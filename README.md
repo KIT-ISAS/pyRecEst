@@ -12,7 +12,7 @@ Please refer to the test cases for usage examples.
 
 - Florian Pfaff (pfaff@kit.edu)
 
-pyRecEst borrows its structure from libDirectional, a project to which I contributed extensively. The libDirectional project is available on GitHub at https://github.com/libDirectional.
+pyRecEst borrows its structure from libDirectional and follows its code closely for many classes. libDirectional, a project to which I contributed extensively, is available on GitHub at https://github.com/libDirectional.
 
 # License
 `pyRecEst` is licensed under the MIT License.
