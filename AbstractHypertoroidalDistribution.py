@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import quad, nquad
-from abc import ABC, abstractmethod
 from AbstractPeriodicDistribution import AbstractPeriodicDistribution
+import matplotlib.pyplot as plt
 
 class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     def plot(self, *args, resolution=None):
