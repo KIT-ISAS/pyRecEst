@@ -6,7 +6,7 @@ pyRecEst is a Python library designed for recursive Bayesian estimation. It is c
 
 # Usage
 
-Please refer to the test cases for usage examples
+Please refer to the test cases for usage examples.
 
 # Credits
 
