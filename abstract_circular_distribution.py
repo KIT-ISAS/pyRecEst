@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import quad
 from abc import ABC, abstractmethod
-from AbstractHypertoroidalDistribution import AbstractHypertoroidalDistribution
+from abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):

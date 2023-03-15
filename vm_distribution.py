@@ -1,7 +1,7 @@
 from math import pi
 import numpy as np
 import scipy.special
-from AbstractCircularDistribution import AbstractCircularDistribution
+from abstract_circular_distribution import AbstractCircularDistribution
 
 class VMDistribution(AbstractCircularDistribution):
     def __init__(self, mu, kappa, norm_const=None):

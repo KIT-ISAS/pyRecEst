@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from AbstractDistribution import AbstractDistribution
+from abstract_distribution import AbstractDistribution
 
 class AbstractPeriodicDistribution(AbstractDistribution):
     def mean(self):

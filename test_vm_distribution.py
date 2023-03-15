@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from VMDistribution import VMDistribution
+from vm_distribution import VMDistribution
 
 
 class TestVMDistribution(unittest.TestCase):

@@ -2,7 +2,7 @@ import numpy as np
 from numpy.fft import rfft, irfft
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
-from WDDistribution import WDDistribution
+from wd_distribution import WDDistribution
 
 """
 Fourier Distribution. The real and complex ones and the option to have it multiplied_by_n or not serve to use the minimum number of operations and thus optimize the graph

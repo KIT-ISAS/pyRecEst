@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from HypertoroidalWNDistribution import HypertoroidalWNDistribution
+from hypertoroidal_wn_distribution import HypertoroidalWNDistribution
 
 class TestHypertoroidalWNDistribution(unittest.TestCase):
     def test_hypertoroidal_wn_distribution_pdf(self):

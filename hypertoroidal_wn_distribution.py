@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import multivariate_normal
 from itertools import product
-from AbstractHypertoroidalDistribution import AbstractHypertoroidalDistribution
+from abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
     def __init__(self, mu_, C_):

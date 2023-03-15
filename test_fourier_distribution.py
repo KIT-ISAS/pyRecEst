@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 from math import pi
-from FourierDistribution import FourierDistribution
-from VMDistribution import VMDistribution
+from fourier_distribution import FourierDistribution
+from vm_distribution import VMDistribution
 import copy
 import scipy.integrate as integrate
 
