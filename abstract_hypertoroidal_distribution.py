@@ -27,13 +27,10 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             raise ValueError("Plotting for this dimension is currently not supported")
         return p
 
-    def circular_mean(self):
+    def mean_direction(self):
         a = self.trigonometric_moment(1)
         m = np.mod(np.angle(a), 2 * np.pi)
         return m
-
-    def mean_direction(self):
-        return self.circular_mean()
 
     def mode(self):
         return self.mode_numerical()
@@ -68,34 +65,84 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return result
 
     def trigonometric_moment_numerical(self, n):
-        def f1(x, y=None, z=None):
-            if y is None and z is None:
-                return self.pdf(x) * np.exp(1j * n * x)
+        def f1_real(*args):
+            x, y, z = args
+            if y is None:
+                value = self.pdf(x)
             elif z is None:
-                return self.pdf(np.array([x, y])) * np.exp(1j * n * x)
+                value = self.pdf(np.array([x, y]))
             else:
-                return self.pdf(np.array([x, y, z])) * np.exp(1j * n * x)
+                value = self.pdf(np.array([x, y, z]))
+            return value * np.cos(n * x)
 
-        def f2(x, y=None, z=None):
-            if z is None:
-                return self.pdf(np.array([x, y])) * np.exp(1j * n * y)
+        def f1_imag(*args):
+            x, y, z = args
+            if y is None:
+                value = self.pdf(x)
+            elif z is None:
+                value = self.pdf(np.array([x, y]))
             else:
-                return self.pdf(np.array([x, y, z])) * np.exp(1j * n * y)
+                value = self.pdf(np.array([x, y, z]))
+            return value * np.sin(n * x)
+        
+        def f2_real(*args):
+            x, y, z = args
+            if y is None:
+                value = self.pdf(x)
+            elif z is None:
+                value = self.pdf(np.array([x, y]))
+            else:
+                value = self.pdf(np.array([x, y, z]))
+            return value * np.cos(n * y)
 
-        def f3(x, y, z):
-            return self.pdf(np.array([x, y, z])) * np.exp(1j * n * z)
+        def f2_imag(*args):
+            x, y, z = args
+            if y is None:
+                value = self.pdf(x)
+            elif z is None:
+                value = self.pdf(np.array([x, y]))
+            else:
+                value = self.pdf(np.array([x, y, z]))
+            return value * np.sin(n * y)
+        
+        def f3_real(*args):
+            x, y, z = args
+            if y is None:
+                value = self.pdf(x)
+            elif z is None:
+                value = self.pdf(np.array([x, y]))
+            else:
+                value = self.pdf(np.array([x, y, z]))
+            return value * np.cos(n * z)
 
+        def f3_imag(*args):
+            x, y, z = args
+            if y is None:
+                value = self.pdf(x)
+            elif z is None:
+                value = self.pdf(np.array([x, y]))
+            else:
+                value = self.pdf(np.array([x, y, z]))
+            return value * np.sin(n * z)
+            
         if self.dim == 1:
-            m, _ = nquad(f1, [(0, 2 * np.pi)])
+            m_real, _ = nquad(f1_real, [(0, 2 * np.pi)])
+            m_imag, _ = nquad(f1_imag, [(0, 2 * np.pi)])
+            m = m_real + 1j * m_imag
         elif self.dim == 2:
             m = np.zeros(2, dtype=complex)
-            m[0], _ = nquad(f1, [(0, 2 * np.pi), (0, 2 * np.pi)])
-            m[1], _ = nquad(f2, [(0, 2 * np.pi), (0, 2 * np.pi)])
+            m[0], _ = nquad(f1_real, [(0, 2 * np.pi), (0, 2 * np.pi)])
+            m[1], _ = nquad(f2_real, [(0, 2 * np.pi), (0, 2 * np.pi)])
+            m[0] += 1j * nquad(f1_imag, [(0, 2 * np.pi), (0, 2 * np.pi)])[0]
+            m[1] += 1j * nquad(f2_imag, [(0, 2 * np.pi), (0, 2 * np.pi)])[0]
         elif self.dim == 3:
             m = np.zeros(3, dtype=complex)
-            m[0], _ = nquad(f1, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])
-            m[1], _ = nquad(f2, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])
-            m[2], _ = nquad(f3, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])
+            m[0], _ = nquad(f1_real, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])
+            m[1], _ = nquad(f2_real, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])
+            m[2], _ = nquad(f3_real, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])
+            m[0] += 1j * nquad(f1_imag, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])[0]
+            m[1] += 1j * nquad(f2_imag, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])[0]
+            m[2] += 1j * nquad(f3_imag, [(0, 2 * np.pi), (0, 2 * np.pi), (0, 2 * np.pi)])[0]
         else:
             raise NotImplementedError("Numerical moment calculation for this dimension is currently not supported")
 
@@ -108,5 +155,15 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def entropy(self):
         return self.entropy_numerical()
+
+    def sample_metropolis_hastings(self, n, proposal=None, start_point=None, burn_in=10, skipping=5):
+        if proposal is None:
+            proposal = lambda x: np.mod(x + np.random.randn(self.dim, 1), 2 * np.pi)
+        if start_point is None:
+            start_point = self.mean_direction()
+
+        s = super().sample_metropolis_hastings(n, proposal, start_point, burn_in, skipping)
+        return s
+
 
 

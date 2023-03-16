@@ -55,11 +55,11 @@ class AbstractDistribution(ABC):
         pdfx = self.pdf(x)
 
         while i < total_samples:
-            x_new = proposal(x)
+            x_new = proposal(np.reshape(x, (self.dim, 1)))
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
-            if a > 1 or a > np.random.rand():
-                s[:, i] = x_new
+            if a.item() or a.item() > np.random.rand():
+                s[:, i] = x_new.squeeze()
                 x = x_new
                 pdfx = pdfx_new
                 i += 1

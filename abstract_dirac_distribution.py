@@ -1,4 +1,6 @@
 import numpy as np
+import warnings
+import copy
 
 class AbstractDiracDistribution:
     def __init__(self, d_, w_=None):
@@ -11,11 +13,15 @@ class AbstractDiracDistribution:
             w_ = np.asarray(w_).reshape(-1)  # Ensure w_ has shape (n,)
         assert d_.shape[1] == w_.shape[0], "Number of Diracs and weights must match."
         self.d = d_
-        if not np.isclose(np.sum(w_), 1, atol=1e-10):
-            print("Sum of the weights is not 1. Normalizing to 1")
-            self.w = w_ / np.sum(w_)
-        else:
-            self.w = w_
+        self.w = w_
+        self = self.normalize()
+
+    def normalize(self):
+        dist = copy.deepcopy(self)
+        if not np.isclose(np.sum(self.w), 1, atol=1e-10):
+            warnings.warn("Weights are not normalized.", RuntimeWarning)
+            dist.w = self.w / np.sum(self.w)
+        return dist
 
     def apply_function(self, f):
         d_ = np.zeros_like(self.d)
@@ -26,7 +32,7 @@ class AbstractDiracDistribution:
 
     def reweigh(self, f):
         w_new = f(self.d)
-        assert w_new.shape == (1, self.d.shape[1]), "Function returned wrong number of outputs."
+        assert w_new.shape == self.w.shape, "Function returned wrong number of outputs."
         assert np.all(w_new >= 0)
         assert np.sum(w_new) > 0
 

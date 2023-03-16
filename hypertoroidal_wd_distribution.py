@@ -16,6 +16,38 @@ class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroid
     def sample(self, n):
         return super().sample(n)
 
+    def mean_direction(self):
+        """
+        Calculate the mean direction of the HypertoroidalWDDistribution.
+
+        :param self: HypertoroidalWDDistribution instance
+        :return: Mean direction
+        """
+        a = self.trigonometric_moment(1)
+        m = np.mod(np.arctan2(np.imag(a), np.real(a)), 2 * np.pi)
+        return m
+    
+    def trigonometric_moment(self, n):
+        """
+        Calculate the trigonometric moment of the HypertoroidalWDDistribution.
+
+        :param self: HypertoroidalWDDistribution instance
+        :param n: Integer moment order
+        :return: Trigonometric moment
+        """
+        assert isinstance(n, int), "n must be an integer"
+        
+        # The expression exp(1j * n * self.d) computes the complex exponential element-wise
+        complex_exp = np.exp(1j * n * self.d)
+        
+        # Multiply the complex exponential element-wise by the weights using implicit broadcasting
+        prod = complex_exp * self.w[np.newaxis, :]
+        
+        # Sum the product along axis 1 (columns)
+        m = np.sum(prod, axis=1)
+        
+        return m
+
     def apply_function(self, f):
         dist = super().apply_function(f)
         dist.d = np.mod(dist.d, 2 * np.pi)
@@ -26,15 +58,6 @@ class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroid
         assert self.dim == 2, "The dimension must be 2"
         twd = ToroidalWDDistribution(self.d, self.w)
         return twd
-
-    def sample_metropolis_hastings(self, n, proposal=None, start_point=None, burn_in=10, skipping=5):
-        if proposal is None:
-            proposal = lambda x: np.mod(x + np.random.randn(self.dim, 1), 2 * np.pi)
-        if start_point is None:
-            start_point = self.mean_direction()
-
-        s = super().sample_metropolis_hastings(n, proposal, start_point, burn_in, skipping)
-        return s
     
     def trigonometric_moment(self, n):
         assert np.isscalar(n)
