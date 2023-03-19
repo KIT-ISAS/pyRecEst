@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-from math import pi
 from fourier_distribution import FourierDistribution
 from vm_distribution import VMDistribution
 import copy
@@ -10,7 +9,7 @@ class TestFourierDistribution(unittest.TestCase):
     def test_vm_to_fourier(self):
         for mult_by_n in [True, False]:
             for transformation in ['identity', 'sqrt']:
-                xs = np.linspace(0, 2*pi, 100)
+                xs = np.linspace(0, 2*np.pi, 100)
                 dist = VMDistribution(np.array(2.5, dtype=np.float32), np.array(1.5, dtype=np.float32))
                 fd = FourierDistribution.from_distribution(dist, n=31, transformation=transformation, store_values_multiplied_by_n=mult_by_n)
                 np.testing.assert_array_almost_equal(dist.pdf(xs), fd.pdf(xs))
@@ -68,7 +67,7 @@ class TestFourierDistribution(unittest.TestCase):
         for mult_by_n in [False, True]:
             fd1 = FourierDistribution.from_distribution(dist1, n=31, transformation='sqrt', store_values_multiplied_by_n=mult_by_n)
             fd2 = FourierDistribution.from_distribution(dist2, n=31, transformation='sqrt', store_values_multiplied_by_n=mult_by_n)
-            hel_like_distance, _ = integrate.quad(lambda x: (np.sqrt(dist1.pdf(np.array(x).reshape(1, -1))) - np.sqrt(dist2.pdf(np.array(x).reshape(1, -1))))**2, 0, 2*pi)
+            hel_like_distance, _ = integrate.quad(lambda x: (np.sqrt(dist1.pdf(np.array(x).reshape(1, -1))) - np.sqrt(dist2.pdf(np.array(x).reshape(1, -1))))**2, 0, 2*np.pi)
             fd_diff = fd1 - fd2
             np.testing.assert_array_almost_equal(fd_diff.integral(), hel_like_distance)
 

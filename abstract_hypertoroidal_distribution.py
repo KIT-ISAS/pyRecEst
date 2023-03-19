@@ -164,6 +164,14 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         s = super().sample_metropolis_hastings(n, proposal, start_point, burn_in, skipping)
         return s
-
-
-
+    @staticmethod
+    def angular_error(alpha, beta):
+        assert not np.isnan(alpha).any() and not np.isnan(beta).any()
+        
+        alpha = np.mod(alpha, 2 * np.pi)
+        beta = np.mod(beta, 2 * np.pi)
+        
+        diff = np.abs(alpha - beta)
+        e = np.minimum(diff, 2 * np.pi - diff)
+        
+        return e
