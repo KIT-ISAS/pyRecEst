@@ -28,6 +28,9 @@ class TestVMDistribution(unittest.TestCase):
                 dtype=np.float32,
             ),
         )
+    def test_plot(self):
+        vm =  VMDistribution(0,1)
+        vm.plot()
 
 
 if __name__ == "__main__":

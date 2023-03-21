@@ -12,19 +12,20 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             theta = np.linspace(0, 2 * np.pi, resolution)
             ftheta = self.pdf(theta)
             p = plt.plot(theta, ftheta, *args)
-            # Call setupAxisCircular('x') function here
+            AbstractHypertoroidalDistribution.setup_axis_circular('x')
         elif self.dim == 2:
             step = 2 * np.pi / resolution
             alpha, beta = np.meshgrid(np.arange(0, 2 * np.pi, step), np.arange(0, 2 * np.pi, step))
             f = self.pdf(np.vstack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
             p = plt.contourf(alpha, beta, f, *args)
-            # Call setupAxisCircular('x', 'y') function here
+            AbstractHypertoroidalDistribution.setup_axis_circular('x')
+            AbstractHypertoroidalDistribution.setup_axis_Circular('y')
         elif self.dim == 3:
-            # Implement the plot for 3D case as needed
             raise NotImplementedError("Plotting for this dimension is currently not supported")
         else:
             raise ValueError("Plotting for this dimension is currently not supported")
+        plt.show(block=False)
         return p
 
     def mean_direction(self):
@@ -164,6 +165,28 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         s = super().sample_metropolis_hastings(n, proposal, start_point, burn_in, skipping)
         return s
+
+    @staticmethod
+    def setup_axis_circular(ax_name = 'x'):
+        if ax_name == 'x':
+            plt.xlim(0, 2 * np.pi)
+            ticks = [i * np.pi for i in range(3)]
+            tick_labels = ['0', '$\pi$', '$2\pi$']
+            plt.xticks(ticks, tick_labels)
+        elif ax_name == 'y':
+            plt.xlim(0, 2 * np.pi)
+            ticks = [i * np.pi for i in range(3)]
+            tick_labels = ['0', '$\pi$', '$2\pi$']
+            plt.xticks(ticks, tick_labels)
+        elif ax_name == 'z':
+            plt.xlim(0, 2 * np.pi)
+            ticks = [i * np.pi for i in range(3)]
+            tick_labels = ['0', '$\pi$', '$2\pi$']
+            plt.xticks(ticks, tick_labels)
+        else:
+            raise ValueError("Unkonwn axis.")
+
+
     @staticmethod
     def angular_error(alpha, beta):
         assert not np.isnan(alpha).any() and not np.isnan(beta).any()

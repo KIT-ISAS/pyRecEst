@@ -6,13 +6,13 @@ from abstract_circular_distribution import AbstractCircularDistribution
 class VMDistribution(AbstractCircularDistribution):
     def __init__(self, mu, kappa, norm_const=None):
         assert kappa >= 0
+        super().__init__()
         self.mu = mu
         self.kappa = kappa
         self.norm_const = norm_const
 
     def calculate_norm_const(self):
-        # Need to go to CPU to use scipy.special.iv
-        self.norm_const = (2 * pi * scipy.special.iv(0, float(self.kappa))).astype(self.kappa.dtype)
+        self.norm_const = 2 * pi * scipy.special.iv(0, self.kappa)
         return self.norm_const
 
     def get_params(self):

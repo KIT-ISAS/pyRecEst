@@ -5,8 +5,7 @@ from abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributio
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):
-        super().__init__()
-        self.dim = 1
+        super().__init__(dim=1)
 
     def cdf_numerical(self, xa, starting_point=0):
         xa = np.asarray(xa)
