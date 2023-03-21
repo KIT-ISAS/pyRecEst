@@ -79,14 +79,13 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         z = np.cos(phi)
         return x, y, z
 
-    @staticmethod
-    def compute_unit_sphere_surface(dimension):
-        if dimension == 2:
+    def get_manifold_size(self):
+        if self.dim == 2:
             surface_area = 2 * np.pi
-        elif dimension == 3:
+        elif self.dim == 3:
             surface_area = 4 * np.pi
-        elif dimension == 4:
+        elif self.dim == 4:
             surface_area = 2 * np.pi**2
         else:
-            surface_area = 2 * np.pi**(dimension / 2) / gamma(dimension / 2)
+            surface_area = 2 * np.pi**(self.dim / 2) / gamma(self.dim / 2)
         return surface_area
