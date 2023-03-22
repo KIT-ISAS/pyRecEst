@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
-from abstract_distribution import AbstractDistribution
+from abc import abstractmethod
+from abstract_non_conditional_distribution import AbstractNonConditionalDistribution
 
-class AbstractPeriodicDistribution(AbstractDistribution):
+class AbstractPeriodicDistribution(AbstractNonConditionalDistribution):
     def mean(self):
         return self.mean_direction()
 

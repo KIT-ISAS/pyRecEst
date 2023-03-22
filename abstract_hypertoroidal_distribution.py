@@ -185,7 +185,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             plt.xticks(ticks, tick_labels)
         else:
             raise ValueError("Unkonwn axis.")
-
+    def get_manifold_size(self):
+        return (2*np.pi)**self.dim
 
     @staticmethod
     def angular_error(alpha, beta):
