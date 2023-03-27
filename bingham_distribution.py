@@ -7,7 +7,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         self.dim = M.shape[0]
 
         assert M.shape[1] == self.dim, 'M is not square'
-        assert Z.shape[0] == self.dim, 'Z has wrong number of rows'
+        assert Z.shape[0] == self.dim, 'Z has wrong length'
         assert Z.ndim == 1, 'Z needs to be a 1-D vector'
         assert Z[self.dim - 1] == 0, 'Last entry of Z needs to be zero'
         assert np.all(Z[:-1] <= Z[1:]), 'Values in Z have to be ascending'
