@@ -1,6 +1,7 @@
 import numpy as np
 from abstract_periodic_distribution import AbstractPeriodicDistribution
 from scipy.integrate import quad, nquad
+from scipy.special import gamma
 
 class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
     def mean_direction(self):
@@ -105,3 +106,14 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
             coords[-i] = np.cos(polar_coords[i])
         return coords
 
+    @staticmethod
+    def compute_unit_hypersphere_surface(dim):
+        if dim == 2:
+            surface_area = 2 * np.pi
+        elif dim == 3:
+            surface_area = 4 * np.pi
+        elif dim == 4:
+            surface_area = 2 * np.pi**2
+        else:
+            surface_area = 2 * np.pi**(dim / 2) / gamma(dim / 2)
+        return surface_area

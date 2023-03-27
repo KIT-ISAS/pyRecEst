@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import gamma
 from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
 from abc import abstractmethod
 from scipy.optimize import minimize
@@ -41,7 +40,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             raise ValueError("Cannot plot hyperspherical distribution with this number of dimensions.")
         
     def moment_numerical(this):
-        return this.moment_numerical(np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
+        return super().moment_numerical(np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
 
     def integral_numerical(this):
         if this.dim <= 4:
@@ -51,7 +50,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             n = 10000
             r = HypersphericalUniformDistribution(this.dim).sample(n)
             p = this.pdf(r)
-            Sd = AbstractHypersphericalDistribution.compute_unit_sphere_surface(this.dim)
+            Sd = AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(this.dim)
             i = np.sum(p) / n * Sd
         return i
 
@@ -80,12 +79,4 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, z
 
     def get_manifold_size(self):
-        if self.dim == 2:
-            surface_area = 2 * np.pi
-        elif self.dim == 3:
-            surface_area = 4 * np.pi
-        elif self.dim == 4:
-            surface_area = 2 * np.pi**2
-        else:
-            surface_area = 2 * np.pi**(self.dim / 2) / gamma(self.dim / 2)
-        return surface_area
+        return AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(self.dim)

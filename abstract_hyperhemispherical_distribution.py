@@ -77,9 +77,4 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return s
 
     def get_manifold_size(self):
-        return AbstractHyperhemisphericalDistribution.compute_unit_hyperhemisphere_surface(self.dim)
-
-    @staticmethod
-    def compute_unit_hyperhemisphere_surface(dimension):
-        return 0.5 * AbstractHypersphericalDistribution.compute_unit_sphere_surface(dimension)
-
+        return 0.5 * AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(self.dim)
