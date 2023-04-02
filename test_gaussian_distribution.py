@@ -10,12 +10,12 @@ class GaussianDistributionTest(unittest.TestCase):
         C = np.array([[1.1, 0.4, 0], [0.4, 0.9, 0], [0, 0, 0.1]])
         g = GaussianDistribution(mu, C)
 
-        xa = np.array([[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5], [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7], [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]])
-        self.assertTrue(np.allclose(g.pdf(xa), multivariate_normal.pdf(xa.T, mu, C).T, rtol=1e-10))
+        xs = np.array([[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5], [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7], [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]]).T
+        self.assertTrue(np.allclose(g.pdf(xs), multivariate_normal.pdf(xs, mu, C), rtol=1e-10))
 
         n = 10
         s = g.sample(n)
-        self.assertEqual(s.shape, (3, n))
+        self.assertEqual(s.shape, (n, 3,))
     
     def test_mode(self):
         mu = np.array([1, 2, 3])

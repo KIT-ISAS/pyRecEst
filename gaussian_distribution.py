@@ -8,6 +8,7 @@ class GaussianDistribution:
     def __init__(self, mu, C, check_validity=True):
         assert mu.shape[0] == C.shape[0] == C.shape[1], "Size of C invalid"
         self.dim = mu.shape[0]
+        assert mu.ndim <= 1
         self.mu = mu
         
         if check_validity:
@@ -21,8 +22,8 @@ class GaussianDistribution:
         self.C = C
         
     def pdf(self, xa):
-        assert xa.shape[0] == self.mu.shape[0] or self.mu.size == 1, "Dimension incorrect"
-        return mvn.pdf(xa.T, self.mu.T, self.C).T
+        assert xa.shape[-1] == self.mu.shape[0] or self.mu.size == 1, "Dimension incorrect"
+        return mvn.pdf(xa, self.mu.T, self.C).T
 
     def shift(self, offsets):
         assert offsets.size == self.dim
@@ -67,4 +68,4 @@ class GaussianDistribution:
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def sample(self, n):
-        return np.random.multivariate_normal(self.mu, self.C, n).T
+        return np.random.multivariate_normal(self.mu, self.C, n)

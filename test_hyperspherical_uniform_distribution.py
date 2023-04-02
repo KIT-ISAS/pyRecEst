@@ -23,8 +23,8 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             hud = HypersphericalUniformDistribution(dim)
             n = 10
             samples = hud.sample(n)
-            self.assertEqual(samples.shape, (hud.dim, n))
-            self.assertTrue(np.allclose(np.sum(samples * samples, axis=0), np.ones(n), rtol=1E-10))
+            self.assertEqual(samples.shape, (n, hud.dim))
+            self.assertTrue(np.allclose(np.linalg.norm(samples, axis=1), np.ones(n), rtol=1E-10))
     
 if __name__ == '__main__':
     unittest.main()

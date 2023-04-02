@@ -17,9 +17,9 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         self.assertIs(p.size, 1)
         
         np.random.seed(10)
-        points = np.random.randn(3, 100)
-        points = points[:, points[2, :] >= 0]
-        points /= np.linalg.norm(points, axis=0)
+        points = np.random.randn(100, 3)
+        points = points[points[:, 2] >= 0, :]
+        points /= np.linalg.norm(points, axis=1, keepdims = True)
         
         self.assertAlmostEqual(np.allclose(chhd.pdf(points), 2 * bd.pdf(points), atol=1e-5), True)
     

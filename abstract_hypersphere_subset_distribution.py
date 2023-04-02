@@ -97,13 +97,13 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
     
     @staticmethod
     def polar2cart(polar_coords):
-        coords = np.zeros(polar_coords.shape[0] + 1)
-        coords[0] = np.sin(polar_coords[0]) * np.cos(polar_coords[1])
-        coords[1] = np.sin(polar_coords[0]) * np.sin(polar_coords[1])
-        coords[2] = np.cos(polar_coords[0])
-        for i in range(2, polar_coords.shape[0]):
-            coords[:-i] *= np.sin(polar_coords[i])
-            coords[-i] = np.cos(polar_coords[i])
+        coords = np.zeros((polar_coords.shape[0], polar_coords.shape[1] + 1,))
+        coords[:, 0] = np.sin(polar_coords[:, 0]) * np.cos(polar_coords[:, 1])
+        coords[:, 1] = np.sin(polar_coords[:, 0]) * np.sin(polar_coords[:, 1])
+        coords[:, 2] = np.cos(polar_coords[:, 0])
+        for i in range(2, polar_coords.shape[1]):
+            coords[:, :-i] *= np.sin(polar_coords[:, i])
+            coords[:, -i] = np.cos(polar_coords[:, i])
         return coords
 
     @staticmethod

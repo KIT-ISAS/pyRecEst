@@ -14,19 +14,19 @@ class EllipsoidalBallUniformDistribution(AbstractEllipsoidalBallDistribution, Ab
         raise NotImplementedError()
         
     def pdf(self, xs):
-        assert xs.shape[0] == self.dim
+        assert xs.shape[-1] == self.dim
         # Calculate the reciprocal of the volume of the ellipsoid
         # reciprocal_volume = 1 / (np.power(np.pi, self.dim / 2) * np.sqrt(np.linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
         reciprocal_volume = 1 / self.get_manifold_size()
         if xs.ndim == 1:
             return reciprocal_volume
         else:
-            n = xs.shape[1]
+            n = xs.shape[0]
             results = np.zeros(n)
 
             # Check if points are inside the ellipsoid
             for i in range(n):
-                point = xs[:, i]
+                point = xs[i, :]
                 diff = point - self.center
                 result = np.dot(diff.T, np.linalg.solve(self.shape_matrix, diff))
 
@@ -38,10 +38,10 @@ class EllipsoidalBallUniformDistribution(AbstractEllipsoidalBallDistribution, Ab
         
     def sample(self, num_samples=1):
         # Generate random points uniformly in a unit d-dimensional ball
-        random_points = np.random.randn(self.dim, num_samples)
-        random_points /= np.linalg.norm(random_points, axis=0)
+        random_points = np.random.randn(num_samples, self.dim)
+        random_points /= np.linalg.norm(random_points, axis=1, keepdims=True)
 
-        random_radii = np.random.rand(num_samples)
+        random_radii = np.random.rand(num_samples, 1)
         random_radii = random_radii**(1 / self.dim) # Consider that the ellipsoid surfaces with higher radii are larger
 
         # Scale random points by the radii
@@ -49,6 +49,7 @@ class EllipsoidalBallUniformDistribution(AbstractEllipsoidalBallDistribution, Ab
 
         # Rotate the points according to the shape matrix
         L = np.linalg.cholesky(self.shape_matrix)
-        transformed_points = L @ random_points + self.center.reshape(-1, 1)
+        # For points (d, n), this would be L @ random_points
+        transformed_points = random_points @ L.T + self.center.reshape(1, -1)
 
         return transformed_points

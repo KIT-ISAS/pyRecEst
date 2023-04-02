@@ -4,11 +4,8 @@ from abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributio
 import copy
 
 class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroidalDistribution):
-    def __init__(self, d_, w_=None):
-        if w_ is None:
-            w_ = np.ones((1, d_.shape[1])) / d_.shape[1]
-
-        super().__init__(np.mod(d_, 2 * np.pi), w_)
+    def __init__(self, d, w=None):
+        AbstractDiracDistribution.__init__(self, np.mod(d, 2 * np.pi), w)
 
     def plot(self, *args, **kwargs):
         raise NotImplementedError("Plotting is not implemented")
@@ -61,23 +58,23 @@ class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroid
     
     def trigonometric_moment(self, n):
         assert np.isscalar(n)
-        m = np.sum(np.exp(1j * n * self.d) * np.tile(self.w, (self.dim, 1)), axis=1)
+        m = np.sum(np.exp(1j * n * self.d.T) * np.tile(self.w, (self.dim, 1)), axis=1)
         return m
 
     def marginalize_to_1D(self, dimension):
         from wd_distribution import WDDistribution
-        return WDDistribution(np.reshape(self.d[dimension, :],(1,-1)), self.w)
+        return WDDistribution(self.d[:, dimension], self.w)
 
     def marginalize_out(self, dimensions):
         from wd_distribution import WDDistribution
         remaining_dims = list(range(self.dim))
         remaining_dims = [dim for dim in remaining_dims if dim != dimensions]
-        return WDDistribution(self.d[remaining_dims, :], self.w)
+        return WDDistribution(self.d[:, remaining_dims], self.w)
 
     def shift(self, shift_angles):
-        assert shift_angles.shape[0] == self.dim
+        assert shift_angles.shape[-1] == self.dim
         hd = copy.copy(self)
-        hd.d = np.mod(self.d + np.reshape(shift_angles,(-1, 1)), 2 * np.pi)
+        hd.d = np.mod(self.d + np.reshape(shift_angles, (1, -1)), 2 * np.pi)
         return hd
 
     def entropy(self):

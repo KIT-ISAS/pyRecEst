@@ -2,6 +2,7 @@ import numpy as np
 from scipy.linalg import qr
 from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 import mpmath
+from bingham_distribution import BinghamDistribution
 
 class WatsonDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu_, kappa_):
@@ -16,9 +17,9 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         C_mpf = mpmath.gamma(self.dim / 2) / (2 * mpmath.pi ** (self.dim / 2)) / mpmath.hyper([0.5],[self.dim/2.0], self.kappa)
         self.C = np.float64(C_mpf)
 
-    def pdf(self, xa):
-        assert xa.shape[0] == self.dim
-        p = self.C * np.exp(self.kappa * (self.mu.T @ xa) ** 2)
+    def pdf(self, xs):
+        assert xs.shape[-1] == self.dim
+        p = self.C * np.exp(self.kappa * (self.mu.T @ xs.T) ** 2)
         return p
 
     def to_bingham(self):

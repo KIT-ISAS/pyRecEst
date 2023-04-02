@@ -10,6 +10,10 @@ class KalmanFilterTest(unittest.TestCase):
         filter_custom = KalmanFilter([0], [[10000]])
         self.assertEqual(filter_custom.get_point_estimate(), [0])
 
+    def test_initialization_gauss(self):
+        filter_custom = KalmanFilter(prior_gauss = GaussianDistribution(np.array([4]), np.array([[10000]])))
+        self.assertEqual(filter_custom.get_point_estimate(), [4])
+
     def test_update_with_likelihood_1d(self):
         kf = KalmanFilter([0], [[1]])
         kf.update_identity(3, 1)

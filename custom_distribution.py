@@ -14,10 +14,10 @@ class CustomDistribution(AbstractDistribution):
         assert shift_by.shape[0] == self.dim, "Shift_by vector length must match the dimension."
         self.shift_by = shift_by
         
-    def pdf(self, xa):
-        assert xa.shape[0] == self.dim
-        # Reshape to properly handle the (d,) shape as well as the (d, n) case
-        p = self.scale_by * self.f(np.reshape(xa, (self.dim, -1)) - self.shift_by[:, np.newaxis])
+    def pdf(self, xs):
+        assert xs.shape[-1] == self.dim
+        # Reshape to properly handle the (d,) shape as well as the (n, d) case
+        p = self.scale_by * self.f(np.reshape(xs, (-1, self.dim)) - self.shift_by[np.newaxis, :])
         assert p.ndim <= 1,  "Output format of pdf is not as expected"
         return p
 

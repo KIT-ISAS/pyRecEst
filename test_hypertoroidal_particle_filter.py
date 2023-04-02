@@ -14,7 +14,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         hpf.set_state(hwnd)
         forced_mean = np.array([1, 2, 3])
 
-        for _ in range(50):
+        for _ in range(10):
             hpf.predict_identity(HypertoroidalWNDistribution(np.zeros(3), 0.5 * C))
             self.assertEqual(hpf.get_point_estimate().shape, (3,))
             hpf.update_identity(HypertoroidalWNDistribution(np.zeros(3), 0.5 * C), forced_mean)

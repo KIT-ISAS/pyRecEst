@@ -4,6 +4,8 @@ from watson_distribution import WatsonDistribution
 from vmf_distribution import VMFDistribution
 from hyperspherical_mixture import HypersphericalMixture
 from numpy.testing import assert_allclose
+from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
+
 
 class HypersphericalMixtureTest(unittest.TestCase):
     def test_pdf_3d(self):
@@ -13,8 +15,7 @@ class HypersphericalMixtureTest(unittest.TestCase):
         smix = HypersphericalMixture([wad, vmf], w)
 
         phi, theta = np.meshgrid(np.linspace(0, 2 * np.pi, 10), np.linspace(-np.pi / 2, np.pi / 2, 10))
-        x, y, z = np.array([phi.ravel(), theta.ravel(), np.ones_like(phi).ravel()])
-        points = np.array([x, y, z])
+        points = AbstractHypersphereSubsetDistribution.polar2cart(np.stack([phi.ravel(), theta.ravel()], axis=-1))
 
         assert_allclose(smix.pdf(points), w[0] * wad.pdf(points) + w[1] * vmf.pdf(points), atol=1e-10)
 
@@ -25,8 +26,8 @@ class HypersphericalMixtureTest(unittest.TestCase):
         smix = HypersphericalMixture([wad, vmf], w)
 
         a, b, c, d = np.mgrid[-1:1:4j, -1:1:4j, -1:1:4j, -1:1:4j]
-        points = np.array([a.ravel(), b.ravel(), c.ravel(), d.ravel()])
-        points = points / np.sqrt(np.sum(points ** 2, axis=0))
+        points = np.array([a.ravel(), b.ravel(), c.ravel(), d.ravel()]).T
+        points = points / np.sqrt(np.sum(points ** 2, axis=1, keepdims=True))
 
         assert_allclose(smix.pdf(points), w[0] * wad.pdf(points) + w[1] * vmf.pdf(points), atol=1e-10)
 

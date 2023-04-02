@@ -77,6 +77,38 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         y = np.sin(phi) * np.sin(theta)
         z = np.cos(phi)
         return x, y, z
+        
+    @staticmethod
+    def plot_unit_sphere():
+        from mpl_toolkits.mplot3d import Axes3D
+
+        # Define the number of points to generate around the circle
+        num_points = 1000
+
+        # Generate theta and phi angles (in radians)
+        theta = np.linspace(0, 2 * np.pi, num_points)
+        phi = np.linspace(0, np.pi, num_points)
+
+        # Create a meshgrid for theta and phi angles
+        theta, phi = np.meshgrid(theta, phi)
+
+        # Calculate the x, y, and z coordinates
+        x = np.sin(phi) * np.cos(theta)
+        y = np.sin(phi) * np.sin(theta)
+        z = np.cos(phi)
+
+        # Plot the unit circle in 3D space
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+        ax.plot_surface(x, y, z, color="c", alpha=0.7)
+
+        ax.set_xlabel("X-axis")
+        ax.set_ylabel("Y-axis")
+        ax.set_zlabel("Z-axis")
+        ax.set_title("Unit Circle in 3D Space")
+
+        plt.show()
+
 
     def get_manifold_size(self):
         return AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(self.dim)

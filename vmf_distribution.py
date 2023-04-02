@@ -19,9 +19,9 @@ class VMFDistribution(AbstractHypersphericalDistribution):
             self.C = kappa_ ** (self.dim / 2 - 1) / ((2 * np.pi) ** (self.dim / 2) * besseli(self.dim / 2 - 1, kappa_))
 
     def pdf(self, xa):
-        assert xa.shape[0] == self.mu.shape[0]
+        assert xa.shape[-1] == self.mu.shape[0]
 
-        return self.C * np.exp(self.kappa * self.mu.T @ xa)
+        return self.C * np.exp(self.kappa * self.mu.T @ xa.T)
 
     def meanDirection(self):
         return self.mu
@@ -32,10 +32,10 @@ class VMFDistribution(AbstractHypersphericalDistribution):
         m1 = besseli(self.dim / 2, self.kappa, 1) / besseli(self.dim / 2 - 1, self.kappa, 1)
         for i in range(self.dim - 1):
             alpha = np.arccos(((self.dim * 2 - 1) * m1 - 1) / (self.dim * 2 - 2))
-            samples[0, 2 * i] = np.cos(alpha)
-            samples[0, 2 * i + 1] = np.cos(alpha)
-            samples[i + 1, 2 * i] = np.sin(alpha)
-            samples[i + 1, 2 * i + 1] = -np.sin(alpha)
+            samples[2 * i, 0] = np.cos(alpha)
+            samples[2 * i + 1, 0] = np.cos(alpha)
+            samples[2 * i, i + 1] = np.sin(alpha)
+            samples[2 * i + 1, i + 1] = -np.sin(alpha)
 
         Q = self.getRotationMatrix()
         samples = Q @ samples
@@ -76,5 +76,5 @@ class VMFDistribution(AbstractHypersphericalDistribution):
         return VMFDistribution(mu_, kappa_)
 
     @staticmethod
-    def Ad(self):#
-        pass
+    def Ad(self):
+        raise NotImplementedError()

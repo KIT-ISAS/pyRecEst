@@ -7,7 +7,7 @@ class AbstractEllipsoidalBallDistribution(AbstractDistribution):
     def __init__(self, center, shape_matrix):
         self.center = center
         self.shape_matrix = shape_matrix
-        self.dim = center.shape[0]
+        self.dim = center.shape[-1]
         assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim
 
     def get_manifold_size(self):

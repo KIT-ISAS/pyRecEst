@@ -4,10 +4,7 @@ from abstract_toroidal_distribution import AbstractToroidalDistribution
 
 class ToroidalWDDistribution(HypertoroidalWDDistribution, AbstractToroidalDistribution):
     def __init__(self, d, w=None):
-        if w is None:
-            w = np.ones(d.shape[1]) / d.shape[1]
-
-        super().__init__(d, w)
+        HypertoroidalWDDistribution.__init__(self, d, w)
 
     def integral(self, l=None, r=None):
         if l is None:

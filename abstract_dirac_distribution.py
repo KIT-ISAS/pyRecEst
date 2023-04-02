@@ -4,14 +4,13 @@ import copy
 
 class AbstractDiracDistribution:
     def __init__(self, d_, w_=None):
-        self.dim = d_.shape[0]
-        if self.dim > d_.shape[1]:
+        self.dim = d_.shape[-1]
+        if self.dim > d_.shape[0]:
             print("Not even one Dirac per dimension. If this warning is unexpected, verify d_ is shaped correctly.")
         if w_ is None:
-            w_ = np.ones(d_.shape[1]) / d_.shape[1]
-        else:
-            w_ = np.asarray(w_).reshape(-1)  # Ensure w_ has shape (n,)
-        assert d_.shape[1] == w_.shape[0], "Number of Diracs and weights must match."
+            w_ = np.ones(d_.shape[0]) / d_.shape[0]
+
+        assert d_.shape[0] == w_.shape[0], "Number of Diracs and weights must match."
         self.d = d_
         self.w = w_
         self = self.normalize()
@@ -25,24 +24,26 @@ class AbstractDiracDistribution:
 
     def apply_function(self, f):
         d_ = np.zeros_like(self.d)
-        for i in range(self.d.shape[1]):
-            d_[:, i] = f(self.d[:, i])
+        for i in range(self.d.shape[0]):
+            d_[i, :] = f(self.d[i, :])
         dist = self.__class__(d_, self.w)
         return dist
 
     def reweigh(self, f):
-        w_new = f(self.d)
-        assert w_new.shape == self.w.shape, "Function returned wrong number of outputs."
-        assert np.all(w_new >= 0)
-        assert np.sum(w_new) > 0
+        w_likelihood = f(self.d)
+        assert w_likelihood.shape == self.w.shape, "Function returned wrong number of outputs."
+        assert np.all(w_likelihood >= 0)
+        assert np.sum(w_likelihood) > 0
+        
+        w_posterior_unnormalized = w_likelihood * self.w
 
-        dist = self.__class__(self.d, w_new * self.w)
-        dist.w /= np.sum(dist.w)
+        w_posterior_normalized = w_posterior_unnormalized / np.sum(w_posterior_unnormalized)
+        dist = self.__class__(self.d, w_posterior_normalized)
         return dist
 
     def sample(self, n):
         ids = np.random.choice(self.w.size, size=n, p=self.w)
-        return self.d[:, ids]
+        return self.d[ids, :]
 
     def entropy(self):
         print("Entropy is not defined in a continuous sense")

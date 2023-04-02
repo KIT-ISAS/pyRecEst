@@ -10,7 +10,7 @@ class TestVMDistribution(unittest.TestCase):
         bd = BinghamDistribution(Z, M)
 
         xs = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0]/np.sqrt(2), [1, 1, 2] /
-                    np.linalg.norm([1, 1, 2]), -np.array([1, 1, 2])/np.linalg.norm([1, 1, 2])]).T
+                    np.linalg.norm([1, 1, 2]), -np.array([1, 1, 2])/np.linalg.norm([1, 1, 2])])
         
         np.testing.assert_array_almost_equal(
             bd.pdf(xs),

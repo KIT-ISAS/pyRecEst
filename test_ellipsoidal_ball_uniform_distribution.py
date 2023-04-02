@@ -14,8 +14,8 @@ class TestEllipsoidalBallUniformDistribution(unittest.TestCase):
         dist = EllipsoidalBallUniformDistribution(
             np.array([2, 3]), np.array([[4, 3], [3, 9]]))
         samples = dist.sample(10)
-        self.assertEqual(samples.shape[0], dist.dim)
-        self.assertEqual(samples.shape[1], samples.shape[1])
+        self.assertEqual(samples.shape[-1], dist.dim)
+        self.assertEqual(samples.shape[0], 10)
         p = dist.pdf(samples)
         self.assertTrue(all(p == p[0]))
 

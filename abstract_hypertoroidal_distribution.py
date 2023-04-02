@@ -45,12 +45,12 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def integral(self, l=None, r=None):
         if l is None:
-            l = np.zeros((self.dim, 1))
+            l = np.zeros(self.dim)
         if r is None:
-            r = 2 * np.pi * np.ones((self.dim, 1))
+            r = 2 * np.pi * np.ones(self.dim)
 
-        assert l.shape == (self.dim, 1)
-        assert r.shape == (self.dim, 1)
+        assert l.shape == (self.dim, )
+        assert r.shape == (self.dim, )
 
         return self.integral_numerical(l, r)
 
@@ -159,7 +159,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def sample_metropolis_hastings(self, n, proposal=None, start_point=None, burn_in=10, skipping=5):
         if proposal is None:
-            proposal = lambda x: np.mod(x + np.random.randn(self.dim, 1), 2 * np.pi)
+            proposal = lambda x: np.mod(x + np.random.randn(self.dim), 2 * np.pi)
         if start_point is None:
             start_point = self.mean_direction()
 

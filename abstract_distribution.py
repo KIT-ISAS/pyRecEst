@@ -48,20 +48,20 @@ class AbstractDistribution(ABC):
             raise NotImplementedError("Default proposals and starting points should be set in inheriting classes.")
 
         total_samples = burn_in + n * skipping
-        s = np.empty((self.dim, total_samples), dtype=np.float64)
+        s = np.empty((total_samples, self.dim,), dtype=np.float64)
         s.fill(np.nan)
         x = start_point
         i = 0
         pdfx = self.pdf(x)
 
         while i < total_samples:
-            x_new = proposal(np.reshape(x, (self.dim, 1)))
+            x_new = proposal(x)
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
             if a.item() or a.item() > np.random.rand():
-                s[:, i] = x_new.squeeze()
+                s[i, :] = x_new.squeeze()
                 x = x_new
                 pdfx = pdfx_new
                 i += 1
 
-        return s[:, burn_in::skipping]
+        return s[burn_in::skipping, :]

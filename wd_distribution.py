@@ -3,11 +3,9 @@ import numpy as np
 
 class WDDistribution(HypertoroidalWDDistribution):
     def __init__(self, d, w=None):
-        if w is None:
-            w = np.ones((1, d.shape[1])) / d.shape[1]
-
-        super().__init__(d, w)
-        assert self.dim == 1, "The dimension must be 1 for WDDistribution"
+        HypertoroidalWDDistribution.__init__(self, d, w)
+        self.dim = 1 # Manually setting dimension because it may not be detected correctly
+        assert self.d.shape[0] == self.w.shape[0]
 
     def plot(self):
         super().plot()

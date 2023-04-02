@@ -30,10 +30,10 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         raise NotImplementedError('Not implemented.')
 
     def pdf(self, xa):
-        assert xa.shape[0] == self.dim
+        assert xa.shape[-1] == self.dim
 
         C = self.M @ np.diag(self.Z) @ self.M.T
-        p = 1 / self.F * np.exp(np.sum(xa * (C @ xa), axis=0))
+        p = 1 / self.F * np.exp(np.sum(xa.T * (C @ xa.T), axis=0))
         return p
 
     def mean_direction(self):

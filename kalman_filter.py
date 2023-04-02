@@ -4,11 +4,23 @@ from abstract_euclidean_filter import AbstractEuclideanFilter
 from gaussian_distribution import GaussianDistribution
 
 class KalmanFilter(AbstractEuclideanFilter):
-    def __init__(self, prior_mean, prior_cov):
-        self.kf = FilterPyKalmanFilter(dim_x=prior_mean.__len__(), dim_z=prior_mean.__len__()) # Set it identical to the dimensionality of the state because we do not know yet.
-        self.set_state(prior_mean, prior_cov)
+    def __init__(self, prior_mean = None, prior_cov = None, prior_gauss = None):
+        if prior_gauss is not None:
+            dim_x = prior_gauss.dim
+        else:
+            dim_x = prior_mean.__len__()
+            
+        self.kf = FilterPyKalmanFilter(dim_x=dim_x, dim_z=dim_x) # Set dim_z identical to the dimensionality of the state because we do not know yet.
+        self.set_state(prior_mean, prior_cov, prior_gauss)
 
-    def set_state(self, mean, cov):
+    def set_state(self, mean = None, cov = None, gauss = None):
+        # Set state either by providing a GaussianDistribution or mean and covariance
+        if gauss is None:
+            assert mean is not None and cov is not None
+        else:
+            assert mean is None and cov is None
+            mean = gauss.mu
+            cov = gauss.C
         self.kf.x = np.asarray(mean)
         self.kf.P = np.asarray(cov) # FilterPy uses .P
 

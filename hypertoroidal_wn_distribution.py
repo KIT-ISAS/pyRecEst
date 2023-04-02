@@ -16,7 +16,7 @@ class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
         self.dim = mu_.shape[0]
 
     def pdf(self, xa, m=3):
-        xa = np.reshape(xa, (self.dim, -1))
+        xa = np.reshape(xa, (-1, self.dim))
         dim = self.mu.shape[0]
 
         # Generate all combinations of offsets for each dimension
@@ -24,10 +24,10 @@ class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
         offset_combinations = np.array(np.meshgrid(*offsets)).T.reshape(-1, dim)
 
         # Calculate the PDF values by considering all combinations of offsets
-        pdf_values = np.zeros(xa.shape[1])
+        pdf_values = np.zeros(xa.shape[0])
         for offset in offset_combinations:
-            shifted_xa = xa + offset[:, np.newaxis]
-            pdf_values += multivariate_normal.pdf(shifted_xa.T, mean=self.mu.flatten(), cov=self.C)
+            shifted_xa = xa + offset[np.newaxis, :]
+            pdf_values += multivariate_normal.pdf(shifted_xa, mean=self.mu.flatten(), cov=self.C)
 
         return pdf_values
     def sample(self, n):
@@ -35,7 +35,7 @@ class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
             raise ValueError("n must be a positive integer")
 
         s = np.random.multivariate_normal(self.mu, self.C, n)
-        s = np.mod(s, 2 * np.pi).T  # wrap the samples
+        s = np.mod(s, 2 * np.pi)  # wrap the samples
         return s
     
     def set_mode(self, m):

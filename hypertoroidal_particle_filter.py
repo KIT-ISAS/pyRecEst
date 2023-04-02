@@ -5,7 +5,7 @@ from abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
     def __init__(self, n_particles, dim):
-        self.dist = HypertoroidalWDDistribution(np.tile(np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim, 1)))
+        self.dist = HypertoroidalWDDistribution(np.tile(np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim)))
 
     def set_state(self, dist_):
         if not isinstance(dist_, HypertoroidalWDDistribution):
@@ -24,13 +24,13 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             self.dist.d = np.mod(self.dist.d, 2 * np.pi)
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
-        assert samples.shape[1] == weights.size, "samples and weights must match in size"
+        assert samples.shape[0] == weights.size, "samples and weights must match in size"
         assert callable(f), "f must be a function"
 
         weights /= np.sum(weights)
-        n = self.dist.shape[1]
+        n = self.dist.shape[0]
         noise_ids = np.random.choice(np.arange(weights.size), size=n, p=weights)
         d = np.zeros_like(self.dist)
         for i in range(n):
-            d[:, i] = f(self.dist[:, i], samples[:, noise_ids[i]])
+            d[i, :] = f(self.dist[i, :], samples[noise_ids[i, :]])
         self.dist = d

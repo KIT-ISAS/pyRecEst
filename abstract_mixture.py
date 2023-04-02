@@ -17,9 +17,9 @@ class AbstractMixture(AbstractDistribution):
             self.w /= sum(self.w)
 
     def pdf(self, xa):
-        assert xa.shape[0] == self.dim, "Dimension mismatch"
+        assert xa.shape[-1] == self.dim, "Dimension mismatch"
         
-        p = np.zeros(xa.shape[1])
+        p = np.zeros(xa.shape[0])
         for dist, weight in zip(self.dists, self.w):
             p += weight * dist.pdf(xa)
         
@@ -42,6 +42,6 @@ class AbstractMixture(AbstractDistribution):
                 count += occ
         
         order = np.argsort(d)
-        s = s[:, order]
+        s = s[order, :]
         
         return s

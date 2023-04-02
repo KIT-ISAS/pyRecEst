@@ -9,7 +9,7 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
 
         hwn = HypertoroidalWNDistribution(mu, C)
 
-        xa = np.array([[0, 1, 2], [1, 2, 3]])
+        xa = np.array([[0, 1, 2], [1, 2, 3]]).T
         pdf_values = hwn.pdf(xa)
 
         expected_values = np.array([0.0499028191873498, 0.425359477472412, 0.0499028191873498])
