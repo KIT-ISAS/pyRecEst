@@ -3,7 +3,7 @@ import numpy as np
 from bingham_distribution import BinghamDistribution
 
 
-class TestVMDistribution(unittest.TestCase):
+class TestBinghamDistribution(unittest.TestCase):
     def test_pdf(self):
         M = np.array([[1/3, 2/3, -2/3], [-2/3, 2/3, 1/3], [2/3, 1/3, 2/3]])
         Z = np.array([-5, -3, 0])

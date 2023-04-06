@@ -1,7 +1,7 @@
-from abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
-from abstract_uniform_distribution import AbstractUniformDistribution
 import numpy as np
 
+from abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
+from abstract_uniform_distribution import AbstractUniformDistribution
 
 class EllipsoidalBallUniformDistribution(AbstractEllipsoidalBallDistribution, AbstractUniformDistribution):
     def __init__(self, center, shape_matrix):

@@ -16,15 +16,6 @@ class AbstractMixture(AbstractDistribution):
             warnings.warn("Weights of mixture must sum to 1.")
             self.w /= sum(self.w)
 
-    def pdf(self, xa):
-        assert xa.shape[-1] == self.dim, "Dimension mismatch"
-        
-        p = np.zeros(xa.shape[0])
-        for dist, weight in zip(self.dists, self.w):
-            p += weight * dist.pdf(xa)
-        
-        return p
-
     def sample(self, n):
         d = np.random.choice(len(self.w), size=n, p=self.w)
         """

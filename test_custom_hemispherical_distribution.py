@@ -1,9 +1,10 @@
 import unittest
+import warnings
 import numpy as np
 from bingham_distribution import BinghamDistribution
 from custom_hemispherical_distribution import CustomHemisphericalDistribution
 from vmf_distribution import VMFDistribution
-import warnings
+
 
 class CustomHemisphericalDistributionTest(unittest.TestCase):
 
@@ -39,6 +40,6 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
             warning_message = 'You are creating a CustomHyperhemispherical distribution based on a distribution on the full hypersphere. ' + \
                             'Using numerical integration to calculate the normalization constant.'
             assert str(warning_list[-1].message) == warning_message
-
+    
 if __name__ == "__main__":
     unittest.main()

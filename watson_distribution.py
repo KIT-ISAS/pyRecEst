@@ -13,12 +13,12 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         self.mu = mu_
         self.kappa = kappa_
 
-        self.dim = mu_.shape[0]
-        C_mpf = mpmath.gamma(self.dim / 2) / (2 * mpmath.pi ** (self.dim / 2)) / mpmath.hyper([0.5],[self.dim/2.0], self.kappa)
+        self.dim = mu_.shape[0] - 1
+        C_mpf = mpmath.gamma((self.dim + 1) / 2) / (2 * mpmath.pi ** ((self.dim + 1) / 2)) / mpmath.hyper([0.5],[(self.dim + 1)/2.0], self.kappa)
         self.C = np.float64(C_mpf)
 
     def pdf(self, xs):
-        assert xs.shape[-1] == self.dim
+        assert xs.shape[-1] == self.dim + 1
         p = self.C * np.exp(self.kappa * (self.mu.T @ xs.T) ** 2)
         return p
 
@@ -26,17 +26,17 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         if self.kappa < 0:
             raise NotImplementedError('Conversion to Bingham is not implemented for kappa<0')
 
-        M = np.tile(self.mu, (1, self.dim))
-        E = np.eye(self.dim)
+        M = np.tile(self.mu, (1, self.dim + 1))
+        E = np.eye(self.dim + 1)
         E[0, 0] = 0
         M = M + E
         Q, _ = qr(M)
         M = np.hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])
-        Z = np.vstack([np.full((self.dim - 1, 1), -self.kappa), 0])
+        Z = np.vstack([np.full((self.dim, 1), -self.kappa), 0])
         return BinghamDistribution(Z, M)
 
     def sample(self, n):
-        if self.dim != 3:
+        if self.dim != 2:
             return self.to_bingham().sample(n)
         else:
             pass
@@ -54,5 +54,5 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         return dist
 
     def shift(self, offsets):
-        assert np.array_equal(self.mu, np.vstack([np.zeros((self.dim - 1, 1)), 1])), 'There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].'
+        assert np.array_equal(self.mu, np.vstack([np.zeros((self.dim, 1)), 1])), 'There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].'
         return self.set_mode(offsets)
