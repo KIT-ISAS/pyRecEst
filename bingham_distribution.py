@@ -4,7 +4,7 @@ import copy
 
 class BinghamDistribution(AbstractHypersphericalDistribution):
     def __init__(self, Z, M):
-        self.dim = M.shape[0]
+        self.dim = M.shape[0] - 1
 
         assert M.shape[1] == self.dim, 'M is not square'
         assert Z.shape[0] == self.dim, 'Z has wrong length'
@@ -30,7 +30,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         raise NotImplementedError('Not implemented.')
 
     def pdf(self, xa):
-        assert xa.shape[-1] == self.dim
+        assert xa.shape[-1] == self.dim + 1
 
         C = self.M @ np.diag(self.Z) @ self.M.T
         p = 1 / self.F * np.exp(np.sum(xa.T * (C @ xa.T), axis=0))

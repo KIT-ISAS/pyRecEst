@@ -15,10 +15,10 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                        'toward [0;...;0;1] because the lower half is considered inexistent.')
         warnings.warn(warning_msg)
         
-        if self.dim == 2:
+        if self.dim == 1:
             mu = super().mean_direction_numerical([0, np.pi])
-        elif self.dim <= 4:
-            mu = super().mean_direction_numerical([np.zeros(self.dim - 1), [2 * np.pi, *np.pi * np.ones(self.dim - 3), np.pi / 2]])
+        elif self.dim <= 3:
+            mu = super().mean_direction_numerical([np.zeros(self.dim), [2 * np.pi, *np.pi * np.ones(self.dim - 2), np.pi / 2]])
         else:
             Sd = self.get_manifold_size()
             n = 10000
@@ -33,16 +33,16 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return mu
 
     def moment_numerical(self):
-        if self.dim == 2:
+        if self.dim == 1:
             return super().moment_numerical([0, np.pi])
         else:
             return super().moment_numerical([np.zeros(self.dim - 1), [2 * np.pi, *np.pi * np.ones(self.dim - 3), np.pi / 2]])
 
     def integral_numerical(self):
-        if self.dim == 2:
+        if self.dim == 1:
             return super().integral_numerical([0, np.pi])
-        elif self.dim <= 4:
-            return super().integral_numerical(np.vstack((np.zeros(self.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(self.dim - 3), np.pi / 2)))).T)
+        elif self.dim <= 3:
+            return super().integral_numerical(np.vstack((np.zeros(self.dim), np.hstack((2 * np.pi, np.pi * np.ones(self.dim - 2), np.pi / 2)))).T)
         else:
             n = 10000
             r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
@@ -55,7 +55,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         def objective_function(s):
             return -self.pdf(polar2cart(s))
 
-        s0 = np.random.rand(self.dim - 1) * np.pi
+        s0 = np.random.rand(self.dim) * np.pi
         result = minimize(objective_function, s0, options={'disp': 'notify-detailed', 'gtol': 1e-12, 'maxiter': 2000, 'xtol': 1e-12})
         m = polar2cart(result.x)
         return m

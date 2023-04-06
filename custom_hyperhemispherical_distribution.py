@@ -10,14 +10,14 @@ class CustomHyperhemisphericalDistribution(CustomDistribution, AbstractHyperhemi
     @staticmethod
     def from_distribution(dist):
         if isinstance(dist, AbstractHyperhemisphericalDistribution):
-            return CustomHyperhemisphericalDistribution(lambda xa: dist.pdf(xa), dist.dim)
+            return CustomHyperhemisphericalDistribution(lambda xs: dist.pdf(xs), dist.dim)
         elif isinstance(dist, BinghamDistribution):
-            chhd = CustomHyperhemisphericalDistribution(lambda xa: dist.pdf(xa), dist.dim)
+            chhd = CustomHyperhemisphericalDistribution(lambda xs: dist.pdf(xs), dist.dim)
             chhd.scale_by = 2
             return
         elif isinstance(dist, AbstractHypersphericalDistribution):
-            chhd_unnorm = CustomHyperhemisphericalDistribution(lambda xa: dist.pdf(xa), dist.dim)
+            chhd_unnorm = CustomHyperhemisphericalDistribution(lambda xs: dist.pdf(xs), dist.dim)
             norm_const_inv = chhd_unnorm.integral()
-            return CustomHyperhemisphericalDistribution(lambda xa: dist.pdf(xa) / norm_const_inv, dist.dim)
+            return CustomHyperhemisphericalDistribution(lambda xs: dist.pdf(xs) / norm_const_inv, dist.dim)
         else:
             raise ValueError('Input variable dist is of wrong class.')

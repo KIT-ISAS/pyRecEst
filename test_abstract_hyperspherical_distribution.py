@@ -28,10 +28,10 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
 
     def testUnitSphereSurface(self):
         self.assertAlmostEqual(
-            AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(2), 2*np.pi, delta=1E-10)
+            AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(1), 2*np.pi, delta=1E-10)
         self.assertAlmostEqual(
-            AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(3), 4*np.pi, delta=1E-10)
-        self.assertAlmostEqual(AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(4),
+            AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(2), 4*np.pi, delta=1E-10)
+        self.assertAlmostEqual(AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(3),
                                2*np.pi**2, delta=1E-10)
     """ Not yet implemented so no need to test
     def testMeanDirectionNumerical(self):

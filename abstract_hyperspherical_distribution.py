@@ -10,14 +10,14 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         pass
 
     def plot(self, faces=100, grid_faces=20):
-        if self.dim == 2:
+        if self.dim == 1:
             phi = np.linspace(0, 2 * np.pi, 320)
             x = np.array([np.cos(phi), np.sin(phi)])
             p = self.pdf(x)
             plt.plot(phi, p)
             plt.show()
 
-        elif self.dim == 3:
+        elif self.dim == 2:
             x_sphere_outer, y_sphere_outer, z_sphere_outer = self.create_sphere(grid_faces)
             x_sphere_inner, y_sphere_inner, z_sphere_inner = self.create_sphere(faces)
 
@@ -43,7 +43,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return super().moment_numerical(np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
 
     def integral_numerical(this):
-        if this.dim <= 4:
+        if this.dim <= 3:
             i = AbstractHypersphereSubsetDistribution.integral_numerical(this, np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
         else:
             from hyperspherical_uniform_distribution import HypersphericalUniformDistribution
@@ -55,7 +55,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return i
 
     def entropy_numerical(this):
-        return this.entropy_numerical(np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
+        return this.entropy_numerical(np.column_stack((np.zeros(this.dim), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 1))))))
 
     def mode_numerical(this):
         fun = lambda s: -this.pdf(AbstractHypersphereSubsetDistribution.polar2cart(s))
@@ -65,10 +65,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return m
 
     def hellinger_distance_numerical(this, other):
-        return this.hellinger_distance_numerical(other, np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
+        return this.hellinger_distance_numerical(other, np.column_stack((np.zeros(this.dim ), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 1))))))
 
     def total_variation_distance_numerical(this, other):
-        return this.total_variation_distance_numerical(other, np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
+        return this.total_variation_distance_numerical(other, np.column_stack((np.zeros(this.dim), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 1))))))
 
     @staticmethod
     def create_sphere(faces):
