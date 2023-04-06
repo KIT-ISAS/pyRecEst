@@ -1,4 +1,8 @@
 *.bak
+# No .C code in this library
+*.C
+*.h
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
