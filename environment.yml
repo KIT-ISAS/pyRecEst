@@ -1,0 +1,14 @@
+name: pyRecEst
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - scipy
+  - matplotlib
+  - mpmath
+  - pytest
+  - pip
+  - pip: # Installing them via pip is much faster than using the conda-forge channel
+    - filterpy
+    - healpy
