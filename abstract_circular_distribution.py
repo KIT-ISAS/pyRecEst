@@ -1,6 +1,4 @@
 import numpy as np
-from scipy.integrate import quad
-from abc import ABC, abstractmethod
 from abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
@@ -23,6 +21,7 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         return np.array([cdf_single(x) for x in xa])
 
     def sample_metropolis_hastings(self, n, proposal=None, start_point=None, burn_in=10, skipping=5):
+        from wn_distribution import WNDistribution
         if proposal is None:
             wn = WNDistribution.from_moment(self.trigonometric_moment(1))
             wn.mu = 0

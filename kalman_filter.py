@@ -34,8 +34,8 @@ class KalmanFilter(AbstractEuclideanFilter):
             B = np.eye(input.shape[0])
         self.kf.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=input)
 
-    def update_identity(self, meas, meas_cov):
-        self.kf.update(z=np.array([meas]), R=meas_cov, H=np.eye(self.kf.x.shape[0]))
+    def update_identity(self, meas, meas_noise_cov):
+        self.kf.update(z=np.array([meas]), R=meas_noise_cov, H=np.eye(self.kf.x.shape[0]))
 
     def update_linear(self, measurement, measurement_matrix, cov_mat_meas):
         self.kf.update(z=measurement, R=cov_mat_meas, H=measurement_matrix)

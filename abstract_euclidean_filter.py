@@ -1,5 +1,6 @@
-from abstract_filter import AbstractFilter
 from abc import abstractmethod
+
+from abstract_filter import AbstractFilter
 
 class AbstractEuclideanFilter(AbstractFilter):
     @abstractmethod

@@ -6,3 +6,4 @@ class AbstractHypertoroidalFilter(AbstractFilter):
     def get_point_estimate(self):
         """Get the point estimate."""
         return self.get_estimate().mean_direction()
+    
