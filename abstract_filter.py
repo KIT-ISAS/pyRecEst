@@ -6,17 +6,14 @@ class AbstractFilter(ABC):
     @abstractmethod
     def set_state(self, state):
         """Set the state of the filter."""
-        pass
 
     @abstractmethod
     def get_estimate(self):
         """Get the estimate of the filter."""
-        pass
 
     @abstractmethod
     def get_point_estimate(self):
         """Get the point estimate of the filter."""
-        pass
 
     def dim(self):
         """Convenience function to get the dimension of the filter.
