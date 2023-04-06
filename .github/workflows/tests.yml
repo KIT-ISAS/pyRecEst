@@ -33,7 +33,7 @@ jobs:
         python -c 'import sys; print(sys.version_info[:])'
     - name: Run tests
       shell: bash -l {0}
-      run: pytest -v --junitxml=junit_test_results.xml
+      run: pytest -v --strict-config --junitxml=junit_test_results.xml
 
     - name: Publish test results
       if: always()
