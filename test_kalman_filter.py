@@ -7,8 +7,8 @@ import copy
 class KalmanFilterTest(unittest.TestCase):
     
     def test_initialization(self):
-        filter_custom = KalmanFilter([0], [[10000]])
-        self.assertEqual(filter_custom.get_point_estimate(), [0])
+        filter_custom = KalmanFilter([1], [[10000]])
+        self.assertEqual(filter_custom.get_point_estimate(), [1])
 
     def test_initialization_gauss(self):
         filter_custom = KalmanFilter(prior_gauss = GaussianDistribution(np.array([4]), np.array([[10000]])))
