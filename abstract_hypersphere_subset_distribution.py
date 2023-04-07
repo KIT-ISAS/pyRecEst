@@ -42,8 +42,8 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
             m = -Vsorted[:, -1]
         return m
 
-    def integral(self):
-        return self.integral_numerical()
+    def integral(self, integration_boundaries):
+        return self.integral_numerical(integration_boundaries)
 
     def integral_numerical(self, integration_boundaries):
         dim = self.dim

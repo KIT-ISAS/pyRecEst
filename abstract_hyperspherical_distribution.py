@@ -43,17 +43,23 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def moment_numerical(this):
         return super().moment_numerical(np.column_stack((np.zeros(this.dim - 1), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 2))))))
 
-    def integral_numerical(this):
-        if this.dim <= 3:
-            i = AbstractHypersphereSubsetDistribution.integral_numerical(this, np.column_stack((np.zeros(this.dim), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 1))))))
-        else:
-            from hyperspherical_uniform_distribution import HypersphericalUniformDistribution
-            n = 10000
-            r = HypersphericalUniformDistribution(this.dim).sample(n)
-            p = this.pdf(r)
-            Sd = AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(this.dim)
-            i = np.mean(p) * Sd
-        return i
+    def integral(self, integration_boundaries = None):
+        if integration_boundaries is None:
+            if self.dim == 1:
+                integration_boundaries = [0, 2*np.pi]
+            else:
+                integration_boundaries = np.vstack((np.zeros((self.dim)), np.concatenate(([2 * np.pi], np.pi * np.ones(self.dim - 1))),)).T
+            
+        return super().integral(integration_boundaries)
+    
+    def integral_numerical(self, integration_boundaries = None):
+        if integration_boundaries is None:
+            if self.dim == 1:
+                integration_boundaries = [0, np.pi]
+            else:
+                integration_boundaries = np.vstack((np.zeros((self.dim)), np.concatenate(([2 * np.pi], np.pi * np.ones(self.dim - 1))),)).T
+            
+        return super().integral_numerical(integration_boundaries)
 
     def entropy_numerical(this):
         return this.entropy_numerical(np.column_stack((np.zeros(this.dim), np.hstack((2 * np.pi, np.pi * np.ones(this.dim - 1))))))

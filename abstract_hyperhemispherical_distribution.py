@@ -2,8 +2,6 @@ import warnings
 import numpy as np
 from scipy.optimize import minimize
 from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
-
 class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
     def mean(self):
         return self.mean_axis()
@@ -20,6 +18,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         elif self.dim <= 3:
             mu = super().mean_direction_numerical([np.zeros(self.dim), [2 * np.pi, *np.pi * np.ones(self.dim - 2), np.pi / 2]])
         else:
+            from hyperhemispherical_uniform_distribution import HyperhemisphericalUniformDistribution
             Sd = self.get_manifold_size()
             n = 10000
             r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
@@ -38,19 +37,23 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         else:
             return super().moment_numerical([np.zeros(self.dim - 1), [2 * np.pi, *np.pi * np.ones(self.dim - 3), np.pi / 2]])
 
-    def integral_numerical(self):
-        if self.dim == 1:
-            return super().integral_numerical([0, np.pi])
-        elif self.dim <= 3:
-            return super().integral_numerical(np.vstack((np.zeros(self.dim), np.hstack((2 * np.pi, np.pi * np.ones(self.dim - 2), np.pi / 2)))).T)
-        else:
-            from hyperhemispherical_uniform_distribution import HyperhemisphericalUniformDistribution
-            n = 10000
-            r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
-            p = self.pdf(r)
-            Sd = AbstractHypersphericalDistribution.compute_unit_sphere_surface(self.dim)
-            i = np.sum(p) / n * Sd 
-            return i
+    def integral(self, integration_boundaries = None):
+        if integration_boundaries is None:
+            if self.dim == 1:
+                integration_boundaries = [0, np.pi]
+            else:
+                integration_boundaries = np.vstack((np.zeros((self.dim)), np.concatenate(([2 * np.pi], np.pi * np.ones(self.dim - 2), [np.pi / 2])),)).T
+            
+        return super().integral(integration_boundaries)
+    
+    def integral_numerical(self, integration_boundaries = None):
+        if integration_boundaries is None:
+            if self.dim == 1:
+                integration_boundaries = [0, np.pi]
+            else:
+                integration_boundaries = np.vstack((np.zeros((self.dim)), np.concatenate(([2 * np.pi], np.pi * np.ones(self.dim - 2), [np.pi / 2])),)).T
+            
+        return super().integral_numerical(integration_boundaries)
 
     def mode_numerical(self):
         def objective_function(s):

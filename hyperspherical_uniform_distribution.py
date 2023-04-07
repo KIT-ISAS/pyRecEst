@@ -1,8 +1,8 @@
 import numpy as np
 from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
-from abstract_uniform_distribution import AbstractUniformDistribution
+from abstract_hypersphere_subset_uniform_distribution import AbstractHypersphereSubsetUniformDistribution
 
-class HypersphericalUniformDistribution (AbstractUniformDistribution, AbstractHypersphericalDistribution):
+class HypersphericalUniformDistribution(AbstractHypersphericalDistribution, AbstractHypersphereSubsetUniformDistribution):
     def __init__(self, dim_):
         assert isinstance(dim_, int) and dim_ >= 1, "dim_ must be an integer greater than or equal to 2"
         self.dim = dim_
