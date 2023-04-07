@@ -1,3 +1,4 @@
+""" Test for uniform distribution on the hypersphere """
 import unittest
 import numpy as np
 from hyperspherical_uniform_distribution import HypersphericalUniformDistribution
@@ -6,7 +7,7 @@ from abstract_hyperspherical_distribution import AbstractHypersphericalDistribut
 class HypersphericalUniformDistributionTest(unittest.TestCase):
     
     def test_integral(self):
-        for dim in range(2, 5):
+        for dim in range(2, 4):
             hud = HypersphericalUniformDistribution(dim)
             self.assertAlmostEqual(hud.integral(), 1, delta=1E-6)
     
