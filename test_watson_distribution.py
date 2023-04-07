@@ -13,7 +13,7 @@ class TestWatsonDistribution(unittest.TestCase):
         self.assertIsInstance(w, WatsonDistribution)
         np.testing.assert_array_equal(w.mu, mu)
         self.assertEqual(w.kappa, kappa)
-        self.assertEqual(w.dim, len(mu))
+        self.assertEqual(w.dim, len(mu) - 1)
 
     def test_pdf(self):
         mu = np.array([1, 2, 3])

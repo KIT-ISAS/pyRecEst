@@ -45,14 +45,14 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
     def integral(self):
         return self.integral_numerical()
 
-    def integral_numerical(this, integration_boundaries):
-        dim = this.dim
+    def integral_numerical(self, integration_boundaries):
+        dim = self.dim
 
-        if dim == 2:
-            f = lambda phi: this.pdf(np.array([np.cos(phi), np.sin(phi)]))
+        if dim == 1:
+            f = lambda phi: self.pdf(np.array([np.cos(phi), np.sin(phi)]))
             i, _ = quad(f, integration_boundaries[0, 0], integration_boundaries[0, 1], epsabs=0.01)
-        elif dim == 3:
-            f = lambda x: this.pdf(x)
+        elif dim == 2:
+            f = lambda x: self.pdf(x)
 
             def fangles(phi1, phi2):
                 r = 1
@@ -66,8 +66,8 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
             i, _ = nquad(g, [[integration_boundaries[0, 0], integration_boundaries[0, 1]],
                             [integration_boundaries[1, 0], integration_boundaries[1, 1]]],
                         opts={'epsabs': 1e-3, 'epsrel': 1e-3})
-        elif dim == 4:
-            f = lambda x: this.pdf(x)
+        elif dim == 3:
+            f = lambda x: self.pdf(x)
 
             def fangles(phi1, phi2, phi3):
                 r = 1
@@ -108,12 +108,12 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def compute_unit_hypersphere_surface(dim):
-        if dim == 2:
+        if dim == 1:
             surface_area = 2 * np.pi
-        elif dim == 3:
+        elif dim == 2:
             surface_area = 4 * np.pi
-        elif dim == 4:
+        elif dim == 3:
             surface_area = 2 * np.pi**2
         else:
-            surface_area = 2 * np.pi**(dim / 2) / gamma(dim / 2)
+            surface_area = 2 * np.pi**((dim + 1) / 2) / gamma((dim + 1) / 2)
         return surface_area

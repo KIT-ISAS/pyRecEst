@@ -14,7 +14,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         np.random.seed(0)
         for dim in range(2, 5):
             hud = HypersphericalUniformDistribution(dim)
-            x = np.random.rand(dim, 1)
+            x = np.random.rand(dim + 1, 1)
             x = x / np.linalg.norm(x)
             self.assertAlmostEqual(hud.pdf(x), 1 / AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(dim), delta=1E-10)
 
@@ -23,7 +23,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             hud = HypersphericalUniformDistribution(dim)
             n = 10
             samples = hud.sample(n)
-            self.assertEqual(samples.shape, (n, hud.dim))
+            self.assertEqual(samples.shape, (n, hud.dim + 1))
             self.assertTrue(np.allclose(np.linalg.norm(samples, axis=1), np.ones(n), rtol=1E-10))
     
 if __name__ == '__main__':
