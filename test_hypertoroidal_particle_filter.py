@@ -1,10 +1,11 @@
+""" Particle filter for hypertoroidal domains """
 import unittest
 import numpy as np
 from hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from hypertoroidal_wn_distribution import HypertoroidalWNDistribution
 
 class HypertoroidalParticleFilterTest(unittest.TestCase):
-
+    """ Particle filter for hypertoroidal domains """
     def test_predict_update_cycle_3D(self):
         np.random.seed(0)
         C = np.array([[0.7, 0.4, 0.2], [0.4, 0.6, 0.1], [0.2, 0.1, 1]])

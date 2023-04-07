@@ -2,6 +2,7 @@ import numpy as np
 from hypertoroidal_wd_distribution import HypertoroidalWDDistribution
 from abstract_toroidal_distribution import AbstractToroidalDistribution
 
+
 class ToroidalWDDistribution(HypertoroidalWDDistribution, AbstractToroidalDistribution):
     def __init__(self, d, w=None):
         HypertoroidalWDDistribution.__init__(self, d, w)
@@ -23,11 +24,16 @@ class ToroidalWDDistribution(HypertoroidalWDDistribution, AbstractToroidalDistri
         assert 0 <= r[1] <= 2 * np.pi
 
         if r[0] < l[0]:
-            result = -self.integral(np.array([r[0], l[1]]), np.array([l[0], r[1]]))  # swap l1 and r1
+            # swap l1 and r1
+            result = \
+                - self.integral(np.array([r[0], l[1]]), np.array([l[0], r[1]]))
         elif r[1] < l[1]:
-            result = -self.integral(np.array([l[0], r[1]]), np.array([r[0], l[1]]))  # swap l2 and r2
+            # swap l2 and r2
+            result = \
+                - self.integral(np.array([l[0], r[1]]), np.array([r[0], l[1]]))
         else:
             # now we can guarantee l1 <= r1 and l2 <= r2
-            result = np.sum(self.w[(self.d[0, :] >= l[0]) & (self.d[0, :] < r[0]) & (self.d[1, :] >= l[1]) & (self.d[1, :] < r[1])])
+            result = np.sum(self.w[(self.d[0, :] >= l[0]) & (self.d[0, :] < r[0]) & (
+                self.d[1, :] >= l[1]) & (self.d[1, :] < r[1])])
 
         return result
