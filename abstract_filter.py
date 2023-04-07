@@ -1,3 +1,4 @@
+""" Abstract base class for all filters """
 from abc import ABC, abstractmethod
 
 class AbstractFilter(ABC):

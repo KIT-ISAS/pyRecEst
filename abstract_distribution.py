@@ -1,5 +1,5 @@
-import numpy as np
 from abc import ABC, abstractmethod
+import numpy as np
 
 class AbstractDistribution(ABC):
     """Abstract base class for all distributions."""

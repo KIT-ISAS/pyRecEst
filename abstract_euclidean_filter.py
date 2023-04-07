@@ -1,5 +1,5 @@
+""" Abstract base class for all filters for Euclidean domains """
 from abc import abstractmethod
-
 from abstract_filter import AbstractFilter
 
 class AbstractEuclideanFilter(AbstractFilter):

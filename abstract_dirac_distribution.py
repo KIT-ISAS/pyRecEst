@@ -1,18 +1,18 @@
-import numpy as np
 import warnings
 import copy
+import numpy as np
 
 class AbstractDiracDistribution:
-    def __init__(self, d_, w_=None):
-        self.dim = d_.shape[-1]
-        if self.dim > d_.shape[0]:
+    def __init__(self, d, w=None):
+        self.dim = d.shape[-1]
+        if self.dim > d.shape[0]:
             print("Not even one Dirac per dimension. If this warning is unexpected, verify d_ is shaped correctly.")
-        if w_ is None:
-            w_ = np.ones(d_.shape[0]) / d_.shape[0]
+        if w is None:
+            w = np.ones(d.shape[0]) / d.shape[0]
 
-        assert d_.shape[0] == w_.shape[0], "Number of Diracs and weights must match."
-        self.d = d_
-        self.w = w_
+        assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
+        self.d = d
+        self.w = w
         self = self.normalize()
 
     def normalize(self):
