@@ -3,6 +3,7 @@ from abc import abstractmethod
 from abstract_filter import AbstractFilter
 
 class AbstractEuclideanFilter(AbstractFilter):
+    """ Abstract base class for all filters for Euclidean domains """
     @abstractmethod
     def get_estimate(self):
         pass

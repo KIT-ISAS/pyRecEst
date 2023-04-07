@@ -1,8 +1,8 @@
+import warnings
 import numpy as np
 from scipy.optimize import minimize
-from scipy.special import gamma
-import warnings
 from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
+from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
 class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
     def mean(self):
@@ -44,6 +44,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         elif self.dim <= 3:
             return super().integral_numerical(np.vstack((np.zeros(self.dim), np.hstack((2 * np.pi, np.pi * np.ones(self.dim - 2), np.pi / 2)))).T)
         else:
+            from hyperhemispherical_uniform_distribution import HyperhemisphericalUniformDistribution
             n = 10000
             r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
             p = self.pdf(r)
