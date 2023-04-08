@@ -1,0 +1,25 @@
+[build-system]
+requires = [
+  "setuptools >= 40.9.0",
+  "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry]
+name = "pyrecest"
+version = "0.1.0"
+description = "Framework for recursive Bayesian estimation in Python."
+readme = "README.md"
+authors = ["Florian Pfaff <pfaff@kit.edu>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "*"
+scipy = "*"
+matplotlib = "*"
+mpmath = "*"
+pytest = "*"
+filterpy = "*"
+
+[tool.poetry.extras]
+healpy_support = ["healpy"]
