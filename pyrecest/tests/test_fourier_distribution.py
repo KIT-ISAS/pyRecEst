@@ -4,8 +4,8 @@ import numpy as np
 
 import scipy.integrate as integrate
 
-from fourier_distribution import FourierDistribution
-from vm_distribution import VMDistribution
+from pyrecest.distributions import FourierDistribution
+from pyrecest.distributions import VMDistribution
 
 
 class TestFourierDistribution(unittest.TestCase):

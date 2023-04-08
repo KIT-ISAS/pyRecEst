@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 from scipy.stats import multivariate_normal
-from gaussian_distribution import GaussianDistribution
 import scipy
+from pyrecest.distributions import GaussianDistribution
 
 class GaussianDistributionTest(unittest.TestCase):
     def test_gaussian_distribution_3d(self):

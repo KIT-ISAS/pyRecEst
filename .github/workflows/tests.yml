@@ -31,9 +31,12 @@ jobs:
       run: |
         ls -al
         python -c 'import sys; print(sys.version_info[:])'
+    
     - name: Run tests
       shell: bash -l {0}
-      run: pytest -v --strict-config --junitxml=junit_test_results.xml
+      env: 
+          PYTHONPATH: ${{ github.workspace }}
+      run: pytest --rootdir . -v --strict-config --junitxml=junit_test_results.xml ./pyrecest
 
     - name: Publish test results
       if: always()

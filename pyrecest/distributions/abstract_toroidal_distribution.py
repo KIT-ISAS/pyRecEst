@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 class AbstractToroidalDistribution(AbstractHypertoroidalDistribution, ABC):
     def __init__(self):

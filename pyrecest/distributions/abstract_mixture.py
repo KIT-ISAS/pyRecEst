@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from abstract_distribution import AbstractDistribution
+from .abstract_distribution import AbstractDistribution
 
 class AbstractMixture(AbstractDistribution):
     def __init__(self, dists, w):

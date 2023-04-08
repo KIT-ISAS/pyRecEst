@@ -1,10 +1,11 @@
 import unittest
 import numpy as np
-from watson_distribution import WatsonDistribution
-from vmf_distribution import VMFDistribution
-from hyperspherical_mixture import HypersphericalMixture
 from numpy.testing import assert_allclose
-from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
+
+from pyrecest.distributions import WatsonDistribution
+from pyrecest.distributions import VMFDistribution
+from pyrecest.distributions import HypersphericalMixture
+from pyrecest.distributions import AbstractHypersphereSubsetDistribution
 
 
 class HypersphericalMixtureTest(unittest.TestCase):

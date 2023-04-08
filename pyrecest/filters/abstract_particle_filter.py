@@ -1,6 +1,7 @@
 import numpy as np
-from abstract_filter import AbstractFilter
-from abstract_distribution import AbstractDistribution
+from pyrecest.distributions import AbstractDistribution
+from .abstract_filter import AbstractFilter
+
 
 class AbstractParticleFilter(AbstractFilter):
     def __init__(self):

@@ -1,5 +1,5 @@
 import numpy as np
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 import copy
 
 class BinghamDistribution(AbstractHypersphericalDistribution):

@@ -1,11 +1,10 @@
-""" Test cases for HypertoroidalWNDistribution"""
+""" Test cases for DiskUniformDistribution"""
 import unittest
 import numpy as np
-from disk_uniform_distribution import DiskUniformDistribution
+from pyrecest.distributions import DiskUniformDistribution
 
-
-class TestHypertoroidalWNDistribution(unittest.TestCase):
-    """ Test cases for HypertoroidalWNDistribution"""
+class TestDiskUniformDistribution(unittest.TestCase):
+    """ Test cases for DiskUniformDistribution"""
 
     def test_pdf(self):
         dist = DiskUniformDistribution()

@@ -1,6 +1,6 @@
 import numpy as np
-from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
-from abstract_uniform_distribution import AbstractUniformDistribution
+from .abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
+from .abstract_uniform_distribution import AbstractUniformDistribution
 
 class AbstractHypersphereSubsetUniformDistribution (AbstractHypersphereSubsetDistribution, AbstractUniformDistribution):
     def __init__(self, dim_):

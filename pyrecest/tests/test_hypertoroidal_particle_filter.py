@@ -1,8 +1,8 @@
 """ Particle filter for hypertoroidal domains """
 import unittest
 import numpy as np
-from hypertoroidal_particle_filter import HypertoroidalParticleFilter
-from hypertoroidal_wn_distribution import HypertoroidalWNDistribution
+from pyrecest.filters import HypertoroidalParticleFilter
+from pyrecest.distributions import HypertoroidalWNDistribution
 
 class HypertoroidalParticleFilterTest(unittest.TestCase):
     """ Particle filter for hypertoroidal domains """

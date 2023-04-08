@@ -1,4 +1,4 @@
-from abstract_filter import AbstractFilter
+from .abstract_filter import AbstractFilter
 
 class AbstractHypertoroidalFilter(AbstractFilter):
     """Abstract base class for filters on the hypertorus."""

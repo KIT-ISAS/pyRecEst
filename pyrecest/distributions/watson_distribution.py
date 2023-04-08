@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.linalg import qr
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 import mpmath
-from bingham_distribution import BinghamDistribution
+from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from .bingham_distribution import BinghamDistribution
 
 class WatsonDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu_, kappa_):

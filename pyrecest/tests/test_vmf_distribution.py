@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from vmf_distribution import VMFDistribution
+from pyrecest.distributions import VMFDistribution
 
 
 class TestVMFDistribution(unittest.TestCase):

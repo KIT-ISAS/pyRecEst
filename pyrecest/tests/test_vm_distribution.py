@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from vm_distribution import VMDistribution
+from pyrecest.distributions import VMDistribution
 
 
 class TestVMDistribution(unittest.TestCase):

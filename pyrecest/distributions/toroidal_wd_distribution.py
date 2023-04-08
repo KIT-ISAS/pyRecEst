@@ -1,6 +1,6 @@
 import numpy as np
-from hypertoroidal_wd_distribution import HypertoroidalWDDistribution
-from abstract_toroidal_distribution import AbstractToroidalDistribution
+from .hypertoroidal_wd_distribution import HypertoroidalWDDistribution
+from .abstract_toroidal_distribution import AbstractToroidalDistribution
 
 
 class ToroidalWDDistribution(HypertoroidalWDDistribution, AbstractToroidalDistribution):

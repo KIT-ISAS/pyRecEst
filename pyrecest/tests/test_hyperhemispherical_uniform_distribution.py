@@ -1,7 +1,7 @@
 """ Test for uniform distribution for hyperhemispheres """
 import unittest
 import numpy as np
-from hyperhemispherical_uniform_distribution import HyperhemisphericalUniformDistribution
+from pyrecest.distributions import HyperhemisphericalUniformDistribution
 
 class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
     """ Test for uniform distribution for hyperhemispheres """

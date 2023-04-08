@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import norm
 from scipy.special import erf
 
-from vm_distribution import VMDistribution
+from .vm_distribution import VMDistribution
 
 class WNDistribution:
     def __init__(self, mu_, sigma_):

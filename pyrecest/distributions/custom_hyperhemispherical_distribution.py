@@ -1,8 +1,8 @@
 import numpy as np
-from abstract_hyperhemispherical_distribution import AbstractHyperhemisphericalDistribution
-from bingham_distribution import BinghamDistribution
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
-from custom_distribution import CustomDistribution
+from .abstract_hyperhemispherical_distribution import AbstractHyperhemisphericalDistribution
+from .bingham_distribution import BinghamDistribution
+from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from .custom_distribution import CustomDistribution
 
 class CustomHyperhemisphericalDistribution(CustomDistribution, AbstractHyperhemisphericalDistribution):
     def __init__(self, f, dim, shift_by: np.ndarray = None):

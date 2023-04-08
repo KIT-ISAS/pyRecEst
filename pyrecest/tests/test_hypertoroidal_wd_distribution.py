@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from hypertoroidal_wd_distribution import HypertoroidalWDDistribution
-from toroidal_wd_distribution import ToroidalWDDistribution
+from pyrecest.distributions import HypertoroidalWDDistribution
+from pyrecest.distributions import ToroidalWDDistribution
 
 class TestHypertoroidalWDDistribution(unittest.TestCase):
 

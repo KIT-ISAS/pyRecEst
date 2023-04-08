@@ -1,7 +1,7 @@
 import numpy as np
 from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
-from abstract_euclidean_filter import AbstractEuclideanFilter
-from gaussian_distribution import GaussianDistribution
+from pyrecest.distributions import GaussianDistribution
+from .abstract_euclidean_filter import AbstractEuclideanFilter
 
 class KalmanFilter(AbstractEuclideanFilter):
     def __init__(self, prior_mean = None, prior_cov = None, prior_gauss = None):

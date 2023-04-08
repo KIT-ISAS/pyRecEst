@@ -1,6 +1,6 @@
-from abstract_disk_distribution import AbstractDiskDistribution
-from ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution
 import numpy as np
+from .abstract_disk_distribution import AbstractDiskDistribution
+from .ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution
 
 class DiskUniformDistribution(EllipsoidalBallUniformDistribution, AbstractDiskDistribution):
     def __init__(self):

@@ -1,8 +1,8 @@
 import unittest
-from kalman_filter import KalmanFilter
-import numpy as np
-from gaussian_distribution import GaussianDistribution
 import copy
+import numpy as np
+from pyrecest.distributions import GaussianDistribution
+from pyrecest.filters.kalman_filter import KalmanFilter
 
 class KalmanFilterTest(unittest.TestCase):
     

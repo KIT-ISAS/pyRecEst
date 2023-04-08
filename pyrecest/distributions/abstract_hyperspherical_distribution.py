@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from abc import abstractmethod
 from scipy.optimize import minimize
 
-from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
+from .abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
 
 class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @abstractmethod

@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from wn_distribution import WNDistribution
+from pyrecest.distributions import WNDistribution
 
 class WNDistributionTest(unittest.TestCase):
 

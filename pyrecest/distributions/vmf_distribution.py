@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.special import iv as besseli
 from scipy.linalg import qr
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
 class VMFDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu_, kappa_):

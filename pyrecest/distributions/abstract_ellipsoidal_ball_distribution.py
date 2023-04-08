@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import gamma
-from abstract_distribution import AbstractDistribution
+from .abstract_distribution import AbstractDistribution
 
 
 class AbstractEllipsoidalBallDistribution(AbstractDistribution):

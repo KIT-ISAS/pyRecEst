@@ -1,6 +1,5 @@
 from abc import abstractmethod
-from abstract_distribution import AbstractDistribution
-import numpy as np
+from .abstract_distribution import AbstractDistribution
 
 class AbstractUniformDistribution(AbstractDistribution):
     # Uniform distribution.

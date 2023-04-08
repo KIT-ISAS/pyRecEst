@@ -1,5 +1,4 @@
-from hypertoroidal_wd_distribution import HypertoroidalWDDistribution
-import numpy as np
+from .hypertoroidal_wd_distribution import HypertoroidalWDDistribution
 
 class WDDistribution(HypertoroidalWDDistribution):
     def __init__(self, d, w=None):

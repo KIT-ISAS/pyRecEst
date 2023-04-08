@@ -1,7 +1,8 @@
 import warnings
 import numpy as np
 from scipy.optimize import minimize
-from abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
+from .abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
+
 class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
     def mean(self):
         return self.mean_axis()

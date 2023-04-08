@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from vmf_distribution import VMFDistribution
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from pyrecest.distributions import VMFDistribution
+from pyrecest.distributions import AbstractHypersphericalDistribution
 
 class AbstractHypersphericalDistributionTest(unittest.TestCase):
 

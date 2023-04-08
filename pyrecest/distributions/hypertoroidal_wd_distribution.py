@@ -1,7 +1,7 @@
 import numpy as np
-from abstract_dirac_distribution import AbstractDiracDistribution
-from abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 import copy
+from .abstract_dirac_distribution import AbstractDiracDistribution
+from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroidalDistribution):
     def __init__(self, d, w=None):
@@ -51,7 +51,7 @@ class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroid
         return dist
     
     def to_toroidal_wd(self):
-        from toroidal_wd_distribution import ToroidalWDDistribution
+        from .toroidal_wd_distribution import ToroidalWDDistribution
         assert self.dim == 2, "The dimension must be 2"
         twd = ToroidalWDDistribution(self.d, self.w)
         return twd
@@ -62,11 +62,11 @@ class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroid
         return m
 
     def marginalize_to_1D(self, dimension):
-        from wd_distribution import WDDistribution
+        from .wd_distribution import WDDistribution
         return WDDistribution(self.d[:, dimension], self.w)
 
     def marginalize_out(self, dimensions):
-        from wd_distribution import WDDistribution
+        from .wd_distribution import WDDistribution
         remaining_dims = list(range(self.dim))
         remaining_dims = [dim for dim in remaining_dims if dim != dimensions]
         return WDDistribution(self.d[:, remaining_dims], self.w)
@@ -83,7 +83,7 @@ class HypertoroidalWDDistribution(AbstractDiracDistribution, AbstractHypertoroid
 
     def to_WD(self):
         assert self.dim == 1
-        from wd_distribution import WDDistribution
+        from .wd_distribution import WDDistribution
         return WDDistribution(self.d, self.w)
         
     @staticmethod

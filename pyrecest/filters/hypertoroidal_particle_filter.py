@@ -1,7 +1,7 @@
 import numpy as np
-from hypertoroidal_wd_distribution import HypertoroidalWDDistribution
-from abstract_particle_filter import AbstractParticleFilter
-from abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
+from pyrecest.distributions import HypertoroidalWDDistribution
+from .abstract_particle_filter import AbstractParticleFilter
+from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
     def __init__(self, n_particles, dim):

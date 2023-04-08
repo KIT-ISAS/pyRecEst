@@ -1,7 +1,7 @@
 import numpy as np
 
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
-from abstract_mixture import AbstractMixture
+from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from .abstract_mixture import AbstractMixture
 
 class HypersphericalMixture(AbstractMixture, AbstractHypersphericalDistribution):
     def __init__(self, dists, w):

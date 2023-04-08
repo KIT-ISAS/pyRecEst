@@ -1,6 +1,6 @@
 import unittest
-from ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution
 import numpy as np
+from pyrecest.distributions import EllipsoidalBallUniformDistribution
 
 
 class TestEllipsoidalBallUniformDistribution(unittest.TestCase):

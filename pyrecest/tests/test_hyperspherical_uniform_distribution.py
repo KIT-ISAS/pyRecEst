@@ -1,8 +1,8 @@
 """ Test for uniform distribution on the hypersphere """
 import unittest
 import numpy as np
-from hyperspherical_uniform_distribution import HypersphericalUniformDistribution
-from abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from pyrecest.distributions import HypersphericalUniformDistribution
+from pyrecest.distributions import AbstractHypersphericalDistribution
 
 class HypersphericalUniformDistributionTest(unittest.TestCase):
     

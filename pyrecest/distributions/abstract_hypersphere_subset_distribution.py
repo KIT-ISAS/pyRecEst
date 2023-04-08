@@ -1,7 +1,7 @@
 import numpy as np
-from abstract_periodic_distribution import AbstractPeriodicDistribution
 from scipy.integrate import quad, nquad
 from scipy.special import gamma
+from .abstract_periodic_distribution import AbstractPeriodicDistribution
 
 class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
     def mean_direction(self):

@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from watson_distribution import WatsonDistribution
+from pyrecest.distributions import WatsonDistribution
 
 
 class TestWatsonDistribution(unittest.TestCase):

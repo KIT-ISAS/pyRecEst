@@ -1,9 +1,9 @@
 import unittest
 import warnings
 import numpy as np
-from bingham_distribution import BinghamDistribution
-from custom_hemispherical_distribution import CustomHemisphericalDistribution
-from vmf_distribution import VMFDistribution
+from pyrecest.distributions import BinghamDistribution
+from pyrecest.distributions import CustomHemisphericalDistribution
+from pyrecest.distributions import VMFDistribution
 
 
 class CustomHemisphericalDistributionTest(unittest.TestCase):

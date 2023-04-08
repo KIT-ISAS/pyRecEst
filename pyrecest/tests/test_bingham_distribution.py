@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from bingham_distribution import BinghamDistribution
+from pyrecest.distributions import BinghamDistribution
 
 
 class TestBinghamDistribution(unittest.TestCase):
