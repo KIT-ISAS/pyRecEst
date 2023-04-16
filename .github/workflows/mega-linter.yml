@@ -3,7 +3,11 @@
 # More info at https://megalinter.io
 name: MegaLinter
 
-on:
+permissions:
+  checks: write
+  pull-requests: write
+
+on: # yamllint disable-line rule:truthy
   # Trigger mega-linter at every push. Action will also be visible from Pull Requests to main
   push: # Comment this line to trigger action only on pull-requests (not recommended if you don't pay for GH Actions)
   pull_request:
@@ -23,6 +27,11 @@ jobs:
   build:
     name: MegaLinter
     runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      pull-requests: write
+
     steps:
       # Git Checkout
       - name: Checkout Code
@@ -30,13 +39,6 @@ jobs:
         with:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0 # If you use VALIDATE_ALL_CODEBASE = true, you can remove this line to improve performances
-
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: pyRecEst
-          environment-file: environment.yml
-          auto-activate-base: false
 
       # MegaLinter
       - name: MegaLinter
@@ -89,4 +91,4 @@ jobs:
           branch: ${{ github.event.pull_request.head.ref || github.head_ref || github.ref }}
           commit_message: "[MegaLinter] Apply linters fixes"
           commit_user_name: megalinter-bot
-          commit_user_email: megalinter-bot@isas.iar.kit.edu
+          commit_user_email: megalinter-bot@iar.kit.edu

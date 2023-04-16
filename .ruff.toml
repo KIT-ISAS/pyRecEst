@@ -1,2 +1,1 @@
-["PYTHON.Ruff"]
-max_line_length = 9999
+line-length = 180

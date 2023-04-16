@@ -1,5 +1,7 @@
 import numpy as np
+
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
+
 
 class AbstractDiskDistribution(AbstractEllipsoidalBallDistribution):
     # We index it using 2-D Euclidean vectors (is zero everywhere else)
