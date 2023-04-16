@@ -1,17 +1,27 @@
 import unittest
+
 import numpy as np
 from pyrecest.distributions import VMDistribution
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 
 class TestVMDistribution(unittest.TestCase):
     def test_vm_init(self):
-        dist1 = VMDistribution(np.array(0.0, dtype=np.float32), np.array(1.0, dtype=np.float32))
-        dist2 = VMDistribution(np.array(2.0, dtype=np.float32), np.array(1.0, dtype=np.float32))
+        dist1 = VMDistribution(
+            np.array(0.0, dtype=np.float32), np.array(1.0, dtype=np.float32)
+        )
+        dist2 = VMDistribution(
+            np.array(2.0, dtype=np.float32), np.array(1.0, dtype=np.float32)
+        )
         self.assertEqual(dist1.kappa, dist2.kappa)
         self.assertNotEqual(dist1.mu, dist2.mu)
 
     def test_pdf(self):
-        dist = VMDistribution(np.array(2.0, dtype=np.float32), np.array(1.0, dtype=np.float32))
+        dist = VMDistribution(
+            np.array(2.0, dtype=np.float32), np.array(1.0, dtype=np.float32)
+        )
         xs = np.linspace(1, 7, 7, dtype=np.float32)
         np.testing.assert_array_almost_equal(
             dist.pdf(xs),
@@ -28,9 +38,11 @@ class TestVMDistribution(unittest.TestCase):
                 dtype=np.float32,
             ),
         )
+
     def test_plot(self):
-        vm =  VMDistribution(0,1)
+        vm = VMDistribution(0, 1)
         vm.plot()
+        plt.close()
 
 
 if __name__ == "__main__":

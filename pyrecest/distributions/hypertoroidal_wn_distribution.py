@@ -1,7 +1,10 @@
+import copy
+
 import numpy as np
 from scipy.stats import multivariate_normal
-import copy
+
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+
 
 class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
     def __init__(self, mu_, C_):
@@ -26,9 +29,12 @@ class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
         pdf_values = np.zeros(xa.shape[0])
         for offset in offset_combinations:
             shifted_xa = xa + offset[np.newaxis, :]
-            pdf_values += multivariate_normal.pdf(shifted_xa, mean=self.mu.flatten(), cov=self.C)
+            pdf_values += multivariate_normal.pdf(
+                shifted_xa, mean=self.mu.flatten(), cov=self.C
+            )
 
         return pdf_values
+
     def sample(self, n):
         if not isinstance(n, int) or n <= 0:
             raise ValueError("n must be a positive integer")
@@ -36,7 +42,7 @@ class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
         s = np.random.multivariate_normal(self.mu, self.C, n)
         s = np.mod(s, 2 * np.pi)  # wrap the samples
         return s
-    
+
     def set_mode(self, m):
         """
         Set the mode of the distribution.
@@ -60,8 +66,9 @@ class HypertoroidalWNDistribution(AbstractHypertoroidalDistribution):
         :return: Trigonometric moment
         """
         assert isinstance(n, int), "n must be an integer"
-        
-        m = np.exp([1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)])
-        
-        return m
 
+        m = np.exp(
+            [1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)]
+        )
+
+        return m

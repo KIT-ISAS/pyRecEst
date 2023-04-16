@@ -1,6 +1,9 @@
-import numpy as np
 from abc import ABC, abstractmethod
+
+import numpy as np
+
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+
 
 class AbstractToroidalDistribution(AbstractHypertoroidalDistribution, ABC):
     def __init__(self):
@@ -11,14 +14,18 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution, ABC):
     def pdf(self, xa):
         pass
 
-    def integral(self, l=None, r=None):
-        if l is None:
-            l = np.array([0, 0])
+    def integral(self, left=None, right=None):
+        left, right = self.prepare_integral_arguments(left, right)
+        return self.integral_numerical(left, right)
 
-        if r is None:
-            r = np.array([2 * np.pi, 2 * np.pi])
+    def prepare_integral_arguments(self, left=None, right=None):
+        if left is None:
+            left = np.array([0, 0])
 
-        assert l.shape == (self.dim, )
-        assert r.shape == (self.dim, )
+        if right is None:
+            right = np.array([2 * np.pi, 2 * np.pi])
 
-        return self.integral_numerical(l, r)
+        assert left.shape == (self.dim,)
+        assert right.shape == (self.dim,)
+
+        return left, right

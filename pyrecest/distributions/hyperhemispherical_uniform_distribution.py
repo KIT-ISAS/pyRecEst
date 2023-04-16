@@ -1,9 +1,18 @@
-from .abstract_hyperhemispherical_distribution import AbstractHyperhemisphericalDistribution
-from .abstract_hypersphere_subset_uniform_distribution import AbstractHypersphereSubsetUniformDistribution
+from .abstract_hyperhemispherical_distribution import (
+    AbstractHyperhemisphericalDistribution,
+)
+from .abstract_hypersphere_subset_distribution import (
+    AbstractHypersphereSubsetDistribution,
+)
+from .abstract_hypersphere_subset_uniform_distribution import (
+    AbstractHypersphereSubsetUniformDistribution,
+)
 from .hyperspherical_uniform_distribution import HypersphericalUniformDistribution
-from .abstract_hypersphere_subset_distribution import AbstractHypersphereSubsetDistribution
 
-class HyperhemisphericalUniformDistribution(AbstractHyperhemisphericalDistribution, AbstractHypersphereSubsetUniformDistribution):
+
+class HyperhemisphericalUniformDistribution(
+    AbstractHyperhemisphericalDistribution, AbstractHypersphereSubsetUniformDistribution
+):
     def sample(self, n):
         s = HypersphericalUniformDistribution(self.dim).sample(n)
         # Mirror ones with negative on the last dimension up for hemisphere. This
@@ -14,4 +23,9 @@ class HyperhemisphericalUniformDistribution(AbstractHyperhemisphericalDistributi
         return s
 
     def get_manifold_size(self):
-        return AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(self.dim)/2
+        return (
+            AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
+                self.dim
+            )
+            / 2
+        )

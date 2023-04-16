@@ -1,5 +1,6 @@
 import numpy as np
 from pyrecest.distributions import AbstractDistribution
+
 from .abstract_filter import AbstractFilter
 
 
@@ -8,13 +9,21 @@ class AbstractParticleFilter(AbstractFilter):
         self.dist = None
 
     def set_state(self, dist_):
-        assert isinstance(dist_, type(self.dist)), "New distribution has to be of the same class as (or inherit from) the previous density."
+        assert isinstance(
+            dist_, type(self.dist)
+        ), "New distribution has to be of the same class as (or inherit from) the previous density."
         self.dist = dist_
 
     def predict_identity(self, noise_distribution):
         self.predict_nonlinear(lambda x: x, noise_distribution)
 
-    def predict_nonlinear(self, f, noise_distribution, function_is_vectorized=True, shift_instead_of_add=True):
+    def predict_nonlinear(
+        self,
+        f,
+        noise_distribution,
+        function_is_vectorized=True,
+        shift_instead_of_add=True,
+    ):
         assert noise_distribution is None or self.dist.dim == noise_distribution.dim
 
         if function_is_vectorized:
@@ -32,7 +41,9 @@ class AbstractParticleFilter(AbstractFilter):
                     self.dist.d[i, :] = noise_curr.sample(1)
 
     def predict_nonlinear_non_additive(self, f, samples, weights):
-        assert samples.shape[0] == weights.size, 'samples and weights must match in size'
+        assert (
+            samples.shape[0] == weights.size
+        ), "samples and weights must match in size"
 
         weights = weights / np.sum(weights)
         n = self.dist.w.size
@@ -49,13 +60,15 @@ class AbstractParticleFilter(AbstractFilter):
             raise NotImplementedError()
         else:
             noise_for_likelihood = noise_distribution.set_mode(z)
-            likelihood = lambda x: noise_for_likelihood.pdf(x)
+            likelihood = noise_for_likelihood.pdf
             self.update_nonlinear(likelihood)
 
     def update_nonlinear(self, likelihood, z=None):
         if isinstance(likelihood, AbstractDistribution):
-            assert z is None, 'Cannot pass a density and a measurement. To assume additive noise, use update_identity.'
-            likelihood = lambda x: likelihood.pdf(x)
+            assert (
+                z is None
+            ), "Cannot pass a density and a measurement. To assume additive noise, use update_identity."
+            likelihood = likelihood.pdf
 
         if z is None:
             self.dist = self.dist.reweigh(likelihood)
@@ -69,5 +82,7 @@ class AbstractParticleFilter(AbstractFilter):
         return self.dist
 
     def association_likelihood(self, likelihood):
-        likelihood_val = np.sum(likelihood.pdf(self.get_estimate().d) * self.get_estimate().w)
+        likelihood_val = np.sum(
+            likelihood.pdf(self.get_estimate().d) * self.get_estimate().w
+        )
         return likelihood_val

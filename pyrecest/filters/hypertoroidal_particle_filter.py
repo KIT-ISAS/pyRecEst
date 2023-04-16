@@ -1,18 +1,24 @@
 import numpy as np
 from pyrecest.distributions import HypertoroidalWDDistribution
-from .abstract_particle_filter import AbstractParticleFilter
+
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
+from .abstract_particle_filter import AbstractParticleFilter
+
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
     def __init__(self, n_particles, dim):
-        self.dist = HypertoroidalWDDistribution(np.tile(np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim)))
+        self.dist = HypertoroidalWDDistribution(
+            np.tile(np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim))
+        )
 
     def set_state(self, dist_):
         if not isinstance(dist_, HypertoroidalWDDistribution):
             dist_ = HypertoroidalWDDistribution(dist_.sample(self.dist.w.size))
         self.dist = dist_
 
-    def predict_nonlinear(self, f, noise_distribution=None, function_is_vectorized=True):
+    def predict_nonlinear(
+        self, f, noise_distribution=None, function_is_vectorized=True
+    ):
         if function_is_vectorized:
             self.dist = f(self.dist)
         else:
@@ -24,7 +30,9 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             self.dist.d = np.mod(self.dist.d, 2 * np.pi)
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
-        assert samples.shape[0] == weights.size, "samples and weights must match in size"
+        assert (
+            samples.shape[0] == weights.size
+        ), "samples and weights must match in size"
         assert callable(f), "f must be a function"
 
         weights /= np.sum(weights)

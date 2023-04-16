@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import gamma
+
 from .abstract_distribution import AbstractDistribution
 
 
@@ -18,10 +19,10 @@ class AbstractEllipsoidalBallDistribution(AbstractDistribution):
         elif self.dim == 2:
             c = np.pi
         elif self.dim == 3:
-            c = 4/3 * np.pi
+            c = 4 / 3 * np.pi
         elif self.dim == 4:
             c = 0.5 * np.pi**2
         else:
-            c = (np.pi**(self.dim/2)) / gamma((self.dim/2) + 1)
+            c = (np.pi ** (self.dim / 2)) / gamma((self.dim / 2) + 1)
 
         return c * np.sqrt(np.linalg.det(self.shape_matrix))
