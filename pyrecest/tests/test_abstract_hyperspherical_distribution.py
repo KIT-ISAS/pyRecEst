@@ -1,15 +1,15 @@
 import unittest
 
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     BinghamDistribution,
     VMFDistribution,
 )
-import matplotlib.pyplot as plt
-matplotlib.use("Agg")
 
+matplotlib.use("Agg")
 
 
 class AbstractHypersphericalDistributionTest(unittest.TestCase):
