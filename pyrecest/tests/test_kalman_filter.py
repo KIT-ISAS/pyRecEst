@@ -1,17 +1,20 @@
-import unittest
 import copy
+import unittest
+
 import numpy as np
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.kalman_filter import KalmanFilter
 
+
 class KalmanFilterTest(unittest.TestCase):
-    
     def test_initialization(self):
         filter_custom = KalmanFilter([1], [[10000]])
         self.assertEqual(filter_custom.get_point_estimate(), [1])
 
     def test_initialization_gauss(self):
-        filter_custom = KalmanFilter(prior_gauss = GaussianDistribution(np.array([4]), np.array([[10000]])))
+        filter_custom = KalmanFilter(
+            prior_gauss=GaussianDistribution(np.array([4]), np.array([[10000]]))
+        )
         self.assertEqual(filter_custom.get_point_estimate(), [4])
 
     def test_update_with_likelihood_1d(self):
@@ -31,7 +34,9 @@ class KalmanFilterTest(unittest.TestCase):
         gauss = GaussianDistribution(np.array([1, 0]), np.diag([2, 1]))
         filter_add.update_linear(gauss.mu, np.eye(2), gauss.C)
         filter_id.update_identity(gauss.mu, gauss.C)
-        self.assertTrue(np.allclose(filter_add.get_point_estimate(), filter_id.get_point_estimate()))
+        self.assertTrue(
+            np.allclose(filter_add.get_point_estimate(), filter_id.get_point_estimate())
+        )
         self.assertTrue(np.allclose(filter_add.kf.P, filter_id.kf.P))
 
     def test_predict_identity_1d(self):
@@ -47,6 +52,7 @@ class KalmanFilterTest(unittest.TestCase):
         self.assertTrue(np.allclose(kf.kf.P, np.diag([3, 9])))
         kf.predict_linear(np.diag([1, 2]), np.diag([2, 1]), np.array([2, -2]))
         self.assertTrue(np.allclose(kf.get_point_estimate(), np.array([2, 2])))
+
 
 if __name__ == "__main__":
     unittest.main()

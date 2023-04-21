@@ -1,6 +1,9 @@
+---
 name: Test Workflow
 
-on:
+permissions: read-all
+
+on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
@@ -16,36 +19,30 @@ jobs:
       pull-requests: write
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v3
+      - name: Check out repository
+        uses: actions/checkout@v3
 
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        activate-environment: pyRecEst
-        environment-file: environment.yml
-        auto-activate-base: false
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: pyRecEst
+          environment-file: environment.yml
+          auto-activate-base: false
 
-    - name: List files and check Python version
-      shell: bash -l {0}
-      run: |
-        ls -al
-        python -c 'import sys; print(sys.version_info[:])'
-    
-    - name: Run tests
-      shell: bash -l {0}
-      env: 
+      - name: List files and check Python version
+        shell: bash -l {0}
+        run: |
+          ls -al
+          python -c 'import sys; print(sys.version_info[:])'
+
+      - name: Run tests
+        shell: bash -l {0}
+        env:
           PYTHONPATH: ${{ github.workspace }}
-      run: pytest --rootdir . -v --strict-config --junitxml=junit_test_results.xml ./pyrecest
+        run: pytest --rootdir . -v --strict-config --junitxml=junit_test_results.xml ./pyrecest
 
-    - name: Publish test results
-      if: always()
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      with:
-        files: junit_test_results.xml
-
-    - name: Produce error on failure
-      if: ${{ failure() }}
-      run: |
-        echo "Tests failed."
-        exit 1
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: junit_test_results.xml

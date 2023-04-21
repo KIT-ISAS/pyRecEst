@@ -1,19 +1,21 @@
 import unittest
+
 import numpy as np
 from pyrecest.distributions import BinghamDistribution
+
+from .test_vmf_distribution import vectors_to_test_2d
 
 
 class TestBinghamDistribution(unittest.TestCase):
     def test_pdf(self):
-        M = np.array([[1/3, 2/3, -2/3], [-2/3, 2/3, 1/3], [2/3, 1/3, 2/3]])
+        M = np.array(
+            [[1 / 3, 2 / 3, -2 / 3], [-2 / 3, 2 / 3, 1 / 3], [2 / 3, 1 / 3, 2 / 3]]
+        )
         Z = np.array([-5, -3, 0])
         bd = BinghamDistribution(Z, M)
 
-        xs = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0]/np.sqrt(2), [1, 1, 2] /
-                    np.linalg.norm([1, 1, 2]), -np.array([1, 1, 2])/np.linalg.norm([1, 1, 2])])
-        
         np.testing.assert_array_almost_equal(
-            bd.pdf(xs),
+            bd.pdf(vectors_to_test_2d),
             np.array(
                 [
                     0.0767812166360095,
@@ -25,6 +27,7 @@ class TestBinghamDistribution(unittest.TestCase):
                 ],
             ),
         )
+
 
 if __name__ == "__main__":
     unittest.main()

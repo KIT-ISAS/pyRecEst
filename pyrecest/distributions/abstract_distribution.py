@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 import numpy as np
+
 
 class AbstractDistribution(ABC):
     """Abstract base class for all distributions."""
@@ -22,33 +24,35 @@ class AbstractDistribution(ABC):
             self._dim = None
 
     @abstractmethod
-    def pdf(self, xa):
+    def pdf(self, xs):
         pass
 
     @abstractmethod
     def mean(self):
         pass
 
-    def __mul__(self, other):
-        return self.multiply(other)
-
-    def __eq__(self, other):
-        if isinstance(other, AbstractDistribution):
-            return self.dim == other.dim
-        return False
-
     def sample(self, n):
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
 
-    def sample_metropolis_hastings(self, n, proposal=None, start_point=None, burn_in=10, skipping=5):
+    def sample_metropolis_hastings(
+        self, n, proposal=None, start_point=None, burn_in=10, skipping=5
+    ):
         """Metropolis Hastings sampling algorithm."""
 
         if proposal is None or start_point is None:
-            raise NotImplementedError("Default proposals and starting points should be set in inheriting classes.")
+            raise NotImplementedError(
+                "Default proposals and starting points should be set in inheriting classes."
+            )
 
         total_samples = burn_in + n * skipping
-        s = np.empty((total_samples, self.dim,), dtype=np.float64)
+        s = np.empty(
+            (
+                total_samples,
+                self.dim,
+            ),
+            dtype=np.float64,
+        )
         s.fill(np.nan)
         x = start_point
         i = 0

@@ -1,0 +1,25 @@
+---
+APPLY_FIXES: all
+
+PRE_COMMANDS:
+  # This takes a lot of time but I have not found any other good and elegant solution
+  - command: pip install --upgrade --no-cache-dir numpy scipy matplotlib mpmath healpy filterpy
+    venv: pylint
+# With apk update and apk add py3-numpy py3-scipy py3-matplotlib,
+# they are not found, regardless whether PRE_COMMANDS or
+# PYTHON_PYLINT_PRE_COMMANDS is used.
+# This does not work (error message: Note: This error originates from the build backend, and is likely not a problem with poetry but with scipy (1.9.3) not supporting PEP 517 builds. You can verify this by running 'pip wheel --use-pep517 "scipy (==1.9.3)"'.)
+#  - command: python -m pip install --upgrade --no-cache-dir pip poetry
+#    venv: pylint
+#  - command: (cd /github/workspace && python -m poetry install --no-root)
+#    venv: pylint
+# This does not work either (installs it into a new venv):
+#  - command: python -m pip install --upgrade --no-cache-dir poetry
+#    venv: pylint
+#  - command: (cd /github/workspace && python -m poetry env use python && python -m poetry install)
+#    venv: pylint
+
+DISABLE_LINTERS:
+  - SPELL_CSPELL
+  - PYTHON_PYRIGHT
+  - REPOSITORY_DEVSKIM

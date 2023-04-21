@@ -1,28 +1,35 @@
-import numpy as np
-from scipy.stats import multivariate_normal as mvn
-from scipy.linalg import cholesky
 import copy
 
-class GaussianDistribution:
+import numpy as np
+from scipy.linalg import cholesky
+from scipy.stats import multivariate_normal as mvn
 
+from .abstract_linear_distribution import AbstractLinearDistribution
+
+
+class GaussianDistribution(AbstractLinearDistribution):
     def __init__(self, mu, C, check_validity=True):
         assert mu.shape[0] == C.shape[0] == C.shape[1], "Size of C invalid"
         self.dim = mu.shape[0]
         assert mu.ndim <= 1
         self.mu = mu
-        
+
         if check_validity:
             if self.dim == 1:
                 assert C > 0, "C must be positive definite"
             elif self.dim == 2:
-                assert C[0, 0] > 0 and np.linalg.det(C) > 0, "C must be positive definite"
+                assert (
+                    C[0, 0] > 0 and np.linalg.det(C) > 0
+                ), "C must be positive definite"
             else:
                 cholesky(C)  # Will fail if C is not positive definite
-        
+
         self.C = C
-        
+
     def pdf(self, xa):
-        assert xa.shape[-1] == self.mu.shape[0] or self.mu.size == 1, "Dimension incorrect"
+        assert (
+            xa.shape[-1] == self.mu.shape[0] or self.mu.size == 1
+        ), "Dimension incorrect"
         return mvn.pdf(xa, self.mu.T, self.C).T
 
     def shift(self, offsets):
@@ -59,7 +66,7 @@ class GaussianDistribution:
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def marginalize_out(self, dimensions):
-        if type(dimensions) is int: # Make it iterable if single integer
+        if type(dimensions) is int:  # Make it iterable if single integer
             dimensions = [dimensions]
         assert all(dim <= self.dim for dim in dimensions)
         remaining_dims = [i for i in range(self.dim) if i not in dimensions]

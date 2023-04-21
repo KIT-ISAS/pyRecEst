@@ -23,3 +23,7 @@ filterpy = "*"
 
 [tool.poetry.extras]
 healpy_support = ["healpy"]
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.0.2"
+

@@ -3,16 +3,19 @@ import numpy as np
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
 
-class EllipsoidalBallUniformDistribution(AbstractEllipsoidalBallDistribution, AbstractUniformDistribution):
+
+class EllipsoidalBallUniformDistribution(
+    AbstractEllipsoidalBallDistribution, AbstractUniformDistribution
+):
     def __init__(self, center, shape_matrix):
         AbstractEllipsoidalBallDistribution.__init__(self, center, shape_matrix)
-        
+
     def get_manifold_size(self):
         return super().get_manifold_size()
-    
+
     def mean(self):
         raise NotImplementedError()
-        
+
     def pdf(self, xs):
         assert xs.shape[-1] == self.dim
         # Calculate the reciprocal of the volume of the ellipsoid
@@ -35,14 +38,16 @@ class EllipsoidalBallUniformDistribution(AbstractEllipsoidalBallDistribution, Ab
                     results[i] = reciprocal_volume
 
             return results
-        
+
     def sample(self, num_samples=1):
         # Generate random points uniformly in a unit d-dimensional ball
         random_points = np.random.randn(num_samples, self.dim)
         random_points /= np.linalg.norm(random_points, axis=1, keepdims=True)
 
         random_radii = np.random.rand(num_samples, 1)
-        random_radii = random_radii**(1 / self.dim) # Consider that the ellipsoid surfaces with higher radii are larger
+        random_radii = random_radii ** (
+            1 / self.dim
+        )  # Consider that the ellipsoid surfaces with higher radii are larger
 
         # Scale random points by the radii
         random_points *= random_radii
