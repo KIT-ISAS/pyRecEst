@@ -34,7 +34,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> "$GITHUB_ENV"
 
       - name: Extract repository name
-        run: echo "REPO_NAME=$(echo ${GITHUB_REPOSITORY#*/} | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+        run: echo "REPO_NAME=$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Create GitHub Release and Upload Artifacts
         uses: ncipollo/release-action@v1
