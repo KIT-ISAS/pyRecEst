@@ -33,10 +33,13 @@ jobs:
         id: extract_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> "$GITHUB_ENV"
 
+      - name: Extract repository name
+        run: echo "REPO_NAME=$(echo ${GITHUB_REPOSITORY#*/} | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
       - name: Create GitHub Release and Upload Artifacts
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref }}
           name: Release ${{ env.VERSION }}
-          artifacts: ./dist/pyrecest-${{ env.VERSION }}-py3-none-any.whl,./dist/pyrecest-${{ env.VERSION }}.tar.gz
+          artifacts: ./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}-py3-none-any.whl,./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
