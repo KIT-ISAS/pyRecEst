@@ -7,7 +7,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "pyrecest"
-version = "0.1.0"
 description = "Framework for recursive Bayesian estimation in Python."
 readme = "README.md"
 authors = ["Florian Pfaff <pfaff@kit.edu>"]
