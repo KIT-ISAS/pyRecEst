@@ -1,0 +1,49 @@
+name: Update version tag
+
+permissions:
+  contents: write
+
+on:
+  workflow_run:
+    workflows: ["Test workflow"]
+    types:
+      - completed
+
+jobs:
+  update_version_tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install toml package
+        run: pip install toml
+
+      - name: Extract version from pyproject.toml
+        id: extract_version
+        run: |
+          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
+          echo "TAG_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "PYPROJECT_VERSION=$VERSION" >> "$GITHUB_ENV"
+      
+      - name: Check if the tag exists
+        id: check_tag
+        run: |
+          EXISTS=$(git ls-remote --tags origin refs/tags/${{ env.TAG_VERSION }} | wc -l)
+          echo "TAG_EXISTS=$EXISTS" >> "$GITHUB_ENV"
+
+      - name: Create new tag
+        run: git tag ${{ env.TAG_VERSION }}
+        if: ${{ env.TAG_EXISTS == 0 }}
+
+      - name: Push new tag
+        run: git push origin ${{ env.TAG_VERSION }}
+        if: ${{ env.TAG_EXISTS == 0 }}
