@@ -32,12 +32,9 @@ class AbstractDiracDistribution(AbstractDistribution):
         return dist
 
     def apply_function(self, f):
-        d_ = np.zeros_like(self.d)
-        for i in range(self.d.shape[0]):
-            d_[i, :] = f(self.d[i, :])
-
+        d_new = np.apply_along_axis(f, 1, self.d)
         dist = copy.deepcopy(self)
-        dist.d = d_
+        dist.d = d_new
         dist.w = self.w
         return dist
 
@@ -62,7 +59,7 @@ class AbstractDiracDistribution(AbstractDistribution):
         return self.d[ids, :]
 
     def entropy(self):
-        print("Entropy is not defined in a continuous sense")
+        warnings.warn("Entropy is not defined in a continuous sense")
         return -np.sum(self.w * np.log(self.w))
 
     def integrate(self, left=None, right=None):
@@ -95,7 +92,7 @@ class AbstractDiracDistribution(AbstractDistribution):
     def mode(self, rel_tol=0.001):
         highest_val, ind = np.max(self.w), np.argmax(self.w)
         if (highest_val / self.w.size) < (1 + rel_tol):
-            print(
+            warnings.warn(
                 "The samples may be equally weighted, .mode is likely to return a bad result."
             )
         return self.d[:, ind]

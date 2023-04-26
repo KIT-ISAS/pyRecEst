@@ -5,6 +5,9 @@ from .abstract_distribution import AbstractDistribution
 
 
 class AbstractNonConditionalDistribution(AbstractDistribution):
+    def __init__(self, dim):
+        super().__init__(dim=dim)
+
     @abstractmethod
     def get_manifold_size(self):
         pass
