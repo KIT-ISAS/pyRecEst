@@ -1,48 +1,62 @@
-from .abstract_circular_distribution import AbstractCircularDistribution
+from .circle.abstract_circular_distribution import AbstractCircularDistribution
 from .abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_disk_distribution import AbstractDiskDistribution
 from .abstract_distribution import AbstractDistribution
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
-from .abstract_hyperhemispherical_distribution import (
+from .hypersphere_subset.abstract_hemispherical_distribution import AbstractHemisphericalDistribution
+from .hypersphere_subset.abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )
-from .abstract_hypersphere_subset_distribution import (
+from .hypersphere_subset.abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
-from .abstract_hypersphere_subset_uniform_distribution import (
+from .hypersphere_subset.abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
 )
-from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+from .hypersphere_subset.abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-from .abstract_linear_distribution import AbstractLinearDistribution
+from .nonperiodic.abstract_linear_distribution import AbstractLinearDistribution
 from .abstract_non_conditional_distribution import AbstractNonConditionalDistribution
 from .abstract_periodic_distribution import AbstractPeriodicDistribution
-from .abstract_toroidal_distribution import AbstractToroidalDistribution
+from .hypertorus.abstract_toroidal_distribution import AbstractToroidalDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
-from .bingham_distribution import BinghamDistribution
+from .hypersphere_subset.bingham_distribution import BinghamDistribution
 from .custom_distribution import CustomDistribution
-from .custom_hemispherical_distribution import CustomHemisphericalDistribution
+from .hypersphere_subset.custom_hemispherical_distribution import CustomHemisphericalDistribution
 from .custom_hyperhemispherical_distribution import CustomHyperhemisphericalDistribution
+from .nonperiodic.custom_linear_distribution import CustomLinearDistribution
 from .disk_uniform_distribution import DiskUniformDistribution
 from .ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution
-from .fourier_distribution import FourierDistribution
-from .gaussian_distribution import GaussianDistribution
-from .hyperhemispherical_uniform_distribution import (
+from .circular_fourier_distribution import CircularFourierDistribution
+from .nonperiodic.gaussian_distribution import GaussianDistribution
+from .hypersphere_subset.hyperhemispherical_uniform_distribution import (
     HyperhemisphericalUniformDistribution,
 )
-from .hyperhemispherical_watson_distribution import HyperhemisphericalWatsonDistribution
-from .hyperspherical_mixture import HypersphericalMixture
-from .hyperspherical_uniform_distribution import HypersphericalUniformDistribution
-from .hypertoroidal_wd_distribution import HypertoroidalWDDistribution
-from .hypertoroidal_wn_distribution import HypertoroidalWNDistribution
-from .toroidal_wd_distribution import ToroidalWDDistribution
-from .vm_distribution import VMDistribution
-from .vmf_distribution import VMFDistribution
-from .watson_distribution import WatsonDistribution
-from .wd_distribution import WDDistribution
-from .wn_distribution import WNDistribution
+from .hypersphere_subset.hyperhemispherical_watson_distribution import HyperhemisphericalWatsonDistribution
+from .hypersphere_subset.hyperspherical_mixture import HypersphericalMixture
+from .hypersphere_subset.hyperspherical_uniform_distribution import HypersphericalUniformDistribution
+from .hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
+HypertoroidalWDDistribution = HypertoroidalDiracDistribution
+from .hypertorus.hypertoroidal_wrapped_normal_distribution import HypertoroidalWNDistribution
+from .hypertorus.toroidal_dirac_distribution import ToroidalDiracDistribution
+ToroidalWDDistribution = ToroidalDiracDistribution
+from .circle.von_mises_distribution import VonMisesDistribution
+from .hypersphere_subset.von_mises_fisher_distribution import VonMisesFisherDistribution
+VMFDistribution = VonMisesFisherDistribution
+from .hypersphere_subset.watson_distribution import WatsonDistribution
+from .circle.circular_dirac_distribution import CircularDiracDistribution
+WDDistribution = CircularDiracDistribution
+from .circle.wrapped_normal_distribution import WrappedNormalDistribution
+WNDistribution = WrappedNormalDistribution
 
 __all__ = [
+    "HypertoroidalWDDistribution",
+    "ToroidalWDDistribution",
+    "VMFDistribution",
+    "WDDistribution",
+    "WNDistribution",
+    "AbstractHemisphericalDistribution",
+    "CustomLinearDistribution",
     "HyperhemisphericalWatsonDistribution",
     "AbstractLinearDistribution",
     "AbstractNonConditionalDistribution",
@@ -65,7 +79,7 @@ __all__ = [
     "CustomHyperhemisphericalDistribution",
     "DiskUniformDistribution",
     "EllipsoidalBallUniformDistribution",
-    "FourierDistribution",
+    "CircularFourierDistribution",
     "GaussianDistribution",
     "HyperhemisphericalUniformDistribution",
     "HypersphericalMixture",
@@ -73,9 +87,9 @@ __all__ = [
     "HypertoroidalWDDistribution",
     "HypertoroidalWNDistribution",
     "ToroidalWDDistribution",
-    "VMFDistribution",
-    "VMDistribution",
+    "VonMisesFisherDistribution",
+    "VonMisesDistribution",
     "WatsonDistribution",
-    "WDDistribution",
-    "WNDistribution",
+    "CircularDiracDistribution",
+    "WrappedNormalDistribution",
 ]

@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -25,7 +26,7 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def sample_metropolis_hastings(
         self, n, proposal=None, start_point=None, burn_in=10, skipping=5
     ):
-        from .wn_distribution import WNDistribution
+        from .wrapped_normal_distribution import WNDistribution
 
         if proposal is None:
             wn = WNDistribution.from_moment(self.trigonometric_moment(1))
@@ -49,7 +50,7 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         Returns:
             vm (VMDistribution): Distribution with the same first trigonometric moment.
         """
-        from .vm_distribution import VMDistribution
+        from .von_mises_distribution import VMDistribution
 
         vm = VMDistribution.from_moment(self.trigonometric_moment(1))
         return vm
@@ -61,7 +62,13 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         Returns:
             wn (WNDistribution): Distribution with the same first trigonometric moment.
         """
-        from .wn_distribution import WNDistribution
+        from .wrapped_normal_distribution import WNDistribution
 
         wn = WNDistribution.from_moment(self.trigonometric_moment(1))
         return wn
+
+    @staticmethod
+    def plot_circle(*args, **kwargs):
+        theta = np.append(np.linspace(0, 2 * np.pi, 320), 0)
+        p = plt.plot(np.cos(theta), np.sin(theta), *args, **kwargs)
+        return p

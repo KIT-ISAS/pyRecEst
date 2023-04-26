@@ -9,11 +9,11 @@ from pyrecest.distributions import (
 
 
 class HypersphericalUniformDistributionTest(unittest.TestCase):
-    def test_integral_2d(self):
+    def test_integrate_2d(self):
         hud = HypersphericalUniformDistribution(2)
         self.assertAlmostEqual(hud.integrate(), 1, delta=1e-6)
 
-    def test_integral_3d(self):
+    def test_integrate_3d(self):
         hud = HypersphericalUniformDistribution(3)
         self.assertAlmostEqual(hud.integrate(), 1, delta=1e-6)
 

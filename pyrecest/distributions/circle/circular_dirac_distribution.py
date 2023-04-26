@@ -1,7 +1,7 @@
-from .hypertoroidal_wd_distribution import HypertoroidalWDDistribution
+from .hypertoroidal_dirac_distribution import HypertoroidalWDDistribution
 
 
-class WDDistribution(HypertoroidalWDDistribution):
+class CircularDiracDistribution(HypertoroidalWDDistribution):
     def __init__(self, d, w=None):
         HypertoroidalWDDistribution.__init__(self, d, w)
         self.dim = (

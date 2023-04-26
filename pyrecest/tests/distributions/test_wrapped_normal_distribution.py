@@ -1,14 +1,14 @@
 import unittest
 
 import numpy as np
-from pyrecest.distributions import WNDistribution
+from pyrecest.distributions import WrappedNormalDistribution
 
 
 class WNDistributionTest(unittest.TestCase):
     def test_WNDistribution(self):
         mu = np.array(3)
         sigma = np.array(1.5)
-        wn = WNDistribution(mu, sigma)
+        wn = WrappedNormalDistribution(mu, sigma)
 
         # test pdf
         def approx_with_wrapping(x):
@@ -28,7 +28,7 @@ class WNDistributionTest(unittest.TestCase):
         )
 
         # test pdf with large sigma
-        wn_large_sigma = WNDistribution(0, 100)
+        wn_large_sigma = WrappedNormalDistribution(0, 100)
         fx = np.ones_like(x) / (2 * np.pi)
         self.assertTrue(np.allclose(wn_large_sigma.pdf(x), fx, rtol=1e-10))
 

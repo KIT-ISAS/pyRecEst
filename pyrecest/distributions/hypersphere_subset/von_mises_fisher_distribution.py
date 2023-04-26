@@ -5,7 +5,7 @@ from scipy.special import iv
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
 
-class VMFDistribution(AbstractHypersphericalDistribution):
+class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu_, kappa_):
         epsilon = 1e-6
         assert (

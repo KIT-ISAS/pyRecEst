@@ -28,7 +28,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
             np.allclose(chhd.pdf(points), 2 * bd.pdf(points), atol=1e-5), True
         )
 
-    def test_integral_bingham_s2(self):
+    def test_integrate_bingham_s2(self):
         M = np.eye(3)
         Z = np.array([-2, -0.5, 0])
         bd = BinghamDistribution(Z, M)

@@ -1,5 +1,6 @@
 import warnings
 
+from .abstract_hemispherical_distribution import AbstractHemisphericalDistribution
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )
@@ -8,7 +9,9 @@ from .bingham_distribution import BinghamDistribution
 from .custom_hyperhemispherical_distribution import CustomHyperhemisphericalDistribution
 
 
-class CustomHemisphericalDistribution(CustomHyperhemisphericalDistribution):
+class CustomHemisphericalDistribution(
+    CustomHyperhemisphericalDistribution, AbstractHemisphericalDistribution
+):
     def __init__(self, f):
         CustomHyperhemisphericalDistribution.__init__(self, f, 2)
 
@@ -31,7 +34,7 @@ class CustomHemisphericalDistribution(CustomHyperhemisphericalDistribution):
             warnings.warn(warning_message, category=UserWarning)
             chhd_unnorm = CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
             norm_const_inv = chhd_unnorm.integrate()
-            chsd = CustomHemisphericalDistribution(lambda xs: dist.pdf(xs))
+            chsd = CustomHemisphericalDistribution(dist.pdf)
             chsd.scale_by = 1 / norm_const_inv
             return chsd
         else:

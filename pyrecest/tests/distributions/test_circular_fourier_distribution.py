@@ -66,7 +66,7 @@ class TestFourierDistribution(unittest.TestCase):
     def test_integrate_numerically_sqrt_mult_false(self):
         self._test_integrate_numerically_helper(mult_by_n=False, transformation="sqrt")
 
-    def _test_integral_helper(self, mult_by_n, transformation):
+    def _test_integrate_helper(self, mult_by_n, transformation):
         scale_by = 1 / 5
         dist = VMDistribution(np.array(2.9), np.array(1.3))
         fd = FourierDistribution.from_distribution(
@@ -100,17 +100,17 @@ class TestFourierDistribution(unittest.TestCase):
         np.testing.assert_array_almost_equal(fd_norm.integrate(), 1)
         np.testing.assert_array_almost_equal(fd_norm_real.integrate(), 1)
 
-    def test_integral_identity_mult_true(self):
-        self._test_integral_helper(mult_by_n=True, transformation="identity")
+    def test_integrate_identity_mult_true(self):
+        self._test_integrate_helper(mult_by_n=True, transformation="identity")
 
-    def test_integral_identity_mult_false(self):
-        self._test_integral_helper(mult_by_n=False, transformation="identity")
+    def test_integrate_identity_mult_false(self):
+        self._test_integrate_helper(mult_by_n=False, transformation="identity")
 
-    def test_integral_sqrt_mult_true(self):
-        self._test_integral_helper(mult_by_n=True, transformation="sqrt")
+    def test_integrate_sqrt_mult_true(self):
+        self._test_integrate_helper(mult_by_n=True, transformation="sqrt")
 
-    def test_integral_sqrt_mult_false(self):
-        self._test_integral_helper(mult_by_n=False, transformation="sqrt")
+    def test_integrate_sqrt_mult_false(self):
+        self._test_integrate_helper(mult_by_n=False, transformation="sqrt")
 
     def test_distance(self):
         dist1 = VMDistribution(np.array(0.0), np.array(1.0))

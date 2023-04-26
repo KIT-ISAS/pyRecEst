@@ -5,14 +5,14 @@ import numpy as np
 import scipy.integrate as integrate
 from numpy.fft import irfft, rfft
 
-from .wd_distribution import WDDistribution
+from .circular_dirac_distribution import CircularDiracDistribution
 
 """
 Fourier Distribution. The real and complex ones and the option to have it multiplied_by_n or not serve to use the minimum number of operations and thus optimize the graph
 """
 
 
-class FourierDistribution:
+class CircularFourierDistribution:
     def __init__(
         self,
         transformation="sqrt",
@@ -59,7 +59,7 @@ class FourierDistribution:
         if self.a is not None:
             aNew = self.a - other.a
             bNew = self.b - other.b
-            fdNew = FourierDistribution(
+            fdNew = CircularFourierDistribution(
                 a=aNew,
                 b=bNew,
                 transformation=self.transformation,
@@ -67,7 +67,7 @@ class FourierDistribution:
             )
         else:
             cNew = self.c - other.c
-            fdNew = FourierDistribution(
+            fdNew = CircularFourierDistribution(
                 c=cNew,
                 transformation=self.transformation,
                 multiplied_by_n=self.multiplied_by_n,
@@ -111,7 +111,7 @@ class FourierDistribution:
 
             a_new = self.a * scale_factor
             b_new = self.b * scale_factor
-            fd_normalized = FourierDistribution(
+            fd_normalized = CircularFourierDistribution(
                 a=a_new,
                 b=b_new,
                 transformation=self.transformation,
@@ -128,7 +128,7 @@ class FourierDistribution:
                 raise Exception("Transformation not supported.")
 
             c_new = self.c * scale_factor
-            fd_normalized = FourierDistribution(
+            fd_normalized = CircularFourierDistribution(
                 c=c_new,
                 transformation=self.transformation,
                 n=self.n,
@@ -251,7 +251,7 @@ class FourierDistribution:
             fd = self
         elif self.c is not None:
             a, b = self.get_a_b()
-            fd = FourierDistribution(
+            fd = CircularFourierDistribution(
                 transformation=self.transformation,
                 a=a,
                 b=b,
@@ -262,8 +262,8 @@ class FourierDistribution:
 
     @staticmethod
     def from_distribution(dist, n, transformation, store_values_multiplied_by_n=True):
-        if isinstance(dist, WDDistribution):
-            fd = FourierDistribution(
+        if isinstance(dist, CircularDiracDistribution):
+            fd = CircularFourierDistribution(
                 np.conj(dist.trigonometric_moment(n, whole_range=True)) / (2 * np.pi),
                 transformation,
                 multiplied_by_n=False,
@@ -284,7 +284,7 @@ class FourierDistribution:
             if not store_values_multiplied_by_n:
                 c = c * (1 / n)
 
-            fd = FourierDistribution(
+            fd = CircularFourierDistribution(
                 c=c,
                 transformation=transformation,
                 n=n,

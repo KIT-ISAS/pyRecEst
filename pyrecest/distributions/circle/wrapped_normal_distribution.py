@@ -2,10 +2,10 @@ import numpy as np
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
 from .abstract_circular_distribution import AbstractCircularDistribution
-from .vm_distribution import VMDistribution
+from .von_mises_distribution import VonMisesDistribution
 
 
-class WNDistribution(AbstractCircularDistribution):
+class WrappedNormalDistribution(AbstractCircularDistribution):
     def __init__(self, mu_, sigma_):
         self.mu = np.mod(mu_, 2 * np.pi)
         self.sigma = sigma_
@@ -93,7 +93,7 @@ class WNDistribution(AbstractCircularDistribution):
     def convolve(self, wn2):
         mu_ = np.mod(self.mu + wn2.mu, 2 * np.pi)
         sigma_ = np.sqrt(self.sigma**2 + wn2.sigma**2)
-        wn = WNDistribution(mu_, sigma_)
+        wn = WrappedNormalDistribution(mu_, sigma_)
         return wn
 
     def sample(self, n):
@@ -101,18 +101,18 @@ class WNDistribution(AbstractCircularDistribution):
 
     def shift(self, angle):
         assert np.isscalar(angle)
-        return WNDistribution(self.mu + angle, self.sigma)
+        return WrappedNormalDistribution(self.mu + angle, self.sigma)
 
     def to_vm(self):
         # Convert to Von Mises distribution
         kappa = self.sigma_to_kappa(self.sigma)
-        return VMDistribution(self.mu, kappa)
+        return VonMisesDistribution(self.mu, kappa)
 
     @staticmethod
     def from_moment(m):
         mu_ = np.mod(np.angle(m), 2 * np.pi)
         sigma_ = np.sqrt(-2 * np.log(np.abs(m)))
-        return WNDistribution(mu_, sigma_)
+        return WrappedNormalDistribution(mu_, sigma_)
 
     @staticmethod
     def sigma_to_kappa(sigma):

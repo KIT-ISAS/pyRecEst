@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.integrate import nquad, quad
+from scipy.integrate import dblquad, nquad, quad, tplquad
 
 from .abstract_periodic_distribution import AbstractPeriodicDistribution
 
@@ -159,6 +159,11 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         return -e
 
+    def mean_2dimD(self):
+        m = self.trigonometric_moment_numerical(1)
+        mu = np.vstack((m.real, m.imag))
+        return mu
+
     def sample_metropolis_hastings(
         self, n, proposal=None, start_point=None, burn_in=10, skipping=5
     ):
@@ -208,3 +213,120 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         e = np.minimum(diff, 2 * np.pi - diff)
 
         return e
+
+    def hellinger_distance_numerical(self, other):
+        assert isinstance(other, AbstractHypertoroidalDistribution)
+        assert (
+            self.dim == other.dim
+        ), "Cannot compare distributions with different number of dimensions."
+
+        if self.dim == 1:
+            dist = (
+                0.5
+                * quad(
+                    lambda x: (np.sqrt(self.pdf(x)) - np.sqrt(other.pdf(x))) ** 2,
+                    0,
+                    2 * np.pi,
+                )[0]
+            )
+        elif self.dim == 2:
+            dist = (
+                0.5
+                * dblquad(
+                    lambda x, y: np.reshape(
+                        (
+                            np.sqrt(self.pdf(np.vstack((x.ravel(), y.ravel()))))
+                            - np.sqrt(other.pdf(np.vstack((x.ravel(), y.ravel()))))
+                        )
+                        ** 2,
+                        x.shape,
+                    ),
+                    0,
+                    2 * np.pi,
+                    0,
+                    2 * np.pi,
+                )[0]
+            )
+        elif self.dim == 3:
+            dist = (
+                0.5
+                * tplquad(
+                    lambda x, y, z: np.reshape(
+                        (
+                            np.sqrt(
+                                self.pdf(np.vstack((x.ravel(), y.ravel(), z.ravel())))
+                            )
+                            - np.sqrt(
+                                other.pdf(np.vstack((x.ravel(), y.ravel(), z.ravel())))
+                            )
+                        )
+                        ** 2,
+                        x.shape,
+                    ),
+                    0,
+                    2 * np.pi,
+                    0,
+                    2 * np.pi,
+                    0,
+                    2 * np.pi,
+                )[0]
+            )
+        else:
+            raise ValueError(
+                "Numerical calculation of Hellinger distance is currently not supported for this dimension."
+            )
+
+        return dist
+
+    def total_variation_distance_numerical(self, other):
+        assert isinstance(other, AbstractHypertoroidalDistribution)
+        assert (
+            self.dim == other.dim
+        ), "Cannot compare distributions with different number of dimensions"
+
+        if self.dim == 1:
+            dist = (
+                0.5 * quad(lambda x: abs(self.pdf(x) - other.pdf(x)), 0, 2 * np.pi)[0]
+            )
+        elif self.dim == 2:
+            dist = (
+                0.5
+                * dblquad(
+                    lambda x, y: np.reshape(
+                        abs(
+                            self.pdf(np.vstack((x.ravel(), y.ravel())))
+                            - other.pdf(np.vstack((x.ravel(), y.ravel())))
+                        ),
+                        x.shape,
+                    ),
+                    0,
+                    2 * np.pi,
+                    0,
+                    2 * np.pi,
+                )[0]
+            )
+        elif self.dim == 3:
+            dist = (
+                0.5
+                * tplquad(
+                    lambda x, y, z: np.reshape(
+                        abs(
+                            self.pdf(np.vstack((x.ravel(), y.ravel(), z.ravel())))
+                            - other.pdf(np.vstack((x.ravel(), y.ravel(), z.ravel())))
+                        ),
+                        x.shape,
+                    ),
+                    0,
+                    2 * np.pi,
+                    0,
+                    2 * np.pi,
+                    0,
+                    2 * np.pi,
+                )[0]
+            )
+        else:
+            raise ValueError(
+                "Numerical calculation of total variation distance is currently not supported for this dimension."
+            )
+
+        return dist

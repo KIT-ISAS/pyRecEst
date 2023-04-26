@@ -5,7 +5,7 @@ from scipy.special import iv
 from .abstract_circular_distribution import AbstractCircularDistribution
 
 
-class VMDistribution(AbstractCircularDistribution):
+class VonMisesDistribution(AbstractCircularDistribution):
     def __init__(self, mu, kappa, norm_const=None):
         assert kappa >= 0
         super().__init__()
@@ -33,7 +33,7 @@ class VMDistribution(AbstractCircularDistribution):
     @staticmethod
     def besselratio_inverse(v, x):
         def f(t):
-            return VMDistribution.besselratio(v, t) - x
+            return VonMisesDistribution.besselratio(v, t) - x
 
         start = 1
         (kappa,) = fsolve(f, start, xtol=1e-40)
@@ -44,18 +44,18 @@ class VMDistribution(AbstractCircularDistribution):
         S = self.kappa * np.sin(self.mu) + vm2.kappa * np.sin(vm2.mu)
         mu_ = np.mod(np.arctan2(S, C), 2 * np.pi)
         kappa_ = np.sqrt(C**2 + S**2)
-        return VMDistribution(mu_, kappa_)
+        return VonMisesDistribution(mu_, kappa_)
 
     def convolve(self, vm2):
         mu_ = np.mod(self.mu + vm2.mu, 2 * np.pi)
-        t = VMDistribution.besselratio(0, self.kappa) * VMDistribution.besselratio(
+        t = VonMisesDistribution.besselratio(0, self.kappa) * VonMisesDistribution.besselratio(
             0, vm2.kappa
         )
-        kappa_ = VMDistribution.besselratio_inverse(0, t)
-        return VMDistribution(mu_, kappa_)
+        kappa_ = VonMisesDistribution.besselratio_inverse(0, t)
+        return VonMisesDistribution(mu_, kappa_)
 
     def entropy(self):
-        result = -self.kappa * VMDistribution.besselratio(0, self.kappa) + np.log(
+        result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + np.log(
             2 * np.pi * iv(0, self.kappa)
         )
         return result
@@ -72,6 +72,9 @@ class VMDistribution(AbstractCircularDistribution):
             vm (VMDistribution): VM distribution obtained by moment matching.
         """
         mu_ = np.mod(np.arctan2(np.imag(m), np.real(m)), 2 * np.pi)
-        kappa_ = VMDistribution.besselratio_inverse(0, np.abs(m))
-        vm = VMDistribution(mu_, kappa_)
+        kappa_ = VonMisesDistribution.besselratio_inverse(0, np.abs(m))
+        vm = VonMisesDistribution(mu_, kappa_)
         return vm
+
+    def __str__(self) -> str:
+        return "VonMisesDistribution: mu = {}, kappa = {}".format(self.mu, self.kappa)

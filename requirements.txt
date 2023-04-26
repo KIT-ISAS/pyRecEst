@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+mpmath
+pytest
+filterpy
+healpy

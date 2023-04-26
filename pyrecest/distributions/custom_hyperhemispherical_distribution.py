@@ -9,7 +9,7 @@ from .custom_distribution import CustomDistribution
 
 
 class CustomHyperhemisphericalDistribution(
-    CustomDistribution, AbstractHyperhemisphericalDistribution
+    AbstractHyperhemisphericalDistribution, CustomDistribution
 ):
     def __init__(self, f, dim, shift_by: np.ndarray = None):
         CustomDistribution.__init__(self, f, dim)
@@ -33,22 +33,16 @@ class CustomHyperhemisphericalDistribution(
     @staticmethod
     def from_distribution(dist):
         if isinstance(dist, AbstractHyperhemisphericalDistribution):
-            return CustomHyperhemisphericalDistribution(
-                lambda xs: dist.pdf(xs), dist.dim
-            )
+            return CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
         elif isinstance(dist, BinghamDistribution):
-            chhd = CustomHyperhemisphericalDistribution(
-                lambda xs: dist.pdf(xs), dist.dim
-            )
+            chhd = CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
             chhd.scale_by = 2
             return
         elif isinstance(dist, AbstractHypersphericalDistribution):
-            chhd_unnorm = CustomHyperhemisphericalDistribution(
-                lambda xs: dist.pdf(xs), dist.dim
-            )
+            chhd_unnorm = CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
             norm_const_inv = chhd_unnorm.integrate()
             return CustomHyperhemisphericalDistribution(
-                lambda xs: dist.pdf(xs) / norm_const_inv, dist.dim
+                dist.pdf / norm_const_inv, dist.dim
             )
         else:
             raise ValueError("Input variable dist is of wrong class.")
