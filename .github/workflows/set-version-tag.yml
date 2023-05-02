@@ -1,5 +1,4 @@
----
-name: Update version tag
+name: Set version tag
 
 permissions:
   contents: write
@@ -11,7 +10,7 @@ on:
       - completed
 
 jobs:
-  update_version_tag:
+  check_if_tag_exists:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,31 +27,29 @@ jobs:
       - name: Install toml package
         run: pip install toml
 
-      - name: Extract version from pyproject.toml
-        id: extract_version
+      - name: Extract version from pyproject.toml and check if tag exists
+        id: extract_version_and_check_tag
         run: |
           VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
-          echo "TAG_VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "PYPROJECT_VERSION=$VERSION" >> "$GITHUB_ENV"
-      
-      - name: Check if the tag exists
-        id: check_tag
-        run: |
-          EXISTS=$(git ls-remote --tags origin refs/tags/${{ env.TAG_VERSION }} | wc -l)
-          echo "TAG_EXISTS=$EXISTS" >> "$GITHUB_ENV"
+          EXISTS=$(git ls-remote --tags origin refs/tags/${VERSION} | wc -l)
+          echo "::set-output name=tag_version::$VERSION"
+          echo "::set-output name=tag_exists::$EXISTS"
+    outputs:
+      tag_version: ${{ steps.extract_version_and_check_tag.outputs.tag_version }}
+      tag_exists: ${{ steps.extract_version_and_check_tag.outputs.tag_exists }}
+          
+  set_version_tag:
+    needs: check_if_tag_exists
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.check_if_tag_exists.outputs.tag_exists != '1' }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
 
       - name: Create new tag
-        run: git tag ${{ env.TAG_VERSION }}
-        if: ${{ env.TAG_EXISTS == 0 }}
+        run: git tag ${{ env.tag_version }}
 
       - name: Push new tag
-        run: git push origin ${{ env.TAG_VERSION }}
-        if: ${{ env.TAG_EXISTS == 0 }}
-
-      - name: Set neutral status if tag not created
-        if: ${{ env.TAG_EXISTS != 0 }}
-        run: |
-          echo "No new version detected, no tag set."
-          echo "::set-output name=status::neutral"
-          exit 78 # exit code for neutral status
-        shell: bash
+        run: git push origin ${{ env.tag_version }}
