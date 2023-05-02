@@ -4,6 +4,9 @@ from .abstract_non_conditional_distribution import AbstractNonConditionalDistrib
 
 
 class AbstractPeriodicDistribution(AbstractNonConditionalDistribution):
+    def __init__(self, dim):
+        super().__init__(dim=dim)
+
     def mean(self):
         return self.mean_direction()
 

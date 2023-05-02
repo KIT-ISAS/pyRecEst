@@ -68,4 +68,5 @@ class AbstractDistribution(ABC):
                 pdfx = pdfx_new
                 i += 1
 
-        return s[burn_in::skipping, :]
+        relevant_samples = s[burn_in::skipping, :]
+        return np.squeeze(relevant_samples)
