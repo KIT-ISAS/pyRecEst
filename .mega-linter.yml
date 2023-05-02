@@ -5,7 +5,7 @@ PRE_COMMANDS:
   # This takes a lot of time.
   #  - command: pip install --upgrade --no-cache-dir numpy scipy matplotlib mpmath healpy filterpy
   # Hopefully with caching?
-  - command: pip install --upgrade --cache-dir ~/.cache/pip -r requirements.txt
+  - command: pip install --upgrade --cache-dir ~/.cache/pip -r $GITHUB_WORKSPACE/requirements.txt
     venv: pylint
   
 # With apk update and apk add py3-numpy py3-scipy py3-matplotlib,
