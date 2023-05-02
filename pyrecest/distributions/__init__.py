@@ -6,7 +6,10 @@ from .abstract_non_conditional_distribution import AbstractNonConditionalDistrib
 from .abstract_periodic_distribution import AbstractPeriodicDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
 from .circle.abstract_circular_distribution import AbstractCircularDistribution
+from .circle.circular_dirac_distribution import CircularDiracDistribution
 from .circle.circular_fourier_distribution import CircularFourierDistribution
+from .circle.von_mises_distribution import VonMisesDistribution
+from .circle.wrapped_normal_distribution import WrappedNormalDistribution
 from .custom_distribution import CustomDistribution
 from .disk_uniform_distribution import DiskUniformDistribution
 from .ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution
@@ -42,23 +45,20 @@ from .hypersphere_subset.hyperspherical_mixture import HypersphericalMixture
 from .hypersphere_subset.hyperspherical_uniform_distribution import (
     HypersphericalUniformDistribution,
 )
+from .hypersphere_subset.von_mises_fisher_distribution import VonMisesFisherDistribution
+from .hypersphere_subset.watson_distribution import WatsonDistribution
 from .hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
 )
 from .hypertorus.abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
-from .nonperiodic.abstract_linear_distribution import AbstractLinearDistribution
-from .nonperiodic.custom_linear_distribution import CustomLinearDistribution
-from .nonperiodic.gaussian_distribution import GaussianDistribution
 from .hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
 from .hypertorus.toroidal_dirac_distribution import ToroidalDiracDistribution
-from .circle.von_mises_distribution import VonMisesDistribution
-from .hypersphere_subset.von_mises_fisher_distribution import VonMisesFisherDistribution
-from .circle.circular_dirac_distribution import CircularDiracDistribution
-from .hypersphere_subset.watson_distribution import WatsonDistribution
-from .circle.wrapped_normal_distribution import WrappedNormalDistribution
+from .nonperiodic.abstract_linear_distribution import AbstractLinearDistribution
+from .nonperiodic.custom_linear_distribution import CustomLinearDistribution
+from .nonperiodic.gaussian_distribution import GaussianDistribution
 
 # Aliases for brevity and compatibility with libDirectional
 HypertoroidalWNDistribution = HypertoroidalWrappedNormalDistribution
