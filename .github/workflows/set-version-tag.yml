@@ -1,3 +1,4 @@
+---
 name: Update version tag
 
 permissions:
@@ -47,3 +48,11 @@ jobs:
       - name: Push new tag
         run: git push origin ${{ env.TAG_VERSION }}
         if: ${{ env.TAG_EXISTS == 0 }}
+
+      - name: Set neutral status if tag not created
+        if: ${{ env.TAG_EXISTS != 0 }}
+        run: |
+          echo "No new version detected, no tag set."
+          echo "::set-output name=status::neutral"
+          exit 78 # exit code for neutral status
+        shell: bash
