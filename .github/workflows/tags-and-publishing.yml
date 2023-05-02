@@ -32,11 +32,12 @@ jobs:
         run: |
           VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
           EXISTS=$(git ls-remote --tags origin refs/tags/${VERSION} | wc -l)
-          echo "::set-output name=tag_version::$VERSION"
-          echo "::set-output name=tag_exists::$EXISTS"
+          echo "tag_version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_exists=$EXISTS" >> "$GITHUB_OUTPUT"
     outputs:
       tag_version: ${{ steps.extract_version_and_check_tag.outputs.tag_version }}
       tag_exists: ${{ steps.extract_version_and_check_tag.outputs.tag_exists }}
+
 
   set_version_tag:
     needs: check_if_tag_exists
