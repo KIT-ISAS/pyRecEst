@@ -2,10 +2,12 @@
 APPLY_FIXES: all
 
 PRE_COMMANDS:
-  # This takes a lot of time but I have not found any other good and elegant solution
+  # This takes a lot of time.
   #  - command: pip install --upgrade --no-cache-dir numpy scipy matplotlib mpmath healpy filterpy
-  - command: pip install --upgrade --cache-dir ~/.cache/pip numpy scipy matplotlib mpmath healpy filterpy
+  # Hopefully with caching?
+  - command: pip install --upgrade --cache-dir ~/.cache/pip -r requirements.txt
     venv: pylint
+  
 # With apk update and apk add py3-numpy py3-scipy py3-matplotlib,
 # they are not found, regardless whether PRE_COMMANDS or
 # PYTHON_PYLINT_PRE_COMMANDS is used.
