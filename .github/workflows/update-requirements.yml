@@ -1,5 +1,8 @@
 name: Update requirements.txt
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
@@ -10,6 +13,8 @@ on:
 jobs:
   update_requirements:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -29,9 +34,8 @@ jobs:
         run: poetry export --format requirements.txt --output requirements.txt --extras healpy_support --without-hashes
 
       - name: Commit and push changes
-        run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "github-actions-bot@example.com"
-          git add requirements.txt
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update requirements.txt"
-          git push
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update requirements.txt"
+          branch: ${{ github.head_ref }}
+          file_pattern: requirements.txt
