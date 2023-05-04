@@ -55,12 +55,13 @@ jobs:
       - name: Push new tag
         run: git push origin ${{ needs.check_if_tag_exists.outputs.tag_version }}
     outputs:
-      tag_set: true
+      tag_set: 'true'
 
   build_and_publish:
     needs: set_version_tag
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.check_if_tag_exists.outputs.tag_exists != '1' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.set_version_tag.outputs.tag_set == 'true' }}
+
     permissions:
       contents: write
     steps:

@@ -20,9 +20,9 @@ class HypertoroidalDiracDistribution(
 
     def mean_direction(self):
         """
-        Calculate the mean direction of the HypertoroidalWDDistribution.
+        Calculate the mean direction of the HypertoroidalDiracDistribution.
 
-        :param self: HypertoroidalWDDistribution instance
+        :param self: HypertoroidalDiracDistribution instance
         :return: Mean direction
         """
         a = self.trigonometric_moment(1)
@@ -31,9 +31,9 @@ class HypertoroidalDiracDistribution(
 
     def trigonometric_moment(self, n):
         """
-        Calculate the trigonometric moment of the HypertoroidalWDDistribution.
+        Calculate the trigonometric moment of the HypertoroidalDiracDistribution.
 
-        :param self: HypertoroidalWDDistribution instance
+        :param self: HypertoroidalDiracDistribution instance
         :param n: Integer moment order
         :return: Trigonometric moment
         """
@@ -79,9 +79,9 @@ class HypertoroidalDiracDistribution(
 
     def to_wd(self):
         assert self.dim == 1
-        from ..circle.circular_dirac_distribution import WDDistribution
+        from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
-        return WDDistribution(self.d, self.w)
+        return CircularDiracDistribution(self.d, self.w)
 
     @staticmethod
     def from_distribution(distribution, no_of_samples):

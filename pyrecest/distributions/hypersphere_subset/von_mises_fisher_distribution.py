@@ -43,7 +43,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             samples[2 * i, i + 1] = np.sin(alpha)
             samples[2 * i + 1, i + 1] = -np.sin(alpha)
 
-        Q = self.getRotationMatrix()
+        Q = self.get_rotation_matrix()
         samples = Q @ samples
         return samples
 

@@ -8,8 +8,7 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 
 class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):
-        self.dim = 2
-        super().__init__()
+        super().__init__(2)
 
     @abstractmethod
     def pdf(self, xa):

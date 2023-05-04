@@ -28,10 +28,10 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def sample_metropolis_hastings(
         self, n, proposal=None, start_point=None, burn_in=10, skipping=5
     ):
-        from .wrapped_normal_distribution import WNDistribution
+        from .wrapped_normal_distribution import WrappedNormalDistribution
 
         if proposal is None:
-            wn = WNDistribution.from_moment(self.trigonometric_moment(1))
+            wn = WrappedNormalDistribution.from_moment(self.trigonometric_moment(1))
             wn.mu = 0
 
             def proposal(x):
@@ -52,9 +52,9 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         Returns:
             vm (VMDistribution): Distribution with the same first trigonometric moment.
         """
-        from .von_mises_distribution import VMDistribution
+        from .von_mises_distribution import VonMisesDistribution
 
-        vm = VMDistribution.from_moment(self.trigonometric_moment(1))
+        vm = VonMisesDistribution.from_moment(self.trigonometric_moment(1))
         return vm
 
     def to_wn(self):
@@ -62,11 +62,11 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         Convert to wrapped normal by trigonometric moment matching.
 
         Returns:
-            wn (WNDistribution): Distribution with the same first trigonometric moment.
+            wn (WrappedNormalDistribution): Distribution with the same first trigonometric moment.
         """
-        from .wrapped_normal_distribution import WNDistribution
+        from .wrapped_normal_distribution import WrappedNormalDistribution
 
-        wn = WNDistribution.from_moment(self.trigonometric_moment(1))
+        wn = WrappedNormalDistribution.from_moment(self.trigonometric_moment(1))
         return wn
 
     @staticmethod
