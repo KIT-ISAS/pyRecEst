@@ -40,12 +40,38 @@ jobs:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0 # If you use VALIDATE_ALL_CODEBASE = true, you can remove this line to improve performances
 
+      ## Set up Python
+      #- name: Set up Python
+      #  uses: actions/setup-python@v3
+      #  with:
+      #    python-version: 3.11.2
+
+      ## Cache the dependencies
+      #- name: Cache dependencies
+      #  uses: actions/cache@v3
+      #  if: always()
+      #  id: cache
+      #  with:
+      #    path: ${{ github.workspace }}/cache-directory
+      #    key: ${{ runner.os }}-dependencies-${{ hashFiles('${{ github.workspace }}/requirements.txt') }}
+      #    restore-keys: |
+      #      ${{ runner.os }}-dependencies-
+
+      ## Install dependencies outside the container
+      #- name: Install dependencies
+      #  if: steps.cache.outputs.cache-hit != 'true'
+      #  run: |
+      #    python3 -m venv venv
+      #    source venv/bin/activate
+      #    pip install --cache-dir ${{ github.workspace }}/cache-directory -r ${{ github.workspace }}/requirements.txt
+      #    deactivate
+
       # MegaLinter
       - name: MegaLinter
         id: ml
         # You can override MegaLinter flavor used to have faster performances
         # More info at https://megalinter.io/flavors/
-        uses: oxsecurity/megalinter@v6
+        uses: oxsecurity/megalinter@v6 # Do not use flavor because numpy needs g++
         env:
           # All available variables are described in documentation
           # https://megalinter.io/configuration/
@@ -53,6 +79,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # ADD YOUR CUSTOM ENV VARIABLES HERE OR DEFINE THEM IN A FILE .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY
           # DISABLE: COPYPASTE,SPELL # Uncomment to disable copy-paste and spell checks
+        #with:
+        #  args: -v ${{ github.workspace }}/cache-directory:/cache-directory
+
+      #- name: List cache-directory contents
+      #  if: ${{ success() }} || ${{ failure() }}
+      #  run: ls -la ${{ github.workspace }}/cache-directory
 
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
