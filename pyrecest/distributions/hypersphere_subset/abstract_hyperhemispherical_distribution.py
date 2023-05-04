@@ -50,12 +50,6 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         mu = mu / np.linalg.norm(mu)
         return mu
 
-    def moment_numerical(self):
-        if self.dim == 1:
-            return super().moment_numerical()
-        else:
-            return super().moment_numerical()
-
     @staticmethod
     def get_full_integration_boundaries(dim):
         if dim == 1:

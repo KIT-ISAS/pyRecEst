@@ -46,14 +46,14 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
     def sample(self, n):
         if self.dim != 2:
             return self.to_bingham().sample(n)
-        else:
-            pass
+        
+        return super().sample(n)
 
     def mode(self):
         if self.kappa >= 0:
             return self.mu
-        else:
-            return self.mode_numerical()
+        
+        return self.mode_numerical()
 
     def set_mode(self, new_mode):
         assert new_mode.shape == self.mu.shape

@@ -5,7 +5,7 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 class BinghamDistribution(AbstractHypersphericalDistribution):
     def __init__(self, Z, M):
-        self.dim = M.shape[0] - 1
+        AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
         assert M.shape[1] == self.dim + 1, "M is not square"
         assert Z.shape[0] == self.dim + 1, "Z has wrong length"

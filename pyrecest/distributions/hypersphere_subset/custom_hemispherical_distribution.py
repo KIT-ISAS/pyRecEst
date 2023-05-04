@@ -22,11 +22,11 @@ class CustomHemisphericalDistribution(
 
         if isinstance(dist, AbstractHyperhemisphericalDistribution):
             return CustomHemisphericalDistribution(dist.pdf)
-        elif isinstance(dist, BinghamDistribution):
+        if isinstance(dist, BinghamDistribution):
             chsd = CustomHemisphericalDistribution(dist.pdf)
             chsd.scale_by = 2
             return chsd
-        elif isinstance(dist, AbstractHypersphericalDistribution):
+        if isinstance(dist, AbstractHypersphericalDistribution):
             warning_message = (
                 "You are creating a CustomHyperhemispherical distribution based on a distribution on the full hypersphere. "
                 + "Using numerical integration to calculate the normalization constant."
@@ -37,5 +37,5 @@ class CustomHemisphericalDistribution(
             chsd = CustomHemisphericalDistribution(dist.pdf)
             chsd.scale_by = 1 / norm_const_inv
             return chsd
-        else:
-            raise ValueError("Input variable dist is of wrong class.")
+        
+        raise ValueError("Input variable dist is of wrong class.")

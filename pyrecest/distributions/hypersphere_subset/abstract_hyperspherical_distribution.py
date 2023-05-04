@@ -11,7 +11,7 @@ from .abstract_hypersphere_subset_distribution import (
 
 class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @abstractmethod
-    def pdf(self, x):
+    def pdf(self, xs):
         pass
 
     def plot(self, faces=100, grid_faces=20):
@@ -86,13 +86,13 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def get_full_integration_boundaries(dim):
         if dim == 1:
             return [0, 2 * np.pi]
-        else:
-            return np.vstack(
-                (
-                    np.zeros((dim)),
-                    np.concatenate(([2 * np.pi], np.pi * np.ones(dim - 1))),
-                )
-            ).T
+        
+        return np.vstack(
+            (
+                np.zeros((dim)),
+                np.concatenate(([2 * np.pi], np.pi * np.ones(dim - 1))),
+            )
+        ).T
 
     def integrate(self, integration_boundaries=None):
         if integration_boundaries is None:

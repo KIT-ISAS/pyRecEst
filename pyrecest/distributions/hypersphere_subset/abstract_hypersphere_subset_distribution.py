@@ -128,13 +128,13 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
                     return f_hypersph_coords(phi)
 
                 return g_1d
-            elif dim == 2:
+            if dim == 2:
 
                 def g_2d(phi1, phi2):
                     return f_hypersph_coords(phi1, phi2) * np.sin(phi2)
 
                 return g_2d
-            elif dim == 3:
+            if dim == 3:
 
                 def g_3d(phi1, phi2, phi3):
                     return (
@@ -144,8 +144,8 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
                     )
 
                 return g_3d
-            else:
-                raise ValueError("Dimension not supported.")
+            
+            raise ValueError("Dimension not supported.")
 
         for i in range(self.dim + 1):
             for j in range(self.dim + 1):

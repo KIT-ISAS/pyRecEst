@@ -1,7 +1,7 @@
 ---
 APPLY_FIXES: all
 
-PRE_COMMANDS:
+#PRE_COMMANDS:
   # This takes a lot of time.
   #  - command: pip install --upgrade --no-cache-dir numpy scipy matplotlib mpmath healpy filterpy
   # Trying aroudn with caching?
