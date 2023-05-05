@@ -46,6 +46,7 @@ jobs:
             ${{ runner.os }}-alpine-wheels-
 
       - name: Set up Alpine Linux
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: jirutka/setup-alpine@v1
         with:
           packages: >
@@ -56,6 +57,7 @@ jobs:
             openblas-dev
             
       - name: Upgrade pip and install wheel
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install wheel
