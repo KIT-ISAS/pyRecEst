@@ -17,26 +17,29 @@ class KalmanFilter(AbstractEuclideanFilter):
         )  # Set dim_z identical to the dimensionality of the state because we do not know yet.
         self.set_state(prior_mean, prior_cov, prior_gauss)
 
-    def set_state(self, mean=None, cov=None, gauss=None):
-        # Set state either by providing a GaussianDistribution or mean and covariance
-        if gauss is None:
-            assert mean is not None and cov is not None
+    def set_state(self, state):
+        # Set state either by providing a GaussianDistribution or a (mean, covariance) tuple
+        
+        if isinstance(state, GaussianDistribution):
+            mean = state.mu
+            cov = state.C
         else:
-            assert mean is None and cov is None
-            mean = gauss.mu
-            cov = gauss.C
+            assert len(state) == 2
+            mean = state[0]
+            cov = state[0]
+            
         self.kf.x = np.asarray(mean)
         self.kf.P = np.asarray(cov)  # FilterPy uses .P
 
     def predict_identity(self, sys_noise_mean, sys_noise_cov):
         self.kf.predict(Q=sys_noise_cov, u=sys_noise_mean)
 
-    def predict_linear(self, system_matrix, sys_noise_cov, input=None):
-        if input is None:
+    def predict_linear(self, system_matrix, sys_noise_cov, sys_input=None):
+        if sys_input is None:
             B = None
         else:
-            B = np.eye(input.shape[0])
-        self.kf.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=input)
+            B = np.eye(sys_input.shape[0])
+        self.kf.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
     def update_identity(self, meas, meas_noise_cov):
         self.kf.update(

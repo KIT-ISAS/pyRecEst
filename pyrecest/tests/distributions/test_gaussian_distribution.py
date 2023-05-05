@@ -59,14 +59,15 @@ class GaussianDistributionTest(unittest.TestCase):
         dist_marginalized = g.marginalize_out(1)
 
         def marginlized_1D_via_integrate(x):
-            return np.array(
-                [
-                    scipy.integrate.quad(
-                        lambda y: g.pdf(np.array([xCurr, y])), -np.inf, np.inf
-                    )[0]
-                    for xCurr in x
-                ]
-            )
+            
+            def integrand(y, xCurr):
+                return g.pdf(np.array([xCurr, y]))
+            
+            result = []
+            for xCurr in x:
+                integral_value, _ = scipy.integrate.quad(integrand, -np.inf, np.inf, args=(xCurr, g))
+                result.append(integral_value)
+            return np.array(result)
 
         self.assertTrue(
             np.allclose(

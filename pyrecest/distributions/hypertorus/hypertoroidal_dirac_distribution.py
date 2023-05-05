@@ -11,12 +11,10 @@ class HypertoroidalDiracDistribution(
 ):
     def __init__(self, d, w=None):
         AbstractDiracDistribution.__init__(self, np.mod(d, 2 * np.pi), w)
+        AbstractHypertoroidalDistribution.__init__(self, self.dim)
 
     def plot(self, *args, **kwargs):
         raise NotImplementedError("Plotting is not implemented")
-
-    def sample(self, n):
-        return super().sample(n)
 
     def mean_direction(self):
         """

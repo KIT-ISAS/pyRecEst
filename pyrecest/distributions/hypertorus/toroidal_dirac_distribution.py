@@ -8,12 +8,12 @@ class ToroidalDiracDistribution(
     HypertoroidalDiracDistribution, AbstractToroidalDistribution
 ):
     def __init__(self, d, w=None):
+        AbstractToroidalDistribution.__init__(self)
         HypertoroidalDiracDistribution.__init__(self, d, w)
 
     def integrate(self, left=None, right=None):
         left, right = self.prepare_integral_arguments(left, right)
 
-        # TODO: Handle case where [l, r] spans more than 2*pi
         assert 0 <= left[0] <= 2 * np.pi
         assert 0 <= right[0] <= 2 * np.pi
         assert 0 <= left[1] <= 2 * np.pi

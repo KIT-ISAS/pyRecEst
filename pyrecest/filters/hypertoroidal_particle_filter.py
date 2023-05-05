@@ -7,27 +7,28 @@ from .abstract_particle_filter import AbstractParticleFilter
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
     def __init__(self, n_particles, dim):
-        self.dist = HypertoroidalWDDistribution(
+        AbstractParticleFilter.__init__(self)
+        self.filter_state = HypertoroidalWDDistribution(
             np.tile(np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim))
         )
 
     def set_state(self, dist_):
         if not isinstance(dist_, HypertoroidalWDDistribution):
-            dist_ = HypertoroidalWDDistribution(dist_.sample(self.dist.w.size))
-        self.dist = dist_
+            dist_ = HypertoroidalWDDistribution(dist_.sample(self.filter_state.w.size))
+        self.filter_state = dist_
 
     def predict_nonlinear(
         self, f, noise_distribution=None, function_is_vectorized=True
     ):
         if function_is_vectorized:
-            self.dist = f(self.dist)
+            self.filter_state = f(self.filter_state)
         else:
-            self.dist = self.dist.apply_function(f)
+            self.filter_state = self.filter_state.apply_function(f)
 
         if noise_distribution is not None:
-            noise = noise_distribution.sample(self.dist.w.size)
-            self.dist.d += noise
-            self.dist.d = np.mod(self.dist.d, 2 * np.pi)
+            noise = noise_distribution.sample(self.filter_state.w.size)
+            self.filter_state.d += noise
+            self.filter_state.d = np.mod(self.filter_state.d, 2 * np.pi)
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
@@ -36,9 +37,9 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         assert callable(f), "f must be a function"
 
         weights /= np.sum(weights)
-        n = self.dist.shape[0]
+        n = self.filter_state.shape[0]
         noise_ids = np.random.choice(np.arange(weights.size), size=n, p=weights)
-        d = np.zeros_like(self.dist)
+        d = np.zeros_like(self.filter_state)
         for i in range(n):
-            d[i, :] = f(self.dist[i, :], samples[noise_ids[i, :]])
-        self.dist = d
+            d[i, :] = f(self.filter_state[i, :], samples[noise_ids[i, :]])
+        self.filter_state = d

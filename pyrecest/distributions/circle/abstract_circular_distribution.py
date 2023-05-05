@@ -25,26 +25,6 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
         return np.array([cdf_single(x) for x in xs])
 
-    def sample_metropolis_hastings(
-        self, n, proposal=None, start_point=None, burn_in=10, skipping=5
-    ):
-        from .wrapped_normal_distribution import WrappedNormalDistribution
-
-        if proposal is None:
-            wn = WrappedNormalDistribution.from_moment(self.trigonometric_moment(1))
-            wn.mu = 0
-
-            def proposal(x):
-                return (x + wn.sample(1)) % (2 * np.pi)
-
-        if start_point is None:
-            start_point = self.mean_direction()
-
-        s = super().sample_metropolis_hastings(
-            n, proposal, start_point, burn_in, skipping
-        )
-        return s
-
     def to_vm(self):
         """
         Convert to von Mises by trigonometric moment matching.

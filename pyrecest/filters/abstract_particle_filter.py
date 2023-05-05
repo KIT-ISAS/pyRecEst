@@ -6,13 +6,13 @@ from .abstract_filter import AbstractFilter
 
 class AbstractParticleFilter(AbstractFilter):
     def __init__(self):
-        self.dist = None
+        self.filter_state = None
 
-    def set_state(self, dist_):
+    def set_state(self, state):
         assert isinstance(
-            dist_, type(self.dist)
+            state, type(self.filter_state)
         ), "New distribution has to be of the same class as (or inherit from) the previous density."
-        self.dist = dist_
+        self.filter_state = state
 
     def predict_identity(self, noise_distribution):
         self.predict_nonlinear(lambda x: x, noise_distribution)
@@ -24,21 +24,21 @@ class AbstractParticleFilter(AbstractFilter):
         function_is_vectorized=True,
         shift_instead_of_add=True,
     ):
-        assert noise_distribution is None or self.dist.dim == noise_distribution.dim
+        assert noise_distribution is None or self.filter_state.dim == noise_distribution.dim
 
         if function_is_vectorized:
-            self.dist.d = f(self.dist.d)
+            self.filter_state.d = f(self.filter_state.d)
         else:
-            self.dist = self.dist.apply_function(f)
+            self.filter_state = self.filter_state.apply_function(f)
 
         if noise_distribution is not None:
             if not shift_instead_of_add:
-                noise = noise_distribution.sample(self.dist.w.size)
-                self.dist.d = self.dist.d + noise
+                noise = noise_distribution.sample(self.filter_state.w.size)
+                self.filter_state.d = self.filter_state.d + noise
             else:
-                for i in range(self.dist.d.shape[1]):
-                    noise_curr = noise_distribution.set_mode(self.dist.d[i, :])
-                    self.dist.d[i, :] = noise_curr.sample(1)
+                for i in range(self.filter_state.d.shape[1]):
+                    noise_curr = noise_distribution.set_mode(self.filter_state.d[i, :])
+                    self.filter_state.d[i, :] = noise_curr.sample(1)
 
     def predict_nonlinear_non_additive(self, f, samples, weights):
         assert (
@@ -46,22 +46,22 @@ class AbstractParticleFilter(AbstractFilter):
         ), "samples and weights must match in size"
 
         weights = weights / np.sum(weights)
-        n = self.dist.w.size
+        n = self.filter_state.w.size
         noise_ids = np.random.choice(weights.size, n, p=weights)
-        d = np.zeros((self.dist.dim, n))
+        d = np.zeros((self.filter_state.dim, n))
         for i in range(n):
-            d[i, :] = f(self.dist.d[i, :], samples[noise_ids[i]])
+            d[i, :] = f(self.filter_state.d[i, :], samples[noise_ids[i]])
 
-        self.dist.d = d
+        self.filter_state.d = d
 
     def update_identity(self, noise_distribution, z, shift_instead_of_add=True):
         assert z is None or z.size == noise_distribution.dim
         if not shift_instead_of_add:
             raise NotImplementedError()
-        else:
-            noise_for_likelihood = noise_distribution.set_mode(z)
-            likelihood = noise_for_likelihood.pdf
-            self.update_nonlinear(likelihood)
+        
+        noise_for_likelihood = noise_distribution.set_mode(z)
+        likelihood = noise_for_likelihood.pdf
+        self.update_nonlinear(likelihood)
 
     def update_nonlinear(self, likelihood, z=None):
         if isinstance(likelihood, AbstractDistribution):
@@ -71,15 +71,15 @@ class AbstractParticleFilter(AbstractFilter):
             likelihood = likelihood.pdf
 
         if z is None:
-            self.dist = self.dist.reweigh(likelihood)
+            self.filter_state = self.filter_state.reweigh(likelihood)
         else:
-            self.dist = self.dist.reweigh(lambda x: likelihood(z, x))
+            self.filter_state = self.filter_state.reweigh(lambda x: likelihood(z, x))
 
-        self.dist.d = self.dist.sample(self.dist.d.shape[0])
-        self.dist.w = np.full(self.dist.d.shape[0], 1 / self.dist.d.shape[0])
+        self.filter_state.d = self.filter_state.sample(self.filter_state.d.shape[0])
+        self.filter_state.w = np.full(self.filter_state.d.shape[0], 1 / self.filter_state.d.shape[0])
 
     def get_estimate(self):
-        return self.dist
+        return self.filter_state
 
     def association_likelihood(self, likelihood):
         likelihood_val = np.sum(

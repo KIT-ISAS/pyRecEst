@@ -9,10 +9,10 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 
 class GaussianDistribution(AbstractLinearDistribution):
     def __init__(self, mu, C, check_validity=True):
+        AbstractLinearDistribution.__init__(self, dim=np.size(mu))
         assert (
             1 == np.size(mu) == np.size(C) or np.size(mu) == C.shape[0] == C.shape[1]
         ), "Size of C invalid"
-        self.dim = np.size(mu)
         assert np.ndim(mu) <= 1
         self.mu = mu
 

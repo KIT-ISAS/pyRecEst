@@ -21,6 +21,9 @@ class CustomHyperhemisphericalDistribution(
         assert p.ndim <= 1, "Output format of pdf is not as expected"
         return p
 
+    def integrate(self, integration_boundaries=None):
+        return AbstractHyperhemisphericalDistribution.integrate(self, integration_boundaries)
+
     @staticmethod
     def from_distribution(dist):
         if isinstance(dist, AbstractHyperhemisphericalDistribution):

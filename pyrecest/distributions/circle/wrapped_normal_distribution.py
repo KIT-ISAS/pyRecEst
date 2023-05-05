@@ -108,9 +108,9 @@ class WrappedNormalDistribution(
     def sample(self, n):
         return np.mod(self.mu + self.sigma * np.random.randn(1, n), 2 * np.pi)
 
-    def shift(self, angle):
-        assert np.isscalar(angle)
-        return WrappedNormalDistribution(self.mu + angle, self.sigma)
+    def shift(self, shift_angles):
+        assert np.isscalar(shift_angles)
+        return WrappedNormalDistribution(self.mu + shift_angles, self.sigma)
 
     def to_vm(self):
         # Convert to Von Mises distribution

@@ -18,6 +18,7 @@ class CustomLinearDistribution(AbstractLinearDistribution, CustomDistribution):
         dim_ (scalar)
             dimension of the Euclidean space
         """
+        AbstractLinearDistribution.__init__(self, dim=dim)
         CustomDistribution.__init__(self, f, dim)
 
     @staticmethod

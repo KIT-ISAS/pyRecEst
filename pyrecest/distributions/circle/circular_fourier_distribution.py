@@ -11,6 +11,7 @@ class CircularFourierDistribution:
     """
     Circular Fourier Distribution. This is based on my implementation for pytorch in pyDirectional
     """
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         transformation="sqrt",
@@ -138,9 +139,9 @@ class CircularFourierDistribution:
 
         return fd_normalized
 
+    # pylint: disable=too-many-branches
     def integrate(self):
         pi = np.pi
-        # pylint: disable=too-many-branches
         if self.a is not None and self.b is not None:
             if self.multiplied_by_n:
                 a = self.a * (1 / self.n)

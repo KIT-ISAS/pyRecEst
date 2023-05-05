@@ -2,7 +2,7 @@ import copy
 import unittest
 
 import numpy as np
-import scipy.integrate as integrate
+from scipy import integrate
 from pyrecest.distributions import (
     CircularFourierDistribution,
     VonMisesDistribution,

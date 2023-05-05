@@ -4,4 +4,5 @@ from .abstract_hyperhemispherical_distribution import (
 
 
 class AbstractHemisphericalDistribution(AbstractHyperhemisphericalDistribution):
-    AbstractHyperhemisphericalDistribution.__init__(self, dim=2)
+    def __init__(self):
+        AbstractHyperhemisphericalDistribution.__init__(self, dim=2)
