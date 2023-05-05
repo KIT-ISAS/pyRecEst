@@ -7,6 +7,7 @@ from .abstract_distribution import AbstractDistribution
 
 class AbstractMixture(AbstractDistribution):
     def __init__(self, dists, w=None):
+        AbstractDistribution.__init__(self, dim=dists[0].dim)
         if w is None:
             w = np.ones(len(dists)) / len(dists)
         else:

@@ -15,5 +15,5 @@ class CircularDiracDistribution(HypertoroidalDiracDistribution):
     def plot_interpolated(self, plot_string="-"):
         raise NotImplementedError("No interpolation available for WDDistribution.")
 
-    def trigonometric_moment(self, n, whole_range=False, transformation="identity"):
+    def trigonometric_moment(self, n):
         return super().trigonometric_moment(n)

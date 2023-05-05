@@ -13,9 +13,12 @@ class WrappedNormalDistribution(
 ):
     def __init__(self, mu_, sigma_):
         AbstractCircularDistribution.__init__(self)
-        self.mu = np.mod(mu_, 2 * np.pi)
-        self.sigma = sigma_
-
+        HypertoroidalWrappedNormalDistribution.__init__(self, mu_, sigma_**2)
+        
+    @property
+    def sigma(self):
+        return np.sqrt(self.C)
+        
     def pdf(self, xs):
         if self.sigma <= 0:
             raise ValueError("sigma must be >0.")

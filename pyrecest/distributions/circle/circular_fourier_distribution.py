@@ -2,17 +2,15 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.integrate as integrate
+from scipy import integrate
 from numpy.fft import irfft, rfft
 
 from .circular_dirac_distribution import CircularDiracDistribution
 
-"""
-Fourier Distribution. The real and complex ones and the option to have it multiplied_by_n or not serve to use the minimum number of operations and thus optimize the graph
-"""
-
-
 class CircularFourierDistribution:
+    """
+    Circular Fourier Distribution. This is based on my implementation for pytorch in pyDirectional
+    """
     def __init__(
         self,
         transformation="sqrt",
@@ -35,7 +33,7 @@ class CircularFourierDistribution:
             self.c = None
             self.n = a.shape[0] + b.shape[0]
         else:
-            raise Exception("Need to provide either c or a and b.")
+            raise ValueError("Need to provide either c or a and b.")
 
         self.multiplied_by_n = multiplied_by_n
         self.transformation = transformation
@@ -82,10 +80,10 @@ class CircularFourierDistribution:
         xs = xs.reshape(-1, 1)
         a, b = self.get_a_b()
 
-        range = np.arange(1, a.shape[0]).astype(xs.dtype)
+        k_range = np.arange(1, a.shape[0]).astype(xs.dtype)
         p = a[0] / 2 + np.sum(
-            a[1:].reshape(1, -1) * np.cos(xs * range)
-            + b.reshape(1, -1) * np.sin(xs * range),
+            a[1:].reshape(1, -1) * np.cos(xs * k_range)
+            + b.reshape(1, -1) * np.sin(xs * k_range),
             axis=1,
         )
         if self.multiplied_by_n:
@@ -95,7 +93,7 @@ class CircularFourierDistribution:
         elif self.transformation == "identity":
             pass
         else:
-            raise Exception("Transformation not supported.")
+            raise NotImplementedError("Transformation not supported.")
         return p
 
     def normalize(self):
@@ -107,7 +105,7 @@ class CircularFourierDistribution:
             elif self.transformation == "sqrt":
                 scale_factor = 1 / np.sqrt(integral_value)
             else:
-                raise Exception("Transformation not supported.")
+                raise NotImplementedError("Transformation not supported.")
 
             a_new = self.a * scale_factor
             b_new = self.b * scale_factor
@@ -125,7 +123,7 @@ class CircularFourierDistribution:
             elif self.transformation == "sqrt":
                 scale_factor = 1 / np.sqrt(integral_value)
             else:
-                raise Exception("Transformation not supported.")
+                raise NotImplementedError("Transformation not supported.")
 
             c_new = self.c * scale_factor
             fd_normalized = CircularFourierDistribution(
@@ -136,12 +134,13 @@ class CircularFourierDistribution:
             )
 
         else:
-            raise Exception("Need either a and b or c.")
+            raise ValueError("Need either a and b or c.")
 
         return fd_normalized
 
     def integrate(self):
         pi = np.pi
+        # pylint: disable=too-many-branches
         if self.a is not None and self.b is not None:
             if self.multiplied_by_n:
                 a = self.a * (1 / self.n)
@@ -156,7 +155,7 @@ class CircularFourierDistribution:
                 from_a1_to_end_and_b = np.sum(a[1:] ** 2) + np.sum(b**2)
                 a0_non_rooted = from_a0 + from_a1_to_end_and_b
             else:
-                raise Exception("Transformation not supported.")
+                raise NotImplementedError("Transformation not supported.")
             integral = a0_non_rooted * pi
         elif self.c is not None:
             if self.transformation == "identity":
@@ -178,9 +177,9 @@ class CircularFourierDistribution:
                 a0_non_rooted = 2 * from_c0 + 4 * from_c1_to_end
                 integral = a0_non_rooted * pi
             else:
-                raise Exception("Transformation not supported.")
+                raise NotImplementedError("Transformation not supported.")
         else:
-            raise Exception("Need either a and b or c.")
+            raise ValueError("Need either a and b or c.")
         return integral
 
     def integrate_numerically(self):
@@ -207,7 +206,7 @@ class CircularFourierDistribution:
         elif self.transformation == "identity":
             p = vals
         else:
-            raise Exception("Transformation not supported.")
+            raise NotImplementedError("Transformation not supported.")
 
         plt.plot(xs, p, "r+")
         plt.show()
@@ -279,7 +278,7 @@ class CircularFourierDistribution:
             elif transformation == "sqrt":
                 fvals = np.sqrt(fvals)
             else:
-                raise Exception("Transformation not supported.")
+                raise NotImplementedError("Transformation not supported.")
             c = rfft(fvals)
             if not store_values_multiplied_by_n:
                 c = c * (1 / n)

@@ -20,8 +20,8 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
             if x_mod < starting_point_mod:
                 return 1 - self.integrate_numerically(x_mod, starting_point_mod)
-            else:
-                return self.integrate_numerically(starting_point_mod, x_mod)
+            
+            return self.integrate_numerically(starting_point_mod, x_mod)
 
         return np.array([cdf_single(x) for x in xs])
 

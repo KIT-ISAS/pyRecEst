@@ -13,6 +13,7 @@ class CustomHemisphericalDistribution(
     CustomHyperhemisphericalDistribution, AbstractHemisphericalDistribution
 ):
     def __init__(self, f):
+        AbstractHemisphericalDistribution.__init__(self)
         CustomHyperhemisphericalDistribution.__init__(self, f, 2)
 
     @staticmethod

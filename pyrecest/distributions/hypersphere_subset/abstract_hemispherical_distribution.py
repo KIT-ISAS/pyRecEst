@@ -4,4 +4,4 @@ from .abstract_hyperhemispherical_distribution import (
 
 
 class AbstractHemisphericalDistribution(AbstractHyperhemisphericalDistribution):
-    pass
+    AbstractHyperhemisphericalDistribution.__init__(self, dim=2)

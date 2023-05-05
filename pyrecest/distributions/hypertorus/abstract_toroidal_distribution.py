@@ -11,7 +11,7 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         super().__init__(2)
 
     @abstractmethod
-    def pdf(self, xa):
+    def pdf(self, xs):
         pass
 
     def integrate(self, left=None, right=None):

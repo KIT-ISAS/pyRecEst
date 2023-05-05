@@ -12,7 +12,7 @@ from .hypersphere_subset.abstract_hypersphere_subset_distribution import (
 
 class CustomDistribution(AbstractDistribution):
     def __init__(self, f, dim: int):
-        self.dim = dim
+        AbstractDistribution.__init__(self, dim=dim)
         self.f = f
         self.scale_by = 1
         if isinstance(self, AbstractHypersphereSubsetDistribution):

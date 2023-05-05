@@ -8,7 +8,7 @@ from .abstract_distribution import AbstractDistribution
 
 class AbstractDiracDistribution(AbstractDistribution):
     def __init__(self, d, w=None):
-        self.dim = d.shape[-1]
+        AbstractDistribution.__init__(self, dim=d.shape[-1])
         if self.dim > d.shape[0]:
             warnings.warn(
                 "Not even one Dirac per dimension. If this warning is unexpected, verify d_ is shaped correctly."
@@ -19,16 +19,16 @@ class AbstractDiracDistribution(AbstractDistribution):
         assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
         self.d = copy.copy(d)
         self.w = copy.copy(w)
-        self._normalize_in_place()
+        self.normalize_in_place()
 
-    def _normalize_in_place(self):
+    def normalize_in_place(self):
         if not np.isclose(np.sum(self.w), 1, atol=1e-10):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
             self.w = self.w / np.sum(self.w)
 
     def normalize(self):
         dist = copy.deepcopy(self)
-        dist._normalize_in_place()
+        dist.normalize_in_place()
         return dist
 
     def apply_function(self, f):

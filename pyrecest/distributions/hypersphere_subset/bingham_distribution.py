@@ -55,22 +55,22 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
 
     def multiply(self, B2):
         assert isinstance(B2, BinghamDistribution)
-        if self.dim == B2.dim:
-            C = (
-                self.M @ np.diag(self.Z.ravel()) @ self.M.T
-                + B2.M @ np.diag(B2.Z.ravel()) @ B2.M.T
-            )  # New exponent
-
-            C = 0.5 * (C + C.T)  # Symmetrize
-            D, V = np.linalg.eig(C)
-            order = np.argsort(D)  # Sort eigenvalues
-            V = V[:, order]
-            Z_ = D[order]
-            Z_ = Z_ - Z_[-1]  # Ensure last entry is zero
-            M_ = V
-            return BinghamDistribution(Z_, M_)
-        else:
+        if self.dim != B2.dim:
             raise ValueError("Dimensions do not match")
+            
+        C = (
+            self.M @ np.diag(self.Z.ravel()) @ self.M.T
+            + B2.M @ np.diag(B2.Z.ravel()) @ B2.M.T
+        )  # New exponent
+
+        C = 0.5 * (C + C.T)  # Symmetrize
+        D, V = np.linalg.eig(C)
+        order = np.argsort(D)  # Sort eigenvalues
+        V = V[:, order]
+        Z_ = D[order]
+        Z_ = Z_ - Z_[-1]  # Ensure last entry is zero
+        M_ = V
+        return BinghamDistribution(Z_, M_)
 
     def sample(self, n):
         return self.sample_kent(n)

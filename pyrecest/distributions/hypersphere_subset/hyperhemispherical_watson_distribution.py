@@ -10,10 +10,10 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
     def __init__(self, mu_, kappa_):
         assert mu_[-1] >= 0
         self.distFullSphere = WatsonDistribution(mu_, kappa_)
-        self.dim = self.distFullSphere.dim
+        AbstractHyperhemisphericalDistribution.__init__(self, dim=self.distFullSphere.dim)
 
-    def pdf(self, xa):
-        return 2 * self.distFullSphere.pdf(xa)
+    def pdf(self, xs):
+        return 2 * self.distFullSphere.pdf(xs)
 
     def set_mode(self, mu):
         w = self

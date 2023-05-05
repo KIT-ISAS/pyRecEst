@@ -8,4 +8,5 @@ class DiskUniformDistribution(
     EllipsoidalBallUniformDistribution, AbstractDiskDistribution
 ):
     def __init__(self):
+        AbstractDiskDistribution.__init__(self)
         EllipsoidalBallUniformDistribution.__init__(self, np.array([0, 0]), np.eye(2))

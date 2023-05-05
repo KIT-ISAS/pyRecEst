@@ -8,10 +8,8 @@ class EllipsoidalBallUniformDistribution(
     AbstractEllipsoidalBallDistribution, AbstractUniformDistribution
 ):
     def __init__(self, center, shape_matrix):
+        AbstractUniformDistribution.__init__(self)
         AbstractEllipsoidalBallDistribution.__init__(self, center, shape_matrix)
-
-    def get_manifold_size(self):
-        return super().get_manifold_size()
 
     def mean(self):
         raise NotImplementedError()
@@ -23,28 +21,28 @@ class EllipsoidalBallUniformDistribution(
         reciprocal_volume = 1 / self.get_manifold_size()
         if xs.ndim == 1:
             return reciprocal_volume
-        else:
-            n = xs.shape[0]
-            results = np.zeros(n)
+        
+        n = xs.shape[0]
+        results = np.zeros(n)
 
-            # Check if points are inside the ellipsoid
-            for i in range(n):
-                point = xs[i, :]
-                diff = point - self.center
-                result = np.dot(diff.T, np.linalg.solve(self.shape_matrix, diff))
+        # Check if points are inside the ellipsoid
+        for i in range(n):
+            point = xs[i, :]
+            diff = point - self.center
+            result = np.dot(diff.T, np.linalg.solve(self.shape_matrix, diff))
 
-                # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
-                if result <= 1:
-                    results[i] = reciprocal_volume
+            # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
+            if result <= 1:
+                results[i] = reciprocal_volume
 
-            return results
+        return results
 
-    def sample(self, num_samples=1):
+    def sample(self, n=1):
         # Generate random points uniformly in a unit d-dimensional ball
-        random_points = np.random.randn(num_samples, self.dim)
+        random_points = np.random.randn(n, self.dim)
         random_points /= np.linalg.norm(random_points, axis=1, keepdims=True)
 
-        random_radii = np.random.rand(num_samples, 1)
+        random_radii = np.random.rand(n, 1)
         random_radii = random_radii ** (
             1 / self.dim
         )  # Consider that the ellipsoid surfaces with higher radii are larger
