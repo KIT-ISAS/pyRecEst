@@ -261,7 +261,7 @@ class CircularFourierDistribution:
         return fd
 
     @staticmethod
-    def from_distribution(dist, n, transformation, store_values_multiplied_by_n=True):
+    def from_distribution(dist, n, transformation = 'sqrt', store_values_multiplied_by_n=True):
         if isinstance(dist, CircularDiracDistribution):
             fd = CircularFourierDistribution(
                 np.conj(dist.trigonometric_moment(n, whole_range=True)) / (2 * np.pi),

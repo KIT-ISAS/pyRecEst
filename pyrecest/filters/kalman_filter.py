@@ -6,19 +6,21 @@ from .abstract_euclidean_filter import AbstractEuclideanFilter
 
 
 class KalmanFilter(AbstractEuclideanFilter):
-    def __init__(self, prior_mean=None, prior_cov=None, prior_gauss=None):
-        if prior_gauss is not None:
-            dim_x = prior_gauss.dim
+    def __init__(self, initial_state=None):
+        """ Provide GaussianDistribution or mean and covariance as initial state."""
+        if isinstance(initial_state, GaussianDistribution):
+            dim_x = initial_state.dim
         else:
-            dim_x = prior_mean.__len__()
+            assert len(initial_state) == 2
+            dim_x = len(initial_state[0])
 
         self.kf = FilterPyKalmanFilter(
             dim_x=dim_x, dim_z=dim_x
         )  # Set dim_z identical to the dimensionality of the state because we do not know yet.
-        self.set_state(prior_mean, prior_cov, prior_gauss)
+        self.set_state(initial_state)
 
     def set_state(self, state):
-        # Set state either by providing a GaussianDistribution or a (mean, covariance) tuple
+        """ Provide GaussianDistribution or mean and covariance as state."""
         
         if isinstance(state, GaussianDistribution):
             mean = state.mu
@@ -26,7 +28,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         else:
             assert len(state) == 2
             mean = state[0]
-            cov = state[0]
+            cov = state[1]
             
         self.kf.x = np.asarray(mean)
         self.kf.P = np.asarray(cov)  # FilterPy uses .P
@@ -48,6 +50,9 @@ class KalmanFilter(AbstractEuclideanFilter):
 
     def update_linear(self, measurement, measurement_matrix, cov_mat_meas):
         self.kf.update(z=measurement, R=cov_mat_meas, H=measurement_matrix)
+
+    def get_point_estimate(self):
+        return self.kf.x
 
     def get_estimate(self):
         return GaussianDistribution(self.kf.x, self.kf.P)

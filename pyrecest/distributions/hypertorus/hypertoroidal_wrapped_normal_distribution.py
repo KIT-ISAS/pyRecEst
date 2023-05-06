@@ -8,11 +8,11 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self, mu_, C_):
-        AbstractHypertoroidalDistribution.__init__(self, mu_.shape[0])
+        AbstractHypertoroidalDistribution.__init__(self, np.size(mu_))
         assert C_.shape[0] == C_.shape[1], "C must be dim x dim"
         assert np.allclose(C_, C_.T, atol=1e-8), "C must be symmetric"
         assert np.all(np.linalg.eigvals(C_) > 0), "C must be positive definite"
-        assert mu_.shape[0] == C_.shape[1], "mu must be dim x 1"
+        assert np.size(mu_) == C_.shape[1], "mu must be dim x 1"
 
         self.mu = np.mod(mu_, 2 * np.pi)
         self.C = C_

@@ -6,7 +6,7 @@ from .abstract_distribution import AbstractDistribution
 
 class AbstractEllipsoidalBallDistribution(AbstractDistribution):
     def __init__(self, center, shape_matrix):
-        AbstractDistribution.__init__(center.shape[-1])
+        AbstractDistribution.__init__(self, center.shape[-1])
         self.center = center
         self.shape_matrix = shape_matrix
         assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim

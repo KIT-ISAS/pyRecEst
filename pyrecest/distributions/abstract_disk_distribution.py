@@ -6,7 +6,6 @@ from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistr
 class AbstractDiskDistribution(AbstractEllipsoidalBallDistribution):
     # We index it using 2-D Euclidean vectors (is zero everywhere else)
     def __init__(self):
-        self.dim = 2
         super().__init__(np.array([0, 0]), np.eye(2))
 
     def mean(self):

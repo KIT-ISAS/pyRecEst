@@ -6,7 +6,7 @@ from scipy import integrate
 from pyrecest.distributions import (
     CircularFourierDistribution,
     VonMisesDistribution,
-    WrappedNormalDistribution,
+    WrappedNormalDistribution
 )
 
 
@@ -30,17 +30,17 @@ class TestCircularFourierDistribution(unittest.TestCase):
             self._test_fourier_conversion(dist, 101, "sqrt", 1e-8)
 
     def test_wn_to_fourier_id(self):
-        mu = 0.8
+        mu = np.array(0.8)
         for sigma in np.arange(0.2, 2.1, 0.1):
             dist = WrappedNormalDistribution(mu, sigma)
             self._test_fourier_conversion(dist, 101, "identity", 1e-8)
 
     def test_wn_to_fourier_sqrt(self):
-        mu = 0.9
+        mu = np.array(0.8)
         for sigma in np.arange(0.2, 2.1, 0.1):
             dist = WrappedNormalDistribution(mu, sigma)
             self._test_fourier_conversion(dist, 101, "sqrt", 1e-8)
-
+            
     def test_vm_to_fourier(self):
         for mult_by_n in [True, False]:
             for transformation in ["identity", "sqrt"]:
