@@ -12,7 +12,7 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
     def cdf_numerical(self, xs, starting_point=0):
         xa = np.asarray(xs)
-        assert xa.ndim == 1, "xa must be a 1D array"
+        assert xa.ndim == 1, "xs must be a 1D array"
 
         def cdf_single(x):
             starting_point_mod = starting_point % (2 * np.pi)
