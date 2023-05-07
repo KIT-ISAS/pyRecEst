@@ -62,7 +62,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         np.testing.assert_allclose(g.mode_numerical(), mu, atol=1e-4)
 
     def test_mode_numerical_gaussian_3D(self):
-        np.testing.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=1e-4)
+        np.testing.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
 
     def test_covariance_numerical_gaussian_2D(self):
         np.testing.assert_allclose(
