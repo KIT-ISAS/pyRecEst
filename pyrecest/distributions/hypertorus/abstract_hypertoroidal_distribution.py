@@ -7,9 +7,6 @@ from ..abstract_periodic_distribution import AbstractPeriodicDistribution
 
 
 class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
-    def __init__(self, dim):
-        super().__init__(dim=dim)
-
     @staticmethod
     def integrate_fun_over_domain(f, dim):
         integration_boundaries = [(0, 2 * np.pi)] * dim
@@ -137,16 +134,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     def trigonometric_moment(self, n):
         return self.trigonometric_moment_numerical(n)
 
-    def integrate(self, left=None, right=None):
-        if left is None:
-            left = np.zeros(self.dim)
-        if right is None:
-            right = 2 * np.pi * np.ones(self.dim)
-
-        assert left.shape == (self.dim,)
-        assert right.shape == (self.dim,)
-
-        return self.integrate_numerically(left, right)
+    def integrate(self, integration_boundaries = None):
+        return self.integrate_numerically(integration_boundaries)
 
     def mean_2dimD(self):
         m = self.trigonometric_moment_numerical(1)
