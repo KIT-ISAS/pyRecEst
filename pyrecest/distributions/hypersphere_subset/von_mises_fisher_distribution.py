@@ -7,7 +7,7 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu_, kappa_):
-        AbstractHypersphericalDistribution.__init__(self, dim=mu_.shape[0]-1)
+        AbstractHypersphericalDistribution.__init__(self, dim=mu_.shape[0] - 1)
         epsilon = 1e-6
         assert (
             mu_.shape[0] >= 2

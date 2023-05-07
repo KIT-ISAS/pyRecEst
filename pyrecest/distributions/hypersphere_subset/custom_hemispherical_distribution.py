@@ -38,5 +38,5 @@ class CustomHemisphericalDistribution(
             chsd = CustomHemisphericalDistribution(dist.pdf)
             chsd.scale_by = 1 / norm_const_inv
             return chsd
-        
+
         raise ValueError("Input variable dist is of wrong class.")

@@ -8,6 +8,7 @@ from .abstract_uniform_distribution import AbstractUniformDistribution
 from .circle.abstract_circular_distribution import AbstractCircularDistribution
 from .circle.circular_dirac_distribution import CircularDiracDistribution
 from .circle.circular_fourier_distribution import CircularFourierDistribution
+from .circle.custom_circular_distribution import CustomCircularDistribution
 from .circle.von_mises_distribution import VonMisesDistribution
 from .circle.wrapped_normal_distribution import WrappedNormalDistribution
 from .custom_distribution import CustomDistribution
@@ -70,6 +71,7 @@ WDDistribution = CircularDiracDistribution
 VMFDistribution = VonMisesFisherDistribution
 
 __all__ = [
+    "CustomCircularDistribution",
     "HypertoroidalWrappedNormalDistribution",
     "VMDistribution",
     "HypertoroidalWDDistribution",

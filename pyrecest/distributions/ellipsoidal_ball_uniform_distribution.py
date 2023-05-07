@@ -21,7 +21,7 @@ class EllipsoidalBallUniformDistribution(
         reciprocal_volume = 1 / self.get_manifold_size()
         if xs.ndim == 1:
             return reciprocal_volume
-        
+
         n = xs.shape[0]
         results = np.zeros(n)
 

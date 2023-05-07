@@ -51,7 +51,6 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
 
         return C
 
-
     def circular_correlation_jammalamadaka(self):
         rhoc = self.circular_correlation_jammalamadaka_numerical()
         return rhoc

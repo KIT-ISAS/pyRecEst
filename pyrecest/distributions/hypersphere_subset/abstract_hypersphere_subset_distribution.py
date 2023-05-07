@@ -144,7 +144,7 @@ class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
                     )
 
                 return g_3d
-            
+
             raise ValueError("Dimension not supported.")
 
         for i in range(self.dim + 1):

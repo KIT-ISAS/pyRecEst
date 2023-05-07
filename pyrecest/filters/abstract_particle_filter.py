@@ -24,7 +24,10 @@ class AbstractParticleFilter(AbstractFilter):
         function_is_vectorized=True,
         shift_instead_of_add=True,
     ):
-        assert noise_distribution is None or self.filter_state.dim == noise_distribution.dim
+        assert (
+            noise_distribution is None
+            or self.filter_state.dim == noise_distribution.dim
+        )
 
         if function_is_vectorized:
             self.filter_state.d = f(self.filter_state.d)
@@ -58,7 +61,7 @@ class AbstractParticleFilter(AbstractFilter):
         assert z is None or z.size == noise_distribution.dim
         if not shift_instead_of_add:
             raise NotImplementedError()
-        
+
         noise_for_likelihood = noise_distribution.set_mode(z)
         likelihood = noise_for_likelihood.pdf
         self.update_nonlinear(likelihood)
@@ -76,7 +79,9 @@ class AbstractParticleFilter(AbstractFilter):
             self.filter_state = self.filter_state.reweigh(lambda x: likelihood(z, x))
 
         self.filter_state.d = self.filter_state.sample(self.filter_state.d.shape[0])
-        self.filter_state.w = np.full(self.filter_state.d.shape[0], 1 / self.filter_state.d.shape[0])
+        self.filter_state.w = np.full(
+            self.filter_state.d.shape[0], 1 / self.filter_state.d.shape[0]
+        )
 
     def get_estimate(self):
         return self.filter_state

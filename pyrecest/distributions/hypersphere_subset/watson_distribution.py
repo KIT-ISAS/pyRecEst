@@ -8,7 +8,7 @@ from .bingham_distribution import BinghamDistribution
 
 class WatsonDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu_, kappa_):
-        AbstractHypersphericalDistribution.__init__(self, dim=mu_.shape[0]-1)
+        AbstractHypersphericalDistribution.__init__(self, dim=mu_.shape[0] - 1)
         epsilon = 1e-6
         assert mu_.ndim == 1, "mu must be a 1-D vector"
         assert np.abs(np.linalg.norm(mu_) - 1) < epsilon, "mu is unnormalized"
@@ -46,13 +46,13 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
     def sample(self, n):
         if self.dim != 2:
             return self.to_bingham().sample(n)
-        
+
         return super().sample(n)
 
     def mode(self):
         if self.kappa >= 0:
             return self.mu
-        
+
         return self.mode_numerical()
 
     def set_mode(self, new_mode):

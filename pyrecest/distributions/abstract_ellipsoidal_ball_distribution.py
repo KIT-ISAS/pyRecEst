@@ -14,7 +14,7 @@ class AbstractEllipsoidalBallDistribution(AbstractDistribution):
     def get_manifold_size(self):
         if self.dim == 0:
             return 1
-        
+
         if self.dim == 1:
             c = 2
         elif self.dim == 2:

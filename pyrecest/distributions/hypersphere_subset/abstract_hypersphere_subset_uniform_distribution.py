@@ -9,7 +9,6 @@ from .abstract_hypersphere_subset_distribution import (
 class AbstractHypersphereSubsetUniformDistribution(
     AbstractHypersphereSubsetDistribution, AbstractUniformDistribution
 ):
-
     def pdf(self, xs):
         p = (1 / self.get_manifold_size()) * np.ones(xs.size // (self.dim + 1))
         return p

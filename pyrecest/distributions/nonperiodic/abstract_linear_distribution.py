@@ -225,7 +225,7 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
     def plot_state(self, scaling_factor=1, circle_color=(0, 0.4470, 0.7410)):
         if self.dim == 2:
             self._plot_state_2d(scaling_factor, circle_color)
-        
+
         if self.dim == 3:
             self._plot_state_3d()
 
@@ -236,11 +236,7 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
         linear_mean = self.mean()
 
         xs = np.linspace(0, 2 * np.pi, 100)
-        ps = (
-            scaling_factor
-            * linear_covmat
-            @ np.column_stack((np.cos(xs), np.sin(xs)))
-        )
+        ps = scaling_factor * linear_covmat @ np.column_stack((np.cos(xs), np.sin(xs)))
         plt.plot(ps[0] + linear_mean[0], ps[1] + linear_mean[1], color=circle_color)
         plt.show()
 

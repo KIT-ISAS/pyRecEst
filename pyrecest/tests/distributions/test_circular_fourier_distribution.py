@@ -2,12 +2,12 @@ import copy
 import unittest
 
 import numpy as np
-from scipy import integrate
 from pyrecest.distributions import (
     CircularFourierDistribution,
     VonMisesDistribution,
-    WrappedNormalDistribution
+    WrappedNormalDistribution,
 )
+from scipy import integrate
 
 
 class TestCircularFourierDistribution(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         for sigma in np.arange(0.2, 2.1, 0.1):
             dist = WrappedNormalDistribution(mu, sigma)
             self._test_fourier_conversion(dist, 101, "sqrt", 1e-8)
-            
+
     def test_vm_to_fourier(self):
         for mult_by_n in [True, False]:
             for transformation in ["identity", "sqrt"]:

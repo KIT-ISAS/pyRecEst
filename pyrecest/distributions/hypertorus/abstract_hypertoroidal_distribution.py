@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-#from scipy.integrate import dblquad, nquad, quad, tplquad
+
 from scipy.integrate import nquad
 
 from ..abstract_periodic_distribution import AbstractPeriodicDistribution

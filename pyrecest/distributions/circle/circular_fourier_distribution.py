@@ -2,15 +2,17 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import integrate
 from numpy.fft import irfft, rfft
+from scipy import integrate
 
 from .circular_dirac_distribution import CircularDiracDistribution
+
 
 class CircularFourierDistribution:
     """
     Circular Fourier Distribution. This is based on my implementation for pytorch in pyDirectional
     """
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,

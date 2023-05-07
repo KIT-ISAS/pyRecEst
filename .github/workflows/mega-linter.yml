@@ -55,7 +55,7 @@ jobs:
             py3-pip
             gfortran
             openblas-dev
-            
+
       - name: Upgrade pip and install wheel
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |

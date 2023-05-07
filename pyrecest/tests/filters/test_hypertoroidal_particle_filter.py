@@ -34,5 +34,6 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.assertEqual(hpf.get_point_estimate().shape, (3,))
         np.testing.assert_allclose(hpf.get_point_estimate(), forced_mean, atol=0.1)
 
+
 if __name__ == "__main__":
     unittest.main()

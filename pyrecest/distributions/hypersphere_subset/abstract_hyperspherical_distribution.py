@@ -86,7 +86,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def get_full_integration_boundaries(dim):
         if dim == 1:
             return [0, 2 * np.pi]
-        
+
         return np.vstack(
             (
                 np.zeros((dim)),

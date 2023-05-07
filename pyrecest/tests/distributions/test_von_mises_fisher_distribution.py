@@ -141,11 +141,21 @@ class TestVMFDistribution(unittest.TestCase):
         vmf = VMFDistribution(mu, 1)
         self.assertTrue(np.allclose(vmf.mean_direction(), mu, atol=1e-13))
 
-    def _test_hellinger_distance_helper(self, dist1, dist2, delta=1e-10, numerical_delta=1e-10):
+    def _test_hellinger_distance_helper(
+        self, dist1, dist2, delta=1e-10, numerical_delta=1e-10
+    ):
         self.assertAlmostEqual(dist1.hellinger_distance(dist1), 0, delta=delta)
         self.assertAlmostEqual(dist2.hellinger_distance(dist2), 0, delta=delta)
-        self.assertAlmostEqual(dist1.hellinger_distance(dist2), dist1.hellinger_distance_numerical(dist2), delta=numerical_delta)
-        self.assertAlmostEqual(dist1.hellinger_distance(dist2), dist2.hellinger_distance(dist1), delta=delta)
+        self.assertAlmostEqual(
+            dist1.hellinger_distance(dist2),
+            dist1.hellinger_distance_numerical(dist2),
+            delta=numerical_delta,
+        )
+        self.assertAlmostEqual(
+            dist1.hellinger_distance(dist2),
+            dist2.hellinger_distance(dist1),
+            delta=delta,
+        )
 
     def test_hellinger_distance_2d(self):
         # 2D

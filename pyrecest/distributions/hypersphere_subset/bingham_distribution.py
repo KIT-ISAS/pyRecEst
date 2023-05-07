@@ -57,7 +57,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         assert isinstance(B2, BinghamDistribution)
         if self.dim != B2.dim:
             raise ValueError("Dimensions do not match")
-            
+
         C = (
             self.M @ np.diag(self.Z.ravel()) @ self.M.T
             + B2.M @ np.diag(B2.Z.ravel()) @ B2.M.T
