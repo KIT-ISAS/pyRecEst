@@ -1,5 +1,6 @@
 from .abstract_circular_distribution import AbstractCircularDistribution
 from ..custom_distribution import CustomDistribution
+import numpy as np
 
 class CustomCircularDistribution(CustomDistribution, AbstractCircularDistribution):
     def __init__(self, f_):
@@ -11,5 +12,5 @@ class CustomCircularDistribution(CustomDistribution, AbstractCircularDistributio
         AbstractCircularDistribution.__init__(self)
         CustomDistribution.__init__(self, f_, 1)
         
-    def integrate(self):
-        return AbstractCircularDistribution.integrate_numerically(self)
+    def integrate(self, integration_boundaries=np.array([0, 2*np.pi])):
+        return AbstractCircularDistribution.integrate(self, integration_boundaries)

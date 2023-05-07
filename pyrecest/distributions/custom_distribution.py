@@ -33,7 +33,7 @@ class CustomDistribution(AbstractDistribution):
         return cd
 
     @abstractmethod
-    def integrate(self):
+    def integrate(self, integration_boundaries=None):
         pass
 
     def normalize(self, verify=None):

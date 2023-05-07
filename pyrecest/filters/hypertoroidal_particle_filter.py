@@ -1,5 +1,5 @@
 import numpy as np
-from pyrecest.distributions import HypertoroidalWDDistribution
+from pyrecest.distributions import HypertoroidalDiracDistribution
 
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_particle_filter import AbstractParticleFilter
@@ -8,14 +8,14 @@ from .abstract_particle_filter import AbstractParticleFilter
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
     def __init__(self, n_particles, dim):
         AbstractParticleFilter.__init__(self)
-        self.filter_state = HypertoroidalWDDistribution(
+        self.filter_state = HypertoroidalDiracDistribution(
             np.tile(np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim))
         )
 
-    def set_state(self, dist_):
-        if not isinstance(dist_, HypertoroidalWDDistribution):
-            dist_ = HypertoroidalWDDistribution(dist_.sample(self.filter_state.w.size))
-        self.filter_state = dist_
+    def set_state(self, state):
+        if not isinstance(state, HypertoroidalDiracDistribution):
+            state = HypertoroidalDiracDistribution(state.sample(self.filter_state.w.size))
+        self.filter_state = state
 
     def predict_nonlinear(
         self, f, noise_distribution=None, function_is_vectorized=True
