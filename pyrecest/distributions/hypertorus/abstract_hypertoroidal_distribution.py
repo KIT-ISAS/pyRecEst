@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
 from scipy.integrate import nquad
 
 from ..abstract_periodic_distribution import AbstractPeriodicDistribution
@@ -26,7 +25,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     def integrate_numerically(self, integration_boundaries):
         left = integration_boundaries[0]
         right = integration_boundaries[1]
-        
+
         def pdf_fun(*args):
             return self.pdf(np.array(args))
 
@@ -36,11 +35,22 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         )
 
     def trigonometric_moment_numerical(self, n):
-        def moment_fun(*args):
-            x = np.array(args)
-            return self.pdf(x) * np.exp(1j * n * x)
+        """Calculates the complex trignometric moments. Since nquad does not support complex functions,
+        the calculation is split up (as used in the alternative representation of trigonometric polonymials
+        involving the two real numbers alpha and beta"""
 
-        return self.integrate_fun_over_domain(moment_fun, self.dim)
+        def moment_fun_real(*args):
+            x = np.array(args)
+            return self.pdf(x) * np.cos(n * x)
+
+        def moment_fun_imag(*args):
+            x = np.array(args)
+            return self.pdf(x) * np.sin(n * x)
+
+        alpha = self.integrate_fun_over_domain(moment_fun_real, self.dim)
+        beta = self.integrate_fun_over_domain(moment_fun_imag, self.dim)
+
+        return alpha + 1j * beta
 
     def entropy_numerical(self):
         def entropy_fun(*args):
@@ -134,7 +144,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     def trigonometric_moment(self, n):
         return self.trigonometric_moment_numerical(n)
 
-    def integrate(self, integration_boundaries = None):
+    def integrate(self, integration_boundaries=None):
         return self.integrate_numerically(integration_boundaries)
 
     def mean_2dimD(self):
