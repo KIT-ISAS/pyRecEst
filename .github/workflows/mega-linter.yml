@@ -6,6 +6,7 @@ name: MegaLinter
 permissions:
   checks: write
   pull-requests: write
+  contents: write
 
 on: # yamllint disable-line rule:truthy
   # Trigger mega-linter at every push. Action will also be visible from Pull Requests to main
@@ -31,6 +32,7 @@ jobs:
     permissions:
       checks: write
       pull-requests: write
+      contents: write
 
     steps:
       - name: Check out repository
