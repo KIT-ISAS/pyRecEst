@@ -64,7 +64,7 @@ class WrappedNormalDistribution(
 
         return result.squeeze()
 
-    def cdf(self, xs, startingPoint=0, n=10):
+    def cdf(self, xs, startingPoint=0, n_wraps=10):
         startingPoint = np.mod(startingPoint, 2 * np.pi)
         xs = np.mod(xs, 2 * np.pi)
 
@@ -79,14 +79,15 @@ class WrappedNormalDistribution(
             )
 
         val = ncdf(startingPoint, xs)
-        for i in range(1, n + 1):
+        for i in range(1, n_wraps + 1):
             val = (
                 val
                 + ncdf(startingPoint + 2 * np.pi * i, xs + 2 * np.pi * i)
                 + ncdf(startingPoint - 2 * np.pi * i, xs - 2 * np.pi * i)
             )
-        val = (xs < startingPoint) + val
-        return val
+        # Val should be negative when x < startingPoint
+        val = np.where(xs < startingPoint, 1 + val, val)
+        return np.squeeze(val)
 
     def trigonometric_moment(self, n):
         return np.exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
