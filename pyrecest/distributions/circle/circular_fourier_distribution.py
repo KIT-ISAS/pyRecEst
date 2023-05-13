@@ -6,9 +6,9 @@ from numpy.fft import irfft, rfft
 from scipy import integrate
 
 from .circular_dirac_distribution import CircularDiracDistribution
+from .abstract_circular_distribution import AbstractCircularDistribution
 
-
-class CircularFourierDistribution:
+class CircularFourierDistribution(AbstractCircularDistribution):
     """
     Circular Fourier Distribution. This is based on my implementation for pytorch in pyDirectional
     """
@@ -23,6 +23,7 @@ class CircularFourierDistribution:
         n=None,
         multiplied_by_n=True,
     ):
+        AbstractCircularDistribution.__init__(self)
         assert (a is None) == (b is None)
         assert (a is None) != (c is None)
         if c is not None:

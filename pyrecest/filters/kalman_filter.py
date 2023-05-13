@@ -6,7 +6,7 @@ from .abstract_euclidean_filter import AbstractEuclideanFilter
 
 
 class KalmanFilter(AbstractEuclideanFilter):
-    def __init__(self, initial_state=None):
+    def __init__(self, initial_state):
         """Provide GaussianDistribution or mean and covariance as initial state."""
         if isinstance(initial_state, GaussianDistribution):
             dim_x = initial_state.dim
