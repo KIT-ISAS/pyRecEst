@@ -5,8 +5,9 @@ import numpy as np
 from numpy.fft import irfft, rfft
 from scipy import integrate
 
-from .circular_dirac_distribution import CircularDiracDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
+from .circular_dirac_distribution import CircularDiracDistribution
+
 
 class CircularFourierDistribution(AbstractCircularDistribution):
     """
@@ -264,7 +265,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         return fd
 
     @staticmethod
-    def from_distribution(dist, n, transformation = 'sqrt', store_values_multiplied_by_n=True):
+    def from_distribution(
+        dist, n, transformation="sqrt", store_values_multiplied_by_n=True
+    ):
         if isinstance(dist, CircularDiracDistribution):
             fd = CircularFourierDistribution(
                 np.conj(dist.trigonometric_moment(n, whole_range=True)) / (2 * np.pi),
