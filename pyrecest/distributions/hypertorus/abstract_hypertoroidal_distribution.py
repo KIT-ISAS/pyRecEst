@@ -23,8 +23,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return nquad(f, integration_boundaries)[0]
 
     def integrate_numerically(self, integration_boundaries):
-        left = integration_boundaries[0]
-        right = integration_boundaries[1]
+        left = np.atleast_1d(integration_boundaries[0])
+        right = np.atleast_1d(integration_boundaries[1])
 
         def pdf_fun(*args):
             return self.pdf(np.array(args))

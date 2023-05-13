@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import fsolve
 from scipy.special import iv
+from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -29,6 +30,35 @@ class VonMisesDistribution(AbstractCircularDistribution):
     @staticmethod
     def besselratio(nu, kappa):
         return iv(nu + 1, kappa) / iv(nu, kappa)
+    
+    def cdf(self, xs, starting_point=0):
+        """
+        Evaluate cumulative distribution function
+
+        Parameters:
+        xs : (n)
+            points where the cdf should be evaluated
+        starting_point : scalar, optional, default: 0
+            point where the cdf is zero (starting point can be
+            [0, 2pi) on the circle, default is 0)
+
+        Returns:
+        val : (n)
+            cdf evaluated at columns of xs
+        """
+        assert xs.ndim <= 1
+
+        r = np.zeros_like(xs)
+
+
+        def to_minus_pi_to_pi_range(angle):
+            return np.mod(angle + np.pi, 2 * np.pi) - np.pi
+
+        r = vonmises.cdf(to_minus_pi_to_pi_range(xs), kappa=self.kappa, loc=to_minus_pi_to_pi_range(self.mu)) - vonmises.cdf(to_minus_pi_to_pi_range(starting_point), kappa=self.kappa, loc=to_minus_pi_to_pi_range(self.mu))
+
+        r = np.where(to_minus_pi_to_pi_range(xs) < to_minus_pi_to_pi_range(starting_point), 1 + r, r)
+        return r
+
 
     @staticmethod
     def besselratio_inverse(v, x):
