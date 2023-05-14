@@ -2,10 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import nquad
 
-from ..abstract_periodic_distribution import AbstractPeriodicDistribution
+from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 
 
-class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
+class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
+    @property
+    def input_dim(self):
+        return self.dim
+
     @staticmethod
     def integrate_fun_over_domain(f, dim):
         integration_boundaries = [(0, 2 * np.pi)] * dim
@@ -128,6 +132,9 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             raise ValueError("Plotting for this dimension is currently not supported")
         plt.show()
         return p
+
+    def mean(self):
+        return self.mean_direction()
 
     def mean_direction(self):
         a = self.trigonometric_moment(1)

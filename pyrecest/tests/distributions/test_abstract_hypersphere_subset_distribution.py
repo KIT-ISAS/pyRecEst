@@ -1,14 +1,14 @@
 import unittest
 
 import numpy as np
-from pyrecest.distributions import VMFDistribution
+from pyrecest.distributions import VonMisesFisherDistribution
 
 
 class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     def test_pdf_hyperspherical_coords_1d(self):
         mu_ = np.array([0.5, 1.0]) / np.linalg.norm([0.5, 1.0])
         kappa_ = 2.0
-        vmf = VMFDistribution(mu_, kappa_)
+        vmf = VonMisesFisherDistribution(mu_, kappa_)
 
         pdf_hyperspherical = vmf.gen_pdf_hyperspherical_coords()
 
@@ -24,7 +24,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     def test_pdf_hyperspherical_coords_2d(self):
         mu_ = np.array([0.5, 1.0, 1.0]) / np.linalg.norm([0.5, 1.0, 1.0])
         kappa_ = 2.0
-        vmf = VMFDistribution(mu_, kappa_)
+        vmf = VonMisesFisherDistribution(mu_, kappa_)
 
         pdf_hyperspherical = vmf.gen_pdf_hyperspherical_coords()
 
@@ -50,7 +50,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     def test_pdf_hyperspherical_coords_3d(self):
         mu_ = np.array([0.5, 1.0, 1.0, -0.5]) / np.linalg.norm([0.5, 1.0, 1.0, -0.5])
         kappa_ = 2.0
-        vmf = VMFDistribution(mu_, kappa_)
+        vmf = VonMisesFisherDistribution(mu_, kappa_)
 
         pdf_hyperspherical = vmf.gen_pdf_hyperspherical_coords()
 

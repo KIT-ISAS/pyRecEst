@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from .abstract_bounded_distribution import AbstractBoundedDistribution
+from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 
 
-class AbstractPeriodicDistribution(AbstractBoundedDistribution):
+class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
     def __init__(self, dim):
         super().__init__(dim=dim)
 

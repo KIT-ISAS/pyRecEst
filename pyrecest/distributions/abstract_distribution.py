@@ -23,6 +23,11 @@ class AbstractDistribution(ABC):
         else:
             self._dim = None
 
+    @property
+    @abstractmethod
+    def input_dim(self):
+        pass
+
     @abstractmethod
     def pdf(self, xs):
         pass
@@ -62,7 +67,7 @@ class AbstractDistribution(ABC):
             x_new = proposal(x)
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
-            if a.item() or a.item() > np.random.rand():
+            if a.item() > 1 or a.item() > np.random.rand():
                 s[i, :] = x_new.squeeze()
                 x = x_new
                 pdfx = pdfx_new

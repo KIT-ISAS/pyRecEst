@@ -11,6 +11,10 @@ class EllipsoidalBallUniformDistribution(
         AbstractUniformDistribution.__init__(self)
         AbstractEllipsoidalBallDistribution.__init__(self, center, shape_matrix)
 
+    @property
+    def input_dim(self):
+        return self.dim
+
     def mean(self):
         raise NotImplementedError()
 

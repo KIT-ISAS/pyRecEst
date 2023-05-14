@@ -1,14 +1,17 @@
 import numpy as np
 from scipy.special import gamma
 
-from .abstract_distribution import AbstractDistribution
+from .abstract_bounded_nonperiodic_distribution import (
+    AbstractBoundedNonPeriodicDistribution,
+)
 
 
-class AbstractEllipsoidalBallDistribution(AbstractDistribution):
+class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution):
     def __init__(self, center, shape_matrix):
-        AbstractDistribution.__init__(self, center.shape[-1])
+        AbstractBoundedNonPeriodicDistribution.__init__(self, center.shape[-1])
         self.center = center
         self.shape_matrix = shape_matrix
+        assert center.ndim == 1 and shape_matrix.ndim == 2
         assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim
 
     def get_manifold_size(self):
