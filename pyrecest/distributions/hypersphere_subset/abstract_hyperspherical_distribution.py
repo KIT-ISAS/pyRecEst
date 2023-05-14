@@ -14,6 +14,9 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def pdf(self, xs):
         pass
 
+    def mean(self):
+        return self.mean_direction()
+
     def plot(self, faces=100, grid_faces=20):
         if self.dim == 1:
             phi = np.linspace(0, 2 * np.pi, 320)

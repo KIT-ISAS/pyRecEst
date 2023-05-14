@@ -12,7 +12,7 @@ class AbstractDistribution(ABC):
     @property
     def dim(self):
         return self._dim
-
+    
     @dim.setter
     def dim(self, value):
         if value is not None:
@@ -22,6 +22,11 @@ class AbstractDistribution(ABC):
                 raise ValueError("dim must be a positive integer or None.")
         else:
             self._dim = None
+
+    @property
+    @abstractmethod
+    def input_dim(self):
+        pass
 
     @abstractmethod
     def pdf(self, xs):
@@ -62,7 +67,7 @@ class AbstractDistribution(ABC):
             x_new = proposal(x)
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
-            if a.item() or a.item() > np.random.rand():
+            if a.item()>1 or a.item() > np.random.rand():
                 s[i, :] = x_new.squeeze()
                 x = x_new
                 pdfx = pdfx_new

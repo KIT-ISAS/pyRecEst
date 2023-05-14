@@ -18,7 +18,6 @@ class AbstractMixture(AbstractDistribution):
             dists[0].dim == dist.dim for dist in dists
         ), "All distributions must have the same dimension"
 
-        self.dim = dists[0].dim
         non_zero_indices = np.nonzero(w)[0]
 
         if len(non_zero_indices) < len(w):
@@ -55,7 +54,7 @@ class AbstractMixture(AbstractDistribution):
     def pdf(self, xs):
         assert xs.shape[-1] == self.dim, "Dimension mismatch"
 
-        p = np.zeros(xs.shape[0])
+        p = np.zeros(1) if xs.ndim == 1 else np.zeros(xs.shape[0])
 
         for i, dist in enumerate(self.dists):
             p += self.w[i] * dist.pdf(xs)

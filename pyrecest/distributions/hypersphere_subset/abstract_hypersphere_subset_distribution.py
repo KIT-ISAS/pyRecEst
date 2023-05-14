@@ -4,10 +4,14 @@ import numpy as np
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
 
-from ..abstract_periodic_distribution import AbstractPeriodicDistribution
+from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 
 
-class AbstractHypersphereSubsetDistribution(AbstractPeriodicDistribution):
+class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
+    @property
+    def input_dim(self):
+        return self.dim + 1
+    
     def mean_direction(self):
         return self.mean_direction_numerical()
 
