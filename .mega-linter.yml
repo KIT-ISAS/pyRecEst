@@ -10,3 +10,4 @@ DISABLE_LINTERS:
   - PYTHON_PYRIGHT
   - REPOSITORY_DEVSKIM
   - REPOSITORY_TRIVY # Reenable as soon as (if?) https://avd.aquasec.com/nvd/2021/cve-2021-29063/ confirms that 1.3.0 is no longer a risk
+  - JSON_JSONLINT # Disable because there is only .devcontainer.json, for which it throws an unwanted warning
