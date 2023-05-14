@@ -7,6 +7,8 @@ from .abstract_particle_filter import AbstractParticleFilter
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
     def __init__(self, n_particles, dim):
+        assert np.isscalar(n_particles)
+        assert n_particles >= 1
         AbstractParticleFilter.__init__(self)
         self.filter_state = HypertoroidalDiracDistribution(
             np.tile(np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim))
