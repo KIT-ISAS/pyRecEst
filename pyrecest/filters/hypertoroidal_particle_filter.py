@@ -16,7 +16,9 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
 
     def set_state(self, state):
         if not isinstance(state, HypertoroidalDiracDistribution):
-            state = HypertoroidalDiracDistribution(state.sample(self.filter_state.w.size))
+            state = HypertoroidalDiracDistribution(
+                state.sample(self.filter_state.w.size)
+            )
         self.filter_state = state
 
     def predict_nonlinear(

@@ -28,8 +28,10 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
 
     def integrate_numerically(self, integration_boundaries):
         if integration_boundaries is None:
-            integration_boundaries = np.vstack((np.zeros(self.dim), 2*np.pi*np.ones(self.dim)))
-        
+            integration_boundaries = np.vstack(
+                (np.zeros(self.dim), 2 * np.pi * np.ones(self.dim))
+            )
+
         left = np.atleast_1d(integration_boundaries[0])
         right = np.atleast_1d(integration_boundaries[1])
 
