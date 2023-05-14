@@ -1,0 +1,5 @@
+from .hypertoroidal_wrapped_normal_distribution import HypertoroidalWrappedNormalDistribution
+from .abstract_toroidal_distribution import AbstractToroidalDistribution
+
+class ToroidalWrappedNormalDistribution(HypertoroidalWrappedNormalDistribution, AbstractToroidalDistribution):
+    pass
