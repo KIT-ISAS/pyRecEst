@@ -54,9 +54,8 @@ class AbstractDistribution(ABC):
         s = np.empty(
             (
                 total_samples,
-                self.dim,
+                self.input_dim,
             ),
-            dtype=np.float64,
         )
         s.fill(np.nan)
         x = start_point
