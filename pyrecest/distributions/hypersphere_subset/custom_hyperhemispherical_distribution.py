@@ -1,4 +1,3 @@
-import numpy as np
 
 from ..custom_distribution import CustomDistribution
 from .abstract_hyperhemispherical_distribution import (

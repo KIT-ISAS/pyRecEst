@@ -95,8 +95,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     def mode_numerical(self):
         def objective_function_2d(s):
             return -self.pdf(AbstractHypersphereSubsetDistribution.polar2cart(s))
+
         assert self.dim == 2, "Currently only implemented for 2D hemispheres."
-        
+
         s0 = np.random.rand(self.dim) * np.pi
         result = minimize(
             objective_function_2d,
@@ -124,7 +125,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
             def proposal(x):
                 return to_upper_hemisphere(
-                    normalize(x + np.random.normal(0, 1, self.dim+1))
+                    normalize(x + np.random.normal(0, 1, self.dim + 1))
                 )
 
         if start_point is None:

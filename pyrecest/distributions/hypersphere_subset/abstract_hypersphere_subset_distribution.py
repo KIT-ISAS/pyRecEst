@@ -11,7 +11,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @property
     def input_dim(self):
         return self.dim + 1
-    
+
     def mean_direction(self):
         return self.mean_direction_numerical()
 

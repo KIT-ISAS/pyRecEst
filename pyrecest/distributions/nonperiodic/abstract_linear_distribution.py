@@ -11,7 +11,7 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
     @property
     def input_dim(self):
         return self.dim
-    
+
     def mean(self):
         return self.mean_numerical()
 

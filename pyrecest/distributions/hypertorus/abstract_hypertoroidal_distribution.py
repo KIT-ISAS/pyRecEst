@@ -9,7 +9,7 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
     @property
     def input_dim(self):
         return self.dim
-    
+
     @staticmethod
     def integrate_fun_over_domain(f, dim):
         integration_boundaries = [(0, 2 * np.pi)] * dim

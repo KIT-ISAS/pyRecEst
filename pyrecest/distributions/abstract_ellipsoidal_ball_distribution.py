@@ -1,7 +1,9 @@
 import numpy as np
 from scipy.special import gamma
 
-from .abstract_bounded_nonperiodic_distribution import AbstractBoundedNonPeriodicDistribution
+from .abstract_bounded_nonperiodic_distribution import (
+    AbstractBoundedNonPeriodicDistribution,
+)
 
 
 class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution):

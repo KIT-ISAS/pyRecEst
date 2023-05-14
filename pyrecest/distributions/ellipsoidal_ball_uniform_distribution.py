@@ -10,7 +10,7 @@ class EllipsoidalBallUniformDistribution(
     def __init__(self, center, shape_matrix):
         AbstractUniformDistribution.__init__(self)
         AbstractEllipsoidalBallDistribution.__init__(self, center, shape_matrix)
-        
+
     @property
     def input_dim(self):
         return self.dim
