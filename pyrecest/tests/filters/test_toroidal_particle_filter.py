@@ -17,10 +17,9 @@ class ToroidalParticleFilterTest(unittest.TestCase):
 
         for _ in range(50):
             tpf.predict_identity(HypertoroidalWrappedNormalDistribution(np.array([0, 0]), C))
-            tpf.update_identity(HypertoroidalWrappedNormalDistribution(np.array([0, 0]), 0.5 * C), forced_mean)
-            tpf.update_identity(HypertoroidalWrappedNormalDistribution(np.array([0, 0]), 0.5 * C), forced_mean)
-            tpf.update_identity(HypertoroidalWrappedNormalDistribution(np.array([0, 0]), 0.5 * C), forced_mean)
-
+            for _ in range(3):
+                tpf.update_identity(HypertoroidalWrappedNormalDistribution(np.array([0, 0]), 0.5 * C), forced_mean)
+            
         self.assertTrue(np.allclose(tpf.get_point_estimate(), forced_mean, atol=0.1))
 
 if __name__ == '__main__':
