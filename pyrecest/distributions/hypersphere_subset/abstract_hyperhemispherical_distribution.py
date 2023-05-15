@@ -12,6 +12,22 @@ from .abstract_hypersphere_subset_distribution import (
 class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
     def mean(self):
         return self.mean_axis()
+    
+    def sample_metropolis_hastings(
+        self, n, burn_in=10, skipping=5, proposal=None, start_point=None
+    ):
+        if proposal==None:
+            # For unimodal densities, other proposals may be far better.
+            from ..abstract_distribution import AbstractDistribution
+            from .hyperhemispherical_uniform_distribution import HyperhemisphericalUniformDistribution
+            proposal = lambda _ : HyperhemisphericalUniformDistribution(self.dim).sample(1)
+        
+        if start_point==None:
+            start_point = HyperhemisphericalUniformDistribution(self.dim).sample(1)
+        # Call the sample_metropolis_hastings method of AbstractDistribution
+        return AbstractDistribution.sample_metropolis_hastings(self,
+            n, proposal=proposal, start_point=start_point, burn_in=burn_in, skipping=skipping
+        )
 
     def mean_direction_numerical(self):
         warning_msg = (
@@ -111,30 +127,6 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         )
         m = AbstractHypersphereSubsetDistribution.polar2cart(result.x)
         return (1 - 2 * (m[-1] < 0)) * m
-
-    def sample_metropolis_hastings(
-        self, n, proposal=None, start_point=None, burn_in=10, skipping=5
-    ):
-        if proposal is None:
-
-            def normalize(x):
-                return x / np.linalg.norm(x)
-
-            def to_upper_hemisphere(s):
-                return (1 - 2 * (s[-1] < 0)) * s
-
-            def proposal(x):
-                return to_upper_hemisphere(
-                    normalize(x + np.random.normal(0, 1, self.dim + 1))
-                )
-
-        if start_point is None:
-            start_point = self.mode()
-
-        s = super().sample_metropolis_hastings(
-            n, proposal, start_point, burn_in, skipping
-        )
-        return s
 
     @staticmethod
     def plot_hemisphere(resolution=150):

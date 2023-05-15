@@ -40,10 +40,10 @@ class AbstractMixture(AbstractDistribution):
 
         occurrences = np.bincount(d, minlength=len(self.dists))
         count = 0
-        s = np.empty(n, self.dim)
+        s = np.empty((n, self.input_dim))
         for i, occ in enumerate(occurrences):
             if occ != 0:
-                s[:, count : count + occ] = self.dists[i].sample(occ)  # noqa: E203
+                s[count : count + occ, :] = self.dists[i].sample(occ)  # noqa: E203
                 count += occ
 
         order = np.argsort(d)
@@ -52,7 +52,7 @@ class AbstractMixture(AbstractDistribution):
         return s
 
     def pdf(self, xs):
-        assert xs.shape[-1] == self.dim, "Dimension mismatch"
+        assert xs.shape[-1] == self.input_dim, "Dimension mismatch"
 
         p = np.zeros(1) if xs.ndim == 1 else np.zeros(xs.shape[0])
 

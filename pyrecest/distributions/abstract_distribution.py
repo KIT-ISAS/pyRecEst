@@ -41,7 +41,7 @@ class AbstractDistribution(ABC):
         return self.sample_metropolis_hastings(n)
 
     def sample_metropolis_hastings(
-        self, n, proposal=None, start_point=None, burn_in=10, skipping=5
+        self, n, burn_in=10, skipping=5, proposal=None, start_point=None
     ):
         """Metropolis Hastings sampling algorithm."""
 
