@@ -13,7 +13,8 @@ class HypertoroidalMixture(AbstractHypertoroidalDistribution, AbstractMixture):
         """
         assert all(isinstance(dist, AbstractHypertoroidalDistribution) for dist in dists), \
             "dists must be a list of hypertoroidal distributions"
-        
+
+        AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
 
     def trigonometric_moment(self, n: int) -> np.ndarray:
