@@ -25,8 +25,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         if start_point==None:
             start_point = HyperhemisphericalUniformDistribution(self.dim).sample(1)
         # Call the sample_metropolis_hastings method of AbstractDistribution
+        # pylint: disable=duplicate-code
         return AbstractDistribution.sample_metropolis_hastings(self,
-            n, proposal=proposal, start_point=start_point, burn_in=burn_in, skipping=skipping
+            n, burn_in, skipping, proposal=proposal, start_point=start_point
         )
 
     def mean_direction_numerical(self):

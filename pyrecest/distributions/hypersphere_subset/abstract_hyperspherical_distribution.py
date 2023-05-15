@@ -28,6 +28,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         if start_point==None:
             start_point = HypersphericalUniformDistribution(self.dim).sample(1)
         # Call the sample_metropolis_hastings method of AbstractDistribution
+        # pylint: disable=duplicate-code
         return AbstractDistribution.sample_metropolis_hastings(self,
             n, burn_in=burn_in, skipping=skipping, proposal=proposal, start_point=start_point,
         )

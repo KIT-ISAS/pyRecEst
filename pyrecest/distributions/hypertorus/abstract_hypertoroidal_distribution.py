@@ -175,8 +175,9 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
         if start_point is None:
             start_point = self.mean_direction()
 
-        s = AbstractDistribution.sample_metropolis_hastings(
-            self, n, proposal=proposal, start_point=start_point, burn_in=burn_in, skipping=skipping
+        # pylint: disable=duplicate-code
+        s = AbstractDistribution.sample_metropolis_hastings(self,
+            n, burn_in, skipping, proposal=proposal, start_point=start_point
         )
         return s
 
