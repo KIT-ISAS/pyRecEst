@@ -1,11 +1,14 @@
 import unittest
+
 import numpy as np
-from scipy.stats import wishart
-from pyrecest.distributions.nonperiodic.linear_dirac_distribution import LinearDiracDistribution
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
+    LinearDiracDistribution,
+)
+from scipy.stats import wishart
+
 
 class LinearDiracDistributionTest(unittest.TestCase):
-
     def test_from_distribution(self):
         np.random.seed(0)
         C = wishart.rvs(3, np.eye(3))
@@ -22,5 +25,5 @@ class LinearDiracDistributionTest(unittest.TestCase):
         self.assertTrue(np.allclose(ddist.covariance(), gd.covariance(), atol=0.05))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

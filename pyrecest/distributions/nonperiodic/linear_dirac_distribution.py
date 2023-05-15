@@ -1,10 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from .abstract_linear_distribution import AbstractLinearDistribution
+import numpy as np
+
 from ..abstract_dirac_distribution import AbstractDiracDistribution
+from .abstract_linear_distribution import AbstractLinearDistribution
 
-class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribution): # type: ignore[misc]
 
+class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribution):  # type: ignore[misc]
     def mean(self):
         return np.average(self.d, weights=self.w, axis=0)
 
@@ -16,11 +17,15 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
         if self.dim == 1:
             plt.stem(self.d, self.w, *args, **kwargs)
         elif self.dim == 2:
-            plt.scatter(self.d[0, :], self.d[1, :], self.w / max(self.w) * 100, *args, **kwargs)
+            plt.scatter(
+                self.d[0, :], self.d[1, :], self.w / max(self.w) * 100, *args, **kwargs
+            )
         elif self.dim == 3:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            ax.scatter(self.d[0, :], self.d[1, :], self.w / max(self.w) * 100, *args, **kwargs)
+            ax = fig.add_subplot(111, projection="3d")
+            ax.scatter(
+                self.d[0, :], self.d[1, :], self.w / max(self.w) * 100, *args, **kwargs
+            )
         else:
             raise ValueError("Plotting not supported for this dimension")
 
