@@ -51,7 +51,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         return hd
 
     def sample(self, n):
-        if not isinstance(n, int) or n <= 0:
+        if n<=0 or not (isinstance(n, int) or (np.isscalar(n) and np.issubdtype(type(n), np.integer))):
             raise ValueError("n must be a positive integer")
 
         s = np.random.multivariate_normal(self.mu, self.C, n)
