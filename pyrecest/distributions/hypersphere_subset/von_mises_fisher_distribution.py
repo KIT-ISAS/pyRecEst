@@ -25,12 +25,33 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             )
 
     def pdf(self, xs):
-        assert xs.shape[-1] == self.dim + 1
+        assert xs.shape[-1] == self.input_dim
 
         return self.C * np.exp(self.kappa * self.mu.T @ xs.T)
 
     def mean_direction(self):
         return self.mu
+
+    # def sample(self, n):
+    # """
+    # Generate n von Mises-Fisher distributed random vectors.
+
+    # Parameters:
+    # n (int): Number of samples to generate.
+
+    # Returns:
+    # array: n von Mises-Fisher distributed random vectors.
+    # """
+    # Requires scipy 1.11 (currently in development)
+    #
+    # from scipy.stats import vonmises_fisher
+    # Create a von Mises-Fisher distribution object
+    # vmf = vonmises_fisher(self.mu, self.kappa)
+
+    # Draw n random samples from the distribution
+    # samples = vmf.rvs(n)
+
+    # return samples
 
     def sample_deterministic(self):
         samples = np.zeros((self.dim + 1, self.dim * 2 + 1))
