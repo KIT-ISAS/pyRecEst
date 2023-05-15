@@ -4,6 +4,7 @@ from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
+
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu_, kappa_):
         AbstractHypersphericalDistribution.__init__(self, dim=mu_.shape[0] - 1)
@@ -30,27 +31,27 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     def mean_direction(self):
         return self.mu
-    
-    #def sample(self, n):
-        #"""
-        #Generate n von Mises-Fisher distributed random vectors.
 
-        #Parameters:
-        #n (int): Number of samples to generate.
-        
-        #Returns:
-        #array: n von Mises-Fisher distributed random vectors.
-        #"""
-        # Requires scipy 1.11 (currently in development)
-        # 
-        #from scipy.stats import vonmises_fisher
-        # Create a von Mises-Fisher distribution object
-        #vmf = vonmises_fisher(self.mu, self.kappa)
+    # def sample(self, n):
+    # """
+    # Generate n von Mises-Fisher distributed random vectors.
 
-        # Draw n random samples from the distribution
-        #samples = vmf.rvs(n)
+    # Parameters:
+    # n (int): Number of samples to generate.
 
-        #return samples
+    # Returns:
+    # array: n von Mises-Fisher distributed random vectors.
+    # """
+    # Requires scipy 1.11 (currently in development)
+    #
+    # from scipy.stats import vonmises_fisher
+    # Create a von Mises-Fisher distribution object
+    # vmf = vonmises_fisher(self.mu, self.kappa)
+
+    # Draw n random samples from the distribution
+    # samples = vmf.rvs(n)
+
+    # return samples
 
     def sample_deterministic(self):
         samples = np.zeros((self.dim + 1, self.dim * 2 + 1))
