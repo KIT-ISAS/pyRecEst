@@ -1,13 +1,20 @@
 import unittest
+
 import numpy as np
-from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import ToroidalWrappedNormalDistribution
-from pyrecest.distributions.hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from pyrecest.distributions import VonMisesFisherDistribution
-from pyrecest.distributions.hypersphere_subset.hyperspherical_mixture import HypersphericalMixture
-from pyrecest.distributions.hypersphere_subset.custom_hyperhemispherical_distribution import CustomHyperhemisphericalDistribution
+from pyrecest.distributions.hypersphere_subset.custom_hyperhemispherical_distribution import (
+    CustomHyperhemisphericalDistribution,
+)
+from pyrecest.distributions.hypersphere_subset.hyperspherical_mixture import (
+    HypersphericalMixture,
+)
+from pyrecest.distributions.hypertorus.hypertoroidal_mixture import HypertoroidalMixture
+from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
+    ToroidalWrappedNormalDistribution,
+)
+
 
 class AbstractMixtureTest(unittest.TestCase):
-
     def _test_sample(self, mix, n):
         for sampling_method in [mix.sample_metropolis_hastings, mix.sample]:
             s = sampling_method(n)
@@ -28,9 +35,12 @@ class AbstractMixtureTest(unittest.TestCase):
 
     def test_sample_metropolis_hastings_basics_only_h2(self):
         vmf = VonMisesFisherDistribution(np.array([1, 0, 0]), 2)
-        mix = CustomHyperhemisphericalDistribution(lambda x: vmf.pdf(x) + vmf.pdf(-x), 2)
+        mix = CustomHyperhemisphericalDistribution(
+            lambda x: vmf.pdf(x) + vmf.pdf(-x), 2
+        )
         s = self._test_sample(mix, 10)
         self.assertTrue(np.allclose(np.linalg.norm(s, axis=1), np.ones(10), rtol=1e-10))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

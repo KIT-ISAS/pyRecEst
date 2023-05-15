@@ -8,6 +8,7 @@ from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
 
+
 class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @abstractmethod
     def pdf(self, xs):
@@ -19,20 +20,28 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def sample_metropolis_hastings(
         self, n, burn_in=10, skipping=5, proposal=None, start_point=None
     ):
-        if proposal==None:
+        if proposal is None:
             # For unimodal densities, other proposals may be far better.
             from ..abstract_distribution import AbstractDistribution
-            from .hyperspherical_uniform_distribution import HypersphericalUniformDistribution
-            proposal = lambda _ : HypersphericalUniformDistribution(self.dim).sample(1)
-        
-        if start_point==None:
+            from .hyperspherical_uniform_distribution import (
+                HypersphericalUniformDistribution,
+            )
+
+            def proposal(_):
+                return HypersphericalUniformDistribution(self.dim).sample(1)
+
+        if start_point is None:
             start_point = HypersphericalUniformDistribution(self.dim).sample(1)
         # Call the sample_metropolis_hastings method of AbstractDistribution
         # pylint: disable=duplicate-code
-        return AbstractDistribution.sample_metropolis_hastings(self,
-            n, burn_in=burn_in, skipping=skipping, proposal=proposal, start_point=start_point,
+        return AbstractDistribution.sample_metropolis_hastings(
+            self,
+            n,
+            burn_in=burn_in,
+            skipping=skipping,
+            proposal=proposal,
+            start_point=start_point,
         )
-        
 
     def plot(self, faces=100, grid_faces=20):
         if self.dim == 1:

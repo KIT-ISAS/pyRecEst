@@ -4,8 +4,9 @@ from scipy.integrate import dblquad, nquad, quad
 from scipy.optimize import minimize
 from scipy.stats import chi2
 
-from ..abstract_non_conditional_distribution import AbstractNonConditionalDistribution
 from ..abstract_distribution import AbstractDistribution
+from ..abstract_non_conditional_distribution import AbstractNonConditionalDistribution
+
 
 class AbstractLinearDistribution(AbstractNonConditionalDistribution):
     @property
@@ -49,7 +50,12 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
 
         # pylint: disable=duplicate-code
         return AbstractDistribution.sample_metropolis_hastings(
-            self, n, burn_in=burn_in, skipping=skipping, proposal=proposal, start_point=start_point,
+            self,
+            n,
+            burn_in=burn_in,
+            skipping=skipping,
+            proposal=proposal,
+            start_point=start_point,
         )
 
     def mean_numerical(self):

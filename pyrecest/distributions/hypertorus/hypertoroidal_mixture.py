@@ -1,18 +1,24 @@
 from typing import List
+
 import numpy as np
-from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+
 from ..abstract_mixture import AbstractMixture
+from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+
 
 class HypertoroidalMixture(AbstractHypertoroidalDistribution, AbstractMixture):
-    def __init__(self, dists: List[AbstractHypertoroidalDistribution], w: np.ndarray = None):
+    def __init__(
+        self, dists: List[AbstractHypertoroidalDistribution], w: np.ndarray = None
+    ):
         """
         Constructor
 
         :param dists: list of hypertoroidal distributions
         :param w: list of weights
         """
-        assert all(isinstance(dist, AbstractHypertoroidalDistribution) for dist in dists), \
-            "dists must be a list of hypertoroidal distributions"
+        assert all(
+            isinstance(dist, AbstractHypertoroidalDistribution) for dist in dists
+        ), "dists must be a list of hypertoroidal distributions"
 
         AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
@@ -26,7 +32,9 @@ class HypertoroidalMixture(AbstractHypertoroidalDistribution, AbstractMixture):
         """
         m = np.zeros(self.dim, dtype=np.complex128)
         for i in range(len(self.dists)):
-            m += self.w[i] * self.dists[i].trigonometric_moment(n)  # Calculate moments using moments of each component
+            m += self.w[i] * self.dists[i].trigonometric_moment(
+                n
+            )  # Calculate moments using moments of each component
         return m
 
     def shift(self, shift_angles: np.ndarray):
@@ -49,6 +57,7 @@ class HypertoroidalMixture(AbstractHypertoroidalDistribution, AbstractMixture):
         """
         assert self.dim == 1
         from ..circle.circular_mixture import CircularMixture
+
         return CircularMixture(self.dists, self.w)
 
     def to_toroidal_mixture(self):
@@ -59,4 +68,5 @@ class HypertoroidalMixture(AbstractHypertoroidalDistribution, AbstractMixture):
         """
         assert self.dim == 2
         from toroidal_mixture import ToroidalMixture
+
         return ToroidalMixture(self.dists, self.w)
