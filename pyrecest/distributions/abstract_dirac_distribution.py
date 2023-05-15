@@ -97,7 +97,7 @@ class AbstractDiracDistribution(AbstractDistribution):
             )
         return self.d[:, ind]
 
-    def mode_numerical(self):
+    def mode_numerical(self, _=None):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
     def entropy_numerical(self):
