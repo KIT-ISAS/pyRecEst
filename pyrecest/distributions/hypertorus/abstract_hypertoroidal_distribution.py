@@ -3,6 +3,7 @@ import numpy as np
 from scipy.integrate import nquad
 
 from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
+from ..abstract_distribution import AbstractDistribution
 
 
 class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
@@ -165,7 +166,12 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
         return mu
 
     def sample_metropolis_hastings(
-        self, n, proposal=None, start_point=None, burn_in=10, skipping=5
+        self,
+        n,
+        burn_in=10,
+        skipping=5,
+        proposal=None,
+        start_point=None,
     ):
         if proposal is None:
 
@@ -175,8 +181,9 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
         if start_point is None:
             start_point = self.mean_direction()
 
-        s = super().sample_metropolis_hastings(
-            n, proposal, start_point, burn_in, skipping
+        # pylint: disable=duplicate-code
+        s = AbstractDistribution.sample_metropolis_hastings(
+            self, n, burn_in, skipping, proposal=proposal, start_point=start_point
         )
         return s
 

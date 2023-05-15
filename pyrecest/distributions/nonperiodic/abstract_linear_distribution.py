@@ -4,6 +4,7 @@ from scipy.integrate import dblquad, nquad, quad
 from scipy.optimize import minimize
 from scipy.stats import chi2
 
+from ..abstract_distribution import AbstractDistribution
 from ..abstract_non_conditional_distribution import AbstractNonConditionalDistribution
 
 
@@ -35,7 +36,7 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
         return result.x
 
     def sample_metropolis_hastings(
-        self, n, proposal=None, start_point=None, burn_in=10, skipping=5
+        self, n, burn_in=10, skipping=5, proposal=None, start_point=None
     ):
         if proposal is None:
 
@@ -47,8 +48,14 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
                 self.mean()
             )  # We assume it is cheaply available. Done so for a lack of a better choice.
 
-        return super().sample_metropolis_hastings(
-            n, proposal, start_point, burn_in, skipping
+        # pylint: disable=duplicate-code
+        return AbstractDistribution.sample_metropolis_hastings(
+            self,
+            n,
+            burn_in=burn_in,
+            skipping=skipping,
+            proposal=proposal,
+            start_point=start_point,
         )
 
     def mean_numerical(self):
