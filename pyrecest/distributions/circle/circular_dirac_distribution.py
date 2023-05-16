@@ -1,7 +1,10 @@
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
 
-class CircularDiracDistribution(HypertoroidalDiracDistribution, AbstractCircularDistribution):
+
+class CircularDiracDistribution(
+    HypertoroidalDiracDistribution, AbstractCircularDistribution
+):
     def __init__(self, d, w=None):
         HypertoroidalDiracDistribution.__init__(self, d, w)
         AbstractCircularDistribution.__init__(self)
