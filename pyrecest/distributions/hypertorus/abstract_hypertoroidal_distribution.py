@@ -51,14 +51,19 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
 
         def moment_fun_real(*args):
             x = np.array(args)
-            return self.pdf(x) * np.cos(n * x)
+            return np.array([self.pdf(x) * np.cos(n * xi) for xi in x])
 
         def moment_fun_imag(*args):
             x = np.array(args)
-            return self.pdf(x) * np.sin(n * x)
+            return np.array([self.pdf(x) * np.sin(n * xi) for xi in x])
 
-        alpha = self.integrate_fun_over_domain(moment_fun_real, self.dim)
-        beta = self.integrate_fun_over_domain(moment_fun_imag, self.dim)
+        alpha = np.zeros(self.dim, dtype=float)
+        beta = np.zeros(self.dim, dtype=float)
+
+        for i in range(self.dim):
+            # i=i to avoid pylint warning (though it does not matter here)
+            alpha[i] = self.integrate_fun_over_domain(lambda *args, i=i: moment_fun_real(*args)[i], self.dim)
+            beta[i] = self.integrate_fun_over_domain(lambda *args, i=i: moment_fun_imag(*args)[i], self.dim)
 
         return alpha + 1j * beta
 
