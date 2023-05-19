@@ -62,8 +62,12 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
 
         for i in range(self.dim):
             # i=i to avoid pylint warning (though it does not matter here)
-            alpha[i] = self.integrate_fun_over_domain(lambda *args, i=i: moment_fun_real(*args)[i], self.dim)
-            beta[i] = self.integrate_fun_over_domain(lambda *args, i=i: moment_fun_imag(*args)[i], self.dim)
+            alpha[i] = self.integrate_fun_over_domain(
+                lambda *args, i=i: moment_fun_real(*args)[i], self.dim
+            )
+            beta[i] = self.integrate_fun_over_domain(
+                lambda *args, i=i: moment_fun_imag(*args)[i], self.dim
+            )
 
         return alpha + 1j * beta
 
