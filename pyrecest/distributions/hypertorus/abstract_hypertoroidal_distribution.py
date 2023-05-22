@@ -2,11 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import nquad
 
-from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
-from ..abstract_distribution import AbstractDistribution
+from ..abstract_manifold_specific_distribution import (
+    AbstractManifoldSpecificDistribution,
+)
+from ..abstract_periodic_distribution import AbstractPeriodicDistribution
 
 
-class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
+class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     @property
     def input_dim(self):
         return self.dim
@@ -27,21 +29,18 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
 
         return nquad(f, integration_boundaries)[0]
 
-    def integrate_numerically(self, integration_boundaries):
+    def integrate_numerically(self, integration_boundaries=None) -> float:
         if integration_boundaries is None:
             integration_boundaries = np.vstack(
                 (np.zeros(self.dim), 2 * np.pi * np.ones(self.dim))
             )
 
-        left = np.atleast_1d(integration_boundaries[0])
-        right = np.atleast_1d(integration_boundaries[1])
+        integration_boundaries = np.reshape(integration_boundaries, (2, -1))
+        left, right = integration_boundaries
 
-        def pdf_fun(*args):
-            return self.pdf(np.array(args))
-
-        integration_boundaries = [(left[i], right[i]) for i in range(self.dim)]
+        integration_boundaries = list(zip(left, right))
         return self.integrate_fun_over_domain_part(
-            pdf_fun, self.dim, integration_boundaries
+            lambda *args: self.pdf(np.array(args)), self.dim, integration_boundaries
         )
 
     def trigonometric_moment_numerical(self, n):
@@ -191,7 +190,7 @@ class AbstractHypertoroidalDistribution(AbstractBoundedDomainDistribution):
             start_point = self.mean_direction()
 
         # pylint: disable=duplicate-code
-        s = AbstractDistribution.sample_metropolis_hastings(
+        s = AbstractManifoldSpecificDistribution.sample_metropolis_hastings(
             self, n, burn_in, skipping, proposal=proposal, start_point=start_point
         )
         return s

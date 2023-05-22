@@ -4,11 +4,12 @@ from scipy.integrate import dblquad, nquad, quad
 from scipy.optimize import minimize
 from scipy.stats import chi2
 
-from ..abstract_distribution import AbstractDistribution
-from ..abstract_non_conditional_distribution import AbstractNonConditionalDistribution
+from ..abstract_manifold_specific_distribution import (
+    AbstractManifoldSpecificDistribution,
+)
 
 
-class AbstractLinearDistribution(AbstractNonConditionalDistribution):
+class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     @property
     def input_dim(self):
         return self.dim
@@ -49,7 +50,7 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
             )  # We assume it is cheaply available. Done so for a lack of a better choice.
 
         # pylint: disable=duplicate-code
-        return AbstractDistribution.sample_metropolis_hastings(
+        return AbstractManifoldSpecificDistribution.sample_metropolis_hastings(
             self,
             n,
             burn_in=burn_in,
@@ -130,25 +131,21 @@ class AbstractLinearDistribution(AbstractNonConditionalDistribution):
             )
         return C
 
-    def integrate(self, left=None, right=None, replace_inf_if_using_numerical=False):
+    def integrate(self, left=None, right=None):
         if left is None:
             left = -np.inf * np.ones(self.dim)
         if right is None:
             right = np.inf * np.ones(self.dim)
 
-        result = self.integrate_numerically(left, right, replace_inf_if_using_numerical)
+        result = self.integrate_numerically(left, right)
         return result
 
-    def integrate_numerically(
-        self, left=None, right=None, limit_integration_range=False
-    ):
-        assert left is not None and right is not None or not limit_integration_range
-        if limit_integration_range:
-            left, right = self.get_suggested_integration_limits()
-        else:
+    def integrate_numerically(self, left=None, right=None):
+        if left is None:
             left = np.empty(self.dim)
-            right = np.empty(self.dim)
             left.fill(-np.inf)
+        if right is None:
+            right = np.empty(self.dim)
             right.fill(np.inf)
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right

@@ -1,7 +1,17 @@
-from .nonperiodic.abstract_hyperrectangular_distribution import AbstractHyperrectangularDistribution
-from .custom_distribution import CustomDistribution
+from .abstract_custom_nonperiodic_distribution import (
+    AbstractCustomNonPeriodicDistribution,
+)
+from .nonperiodic.abstract_hyperrectangular_distribution import (
+    AbstractHyperrectangularDistribution,
+)
 
-class CustomHyperrectangularDistribution(AbstractHyperrectangularDistribution, CustomDistribution):
+
+class CustomHyperrectangularDistribution(
+    AbstractHyperrectangularDistribution, AbstractCustomNonPeriodicDistribution
+):
     def __init__(self, f, bounds):
         AbstractHyperrectangularDistribution.__init__(self, bounds)
-        CustomDistribution.__init__(self, f, self.dim)
+        AbstractCustomNonPeriodicDistribution.__init__(self, f)
+
+    def pdf(self, xs):
+        return AbstractCustomNonPeriodicDistribution.pdf(self, xs)

@@ -3,11 +3,15 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
-class AbstractDistribution(ABC):
+class AbstractManifoldSpecificDistribution(ABC):
     """Abstract base class for all distributions."""
 
     def __init__(self, dim=None):
         self._dim = dim
+
+    @abstractmethod
+    def get_manifold_size(self):
+        pass
 
     @property
     def dim(self):

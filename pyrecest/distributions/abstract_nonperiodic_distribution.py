@@ -3,5 +3,5 @@ from .abstract_manifold_specific_distribution import (
 )
 
 
-class AbstractBoundedDomainDistribution(AbstractManifoldSpecificDistribution):
+class AbstractNonperiodicDistribution(AbstractManifoldSpecificDistribution):
     pass

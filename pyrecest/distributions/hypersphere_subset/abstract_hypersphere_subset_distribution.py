@@ -191,6 +191,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     @abstractmethod
     def integrate_fun_over_domain(f_hypersph_coords, dim):
+        # Overwrite with a function that specifies the integration_boundaries for the type of HypersphereSubsetDistribution
         pass
 
     @staticmethod

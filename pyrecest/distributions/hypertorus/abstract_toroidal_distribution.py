@@ -6,7 +6,7 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 
 class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):
-        super().__init__(2)
+        AbstractHypertoroidalDistribution.__init__(self, 2)
 
     def covariance_4D_numerical(self):
         m = self.mean_4D()
