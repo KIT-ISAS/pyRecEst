@@ -6,7 +6,7 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class BinghamDistribution(AbstractHypersphericalDistribution):
-    def __init__(self, Z, M):
+    def __init__(self, Z: np.ndarray, M: np.ndarray):
         AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
         assert M.shape[1] == self.input_dim, "M is not square"

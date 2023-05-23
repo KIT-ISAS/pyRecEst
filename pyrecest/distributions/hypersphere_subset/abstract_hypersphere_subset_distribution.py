@@ -9,7 +9,7 @@ from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribu
 
 class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @property
-    def input_dim(self):
+    def input_dim(self) -> int:
         return self.dim + 1
 
     def mean_direction(self):

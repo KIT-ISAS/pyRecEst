@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import irfft, rfft
 from scipy import integrate
+from typing import Optional
+
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
@@ -17,12 +19,12 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        transformation="sqrt",
-        c=None,
-        a=None,
-        b=None,
-        n=None,
-        multiplied_by_n=True,
+        transformation: str = "sqrt",
+        c: Optional[np.ndarray] = None,
+        a: Optional[np.ndarray] = None,
+        b: Optional[np.ndarray] = None,
+        n: Optional[int] = None,
+        multiplied_by_n: bool = True,
     ):
         AbstractCircularDistribution.__init__(self)
         assert (a is None) == (b is None)
@@ -48,18 +50,19 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             else:
                 self.n = n
 
-    def __sub__(self, other):
+    def __sub__(self, other: 'CircularFourierDistribution') -> 'CircularFourierDistribution':
         # If transformed will not yield minus of pdfs!
         assert (
-            self.a is not None
-            and other.a is not None
-            or self.c is not None
-            and other.c is not None
-        )
+            ((self.a is not None and other.a is not None) and
+            (self.b is not None and other.b is not None))
+            or 
+            (self.c is not None and other.c is not None)
+        ), "Either both instances should have `a` and `b` defined, or both should have `c` defined."
+
         assert self.transformation == other.transformation
         assert self.n == other.n
         assert self.multiplied_by_n == other.multiplied_by_n
-        if self.a is not None:
+        if self.a is not None and self.b is not None:
             aNew = self.a - other.a
             bNew = self.b - other.b
             fdNew = CircularFourierDistribution(
@@ -81,7 +84,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         return fdNew
 
     def pdf(self, xs):
-        assert xs.ndim <= 2
+        assert xs.ndim <= 2, "xs should have at most 2 dimensions."
         xs = xs.reshape(-1, 1)
         a, b = self.get_a_b()
 

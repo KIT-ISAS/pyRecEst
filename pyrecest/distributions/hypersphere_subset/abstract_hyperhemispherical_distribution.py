@@ -13,9 +13,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     def mean(self):
         return self.mean_axis()
 
-    def sample_metropolis_hastings(
-        self, n, burn_in=10, skipping=5, proposal=None, start_point=None
-    ):
+    def sample_metropolis_hastings(self, n: int, burn_in: int = 10, skipping: int = 5, proposal = None, start_point = None) -> np.ndarray:
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
             from .hyperhemispherical_uniform_distribution import (
@@ -71,7 +69,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return mu
 
     @staticmethod
-    def get_full_integration_boundaries(dim):
+    def get_full_integration_boundaries(dim: int) -> np.ndarray:
         if dim == 1:
             integration_boundaries = [0, np.pi]
         else:
@@ -85,7 +83,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             ).T
         return integration_boundaries
 
-    def integrate(self, integration_boundaries=None):
+    def integrate(self, integration_boundaries: np.ndarray = None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -94,7 +92,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             )
         return super().integrate(integration_boundaries)
 
-    def integrate_numerically(self, integration_boundaries=None):
+    def integrate_numerically(self, integration_boundaries: np.ndarray = None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -104,7 +102,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return super().integrate_numerically(integration_boundaries)
 
     @staticmethod
-    def integrate_fun_over_domain(f_hypersph_coords, dim):
+    def integrate_fun_over_domain(f_hypersph_coords, dim: int) -> float:
         integration_boundaries = (
             AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(dim)
         )
@@ -112,7 +110,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             f_hypersph_coords, dim, integration_boundaries
         )
 
-    def mode_numerical(self):
+    def mode_numerical(self) -> np.ndarray:
         def objective_function_2d(s):
             return -self.pdf(AbstractHypersphereSubsetDistribution.polar2cart(s))
 
@@ -133,7 +131,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return (1 - 2 * (m[-1] < 0)) * m
 
     @staticmethod
-    def plot_hemisphere(resolution=150):
+    def plot_hemisphere(resolution: int = 150):
         x, y, z = np.meshgrid(
             np.linspace(-1, 1, resolution),
             np.linspace(-1, 1, resolution),

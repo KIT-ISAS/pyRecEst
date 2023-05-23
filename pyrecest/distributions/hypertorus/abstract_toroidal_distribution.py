@@ -8,10 +8,10 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):
         AbstractHypertoroidalDistribution.__init__(self, 2)
 
-    def covariance_4D_numerical(self):
+    def covariance_4D_numerical(self) -> np.ndarray:
         m = self.mean_4D()
 
-        def f(i, j, x, y):
+        def f(x: float, y: float, i: int, j: int) -> float:
             funcs = [
                 lambda x, _: np.cos(x) - m[0],
                 lambda x, _: np.sin(x) - m[1],
@@ -29,11 +29,11 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
 
         return C
 
-    def circular_correlation_jammalamadaka(self):
+    def circular_correlation_jammalamadaka(self) -> float:
         rhoc = self.circular_correlation_jammalamadaka_numerical()
         return rhoc
 
-    def circular_correlation_jammalamadaka_numerical(self):
+    def circular_correlation_jammalamadaka_numerical(self) -> float:
         m = self.mean_direction()
 
         def fsinAsinB(x, y):

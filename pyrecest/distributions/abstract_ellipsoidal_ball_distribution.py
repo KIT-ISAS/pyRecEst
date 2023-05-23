@@ -7,7 +7,16 @@ from .abstract_bounded_nonperiodic_distribution import (
 
 
 class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution):
+    """
+    This class represents distributions on ellipsoidal balls.
+    """
     def __init__(self, center, shape_matrix):
+        """
+        Initialize the class with a center and shape matrix.
+
+        :param center: The center of the ellipsoidal ball.
+        :param shape_matrix: The shape matrix of the ellipsoidal ball.
+        """
         AbstractBoundedNonPeriodicDistribution.__init__(self, center.shape[-1])
         self.center = center
         self.shape_matrix = shape_matrix
@@ -15,6 +24,12 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim
 
     def get_manifold_size(self):
+        """
+        Calculate the size of the manifold.
+
+        :returns: The size of the manifold.
+        """
+        # Handle cases with dimensions up to 4 directly
         if self.dim == 0:
             return 1
 

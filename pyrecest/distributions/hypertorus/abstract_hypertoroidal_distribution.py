@@ -9,6 +9,8 @@ from ..abstract_periodic_distribution import AbstractPeriodicDistribution
 
 
 class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
+    """An abstract class representing a Hypertoroidal Distribution"""
+
     @property
     def input_dim(self):
         return self.dim

@@ -10,20 +10,31 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):
         AbstractHypertoroidalDistribution.__init__(self, dim=1)
 
-    def cdf_numerical(self, xs, starting_point=0):
+    def cdf_numerical(self, xs: np.array, starting_point: float = 0) -> np.array:
+        """
+        Calculates the cumulative distribution function.
+
+        Args:
+            xs (np.array): The 1D array to calculate the CDF on.
+            starting_point (float, optional): Defaults to 0.
+
+        Returns:
+            np.array: The computed CDF as a numpy array.
+        """
         xs = np.asarray(xs)
         assert xs.ndim == 1, "xs must be a 1D array"
 
-        def cdf_single(x):
-            starting_point_mod = np.mod(starting_point, 2 * np.pi)
-            x_mod = np.mod(x, 2 * np.pi)
+        return np.array([self._cdf_numerical_single(x, starting_point) for x in xs])
 
-            if x_mod < starting_point_mod:
-                return 1 - self.integrate_numerically([x_mod, starting_point_mod])
+    def _cdf_numerical_single(self, x: float, starting_point: float) -> float:
+        """Helper method for cdf_numerical"""
+        starting_point_mod = np.mod(starting_point, 2 * np.pi)
+        x_mod = np.mod(x, 2 * np.pi)
 
-            return self.integrate_numerically([starting_point_mod, x_mod])
+        if x_mod < starting_point_mod:
+            return 1 - self.integrate_numerically([x_mod, starting_point_mod])
 
-        return np.array([cdf_single(x) for x in xs])
+        return self.integrate_numerically([starting_point_mod, x_mod])
 
     def to_vm(self):
         """
