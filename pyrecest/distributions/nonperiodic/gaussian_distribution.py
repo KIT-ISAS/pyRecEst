@@ -32,7 +32,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         assert (
             self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
         ), "Dimension incorrect"
-        return mvn.pdf(xs, self.mu.T, self.C).T
+        return mvn.pdf(xs, self.mu, self.C)
 
     def shift(self, offsets):
         assert offsets.size == self.dim
@@ -78,3 +78,15 @@ class GaussianDistribution(AbstractLinearDistribution):
 
     def sample(self, n):
         return np.random.multivariate_normal(self.mu, self.C, n)
+
+    @staticmethod
+    def from_distribution(dist):
+        from .gaussian_mixture import GaussianMixture
+
+        if isinstance(dist, GaussianMixture):
+            gaussian = (
+                dist.to_gaussian()
+            )  # Assuming to_gaussian method is defined in GaussianMixtureDistribution
+        else:
+            gaussian = GaussianDistribution(dist.mean, dist.covariance)
+        return gaussian

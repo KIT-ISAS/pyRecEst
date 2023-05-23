@@ -9,9 +9,18 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
 ):
-    def __init__(self, d, w=None):
-        AbstractDiracDistribution.__init__(self, np.mod(d, 2 * np.pi), w)
-        AbstractHypertoroidalDistribution.__init__(self, self.dim)
+    def __init__(self, d, w=None, dim=None):
+        """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
+        if dim is None:
+            if d.ndim > 1:
+                dim = d.shape[-1]
+            elif w is not None:
+                dim = np.size(d) // np.size(w)
+            else:
+                raise ValueError("Cannot determine dimension.")
+
+        AbstractHypertoroidalDistribution.__init__(self, dim)
+        AbstractDiracDistribution.__init__(self, np.mod(d, 2 * np.pi), w=w)
 
     def plot(self, *args, **kwargs):
         raise NotImplementedError("Plotting is not implemented")
@@ -80,10 +89,3 @@ class HypertoroidalDiracDistribution(
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         return CircularDiracDistribution(self.d, self.w)
-
-    @staticmethod
-    def from_distribution(distribution, no_of_samples):
-        return HypertoroidalDiracDistribution(
-            distribution.sample(no_of_samples),
-            np.ones((1, no_of_samples)) / no_of_samples,
-        )

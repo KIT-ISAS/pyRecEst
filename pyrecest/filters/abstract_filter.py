@@ -17,6 +17,7 @@ class AbstractFilter(ABC):
     def get_point_estimate(self):
         """Get the point estimate of the filter."""
 
+    @property
     def dim(self):
         """Convenience function to get the dimension of the filter.
         Overwrite if the filter is not directly based on a distribution."""

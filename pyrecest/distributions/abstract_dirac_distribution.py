@@ -3,16 +3,11 @@ import warnings
 
 import numpy as np
 
-from .abstract_distribution import AbstractDistribution
+from .abstract_distribution_type import AbstractDistributionType
 
 
-class AbstractDiracDistribution(AbstractDistribution):
+class AbstractDiracDistribution(AbstractDistributionType):
     def __init__(self, d, w=None):
-        AbstractDistribution.__init__(self, dim=d.shape[-1])
-        if self.dim > d.shape[0]:
-            warnings.warn(
-                "Not even one Dirac per dimension. If this warning is unexpected, verify d_ is shaped correctly."
-            )
         if w is None:
             w = np.ones(d.shape[0]) / d.shape[0]
 
@@ -31,11 +26,12 @@ class AbstractDiracDistribution(AbstractDistribution):
         dist.normalize_in_place()
         return dist
 
-    def apply_function(self, f):
-        d_new = np.apply_along_axis(f, 1, self.d)
+    def apply_function(self, f, f_supports_multiple=True):
         dist = copy.deepcopy(self)
-        dist.d = d_new
-        dist.w = self.w
+        if f_supports_multiple:
+            dist.d = f(dist.d)
+        else:
+            dist.d = np.apply_along_axis(f, 1, dist.d)
         return dist
 
     def reweigh(self, f):
@@ -56,7 +52,7 @@ class AbstractDiracDistribution(AbstractDistribution):
 
     def sample(self, n):
         ids = np.random.choice(self.w.size, size=n, p=self.w)
-        return self.d[ids, :]
+        return self.d[ids] if self.d.ndim == 1 else self.d[ids, :]
 
     def entropy(self):
         warnings.warn("Entropy is not defined in a continuous sense")
@@ -71,7 +67,7 @@ class AbstractDiracDistribution(AbstractDistribution):
     def log_likelihood(self, *args):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
-    def pdf(self, *args):
+    def pdf(self, xs):
         raise NotImplementedError("PDF:UNDEFINED, pdf is not defined")
 
     def integrate_numerically(self, *args):
@@ -102,3 +98,17 @@ class AbstractDiracDistribution(AbstractDistribution):
 
     def entropy_numerical(self):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
+
+    @classmethod
+    def from_distribution(cls, distribution, n_samples):
+        is_valid_class = False
+        # Look if distribution is of the correct type
+        for base in cls.__bases__:
+            if isinstance(distribution, base):
+                is_valid_class = True
+
+        assert is_valid_class
+        assert isinstance(n_samples, int) and n_samples > 0
+        samples = distribution.sample(n_samples)
+        weights = np.ones(n_samples) / n_samples
+        return cls(samples, weights)

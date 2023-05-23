@@ -13,3 +13,4 @@ dependencies:
   - pip: # Installing them via pip is much faster than using the conda-forge channel
       - filterpy
       - healpy
+      - pyshtools

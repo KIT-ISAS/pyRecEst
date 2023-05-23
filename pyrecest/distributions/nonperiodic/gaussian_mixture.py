@@ -14,6 +14,10 @@ class GaussianMixture(AbstractMixture, AbstractLinearDistribution):
         AbstractLinearDistribution.__init__(self, dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
 
+    @property
+    def input_dim(self):
+        return AbstractLinearDistribution.input_dim.fget(self)
+
     def mean(self):
         gauss_array = self.dists
         return np.dot(np.array([g.mu for g in gauss_array]), self.w)

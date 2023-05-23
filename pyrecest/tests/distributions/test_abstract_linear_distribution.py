@@ -46,7 +46,9 @@ class TestAbstractLinearDistribution(unittest.TestCase):
 
     def test_mode_numerical_custom_1D(self):
         cd = CustomLinearDistribution(
-            lambda x: ((x > -1) & (x <= 0)) * (1 + x) + ((x > 0) & (x <= 1)) * (1 - x),
+            lambda x: np.squeeze(
+                ((x > -1) & (x <= 0)) * (1 + x) + ((x > 0) & (x <= 1)) * (1 - x)
+            ),
             1,
         )
         cd = cd.shift(np.array(0.5))

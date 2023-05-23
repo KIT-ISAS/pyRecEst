@@ -5,7 +5,12 @@ from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_linear_distribution import AbstractLinearDistribution
 
 
-class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribution):  # type: ignore[misc]
+class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribution):
+    def __init__(self, d, w=None):
+        dim = d.shape[1] if d.ndim > 1 else 1
+        AbstractLinearDistribution.__init__(self, dim)
+        AbstractDiracDistribution.__init__(self, d, w)
+
     def mean(self):
         return np.average(self.d, weights=self.w, axis=0)
 
@@ -30,9 +35,9 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
             raise ValueError("Plotting not supported for this dimension")
 
     @staticmethod
-    def from_distribution(distribution, no_of_samples):
-        samples = distribution.sample(no_of_samples)
-        return LinearDiracDistribution(samples, np.ones(no_of_samples) / no_of_samples)
+    def from_distribution(distribution, n_samples):
+        samples = distribution.sample(n_samples)
+        return LinearDiracDistribution(samples, np.ones(n_samples) / n_samples)
 
     @staticmethod
     def weighted_samples_to_mean_and_cov(samples, weights=None):

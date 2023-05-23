@@ -22,7 +22,6 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     ):
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
-            from ..abstract_distribution import AbstractDistribution
             from .hyperspherical_uniform_distribution import (
                 HypersphericalUniformDistribution,
             )
@@ -34,8 +33,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             start_point = HypersphericalUniformDistribution(self.dim).sample(1)
         # Call the sample_metropolis_hastings method of AbstractDistribution
         # pylint: disable=duplicate-code
-        return AbstractDistribution.sample_metropolis_hastings(
-            self,
+        return super().sample_metropolis_hastings(
             n,
             burn_in=burn_in,
             skipping=skipping,

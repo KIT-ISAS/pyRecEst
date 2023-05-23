@@ -15,4 +15,9 @@ class LinearMixture(AbstractMixture, AbstractLinearDistribution):
                 "For mixtures of Gaussians, consider using GaussianMixture.",
                 UserWarning,
             )
-        super().__init__(dists, w)
+        AbstractLinearDistribution.__init__(self, dists[0].dim)
+        AbstractMixture.__init__(self, dists, w)
+
+    @property
+    def input_dim(self):
+        return AbstractLinearDistribution.input_dim.fget(self)

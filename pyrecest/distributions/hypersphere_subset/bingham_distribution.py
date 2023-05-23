@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.integrate import quad
+from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
@@ -7,8 +9,8 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
     def __init__(self, Z, M):
         AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
-        assert M.shape[1] == self.dim + 1, "M is not square"
-        assert Z.shape[0] == self.dim + 1, "Z has wrong length"
+        assert M.shape[1] == self.input_dim, "M is not square"
+        assert Z.shape[0] == self.input_dim, "Z has wrong length"
         assert Z.ndim == 1, "Z needs to be a 1-D vector"
         assert Z[-1] == 0, "Last entry of Z needs to be zero"
         assert np.all(Z[:-1] <= Z[1:]), "Values in Z have to be ascending"
@@ -37,9 +39,22 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
     def F(self, value):
         self._F = value
 
-    @property
-    def dF(self):
-        raise NotImplementedError("Not implemented.")
+    @staticmethod
+    def calculate_F(Z):
+        """Uses method by wood. Only supports 4-D distributions."""
+        assert Z.shape[0] == 4
+
+        def J(Z, u):
+            return iv(0, 0.5 * abs(Z[0] - Z[1]) * u) * iv(
+                0, 0.5 * abs(Z[2] - Z[3]) * (1 - u)
+            )
+
+        def ifun(u):
+            return J(Z, u) * np.exp(
+                0.5 * (Z[0] + Z[1]) * u + 0.5 * (Z[2] + Z[3]) * (1 - u)
+            )
+
+        return 2 * np.pi**2 * quad(ifun, 0, 1)[0]
 
     def pdf(self, xs):
         assert xs.shape[-1] == self.dim + 1
@@ -73,7 +88,38 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         return BinghamDistribution(Z_, M_)
 
     def sample(self, n):
-        return self.sample_kent(n)
+        return self.sample_metropolis_hastings(n)
+
+    @property
+    def dF(self):
+        if self._dF is None:
+            self._dF = self.calculate_dF()
+        return self._dF
+
+    def calculate_dF(self):
+        dim = self.Z.shape[0]  # Assuming Z is a property of the object
+        dF = np.zeros(dim)
+        epsilon = 0.001
+        for i in range(dim):
+            # Using finite differences
+            dZ = np.zeros(dim)
+            dZ[i] = epsilon
+            F1 = self.calculate_F(self.Z + dZ)
+            F2 = self.calculate_F(self.Z - dZ)
+            dF[i] = (F1 - F2) / (2 * epsilon)
+        return dF
 
     def sample_kent(self, n):
         raise NotImplementedError("Not yet implemented.")
+
+    def moment(self):
+        """
+        Returns:
+            S (numpy.ndarray): scatter/covariance matrix in R^d
+        """
+        D = np.diag(self.dF / self.F)
+        # It should already be normalized, but numerical inaccuracies can lead to values unequal to 1
+        D = D / np.sum(np.diag(D))
+        S = self.M @ D @ self.M.T
+        S = (S + S.T) / 2  # Enforce symmetry
+        return S

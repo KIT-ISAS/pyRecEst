@@ -1,13 +1,14 @@
 import warnings
+from abc import abstractmethod
 
 import numpy as np
 
-from .abstract_distribution import AbstractDistribution
+from .abstract_distribution_type import AbstractDistributionType
 
 
-class AbstractMixture(AbstractDistribution):
+class AbstractMixture(AbstractDistributionType):
     def __init__(self, dists, w=None):
-        AbstractDistribution.__init__(self, dim=dists[0].dim)
+        AbstractDistributionType.__init__(self)
         if w is None:
             w = np.ones(len(dists)) / len(dists)
         else:
@@ -50,6 +51,11 @@ class AbstractMixture(AbstractDistribution):
         s = s[order, :]  # noqa: E203
 
         return s
+
+    @property
+    @abstractmethod
+    def input_dim(self):
+        pass
 
     def pdf(self, xs):
         assert xs.shape[-1] == self.input_dim, "Dimension mismatch"

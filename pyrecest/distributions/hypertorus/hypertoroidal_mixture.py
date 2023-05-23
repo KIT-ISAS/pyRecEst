@@ -6,7 +6,7 @@ from ..abstract_mixture import AbstractMixture
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
-class HypertoroidalMixture(AbstractHypertoroidalDistribution, AbstractMixture):
+class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
     def __init__(
         self, dists: List[AbstractHypertoroidalDistribution], w: np.ndarray = None
     ):
@@ -70,3 +70,7 @@ class HypertoroidalMixture(AbstractHypertoroidalDistribution, AbstractMixture):
         from toroidal_mixture import ToroidalMixture
 
         return ToroidalMixture(self.dists, self.w)
+
+    @property
+    def input_dim(self):
+        return AbstractHypertoroidalDistribution.input_dim.fget(self)

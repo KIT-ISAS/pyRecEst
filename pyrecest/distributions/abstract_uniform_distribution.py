@@ -2,13 +2,13 @@ from abc import abstractmethod
 
 import numpy as np
 
-from .abstract_distribution import AbstractDistribution
+from .abstract_distribution_type import AbstractDistributionType
 
 
-class AbstractUniformDistribution(AbstractDistribution):
+class AbstractUniformDistribution(AbstractDistributionType):
     # Uniform distribution.
     def pdf(self, xs):
-        return 1 / self.get_manifold_size() * np.ones(np.size(xs) // self.dim)
+        return 1 / self.get_manifold_size() * np.ones(xs.shape[0])
 
     @abstractmethod
     def get_manifold_size(self):

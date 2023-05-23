@@ -10,3 +10,7 @@ class HypersphericalMixture(AbstractMixture, AbstractHypersphericalDistribution)
         ), "dists must be a list of hyperspherical distributions"
 
         AbstractMixture.__init__(self, dists, w)
+
+    @property
+    def input_dim(self):
+        return AbstractHypersphericalDistribution.input_dim.fget(self)

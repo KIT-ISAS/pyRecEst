@@ -18,7 +18,6 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     ):
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
-            from ..abstract_distribution import AbstractDistribution
             from .hyperhemispherical_uniform_distribution import (
                 HyperhemisphericalUniformDistribution,
             )
@@ -30,8 +29,8 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             start_point = HyperhemisphericalUniformDistribution(self.dim).sample(1)
         # Call the sample_metropolis_hastings method of AbstractDistribution
         # pylint: disable=duplicate-code
-        return AbstractDistribution.sample_metropolis_hastings(
-            self, n, burn_in, skipping, proposal=proposal, start_point=start_point
+        return super().sample_metropolis_hastings(
+            n, burn_in, skipping, proposal=proposal, start_point=start_point
         )
 
     def mean_direction_numerical(self):

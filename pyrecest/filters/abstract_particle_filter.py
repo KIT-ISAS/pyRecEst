@@ -1,18 +1,23 @@
 import numpy as np
-from pyrecest.distributions import AbstractDistribution
+from pyrecest.distributions.abstract_manifold_specific_distribution import (
+    AbstractManifoldSpecificDistribution,
+)
 
 from .abstract_filter import AbstractFilter
 
 
 class AbstractParticleFilter(AbstractFilter):
-    def __init__(self):
-        self.filter_state = None
+    def __init__(self, filter_state=None):
+        self.filter_state = filter_state
 
     def set_state(self, state):
         assert isinstance(
             state, type(self.filter_state)
         ), "New distribution has to be of the same class as (or inherit from) the previous density."
         self.filter_state = state
+
+    def get_estimate(self):
+        return self.filter_state
 
     def predict_identity(self, noise_distribution):
         self.predict_nonlinear(lambda x: x, noise_distribution)
@@ -58,7 +63,8 @@ class AbstractParticleFilter(AbstractFilter):
         self.filter_state.d = d
 
     def update_identity(self, noise_distribution, z, shift_instead_of_add=True):
-        assert z is None or z.size == noise_distribution.dim
+        assert z is None or np.size(z) == noise_distribution.dim
+        assert np.ndim(z) == 1 or np.ndim(z) == 0 and noise_distribution.dim == 1
         if not shift_instead_of_add:
             raise NotImplementedError()
 
@@ -67,7 +73,7 @@ class AbstractParticleFilter(AbstractFilter):
         self.update_nonlinear(likelihood)
 
     def update_nonlinear(self, likelihood, z=None):
-        if isinstance(likelihood, AbstractDistribution):
+        if isinstance(likelihood, AbstractManifoldSpecificDistribution):
             assert (
                 z is None
             ), "Cannot pass a density and a measurement. To assume additive noise, use update_identity."
@@ -82,9 +88,6 @@ class AbstractParticleFilter(AbstractFilter):
         self.filter_state.w = np.full(
             self.filter_state.d.shape[0], 1 / self.filter_state.d.shape[0]
         )
-
-    def get_estimate(self):
-        return self.filter_state
 
     def association_likelihood(self, likelihood):
         likelihood_val = np.sum(
