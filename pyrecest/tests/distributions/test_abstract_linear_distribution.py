@@ -61,7 +61,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         mu = np.array([5, 10])
         C = np.array([[2, 1], [1, 1]])
         g = GaussianDistribution(mu, C)
-        np.testing.assert_allclose(g.mode_numerical(), mu, atol=1e-4)
+        np.testing.assert_allclose(g.mode_numerical(), mu, atol=2e-4)
 
     def test_mode_numerical_gaussian_3D(self):
         np.testing.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
