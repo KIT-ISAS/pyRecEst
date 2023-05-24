@@ -7,14 +7,22 @@ from .bingham_distribution import BinghamDistribution
 
 
 class WatsonDistribution(AbstractHypersphericalDistribution):
-    def __init__(self, mu_, kappa_):
-        AbstractHypersphericalDistribution.__init__(self, dim=mu_.shape[0] - 1)
-        epsilon = 1e-6
-        assert mu_.ndim == 1, "mu must be a 1-D vector"
-        assert np.abs(np.linalg.norm(mu_) - 1) < epsilon, "mu is unnormalized"
+    EPSILON = 1e-6
 
-        self.mu = mu_
-        self.kappa = kappa_
+    def __init__(self, mu: np.ndarray, kappa: float):
+        """
+        Initializes a new instance of the WatsonDistribution class.
+
+        Args:
+            mu_ (np.ndarray): The mean direction of the distribution.
+            kappa_ (float): The concentration parameter of the distribution.
+        """
+        AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
+        assert mu.ndim == 1, "mu must be a 1-D vector"
+        assert np.abs(np.linalg.norm(mu) - 1) < self.EPSILON, "mu is unnormalized"
+
+        self.mu = mu
+        self.kappa = kappa
 
         C_mpf = (
             mpmath.gamma((self.dim + 1) / 2)
@@ -23,12 +31,30 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         )
         self.C = np.float64(C_mpf)
 
-    def pdf(self, xs):
-        assert xs.shape[-1] == self.dim + 1
-        p = self.C * np.exp(self.kappa * (self.mu.T @ xs.T) ** 2)
+    def pdf(self, xs: np.ndarray) -> np.ndarray:
+        """
+        Computes the probability density function at xs.
+
+        Args:
+            xs (np.ndarray): The values at which to evaluate the pdf.
+
+        Returns:
+            np.ndarray: The value of the pdf at xs.
+        """
+        assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
+        p = self.C * np.exp(self.kappa * np.dot(self.mu.T, xs.T) ** 2)
         return p
 
-    def to_bingham(self):
+    def to_bingham(self) -> BinghamDistribution:
+        """
+        Converts the Watson distribution to a Bingham distribution.
+
+        Returns:
+            BinghamDistribution: The converted distribution.
+
+        Raises:
+            NotImplementedError: If kappa is less than 0.
+        """
         if self.kappa < 0:
             raise NotImplementedError(
                 "Conversion to Bingham is not implemented for kappa<0"

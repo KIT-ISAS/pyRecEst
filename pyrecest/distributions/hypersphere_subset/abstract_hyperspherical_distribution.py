@@ -1,5 +1,3 @@
-from abc import abstractmethod
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
@@ -10,16 +8,34 @@ from .abstract_hypersphere_subset_distribution import (
 
 
 class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
-    @abstractmethod
-    def pdf(self, xs):
-        pass
+    """
+    This is an abstract class for a distribution over a hypersphere.
+    """
 
     def mean(self):
         return self.mean_direction()
 
     def sample_metropolis_hastings(
-        self, n, burn_in=10, skipping=5, proposal=None, start_point=None
+        self,
+        n: int,
+        burn_in: int = 10,
+        skipping: int = 5,
+        proposal=None,
+        start_point=None,
     ):
+        """
+        Sample from the distribution using Metropolis-Hastings algorithm.
+
+        Args:
+            n (int): Number of samples.
+            burn_in (int, optional): Number of samples to discard at the start. Defaults to 10.
+            skipping (int, optional): Number of samples to skip between each kept sample. Defaults to 5.
+            proposal (function, optional): Proposal distribution for the Metropolis-Hastings algorithm. Defaults to None.
+            start_point (np.ndarray, optional): Starting point for the Metropolis-Hastings algorithm. Defaults to None.
+
+        Returns:
+            np.ndarray: Sampled points.
+        """
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
             from .hyperspherical_uniform_distribution import (

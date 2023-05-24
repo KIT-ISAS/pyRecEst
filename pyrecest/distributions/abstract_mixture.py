@@ -1,5 +1,4 @@
 import warnings
-from abc import abstractmethod
 
 import numpy as np
 
@@ -7,34 +6,45 @@ from .abstract_distribution_type import AbstractDistributionType
 
 
 class AbstractMixture(AbstractDistributionType):
-    def __init__(self, dists, w=None):
+    """
+    Abstract base class for mixture distributions.
+    """
+
+    def __init__(self, dists, weights=None):
         AbstractDistributionType.__init__(self)
-        if w is None:
-            w = np.ones(len(dists)) / len(dists)
+        num_distributions = len(dists)
+
+        if weights is None:
+            weights = np.ones(num_distributions) / num_distributions
         else:
-            w = np.asarray(w)
+            weights = np.asarray(weights)
 
-        assert len(dists) == len(w), "Sizes of dists and w must be equal"
-        assert all(
-            dists[0].dim == dist.dim for dist in dists
-        ), "All distributions must have the same dimension"
+        if num_distributions != len(weights):
+            raise ValueError("Sizes of distributions and weights must be equal")
 
-        non_zero_indices = np.nonzero(w)[0]
+        if not all(dists[0].dim == dist.dim for dist in dists):
+            raise ValueError("All distributions must have the same dimension")
 
-        if len(non_zero_indices) < len(w):
+        non_zero_indices = np.nonzero(weights)[0]
+
+        if len(non_zero_indices) < len(weights):
             warnings.warn(
                 "Elements with zero weights detected. Pruning elements in mixture with weight zero."
             )
             dists = [dists[i] for i in non_zero_indices]
-            w = w[non_zero_indices]
+            weights = weights[non_zero_indices]
 
         self.dists = dists
 
-        if abs(np.sum(w) - 1) > 1e-10:
+        if abs(np.sum(weights) - 1) > 1e-10:
             warnings.warn("Weights of mixture do not sum to one.")
-            self.w = w / np.sum(w)
+            self.w = weights / np.sum(weights)
         else:
-            self.w = w
+            self.w = weights
+
+    @property
+    def input_dim(self) -> int:
+        return self.dists[0].input_dim
 
     def sample(self, n):
         d = np.random.choice(len(self.w), size=n, p=self.w)
@@ -51,11 +61,6 @@ class AbstractMixture(AbstractDistributionType):
         s = s[order, :]  # noqa: E203
 
         return s
-
-    @property
-    @abstractmethod
-    def input_dim(self):
-        pass
 
     def pdf(self, xs):
         assert xs.shape[-1] == self.input_dim, "Dimension mismatch"

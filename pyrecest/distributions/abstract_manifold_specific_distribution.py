@@ -4,7 +4,10 @@ import numpy as np
 
 
 class AbstractManifoldSpecificDistribution(ABC):
-    """Abstract base class for all distributions."""
+    """
+    Abstract base class for distributions catering to specific manifolds.
+    Should be inerhited by (abstract) classes limited to specific manifolds.
+    """
 
     def __init__(self, dim=None):
         self._dim = dim
@@ -15,10 +18,12 @@ class AbstractManifoldSpecificDistribution(ABC):
 
     @property
     def dim(self):
+        """Get dimension of the manifold."""
         return self._dim
 
     @dim.setter
     def dim(self, value):
+        """Set dimension of the manifold. Must be a positive integer or None."""
         if value is not None:
             if isinstance(value, int) and value > 0:
                 self._dim = value

@@ -7,7 +7,17 @@ from .abstract_distribution_type import AbstractDistributionType
 
 
 class AbstractDiracDistribution(AbstractDistributionType):
+    """
+    This class represents an abstract base for Dirac distributions.
+    """
+
     def __init__(self, d, w=None):
+        """
+        Initialize a Dirac distribution with given Dirac locations and weights.
+
+        :param d: Dirac locations as a numpy array.
+        :param w: Weights of Dirac locations as a numpy array. If not provided, defaults to uniform weights.
+        """
         if w is None:
             w = np.ones(d.shape[0]) / d.shape[0]
 
@@ -17,6 +27,9 @@ class AbstractDiracDistribution(AbstractDistributionType):
         self.normalize_in_place()
 
     def normalize_in_place(self):
+        """
+        Normalize the weights in-place to ensure they sum to 1.
+        """
         if not np.isclose(np.sum(self.w), 1, atol=1e-10):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
             self.w = self.w / np.sum(self.w)
@@ -26,7 +39,15 @@ class AbstractDiracDistribution(AbstractDistributionType):
         dist.normalize_in_place()
         return dist
 
-    def apply_function(self, f, f_supports_multiple=True):
+    def apply_function(
+        self, f, f_supports_multiple=True
+    ) -> "AbstractDiracDistribution":
+        """
+        Apply a function to the Dirac locations and return a new distribution.
+
+        :param f: Function to apply.
+        :returns: A new distribution with the function applied to the locations.
+        """
         dist = copy.deepcopy(self)
         if f_supports_multiple:
             dist.d = f(dist.d)

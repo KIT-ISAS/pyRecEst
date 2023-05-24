@@ -1,4 +1,5 @@
 import copy
+from typing import Optional, Union
 
 import numpy as np
 
@@ -9,7 +10,9 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
 ):
-    def __init__(self, d, w=None, dim=None):
+    def __init__(
+        self, d: np.ndarray, w: Optional[np.ndarray] = None, dim: Optional[int] = None
+    ):
         """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
         if dim is None:
             if d.ndim > 1:
@@ -67,7 +70,7 @@ class HypertoroidalDiracDistribution(
 
         return CircularDiracDistribution(self.d[:, dimension], self.w)
 
-    def marginalize_out(self, dimensions):
+    def marginalize_out(self, dimensions: Union[int, list[int]]):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         remaining_dims = list(range(self.dim))

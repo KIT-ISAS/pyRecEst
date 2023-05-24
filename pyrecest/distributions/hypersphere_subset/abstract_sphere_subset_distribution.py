@@ -7,12 +7,29 @@ from .abstract_hypersphere_subset_distribution import (
 
 
 class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
+    """
+    This is an abstract class for a distribution over a sphere.
+    """
+
     def __init__(self):
-        AbstractHypersphereSubsetDistribution.__init__(self, dim=2)
+        """
+        Initialize the AbstractSphereSubsetDistribution instance.
+        """
+        super().__init__(2)
 
     @staticmethod
-    def sph2cart(azimuth, elevation):
-        assert azimuth.ndim == 1 and elevation.ndim == 1
+    def _sph_to_cart(azimuth: np.ndarray, elevation: np.ndarray) -> tuple:
+        """
+        Convert spherical coordinates to Cartesian coordinates.
+
+        Args:
+            azimuth (np.ndarray): Azimuth angles.
+            elevation (np.ndarray): Elevation angles.
+
+        Returns:
+            tuple: Cartesian coordinates.
+        """
+        assert azimuth.ndim == 1 and elevation.ndim == 1, "Input must be 1-dimensional"
         x, y, z = (
             R.from_euler(
                 "ZYX", np.column_stack((azimuth, elevation, np.zeros(np.size(azimuth))))
@@ -23,18 +40,29 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, -z
 
     @staticmethod
-    def cart2sph(x, y, z):
-        return AbstractSphereSubsetDistribution.cart2sph_colatitude(x, y, z)
+    def _cart_to_sph(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
+        """
+        Convert Cartesian coordinates to spherical coordinates.
+
+        Args:
+            x (np.ndarray): X coordinates.
+            y (np.ndarray): Y coordinates.
+            z (np.ndarray): Z coordinates.
+
+        Returns:
+            tuple: Spherical coordinates.
+        """
+        return AbstractSphereSubsetDistribution._cart_to_sph_colatitude(x, y, z)
 
     @staticmethod
-    def cart2sph_colatitude(x, y, z):
+    def _cart_to_sph_colatitude(x, y, z):
         hxy = np.hypot(x, y)
         colatitude = np.arctan2(hxy, z)
         azimuth = np.arctan2(y, x)
         return azimuth, colatitude
 
     @staticmethod
-    def cart2sph_elevation(x, y, z):
+    def _cart_to_sph_elevation(x, y, z):
         hxy = np.hypot(x, y)
         elevation = np.arctan2(z, hxy)
         azimuth = np.arctan2(y, x)

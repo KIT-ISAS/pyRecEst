@@ -1,5 +1,4 @@
 import unittest
-import warnings
 
 import numpy as np
 from pyrecest.distributions.hypertorus.toroidal_uniform_distribution import (
@@ -50,15 +49,14 @@ class TestToroidalUniformDistribution(unittest.TestCase):
                     )
                 )
 
-    def test_circular_mean(self):
-        with warnings.catch_warnings(record=True) as w:
-            self.tud.circular_mean()
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, RuntimeWarning))
-            self.assertIn(
-                "Circular uniform distribution does not have a unique mean",
-                str(w[-1].message),
-            )
+    def test_mean_direction(self):
+        with self.assertRaises(ValueError) as cm:
+            self.tud.mean_direction()
+
+        self.assertEqual(
+            str(cm.exception),
+            "Hypertoroidal uniform distributions do not have a unique mean",
+        )
 
     def test_entropy(self):
         self.assertAlmostEqual(

@@ -11,10 +11,19 @@ from .von_mises_distribution import VonMisesDistribution
 class WrappedNormalDistribution(
     AbstractCircularDistribution, HypertoroidalWrappedNormalDistribution
 ):
-    def __init__(self, mu_, sigma_):
+    """
+    This class implements the wrapped normal distribution.
+    """
+
+    MAX_SIGMA_BEFORE_UNIFORM = 10
+
+    def __init__(self, mu, sigma):
+        """
+        Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
+        """
         AbstractCircularDistribution.__init__(self)
         HypertoroidalWrappedNormalDistribution.__init__(
-            self, mu_, np.atleast_2d(sigma_**2)
+            self, mu, np.atleast_2d(sigma**2)
         )
 
     @property
@@ -23,7 +32,7 @@ class WrappedNormalDistribution(
 
     def pdf(self, xs):
         if self.sigma <= 0:
-            raise ValueError("sigma must be >0.")
+            raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
         xs = np.asarray(xs)
         if xs.ndim == 0:
@@ -32,7 +41,7 @@ class WrappedNormalDistribution(
         result = np.zeros(n_inputs)
 
         # check if sigma is large and return uniform distribution in this case
-        if self.sigma > 10:
+        if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
             result[:] = 1.0 / (2 * np.pi)
             return result
 

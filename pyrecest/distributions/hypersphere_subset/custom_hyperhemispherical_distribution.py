@@ -9,23 +9,61 @@ from .bingham_distribution import BinghamDistribution
 class CustomHyperhemisphericalDistribution(
     AbstractCustomDistribution, AbstractHyperhemisphericalDistribution
 ):
-    def __init__(self, f, dim, scale_by=1):
+    def __init__(self, f, dim: int, scale_by: float = 1):
+        """
+        Initialize a CustomHyperhemisphericalDistribution.
+
+        Args:
+            f: function to be used for custom distribution.
+            dim: dimension of the distribution.
+            scale_by: scaling factor for the distribution, default is 1.
+        """
         AbstractHyperhemisphericalDistribution.__init__(self, dim=dim)
         AbstractCustomDistribution.__init__(self, f=f, scale_by=scale_by)
 
     def pdf(self, xs):
+        """
+        Calculate the probability density function at given points.
+
+        Args:
+            xs: points where the pdf will be calculated.
+
+        Returns:
+            numpy.ndarray: pdf values at given points.
+        """
         assert xs.shape[-1] == self.dim + 1
         p = self.scale_by * self.f(xs)
         assert p.ndim <= 1, "Output format of pdf is not as expected"
         return p
 
     def integrate(self, integration_boundaries=None):
+        """
+        Integrate the pdf over given boundaries.
+
+        Args:
+            integration_boundaries: boundaries of the integration, if None, the integration will be performed over the whole domain.
+
+        Returns:
+            float: result of the integration.
+        """
         return AbstractHyperhemisphericalDistribution.integrate(
             self, integration_boundaries
         )
 
     @staticmethod
     def from_distribution(dist):
+        """
+        Create a CustomHyperhemisphericalDistribution from another distribution.
+
+        Args:
+            dist: the distribution from which the CustomHyperhemisphericalDistribution will be created.
+
+        Returns:
+            CustomHyperhemisphericalDistribution: the resulting distribution.
+
+        Raises:
+            ValueError: if the type of dist is not supported.
+        """
         if isinstance(dist, AbstractHyperhemisphericalDistribution):
             return CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
 

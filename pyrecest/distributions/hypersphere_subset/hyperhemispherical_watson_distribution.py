@@ -7,41 +7,41 @@ from .watson_distribution import WatsonDistribution
 
 
 class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistribution):
-    def __init__(self, mu_, kappa_):
-        assert mu_[-1] >= 0
-        self.distFullSphere = WatsonDistribution(mu_, kappa_)
+    def __init__(self, mu: np.array, kappa: float):
+        assert mu[-1] >= 0
+        self.dist_full_sphere = WatsonDistribution(mu, kappa)
         AbstractHyperhemisphericalDistribution.__init__(
-            self, dim=self.distFullSphere.dim
+            self, dim=self.dist_full_sphere.dim
         )
 
-    def pdf(self, xs):
-        return 2 * self.distFullSphere.pdf(xs)
+    def pdf(self, xs: np.array):
+        return 2 * self.dist_full_sphere.pdf(xs)
 
-    def set_mode(self, mu):
+    def set_mode(self, mu: np.array):
         w = self
         w.mu = mu
         return w
 
-    def sample(self, n):
-        s_full = self.distFullSphere.sample(n)
+    def sample(self, n: int):
+        s_full = self.dist_full_sphere.sample(n)
         s = s_full * (-1) ** (s_full[-1] < 0)  # Mirror to upper hemisphere
         return s
 
     @property
     def mu(self):
-        return self.distFullSphere.mu
+        return self.dist_full_sphere.mu
 
     @mu.setter
     def mu(self, mu):
-        self.distFullSphere.mu = mu
+        self.dist_full_sphere.mu = mu
 
     @property
     def kappa(self):
-        return self.distFullSphere.kappa
+        return self.dist_full_sphere.kappa
 
     @kappa.setter
     def kappa(self, kappa):
-        self.distFullSphere.kappa = kappa
+        self.dist_full_sphere.kappa = kappa
 
     def mode(self):
         return self.mu

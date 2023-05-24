@@ -10,7 +10,17 @@ from .hypertoroidal_wrapped_normal_distribution import (
 class ToroidalWrappedNormalDistribution(
     HypertoroidalWrappedNormalDistribution, AbstractToroidalDistribution
 ):
-    def mean_4D(self):
+    """
+    Toroidal Wrapped Normal Distribution.
+    """
+
+    def mean_4D(self) -> np.array:
+        """
+        Compute the 4D mean of the distribution.
+
+        Returns:
+            np.array: The 4D mean.
+        """
         s = self.mu
         mu = np.array(
             [
@@ -22,7 +32,13 @@ class ToroidalWrappedNormalDistribution(
         )
         return mu
 
-    def covariance_4D(self):
+    def covariance_4D(self) -> np.array:
+        """
+        Compute the 4D covariance of the distribution.
+
+        Returns:
+            np.array: The 4D covariance.
+        """
         C = np.zeros((4, 4))
         # jscpd:ignore-start
         C[0, 0] = (
