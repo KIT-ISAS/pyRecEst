@@ -6,7 +6,7 @@ class AbstractFilter(ABC):
     """Abstract base class for all filters."""
 
     @abstractmethod
-    def set_state(self, state):
+    def set_state(self, new_state):
         """Set the state of the filter."""
 
     @abstractmethod

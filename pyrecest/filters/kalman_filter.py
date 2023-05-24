@@ -19,16 +19,16 @@ class KalmanFilter(AbstractEuclideanFilter):
         )  # Set dim_z identical to the dimensionality of the state because we do not know yet.
         self.set_state(initial_state)
 
-    def set_state(self, state):
+    def set_state(self, new_state):
         """Provide GaussianDistribution or mean and covariance as state."""
 
-        if isinstance(state, GaussianDistribution):
-            mean = state.mu
-            cov = state.C
+        if isinstance(new_state, GaussianDistribution):
+            mean = new_state.mu
+            cov = new_state.C
         else:
-            assert len(state) == 2
-            mean = state[0]
-            cov = state[1]
+            assert len(new_state) == 2
+            mean = new_state[0]
+            cov = new_state[1]
 
         self.kf.x = np.asarray(mean)
         self.kf.P = np.asarray(cov)  # FilterPy uses .P
