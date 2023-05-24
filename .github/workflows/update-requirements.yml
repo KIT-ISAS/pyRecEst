@@ -39,17 +39,18 @@ jobs:
       - name: Update requirements_dev.txt
         run: poetry export --dev --format requirements.txt --output requirements-dev.txt --without-hashes
 
+      - name: Set branch name
+        id: branch_name
+        run: echo "BRANCH_NAME=update-requirements-${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
       - name: Commit changes
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git checkout -b update-requirements
+          git checkout -b "$BRANCH_NAME"
           git add .
           git commit -m "Update requirements.txt"
-
-      - name: Set branch name
-        id: branch_name
-        run: echo "BRANCH_NAME=update-requirements-${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+          git push origin "$BRANCH_NAME"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
