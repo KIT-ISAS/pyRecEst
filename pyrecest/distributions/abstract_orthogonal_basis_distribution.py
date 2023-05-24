@@ -55,7 +55,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         val = self.value(xs)
         if self.transformation == "sqrt":
-            assert all(np.imag(val) < 0.0001)
+            assert np.all(np.imag(val) < 0.0001)
             return np.real(val) ** 2
 
         if self.transformation == "identity":

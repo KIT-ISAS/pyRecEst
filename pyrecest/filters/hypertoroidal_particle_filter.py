@@ -27,7 +27,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
                 ).T.squeeze(),
                 dim=dim,
             )
-        AbstractHypertoroidalFilter.__init__(self)
+        AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)
 
     def set_state(self, new_state):

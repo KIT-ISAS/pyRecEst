@@ -28,6 +28,11 @@ class GaussianDistribution(AbstractLinearDistribution):
 
         self.C = C
 
+    def set_mean(self, new_mean):
+        new_dist = copy.deepcopy(self)
+        new_dist.mu = new_mean
+        return new_dist
+
     def pdf(self, xs):
         assert (
             self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
