@@ -47,6 +47,10 @@ jobs:
           git add .
           git commit -m "Update requirements.txt"
 
+      - name: Set branch name
+        id: branch_name
+        run: echo "BRANCH_NAME=update-requirements-${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
@@ -54,4 +58,4 @@ jobs:
           commit-message: "Update requirements.txt"
           title: "Update requirements.txt"
           body: "Updates the requirements.txt"
-          branch: "update-requirements"
+          branch: ${{ env.BRANCH_NAME }}
