@@ -33,7 +33,9 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
     def set_state(self, new_state):
         if not isinstance(new_state, HypertoroidalDiracDistribution):
             # If CircularDiracDistribution: Also generate CircularDiracDistribution
-            new_state = self.filter_state.__class__(new_state.sample(self.filter_state.w.size))
+            new_state = self.filter_state.__class__(
+                new_state.sample(self.filter_state.w.size)
+            )
         self.filter_state = copy.deepcopy(new_state)
 
     def predict_nonlinear(
