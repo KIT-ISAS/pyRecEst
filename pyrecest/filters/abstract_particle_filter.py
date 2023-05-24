@@ -2,6 +2,8 @@ import numpy as np
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
+from pyrecest.distributions import AbstractLinearDistribution
+from typing import Callable, Optional   
 
 from .abstract_filter import AbstractFilter
 
@@ -24,10 +26,10 @@ class AbstractParticleFilter(AbstractFilter):
 
     def predict_nonlinear(
         self,
-        f,
-        noise_distribution,
-        function_is_vectorized=True,
-        shift_instead_of_add=True,
+        f: Callable,
+        noise_distribution: Optional[AbstractLinearDistribution] = None,
+        function_is_vectorized: bool = True,
+        shift_instead_of_add: bool = True,
     ):
         assert (
             noise_distribution is None
