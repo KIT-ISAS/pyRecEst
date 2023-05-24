@@ -10,11 +10,11 @@ class AbstractParticleFilter(AbstractFilter):
     def __init__(self, filter_state=None):
         self.filter_state = filter_state
 
-    def set_state(self, state):
+    def set_state(self, new_state):
         assert isinstance(
-            state, type(self.filter_state)
+            new_state, type(self.filter_state)
         ), "New distribution has to be of the same class as (or inherit from) the previous density."
-        self.filter_state = state
+        self.filter_state = new_state
 
     def get_estimate(self):
         return self.filter_state
@@ -48,7 +48,7 @@ class AbstractParticleFilter(AbstractFilter):
                     noise_curr = noise_distribution.set_mode(self.filter_state.d[i, :])
                     self.filter_state.d[i, :] = noise_curr.sample(1)
 
-    def predict_nonlinear_non_additive(self, f, samples, weights):
+    def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
             samples.shape[0] == weights.size
         ), "samples and weights must match in size"
@@ -56,7 +56,7 @@ class AbstractParticleFilter(AbstractFilter):
         weights = weights / np.sum(weights)
         n = self.filter_state.w.size
         noise_ids = np.random.choice(weights.size, n, p=weights)
-        d = np.zeros((self.filter_state.dim, n))
+        d = np.zeros((n, self.filter_state.dim))
         for i in range(n):
             d[i, :] = f(self.filter_state.d[i, :], samples[noise_ids[i]])
 
