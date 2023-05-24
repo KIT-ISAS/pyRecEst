@@ -36,6 +36,9 @@ jobs:
       - name: Update requirements.txt
         run: poetry export --format requirements.txt --output requirements.txt --extras healpy_support --without-hashes
 
+      - name: Update requirements_dev.txt
+        run: poetry export --dev --format requirements.txt --output requirements_dev.txt --without-hashes
+
       - name: Commit changes
         run: |
           git config --global user.name 'github-actions'
