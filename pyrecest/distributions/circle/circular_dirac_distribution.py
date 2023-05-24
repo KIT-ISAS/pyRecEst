@@ -1,11 +1,14 @@
 from typing import Optional
+
 import numpy as np
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
 
 
-class CircularDiracDistribution(HypertoroidalDiracDistribution, AbstractCircularDistribution):
+class CircularDiracDistribution(
+    HypertoroidalDiracDistribution, AbstractCircularDistribution
+):
     def __init__(self, d: np.ndarray, w: Optional[np.ndarray] = None):
         """
         Initializes a CircularDiracDistribution instance.

@@ -1,3 +1,4 @@
+import warnings
 from typing import List
 
 import numpy as np
@@ -6,7 +7,7 @@ from abstract_circular_distribution import AbstractCircularDistribution
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from .circular_dirac_distribution import CircularDiracDistribution
 from .circular_fourier_distribution import CircularFourierDistribution
-import warnings
+
 
 class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
     def __init__(self, dists: List[AbstractCircularDistribution], w: np.ndarray):
@@ -20,7 +21,9 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
         """
         super().__init__(dists, w)
         if not all(isinstance(cd, AbstractCircularDistribution) for cd in dists):
-            raise TypeError("All elements of 'dists' must be of type AbstractCircularDistribution.")
+            raise TypeError(
+                "All elements of 'dists' must be of type AbstractCircularDistribution."
+            )
 
         if np.shape(dists) != np.shape(w):
             raise ValueError("'dists' and 'w' must have the same shape.")

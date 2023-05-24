@@ -1,5 +1,4 @@
 import unittest
-import warnings
 
 import numpy as np
 from pyrecest.distributions.hypertorus.toroidal_uniform_distribution import (
@@ -54,7 +53,10 @@ class TestToroidalUniformDistribution(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             self.tud.mean_direction()
 
-        self.assertEqual(str(cm.exception), "Hypertoroidal uniform distributions do not have a unique mean")
+        self.assertEqual(
+            str(cm.exception),
+            "Hypertoroidal uniform distributions do not have a unique mean",
+        )
 
     def test_entropy(self):
         self.assertAlmostEqual(

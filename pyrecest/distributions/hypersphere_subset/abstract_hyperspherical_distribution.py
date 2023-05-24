@@ -11,11 +11,17 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     """
     This is an abstract class for a distribution over a hypersphere.
     """
+
     def mean(self):
         return self.mean_direction()
 
     def sample_metropolis_hastings(
-        self, n: int, burn_in: int=10, skipping: int=5, proposal=None, start_point=None
+        self,
+        n: int,
+        burn_in: int = 10,
+        skipping: int = 5,
+        proposal=None,
+        start_point=None,
     ):
         """
         Sample from the distribution using Metropolis-Hastings algorithm.

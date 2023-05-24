@@ -12,6 +12,7 @@ class AbstractHemisphericalDistribution(
     It inherits from both AbstractSphereSubsetDistribution and AbstractHyperhemisphericalDistribution.
     The class is meant to be subclassed and should not be instantiated directly.
     """
+
     def __init__(self):
         """
         Initializes a new instance of the AbstractHemisphericalDistribution class.

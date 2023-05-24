@@ -3,8 +3,10 @@ import warnings
 from abc import abstractmethod
 from typing import Optional
 
-from .abstract_distribution_type import AbstractDistributionType
 import numpy as np
+
+from .abstract_distribution_type import AbstractDistributionType
+
 
 class AbstractCustomDistribution(AbstractDistributionType):
     """
@@ -21,6 +23,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
     - normalize(verify : Optional[bool] = None) -> AbstractCustomDistribution:
         Normalize the PDF such that its integral is 1. Returns a copy of the original distribution.
     """
+
     def __init__(self, f, scale_by=1):
         """
         Initialize AbstractCustomDistribution.
@@ -50,7 +53,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :returns: The integral of the PDF.
         """
 
-    def normalize(self, verify: Optional[bool] = None) -> 'AbstractCustomDistribution':
+    def normalize(self, verify: Optional[bool] = None) -> "AbstractCustomDistribution":
         """
         Normalize the PDF such that its integral is 1.
 

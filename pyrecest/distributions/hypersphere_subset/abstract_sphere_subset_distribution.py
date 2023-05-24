@@ -10,6 +10,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     """
     This is an abstract class for a distribution over a sphere.
     """
+
     def __init__(self):
         """
         Initialize the AbstractSphereSubsetDistribution instance.
@@ -52,7 +53,6 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             tuple: Spherical coordinates.
         """
         return AbstractSphereSubsetDistribution._cart_to_sph_colatitude(x, y, z)
-
 
     @staticmethod
     def _cart_to_sph_colatitude(x, y, z):

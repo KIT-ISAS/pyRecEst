@@ -5,5 +5,5 @@ from .abstract_manifold_specific_distribution import (
 
 class AbstractNonperiodicDistribution(AbstractManifoldSpecificDistribution):
     """
-    Abstract base class for all distributions on non-periodic manifolds. 
+    Abstract base class for all distributions on non-periodic manifolds.
     """

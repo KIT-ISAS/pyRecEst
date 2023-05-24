@@ -11,6 +11,7 @@ class DiskUniformDistribution(
     A class used to represent uniform distribution on a disk.
     Inherits from EllipsoidalBallUniformDistribution and AbstractDiskDistribution.
     """
+
     def __init__(self):
         """
         Initialize DiskUniformDistribution.

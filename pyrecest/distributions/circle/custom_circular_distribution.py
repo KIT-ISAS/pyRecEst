@@ -17,7 +17,7 @@ class CustomCircularDistribution(
             shift_by (float, optional): The shift for the distribution. Defaults to 0.
 
         Note:
-            It is the user's responsibility to ensure that f_ is a valid circular density, 
+            It is the user's responsibility to ensure that f_ is a valid circular density,
             i.e., 2pi-periodic, nonnegative and normalized.
         """
         AbstractCircularDistribution.__init__(self)
@@ -41,7 +41,7 @@ class CustomCircularDistribution(
         Computes the integral of the pdf over the given boundaries.
 
         Args:
-            integration_boundaries (np.ndarray, optional): The boundaries of the integral. 
+            integration_boundaries (np.ndarray, optional): The boundaries of the integral.
                 Defaults to [0, 2 * np.pi].
 
         Returns:

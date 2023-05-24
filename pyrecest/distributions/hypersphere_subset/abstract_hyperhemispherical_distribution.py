@@ -13,7 +13,14 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     def mean(self):
         return self.mean_axis()
 
-    def sample_metropolis_hastings(self, n: int, burn_in: int = 10, skipping: int = 5, proposal = None, start_point = None) -> np.ndarray:
+    def sample_metropolis_hastings(
+        self,
+        n: int,
+        burn_in: int = 10,
+        skipping: int = 5,
+        proposal=None,
+        start_point=None,
+    ) -> np.ndarray:
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
             from .hyperhemispherical_uniform_distribution import (

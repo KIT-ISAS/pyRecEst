@@ -10,6 +10,7 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
     """
     This class represents distributions on ellipsoidal balls.
     """
+
     def __init__(self, center, shape_matrix):
         """
         Initialize the class with a center and shape matrix.

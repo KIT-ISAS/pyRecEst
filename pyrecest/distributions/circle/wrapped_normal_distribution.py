@@ -14,7 +14,9 @@ class WrappedNormalDistribution(
     """
     This class implements the wrapped normal distribution.
     """
+
     MAX_SIGMA_BEFORE_UNIFORM = 10
+
     def __init__(self, mu, sigma):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.

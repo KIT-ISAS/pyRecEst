@@ -1,11 +1,10 @@
 import warnings
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import irfft, rfft
 from scipy import integrate
-from typing import Optional
-
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
@@ -50,13 +49,15 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             else:
                 self.n = n
 
-    def __sub__(self, other: 'CircularFourierDistribution') -> 'CircularFourierDistribution':
+    def __sub__(
+        self, other: "CircularFourierDistribution"
+    ) -> "CircularFourierDistribution":
         # If transformed will not yield minus of pdfs!
         assert (
-            ((self.a is not None and other.a is not None) and
-            (self.b is not None and other.b is not None))
-            or 
-            (self.c is not None and other.c is not None)
+            (self.a is not None and other.a is not None)
+            and (self.b is not None and other.b is not None)
+        ) or (
+            self.c is not None and other.c is not None
         ), "Either both instances should have `a` and `b` defined, or both should have `c` defined."
 
         assert self.transformation == other.transformation

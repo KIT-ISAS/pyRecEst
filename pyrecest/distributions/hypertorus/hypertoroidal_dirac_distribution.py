@@ -1,16 +1,18 @@
 import copy
+from typing import Optional, Union
 
 import numpy as np
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-from typing import Optional, Union
 
 
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
 ):
-    def __init__(self, d: np.ndarray, w: Optional[np.ndarray] = None, dim: Optional[int] = None):
+    def __init__(
+        self, d: np.ndarray, w: Optional[np.ndarray] = None, dim: Optional[int] = None
+    ):
         """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
         if dim is None:
             if d.ndim > 1:

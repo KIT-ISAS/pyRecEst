@@ -48,7 +48,9 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
 
         return pdf_values
 
-    def shift(self, shift_angles: np.ndarray) -> 'HypertoroidalWrappedNormalDistribution':
+    def shift(
+        self, shift_angles: np.ndarray
+    ) -> "HypertoroidalWrappedNormalDistribution":
         """
         Shift distribution by the given angles
 

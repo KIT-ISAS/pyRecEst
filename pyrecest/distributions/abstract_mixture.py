@@ -1,5 +1,4 @@
 import warnings
-from abc import abstractmethod
 
 import numpy as np
 
@@ -10,10 +9,11 @@ class AbstractMixture(AbstractDistributionType):
     """
     Abstract base class for mixture distributions.
     """
+
     def __init__(self, dists, weights=None):
         AbstractDistributionType.__init__(self)
         num_distributions = len(dists)
-        
+
         if weights is None:
             weights = np.ones(num_distributions) / num_distributions
         else:
@@ -24,7 +24,6 @@ class AbstractMixture(AbstractDistributionType):
 
         if not all(dists[0].dim == dist.dim for dist in dists):
             raise ValueError("All distributions must have the same dimension")
-
 
         non_zero_indices = np.nonzero(weights)[0]
 

@@ -10,6 +10,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
     """
     This class represents an abstract base for Dirac distributions.
     """
+
     def __init__(self, d, w=None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
@@ -38,7 +39,9 @@ class AbstractDiracDistribution(AbstractDistributionType):
         dist.normalize_in_place()
         return dist
 
-    def apply_function(self, f, f_supports_multiple=True)  -> 'AbstractDiracDistribution':
+    def apply_function(
+        self, f, f_supports_multiple=True
+    ) -> "AbstractDiracDistribution":
         """
         Apply a function to the Dirac locations and return a new distribution.
 

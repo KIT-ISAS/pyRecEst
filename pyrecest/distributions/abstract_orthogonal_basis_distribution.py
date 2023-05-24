@@ -1,19 +1,21 @@
 import copy
+import warnings
 from abc import abstractmethod
 
 import numpy as np
 
 from .abstract_distribution_type import AbstractDistributionType
-import warnings
+
 
 class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
     """
     Abstract base class for distributions based on orthogonal basis functions.
     """
+
     def __init__(self, coeff_mat, transformation):
         """
         Initialize the distribution.
-        
+
         :param coeff_mat: Coefficient matrix.
         :param transformation: Transformation function. Possible values are "sqrt", "identity", "log".
         """
@@ -31,14 +33,14 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
     def value(self, xs):
         """
         Abstract method to get value of the distribution for given input. Implementation required in subclasses.
-        
+
         :param xs: Input data for value calculation.
         """
 
     def normalize(self):
         """
         Normalizes the distribution.
-        
+
         :return: Normalized distribution.
         """
         result = copy.deepcopy(self)
@@ -47,7 +49,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
     def pdf(self, xs: np.ndarray):
         """
         Calculates probability density function for the given input.
-        
+
         :param xa: Input data for PDF calculation.
         :return: PDF value.
         """

@@ -1,4 +1,3 @@
-import warnings
 from typing import Optional, Tuple
 
 import numpy as np
@@ -41,12 +40,14 @@ class HypertoroidalUniformDistribution(
 
     def mean_direction(self):
         """
-        Returns the mean of the circular uniform distribution. 
+        Returns the mean of the circular uniform distribution.
         Since it doesn't have a unique mean, this function always raises a ValueError.
 
         :raises ValueError: Circular uniform distribution does not have a unique mean
         """
-        raise ValueError("Hypertoroidal uniform distributions do not have a unique mean")
+        raise ValueError(
+            "Hypertoroidal uniform distributions do not have a unique mean"
+        )
 
     def sample(self, n: int) -> np.ndarray:
         """
@@ -57,9 +58,9 @@ class HypertoroidalUniformDistribution(
         """
         return 2 * np.pi * np.random.rand(self.dim, n)
 
-    def shift(self, shift_angles: np.ndarray) -> 'HypertoroidalUniformDistribution':
+    def shift(self, shift_angles: np.ndarray) -> "HypertoroidalUniformDistribution":
         """
-        Shifts the distribution by shift_angles. 
+        Shifts the distribution by shift_angles.
         Since this is a uniform distribution, the shift does not change the distribution.
 
         :param shift_angles: Angles to shift by
@@ -68,7 +69,9 @@ class HypertoroidalUniformDistribution(
         assert shift_angles.shape == (self.dim,)
         return self
 
-    def integrate(self, integration_boundaries: Optional[Tuple[np.ndarray, np.ndarray]] = None) -> float:
+    def integrate(
+        self, integration_boundaries: Optional[Tuple[np.ndarray, np.ndarray]] = None
+    ) -> float:
         """
         Returns the integral of the distribution over the specified boundaries
 

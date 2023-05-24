@@ -12,6 +12,7 @@ class AbstractHypersphereSubsetUniformDistribution(
     """
     This is an abstract class for a uniform distribution over a subset of a hypersphere.
     """
+
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         """
         Calculates the probability density function over the subset of the hypersphere.
