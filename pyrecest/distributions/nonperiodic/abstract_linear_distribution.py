@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import dblquad, nquad, quad
@@ -13,6 +15,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     @property
     def input_dim(self):
         return self.dim
+
+    @abstractmethod
+    def set_mean(self, new_mean):
+        pass
 
     def mean(self):
         return self.mean_numerical()

@@ -22,6 +22,11 @@ class GaussianMixture(AbstractMixture, AbstractLinearDistribution):
         gauss_array = self.dists
         return np.dot(np.array([g.mu for g in gauss_array]), self.w)
 
+    def set_mean(self, new_mean):
+        mean_offset = new_mean - self.mean
+        for dist in self.dists:
+            dist.mu += mean_offset
+
     def to_gaussian(self):
         gauss_array = self.dists
         mu, C = self.mixture_parameters_to_gaussian_parameters(

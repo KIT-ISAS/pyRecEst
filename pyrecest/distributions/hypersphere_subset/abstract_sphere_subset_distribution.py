@@ -18,7 +18,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         super().__init__(2)
 
     @staticmethod
-    def _sph_to_cart(azimuth: np.ndarray, elevation: np.ndarray) -> tuple:
+    def sph_to_cart(azimuth: np.ndarray, elevation: np.ndarray) -> tuple:
         """
         Convert spherical coordinates to Cartesian coordinates.
 
@@ -40,7 +40,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, -z
 
     @staticmethod
-    def _cart_to_sph(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
+    def cart_to_sph(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
         """
         Convert Cartesian coordinates to spherical coordinates.
 
