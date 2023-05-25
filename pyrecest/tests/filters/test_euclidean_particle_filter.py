@@ -1,4 +1,3 @@
-import copy
 import unittest
 
 import numpy as np
@@ -40,6 +39,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
 
         def f(x, w):
             return x + w
+
         self.pf.predict_nonlinear_nonadditive(f, samples, weights)
         est = self.pf.get_point_estimate()
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
