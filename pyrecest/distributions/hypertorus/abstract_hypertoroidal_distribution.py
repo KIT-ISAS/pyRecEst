@@ -150,6 +150,13 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return p
 
     def mean(self):
+        """
+        Convenient access to mean_direction to have a consistent interface
+        throughout manifolds.
+
+        :return: The mean of the distribution.
+        :rtype: np.ndarray
+        """
         return self.mean_direction()
 
     def mean_direction(self):

@@ -11,6 +11,13 @@ from .abstract_hypersphere_subset_distribution import (
 
 class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
     def mean(self):
+        """
+        Convenient access to axis to have a consistent interface
+        throughout manifolds.
+
+        :return: The mean of the distribution.
+        :rtype: np.ndarray
+        """
         return self.mean_axis()
 
     def sample_metropolis_hastings(
