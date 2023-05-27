@@ -14,36 +14,34 @@ from pyrecest.distributions.hypersphere_subset.hyperhemispherical_uniform_distri
 
 
 class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
+    def setUp(self):
+        self.mu_ = np.array([0.5, 1.0, 1.0]) / np.linalg.norm([0.5, 1.0, 1.0])
+        self.kappa_ = 2.0
+
     def test_get_manifold_size(self):
-        # Circle
-        hud = HyperhemisphericalUniformDistribution(1)
-        self.assertAlmostEqual(hud.get_manifold_size(), np.pi, delta=1e-16)
-        # Sphere
-        hud = HyperhemisphericalUniformDistribution(2)
-        self.assertAlmostEqual(hud.get_manifold_size(), 2 * np.pi, delta=1e-16)
+        """Tests get_manifold_size function with different dimensions."""
+        dimensions = [(1, np.pi), (2, 2 * np.pi)]
+        for dim, expected in dimensions:
+            with self.subTest(dim=dim):
+                hud = HyperhemisphericalUniformDistribution(dim)
+                self.assertAlmostEqual(hud.get_manifold_size(), expected, delta=1e-16)
 
     def test_mode_numerical(self):
-        mu_ = np.array([0.5, 1.0, 1.0] / np.linalg.norm([0.5, 1.0, 1.0]))
-        kappa_ = 2.0
-        watson_dist = HyperhemisphericalWatsonDistribution(mu_, kappa_)
-
+        """Tests mode_numerical."""
+        watson_dist = HyperhemisphericalWatsonDistribution(self.mu_, self.kappa_)
         mode_numerical = watson_dist.mode_numerical()
-
-        np.testing.assert_array_almost_equal(mu_, mode_numerical, decimal=6)
+        np.testing.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
 
     def test_sample_metropolis_hastings_basics_only(self):
+        """Tests the sample_metropolis_hastings sampling """
         vmf = VonMisesFisherDistribution(np.array([1, 0, 0]), 2)
-        chd = CustomHyperhemisphericalDistribution(
-            lambda x: vmf.pdf(x) + vmf.pdf(-x), vmf.dim
-        )
+        chd = CustomHyperhemisphericalDistribution(lambda x: vmf.pdf(x) + vmf.pdf(-x), vmf.dim)
         n = 10
-        s = chd.sample_metropolis_hastings(n)
-        self.assertEqual(s.shape, (n, chd.input_dim))
-        np.testing.assert_allclose(np.sum(s**2, axis=1), np.ones(n), rtol=1e-10)
-
-        s2 = chd.sample(n)
-        self.assertEqual(s2.shape, (n, chd.input_dim))
-        np.testing.assert_allclose(np.sum(s**2, axis=1), np.ones(n), rtol=1e-10)
+        samples = [chd.sample_metropolis_hastings(n), chd.sample(n)]
+        for s in samples:
+            with self.subTest(sample=s):
+                self.assertEqual(s.shape, (n, chd.input_dim))
+                np.testing.assert_allclose(np.sum(s**2, axis=1), np.ones(n), rtol=1e-10)
 
 
 if __name__ == "__main__":

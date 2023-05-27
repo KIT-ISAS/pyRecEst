@@ -85,6 +85,6 @@ class AbstractParticleFilter(AbstractFilterType):
 
     def association_likelihood(self, likelihood):
         likelihood_val = np.sum(
-            likelihood.pdf(self.filter_state().d) * self.filter_state().w
+            likelihood.pdf(self.filter_state.d) * self.filter_state.w
         )
         return likelihood_val

@@ -43,7 +43,12 @@ class AbstractManifoldSpecificDistribution(ABC):
 
     @abstractmethod
     def mean(self):
-        pass
+        """
+        Convenient access to a reasonable "mean" for different manifolds.
+
+        :return: The mean of the distribution.
+        :rtype: np.ndarray
+        """
 
     def sample(self, n):
         """Obtain n samples from the distribution."""
