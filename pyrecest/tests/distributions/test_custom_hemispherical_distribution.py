@@ -14,7 +14,9 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         self.M = np.eye(3)
         self.Z = np.array([-2, -0.5, 0])
         self.bingham_distribution = BinghamDistribution(self.Z, self.M)
-        self.custom_hemispherical_distribution = CustomHemisphericalDistribution.from_distribution(self.bingham_distribution)
+        self.custom_hemispherical_distribution = (
+            CustomHemisphericalDistribution.from_distribution(self.bingham_distribution)
+        )
 
     def test_simple_distribution_2D(self):
         """Test that pdf function returns the correct size and values for given points."""
@@ -27,14 +29,23 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         points /= np.linalg.norm(points, axis=1, keepdims=True)
 
         self.assertTrue(
-            np.allclose(self.custom_hemispherical_distribution.pdf(points), 2 * self.bingham_distribution.pdf(points), atol=1e-5),
-            "PDF values do not match."
+            np.allclose(
+                self.custom_hemispherical_distribution.pdf(points),
+                2 * self.bingham_distribution.pdf(points),
+                atol=1e-5,
+            ),
+            "PDF values do not match.",
         )
 
     def test_integrate_bingham_s2(self):
         """Test that the distribution integrates to 1."""
         self.custom_hemispherical_distribution.pdf(np.asarray([1, 0, 0]))
-        self.assertAlmostEqual(self.custom_hemispherical_distribution.integrate_numerically(), 1, delta=1e-4, msg="Integration value mismatch.")
+        self.assertAlmostEqual(
+            self.custom_hemispherical_distribution.integrate_numerically(),
+            1,
+            delta=1e-4,
+            msg="Integration value mismatch.",
+        )
 
     def test_warning_asymmetric(self):
         """Test that creating a custom distribution based on a full hypersphere distribution raises a warning."""
@@ -48,7 +59,11 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
             CustomHemisphericalDistribution.from_distribution(vmf)
 
             # Check the warning message
-            self.assertEqual(str(warning_list[-1].message), expected_warning_message, "Warning message mismatch.")
+            self.assertEqual(
+                str(warning_list[-1].message),
+                expected_warning_message,
+                "Warning message mismatch.",
+            )
 
 
 if __name__ == "__main__":

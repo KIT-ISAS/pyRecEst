@@ -5,7 +5,6 @@ from pyrecest.distributions import WrappedNormalDistribution
 
 
 class WrappedNormalDistributionTest(unittest.TestCase):
-
     def setUp(self):
         self.mu = np.array(3)
         self.sigma = np.array(1.5)
@@ -18,18 +17,24 @@ class WrappedNormalDistributionTest(unittest.TestCase):
 
         def approx_with_wrapping(x):
             k = np.arange(-20, 21)
-            total = np.sum(np.exp(-((x - self.mu + 2 * np.pi * k) ** 2) / (2 * self.sigma**2)))
+            total = np.sum(
+                np.exp(-((x - self.mu + 2 * np.pi * k) ** 2) / (2 * self.sigma**2))
+            )
             return 1 / np.sqrt(2 * np.pi) / self.sigma * total
 
         test_points = [self.mu, self.mu - 1, self.mu + 2]
         for point in test_points:
             with self.subTest(x=point):
-                self.assertAlmostEqual(self.wn.pdf(point), approx_with_wrapping(point), places=10)
-        
+                self.assertAlmostEqual(
+                    self.wn.pdf(point), approx_with_wrapping(point), places=10
+                )
+
         x = np.arange(0, 7)
         self.assertTrue(
             np.allclose(
-                self.wn.pdf(x), np.array([approx_with_wrapping(xi) for xi in x]), rtol=1e-10
+                self.wn.pdf(x),
+                np.array([approx_with_wrapping(xi) for xi in x]),
+                rtol=1e-10,
             )
         )
 

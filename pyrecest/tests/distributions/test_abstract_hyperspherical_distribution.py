@@ -55,7 +55,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
 
     def test_plotting_error_free_2d(self):
         """Tests the numerical mode calculation."""
-        
+
         mu = np.array([1, 1, 2])
         mu = mu / np.linalg.norm(mu)
         kappa = 10

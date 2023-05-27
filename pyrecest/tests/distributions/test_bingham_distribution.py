@@ -29,7 +29,9 @@ class TestBinghamDistribution(unittest.TestCase):
         )
         computed_values = self.bd.pdf(vectors_to_test_2d)
         np.testing.assert_array_almost_equal(
-            computed_values, expected_values, err_msg="Expected and computed pdf values do not match."
+            computed_values,
+            expected_values,
+            err_msg="Expected and computed pdf values do not match.",
         )
 
 

@@ -37,7 +37,9 @@ class KalmanFilterTest(unittest.TestCase):
         self.assertTrue(
             np.allclose(filter_add.get_point_estimate(), filter_id.get_point_estimate())
         )
-        self.assertTrue(np.allclose(filter_add.filter_state.C, filter_id.filter_state.C))
+        self.assertTrue(
+            np.allclose(filter_add.filter_state.C, filter_id.filter_state.C)
+        )
 
     def test_predict_identity_1d(self):
         kf = KalmanFilter((np.array([0]), np.array([[1]])))

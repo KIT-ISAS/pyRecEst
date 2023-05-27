@@ -33,15 +33,19 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         np.testing.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
 
     def test_sample_metropolis_hastings_basics_only(self):
-        """Tests the sample_metropolis_hastings sampling """
+        """Tests the sample_metropolis_hastings sampling"""
         vmf = VonMisesFisherDistribution(np.array([1, 0, 0]), 2)
-        chd = CustomHyperhemisphericalDistribution(lambda x: vmf.pdf(x) + vmf.pdf(-x), vmf.dim)
+        chd = CustomHyperhemisphericalDistribution(
+            lambda x: vmf.pdf(x) + vmf.pdf(-x), vmf.dim
+        )
         n = 10
         samples = [chd.sample_metropolis_hastings(n), chd.sample(n)]
         for s in samples:
             with self.subTest(sample=s):
                 self.assertEqual(s.shape, (n, chd.input_dim))
-                np.testing.assert_allclose(np.sum(s**2, axis=1), np.ones(n), rtol=1e-10)
+                np.testing.assert_allclose(
+                    np.sum(s**2, axis=1), np.ones(n), rtol=1e-10
+                )
 
 
 if __name__ == "__main__":

@@ -2,39 +2,76 @@ import copy
 import unittest
 
 import numpy as np
+from parameterized import parameterized
 from pyrecest.distributions import (
     CircularFourierDistribution,
     VonMisesDistribution,
     WrappedNormalDistribution,
 )
 from scipy import integrate
-from parameterized import parameterized
+
 
 class TestCircularFourierDistribution(unittest.TestCase):
-    @parameterized.expand([
-        ("identity", VonMisesDistribution, 0.4, np.arange(0.1, 2.1, 0.1), 101, 1e-8),
-        ("sqrt", VonMisesDistribution, 0.5, np.arange(0.1, 2.1, 0.1), 101, 1e-8),
-        ("identity", WrappedNormalDistribution, 0.8, np.arange(0.2, 2.1, 0.1), 101, 1e-8),
-        ("sqrt", WrappedNormalDistribution, 0.8, np.arange(0.2, 2.1, 0.1), 101, 1e-8)
-    ])
+    @parameterized.expand(
+        [
+            (
+                "identity",
+                VonMisesDistribution,
+                0.4,
+                np.arange(0.1, 2.1, 0.1),
+                101,
+                1e-8,
+            ),
+            ("sqrt", VonMisesDistribution, 0.5, np.arange(0.1, 2.1, 0.1), 101, 1e-8),
+            (
+                "identity",
+                WrappedNormalDistribution,
+                0.8,
+                np.arange(0.2, 2.1, 0.1),
+                101,
+                1e-8,
+            ),
+            (
+                "sqrt",
+                WrappedNormalDistribution,
+                0.8,
+                np.arange(0.2, 2.1, 0.1),
+                101,
+                1e-8,
+            ),
+        ]
+    )
     # pylint: disable=too-many-arguments
-    def test_fourier_conversion(self, transformation, dist_class, mu, param_range, coeffs, tolerance):
+    def test_fourier_conversion(
+        self, transformation, dist_class, mu, param_range, coeffs, tolerance
+    ):
         """
         Test fourier conversion of the given distribution with varying parameter.
         """
         for param in param_range:
             dist = dist_class(mu, param)
             xvals = np.arange(-2 * np.pi, 3 * np.pi, 0.01)
-            fd = CircularFourierDistribution.from_distribution(dist, coeffs, transformation)
-            self.assertEqual(np.size(fd.c), np.ceil(coeffs / 2), "Length of Fourier Coefficients mismatch.")
-            self.assertTrue(np.allclose(fd.pdf(xvals), dist.pdf(xvals), atol=tolerance), "PDF values do not match.")
+            fd = CircularFourierDistribution.from_distribution(
+                dist, coeffs, transformation
+            )
+            self.assertEqual(
+                np.size(fd.c),
+                np.ceil(coeffs / 2),
+                "Length of Fourier Coefficients mismatch.",
+            )
+            self.assertTrue(
+                np.allclose(fd.pdf(xvals), dist.pdf(xvals), atol=tolerance),
+                "PDF values do not match.",
+            )
 
-    @parameterized.expand([
-        (True, "identity"),
-        (True, "sqrt"),
-        (False, "identity"),
-        (False, "sqrt"),
-    ])
+    @parameterized.expand(
+        [
+            (True, "identity"),
+            (True, "sqrt"),
+            (False, "identity"),
+            (False, "sqrt"),
+        ]
+    )
     def test_vm_to_fourier(self, mult_by_n, transformation):
         xs = np.linspace(0, 2 * np.pi, 100)
         dist = VonMisesDistribution(np.array(2.5), np.array(1.5))
@@ -48,13 +85,14 @@ class TestCircularFourierDistribution(unittest.TestCase):
         fd_real = fd.to_real_fd()
         np.testing.assert_array_almost_equal(dist.pdf(xs), fd_real.pdf(xs))
 
-
-    @parameterized.expand([
-        (True, "identity"),
-        (False, "identity"),
-        (True, "sqrt"),
-        (False, "sqrt"),
-    ])
+    @parameterized.expand(
+        [
+            (True, "identity"),
+            (False, "identity"),
+            (True, "sqrt"),
+            (False, "sqrt"),
+        ]
+    )
     def test_integrate_numerically(self, mult_by_n, transformation):
         scale_by = 2 / 5
         dist = VonMisesDistribution(np.array(2.9), np.array(1.3))
@@ -81,12 +119,14 @@ class TestCircularFourierDistribution(unittest.TestCase):
             fd_unnorm_real.integrate_numerically(), expected_val
         )
 
-    @parameterized.expand([
-        (True, "identity"),
-        (False, "identity"),
-        (True, "sqrt"),
-        (False, "sqrt"),
-    ])
+    @parameterized.expand(
+        [
+            (True, "identity"),
+            (False, "identity"),
+            (True, "sqrt"),
+            (False, "sqrt"),
+        ]
+    )
     def test_integrate(self, mult_by_n, transformation):
         scale_by = 1 / 5
         dist = VonMisesDistribution(np.array(2.9), np.array(1.3))
@@ -121,10 +161,12 @@ class TestCircularFourierDistribution(unittest.TestCase):
         np.testing.assert_array_almost_equal(fd_norm.integrate(), 1)
         np.testing.assert_array_almost_equal(fd_norm_real.integrate(), 1)
 
-    @parameterized.expand([
-        (False,),
-        (True,),
-    ])
+    @parameterized.expand(
+        [
+            (False,),
+            (True,),
+        ]
+    )
     def test_distance(self, mult_by_n):
         dist1 = VonMisesDistribution(np.array(0.0), np.array(1.0))
         dist2 = VonMisesDistribution(np.array(2.0), np.array(1.0))
@@ -142,8 +184,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         )
         hel_like_distance, _ = integrate.quad(
             lambda x: (
-                np.sqrt(dist1.pdf(np.array(x)))
-                - np.sqrt(dist2.pdf(np.array(x)))
+                np.sqrt(dist1.pdf(np.array(x))) - np.sqrt(dist2.pdf(np.array(x)))
             )
             ** 2,
             0,
@@ -151,7 +192,6 @@ class TestCircularFourierDistribution(unittest.TestCase):
         )
         fd_diff = fd1 - fd2
         np.testing.assert_array_almost_equal(fd_diff.integrate(), hel_like_distance)
-
 
 
 if __name__ == "__main__":

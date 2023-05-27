@@ -1,11 +1,16 @@
+from typing import Tuple, Union
+
 import numpy as np
-from typing import Union, Tuple
 from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
 from pyrecest.distributions import GaussianDistribution
+
 from .abstract_euclidean_filter import AbstractEuclideanFilter
 
+
 class KalmanFilter(AbstractEuclideanFilter):
-    def __init__(self, initial_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]):
+    def __init__(
+        self, initial_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]
+    ):
         """
         Initialize the Kalman filter with the initial state.
 
@@ -16,17 +21,25 @@ class KalmanFilter(AbstractEuclideanFilter):
         elif isinstance(initial_state, tuple) and len(initial_state) == 2:
             dim_x = len(initial_state[0])
         else:
-            raise ValueError("initial_state must be a GaussianDistribution or a tuple of (mean, covariance)")
+            raise ValueError(
+                "initial_state must be a GaussianDistribution or a tuple of (mean, covariance)"
+            )
 
         self._filter_state = FilterPyKalmanFilter(dim_x=dim_x, dim_z=dim_x)
         self.filter_state = initial_state
 
     @property
-    def filter_state(self) -> Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]: # It can only return GaussianDistribution, this just serves to prevent mypy linter warnings
+    def filter_state(
+        self,
+    ) -> Union[
+        GaussianDistribution, Tuple[np.ndarray, np.ndarray]
+    ]:  # It can only return GaussianDistribution, this just serves to prevent mypy linter warnings
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
 
     @filter_state.setter
-    def filter_state(self, new_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]):
+    def filter_state(
+        self, new_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]
+    ):
         """
         Set the filter state.
 
@@ -39,18 +52,25 @@ class KalmanFilter(AbstractEuclideanFilter):
             self._filter_state.x = new_state[0]
             self._filter_state.P = new_state[1]
         else:
-            raise ValueError("new_state must be a GaussianDistribution or a tuple of (mean, covariance)")
+            raise ValueError(
+                "new_state must be a GaussianDistribution or a tuple of (mean, covariance)"
+            )
 
     def predict_identity(self, sys_noise_mean: np.ndarray, sys_noise_cov: np.ndarray):
         """
         Predicts the next state assuming identity transition matrix.
-        
+
         :param sys_noise_mean: System noise mean.
         :param sys_noise_cov: System noise covariance.
         """
         self._filter_state.predict(Q=sys_noise_cov, u=sys_noise_mean)
 
-    def predict_linear(self, system_matrix: np.ndarray, sys_noise_cov: np.ndarray, sys_input: np.ndarray=None):
+    def predict_linear(
+        self,
+        system_matrix: np.ndarray,
+        sys_noise_cov: np.ndarray,
+        sys_input: np.ndarray = None,
+    ):
         """
         Predicts the next state assuming a linear system model.
 
@@ -59,7 +79,9 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param sys_input: System input.
         """
         if sys_input is not None and system_matrix.shape[0] != sys_input.shape[0]:
-            raise ValueError("The number of rows in system_matrix should match the number of elements in sys_input")
+            raise ValueError(
+                "The number of rows in system_matrix should match the number of elements in sys_input"
+            )
 
         B = np.eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
@@ -67,13 +89,20 @@ class KalmanFilter(AbstractEuclideanFilter):
     def update_identity(self, meas: np.ndarray, meas_noise_cov: np.ndarray):
         """
         Update the filter state with measurement, assuming identity measurement matrix.
-        
+
         :param meas: Measurement.
         :param meas_noise_cov: Measurement noise covariance.
         """
-        self._filter_state.update(z=meas, R=meas_noise_cov, H=np.eye(np.size(self._filter_state.x)))
+        self._filter_state.update(
+            z=meas, R=meas_noise_cov, H=np.eye(np.size(self._filter_state.x))
+        )
 
-    def update_linear(self, measurement: np.ndarray, measurement_matrix: np.ndarray, cov_mat_meas: np.ndarray):
+    def update_linear(
+        self,
+        measurement: np.ndarray,
+        measurement_matrix: np.ndarray,
+        cov_mat_meas: np.ndarray,
+    ):
         """
         Update the filter state with measurement, assuming a linear measurement model.
 

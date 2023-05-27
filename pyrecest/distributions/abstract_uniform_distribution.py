@@ -7,6 +7,7 @@ from .abstract_distribution_type import AbstractDistributionType
 
 class AbstractUniformDistribution(AbstractDistributionType):
     """Abstract class for a uniform distribution on a manifold."""
+
     def pdf(self, xs):
         """Compute the probability density function at each point in xs.
 
@@ -29,7 +30,7 @@ class AbstractUniformDistribution(AbstractDistributionType):
         :return: The pdf evaluated at each point in xs.
         :rtype: np.ndarray
         """
-        
+
     def mode(self):
         """Mode is not defined for a uniform distribution."""
         raise AttributeError("Mode not available for uniform distribution")

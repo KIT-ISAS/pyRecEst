@@ -15,13 +15,13 @@ from .abstract_particle_filter import AbstractParticleFilter
 
 class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
     """Euclidean Particle Filter Class."""
-    
+
     def __init__(self, n_particles: int, dim: int):
         if not (isinstance(n_particles, int) and n_particles > 0):
             raise ValueError("n_particles must be a positive integer")
         if not (isinstance(dim, int) and dim > 0):
             raise ValueError("dim must be a positive integer")
-        
+
         initial_distribution = LinearDiracDistribution(np.zeros((n_particles, dim)))
         AbstractParticleFilter.__init__(self, initial_distribution)
         AbstractEuclideanFilter.__init__(self, initial_distribution)
@@ -32,7 +32,9 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
         return self._filter_state
 
     @filter_state.setter
-    def filter_state(self, new_state: Union[AbstractLinearDistribution, LinearDiracDistribution]):
+    def filter_state(
+        self, new_state: Union[AbstractLinearDistribution, LinearDiracDistribution]
+    ):
         """Set the filter state."""
         if not isinstance(new_state, LinearDiracDistribution):
             dist_dirac = LinearDiracDistribution.from_distribution(
@@ -42,7 +44,9 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
             dist_dirac = copy.deepcopy(new_state)
 
         if self._filter_state.d.shape != dist_dirac.d.shape:
-            raise ValueError("The shape of new state does not match with the existing state.")
+            raise ValueError(
+                "The shape of new state does not match with the existing state."
+            )
 
         self._filter_state = dist_dirac
 

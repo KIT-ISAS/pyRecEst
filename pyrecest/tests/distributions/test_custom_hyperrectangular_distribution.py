@@ -10,7 +10,6 @@ from pyrecest.distributions.nonperiodic.hyperrectangular_uniform_distribution im
 
 
 class TestCustomHyperrectangularDistribution(unittest.TestCase):
-
     def setUp(self):
         self.bounds = np.array([[1, 3], [2, 5]])
         self.hud = HyperrectangularUniformDistribution(self.bounds)
@@ -18,7 +17,11 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
 
     def test_object_creation(self):
         """Test that a CustomHyperrectangularDistribution object is successfully created."""
-        self.assertIsInstance(self.cd, CustomHyperrectangularDistribution, "CustomHyperrectangularDistribution object creation failed.")
+        self.assertIsInstance(
+            self.cd,
+            CustomHyperrectangularDistribution,
+            "CustomHyperrectangularDistribution object creation failed.",
+        )
 
     def test_pdf_method(self):
         """Test that the pdf method returns correct values."""
@@ -27,7 +30,7 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
         calculated_pdf = self.cd.pdf(np.column_stack((x_mesh.ravel(), y_mesh.ravel())))
         self.assertTrue(
             np.allclose(calculated_pdf, expected_pdf),
-            "PDF calculated values do not match the expected values."
+            "PDF calculated values do not match the expected values.",
         )
 
 
