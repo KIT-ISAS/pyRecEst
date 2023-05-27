@@ -1,7 +1,9 @@
 import warnings
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from beartype import beartype
 from scipy.optimize import minimize
 
 from .abstract_hypersphere_subset_distribution import (
@@ -19,15 +21,17 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         :rtype: np.ndarray
         """
         return self.mean_axis()
-
+    # jscpd:ignore-start
+    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int,
-        burn_in: int = 10,
-        skipping: int = 5,
+        n: Union[int, np.int64],
+        burn_in: Union[int, np.int64] = 10,
+        skipping: Union[int, np.int64] = 5,
         proposal=None,
         start_point=None,
     ) -> np.ndarray:
+        # jscpd:ignore-end
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
             from .hyperhemispherical_uniform_distribution import (
@@ -82,6 +86,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         mu = mu / np.linalg.norm(mu)
         return mu
 
+    @beartype
     @staticmethod
     def get_full_integration_boundaries(dim: int) -> np.ndarray:
         if dim == 1:
@@ -144,6 +149,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         m = AbstractHypersphereSubsetDistribution.polar2cart(result.x)
         return (1 - 2 * (m[-1] < 0)) * m
 
+    @beartype
     @staticmethod
     def plot_hemisphere(resolution: int = 150):
         x, y, z = np.meshgrid(
