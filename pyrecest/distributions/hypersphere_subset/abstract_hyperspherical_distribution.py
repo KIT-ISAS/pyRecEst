@@ -5,7 +5,8 @@ from scipy.optimize import minimize
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
-
+from beartype import beartype
+from typing import Union
 
 class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     """
@@ -22,11 +23,12 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         """
         return self.mean_direction()
 
+    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int,
-        burn_in: int = 10,
-        skipping: int = 5,
+        n: Union[int, np.int64],
+        burn_in: Union[int, np.int64] = 10,
+        skipping: Union[int, np.int64] = 5,
         proposal=None,
         start_point=None,
     ):

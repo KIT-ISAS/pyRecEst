@@ -11,12 +11,13 @@ from ..distributions.nonperiodic.linear_dirac_distribution import (
 )
 from .abstract_euclidean_filter import AbstractEuclideanFilter
 from .abstract_particle_filter import AbstractParticleFilter
-
+from beartype import beartype
+from typing import Union
 
 class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
     """Euclidean Particle Filter Class."""
 
-    def __init__(self, n_particles: int, dim: int):
+    def __init__(self, n_particles: Union[int, np.int64], dim: Union[int, np.int64]):
         if not (isinstance(n_particles, int) and n_particles > 0):
             raise ValueError("n_particles must be a positive integer")
         if not (isinstance(dim, int) and dim > 0):
@@ -50,6 +51,7 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
         self._filter_state = dist_dirac
 
+    @beartype
     def predict_nonlinear(
         self,
         f: Callable,

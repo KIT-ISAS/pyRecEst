@@ -8,12 +8,13 @@ from .abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
 )
 from .hyperspherical_uniform_distribution import HypersphericalUniformDistribution
-
+from typing import Union
+import numpy as np
 
 class HyperhemisphericalUniformDistribution(
     AbstractHyperhemisphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
-    def sample(self, n: int):
+    def sample(self, n: Union[int, np.int64]):
         """
         Sample n points from the hyperhemispherical distribution.
 

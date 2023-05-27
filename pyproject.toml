@@ -13,6 +13,7 @@ matplotlib = "*"
 mpmath = "*"
 filterpy = "*"
 pyshtools = "*"
+beartype = "*"
 
 [tool.poetry.extras]
 healpy_support = ["healpy"]

@@ -5,9 +5,10 @@ from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter
-
+from beartype import beartype
 
 class KalmanFilter(AbstractEuclideanFilter):
+    @beartype
     def __init__(
         self, initial_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]
     ):
@@ -27,7 +28,7 @@ class KalmanFilter(AbstractEuclideanFilter):
 
         self._filter_state = FilterPyKalmanFilter(dim_x=dim_x, dim_z=dim_x)
         self.filter_state = initial_state
-
+    
     @property
     def filter_state(
         self,
@@ -35,7 +36,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         GaussianDistribution, Tuple[np.ndarray, np.ndarray]
     ]:  # It can only return GaussianDistribution, this just serves to prevent mypy linter warnings
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
-
+    
     @filter_state.setter
     def filter_state(
         self, new_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]
@@ -56,6 +57,7 @@ class KalmanFilter(AbstractEuclideanFilter):
                 "new_state must be a GaussianDistribution or a tuple of (mean, covariance)"
             )
 
+    @beartype
     def predict_identity(self, sys_noise_mean: np.ndarray, sys_noise_cov: np.ndarray):
         """
         Predicts the next state assuming identity transition matrix.
@@ -65,6 +67,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         """
         self._filter_state.predict(Q=sys_noise_cov, u=sys_noise_mean)
 
+    @beartype
     def predict_linear(
         self,
         system_matrix: np.ndarray,
@@ -86,6 +89,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         B = np.eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
+    @beartype
     def update_identity(self, meas: np.ndarray, meas_noise_cov: np.ndarray):
         """
         Update the filter state with measurement, assuming identity measurement matrix.
@@ -97,6 +101,7 @@ class KalmanFilter(AbstractEuclideanFilter):
             z=meas, R=meas_noise_cov, H=np.eye(np.size(self._filter_state.x))
         )
 
+    @beartype
     def update_linear(
         self,
         measurement: np.ndarray,
@@ -112,10 +117,12 @@ class KalmanFilter(AbstractEuclideanFilter):
         """
         self._filter_state.update(z=measurement, R=cov_mat_meas, H=measurement_matrix)
 
+    @beartype
     def get_point_estimate(self) -> np.ndarray:
         """Returns the mean of the current filter state."""
         return self._filter_state.x
 
+    @beartype
     def get_estimate(self) -> GaussianDistribution:
         """Returns the current filter state as a GaussianDistribution."""
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)

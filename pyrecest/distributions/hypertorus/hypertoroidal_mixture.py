@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 import numpy as np
 
@@ -23,7 +23,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
 
-    def trigonometric_moment(self, n: int) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, np.int64]) -> np.ndarray:
         """
         Calculate n-th trigonometric moment
 

@@ -5,7 +5,7 @@ import numpy as np
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-
+from beartype import beartype
 
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
@@ -39,7 +39,8 @@ class HypertoroidalDiracDistribution(
         m = np.mod(np.arctan2(np.imag(a), np.real(a)), 2 * np.pi)
         return m
 
-    def trigonometric_moment(self, n):
+    @beartype
+    def trigonometric_moment(self, n: Union[int, np.int64]):
         """
         Calculate the trigonometric moment of the HypertoroidalDiracDistribution.
 
@@ -47,8 +48,6 @@ class HypertoroidalDiracDistribution(
         :param n: Integer moment order
         :return: Trigonometric moment
         """
-        assert isinstance(n, int), "n must be an integer"
-
         return np.sum(
             np.exp(1j * n * self.d.T) * np.tile(self.w, (self.dim, 1)), axis=1
         )

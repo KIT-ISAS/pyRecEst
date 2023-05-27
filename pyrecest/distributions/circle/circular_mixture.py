@@ -7,9 +7,10 @@ from abstract_circular_distribution import AbstractCircularDistribution
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from .circular_dirac_distribution import CircularDiracDistribution
 from .circular_fourier_distribution import CircularFourierDistribution
-
+from beartype import beartype
 
 class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
+    @beartype
     def __init__(self, dists: List[AbstractCircularDistribution], w: np.ndarray):
         """
         Creates a new circular mixture.

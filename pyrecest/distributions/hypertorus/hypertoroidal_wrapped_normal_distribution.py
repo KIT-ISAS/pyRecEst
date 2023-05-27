@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-
+from typing import Union
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self, mu: np.ndarray, C: np.ndarray):
@@ -24,7 +24,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         self.mu = np.mod(mu, 2 * np.pi)
         self.C = C
 
-    def pdf(self, xs: np.ndarray, m: int = 3) -> np.ndarray:
+    def pdf(self, xs: np.ndarray, m: Union[int, np.int64] = 3) -> np.ndarray:
         """
         Compute the PDF at given points.
 
