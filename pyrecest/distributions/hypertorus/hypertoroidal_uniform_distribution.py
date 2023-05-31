@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -49,7 +49,7 @@ class HypertoroidalUniformDistribution(
             "Hypertoroidal uniform distributions do not have a unique mean"
         )
 
-    def sample(self, n: int) -> np.ndarray:
+    def sample(self, n: Union[int, np.int64]) -> np.ndarray:
         """
         Returns a sample of size n from the distribution
 

@@ -13,7 +13,7 @@ class AbstractHypertoroidalFilter(AbstractManifoldSpecificFilter):
     Currently, it does not add any functionality to AbstractHypertoroidalFilter.
     """
 
-    def __init__(self, filter_state):
+    def __init__(self, filter_state=None):
         self._filter_state = copy.deepcopy(filter_state)
 
     def get_point_estimate(self) -> np.ndarray:

@@ -1,5 +1,8 @@
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
+from beartype import beartype
 from scipy.optimize import minimize
 
 from .abstract_hypersphere_subset_distribution import (
@@ -22,14 +25,17 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         """
         return self.mean_direction()
 
+    # jscpd:ignore-start
+    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int,
-        burn_in: int = 10,
-        skipping: int = 5,
+        n: Union[int, np.int64],
+        burn_in: Union[int, np.int64] = 10,
+        skipping: Union[int, np.int64] = 5,
         proposal=None,
         start_point=None,
-    ):
+    ) -> np.ndarray:
+        # jscpd:ignore-end
         """
         Sample from the distribution using Metropolis-Hastings algorithm.
 
