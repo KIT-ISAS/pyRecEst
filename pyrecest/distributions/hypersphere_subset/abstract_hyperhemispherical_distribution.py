@@ -21,6 +21,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         :rtype: np.ndarray
         """
         return self.mean_axis()
+
     # jscpd:ignore-start
     @beartype
     def sample_metropolis_hastings(

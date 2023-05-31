@@ -24,6 +24,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         :rtype: np.ndarray
         """
         return self.mean_direction()
+
     # jscpd:ignore-start
     @beartype
     def sample_metropolis_hastings(
