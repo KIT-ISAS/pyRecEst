@@ -4,31 +4,36 @@ from scipy.special import iv
 from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
-
+from beartype import beartype
+from typing import Optional, Union
+import numbers
 
 class VonMisesDistribution(AbstractCircularDistribution):
-    def __init__(self, mu, kappa, norm_const=None):
-        assert kappa >= 0
+    def __init__(self, mu: Union[np.number, numbers.Real], kappa, norm_const: Optional[float] = None):
+        assert kappa >= 0.0
         super().__init__()
         self.mu = mu
         self.kappa = kappa
-        self.norm_const = norm_const
-
-    def calculate_norm_const(self):
-        self.norm_const = 2 * np.pi * iv(0, self.kappa)
-        return self.norm_const
+        self._norm_const = norm_const
 
     def get_params(self):
         return self.mu, self.kappa
 
-    def pdf(self, xs):
-        if self.norm_const is None:
-            self.calculate_norm_const()
+    @property
+    @beartype
+    def norm_const(self) -> np.number:
+        if self._norm_const is None:
+            self._norm_const = 2 * np.pi * iv(0, self.kappa)
+        return self._norm_const
+
+    @beartype
+    def pdf(self, xs: np.ndarray) -> Union[np.ndarray, np.number]:
         p = np.exp(self.kappa * np.cos(xs - self.mu)) / self.norm_const
         return p
 
     @staticmethod
-    def besselratio(nu, kappa):
+    @beartype
+    def besselratio(nu: Union[np.number, numbers.Real], kappa: Union[np.number, numbers.Real]) -> Union[np.number, numbers.Real]:
         return iv(nu + 1, kappa) / iv(nu, kappa)
     
     def cdf(self, xs, starting_point=0):
@@ -50,8 +55,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
         r = np.zeros_like(xs)
 
-
-        def to_minus_pi_to_pi_range(angle):
+        def to_minus_pi_to_pi_range(angle: Union[np.number, numbers.Real, np.ndarray]) -> Union[np.number, numbers.Real, np.ndarray]:
             return np.mod(angle + np.pi, 2 * np.pi) - np.pi
 
         r = vonmises.cdf(to_minus_pi_to_pi_range(xs), kappa=self.kappa, loc=to_minus_pi_to_pi_range(self.mu)) - vonmises.cdf(to_minus_pi_to_pi_range(starting_point), kappa=self.kappa, loc=to_minus_pi_to_pi_range(self.mu))
@@ -61,22 +65,25 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
 
     @staticmethod
-    def besselratio_inverse(v, x):
-        def f(t):
+    @beartype
+    def besselratio_inverse(v: Union[np.number, numbers.Real], x: Union[np.number, numbers.Real]) -> Union[np.number, numbers.Real]:
+        def f(t: float) -> float:
             return VonMisesDistribution.besselratio(v, t) - x
 
         start = 1
         (kappa,) = fsolve(f, start, xtol=1e-40)
         return kappa
 
-    def multiply(self, vm2):
+    @beartype
+    def multiply(self, vm2: 'VonMisesDistribution') -> 'VonMisesDistribution':
         C = self.kappa * np.cos(self.mu) + vm2.kappa * np.cos(vm2.mu)
         S = self.kappa * np.sin(self.mu) + vm2.kappa * np.sin(vm2.mu)
         mu_ = np.mod(np.arctan2(S, C), 2 * np.pi)
         kappa_ = np.sqrt(C**2 + S**2)
         return VonMisesDistribution(mu_, kappa_)
 
-    def convolve(self, vm2):
+    @beartype
+    def convolve(self, vm2: 'VonMisesDistribution') -> 'VonMisesDistribution':
         mu_ = np.mod(self.mu + vm2.mu, 2 * np.pi)
         t = VonMisesDistribution.besselratio(
             0, self.kappa

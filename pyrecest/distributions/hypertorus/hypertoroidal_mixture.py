@@ -1,14 +1,16 @@
-from typing import List, Union
+from typing import Optional, List, Union
 
 import numpy as np
 
 from ..abstract_mixture import AbstractMixture
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-
+from beartype import beartype
+import copy
 
 class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
+    @beartype
     def __init__(
-        self, dists: List[AbstractHypertoroidalDistribution], w: np.ndarray = None
+        self, dists: List[AbstractHypertoroidalDistribution], w: Optional[np.ndarray] = None
     ):
         """
         Constructor
@@ -16,14 +18,10 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param dists: list of hypertoroidal distributions
         :param w: list of weights
         """
-        assert all(
-            isinstance(dist, AbstractHypertoroidalDistribution) for dist in dists
-        ), "dists must be a list of hypertoroidal distributions"
-
         AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
 
-    def trigonometric_moment(self, n: Union[int, np.int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         """
         Calculate n-th trigonometric moment
 
@@ -32,9 +30,8 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         """
         m = np.zeros(self.dim, dtype=np.complex128)
         for i in range(len(self.dists)):
-            m += self.w[i] * self.dists[i].trigonometric_moment(
-                n
-            )  # Calculate moments using moments of each component
+            # Calculate moments using moments of each component
+            m += self.w[i] * self.dists[i].trigonometric_moment(n) # type: ignore
         return m
 
     def shift(self, shift_angles: np.ndarray):
@@ -44,10 +41,10 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param shift_angles: angles to shift by
         :returns: shifted distribution
         """
-        assert len(shift_angles) == self.dim
-        hd = HypertoroidalMixture(self.dists, self.w)
-        hd.dists = [dist.shift(shift_angles) for dist in hd.dists]
-        return hd
+        assert np.size(shift_angles) == self.dim
+        hd_shifted = copy.deepcopy(self)
+        hd_shifted.dists = [dist.shift(shift_angles) for dist in hd_shifted.dists] # type: ignore
+        return hd_shifted
 
     def to_circular_mixture(self):
         """

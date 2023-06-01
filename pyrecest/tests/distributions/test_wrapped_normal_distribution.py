@@ -6,8 +6,8 @@ from pyrecest.distributions import WrappedNormalDistribution
 
 class WrappedNormalDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.mu = np.array(3)
-        self.sigma = np.array(1.5)
+        self.mu = 3
+        self.sigma = 1.5
         self.wn = WrappedNormalDistribution(self.mu, self.sigma)
 
     def test_pdf_values_are_as_expected(self):

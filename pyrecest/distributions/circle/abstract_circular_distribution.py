@@ -1,32 +1,38 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import Union
+
+from beartype import beartype
 
 from ..hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
 )
+import numbers
 
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
+    @beartype
     def __init__(self):
         AbstractHypertoroidalDistribution.__init__(self, dim=1)
 
-    def cdf_numerical(self, xs: np.array, starting_point: float = 0) -> np.array:
+    @beartype
+    def cdf_numerical(self, xs: np.ndarray, starting_point: float = 0.0) -> np.ndarray:
         """
         Calculates the cumulative distribution function.
 
         Args:
-            xs (np.array): The 1D array to calculate the CDF on.
+            xs (np.ndarray): The 1D array to calculate the CDF on.
             starting_point (float, optional): Defaults to 0.
 
         Returns:
-            np.array: The computed CDF as a numpy array.
+            np.ndarray: The computed CDF as a numpy array.
         """
-        xs = np.asarray(xs)
         assert xs.ndim == 1, "xs must be a 1D array"
 
         return np.array([self._cdf_numerical_single(x, starting_point) for x in xs])
 
-    def _cdf_numerical_single(self, x: float, starting_point: float) -> float:
+    @beartype
+    def _cdf_numerical_single(self, x: Union[np.number, numbers.Real], starting_point: Union[np.number, numbers.Real]) -> Union[np.number, numbers.Real]:
         """Helper method for cdf_numerical"""
         starting_point_mod = np.mod(starting_point, 2 * np.pi)
         x_mod = np.mod(x, 2 * np.pi)

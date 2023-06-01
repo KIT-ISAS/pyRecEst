@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from beartype import beartype
@@ -73,7 +73,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         self,
         system_matrix: np.ndarray,
         sys_noise_cov: np.ndarray,
-        sys_input: np.ndarray = None,
+        sys_input: Optional[np.ndarray] = None,
     ):
         """
         Predicts the next state assuming a linear system model.

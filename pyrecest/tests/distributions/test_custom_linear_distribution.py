@@ -9,7 +9,7 @@ class CustomLinearDistributionTest(unittest.TestCase):
     def setUp(self):
         g1 = GaussianDistribution(np.array([1, 1]), np.eye(2))
         g2 = GaussianDistribution(np.array([-3, -3]), np.eye(2))
-        self.gm = GaussianMixture([g1, g2], [0.7, 0.3])
+        self.gm = GaussianMixture([g1, g2], np.array([0.7, 0.3]))
 
     def test_init_and_mean(self):
         cld = CustomLinearDistribution.from_distribution(self.gm)

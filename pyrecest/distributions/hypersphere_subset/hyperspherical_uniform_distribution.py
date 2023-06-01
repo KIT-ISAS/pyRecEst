@@ -1,4 +1,6 @@
 import numpy as np
+from beartype import beartype
+from typing import Union
 
 from .abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
@@ -9,13 +11,17 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 class HypersphericalUniformDistribution(
     AbstractHypersphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
-    def __init__(self, dim_):
-        AbstractHypersphereSubsetUniformDistribution.__init__(self, dim_)
 
-    def pdf(self, xs):
+    @beartype
+    def __init__(self, dim: Union[int, np.int32, np.int64]):
+        AbstractHypersphereSubsetUniformDistribution.__init__(self, dim)
+
+    @beartype
+    def pdf(self, xs: np.ndarray):
         return AbstractHypersphereSubsetUniformDistribution.pdf(self, xs)
 
-    def sample(self, n):
+    @beartype
+    def sample(self, n: Union[int, np.int32, np.int64]):
         assert isinstance(n, int) and n > 0, "n must be a positive integer"
 
         if self.dim == 2:

@@ -8,15 +8,15 @@ from pyrecest.distributions import VonMisesDistribution
 matplotlib.use("Agg")
 
 
-class TestVMDistribution(unittest.TestCase):
+class TestVonMisesDistribution(unittest.TestCase):
     def test_vm_init(self):
-        dist1 = VonMisesDistribution(np.array(0.0), np.array(1.0))
-        dist2 = VonMisesDistribution(np.array(2.0), np.array(1.0))
+        dist1 = VonMisesDistribution(0, 1)
+        dist2 = VonMisesDistribution(2, 1)
         self.assertEqual(dist1.kappa, dist2.kappa)
         self.assertNotEqual(dist1.mu, dist2.mu)
 
     def test_pdf(self):
-        dist = VonMisesDistribution(np.array(2.0), np.array(1.0))
+        dist = VonMisesDistribution(2, 1)
         xs = np.linspace(1, 7, 7)
         np.testing.assert_array_almost_equal(
             dist.pdf(xs),

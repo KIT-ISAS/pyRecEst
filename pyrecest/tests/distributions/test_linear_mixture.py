@@ -30,7 +30,7 @@ class LinearMixtureTest(unittest.TestCase):
 
         with catch_warnings():
             simplefilter("ignore", category=UserWarning)
-            lm = LinearMixture([gm1, gm2], [0.3, 0.7])
+            lm = LinearMixture([gm1, gm2], np.array([0.3, 0.7]))
 
         x, y = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-2, 2, 100))
         points = np.column_stack((x.ravel(), y.ravel()))

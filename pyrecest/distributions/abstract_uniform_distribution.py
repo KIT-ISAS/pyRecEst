@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 import numpy as np
+from beartype import beartype
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -8,7 +9,8 @@ from .abstract_distribution_type import AbstractDistributionType
 class AbstractUniformDistribution(AbstractDistributionType):
     """Abstract class for a uniform distribution on a manifold."""
 
-    def pdf(self, xs):
+    @beartype
+    def pdf(self, xs: np.ndarray) -> np.ndarray:
         """Compute the probability density function at each point in xs.
 
         :param xs: Points at which to compute the pdf.
@@ -20,7 +22,7 @@ class AbstractUniformDistribution(AbstractDistributionType):
         return 1 / self.get_manifold_size() * np.ones(xs.shape[0])
 
     @abstractmethod
-    def get_manifold_size(self):
+    def get_manifold_size(self) -> np.ndarray:
         """
         Compute the probability density function at each point in xs.
 

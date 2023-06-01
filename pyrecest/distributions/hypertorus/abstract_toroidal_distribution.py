@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import dblquad
-
+from typing import Union
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -11,7 +11,7 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
     def covariance_4D_numerical(self) -> np.ndarray:
         m = self.mean_4D()
 
-        def f(x: float, y: float, i: int, j: int) -> float:
+        def f(x: float, y: float, i: Union[int, np.int32, np.int64], j: Union[int, np.int32, np.int64]) -> float:
             funcs = [
                 lambda x, _: np.cos(x) - m[0],
                 lambda x, _: np.sin(x) - m[1],
@@ -52,7 +52,7 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         rhoc = EsinAsinB / np.sqrt(EsinAsquared * EsinBsquared)
         return rhoc
 
-    def mean_4D(self):
+    def mean_4D(self) -> np.ndarray:
         """
         Calculates the 4D mean of [cos(x1), sin(x1), cos(x2), sin(x2)]
 

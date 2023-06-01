@@ -2,6 +2,8 @@ import copy
 import warnings
 
 import numpy as np
+from beartype import beartype
+from typing import Callable, Optional, Union
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -11,7 +13,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
     This class represents an abstract base for Dirac distributions.
     """
 
-    def __init__(self, d, w=None):
+    @beartype
+    def __init__(self, d: np.ndarray, w: Optional[np.ndarray] = None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
 
@@ -26,6 +29,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         self.w = copy.copy(w)
         self.normalize_in_place()
 
+    @beartype
     def normalize_in_place(self):
         """
         Normalize the weights in-place to ensure they sum to 1.
@@ -34,13 +38,15 @@ class AbstractDiracDistribution(AbstractDistributionType):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
             self.w = self.w / np.sum(self.w)
 
-    def normalize(self):
+    @beartype
+    def normalize(self) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
         dist.normalize_in_place()
         return dist
 
+    @beartype
     def apply_function(
-        self, f, f_supports_multiple=True
+        self, f: Callable, f_supports_multiple: bool = True
     ) -> "AbstractDiracDistribution":
         """
         Apply a function to the Dirac locations and return a new distribution.
@@ -55,7 +61,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
             dist.d = np.apply_along_axis(f, 1, dist.d)
         return dist
 
-    def reweigh(self, f):
+    @beartype
+    def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
         w_likelihood = f(self.d)
         assert (
             w_likelihood.shape == self.w.shape
@@ -71,15 +78,16 @@ class AbstractDiracDistribution(AbstractDistributionType):
         dist = self.__class__(self.d, w_posterior_normalized)
         return dist
 
-    def sample(self, n):
+    @beartype
+    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         ids = np.random.choice(self.w.size, size=n, p=self.w)
         return self.d[ids] if self.d.ndim == 1 else self.d[ids, :]
 
-    def entropy(self):
+    def entropy(self) -> float:
         warnings.warn("Entropy is not defined in a continuous sense")
         return -np.sum(self.w * np.log(self.w))
 
-    def integrate(self, left=None, right=None):
+    def integrate(self, left=None, right=None) -> float:
         assert (
             left is None and right is None
         ), "Must overwrite in child class to use integral limits"

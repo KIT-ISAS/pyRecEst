@@ -1,10 +1,9 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-
+from beartype import beartype
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
-
 
 class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     """
@@ -18,6 +17,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         super().__init__(2)
 
     @staticmethod
+    @beartype
     def sph_to_cart(azimuth: np.ndarray, elevation: np.ndarray) -> tuple:
         """
         Convert spherical coordinates to Cartesian coordinates.
@@ -40,6 +40,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, -z
 
     @staticmethod
+    @beartype
     def cart_to_sph(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
         """
         Convert Cartesian coordinates to spherical coordinates.
@@ -55,14 +56,16 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return AbstractSphereSubsetDistribution._cart_to_sph_colatitude(x, y, z)
 
     @staticmethod
-    def _cart_to_sph_colatitude(x, y, z):
+    @beartype
+    def _cart_to_sph_colatitude(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
         hxy = np.hypot(x, y)
         colatitude = np.arctan2(hxy, z)
         azimuth = np.arctan2(y, x)
         return azimuth, colatitude
 
     @staticmethod
-    def _cart_to_sph_elevation(x, y, z):
+    @beartype
+    def _cart_to_sph_elevation(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
         hxy = np.hypot(x, y)
         elevation = np.arctan2(z, hxy)
         azimuth = np.arctan2(y, x)

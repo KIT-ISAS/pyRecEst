@@ -1,31 +1,26 @@
 import numpy as np
+from typing import List, Union
 
-from ..abstract_mixture import AbstractMixture
-from .abstract_linear_distribution import AbstractLinearDistribution
-from .gaussian_distribution import GaussianDistribution
+from .linear_mixture import LinearMixture
 from .linear_dirac_distribution import LinearDiracDistribution
+from .gaussian_distribution import GaussianDistribution
+from beartype import beartype
+import numbers
 
-
-class GaussianMixture(AbstractMixture, AbstractLinearDistribution):
-    def __init__(self, dists, w=None):
-        assert all(
-            isinstance(dist, GaussianDistribution) for dist in dists
-        ), "dists must be a list of Gaussian distributions"
-        AbstractLinearDistribution.__init__(self, dists[0].dim)
-        AbstractMixture.__init__(self, dists, w)
-
-    @property
-    def input_dim(self):
-        return AbstractLinearDistribution.input_dim.fget(self)
+class GaussianMixture(LinearMixture):
+    @beartype
+    def __init__(self, dists: List[GaussianDistribution], w: np.ndarray):
+        LinearMixture.__init__(self, dists, w)
 
     def mean(self):
         gauss_array = self.dists
         return np.dot(np.array([g.mu for g in gauss_array]), self.w)
-
-    def set_mean(self, new_mean):
-        mean_offset = new_mean - self.mean
+            
+    @beartype
+    def set_mean(self, new_mean: Union[np.ndarray, numbers.Real]):
+        mean_offset = new_mean - self.mean()
         for dist in self.dists:
-            dist.mu += mean_offset
+            dist.mu += mean_offset # type: ignore
 
     def to_gaussian(self):
         gauss_array = self.dists

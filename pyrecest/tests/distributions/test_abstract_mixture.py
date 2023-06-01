@@ -23,7 +23,7 @@ class AbstractMixtureTest(unittest.TestCase):
 
     def test_sample_metropolis_hastings_basics_only_t2(self):
         vmf = ToroidalWrappedNormalDistribution(np.array([1, 0]), np.eye(2))
-        mix = HypertoroidalMixture([vmf, vmf.shift(np.array([1, 1]))], [0.5, 0.5])
+        mix = HypertoroidalMixture([vmf, vmf.shift(np.array([1, 1]))],np.array([0.5, 0.5]))
         self._test_sample(mix, 10)
 
     def test_sample_metropolis_hastings_basics_only_s2(self):
