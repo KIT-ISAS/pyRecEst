@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-
+from beartype import beartype
+from typing import Optional, Callable, Union
+import numbers
 
 class AbstractManifoldSpecificDistribution(ABC):
     """
@@ -9,40 +11,40 @@ class AbstractManifoldSpecificDistribution(ABC):
     Should be inerhited by (abstract) classes limited to specific manifolds.
     """
 
-    def __init__(self, dim=None):
+    @beartype
+    def __init__(self, dim: int):
         self._dim = dim
 
     @abstractmethod
-    def get_manifold_size(self):
+    def get_manifold_size(self) -> float:
         pass
 
     @property
-    def dim(self):
+    def dim(self) -> int:
         """Get dimension of the manifold."""
         return self._dim
 
     @dim.setter
-    def dim(self, value):
+    @beartype
+    def dim(self, value: int):
         """Set dimension of the manifold. Must be a positive integer or None."""
-        if value is not None:
-            if isinstance(value, int) and value > 0:
-                self._dim = value
-            else:
-                raise ValueError("dim must be a positive integer or None.")
-        else:
-            self._dim = None
+        if value <= 0:
+            raise ValueError("dim must be a positive integer or None.")
+        
+        self._dim = value    
 
     @property
     @abstractmethod
-    def input_dim(self):
+    def input_dim(self) -> int:
         pass
 
     @abstractmethod
-    def pdf(self, xs):
+    @beartype
+    def pdf(self, xs: np.ndarray) -> np.ndarray:
         pass
 
     @abstractmethod
-    def mean(self):
+    def mean(self) -> np.ndarray:
         """
         Convenient access to a reasonable "mean" for different manifolds.
 
@@ -50,13 +52,22 @@ class AbstractManifoldSpecificDistribution(ABC):
         :rtype: np.ndarray
         """
 
-    def sample(self, n):
+    @beartype
+    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
 
+    # jscpd:ignore-start
+    @beartype
     def sample_metropolis_hastings(
-        self, n, burn_in=10, skipping=5, proposal=None, start_point=None
-    ):
+        self, 
+        n: Union[int, np.int32, np.int64], 
+        burn_in: Union[int, np.int32, np.int64] = 10, 
+        skipping: Union[int, np.int32, np.int64] = 5, 
+        proposal: Optional[Callable] = None, 
+        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None
+    ) -> np.ndarray:
+        # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""
 
         if proposal is None or start_point is None:

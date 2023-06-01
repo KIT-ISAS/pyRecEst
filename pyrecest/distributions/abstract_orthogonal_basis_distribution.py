@@ -5,7 +5,7 @@ from abc import abstractmethod
 import numpy as np
 
 from .abstract_distribution_type import AbstractDistributionType
-
+from beartype import beartype
 
 class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
     """
@@ -46,7 +46,8 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         result = copy.deepcopy(self)
         return result.normalize_in_place()
 
-    def pdf(self, xs: np.ndarray):
+    @beartype
+    def pdf(self, xs: np.ndarray) -> np.ndarray:
         """
         Calculates probability density function for the given input.
 

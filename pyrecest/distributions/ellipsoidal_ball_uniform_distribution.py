@@ -3,7 +3,8 @@ import numpy as np
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
-
+from beartype import beartype
+from typing import Union
 
 class EllipsoidalBallUniformDistribution(
     AbstractEllipsoidalBallDistribution, AbstractUniformDistribution
@@ -28,7 +29,8 @@ class EllipsoidalBallUniformDistribution(
     def mean(self):
         raise NotImplementedError()
 
-    def pdf(self, xs):
+    @beartype
+    def pdf(self, xs: np.ndarray):
         """
         Compute the probability density function at given points.
 
@@ -57,7 +59,8 @@ class EllipsoidalBallUniformDistribution(
 
         return results
 
-    def sample(self, n: int = 1) -> np.ndarray:
+    @beartype
+    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         """
         Generate samples from the distribution.
 

@@ -1,5 +1,5 @@
 import warnings
-
+from beartype import beartype
 from .abstract_hemispherical_distribution import AbstractHemisphericalDistribution
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -7,17 +7,19 @@ from .abstract_hyperhemispherical_distribution import (
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
 from .custom_hyperhemispherical_distribution import CustomHyperhemisphericalDistribution
-
+from typing import Callable
 
 class CustomHemisphericalDistribution(
     CustomHyperhemisphericalDistribution, AbstractHemisphericalDistribution
 ):
-    def __init__(self, f):
+    @beartype
+    def __init__(self, f: Callable):
         AbstractHemisphericalDistribution.__init__(self)
         CustomHyperhemisphericalDistribution.__init__(self, f, 2)
 
     @staticmethod
-    def from_distribution(dist):
+    @beartype
+    def from_distribution(dist: "AbstractHypersphericalDistribution"):
         if dist.dim != 2:
             raise ValueError("Dimension of the distribution should be 2.")
 

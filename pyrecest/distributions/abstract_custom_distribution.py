@@ -1,10 +1,11 @@
 import copy
 import warnings
 from abc import abstractmethod
-from typing import Optional
+from typing import Optional, Callable
 
 import numpy as np
 
+from beartype import beartype
 from .abstract_distribution_type import AbstractDistributionType
 
 
@@ -24,7 +25,8 @@ class AbstractCustomDistribution(AbstractDistributionType):
         Normalize the PDF such that its integral is 1. Returns a copy of the original distribution.
     """
 
-    def __init__(self, f, scale_by=1):
+    @beartype
+    def __init__(self, f: Callable[[np.ndarray], np.ndarray], scale_by = 1):
         """
         Initialize AbstractCustomDistribution.
 
@@ -34,6 +36,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         self.f = f
         self.scale_by = scale_by
 
+    @beartype
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         """
         Compute the probability density function at given points.
@@ -45,6 +48,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         return self.scale_by * self.f(xs)
 
     @abstractmethod
+    @beartype
     def integrate(self, integration_boundaries=None):
         """
         Calculate the integral of the probability density function.
@@ -53,6 +57,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :returns: The integral of the PDF.
         """
 
+    @beartype
     def normalize(self, verify: Optional[bool] = None) -> "AbstractCustomDistribution":
         """
         Normalize the PDF such that its integral is 1.

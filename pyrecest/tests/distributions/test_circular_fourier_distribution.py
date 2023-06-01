@@ -74,7 +74,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
     )
     def test_vm_to_fourier(self, mult_by_n, transformation):
         xs = np.linspace(0, 2 * np.pi, 100)
-        dist = VonMisesDistribution(np.array(2.5), np.array(1.5))
+        dist = VonMisesDistribution(2.5, 1.5)
         fd = CircularFourierDistribution.from_distribution(
             dist,
             n=31,
@@ -95,7 +95,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
     )
     def test_integrate_numerically(self, mult_by_n, transformation):
         scale_by = 2 / 5
-        dist = VonMisesDistribution(np.array(2.9), np.array(1.3))
+        dist = VonMisesDistribution(2.9, 1.3)
         fd = CircularFourierDistribution.from_distribution(
             dist,
             n=31,
@@ -129,7 +129,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
     )
     def test_integrate(self, mult_by_n, transformation):
         scale_by = 1 / 5
-        dist = VonMisesDistribution(np.array(2.9), np.array(1.3))
+        dist = VonMisesDistribution(2.9, 1.3)
         fd = CircularFourierDistribution.from_distribution(
             dist,
             n=31,
@@ -168,8 +168,8 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     def test_distance(self, mult_by_n):
-        dist1 = VonMisesDistribution(np.array(0.0), np.array(1.0))
-        dist2 = VonMisesDistribution(np.array(2.0), np.array(1.0))
+        dist1 = VonMisesDistribution(0.0, 1.0)
+        dist2 = VonMisesDistribution(2.0, 1.0)
         fd1 = CircularFourierDistribution.from_distribution(
             dist1,
             n=31,

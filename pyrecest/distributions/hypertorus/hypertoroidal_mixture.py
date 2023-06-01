@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Optional, List, Union
 
 import numpy as np
 
@@ -8,7 +8,7 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 
 class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
     def __init__(
-        self, dists: List[AbstractHypertoroidalDistribution], w: np.ndarray = None
+        self, dists: List[AbstractHypertoroidalDistribution], w: Optional[np.ndarray] = None
     ):
         """
         Constructor
@@ -16,14 +16,10 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param dists: list of hypertoroidal distributions
         :param w: list of weights
         """
-        assert all(
-            isinstance(dist, AbstractHypertoroidalDistribution) for dist in dists
-        ), "dists must be a list of hypertoroidal distributions"
-
         AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
 
-    def trigonometric_moment(self, n: Union[int, np.int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         """
         Calculate n-th trigonometric moment
 
@@ -44,7 +40,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param shift_angles: angles to shift by
         :returns: shifted distribution
         """
-        assert len(shift_angles) == self.dim
+        assert np.size(shift_angles) == self.dim
         hd = HypertoroidalMixture(self.dists, self.w)
         hd.dists = [dist.shift(shift_angles) for dist in hd.dists]
         return hd

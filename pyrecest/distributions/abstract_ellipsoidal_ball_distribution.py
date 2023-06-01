@@ -4,14 +4,17 @@ from scipy.special import gamma
 from .abstract_bounded_nonperiodic_distribution import (
     AbstractBoundedNonPeriodicDistribution,
 )
-
+from beartype import beartype
+import numbers
+from typing import Union
 
 class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution):
     """
     This class represents distributions on ellipsoidal balls.
     """
 
-    def __init__(self, center, shape_matrix):
+    @beartype
+    def __init__(self, center: np.ndarray, shape_matrix: np.ndarray):
         """
         Initialize the class with a center and shape matrix.
 
@@ -24,7 +27,8 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         assert center.ndim == 1 and shape_matrix.ndim == 2
         assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim
 
-    def get_manifold_size(self):
+    @beartype
+    def get_manifold_size(self) -> Union[np.number, numbers.Real]:
         """
         Calculate the size of the manifold.
 

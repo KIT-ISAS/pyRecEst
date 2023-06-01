@@ -7,8 +7,8 @@ from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistributi
 class AbstractCircularDistributionTest(unittest.TestCase):
     def setUp(self):
         self.distributions = [
-            WrappedNormalDistribution(2, 0.7),
-            VonMisesDistribution(6, 1.2),
+            WrappedNormalDistribution(2.0, 0.7),
+            VonMisesDistribution(6.0, 1.2),
         ]
 
     def test_cdf_numerical(self):

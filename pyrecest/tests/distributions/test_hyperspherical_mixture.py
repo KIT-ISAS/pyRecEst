@@ -20,7 +20,7 @@ class HypersphericalMixtureTest(unittest.TestCase):
         phi, theta = np.meshgrid(
             np.linspace(0, 2 * np.pi, 10), np.linspace(-np.pi / 2, np.pi / 2, 10)
         )
-        points = AbstractHypersphereSubsetDistribution.polar2cart(
+        points = AbstractHypersphereSubsetDistribution.polar_to_cart(
             np.stack([phi.ravel(), theta.ravel()], axis=-1)
         )
 
