@@ -1,5 +1,4 @@
 import warnings
-from typing import List, Union
 
 import numpy as np
 from beartype import beartype
@@ -16,7 +15,7 @@ class AbstractMixture(AbstractDistributionType):
     """
 
     @beartype
-    def __init__(self, dists: List[AbstractManifoldSpecificDistribution], weights=None):
+    def __init__(self, dists: list[AbstractManifoldSpecificDistribution], weights=None):
         AbstractDistributionType.__init__(self)
         num_distributions = len(dists)
 
@@ -53,7 +52,7 @@ class AbstractMixture(AbstractDistributionType):
         return self.dists[0].input_dim
 
     @beartype
-    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         d = np.random.choice(len(self.w), size=n, p=self.w)
 
         occurrences = np.bincount(d, minlength=len(self.dists))

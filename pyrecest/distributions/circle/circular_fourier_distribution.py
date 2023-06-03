@@ -1,5 +1,4 @@
 import warnings
-from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,10 +19,10 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     def __init__(
         self,
         transformation: str = "sqrt",
-        c: Optional[np.ndarray] = None,
-        a: Optional[np.ndarray] = None,
-        b: Optional[np.ndarray] = None,
-        n: Optional[int] = None,
+        c: np.ndarray | None = None,
+        a: np.ndarray | None = None,
+        b: np.ndarray | None = None,
+        n: int | None = None,
         multiplied_by_n: bool = True,
     ):
         AbstractCircularDistribution.__init__(self)
@@ -268,7 +267,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     @beartype
     def from_distribution(
         dist: AbstractCircularDistribution,
-        n: Union[int, np.int32, np.int64],
+        n: int | np.int32 | np.int64,
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":

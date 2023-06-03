@@ -1,5 +1,4 @@
 import numbers
-from typing import Optional, Union
 
 import numpy as np
 from beartype import beartype
@@ -13,9 +12,9 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class VonMisesDistribution(AbstractCircularDistribution):
     def __init__(
         self,
-        mu: Union[np.number, numbers.Real],
+        mu: np.number | numbers.Real,
         kappa,
-        norm_const: Optional[float] = None,
+        norm_const: float | None = None,
     ):
         assert kappa >= 0.0
         super().__init__()
@@ -34,15 +33,15 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return self._norm_const
 
     @beartype
-    def pdf(self, xs: np.ndarray) -> Union[np.ndarray, np.number]:
+    def pdf(self, xs: np.ndarray) -> np.ndarray | np.number:
         p = np.exp(self.kappa * np.cos(xs - self.mu)) / self.norm_const
         return p
 
     @staticmethod
     @beartype
     def besselratio(
-        nu: Union[np.number, numbers.Real], kappa: Union[np.number, numbers.Real]
-    ) -> Union[np.number, numbers.Real]:
+        nu: np.number | numbers.Real, kappa: np.number | numbers.Real
+    ) -> np.number | numbers.Real:
         return iv(nu + 1, kappa) / iv(nu, kappa)
 
     def cdf(self, xs, starting_point=0):
@@ -65,8 +64,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
         r = np.zeros_like(xs)
 
         def to_minus_pi_to_pi_range(
-            angle: Union[np.number, numbers.Real, np.ndarray]
-        ) -> Union[np.number, numbers.Real, np.ndarray]:
+            angle: np.number | numbers.Real | np.ndarray
+        ) -> np.number | numbers.Real | np.ndarray:
             return np.mod(angle + np.pi, 2 * np.pi) - np.pi
 
         r = vonmises.cdf(
@@ -89,8 +88,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
     @staticmethod
     @beartype
     def besselratio_inverse(
-        v: Union[np.number, numbers.Real], x: Union[np.number, numbers.Real]
-    ) -> Union[np.number, numbers.Real]:
+        v: np.number | numbers.Real, x: np.number | numbers.Real
+    ) -> np.number | numbers.Real:
         def f(t: float) -> float:
             return VonMisesDistribution.besselratio(v, t) - x
 
@@ -138,4 +137,4 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return vm
 
     def __str__(self) -> str:
-        return "VonMisesDistribution: mu = {}, kappa = {}".format(self.mu, self.kappa)
+        return f"VonMisesDistribution: mu = {self.mu}, kappa = {self.kappa}"

@@ -1,6 +1,7 @@
 import numbers
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, Union
+
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -54,7 +55,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         """
 
     @beartype
-    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
 
@@ -62,11 +63,11 @@ class AbstractManifoldSpecificDistribution(ABC):
     @beartype
     def sample_metropolis_hastings(
         self,
-        n: Union[int, np.int32, np.int64],
-        burn_in: Union[int, np.int32, np.int64] = 10,
-        skipping: Union[int, np.int32, np.int64] = 5,
-        proposal: Optional[Callable] = None,
-        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None,
+        n: int | np.int32 | np.int64,
+        burn_in: int | np.int32 | np.int64 = 10,
+        skipping: int | np.int32 | np.int64 = 5,
+        proposal: Callable | None = None,
+        start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""

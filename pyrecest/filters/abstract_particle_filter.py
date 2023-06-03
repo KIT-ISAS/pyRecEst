@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from pyrecest.distributions.abstract_manifold_specific_distribution import (

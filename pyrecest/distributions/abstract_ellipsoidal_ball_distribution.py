@@ -1,5 +1,4 @@
 import numbers
-from typing import Union
 
 import numpy as np
 from beartype import beartype
@@ -30,7 +29,7 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim
 
     @beartype
-    def get_manifold_size(self) -> Union[np.number, numbers.Real]:
+    def get_manifold_size(self) -> np.number | numbers.Real:
         """
         Calculate the size of the manifold.
 

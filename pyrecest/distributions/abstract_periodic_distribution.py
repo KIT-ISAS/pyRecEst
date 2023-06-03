@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Union
 
 import numpy as np
 from beartype import beartype
@@ -11,7 +10,7 @@ class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
     """Abstract class for a distributions on periodic manifolds."""
 
     @beartype
-    def __init__(self, dim: Union[int, np.int32, np.int64]):
+    def __init__(self, dim: int | np.int32 | np.int64):
         super().__init__(dim=dim)
 
     @beartype

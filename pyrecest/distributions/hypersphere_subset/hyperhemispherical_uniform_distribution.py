@@ -1,5 +1,3 @@
-from typing import Union
-
 import numpy as np
 from beartype import beartype
 
@@ -19,7 +17,7 @@ class HyperhemisphericalUniformDistribution(
     AbstractHyperhemisphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
     @beartype
-    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """
         Sample n points from the hyperhemispherical distribution.
 

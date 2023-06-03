@@ -1,5 +1,4 @@
 import numbers
-from typing import Union
 
 import numpy as np
 from beartype import beartype
@@ -11,7 +10,7 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @beartype
-    def __init__(self, mu: np.ndarray, kappa: Union[np.number, numbers.Real]):
+    def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6
         assert (
@@ -130,12 +129,12 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     @beartype
-    def a_d(d: Union[int, np.int32, np.int64], kappa: Union[np.number, numbers.Real]):
+    def a_d(d: int | np.int32 | np.int64, kappa: np.number | numbers.Real):
         return iv(d / 2, kappa) / iv(d / 2 - 1, kappa)
 
     @staticmethod
     @beartype
-    def a_d_inverse(d: Union[int, np.int32, np.int64], x: float):
+    def a_d_inverse(d: int | np.int32 | np.int64, x: float):
         kappa_ = x * (d - x**2) / (1 - x**2)
         max_steps = 20
         epsilon = 1e-7

@@ -1,5 +1,4 @@
 import numbers
-from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,9 +33,9 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     @beartype
     def _cdf_numerical_single(
         self,
-        x: Union[np.number, numbers.Real],
-        starting_point: Union[np.number, numbers.Real],
-    ) -> Union[np.number, numbers.Real]:
+        x: np.number | numbers.Real,
+        starting_point: np.number | numbers.Real,
+    ) -> np.number | numbers.Real:
         """Helper method for cdf_numerical"""
         starting_point_mod = np.mod(starting_point, 2 * np.pi)
         x_mod = np.mod(x, 2 * np.pi)

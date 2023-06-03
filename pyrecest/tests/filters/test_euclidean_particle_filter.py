@@ -35,7 +35,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
     def test_predict_nonlinear_nonadditive(self):
         n = 5
         samples = np.random.rand(n, 3)
-        weights = np.ones((n)) / n
+        weights = np.ones(n) / n
 
         def f(x, w):
             return x + w

@@ -1,6 +1,4 @@
 import warnings
-from typing import List
-
 import numpy as np
 from abstract_circular_distribution import AbstractCircularDistribution
 from beartype import beartype
@@ -12,7 +10,7 @@ from .circular_fourier_distribution import CircularFourierDistribution
 
 class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
     @beartype
-    def __init__(self, dists: List[AbstractCircularDistribution], w: np.ndarray):
+    def __init__(self, dists: list[AbstractCircularDistribution], w: np.ndarray):
         """
         Creates a new circular mixture.
 

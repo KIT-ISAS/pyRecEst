@@ -1,5 +1,3 @@
-from typing import Optional, Tuple, Union
-
 import numpy as np
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
@@ -18,7 +16,7 @@ class HypertoroidalUniformDistribution(
         """
         return 1 / self.get_manifold_size() * np.ones(xs.size // self.dim)
 
-    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """
         Returns the n-th trigonometric moment
 
@@ -49,7 +47,7 @@ class HypertoroidalUniformDistribution(
             "Hypertoroidal uniform distributions do not have a unique mean"
         )
 
-    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """
         Returns a sample of size n from the distribution
 
@@ -70,7 +68,7 @@ class HypertoroidalUniformDistribution(
         return self
 
     def integrate(
-        self, integration_boundaries: Optional[Tuple[np.ndarray, np.ndarray]] = None
+        self, integration_boundaries: tuple[np.ndarray, np.ndarray] | None = None
     ) -> float:
         """
         Returns the integral of the distribution over the specified boundaries

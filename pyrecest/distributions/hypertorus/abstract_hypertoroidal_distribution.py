@@ -1,5 +1,6 @@
 import numbers
-from typing import Callable, Optional, Union
+
+from collections.abc import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,7 +23,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     @staticmethod
     @beartype
     def integrate_fun_over_domain(
-        f: Callable, dim: Union[int, np.int32, np.int64]
+        f: Callable, dim: int | np.int32 | np.int64
     ) -> float:
         integration_boundaries = [(0, 2 * np.pi)] * dim
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
@@ -32,7 +33,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     @staticmethod
     @beartype
     def integrate_fun_over_domain_part(
-        f: Callable, dim: Union[int, np.int32, np.int64], integration_boundaries
+        f: Callable, dim: int | np.int32 | np.int64, integration_boundaries
     ) -> float:
         if len(integration_boundaries) != dim:
             raise ValueError(
@@ -43,7 +44,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def integrate_numerically(
         self, integration_boundaries=None
-    ) -> Union[np.number, numbers.Real]:
+    ) -> np.number | numbers.Real:
         if integration_boundaries is None:
             integration_boundaries = np.vstack(
                 (np.zeros(self.dim), 2 * np.pi * np.ones(self.dim))
@@ -59,7 +60,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @beartype
     def trigonometric_moment_numerical(
-        self, n: Union[int, np.int32, np.int64]
+        self, n: int | np.int32 | np.int64
     ) -> np.ndarray:
         """Calculates the complex trignometric moments. Since nquad does not support complex functions,
         the calculation is split up (as used in the alternative representation of trigonometric polonymials
@@ -187,7 +188,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         raise NotImplementedError("Mode calculation is not implemented")
 
     @beartype
-    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
         return self.trigonometric_moment_numerical(n)
 
     def integrate(self, integration_boundaries=None):
@@ -201,11 +202,11 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     # jscpd:ignore-start
     def sample_metropolis_hastings(
         self,
-        n: Union[int, np.int32, np.int64],
-        burn_in: Union[int, np.int32, np.int64] = 10,
-        skipping: Union[int, np.int32, np.int64] = 5,
-        proposal: Optional[Callable] = None,
-        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None,
+        n: int | np.int32 | np.int64,
+        burn_in: int | np.int32 | np.int64 = 10,
+        skipping: int | np.int32 | np.int64 = 5,
+        proposal: Callable | None = None,
+        start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:
         # jscpd:ignore-end
         if proposal is None:

@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 from beartype import beartype
 
@@ -11,7 +9,7 @@ class CircularDiracDistribution(
     HypertoroidalDiracDistribution, AbstractCircularDistribution
 ):
     @beartype
-    def __init__(self, d: np.ndarray, w: Optional[np.ndarray] = None):
+    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
         """
         Initializes a CircularDiracDistribution instance.
 

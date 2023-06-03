@@ -1,5 +1,6 @@
 import copy
-from typing import Callable, Optional, Union
+
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -19,8 +20,8 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
     def __init__(
         self,
-        n_particles: Union[int, np.int32, np.int64],
-        dim: Union[int, np.int32, np.int64],
+        n_particles: int | np.int32 | np.int64,
+        dim: int | np.int32 | np.int64,
     ):
         if not (isinstance(n_particles, int) and n_particles > 0):
             raise ValueError("n_particles must be a positive integer")
@@ -38,7 +39,7 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
     @filter_state.setter
     def filter_state(
-        self, new_state: Union[AbstractLinearDistribution, LinearDiracDistribution]
+        self, new_state: AbstractLinearDistribution | LinearDiracDistribution
     ):
         """Set the filter state."""
         if not isinstance(new_state, LinearDiracDistribution):
@@ -59,7 +60,7 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
     def predict_nonlinear(
         self,
         f: Callable,
-        noise_distribution: Optional[AbstractLinearDistribution] = None,
+        noise_distribution: AbstractLinearDistribution | None = None,
         function_is_vectorized: bool = True,
         shift_instead_of_add: bool = False,
     ):

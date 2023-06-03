@@ -13,7 +13,7 @@ class HypersphericalUniformDistribution(
     AbstractHypersphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
     @beartype
-    def __init__(self, dim: Union[int, np.int32, np.int64]):
+    def __init__(self, dim: int | np.int32 | np.int64):
         AbstractHypersphereSubsetUniformDistribution.__init__(self, dim)
 
     @beartype
@@ -21,7 +21,7 @@ class HypersphericalUniformDistribution(
         return AbstractHypersphereSubsetUniformDistribution.pdf(self, xs)
 
     @beartype
-    def sample(self, n: Union[int, np.int32, np.int64]):
+    def sample(self, n: int | np.int32 | np.int64):
         assert isinstance(n, int) and n > 0, "n must be a positive integer"
 
         if self.dim == 2:

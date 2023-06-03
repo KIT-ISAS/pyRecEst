@@ -1,5 +1,3 @@
-from typing import Union
-
 import numpy as np
 from scipy.integrate import dblquad
 
@@ -16,8 +14,8 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         def f(
             x: float,
             y: float,
-            i: Union[int, np.int32, np.int64],
-            j: Union[int, np.int32, np.int64],
+            i: int | np.int32 | np.int64,
+            j: int | np.int32 | np.int64,
         ) -> float:
             funcs = [
                 lambda x, _: np.cos(x) - m[0],

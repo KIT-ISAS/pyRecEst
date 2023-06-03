@@ -1,5 +1,6 @@
 import copy
-from typing import Callable, Optional, Union
+
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -19,8 +20,8 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
     @beartype
     def __init__(
         self,
-        n_particles: Union[int, np.int32, np.int64],
-        dim: Union[int, np.int32, np.int64],
+        n_particles: int | np.int32 | np.int64,
+        dim: int | np.int32 | np.int64,
     ):
         assert np.isscalar(n_particles)
         assert n_particles > 1, "Use CircularParticleFilter for 1-D case"
@@ -54,7 +55,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
     def predict_nonlinear(
         self,
         f: Callable,
-        noise_distribution: Optional[AbstractHypertoroidalDistribution] = None,
+        noise_distribution: AbstractHypertoroidalDistribution | None = None,
         function_is_vectorized: bool = True,
     ):
         if function_is_vectorized:
