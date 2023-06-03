@@ -1,5 +1,3 @@
-from typing import Optional, Tuple, Union
-
 import numpy as np
 from beartype import beartype
 from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
@@ -11,7 +9,7 @@ from .abstract_euclidean_filter import AbstractEuclideanFilter
 class KalmanFilter(AbstractEuclideanFilter):
     @beartype
     def __init__(
-        self, initial_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]
+        self, initial_state: GaussianDistribution | tuple[np.ndarray, np.ndarray]
     ):
         """
         Initialize the Kalman filter with the initial state.
@@ -33,14 +31,14 @@ class KalmanFilter(AbstractEuclideanFilter):
     @property
     def filter_state(
         self,
-    ) -> Union[
-        GaussianDistribution, Tuple[np.ndarray, np.ndarray]
-    ]:  # It can only return GaussianDistribution, this just serves to prevent mypy linter warnings
+    ) -> (
+        GaussianDistribution | tuple[np.ndarray, np.ndarray]
+    ):  # It can only return GaussianDistribution, this just serves to prevent mypy linter warnings
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
 
     @filter_state.setter
     def filter_state(
-        self, new_state: Union[GaussianDistribution, Tuple[np.ndarray, np.ndarray]]
+        self, new_state: GaussianDistribution | tuple[np.ndarray, np.ndarray]
     ):
         """
         Set the filter state.
@@ -73,7 +71,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         self,
         system_matrix: np.ndarray,
         sys_noise_cov: np.ndarray,
-        sys_input: Optional[np.ndarray] = None,
+        sys_input: np.ndarray | None = None,
     ):
         """
         Predicts the next state assuming a linear system model.

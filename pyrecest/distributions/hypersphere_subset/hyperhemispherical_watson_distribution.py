@@ -1,5 +1,4 @@
 import numbers
-from typing import Union
 
 import numpy as np
 from beartype import beartype
@@ -12,7 +11,7 @@ from .watson_distribution import WatsonDistribution
 
 class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistribution):
     @beartype
-    def __init__(self, mu: np.ndarray, kappa: Union[np.number, numbers.Real]):
+    def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
         assert mu[-1] >= 0
         self.dist_full_sphere = WatsonDistribution(mu, kappa)
         AbstractHyperhemisphericalDistribution.__init__(
@@ -29,7 +28,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return w
 
     @beartype
-    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         s_full = self.dist_full_sphere.sample(n)
         s = s_full * (-1) ** (s_full[-1] < 0)  # Mirror to upper hemisphere
         return s

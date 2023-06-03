@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -20,7 +20,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     @abstractmethod
     @beartype
-    def get_full_integration_boundaries(dim: Union[int, np.int32, np.int64]):
+    def get_full_integration_boundaries(dim: int | np.int32 | np.int64):
         pass
 
     def mean_direction_numerical(self, integration_boundaries=None):
@@ -82,7 +82,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     @beartype
-    def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, np.int32, np.int64]):
+    def gen_fun_hyperspherical_coords(f: Callable, dim: int | np.int32 | np.int64):
         r = 1
 
         def generate_input(angles):
@@ -189,7 +189,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return AbstractHypersphereSubsetDistribution._compute_mean_axis_from_moment(mom)
 
     @beartype
-    def integrate(self, integration_boundaries: Optional[np.ndarray] = None):
+    def integrate(self, integration_boundaries: np.ndarray | None = None):
         if integration_boundaries is None:
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim
@@ -200,7 +200,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @abstractmethod
     @beartype
     def integrate_fun_over_domain(
-        f_hypersph_coords: Callable, dim: Union[int, np.int32, np.int64]
+        f_hypersph_coords: Callable, dim: int | np.int32 | np.int64
     ):
         # Overwrite with a function that specifies the integration_boundaries for the type of HypersphereSubsetDistribution
         pass
@@ -209,7 +209,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @beartype
     def integrate_fun_over_domain_part(
         f_hypersph_coords: Callable,
-        dim: Union[int, np.int32, np.int64],
+        dim: int | np.int32 | np.int64,
         integration_boundaries,
     ):
         if dim == 1:
@@ -367,7 +367,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     @beartype
-    def compute_unit_hypersphere_surface(dim: Union[int, np.int32, np.int64]) -> float:
+    def compute_unit_hypersphere_surface(dim: int | np.int32 | np.int64) -> float:
         if dim == 1:
             surface_area = 2 * np.pi
         elif dim == 2:

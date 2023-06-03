@@ -1,4 +1,3 @@
-from typing import List, Union
 
 import numpy as np
 from beartype import beartype
@@ -15,8 +14,8 @@ class HypersphericalMixture(AbstractMixture, AbstractHypersphericalDistribution)
     @beartype
     def __init__(
         self,
-        dists: List[AbstractHypersphericalDistribution],
-        w: Union[List[float], np.ndarray],
+        dists: list[AbstractHypersphericalDistribution],
+        w: list[float] | np.ndarray,
     ):
         """
         Initializes the HypersphericalMixture with a list of distributions and weights.

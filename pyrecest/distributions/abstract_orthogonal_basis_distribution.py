@@ -1,7 +1,6 @@
 import copy
 import warnings
 from abc import abstractmethod
-from typing import Union
 
 import numpy as np
 from beartype import beartype
@@ -32,7 +31,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
 
     @abstractmethod
-    def value(self, xs: Union[np.ndarray, np.number]) -> Union[np.ndarray, np.number]:
+    def value(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
         """
         Abstract method to get value of the distribution for given input. Implementation required in subclasses.
 
@@ -49,7 +48,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         return result.normalize_in_place()
 
     @beartype
-    def pdf(self, xs: Union[np.ndarray, np.number]) -> Union[np.ndarray, np.number]:
+    def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
         """
         Calculates probability density function for the given input.
 

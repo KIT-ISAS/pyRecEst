@@ -1,7 +1,7 @@
 import copy
 import warnings
 from abc import abstractmethod
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -58,7 +58,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         """
 
     @beartype
-    def normalize(self, verify: Optional[bool] = None) -> "AbstractCustomDistribution":
+    def normalize(self, verify: bool | None = None) -> "AbstractCustomDistribution":
         """
         Normalize the PDF such that its integral is 1.
 

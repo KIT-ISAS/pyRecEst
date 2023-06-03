@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,11 +29,11 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @beartype
     def sample_metropolis_hastings(
         self,
-        n: Union[int, np.int32, np.int64],
-        burn_in: Union[int, np.int32, np.int64] = 10,
-        skipping: Union[int, np.int32, np.int64] = 5,
-        proposal: Optional[Callable] = None,
-        start_point: Optional[np.ndarray] = None,
+        n: int | np.int32 | np.int64,
+        burn_in: int | np.int32 | np.int64 = 10,
+        skipping: int | np.int32 | np.int64 = 5,
+        proposal: Callable | None = None,
+        start_point: np.ndarray | None = None,
     ) -> np.ndarray:
         # jscpd:ignore-end
         """
@@ -73,8 +73,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @beartype
     def plot(
         self,
-        faces: Union[int, np.int32, np.int64] = 100,
-        grid_faces: Union[int, np.int32, np.int64] = 20,
+        faces: int | np.int32 | np.int64 = 100,
+        grid_faces: int | np.int32 | np.int64 = 20,
     ) -> None:
         if self.dim == 1:
             phi = np.linspace(0, 2 * np.pi, 320)
@@ -151,7 +151,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
 
         return np.vstack(
             (
-                np.zeros((dim)),
+                np.zeros(dim),
                 np.concatenate(([2 * np.pi], np.pi * np.ones(dim - 1))),
             )
         ).T

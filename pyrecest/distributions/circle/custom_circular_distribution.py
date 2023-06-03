@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -42,7 +42,7 @@ class CustomCircularDistribution(
         super().pdf(np.mod(xs + self.shift_by, 2 * np.pi))
 
     @beartype
-    def integrate(self, integration_boundaries: Optional[np.ndarray] = None) -> float:
+    def integrate(self, integration_boundaries: np.ndarray | None = None) -> float:
         """
         Computes the integral of the pdf over the given boundaries.
 

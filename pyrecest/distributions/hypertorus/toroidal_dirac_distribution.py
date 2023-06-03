@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
@@ -9,7 +7,7 @@ from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 class ToroidalDiracDistribution(
     HypertoroidalDiracDistribution, AbstractToroidalDistribution
 ):
-    def __init__(self, d: np.ndarray, w: Optional[np.ndarray] = None):
+    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
         """
         Initialize ToroidalDiracDistribution.
 

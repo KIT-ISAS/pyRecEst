@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -16,7 +16,7 @@ class CustomHyperhemisphericalDistribution(
 ):
     @beartype
     def __init__(
-        self, f: Callable, dim: Union[int, np.int32, np.int64], scale_by: float = 1
+        self, f: Callable, dim: int | np.int32 | np.int64, scale_by: float = 1
     ):
         """
         Initialize a CustomHyperhemisphericalDistribution.

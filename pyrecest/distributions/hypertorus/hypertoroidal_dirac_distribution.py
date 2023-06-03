@@ -1,5 +1,5 @@
 import copy
-from typing import Callable, List, Optional, Union
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -13,7 +13,7 @@ class HypertoroidalDiracDistribution(
 ):
     @beartype
     def __init__(
-        self, d: np.ndarray, w: Optional[np.ndarray] = None, dim: Optional[int] = None
+        self, d: np.ndarray, w: np.ndarray | None = None, dim: int | None = None
     ):
         """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
         if dim is None:
@@ -42,7 +42,7 @@ class HypertoroidalDiracDistribution(
         return m
 
     @beartype
-    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """
         Calculate the trigonometric moment of the HypertoroidalDiracDistribution.
 
@@ -68,13 +68,13 @@ class HypertoroidalDiracDistribution(
         return twd
 
     @beartype
-    def marginalize_to_1D(self, dimension: Union[int, np.int32, np.int64]):
+    def marginalize_to_1D(self, dimension: int | np.int32 | np.int64):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         return CircularDiracDistribution(self.d[:, dimension], self.w)
 
     @beartype
-    def marginalize_out(self, dimensions: Union[int, List[int]]):
+    def marginalize_out(self, dimensions: int | list[int]):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         remaining_dims = list(range(self.dim))

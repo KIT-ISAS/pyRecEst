@@ -1,5 +1,4 @@
 import numbers
-from typing import Union
 
 import mpmath
 import numpy as np
@@ -14,7 +13,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
     EPSILON = 1e-6
 
     @beartype
-    def __init__(self, mu: np.ndarray, kappa: Union[np.number, numbers.Real]):
+    def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
         """
         Initializes a new instance of the WatsonDistribution class.
 

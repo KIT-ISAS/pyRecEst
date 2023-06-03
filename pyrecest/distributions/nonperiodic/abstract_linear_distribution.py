@@ -1,5 +1,5 @@
 import numbers
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,11 +41,11 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def sample_metropolis_hastings(
         self,
-        n: Union[int, np.int32, np.int64],
-        burn_in: Union[int, np.int32, np.int64] = 10,
-        skipping: Union[int, np.int32, np.int64] = 5,
-        proposal: Optional[Callable] = None,
-        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None,
+        n: int | np.int32 | np.int64,
+        burn_in: int | np.int32 | np.int64 = 10,
+        skipping: int | np.int32 | np.int64 = 5,
+        proposal: Callable | None = None,
+        start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:
         if proposal is None:
 

@@ -1,5 +1,4 @@
 import numbers
-from typing import Union
 
 import numpy as np
 from beartype import beartype
@@ -22,9 +21,7 @@ class WrappedNormalDistribution(
     MAX_SIGMA_BEFORE_UNIFORM = 10
 
     @beartype
-    def __init__(
-        self, mu: Union[np.number, numbers.Real], sigma: Union[np.number, numbers.Real]
-    ):
+    def __init__(self, mu: np.number | numbers.Real, sigma: np.number | numbers.Real):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
         """
@@ -38,7 +35,7 @@ class WrappedNormalDistribution(
         return np.sqrt(self.C)
 
     @beartype
-    def pdf(self, xs: Union[np.ndarray, np.number, numbers.Real]):
+    def pdf(self, xs: np.ndarray | np.number | numbers.Real):
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
@@ -86,7 +83,7 @@ class WrappedNormalDistribution(
         self,
         xs: np.ndarray,
         startingPoint: float = 0,
-        n_wraps: Union[int, np.int32, np.int64] = 10,
+        n_wraps: int | np.int32 | np.int64 = 10,
     ) -> np.ndarray:
         startingPoint = np.mod(startingPoint, 2 * np.pi)
         xs = np.mod(xs, 2 * np.pi)
@@ -114,8 +111,8 @@ class WrappedNormalDistribution(
 
     @beartype
     def trigonometric_moment(
-        self, n: Union[int, np.int32, np.int64]
-    ) -> Union[complex, np.ndarray]:
+        self, n: int | np.int32 | np.int64
+    ) -> complex | np.ndarray:
         return np.exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
     def multiply(self, wn2: "WrappedNormalDistribution") -> "WrappedNormalDistribution":
@@ -135,7 +132,7 @@ class WrappedNormalDistribution(
         return wn
 
     @beartype
-    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         return np.mod(self.mu + self.sigma * np.random.randn(1, n), 2 * np.pi)
 
     @beartype

@@ -1,5 +1,4 @@
 import copy
-from typing import List, Optional, Union
 
 import numpy as np
 from beartype import beartype
@@ -12,8 +11,8 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
     @beartype
     def __init__(
         self,
-        dists: List[AbstractHypertoroidalDistribution],
-        w: Optional[np.ndarray] = None,
+        dists: list[AbstractHypertoroidalDistribution],
+        w: np.ndarray | None = None,
     ):
         """
         Constructor
@@ -24,7 +23,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
 
-    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """
         Calculate n-th trigonometric moment
 

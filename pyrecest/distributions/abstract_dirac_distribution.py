@@ -1,6 +1,6 @@
 import copy
 import warnings
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import numpy as np
 from beartype import beartype
@@ -14,7 +14,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
     """
 
     @beartype
-    def __init__(self, d: np.ndarray, w: Optional[np.ndarray] = None):
+    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
 
@@ -79,7 +79,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     @beartype
-    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         ids = np.random.choice(self.w.size, size=n, p=self.w)
         return self.d[ids] if self.d.ndim == 1 else self.d[ids, :]
 
