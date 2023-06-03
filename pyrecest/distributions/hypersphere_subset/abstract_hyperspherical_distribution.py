@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Callable, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,11 +29,11 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @beartype
     def sample_metropolis_hastings(
         self,
-        n: Union[int, np.int64],
-        burn_in: Union[int, np.int64] = 10,
-        skipping: Union[int, np.int64] = 5,
-        proposal=None,
-        start_point=None,
+        n: Union[int, np.int32, np.int64],
+        burn_in: Union[int, np.int32, np.int64] = 10,
+        skipping: Union[int, np.int32, np.int64] = 5,
+        proposal: Optional[Callable] = None,
+        start_point: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         # jscpd:ignore-end
         """
@@ -70,7 +70,12 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             start_point=start_point,
         )
 
-    def plot(self, faces=100, grid_faces=20):
+    @beartype
+    def plot(
+        self,
+        faces: Union[int, np.int32, np.int64] = 100,
+        grid_faces: Union[int, np.int32, np.int64] = 20,
+    ) -> None:
         if self.dim == 1:
             phi = np.linspace(0, 2 * np.pi, 320)
             x = np.array([np.sin(phi), np.cos(phi)])
@@ -135,7 +140,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 "Cannot plot hyperspherical distribution with this number of dimensions."
             )
 
-    def moment(self):
+    @beartype
+    def moment(self) -> np.ndarray:
         return self.moment_numerical()
 
     @staticmethod
@@ -169,9 +175,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def entropy(self):
         return super().entropy_numerical()
 
-    def mode_numerical(self):
+    @beartype
+    def mode_numerical(self) -> np.ndarray:
         def fun(s):
-            return -self.pdf(AbstractHypersphereSubsetDistribution.polar2cart(s))
+            return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
 
         s0 = np.random.rand(self.dim) * np.pi
         res = minimize(
@@ -180,13 +187,14 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             method="BFGS",
             options={"disp": False, "gtol": 1e-12, "maxiter": 2000},
         )
-        m = AbstractHypersphereSubsetDistribution.polar2cart(res.x)
+        m = AbstractHypersphereSubsetDistribution.polar_to_cart(res.x)
         return m
 
     def hellinger_distance(self, other):
         return super().hellinger_distance_numerical(other)
 
-    def total_variation_distance(self, other):
+    @beartype
+    def total_variation_distance(self, other: "AbstractHypersphericalDistribution"):
         return super().total_variation_distance_numerical(other)
 
     @staticmethod

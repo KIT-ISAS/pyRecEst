@@ -17,7 +17,11 @@ from .abstract_particle_filter import AbstractParticleFilter
 class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
     """Euclidean Particle Filter Class."""
 
-    def __init__(self, n_particles: Union[int, np.int64], dim: Union[int, np.int64]):
+    def __init__(
+        self,
+        n_particles: Union[int, np.int32, np.int64],
+        dim: Union[int, np.int32, np.int64],
+    ):
         if not (isinstance(n_particles, int) and n_particles > 0):
             raise ValueError("n_particles must be a positive integer")
         if not (isinstance(dim, int) and dim > 0):

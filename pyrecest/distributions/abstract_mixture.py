@@ -1,8 +1,13 @@
 import warnings
+from typing import List, Union
 
 import numpy as np
+from beartype import beartype
 
 from .abstract_distribution_type import AbstractDistributionType
+from .abstract_manifold_specific_distribution import (
+    AbstractManifoldSpecificDistribution,
+)
 
 
 class AbstractMixture(AbstractDistributionType):
@@ -10,7 +15,8 @@ class AbstractMixture(AbstractDistributionType):
     Abstract base class for mixture distributions.
     """
 
-    def __init__(self, dists, weights=None):
+    @beartype
+    def __init__(self, dists: List[AbstractManifoldSpecificDistribution], weights=None):
         AbstractDistributionType.__init__(self)
         num_distributions = len(dists)
 
@@ -46,7 +52,8 @@ class AbstractMixture(AbstractDistributionType):
     def input_dim(self) -> int:
         return self.dists[0].input_dim
 
-    def sample(self, n):
+    @beartype
+    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         d = np.random.choice(len(self.w), size=n, p=self.w)
 
         occurrences = np.bincount(d, minlength=len(self.dists))
@@ -62,7 +69,8 @@ class AbstractMixture(AbstractDistributionType):
 
         return s
 
-    def pdf(self, xs):
+    @beartype
+    def pdf(self, xs: np.ndarray) -> np.ndarray:
         assert xs.shape[-1] == self.input_dim, "Dimension mismatch"
 
         p = np.zeros(1) if xs.ndim == 1 else np.zeros(xs.shape[0])

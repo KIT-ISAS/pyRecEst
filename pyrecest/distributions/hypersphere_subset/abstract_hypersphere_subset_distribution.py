@@ -1,6 +1,8 @@
 from abc import abstractmethod
+from typing import Callable, Optional, Union
 
 import numpy as np
+from beartype import beartype
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
 
@@ -17,7 +19,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     @abstractmethod
-    def get_full_integration_boundaries(dim):
+    @beartype
+    def get_full_integration_boundaries(dim: Union[int, np.int32, np.int64]):
         pass
 
     def mean_direction_numerical(self, integration_boundaries=None):
@@ -78,7 +81,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         )
 
     @staticmethod
-    def gen_fun_hyperspherical_coords(f, dim):
+    @beartype
+    def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, np.int32, np.int64]):
         r = 1
 
         def generate_input(angles):
@@ -161,7 +165,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return m
 
     @staticmethod
-    def _compute_mean_axis_from_moment(moment_matrix):
+    @beartype
+    def _compute_mean_axis_from_moment(moment_matrix: np.ndarray) -> np.ndarray:
         D, V = np.linalg.eig(moment_matrix)
         Dsorted = np.sort(D)
         Vsorted = V[:, D.argsort()]
@@ -173,15 +178,18 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             m = -Vsorted[:, -1]
         return m
 
-    def mean_axis(self):
+    @beartype
+    def mean_axis(self) -> np.ndarray:
         mom = self.moment()
         return AbstractHypersphereSubsetDistribution._compute_mean_axis_from_moment(mom)
 
-    def mean_axis_numerical(self):
+    @beartype
+    def mean_axis_numerical(self) -> np.ndarray:
         mom = self.moment_numerical()
         return AbstractHypersphereSubsetDistribution._compute_mean_axis_from_moment(mom)
 
-    def integrate(self, integration_boundaries=None):
+    @beartype
+    def integrate(self, integration_boundaries: Optional[np.ndarray] = None):
         if integration_boundaries is None:
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim
@@ -190,12 +198,20 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     @abstractmethod
-    def integrate_fun_over_domain(f_hypersph_coords, dim):
+    @beartype
+    def integrate_fun_over_domain(
+        f_hypersph_coords: Callable, dim: Union[int, np.int32, np.int64]
+    ):
         # Overwrite with a function that specifies the integration_boundaries for the type of HypersphereSubsetDistribution
         pass
 
     @staticmethod
-    def integrate_fun_over_domain_part(f_hypersph_coords, dim, integration_boundaries):
+    @beartype
+    def integrate_fun_over_domain_part(
+        f_hypersph_coords: Callable,
+        dim: Union[int, np.int32, np.int64],
+        integration_boundaries,
+    ):
         if dim == 1:
             i, _ = quad(
                 f_hypersph_coords,
@@ -331,7 +347,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return 0.5 * distance_integral
 
     @staticmethod
-    def polar2cart(polar_coords):
+    @beartype
+    def polar_to_cart(polar_coords: np.ndarray) -> np.ndarray:
         polar_coords = np.atleast_2d(polar_coords)
 
         coords = np.zeros(
@@ -349,7 +366,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return np.squeeze(coords)
 
     @staticmethod
-    def compute_unit_hypersphere_surface(dim):
+    @beartype
+    def compute_unit_hypersphere_surface(dim: Union[int, np.int32, np.int64]) -> float:
         if dim == 1:
             surface_area = 2 * np.pi
         elif dim == 2:

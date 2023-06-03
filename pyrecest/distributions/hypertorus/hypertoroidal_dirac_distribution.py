@@ -1,5 +1,5 @@
 import copy
-from typing import Optional, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 from beartype import beartype
@@ -11,6 +11,7 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
 ):
+    @beartype
     def __init__(
         self, d: np.ndarray, w: Optional[np.ndarray] = None, dim: Optional[int] = None
     ):
@@ -29,7 +30,7 @@ class HypertoroidalDiracDistribution(
     def plot(self, *args, **kwargs):
         raise NotImplementedError("Plotting is not implemented")
 
-    def mean_direction(self):
+    def mean_direction(self) -> np.ndarray:
         """
         Calculate the mean direction of the HypertoroidalDiracDistribution.
 
@@ -41,7 +42,7 @@ class HypertoroidalDiracDistribution(
         return m
 
     @beartype
-    def trigonometric_moment(self, n: Union[int, np.int64]):
+    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         """
         Calculate the trigonometric moment of the HypertoroidalDiracDistribution.
 
@@ -53,7 +54,8 @@ class HypertoroidalDiracDistribution(
             np.exp(1j * n * self.d.T) * np.tile(self.w, (self.dim, 1)), axis=1
         )
 
-    def apply_function(self, f):
+    @beartype
+    def apply_function(self, f: Callable) -> "HypertoroidalDiracDistribution":
         dist = super().apply_function(f)
         dist.d = np.mod(dist.d, 2 * np.pi)
         return dist
@@ -65,19 +67,22 @@ class HypertoroidalDiracDistribution(
         twd = ToroidalDiracDistribution(self.d, self.w)
         return twd
 
-    def marginalize_to_1D(self, dimension):
+    @beartype
+    def marginalize_to_1D(self, dimension: Union[int, np.int32, np.int64]):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         return CircularDiracDistribution(self.d[:, dimension], self.w)
 
-    def marginalize_out(self, dimensions: Union[int, list[int]]):
+    @beartype
+    def marginalize_out(self, dimensions: Union[int, List[int]]):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         remaining_dims = list(range(self.dim))
         remaining_dims = [dim for dim in remaining_dims if dim != dimensions]
         return CircularDiracDistribution(self.d[:, remaining_dims], self.w)
 
-    def shift(self, shift_angles):
+    @beartype
+    def shift(self, shift_angles: np.ndarray) -> "HypertoroidalDiracDistribution":
         assert shift_angles.shape[-1] == self.dim
         hd = copy.copy(self)
         hd.d = np.mod(self.d + np.reshape(shift_angles, (1, -1)), 2 * np.pi)

@@ -1,4 +1,8 @@
+import numbers
+from typing import Union
+
 import numpy as np
+from beartype import beartype
 
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -7,46 +11,52 @@ from .watson_distribution import WatsonDistribution
 
 
 class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistribution):
-    def __init__(self, mu: np.array, kappa: float):
+    @beartype
+    def __init__(self, mu: np.ndarray, kappa: Union[np.number, numbers.Real]):
         assert mu[-1] >= 0
         self.dist_full_sphere = WatsonDistribution(mu, kappa)
         AbstractHyperhemisphericalDistribution.__init__(
             self, dim=self.dist_full_sphere.dim
         )
 
-    def pdf(self, xs: np.array):
+    def pdf(self, xs):
         return 2 * self.dist_full_sphere.pdf(xs)
 
-    def set_mode(self, mu: np.array):
+    @beartype
+    def set_mode(self, mu: np.ndarray) -> "HyperhemisphericalWatsonDistribution":
         w = self
         w.mu = mu
         return w
 
-    def sample(self, n: int):
+    @beartype
+    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         s_full = self.dist_full_sphere.sample(n)
         s = s_full * (-1) ** (s_full[-1] < 0)  # Mirror to upper hemisphere
         return s
 
     @property
-    def mu(self):
+    def mu(self) -> np.ndarray:
         return self.dist_full_sphere.mu
 
     @mu.setter
-    def mu(self, mu):
+    @beartype
+    def mu(self, mu: np.ndarray):
         self.dist_full_sphere.mu = mu
 
     @property
-    def kappa(self):
+    def kappa(self) -> float:
         return self.dist_full_sphere.kappa
 
     @kappa.setter
-    def kappa(self, kappa):
+    @beartype
+    def kappa(self, kappa: float):
         self.dist_full_sphere.kappa = kappa
 
-    def mode(self):
+    def mode(self) -> np.ndarray:
         return self.mu
 
-    def shift(self, offsets):
+    @beartype
+    def shift(self, offsets: np.ndarray) -> "HyperhemisphericalWatsonDistribution":
         assert np.allclose(
             self.mu, np.append(np.zeros(self.dim - 1), 1)
         ), "There is no true shifting for the hyperhemisphere. This is a function for compatibility and only works when mu is [0,0,...,1]."

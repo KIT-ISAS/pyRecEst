@@ -1,3 +1,8 @@
+from typing import Callable, Union
+
+import numpy as np
+from beartype import beartype
+
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -9,27 +14,27 @@ from .bingham_distribution import BinghamDistribution
 class CustomHyperhemisphericalDistribution(
     AbstractCustomDistribution, AbstractHyperhemisphericalDistribution
 ):
-    def __init__(self, f, dim: int, scale_by: float = 1):
+    @beartype
+    def __init__(
+        self, f: Callable, dim: Union[int, np.int32, np.int64], scale_by: float = 1
+    ):
         """
         Initialize a CustomHyperhemisphericalDistribution.
 
-        Args:
-            f: function to be used for custom distribution.
-            dim: dimension of the distribution.
-            scale_by: scaling factor for the distribution, default is 1.
+        :param f: function to be used for custom distribution.
+        :param dim: dimension of the distribution.
+        :param scale_by: scaling factor for the distribution, default is 1.
         """
         AbstractHyperhemisphericalDistribution.__init__(self, dim=dim)
         AbstractCustomDistribution.__init__(self, f=f, scale_by=scale_by)
 
+    @beartype
     def pdf(self, xs):
         """
         Calculate the probability density function at given points.
 
-        Args:
-            xs: points where the pdf will be calculated.
-
-        Returns:
-            numpy.ndarray: pdf values at given points.
+        :param xs: points where the pdf will be calculated.
+        :return: numpy.ndarray: pdf values at given points.
         """
         assert xs.shape[-1] == self.dim + 1
         p = self.scale_by * self.f(xs)
@@ -40,29 +45,22 @@ class CustomHyperhemisphericalDistribution(
         """
         Integrate the pdf over given boundaries.
 
-        Args:
-            integration_boundaries: boundaries of the integration, if None, the integration will be performed over the whole domain.
-
-        Returns:
-            float: result of the integration.
+        :param integration_boundaries: boundaries of the integration, if None, the integration will be performed over the whole domain.
+        :return: float: result of the integration.
         """
         return AbstractHyperhemisphericalDistribution.integrate(
             self, integration_boundaries
         )
 
     @staticmethod
-    def from_distribution(dist):
+    @beartype
+    def from_distribution(dist: "AbstractHypersphericalDistribution"):
         """
         Create a CustomHyperhemisphericalDistribution from another distribution.
 
-        Args:
-            dist: the distribution from which the CustomHyperhemisphericalDistribution will be created.
-
-        Returns:
-            CustomHyperhemisphericalDistribution: the resulting distribution.
-
-        Raises:
-            ValueError: if the type of dist is not supported.
+        :param dist: the distribution from which the CustomHyperhemisphericalDistribution will be created.
+        :return: CustomHyperhemisphericalDistribution: the resulting distribution.
+        :raises ValueError: if the type of dist is not supported.
         """
         if isinstance(dist, AbstractHyperhemisphericalDistribution):
             return CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)

@@ -1,6 +1,7 @@
 from typing import Union
 
 import numpy as np
+from beartype import beartype
 
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -17,7 +18,8 @@ from .hyperspherical_uniform_distribution import HypersphericalUniformDistributi
 class HyperhemisphericalUniformDistribution(
     AbstractHyperhemisphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
-    def sample(self, n: Union[int, np.int64]):
+    @beartype
+    def sample(self, n: Union[int, np.int32, np.int64]) -> np.ndarray:
         """
         Sample n points from the hyperhemispherical distribution.
 
@@ -35,7 +37,7 @@ class HyperhemisphericalUniformDistribution(
         s = (1 - 2 * (s[-1, :] < 0)) * s
         return s
 
-    def get_manifold_size(self):
+    def get_manifold_size(self) -> float:
         """
         Compute the size of the manifold.
 

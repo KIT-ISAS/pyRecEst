@@ -1,4 +1,5 @@
-from abc import abstractmethod
+import numbers
+from typing import Callable, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,10 +16,6 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     @property
     def input_dim(self):
         return self.dim
-
-    @abstractmethod
-    def set_mean(self, new_mean):
-        pass
 
     def mean(self):
         return self.mean_numerical()
@@ -43,8 +40,13 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         return result.x
 
     def sample_metropolis_hastings(
-        self, n, burn_in=10, skipping=5, proposal=None, start_point=None
-    ):
+        self,
+        n: Union[int, np.int32, np.int64],
+        burn_in: Union[int, np.int32, np.int64] = 10,
+        skipping: Union[int, np.int32, np.int64] = 5,
+        proposal: Optional[Callable] = None,
+        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None,
+    ) -> np.ndarray:
         if proposal is None:
 
             def proposal(x):

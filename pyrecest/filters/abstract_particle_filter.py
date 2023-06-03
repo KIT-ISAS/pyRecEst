@@ -1,7 +1,6 @@
-from typing import Callable, Optional
+from typing import Callable
 
 import numpy as np
-from pyrecest.distributions import AbstractLinearDistribution
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -14,12 +13,12 @@ class AbstractParticleFilter(AbstractFilterType):
         AbstractFilterType.__init__(self, initial_filter_state)
 
     def predict_identity(self, noise_distribution):
-        self.predict_nonlinear(lambda x: x, noise_distribution)
+        self.predict_nonlinear(f=lambda x: x, noise_distribution=noise_distribution)
 
     def predict_nonlinear(
         self,
         f: Callable,
-        noise_distribution: Optional[AbstractLinearDistribution] = None,
+        noise_distribution=None,
         function_is_vectorized: bool = True,
         shift_instead_of_add: bool = True,
     ):

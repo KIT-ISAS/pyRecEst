@@ -1,5 +1,9 @@
+import numbers
+from typing import Union
+
 import mpmath
 import numpy as np
+from beartype import beartype
 from scipy.linalg import qr
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
@@ -9,13 +13,14 @@ from .bingham_distribution import BinghamDistribution
 class WatsonDistribution(AbstractHypersphericalDistribution):
     EPSILON = 1e-6
 
-    def __init__(self, mu: np.ndarray, kappa: float):
+    @beartype
+    def __init__(self, mu: np.ndarray, kappa: Union[np.number, numbers.Real]):
         """
         Initializes a new instance of the WatsonDistribution class.
 
         Args:
-            mu_ (np.ndarray): The mean direction of the distribution.
-            kappa_ (float): The concentration parameter of the distribution.
+            mu (np.ndarray): The mean direction of the distribution.
+            kappa (float): The concentration parameter of the distribution.
         """
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         assert mu.ndim == 1, "mu must be a 1-D vector"
@@ -31,15 +36,15 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         )
         self.C = np.float64(C_mpf)
 
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         """
         Computes the probability density function at xs.
 
         Args:
-            xs (np.ndarray): The values at which to evaluate the pdf.
+            xs: The values at which to evaluate the pdf.
 
         Returns:
-            np.ndarray: The value of the pdf at xs.
+            np.generic: The value of the pdf at xs.
         """
         assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
         p = self.C * np.exp(self.kappa * np.dot(self.mu.T, xs.T) ** 2)

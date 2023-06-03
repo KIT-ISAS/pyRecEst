@@ -1,4 +1,7 @@
+from typing import Callable, Optional
+
 import numpy as np
+from beartype import beartype
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -7,7 +10,8 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class CustomCircularDistribution(
     AbstractCustomDistribution, AbstractCircularDistribution
 ):
-    def __init__(self, f_, scale_by=1, shift_by=0):
+    @beartype
+    def __init__(self, f_: Callable, scale_by: float = 1, shift_by: float = 0):
         """
         Initializes a new instance of the CustomCircularDistribution class.
 
@@ -24,7 +28,8 @@ class CustomCircularDistribution(
         AbstractCustomDistribution.__init__(self, f_, scale_by)
         self.shift_by = shift_by
 
-    def pdf(self, xs):
+    @beartype
+    def pdf(self, xs: np.ndarray):
         """
         Computes the probability density function at xs.
 
@@ -36,7 +41,8 @@ class CustomCircularDistribution(
         """
         super().pdf(np.mod(xs + self.shift_by, 2 * np.pi))
 
-    def integrate(self, integration_boundaries: np.ndarray = None) -> float:
+    @beartype
+    def integrate(self, integration_boundaries: Optional[np.ndarray] = None) -> float:
         """
         Computes the integral of the pdf over the given boundaries.
 
