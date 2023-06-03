@@ -1,6 +1,5 @@
 import copy
 import warnings
-
 from collections.abc import Callable
 
 import numpy as np

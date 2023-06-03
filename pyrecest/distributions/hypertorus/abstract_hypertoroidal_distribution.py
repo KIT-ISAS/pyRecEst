@@ -1,5 +1,4 @@
 import numbers
-
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
@@ -22,9 +21,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     @beartype
-    def integrate_fun_over_domain(
-        f: Callable, dim: int | np.int32 | np.int64
-    ) -> float:
+    def integrate_fun_over_domain(f: Callable, dim: int | np.int32 | np.int64) -> float:
         integration_boundaries = [(0, 2 * np.pi)] * dim
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
             f, dim, integration_boundaries

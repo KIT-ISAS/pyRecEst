@@ -1,4 +1,5 @@
 import numbers
+
 import numpy as np
 from beartype import beartype
 

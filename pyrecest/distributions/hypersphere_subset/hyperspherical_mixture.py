@@ -1,4 +1,3 @@
-from typing import List, Union
 
 import numpy as np
 from beartype import beartype

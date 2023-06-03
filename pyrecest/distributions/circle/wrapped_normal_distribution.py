@@ -21,9 +21,7 @@ class WrappedNormalDistribution(
     MAX_SIGMA_BEFORE_UNIFORM = 10
 
     @beartype
-    def __init__(
-        self, mu: np.number | numbers.Real, sigma: np.number | numbers.Real
-    ):
+    def __init__(self, mu: np.number | numbers.Real, sigma: np.number | numbers.Real):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
         """

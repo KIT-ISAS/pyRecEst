@@ -64,7 +64,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         r = np.zeros_like(xs)
 
         def to_minus_pi_to_pi_range(
-            angle: np.number | numbers.Real | np.ndarray
+            angle: np.number | numbers.Real | np.ndarray,
         ) -> np.number | numbers.Real | np.ndarray:
             return np.mod(angle + np.pi, 2 * np.pi) - np.pi
 

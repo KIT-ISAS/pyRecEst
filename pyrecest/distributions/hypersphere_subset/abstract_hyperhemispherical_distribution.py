@@ -1,5 +1,4 @@
 import warnings
-
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
@@ -91,9 +90,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
     @beartype
     @staticmethod
-    def get_full_integration_boundaries(
-        dim: int | np.int32 | np.int64
-    ) -> np.ndarray:
+    def get_full_integration_boundaries(dim: int | np.int32 | np.int64) -> np.ndarray:
         if dim == 1:
             integration_boundaries = [0, np.pi]
         else:

@@ -1,5 +1,4 @@
 import copy
-
 from collections.abc import Callable
 
 import numpy as np

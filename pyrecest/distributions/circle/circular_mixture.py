@@ -1,4 +1,5 @@
 import warnings
+
 import numpy as np
 from abstract_circular_distribution import AbstractCircularDistribution
 from beartype import beartype

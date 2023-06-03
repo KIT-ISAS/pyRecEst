@@ -1,7 +1,6 @@
 import copy
 import warnings
 from abc import abstractmethod
-
 from collections.abc import Callable
 
 import numpy as np
