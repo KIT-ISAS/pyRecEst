@@ -1,7 +1,6 @@
 from typing import Optional
 
 import numpy as np
-
 from beartype import beartype
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution

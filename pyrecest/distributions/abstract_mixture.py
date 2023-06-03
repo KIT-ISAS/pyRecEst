@@ -1,11 +1,13 @@
 import warnings
+from typing import List, Union
 
 import numpy as np
 from beartype import beartype
-from typing import List, Union
 
 from .abstract_distribution_type import AbstractDistributionType
-from .abstract_manifold_specific_distribution import AbstractManifoldSpecificDistribution
+from .abstract_manifold_specific_distribution import (
+    AbstractManifoldSpecificDistribution,
+)
 
 
 class AbstractMixture(AbstractDistributionType):

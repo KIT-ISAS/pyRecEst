@@ -1,12 +1,13 @@
 import copy
 import warnings
 from abc import abstractmethod
+from typing import Union
 
 import numpy as np
+from beartype import beartype
 
 from .abstract_distribution_type import AbstractDistributionType
-from beartype import beartype
-from typing import Union
+
 
 class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
     """

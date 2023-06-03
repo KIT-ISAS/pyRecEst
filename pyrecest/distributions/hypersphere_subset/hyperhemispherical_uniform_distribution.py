@@ -2,6 +2,7 @@ from typing import Union
 
 import numpy as np
 from beartype import beartype
+
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )

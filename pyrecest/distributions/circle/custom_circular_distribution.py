@@ -1,15 +1,17 @@
+from typing import Callable, Optional
+
 import numpy as np
 from beartype import beartype
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
-from typing import Optional, Callable
+
 
 class CustomCircularDistribution(
     AbstractCustomDistribution, AbstractCircularDistribution
 ):
     @beartype
-    def __init__(self, f_: Callable, scale_by: float=1, shift_by: float=0):
+    def __init__(self, f_: Callable, scale_by: float = 1, shift_by: float = 0):
         """
         Initializes a new instance of the CustomCircularDistribution class.
 

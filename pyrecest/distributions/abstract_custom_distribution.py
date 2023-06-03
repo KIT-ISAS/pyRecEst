@@ -1,11 +1,11 @@
 import copy
 import warnings
 from abc import abstractmethod
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 import numpy as np
-
 from beartype import beartype
+
 from .abstract_distribution_type import AbstractDistributionType
 
 
@@ -26,7 +26,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
     """
 
     @beartype
-    def __init__(self, f: Callable[[np.ndarray], np.ndarray], scale_by = 1):
+    def __init__(self, f: Callable[[np.ndarray], np.ndarray], scale_by=1):
         """
         Initialize AbstractCustomDistribution.
 

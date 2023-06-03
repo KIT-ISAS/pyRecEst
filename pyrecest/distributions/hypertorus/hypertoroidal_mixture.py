@@ -1,16 +1,19 @@
-from typing import Optional, List, Union
+import copy
+from typing import List, Optional, Union
 
 import numpy as np
+from beartype import beartype
 
 from ..abstract_mixture import AbstractMixture
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-from beartype import beartype
-import copy
+
 
 class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
     @beartype
     def __init__(
-        self, dists: List[AbstractHypertoroidalDistribution], w: Optional[np.ndarray] = None
+        self,
+        dists: List[AbstractHypertoroidalDistribution],
+        w: Optional[np.ndarray] = None,
     ):
         """
         Constructor
@@ -31,7 +34,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         m = np.zeros(self.dim, dtype=np.complex128)
         for i in range(len(self.dists)):
             # Calculate moments using moments of each component
-            m += self.w[i] * self.dists[i].trigonometric_moment(n) # type: ignore
+            m += self.w[i] * self.dists[i].trigonometric_moment(n)  # type: ignore
         return m
 
     def shift(self, shift_angles: np.ndarray):
@@ -43,7 +46,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         """
         assert np.size(shift_angles) == self.dim
         hd_shifted = copy.deepcopy(self)
-        hd_shifted.dists = [dist.shift(shift_angles) for dist in hd_shifted.dists] # type: ignore
+        hd_shifted.dists = [dist.shift(shift_angles) for dist in hd_shifted.dists]  # type: ignore
         return hd_shifted
 
     def to_circular_mixture(self):

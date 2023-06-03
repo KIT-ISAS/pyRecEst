@@ -1,10 +1,11 @@
+from typing import Union
 
 import numpy as np
+from beartype import beartype
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
-from beartype import beartype
-from typing import Union
+
 
 class EllipsoidalBallUniformDistribution(
     AbstractEllipsoidalBallDistribution, AbstractUniformDistribution

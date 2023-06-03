@@ -3,12 +3,12 @@ from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from beartype import beartype
 from numpy.fft import irfft, rfft
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
-from beartype import beartype
-import warnings
+
 
 class CircularFourierDistribution(AbstractCircularDistribution):
     """
@@ -34,8 +34,10 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             self.a = None
             self.b = None
             if n is None:
-                warnings.warn('It is not clear for complex ones since they may include another coefficient or not (imaginary part of the last coefficient). Assuming it is relevant.')
-                self.n = 2*np.size(c) - 1
+                warnings.warn(
+                    "It is not clear for complex ones since they may include another coefficient or not (imaginary part of the last coefficient). Assuming it is relevant."
+                )
+                self.n = 2 * np.size(c) - 1
             else:
                 self.n = n
         elif a is not None and b is not None:
@@ -152,7 +154,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     # pylint: disable=too-many-branches
     def integrate(self, integration_boundaries=None) -> float:
-        assert integration_boundaries is None, "Currently, only supported for entire domain."
+        assert (
+            integration_boundaries is None
+        ), "Currently, only supported for entire domain."
         if self.a is not None and self.b is not None:
             if self.multiplied_by_n:
                 a = self.a * (1 / self.n)

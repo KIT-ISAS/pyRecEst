@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable, Union, Optional
+from typing import Callable, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -90,7 +90,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
     @beartype
     @staticmethod
-    def get_full_integration_boundaries(dim: Union[int, np.int32, np.int64]) -> np.ndarray:
+    def get_full_integration_boundaries(
+        dim: Union[int, np.int32, np.int64]
+    ) -> np.ndarray:
         if dim == 1:
             integration_boundaries = [0, np.pi]
         else:
@@ -115,7 +117,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return super().integrate(integration_boundaries)
 
     @beartype
-    def integrate_numerically(self, integration_boundaries: Optional[np.ndarray] = None) -> float:
+    def integrate_numerically(
+        self, integration_boundaries: Optional[np.ndarray] = None
+    ) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -126,7 +130,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
     @beartype
     @staticmethod
-    def integrate_fun_over_domain(f_hypersph_coords: Callable, dim: Union[int, np.int32, np.int64]) -> float:
+    def integrate_fun_over_domain(
+        f_hypersph_coords: Callable, dim: Union[int, np.int32, np.int64]
+    ) -> float:
         integration_boundaries = (
             AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(dim)
         )

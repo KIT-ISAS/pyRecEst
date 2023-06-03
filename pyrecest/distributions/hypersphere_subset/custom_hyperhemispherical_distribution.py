@@ -1,19 +1,23 @@
+from typing import Callable, Union
+
+import numpy as np
 from beartype import beartype
+
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
-from typing import Callable
-import numpy as np
-from typing import Union
+
 
 class CustomHyperhemisphericalDistribution(
     AbstractCustomDistribution, AbstractHyperhemisphericalDistribution
 ):
     @beartype
-    def __init__(self, f: Callable, dim: Union[int, np.int32, np.int64], scale_by: float = 1):
+    def __init__(
+        self, f: Callable, dim: Union[int, np.int32, np.int64], scale_by: float = 1
+    ):
         """
         Initialize a CustomHyperhemisphericalDistribution.
 

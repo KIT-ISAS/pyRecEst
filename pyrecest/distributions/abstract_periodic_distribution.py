@@ -1,9 +1,11 @@
 from abc import abstractmethod
+from typing import Union
+
+import numpy as np
+from beartype import beartype
 
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
-from beartype import beartype
-import numpy as np
-from typing import Union
+
 
 class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
     """Abstract class for a distributions on periodic manifolds."""

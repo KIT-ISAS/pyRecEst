@@ -1,9 +1,9 @@
 import copy
 import warnings
+from typing import Callable, Optional, Union
 
 import numpy as np
 from beartype import beartype
-from typing import Callable, Optional, Union
 
 from .abstract_distribution_type import AbstractDistributionType
 

@@ -1,9 +1,11 @@
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 from beartype import beartype
+from scipy.spatial.transform import Rotation as R
+
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
+
 
 class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     """

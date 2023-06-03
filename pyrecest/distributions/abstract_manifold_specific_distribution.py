@@ -1,9 +1,10 @@
+import numbers
 from abc import ABC, abstractmethod
+from typing import Callable, Optional, Union
 
 import numpy as np
 from beartype import beartype
-from typing import Optional, Callable, Union
-import numbers
+
 
 class AbstractManifoldSpecificDistribution(ABC):
     """
@@ -30,8 +31,8 @@ class AbstractManifoldSpecificDistribution(ABC):
         """Set dimension of the manifold. Must be a positive integer or None."""
         if value <= 0:
             raise ValueError("dim must be a positive integer or None.")
-        
-        self._dim = value    
+
+        self._dim = value
 
     @property
     @abstractmethod
@@ -60,12 +61,12 @@ class AbstractManifoldSpecificDistribution(ABC):
     # jscpd:ignore-start
     @beartype
     def sample_metropolis_hastings(
-        self, 
-        n: Union[int, np.int32, np.int64], 
-        burn_in: Union[int, np.int32, np.int64] = 10, 
-        skipping: Union[int, np.int32, np.int64] = 5, 
-        proposal: Optional[Callable] = None, 
-        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None
+        self,
+        n: Union[int, np.int32, np.int64],
+        burn_in: Union[int, np.int32, np.int64] = 10,
+        skipping: Union[int, np.int32, np.int64] = 5,
+        proposal: Optional[Callable] = None,
+        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None,
     ) -> np.ndarray:
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""

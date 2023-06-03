@@ -1,4 +1,5 @@
-from abc import abstractmethod
+import numbers
+from typing import Callable, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,8 +10,6 @@ from scipy.stats import chi2
 from ..abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
-import numbers
-from typing import Union, Callable, Optional
 
 
 class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
@@ -41,12 +40,12 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         return result.x
 
     def sample_metropolis_hastings(
-        self, 
-        n: Union[int, np.int32, np.int64], 
-        burn_in: Union[int, np.int32, np.int64] = 10, 
-        skipping: Union[int, np.int32, np.int64] = 5, 
+        self,
+        n: Union[int, np.int32, np.int64],
+        burn_in: Union[int, np.int32, np.int64] = 10,
+        skipping: Union[int, np.int32, np.int64] = 5,
         proposal: Optional[Callable] = None,
-        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None
+        start_point: Optional[Union[np.number, numbers.Real, np.ndarray]] = None,
     ) -> np.ndarray:
         if proposal is None:
 

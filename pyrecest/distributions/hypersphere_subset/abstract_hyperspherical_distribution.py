@@ -1,4 +1,4 @@
-from typing import Union, Optional, Callable
+from typing import Callable, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +34,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         skipping: Union[int, np.int32, np.int64] = 5,
         proposal: Optional[Callable] = None,
         start_point: Optional[np.ndarray] = None,
-        ) -> np.ndarray:
+    ) -> np.ndarray:
         # jscpd:ignore-end
         """
         Sample from the distribution using Metropolis-Hastings algorithm.
@@ -71,7 +71,11 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         )
 
     @beartype
-    def plot(self, faces: Union[int, np.int32, np.int64] = 100, grid_faces: Union[int, np.int32, np.int64] = 20) -> None:
+    def plot(
+        self,
+        faces: Union[int, np.int32, np.int64] = 100,
+        grid_faces: Union[int, np.int32, np.int64] = 20,
+    ) -> None:
         if self.dim == 1:
             phi = np.linspace(0, 2 * np.pi, 320)
             x = np.array([np.sin(phi), np.cos(phi)])

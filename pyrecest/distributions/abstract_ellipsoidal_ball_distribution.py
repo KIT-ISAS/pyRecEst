@@ -1,12 +1,14 @@
+import numbers
+from typing import Union
+
 import numpy as np
+from beartype import beartype
 from scipy.special import gamma
 
 from .abstract_bounded_nonperiodic_distribution import (
     AbstractBoundedNonPeriodicDistribution,
 )
-from beartype import beartype
-import numbers
-from typing import Union
+
 
 class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution):
     """

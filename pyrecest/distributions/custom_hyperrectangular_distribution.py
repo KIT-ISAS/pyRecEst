@@ -1,5 +1,7 @@
-from beartype import beartype
+from typing import Callable
+
 import numpy as np
+from beartype import beartype
 
 from .abstract_custom_nonperiodic_distribution import (
     AbstractCustomNonPeriodicDistribution,
@@ -7,7 +9,7 @@ from .abstract_custom_nonperiodic_distribution import (
 from .nonperiodic.abstract_hyperrectangular_distribution import (
     AbstractHyperrectangularDistribution,
 )
-from typing import Callable
+
 
 class CustomHyperrectangularDistribution(
     AbstractHyperrectangularDistribution, AbstractCustomNonPeriodicDistribution

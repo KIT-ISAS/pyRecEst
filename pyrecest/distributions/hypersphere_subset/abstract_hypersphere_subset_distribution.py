@@ -1,11 +1,13 @@
 from abc import abstractmethod
-from typing import Optional, Callable, Union
+from typing import Callable, Optional, Union
+
 import numpy as np
+from beartype import beartype
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
 
 from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
-from beartype import beartype
+
 
 class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @property
@@ -197,13 +199,19 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     @abstractmethod
     @beartype
-    def integrate_fun_over_domain(f_hypersph_coords: Callable, dim: Union[int, np.int32, np.int64]):
+    def integrate_fun_over_domain(
+        f_hypersph_coords: Callable, dim: Union[int, np.int32, np.int64]
+    ):
         # Overwrite with a function that specifies the integration_boundaries for the type of HypersphereSubsetDistribution
         pass
 
     @staticmethod
     @beartype
-    def integrate_fun_over_domain_part(f_hypersph_coords: Callable, dim: Union[int, np.int32, np.int64], integration_boundaries):
+    def integrate_fun_over_domain_part(
+        f_hypersph_coords: Callable,
+        dim: Union[int, np.int32, np.int64],
+        integration_boundaries,
+    ):
         if dim == 1:
             i, _ = quad(
                 f_hypersph_coords,

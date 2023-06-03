@@ -1,11 +1,13 @@
-import numpy as np
+import numbers
 from typing import List, Union
 
-from .linear_mixture import LinearMixture
-from .linear_dirac_distribution import LinearDiracDistribution
-from .gaussian_distribution import GaussianDistribution
+import numpy as np
 from beartype import beartype
-import numbers
+
+from .gaussian_distribution import GaussianDistribution
+from .linear_dirac_distribution import LinearDiracDistribution
+from .linear_mixture import LinearMixture
+
 
 class GaussianMixture(LinearMixture):
     @beartype
@@ -15,12 +17,12 @@ class GaussianMixture(LinearMixture):
     def mean(self):
         gauss_array = self.dists
         return np.dot(np.array([g.mu for g in gauss_array]), self.w)
-            
+
     @beartype
     def set_mean(self, new_mean: Union[np.ndarray, numbers.Real]):
         mean_offset = new_mean - self.mean()
         for dist in self.dists:
-            dist.mu += mean_offset # type: ignore
+            dist.mu += mean_offset  # type: ignore
 
     def to_gaussian(self):
         gauss_array = self.dists

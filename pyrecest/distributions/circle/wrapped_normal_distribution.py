@@ -1,13 +1,16 @@
-import numpy as np
-from scipy.special import erf  # pylint: disable=no-name-in-module
+import numbers
 from typing import Union
+
+import numpy as np
+from beartype import beartype
+from scipy.special import erf  # pylint: disable=no-name-in-module
+
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .von_mises_distribution import VonMisesDistribution
-from beartype import beartype
-import numbers
+
 
 class WrappedNormalDistribution(
     AbstractCircularDistribution, HypertoroidalWrappedNormalDistribution
@@ -17,8 +20,11 @@ class WrappedNormalDistribution(
     """
 
     MAX_SIGMA_BEFORE_UNIFORM = 10
+
     @beartype
-    def __init__(self, mu: Union[np.number, numbers.Real], sigma: Union[np.number, numbers.Real]):
+    def __init__(
+        self, mu: Union[np.number, numbers.Real], sigma: Union[np.number, numbers.Real]
+    ):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
         """
@@ -76,7 +82,12 @@ class WrappedNormalDistribution(
         return result.squeeze()
 
     @beartype
-    def cdf(self, xs: np.ndarray, startingPoint: float = 0, n_wraps: Union[int, np.int32, np.int64] = 10) -> np.ndarray:
+    def cdf(
+        self,
+        xs: np.ndarray,
+        startingPoint: float = 0,
+        n_wraps: Union[int, np.int32, np.int64] = 10,
+    ) -> np.ndarray:
         startingPoint = np.mod(startingPoint, 2 * np.pi)
         xs = np.mod(xs, 2 * np.pi)
 
@@ -102,10 +113,12 @@ class WrappedNormalDistribution(
         return np.squeeze(val)
 
     @beartype
-    def trigonometric_moment(self, n: Union[int, np.int32, np.int64]) -> Union[complex,np.ndarray]:
+    def trigonometric_moment(
+        self, n: Union[int, np.int32, np.int64]
+    ) -> Union[complex, np.ndarray]:
         return np.exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
-    def multiply(self, wn2: 'WrappedNormalDistribution') -> 'WrappedNormalDistribution':
+    def multiply(self, wn2: "WrappedNormalDistribution") -> "WrappedNormalDistribution":
         return self.multiply_vm(wn2)
 
     def multiply_vm(self, wn2):
@@ -115,7 +128,7 @@ class WrappedNormalDistribution(
         wn = vm.to_wn()
         return wn
 
-    def convolve(self, wn2: 'WrappedNormalDistribution') -> 'WrappedNormalDistribution':
+    def convolve(self, wn2: "WrappedNormalDistribution") -> "WrappedNormalDistribution":
         mu_ = np.mod(self.mu + wn2.mu, 2 * np.pi)
         sigma_ = np.sqrt(self.sigma**2 + wn2.sigma**2)
         wn = WrappedNormalDistribution(mu_, sigma_)
@@ -136,7 +149,7 @@ class WrappedNormalDistribution(
         return VonMisesDistribution(self.mu, kappa)
 
     @staticmethod
-    def from_moment(m: complex) -> 'WrappedNormalDistribution':
+    def from_moment(m: complex) -> "WrappedNormalDistribution":
         mu_ = np.mod(np.angle(m), 2 * np.pi)
         sigma_ = np.sqrt(-2 * np.log(np.abs(m)))
         return WrappedNormalDistribution(mu_, sigma_)

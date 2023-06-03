@@ -1,5 +1,5 @@
 import copy
-from typing import Optional, Union, Callable, List
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 from beartype import beartype
@@ -55,7 +55,7 @@ class HypertoroidalDiracDistribution(
         )
 
     @beartype
-    def apply_function(self, f: Callable) -> 'HypertoroidalDiracDistribution':
+    def apply_function(self, f: Callable) -> "HypertoroidalDiracDistribution":
         dist = super().apply_function(f)
         dist.d = np.mod(dist.d, 2 * np.pi)
         return dist
@@ -82,7 +82,7 @@ class HypertoroidalDiracDistribution(
         return CircularDiracDistribution(self.d[:, remaining_dims], self.w)
 
     @beartype
-    def shift(self, shift_angles: np.ndarray) -> 'HypertoroidalDiracDistribution':
+    def shift(self, shift_angles: np.ndarray) -> "HypertoroidalDiracDistribution":
         assert shift_angles.shape[-1] == self.dim
         hd = copy.copy(self)
         hd.d = np.mod(self.d + np.reshape(shift_angles, (1, -1)), 2 * np.pi)

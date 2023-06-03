@@ -1,6 +1,7 @@
+from typing import Union
+
 import numpy as np
 from beartype import beartype
-from typing import Union
 
 from .abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
@@ -11,7 +12,6 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 class HypersphericalUniformDistribution(
     AbstractHypersphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
-
     @beartype
     def __init__(self, dim: Union[int, np.int32, np.int64]):
         AbstractHypersphereSubsetUniformDistribution.__init__(self, dim)

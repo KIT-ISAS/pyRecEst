@@ -1,11 +1,14 @@
+import numbers
+from typing import Union
+
 import numpy as np
 from beartype import beartype
+
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )
 from .watson_distribution import WatsonDistribution
-from typing import Union
-import numbers
+
 
 class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistribution):
     @beartype
@@ -20,7 +23,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return 2 * self.dist_full_sphere.pdf(xs)
 
     @beartype
-    def set_mode(self, mu: np.ndarray) -> 'HyperhemisphericalWatsonDistribution':
+    def set_mode(self, mu: np.ndarray) -> "HyperhemisphericalWatsonDistribution":
         w = self
         w.mu = mu
         return w
@@ -53,7 +56,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return self.mu
 
     @beartype
-    def shift(self, offsets: np.ndarray) -> 'HyperhemisphericalWatsonDistribution':
+    def shift(self, offsets: np.ndarray) -> "HyperhemisphericalWatsonDistribution":
         assert np.allclose(
             self.mu, np.append(np.zeros(self.dim - 1), 1)
         ), "There is no true shifting for the hyperhemisphere. This is a function for compatibility and only works when mu is [0,0,...,1]."

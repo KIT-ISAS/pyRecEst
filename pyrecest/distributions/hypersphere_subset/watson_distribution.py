@@ -1,15 +1,18 @@
+import numbers
+from typing import Union
+
 import mpmath
 import numpy as np
+from beartype import beartype
 from scipy.linalg import qr
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
-from beartype import beartype
-from typing import Union
-import numbers
+
 
 class WatsonDistribution(AbstractHypersphericalDistribution):
     EPSILON = 1e-6
+
     @beartype
     def __init__(self, mu: np.ndarray, kappa: Union[np.number, numbers.Real]):
         """
@@ -46,7 +49,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
         p = self.C * np.exp(self.kappa * np.dot(self.mu.T, xs.T) ** 2)
         return p
-    
+
     def to_bingham(self) -> BinghamDistribution:
         """
         Converts the Watson distribution to a Bingham distribution.

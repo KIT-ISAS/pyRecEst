@@ -1,5 +1,8 @@
 import warnings
+from typing import Callable
+
 from beartype import beartype
+
 from .abstract_hemispherical_distribution import AbstractHemisphericalDistribution
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -7,7 +10,7 @@ from .abstract_hyperhemispherical_distribution import (
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
 from .custom_hyperhemispherical_distribution import CustomHyperhemisphericalDistribution
-from typing import Callable
+
 
 class CustomHemisphericalDistribution(
     CustomHyperhemisphericalDistribution, AbstractHemisphericalDistribution

@@ -1,11 +1,13 @@
-import numpy as np
 import numbers
+from typing import Union
+
+import numpy as np
+from beartype import beartype
 from scipy.linalg import qr
 from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
-from beartype import beartype
-from typing import Union
+
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @beartype
@@ -104,7 +106,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return dist
 
     @beartype
-    def multiply(self, other: 'VonMisesFisherDistribution'):
+    def multiply(self, other: "VonMisesFisherDistribution"):
         assert self.mu.shape == other.mu.shape
 
         mu_ = self.kappa * self.mu + other.kappa * other.mu
@@ -113,7 +115,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution(mu_, kappa_)
 
     @beartype
-    def convolve(self, other: 'VonMisesFisherDistribution'):
+    def convolve(self, other: "VonMisesFisherDistribution"):
         assert other.mu[-1] == 1, "Other is not zonal"
         assert np.all(self.mu.shape == other.mu.shape)
         d = self.dim + 1

@@ -1,9 +1,12 @@
 import copy
+from typing import Callable, Optional, Union
 
 import numpy as np
-from typing import Callable, Optional, Union
 from beartype import beartype
-from pyrecest.distributions import HypertoroidalDiracDistribution, AbstractHypertoroidalDistribution
+from pyrecest.distributions import (
+    AbstractHypertoroidalDistribution,
+    HypertoroidalDiracDistribution,
+)
 from pyrecest.distributions.circle.circular_dirac_distribution import (
     CircularDiracDistribution,
 )
@@ -14,7 +17,11 @@ from .abstract_particle_filter import AbstractParticleFilter
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
     @beartype
-    def __init__(self, n_particles: Union[int, np.int32, np.int64], dim: Union[int, np.int32, np.int64]):
+    def __init__(
+        self,
+        n_particles: Union[int, np.int32, np.int64],
+        dim: Union[int, np.int32, np.int64],
+    ):
         assert np.isscalar(n_particles)
         assert n_particles > 1, "Use CircularParticleFilter for 1-D case"
 
@@ -44,7 +51,12 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         self.filter_state = copy.deepcopy(new_state)
 
     @beartype
-    def predict_nonlinear(self, f: Callable, noise_distribution: Optional[AbstractHypertoroidalDistribution] = None, function_is_vectorized: bool = True):
+    def predict_nonlinear(
+        self,
+        f: Callable,
+        noise_distribution: Optional[AbstractHypertoroidalDistribution] = None,
+        function_is_vectorized: bool = True,
+    ):
         if function_is_vectorized:
             self.filter_state.d = f(self.filter_state.d)
         else:
@@ -56,8 +68,12 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             self.filter_state.d = np.mod(self.filter_state.d, 2 * np.pi)
 
     @beartype
-    def predict_nonlinear_nonadditive(self, f: Callable, samples: np.ndarray, weights: np.ndarray):
-        assert samples.shape[0] == weights.size, "samples and weights must match in size"
+    def predict_nonlinear_nonadditive(
+        self, f: Callable, samples: np.ndarray, weights: np.ndarray
+    ):
+        assert (
+            samples.shape[0] == weights.size
+        ), "samples and weights must match in size"
 
         weights /= np.sum(weights)
         n = self.filter_state.shape[0]

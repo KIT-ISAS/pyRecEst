@@ -1,13 +1,13 @@
-import matplotlib.pyplot as plt
-import numpy as np
+import numbers
 from typing import Union
 
+import matplotlib.pyplot as plt
+import numpy as np
 from beartype import beartype
 
 from ..hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
 )
-import numbers
 
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
@@ -32,7 +32,11 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         return np.array([self._cdf_numerical_single(x, starting_point) for x in xs])
 
     @beartype
-    def _cdf_numerical_single(self, x: Union[np.number, numbers.Real], starting_point: Union[np.number, numbers.Real]) -> Union[np.number, numbers.Real]:
+    def _cdf_numerical_single(
+        self,
+        x: Union[np.number, numbers.Real],
+        starting_point: Union[np.number, numbers.Real],
+    ) -> Union[np.number, numbers.Real]:
         """Helper method for cdf_numerical"""
         starting_point_mod = np.mod(starting_point, 2 * np.pi)
         x_mod = np.mod(x, 2 * np.pi)

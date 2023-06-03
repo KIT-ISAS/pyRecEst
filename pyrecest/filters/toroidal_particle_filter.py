@@ -1,8 +1,10 @@
+from typing import Union
+
+import numpy as np
 from beartype import beartype
 
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
-import numpy as np
-from typing import Union
+
 
 class ToroidalParticleFilter(HypertoroidalParticleFilter):
     @beartype
