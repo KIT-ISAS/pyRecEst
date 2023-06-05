@@ -73,7 +73,8 @@ jobs:
 
       - name: Build wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
+        run: | # Need to install numpy manually for pyshtools
+          pip install numpy
           mkdir -p alpine-wheels
           for package in $(cat requirements_no_version.txt); do
             if ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
