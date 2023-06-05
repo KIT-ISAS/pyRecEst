@@ -50,13 +50,22 @@ jobs:
       - name: Set up Alpine Linux
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: jirutka/setup-alpine@v1
-        with:
+        with: # not using lapack-dev, lapack, liblapack...
           packages: >
             build-base
             python3-dev
             py3-pip
             gfortran
             openblas-dev
+            fftw-dev
+            fftw
+            fftw-double-libs
+            meson
+            ninja
+            git
+            lapack-dev
+            cmake
+
 
       - name: Upgrade pip and install wheel
         if: steps.cache-wheels.outputs.cache-hit != 'true'
@@ -71,18 +80,51 @@ jobs:
           sed 's/==.*//' requirements.txt > requirements_no_version.txt
         shell: alpine.sh {0}
 
+      - name: List contents of /usr/lib # See if fftw etc. are installed correctly.
+        run: |
+          ls /usr/lib
+        shell: alpine.sh {0}
+
       - name: Build wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
+        run: | # Need to install numpy manually for pyshtools
+          find / -name 'liblapack*'
+          find / -name lapacke.pc
+          export FFTW="/usr/lib"
+          python -m pip install numpy
+          #git clone https://github.com/SHTOOLS/SHTOOLS.git
+          #cd SHTOOLS
+          #git checkout develop
+          #python -m pip install -e .  # install into the shtools folder and link to the active python environment
+          #cd ..
+
+          
+          git clone https://github.com/QuLogic/SHTOOLS.git
+          cd SHTOOLS
+          git checkout meson
+          mkdir build
+          cd build
+          meson setup ..
+          ninja
+          ls -al
+
+
           mkdir -p alpine-wheels
+          FFTW="/usr/lib" pip wheel --wheel-dir=./alpine-wheels pyshtools
+
           for package in $(cat requirements_no_version.txt); do
             if ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
               echo "Building wheel for $package"
-              pip wheel --wheel-dir=./alpine-wheels "$package"
+              FFTW="/usr/lib" pip wheel --wheel-dir=./alpine-wheels "$package"
             else
               echo "Compatible wheel for $package found, skipping build"
             fi
           done
+        shell: alpine.sh {0}
+
+      - name: Print Meson Logs
+        if: failure()
+        run: cat /home/runner/work/pyRecEst/pyRecEst/SHTOOLS/build/meson-logs/meson-log.txt
         shell: alpine.sh {0}
 
       - name: List available wheels
