@@ -1,3 +1,7 @@
+# For ignoring cached files of GitHut action
+alpine-wheels/
+
+# Others
 *.bak
 # No .C code in this library
 *.C
