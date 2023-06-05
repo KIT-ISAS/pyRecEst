@@ -51,12 +51,14 @@ jobs:
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: jirutka/setup-alpine@v1
         with:
+          # fftw-dev for alpine
           packages: >
             build-base
             python3-dev
             py3-pip
             gfortran
             openblas-dev
+            fftw-dev
 
       - name: Upgrade pip and install wheel
         if: steps.cache-wheels.outputs.cache-hit != 'true'

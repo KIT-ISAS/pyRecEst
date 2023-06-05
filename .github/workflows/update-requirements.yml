@@ -48,7 +48,7 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git checkout -b "$BRANCH_NAME"
-          git add .
+          git add $(git ls-files -o --exclude=poetry.lock)
           git commit -m "Update requirements.txt"
           git push origin "$BRANCH_NAME"
 
@@ -60,3 +60,4 @@ jobs:
           title: "Update requirements.txt"
           body: "Updates the requirements.txt"
           branch: ${{ env.BRANCH_NAME }}
+          base: main
