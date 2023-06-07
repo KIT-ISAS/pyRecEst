@@ -163,24 +163,23 @@
                 #export BLAS=/path/to/your/blas/library
                 #export LAPACK=/path/to/your/lapack/library
 
+                # First loop to install packages available from apk
                 for package in $(cat requirements_no_version.txt); do
                   if apk info | grep -q "^py3-$package\$"; then
-                    echo "Alpine package for $package found, skipping build"
-                  elif [ "$package" == "pyshtools" ]; then
-                    echo "Building wheel for $package"
-                    git clone https://github.com/FlorianPfaff/SHTOOLS.git
-                    cd SHTOOLS
-                    git checkout meson
-                    python -m build
-                    cd ..
-                    mv SHTOOLS/dist/* ./alpine-wheels/
-                  elif pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
-                    echo "Compatible wheel for $package found, skipping build"
-                  else
-                    echo "Building wheel for $package"
-                    pip wheel --wheel-dir=./alpine-wheels "$package"
+                    echo "Alpine package for $package found, installing"
+                    apk add "py3-$package"
                   fi
                 done
 
+                # Second loop to handle the remaining packages
+                for package in $(cat requirements_no_version.txt); do
+                  if ! apk info | grep -q "^py3-$package\$"; then
+                    if [ "$package" == "pyshtools" ]; then
+                      echo "Building wheel for $package"
+                      git clone https://github.com/FlorianPfaff/SHTOOLS.git
+                      cd SHTOOLS
+                      git checkout meson
+                      python -m build
+                      cd ..
 
             shell: alpine.sh {0}
