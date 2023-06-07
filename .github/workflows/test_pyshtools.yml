@@ -179,8 +179,8 @@
                       cd SHTOOLS
                       git checkout meson
                       python -m build
-                      mv ./dist/* ../alpine-wheels
                       cd ..
+                      mv SHTOOLS/dist/* ./alpine-wheels/
                     elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
                       echo "Building wheel for $package"
                       pip wheel --wheel-dir=./alpine-wheels "$package"
