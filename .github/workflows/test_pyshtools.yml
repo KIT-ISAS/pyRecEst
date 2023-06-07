@@ -58,8 +58,7 @@
                 fftw
                 fftw-double-libs
                 git
-                lapack-dev
-                cmake
+                openblas-dev
     
           - name: Upgrade pip and install wheel
             if: steps.cache-wheels.outputs.cache-hit != 'true'
