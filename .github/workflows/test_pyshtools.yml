@@ -45,22 +45,7 @@
                 ${{ runner.os }}-alpine-wheels-
     
             # not using lapack-dev, lapack, liblapack... # commented out openblas-dev,  for now #meson #ninja now on pip
-          - name: Set up Alpine Linux (default)
-            if: steps.cache-wheels.outputs.cache-hit != 'true'
-            uses: jirutka/setup-alpine@v1
-            with:
-              packages: >
-                build-base
-                python3-dev
-                py3-pip
-                gfortran
-                fftw-dev
-                git
-                lapack-dev
-                cmake
-
-          - name: Set up Alpine Linux (for scipy)
-            id: alpine-scipy
+          - name: Set up Alpine Linux
             if: steps.cache-wheels.outputs.cache-hit != 'true'
             uses: jirutka/setup-alpine@v1
             with:
@@ -113,37 +98,21 @@
 
           - name: Build wheels
             if: steps.cache-wheels.outputs.cache-hit != 'true'
-            run: | # Need to install numpy manually for pyshtools
-              mkdir -p alpine-wheels
-              echo "Building wheel for SHTOOLS"
-              git clone https://github.com/FlorianPfaff/SHTOOLS.git
-              cd SHTOOLS
-              git checkout meson
-              python -m build
-              mv ./dist/* ../alpine-wheels
-              cd ..
-            shell: alpine.sh {0}
-          
-          - name: Build scipy
-            if: steps.cache-wheels.outputs.cache-hit != 'true'
             run: |
-              pip wheel --wheel-dir=./alpine-wheels scipy
+              for package in $(cat requirements_no_version.txt); do
+                echo "Building wheel for $package"
+                if [ "$package" == "pyshtools" ]; then
+                  git clone https://github.com/FlorianPfaff/SHTOOLS.git
+                  cd SHTOOLS
+                  git checkout meson
+                  python -m build
+                  cd ..
+                  mv SHTOOLS/dist/* ./alpine-wheels
+                elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
+                  pip wheel --wheel-dir=./alpine-wheels "$package"
+                else
+                  echo "Compatible wheel for $package found, skipping build"
+                fi
+              done
 
-              #for package in $(cat requirements_no_version.txt); do
-                #if [ "$package" == "pyshtools" ]; then
-                #echo "Building wheel for $package"
-                #git clone https://github.com/FlorianPfaff/SHTOOLS.git
-                #cd SHTOOLS
-                #git checkout meson
-                #python -m build
-                #mv ./dist/* ../alpine-wheels
-                #cd ..
-                #elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
-                #echo "Building wheel for $package"
-                #pip wheel --wheel-dir=./alpine-wheels "$package"
-                #else
-                #echo "Compatible wheel for $package found, skipping build"
-                #fi
-              #done
-
-            shell: alpine-scipy.sh {0}
+            shell: alpine.sh {0}
