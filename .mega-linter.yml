@@ -2,8 +2,9 @@
 APPLY_FIXES: all
 
 PRE_COMMANDS:
-  - command: pip install $GITHUB_WORKSPACE/alpine-wheels/*
-    venv: pylint
+  - command: apk add py3-numpy
+    cwd: "workspace"   # Will be run at the root of the workspace (usually your repository root)
+    continue_if_failed: False  # Will stop the process if command is failed (return code > 0)
 
 DISABLE_LINTERS:
   - SPELL_CSPELL

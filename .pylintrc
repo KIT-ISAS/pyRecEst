@@ -429,7 +429,6 @@ disable=raw-checker-failed,
         useless-suppression,
         deprecated-pragma,
         use-symbolic-message-instead,
-        E0401,
         C,
         W0221,
         cyclic-import
