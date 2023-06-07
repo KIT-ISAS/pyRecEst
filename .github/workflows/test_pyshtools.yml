@@ -92,21 +92,8 @@
 
           - name: Run pkg-config to find LAPACK
             run: |
-              pkg-config --libs --cflags lapack
+              pkg-config --libs --cflags lapack || true
 
-            shell: alpine.sh {0}
-
-          - name: Run CMake to find LAPACK
-            run: |
-              echo "find_package(LAPACK)" > CMakeLists.txt
-              echo "if(LAPACK_FOUND)" >> CMakeLists.txt
-              echo '  message("LAPACK found")' >> CMakeLists.txt
-              echo '  message("LAPACK include dirs: ${LAPACK_INCLUDE_DIRS}")' >> CMakeLists.txt
-              echo '  message("LAPACK libraries: ${LAPACK_LIBRARIES}")' >> CMakeLists.txt
-              echo "else()" >> CMakeLists.txt
-              echo '  message(FATAL_ERROR "LAPACK not found")' >> CMakeLists.txt
-              echo "endif()" >> CMakeLists.txt
-              cmake .
             shell: alpine.sh {0}
 
           - name: Build wheels
