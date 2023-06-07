@@ -167,7 +167,7 @@
                 for package in $(cat requirements_no_version.txt); do
                   if apk info | grep -q "^py3-$package\$"; then
                     echo "Alpine package for $package found, installing"
-                    apk add "py3-$package"
+                    sudo apk add "py3-$package"
                   fi
                 done
 
