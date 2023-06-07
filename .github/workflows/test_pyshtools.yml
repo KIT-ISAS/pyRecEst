@@ -159,23 +159,32 @@
               #    echo "Compatible wheel for $package found, skipping build"
               #  fi
               #done
-              mkdir -p alpine-wheels
+                mkdir -p alpine-wheels
+
+                # Special handling for numpy: Build and install it first.
+                if grep -q "numpy" requirements_no_version.txt; then
+                  echo "Building wheel for numpy"
+                  pip wheel --wheel-dir=./alpine-wheels "numpy"
+                  pip install ./alpine-wheels/numpy*.whl
+                fi
+
                 for package in $(cat requirements_no_version.txt); do
-                  if [ "$package" == "pyshtools" ]; then
-                    echo "Building wheel for $package"
-                    git clone https://github.com/FlorianPfaff/SHTOOLS.git
-                    cd SHTOOLS
-                    git checkout meson
-                    python -m build
-                    mv ./dist/* ../alpine-wheels
-                    cd ..
-                  elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
-                    echo "Building wheel for $package"
-                    pip wheel --wheel-dir=./alpine-wheels "$package"
-                  else
-                    echo "Compatible wheel for $package found, skipping build"
+                  if [ "$package" != "numpy" ]; then
+                    if [ "$package" == "pyshtools" ]; then
+                      echo "Building wheel for $package"
+                      git clone https://github.com/FlorianPfaff/SHTOOLS.git
+                      cd SHTOOLS
+                      git checkout meson
+                      python -m build
+                      mv ./dist/* ../alpine-wheels
+                      cd ..
+                    elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
+                      echo "Building wheel for $package"
+                      pip wheel --wheel-dir=./alpine-wheels "$package"
+                    else
+                      echo "Compatible wheel for $package found, skipping build"
+                    fi
                   fi
                 done
-
 
             shell: alpine.sh {0}
