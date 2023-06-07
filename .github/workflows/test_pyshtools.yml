@@ -160,6 +160,9 @@
               #  fi
               #done
                 mkdir -p alpine-wheels
+                export BLAS=/path/to/your/blas/library
+                export LAPACK=/path/to/your/lapack/library
+
 
                 # Special handling for numpy: Build and install it first.
                 if grep -q "numpy" requirements_no_version.txt; then
