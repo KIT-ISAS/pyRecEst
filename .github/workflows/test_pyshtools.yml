@@ -160,34 +160,27 @@
               #  fi
               #done
                 mkdir -p alpine-wheels
-                export BLAS=/path/to/your/blas/library
-                export LAPACK=/path/to/your/lapack/library
-
-
-                # Special handling for numpy: Build and install it first.
-                if grep -q "numpy" requirements_no_version.txt; then
-                  echo "Building wheel for numpy"
-                  pip wheel --wheel-dir=./alpine-wheels "numpy"
-                  pip install ./alpine-wheels/numpy*.whl
-                fi
+                #export BLAS=/path/to/your/blas/library
+                #export LAPACK=/path/to/your/lapack/library
 
                 for package in $(cat requirements_no_version.txt); do
-                  if [ "$package" != "numpy" ]; then
-                    if [ "$package" == "pyshtools" ]; then
-                      echo "Building wheel for $package"
-                      git clone https://github.com/FlorianPfaff/SHTOOLS.git
-                      cd SHTOOLS
-                      git checkout meson
-                      python -m build
-                      cd ..
-                      mv SHTOOLS/dist/* ./alpine-wheels/
-                    elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
-                      echo "Building wheel for $package"
-                      pip wheel --wheel-dir=./alpine-wheels "$package"
-                    else
-                      echo "Compatible wheel for $package found, skipping build"
-                    fi
+                  if apk info | grep -q "^py3-$package\$"; then
+                    echo "Alpine package for $package found, skipping build"
+                  elif [ "$package" == "pyshtools" ]; then
+                    echo "Building wheel for $package"
+                    git clone https://github.com/FlorianPfaff/SHTOOLS.git
+                    cd SHTOOLS
+                    git checkout meson
+                    python -m build
+                    cd ..
+                    mv SHTOOLS/dist/* ./alpine-wheels/
+                  elif pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
+                    echo "Compatible wheel for $package found, skipping build"
+                  else
+                    echo "Building wheel for $package"
+                    pip wheel --wheel-dir=./alpine-wheels "$package"
                   fi
                 done
+
 
             shell: alpine.sh {0}
