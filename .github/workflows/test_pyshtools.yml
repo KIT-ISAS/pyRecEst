@@ -57,6 +57,7 @@
                 fftw-dev
                 git
                 openblas-dev
+                cmake
     
           - name: Upgrade pip and install requirements for building
             if: steps.cache-wheels.outputs.cache-hit != 'true'
@@ -111,74 +112,27 @@
           - name: Build wheels
             if: steps.cache-wheels.outputs.cache-hit != 'true'
             run: | # Need to install numpy manually for pyshtools
-              #find / -name 'liblapack*'
-              #find / -name lapacke.pc
-              #export FFTW="/usr/lib"
-              #pkg-config --libs --cflags lapack
-              #python -m pip install numpy
-              #git clone https://github.com/SHTOOLS/SHTOOLS.git
-              #cd SHTOOLS
-              #git checkout develop
-              #python -m pip install -e .  # install into the shtools folder and link to the active python environment
-              #cd ..
-              #mkdir -p alpine-wheels
-              #cd alpine-wheels
-              #git clone https://github.com/FlorianPfaff/SHTOOLS.git
-              #cd SHTOOLS
-              #git checkout meson
-              ###### working with apk version of meson and ninja
-              #mkdir build
-              #cd build
-              #meson setup ..
-              #ninja
-              #ls -al
-              #find . -maxdepth 2 -type f
-              ######
-
-              #rm setup.py
-              #python -m pip wheel ..
-              #ls -al
-              #ls -al build.ninja
-              #find . -maxdepth 2 -type f
-              
-              #cd ..
-              #python -m build || true
-              #pip install . || true
-              #python -m build || true
-              #mv ./dist/* ../
-              #cd ..
-              
-              #for package in $(cat requirements_no_version.txt); do
-              #  if ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
-              #    echo "Building wheel for $package"
-              #    if [ "$package" != "pyshtools" ]; then
-              #       pip wheel --wheel-dir=./alpine-wheels "$package"
-              #       
-              #  else
-              #    echo "Compatible wheel for $package found, skipping build"
-              #  fi
-              #done
-                mkdir -p alpine-wheels
-                #export BLAS=/path/to/your/blas/library
-                #export LAPACK=/path/to/your/lapack/library
-
-                # First loop to install packages available from apk
-                for package in $(cat requirements_no_version.txt); do
-                  if apk info | grep -q "^py3-$package\$"; then
-                    echo "Alpine package for $package found, installing"
-                    sudo apk add "py3-$package"
-                  fi
-                done
-
-                # Second loop to handle the remaining packages
-                for package in $(cat requirements_no_version.txt); do
-                  if ! apk info | grep -q "^py3-$package\$"; then
-                    if [ "$package" == "pyshtools" ]; then
-                      echo "Building wheel for $package"
-                      git clone https://github.com/FlorianPfaff/SHTOOLS.git
-                      cd SHTOOLS
-                      git checkout meson
-                      python -m build
-                      cd ..
+              mkdir -p alpine-wheels
+              echo "Building wheel for $package"
+              git clone https://github.com/FlorianPfaff/SHTOOLS.git
+              cd SHTOOLS
+              git checkout meson
+              python -m build
+              for package in $(cat requirements_no_version.txt); do
+                if [ "$package" == "pyshtools" ]; then
+                #echo "Building wheel for $package"
+                #git clone https://github.com/FlorianPfaff/SHTOOLS.git
+                #cd SHTOOLS
+                #git checkout meson
+                #python -m build
+                #mv ./dist/* ../alpine-wheels
+                #cd ..
+                elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
+                echo "Building wheel for $package"
+                pip wheel --wheel-dir=./alpine-wheels "$package"
+                else
+                echo "Compatible wheel for $package found, skipping build"
+                fi
+              done
 
             shell: alpine.sh {0}
