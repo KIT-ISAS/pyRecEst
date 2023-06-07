@@ -73,6 +73,7 @@
             shell: alpine.sh {0}
     
           - name: List contents of /usr/lib # See if fftw etc. are installed correctly.
+            if: steps.cache-wheels.outputs.cache-hit != 'true'
             run: |
               ls /usr/lib
             shell: alpine.sh {0}
