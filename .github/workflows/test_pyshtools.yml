@@ -55,12 +55,10 @@
                 py3-pip
                 gfortran
                 fftw-dev
-                fftw
-                fftw-double-libs
                 git
                 openblas-dev
     
-          - name: Upgrade pip and install wheel
+          - name: Upgrade pip and install requirements for building
             if: steps.cache-wheels.outputs.cache-hit != 'true'
             run: |
               python -m pip install --upgrade pip
@@ -123,11 +121,11 @@
               #git checkout develop
               #python -m pip install -e .  # install into the shtools folder and link to the active python environment
               #cd ..
-              
-
-              git clone https://github.com/FlorianPfaff/SHTOOLS.git
-              cd SHTOOLS
-              git checkout meson
+              #mkdir -p alpine-wheels
+              #cd alpine-wheels
+              #git clone https://github.com/FlorianPfaff/SHTOOLS.git
+              #cd SHTOOLS
+              #git checkout meson
               ###### working with apk version of meson and ninja
               #mkdir build
               #cd build
@@ -144,17 +142,43 @@
               #find . -maxdepth 2 -type f
               
               #cd ..
-              python -m build || true
-              pip install . || true
-              python -m build || true
-
+              #python -m build || true
+              #pip install . || true
+              #python -m build || true
+              #mv ./dist/* ../
+              #cd ..
+              
               #for package in $(cat requirements_no_version.txt); do
               #  if ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
               #    echo "Building wheel for $package"
-              #    FFTW="/usr/lib" pip wheel --wheel-dir=./alpine-wheels "$package"
+              #    if [ "$package" != "pyshtools" ]; then
+              #       pip wheel --wheel-dir=./alpine-wheels "$package"
+              #       
               #  else
               #    echo "Compatible wheel for $package found, skipping build"
               #  fi
               #done
+                mkdir -p alpine-wheels
+                #export BLAS=/path/to/your/blas/library
+                #export LAPACK=/path/to/your/lapack/library
+
+                # First loop to install packages available from apk
+                for package in $(cat requirements_no_version.txt); do
+                  if apk info | grep -q "^py3-$package\$"; then
+                    echo "Alpine package for $package found, installing"
+                    sudo apk add "py3-$package"
+                  fi
+                done
+
+                # Second loop to handle the remaining packages
+                for package in $(cat requirements_no_version.txt); do
+                  if ! apk info | grep -q "^py3-$package\$"; then
+                    if [ "$package" == "pyshtools" ]; then
+                      echo "Building wheel for $package"
+                      git clone https://github.com/FlorianPfaff/SHTOOLS.git
+                      cd SHTOOLS
+                      git checkout meson
+                      python -m build
+                      cd ..
 
             shell: alpine.sh {0}
