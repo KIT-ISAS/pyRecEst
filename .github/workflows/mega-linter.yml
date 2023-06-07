@@ -56,13 +56,16 @@ jobs:
             python3-dev
             py3-pip
             gfortran
+            fftw-dev
+            git
             openblas-dev
+            cmake
 
-      - name: Upgrade pip and install wheel
+      - name: Upgrade pip and install requirements for building
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install wheel
+          python -m pip install meson-python meson ninja wheel build
         shell: alpine.sh {0}
 
       - name: Remove version settings
@@ -71,13 +74,39 @@ jobs:
           sed 's/==.*//' requirements.txt > requirements_no_version.txt
         shell: alpine.sh {0}
 
+      - name: Run CMake to find LAPACK
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
+        run: |
+          echo "find_package(LAPACK)" > CMakeLists.txt
+          echo "if(LAPACK_FOUND)" >> CMakeLists.txt
+          echo '  message("LAPACK found")' >> CMakeLists.txt
+          echo '  message("LAPACK include dirs: ${LAPACK_INCLUDE_DIRS}")' >> CMakeLists.txt
+          echo '  message("LAPACK libraries: ${LAPACK_LIBRARIES}")' >> CMakeLists.txt
+          echo "else()" >> CMakeLists.txt
+          echo '  message(FATAL_ERROR "LAPACK not found")' >> CMakeLists.txt
+          echo "endif()" >> CMakeLists.txt
+          cmake .
+        shell: alpine.sh {0}
+
+      - name: Run pkg-config to find LAPACK
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
+        run: |
+          pkg-config --libs --cflags lapack || true
+        shell: alpine.sh {0}
+
       - name: Build wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
-          mkdir -p alpine-wheels
           for package in $(cat requirements_no_version.txt); do
-            if ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
-              echo "Building wheel for $package"
+            echo "Building wheel for $package"
+            if [ "$package" == "pyshtools" ]; then
+              git clone https://github.com/FlorianPfaff/SHTOOLS.git
+              cd SHTOOLS
+              git checkout meson
+              python -m build
+              cd ..
+              mv SHTOOLS/dist/* ./alpine-wheels
+            elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
               pip wheel --wheel-dir=./alpine-wheels "$package"
             else
               echo "Compatible wheel for $package found, skipping build"
