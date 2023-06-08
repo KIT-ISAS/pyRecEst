@@ -1,6 +1,9 @@
 # For ignoring cached files of GitHut action
 alpine-wheels/
 
+# For files generated when building SHTOOLS
+CMakeFiles
+
 # Others
 *.bak
 # No .C code in this library
