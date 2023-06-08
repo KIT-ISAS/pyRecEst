@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/alpine-wheels
-          key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-alpine-wheels-
 
@@ -71,7 +71,7 @@ jobs:
       - name: Remove version settings
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
-          sed 's/==.*//' requirements.txt > requirements_no_version.txt
+          sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt
         shell: alpine.sh {0}
 
       - name: Run CMake to find LAPACK
@@ -97,7 +97,7 @@ jobs:
       - name: Build wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
-          for package in $(cat requirements_no_version.txt); do
+          for package in $(cat requirements-dev_no_version.txt); do
             echo "Processing $package"
 
             # Check if wheel already exists for package
@@ -113,9 +113,7 @@ jobs:
               git checkout meson
               python -m build
               cd ..
-              mv SHTOOLS/dist/* ./alpine-wheels
-              # Delete source package
-              rm ./alpine-wheels/pyshtools-*.tar.gz
+              mv SHTOOLS/dist/*.whl ./alpine-wheels/
               rm -rf SHTOOLS
               rm -rf CMakeFiles
             elif ! pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels > /dev/null 2>&1; then

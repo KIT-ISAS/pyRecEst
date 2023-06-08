@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-from abstract_circular_distribution import AbstractCircularDistribution
+from .abstract_circular_distribution import AbstractCircularDistribution
 from beartype import beartype
 
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
@@ -20,7 +20,7 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
             w: The weights of the distributions. They must have the same shape as 'dists'
                 and the sum of all weights must be 1.
         """
-        super().__init__(dists, w)
+        HypertoroidalMixture.__init__(self, dists, w)
         if not all(isinstance(cd, AbstractCircularDistribution) for cd in dists):
             raise TypeError(
                 "All elements of 'dists' must be of type AbstractCircularDistribution."

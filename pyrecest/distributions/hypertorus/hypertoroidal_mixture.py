@@ -69,7 +69,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :returns: ToroidalMixture with same parameters
         """
         assert self.dim == 2
-        from toroidal_mixture import ToroidalMixture
+        from .toroidal_mixture import ToroidalMixture
 
         return ToroidalMixture(self.dists, self.w)
 
