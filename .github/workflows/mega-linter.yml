@@ -106,6 +106,7 @@ jobs:
               python -m build
               cd ..
               mv SHTOOLS/dist/* ./alpine-wheels
+              rm -rf SHTOOLS
             elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
               pip wheel --wheel-dir=./alpine-wheels "$package"
             else
