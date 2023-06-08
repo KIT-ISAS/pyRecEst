@@ -1,9 +1,10 @@
+---
 name: Update requirements.txt
 
 permissions:
   contents: write
 
-on:
+on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
