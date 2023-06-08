@@ -99,6 +99,13 @@ jobs:
         run: |
           for package in $(cat requirements_no_version.txt); do
             echo "Processing $package"
+
+            # Check if wheel already exists for package
+            if [ $(find ./alpine-wheels -name "${package}*.whl" | wc -l) -gt 0 ]; then
+              echo "Wheel for $package already exists, skipping"
+              continue
+            fi
+
             if [ "$package" == "pyshtools" ]; then
               echo "Building wheel for $package"
               git clone https://github.com/FlorianPfaff/SHTOOLS.git
@@ -109,11 +116,10 @@ jobs:
               mv SHTOOLS/dist/* ./alpine-wheels
               rm -rf SHTOOLS
               rm -rf CMakeFiles
-            elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
+            elif ! pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels > /dev/null 2>&1; then
               echo "No compatible wheel for $package found, building..."
               pip wheel --wheel-dir=./alpine-wheels "$package"
             else
-              pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels
               echo "Compatible wheel for $package downloaded"
             fi
           done
