@@ -114,6 +114,8 @@ jobs:
               python -m build
               cd ..
               mv SHTOOLS/dist/* ./alpine-wheels
+              # Delete source package
+              rm ./alpine-wheels/pyshtools-*.tar.gz
               rm -rf SHTOOLS
               rm -rf CMakeFiles
             elif ! pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels > /dev/null 2>&1; then
