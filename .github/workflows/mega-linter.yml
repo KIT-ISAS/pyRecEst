@@ -109,13 +109,14 @@ jobs:
               mv SHTOOLS/dist/* ./alpine-wheels
               rm -rf SHTOOLS
               rm -rf CMakeFiles
-            elif ! pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels > /dev/null 2>&1; then
+            elif ! pip download --only-binary=:all: --no-deps "$package" -d /tmp > /dev/null 2>&1; then
               echo "No compatible wheel for $package found, building..."
               pip wheel --wheel-dir=./alpine-wheels "$package"
             else
+              pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels
               echo "Compatible wheel for $package downloaded"
             fi
-          done    
+          done
         shell: alpine.sh {0}
 
       - name: List available wheels
