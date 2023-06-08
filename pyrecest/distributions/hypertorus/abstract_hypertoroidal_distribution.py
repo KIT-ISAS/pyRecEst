@@ -39,7 +39,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         :raises AssertionError: If the shift vector is not of the same dimension as the distribution.
         """
-        from custom_hypertoroidal_distribution import CustomHypertoroidalDistribution
+        from .custom_hypertoroidal_distribution import CustomHypertoroidalDistribution
 
         assert shift_by.shape == (
             self.dim,
