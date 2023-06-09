@@ -16,7 +16,7 @@ class AbstractFilter(ABC):
 
     @filter_state.setter
     def filter_state(self, new_state):
-        assert isinstance(
+        assert self.filter_state is None or isinstance(
             new_state, type(self.filter_state)
         ), "New distribution has to be of the same class as (or inherit from) the previous density."
         self._filter_state = copy.deepcopy(new_state)
