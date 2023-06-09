@@ -44,14 +44,18 @@ jobs:
         id: branch_name
         run: echo "BRANCH_NAME=update-requirements-${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
 
-      - name: Commit changes
+      - name: Check out new branch for PR
         run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
           git checkout -b "$BRANCH_NAME"
-          git add .
-          git commit -m "Update requirements.txt"
-          git push origin "$BRANCH_NAME"
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update requirements.txt"
+          commit_user_name: "github-actions"
+          commit_user_email: "github-actions@github.com"
+          commit_author: "github-actions <github-actions@github.com>"
+          branch: ${{ env.BRANCH_NAME }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
