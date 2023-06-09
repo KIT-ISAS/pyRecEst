@@ -31,7 +31,9 @@ class GlobalNearestNeighborTest(unittest.TestCase):
                 np.array([[2, -0.5], [-0.5, 0.5]]),
             ]
         )
-        self.all_different_meas_covs_4 = np.dstack((self.all_different_meas_covs,np.array([[2,-0.5],[-0.5,0.5]])))
+        self.all_different_meas_covs_4 = np.dstack(
+            (self.all_different_meas_covs, np.array([[2, -0.5], [-0.5, 0.5]]))
+        )
 
     def test_set_state_sets_correct_state(self):
         tracker = GlobalNearestNeighbor()
@@ -274,9 +276,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         )
 
         tracker_no_clut.update_linear(
-            measurements_no_clut,
-            self.meas_mat,
-            self.all_different_meas_covs
+            measurements_no_clut, self.meas_mat, self.all_different_meas_covs
         )
         previous_means = curr_means
         self.assertFalse(
