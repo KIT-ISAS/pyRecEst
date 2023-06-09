@@ -15,3 +15,4 @@ class ToroidalMixture(HypertoroidalMixture, AbstractToroidalDistribution):
             "hds must be a list of toroidal distributions"
         
         HypertoroidalMixture.__init__(self, hds, w)
+        AbstractToroidalDistribution.__init__(self)

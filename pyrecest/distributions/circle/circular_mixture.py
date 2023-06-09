@@ -7,11 +7,11 @@ from beartype import beartype
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from .circular_dirac_distribution import CircularDiracDistribution
 from .circular_fourier_distribution import CircularFourierDistribution
-
+import collections
 
 class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
     @beartype
-    def __init__(self, dists: list[AbstractCircularDistribution], w: np.ndarray):
+    def __init__(self, dists: collections.abc.Sequence[AbstractCircularDistribution], w: np.ndarray):
         """
         Creates a new circular mixture.
 
@@ -21,6 +21,7 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
                 and the sum of all weights must be 1.
         """
         HypertoroidalMixture.__init__(self, dists, w)
+        AbstractCircularDistribution.__init__(self)
         if not all(isinstance(cd, AbstractCircularDistribution) for cd in dists):
             raise TypeError(
                 "All elements of 'dists' must be of type AbstractCircularDistribution."
