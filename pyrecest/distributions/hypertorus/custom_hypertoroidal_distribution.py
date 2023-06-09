@@ -1,11 +1,14 @@
-from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-from ..abstract_custom_distribution import AbstractCustomDistribution
-from ..circle.custom_circular_distribution import CustomCircularDistribution
 import numpy as np
 
-class CustomHypertoroidalDistribution(AbstractHypertoroidalDistribution, AbstractCustomDistribution):
+from ..abstract_custom_distribution import AbstractCustomDistribution
+from ..circle.custom_circular_distribution import CustomCircularDistribution
+from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
-    def __init__(self, f, dim, shift_by = None):
+
+class CustomHypertoroidalDistribution(
+    AbstractHypertoroidalDistribution, AbstractCustomDistribution
+):
+    def __init__(self, f, dim, shift_by=None):
         # Constructor, it is the user's responsibility to ensure that f is a valid
         # hypertoroidal density and takes arguments of the same form as
         # .pdf, i.e., it needs to be vectorized.
@@ -21,9 +24,9 @@ class CustomHypertoroidalDistribution(AbstractHypertoroidalDistribution, Abstrac
             self.shift_by = np.zeros(dim)
         else:
             self.shift_by = shift_by
-        
+
     def pdf(self, xs):
-        return AbstractCustomDistribution.pdf(self, (xs+self.shift_by) // (2*np.pi))
+        return AbstractCustomDistribution.pdf(self, (xs + self.shift_by) // (2 * np.pi))
 
     def to_custom_circular(self):
         # Convert to a custom circular distribution (only in 1D case)
@@ -42,6 +45,7 @@ class CustomHypertoroidalDistribution(AbstractHypertoroidalDistribution, Abstrac
         #   ctd (CustomToroidalDistribution)
         #       CustomToroidalDistribution with same parameters
         from .custom_toroidal_distribution import CustomToroidalDistribution
+
         assert self.dim == 2
         ctd = CustomToroidalDistribution(self.f)
         return ctd
