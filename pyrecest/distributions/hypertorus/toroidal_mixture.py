@@ -1,6 +1,7 @@
 import numpy as np
-from .hypertoroidal_mixture import HypertoroidalMixture
+
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
+from .hypertoroidal_mixture import HypertoroidalMixture
 
 
 class ToroidalMixture(HypertoroidalMixture, AbstractToroidalDistribution):
@@ -11,8 +12,9 @@ class ToroidalMixture(HypertoroidalMixture, AbstractToroidalDistribution):
         :param hds: list of toroidal distributions
         :param w: list of weights
         """
-        assert all(isinstance(hd, AbstractToroidalDistribution) for hd in hds), \
-            "hds must be a list of toroidal distributions"
-        
+        assert all(
+            isinstance(hd, AbstractToroidalDistribution) for hd in hds
+        ), "hds must be a list of toroidal distributions"
+
         HypertoroidalMixture.__init__(self, hds, w)
         AbstractToroidalDistribution.__init__(self)
