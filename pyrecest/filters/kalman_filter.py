@@ -33,7 +33,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         self,
     ) -> (
         GaussianDistribution | tuple[np.ndarray, np.ndarray]
-    ):  # It can only return GaussianDistribution, this just serves to prevent mypy linter warnings
+    ):  # It can only return GaussianDistribution, allowing the output of tuples just serves to prevent mypy linter warnings
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
 
     @filter_state.setter
@@ -114,14 +114,10 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param measurement_matrix: Measurement matrix.
         :param cov_mat_meas: Covariance matrix for measurement.
         """
+        self._filter_state.dim_z = measurement_matrix.shape[0]
         self._filter_state.update(z=measurement, R=cov_mat_meas, H=measurement_matrix)
 
     @beartype
     def get_point_estimate(self) -> np.ndarray:
         """Returns the mean of the current filter state."""
         return self._filter_state.x
-
-    @beartype
-    def get_estimate(self) -> GaussianDistribution:
-        """Returns the current filter state as a GaussianDistribution."""
-        return GaussianDistribution(self._filter_state.x, self._filter_state.P)

@@ -25,7 +25,7 @@ class KalmanFilterTest(unittest.TestCase):
     def test_update_with_meas_noise_and_meas_1d(self):
         kf = KalmanFilter((np.array([0]), np.array([[1]])))
         kf.update_identity(np.array(4), np.array(1))
-        self.assertEqual(kf.get_estimate().C, 0.5)
+        self.assertEqual(kf.filter_state.C, 0.5)
         self.assertEqual(kf.get_point_estimate(), 2)
 
     def test_update_linear_2d(self):
