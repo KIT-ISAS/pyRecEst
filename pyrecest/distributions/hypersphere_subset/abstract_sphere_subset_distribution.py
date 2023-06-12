@@ -33,17 +33,23 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         """
         assert phi.ndim == 1 and theta.ndim == 1, "Input must be 1-dimensional"
         if mode == "colatitude":
-            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_colatitude(phi, theta)
+            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_colatitude(
+                phi, theta
+            )
         elif mode == "elevation":
-            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(phi, theta)
+            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(
+                phi, theta
+            )
         else:
             raise ValueError("mode must be either 'colatitude' or 'elevation'")
-        
+
         return x, y, z
-    
+
     @staticmethod
     @beartype
-    def cart_to_sph(x: np.ndarray, y: np.ndarray, z: np.ndarray, mode='colatitude') -> tuple:
+    def cart_to_sph(
+        x: np.ndarray, y: np.ndarray, z: np.ndarray, mode="colatitude"
+    ) -> tuple:
         """
         Convert Cartesian coordinates to spherical coordinates.
 
@@ -56,12 +62,16 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             tuple: Spherical coordinates.
         """
         if mode == "colatitude":
-            phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_colatitude(x, y, z)
+            phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_colatitude(
+                x, y, z
+            )
         elif mode == "elevation":
-            phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_elevation(x, y, z)
+            phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_elevation(
+                x, y, z
+            )
         else:
             raise ValueError("mode must be either 'colatitude' or 'elevation'")
-        
+
         return phi, theta
 
     @staticmethod
@@ -72,7 +82,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         y = np.sin(colatitude) * np.sin(azimuth)
         z = np.cos(colatitude)
         return x, y, z
-    
+
     @staticmethod
     @beartype
     def _sph_to_cart_elevation(azimuth: np.ndarray, elevation: np.ndarray) -> tuple:
@@ -92,7 +102,6 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         y = np.cos(elevation) * np.sin(azimuth)
         z = np.sin(elevation)
         return x, y, z
-
 
     @staticmethod
     @beartype
