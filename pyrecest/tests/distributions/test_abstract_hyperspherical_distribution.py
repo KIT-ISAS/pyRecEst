@@ -54,14 +54,13 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         self.assertLess(np.linalg.norm(vmf.mean_direction_numerical() - mu), 1e-6)
 
     def test_plotting_error_free_2d(self):
-        """Tests the numerical mode calculation."""
+        """Tests the plotting function"""
 
         mu = np.array([1, 1, 2])
         mu = mu / np.linalg.norm(mu)
         kappa = 10
         vmf = VonMisesFisherDistribution(mu, kappa)
         vmf.plot()
-        plt.close()
 
 
 if __name__ == "__main__":
