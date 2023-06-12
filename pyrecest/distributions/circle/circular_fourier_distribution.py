@@ -28,8 +28,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         AbstractCircularDistribution.__init__(self)
         assert (a is None) == (b is None)
         assert (a is None) != (c is None)
-        if c is not None:
-            self.c = c  # Assumed as result from rfft
+        if c is not None: # Assumed as result from rfft
+            assert c.ndim == 1
+            self.c = c
             self.a = None
             self.b = None
             if n is None:
@@ -40,6 +41,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             else:
                 self.n = n
         elif a is not None and b is not None:
+            assert a.ndim == 1
+            assert b.ndim == 1
             self.a = a
             self.b = b
             self.c = None
@@ -263,6 +266,12 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             )
         return fd
 
+    def get_full_c(self):
+        assert self.c is not None
+        neg_c = np.conj(self.c[-1:0:-1])  # Create array for negative-frequency components
+        full_c = np.concatenate([neg_c, self.c])  # Concatenate arrays to get full spectrum
+        return full_c
+    
     @staticmethod
     @beartype
     def from_distribution(
