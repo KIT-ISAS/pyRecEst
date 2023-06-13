@@ -109,7 +109,7 @@ class HypercylindricalPartiallyWrappedNormalDistribution(
         """
         assert n > 0, "n must be positive"
         s = np.random.multivariate_normal(self.mu, self.C, n)
-        s[:, : self.bound_dim] = s[:, : self.bound_dim] // 2 * np.pi  # noqa: E203
+        s[:, : self.bound_dim] = np.mod(s[:, : self.bound_dim], 2 * np.pi)  # noqa: E203
         return s
 
     def to_gaussian(self):
