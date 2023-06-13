@@ -49,8 +49,11 @@ class HypercylindricalPartiallyWrappedNormalDistribution(
         # prepare data for wrapping (not applied to linear dimensions)
         xs_wrapped = xs_reshaped + np.repeat(mesh, xs.shape[0], axis=0)
         xs_wrapped = np.concatenate(
-            [xs_wrapped, np.tile(xs[:, self.bound_dim :], # noqa: E203
-            (mesh.shape[0], 1))], axis=1,
+            [
+                xs_wrapped,
+                np.tile(xs[:, self.bound_dim :], (mesh.shape[0], 1)),  # noqa: E203
+            ],
+            axis=1,
         )
 
         # evaluate normal for all xs_wrapped
