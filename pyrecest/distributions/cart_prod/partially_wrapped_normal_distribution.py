@@ -10,9 +10,7 @@ from ..nonperiodic.gaussian_distribution import GaussianDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
 
 
-class PartiallyWrappedNormalDistribution(
-    AbstractHypercylindricalDistribution
-):
+class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     def __init__(
         self, mu: np.ndarray, C: np.ndarray, bound_dim: int | np.int32 | np.int64
     ):
