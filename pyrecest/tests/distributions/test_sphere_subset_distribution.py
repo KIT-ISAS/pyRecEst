@@ -47,7 +47,9 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         theta = np.array([np.pi / 2, np.pi / 4, 0.1])
 
         # Convert to Cartesian coordinates and back
-        x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(azimuth, theta, mode=mode)
+        x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(
+            azimuth, theta, mode=mode
+        )
         azimuth_new, theta_new = AbstractSphereSubsetDistribution.cart_to_sph(
             x, y, z, mode=mode
         )

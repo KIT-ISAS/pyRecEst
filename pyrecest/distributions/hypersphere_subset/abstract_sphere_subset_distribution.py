@@ -61,7 +61,9 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             tuple: Spherical coordinates.
         """
-        assert np.ndim(x) == 1 and np.ndim(y) == 1 and np.ndim(z), "Inputs must be 1-dimensional"
+        assert (
+            np.ndim(x) == 1 and np.ndim(y) == 1 and np.ndim(z)
+        ), "Inputs must be 1-dimensional"
         if mode == "colatitude":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_colatitude(
                 x, y, z
@@ -78,7 +80,9 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     @staticmethod
     @beartype
     def _sph_to_cart_colatitude(azimuth: np.ndarray, colatitude: np.ndarray) -> tuple:
-        assert np.ndim(azimuth) == 1 and np.ndim(colatitude), "Inputs must be 1-dimensional"
+        assert np.ndim(azimuth) == 1 and np.ndim(
+            colatitude
+        ), "Inputs must be 1-dimensional"
         x = np.sin(colatitude) * np.cos(azimuth)
         y = np.sin(colatitude) * np.sin(azimuth)
         z = np.cos(colatitude)
@@ -98,14 +102,15 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             tuple: Cartesian coordinates.
         """
-        assert np.ndim(azimuth) == 1 and np.ndim(elevation) == 1, "Inputs must be 1-dimensional"
+        assert (
+            np.ndim(azimuth) == 1 and np.ndim(elevation) == 1
+        ), "Inputs must be 1-dimensional"
         # elevation is π/2 - colatitude, so we calculate colatitude from elevation
-        colatitude = np.pi/2 - elevation  
+        colatitude = np.pi / 2 - elevation
         x = np.sin(colatitude) * np.cos(azimuth)
         y = np.sin(colatitude) * np.sin(azimuth)
         z = np.cos(colatitude)
         return x, y, z
-
 
     @staticmethod
     @beartype
@@ -124,5 +129,5 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         radius = np.sqrt(x**2 + y**2 + z**2)
         azimuth = np.arctan2(y, x)
         azimuth = np.where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
-        elevation = np.pi/2 - np.arccos(z / radius)  # elevation is π/2 - colatitude
+        elevation = np.pi / 2 - np.arccos(z / radius)  # elevation is π/2 - colatitude
         return azimuth, elevation
