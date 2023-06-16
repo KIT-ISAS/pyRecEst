@@ -20,7 +20,7 @@ class LinBoundedCartProdDiracDistribution(
 
     def marginalize_periodic(self):
         return LinearDiracDistribution(
-            self.d[:, self.bound_dim :], self.w # noqa: E203
+            self.d[:, self.bound_dim :], self.w  # noqa: E203
         )
 
     def linear_mean(self):
