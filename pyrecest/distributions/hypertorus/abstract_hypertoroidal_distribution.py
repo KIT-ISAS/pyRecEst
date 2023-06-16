@@ -47,7 +47,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         # Define the shifted PDF
         def shifted_pdf(xs):
-            return self.pdf((xs + shift_by) % (2 * np.pi))
+            return self.pdf(np.mod(xs + shift_by, 2 * np.pi))
 
         # Create the shifted distribution
         shifted_distribution = CustomHypertoroidalDistribution(shifted_pdf, self.dim)
