@@ -26,7 +26,7 @@ class CustomHypertoroidalDistribution(
             self.shift_by = shift_by
 
     def pdf(self, xs):
-        return AbstractCustomDistribution.pdf(self, (xs + self.shift_by) // (2 * np.pi))
+        return AbstractCustomDistribution.pdf(self, np.mod(xs + self.shift_by, 2 * np.pi))
 
     def to_custom_circular(self):
         # Convert to a custom circular distribution (only in 1D case)

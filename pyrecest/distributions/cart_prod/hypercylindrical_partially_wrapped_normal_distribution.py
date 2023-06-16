@@ -23,6 +23,9 @@ class HypercylindricalPartiallyWrappedNormalDistribution(
         assert np.all(np.linalg.eigvals(C) > 0), "C must be positive definite"
         assert bound_dim <= np.size(mu)
         assert np.ndim(mu) == 1
+        if bound_dim > 0: # This decreases the need for many wrappings
+            mu[:bound_dim] = np.mod(mu[:bound_dim], 2 * np.pi)
+            
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim=bound_dim, lin_dim=mu.shape[0] - bound_dim
         )
@@ -33,6 +36,9 @@ class HypercylindricalPartiallyWrappedNormalDistribution(
 
     def pdf(self, xs: np.ndarray, m: int | np.int32 | np.int64 = 3):
         xs = np.atleast_2d(xs)
+        if self.bound_dim > 0:
+            xs[:, :self.bound_dim] = np.mod(xs[:, :self.bound_dim], 2 * np.pi)
+
         assert xs.shape[-1] == self.input_dim
 
         # generate multiples for wrapping
