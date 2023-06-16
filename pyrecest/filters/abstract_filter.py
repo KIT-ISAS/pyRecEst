@@ -21,9 +21,9 @@ class AbstractFilter(ABC):
         ), "New distribution has to be of the same class as (or inherit from) the previous density."
         self._filter_state = copy.deepcopy(new_state)
 
-    @abstractmethod
     def get_point_estimate(self):
-        """Get the point estimate of the filter."""
+        """Get a point estimate"""
+        return self.filter_state.mean()
 
     @property
     def dim(self) -> int:
