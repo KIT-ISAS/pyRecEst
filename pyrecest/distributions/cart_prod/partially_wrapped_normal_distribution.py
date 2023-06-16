@@ -10,7 +10,7 @@ from ..nonperiodic.gaussian_distribution import GaussianDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
 
 
-class HypercylindricalPartiallyWrappedNormalDistribution(
+class PartiallyWrappedNormalDistribution(
     AbstractHypercylindricalDistribution
 ):
     def __init__(
