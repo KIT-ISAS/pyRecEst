@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter

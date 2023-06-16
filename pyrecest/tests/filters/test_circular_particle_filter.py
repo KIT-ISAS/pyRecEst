@@ -14,6 +14,7 @@ from pyrecest.distributions.circle.circular_uniform_distribution import (
 from pyrecest.distributions.circle.von_mises_distribution import VonMisesDistribution
 from pyrecest.filters.circular_particle_filter import CircularParticleFilter
 
+
 class CircularParticleFilterTest(unittest.TestCase):
     def setUp(self):
         self.n_particles = 30
@@ -46,8 +47,10 @@ class CircularParticleFilterTest(unittest.TestCase):
     def test_prediction(self):
         # test prediction
         self.filter.filter_state = self.dist
+
         def f(x):
             return x
+
         self.filter.predict_nonlinear(f, self.wn)
         dist2 = self.filter.filter_state
         self.assertIsInstance(dist2, HypertoroidalDiracDistribution)
@@ -63,8 +66,10 @@ class CircularParticleFilterTest(unittest.TestCase):
     def test_nonlinear_prediction_without_noise(self):
         # nonlinear test without noise
         self.filter.set_state(self.dist)
+
         def f(x):
-            return x ** 2
+            return x**2
+
         no_noise = CircularDiracDistribution(np.array([0]))
         self.filter.predict_nonlinear(f, no_noise)
         predicted = self.filter.filter_state
@@ -77,11 +82,15 @@ class CircularParticleFilterTest(unittest.TestCase):
         # test update
         np.random.seed(0)
         self.filter.set_state(self.dist)
+
         def h(x):
             return x
+
         z = 0
+
         def likelihood(z, x):
             return self.wn.pdf(z - h(x))
+
         self.filter.update_nonlinear(likelihood, z)
         dist3a = self.filter.filter_state
         self.assertIsInstance(dist3a, CircularDiracDistribution)
@@ -107,9 +116,10 @@ class CircularParticleFilterTest(unittest.TestCase):
         )
 
         self.filter.set_state(CircularDiracDistribution(np.arange(0, 1.1, 0.1)))
-        
+
         def likelihood1(_, x):
             return x == 0.5
+
         self.filter.update_nonlinear(likelihood1, 42)
         estimation = self.filter.filter_state
         self.assertIsInstance(estimation, CircularDiracDistribution)
@@ -120,9 +130,10 @@ class CircularParticleFilterTest(unittest.TestCase):
         np.random.seed(0)
         self.filter.filter_state = self.dist
         wn = WrappedNormalDistribution(1.3, 0.8)
-        
+
         def likelihood2(x):
             return wn.pdf(-x)
+
         self.filter.update_nonlinear(likelihood2)
         dist3c = self.filter.filter_state
         self.assertIsInstance(dist3c, HypertoroidalDiracDistribution)
