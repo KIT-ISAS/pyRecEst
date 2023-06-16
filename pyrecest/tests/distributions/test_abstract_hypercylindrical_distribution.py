@@ -1,8 +1,8 @@
 import unittest
 
 import numpy as np
-from pyrecest.distributions.cart_prod.hypercylindrical_partially_wrapped_normal_distribution import (
-    HypercylindricalPartiallyWrappedNormalDistribution,
+from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
+    PartiallyWrappedNormalDistribution,
 )
 
 
@@ -10,17 +10,17 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
     def test_mode_numerical_gaussian_2D(self):
         mu = np.array([5, 1])
         C = np.array([[2, 1], [1, 1]])
-        g = HypercylindricalPartiallyWrappedNormalDistribution(mu, C, 1)
+        g = PartiallyWrappedNormalDistribution(mu, C, 1)
         self.assertTrue(np.allclose(g.mode_numerical(), mu, atol=1e-5))
 
     def test_linear_mean_numerical(self):
-        hwn = HypercylindricalPartiallyWrappedNormalDistribution(
+        hwn = PartiallyWrappedNormalDistribution(
             np.array([1, 2]), np.array([[2, 0.3], [0.3, 1]]), 1
         )
         np.testing.assert_allclose(hwn.linear_mean_numerical(), hwn.mu[-1])
 
     def test_condition_on_periodic(self):
-        hwn = HypercylindricalPartiallyWrappedNormalDistribution(
+        hwn = PartiallyWrappedNormalDistribution(
             np.array([1, 2]), np.array([[2, 0.3], [0.3, 1]]), 1
         )
         dist_cond1 = hwn.condition_on_periodic(np.array(1.5))
@@ -44,7 +44,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         )
 
     def test_condition_on_linear(self):
-        hwn = HypercylindricalPartiallyWrappedNormalDistribution(
+        hwn = PartiallyWrappedNormalDistribution(
             np.array([1, 2]), np.array([[2, 0.3], [0.3, 1]]), 1
         )
         dist_cond1 = hwn.condition_on_linear(np.array(1.5))
