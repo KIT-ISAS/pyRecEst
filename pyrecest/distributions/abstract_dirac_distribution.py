@@ -14,7 +14,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
     """
 
     @beartype
-    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
+    def __init__(self, d: np.ndarray, w: np.ndarray | float | np.float64 | None = None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
 
@@ -24,7 +24,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         if w is None:
             w = np.ones(d.shape[0]) / d.shape[0]
 
-        assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
+        assert d.shape[0] == np.size(w), "Number of Diracs and weights must match."
         self.d = copy.copy(d)
         self.w = copy.copy(w)
         self.normalize_in_place()
@@ -63,25 +63,23 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     @beartype
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
-        w_likelihood = f(self.d)
-        assert (
-            w_likelihood.shape == self.w.shape
+        wNew = f(self.d)
+
+        assert wNew.shape == (
+            self.d.shape[0],
         ), "Function returned wrong number of outputs."
-        assert np.all(w_likelihood >= 0)
-        assert np.sum(w_likelihood) > 0
+        assert np.all(wNew >= 0), "All weights should be greater than or equal to 0."
+        assert np.sum(wNew) > 0, "The sum of all weights should be greater than 0."
 
-        w_posterior_unnormalized = w_likelihood * self.w
+        self.w = wNew * self.w
+        self.w = self.w / np.sum(self.w)
 
-        w_posterior_normalized = w_posterior_unnormalized / np.sum(
-            w_posterior_unnormalized
-        )
-        dist = self.__class__(self.d, w_posterior_normalized)
-        return dist
+        return self
 
     @beartype
     def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
-        ids = np.random.choice(self.w.size, size=n, p=self.w)
-        return self.d[ids] if self.d.ndim == 1 else self.d[ids, :]
+        ids = np.random.choice(np.size(self.w), size=n, p=self.w)
+        return self.d[ids] if self.d.ndim == 1 else self.d[ids, :]  # noqa: E203
 
     def entropy(self) -> float:
         warnings.warn("Entropy is not defined in a continuous sense")
@@ -129,14 +127,11 @@ class AbstractDiracDistribution(AbstractDistributionType):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
     @classmethod
-    def from_distribution(cls, distribution, n_samples):
-        is_valid_class = False
-        # Look if distribution is of the correct type
-        for base in cls.__bases__:
-            if isinstance(distribution, base):
-                is_valid_class = True
+    def is_valid_for_conversion(cls, distribution):
+        return any(isinstance(distribution, base) for base in cls.__bases__)
 
-        assert is_valid_class
-        assert isinstance(n_samples, int) and n_samples > 0
+    @classmethod
+    def from_distribution(cls, distribution, n_samples):
+        assert cls.is_valid_for_conversion(distribution)
         samples = distribution.sample(n_samples)
         return cls(samples)
