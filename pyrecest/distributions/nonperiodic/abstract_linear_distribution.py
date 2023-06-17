@@ -161,16 +161,13 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     @staticmethod
     def integrate_fun_over_domain(f, dim, left, right):
-        def wrapped_f(*args):
-            return f(np.array(args).reshape(-1, dim))
-
         if dim == 1:
             result, _ = quad(f, left, right)
         elif dim == 2:
-            result, _ = nquad(wrapped_f, [(left[0], right[0]), (left[1], right[1])])
+            result, _ = nquad(f, [(left[0], right[0]), (left[1], right[1])])
         elif dim == 3:
             result, _ = nquad(
-                wrapped_f,
+                f,
                 [(left[0], right[0]), (left[1], right[1]), (left[2], right[2])],
             )
         else:

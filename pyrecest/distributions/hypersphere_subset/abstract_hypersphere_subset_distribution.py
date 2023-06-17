@@ -160,7 +160,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 f_curr = f_gen(i, j)
                 fangles = self.__class__.gen_fun_hyperspherical_coords(f_curr, self.dim)
                 g_curr = g_gen(fangles, self.dim)
-                m[i, j] = self.__class__.integrate_fun_over_domain(g_curr, self.dim)
+                m[i, j] = self.__class__.integrate_fun_hypersph_coord_over_domain(g_curr, self.dim)
 
         return m
 
@@ -199,15 +199,16 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     @abstractmethod
     @beartype
-    def integrate_fun_over_domain(
+    def integrate_fun_hypersph_coord_over_domain(
         f_hypersph_coords: Callable, dim: int | np.int32 | np.int64
     ):
         # Overwrite with a function that specifies the integration_boundaries for the type of HypersphereSubsetDistribution
+        # and calls integrate_fun_hypersph_coord_over_domain_part
         pass
 
     @staticmethod
     @beartype
-    def integrate_fun_over_domain_part(
+    def integrate_fun_hypersph_coord_over_domain_part(
         f_hypersph_coords: Callable,
         dim: int | np.int32 | np.int64,
         integration_boundaries,
@@ -255,7 +256,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 self.dim
             )
         f = self.gen_pdf_hyperspherical_coords()
-        return AbstractHypersphereSubsetDistribution.integrate_fun_over_domain_part(
+        return AbstractHypersphereSubsetDistribution.integrate_fun_hypersph_coord_over_domain_part(
             f, self.dim, integration_boundaries
         )
 
@@ -284,7 +285,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             )
         )
 
-        entropy_integral = self.__class__.integrate_fun_over_domain(
+        entropy_integral = self.__class__.integrate_fun_hypersph_coord_over_domain(
             fangles_entropy, self.dim
         )
 
@@ -315,7 +316,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             )
         )
 
-        distance_integral = self.__class__.integrate_fun_over_domain(
+        distance_integral = self.__class__.integrate_fun_hypersph_coord_over_domain(
             fangles_hellinger, self.dim
         )
 
@@ -340,7 +341,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             )
         )
 
-        distance_integral = self.__class__.integrate_fun_over_domain(
+        distance_integral = self.__class__.integrate_fun_hypersph_coord_over_domain(
             fangles_total_variation, self.dim
         )
 

@@ -128,13 +128,13 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
     @beartype
     @staticmethod
-    def integrate_fun_over_domain(
+    def integrate_fun_hypersph_coord_over_domain(
         f_hypersph_coords: Callable, dim: int | np.int32 | np.int64
     ) -> float:
         integration_boundaries = (
             AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(dim)
         )
-        return AbstractHypersphereSubsetDistribution.integrate_fun_over_domain_part(
+        return AbstractHypersphereSubsetDistribution.integrate_fun_hypersph_coord_over_domain_part(
             f_hypersph_coords, dim, integration_boundaries
         )
 

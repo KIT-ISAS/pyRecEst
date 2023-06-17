@@ -8,6 +8,8 @@ from scipy.optimize import minimize
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
+import matplotlib.colors as mcolors
+
 
 
 class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
@@ -106,9 +108,6 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
             if grid_faces > 0:
-                print("x_sphere_outer.shape:", x_sphere_outer.shape)
-                print("y_sphere_outer.shape:", y_sphere_outer.shape)
-                print("z_sphere_outer.shape:", z_sphere_outer.shape)
                 ax.plot_surface(
                     x_sphere_outer,
                     y_sphere_outer,
@@ -118,22 +117,22 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                     alpha=0.1,
                     linewidth=0.5,
                 )
-            print("x_sphere_inner.shape:", x_sphere_inner.shape)
-            print("y_sphere_inner.shape:", y_sphere_inner.shape)
-            print("z_sphere_inner.shape:", z_sphere_inner.shape)
-            print("c_sphere.shape:", c_sphere.shape)
+            
+            norm_colors = mcolors.Normalize(vmin=c_sphere.min(), vmax=c_sphere.max())
+            c_sphere = norm_colors(c_sphere)
+            
             ax.plot_surface(
                 x_sphere_inner,
                 y_sphere_inner,
                 z_sphere_inner,
-                cmap="viridis",
+                cmap="jet",
                 rstride=1,
                 cstride=1,
-                facecolors=plt.cm.viridis(c_sphere),  # pylint: disable=no-member
+                facecolors=plt.cm.jet(c_sphere),  # pylint: disable=no-member
                 shade=False,
             )
             ax.set_box_aspect([1, 1, 1])
-            plt.colorbar(plt.cm.ScalarMappable(cmap="viridis"), ax=ax)
+            plt.colorbar(plt.cm.ScalarMappable(cmap="jet"), ax=ax)
             plt.show()
         else:
             raise ValueError(
@@ -209,11 +208,11 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, z
 
     @staticmethod
-    def integrate_fun_over_domain(f_hypersph_coords, dim):
+    def integrate_fun_hypersph_coord_over_domain(f_hypersph_coords, dim):
         integration_boundaries = (
             AbstractHypersphericalDistribution.get_full_integration_boundaries(dim)
         )
-        return AbstractHypersphereSubsetDistribution.integrate_fun_over_domain_part(
+        return AbstractHypersphereSubsetDistribution.integrate_fun_hypersph_coord_over_domain_part(
             f_hypersph_coords, dim, integration_boundaries
         )
 

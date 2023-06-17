@@ -21,9 +21,9 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     @beartype
-    def integrate_fun_over_domain(f: Callable, dim: int | np.int32 | np.int64) -> float:
+    def integrate_fun_hypersph_coord_over_domain(f: Callable, dim: int | np.int32 | np.int64) -> float:
         integration_boundaries = [(0, 2 * np.pi)] * dim
-        return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
+        return AbstractHypertoroidalDistribution.integrate_fun_hypersph_coord_over_domain_part(
             f, dim, integration_boundaries
         )
 
@@ -56,7 +56,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     @beartype
-    def integrate_fun_over_domain_part(
+    def integrate_fun_hypersph_coord_over_domain_part(
         f: Callable, dim: int | np.int32 | np.int64, integration_boundaries
     ) -> float:
         if len(integration_boundaries) != dim:
@@ -78,7 +78,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         left, right = integration_boundaries
 
         integration_boundaries = list(zip(left, right))
-        return self.integrate_fun_over_domain_part(
+        return self.integrate_fun_hypersph_coord_over_domain_part(
             lambda *args: self.pdf(np.array(args)), self.dim, integration_boundaries
         )
 
@@ -103,10 +103,10 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         for i in range(self.dim):
             # i=i to avoid pylint warning (though it does not matter here)
-            alpha[i] = self.integrate_fun_over_domain(
+            alpha[i] = self.integrate_fun_hypersph_coord_over_domain(
                 lambda *args, i=i: moment_fun_real(*args)[i], self.dim
             )
-            beta[i] = self.integrate_fun_over_domain(
+            beta[i] = self.integrate_fun_hypersph_coord_over_domain(
                 lambda *args, i=i: moment_fun_imag(*args)[i], self.dim
             )
 
@@ -118,7 +118,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             pdf_val = self.pdf(x)
             return pdf_val * np.log(pdf_val)
 
-        return -self.integrate_fun_over_domain(entropy_fun, self.dim)
+        return -self.integrate_fun_hypersph_coord_over_domain(entropy_fun, self.dim)
 
     def get_manifold_size(self):
         return (2 * np.pi) ** self.dim
@@ -145,7 +145,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             x = np.array(args)
             return (np.sqrt(self.pdf(x)) - np.sqrt(other.pdf(x))) ** 2
 
-        dist = 0.5 * self.integrate_fun_over_domain(hellinger_dist_fun, self.dim)
+        dist = 0.5 * self.integrate_fun_hypersph_coord_over_domain(hellinger_dist_fun, self.dim)
         return dist
 
     def total_variation_distance_numerical(self, other):
@@ -158,7 +158,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             x = np.array(args)
             return abs(self.pdf(x) - other.pdf(x))
 
-        dist = 0.5 * self.integrate_fun_over_domain(total_variation_dist_fun, self.dim)
+        dist = 0.5 * self.integrate_fun_hypersph_coord_over_domain(total_variation_dist_fun, self.dim)
         return dist
 
     def plot(self, *args, resolution=None):
