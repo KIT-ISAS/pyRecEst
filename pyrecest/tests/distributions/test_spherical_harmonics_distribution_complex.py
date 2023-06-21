@@ -177,10 +177,103 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def test_basis_function(self, _, coeff_mat, expected_func):
         shd = SphericalHarmonicsDistributionComplex(1 / np.sqrt(4 * np.pi))
         shd.coeff_mat = coeff_mat
-        phi, theta = np.meshgrid(np.linspace(0, 2*np.pi, 10), np.linspace(-np.pi/2, np.pi/2, 10))
-        x, y, z = np.cos(phi.ravel()) * np.cos(theta.ravel()), np.sin(phi.ravel()) * np.cos(theta.ravel()), np.sin(theta.ravel())
+        phi, theta = np.meshgrid(np.linspace(0, 2*np.pi, 10), np.linspace(0, np.pi, 10))
+        x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         np.testing.assert_allclose(shd.pdf(np.column_stack([x, y, z])), expected_func(x, y, z), atol=1e-6)
 
+    @parameterized.expand([
+        # Test complex basis functions
+        ('testl1mneg1_cart', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [1, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 0, 0]]),
+        lambda x, y, _: 0.5*np.sqrt(3/(2*np.pi))*(x - 1j*y)),
+        ('testl1m1_cart', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 1, np.nan, np.nan], 
+                               [0, 0, 0, 0, 0]]),
+        lambda x, y, _: -0.5*np.sqrt(3/(2*np.pi))*(x + 1j*y)),
+        ('testl2mneg2_cart', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [1, 0, 0, 0, 0]]),
+        lambda x, y, _: 0.25*np.sqrt(15/(2*np.pi))*(x - 1j*y)**2),
+        ('testl2mneg1_cart', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 1, 0, 0, 0]]),
+        lambda x, y, z: 0.5*np.sqrt(15/(2*np.pi))*(x - 1j*y)*z),
+        ('testl2m1_cart', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 1, 0]]),
+        lambda x, y, z: -0.5*np.sqrt(15/(2*np.pi))*(x + 1j*y)*z),
+        ('testl2m2_cart', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 0, 1]]),
+        lambda x, y, _: 0.25*np.sqrt(15/(2*np.pi))*(x + 1j*y)**2),
+        # For spherical coordinates
+        ('testl1mneg1_sph', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [1, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 0, 0]]),
+        lambda phi, theta: 0.5*np.sqrt(3/(2*np.pi))*np.sin(theta)*np.exp(-1j*phi)),
+        ('testl1m1_sph', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 1, np.nan, np.nan], 
+                               [0, 0, 0, 0, 0]]),
+        lambda phi, theta: -0.5*np.sqrt(3/(2*np.pi))*np.sin(theta)*np.exp(1j*phi)),
+        ('testl2mneg2_sph', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [1, 0, 0, 0, 0]]),
+        lambda phi, theta: 0.25*np.sqrt(15/(2*np.pi))*np.sin(theta)**2*np.exp(-2j*phi)),
+        ('testl2mneg1_sph', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 1, 0, 0, 0]]),
+        lambda phi, theta: 0.5*np.sqrt(15/(2*np.pi))*np.sin(theta)*np.cos(theta)*np.exp(-1j*phi)),
+        ('testl2m1_sph', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 1, 0]]),
+        lambda phi, theta: -0.5*np.sqrt(15/(2*np.pi))*np.sin(theta)*np.cos(theta)*np.exp(1j*phi)),
+        ('testl2m2_sph', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 0, 1]]),
+        lambda phi, theta: 0.25*np.sqrt(15/(2*np.pi))*np.sin(theta)**2*np.exp(2j*phi)),
+        ('testl1mneg1_sphconv_colatitude', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [1, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 0, 0]]),
+        lambda phi, theta: 0.5*np.sqrt(3/(2*np.pi))*np.sin(theta)*np.exp(-1j*phi)),
+        ('testl1m1_sphconv_colatitude', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 1, np.nan, np.nan], 
+                               [0, 0, 0, 0, 0]]),
+        lambda phi, theta: -0.5*np.sqrt(3/(2*np.pi))*np.sin(theta)*np.exp(1j*phi)),
+        ('testl2mneg2_sphconv_colatitude', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [1, 0, 0, 0, 0]]),
+        lambda phi, theta: 0.25*np.sqrt(15/(2*np.pi))*np.sin(theta)**2*np.exp(-2j*phi)),
+        ('testl2mneg1_sphconv_colatitude', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 1, 0, 0, 0]]),
+        lambda phi, theta: 0.5*np.sqrt(15/(2*np.pi))*np.sin(theta)*np.cos(theta)*np.exp(-1j*phi)),
+        ('testl2m1_sphconv_colatitude', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 1, 0]]),
+        lambda phi, theta: -0.5*np.sqrt(15/(2*np.pi))*np.sin(theta)*np.cos(theta)*np.exp(1j*phi)),
+        ('testl2m2_sphconv_colatitude', np.array([[0, np.nan, np.nan, np.nan, np.nan], 
+                               [0, 0, 0, np.nan, np.nan], 
+                               [0, 0, 0, 0, 1]]),
+        lambda phi, theta: 0.25*np.sqrt(15/(2*np.pi))*np.sin(theta)**2*np.exp(2j*phi)),
+    ])
+    def test_basis_function_complex(self, name, coeff_mat, expected_func):
+        shd = SphericalHarmonicsDistributionComplex(1 / np.sqrt(4 * np.pi), assert_real=False)
+        shd.coeff_mat = coeff_mat
+        phi, theta = np.meshgrid(np.linspace(0, 2*np.pi, 10), np.linspace(-np.pi/2, np.pi/2, 10))
+        x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
+        
+        vals_to_test = shd.pdf(np.column_stack([x, y, z]))
+        if name.endswith('cart'):
+            expected_func_vals = expected_func(x, y, z)
+        elif name.endswith('sph'):
+            expected_func_vals = expected_func(phi.ravel(), theta.ravel())                                         
+        elif name.endswith('colatitude'):
+            phi, theta = AbstractSphericalDistribution.cart_to_sph(x, y, z, mode='colatitude')
+            expected_func_vals = expected_func(phi, theta)                                         
+            
+        np.testing.assert_allclose(vals_to_test, expected_func_vals, atol=1e-6)
+        
     @parameterized.expand([
         ('l0m0',
          np.array([[1, np.nan, np.nan, np.nan, np.nan], 
@@ -283,6 +376,12 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
          SphericalHarmonicsDistributionComplex.mean_direction),
         ("shd_z", np.array([[1, np.nan, np.nan], [0, 1, 0]]), np.array([0, 0, 1]),
          SphericalHarmonicsDistributionComplex.mean_direction),
+        ("shd_xy", np.array([[1, np.nan, np.nan], [np.sqrt(1/2)+1j * np.sqrt(1/2), 0, -np.sqrt(1/2)+1j * np.sqrt(1/2)]]), np.array([1, 1, 0]/np.sqrt(2)), 
+         SphericalHarmonicsDistributionComplex.mean_direction),
+        ("shd_xz", np.array([[1, np.nan, np.nan], [np.sqrt(1/2), 1, -np.sqrt(1/2)]]), np.array([1, 0, 1]/np.sqrt(2)), 
+         SphericalHarmonicsDistributionComplex.mean_direction),
+        ("shd_yz", np.array([[1, np.nan, np.nan], [1j * np.sqrt(1/2), 1, 1j * np.sqrt(1/2)]]), np.array([0, 1, 1]/np.sqrt(2)), 
+         SphericalHarmonicsDistributionComplex.mean_direction),
         ("numerical_shd_x", np.array([[1, np.nan, np.nan], [np.sqrt(1/2), 0, -np.sqrt(1/2)]]), np.array([1, 0, 0]), 
          SphericalHarmonicsDistributionComplex.mean_direction_numerical),
         ("numerical_shd_y", np.array([[1, np.nan, np.nan], [1j * np.sqrt(1/2), 0, 1j * np.sqrt(1/2)]]), np.array([0, 1, 0]),
@@ -296,11 +395,15 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
     def test_from_distribution_via_integral_vmf(self):
         # Test approximating a VMF
-        dist = VonMisesFisherDistribution(np.array([0, -1, 0]), 10)
+        dist = VonMisesFisherDistribution(np.array([-1, -1, 0]/np.sqrt(2)), 1)
         shd = SphericalHarmonicsDistributionComplex.from_distribution_via_integral(dist, 3)
-        points = np.random.rand(100, 3)
-        np.testing.assert_allclose(shd.mean_direction_numerical(), dist.mean_direction())
-        np.testing.assert_allclose(shd.pdf(points), dist.pdf(points), atol=2e-3)
+        phi, theta = np.meshgrid(np.linspace(0, 2*np.pi, 10), np.linspace(-np.pi/2, np.pi/2, 10))
+        x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
+        np.testing.assert_allclose(shd.mean_direction(), dist.mean_direction(),atol=1e-10)
+        np.testing.assert_allclose(shd.mean_direction_numerical(), dist.mean_direction(),atol=1e-10)
+        np.testing.assert_allclose(shd.integrate_numerically(), dist.integrate_numerically(),atol=1e-10)
+        np.testing.assert_allclose(shd.pdf(np.column_stack([x,y,z])),
+                                   dist.pdf(np.column_stack([x,y,z])), atol=0.001)
         
     def test_from_distribution_via_integral_uniform(self):
         shd = SphericalHarmonicsDistributionComplex.from_distribution_via_integral(HypersphericalUniformDistribution(2), degree=0)
@@ -312,26 +415,18 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                                                                [0, 1, 0]]))
         
         shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(dist.pdf, 1)
-        #points = np.random.rand(100, 3)
-        
-        
-        #np.testing.assert_allclose(shd.pdf(points), dist.pdf(points), atol=1e-6)
         np.testing.assert_allclose(shd.coeff_mat, dist.coeff_mat, atol=1e-6)
-    
-    def test_transform_constant_function_fast(self):
-        shd = SphericalHarmonicsDistributionComplex.from_function(lambda _: 1, degree=1)
-        np.testing.assert_allclose(shd.coeff_mat, np.array([[1, np.nan, np.nan], [0, 0, 0]]))
 
     def test_convergence(self):
         no_diffs = 3
-        dist = VonMisesFisherDistribution(np.array([0, -1, 0]), 10)
+        dist = VonMisesFisherDistribution(np.array([0, -1, 0]), 1)
         diffs = np.zeros(no_diffs)
 
-        for i in range(1, no_diffs + 1):
-            shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(dist.pdf, i + 1)
-            diffs[i - 1] = shd.total_variation_distance_numerical(dist)
+        for i in range(0, no_diffs):
+            shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(dist.pdf, i)
+            diffs[i] = shd.total_variation_distance_numerical(dist)
 
-        # Check if the differences are decreasing
+        # Check if the deviation from true density is decreasing
         self.assertTrue(np.all(np.diff(diffs) < 0))
         
     @parameterized.expand([

@@ -42,33 +42,6 @@ class AbstractSphericalHarmonicsDistribution(AbstractSphericalDistribution, Abst
             
         return self
     
-    def convolve(self, other):
-        """Convolves this distribution with another one."""
-        
-        # Check if other is zonal. For this, only the coefficients for m=0 are allowed to be nonzero.
-        zonal_test_mat = copy.copy(other.coeff_mat)
-        np.fill_diagonal(zonal_test_mat, np.nan)
-        assert np.all((np.abs(zonal_test_mat) <= 1E-5) | np.isnan(zonal_test_mat)), 'Other is not zonal.'
-
-        current = copy.deepcopy(self)
-        # Truncate to the smaller degree
-        if other.coeff_mat.shape[0] < self.coeff_mat.shape[0]:
-            current = current.truncate(other.coeff_mat.shape[0]-1)
-        elif self.coeff_mat.shape[0] < other.coeff_mat.shape[0]:
-            other = other.truncate(self.coeff_mat.shape[0]-1)
-
-        if self.transformation == 'identity':
-            # Get coefficients of other of order 0. Use broadcasting.
-            new_coeff_mat = self.coeff_mat \
-                * np.expand_dims(other.coeff_mat[np.arange(other.coeff_mat.shape[0]), np.arange(other.coeff_mat.shape[0])] \
-                * np.sqrt(4*np.pi/(2*np.arange(other.coeff_mat.shape[0])+1)), axis=1)
-            
-            shd = self.__class__(new_coeff_mat, self.transformation)  # Do not use constructor to allow for inheritability
-        else:
-            raise ValueError('Transformation not supported')
-
-        return shd
-
     def integrate(self):
             
         if self.transformation == 'identity':

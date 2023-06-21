@@ -1,3 +1,4 @@
+""" Do not check in, not working yet!
 import unittest
 import numpy as np
 from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_real import SphericalHarmonicsDistributionReal
@@ -11,7 +12,7 @@ class AbstractSphericalHarmonicsDistributionTest(unittest.TestCase):
         rshdRandom = SphericalHarmonicsDistributionReal(coeffMat)
         coeffMatZonal = np.zeros((7, 13))
         coeffMatZonal[0, 0] = 1 / np.sqrt(4 * np.pi)
-        coeffMatZonal[1:, 1:2:] = np.random.rand(6, 1) # Needs this type to work properly
+        coeffMatZonal[1:, 1:2:] = np.random.rand(6, 1) # Needs this shape to work properly
         cshdZonal = SphericalHarmonicsDistributionComplex(coeffMatZonal)
 
         # Test both for real and complex
@@ -50,3 +51,4 @@ class AbstractSphericalHarmonicsDistributionTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+"""

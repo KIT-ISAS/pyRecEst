@@ -41,7 +41,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
                 phi, theta
             )
         else:
-            raise ValueError("mode must be either 'colatitude' or 'elevation'")
+            raise ValueError("Mode must be either 'colatitude' or 'elevation'")
 
         return x, y, z
 
@@ -73,7 +73,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
                 x, y, z
             )
         else:
-            raise ValueError("mode must be either 'colatitude' or 'elevation'")
+            raise ValueError("Mode must be either 'colatitude' or 'elevation'")
 
         return phi, theta
 
@@ -126,7 +126,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     @beartype
     def _cart_to_sph_elevation(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
         assert np.ndim(x) == 1 and np.ndim(y) == 1 and np.ndim(z) == 1
-        radius = np.sqrt(x**2 + y**2 + z**2)
+        radius = 1
         azimuth = np.arctan2(y, x)
         azimuth = np.where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
         elevation = np.pi / 2 - np.arccos(z / radius)  # elevation is π/2 - colatitude

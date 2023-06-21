@@ -11,7 +11,7 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
         AbstractSphericalHarmonicsDistribution.__init__(self, coeff_mat, transformation)
 
     @staticmethod
-    def real_spherical_harmonic(l, m, theta, phi):
+    def real_spherical_harmonic_basis_function(l, m, theta, phi):
         y_lm = sph_harm(m, l, phi, theta)
         
         if m < 0:
@@ -31,7 +31,7 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
         for l_curr in range(self.coeff_mat.shape[0]):
             for m_curr in range(-l_curr, l_curr + 1):
                 # Evaluate it for all query points at once
-                y_lm_real = SphericalHarmonicsDistributionReal.real_spherical_harmonic(l_curr, m_curr, theta, phi)
+                y_lm_real = SphericalHarmonicsDistributionReal.real_spherical_harmonic_basis_function(l_curr, m_curr, theta, phi)
                 vals += self.coeff_mat[l_curr, l_curr + m_curr] * y_lm_real
             
         return vals
@@ -42,7 +42,7 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
             raise NotImplementedError("Transformation currently not supported")
 
         real_coeff_mat = self.coeff_mat
-        complex_coeff_mat = np.full_like(real_coeff_mat, np.nan, dtype=np.complex128)
+        complex_coeff_mat = np.full_like(real_coeff_mat, np.nan, dtype=np.complex)
         
         for l in range(real_coeff_mat.shape[0]):
             for m in range(-l, l+1):

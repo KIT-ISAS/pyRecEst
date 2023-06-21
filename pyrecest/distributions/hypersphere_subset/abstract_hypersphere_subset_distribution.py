@@ -83,26 +83,20 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     @beartype
     def gen_fun_hyperspherical_coords(f: Callable, dim: int | np.int32 | np.int64):
-        r = 1
-
         def generate_input(angles):
             dim_eucl = dim + 1
-            # To make it work both when all inputs are single-elementary
-            # or multi-elementary, use vstack to ensure they are concatenated
-            # along the first dimension, transpose afterward to get an
-            # (n, dim,) numpy array
-            angles = np.vstack(angles).T
+            angles = np.column_stack(angles)
             input_arr = np.zeros((angles.shape[0], dim_eucl))
             # Start at last, which is just cos
-            input_arr[:, -1] = r * np.cos(angles[:, -1])
+            input_arr[:, -1] = np.cos(angles[:, -1])
             sin_product = np.sin(angles[:, -1])
             # Now, iterate over all from end to back and accumulate the sines
             for i in range(2, dim_eucl):
                 # All except the final one have a cos factor as their last one
-                input_arr[:, -i] = r * sin_product * np.cos(angles[:, -i])
+                input_arr[:, -i] = sin_product * np.cos(angles[:, -i])
                 sin_product *= np.sin(angles[:, -i])
             # The last one is all sines
-            input_arr[:, 0] = r * sin_product
+            input_arr[:, 0] = sin_product
             return np.squeeze(input_arr)
 
         def fangles(*angles):

@@ -4,7 +4,6 @@ import warnings
 from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_real import SphericalHarmonicsDistributionReal
 from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution import AbstractSphericalDistribution
 from parameterized import parameterized
-from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution import VonMisesFisherDistribution
 
 
 class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
@@ -24,9 +23,9 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
         phi, theta = np.random.rand(10) * 2 * np.pi, np.random.rand(10) * np.pi - np.pi / 2
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
-        vals_normalized = shd.pdf(np.vstack((x,y,z)).T)
+        vals_normalized = shd.pdf(np.column_stack((x,y,z)))
         shd.coeff_mat = unnormalized_coeffs
-        vals_unnormalized = shd.pdf(np.vstack((x,y,z)).T)
+        vals_unnormalized = shd.pdf(np.column_stack((x,y,z)))
         self.assertTrue(np.allclose(np.diff(vals_normalized / vals_unnormalized), np.zeros((1, x.size - 1)), atol=1e-6))
  
     @parameterized.expand([
@@ -70,8 +69,8 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
     def test_conversion(self, _, coeff_mat):
         rshd = SphericalHarmonicsDistributionReal(coeff_mat)
         cshd = rshd.to_spherical_harmonics_distribution_complex()
-        phi, theta = np.random.rand(10) * 2 * np.pi, np.random.rand(10) * np.pi - np.pi / 2
-        x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
+        phi_to_test, theta_to_test = np.random.rand(10) * 2 * np.pi, np.random.rand(10) * np.pi - np.pi / 2
+        x, y, z = AbstractSphericalDistribution.sph_to_cart(phi_to_test, theta_to_test)
         np.testing.assert_allclose(cshd.pdf(np.column_stack((x, y, z))), rshd.pdf(np.column_stack((x, y, z))), atol=1e-6)
 
     def test_conversion_to_complex_and_back(self):

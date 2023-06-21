@@ -64,13 +64,13 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
                 "Conversion to Bingham is not implemented for kappa<0"
             )
 
-        M = np.tile(self.mu, (1, self.dim + 1))
+        M = np.tile(self.mu, (self.dim + 1, 1))
         E = np.eye(self.dim + 1)
         E[0, 0] = 0
         M = M + E
         Q, _ = qr(M)
         M = np.hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])
-        Z = np.vstack([np.full((self.dim, 1), -self.kappa), 0])
+        Z = np.hstack([np.full(self.dim, -self.kappa), 0])
         return BinghamDistribution(Z, M)
 
     def sample(self, n):
