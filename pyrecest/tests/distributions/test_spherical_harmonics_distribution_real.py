@@ -26,7 +26,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)
         self.assertAlmostEqual(shd.integrate(), 1, delta=1e-6)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)
-        
+
         vals_normalized = shd.pdf(np.column_stack((x, y, z)))
         shd.coeff_mat = unnormalized_coeffs
         vals_unnormalized = shd.pdf(np.column_stack((x, y, z)))
@@ -39,7 +39,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         )
 
     @parameterized.expand(
-        [# jscpd:ignore-start-python
+        [  # jscpd:ignore-start-python
             (
                 "l0m0",
                 [
@@ -124,7 +124,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                 ],
                 lambda x, y, _: 1 / 4 * np.sqrt(15 / np.pi) * (x**2 - y**2),
             ),
-        ]# jscpd:ignore-end
+        ]  # jscpd:ignore-end
     )
     def test_basis_function(self, name, coeff_mat, result_func):
         np.random.seed(10)
@@ -145,7 +145,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         return AbstractSphericalDistribution.sph_to_cart(phi, theta)
 
     @parameterized.expand(
-        [# jscpd:ignore-start-python
+        [  # jscpd:ignore-start-python
             (
                 "l0_m0",
                 np.array(
@@ -314,7 +314,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                 ),
             ),
             ("random", np.random.rand(4, 7)),
-        ]# jscpd:ignore-end
+        ]  # jscpd:ignore-end
     )
     def test_conversion(self, _, coeff_mat):
         rshd = SphericalHarmonicsDistributionReal(coeff_mat)

@@ -78,17 +78,20 @@ class AbstractSphericalHarmonicsDistribution(
     def truncate(self, degree):
         result = copy.deepcopy(self)
         if result.coeff_mat.shape[0] - 1 > degree:
-            result.coeff_mat = result.coeff_mat[: degree + 1, : 2 * degree + 1] # noqa: E203
+            result.coeff_mat = result.coeff_mat[
+                : degree + 1, : 2 * degree + 1
+            ]  # noqa: E203
         elif result.coeff_mat.shape[0] - 1 < degree:
             warnings.warn("Less coefficients than desired, filling up with zeros")
             new_coeff_mat = np.zeros(
                 (degree + 1, 2 * degree + 1), dtype=self.coeff_mat.dtype
             )
             new_coeff_mat[
-                : result.coeff_mat.shape[0], : 2 * result.coeff_mat.shape[0] - 1 # noqa: E203
+                : result.coeff_mat.shape[0],
+                : 2 * result.coeff_mat.shape[0] - 1,  # noqa: E203
             ] = result.coeff_mat
             for i in range(new_coeff_mat.shape[0] - 1):
-                new_coeff_mat[i, 2 * i + 1 :] = np.nan # noqa: E203
+                new_coeff_mat[i, 2 * i + 1 :] = np.nan  # noqa: E203
             result.coeff_mat = new_coeff_mat
 
         return result
