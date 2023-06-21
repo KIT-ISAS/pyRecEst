@@ -24,7 +24,9 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
         # To tell mypy the type of the variable explicitly
-        self.dists: collections.abc.Sequence[AbstractHypertoroidalDistribution] = self.dists
+        self.dists: collections.abc.Sequence[
+            AbstractHypertoroidalDistribution
+        ] = self.dists
 
     def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """
@@ -33,7 +35,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param n: number of moment
         :returns: n-th trigonometric moment (complex number)
         """
-        m = np.zeros(self.dim, dtype=np.complex128)
+        m = np.zeros(self.dim, dtype=complex)
         for i in range(len(self.dists)):
             # Calculate moments using moments of each component
             m += self.w[i] * self.dists[i].trigonometric_moment(n)
