@@ -20,7 +20,10 @@ class CircularDiracDistribution(
         super().__init__(
             d, w, dim=1
         )  # Necessary so it is clear that the dimension is 1.
-        assert np.shape(d) == np.shape(self.w), "The shapes of d and w should match."
+        d = np.squeeze(d)
+        assert w is None or np.shape(d) == np.shape(
+            w
+        ), "The shapes of d and w should match."
 
     def plot_interpolated(self, _):
         """
