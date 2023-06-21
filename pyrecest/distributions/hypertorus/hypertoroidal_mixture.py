@@ -33,7 +33,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param n: number of moment
         :returns: n-th trigonometric moment (complex number)
         """
-        m = np.zeros(self.dim, dtype=np.complex128)
+        m = np.zeros(self.dim, dtype=complex)
         for i in range(len(self.dists)):
             # Calculate moments using moments of each component
             m += self.w[i] * self.dists[i].trigonometric_moment(n)
