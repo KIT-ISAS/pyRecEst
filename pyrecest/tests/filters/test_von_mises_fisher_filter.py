@@ -1,10 +1,11 @@
 import unittest
+
 import numpy as np
-from pyrecest.filters.von_mises_fisher_filter import VonMisesFisherFilter
 from pyrecest.distributions import VonMisesFisherDistribution
+from pyrecest.filters.von_mises_fisher_filter import VonMisesFisherFilter
+
 
 class VMFFilterTest(unittest.TestCase):
-
     def setUp(self):
         """Initial setup for each test."""
         self.filter = VonMisesFisherFilter()
@@ -38,5 +39,6 @@ class VMFFilterTest(unittest.TestCase):
         self.assertTrue(np.allclose(self.vmf.mu, vmf_updated_identity.mu, rtol=1e-10))
         self.assertGreaterEqual(vmf_updated_identity.kappa, self.vmf.kappa)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
