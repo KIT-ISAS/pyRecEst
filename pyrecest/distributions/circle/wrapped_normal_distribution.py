@@ -21,13 +21,13 @@ class WrappedNormalDistribution(
     MAX_SIGMA_BEFORE_UNIFORM = 10
 
     @beartype
-    def __init__(self, mu: np.number | numbers.Real, sigma: np.number | numbers.Real):
+    def __init__(self, mu: np.number | numbers.Real | np.ndarray, sigma: np.number | numbers.Real | np.ndarray):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
         """
         AbstractCircularDistribution.__init__(self)
         HypertoroidalWrappedNormalDistribution.__init__(
-            self, mu, np.atleast_2d(sigma**2)
+            self, mu, sigma**2
         )
 
     @property
@@ -147,9 +147,9 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def from_moment(m: complex) -> "WrappedNormalDistribution":
-        mu_ = np.mod(np.angle(m), 2 * np.pi)
-        sigma_ = np.sqrt(-2 * np.log(np.abs(m)))
-        return WrappedNormalDistribution(mu_, sigma_)
+        mu = np.mod(np.angle(m), 2 * np.pi)
+        sigma = np.sqrt(-2 * np.log(np.abs(m)))
+        return WrappedNormalDistribution(mu, sigma)
 
     @staticmethod
     def sigma_to_kappa(sigma):
