@@ -21,6 +21,9 @@ class HypercylindricalDiracDistribution(
     def pdf(self, xs):
         return LinBoundedCartProdDiracDistribution.pdf(self, xs)
 
+    def marginalize_periodic(self):
+        return LinBoundedCartProdDiracDistribution.marginalize_periodic(self)
+
     def marginalize_linear(self):
         return HypertoroidalDiracDistribution(
             self.d[:, 0 : self.bound_dim], self.w  # noqa: E203
