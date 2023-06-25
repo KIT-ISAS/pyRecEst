@@ -39,9 +39,9 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
             raise ValueError("Plotting not supported for this dimension")
 
     @staticmethod
-    def from_distribution(distribution, n_samples):
-        samples = distribution.sample(n_samples)
-        return LinearDiracDistribution(samples, np.ones(n_samples) / n_samples)
+    def from_distribution(distribution, n_particles):
+        samples = distribution.sample(n_particles)
+        return LinearDiracDistribution(samples, np.ones(n_particles) / n_particles)
 
     @staticmethod
     def weighted_samples_to_mean_and_cov(samples, weights=None):

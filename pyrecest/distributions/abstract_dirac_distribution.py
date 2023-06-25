@@ -118,7 +118,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
             warnings.warn(
                 "The samples may be equally weighted, .mode is likely to return a bad result."
             )
-        return self.d[:, ind]
+        return self.d[ind, :]
 
     def mode_numerical(self, _=None):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
@@ -131,7 +131,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return any(isinstance(distribution, base) for base in cls.__bases__)
 
     @classmethod
-    def from_distribution(cls, distribution, n_samples):
+    def from_distribution(cls, distribution, n_particles):
         assert cls.is_valid_for_conversion(distribution)
-        samples = distribution.sample(n_samples)
+        samples = distribution.sample(n_particles)
         return cls(samples)

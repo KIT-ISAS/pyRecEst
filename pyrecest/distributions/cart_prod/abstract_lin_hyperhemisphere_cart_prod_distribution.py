@@ -1,0 +1,5 @@
+from .abstract_lin_periodic_cart_prod_distribution import AbstractLinPeriodicCartProdDistribution
+from .abstract_lin_hypersphere_subset_cart_prod_distribution import AbstractLinHypersphereSubsetCartProdDistribution
+
+class AbstractLinHyperhemisphereCartProdDistribution(AbstractLinHypersphereSubsetCartProdDistribution, AbstractLinPeriodicCartProdDistribution):
+    pass

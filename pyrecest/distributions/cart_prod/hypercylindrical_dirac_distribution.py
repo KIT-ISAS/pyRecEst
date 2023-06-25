@@ -12,11 +12,9 @@ class HypercylindricalDiracDistribution(
 ):
     def __init__(self, bound_dim: int | np.int32 | np.int64, d, w=None):
         AbstractHypercylindricalDistribution.__init__(
-            self, bound_dim, d.shape[1] - bound_dim
+            self, bound_dim, d.shape[-1] - bound_dim
         )
-        LinBoundedCartProdDiracDistribution.__init__(
-            self, d=d, bound_dim=bound_dim, w=w
-        )
+        LinBoundedCartProdDiracDistribution.__init__(self, d=d, w=w)
 
     def pdf(self, xs):
         return LinBoundedCartProdDiracDistribution.pdf(self, xs)
