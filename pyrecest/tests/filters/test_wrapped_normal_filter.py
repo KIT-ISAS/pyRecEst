@@ -1,14 +1,15 @@
 import unittest
+
+import numpy as np
 from pyrecest.distributions import WrappedNormalDistribution
 from pyrecest.filters.wrapped_normal_filter import WrappedNormalFilter
-import numpy as np
+
 
 class WrappedNormalFilterTest(unittest.TestCase):
-    
     def test_initialization(self):
         wn_filter = WrappedNormalFilter()
         wn = WrappedNormalDistribution(1.3, 0.8)
-        
+
         # Sanity check
         wn_filter.filter_state = wn
         wn1 = wn_filter.filter_state
@@ -39,7 +40,7 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.assertIsInstance(wn_identity, WrappedNormalDistribution)
         np.testing.assert_almost_equal(wn.mu, wn_identity.mu)
         self.assertGreater(wn.sigma, wn_identity.sigma)
-        
+
         # update identity with different measurement
         wn_filter.filter_state = wn
         wn_filter.update_identity(meas_noise, wn.mu + 0.1)
@@ -48,5 +49,6 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.assertLess(wn.mu, wn_identity2.mu)
         self.assertGreater(wn.sigma, wn_identity2.sigma)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

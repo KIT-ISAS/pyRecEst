@@ -1,8 +1,10 @@
 from collections.abc import Callable
-import numpy as np
 from functools import partial
+
+import numpy as np
+from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
 from pyrecest.filters.abstract_circular_filter import AbstractCircularFilter
-from pyrecest.distributions import WrappedNormalDistribution, CircularDiracDistribution
+
 
 class WrappedNormalFilter(AbstractCircularFilter):
     def __init__(self, wn=None):
@@ -27,7 +29,9 @@ class WrappedNormalFilter(AbstractCircularFilter):
         wd_new = wd.reweigh(partial(likelihood, z))
         self.filter_state = wd_new.to_wn()
 
-    def update_nonlinear_progressive(self, likelihood: Callable, z: float, tau: float | None = None):
+    def update_nonlinear_progressive(
+        self, likelihood: Callable, z: float, tau: float | None = None
+    ):
         # pylint: disable=too-many-locals
         DEFAULT_TAU = 0.02
         MINIMUM_LAMBDA = 0.001
@@ -38,20 +42,28 @@ class WrappedNormalFilter(AbstractCircularFilter):
         while lambda_ > 0:
             wd = self.filter_state.to_dirac5()
             likelihood_vals = np.array([likelihood(z, x) for x in wd.d])
-            likelihood_vals_min, likelihood_vals_max = np.min(likelihood_vals), np.max(likelihood_vals)
+            likelihood_vals_min, likelihood_vals_max = np.min(likelihood_vals), np.max(
+                likelihood_vals
+            )
 
             if likelihood_vals_max == 0:
-                raise ValueError('Progressive update failed because likelihood is 0 everywhere')
+                raise ValueError(
+                    "Progressive update failed because likelihood is 0 everywhere"
+                )
 
             w_min, w_max = np.min(wd.w), np.max(wd.w)
 
             if likelihood_vals_min == 0 or w_min == 0:
-                raise ZeroDivisionError('Cannot perform division by zero')
+                raise ZeroDivisionError("Cannot perform division by zero")
 
-            current_lambda = min(np.log(tau * w_max / w_min) / np.log(likelihood_vals_min / likelihood_vals_max), lambda_)
+            current_lambda = min(
+                np.log(tau * w_max / w_min)
+                / np.log(likelihood_vals_min / likelihood_vals_max),
+                lambda_,
+            )
 
             if current_lambda <= 0:
-                raise ValueError('Progressive update with given threshold impossible')
+                raise ValueError("Progressive update with given threshold impossible")
 
             current_lambda = MINIMUM_LAMBDA
             wd_new = wd.reweigh(lambda x: likelihood(z, x) ** current_lambda)

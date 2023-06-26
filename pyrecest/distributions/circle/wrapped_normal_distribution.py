@@ -21,14 +21,16 @@ class WrappedNormalDistribution(
     MAX_SIGMA_BEFORE_UNIFORM = 10
 
     @beartype
-    def __init__(self, mu: np.number | numbers.Real | np.ndarray, sigma: np.number | numbers.Real | np.ndarray):
+    def __init__(
+        self,
+        mu: np.number | numbers.Real | np.ndarray,
+        sigma: np.number | numbers.Real | np.ndarray,
+    ):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
         """
         AbstractCircularDistribution.__init__(self)
-        HypertoroidalWrappedNormalDistribution.__init__(
-            self, mu, sigma**2
-        )
+        HypertoroidalWrappedNormalDistribution.__init__(self, mu, sigma**2)
 
     @property
     def sigma(self):

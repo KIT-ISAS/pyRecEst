@@ -17,10 +17,14 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         """
         AbstractHypertoroidalDistribution.__init__(self, np.size(mu))
         # First check is for 1-D case
-        assert np.size(C)==1 or C.shape[0] == C.shape[1], "C must be dim x dim"
-        assert np.size(C)==1 or np.allclose(C, C.T, atol=1e-8), "C must be symmetric"
-        assert np.size(C)==1 and C>0 or np.all(np.linalg.eigvals(C) > 0), "C must be positive definite"
-        assert np.size(C) == np.size(mu) or np.size(mu) == C.shape[1], "mu must be dim x 1"
+        assert np.size(C) == 1 or C.shape[0] == C.shape[1], "C must be dim x dim"
+        assert np.size(C) == 1 or np.allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        assert (
+            np.size(C) == 1 and C > 0 or np.all(np.linalg.eigvals(C) > 0)
+        ), "C must be positive definite"
+        assert (
+            np.size(C) == np.size(mu) or np.size(mu) == C.shape[1]
+        ), "mu must be dim x 1"
 
         self.mu = np.mod(mu, 2 * np.pi)
         self.C = C
