@@ -85,13 +85,13 @@ class GaussianDistribution(AbstractLinearDistribution):
         return np.random.multivariate_normal(self.mu, self.C, n)
 
     @staticmethod
-    def from_distribution(dist):
+    def from_distribution(distribution):
         from .gaussian_mixture import GaussianMixture
 
-        if isinstance(dist, GaussianMixture):
+        if isinstance(distribution, GaussianMixture):
             gaussian = (
-                dist.to_gaussian()
+                distribution.to_gaussian()
             )  # Assuming to_gaussian method is defined in GaussianMixtureDistribution
         else:
-            gaussian = GaussianDistribution(dist.mean, dist.covariance)
+            gaussian = GaussianDistribution(distribution.mean, distribution.covariance)
         return gaussian

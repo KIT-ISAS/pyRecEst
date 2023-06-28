@@ -22,25 +22,27 @@ class CustomHemisphericalDistribution(
 
     @staticmethod
     @beartype
-    def from_distribution(dist: "AbstractHypersphericalDistribution"):
-        if dist.dim != 2:
+    def from_distribution(distribution: "AbstractHypersphericalDistribution"):
+        if distribution.dim != 2:
             raise ValueError("Dimension of the distribution should be 2.")
 
-        if isinstance(dist, AbstractHyperhemisphericalDistribution):
-            return CustomHemisphericalDistribution(dist.pdf)
-        if isinstance(dist, BinghamDistribution):
-            chsd = CustomHemisphericalDistribution(dist.pdf)
+        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
+            return CustomHemisphericalDistribution(distribution.pdf)
+        if isinstance(distribution, BinghamDistribution):
+            chsd = CustomHemisphericalDistribution(distribution.pdf)
             chsd.scale_by = 2
             return chsd
-        if isinstance(dist, AbstractHypersphericalDistribution):
+        if isinstance(distribution, AbstractHypersphericalDistribution):
             warning_message = (
                 "You are creating a CustomHyperhemispherical distribution based on a distribution on the full hypersphere. "
                 + "Using numerical integration to calculate the normalization constant."
             )
             warnings.warn(warning_message, category=UserWarning)
-            chhd_unnorm = CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
+            chhd_unnorm = CustomHyperhemisphericalDistribution(
+                distribution.pdf, distribution.dim
+            )
             norm_const_inv = chhd_unnorm.integrate()
-            chsd = CustomHemisphericalDistribution(dist.pdf)
+            chsd = CustomHemisphericalDistribution(distribution.pdf)
             chsd.scale_by = 1 / norm_const_inv
             return chsd
 

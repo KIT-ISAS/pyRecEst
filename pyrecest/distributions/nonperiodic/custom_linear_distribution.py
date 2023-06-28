@@ -53,7 +53,7 @@ class CustomLinearDistribution(
         return p
 
     @staticmethod
-    def from_distribution(dist):
+    def from_distribution(distribution):
         """
         Creates a CustomLinearDistribution from some other distribution
 
@@ -65,7 +65,7 @@ class CustomLinearDistribution(
         chd (CustomLinearDistribution)
             CustomLinearDistribution with identical pdf
         """
-        chd = CustomLinearDistribution(dist.pdf, dist.dim)
+        chd = CustomLinearDistribution(distribution.pdf, distribution.dim)
         return chd
 
     def integrate(self, left=None, right=None):
