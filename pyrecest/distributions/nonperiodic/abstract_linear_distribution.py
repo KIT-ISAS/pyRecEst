@@ -36,9 +36,11 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
         def neg_pdf(x):
             return -self.pdf(x)
-        
-        assert np.ndim(starting_point) <=1, "Starting point must be a 1D array"
-        starting_point = np.atleast_1d(starting_point) # Avoid numpy warning "DeprecationWarning: Use of `minimize` with `x0.ndim != 1` is deprecated"
+
+        assert np.ndim(starting_point) <= 1, "Starting point must be a 1D array"
+        starting_point = np.atleast_1d(
+            starting_point
+        )  # Avoid numpy warning "DeprecationWarning: Use of `minimize` with `x0.ndim != 1` is deprecated"
 
         result = minimize(neg_pdf, starting_point, method="L-BFGS-B")
         return result.x
