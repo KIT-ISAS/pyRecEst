@@ -18,7 +18,7 @@ class VonMisesFisherFilter(AbstractHypersphericalFilter):
     def filter_state(self, filter_state):
         assert isinstance(
             filter_state, VonMisesFisherDistribution
-        ), "filter_state must be an instance of VMFDistribution."
+        ), "filter_state must be an instance of VonMisesFisherDistribution."
         self._filter_state = filter_state
 
     def predict_identity(self, sys_noise):
@@ -28,7 +28,7 @@ class VonMisesFisherFilter(AbstractHypersphericalFilter):
         """
         assert isinstance(
             sys_noise, VonMisesFisherDistribution
-        ), "sys_noise must be an instance of VMFDistribution."
+        ), "sys_noise must be an instance of VonMisesFisherDistribution."
         self.filter_state = self.filter_state.convolve(sys_noise)
 
     def update_identity(self, meas_noise, z):
@@ -38,7 +38,7 @@ class VonMisesFisherFilter(AbstractHypersphericalFilter):
         """
         assert isinstance(
             meas_noise, VonMisesFisherDistribution
-        ), "meas_noise must be an instance of VMFDistribution."
+        ), "meas_noise must be an instance of VonMisesFisherDistribution."
         assert (
             meas_noise.mu[-1] == 1
         ), "Set mu of meas_noise to [0,0,...,1] to acknowledge that the mean is discarded."
