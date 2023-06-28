@@ -38,7 +38,9 @@ class CustomHemisphericalDistribution(
                 + "Using numerical integration to calculate the normalization constant."
             )
             warnings.warn(warning_message, category=UserWarning)
-            chhd_unnorm = CustomHyperhemisphericalDistribution(distribution.pdf, distribution.dim)
+            chhd_unnorm = CustomHyperhemisphericalDistribution(
+                distribution.pdf, distribution.dim
+            )
             norm_const_inv = chhd_unnorm.integrate()
             chsd = CustomHemisphericalDistribution(distribution.pdf)
             chsd.scale_by = 1 / norm_const_inv

@@ -63,15 +63,21 @@ class CustomHyperhemisphericalDistribution(
         :raises ValueError: if the type of dist is not supported.
         """
         if isinstance(distribution, AbstractHyperhemisphericalDistribution):
-            return CustomHyperhemisphericalDistribution(distribution.pdf, distribution.dim)
+            return CustomHyperhemisphericalDistribution(
+                distribution.pdf, distribution.dim
+            )
 
         if isinstance(distribution, BinghamDistribution):
-            chhd = CustomHyperhemisphericalDistribution(distribution.pdf, distribution.dim)
+            chhd = CustomHyperhemisphericalDistribution(
+                distribution.pdf, distribution.dim
+            )
             chhd.scale_by = 2
             return chhd
 
         if isinstance(distribution, AbstractHypersphericalDistribution):
-            chhd_unnorm = CustomHyperhemisphericalDistribution(distribution.pdf, distribution.dim)
+            chhd_unnorm = CustomHyperhemisphericalDistribution(
+                distribution.pdf, distribution.dim
+            )
             norm_const_inv = chhd_unnorm.integrate()
             return CustomHyperhemisphericalDistribution(
                 distribution.pdf / norm_const_inv, distribution.dim
