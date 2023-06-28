@@ -25,7 +25,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             mu[:bound_dim] = np.mod(mu[:bound_dim], 2 * np.pi)
 
         AbstractHypercylindricalDistribution.__init__(
-            self, bound_dim=bound_dim, lin_dim=mu.shape[0] - bound_dim
+            self, bound_dim=bound_dim, lin_dim=np.size(mu) - bound_dim
         )
 
         self.mu = mu
