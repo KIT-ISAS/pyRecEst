@@ -48,8 +48,9 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         array: n von Mises-Fisher distributed random vectors.
         # Requires scipy 1.11 or later
         """
-        
+
         from scipy.stats import vonmises_fisher
+
         # Create a von Mises-Fisher distribution object
         vmf = vonmises_fisher(self.mu, self.kappa)
 
