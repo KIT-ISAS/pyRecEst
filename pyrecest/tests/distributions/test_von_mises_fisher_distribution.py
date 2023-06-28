@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from pyrecest.distributions import VMFDistribution
+from pyrecest.distributions import VonMisesFisherDistribution
 
 vectors_to_test_2d = np.array(
     [
@@ -15,16 +15,16 @@ vectors_to_test_2d = np.array(
 )
 
 
-class TestVMFDistribution(unittest.TestCase):
+class TestVonMisesFisherDistribution(unittest.TestCase):
     def setUp(self):
         self.mu = np.array([1, 2, 3])
         self.mu = self.mu / np.linalg.norm(self.mu)
         self.kappa = 2
-        self.vmf = VMFDistribution(self.mu, self.kappa)
-        self.other = VMFDistribution(np.array([0, 0, 1]), self.kappa / 3)
+        self.vmf = VonMisesFisherDistribution(self.mu, self.kappa)
+        self.other = VonMisesFisherDistribution(np.array([0, 0, 1]), self.kappa / 3)
 
     def test_vmf_distribution_3d_sanity_check(self):
-        self.assertIsInstance(self.vmf, VMFDistribution)
+        self.assertIsInstance(self.vmf, VonMisesFisherDistribution)
         self.assertTrue(np.allclose(self.vmf.mu, self.mu))
         self.assertEqual(self.vmf.kappa, self.kappa)
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
@@ -56,9 +56,9 @@ class TestVMFDistribution(unittest.TestCase):
         self.assertTrue(np.allclose(vmf_conv.mu, self.vmf.mu, atol=1e-10))
         d = 3
         self.assertAlmostEqual(
-            VMFDistribution.a_d(d, vmf_conv.kappa),
-            VMFDistribution.a_d(d, self.vmf.kappa)
-            * VMFDistribution.a_d(d, self.other.kappa),
+            VonMisesFisherDistribution.a_d(d, vmf_conv.kappa),
+            VonMisesFisherDistribution.a_d(d, self.vmf.kappa)
+            * VonMisesFisherDistribution.a_d(d, self.other.kappa),
             delta=1e-10,
         )
 
@@ -66,21 +66,21 @@ class TestVMFDistribution(unittest.TestCase):
         mu = np.array([1, 1, 2])
         mu = mu / np.linalg.norm(mu)
         kappa = 10
-        dist = VMFDistribution(mu, kappa)
+        dist = VonMisesFisherDistribution(mu, kappa)
         np.testing.assert_array_almost_equal(dist.C, 7.22562325261744e-05)
 
     def test_init_3d(self):
         mu = np.array([1, 1, 2, -3])
         mu = mu / np.linalg.norm(mu)
         kappa = 2
-        dist = VMFDistribution(mu, kappa)
+        dist = VonMisesFisherDistribution(mu, kappa)
         np.testing.assert_array_almost_equal(dist.C, 0.0318492506152322)
 
     def test_pdf_2d(self):
         mu = np.array([1, 1, 2])
         mu = mu / np.linalg.norm(mu)
         kappa = 10
-        dist = VMFDistribution(mu, kappa)
+        dist = VonMisesFisherDistribution(mu, kappa)
 
         np.testing.assert_array_almost_equal(
             dist.pdf(vectors_to_test_2d),
@@ -100,7 +100,7 @@ class TestVMFDistribution(unittest.TestCase):
         mu = np.array([1, 1, 2, -3])
         mu = mu / np.linalg.norm(mu)
         kappa = 2
-        dist = VMFDistribution(mu, kappa)
+        dist = VonMisesFisherDistribution(mu, kappa)
 
         xs_unnorm = np.array(
             [
@@ -138,7 +138,7 @@ class TestVMFDistribution(unittest.TestCase):
 
     def test_mean_direction(self):
         mu = 1 / np.sqrt(2) * np.array([1, 1, 0])
-        vmf = VMFDistribution(mu, 1)
+        vmf = VonMisesFisherDistribution(mu, 1)
         self.assertTrue(np.allclose(vmf.mean_direction(), mu, atol=1e-13))
 
     def _test_hellinger_distance_helper(
@@ -159,15 +159,15 @@ class TestVMFDistribution(unittest.TestCase):
 
     def test_hellinger_distance_2d(self):
         # 2D
-        vmf1 = VMFDistribution(np.array([1, 0]), 0.9)
-        vmf2 = VMFDistribution(np.array([0, 1]), 1.7)
+        vmf1 = VonMisesFisherDistribution(np.array([1, 0]), 0.9)
+        vmf2 = VonMisesFisherDistribution(np.array([0, 1]), 1.7)
         self._test_hellinger_distance_helper(vmf1, vmf2)
 
     def test_hellinger_distance_3d(self):
         # 3D
-        vmf1 = VMFDistribution(np.array([1, 0, 0]), 0.6)
+        vmf1 = VonMisesFisherDistribution(np.array([1, 0, 0]), 0.6)
         mu2 = np.array([1, 2, 3])
-        vmf2 = VMFDistribution(mu2 / np.linalg.norm(mu2), 2.1)
+        vmf2 = VonMisesFisherDistribution(mu2 / np.linalg.norm(mu2), 2.1)
         self._test_hellinger_distance_helper(vmf1, vmf2, numerical_delta=1e-6)
 
 
