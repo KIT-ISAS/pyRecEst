@@ -19,4 +19,3 @@ class AbstractLinPeriodicCartProdDistribution(AbstractLinBoundedCartProdDistribu
             self.lin_dim > 0
         ), "This class is not intended to be used for purely periodic domains."
         return np.inf
-    

@@ -33,8 +33,7 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         curr_ind = 0
         for dist in self.dists:
             new_dists.append(
-                dist.set_mode(
-                    new_mode[curr_ind : curr_ind + dist.dim]) # noqa: E203
+                dist.set_mode(new_mode[curr_ind : curr_ind + dist.dim])  # noqa: E203
             )
             curr_ind += dist.dim
         return CartProdStackedDistribution(new_dists)

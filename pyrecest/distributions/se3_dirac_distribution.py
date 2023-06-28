@@ -41,6 +41,7 @@ class SE3DiracDistribution(
         ), "n_particles must be a positive integer"
 
         ddist = SE3DiracDistribution(
-            distribution.sample(n_particles), 1 / n_particles * np.ones((1, n_particles))
+            distribution.sample(n_particles),
+            1 / n_particles * np.ones((1, n_particles)),
         )
         return ddist

@@ -260,7 +260,6 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         raise NotImplementedError("Method is not implemented yet.")
 
     def entropy_numerical(self):
-
         def entropy_f_gen():
             def f(points):
                 return self.pdf(points) * np.log(self.pdf(points))
