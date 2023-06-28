@@ -259,12 +259,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def mode_numerical(self):
         raise NotImplementedError("Method is not implemented yet.")
 
-    def entropy_numerical(self, integration_boundaries=None):
-        if integration_boundaries is None:
-            integration_boundaries = self.__class__.get_full_integration_boundaries(
-                self.dim
-            )
-
+    def entropy_numerical(self):
         def entropy_f_gen():
             def f(points):
                 return self.pdf(points) * np.log(self.pdf(points))
