@@ -279,14 +279,14 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     @staticmethod
     @beartype
     def from_distribution(
-        dist: AbstractCircularDistribution,
+        distribution: AbstractCircularDistribution,
         n: int | np.int32 | np.int64,
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
-        if isinstance(dist, CircularDiracDistribution):
+        if isinstance(distribution, CircularDiracDistribution):
             fd = CircularFourierDistribution(
-                np.conj(dist.trigonometric_moment(n, whole_range=True)) / (2 * np.pi),
+                np.conj(distribution.trigonometric_moment(n, whole_range=True)) / (2 * np.pi),
                 transformation,
                 multiplied_by_n=False,
             )
@@ -295,7 +295,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 fd.c = fd.c * fd.n
         else:
             xs = np.linspace(0, 2 * np.pi, n + 1)
-            fvals = dist.pdf(xs[:-1])
+            fvals = distribution.pdf(xs[:-1])
             if transformation == "identity":
                 pass
             elif transformation == "sqrt":

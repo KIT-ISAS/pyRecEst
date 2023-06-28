@@ -54,27 +54,27 @@ class CustomHyperhemisphericalDistribution(
 
     @staticmethod
     @beartype
-    def from_distribution(dist: "AbstractHypersphericalDistribution"):
+    def from_distribution(distribution: "AbstractHypersphericalDistribution"):
         """
         Create a CustomHyperhemisphericalDistribution from another distribution.
 
-        :param dist: the distribution from which the CustomHyperhemisphericalDistribution will be created.
+        :param distribution: the distribution from which the CustomHyperhemisphericalDistribution will be created.
         :return: CustomHyperhemisphericalDistribution: the resulting distribution.
         :raises ValueError: if the type of dist is not supported.
         """
-        if isinstance(dist, AbstractHyperhemisphericalDistribution):
-            return CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
+        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
+            return CustomHyperhemisphericalDistribution(distribution.pdf, distribution.dim)
 
-        if isinstance(dist, BinghamDistribution):
-            chhd = CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
+        if isinstance(distribution, BinghamDistribution):
+            chhd = CustomHyperhemisphericalDistribution(distribution.pdf, distribution.dim)
             chhd.scale_by = 2
             return chhd
 
-        if isinstance(dist, AbstractHypersphericalDistribution):
-            chhd_unnorm = CustomHyperhemisphericalDistribution(dist.pdf, dist.dim)
+        if isinstance(distribution, AbstractHypersphericalDistribution):
+            chhd_unnorm = CustomHyperhemisphericalDistribution(distribution.pdf, distribution.dim)
             norm_const_inv = chhd_unnorm.integrate()
             return CustomHyperhemisphericalDistribution(
-                dist.pdf / norm_const_inv, dist.dim
+                distribution.pdf / norm_const_inv, distribution.dim
             )
 
-        raise ValueError("Input variable dist is of wrong class.")
+        raise ValueError("Input variable distribution is of the wrong class.")
