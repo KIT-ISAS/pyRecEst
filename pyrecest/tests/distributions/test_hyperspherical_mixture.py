@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
     HypersphericalMixture,
-    VMFDistribution,
+    VonMisesFisherDistribution,
     WatsonDistribution,
 )
 
@@ -13,7 +13,7 @@ from pyrecest.distributions import (
 class HypersphericalMixtureTest(unittest.TestCase):
     def test_pdf_3d(self):
         wad = WatsonDistribution(np.array([0, 0, 1]), -10)
-        vmf = VMFDistribution(np.array([0, 0, 1]), 1)
+        vmf = VonMisesFisherDistribution(np.array([0, 0, 1]), 1)
         w = [0.3, 0.7]
         smix = HypersphericalMixture([wad, vmf], w)
 
@@ -32,7 +32,7 @@ class HypersphericalMixtureTest(unittest.TestCase):
 
     def test_pdf_4d(self):
         wad = WatsonDistribution(np.array([0, 0, 0, 1]), -10)
-        vmf = VMFDistribution(np.array([0, 1, 0, 0]), 1)
+        vmf = VonMisesFisherDistribution(np.array([0, 1, 0, 0]), 1)
         w = [0.3, 0.7]
         smix = HypersphericalMixture([wad, vmf], w)
 
