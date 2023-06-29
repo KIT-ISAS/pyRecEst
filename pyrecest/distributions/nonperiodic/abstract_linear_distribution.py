@@ -31,10 +31,16 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def mode_numerical(self, starting_point=None):
         if starting_point is None:
-            starting_point = self.sample(1)
+            # Ensure 1-D for minimize
+            starting_point = np.squeeze(self.sample(1))
 
         def neg_pdf(x):
             return -self.pdf(x)
+
+        assert np.ndim(starting_point) <= 1, "Starting point must be a 1D array"
+        starting_point = np.atleast_1d(
+            starting_point
+        )  # Avoid numpy warning "DeprecationWarning: Use of `minimize` with `x0.ndim != 1` is deprecated"
 
         result = minimize(neg_pdf, starting_point, method="L-BFGS-B")
         return result.x
@@ -162,7 +168,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     @staticmethod
     def integrate_fun_over_domain(f, dim, left, right):
         def f_for_nquad(*args):
-            return f(np.array(args).reshape(-1, dim))
+            # Avoid DeprecationWarning: Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future.
+            return np.squeeze(f(np.array(args).reshape(-1, dim)))
 
         if dim == 1:
             result, _ = quad(f, left, right)
