@@ -79,7 +79,6 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         return s
 
     def convolve(self, twn2: "HypertoroidalWrappedNormalDistribution"):
-
         mu_ = (self.mu + twn2.mu) % (2 * np.pi)
         C_ = self.C + twn2.C
         dist_result = self.__class__(mu_, C_)
