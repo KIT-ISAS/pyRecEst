@@ -78,6 +78,12 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         s = np.mod(s, 2 * np.pi)  # wrap the samples
         return s
 
+    def convolve(self, twn2: "HypertoroidalWrappedNormalDistribution"):
+        mu_ = (self.mu + twn2.mu) % (2 * np.pi)
+        C_ = self.C + twn2.C
+        dist_result = self.__class__(mu_, C_)
+        return dist_result
+
     def set_mode(self, m):
         """
         Set the mode of the distribution.
