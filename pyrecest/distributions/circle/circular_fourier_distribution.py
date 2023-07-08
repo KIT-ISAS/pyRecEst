@@ -218,8 +218,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         plt.show()
 
     @beartype
-    def plot(self, plot_string: str = "-", **kwargs):
-        xs = np.linspace(0, 2 * np.pi, 100).reshape([100, 1])
+    def plot(self, resolution=128, **kwargs):
+        xs = np.linspace(0, 2 * np.pi, resolution)
 
         if self.a is not None:
             xs = xs.astype(self.a.dtype)
@@ -228,10 +228,10 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
         pdf_vals = self.pdf(xs)
 
-        plt.plot(xs, pdf_vals, plot_string, **kwargs)
+        p = plt.plot(xs, pdf_vals, **kwargs)
         plt.show()
 
-        return np.max(pdf_vals)
+        return p
 
     def get_a_b(self) -> tuple[np.ndarray, np.ndarray]:
         if self.a is not None:

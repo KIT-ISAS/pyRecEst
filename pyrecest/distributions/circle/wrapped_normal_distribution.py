@@ -42,9 +42,9 @@ class WrappedNormalDistribution(
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
         xs = np.asarray(xs)
-        if xs.ndim == 0:
+        if np.ndim(xs) == 0:
             xs = np.array([xs])
-        n_inputs = xs.size
+        n_inputs = np.size(xs)
         result = np.zeros(n_inputs)
 
         # check if sigma is large and return uniform distribution in this case
