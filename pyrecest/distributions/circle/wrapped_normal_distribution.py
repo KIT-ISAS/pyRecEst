@@ -42,9 +42,9 @@ class WrappedNormalDistribution(
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
         xs = np.asarray(xs)
-        if xs.ndim == 0:
+        if np.ndim(xs) == 0:
             xs = np.array([xs])
-        n_inputs = xs.size
+        n_inputs = np.size(xs)
         result = np.zeros(n_inputs)
 
         # check if sigma is large and return uniform distribution in this case
@@ -117,20 +117,14 @@ class WrappedNormalDistribution(
     ) -> complex | np.ndarray:
         return np.exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
-    def multiply(self, wn2: "WrappedNormalDistribution") -> "WrappedNormalDistribution":
-        return self.multiply_vm(wn2)
+    def multiply(self, other: "WrappedNormalDistribution") -> "WrappedNormalDistribution":
+        return self.multiply_vm(other)
 
-    def multiply_vm(self, wn2):
+    def multiply_vm(self, other):
         vm1 = self.to_vm()
-        vm2 = wn2.to_vm()
+        vm2 = other.to_vm()
         vm = vm1.multiply(vm2)
         wn = vm.to_wn()
-        return wn
-
-    def convolve(self, wn2: "WrappedNormalDistribution") -> "WrappedNormalDistribution":
-        mu_ = np.mod(self.mu + wn2.mu, 2 * np.pi)
-        sigma_ = np.sqrt(self.sigma**2 + wn2.sigma**2)
-        wn = WrappedNormalDistribution(mu_, sigma_)
         return wn
 
     @beartype
