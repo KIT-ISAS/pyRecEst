@@ -303,13 +303,19 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 fvals = np.sqrt(fvals)
             else:
                 raise NotImplementedError("Transformation not supported.")
-            fd = CircularFourierDistribution.from_function_values(fvals, transformation, store_values_multiplied_by_n)
-            
+            fd = CircularFourierDistribution.from_function_values(
+                fvals, transformation, store_values_multiplied_by_n
+            )
+
         return fd
 
     @staticmethod
     @beartype
-    def from_function_values(fvals: np.ndarray, transformation: str = "sqrt", store_values_multiplied_by_n: bool = True) -> "CircularFourierDistribution":
+    def from_function_values(
+        fvals: np.ndarray,
+        transformation: str = "sqrt",
+        store_values_multiplied_by_n: bool = True,
+    ) -> "CircularFourierDistribution":
         c = rfft(fvals)
         if not store_values_multiplied_by_n:
             c = c * (1 / np.size(fvals))
@@ -320,5 +326,5 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             n=np.size(fvals),
             multiplied_by_n=store_values_multiplied_by_n,
         )
-        
+
         return fd
