@@ -94,7 +94,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
             return VonMisesDistribution.besselratio(v, t) - x
 
         start = 1
-        (kappa,) = fsolve(f, start, xtol=1e-40)
+        (kappa,) = fsolve(f, start)
         return kappa
 
     @beartype
