@@ -153,7 +153,6 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                 "disp": "notify-detailed",
                 "gtol": 1e-12,
                 "maxiter": 2000,
-                "xtol": 1e-12,
             },
         )
         m = AbstractHypersphereSubsetDistribution.polar_to_cart(result.x)
