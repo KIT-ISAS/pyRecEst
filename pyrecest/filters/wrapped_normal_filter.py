@@ -34,7 +34,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
     ):
         # pylint: disable=too-many-locals
         DEFAULT_TAU = 0.02
-        MINIMUM_LAMBDA = 0.001
+        MINIMUM_LAMBDA: float = 0.001
         tau = tau if tau else DEFAULT_TAU
         lambda_ = 1
         steps = 0
@@ -42,16 +42,16 @@ class WrappedNormalFilter(AbstractCircularFilter):
         while lambda_ > 0:
             wd = self.filter_state.to_dirac5()
             likelihood_vals = np.array([likelihood(z, x) for x in wd.d])
-            likelihood_vals_min, likelihood_vals_max = np.min(likelihood_vals), np.max(
-                likelihood_vals
-            )
+            likelihood_vals_min : np.number = np.min(likelihood_vals)
+            likelihood_vals_max : np.number = np.max(likelihood_vals)
 
             if likelihood_vals_max == 0:
                 raise ValueError(
                     "Progressive update failed because likelihood is 0 everywhere"
                 )
 
-            w_min, w_max = np.min(wd.w), np.max(wd.w)
+            w_min : np.number = np.min(wd.w)
+            w_max : np.number = np.max(wd.w)
 
             if likelihood_vals_min == 0 or w_min == 0:
                 raise ZeroDivisionError("Cannot perform division by zero")

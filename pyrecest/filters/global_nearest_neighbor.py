@@ -115,12 +115,12 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                             @ measurement_matrix.T
                             + cov_mats_meas[:, :, j]
                         )
-                        dists[i, j] = cdist(
+                        dists[i, j] = np.squeeze(cdist(
                             (measurement_matrix @ all_means_prior[:, i]).T[np.newaxis],
                             measurements[:, j].T[np.newaxis],
                             "mahalanobis",
                             VI=curr_cov_mahalanobis,
-                        )
+                        ))
         else:
             raise ValueError("Association scheme not recognized")
 
