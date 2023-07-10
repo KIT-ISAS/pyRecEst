@@ -161,10 +161,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         dist = 0.5 * self.integrate_fun_over_domain(total_variation_dist_fun, self.dim)
         return dist
 
-    def plot(self, resolution=None, **kwargs):
-        if resolution is None:
-            resolution = 128
-
+    def plot(self, resolution=128, **kwargs):
         if self.dim == 1:
             theta = np.linspace(0, 2 * np.pi, resolution)
             f_theta = self.pdf(theta)
