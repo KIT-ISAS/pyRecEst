@@ -117,7 +117,9 @@ class WrappedNormalDistribution(
     ) -> complex | np.ndarray:
         return np.exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
-    def multiply(self, other: "WrappedNormalDistribution") -> "WrappedNormalDistribution":
+    def multiply(
+        self, other: "WrappedNormalDistribution"
+    ) -> "WrappedNormalDistribution":
         return self.multiply_vm(other)
 
     def multiply_vm(self, other):
