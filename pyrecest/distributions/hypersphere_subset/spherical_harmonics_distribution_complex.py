@@ -52,7 +52,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
         coeff_mat_real = np.empty(self.coeff_mat.shape, dtype=float)
 
-        coeff_mat_real[0, 0] = self.coeff_mat[0, 0]
+        coeff_mat_real[0, 0] = np.real(self.coeff_mat[0, 0])
 
         for n in range(
             1, self.coeff_mat.shape[0]
@@ -72,7 +72,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
                         * np.real(self.coeff_mat[n, n + m])
                     )
                 else:  # m == 0
-                    coeff_mat_real[n, n] = self.coeff_mat[n, n]
+                    coeff_mat_real[n, n] = np.real(self.coeff_mat[n, n])
 
         shd = SphericalHarmonicsDistributionReal(
             np.real(coeff_mat_real), self.transformation
