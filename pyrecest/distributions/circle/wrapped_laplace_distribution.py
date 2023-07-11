@@ -1,5 +1,7 @@
 import numpy as np
+
 from .abstract_circular_distribution import AbstractCircularDistribution
+
 
 class WrappedLaplaceDistribution(AbstractCircularDistribution):
     def __init__(self, lambda_, kappa_):
@@ -12,13 +14,24 @@ class WrappedLaplaceDistribution(AbstractCircularDistribution):
         self.kappa = kappa_
 
     def trigonometric_moment(self, n):
-        return 1 / (1 - 1j * n / self.lambda_ / self.kappa) / (1 + 1j * n / (self.lambda_ / self.kappa))
-    
+        return (
+            1
+            / (1 - 1j * n / self.lambda_ / self.kappa)
+            / (1 + 1j * n / (self.lambda_ / self.kappa))
+        )
+
     def pdf(self, xs):
         assert np.ndim(xs) <= 1
         xs = np.mod(xs, 2 * np.pi)
-        p = self.lambda_ * self.kappa / (1 + self.kappa ** 2) * (
-            np.exp(-self.lambda_ * self.kappa * xs) / (1 - np.exp(-2 * np.pi * self.lambda_ * self.kappa)) +
-            np.exp(self.lambda_ / self.kappa * xs) / (np.exp(2 * np.pi * self.lambda_ / self.kappa) - 1))
+        p = (
+            self.lambda_
+            * self.kappa
+            / (1 + self.kappa**2)
+            * (
+                np.exp(-self.lambda_ * self.kappa * xs)
+                / (1 - np.exp(-2 * np.pi * self.lambda_ * self.kappa))
+                + np.exp(self.lambda_ / self.kappa * xs)
+                / (np.exp(2 * np.pi * self.lambda_ / self.kappa) - 1)
+            )
+        )
         return p
-
