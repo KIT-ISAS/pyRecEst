@@ -3,6 +3,12 @@ alpine-wheels/
 
 # For files generated when building SHTOOLS
 CMakeFiles
+# To prevent MegaLinter from checking in temporary files
+CMakeCache.txt
+CMakeLists.txt
+cmake_install.cmake
+requirements-dev_no_version.txt
+Makefile
 
 # Others
 *.bak

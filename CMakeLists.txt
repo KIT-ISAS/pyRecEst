@@ -1,8 +1,0 @@
-find_package(LAPACK)
-if(LAPACK_FOUND)
-  message("LAPACK found")
-  message("LAPACK include dirs: ${LAPACK_INCLUDE_DIRS}")
-  message("LAPACK libraries: ${LAPACK_LIBRARIES}")
-else()
-  message(FATAL_ERROR "LAPACK not found")
-endif()
