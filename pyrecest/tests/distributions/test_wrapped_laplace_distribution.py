@@ -28,6 +28,7 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
 
         def pdftemp(x):
             return sum(laplace(z) for z in x + 2 * np.pi * np.arange(-20, 21))
+
         for x in [0, 1, 2, 3, 4]:
             np.testing.assert_allclose(self.wl.pdf(x), pdftemp(x), rtol=1e-10)
 

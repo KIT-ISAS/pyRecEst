@@ -56,8 +56,10 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         # Define functions for testing
         def f1(x):
             return np.sum(x, axis=-1) == 3
+
         def f2(x):
             return 2 * np.ones(x.shape[0])
+
         def f3(x):
             return x[:, 0]
 

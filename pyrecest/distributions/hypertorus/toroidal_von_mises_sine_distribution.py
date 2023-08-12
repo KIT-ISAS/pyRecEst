@@ -21,7 +21,13 @@ class ToroidalVonMisesSineDistribution(AbstractToroidalDistribution):
     @property
     def norm_const(self):
         def s(m):
-            return comb(2 * m, m) * (self.lambda_ ** 2 / 4 / self.kappa[0] / self.kappa[1]) ** m * iv(m, self.kappa[0]) * iv(m, self.kappa[1])
+            return (
+                comb(2 * m, m)
+                * (self.lambda_**2 / 4 / self.kappa[0] / self.kappa[1]) ** m
+                * iv(m, self.kappa[0])
+                * iv(m, self.kappa[1])
+            )
+
         Cinv = 4 * np.pi**2 * np.sum([s(m) for m in range(11)])
         return Cinv
 
