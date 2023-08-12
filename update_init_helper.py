@@ -5,11 +5,11 @@ be copied from the old file. This file is for developers only and not executed
 automatically. Therefore, it is okay to accept the risk of using the subprocess
 module and using partial executable paths.
 """
-import os
-import pkgutil
-import subprocess # nosec
 import importlib
 import inspect
+import os
+import pkgutil
+import subprocess  # nosec
 
 # The name of the package
 package_name = "pyrecest.distributions"
