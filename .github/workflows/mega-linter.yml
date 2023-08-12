@@ -115,7 +115,6 @@ jobs:
               cd ..
               mv SHTOOLS/dist/*.whl ./alpine-wheels/
               rm -rf SHTOOLS
-              rm -rf CMakeFiles
             elif ! pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels > /dev/null 2>&1; then
               echo "No compatible wheel for $package found, building..."
               pip wheel --wheel-dir=./alpine-wheels "$package"
@@ -128,25 +127,22 @@ jobs:
       - name: List available wheels
         run: ls -l ./alpine-wheels
 
+      - name: Clean up temporary files (in case they are generated)
+        run: rm -rf CMakeFiles CMakeCache.txt cmake_install.cmake Makefile
+
       # MegaLinter
       - name: MegaLinter
         id: ml
         # You can override MegaLinter flavor used to have faster performances
-        # More info at https://megalinter.io/flavors/
-        uses: oxsecurity/megalinter/flavors/python@v7.1.0
+        # More info at https://megalinter.io/latest/configuration/#shared-variables
+        uses: oxsecurity/megalinter/flavors/python@v7.3.0
         env:
           # All available variables are described in documentation
-          # https://megalinter.io/configuration/
-          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Validates all source when push on main, else just the git diff with main. Override with true if you always want to lint all sources
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # https://megalinter.io/latest/configuration/#shared-variables
           # ADD YOUR CUSTOM ENV VARIABLES HERE OR DEFINE THEM IN A FILE .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY
-          # DISABLE: COPYPASTE,SPELL # Uncomment to disable copy-paste and spell checks
-        #with:
-        #  args: -v ${{ github.workspace }}/cache-directory:/cache-directory
-
-      #- name: List cache-directory contents
-      #  if: ${{ success() }} || ${{ failure() }}
-      #  run: ls -la ${{ github.workspace }}/cache-directory
+          VALIDATE_ALL_CODEBASE: true #  ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Validates all source when push on main, else just the git diff with main. Override with true if you always want to lint all sources
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EMAIL_REPORTER_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
 
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
@@ -161,7 +157,7 @@ jobs:
       # Create pull request if applicable (for now works only on PR from same repository, not from forks)
       - name: Create Pull Request with applied fixes
         id: cpr
-        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
@@ -169,17 +165,17 @@ jobs:
           title: "[MegaLinter] Apply linters automatic fixes"
           labels: bot
       - name: Create PR output
-        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
         run: |
           echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
           echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
 
       # Push new commit if applicable (for now works only on PR from same repository, not from forks)
       - name: Prepare commit
-        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
         run: sudo chown -Rc $UID .git/
       - name: Commit and push applied linter fixes
-        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           branch: ${{ github.event.pull_request.head.ref || github.head_ref || github.ref }}

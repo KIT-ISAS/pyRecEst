@@ -161,14 +161,11 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         dist = 0.5 * self.integrate_fun_over_domain(total_variation_dist_fun, self.dim)
         return dist
 
-    def plot(self, *args, resolution=None):
-        if resolution is None:
-            resolution = 128
-
+    def plot(self, resolution=128, **kwargs):
         if self.dim == 1:
             theta = np.linspace(0, 2 * np.pi, resolution)
             f_theta = self.pdf(theta)
-            p = plt.plot(theta, f_theta, *args)
+            p = plt.plot(theta, f_theta, **kwargs)
             AbstractHypertoroidalDistribution.setup_axis_circular("x")
         elif self.dim == 2:
             step = 2 * np.pi / resolution
@@ -177,7 +174,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             )
             f = self.pdf(np.vstack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
-            p = plt.contourf(alpha, beta, f, *args)
+            p = plt.contourf(alpha, beta, f, **kwargs)
             AbstractHypertoroidalDistribution.setup_axis_circular("x")
             AbstractHypertoroidalDistribution.setup_axis_circular("y")
         elif self.dim == 3:

@@ -160,12 +160,12 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             integration_boundaries is None
         ), "Currently, only supported for entire domain."
         if self.a is not None and self.b is not None:
+            a: np.ndarray = self.a
+            b: np.ndarray = self.b
             if self.multiplied_by_n:
-                a = self.a * (1 / self.n)
-                b = self.b * (1 / self.n)
-            else:
-                a = self.a
-                b = self.b
+                a = a * (1 / self.n)
+                b = b * (1 / self.n)
+
             if self.transformation == "identity":
                 a0_non_rooted = a[0]
             elif self.transformation == "sqrt":
@@ -218,8 +218,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         plt.show()
 
     @beartype
-    def plot(self, plot_string: str = "-", **kwargs):
-        xs = np.linspace(0, 2 * np.pi, 100).reshape([100, 1])
+    def plot(self, resolution=128, **kwargs):
+        xs = np.linspace(0, 2 * np.pi, resolution)
 
         if self.a is not None:
             xs = xs.astype(self.a.dtype)
@@ -228,10 +228,10 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
         pdf_vals = self.pdf(xs)
 
-        plt.plot(xs, pdf_vals, plot_string, **kwargs)
+        p = plt.plot(xs, pdf_vals, **kwargs)
         plt.show()
 
-        return np.max(pdf_vals)
+        return p
 
     def get_a_b(self) -> tuple[np.ndarray, np.ndarray]:
         if self.a is not None:
@@ -295,22 +295,36 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 warnings.warn("Scaling up for WD (this is not recommended).")
                 fd.c = fd.c * fd.n
         else:
-            xs = np.linspace(0, 2 * np.pi, n + 1)
-            fvals = distribution.pdf(xs[:-1])
+            xs = np.linspace(0, 2 * np.pi, n, endpoint=False)
+            fvals = distribution.pdf(xs)
             if transformation == "identity":
                 pass
             elif transformation == "sqrt":
                 fvals = np.sqrt(fvals)
             else:
                 raise NotImplementedError("Transformation not supported.")
-            c = rfft(fvals)
-            if not store_values_multiplied_by_n:
-                c = c * (1 / n)
-
-            fd = CircularFourierDistribution(
-                c=c,
-                transformation=transformation,
-                n=n,
-                multiplied_by_n=store_values_multiplied_by_n,
+            fd = CircularFourierDistribution.from_function_values(
+                fvals, transformation, store_values_multiplied_by_n
             )
+
+        return fd
+
+    @staticmethod
+    @beartype
+    def from_function_values(
+        fvals: np.ndarray,
+        transformation: str = "sqrt",
+        store_values_multiplied_by_n: bool = True,
+    ) -> "CircularFourierDistribution":
+        c = rfft(fvals)
+        if not store_values_multiplied_by_n:
+            c = c * (1 / np.size(fvals))
+
+        fd = CircularFourierDistribution(
+            c=c,
+            transformation=transformation,
+            n=np.size(fvals),
+            multiplied_by_n=store_values_multiplied_by_n,
+        )
+
         return fd
