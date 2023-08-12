@@ -73,7 +73,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def marginalize_out(self, dimensions):
-        if type(dimensions) is int:  # Make it iterable if single integer
+        if isinstance(dimensions, int):  # Make it iterable if single integer
             dimensions = [dimensions]
         assert all(dim <= self.dim for dim in dimensions)
         remaining_dims = [i for i in range(self.dim) if i not in dimensions]
