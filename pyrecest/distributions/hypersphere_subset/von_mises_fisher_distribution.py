@@ -81,7 +81,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         if R[0, 0] < 0:
             Q = -Q
         return Q
-    
+
     @staticmethod
     @beartype
     def from_distribution(d: AbstractHypersphericalDistribution):

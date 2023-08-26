@@ -169,7 +169,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         mu2 = np.array([1, 2, 3])
         vmf2 = VonMisesFisherDistribution(mu2 / np.linalg.norm(mu2), 2.1)
         self._test_hellinger_distance_helper(vmf1, vmf2, numerical_delta=1e-6)
-      
+
     def test_from_distribution(self):
         v = VonMisesFisherDistribution.from_distribution(self.vmf)
         np.testing.assert_allclose(v.mu, self.vmf.mu, atol=1e-2)
