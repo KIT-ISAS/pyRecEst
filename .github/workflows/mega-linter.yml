@@ -132,9 +132,9 @@ jobs:
       - name: Build wheel for pyshtools
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
-          git clone https://github.com/FlorianPfaff/SHTOOLS.git
+          git clone https://github.com/SHTOOLS/SHTOOLS.git
           cd SHTOOLS
-          git checkout meson
+          git checkout develop
           source "$VENV_PATH/bin/activate"
           python -m build
           cd ..
