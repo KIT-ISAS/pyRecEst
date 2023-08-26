@@ -71,6 +71,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
                 KalmanFilter(filter_state) for filter_state in new_state
             ]
 
+        # pylint: disable=E1101
         if self.log_prior_estimates:
             self.store_prior_estimates()
 
@@ -104,6 +105,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
                 curr_sys_matrix, curr_sys_noise, curr_input
             )
 
+        # pylint: disable=E1101
         if self.log_prior_estimates:
             self.store_prior_estimates()
 
@@ -128,6 +130,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
                 self.filter_bank[i].update_linear(
                     measurements[:, association[i]], measurement_matrix, currMeasCov
                 )
+        # pylint: disable=E1101
         if self.log_posterior_estimates:
             self.store_posterior_estimates()
 
