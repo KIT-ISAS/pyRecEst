@@ -84,13 +84,20 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     @beartype
+    def from_distribution(d: AbstractHypersphericalDistribution):
+        assert d.input_dim >= 2, "mu must be at least 2 for the circular case"
+
+        m = d.mean_direction()
+        return VonMisesFisherDistribution.from_moment(m)
+
+    @staticmethod
+    @beartype
     def from_moment(m: np.ndarray):
-        assert m.shape == (len(m), 1), "mu must be a column vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
         mu_ = m / np.linalg.norm(m)
         Rbar = np.linalg.norm(m)
-        kappa_ = VonMisesFisherDistribution.a_d_inverse(len(m), Rbar)
+        kappa_ = VonMisesFisherDistribution.a_d_inverse(np.size(m), Rbar)
 
         V = VonMisesFisherDistribution(mu_, kappa_)
         return V
