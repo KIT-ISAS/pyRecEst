@@ -166,16 +166,18 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             kappa_old = kappa_
             ad_value = VonMisesFisherDistribution.a_d(d, kappa_old)
             if np.isnan(ad_value):
-                print(f"a_d returned NaN during iteration for d={d}, kappa_old={kappa_old}")
+                print(
+                    f"a_d returned NaN during iteration for d={d}, kappa_old={kappa_old}"
+                )
 
             kappa_ = kappa_old - (ad_value - x) / (
-                1
-                - ad_value ** 2
-                - (d - 1) / kappa_old * ad_value
+                1 - ad_value**2 - (d - 1) / kappa_old * ad_value
             )
 
             if np.isnan(kappa_):
-                print(f"kappa_ became NaN during iteration for d={d}, kappa_old={kappa_old}, x={x}")
+                print(
+                    f"kappa_ became NaN during iteration for d={d}, kappa_old={kappa_old}, x={x}"
+                )
 
             if np.abs(kappa_ - kappa_old) < epsilon:
                 break
