@@ -105,7 +105,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
                 curr_sys_matrix, curr_sys_noise, curr_input
             )
 
-        # pylint: disable=E1101 
+        # pylint: disable=E1101
         if self.log_prior_estimates:
             self.store_prior_estimates()
 

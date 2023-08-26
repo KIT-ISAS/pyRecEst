@@ -2,7 +2,6 @@ import unittest
 
 import numpy as np
 from parameterized import parameterized
-
 from pyrecest.distributions.nonperiodic.gaussian_distribution import (
     GaussianDistribution,
 )
@@ -67,30 +66,52 @@ class TestRandomMatrixTracker(unittest.TestCase):
             self.tracker.extent, expected_extent, decimal=5
         )
 
-    @parameterized.expand([
-        ("smaller", np.array([[0.1, 0], [0, 0.1], [-0.1, 0], [0, -0.1]]), "The extent should now be smaller since the measurements are closely spaced"),
-        ("larger", np.array([[1, 0], [0, 1], [-1, 0], [0, -1]]), "The extent should now be larger since the measurements are spaced more widely")
-    ])
+    @parameterized.expand(
+        [
+            (
+                "smaller",
+                np.array([[0.1, 0], [0, 0.1], [-0.1, 0], [0, -0.1]]),
+                "The extent should now be smaller since the measurements are closely spaced",
+            ),
+            (
+                "larger",
+                np.array([[1, 0], [0, 1], [-1, 0], [0, -1]]),
+                "The extent should now be larger since the measurements are spaced more widely",
+            ),
+        ]
+    )
     def test_update(self, name, offset, _):
         ys = np.array([self.initial_state + offset_row for offset_row in offset]).T
         Cv = np.array([[0.1, 0.0], [0.0, 0.1]])
         H = np.eye(np.size(self.initial_state))
-        
+
         # Call the update method
         self.tracker.update(ys, H, Cv)
-        
+
         # Check if state, state covariance, and extent are updated correctly. Use KF for comparison
-        kf = KalmanFilter(GaussianDistribution(self.initial_state, self.initial_covariance))
-        kf.update_linear(np.mean(ys, axis=1), H, (self.initial_extent+Cv)/ys.shape[1])
-        
-        np.testing.assert_array_almost_equal(self.tracker.state, kf.get_point_estimate(), decimal=5)
-        np.testing.assert_array_almost_equal(self.tracker.covariance, kf.filter_state.C, decimal=5)
-        
+        kf = KalmanFilter(
+            GaussianDistribution(self.initial_state, self.initial_covariance)
+        )
+        kf.update_linear(
+            np.mean(ys, axis=1), H, (self.initial_extent + Cv) / ys.shape[1]
+        )
+
+        np.testing.assert_array_almost_equal(
+            self.tracker.state, kf.get_point_estimate(), decimal=5
+        )
+        np.testing.assert_array_almost_equal(
+            self.tracker.covariance, kf.filter_state.C, decimal=5
+        )
+
         # Check if extent has changed as expected
         if name == "smaller":
-            np.testing.assert_array_less(np.zeros(2), np.linalg.eig(self.initial_extent - self.tracker.extent)[0])
+            np.testing.assert_array_less(
+                np.zeros(2), np.linalg.eig(self.initial_extent - self.tracker.extent)[0]
+            )
         elif name == "larger":
-            np.testing.assert_array_less(np.zeros(2), np.linalg.eig(self.tracker.extent - self.initial_extent)[0])
+            np.testing.assert_array_less(
+                np.zeros(2), np.linalg.eig(self.tracker.extent - self.initial_extent)[0]
+            )
         else:
             raise ValueError(f"Invalid test name: {name}")
 

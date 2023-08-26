@@ -2,13 +2,22 @@ from abc import abstractmethod
 
 from .abstract_tracker_with_logging import AbstractTrackerWithLogging
 
+
 # pylint: disable=too-many-instance-attributes
 class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
-    def __init__(self, log_prior_estimates=True, log_posterior_estimates=True, log_prior_extent=True, log_posterior_extent=True):
-        super().__init__(log_prior_estimates=log_prior_estimates, 
-                         log_posterior_estimates=log_posterior_estimates, 
-                         log_prior_extent=log_prior_extent, 
-                         log_posterior_extent=log_posterior_extent)
+    def __init__(
+        self,
+        log_prior_estimates=True,
+        log_posterior_estimates=True,
+        log_prior_extent=True,
+        log_posterior_extent=True,
+    ):
+        super().__init__(
+            log_prior_estimates=log_prior_estimates,
+            log_posterior_estimates=log_posterior_estimates,
+            log_prior_extent=log_prior_extent,
+            log_posterior_extent=log_posterior_extent,
+        )
 
     def store_prior_estimates(self):
         curr_ests = self.get_point_estimate()

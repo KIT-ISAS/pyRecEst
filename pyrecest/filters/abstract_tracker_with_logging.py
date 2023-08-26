@@ -1,5 +1,7 @@
 from abc import ABC
+
 import numpy as np
+
 
 class AbstractTrackerWithLogging(ABC):
     def __init__(self, **kwargs):
