@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 from pyrecest.distributions import VonMisesFisherDistribution
+from parameterized import parameterized
 
 vectors_to_test_2d = np.array(
     [
@@ -169,12 +170,20 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         mu2 = np.array([1, 2, 3])
         vmf2 = VonMisesFisherDistribution(mu2 / np.linalg.norm(mu2), 2.1)
         self._test_hellinger_distance_helper(vmf1, vmf2, numerical_delta=1e-6)
+    
 
-    def test_from_distribution(self):
-        v = VonMisesFisherDistribution.from_distribution(self.vmf)
-        np.testing.assert_allclose(v.mu, self.vmf.mu, atol=1e-2)
-        np.testing.assert_allclose(v.kappa, 0, atol=1e-2)
+    @parameterized.expand([
+        ("2D_case", np.array([-1, 0, 0]), 1.3),
+        ("3D_case", np.array([0, 1, 0, 0]), 0.5),
+    ])
+    def test_from_distribution(self, _, mu, kappa):
+        vmf1 = VonMisesFisherDistribution(mu, kappa)
+        vmf2 = VonMisesFisherDistribution.from_distribution(vmf1)
+        
+        np.testing.assert_allclose(vmf1.mu, vmf2.mu, rtol=1e-10)
+        np.testing.assert_allclose(vmf1.kappa, vmf2.kappa, rtol=1e-10)
 
-
+    
+    
 if __name__ == "__main__":
     unittest.main()

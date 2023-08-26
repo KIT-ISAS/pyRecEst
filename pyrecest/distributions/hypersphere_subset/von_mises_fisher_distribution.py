@@ -82,12 +82,20 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             Q = -Q
         return Q
 
+    @beartype
+    def moment(self) -> np.ndarray:
+        """
+        Returns the mean resultant vector.
+        """
+        r = self.a_d(self.input_dim, self.kappa) * self.mu
+        return r
+
     @staticmethod
     @beartype
     def from_distribution(d: AbstractHypersphericalDistribution):
-        assert d.input_dim >= 2, "mu must be at least 2 for the circular case"
+        assert d.input_dim >= 2, "mu must be at least 2-D for the circular case"
 
-        m = d.mean_direction()
+        m = d.moment()
         return VonMisesFisherDistribution.from_moment(m)
 
     @staticmethod
@@ -138,22 +146,37 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @staticmethod
     @beartype
     def a_d(d: int | np.int32 | np.int64, kappa: np.number | numbers.Real):
-        return iv(d / 2, kappa) / iv(d / 2 - 1, kappa)
+        bessel1 = iv(d / 2, kappa)
+        bessel2 = iv(d / 2 - 1, kappa)
+        if np.isnan(bessel1) or np.isnan(bessel2):
+            print(f"Bessel functions returned NaN for d={d}, kappa={kappa}")
+        return bessel1 / bessel2
 
     @staticmethod
     @beartype
     def a_d_inverse(d: int | np.int32 | np.int64, x: float):
         kappa_ = x * (d - x**2) / (1 - x**2)
+        if np.isnan(kappa_):
+            print(f"Initial kappa_ is NaN for d={d}, x={x}")
+
         max_steps = 20
         epsilon = 1e-7
 
         for _ in range(max_steps):
             kappa_old = kappa_
-            kappa_ = kappa_old - (VonMisesFisherDistribution.a_d(d, kappa_old) - x) / (
+            ad_value = VonMisesFisherDistribution.a_d(d, kappa_old)
+            if np.isnan(ad_value):
+                print(f"a_d returned NaN during iteration for d={d}, kappa_old={kappa_old}")
+
+            kappa_ = kappa_old - (ad_value - x) / (
                 1
-                - VonMisesFisherDistribution.a_d(d, kappa_old) ** 2
-                - (d - 1) / kappa_old * VonMisesFisherDistribution.a_d(d, kappa_old)
+                - ad_value ** 2
+                - (d - 1) / kappa_old * ad_value
             )
+
+            if np.isnan(kappa_):
+                print(f"kappa_ became NaN during iteration for d={d}, kappa_old={kappa_old}, x={x}")
+
             if np.abs(kappa_ - kappa_old) < epsilon:
                 break
 
