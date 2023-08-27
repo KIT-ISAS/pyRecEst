@@ -8,6 +8,10 @@ on: # yamllint disable-line rule:truthy
   pull_request:
     branches:
       - main
+  workflow_run:
+    workflows: ["MegaLinter"]
+    types:
+      - completed
 
 jobs:
   test:
