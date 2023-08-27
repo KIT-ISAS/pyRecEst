@@ -15,7 +15,6 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
         s = np.prod(np.diff(self.bounds, axis=1))
         return s
 
-
     @property
     def input_dim(self):
         return self.dim
