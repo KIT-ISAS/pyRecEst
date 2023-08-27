@@ -1,6 +1,7 @@
 import unittest
+
 import numpy as np
-from pyrecest.distributions import WatsonDistribution, BinghamDistribution
+from pyrecest.distributions import BinghamDistribution, WatsonDistribution
 
 
 class TestWatsonDistribution(unittest.TestCase):
@@ -27,10 +28,16 @@ class TestWatsonDistribution(unittest.TestCase):
         mu = mu / np.linalg.norm(mu)
         kappa = 2
         w = WatsonDistribution(mu, kappa)
-        
+
         expected_pdf_values = np.array(
-            [0.0388240901641662, 0.229710245437696, 0.0595974246790006,
-             0.121741272709942, 0.186880524436683, 0.186880524436683]
+            [
+                0.0388240901641662,
+                0.229710245437696,
+                0.0595974246790006,
+                0.121741272709942,
+                0.186880524436683,
+                0.186880524436683,
+            ]
         )
 
         pdf_values = w.pdf(self.xs)
@@ -49,7 +56,9 @@ class TestWatsonDistribution(unittest.TestCase):
         watson_dist = WatsonDistribution(mu, kappa)
         bingham_dist = watson_dist.to_bingham()
         self.assertIsInstance(bingham_dist, BinghamDistribution)
-        np.testing.assert_almost_equal(watson_dist.pdf(self.xs), bingham_dist.pdf(self.xs), decimal=5)
+        np.testing.assert_almost_equal(
+            watson_dist.pdf(self.xs), bingham_dist.pdf(self.xs), decimal=5
+        )
 
 
 if __name__ == "__main__":
