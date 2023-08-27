@@ -1,10 +1,16 @@
 import unittest
-
 import numpy as np
-from pyrecest.distributions import WatsonDistribution
+from pyrecest.distributions import WatsonDistribution, BinghamDistribution
 
 
 class TestWatsonDistribution(unittest.TestCase):
+    def setUp(self):
+        self.xs = np.array(
+            [[1, 0, 0], [1, 2, 2], [0, 1, 0], [0, 0, 1], [1, 1, 1], [-1, -1, -1]],
+            dtype=float,
+        )
+        self.xs = self.xs / np.linalg.norm(self.xs, axis=1, keepdims=True)
+
     def test_constructor(self):
         mu = np.array([1, 2, 3])
         mu = mu / np.linalg.norm(mu)
@@ -14,32 +20,20 @@ class TestWatsonDistribution(unittest.TestCase):
         self.assertIsInstance(w, WatsonDistribution)
         np.testing.assert_array_equal(w.mu, mu)
         self.assertEqual(w.kappa, kappa)
-        self.assertEqual(w.dim, len(mu) - 1)
+        self.assertEqual(w.input_dim, np.size(mu))
 
     def test_pdf(self):
         mu = np.array([1, 2, 3])
         mu = mu / np.linalg.norm(mu)
         kappa = 2
         w = WatsonDistribution(mu, kappa)
-
-        xs = np.array(
-            [[1, 0, 0], [1, 2, 2], [0, 1, 0], [0, 0, 1], [1, 1, 1], [-1, -1, -1]],
-            dtype=float,
-        )
-        xs = xs / np.linalg.norm(xs, axis=1, keepdims=True)
-
+        
         expected_pdf_values = np.array(
-            [
-                0.0388240901641662,
-                0.229710245437696,
-                0.0595974246790006,
-                0.121741272709942,
-                0.186880524436683,
-                0.186880524436683,
-            ]
+            [0.0388240901641662, 0.229710245437696, 0.0595974246790006,
+             0.121741272709942, 0.186880524436683, 0.186880524436683]
         )
 
-        pdf_values = w.pdf(xs)
+        pdf_values = w.pdf(self.xs)
         np.testing.assert_almost_equal(pdf_values, expected_pdf_values, decimal=5)
 
     def test_integrate(self):
@@ -47,9 +41,15 @@ class TestWatsonDistribution(unittest.TestCase):
         mu = mu / np.linalg.norm(mu)
         kappa = 2
         w = WatsonDistribution(mu, kappa)
-
-        # Test integral
         self.assertAlmostEqual(w.integrate(), 1, delta=1e-5)
+
+    def test_to_bingham(self):
+        mu = np.array([1.0, 0.0, 0.0])
+        kappa = 2.0
+        watson_dist = WatsonDistribution(mu, kappa)
+        bingham_dist = watson_dist.to_bingham()
+        self.assertIsInstance(bingham_dist, BinghamDistribution)
+        np.testing.assert_almost_equal(watson_dist.pdf(self.xs), bingham_dist.pdf(self.xs), decimal=5)
 
 
 if __name__ == "__main__":

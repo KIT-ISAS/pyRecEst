@@ -50,27 +50,18 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         return p
 
     def to_bingham(self) -> BinghamDistribution:
-        """
-        Converts the Watson distribution to a Bingham distribution.
-
-        Returns:
-            BinghamDistribution: The converted distribution.
-
-        Raises:
-            NotImplementedError: If kappa is less than 0.
-        """
         if self.kappa < 0:
             raise NotImplementedError(
                 "Conversion to Bingham is not implemented for kappa<0"
             )
 
-        M = np.tile(self.mu, (1, self.dim + 1))
-        E = np.eye(self.dim + 1)
+        M = np.tile(self.mu.reshape(-1, 1), (1, self.input_dim))
+        E = np.eye(self.input_dim)
         E[0, 0] = 0
         M = M + E
         Q, _ = qr(M)
         M = np.hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])
-        Z = np.vstack([np.full((self.dim, 1), -self.kappa), 0])
+        Z = np.hstack([np.full((self.dim), -self.kappa), 0])
         return BinghamDistribution(Z, M)
 
     def sample(self, n):
