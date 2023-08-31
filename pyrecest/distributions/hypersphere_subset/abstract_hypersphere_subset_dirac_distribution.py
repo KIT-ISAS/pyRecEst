@@ -21,5 +21,5 @@ class AbstractHypersphereSubsetDiracDistribution(
         result = -np.sum(self.w * np.log(self.w))
         return result
 
-    def integrate(self):
-        pass
+    def integrate(self, integration_boundaries=None):
+        raise NotImplementedError()
