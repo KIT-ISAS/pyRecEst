@@ -22,4 +22,4 @@ class AbstractHypersphereSubsetDiracDistribution(
         return result
 
     def integrate(self):
-        pass
+        raise NotImplementedError()

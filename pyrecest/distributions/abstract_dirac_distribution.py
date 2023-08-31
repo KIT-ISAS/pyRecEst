@@ -14,7 +14,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
     """
 
     @beartype
-    def __init__(self, d: np.ndarray, w: np.ndarray | float | np.float64 | None = None):
+    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
 
@@ -63,29 +63,28 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     @beartype
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
-        wNew = f(self.d)
+        dist = copy.deepcopy(self)
+        wNew = f(dist.d)
 
-        assert wNew.shape == (
-            self.d.shape[0],
-        ), "Function returned wrong number of outputs."
+        assert wNew.shape == dist.w.shape, "Function returned wrong output dimensions."
         assert np.all(wNew >= 0), "All weights should be greater than or equal to 0."
         assert np.sum(wNew) > 0, "The sum of all weights should be greater than 0."
 
-        self.w = wNew * self.w
-        self.w = self.w / np.sum(self.w)
+        dist.w = wNew * dist.w
+        dist.w = dist.w / np.sum(dist.w)
 
-        return self
+        return dist
 
     @beartype
     def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         ids = np.random.choice(np.size(self.w), size=n, p=self.w)
-        return self.d[ids] if self.d.ndim == 1 else self.d[ids, :]  # noqa: E203
+        return self.d[ids]
 
     def entropy(self) -> float:
         warnings.warn("Entropy is not defined in a continuous sense")
         return -np.sum(self.w * np.log(self.w))
 
-    def integrate(self, left=None, right=None) -> float:
+    def integrate(self, left=None, right=None) -> np.ndarray:
         assert (
             left is None and right is None
         ), "Must overwrite in child class to use integral limits"
