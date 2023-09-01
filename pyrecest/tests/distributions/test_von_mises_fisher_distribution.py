@@ -3,6 +3,8 @@ import unittest
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions import VonMisesFisherDistribution
+from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import HypersphericalDiracDistribution
+
 
 vectors_to_test_2d = np.array(
     [
@@ -177,12 +179,20 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
             ("3D_case", np.array([0, 1, 0, 0]), 0.5),
         ]
     )
-    def test_from_distribution(self, _, mu, kappa):
+    def test_from_distribution_vmf(self, _, mu, kappa):
         vmf1 = VonMisesFisherDistribution(mu, kappa)
         vmf2 = VonMisesFisherDistribution.from_distribution(vmf1)
 
         np.testing.assert_allclose(vmf1.mu, vmf2.mu, rtol=1e-10)
         np.testing.assert_allclose(vmf1.kappa, vmf2.kappa, rtol=1e-10)
+        
+    def test_from_distribution_dirac(self):
+        dirac_dist = HypersphericalDiracDistribution(
+            np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0],
+                      [0, 1, 1]/np.linalg.norm([0, 1, 1])]))
+        vmf = VonMisesFisherDistribution.from_distribution(dirac_dist)
+        
+        np.testing.assert_allclose(dirac_dist.mean(), vmf.mean())
 
 
 if __name__ == "__main__":
