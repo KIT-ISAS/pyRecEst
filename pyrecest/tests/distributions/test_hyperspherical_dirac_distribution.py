@@ -40,6 +40,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
     def test_reweigh_identity(self):
         def f(x):
             return 2 * np.ones(x.shape[0])
+
         twdNew = self.hdd.reweigh(f)
         self.assertIsInstance(twdNew, HypersphericalDiracDistribution)
         np.testing.assert_array_almost_equal(twdNew.d, self.hdd.d)
@@ -48,6 +49,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
     def test_reweigh_coord_based(self):
         def f(x):
             return x[:, 1]
+
         twdNew = self.hdd.reweigh(f)
         self.assertIsInstance(twdNew, HypersphericalDiracDistribution)
         np.testing.assert_array_almost_equal(twdNew.d, self.hdd.d)
