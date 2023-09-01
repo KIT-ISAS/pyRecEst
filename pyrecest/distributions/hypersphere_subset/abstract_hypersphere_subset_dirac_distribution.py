@@ -14,8 +14,8 @@ class AbstractHypersphereSubsetDiracDistribution(
         AbstractDiracDistribution.__init__(self, d, w=w)
 
     def moment(self):
-        C = self.d.T * self.w @ self.d
-        return C
+        m = self.w @ self.d
+        return m
 
     def entropy(self):
         result = -np.sum(self.w * np.log(self.w))
