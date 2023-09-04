@@ -14,11 +14,16 @@ def generate_groundtruth(x0, scenario_param):
         groundtruth (ndarray): Generated ground truth.
     """
 
-    assert np.ndim(x0) == 1 and scenario_param["n_targets"] == 1 or x0.shape[0] == scenario_param["n_targets"], "Mismatch in number of targets."
+    assert (
+        np.ndim(x0) == 1
+        and scenario_param["n_targets"] == 1
+        or x0.shape[0] == scenario_param["n_targets"]
+    ), "Mismatch in number of targets."
 
     # Initialize ground truth
     groundtruth = np.empty(
-        (scenario_param["timesteps"], scenario_param["n_targets"], x0.shape[-1]))
+        (scenario_param["timesteps"], scenario_param["n_targets"], x0.shape[-1])
+    )
 
     for target_no in range(scenario_param["n_targets"]):
         groundtruth[0, target_no, :] = x0

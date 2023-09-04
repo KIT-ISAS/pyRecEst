@@ -30,7 +30,11 @@ class TestEvalation(unittest.TestCase):
 
         self.assertEqual(len(measurements), timesteps)
         for i in range(timesteps):
-            self.assertEqual(measurements[i].shape[0], scenario_param["n_meas_at_individual_time_step"][i])
+            self.assertEqual(
+                measurements[i].shape[0],
+                scenario_param["n_meas_at_individual_time_step"][i],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

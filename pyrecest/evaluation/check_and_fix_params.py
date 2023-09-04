@@ -62,6 +62,8 @@ def check_and_fix_params(scenario_param):
             "timesteps"
         ]
 
-    assert isinstance(scenario_param["initial_prior"], AbstractManifoldSpecificDistribution)
+    assert isinstance(
+        scenario_param["initial_prior"], AbstractManifoldSpecificDistribution
+    )
 
     return scenario_param

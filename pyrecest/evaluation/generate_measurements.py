@@ -68,7 +68,9 @@ def generate_measurements(groundtruth, scenario_param):
                     2 * np.pi,
                 )
 
-            elif isinstance(meas_noise, (VonMisesFisherDistribution, WatsonDistribution)):
+            elif isinstance(
+                meas_noise, (VonMisesFisherDistribution, WatsonDistribution)
+            ):
                 curr_dist = meas_noise
                 curr_dist.mu = groundtruth[t - 1]
                 measurements[t] = curr_dist.sample(n_meas)
