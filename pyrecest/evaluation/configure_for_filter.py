@@ -1,5 +1,6 @@
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
+
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
 def configure_for_filter(
@@ -21,11 +22,16 @@ def configure_for_filter(
         configured_filter = KalmanFilter(scenario_param["initial_prior"])
 
         if scenario_param.get("inputs") is None:
+
             def prediction_routine():  # type: ignore
                 return configured_filter.predict_identity(scenario_param["sys_noise"])
+
         else:
+
             def prediction_routine(curr_input):  # type: ignore
-                return configured_filter.predict_identity(scenario_param["sys_noise"], curr_input)
+                return configured_filter.predict_identity(
+                    scenario_param["sys_noise"], curr_input
+                )
 
     elif filter_name == "twn":
         raise NotImplementedError("ToroidalWNFilter not implemented yet")
@@ -61,11 +67,20 @@ def configure_for_filter(
             configured_filter.set_state(scenario_param["initial_prior"])
 
             if "gen_next_state_with_noise" in scenario_param:
+
                 def prediction_routine():  # type: ignore
-                    return configured_filter.predict_nonlinear(scenario_param["gen_next_state_with_noise"], None, scenario_param.get("genNextStateWithNoiseIsVectorized", False))
+                    return configured_filter.predict_nonlinear(
+                        scenario_param["gen_next_state_with_noise"],
+                        None,
+                        scenario_param.get("genNextStateWithNoiseIsVectorized", False),
+                    )
+
             elif "sys_noise" in scenario_param:
+
                 def prediction_routine():  # type: ignore
-                    return configured_filter.predict_nonlinear(lambda x: x, scenario_param["sys_noise"], True)
+                    return configured_filter.predict_nonlinear(
+                        lambda x: x, scenario_param["sys_noise"], True
+                    )
 
         elif manifold_type in [
             "hypersphere",
