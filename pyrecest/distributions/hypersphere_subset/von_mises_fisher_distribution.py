@@ -101,6 +101,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @staticmethod
     @beartype
     def from_moment(m: np.ndarray):
+        assert np.ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
         mu_ = m / np.linalg.norm(m)
