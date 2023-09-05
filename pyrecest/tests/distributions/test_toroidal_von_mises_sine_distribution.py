@@ -38,8 +38,11 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         return np.exp(
             self.kappa[0] * np.cos(xs[..., 0] - self.mu[0])
             + self.kappa[1] * np.cos(xs[..., 1] - self.mu[1])
-            + self.lambda_ * np.sin(xs[..., 0] - self.mu[0]) * np.sin(xs[..., 1] - self.mu[1])
+            + self.lambda_
+            * np.sin(xs[..., 0] - self.mu[0])
+            * np.sin(xs[..., 1] - self.mu[1])
         )
+
     # jscpd:ignore-end
 
     @parameterized.expand(
@@ -49,7 +52,11 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
             (np.array([5, 6]),),
             (np.array([-3, 11]),),
             (np.array([[5, 1], [6, 3]]),),
-            (np.column_stack((np.arange(0, 2 * np.pi, 0.1), np.arange(1 * np.pi, 3 * np.pi, 0.1))),),
+            (
+                np.column_stack(
+                    (np.arange(0, 2 * np.pi, 0.1), np.arange(1 * np.pi, 3 * np.pi, 0.1))
+                ),
+            ),
         ]
     )
     def test_pdf(self, x):

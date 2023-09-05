@@ -36,6 +36,8 @@ class ToroidalVonMisesSineDistribution(AbstractToroidalDistribution):
         p = self.C * np.exp(
             self.kappa[0] * np.cos(xs[..., 0] - self.mu[0])
             + self.kappa[1] * np.cos(xs[..., 1] - self.mu[1])
-            + self.lambda_ * np.sin(xs[..., 0] - self.mu[0]) * np.sin(xs[..., 1] - self.mu[1])
+            + self.lambda_
+            * np.sin(xs[..., 0] - self.mu[0])
+            * np.sin(xs[..., 1] - self.mu[1])
         )
         return p
