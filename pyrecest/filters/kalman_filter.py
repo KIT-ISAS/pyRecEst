@@ -31,9 +31,7 @@ class KalmanFilter(AbstractEuclideanFilter):
     @property
     def filter_state(
         self,
-    ) -> (
-        GaussianDistribution
-    ):
+    ) -> GaussianDistribution:
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
 
     @filter_state.setter
@@ -99,8 +97,12 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param measurement: Measurement.
         :param meas_noise_cov: Measurement noise covariance.
         """
-        self.update_linear(measurement=measurement, measurement_matrix=np.eye(self.dim), meas_noise_cov=meas_noise_cov)
-        
+        self.update_linear(
+            measurement=measurement,
+            measurement_matrix=np.eye(self.dim),
+            meas_noise_cov=meas_noise_cov,
+        )
+
     @beartype
     def update_linear(
         self,
