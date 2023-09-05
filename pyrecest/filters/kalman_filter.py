@@ -57,7 +57,7 @@ class KalmanFilter(AbstractEuclideanFilter):
             )
 
     @beartype
-    def predict_identity(self, sys_noise_cov: np.ndarray, sys_input: np.ndarray=None):
+    def predict_identity(self, sys_noise_cov: np.ndarray, sys_input: np.ndarray = None):
         """
         Predicts the next state assuming identity transition matrix.
 
