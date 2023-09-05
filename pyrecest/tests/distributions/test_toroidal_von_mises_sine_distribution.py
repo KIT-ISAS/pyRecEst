@@ -32,12 +32,15 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
             self.tvm.trigonometric_moment_numerical(0), np.array([1, 1]), decimal=5
         )
 
-    def _unnormalized_pdf(self, x):
+    # jscpd:ignore-start
+    # pylint: disable=R0801
+    def _unnormalized_pdf(self, xs):
         return np.exp(
-            self.kappa[0] * np.cos(x[0] - self.mu[0])
-            + self.kappa[1] * np.cos(x[1] - self.mu[1])
-            + self.lambda_ * np.sin(x[0] - self.mu[0]) * np.sin(x[1] - self.mu[1])
+            self.kappa[0] * np.cos(xs[..., 0] - self.mu[0])
+            + self.kappa[1] * np.cos(xs[..., 1] - self.mu[1])
+            + self.lambda_ * np.sin(xs[..., 0] - self.mu[0]) * np.sin(xs[..., 1] - self.mu[1])
         )
+    # jscpd:ignore-end
 
     @parameterized.expand(
         [
@@ -46,6 +49,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
             (np.array([5, 6]),),
             (np.array([-3, 11]),),
             (np.array([[5, 1], [6, 3]]),),
+            (np.column_stack((np.arange(0, 2 * np.pi, 0.1), np.arange(1 * np.pi, 3 * np.pi, 0.1))),),
         ]
     )
     def test_pdf(self, x):
