@@ -43,8 +43,8 @@ class KalmanFilterTest(unittest.TestCase):
 
     def test_predict_identity_1d(self):
         kf = KalmanFilter((np.array([0]), np.array([[1]])))
-        kf.predict_identity(np.array(0), np.array(3))
-        self.assertEqual(kf.get_point_estimate(), 0)
+        kf.predict_identity(np.array([[3]]), np.array([1]))
+        self.assertEqual(kf.get_point_estimate(), 1)
         self.assertEqual(kf.filter_state.C, 4)
 
     def test_predict_linear_2d(self):

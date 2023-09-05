@@ -57,14 +57,16 @@ class KalmanFilter(AbstractEuclideanFilter):
             )
 
     @beartype
-    def predict_identity(self, sys_noise_mean: np.ndarray, sys_noise_cov: np.ndarray):
+    def predict_identity(self, sys_noise_cov: np.ndarray, sys_input: np.ndarray = None):
         """
         Predicts the next state assuming identity transition matrix.
 
         :param sys_noise_mean: System noise mean.
-        :param sys_noise_cov: System noise covariance.
+        :param sys_input: System noise covariance.
         """
-        self._filter_state.predict(Q=sys_noise_cov, u=sys_noise_mean)
+        system_matrix = np.eye(self._filter_state.x.shape[0])
+        B = np.eye(system_matrix.shape[0]) if sys_input is not None else None
+        self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
     @beartype
     def predict_linear(
