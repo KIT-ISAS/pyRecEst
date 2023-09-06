@@ -1,3 +1,4 @@
+import warnings
 from abc import abstractmethod
 
 import numpy as np
@@ -20,7 +21,13 @@ class LinBoundedCartProdDiracDistribution(
     def linear_mean(self):
         return self.marginalize_periodic().mean()
 
-    def linear_covariance(self):
+    def linear_covariance(
+        self, approximate_mean=False
+    ):  # This is just to be consistent with the interface
+        if approximate_mean:
+            warnings.warn(
+                "Formula for mean is trivial, so approximate_mean is ignored."
+            )
         return self.marginalize_periodic().covariance()
 
     @abstractmethod

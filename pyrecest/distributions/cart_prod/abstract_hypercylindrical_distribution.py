@@ -3,6 +3,8 @@ from abc import abstractmethod
 import numpy as np
 import scipy.integrate
 import scipy.optimize
+from beartype import beartype
+from scipy.integrate import nquad
 
 from ..hypertorus.custom_hypertoroidal_distribution import (
     CustomHypertoroidalDistribution,
@@ -22,6 +24,112 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
     @abstractmethod
     def pdf(self, xs):
         pass
+
+    def integrate(self, integration_boundaries=None):
+        return self.integrate_numerically(integration_boundaries)
+
+    def integrate_numerically(self, integration_boundaries=None):
+        if integration_boundaries is None:
+            integration_boundaries = self.get_reasonable_integration_boundaries()
+
+        def f(*args):
+            return self.pdf(np.array(args))
+
+        integration_result = nquad(f, integration_boundaries)[0]
+
+        return integration_result
+
+    @beartype
+    def get_reasonable_integration_boundaries(self, scalingFactor=10) -> np.ndarray:
+        """
+        Returns reasonable integration boundaries for the specific distribution
+        based on the mode and covariance.
+        """
+        left = np.empty((self.bound_dim + self.lin_dim, 1))
+        right = np.empty((self.bound_dim + self.lin_dim, 1))
+        P = self.linear_covariance()
+        m = self.mode()
+
+        for i in range(self.bound_dim, self.bound_dim + self.lin_dim):
+            left[i] = m[i] - scalingFactor * np.sqrt(
+                P[i - self.bound_dim, i - self.bound_dim]
+            )
+            right[i] = m[i] + scalingFactor * np.sqrt(
+                P[i - self.bound_dim, i - self.bound_dim]
+            )
+
+        return np.vstack((left, right))
+
+    def mode(self):
+        """Find the mode of the distribution by calling mode_numerical."""
+        return self.mode_numerical()
+
+    def linear_covariance(self, approximate_mean=None):
+        """
+        Calculates the linear covariance, or calls linear_covariance_numerical
+        if a non-numerical solution doesn't exist.
+
+        Parameters:
+        - approximate_mean : ndarray, optional
+          The approximate mean to be used. If None, uses NaNs to flag for calculation.
+
+        Returns:
+        - C : ndarray
+          The linear covariance.
+        """
+        if approximate_mean is None:
+            approximate_mean = np.full((self.lin_dim,), np.nan)
+
+        assert approximate_mean.shape[0] == self.lin_dim
+
+        return self.linear_covariance_numerical(approximate_mean)
+
+    def linear_covariance_numerical(self, approximate_mean=None):
+        """
+        Numerically calculates the linear covariance.
+
+        Parameters:
+        - approximate_mean : ndarray, optional
+          The approximate mean to be used. If None, calculates the mean.
+
+        Returns:
+        - C : ndarray
+          The linear covariance.
+        """
+        if approximate_mean is None or np.any(np.isnan(approximate_mean)):
+            approximate_mean = self.linear_mean_numerical()
+
+        if self.bound_dim == 1 and self.lin_dim == 1:
+            C, _ = nquad(
+                lambda x, y: (y - approximate_mean) ** 2 * self.pdf([x, y]),
+                [[0, 2 * np.pi], [-np.inf, np.inf]],
+            )
+        elif self.bound_dim == 2 and self.lin_dim == 1:
+            C, _ = nquad(
+                lambda x, y, z: (z - approximate_mean) ** 2 * self.pdf([x, y, z]),
+                [[0, 2 * np.pi], [0, 2 * np.pi], [-np.inf, np.inf]],
+            )
+        elif self.bound_dim == 1 and self.lin_dim == 2:
+            C = np.empty((2, 2))
+            C[0, 0], _ = nquad(
+                lambda x, y, z: (y - approximate_mean[0]) ** 2 * self.pdf([x, y, z]),
+                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+            )
+            C[0, 1], _ = nquad(
+                lambda x, y, z: (y - approximate_mean[0])
+                * (z - approximate_mean[1])
+                * self.pdf([x, y, z]),
+                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+            )
+            C[1, 0] = C[0, 1]
+            C[1, 1], _ = nquad(
+                lambda x, y, z: (z - approximate_mean[1]) ** 2 * self.pdf([x, y, z]),
+                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+            )
+        else:
+            raise ValueError("Cannot determine linear covariance for this dimension.")
+
+        return C
 
     def condition_on_linear(self, input_lin, normalize=True):
         """
@@ -117,27 +225,36 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         Parameters:
         starting_point : ndarray, optional
-            The starting point for the optimization. If None, uses [pi*ones(this.boundD,1);zeros(this.linD,1)]
+          The starting point for the optimization.
+          If None, uses [pi * ones(self.bound_dim); zeros(self.lin_dim)]
 
         Returns:
         m : ndarray
-            The mode of the distribution.
+          The mode of the distribution.
         """
         if starting_point is None:
             starting_point = np.concatenate(
-                [np.pi * np.ones((self.bound_dim)), np.zeros((self.lin_dim))]
+                [np.pi * np.ones(self.bound_dim), np.zeros(self.lin_dim)]
             )
 
+        # Define bounds for the optimization
         bounds = [
             (0, 2 * np.pi) if i < self.bound_dim else (-np.inf, np.inf)
-            for i in range(len(starting_point))
+            for i in range(self.bound_dim + self.lin_dim)
         ]
 
-        m = scipy.optimize.minimize(
+        # Perform the optimization
+        res = scipy.optimize.minimize(
             lambda x: -self.pdf(x), starting_point, bounds=bounds
-        ).x
+        )
 
-        return m
+        # Check if the optimization might have stopped early
+        if np.allclose(res.x, starting_point):
+            print(
+                "Warning: Mode was at the starting point. This may indicate the optimizer stopped early."
+            )
+
+        return res.x
 
     @property
     def input_dim(self):
