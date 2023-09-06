@@ -1,8 +1,7 @@
+import tempfile
 import unittest
 
 import numpy as np
-import tempfile
-
 from parameterized import parameterized
 from pyrecest.distributions import (
     GaussianDistribution,
@@ -153,15 +152,21 @@ class TestEvalation(unittest.TestCase):
         )
 
     def test_evaluation_R2_random_walk(self):
-        scenario_name = 'R2randomWalk'
+        scenario_name = "R2randomWalk"
         filters = [
-            {'name': 'kf', 'filter_params': None},
-            {'name': 'pf', 'filter_params': [51, 81]}
+            {"name": "kf", "filter_params": None},
+            {"name": "pf", "filter_params": [51, 81]},
         ]
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            results, groundtruths, scenario_param = start_evaluation(scenario_name, filters, self.n_runs_default, 
-                            initial_seed=1, auto_warning_on_off=False, save_folder=tmpdirname)
+            results, groundtruths, scenario_param = start_evaluation(
+                scenario_name,
+                filters,
+                self.n_runs_default,
+                initial_seed=1,
+                auto_warning_on_off=False,
+                save_folder=tmpdirname,
+            )
 
         self.assertIsNotNone(results)
         self.assertIsNotNone(groundtruths)
