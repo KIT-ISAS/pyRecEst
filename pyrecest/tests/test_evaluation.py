@@ -59,7 +59,7 @@ class TestEvalation(unittest.TestCase):
     def test_determine_all_deviations(self):
         def dummy_extract_mean(x):
             return x
-        
+
         def dummy_distance_function(x, y):
             return np.linalg.norm(x - y)
 
@@ -91,11 +91,13 @@ class TestEvalation(unittest.TestCase):
         # Validate some of the results
         np.testing.assert_allclose(
             # Should be zeros as the lastEstimates match groundtruths
-            all_deviations[0], [0, 0]
+            all_deviations[0],
+            [0, 0],
         )
         np.testing.assert_allclose(
             # Should be np.sqrt(2) away from groundtruths
-            all_deviations[1], [np.sqrt(3), np.sqrt(3)]
+            all_deviations[1],
+            [np.sqrt(3), np.sqrt(3)],
         )
 
     def test_configure_kf(self):

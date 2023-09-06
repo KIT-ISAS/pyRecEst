@@ -1,5 +1,6 @@
-import numpy as np
 import warnings
+
+import numpy as np
 
 
 def determine_all_deviations(
@@ -23,7 +24,9 @@ def determine_all_deviations(
             if "last_filter_states" not in result_curr_config:
                 final_estimate = result_curr_config["last_estimates"][run]
             elif callable(extract_mean):
-                final_estimate = extract_mean(result_curr_config["last_filter_states"][run])
+                final_estimate = extract_mean(
+                    result_curr_config["last_filter_states"][run]
+                )
             else:
                 raise ValueError("No compatible mean extraction function given.")
 
