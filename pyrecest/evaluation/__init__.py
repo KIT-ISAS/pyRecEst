@@ -1,5 +1,6 @@
 from .check_and_fix_params import check_and_fix_params
 from .configure_for_filter import configure_for_filter
+from .determine_all_deviations import determine_all_deviations
 from .generate_groundtruth import generate_groundtruth
 from .generate_measurements import generate_measurements
 from .get_axis_label import get_axis_label
@@ -18,6 +19,7 @@ __all__ = [
     "configure_for_filter",
     "perform_predict_update_cycles",
     "iterate_configs_and_runs",
+    "determine_all_deviations",
     "start_evaluation",
     "get_axis_label",
     "get_distance_function",
