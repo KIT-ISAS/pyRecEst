@@ -11,14 +11,13 @@ from pyrecest.evaluation import (
     configure_for_filter,
     generate_groundtruth,
     generate_measurements,
+    perform_predict_update_cycles,
     scenario_database,
-    perform_predict_update_cycles
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
 
 class TestEvalation(unittest.TestCase):
-    
     @parameterized.expand(
         [
             (np.zeros(2),),
@@ -59,14 +58,17 @@ class TestEvalation(unittest.TestCase):
             "meas_noise": GaussianDistribution(np.array([0, 0]), np.eye(2)),
         }
 
-        configured_filter, predictionRoutine, _, meas_noise_for_filter = configure_for_filter(
-            filterParam, scenarioParam
-        )
+        (
+            configured_filter,
+            predictionRoutine,
+            _,
+            meas_noise_for_filter,
+        ) = configure_for_filter(filterParam, scenarioParam)
 
         self.assertIsInstance(configured_filter, KalmanFilter)
         self.assertIsNotNone(predictionRoutine)
         self.assertIsInstance(meas_noise_for_filter, np.ndarray)
-        
+
     def test_configure_pf(self):
         filterParam = {"name": "pf", "parameter": 100}
         scenarioParam = {
@@ -101,17 +103,26 @@ class TestEvalation(unittest.TestCase):
         scenario_param = scenario_database(scenario_name)
         scenario_param = check_and_fix_params(scenario_param)
         timesteps = 10
-        
-        time_elapsed, last_filter_state, last_estimate, all_estimates = perform_predict_update_cycles(scenario_param, {"name": "kf", "parameter": None},
-                                      np.zeros((timesteps, 2)), generate_measurements(np.zeros((timesteps, 2)), scenario_param))
-        
+
+        (
+            time_elapsed,
+            last_filter_state,
+            last_estimate,
+            all_estimates,
+        ) = perform_predict_update_cycles(
+            scenario_param,
+            {"name": "kf", "parameter": None},
+            np.zeros((timesteps, 2)),
+            generate_measurements(np.zeros((timesteps, 2)), scenario_param),
+        )
+
         self.assertIsInstance(time_elapsed, float)
         self.assertGreater(time_elapsed, 0)
         self.assertIsNotNone(last_filter_state)
         self.assertIsInstance(last_estimate, np.ndarray)
         self.assertEqual(last_estimate.shape, (2,))
         self.assertIsNone(all_estimates)
-        
+
 
 if __name__ == "__main__":
     unittest.main()

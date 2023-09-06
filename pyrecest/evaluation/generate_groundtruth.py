@@ -15,7 +15,7 @@ def generate_groundtruth(scenario_param, x0=None):
     """
     if x0 is None:
         x0 = scenario_param["initial_prior"].sample(1)
-        
+
     assert (
         np.ndim(x0) == 1
         and scenario_param["n_targets"] == 1

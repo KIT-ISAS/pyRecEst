@@ -6,8 +6,9 @@ def check_and_fix_params(scenario_param):
     scenario_param.setdefault("use_transition", False)
     scenario_param.setdefault("use_likelihood", False)
     scenario_param.setdefault("n_targets", 1)
-    scenario_param.setdefault('apply_sys_noise_times', [True] * (scenario_param['timesteps'] - 1) + [False])
-
+    scenario_param.setdefault(
+        "apply_sys_noise_times", [True] * (scenario_param["timesteps"] - 1) + [False]
+    )
 
     # Check for 'timesteps'
     timesteps = scenario_param["timesteps"]
