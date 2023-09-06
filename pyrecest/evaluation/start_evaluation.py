@@ -47,13 +47,13 @@ def start_evaluation(
     Returns:
         Tuple: results, groundtruths, and scenario parameters.
     """
-    
+
     filter_configs = [
         {"name": f["name"], "parameter": p}
         for f in filter_configs
         for p in (f["parameter"] or [None])
     ]
-    
+
     if initial_seed is None:
         initial_seed = np.uint32(random.randint(1, 0xFFFFFFFF))  # nosec
 

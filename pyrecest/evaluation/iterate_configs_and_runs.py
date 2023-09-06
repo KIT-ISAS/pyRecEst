@@ -9,9 +9,15 @@ from .perform_predict_update_cycles import perform_predict_update_cycles
 
 
 # pylint: disable=R0913,R0914,W0718,R0912
-def iterate_configs_and_runs(scenario_param: Dict[str, Any], filter_configs: list[Dict[str, None | int | list[Any]]],
-    n_runs: int, convert_to_point_estimate_during_runtime: bool = False, extract_all_point_estimates: bool = False,
-    tolerate_failure: bool = False, auto_warning_on_off: bool = True):
+def iterate_configs_and_runs(
+    scenario_param: Dict[str, Any],
+    filter_configs: list[Dict[str, None | int | list[Any]]],
+    n_runs: int,
+    convert_to_point_estimate_during_runtime: bool = False,
+    extract_all_point_estimates: bool = False,
+    tolerate_failure: bool = False,
+    auto_warning_on_off: bool = True,
+):
     if extract_all_point_estimates:
         warnings.warn(
             "Extracting all point estimates can have a massive impact on the run time. Use this for debugging only"
@@ -28,7 +34,7 @@ def iterate_configs_and_runs(scenario_param: Dict[str, Any], filter_configs: lis
 
     if convert_to_point_estimate_during_runtime:
         raise NotImplementedError("This is not implemented yet.")
-    
+
     last_filter_states = np.empty((n_configs, n_runs), dtype=object)
     config_index = 0
 
@@ -37,7 +43,6 @@ def iterate_configs_and_runs(scenario_param: Dict[str, Any], filter_configs: lis
         measurements[run, :] = generate_measurements(groundtruths[run], scenario_param)
 
         for filter_no, filter_config in enumerate(filter_configs):
-            
             try:
                 if (
                     not convert_to_point_estimate_during_runtime
@@ -79,7 +84,7 @@ def iterate_configs_and_runs(scenario_param: Dict[str, Any], filter_configs: lis
                 if auto_warning_on_off:
                     warnings.warn(
                         f"Filter {filter_no} config {filter_config['parameter']} run {run} FAILED: {str(err)}"
-                )
+                    )
 
             run_failed[config_index, run] = True
 

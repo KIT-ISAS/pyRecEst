@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-import os
+
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions import (
@@ -32,7 +32,7 @@ class TestEvalation(unittest.TestCase):
         self.timesteps = 10
         self.n_runs_default = 10
         self.tmpdirname = tempfile.TemporaryDirectory()  # pylint: disable=R1732
-        
+
     def tearDown(self):
         self.tmpdirname.cleanup()
 
@@ -236,7 +236,13 @@ class TestEvalation(unittest.TestCase):
         ]
         n_configs = 3  # 2 for pf, 1 for KF
 
-        filter_configs, last_filter_states, run_times, groundtruths, scenario_param = start_evaluation(
+        (
+            filter_configs,
+            last_filter_states,
+            run_times,
+            groundtruths,
+            scenario_param,
+        ) = start_evaluation(
             scenario_name,
             filters,
             n_runs=self.n_runs_default,
@@ -246,14 +252,18 @@ class TestEvalation(unittest.TestCase):
         )
 
         self.assertEqual(len(filter_configs), n_configs)
-        self.assertEqual(np.shape(last_filter_states), (n_configs, self.n_runs_default))  # Dimension for state is contained in the state object
+        self.assertEqual(
+            np.shape(last_filter_states), (n_configs, self.n_runs_default)
+        )  # Dimension for state is contained in the state object
         self.assertTrue(np.all(last_filter_states != None))  # noqa
-        
+
         self.assertEqual(np.shape(run_times), (n_configs, self.n_runs_default))
         self.assertTrue(np.all(run_times > 0))
-        
-        self.assertEqual(np.shape(groundtruths), (self.n_runs_default, self.timesteps, 2))
-        
+
+        self.assertEqual(
+            np.shape(groundtruths), (self.n_runs_default, self.timesteps, 2)
+        )
+
         self.assertIsInstance(scenario_param, dict)
         self.assertIsInstance(scenario_param["manifold_type"], str)
 
