@@ -106,11 +106,17 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
                 no_particles, scenario_param["initial_prior"].dim
             )
             if scenario_param.get("inputs") is None:
+
                 def prediction_routine():  # type: ignore[misc]
                     return filter_obj.predict_identity(scenario_param["sys_noise"])
+
             else:
+
                 def prediction_routine(curr_input):  # type: ignore[misc]
-                    return filter_obj.predict_identity(scenario_param["sys_noise"].shift(curr_input))
+                    return filter_obj.predict_identity(
+                        scenario_param["sys_noise"].shift(curr_input)
+                    )
+
         else:
             raise NotImplementedError("Manifold not supported yet")
 
