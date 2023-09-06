@@ -6,6 +6,7 @@ from .get_distance_fun_mean_calc_and_label import get_distance_fun_mean_calc_and
 from .iterate_configs_and_runs import iterate_configs_and_runs
 from .perform_predict_update_cycles import perform_predict_update_cycles
 from .scenario_database import scenario_database
+from .start_evaluation import start_evaluation
 
 __all__ = [
     "generate_groundtruth",
@@ -16,4 +17,5 @@ __all__ = [
     "perform_predict_update_cycles",
     "iterate_configs_and_runs",
     "get_distance_fun_mean_calc_and_label",
+    "start_evaluation",
 ]
