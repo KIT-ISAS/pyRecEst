@@ -55,27 +55,32 @@ class AbstractParticleFilter(AbstractFilterType):
 
         self.filter_state.d = d
 
-    def update_identity(self, noise_distribution, z, shift_instead_of_add=True):
-        assert z is None or np.size(z) == noise_distribution.dim
-        assert np.ndim(z) == 1 or np.ndim(z) == 0 and noise_distribution.dim == 1
+    def update_identity(
+        self, measurement, noise_distribution, shift_instead_of_add=True
+    ):
+        assert measurement is None or np.size(measurement) == noise_distribution.dim
+        assert (
+            np.ndim(measurement) == 1
+            or np.ndim(measurement) == 0
+            and noise_distribution.dim == 1
+        )
         if not shift_instead_of_add:
             raise NotImplementedError()
 
-        noise_for_likelihood = noise_distribution.set_mode(z)
+        noise_for_likelihood = noise_distribution.set_mode(measurement)
         likelihood = noise_for_likelihood.pdf
-        self.update_nonlinear(likelihood)
+        self.update_nonlinear_using_likelihood(likelihood)
 
-    def update_nonlinear(self, likelihood, z=None):
+    def update_nonlinear_using_likelihood(self, likelihood, measurement=None):
         if isinstance(likelihood, AbstractManifoldSpecificDistribution):
-            assert (
-                z is None
-            ), "Cannot pass a density and a measurement. To assume additive noise, use update_identity."
             likelihood = likelihood.pdf
 
-        if z is None:
+        if measurement is None:
             self.filter_state = self.filter_state.reweigh(likelihood)
         else:
-            self.filter_state = self.filter_state.reweigh(lambda x: likelihood(z, x))
+            self.filter_state = self.filter_state.reweigh(
+                lambda x: likelihood(measurement, x)
+            )
 
         self.filter_state.d = self.filter_state.sample(self.filter_state.d.shape[0])
         self.filter_state.w = np.full(

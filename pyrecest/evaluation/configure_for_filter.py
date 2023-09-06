@@ -1,4 +1,8 @@
-from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
+from pyrecest.filters import (
+    EuclideanParticleFilter,
+    HypertoroidalParticleFilter,
+    KalmanFilter,
+)
 
 
 # pylint: disable=too-many-branches
@@ -18,19 +22,19 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
 
     if filter_name == "kf":
         # Implement your KalmanFilter class and its methods
-        configured_filter = KalmanFilter(scenario_param["initial_prior"])
+        filter_obj = KalmanFilter(scenario_param["initial_prior"])
         meas_noise_for_filter = meas_noise_for_filter.covariance()
         if scenario_param.get("inputs") is None:
 
             def prediction_routine():  # type: ignore
-                return configured_filter.predict_identity(
+                return filter_obj.predict_identity(
                     scenario_param["sys_noise"].covariance()
                 )
 
         else:
 
             def prediction_routine(curr_input):  # type: ignore
-                return configured_filter.predict_identity(
+                return filter_obj.predict_identity(
                     scenario_param["sys_noise"], curr_input
                 )
 
@@ -62,15 +66,15 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
                 scenario_param.get("inputs") is None
             ), "Inputs currently not supported for the current setting."
 
-            configured_filter = HypertoroidalParticleFilter(
+            filter_obj = HypertoroidalParticleFilter(
                 no_particles, scenario_param["initial_prior"].dim
             )
-            configured_filter.set_state(scenario_param["initial_prior"])
+            filter_obj.set_state(scenario_param["initial_prior"])
 
             if "gen_next_state_with_noise" in scenario_param:
 
                 def prediction_routine():  # type: ignore
-                    return configured_filter.predict_nonlinear(
+                    return filter_obj.predict_nonlinear(
                         scenario_param["gen_next_state_with_noise"],
                         None,
                         scenario_param.get("genNextStateWithNoiseIsVectorized", False),
@@ -79,7 +83,7 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
             elif "sys_noise" in scenario_param:
 
                 def prediction_routine():  # type: ignore
-                    return configured_filter.predict_nonlinear(
+                    return filter_obj.predict_nonlinear(
                         lambda x: x, scenario_param["sys_noise"], True
                     )
 
@@ -94,6 +98,21 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
             raise NotImplementedError(
                 "HypersphericalParticleFilter not implemented yet"
             )
+        elif manifold_type in [
+            "euclidean",
+            "Euclidean",
+        ]:
+            filter_obj = EuclideanParticleFilter(
+                no_particles, scenario_param["initial_prior"].dim
+            )
+            if scenario_param.get("inputs") is None:
+                def prediction_routine():  # type: ignore[misc]
+                    return filter_obj.predict_identity(scenario_param["sys_noise"])
+            else:
+                def prediction_routine(curr_input):  # type: ignore[misc]
+                    return filter_obj.predict_identity(scenario_param["sys_noise"].shift(curr_input))
+        else:
+            raise NotImplementedError("Manifold not supported yet")
 
     elif filter_name in ["sgf", "hgf"]:
         raise NotImplementedError("SGF and HGF not implemented yet")
@@ -120,7 +139,7 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
         raise ValueError("Filter currently unsupported")
 
     return (
-        configured_filter,
+        filter_obj,
         prediction_routine,
         likelihood_for_filter,
         meas_noise_for_filter,
