@@ -8,7 +8,7 @@ def scenario_database(scenario, scenario_customization_params=None):
     scenario_param = {
         "initial_prior": lambda: "Scenario param not initialized",
         "timesteps": None,
-        "allSeeds": None,
+        "all_seeds": None,
     }
 
     if scenario == "R2randomWalk":

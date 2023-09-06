@@ -5,6 +5,7 @@ from .generate_measurements import generate_measurements
 from .iterate_configs_and_runs import iterate_configs_and_runs
 from .perform_predict_update_cycles import perform_predict_update_cycles
 from .scenario_database import scenario_database
+from .start_evaluation import start_evaluation
 
 __all__ = [
     "generate_groundtruth",
@@ -14,4 +15,5 @@ __all__ = [
     "configure_for_filter",
     "perform_predict_update_cycles",
     "iterate_configs_and_runs",
+    "start_evaluation",
 ]
