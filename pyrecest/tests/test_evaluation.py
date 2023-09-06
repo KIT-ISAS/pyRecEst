@@ -11,6 +11,7 @@ from pyrecest.evaluation import (
     configure_for_filter,
     generate_groundtruth,
     generate_measurements,
+    get_distance_fun_mean_calc_and_label,
     iterate_configs_and_runs,
     perform_predict_update_cycles,
     scenario_database,
@@ -123,6 +124,28 @@ class TestEvalation(unittest.TestCase):
         self.assertEqual(last_estimate.shape, (2,))
         self.assertIsNone(all_estimates)
 
+    def test_get_distance_fun_mean_calc_and_label(self):
+        (
+            distance_function,
+            extract_mean,
+            error_label,
+        ) = get_distance_fun_mean_calc_and_label("hypertorus")
+
+        self.assertTrue(
+            callable(distance_function),
+            f"Expected distanceFunction to be callable, but got {type(distance_function)}",
+        )
+        self.assertEqual(distance_function(np.array([0, 0]), np.array([0, 0])), 0)
+
+        self.assertTrue(
+            callable(extract_mean),
+            f"Expected extractMean to be callable, but got {type(extract_mean)}",
+        )
+        self.assertTrue(
+            isinstance(error_label, str),
+            f"Expected errorLabel to be a string, but got {type(error_label)}",
+        )
+
     def test_iterate_configs_and_runs_kf_only(self):
         scenario_name = "R2randomWalk"
         scenario_param = scenario_database(scenario_name)
@@ -147,7 +170,6 @@ class TestEvalation(unittest.TestCase):
             ],
             n_runs=10,
         )
-
 
 if __name__ == "__main__":
     unittest.main()
