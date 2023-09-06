@@ -127,11 +127,11 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     def angular_error(alpha, beta):
         """
         Calculates the angular error between alpha and beta.
-        
+
         Parameters:
             alpha (float or numpy array): The first angle(s) in radians.
             beta (float or numpy array): The second angle(s) in radians.
-            
+
         Returns:
             float or numpy array: The angular error(s) in radians.
         """
@@ -139,13 +139,13 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         # Ensure the angles are between 0 and 2*pi
         alpha = np.mod(alpha, 2 * np.pi)
         beta = np.mod(beta, 2 * np.pi)
-        
+
         # Calculate the absolute difference
         diff = np.abs(alpha - beta)
-        
+
         # Calculate the angular error
         e = np.minimum(diff, 2 * np.pi - diff)
-        
+
         return e
 
     def hellinger_distance_numerical(self, other):
