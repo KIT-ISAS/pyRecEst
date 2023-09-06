@@ -12,7 +12,9 @@ from pyrecest.evaluation import (
     configure_for_filter,
     generate_groundtruth,
     generate_measurements,
-    get_distance_fun_mean_calc_and_label,
+    get_axis_label,
+    get_distance_function,
+    get_extract_mean,
     iterate_configs_and_runs,
     perform_predict_update_cycles,
     scenario_database,
@@ -127,12 +129,8 @@ class TestEvalation(unittest.TestCase):
         self.assertEqual(last_estimate.shape, (2,))
         self.assertIsNone(all_estimates)
 
-    def test_get_distance_fun_mean_calc_and_label(self):
-        (
-            distance_function,
-            extract_mean,
-            error_label,
-        ) = get_distance_fun_mean_calc_and_label("hypertorus")
+    def test_get_distance_function(self):
+        distance_function = get_distance_function("hypertorus")
 
         self.assertTrue(
             callable(distance_function),
@@ -140,10 +138,17 @@ class TestEvalation(unittest.TestCase):
         )
         self.assertEqual(distance_function(np.array([0, 0]), np.array([0, 0])), 0)
 
+    def test_get_mean_calc(self):
+        extract_mean = get_extract_mean("hypertorus")
+
         self.assertTrue(
             callable(extract_mean),
             f"Expected extractMean to be callable, but got {type(extract_mean)}",
         )
+
+    def test_get_axis_label(self):
+        error_label = get_axis_label("hypertorus")
+
         self.assertTrue(
             isinstance(error_label, str),
             f"Expected errorLabel to be a string, but got {type(error_label)}",
