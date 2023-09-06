@@ -1,11 +1,11 @@
 import numpy as np
 from numpy.linalg import norm
-from scipy.optimize import fminbound
 from pyrecest.distributions import AbstractHypertoroidalDistribution
+from scipy.optimize import fminbound
+
 
 # pylint: disable=too-many-branches
 def get_distance_fun_mean_calc_and_label(mode, additional_params=None):
-
     if "circleSymm" in mode:
         error_label = "Error in radian"
         nSymm = int(
@@ -24,7 +24,9 @@ def get_distance_fun_mean_calc_and_label(mode, additional_params=None):
 
             def distance_function(xest, xtrue):
                 return np.min(
-                    AbstractHypertoroidalDistribution.angular_error(xest, xtrue + symmetryOffsets.reshape(1, 1, -1)),
+                    AbstractHypertoroidalDistribution.angular_error(
+                        xest, xtrue + symmetryOffsets.reshape(1, 1, -1)
+                    ),
                     axis=2,
                 )
 
@@ -35,7 +37,9 @@ def get_distance_fun_mean_calc_and_label(mode, additional_params=None):
 
             def distance_function(xest, xtrue):
                 return np.min(
-                    AbstractHypertoroidalDistribution.angular_error(xest, xtrue + symmetryOffsets.reshape(1, 1, -1)),
+                    AbstractHypertoroidalDistribution.angular_error(
+                        xest, xtrue + symmetryOffsets.reshape(1, 1, -1)
+                    ),
                     axis=2,
                 )
 
@@ -91,11 +95,13 @@ def get_distance_fun_mean_calc_and_label(mode, additional_params=None):
     elif "se2bounded" in mode:
 
         def distance_function(xest, xtrue):
-            return norm(AbstractHypertoroidalDistribution.angular_error(xest[0, :], xtrue[0, :]))  # Stub for angularError
+            return norm(
+                AbstractHypertoroidalDistribution.angular_error(xest[0, :], xtrue[0, :])
+            )  # Stub for angularError
 
         def extract_mean(filterState):
             raise NotImplementedError("Not implemented yet")
-            
+
         error_label = "Error in radian"
 
     elif "se3" in mode or "se3linear" in mode:
