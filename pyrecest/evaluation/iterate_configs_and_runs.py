@@ -1,4 +1,5 @@
 import warnings
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -9,14 +10,14 @@ from .perform_predict_update_cycles import perform_predict_update_cycles
 
 # pylint: disable=R0913,R0914,W0718,R0912
 def iterate_configs_and_runs(
-    scenario_param,
-    filters,
-    n_runs,
-    convert_to_point_estimate_during_runtime=False,
-    extract_all_point_estimates=False,
-    tolerate_failure=False,
-    auto_warning_on_off=True,
-):
+    scenario_param: Dict[str, Any],
+    filters: list[Dict[str, None | int | list[Any]]],
+    n_runs: int,
+    convert_to_point_estimate_during_runtime: bool = False,
+    extract_all_point_estimates: bool = False,
+    tolerate_failure: bool = False,
+    auto_warning_on_off: bool = True,
+) -> Tuple[np.ndarray, list[Optional[Any]], np.ndarray]:
     if extract_all_point_estimates:
         warnings.warn(
             "Extracting all point estimates can have a massive impact on the run time. Use this for debugging only"
@@ -49,7 +50,7 @@ def iterate_configs_and_runs(
             filter_data["filter_params"] = [
                 filter_data["filter_params"]
             ]  # To make it iterable
-        for config in filter_data["filter_params"]:
+        for config in filter_data["filter_params"]:  # type: ignore
             filter_param = {"name": filter_data["name"], "parameter": config}
 
             try:

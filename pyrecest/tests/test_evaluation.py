@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 
 import numpy as np
@@ -12,9 +13,13 @@ from pyrecest.evaluation import (
     determine_all_deviations,
     generate_groundtruth,
     generate_measurements,
+    get_axis_label,
+    get_distance_function,
+    get_extract_mean,
     iterate_configs_and_runs,
     perform_predict_update_cycles,
     scenario_database,
+    start_evaluation,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -25,6 +30,7 @@ class TestEvalation(unittest.TestCase):
         scenario_param = scenario_database(self.scenario_name)
         self.scenario_param = check_and_fix_params(scenario_param)
         self.timesteps = 10
+        self.n_runs_default = 10
 
     @parameterized.expand(
         [
@@ -166,6 +172,31 @@ class TestEvalation(unittest.TestCase):
         self.assertEqual(last_estimate.shape, (2,))
         self.assertIsNone(all_estimates)
 
+    def test_get_distance_function(self):
+        distance_function = get_distance_function("hypertorus")
+
+        self.assertTrue(
+            callable(distance_function),
+            f"Expected distanceFunction to be callable, but got {type(distance_function)}",
+        )
+        self.assertEqual(distance_function(np.array([0, 0]), np.array([0, 0])), 0)
+
+    def test_get_mean_calc(self):
+        extract_mean = get_extract_mean("hypertorus")
+
+        self.assertTrue(
+            callable(extract_mean),
+            f"Expected extractMean to be callable, but got {type(extract_mean)}",
+        )
+
+    def test_get_axis_label(self):
+        error_label = get_axis_label("hypertorus")
+
+        self.assertTrue(
+            isinstance(error_label, str),
+            f"Expected errorLabel to be a string, but got {type(error_label)}",
+        )
+
     def test_iterate_configs_and_runs_kf_only(self):
         scenario_name = "R2randomWalk"
         scenario_param = scenario_database(scenario_name)
@@ -190,6 +221,28 @@ class TestEvalation(unittest.TestCase):
             ],
             n_runs=10,
         )
+
+    def test_evaluation_R2_random_walk(self):
+        scenario_name = "R2randomWalk"
+        filters = [
+            {"name": "kf", "filter_params": None},
+            {"name": "pf", "filter_params": [51, 81]},
+        ]
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            results, groundtruths, scenario_param = start_evaluation(
+                scenario_name,
+                filters,
+                self.n_runs_default,
+                initial_seed=1,
+                auto_warning_on_off=False,
+                save_folder=tmpdirname,
+            )
+
+        self.assertIsNotNone(results)
+        self.assertIsNotNone(groundtruths)
+        self.assertIsInstance(scenario_param, dict)
+        self.assertIsInstance(scenario_param["manifold_type"], str)
 
 
 if __name__ == "__main__":
