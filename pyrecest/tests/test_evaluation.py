@@ -9,6 +9,7 @@ from pyrecest.distributions import (
 from pyrecest.evaluation import (
     check_and_fix_params,
     configure_for_filter,
+    determine_all_deviations,
     generate_groundtruth,
     generate_measurements,
     iterate_configs_and_runs,
@@ -48,6 +49,48 @@ class TestEvalation(unittest.TestCase):
                 measurements[i].shape[0],
                 self.scenario_param["n_meas_at_individual_time_step"][i],
             )
+
+    def test_determine_all_deviations(self):
+        def dummy_extract_mean(x):
+            return x
+        
+        def dummy_distance_function(x, y):
+            return np.linalg.norm(x - y)
+
+        groundtruths = np.array([[[1, 2, 3], [2, 3, 4]], [[11, 12, 13], [12, 13, 14]]])
+        results = [
+            {
+                "filter_name": "filter1",
+                "filter_param": "params1",
+                "last_estimates": groundtruths[:, -1, :],
+            },
+            {
+                "filter_name": "filter2",
+                "filter_param": "params2",
+                "last_estimates": groundtruths[:, -1, :] + 1,
+            },
+        ]
+
+        # Run the function and get the deviations matrix
+        all_deviations = determine_all_deviations(
+            results,
+            dummy_extract_mean,
+            dummy_distance_function,
+            groundtruths,
+        )
+
+        # Check the shape of the output matrices
+        assert len(all_deviations) == len(results)
+
+        # Validate some of the results
+        np.testing.assert_allclose(
+            # Should be zeros as the lastEstimates match groundtruths
+            all_deviations[0], [0, 0]
+        )
+        np.testing.assert_allclose(
+            # Should be np.sqrt(2) away from groundtruths
+            all_deviations[1], [np.sqrt(3), np.sqrt(3)]
+        )
 
     def test_configure_kf(self):
         filterParam = {"name": "kf", "parameter": None}
