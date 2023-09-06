@@ -98,4 +98,4 @@ def iterate_configs_and_runs(
 
             curr_config_index += 1
 
-    return t, groundtruths, measurements
+    return last_filter_states, t, groundtruths, measurements

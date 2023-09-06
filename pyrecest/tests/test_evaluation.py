@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-
+import os
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions import (
@@ -20,6 +20,7 @@ from pyrecest.evaluation import (
     perform_predict_update_cycles,
     scenario_database,
     start_evaluation,
+    plot_results,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -31,7 +32,11 @@ class TestEvalation(unittest.TestCase):
         self.scenario_param = check_and_fix_params(scenario_param)
         self.timesteps = 10
         self.n_runs_default = 10
-
+        self.tmpdirname = tempfile.TemporaryDirectory()
+        
+    def tearDown(self):
+        self.tmpdirname.cleanup()
+        
     @parameterized.expand(
         [
             (np.zeros(2),),
@@ -226,26 +231,41 @@ class TestEvalation(unittest.TestCase):
 
     def test_evaluation_R2_random_walk(self):
         scenario_name = "R2randomWalk"
-        filters = [
+        filter_list = [
             {"name": "kf", "filter_params": None},
             {"name": "pf", "filter_params": [51, 81]},
         ]
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            results, groundtruths, scenario_param = start_evaluation(
-                scenario_name,
-                filters,
-                self.n_runs_default,
-                initial_seed=1,
-                auto_warning_on_off=False,
-                save_folder=tmpdirname,
-            )
+        last_filter_states, runtimes, measurements, groundtruths, scenario_param = start_evaluation(
+            scenario_name,
+            filter_list,
+            n_runs=2,
+            initial_seed=1,
+            auto_warning_on_off=False,
+            save_folder=self.tmpdirname.name,
+        )
 
-        self.assertIsNotNone(results)
+        self.assertIsNotNone(last_filter_states)
+        self.assertIsNotNone(runtimes)
+        self.assertIsNotNone(measurements)
         self.assertIsNotNone(groundtruths)
         self.assertIsInstance(scenario_param, dict)
         self.assertIsInstance(scenario_param["manifold_type"], str)
 
+    def test_plot_results(self):
+        # To generate some results
+        self.test_evaluation_R2_random_walk()
+        files = os.listdir(self.tmpdirname.name)
+        filename = os.path.join(self.tmpdirname.name, files[0])
 
+        plot_log = np.array([[True, True]])
+        plot_stds = False
+        omit_slow = True
+
+        param_time_and_error_per_filter = plot_results(filename=filename, plot_log=plot_log, plot_stds=plot_stds,
+                                                        omit_slow=omit_slow)
+
+        self.assertIsInstance(param_time_and_error_per_filter, dict)
+        
 if __name__ == "__main__":
     unittest.main()
