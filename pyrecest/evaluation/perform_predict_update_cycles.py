@@ -55,9 +55,7 @@ def perform_predict_update_cycles(
             curr_meas = all_meas_curr_time_step[m]
 
             if not scenario_param["use_likelihood"]:
-                filter_obj.update_identity(
-                    measurement=curr_meas, meas_noise_cov=meas_noise_for_filter
-                )
+                filter_obj.update_identity(curr_meas, meas_noise_for_filter)
 
             # If plotting is required
             if scenario_param.get("plot", False):

@@ -11,6 +11,7 @@ from pyrecest.evaluation import (
     configure_for_filter,
     generate_groundtruth,
     generate_measurements,
+    iterate_configs_and_runs,
     perform_predict_update_cycles,
     scenario_database,
 )
@@ -18,6 +19,12 @@ from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
 
 class TestEvalation(unittest.TestCase):
+    def setUp(self):
+        self.scenario_name = "R2randomWalk"
+        scenario_param = scenario_database(self.scenario_name)
+        self.scenario_param = check_and_fix_params(scenario_param)
+        self.timesteps = 10
+
     @parameterized.expand(
         [
             (np.zeros(2),),
@@ -25,28 +32,21 @@ class TestEvalation(unittest.TestCase):
         ]
     )
     def test_generate_gt_R2(self, x0):
-        scenario_name = "R2randomWalk"
-        scenario_param = scenario_database(scenario_name)
-        scenario_param = check_and_fix_params(scenario_param)
-
-        groundtruth = generate_groundtruth(scenario_param, x0)
+        groundtruth = generate_groundtruth(self.scenario_param, x0)
 
         # Test if groundtruth has the shape (timesteps, 2)
-        self.assertEqual(groundtruth.shape, (scenario_param["timesteps"], 2))
+        self.assertEqual(groundtruth.shape, (self.timesteps, 2))
 
     def test_generate_meas_R2(self):
-        scenario_name = "R2randomWalk"
-        scenario_param = scenario_database(scenario_name)
-        scenario_param = check_and_fix_params(scenario_param)
-        timesteps = 10
+        measurements = generate_measurements(
+            np.zeros((self.timesteps, 2)), self.scenario_param
+        )
 
-        measurements = generate_measurements(np.zeros((timesteps, 2)), scenario_param)
-
-        self.assertEqual(len(measurements), timesteps)
-        for i in range(timesteps):
+        self.assertEqual(len(measurements), self.timesteps)
+        for i in range(self.timesteps):
             self.assertEqual(
                 measurements[i].shape[0],
-                scenario_param["n_meas_at_individual_time_step"][i],
+                self.scenario_param["n_meas_at_individual_time_step"][i],
             )
 
     def test_configure_kf(self):
@@ -122,6 +122,31 @@ class TestEvalation(unittest.TestCase):
         self.assertIsInstance(last_estimate, np.ndarray)
         self.assertEqual(last_estimate.shape, (2,))
         self.assertIsNone(all_estimates)
+
+    def test_iterate_configs_and_runs_kf_only(self):
+        scenario_name = "R2randomWalk"
+        scenario_param = scenario_database(scenario_name)
+        scenario_param = check_and_fix_params(scenario_param)
+        scenario_param["timesteps"] = 10
+
+        iterate_configs_and_runs(
+            scenario_param, [{"name": "kf", "filter_params": None}], n_runs=10
+        )
+
+    def test_iterate_configs_and_runs_kf_and_pf(self):
+        scenario_name = "R2randomWalk"
+        scenario_param = scenario_database(scenario_name)
+        scenario_param = check_and_fix_params(scenario_param)
+        scenario_param["timesteps"] = 10
+
+        iterate_configs_and_runs(
+            scenario_param,
+            [
+                {"name": "kf", "filter_params": None},
+                {"name": "pf", "filter_params": 100},
+            ],
+            n_runs=10,
+        )
 
 
 if __name__ == "__main__":

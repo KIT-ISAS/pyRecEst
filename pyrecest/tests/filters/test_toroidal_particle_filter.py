@@ -26,8 +26,8 @@ class ToroidalParticleFilterTest(unittest.TestCase):
             )
             for _ in range(3):
                 tpf.update_identity(
-                    HypertoroidalWrappedNormalDistribution(np.array([0, 0]), 0.5 * C),
                     forced_mean,
+                    HypertoroidalWrappedNormalDistribution(np.array([0, 0]), 0.5 * C),
                 )
 
         self.assertTrue(np.allclose(tpf.get_point_estimate(), forced_mean, atol=0.1))

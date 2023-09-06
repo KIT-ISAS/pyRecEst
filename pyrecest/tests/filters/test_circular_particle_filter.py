@@ -91,11 +91,11 @@ class CircularParticleFilterTest(unittest.TestCase):
         def likelihood(z, x):
             return self.wn.pdf(z - h(x))
 
-        self.filter.update_nonlinear(likelihood, z)
+        self.filter.update_nonlinear_using_likelihood(likelihood, z)
         dist3a = self.filter.filter_state
         self.assertIsInstance(dist3a, CircularDiracDistribution)
         self.filter.set_state(self.dist)
-        self.filter.update_identity(self.wn, z)
+        self.filter.update_identity(z, self.wn)
         dist3b = self.filter.filter_state
         self.assertIsInstance(dist3b, CircularDiracDistribution)
 
@@ -120,7 +120,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         def likelihood1(_, x):
             return x == 0.5
 
-        self.filter.update_nonlinear(likelihood1, 42)
+        self.filter.update_nonlinear_using_likelihood(likelihood1, 42)
         estimation = self.filter.filter_state
         self.assertIsInstance(estimation, CircularDiracDistribution)
         for i in range(len(estimation.d)):
@@ -134,7 +134,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         def likelihood2(x):
             return wn.pdf(-x)
 
-        self.filter.update_nonlinear(likelihood2)
+        self.filter.update_nonlinear_using_likelihood(likelihood2)
         dist3c = self.filter.filter_state
         self.assertIsInstance(dist3c, HypertoroidalDiracDistribution)
 
