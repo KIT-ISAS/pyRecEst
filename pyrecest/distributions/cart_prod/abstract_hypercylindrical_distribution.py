@@ -34,7 +34,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         def f(*args):
             return self.pdf(np.array(args))
-        
+
         integration_result = nquad(f, integration_boundaries)[0]
 
         return integration_result
