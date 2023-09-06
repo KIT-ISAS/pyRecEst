@@ -13,7 +13,7 @@ from .scenario_database import scenario_database
 # pylint: disable=R0913,R0914
 def start_evaluation(
     scenario: str | Dict[str, Any],
-    filters: List[Dict[str, Any]],
+    filter_configs: List[Dict[str, Any]],
     n_runs: int,
     save_folder: str = ".",
     plot_each_step: bool = False,
@@ -47,12 +47,15 @@ def start_evaluation(
     Returns:
         Tuple: results, groundtruths, and scenario parameters.
     """
+    
+    filter_configs = [
+        {"name": f["name"], "parameter": p}
+        for f in filter_configs
+        for p in (f["parameter"] or [None])
+    ]
+    
     if initial_seed is None:
         initial_seed = np.uint32(random.randint(1, 0xFFFFFFFF))  # nosec
-
-    assert len(set(f["name"] for f in filters)) == len(
-        filters
-    ), "One filter was chosen more than once."
 
     if isinstance(scenario, dict):
         scenario_param = scenario
@@ -72,9 +75,14 @@ def start_evaluation(
             random.randint(1, 0xFFFFFFFF) for _ in range(n_runs)  # nosec
         ]
 
-    results, groundtruths, measurements = iterate_configs_and_runs(
+    (
+        last_filter_states,
+        run_times,
+        groundtruths,
+        measurements,
+    ) = iterate_configs_and_runs(
         scenario_param,
-        filters,
+        filter_configs,
         n_runs,
         convert_to_point_estimate_during_runtime,
         extract_all_point_estimates,
@@ -92,9 +100,11 @@ def start_evaluation(
         {
             "groundtruths": groundtruths,
             "measurements": measurements,
-            "results": results,
-            "scenarioParam": scenario_param,
+            "last_filter_states": last_filter_states,
+            "run_times": run_times,
+            "scenario_param": scenario_param,
         },
+        allow_pickle=True,
     )
 
-    return results, groundtruths, scenario_param
+    return filter_configs, last_filter_states, run_times, groundtruths, scenario_param

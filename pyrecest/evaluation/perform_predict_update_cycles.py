@@ -9,7 +9,7 @@ from .configure_for_filter import configure_for_filter
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
 def perform_predict_update_cycles(
     scenario_param,
-    filter_param,
+    filter_config,
     groundtruth,
     measurements,
     precalculated_params=None,
@@ -23,7 +23,7 @@ def perform_predict_update_cycles(
 
     # Configure filter
     filter_obj, prediction_routine, _, meas_noise_for_filter = configure_for_filter(
-        filter_param, scenario_param, precalculated_params
+        filter_config, scenario_param, precalculated_params
     )
 
     # Check conditions for cumulative updates
@@ -86,4 +86,4 @@ def perform_predict_update_cycles(
     else:
         last_estimate = filter_obj.get_point_estimate()
 
-    return time_elapsed, last_filter_state, last_estimate, all_estimates
+    return last_filter_state, time_elapsed, last_estimate, all_estimates

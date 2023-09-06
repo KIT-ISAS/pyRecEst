@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-
+import os
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions import (
@@ -31,6 +31,10 @@ class TestEvalation(unittest.TestCase):
         self.scenario_param = check_and_fix_params(scenario_param)
         self.timesteps = 10
         self.n_runs_default = 10
+        self.tmpdirname = tempfile.TemporaryDirectory()  # pylint: disable=R1732
+        
+    def tearDown(self):
+        self.tmpdirname.cleanup()
 
     @parameterized.expand(
         [
@@ -156,8 +160,8 @@ class TestEvalation(unittest.TestCase):
         timesteps = 10
 
         (
-            time_elapsed,
             last_filter_state,
+            time_elapsed,
             last_estimate,
             all_estimates,
         ) = perform_predict_update_cycles(
@@ -206,7 +210,7 @@ class TestEvalation(unittest.TestCase):
         scenario_param["timesteps"] = 10
 
         iterate_configs_and_runs(
-            scenario_param, [{"name": "kf", "filter_params": None}], n_runs=10
+            scenario_param, [{"name": "kf", "parameter": None}], n_runs=10
         )
 
     def test_iterate_configs_and_runs_kf_and_pf(self):
@@ -218,8 +222,8 @@ class TestEvalation(unittest.TestCase):
         iterate_configs_and_runs(
             scenario_param,
             [
-                {"name": "kf", "filter_params": None},
-                {"name": "pf", "filter_params": 100},
+                {"name": "kf", "parameter": None},
+                {"name": "pf", "parameter": 100},
             ],
             n_runs=10,
         )
@@ -227,22 +231,29 @@ class TestEvalation(unittest.TestCase):
     def test_evaluation_R2_random_walk(self):
         scenario_name = "R2randomWalk"
         filters = [
-            {"name": "kf", "filter_params": None},
-            {"name": "pf", "filter_params": [51, 81]},
+            {"name": "kf", "parameter": None},
+            {"name": "pf", "parameter": [51, 81]},
         ]
+        n_configs = 3  # 2 for pf, 1 for KF
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            results, groundtruths, scenario_param = start_evaluation(
-                scenario_name,
-                filters,
-                self.n_runs_default,
-                initial_seed=1,
-                auto_warning_on_off=False,
-                save_folder=tmpdirname,
-            )
+        filter_configs, last_filter_states, run_times, groundtruths, scenario_param = start_evaluation(
+            scenario_name,
+            filters,
+            n_runs=self.n_runs_default,
+            initial_seed=1,
+            auto_warning_on_off=False,
+            save_folder=self.tmpdirname.name,
+        )
 
-        self.assertIsNotNone(results)
-        self.assertIsNotNone(groundtruths)
+        self.assertEqual(len(filter_configs), n_configs)
+        self.assertEqual(np.shape(last_filter_states), (n_configs, self.n_runs_default))  # Dimension for state is contained in the state object
+        self.assertTrue(np.all(last_filter_states != None))  # noqa
+        
+        self.assertEqual(np.shape(run_times), (n_configs, self.n_runs_default))
+        self.assertTrue(np.all(run_times > 0))
+        
+        self.assertEqual(np.shape(groundtruths), (self.n_runs_default, self.timesteps, 2))
+        
         self.assertIsInstance(scenario_param, dict)
         self.assertIsInstance(scenario_param["manifold_type"], str)
 
