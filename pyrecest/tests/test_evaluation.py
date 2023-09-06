@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 
 import numpy as np
@@ -14,6 +15,7 @@ from pyrecest.evaluation import (
     iterate_configs_and_runs,
     perform_predict_update_cycles,
     scenario_database,
+    start_evaluation,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -24,6 +26,7 @@ class TestEvalation(unittest.TestCase):
         scenario_param = scenario_database(self.scenario_name)
         self.scenario_param = check_and_fix_params(scenario_param)
         self.timesteps = 10
+        self.n_runs_default = 10
 
     @parameterized.expand(
         [
@@ -147,6 +150,28 @@ class TestEvalation(unittest.TestCase):
             ],
             n_runs=10,
         )
+
+    def test_evaluation_R2_random_walk(self):
+        scenario_name = "R2randomWalk"
+        filters = [
+            {"name": "kf", "filter_params": None},
+            {"name": "pf", "filter_params": [51, 81]},
+        ]
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            results, groundtruths, scenario_param = start_evaluation(
+                scenario_name,
+                filters,
+                self.n_runs_default,
+                initial_seed=1,
+                auto_warning_on_off=False,
+                save_folder=tmpdirname,
+            )
+
+        self.assertIsNotNone(results)
+        self.assertIsNotNone(groundtruths)
+        self.assertIsInstance(scenario_param, dict)
+        self.assertIsInstance(scenario_param["manifold_type"], str)
 
 
 if __name__ == "__main__":
