@@ -2,17 +2,19 @@ import numpy as np
 
 
 # pylint: disable=too-many-branches
-def generate_groundtruth(x0, scenario_param):
+def generate_groundtruth(scenario_param, x0=None):
     """
     Generate ground truth based on the given scenario parameters.
 
     Parameters:
-        x0 (ndarray): Starting point.
         scenario_param (dict): Dictionary containing scenario parameters.
+        x0 (ndarray): Starting point (optional)
 
     Returns:
         groundtruth (ndarray): Generated ground truth.
     """
+    if x0 is None:
+        x0 = scenario_param["initial_prior"].sample(1)
 
     assert (
         np.ndim(x0) == 1
