@@ -50,7 +50,9 @@ class TestEvalation(unittest.TestCase):
 
     @parameterized.expand([(1,), (3,)])
     def test_generate_measurements(self, n_meas):
-        self.scenario_param["n_meas_at_individual_time_step"] = n_meas * np.ones(self.timesteps, dtype=int)
+        self.scenario_param["n_meas_at_individual_time_step"] = n_meas * np.ones(
+            self.timesteps, dtype=int
+        )
         measurements = generate_measurements(
             np.zeros((self.timesteps, self.scenario_param["initial_prior"].dim)),
             self.scenario_param,
