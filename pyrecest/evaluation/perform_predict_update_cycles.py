@@ -9,7 +9,7 @@ from .configure_for_filter import configure_for_filter
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
 def perform_predict_update_cycles(
     scenario_param,
-    filter_param,
+    filter_config,
     groundtruth,
     measurements,
     precalculated_params=None,
@@ -23,7 +23,7 @@ def perform_predict_update_cycles(
 
     # Configure filter
     filter_obj, prediction_routine, _, meas_noise_for_filter = configure_for_filter(
-        filter_param, scenario_param, precalculated_params
+        filter_config, scenario_param, precalculated_params
     )
 
     # Check conditions for cumulative updates
@@ -50,9 +50,9 @@ def perform_predict_update_cycles(
             raise NotImplementedError("Cumulative updates not implemented yet.")
 
         n_updates = scenario_param["n_meas_at_individual_time_step"][t]
-        all_meas_curr_time_step = measurements[t]
+        all_meas_curr_time_step = np.atleast_2d(measurements[t])
         for m in range(n_updates):
-            curr_meas = all_meas_curr_time_step[m]
+            curr_meas = all_meas_curr_time_step[m, :]
 
             if not scenario_param["use_likelihood"]:
                 filter_obj.update_identity(curr_meas, meas_noise_for_filter)
@@ -86,4 +86,4 @@ def perform_predict_update_cycles(
     else:
         last_estimate = filter_obj.get_point_estimate()
 
-    return time_elapsed, last_filter_state, last_estimate, all_estimates
+    return last_filter_state, time_elapsed, last_estimate, all_estimates

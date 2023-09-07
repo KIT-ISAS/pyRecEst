@@ -7,7 +7,7 @@ from pyrecest.filters import (
 
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
-def configure_for_filter(filter_param, scenario_param, precalculated_params=None):
+def configure_for_filter(filter_config, scenario_param, precalculated_params=None):
     if precalculated_params is not None:
         raise NotImplementedError(
             "No filters using precalculated parameters have been implemented so far."
@@ -18,7 +18,7 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
     meas_noise_for_filter = scenario_param.get("meas_noise", None)
 
     # Switch-case based on filter name
-    filter_name = filter_param["name"]
+    filter_name = filter_config["name"]
 
     if filter_name == "kf":
         # Implement your KalmanFilter class and its methods
@@ -54,7 +54,7 @@ def configure_for_filter(filter_param, scenario_param, precalculated_params=None
         raise NotImplementedError("ISHF not implemented yet")
 
     elif filter_name == "pf":
-        no_particles = filter_param.get("parameter", None)
+        no_particles = filter_config["parameter"]
 
         if no_particles is None or no_particles == 0:
             raise ValueError("Using zero particles does not make sense")

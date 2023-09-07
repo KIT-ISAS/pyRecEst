@@ -21,7 +21,11 @@ def generate_measurements(groundtruth, scenario_param):
         Comprises timesteps elements, each of which is a numpy array of shape
         (n_meas_at_individual_time_step[t], n_dim).
     """
-    measurements = [None] * scenario_param["timesteps"]
+    assert (
+        len(scenario_param["n_meas_at_individual_time_step"])
+        == scenario_param["timesteps"]
+    )
+    measurements = np.empty(scenario_param["timesteps"], dtype=object)
     if "MTT" in scenario_param.get("manifold_type", ""):
         assert scenario_param["clutter_rate"] == 0, "Clutter currently not supported."
 
@@ -62,9 +66,18 @@ def generate_measurements(groundtruth, scenario_param):
             meas_noise = scenario_param["meas_noise"]
 
             if isinstance(meas_noise, AbstractHypertoroidalDistribution):
-                noise_sample = meas_noise.sample(n_meas)
+                noise_samples = meas_noise.sample(n_meas)
                 measurements[t] = np.mod(
-                    np.tile(groundtruth[t - 1, :], (1, n_meas)) + noise_sample,
+                    np.squeeze(
+                        np.tile(
+                            groundtruth[t - 1],
+                            (
+                                n_meas,
+                                1,
+                            ),
+                        )
+                        + noise_samples
+                    ),
                     2 * np.pi,
                 )
 
@@ -76,9 +89,16 @@ def generate_measurements(groundtruth, scenario_param):
                 measurements[t] = curr_dist.sample(n_meas)
 
             elif isinstance(meas_noise, GaussianDistribution):
-                noise_sample = meas_noise.sample(n_meas)
-                measurements[t] = (
-                    np.tile(groundtruth[t - 1], (n_meas, 1)) + noise_sample
+                noise_samples = meas_noise.sample(n_meas)
+                measurements[t] = np.squeeze(
+                    np.tile(
+                        groundtruth[t - 1],
+                        (
+                            n_meas,
+                            1,
+                        ),
+                    )
+                    + noise_samples
                 )
 
     return measurements

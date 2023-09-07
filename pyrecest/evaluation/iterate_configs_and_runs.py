@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict
 
 import numpy as np
 
@@ -11,60 +11,52 @@ from .perform_predict_update_cycles import perform_predict_update_cycles
 # pylint: disable=R0913,R0914,W0718,R0912
 def iterate_configs_and_runs(
     scenario_param: Dict[str, Any],
-    filters: list[Dict[str, None | int | list[Any]]],
+    filter_configs: list[Dict[str, None | int | list[Any]]],
     n_runs: int,
     convert_to_point_estimate_during_runtime: bool = False,
     extract_all_point_estimates: bool = False,
     tolerate_failure: bool = False,
     auto_warning_on_off: bool = True,
-) -> Tuple[np.ndarray, list[Optional[Any]], np.ndarray]:
+):
     if extract_all_point_estimates:
         warnings.warn(
             "Extracting all point estimates can have a massive impact on the run time. Use this for debugging only"
         )
         raise NotImplementedError("This is not implemented yet.")
 
-    n_configs = sum(np.size(f["filter_params"]) for f in filters)
-    t = np.empty((n_configs, n_runs))
+    n_configs = sum(np.size(f["parameter"]) for f in filter_configs)
+    run_times = np.empty((n_configs, n_runs))
 
     groundtruths = [None] * n_runs
+    # This allows for different numbers of measurements per step or run
     measurements = np.empty((n_runs, scenario_param["timesteps"]), dtype=object)
 
     run_failed = np.zeros((n_configs, n_runs), dtype=bool)
 
     if convert_to_point_estimate_during_runtime:
-        np.empty((n_configs, n_runs), dtype=object)
-    else:
-        last_filter_states = np.empty((n_configs, n_runs), dtype=object)
+        raise NotImplementedError("This is not implemented yet.")
 
-    curr_config_index = 0
+    last_filter_states = np.empty((n_configs, n_runs), dtype=object)
 
-    for r in range(n_runs):
-        groundtruths[r] = generate_groundtruth(scenario_param)
-        measurements[r, :] = generate_measurements(groundtruths[r], scenario_param)
+    for run in range(n_runs):
+        groundtruths[run] = generate_groundtruth(scenario_param)
+        measurements[run, :] = generate_measurements(groundtruths[run], scenario_param)
 
-    for filter_no, filter_data in enumerate(filters):
-        if filter_data["filter_params"] is None or isinstance(
-            filter_data["filter_params"], int
-        ):
-            filter_data["filter_params"] = [
-                filter_data["filter_params"]
-            ]  # To make it iterable
-        for config in filter_data["filter_params"]:  # type: ignore
-            filter_param = {"name": filter_data["name"], "parameter": config}
-
+        for config_no, filter_config in enumerate(filter_configs):
             try:
                 if (
                     not convert_to_point_estimate_during_runtime
                     and not extract_all_point_estimates
                 ):
-                    last_filter_states[
-                        curr_config_index, r
-                    ] = perform_predict_update_cycles(
+                    (
+                        last_filter_states[config_no, run],
+                        run_times[config_no, run],
+                        *_,
+                    ) = perform_predict_update_cycles(
                         scenario_param=scenario_param,
-                        filter_param=filter_param,
-                        groundtruth=groundtruths[r],
-                        measurements=measurements[r, :],
+                        filter_config=filter_config,
+                        groundtruth=groundtruths[run],
+                        measurements=measurements[run, :],
                     )
 
                 elif (
@@ -88,14 +80,10 @@ def iterate_configs_and_runs(
             except Exception as err:
                 if not tolerate_failure:
                     raise err
-
+                run_failed[config_no, run] = True
                 if auto_warning_on_off:
                     warnings.warn(
-                        f"Filter {filter_no} config {config} run {r} FAILED: {str(err)}"
+                        f"Filter {config_no} config {filter_config['parameter']} run {run} FAILED: {str(err)}"
                     )
 
-                run_failed[curr_config_index, r] = True
-
-            curr_config_index += 1
-
-    return t, groundtruths, measurements
+    return last_filter_states, run_times, run_failed, groundtruths, measurements
