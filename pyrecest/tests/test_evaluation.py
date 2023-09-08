@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-
+import os
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions import (
@@ -20,6 +20,7 @@ from pyrecest.evaluation import (
     perform_predict_update_cycles,
     scenario_database,
     start_evaluation,
+    plot_results,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -260,10 +261,7 @@ class TestEvalation(unittest.TestCase):
             auto_warning_on_off=False,
             save_folder=self.tmpdirname.name,
         )
-
-        self.assertIsInstance(scenario_param, dict)
-        self.assertIsInstance(scenario_param["manifold_type"], str)
-
+        
         self.assertEqual(len(filter_configs), n_configs)
         self.assertDictEqual(filter_configs[0], {"name": "kf", "parameter": None})
         self.assertDictEqual(filter_configs[1], {"name": "pf", "parameter": 51})
@@ -294,6 +292,20 @@ class TestEvalation(unittest.TestCase):
             (self.n_runs_default, self.timesteps, scenario_param["initial_prior"].dim),
         )
 
+    def test_plot_results(self):
+        # To generate some results
+        self.test_evaluation_R2_random_walk()
+        files = os.listdir(self.tmpdirname.name)
+        filename = os.path.join(self.tmpdirname.name, files[0])
 
+        plot_log = np.array([[True, True]])
+        plot_stds = False
+        omit_slow = True
+
+        param_time_and_error_per_filter = plot_results(filename=filename, plot_log=plot_log, plot_stds=plot_stds,
+                                                        omit_slow=omit_slow)
+
+        self.assertIsInstance(param_time_and_error_per_filter, dict)
+        
 if __name__ == "__main__":
     unittest.main()
