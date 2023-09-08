@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-
+import os
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions import (
@@ -20,6 +20,7 @@ from pyrecest.evaluation import (
     perform_predict_update_cycles,
     scenario_database,
     start_evaluation,
+    plot_results,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -236,31 +237,9 @@ class TestEvalation(unittest.TestCase):
             n_runs=10,
         )
 
-    def test_evaluation_R2_random_walk(self):
-        scenario_name = "R2randomWalk"
-        filters_configs_input = [
-            {"name": "kf", "parameter": None},
-            {"name": "pf", "parameter": [51, 81]},
-        ]
-        n_configs = 3  # 2 for pf, 1 for KF
-
-        (
-            scenario_param,
-            filter_configs,  # pylint: disable=R0801
-            last_filter_states,  # pylint: disable=R0801
-            run_times,  # pylint: disable=R0801
-            run_failed,  # pylint: disable=R0801
-            groundtruths,  # pylint: disable=R0801
-            measurements,  # pylint: disable=R0801
-        ) = start_evaluation(
-            scenario_name,
-            filters_configs_input,
-            n_runs=self.n_runs_default,
-            initial_seed=1,
-            auto_warning_on_off=False,
-            save_folder=self.tmpdirname.name,
-        )
-
+    def _validate_eval_data(self, scenario_param, filter_configs, last_filter_states, run_times, run_failed, groundtruths, measurements):
+        n_configs = len(filter_configs)
+        
         self.assertIsInstance(scenario_param, dict)
         self.assertIsInstance(scenario_param["manifold_type"], str)
 
@@ -269,9 +248,7 @@ class TestEvalation(unittest.TestCase):
         self.assertDictEqual(filter_configs[1], {"name": "pf", "parameter": 51})
         self.assertDictEqual(filter_configs[2], {"name": "pf", "parameter": 81})
 
-        self.assertEqual(
-            np.shape(last_filter_states), (n_configs, self.n_runs_default)
-        )  # Dimension for state is contained in the state object
+        self.assertEqual(np.shape(last_filter_states), (n_configs, self.n_runs_default))
         self.assertTrue(np.all(last_filter_states != None))  # noqa
 
         self.assertEqual(np.shape(run_times), (n_configs, self.n_runs_default))
@@ -293,7 +270,40 @@ class TestEvalation(unittest.TestCase):
             np.shape(measuremnts_flattened),
             (self.n_runs_default, self.timesteps, scenario_param["initial_prior"].dim),
         )
+    
+    def test_evaluation_R2_random_walk(self):
+        scenario_name = "R2randomWalk"
+        filters_configs_input = [
+            {"name": "kf", "parameter": None},
+            {"name": "pf", "parameter": [51, 81]},
+        ]
+        
+        (
+            scenario_param,
+            filter_configs,
+            last_filter_states,
+            run_times,
+            run_failed,
+            groundtruths,
+            measurements,
+        ) = start_evaluation(
+            scenario_name,
+            filters_configs_input,
+            n_runs=self.n_runs_default,
+            initial_seed=1,
+            auto_warning_on_off=False,
+            save_folder=self.tmpdirname.name,
+        )
+        self._validate_eval_data(scenario_param, filter_configs, last_filter_states, run_times, run_failed, groundtruths, measurements)
 
-
+    def test_file_content(self):
+        self.test_evaluation_R2_random_walk()
+        files = os.listdir(self.tmpdirname.name)
+        filename = os.path.join(self.tmpdirname.name, files[0])
+        
+        data = np.load(filename, allow_pickle=True).item()
+        self._validate_eval_data(data['scenario_param'], data['filter_configs'], data['last_filter_states'],
+                                data['run_times'], data['run_failed'], data['groundtruths'], data['measurements'])         
+        
 if __name__ == "__main__":
     unittest.main()

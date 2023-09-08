@@ -2,19 +2,23 @@ import warnings
 
 import numpy as np
 
+from beartype import beartype
+import typing
 
+
+@beartype
 def determine_all_deviations(
     results,
     extract_mean,
-    distance_function,
-    groundtruths,
-    mean_calculation_symm="",
-):
+    distance_function: typing.Callable,
+    groundtruths: np.ndarray[np.ndarray],
+    mean_calculation_symm: str = "",
+) -> np.ndarray:
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
     assert (
-        np.ndim(groundtruths) == 3
+        np.ndim(groundtruths) == 2
     ), "Assuming groundtruths to be a 3D array of shape (n_runs, n_timesteps, state_dimension)"
 
     all_deviations_last_mat = np.empty((len(results), groundtruths.shape[0]))
