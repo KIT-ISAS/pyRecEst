@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import patch
 
+import matplotlib.pyplot as plt
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions.nonperiodic.gaussian_distribution import (
@@ -21,7 +23,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         )
 
     def test_initialization(self):
-        np.testing.assert_array_equal(self.tracker.state, self.initial_state)
+        np.testing.assert_array_equal(self.tracker.kinematic_state, self.initial_state)
         np.testing.assert_array_equal(self.tracker.covariance, self.initial_covariance)
         np.testing.assert_array_equal(self.tracker.extent, self.initial_extent)
 
@@ -57,7 +59,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         expected_extent = self.initial_extent
 
         np.testing.assert_array_almost_equal(
-            self.tracker.state, expected_state, decimal=5
+            self.tracker.kinematic_state, expected_state, decimal=5
         )
         np.testing.assert_array_almost_equal(
             self.tracker.covariance, expected_covariance, decimal=5
@@ -97,7 +99,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         )
 
         np.testing.assert_array_almost_equal(
-            self.tracker.state, kf.get_point_estimate(), decimal=5
+            self.tracker.kinematic_state, kf.get_point_estimate(), decimal=5
         )
         np.testing.assert_array_almost_equal(
             self.tracker.covariance, kf.filter_state.C, decimal=5
@@ -114,6 +116,22 @@ class TestRandomMatrixTracker(unittest.TestCase):
             )
         else:
             raise ValueError(f"Invalid test name: {name}")
+
+    @patch("matplotlib.pyplot.show")
+    def test_draw_extent_3d(self, mock_show):
+        self.tracker = RandomMatrixTracker(
+            np.zeros(3),
+            np.eye(3),
+            np.diag([1, 2, 3]),
+            kinematic_state_to_pos_matrix=np.eye(3),
+        )
+        self.tracker.plot_point_estimate()
+
+        # Check that the plot was created
+        self.assertIsInstance(plt.gcf(), plt.Figure)
+
+        # Check that the plot is shown
+        mock_show.assert_called_once()
 
 
 if __name__ == "__main__":
