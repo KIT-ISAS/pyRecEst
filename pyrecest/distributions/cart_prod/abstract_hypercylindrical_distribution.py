@@ -197,21 +197,21 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         # Define the integrands for the mean calculation
         if self.lin_dim == 1 and self.bound_dim == 1:
             mu = scipy.integrate.nquad(
-                lambda x, y: y * self.pdf([x, y]), [[0, 2 * np.pi], [-np.inf, np.inf]]
+                lambda x, y: (y * self.pdf([x, y]))[0], [[0, 2 * np.pi], [-np.inf, np.inf]]
             )[0]
         elif self.bound_dim == 2 and self.lin_dim == 1:
             mu = scipy.integrate.nquad(
-                lambda x, y, z: z * self.pdf([x, y, z]),
+                lambda x, y, z: (z * self.pdf([x, y, z]))[0],
                 [[0, 2 * np.pi], [0, 2 * np.pi], [-np.inf, np.inf]],
             )[0]
         elif self.bound_dim == 1 and self.lin_dim == 2:
             mu = np.empty(2)
             mu[0] = scipy.integrate.nquad(
-                lambda x, y, z: y * self.pdf([x, y, z]),
+                lambda x, y, z: (y * self.pdf([x, y, z]))[0],
                 [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
             )[0]
             mu[1] = scipy.integrate.nquad(
-                lambda x, y, z: z * self.pdf([x, y, z]),
+                lambda x, y, z: (z * self.pdf([x, y, z]))[0],
                 [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
             )[0]
         else:
