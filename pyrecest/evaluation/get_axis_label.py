@@ -1,32 +1,32 @@
-def get_axis_label(mode):
-    if "circleSymm" in mode:
+def get_axis_label(manifold_name):
+    if "circleSymm" in manifold_name:
         error_label = "Error in radian"
 
-    elif "circle" in mode or "hypertorus" in mode:
+    elif "circle" in manifold_name or "hypertorus" in manifold_name:
         error_label = "Error in radian"
 
-    elif "hypersphere" in mode:
+    elif "hypersphere" in manifold_name:
         error_label = "Error (orthodromic distance) in radian"
 
-    elif "hypersphereSymmetric" in mode:
+    elif "hypersphereSymmetric" in manifold_name:
         error_label = "Angular error in radian"
 
-    elif "se2" in mode or "se2linear" in mode:
+    elif "se2" in manifold_name or "se2linear" in manifold_name:
         error_label = "Error in meters"
 
-    elif "se2bounded" in mode:
+    elif "se2bounded" in manifold_name:
         error_label = "Error in radian"
 
-    elif "se3" in mode or "se3linear" in mode:
+    elif "se3" in manifold_name or "se3linear" in manifold_name:
         error_label = "Error in meters"
 
-    elif "se3bounded" in mode:
+    elif "se3bounded" in manifold_name:
         error_label = "Error in radian"
 
-    elif "euclidean" in mode and "MTT" not in mode:
+    elif "euclidean" in manifold_name and "MTT" not in manifold_name:
         error_label = "Error in meters"
 
-    elif "MTTEuclidean" in mode:
+    elif "MTTEuclidean" in manifold_name:
         error_label = "OSPA error in meters"
 
     else:
