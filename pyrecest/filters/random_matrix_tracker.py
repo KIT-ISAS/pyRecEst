@@ -1,11 +1,18 @@
 import numpy as np
+from pyrecest.utils.plotting import plot_ellipsoid
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
-from pyrecest.utils.plotting import plot_ellipsoid
 
 
 class RandomMatrixTracker(AbstractExtendedObjectTracker):
-    def __init__(self, kinematic_state, covariance, extent, kinematic_state_to_pos_matrix=None, **kwargs):
+    def __init__(
+        self,
+        kinematic_state,
+        covariance,
+        extent,
+        kinematic_state_to_pos_matrix=None,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.kinematic_state = kinematic_state  # Initial kinematic state
         self.covariance = covariance  # Initial state covariance matrix
@@ -45,7 +52,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         if self.kinematic_state_to_pos_matrix is None:
             # Usually, the measurement matrix is mapping the kinematic state to the position.
             self.kinematic_state_to_pos_matrix = meas_mat
-            
+
         Cv = meas_noise_cov
         ys = measurements
         H = meas_mat
@@ -79,14 +86,16 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         )
 
         self.alpha = self.alpha + y_cols
-        
+
     def plot_point_estimate(self, scaling_factor=1, color=(0, 0.4470, 0.7410)):
         if self.kinematic_state_to_pos_matrix is None:
-            raise ValueError("""No kinematic_state_to_pos_matrix
+            raise ValueError(
+                """No kinematic_state_to_pos_matrix
                              matrix was set, so it is unclear what
                              the individual components of the kinematic
                              state are (position, velocity, etc.).
                              Please set it directly or perform an update step
-                             before plotting.""")
+                             before plotting."""
+            )
         position_estimate = self.kinematic_state_to_pos_matrix @ self.kinematic_state
         plot_ellipsoid(position_estimate, self.extent, scaling_factor, color)

@@ -3,6 +3,7 @@ from collections.abc import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
+from pyrecest.utils.plotting import plot_ellipsoid
 from scipy.integrate import dblquad, nquad, quad
 from scipy.optimize import minimize
 from scipy.stats import chi2
@@ -10,7 +11,6 @@ from scipy.stats import chi2
 from ..abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
-from pyrecest.utils.plotting import plot_ellipsoid
 
 
 class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
@@ -246,7 +246,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             raise ValueError("Dimension not supported")
 
     def plot_state(self, scaling_factor=1, color=(0, 0.4470, 0.7410)):
-        if self.dim in (2, 3,):
+        if self.dim in (
+            2,
+            3,
+        ):
             covariance = self.covariance()
             mean = self.mean()
             plot_ellipsoid(mean, covariance, scaling_factor, color)

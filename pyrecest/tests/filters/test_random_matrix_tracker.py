@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch
-import numpy as np
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions.nonperiodic.gaussian_distribution import (
     GaussianDistribution,
@@ -120,14 +120,16 @@ class TestRandomMatrixTracker(unittest.TestCase):
     @patch("matplotlib.pyplot.show")
     def test_draw_extent_3d(self, mock_show):
         self.tracker = RandomMatrixTracker(
-            np.zeros(3), np.eye(3), np.diag([1, 2, 3]),
-            kinematic_state_to_pos_matrix=np.eye(3)
+            np.zeros(3),
+            np.eye(3),
+            np.diag([1, 2, 3]),
+            kinematic_state_to_pos_matrix=np.eye(3),
         )
         self.tracker.plot_point_estimate()
 
         # Check that the plot was created
         self.assertIsInstance(plt.gcf(), plt.Figure)
-        
+
         # Check that the plot is shown
         mock_show.assert_called_once()
 

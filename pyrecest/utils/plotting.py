@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def plot_ellipsoid(center, shape_matrix, scaling_factor=1, color="blue"):
@@ -28,12 +28,20 @@ def plot_ellipsoid_3d(center, shape_matrix, scaling_factor=1, color="blue"):
     z = np.outer(np.ones(np.size(u)), np.cos(v))
 
     V, D = np.linalg.eig(shape_matrix)
-    all_coords = V @ np.sqrt(D) @ np.array([x.ravel(), y.ravel(), z.ravel()]) + center.reshape(-1, 1)
+    all_coords = V @ np.sqrt(D) @ np.array(
+        [x.ravel(), y.ravel(), z.ravel()]
+    ) + center.reshape(-1, 1)
     x = np.reshape(all_coords[0], x.shape)
     y = np.reshape(all_coords[1], y.shape)
     z = np.reshape(all_coords[2], z.shape)
 
     ax.plot_surface(
-        scaling_factor * x, scaling_factor * y, scaling_factor * z, color=color, alpha=0.7, linewidth=0, antialiased=False
+        scaling_factor * x,
+        scaling_factor * y,
+        scaling_factor * z,
+        color=color,
+        alpha=0.7,
+        linewidth=0,
+        antialiased=False,
     )
     plt.show()
