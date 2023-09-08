@@ -27,9 +27,9 @@ def iterate_configs_and_runs(
     n_configs = sum(np.size(f["parameter"]) for f in filter_configs)
     run_times = np.empty((n_configs, n_runs))
 
-    groundtruths = [None] * n_runs
-    # This allows for different numbers of measurements per step or run
-    measurements = np.empty((n_runs, scenario_param["timesteps"]), dtype=object)
+    # Creating an array of arrays allows for different numbers of targets and measurements per step or run
+    groundtruths = np.empty((n_runs, scenario_param["timesteps"]), dtype=np.ndarray)
+    measurements = np.empty((n_runs, scenario_param["timesteps"]), dtype=np.ndarray)
 
     run_failed = np.zeros((n_configs, n_runs), dtype=bool)
 
@@ -39,8 +39,8 @@ def iterate_configs_and_runs(
     last_filter_states = np.empty((n_configs, n_runs), dtype=object)
 
     for run in range(n_runs):
-        groundtruths[run] = generate_groundtruth(scenario_param)
-        measurements[run, :] = generate_measurements(groundtruths[run], scenario_param)
+        groundtruths[run, :] = generate_groundtruth(scenario_param)
+        measurements[run, :] = generate_measurements(groundtruths[run, :], scenario_param)
 
         for config_no, filter_config in enumerate(filter_configs):
             try:
@@ -55,7 +55,7 @@ def iterate_configs_and_runs(
                     ) = perform_predict_update_cycles(
                         scenario_param=scenario_param,
                         filter_config=filter_config,
-                        groundtruth=groundtruths[run],
+                        groundtruth=groundtruths[run, :],
                         measurements=measurements[run, :],
                     )
 
