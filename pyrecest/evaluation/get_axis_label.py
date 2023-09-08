@@ -23,10 +23,10 @@ def get_axis_label(manifold_name):
     elif "se3bounded" in manifold_name:
         error_label = "Error in radian"
 
-    elif "euclidean" in manifold_name and "MTT" not in manifold_name:
+    elif ("euclidean" in manifold_name or "Euclidean" in manifold_name) and "MTT" not in manifold_name:
         error_label = "Error in meters"
 
-    elif "MTTEuclidean" in manifold_name:
+    elif ("euclidean" in manifold_name or "Euclidean" in manifold_name) and "MTT" in manifold_name:
         error_label = "OSPA error in meters"
 
     else:
