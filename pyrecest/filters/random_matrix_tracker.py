@@ -1,25 +1,25 @@
 import numpy as np
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
+from pyrecest.utils.plotting import plot_ellipsoid
 
 
 class RandomMatrixTracker(AbstractExtendedObjectTracker):
-    def __init__(self, initial_state, initial_covariance, initial_extent, **kwargs):
+    def __init__(self, kinematic_state, covariance, extent, kinematic_state_to_pos_matrix=None, **kwargs):
         super().__init__(**kwargs)
-        self.state = np.array(initial_state)  # Initial kinematic state
-        self.covariance = np.array(
-            initial_covariance
-        )  # Initial state covariance matrix
-        self.extent = np.array(initial_extent)  # Initial extent matrix
+        self.kinematic_state = kinematic_state  # Initial kinematic state
+        self.covariance = covariance  # Initial state covariance matrix
+        self.extent = extent  # Initial extent matrix
         self.alpha = 0
+        self.kinematic_state_to_pos_matrix = kinematic_state_to_pos_matrix
 
     def get_point_estimate(self):
         # Combines the kinematic state and flattened extent matrix into one vector
-        return np.concatenate([self.state, self.extent.flatten()])
+        return np.concatenate([self.kinematic_state, self.extent.flatten()])
 
     def get_point_estimate_kinematics(self):
         # Returns just the kinematic state
-        return self.state
+        return self.kinematic_state
 
     def get_point_estimate_extent(self, flatten_matrix=False):
         # Returns just the extent matrix
@@ -29,19 +29,23 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
 
     def predict(self, dt, Cw, tau, system_matrix):
         F = system_matrix
-        x_rows = self.state.shape[0]
+        x_rows = self.kinematic_state.shape[0]
         y_rows = x_rows // 2
 
         if np.isscalar(Cw):
             Cw = Cw * np.eye(x_rows)
 
-        self.state = F @ self.state
+        self.kinematic_state = F @ self.kinematic_state
         self.covariance = F @ self.covariance @ F.T + Cw
 
         self.alpha = y_rows + np.exp(-dt / tau) * (self.alpha - y_rows)
 
     # pylint: disable=too-many-locals
     def update(self, measurements, meas_mat, meas_noise_cov):
+        if self.kinematic_state_to_pos_matrix is None:
+            # Usually, the measurement matrix is mapping the kinematic state to the position.
+            self.kinematic_state_to_pos_matrix = meas_mat
+            
         Cv = meas_noise_cov
         ys = measurements
         H = meas_mat
@@ -54,12 +58,12 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         ys_demean = ys - y_
         Y_ = ys_demean @ ys_demean.T
 
-        Hx = H @ self.state
+        Hx = H @ self.kinematic_state
 
         Y = self.extent + Cv
         S = H @ self.covariance @ H.T + Y / y_cols
         K = self.covariance @ np.linalg.solve(S, H).T
-        self.state = self.state + K @ (y_.flatten() - Hx)
+        self.kinematic_state = self.kinematic_state + K @ (y_.flatten() - Hx)
         self.covariance = self.covariance - K @ S @ K.T
 
         Xsqrt = np.linalg.cholesky(self.extent)
@@ -75,3 +79,14 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         )
 
         self.alpha = self.alpha + y_cols
+        
+    def plot_point_estimate(self, scaling_factor=1, color=(0, 0.4470, 0.7410)):
+        if self.kinematic_state_to_pos_matrix is None:
+            raise ValueError("""No kinematic_state_to_pos_matrix
+                             matrix was set, so it is unclear what
+                             the individual components of the kinematic
+                             state are (position, velocity, etc.).
+                             Please set it directly or perform an update step
+                             before plotting.""")
+        position_estimate = self.kinematic_state_to_pos_matrix @ self.kinematic_state
+        plot_ellipsoid(position_estimate, self.extent, scaling_factor, color)

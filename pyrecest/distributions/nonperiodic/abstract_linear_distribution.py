@@ -10,6 +10,7 @@ from scipy.stats import chi2
 from ..abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
+from pyrecest.utils.plotting import plot_ellipsoid
 
 
 class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
@@ -244,43 +245,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         else:
             raise ValueError("Dimension not supported")
 
-    def plot_state(self, scaling_factor=1, circle_color=(0, 0.4470, 0.7410)):
-        if self.dim == 2:
-            self._plot_state_2d(scaling_factor, circle_color)
-
-        if self.dim == 3:
-            self._plot_state_3d()
+    def plot_state(self, scaling_factor=1, color=(0, 0.4470, 0.7410)):
+        if self.dim in (2, 3,):
+            covariance = self.covariance()
+            mean = self.mean()
+            plot_ellipsoid(mean, covariance, scaling_factor, color)
 
         raise ValueError("Dimension currently not supported for plotting the state.")
-
-    def _plot_state_2d(self, scaling_factor, circle_color):
-        linear_covmat = self.covariance()
-        linear_mean = self.mean()
-
-        xs = np.linspace(0, 2 * np.pi, 100)
-        ps = scaling_factor * linear_covmat @ np.column_stack((np.cos(xs), np.sin(xs)))
-        plt.plot(ps[0] + linear_mean[0], ps[1] + linear_mean[1], color=circle_color)
-        plt.show()
-
-    def _plot_state_3d(self):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection="3d")
-        u = np.linspace(0, 2 * np.pi, 100)
-        v = np.linspace(0, np.pi, 100)
-        x = np.outer(np.cos(u), np.sin(v))
-        y = np.outer(np.sin(u), np.sin(v))
-        z = np.outer(np.ones(np.size(u)), np.cos(v))
-
-        V, D = np.linalg.eig(self.covariance())
-        all_coords = V @ np.sqrt(D) @ np.array(
-            [x.ravel(), y.ravel(), z.ravel()]
-        ) + self.mean().reshape(-1, 1)
-        x = np.reshape(all_coords[0], x.shape)
-        y = np.reshape(all_coords[1], y.shape)
-        z = np.reshape(all_coords[2], z.shape)
-
-        ax.plot_surface(
-            x, y, z, color="lightgray", alpha=0.7, linewidth=0, antialiased=False
-        )
-
-        plt.show()
