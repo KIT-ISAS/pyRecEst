@@ -1,12 +1,15 @@
 def group_results_by_filter(data):
     # Sort the data by 'parameter', treating None as negative infinity for sorting purposes
-    sorted_data = sorted(data, key=lambda x: (float('-inf') if x['parameter'] is None else x['parameter']))
+    sorted_data = sorted(
+        data,
+        key=lambda x: (float("-inf") if x["parameter"] is None else x["parameter"]),
+    )
 
     output_dict = {}
     for entry in sorted_data:
-        name = entry['name']
+        name = entry["name"]
         # Remove the 'name' key-value pair from the entry
-        entry_values = {k: v for k, v in entry.items() if k != 'name'}
+        entry_values = {k: v for k, v in entry.items() if k != "name"}
 
         # Check if the name already exists in the output_dict
         if name in output_dict:
@@ -18,5 +21,3 @@ def group_results_by_filter(data):
             output_dict[name] = {k: [v] for k, v in entry_values.items()}
 
     return output_dict
-
-
