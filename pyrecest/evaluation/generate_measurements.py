@@ -7,13 +7,14 @@ from pyrecest.distributions import (
 )
 
 
-def generate_measurements(groundtruth, scenario_param):
+# pylint: disable=too-many-branches
+def generate_measurements(groundtruth, simulation_param):
     """
     Generate measurements based on the given groundtruth and scenario parameters.
 
     Parameters:
         groundtruth (ndarray): Ground truth data.
-        scenario_param (dict): Dictionary containing scenario parameters.
+        simulation_param (dict): Dictionary containing scenario parameters.
 
     Returns:
         measurements (list): List of generated measurements at each time step.
@@ -22,33 +23,40 @@ def generate_measurements(groundtruth, scenario_param):
         (n_meas_at_individual_time_step[t], n_dim).
     """
     assert (
-        len(scenario_param["n_meas_at_individual_time_step"])
-        == scenario_param["timesteps"]
+        np.shape(simulation_param["n_meas_at_individual_time_step"])
+        == (simulation_param["n_timesteps"],)
     )
-    measurements = np.empty(scenario_param["timesteps"], dtype=object)
-    if "MTT" in scenario_param.get("manifold_type", ""):
-        assert scenario_param["clutter_rate"] == 0, "Clutter currently not supported."
+    measurements = np.empty(simulation_param["n_timesteps"], dtype=object)
+    
+    if simulation_param.get("MTT", False) and simulation_param.get("EOT", False):
+        raise NotImplementedError("Multiple extended object tracking is currently not supported.")
+    if simulation_param.get("EOT", False):
+        assert "target_shape" in simulation_param
+        raise NotImplementedError("Extended object tracking is currently not supported.")
+    
+    if simulation_param.get("MTT", False):
+        assert simulation_param["clutter_rate"] == 0, "Clutter currently not supported."
 
         n_observations = np.random.binomial(
             1,
-            scenario_param["detection_probability"],
-            (scenario_param["timesteps"], scenario_param["n_targets"]),
+            simulation_param["detection_probability"],
+            (simulation_param["n_timesteps"], simulation_param["n_targets"]),
         )
 
-        for t in range(scenario_param["timesteps"]):
+        for t in range(simulation_param["n_timesteps"]):
             n_meas_at_t = np.sum(n_observations[t, :])
             measurements[t] = np.nan * np.zeros(
-                (scenario_param["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
+                (simulation_param["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
             )
 
             meas_no = 0
-            for target_no in range(scenario_param["n_targets"]):
+            for target_no in range(simulation_param["n_targets"]):
                 if n_observations[t, target_no] == 1:
                     meas_no += 1
                     measurements[t][meas_no - 1, :] = np.dot(
-                        scenario_param["meas_matrix_for_each_target"],
+                        simulation_param["meas_matrix_for_each_target"],
                         groundtruth[t, target_no, :],
-                    ) + scenario_param["meas_noise"].sample(1)
+                    ) + simulation_param["meas_noise"].sample(1)
                 else:
                     assert (
                         n_observations[t, target_no] == 0
@@ -57,13 +65,13 @@ def generate_measurements(groundtruth, scenario_param):
             assert meas_no == n_meas_at_t, "Mismatch in number of measurements."
 
     else:
-        if "meas_generator" in scenario_param:
+        if "meas_generator" in simulation_param:
             raise NotImplementedError(
                 "Scenarios based on a 'measGenerator' are currently not supported."
             )
-        for t in range(scenario_param["timesteps"]):
-            n_meas = scenario_param["n_meas_at_individual_time_step"][t]
-            meas_noise = scenario_param["meas_noise"]
+        for t in range(simulation_param["n_timesteps"]):
+            n_meas = simulation_param["n_meas_at_individual_time_step"][t]
+            meas_noise = simulation_param["meas_noise"]
 
             if isinstance(meas_noise, AbstractHypertoroidalDistribution):
                 noise_samples = meas_noise.sample(n_meas)
