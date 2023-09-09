@@ -38,6 +38,25 @@ class TestEvalation(unittest.TestCase):
     def tearDown(self):
         self.tmpdirname.cleanup()
 
+    def test_plot_results(self):
+        from pyrecest.evaluation.plot_results import plot_results
+        import matplotlib
+        matplotlib.use('Agg')  # Set the backend to Agg
+        # To generate some results
+        self.test_evaluation_R2_random_walk()
+        files = os.listdir(self.tmpdirname.name)
+        filename = os.path.join(self.tmpdirname.name, files[0])
+
+        plot_results(
+            filename=filename,
+            plot_log=False,
+            plot_stds=False,
+        )
+        
+        for fig_num in matplotlib.pyplot.get_fignums():
+            fig = matplotlib.pyplot.figure(fig_num)
+            fig.savefig(f"test_plot_{fig_num}.png")
+
     @parameterized.expand(
         [
             (np.zeros(2),),
@@ -319,6 +338,51 @@ class TestEvalation(unittest.TestCase):
     def test_file_content(self):
         data = self._load_evaluation_data()
         self._validate_eval_data(**data)
+
+    def test_group_results_by_filter(self):
+        from pyrecest.evaluation.group_results_by_filter import group_results_by_filter
+
+        # Dummy data
+        data1 = [
+            {
+                "name": "kf",
+                "parameter": 41,
+                "error_mean": 1.17,
+                "error_std": 0.75,
+                "time_mean": 0.009,
+                "failure_rate": 0.0,
+            },
+            {
+                "name": "kf",
+                "parameter": 61,
+                "error_mean": 1.27,
+                "error_std": 0.85,
+                "time_mean": 0.109,
+                "failure_rate": 0.0,
+            },
+            {
+                "name": "pf",
+                "parameter": 51,
+                "error_mean": 1.21,
+                "error_std": 0.77,
+                "time_mean": 0.031,
+                "failure_rate": 0.0,
+            },
+            {
+                "name": "pf",
+                "parameter": 81,
+                "error_mean": 1.18,
+                "error_std": 0.71,
+                "time_mean": 0.030,
+                "failure_rate": 0.0,
+            },
+        ]
+        data2 = [data1[3], data1[1], data1[0], data1[2]]
+
+        repackaged_data1 = group_results_by_filter(data1)
+        repackaged_data2 = group_results_by_filter(data2)
+
+        self.assertEqual(repackaged_data1, repackaged_data2)
 
     def test_summarize_filter_results(self):
         data = self._load_evaluation_data()
