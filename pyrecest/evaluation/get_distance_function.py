@@ -48,12 +48,16 @@ def get_distance_function(
                 np.arccos(np.dot(x1[:4], x2[:4])), np.arccos(np.dot(x1[:4], -x2[:4]))
             )
 
-    elif ("euclidean" in manifold_name or "Euclidean" in manifold_name) and "MTT" not in manifold_name:
+    elif (
+        "euclidean" in manifold_name or "Euclidean" in manifold_name
+    ) and "MTT" not in manifold_name:
 
         def distance_function(x1, x2):
             return norm(x1 - x2)
 
-    elif ("euclidean" in manifold_name or "Euclidean" in manifold_name) and "MTT" in manifold_name:
+    elif (
+        "euclidean" in manifold_name or "Euclidean" in manifold_name
+    ) and "MTT" in manifold_name:
         additional_params.get("cutoff_distance", 1000000)
 
         def distance_function(x1, x2):
