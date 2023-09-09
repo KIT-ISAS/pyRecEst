@@ -21,6 +21,7 @@ from pyrecest.evaluation import (
     perform_predict_update_cycles,
     scenario_database,
     start_evaluation,
+    summarize_filter_results,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -242,10 +243,11 @@ class TestEvalation(unittest.TestCase):
         scenario_param,
         filter_configs,
         last_filter_states,
-        run_times,
+        runtimes,
         run_failed,
         groundtruths,
         measurements,
+        **_,
     ):
         n_configs = len(filter_configs)
 
@@ -260,9 +262,9 @@ class TestEvalation(unittest.TestCase):
         self.assertEqual(np.shape(last_filter_states), (n_configs, self.n_runs_default))
         self.assertTrue(np.all(last_filter_states != None))  # noqa
 
-        self.assertEqual(np.shape(run_times), (n_configs, self.n_runs_default))
-        print(run_times)
-        self.assertTrue(np.all(run_times > 0))
+        self.assertEqual(np.shape(runtimes), (n_configs, self.n_runs_default))
+        print(runtimes)
+        self.assertTrue(np.all(runtimes > 0))
 
         self.assertEqual(np.shape(run_failed), (n_configs, self.n_runs_default))
         self.assertTrue(not np.any(run_failed))
@@ -286,7 +288,7 @@ class TestEvalation(unittest.TestCase):
             scenario_param,
             filter_configs,
             last_filter_states,
-            run_times,
+            runtimes,
             run_failed,
             groundtruths,
             measurements,
@@ -302,27 +304,42 @@ class TestEvalation(unittest.TestCase):
             scenario_param,
             filter_configs,
             last_filter_states,
-            run_times,
+            runtimes,
             run_failed,
             groundtruths,
             measurements,
         )
 
-    def test_file_content(self):
+    def _load_evaluation_data(self):
         self.test_evaluation_R2_random_walk()
         files = os.listdir(self.tmpdirname.name)
         filename = os.path.join(self.tmpdirname.name, files[0])
+        return np.load(filename, allow_pickle=True).item()
 
-        data = np.load(filename, allow_pickle=True).item()
-        self._validate_eval_data(
-            data["scenario_param"],
-            data["filter_configs"],
-            data["last_filter_states"],
-            data["run_times"],
-            data["run_failed"],
-            data["groundtruths"],
-            data["measurements"],
-        )
+    def test_file_content(self):
+        data = self._load_evaluation_data()
+        self._validate_eval_data(**data)
+
+    def test_summarize_filter_results(self):
+        data = self._load_evaluation_data()
+        results_summarized = summarize_filter_results(**data)
+
+        for result in results_summarized:
+            error_mean = result["error_mean"]
+            error_std = result["error_std"]
+            time_mean = result["time_mean"]
+            failure_rate = result["failure_rate"]
+
+            self.assertGreaterEqual(error_mean, 0)
+            self.assertLessEqual(error_mean, 2)
+
+            self.assertGreaterEqual(error_std, 0)
+            self.assertLessEqual(error_std, 1)
+
+            self.assertGreaterEqual(time_mean, 0)
+            self.assertLessEqual(time_mean, 1)
+
+            self.assertEqual(failure_rate, 0)
 
 
 if __name__ == "__main__":
