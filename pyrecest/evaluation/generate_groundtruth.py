@@ -25,20 +25,18 @@ def generate_groundtruth(scenario_param, x0=None):
     ), "Mismatch in number of targets."
 
     # Initialize ground truth
-    groundtruth = np.empty(
-        scenario_param["timesteps"], dtype=np.ndarray
-    )
-    
+    groundtruth = np.empty(scenario_param["timesteps"], dtype=np.ndarray)
+
     if "inputs" in scenario_param:
         assert (
             scenario_param["inputs"].shape[1] == scenario_param["timesteps"] - 1
         ), "Mismatch in number of timesteps."
 
     groundtruth[0] = np.atleast_2d(x0)
-    
+
     for t in range(1, scenario_param["timesteps"]):
         groundtruth[t] = np.empty_like(groundtruth[0])
-        for target_no in range(scenario_param["n_targets"]):      
+        for target_no in range(scenario_param["n_targets"]):
             if "gen_next_state_with_noise" in scenario_param:
                 if "inputs" not in scenario_param or scenario_param["inputs"] is None:
                     groundtruth[t][target_no, :] = scenario_param[
@@ -86,5 +84,5 @@ def generate_groundtruth(scenario_param, x0=None):
     assert groundtruth[0].shape[1] == scenario_param["initial_prior"].dim
     for t in range(scenario_param["timesteps"]):
         groundtruth[t] = np.squeeze(groundtruth[t])
-            
+
     return groundtruth

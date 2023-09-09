@@ -40,7 +40,9 @@ def iterate_configs_and_runs(
 
     for run in range(n_runs):
         groundtruths[run, :] = generate_groundtruth(scenario_param)
-        measurements[run, :] = generate_measurements(groundtruths[run, :], scenario_param)
+        measurements[run, :] = generate_measurements(
+            groundtruths[run, :], scenario_param
+        )
 
         for config_no, filter_config in enumerate(filter_configs):
             try:

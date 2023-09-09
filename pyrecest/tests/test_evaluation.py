@@ -1,6 +1,7 @@
+import os
 import tempfile
 import unittest
-import os
+
 import numpy as np
 from parameterized import parameterized
 from pyrecest.distributions import (
@@ -47,7 +48,9 @@ class TestEvalation(unittest.TestCase):
 
         # Test if groundtruth and its content is as expected
         self.assertEqual(np.shape(groundtruth), (self.timesteps,))
-        self.assertEqual(np.shape(groundtruth[0]), (self.scenario_param["initial_prior"].dim,))
+        self.assertEqual(
+            np.shape(groundtruth[0]), (self.scenario_param["initial_prior"].dim,)
+        )
 
     @parameterized.expand([(1,), (3,)])
     def test_generate_measurements(self, n_meas):
@@ -75,15 +78,15 @@ class TestEvalation(unittest.TestCase):
 
         def dummy_distance_function(x, y):
             return np.linalg.norm(x - y)
-        
+
         # Initialize the outer array with object type
         groundtruths = np.empty((3, 4), dtype=object)
 
         # Populate each entry with (2,) arrays
         for i in range(3):
             for j in range(4):
-                groundtruths[i, j] = np.array([i+j, i-j])
-                
+                groundtruths[i, j] = np.array([i + j, i - j])
+
         results = np.array([groundtruths[:, -1], groundtruths[:, -1] + 1])
 
         # Run the function and get the deviations matrix
@@ -234,9 +237,18 @@ class TestEvalation(unittest.TestCase):
         )
 
     # pylint: disable=too-many-arguments
-    def _validate_eval_data(self, scenario_param, filter_configs, last_filter_states, run_times, run_failed, groundtruths, measurements):
+    def _validate_eval_data(
+        self,
+        scenario_param,
+        filter_configs,
+        last_filter_states,
+        run_times,
+        run_failed,
+        groundtruths,
+        measurements,
+    ):
         n_configs = len(filter_configs)
-        
+
         self.assertIsInstance(scenario_param, dict)
         self.assertIsInstance(scenario_param["manifold_type"], str)
 
@@ -258,19 +270,18 @@ class TestEvalation(unittest.TestCase):
         self.assertEqual(np.ndim(groundtruths), 2)
         self.assertIsInstance(groundtruths[0, 0], np.ndarray)
         self.assertIn(np.ndim(groundtruths[0, 0]), (1, 2))
-        
+
         self.assertEqual(np.ndim(measurements), 2)
         self.assertIsInstance(measurements[0, 0], np.ndarray)
         self.assertIn(np.ndim(measurements[0, 0]), (1, 2))
-        
-    
+
     def test_evaluation_R2_random_walk(self):
         scenario_name = "R2randomWalk"
         filters_configs_input = [
             {"name": "kf", "parameter": None},
             {"name": "pf", "parameter": [51, 81]},
         ]
-        
+
         (
             scenario_param,
             filter_configs,
@@ -287,17 +298,32 @@ class TestEvalation(unittest.TestCase):
             auto_warning_on_off=False,
             save_folder=self.tmpdirname.name,
         )
-        self._validate_eval_data(scenario_param, filter_configs, last_filter_states, run_times, run_failed, groundtruths, measurements)
+        self._validate_eval_data(
+            scenario_param,
+            filter_configs,
+            last_filter_states,
+            run_times,
+            run_failed,
+            groundtruths,
+            measurements,
+        )
 
     def test_file_content(self):
         self.test_evaluation_R2_random_walk()
         files = os.listdir(self.tmpdirname.name)
         filename = os.path.join(self.tmpdirname.name, files[0])
-        
-        data = np.load(filename, allow_pickle=True).item()
-        self._validate_eval_data(data['scenario_param'], data['filter_configs'], data['last_filter_states'],
-                                 data['run_times'], data['run_failed'], data['groundtruths'], data['measurements'])         
 
-        
+        data = np.load(filename, allow_pickle=True).item()
+        self._validate_eval_data(
+            data["scenario_param"],
+            data["filter_configs"],
+            data["last_filter_states"],
+            data["run_times"],
+            data["run_failed"],
+            data["groundtruths"],
+            data["measurements"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

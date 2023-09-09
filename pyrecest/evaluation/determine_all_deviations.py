@@ -1,9 +1,9 @@
 import warnings
+from typing import Callable
 
 import numpy as np
-
 from beartype import beartype
-from typing import Callable
+
 
 @beartype
 def determine_all_deviations(
@@ -17,7 +17,13 @@ def determine_all_deviations(
         raise NotImplementedError("Not implemented yet")
 
     assert (
-        np.ndim(groundtruths) == 2 and isinstance(groundtruths[0, 0], np.ndarray) and np.ndim(groundtruths[0, 0]) in (1, 2,)
+        np.ndim(groundtruths) == 2
+        and isinstance(groundtruths[0, 0], np.ndarray)
+        and np.ndim(groundtruths[0, 0])
+        in (
+            1,
+            2,
+        )
     ), "Assuming groundtruths to be a 2-D array of shape (n_runs, n_timesteps) composed arrays of shape (n_dim,) or (n_targets,n_dim)."
 
     all_deviations_last_mat = np.empty((len(results), groundtruths.shape[0]))
@@ -29,9 +35,7 @@ def determine_all_deviations(
                 final_estimate = result_curr_config[run]
             elif callable(extract_mean):
                 # Otherwise, use extract_mean to obtain the estimate
-                final_estimate = extract_mean(
-                    result_curr_config[run]
-                )
+                final_estimate = extract_mean(result_curr_config[run])
             else:
                 raise ValueError("No compatible mean extraction function given.")
 

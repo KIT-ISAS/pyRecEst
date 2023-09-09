@@ -8,10 +8,10 @@ import numpy as np
 from .check_and_fix_params import check_and_fix_params
 from .iterate_configs_and_runs import iterate_configs_and_runs
 from .scenario_database import scenario_database
-from beartype import beartype
+
 
 # pylint: disable=R0913,R0914
-#@beartype
+# @beartype
 def start_evaluation(
     scenario: str | dict[str, Any],
     filter_configs: list[dict[str, Any]],
@@ -25,7 +25,15 @@ def start_evaluation(
     initial_seed: None | int | np.uint32 = None,
     consecutive_seed: bool = False,
     auto_warning_on_off: bool = False,
-) -> tuple[dict, list[dict], np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray[np.ndarray]]:
+) -> tuple[
+    dict,
+    list[dict],
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray[np.ndarray],
+]:
     """
     Main function for evaluating filters.
 
