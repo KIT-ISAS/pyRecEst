@@ -7,11 +7,11 @@ def check_and_fix_params(scenario_param):
     scenario_param.setdefault("use_likelihood", False)
     scenario_param.setdefault("n_targets", 1)
     scenario_param.setdefault(
-        "apply_sys_noise_times", [True] * (scenario_param["timesteps"] - 1) + [False]
+        "apply_sys_noise_times", [True] * (scenario_param["n_timesteps"] - 1) + [False]
     )
 
     # Check for 'timesteps'
-    timesteps = scenario_param["timesteps"]
+    timesteps = scenario_param["n_timesteps"]
     if timesteps is not None:
         assert timesteps > 0 and isinstance(timesteps, int)
 
@@ -46,7 +46,7 @@ def check_and_fix_params(scenario_param):
 
         scenario_param["n_meas_at_individual_time_step"] = [
             scenario_param["meas_per_step"]
-        ] * scenario_param["timesteps"]
+        ] * scenario_param["n_timesteps"]
         del scenario_param["meas_per_step"]
 
         assert all(
@@ -58,7 +58,7 @@ def check_and_fix_params(scenario_param):
 
     elif "n_meas_at_individual_time_step" not in scenario_param:
         scenario_param["n_meas_at_individual_time_step"] = [1] * scenario_param[
-            "timesteps"
+            "n_timesteps"
         ]
 
     assert isinstance(

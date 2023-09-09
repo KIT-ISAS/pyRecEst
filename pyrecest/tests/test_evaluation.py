@@ -14,14 +14,15 @@ from pyrecest.evaluation import (
     determine_all_deviations,
     generate_groundtruth,
     generate_measurements,
+    evaluate_for_simulation_config,
+    simulation_database,
     get_axis_label,
     get_distance_function,
     get_extract_mean,
     iterate_configs_and_runs,
     perform_predict_update_cycles,
-    scenario_database,
-    start_evaluation,
     summarize_filter_results,
+    generate_simulated_scenarios,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -29,9 +30,9 @@ from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 class TestEvalation(unittest.TestCase):
     def setUp(self):
         self.scenario_name = "R2randomWalk"
-        scenario_param = scenario_database(self.scenario_name)
-        self.scenario_param = check_and_fix_params(scenario_param)
-        self.timesteps = 10
+        simulation_config = simulation_database(self.scenario_name)
+        self.simulation_param = check_and_fix_params(simulation_config)
+        self.n_timesteps_default = 10
         self.n_runs_default = 8
         self.tmpdirname = tempfile.TemporaryDirectory()  # pylint: disable=R1732
 
@@ -65,33 +66,41 @@ class TestEvalation(unittest.TestCase):
         ]
     )
     def test_generate_gt_R2(self, x0):
-        groundtruth = generate_groundtruth(self.scenario_param, x0)
+        groundtruth = generate_groundtruth(self.simulation_param, x0)
 
         # Test if groundtruth and its content is as expected
-        self.assertEqual(np.shape(groundtruth), (self.timesteps,))
+        self.assertEqual(np.shape(groundtruth), (self.n_timesteps_default,))
         self.assertEqual(
-            np.shape(groundtruth[0]), (self.scenario_param["initial_prior"].dim,)
+            np.shape(groundtruth[0]), (self.simulation_param["initial_prior"].dim,)
         )
 
     @parameterized.expand([(1,), (3,)])
     def test_generate_measurements(self, n_meas):
-        self.scenario_param["n_meas_at_individual_time_step"] = n_meas * np.ones(
-            self.timesteps, dtype=int
+        self.simulation_param["n_meas_at_individual_time_step"] = n_meas * np.ones(
+            self.n_timesteps_default, dtype=int
         )
         measurements = generate_measurements(
-            np.zeros((self.timesteps, self.scenario_param["initial_prior"].dim)),
-            self.scenario_param,
+            np.zeros((self.n_timesteps_default, self.simulation_param["initial_prior"].dim)),
+            self.simulation_param,
         )
 
-        self.assertEqual(len(measurements), self.timesteps)
-        for i in range(self.timesteps):
+        self.assertEqual(len(measurements), self.n_timesteps_default)
+        for i in range(self.n_timesteps_default):
             self.assertEqual(
                 np.atleast_2d(measurements[i]).shape,
                 (
-                    self.scenario_param["n_meas_at_individual_time_step"][i],
-                    self.scenario_param["initial_prior"].dim,
+                    self.simulation_param["n_meas_at_individual_time_step"][i],
+                    self.simulation_param["initial_prior"].dim,
                 ),
             )
+
+    def test_generate_simulated_scenario(self):
+        self.simulation_param["all_seeds"] = range(self.n_runs_default)
+        groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
+
+        self.assertEqual(np.shape(groundtruths), (self.n_runs_default, self.n_timesteps_default))
+        self.assertEqual(np.shape(measurements), (self.n_runs_default, self.n_timesteps_default))
+        return groundtruths, measurements
 
     def test_determine_all_deviations(self):
         def dummy_extract_mean(x):
@@ -154,18 +163,18 @@ class TestEvalation(unittest.TestCase):
         self.assertIsInstance(meas_noise_for_filter, np.ndarray)
 
     def test_configure_pf(self):
-        filterParam = {"name": "pf", "parameter": 100}
-        scenarioParam = {
+        filter_config = {"name": "pf", "parameter": 100}
+        scenario_config = {
             "initial_prior": HypertoroidalWrappedNormalDistribution(
                 np.array([0, 0]), np.eye(2)
             ),
             "inputs": None,
-            "manifold_type": "hypertorus",
+            "manifold": "hypertorus",
             "gen_next_state_with_noise": lambda x: x,
         }
 
         configured_filter, predictionRoutine, *_ = configure_for_filter(
-            filterParam, scenarioParam
+            filter_config, scenario_config
         )
 
         self.assertIsInstance(configured_filter, HypertoroidalParticleFilter)
@@ -173,20 +182,19 @@ class TestEvalation(unittest.TestCase):
 
     def test_configure_unsupported_filter(self):
         filterParam = {"name": "unsupported_filter", "parameter": 10}
-        scenario_param = {
+        scenario_config = {
             "initial_prior": "some_initial_prior",
             "inputs": None,
-            "manifold_type": "Euclidean",
+            "manifold": "Euclidean",
         }
 
         with self.assertRaises(ValueError):
-            configure_for_filter(filterParam, scenario_param)
+            configure_for_filter(filterParam, scenario_config)
 
     def test_perform_predict_update_cycles(self):
         scenario_name = "R2randomWalk"
-        scenario_param = scenario_database(scenario_name)
+        scenario_param = simulation_database(scenario_name)
         scenario_param = check_and_fix_params(scenario_param)
-        timesteps = 10
 
         (
             last_filter_state,
@@ -196,8 +204,8 @@ class TestEvalation(unittest.TestCase):
         ) = perform_predict_update_cycles(
             scenario_param,
             {"name": "kf", "parameter": None},
-            np.zeros((timesteps, 2)),
-            generate_measurements(np.zeros((timesteps, 2)), scenario_param),
+            np.zeros((self.n_timesteps_default, 2)),
+            generate_measurements(np.zeros((self.n_timesteps_default, 2)), scenario_param),
         )
 
         self.assertIsInstance(time_elapsed, float)
@@ -232,36 +240,31 @@ class TestEvalation(unittest.TestCase):
             f"Expected errorLabel to be a string, but got {type(error_label)}",
         )
 
-    def test_iterate_configs_and_runs_kf_only(self):
-        scenario_name = "R2randomWalk"
-        scenario_param = scenario_database(scenario_name)
-        scenario_param = check_and_fix_params(scenario_param)
-        scenario_param["timesteps"] = 10
+    @parameterized.expand([
+        ([{"name": "kf", "parameter": None}],),
+        ([{"name": "kf", "parameter": None}, {"name": "pf", "parameter": 51},
+          {"name": "pf", "parameter": 81}],)
+    ])
+    def test_iterate_configs_and_runs(self, filter_configs):
+        groundtruths, measurements = self.test_generate_simulated_scenario()
+        evaluation_config = {"plot_each_step": False,
+                        "convert_to_point_estimate_during_runtime": False,
+                        "extract_all_point_estimates": False,
+                        "tolerate_failure": False,
+                        "auto_warning_on_off": False,
+        }
 
         iterate_configs_and_runs(
-            scenario_param, [{"name": "kf", "parameter": None}], n_runs=10
+            groundtruths, measurements, self.simulation_param, filter_configs, evaluation_config
         )
 
-    def test_iterate_configs_and_runs_kf_and_pf(self):
-        scenario_name = "R2randomWalk"
-        scenario_param = scenario_database(scenario_name)
-        scenario_param = check_and_fix_params(scenario_param)
-        scenario_param["timesteps"] = 10
-
-        iterate_configs_and_runs(
-            scenario_param,
-            [
-                {"name": "kf", "parameter": None},
-                {"name": "pf", "parameter": 100},
-            ],
-            n_runs=10,
-        )
 
     # pylint: disable=too-many-arguments
     def _validate_eval_data(
         self,
-        scenario_param,
+        scenario_config,
         filter_configs,
+        evaluation_config,
         last_filter_states,
         runtimes,
         run_failed,
@@ -271,13 +274,15 @@ class TestEvalation(unittest.TestCase):
     ):
         n_configs = len(filter_configs)
 
-        self.assertIsInstance(scenario_param, dict)
-        self.assertIsInstance(scenario_param["manifold_type"], str)
+        self.assertIsInstance(scenario_config, dict)
+        self.assertIsInstance(scenario_config["manifold"], str)
 
         self.assertEqual(len(filter_configs), n_configs)
         self.assertDictEqual(filter_configs[0], {"name": "kf", "parameter": None})
         self.assertDictEqual(filter_configs[1], {"name": "pf", "parameter": 51})
         self.assertDictEqual(filter_configs[2], {"name": "pf", "parameter": 81})
+        
+        self.assertIsInstance(evaluation_config, dict)
 
         self.assertEqual(np.shape(last_filter_states), (n_configs, self.n_runs_default))
         self.assertTrue(np.all(last_filter_states != None))  # noqa
@@ -305,24 +310,27 @@ class TestEvalation(unittest.TestCase):
         ]
 
         (
-            scenario_param,
-            filter_configs,
-            last_filter_states,
-            runtimes,
-            run_failed,
-            groundtruths,
-            measurements,
-        ) = start_evaluation(
+            last_filter_states,  # pylint: disable=R0801
+            runtimes,  # pylint: disable=R0801
+            run_failed,  # pylint: disable=R0801
+            groundtruths,  # pylint: disable=R0801
+            measurements,  # pylint: disable=R0801
+            scenario_config,  # pylint: disable=R0801
+            filter_configs,  # pylint: disable=R0801
+            evaluation_config,  # pylint: disable=R0801
+        ) = evaluate_for_simulation_config(
             scenario_name,
             filters_configs_input,
             n_runs=self.n_runs_default,
+            n_timesteps=self.n_timesteps_default,
             initial_seed=1,
             auto_warning_on_off=False,
             save_folder=self.tmpdirname.name,
         )
         self._validate_eval_data(
-            scenario_param,
+            scenario_config,
             filter_configs,
+            evaluation_config,
             last_filter_states,
             runtimes,
             run_failed,

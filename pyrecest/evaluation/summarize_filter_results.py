@@ -9,7 +9,7 @@ from .get_extract_mean import get_extract_mean
 
 # pylint: disable=too-many-arguments,too-many-locals
 def summarize_filter_results(
-    scenario_param,
+    scenario_config,
     filter_configs,
     runtimes,
     groundtruths,
@@ -33,8 +33,8 @@ def summarize_filter_results(
     if groundtruths.shape[1] < 1000:
         warnings.warn("Using less than 1000 runs. This may lead to unreliable results.")
 
-    extract_mean = get_extract_mean(scenario_param["manifold_type"])
-    distance_function = get_distance_function(scenario_param["manifold_type"])
+    extract_mean = get_extract_mean(scenario_config["manifold"])
+    distance_function = get_distance_function(scenario_config["manifold"])
     errors_all = determine_all_deviations(
         filter_results, extract_mean, distance_function, groundtruths
     )

@@ -23,19 +23,19 @@ def generate_measurements(groundtruth, scenario_param):
     """
     assert (
         len(scenario_param["n_meas_at_individual_time_step"])
-        == scenario_param["timesteps"]
+        == scenario_param["n_timesteps"]
     )
-    measurements = np.empty(scenario_param["timesteps"], dtype=object)
+    measurements = np.empty(scenario_param["n_timesteps"], dtype=object)
     if "MTT" in scenario_param.get("manifold_type", ""):
         assert scenario_param["clutter_rate"] == 0, "Clutter currently not supported."
 
         n_observations = np.random.binomial(
             1,
             scenario_param["detection_probability"],
-            (scenario_param["timesteps"], scenario_param["n_targets"]),
+            (scenario_param["n_timesteps"], scenario_param["n_targets"]),
         )
 
-        for t in range(scenario_param["timesteps"]):
+        for t in range(scenario_param["n_timesteps"]):
             n_meas_at_t = np.sum(n_observations[t, :])
             measurements[t] = np.nan * np.zeros(
                 (scenario_param["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
@@ -61,7 +61,7 @@ def generate_measurements(groundtruth, scenario_param):
             raise NotImplementedError(
                 "Scenarios based on a 'measGenerator' are currently not supported."
             )
-        for t in range(scenario_param["timesteps"]):
+        for t in range(scenario_param["n_timesteps"]):
             n_meas = scenario_param["n_meas_at_individual_time_step"][t]
             meas_noise = scenario_param["meas_noise"]
 

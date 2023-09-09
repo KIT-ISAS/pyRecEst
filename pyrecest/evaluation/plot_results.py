@@ -54,7 +54,7 @@ def plot_results(
 
     # To convert to ms per time step
     times_factor = 1000 / data["groundtruths"].shape[1]
-    state_dim = data["scenario_param"]["initial_prior"].dim
+    state_dim = data["scenario_config"]["initial_prior"].dim
     # Initialize plots and axis
     figs = [plt.figure(i) for i in range(3)]
 
@@ -109,7 +109,7 @@ def plot_results(
                 label=long_name_to_short_name(curr_filter_name),
             )
         plt.xlabel("Number of grid points/particles/coefficients")
-        plt.ylabel(get_axis_label(data["scenario_param"]["manifold_type"]))
+        plt.ylabel(get_axis_label(data["scenario_config"]["manifold"]))
 
         # Plot times
         plt.figure(1)
@@ -169,7 +169,7 @@ def plot_results(
                 label=long_name_to_short_name(curr_filter_name),
             )
         plt.xlabel("Time taken in ms per time step")
-        plt.ylabel(get_axis_label(data["scenario_param"]["manifold_type"]))
+        plt.ylabel(get_axis_label(data["scenario_config"]["manifold"]))
 
     if not_all_warnings_shown:
         print("-----------Reminder: Not all warnings were enabled.-----------")
