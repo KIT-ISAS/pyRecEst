@@ -38,6 +38,26 @@ class TestEvalation(unittest.TestCase):
     def tearDown(self):
         self.tmpdirname.cleanup()
 
+    def test_plot_results(self):
+        import matplotlib
+        from pyrecest.evaluation.plot_results import plot_results
+
+        matplotlib.use("Agg")  # Set the backend to Agg
+        # To generate some results
+        self.test_evaluation_R2_random_walk()
+        files = os.listdir(self.tmpdirname.name)
+        filename = os.path.join(self.tmpdirname.name, files[0])
+
+        plot_results(
+            filename=filename,
+            plot_log=False,
+            plot_stds=False,
+        )
+
+        for fig_num in matplotlib.pyplot.get_fignums():
+            fig = matplotlib.pyplot.figure(fig_num)
+            fig.savefig(f"test_plot_{fig_num}.png")
+
     @parameterized.expand(
         [
             (np.zeros(2),),
