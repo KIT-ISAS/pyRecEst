@@ -22,6 +22,7 @@ from pyrecest.evaluation import (
     scenario_database,
     start_evaluation,
     summarize_filter_results,
+    generate_simulated_scenarios,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 
@@ -92,6 +93,14 @@ class TestEvalation(unittest.TestCase):
                     self.scenario_param["initial_prior"].dim,
                 ),
             )
+
+    def test_generate_simulated_scenario(self):
+        scenario_param = generate_simulated_scenarios(
+            self.scenario_name, n_runs=self.n_runs_default, initial_seed=1)
+
+        self.assertEqual(len(scenario_param), self.n_runs_default)
+        for i in range(self.n_runs_default):
+            self.assertIsInstance(scenario_param[i], dict)
 
     def test_determine_all_deviations(self):
         def dummy_extract_mean(x):

@@ -11,6 +11,8 @@ from .perform_predict_update_cycles import perform_predict_update_cycles
 from .scenario_database import scenario_database
 from .start_evaluation import start_evaluation
 from .summarize_filter_results import summarize_filter_results
+from .generate_simulated_scenarios import generate_simulated_scenarios
+from .plot_results import plot_results
 
 __all__ = [
     "generate_groundtruth",
@@ -26,4 +28,6 @@ __all__ = [
     "get_distance_function",
     "get_extract_mean",
     "summarize_filter_results",
+    "generate_simulated_scenarios",
+    "plot_results",
 ]
