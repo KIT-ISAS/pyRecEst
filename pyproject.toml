@@ -20,7 +20,7 @@ numpy-quaternion = "*"
 healpy_support = ["healpy"]
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.0.2"
+autopep8 = "^2.0.4"
 pytest = "*"
 parameterized = "*"
 
