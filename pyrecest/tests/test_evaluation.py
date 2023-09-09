@@ -39,9 +39,10 @@ class TestEvalation(unittest.TestCase):
         self.tmpdirname.cleanup()
 
     def test_plot_results(self):
-        from pyrecest.evaluation.plot_results import plot_results
         import matplotlib
-        matplotlib.use('Agg')  # Set the backend to Agg
+        from pyrecest.evaluation.plot_results import plot_results
+
+        matplotlib.use("Agg")  # Set the backend to Agg
         # To generate some results
         self.test_evaluation_R2_random_walk()
         files = os.listdir(self.tmpdirname.name)
@@ -52,7 +53,7 @@ class TestEvalation(unittest.TestCase):
             plot_log=False,
             plot_stds=False,
         )
-        
+
         for fig_num in matplotlib.pyplot.get_fignums():
             fig = matplotlib.pyplot.figure(fig_num)
             fig.savefig(f"test_plot_{fig_num}.png")

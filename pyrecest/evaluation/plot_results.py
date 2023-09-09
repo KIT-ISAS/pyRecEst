@@ -2,15 +2,16 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from beartype import beartype
+
 from .get_axis_label import get_axis_label
 from .group_results_by_filter import group_results_by_filter
 from .summarize_filter_results import summarize_filter_results
 
+
 # pylint: disable=too-many-branches,too-many-locals,too-many-statements
 def plot_results(
-    filename=None, plot_log=False, plot_stds:bool=False, omit_slow:bool=False
+    filename=None, plot_log=False, plot_stds: bool = False, omit_slow: bool = False
 ):
     """
     Plot results of filter evaluations.
@@ -52,11 +53,11 @@ def plot_results(
             del results_grouped["random"]
 
     # To convert to ms per time step
-    times_factor = 1000/data["groundtruths"].shape[1]
+    times_factor = 1000 / data["groundtruths"].shape[1]
     state_dim = data["scenario_param"]["initial_prior"].dim
     # Initialize plots and axis
     figs = [plt.figure(i) for i in range(3)]
-    
+
     for curr_filter_name in results_grouped.keys():
         # Iterate over all possible names and plot the lines for those that were evaluated
         color, style_marker, style_line = get_plot_style_for_filter(curr_filter_name)
@@ -79,10 +80,26 @@ def plot_results(
             and np.size(params) > 1
         ):
             if plot_stds:
-                plt.plot(params, errors_mean - errors_std * 0.05, color=color, label=long_name_to_short_name(curr_filter_name) + " - std")
-                plt.plot(params, errors_mean + errors_std * 0.05, color=color, label=long_name_to_short_name(curr_filter_name) + " + std")
+                plt.plot(
+                    params,
+                    errors_mean - errors_std * 0.05,
+                    color=color,
+                    label=long_name_to_short_name(curr_filter_name) + " - std",
+                )
+                plt.plot(
+                    params,
+                    errors_mean + errors_std * 0.05,
+                    color=color,
+                    label=long_name_to_short_name(curr_filter_name) + " + std",
+                )
 
-            plt.plot(params, errors_mean, style_marker + style_line, color=color, label=long_name_to_short_name(curr_filter_name))
+            plt.plot(
+                params,
+                errors_mean,
+                style_marker + style_line,
+                color=color,
+                label=long_name_to_short_name(curr_filter_name),
+            )
         else:  # If not parametric like wn or twn filter
             plt.plot(
                 [min_param, max_param],
@@ -91,7 +108,7 @@ def plot_results(
                 color=color,
                 label=long_name_to_short_name(curr_filter_name),
             )
-        plt.xlabel('Number of grid points/particles/coefficients')
+        plt.xlabel("Number of grid points/particles/coefficients")
         plt.ylabel(get_axis_label(data["scenario_param"]["manifold_type"]))
 
         # Plot times
@@ -101,7 +118,13 @@ def plot_results(
             and not np.any(np.isnan(params))
             and np.size(params) > 1
         ):
-            plt.plot(params, times_factor * times_mean, style_marker + style_line, color=color, label=long_name_to_short_name(curr_filter_name))
+            plt.plot(
+                params,
+                times_factor * times_mean,
+                style_marker + style_line,
+                color=color,
+                label=long_name_to_short_name(curr_filter_name),
+            )
         else:
             if omit_slow:
                 raise NotImplementedError(
@@ -115,8 +138,8 @@ def plot_results(
                 color=color,
                 label=long_name_to_short_name(curr_filter_name),
             )
-        plt.xlabel('Number of grid points/particles/coefficients')
-        plt.ylabel('Time taken in ms per time step')
+        plt.xlabel("Number of grid points/particles/coefficients")
+        plt.ylabel("Time taken in ms per time step")
 
         # Plot errors over time
         plt.figure(2)
@@ -125,15 +148,27 @@ def plot_results(
             and not np.any(np.isnan(params))
             and np.size(params) > 1
         ):
-            plt.plot(times_factor * times_mean, errors_mean, style_marker + style_line, color=color, label=long_name_to_short_name(curr_filter_name))
+            plt.plot(
+                times_factor * times_mean,
+                errors_mean,
+                style_marker + style_line,
+                color=color,
+                label=long_name_to_short_name(curr_filter_name),
+            )
         else:
             if omit_slow:
                 raise NotImplementedError(
                     "Omitting slow filters is not implemented yet."
                 )
 
-            plt.plot(times_mean, errors_mean, style_marker, color=color, label=long_name_to_short_name(curr_filter_name))
-        plt.xlabel('Time taken in ms per time step')
+            plt.plot(
+                times_mean,
+                errors_mean,
+                style_marker,
+                color=color,
+                label=long_name_to_short_name(curr_filter_name),
+            )
+        plt.xlabel("Time taken in ms per time step")
         plt.ylabel(get_axis_label(data["scenario_param"]["manifold_type"]))
 
     if not_all_warnings_shown:
@@ -249,9 +284,8 @@ def apply_log_scale_to_axes(axes_list, log_array):
     assert len(axes_list) == 3, "Expecting 3 axes for 3 plots"
 
     for plot_idx, ax in enumerate(axes_list):
-
         if log_array[0, plot_idx]:  # Check if x-axis should be log scale
-            ax.set_xscale('log')
-        
+            ax.set_xscale("log")
+
         if log_array[1, plot_idx]:  # Check if y-axis should be log scale
-            ax.set_yscale('log')
+            ax.set_yscale("log")
