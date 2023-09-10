@@ -7,35 +7,35 @@ from pyrecest.filters import (
 
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
-def configure_for_filter(filter_config, scenario_param, precalculated_params=None):
+def configure_for_filter(filter_config, scenario_config, precalculated_params=None):
     if precalculated_params is not None:
         raise NotImplementedError(
             "No filters using precalculated parameters have been implemented so far."
         )
 
     # Check for likelihood and measurement noise in scenario parameters
-    likelihood_for_filter = scenario_param.get("likelihood", None)
-    meas_noise_for_filter = scenario_param.get("meas_noise", None)
+    likelihood_for_filter = scenario_config.get("likelihood", None)
+    meas_noise_for_filter = scenario_config.get("meas_noise", None)
 
     # Switch-case based on filter name
     filter_name = filter_config["name"]
 
     if filter_name == "kf":
         # Implement your KalmanFilter class and its methods
-        filter_obj = KalmanFilter(scenario_param["initial_prior"])
+        filter_obj = KalmanFilter(scenario_config["initial_prior"])
         meas_noise_for_filter = meas_noise_for_filter.covariance()
-        if scenario_param.get("inputs") is None:
+        if scenario_config.get("inputs") is None:
 
             def prediction_routine():  # type: ignore
                 return filter_obj.predict_identity(
-                    scenario_param["sys_noise"].covariance()
+                    scenario_config["sys_noise"].covariance()
                 )
 
         else:
 
             def prediction_routine(curr_input):  # type: ignore
                 return filter_obj.predict_identity(
-                    scenario_param["sys_noise"], curr_input
+                    scenario_config["sys_noise"], curr_input
                 )
 
     elif filter_name == "twn":
@@ -59,62 +59,62 @@ def configure_for_filter(filter_config, scenario_param, precalculated_params=Non
         if no_particles is None or no_particles == 0:
             raise ValueError("Using zero particles does not make sense")
 
-        manifold_type = scenario_param.get("manifold_type")
+        manifold = scenario_config["manifold"]
 
-        if manifold_type in ["circle", "hypertorus"]:
+        if manifold in ["circle", "hypertorus"]:
             assert (
-                scenario_param.get("inputs") is None
+                scenario_config.get("inputs") is None
             ), "Inputs currently not supported for the current setting."
 
             filter_obj = HypertoroidalParticleFilter(
-                no_particles, scenario_param["initial_prior"].dim
+                no_particles, scenario_config["initial_prior"].dim
             )
-            filter_obj.set_state(scenario_param["initial_prior"])
+            filter_obj.set_state(scenario_config["initial_prior"])
 
-            if "gen_next_state_with_noise" in scenario_param:
+            if "gen_next_state_with_noise" in scenario_config:
 
                 def prediction_routine():  # type: ignore
                     return filter_obj.predict_nonlinear(
-                        scenario_param["gen_next_state_with_noise"],
+                        scenario_config["gen_next_state_with_noise"],
                         None,
-                        scenario_param.get("genNextStateWithNoiseIsVectorized", False),
+                        scenario_config.get("genNextStateWithNoiseIsVectorized", False),
                     )
 
-            elif "sys_noise" in scenario_param:
+            elif "sys_noise" in scenario_config:
 
                 def prediction_routine():  # type: ignore
                     return filter_obj.predict_nonlinear(
-                        lambda x: x, scenario_param["sys_noise"], True
+                        lambda x: x, scenario_config["sys_noise"], True
                     )
 
-        elif manifold_type in [
+        elif manifold in [
             "hypersphere",
             "hypersphere_general",
             "hypersphere_symmetric",
         ]:
             assert (
-                scenario_param.get("inputs") is None
+                scenario_config.get("inputs") is None
             ), "Inputs currently not supported for the current setting."
             raise NotImplementedError(
                 "HypersphericalParticleFilter not implemented yet"
             )
-        elif manifold_type in [
+        elif manifold in [
             "euclidean",
             "Euclidean",
         ]:
             filter_obj = EuclideanParticleFilter(
-                no_particles, scenario_param["initial_prior"].dim
+                no_particles, scenario_config["initial_prior"].dim
             )
-            if scenario_param.get("inputs") is None:
+            if scenario_config.get("inputs") is None:
 
                 def prediction_routine():  # type: ignore[misc]
-                    return filter_obj.predict_identity(scenario_param["sys_noise"])
+                    return filter_obj.predict_identity(scenario_config["sys_noise"])
 
             else:
 
                 def prediction_routine(curr_input):  # type: ignore[misc]
                     return filter_obj.predict_identity(
-                        scenario_param["sys_noise"].shift(curr_input)
+                        scenario_config["sys_noise"].shift(curr_input)
                     )
 
         else:
