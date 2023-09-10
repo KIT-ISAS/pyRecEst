@@ -181,10 +181,15 @@ def random_points_within(poly: Polygon, num_points: int) -> np.ndarray:
     points = np.empty((num_points,), dtype=Point)
 
     for i in range(num_points):
-        random_point = Point([np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)])
+        random_point = Point(
+            [np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)]
+        )
         while not random_point.within(poly):
-            random_point = [np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)]
-            
+            random_point = [
+                np.random.uniform(min_x, max_x),
+                np.random.uniform(min_y, max_y),
+            ]
+
         points[i] = random_point
 
     return np.array(points)
