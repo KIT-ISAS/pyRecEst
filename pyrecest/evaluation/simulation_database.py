@@ -13,8 +13,8 @@ def simulation_database(
     simulation_param: dict = {
         "n_timesteps": None,
         "all_seeds": None,
-        "EOT": False,
-        "MTT": False,
+        "eot": False,
+        "mtt": False,
         "n_targets": 1,
     }
 

@@ -16,7 +16,30 @@ def check_and_fix_config(simulation_param):
     if timesteps is not None:
         assert timesteps > 0 and isinstance(timesteps, int)
 
-    if "MTT" in simulation_param.get("manifold_type", ""):
+    if "intensity_lambda" in simulation_param:
+        assert (
+            simulation_param["mtt"] or simulation_param["eot"]
+        ), "Intensity lambda can only be used with MTT or EOT."
+        assert (
+            simulation_param["intensity_lambda"] > 0
+        ), "Intensity lambda must be positive."
+
+    if simulation_param["mtt"] and simulation_param["eot"]:
+        raise ValueError("MTT and EOT cannot be used together at the moment.")
+
+    if simulation_param["eot"]:
+        assert (
+            sum(
+                key in simulation_param
+                for key in [
+                    "meas_per_step",
+                    "n_meas_at_individual_time_step",
+                    "lambda_intensity",
+                ]
+            )
+            == 1
+        ), "Can only use one of the parameter to modulate the number of measurements (meas_per_step, n_meas_at_individual_time_step, lambda_intensity)"
+    elif simulation_param["mtt"]:
         assert (
             "n_meas_at_individual_time_step" not in simulation_param
             and "meas_per_step" not in simulation_param
@@ -26,7 +49,7 @@ def check_and_fix_config(simulation_param):
 
         assert (
             "observed_area" in simulation_param or simulation_param["clutter_rate"] == 0
-        ), "Can only add clutter if observedArea is set."
+        ), "Can only add clutter if observed_area is set."
 
     elif (
         "n_meas_at_individual_time_step" in simulation_param

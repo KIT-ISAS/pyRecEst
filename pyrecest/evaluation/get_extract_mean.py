@@ -1,4 +1,4 @@
-def get_extract_mean(manifold_name):
+def get_extract_mean(manifold_name, mtt_scenario=False):
     if "symm" in manifold_name:
         raise NotImplementedError("Not implemented yet")
 
@@ -33,14 +33,14 @@ def get_extract_mean(manifold_name):
 
     elif (
         "euclidean" in manifold_name or "Euclidean" in manifold_name
-    ) and "MTT" not in manifold_name:
+    ) and not mtt_scenario:
 
         def extract_mean(filter_state):
             return filter_state.mean()
 
     elif (
         "euclidean" in manifold_name or "Euclidean" in manifold_name
-    ) and "MTT" in manifold_name:
+    ) and mtt_scenario:
 
         def extract_mean(_):
             raise NotImplementedError("Not implemented yet")

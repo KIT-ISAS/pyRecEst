@@ -44,7 +44,7 @@ def perform_predict_update_cycles(
     # Perform evaluation
     for t in range(scenario_config["n_timesteps"]):
         # Update
-        if "MTT" in scenario_config["manifold"]:
+        if scenario_config.get("mtt", False):
             raise NotImplementedError("MTT not implemented yet.")
         if perform_cumulative_updates:
             raise NotImplementedError("Cumulative updates not implemented yet.")

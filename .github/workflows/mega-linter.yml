@@ -60,6 +60,7 @@ jobs:
             git
             openblas-dev
             cmake
+            geos-dev
 
       - name: Upgrade pip and install requirements for building
         if: steps.cache-wheels.outputs.cache-hit != 'true'

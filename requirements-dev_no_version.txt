@@ -33,6 +33,7 @@ pytz
 pyyaml
 requests
 scipy
+shapely
 six
 tomli
 tqdm
