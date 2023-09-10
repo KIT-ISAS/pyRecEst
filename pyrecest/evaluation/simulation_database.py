@@ -1,14 +1,15 @@
 import warnings
+from typing import Optional
 
 import numpy as np
-from pyrecest.distributions import GaussianDistribution
-from typing import Optional
 from beartype import beartype
+from pyrecest.distributions import GaussianDistribution
 
 
 @beartype
-def simulation_database(scenario_name: str = "custom",
-                        scenario_customization_params: Optional[dict] = None) -> dict:
+def simulation_database(
+    scenario_name: str = "custom", scenario_customization_params: Optional[dict] = None
+) -> dict:
     simulation_param: dict = {
         "n_timesteps": None,
         "all_seeds": None,

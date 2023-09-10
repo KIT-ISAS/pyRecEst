@@ -38,7 +38,10 @@ def generate_groundtruth(simulation_param, x0=None):
         groundtruth[t] = np.empty_like(groundtruth[0])
         for target_no in range(simulation_param["n_targets"]):
             if "gen_next_state_with_noise" in simulation_param:
-                if "inputs" not in simulation_param or simulation_param["inputs"] is None:
+                if (
+                    "inputs" not in simulation_param
+                    or simulation_param["inputs"] is None
+                ):
                     groundtruth[t][target_no, :] = simulation_param[
                         "gen_next_state_with_noise"
                     ](groundtruth[t - 1, target_no, :])

@@ -8,6 +8,7 @@ from .evaluate_for_variables import evaluate_for_variables
 from .generate_simulated_scenarios import generate_simulated_scenarios
 from .simulation_database import simulation_database
 
+
 # jscpd:ignore-start
 # pylint: disable=R0913,R0914
 def evaluate_for_simulation_config(
@@ -24,7 +25,7 @@ def evaluate_for_simulation_config(
     extract_all_point_estimates: bool = False,
     tolerate_failure: bool = False,
     auto_warning_on_off: bool = False,
-# jscpd:ignore-end
+    # jscpd:ignore-end
 ) -> tuple[
     dict,
     list[dict],

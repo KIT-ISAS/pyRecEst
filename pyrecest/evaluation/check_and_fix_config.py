@@ -7,7 +7,8 @@ def check_and_fix_config(simulation_param):
     simulation_param.setdefault("use_likelihood", False)
     simulation_param.setdefault("n_targets", 1)
     simulation_param.setdefault(
-        "apply_sys_noise_times", [True] * (simulation_param["n_timesteps"] - 1) + [False]
+        "apply_sys_noise_times",
+        [True] * (simulation_param["n_timesteps"] - 1) + [False],
     )
 
     # Check for 'timesteps'
@@ -53,7 +54,8 @@ def check_and_fix_config(simulation_param):
             x > 0 for x in simulation_param["n_meas_at_individual_time_step"]
         ), "n_meas_at_individual_time_step must contain positive values"
         assert all(
-            isinstance(x, int) for x in simulation_param["n_meas_at_individual_time_step"]
+            isinstance(x, int)
+            for x in simulation_param["n_meas_at_individual_time_step"]
         ), "n_meas_at_individual_time_step must contain integer values"
 
     elif "n_meas_at_individual_time_step" not in simulation_param:

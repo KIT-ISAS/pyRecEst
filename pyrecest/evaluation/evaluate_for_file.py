@@ -5,6 +5,7 @@ import numpy as np
 
 from .evaluate_for_variables import evaluate_for_variables
 
+
 # jscpd:ignore-start
 # pylint: disable=R0913,R0914
 def evaluate_for_file(
@@ -17,7 +18,7 @@ def evaluate_for_file(
     extract_all_point_estimates: bool = False,
     tolerate_failure: bool = False,
     auto_warning_on_off: bool = False,
-# jscpd:ignore-end
+    # jscpd:ignore-end
 ) -> tuple[
     dict,
     list[dict],

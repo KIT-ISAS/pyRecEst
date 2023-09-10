@@ -22,18 +22,21 @@ def generate_measurements(groundtruth, simulation_param):
         Comprises timesteps elements, each of which is a numpy array of shape
         (n_meas_at_individual_time_step[t], n_dim).
     """
-    assert (
-        np.shape(simulation_param["n_meas_at_individual_time_step"])
-        == (simulation_param["n_timesteps"],)
+    assert np.shape(simulation_param["n_meas_at_individual_time_step"]) == (
+        simulation_param["n_timesteps"],
     )
     measurements = np.empty(simulation_param["n_timesteps"], dtype=object)
-    
+
     if simulation_param.get("MTT", False) and simulation_param.get("EOT", False):
-        raise NotImplementedError("Multiple extended object tracking is currently not supported.")
+        raise NotImplementedError(
+            "Multiple extended object tracking is currently not supported."
+        )
     if simulation_param.get("EOT", False):
         assert "target_shape" in simulation_param
-        raise NotImplementedError("Extended object tracking is currently not supported.")
-    
+        raise NotImplementedError(
+            "Extended object tracking is currently not supported."
+        )
+
     if simulation_param.get("MTT", False):
         assert simulation_param["clutter_rate"] == 0, "Clutter currently not supported."
 
