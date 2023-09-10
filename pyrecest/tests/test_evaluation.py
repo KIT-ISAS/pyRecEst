@@ -26,6 +26,7 @@ from pyrecest.evaluation import (
     summarize_filter_results,
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
+from shapely.geometry import Polygon
 
 
 class TestEvalation(unittest.TestCase):
@@ -87,7 +88,7 @@ class TestEvalation(unittest.TestCase):
             self.simulation_param,
         )
 
-        self.assertEqual(len(measurements), self.n_timesteps_default)
+        self.assertEqual(np.size(measurements), self.n_timesteps_default)
         for i in range(self.n_timesteps_default):
             self.assertEqual(
                 np.atleast_2d(measurements[i]).shape,
@@ -96,6 +97,43 @@ class TestEvalation(unittest.TestCase):
                     self.simulation_param["initial_prior"].dim,
                 ),
             )
+
+    @parameterized.expand([("vertices",), ("surface",)])
+    def test_generate_measurements_eot(self, sample_on: str):
+        np.random.seed(0)
+        simulation_param = {
+            "eot": True,
+            "intensity_lambda": 0.2,
+            "target_shape": Polygon([(0, 0), (1, 0), (1, 1), (0, 1)]),
+            "sample_on": sample_on,
+            "n_timesteps": self.n_timesteps_default,
+        }
+        state_dim = 2
+
+        measurements = generate_measurements(
+            np.zeros((self.n_timesteps_default, state_dim)),
+            simulation_param,
+        )
+
+        self.assertEqual(np.size(measurements), self.n_timesteps_default)
+        n_meas_at_individual_time_step = np.array(
+            [meas_at_timestep.shape[0] for meas_at_timestep in measurements]
+        )
+        # If one measurement at every timestep, then the number is apparently not stochastic
+        self.assertFalse(np.all(n_meas_at_individual_time_step == 1))
+        state_dim_at_individual_time_step = np.array(
+            [meas_at_timestep.shape[-1] for meas_at_timestep in measurements]
+        )
+        has_state_dim_all = state_dim_at_individual_time_step == state_dim
+        has_dim_zero_all = state_dim_at_individual_time_step == 0
+        self.assertTrue(
+            np.all(
+                [
+                    state_dim or dim_zero
+                    for state_dim, dim_zero in zip(has_state_dim_all, has_dim_zero_all)
+                ]
+            )
+        )
 
     def test_generate_simulated_scenario(self):
         self.simulation_param["all_seeds"] = range(self.n_runs_default)
