@@ -1,0 +1,105 @@
+import numpy as np
+from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import unary_union
+
+
+class StarShapedPolygon(Polygon):  # pylint: disable=abstract-method
+    __slots__ = Polygon.__slots__
+
+    def __new__(cls, shell=None, holes=None):  # nosec
+        polygon = super().__new__(cls, shell=shell, holes=holes)  # nosec
+        polygon.__class__ = cls
+        return polygon
+
+    def is_convex(self):
+        return self.area == self.convex_hull.area
+
+    def compute_kernel(self):
+        if self.is_convex():
+            return self
+
+        # Compute the kernel of a star-convex polygon
+        # Create a visibility polygon for each vertex and intersect them all
+        vertices = list(self.exterior.coords)[
+            :-1
+        ]  # omit the last one because it's the same as the first
+        visibility_polygons = []
+
+        for vertex in vertices:
+            vis_poly = self.compute_visibility_polygon(Point(vertex))
+            visibility_polygons.append(vis_poly)
+
+        # Intersect all visibility polygons to get the kernel
+        kernel = visibility_polygons[0]
+        for vis_poly in visibility_polygons[1:]:
+            kernel = kernel.intersection(vis_poly)
+
+        return kernel
+
+    def compute_visibility_polygon(self, point):
+        # Compute the visibility polygon for a given point inside a polygon
+
+        # List to store segments of the visibility polygon
+        segments = []
+
+        # Get vertices of the polygon
+        vertices = list(self.exterior.coords)[
+            :-1
+        ]  # omit the last one because it's the same as the first
+
+        for vertex in vertices:
+            # Check if the vertex is visible from the given point
+            line_of_sight = LineString([point, vertex])
+            if self.contains(line_of_sight):
+                segments.append(line_of_sight)
+
+            # Check for intersections along the direction to the vertex
+            direction = np.array(vertex) - np.array(point.coords)
+            far_away_point = Point(np.array(vertex) + 1000 * direction)
+            ray = LineString([point, far_away_point])
+
+            # Find intersection points with the polygon boundary
+            intersections = ray.intersection(self.boundary)
+
+            if intersections.geom_type == "Point":
+                segments.append(LineString([point, intersections]))
+            elif intersections.geom_type == "MultiPoint":
+                # If there are multiple intersection points, choose the closest one
+                closest_point = min(intersections.geoms, key=point.distance)
+                segments.append(LineString([point, closest_point]))
+
+        # Create the visibility polygon by taking the union of all visible segments
+        visibility_polygon = unary_union(segments).convex_hull
+
+        return visibility_polygon
+
+
+class Star(StarShapedPolygon):  # pylint: disable=abstract-method
+    __slots__ = Polygon.__slots__
+
+    def __new__(cls, radius=1, arms=5, arm_width=0.3, center=(0, 0)):
+        arm_angle = 2 * np.pi / arms
+        points = []
+        for i in range(arms):
+            base_angle = i * arm_angle
+            inner_angle = base_angle + arm_angle / 2
+            # External point
+            points.append(
+                (
+                    center[0] + radius * np.cos(base_angle),
+                    center[1] + radius * np.sin(base_angle),
+                )
+            )
+            # Internal point
+            points.append(
+                (
+                    center[0] + arm_width * np.cos(inner_angle),
+                    center[1] + arm_width * np.sin(inner_angle),
+                )
+            )
+        # Close the loop
+        points.append(points[0])
+
+        polygon = super().__new__(cls, shell=points, holes=None)  # nosec
+        polygon.__class__ = cls
+        return polygon
