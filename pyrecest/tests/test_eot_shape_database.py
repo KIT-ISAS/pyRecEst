@@ -1,9 +1,8 @@
 import unittest
 
-from pyrecest.evaluation.eot_shape_database import Star, StarShapedPolygon, Cross
+from pyrecest.evaluation.eot_shape_database import Cross, Star, StarShapedPolygon
 from shapely.geometry import Polygon
 from shapely.plotting import plot_polygon
-import matplotlib.pyplot as plt
 
 
 class TestStarSahpedPolygon(unittest.TestCase):
@@ -38,17 +37,18 @@ class TestCross(unittest.TestCase):
     def setUp(self) -> None:
         self.cross_full = Cross(2, 1, 2, 3)
         self.cross_kernel = self.cross_full.compute_kernel()
-        
+
     def test_area(self):
         self.assertEqual(self.cross_full.area, 5)
-        
+
     def test_compute_kernel_cross_convex(self):
         # Determining the kernel of a cross-shaped polygon is trivial
         self.assertEqual(self.cross_kernel.area, 2)
-        
+
     def test_plotting(self):
         plot_polygon(self.cross_full)
-        plot_polygon(self.cross_kernel, color='red')
+        plot_polygon(self.cross_kernel, color="red")
+
 
 if __name__ == "__main__":
     unittest.main()

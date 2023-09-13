@@ -125,26 +125,28 @@ class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
         half_width_2 = width_2 / 2
 
         # Define polygon points
-        polygon_points = np.array([
-            [half_width_1, half_height_1],
-            [half_height_2, half_height_1],
-            [half_height_2, half_width_2],
-            [-half_height_2, half_width_2],
-            [-half_height_2, half_height_1],
-            [-half_width_1, half_height_1],
-            [-half_width_1, -half_height_1],
-            [-half_height_2, -half_height_1],
-            [-half_height_2, -half_width_2],
-            [half_height_2, -half_width_2],
-            [half_height_2, -half_height_1],
-            [half_width_1, -half_height_1]
-        ])
-        
+        polygon_points = np.array(
+            [
+                [half_width_1, half_height_1],
+                [half_height_2, half_height_1],
+                [half_height_2, half_width_2],
+                [-half_height_2, half_width_2],
+                [-half_height_2, half_height_1],
+                [-half_width_1, half_height_1],
+                [-half_width_1, -half_height_1],
+                [-half_height_2, -half_height_1],
+                [-half_height_2, -half_width_2],
+                [half_height_2, -half_width_2],
+                [half_height_2, -half_height_1],
+                [half_width_1, -half_height_1],
+            ]
+        )
+
         # Adjust points by centroid
         polygon_points += centroid
 
         # Create polygon instance
         polygon = super().__new__(cls, shell=polygon_points, holes=None)  # nosec
         polygon.__class__ = cls
-        
+
         return polygon
