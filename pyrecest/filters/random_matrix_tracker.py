@@ -34,7 +34,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
             return self.extent.flatten()
         return self.extent
 
-    def predict(self, dt, Cw, tau, system_matrix):
+    def predict(self, delta_t, Cw, system_matrix, tau):
         F = system_matrix
         x_rows = self.kinematic_state.shape[0]
         y_rows = x_rows // 2
@@ -45,7 +45,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         self.kinematic_state = F @ self.kinematic_state
         self.covariance = F @ self.covariance @ F.T + Cw
 
-        self.alpha = y_rows + np.exp(-dt / tau) * (self.alpha - y_rows)
+        self.alpha = y_rows + np.exp(-delta_t / tau) * (self.alpha - y_rows)
 
     # pylint: disable=too-many-locals
     def update(self, measurements, meas_mat, meas_noise_cov):

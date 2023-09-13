@@ -41,7 +41,7 @@ def perform_predict_update_cycles(
     # Start timer
     start_time = time.time()
 
-    # Perform evaluation
+    # Perform predict and update cycles
     for t in range(scenario_config["n_timesteps"]):
         # Update
         if scenario_config.get("mtt", False):
@@ -49,7 +49,7 @@ def perform_predict_update_cycles(
         if perform_cumulative_updates:
             raise NotImplementedError("Cumulative updates not implemented yet.")
 
-        n_updates = scenario_config["n_meas_at_individual_time_step"][t]
+        n_updates = measurements[t].shape[0]
         all_meas_curr_time_step = np.atleast_2d(measurements[t])
         for m in range(n_updates):
             curr_meas = all_meas_curr_time_step[m, :]

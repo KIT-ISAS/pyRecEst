@@ -34,11 +34,11 @@ def check_and_fix_config(simulation_param):
                 for key in [
                     "meas_per_step",
                     "n_meas_at_individual_time_step",
-                    "lambda_intensity",
+                    "intensity_lambda",
                 ]
             )
             == 1
-        ), "Can only use one of the parameter to modulate the number of measurements (meas_per_step, n_meas_at_individual_time_step, lambda_intensity)"
+        ), "Must use precisely one parameter to modulate the number of measurements (meas_per_step, n_meas_at_individual_time_step, or lambda_intensity)"
     elif simulation_param["mtt"]:
         assert (
             "n_meas_at_individual_time_step" not in simulation_param
