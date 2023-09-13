@@ -103,3 +103,50 @@ class Star(StarShapedPolygon):  # pylint: disable=abstract-method
         polygon = super().__new__(cls, shell=points, holes=None)  # nosec
         polygon.__class__ = cls
         return polygon
+
+
+class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
+    __slots__ = Polygon.__slots__
+
+    # pylint: disable=signature-differs
+    def __new__(cls, height_1, height_2, width_1, width_2, centroid=None):
+        # Assertions to check conditions
+        assert width_1 > height_2, "width_1 has to be larger than height_2"
+        assert width_2 > height_1, "width_2 has to be larger than height_1"
+
+        # Use a default centroid if none is provided
+        if centroid is None:
+            centroid = [0, 0]
+
+        # Calculate half dimensions for clarity
+        half_height_1 = height_1 / 2
+        half_height_2 = height_2 / 2
+        half_width_1 = width_1 / 2
+        half_width_2 = width_2 / 2
+
+        # Define polygon points
+        polygon_points = np.array(
+            [
+                [half_width_1, half_height_1],
+                [half_height_2, half_height_1],
+                [half_height_2, half_width_2],
+                [-half_height_2, half_width_2],
+                [-half_height_2, half_height_1],
+                [-half_width_1, half_height_1],
+                [-half_width_1, -half_height_1],
+                [-half_height_2, -half_height_1],
+                [-half_height_2, -half_width_2],
+                [half_height_2, -half_width_2],
+                [half_height_2, -half_height_1],
+                [half_width_1, -half_height_1],
+            ]
+        )
+
+        # Adjust points by centroid
+        polygon_points += centroid
+
+        # Create polygon instance
+        polygon = super().__new__(cls, shell=polygon_points, holes=None)  # nosec
+        polygon.__class__ = cls
+
+        return polygon
