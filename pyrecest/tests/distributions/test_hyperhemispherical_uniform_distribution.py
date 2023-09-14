@@ -4,12 +4,14 @@ import unittest
 import numpy as np
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
 
+
 def get_random_points(n, d):
     np.random.seed(10)
     points = np.random.randn(n, d + 1)
     points = points[points[:, -1] >= 0, :]
     points /= np.reshape(np.linalg.norm(points, axis=1), (-1, 1))
     return points
+
 
 class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
     """Test for uniform distribution for hyperhemispheres"""
