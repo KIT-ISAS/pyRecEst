@@ -90,7 +90,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
     @beartype
-    def update_identity(self, measurement: np.ndarray, meas_noise_cov: np.ndarray):
+    def update_identity(self, meas_noise: np.ndarray, measurement: np.ndarray):
         """
         Update the filter state with measurement, assuming identity measurement matrix.
 
@@ -100,7 +100,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         self.update_linear(
             measurement=measurement,
             measurement_matrix=np.eye(self.dim),
-            meas_noise_cov=meas_noise_cov,
+            meas_noise=meas_noise,
         )
 
     @beartype
@@ -108,17 +108,17 @@ class KalmanFilter(AbstractEuclideanFilter):
         self,
         measurement: np.ndarray,
         measurement_matrix: np.ndarray,
-        meas_noise_cov: np.ndarray,
+        meas_noise: np.ndarray,
     ):
         """
         Update the filter state with measurement, assuming a linear measurement model.
 
         :param measurement: Measurement.
         :param measurement_matrix: Measurement matrix.
-        :param meas_noise_cov: Covariance matrix for measurement.
+        :param meas_noise: Covariance matrix for measurement.
         """
         self._filter_state.dim_z = measurement_matrix.shape[0]
-        self._filter_state.update(z=measurement, R=meas_noise_cov, H=measurement_matrix)
+        self._filter_state.update(z=measurement, R=meas_noise, H=measurement_matrix)
 
     @beartype
     def get_point_estimate(self) -> np.ndarray:
