@@ -1,6 +1,7 @@
 import copy
 
 import numpy as np
+from beartype import beartype
 from scipy.stats import multivariate_normal
 
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
@@ -8,7 +9,7 @@ from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
 )
 from ..nonperiodic.gaussian_distribution import GaussianDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
-from beartype import beartype
+
 
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     @beartype
@@ -92,9 +93,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         mu[2 * self.bound_dim :] = self.mu[self.bound_dim :]  # noqa: E203
         for i in range(self.bound_dim):
             mu[2 * i] = np.cos(self.mu[i]) * np.exp(-self.C[i, i] / 2)  # noqa: E203
-            mu[2 * i + 1] = np.sin(self.mu[i]) * np.exp(  # noqa: E203
-                -self.C[i, i] / 2
-            )
+            mu[2 * i + 1] = np.sin(self.mu[i]) * np.exp(-self.C[i, i] / 2)  # noqa: E203
         return mu
 
     def hybrid_mean(self):
