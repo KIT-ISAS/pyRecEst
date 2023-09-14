@@ -28,8 +28,8 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
 
     def test_update_identity(self):
         self.hpf.update_identity(
-            self.forced_mean,
             HypertoroidalWNDistribution(np.zeros(3), 0.5 * self.covariance_matrix),
+            self.forced_mean,
         )
         self.assertEqual(self.hpf.get_point_estimate().shape, (3,))
 
