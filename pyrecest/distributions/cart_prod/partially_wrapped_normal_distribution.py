@@ -1,6 +1,7 @@
 import copy
 
 import numpy as np
+from beartype import beartype
 from scipy.stats import multivariate_normal
 
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
@@ -11,12 +12,13 @@ from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDist
 
 
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
+    @beartype
     def __init__(
         self, mu: np.ndarray, C: np.ndarray, bound_dim: int | np.int32 | np.int64
     ):
         assert bound_dim >= 0, "bound_dim must be non-negative"
         assert np.ndim(mu) == 1, "mu must be a 1-dimensional array"
-        assert C.shape == (np.size(mu), np.size(mu)), "C must match size of mu"
+        assert np.shape(C) == (np.size(mu), np.size(mu)), "C must match size of mu"
         assert np.allclose(C, C.T), "C must be symmetric"
         assert np.all(np.linalg.eigvals(C) > 0), "C must be positive definite"
         assert bound_dim <= np.size(mu)
@@ -85,15 +87,13 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         """
         Calculates mean of [x1, x2, .., x_lin_dim, cos(x_(linD+1), sin(x_(linD+1)), ..., cos(x_(linD+boundD), sin(x_(lin_dim+bound_dim))]
         Returns:
-            mu (linD+2 x 1): expectation value of [x1, x2, .., x_lin_dim, cos(x_(lin_dim+1), sin(x_(lin_dim+1)), ..., cos(x_(lin_dim+bound_dim), sin(x_(lin_dim+bound_dim))]
+            mu (linD+2): expectation value of [x1, x2, .., x_lin_dim, cos(x_(lin_dim+1), sin(x_(lin_dim+1)), ..., cos(x_(lin_dim+bound_dim), sin(x_(lin_dim+bound_dim))]
         """
-        mu = np.NaN * np.zeros((2 * self.bound_dim + self.lin_dim, 1))
-        mu[2 * self.bound_dim :, :] = self.mu[self.bound_dim :]  # noqa: E203
+        mu = np.empty(2 * self.bound_dim + self.lin_dim)
+        mu[2 * self.bound_dim :] = self.mu[self.bound_dim :]  # noqa: E203
         for i in range(self.bound_dim):
-            mu[2 * i, :] = np.cos(self.mu[i]) * np.exp(-self.C[i, i] / 2)  # noqa: E203
-            mu[2 * i + 1, :] = np.sin(self.mu[i]) * np.exp(  # noqa: E203
-                -self.C[i, i] / 2
-            )
+            mu[2 * i] = np.cos(self.mu[i]) * np.exp(-self.C[i, i] / 2)  # noqa: E203
+            mu[2 * i + 1] = np.sin(self.mu[i]) * np.exp(-self.C[i, i] / 2)  # noqa: E203
         return mu
 
     def hybrid_mean(self):
