@@ -21,7 +21,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         np.random.seed(0)
         for dim in range(2, 5):
             hud = HypersphericalUniformDistribution(dim)
-            x = np.random.rand(dim + 1, 1)
+            x = np.random.rand(dim + 1)
             x = x / np.linalg.norm(x)
             self.assertAlmostEqual(
                 hud.pdf(x),

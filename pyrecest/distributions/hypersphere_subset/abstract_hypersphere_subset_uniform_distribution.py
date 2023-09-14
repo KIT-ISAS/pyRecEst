@@ -25,7 +25,7 @@ class AbstractHypersphereSubsetUniformDistribution(
         Returns:
             np.ndarray: Probability density at the given data points.
         """
-        if xs.size % (self.dim + 1) != 0:
+        if xs.shape[-1] != self.input_dim:
             raise ValueError("Invalid shape of input data points.")
         manifold_size = self.get_manifold_size()
         if manifold_size == 0:
