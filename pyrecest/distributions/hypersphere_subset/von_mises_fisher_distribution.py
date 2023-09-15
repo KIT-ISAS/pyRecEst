@@ -29,7 +29,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             )
 
     @beartype
-    def pdf(self, xs: np.ndarray):
+    def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
         assert xs.shape[-1] == self.input_dim
 
         return self.C * np.exp(self.kappa * self.mu.T @ xs.T)

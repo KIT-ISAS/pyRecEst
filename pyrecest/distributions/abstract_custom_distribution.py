@@ -37,7 +37,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         self.scale_by = scale_by
 
     @beartype
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs: np.ndarray) -> np.ndarray | np.number:
         """
         Compute the probability density function at given points.
 
