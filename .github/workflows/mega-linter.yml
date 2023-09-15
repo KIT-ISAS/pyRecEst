@@ -38,6 +38,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
+      - name: Create alpine-wheels folder
+        run: mkdir alpine-wheels
+
       - name: Cache wheel directory
         id: cache-wheels
         uses: actions/cache@v3
@@ -45,12 +48,12 @@ jobs:
           path: ${{ github.workspace }}/alpine-wheels
           key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
           restore-keys: |
-            ${{ runner.os }}-alpine-wheels-
+            ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
 
       - name: Set up Alpine Linux
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: jirutka/setup-alpine@v1
-        with:
+        with: # cfitsio, py3-pkgconfig, curl-dev, and zlib for healpy
           packages: >
             build-base
             python3-dev
@@ -61,6 +64,14 @@ jobs:
             openblas-dev
             cmake
             geos-dev
+            cfitsio
+            py3-pkgconfig
+            curl-dev
+            zlib-dev
+
+      - name: List workspace
+        run: ls -l .
+        shell: alpine.sh {0}
 
       - name: Upgrade pip and install requirements for building
         if: steps.cache-wheels.outputs.cache-hit != 'true'
@@ -95,34 +106,45 @@ jobs:
           pkg-config --libs --cflags lapack || true
         shell: alpine.sh {0}
 
-      - name: Build wheels
+      - name: Build wheel for pyshtools
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
-          for package in $(cat requirements-dev_no_version.txt); do
-            echo "Processing $package"
+          git clone https://github.com/FlorianPfaff/SHTOOLS.git
+          cd SHTOOLS
+          git checkout meson
+          python -m build
+          cd ..
+          mv SHTOOLS/dist/*.whl ./alpine-wheels/
+          rm -rf SHTOOLS
+        shell: alpine.sh {0}
 
-            # Check if wheel already exists for package
-            if [ $(find ./alpine-wheels -name "${package}*.whl" | wc -l) -gt 0 ]; then
-              echo "Wheel for $package already exists, skipping"
-              continue
-            fi
+      - name: Build wheel for healpy
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
+        run: |
+          pip wheel --wheel-dir=./alpine-wheels healpy
+        shell: alpine.sh {0}
 
-            if [ "$package" == "pyshtools" ]; then
-              echo "Building wheel for $package"
-              git clone https://github.com/FlorianPfaff/SHTOOLS.git
-              cd SHTOOLS
-              git checkout meson
-              python -m build
-              cd ..
-              mv SHTOOLS/dist/*.whl ./alpine-wheels/
-              rm -rf SHTOOLS
-            elif ! pip download --only-binary=:all: --no-deps "$package" -d ./alpine-wheels > /dev/null 2>&1; then
-              echo "No compatible wheel for $package found, building..."
-              pip wheel --wheel-dir=./alpine-wheels "$package"
-            else
-              echo "Compatible wheel for $package downloaded"
-            fi
-          done
+      - name: Setup venv for ensuring compatibility of packages that follow
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
+        run: |
+          python -m venv myenv
+        shell: alpine.sh {0}
+
+      - name: Install healpy and pyshtools to ensure compatibility of packages that follow
+        run: |
+          ./myenv/bin/pip install --no-index --find-links=./alpine-wheels healpy pyshtools
+        shell: alpine.sh {0}
+      
+      - name: Install dependencies
+        run: ./myenv/bin/pip install requirements-dev_no_version.txt)
+        
+      - name: Freeze requirements
+        run: ./myenv/bin/pip freeze > requirements-tmp.txt
+        shell: alpine.sh {0}
+
+      - name: Download compatible packages
+        run: |
+          ./myenv/bin/pip download -r requirements-tmp.txt -d ./alpine-wheels
         shell: alpine.sh {0}
 
       - name: List available wheels

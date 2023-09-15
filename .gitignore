@@ -9,6 +9,7 @@ CMakeLists.txt
 cmake_install.cmake
 requirements-dev_no_version.txt
 Makefile
+requirements-tmp.txt
 
 # Others
 *.bak
