@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from typing import Optional
 
 import numpy as np
 from parameterized import parameterized
@@ -27,14 +28,16 @@ from pyrecest.evaluation import (
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 from shapely.geometry import Polygon
-from typing import Optional
+
 
 class TestEvalationBase(unittest.TestCase):
     scenario_name: Optional[str] = None
 
     def setUp(self):
-        assert self.scenario_name is not None, "scenario_name must be set in child class"
-        
+        assert (
+            self.scenario_name is not None
+        ), "scenario_name must be set in child class"
+
         simulation_config = simulation_database(self.scenario_name)
         self.simulation_param = check_and_fix_config(simulation_config)
         self.n_timesteps_default = 10
