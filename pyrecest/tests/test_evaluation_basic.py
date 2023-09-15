@@ -27,11 +27,14 @@ from pyrecest.evaluation import (
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 from shapely.geometry import Polygon
+from typing import Optional
 
+class TestEvalationBase(unittest.TestCase):
+    scenario_name: Optional[str] = None
 
-class TestEvalation(unittest.TestCase):
     def setUp(self):
-        self.scenario_name = "R2randomWalk"
+        assert self.scenario_name is not None, "scenario_name must be set in child class"
+        
         simulation_config = simulation_database(self.scenario_name)
         self.simulation_param = check_and_fix_config(simulation_config)
         self.n_timesteps_default = 10
@@ -40,6 +43,10 @@ class TestEvalation(unittest.TestCase):
 
     def tearDown(self):
         self.tmpdirname.cleanup()
+
+
+class TestEvalationBasics(TestEvalationBase):
+    scenario_name: Optional[str] = "R2randomWalk"
 
     def test_plot_results(self):
         import matplotlib
@@ -361,7 +368,6 @@ class TestEvalation(unittest.TestCase):
         self.assertIn(np.ndim(measurements[0, 0]), (1, 2))
 
     def test_evaluate_for_simulation_config_R2_random_walk(self):
-        scenario_name = "R2randomWalk"
         filters_configs_input = [
             {"name": "kf", "parameter": None},
             {"name": "pf", "parameter": [51, 81]},
@@ -377,7 +383,7 @@ class TestEvalation(unittest.TestCase):
             filter_configs,  # pylint: disable=R0801
             evaluation_config,  # pylint: disable=R0801
         ) = evaluate_for_simulation_config(
-            scenario_name,
+            self.scenario_name,
             filters_configs_input,
             n_runs=self.n_runs_default,
             n_timesteps=self.n_timesteps_default,
