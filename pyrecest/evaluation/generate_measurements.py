@@ -41,13 +41,13 @@ def generate_measurements(groundtruth, simulation_config):
             "target_shape" in simulation_config.keys()
         ), "shape must be in simulation_config for EOT"
         assert (
-            "sample_on" in simulation_config.keys()
-        ), "sample_on must be in simulation_config for EOT"
+            "eot_sample_from" in simulation_config.keys()
+        ), "eot_sample_from must be in simulation_config for EOT"
         assert ("intensity_lambda" in simulation_config.keys()) != (
             "n_meas_at_individual_time_step" in simulation_config.keys()
         ), "Must either give intensity_lambda or n_meas_at_individual_time_step for EOT"
         shape = simulation_config["target_shape"]
-        sample_on = simulation_config["sample_on"]
+        eot_sample_from = simulation_config["eot_sample_from"]
         assert isinstance(
             shape, Polygon
         ), "Currently only shapely polygons are supported as target shapes."
@@ -76,25 +76,25 @@ def generate_measurements(groundtruth, simulation_config):
                 ), "Cannot use both intensity_lambda and n_meas_at_individual_time_step."
                 n_meas_curr = simulation_config["n_meas_at_individual_time_step"][t]
             else:
-                if sample_on == "vertices":
+                if eot_sample_from == "boundary":
                     n_meas_curr = generate_n_measurements_PPP(
                         curr_shape.length, simulation_config["intensity_lambda"]
                     )
-                elif sample_on == "surface":
+                elif eot_sample_from == "within":
                     n_meas_curr = generate_n_measurements_PPP(
                         curr_shape.area, simulation_config["intensity_lambda"]
                     )
                 else:
                     raise ValueError(
-                        "sample_on must be either 'vertices' or 'surface'."
+                        "eot_sample_from must be either 'vertices' or 'surface'."
                     )
 
-            if sample_on == "vertices":
+            if eot_sample_from == "boundary":
                 measurements[t] = random_points_on_boundary(curr_shape, n_meas_curr)
-            elif sample_on == "surface":
+            elif eot_sample_from == "within":
                 measurements[t] = random_points_within(curr_shape, n_meas_curr)
             else:
-                raise ValueError("sample_on must be either 'vertices' or 'surface'.")
+                raise ValueError("eot_sample_from must be either 'vertices' or 'surface'.")
 
     elif simulation_config.get("mtt", False):
         assert (
