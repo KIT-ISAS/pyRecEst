@@ -1,12 +1,13 @@
 from collections.abc import Callable
 
 import numpy as np
+from beartype import beartype
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
 
 from .abstract_filter_type import AbstractFilterType
-from beartype import beartype
+
 
 class AbstractParticleFilter(AbstractFilterType):
     def __init__(self, initial_filter_state=None):
@@ -84,7 +85,9 @@ class AbstractParticleFilter(AbstractFilterType):
             )
 
         self.filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
-        self.filter_state.w = 1 / self.filter_state.w.shape[0] * np.ones_like(self.filter_state.w)
+        self.filter_state.w = (
+            1 / self.filter_state.w.shape[0] * np.ones_like(self.filter_state.w)
+        )
 
     @beartype
     def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
