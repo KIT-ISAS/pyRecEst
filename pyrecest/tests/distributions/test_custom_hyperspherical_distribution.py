@@ -1,15 +1,18 @@
 import unittest
+
 import numpy as np
-from pyrecest.distributions import (
-    VonMisesFisherDistribution,
+from pyrecest.distributions import VonMisesFisherDistribution
+from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import (
+    CustomHypersphericalDistribution,
 )
-from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import CustomHypersphericalDistribution
+
 
 class CustomHypersphericalDistributionTest(unittest.TestCase):
-
     def setUp(self):
         self.vmf = VonMisesFisherDistribution(np.array([0, 0, 1]), 10)
-        self.custom_hyperspherical_distribution = CustomHypersphericalDistribution.from_distribution(self.vmf)
+        self.custom_hyperspherical_distribution = (
+            CustomHypersphericalDistribution.from_distribution(self.vmf)
+        )
 
     def test_simple_distribution(self):
         """Test that pdf function returns the correct size and values for given points."""
@@ -41,7 +44,11 @@ class CustomHypersphericalDistributionTest(unittest.TestCase):
     def test_from_distribution(self):
         """Test that the distribution can be created from another hyperspherical distribution."""
         dist = CustomHypersphericalDistribution.from_distribution(self.vmf)
-        self.assertIsInstance(dist, CustomHypersphericalDistribution, "Type mismatch when creating from distribution.")
+        self.assertIsInstance(
+            dist,
+            CustomHypersphericalDistribution,
+            "Type mismatch when creating from distribution.",
+        )
 
 
 if __name__ == "__main__":
