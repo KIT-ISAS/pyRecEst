@@ -5,7 +5,7 @@ from shapely.geometry import Polygon
 from shapely.plotting import plot_polygon
 
 
-class TestStarSahpedPolygon(unittest.TestCase):
+class TestStarShapedPolygon(unittest.TestCase):
     def setUp(self):
         self.square_star_convex_poly = StarShapedPolygon(
             [(-0.5, -0.5), (-0.5, 0.5), (0.5, 0.5), (0.5, -0.5)]
