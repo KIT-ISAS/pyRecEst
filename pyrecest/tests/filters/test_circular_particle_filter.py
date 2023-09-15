@@ -95,7 +95,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         dist3a = self.filter.filter_state
         self.assertIsInstance(dist3a, CircularDiracDistribution)
         self.filter.set_state(self.dist)
-        self.filter.update_identity(z, self.wn)
+        self.filter.update_identity(self.wn, z)
         dist3b = self.filter.filter_state
         self.assertIsInstance(dist3b, CircularDiracDistribution)
 

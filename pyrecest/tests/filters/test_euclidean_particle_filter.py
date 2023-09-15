@@ -24,7 +24,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
             # jscpd:ignore-start
             self.assertEqual(self.pf.get_point_estimate().shape, (3,))
             for _ in range(3):
-                self.pf.update_identity(self.forced_mean, self.sys_noise_default)
+                self.pf.update_identity(self.sys_noise_default, self.forced_mean)
             # jscpd:ignore-end
 
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
@@ -56,7 +56,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
             # jscpd:ignore-start
             self.assertEqual(self.pf.get_point_estimate().shape, (3,))
             for _ in range(3):
-                self.pf.update_identity(self.forced_mean, self.sys_noise_default)
+                self.pf.update_identity(self.sys_noise_default, self.forced_mean)
             # jscpd:ignore-end
 
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))

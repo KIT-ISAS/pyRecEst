@@ -19,12 +19,12 @@ class KalmanFilterTest(unittest.TestCase):
 
     def test_update_with_likelihood_1d(self):
         kf = KalmanFilter((np.array([0]), np.array([[1]])))
-        kf.update_identity(np.array(3), np.array(1))
+        kf.update_identity(np.array(1), np.array(3))
         self.assertEqual(kf.get_point_estimate(), 1.5)
 
     def test_update_with_meas_noise_and_meas_1d(self):
         kf = KalmanFilter((np.array([0]), np.array([[1]])))
-        kf.update_identity(np.array(4), np.array(1))
+        kf.update_identity(np.array(1), np.array(4))
         self.assertEqual(kf.filter_state.C, 0.5)
         self.assertEqual(kf.get_point_estimate(), 2)
 
@@ -33,7 +33,7 @@ class KalmanFilterTest(unittest.TestCase):
         filter_id = copy.deepcopy(filter_add)
         gauss = GaussianDistribution(np.array([1, 0]), np.diag([2, 1]))
         filter_add.update_linear(gauss.mu, np.eye(2), gauss.C)
-        filter_id.update_identity(gauss.mu, gauss.C)
+        filter_id.update_identity(gauss.C, gauss.mu)
         self.assertTrue(
             np.allclose(filter_add.get_point_estimate(), filter_id.get_point_estimate())
         )

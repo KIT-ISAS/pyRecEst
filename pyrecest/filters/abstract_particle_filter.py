@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 import numpy as np
+from beartype import beartype
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -15,6 +16,7 @@ class AbstractParticleFilter(AbstractFilterType):
     def predict_identity(self, noise_distribution):
         self.predict_nonlinear(f=lambda x: x, noise_distribution=noise_distribution)
 
+    @beartype
     def predict_nonlinear(
         self,
         f: Callable,
@@ -55,20 +57,20 @@ class AbstractParticleFilter(AbstractFilterType):
 
         self.filter_state.d = d
 
+    @beartype
     def update_identity(
-        self, measurement, noise_distribution, shift_instead_of_add=True
+        self, meas_noise, measurement, shift_instead_of_add: bool = True
     ):
-        assert measurement is None or np.size(measurement) == noise_distribution.dim
+        assert measurement is None or np.size(measurement) == meas_noise.dim
         assert (
             np.ndim(measurement) == 1
             or np.ndim(measurement) == 0
-            and noise_distribution.dim == 1
+            and meas_noise.dim == 1
         )
         if not shift_instead_of_add:
             raise NotImplementedError()
 
-        noise_for_likelihood = noise_distribution.set_mode(measurement)
-        likelihood = noise_for_likelihood.pdf
+        likelihood = meas_noise.set_mode(measurement).pdf
         self.update_nonlinear_using_likelihood(likelihood)
 
     def update_nonlinear_using_likelihood(self, likelihood, measurement=None):
@@ -82,12 +84,13 @@ class AbstractParticleFilter(AbstractFilterType):
                 lambda x: likelihood(measurement, x)
             )
 
-        self.filter_state.d = self.filter_state.sample(self.filter_state.d.shape[0])
-        self.filter_state.w = np.full(
-            self.filter_state.d.shape[0], 1 / self.filter_state.d.shape[0]
+        self.filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
+        self.filter_state.w = (
+            1 / self.filter_state.w.shape[0] * np.ones_like(self.filter_state.w)
         )
 
-    def association_likelihood(self, likelihood):
+    @beartype
+    def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
         likelihood_val = np.sum(
             likelihood.pdf(self.filter_state.d) * self.filter_state.w
         )

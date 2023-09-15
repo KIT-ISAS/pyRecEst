@@ -53,6 +53,12 @@ class AbstractManifoldSpecificDistribution(ABC):
         :rtype: np.ndarray
         """
 
+    def set_mode(self, _):
+        """
+        Set the mode of the distribution
+        """
+        raise NotImplementedError("set_mode is not implemented for this distribution")
+
     @beartype
     def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
         """Obtain n samples from the distribution."""
