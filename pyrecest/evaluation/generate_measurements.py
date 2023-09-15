@@ -37,9 +37,15 @@ def generate_measurements(groundtruth, simulation_config):
         )
 
     if simulation_config.get("eot", False):
-        assert "target_shape" in simulation_config.keys(), "shape must be in simulation_config for EOT"
-        assert "sample_on" in simulation_config.keys(), "sample_on must be in simulation_config for EOT"
-        assert ("intensity_lambda" in simulation_config.keys()) != ("n_meas_at_individual_time_step" in simulation_config.keys()), "Must either give intensity_lambda or n_meas_at_individual_time_step for EOT"
+        assert (
+            "target_shape" in simulation_config.keys()
+        ), "shape must be in simulation_config for EOT"
+        assert (
+            "sample_on" in simulation_config.keys()
+        ), "sample_on must be in simulation_config for EOT"
+        assert ("intensity_lambda" in simulation_config.keys()) != (
+            "n_meas_at_individual_time_step" in simulation_config.keys()
+        ), "Must either give intensity_lambda or n_meas_at_individual_time_step for EOT"
         shape = simulation_config["target_shape"]
         sample_on = simulation_config["sample_on"]
         assert isinstance(
@@ -188,10 +194,12 @@ def random_points_within(poly: Polygon, num_points: int) -> np.ndarray:
             [np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)]
         )
         while not random_point.within(poly):
-            random_point = Point([
-                np.random.uniform(min_x, max_x),
-                np.random.uniform(min_y, max_y),
-            ])
+            random_point = Point(
+                [
+                    np.random.uniform(min_x, max_x),
+                    np.random.uniform(min_y, max_y),
+                ]
+            )
 
         points[i] = random_point
 
