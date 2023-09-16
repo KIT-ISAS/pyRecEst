@@ -1,5 +1,5 @@
-from .abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_nonperiodic_distribution import AbstractNonperiodicDistribution
+from .abstract_custom_distribution import AbstractCustomDistribution
 
 
 class AbstractCustomNonPeriodicDistribution(

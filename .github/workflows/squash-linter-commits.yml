@@ -1,0 +1,59 @@
+name: Squash MegaLinter Commits
+
+permissions:
+  checks: write
+  pull-requests: write
+  contents: write
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  commit-check:
+    runs-on: ubuntu-latest
+    outputs:
+      is_megalinter: ${{ steps.check-commit.outputs.is_megalinter }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Check for MegaLinter commit
+        id: check-commit
+        run: |
+          COMMIT_MSG="$(git log --format=%B -n 1 HEAD)"
+          if [[ "$COMMIT_MSG" == "[MegaLinter]"* ]]; then
+            echo "is_megalinter=true" >> "$GITHUB_ENV"
+          else
+            echo "is_megalinter=false" >> "$GITHUB_ENV"
+          fi
+
+  squash:
+    needs: commit-check
+    if: needs.commit-check.outputs.is_megalinter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Count commits since main
+        id: count-commits
+        run: |
+          COUNT=$(git rev-list --count main..HEAD)
+          echo "commit_count=$COUNT" >> "$GITHUB_ENV"
+
+      - name: Check for open PR
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --base main --head "$(git rev-parse --abbrev-ref HEAD)" --limit 1 | wc -l)
+          echo "pr_exists=$PR_EXISTS" >> "$GITHUB_ENV"
+
+      - name: Squash commits if needed
+        if: env.is_megalinter == 'true' && env.commit_count == '2' && env.pr_exists == '1'
+        run: |
+          git reset --soft HEAD~2
+          git commit -m "[Squashed] $(git log --format=%B -n 1 HEAD~1)"
+          git push origin HEAD:"$(git rev-parse --abbrev-ref HEAD)" --force-with-lease
