@@ -1,11 +1,12 @@
 import copy
+import warnings
 
 import numpy as np
 from beartype import beartype
 from pyrecest.distributions import VonMisesDistribution
 
 from .abstract_circular_filter import AbstractCircularFilter
-import warnings
+
 
 class VonMisesFilter(AbstractCircularFilter):
     """
