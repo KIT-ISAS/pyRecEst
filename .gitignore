@@ -8,6 +8,7 @@ CMakeCache.txt
 CMakeLists.txt
 cmake_install.cmake
 requirements-dev_no_version.txt
+requirements-tmp.txt
 Makefile
 
 # Others
