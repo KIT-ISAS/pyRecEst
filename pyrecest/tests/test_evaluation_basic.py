@@ -29,7 +29,6 @@ from pyrecest.evaluation import (
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 from shapely.geometry import Polygon
 
-
 class TestEvalationBase(unittest.TestCase):
     scenario_name: Optional[str] = None
 
@@ -108,14 +107,14 @@ class TestEvalationBasics(TestEvalationBase):
                 ),
             )
 
-    @parameterized.expand([("vertices",), ("surface",)])
-    def test_generate_measurements_eot(self, sample_on: str):
+    @parameterized.expand([("boundary",), ("within",)])
+    def test_generate_measurements_eot(self, eot_sampling_style: str):
         np.random.seed(0)
         simulation_param = {
             "eot": True,
             "intensity_lambda": 0.2,
             "target_shape": Polygon([(0, 0), (1, 0), (1, 1), (0, 1)]),
-            "sample_on": sample_on,
+            "eot_sampling_style": eot_sampling_style,
             "n_timesteps": self.n_timesteps_default,
         }
         state_dim = 2

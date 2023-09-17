@@ -1,16 +1,65 @@
 import numpy as np
-from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import MultiLineString, LineString, Point, Polygon
 from shapely.ops import unary_union
 
 
-class StarShapedPolygon(Polygon):  # pylint: disable=abstract-method
+class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
     __slots__ = Polygon.__slots__
 
     def __new__(cls, shell=None, holes=None):  # nosec
         polygon = super().__new__(cls, shell=shell, holes=holes)  # nosec
         polygon.__class__ = cls
         return polygon
+    
+    def sample_on_boundary(self, num_points: int) -> np.ndarray:
+        points = np.empty((num_points,), dtype=Point)
 
+        if isinstance(self.boundary, LineString):
+            lines = [self.boundary]
+        elif isinstance(self.boundary, MultiLineString):
+            lines = list(self.boundary)
+
+        for i in range(num_points):
+            # Compute total perimeter
+            perimeter = self.length
+
+            # Generate a random distance along the perimeter
+            distance = np.random.uniform(0, perimeter)
+
+            # Traverse the edges to place the point
+            for line in lines:
+                if distance < line.length:
+                    points[i] = line.interpolate(distance)
+                    break
+                distance -= line.length
+
+        return np.array([(point.x, point.y) for point in points])
+
+    def sample_within(self, num_points: int) -> np.ndarray:
+        min_x, min_y, max_x, max_y = self.bounds
+        points = np.empty((num_points,), dtype=Point)
+
+        for i in range(num_points):
+            random_point = Point(
+                [np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)]
+            )
+            while not random_point.within(self):
+                random_point = Point(
+                    [
+                        np.random.uniform(min_x, max_x),
+                        np.random.uniform(min_y, max_y),
+                    ]
+                )
+
+            points[i] = random_point
+
+        return np.array(points)
+
+
+class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
+    __slots__ = Polygon.__slots__
+    # Inheriting __new__ of PolygonWithSampling
+    
     def is_convex(self):
         return self.area == self.convex_hull.area
 

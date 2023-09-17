@@ -8,7 +8,8 @@ from pyrecest.distributions import (
 )
 from scipy.stats import poisson
 from shapely.affinity import rotate, translate
-from shapely.geometry import LineString, MultiLineString, Point, Polygon
+from shapely.geometry import Polygon
+from pyrecest.evaluation.eot_shape_database import PolygonWithSampling
 
 
 # pylint: disable=too-many-branches,too-many-locals,too-many-statements
@@ -41,17 +42,17 @@ def generate_measurements(groundtruth, simulation_config):
             "target_shape" in simulation_config.keys()
         ), "shape must be in simulation_config for EOT"
         assert (
-            "sample_on" in simulation_config.keys()
-        ), "sample_on must be in simulation_config for EOT"
+            "eot_sampling_style" in simulation_config.keys()
+        ), "eot_sampling_style must be in simulation_config for EOT"
         assert ("intensity_lambda" in simulation_config.keys()) != (
             "n_meas_at_individual_time_step" in simulation_config.keys()
         ), "Must either give intensity_lambda or n_meas_at_individual_time_step for EOT"
         shape = simulation_config["target_shape"]
-        sample_on = simulation_config["sample_on"]
+        eot_sampling_style = simulation_config["eot_sampling_style"]
         assert isinstance(
             shape, Polygon
-        ), "Currently only shapely polygons are supported as target shapes."
-
+        ), "Currently only StarConvexPolygon (based on shapely Polygons) are supported as target shapes."
+        
         for t in range(simulation_config["n_timesteps"]):
             if groundtruth[0].shape[-1] == 2:
                 curr_shape = translate(
@@ -69,32 +70,34 @@ def generate_measurements(groundtruth, simulation_config):
                 raise ValueError(
                     "Currently only R^2 and SE(2) scenarios are supported."
                 )
-
+            if not isinstance(shape, PolygonWithSampling):
+                curr_shape.__class__ = PolygonWithSampling  # Evil class sugery to add sampling methods
+                
             if simulation_config.get("n_meas_at_individual_time_step", None):
                 assert (
                     "intensity_lambda" not in simulation_config
                 ), "Cannot use both intensity_lambda and n_meas_at_individual_time_step."
                 n_meas_curr = simulation_config["n_meas_at_individual_time_step"][t]
             else:
-                if sample_on == "vertices":
+                if eot_sampling_style == "boundary":
                     n_meas_curr = generate_n_measurements_PPP(
                         curr_shape.length, simulation_config["intensity_lambda"]
                     )
-                elif sample_on == "surface":
+                elif eot_sampling_style == "within":
                     n_meas_curr = generate_n_measurements_PPP(
                         curr_shape.area, simulation_config["intensity_lambda"]
                     )
                 else:
                     raise ValueError(
-                        "sample_on must be either 'vertices' or 'surface'."
+                        "eot_sampling_style must be either 'boundary' or 'within'."
                     )
 
-            if sample_on == "vertices":
-                measurements[t] = random_points_on_boundary(curr_shape, n_meas_curr)
-            elif sample_on == "surface":
-                measurements[t] = random_points_within(curr_shape, n_meas_curr)
+            if eot_sampling_style == "boundary":
+                measurements[t] = curr_shape.sample_on_boundary(n_meas_curr)
+            elif eot_sampling_style == "within":
+                measurements[t] = curr_shape.sample_within(n_meas_curr)
             else:
-                raise ValueError("sample_on must be either 'vertices' or 'surface'.")
+                raise ValueError("eot_sampling_style must be either 'boundary' or 'within'.")
 
     elif simulation_config.get("mtt", False):
         assert (
@@ -182,51 +185,3 @@ def generate_n_measurements_PPP(area: float, intensity_lambda: float) -> int:
     expected_num_points = intensity_lambda * area
     # Get the actual number of points to generate as a realization from a Poisson distribution
     return poisson.rvs(expected_num_points)
-
-
-@beartype
-def random_points_within(poly: Polygon, num_points: int) -> np.ndarray:
-    min_x, min_y, max_x, max_y = poly.bounds
-    points = np.empty((num_points,), dtype=Point)
-
-    for i in range(num_points):
-        random_point = Point(
-            [np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)]
-        )
-        while not random_point.within(poly):
-            random_point = Point(
-                [
-                    np.random.uniform(min_x, max_x),
-                    np.random.uniform(min_y, max_y),
-                ]
-            )
-
-        points[i] = random_point
-
-    return np.array(points)
-
-
-@beartype
-def random_points_on_boundary(poly: Polygon, num_points: int) -> np.ndarray:
-    points = np.empty((num_points,), dtype=Point)
-
-    if isinstance(poly.boundary, LineString):
-        lines = [poly.boundary]
-    elif isinstance(poly.boundary, MultiLineString):
-        lines = list(poly.boundary)
-
-    for i in range(num_points):
-        # Compute total perimeter
-        perimeter = poly.length
-
-        # Generate a random distance along the perimeter
-        distance = np.random.uniform(0, perimeter)
-
-        # Traverse the edges to place the point
-        for line in lines:
-            if distance < line.length:
-                points[i] = line.interpolate(distance)
-                break
-            distance -= line.length
-
-    return np.array([(point.x, point.y) for point in points])
