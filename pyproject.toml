@@ -21,6 +21,7 @@ shapely = "*"
 healpy_support = ["healpy"]
 
 [tool.poetry.group.dev.dependencies]
+healpy = "*"
 autopep8 = "^2.0.2"
 pytest = "*"
 parameterized = "*"
