@@ -150,3 +150,21 @@ class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
         polygon.__class__ = cls
 
         return polygon
+
+
+class StarFish(StarShapedPolygon):  # pylint: disable=abstract-method
+    __slots__ = Polygon.__slots__
+
+    # pylint: disable=signature-differs
+    def __new__(cls, scaling_factor=1):
+        theta = np.linspace(0, 2 * np.pi, 1000)
+        r = 5 + 1.5 * np.sin(6 * theta)
+
+        x = r * np.cos(theta) * scaling_factor
+        y = r * np.sin(theta) * scaling_factor
+
+        # Create polygon instance
+        polygon = super().__new__(cls, shell=zip(x, y), holes=None)  # nosec
+        polygon.__class__ = cls
+
+        return polygon
