@@ -1,10 +1,10 @@
-import numpy as np
 import unittest
+
+import numpy as np
 from pyrecest.sampling.hypertoroidal_sampler import CircularUniformSampler
 
 
 class TestCircularUniformSampler(unittest.TestCase):
-
     def setUp(self):
         self.sampler = CircularUniformSampler()
 
@@ -17,7 +17,7 @@ class TestCircularUniformSampler(unittest.TestCase):
 
         # Check that all samples are within the range [0, 2*pi)
         self.assertTrue(np.all(samples >= 0))
-        self.assertTrue(np.all(samples < 2*np.pi))
+        self.assertTrue(np.all(samples < 2 * np.pi))
 
     def test_get_grid(self):
         grid_density_parameter = 100
@@ -28,7 +28,7 @@ class TestCircularUniformSampler(unittest.TestCase):
 
         # Check that all grid points are within the range [0, 2*pi)
         self.assertTrue(np.all(grid_points >= 0))
-        self.assertTrue(np.all(grid_points < 2*np.pi))
+        self.assertTrue(np.all(grid_points < 2 * np.pi))
 
         # Check that the grid points are equidistant
         diff = np.diff(grid_points)

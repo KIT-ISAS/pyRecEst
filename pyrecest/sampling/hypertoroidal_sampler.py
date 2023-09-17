@@ -1,7 +1,8 @@
-from beartype import beartype
-from .abstract_sampler import AbstractSampler
-from pyrecest.distributions import CircularUniformDistribution
 import numpy as np
+from beartype import beartype
+from pyrecest.distributions import CircularUniformDistribution
+
+from .abstract_sampler import AbstractSampler
 
 
 class AbstractHypertoroidalSampler(AbstractSampler):
