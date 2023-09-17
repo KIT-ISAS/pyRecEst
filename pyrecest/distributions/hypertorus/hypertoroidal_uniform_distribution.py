@@ -54,7 +54,7 @@ class HypertoroidalUniformDistribution(
         :param n: Sample size
         :returns: Sample of size n
         """
-        return 2 * np.pi * np.random.rand(self.dim, n)
+        return 2 * np.pi * np.random.rand(n, self.dim)
 
     def shift(self, shift_by) -> "HypertoroidalUniformDistribution":
         """

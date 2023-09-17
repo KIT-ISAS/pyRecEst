@@ -66,7 +66,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
     def test_sampling(self):
         n = 10
         s = self.tud.sample(n)
-        self.assertEqual(s.shape, (2, n))
+        self.assertEqual(s.shape, (n, 2))
         self.assertTrue(np.all(s >= 0))
         self.assertTrue(np.all(s < 2 * np.pi))
 
