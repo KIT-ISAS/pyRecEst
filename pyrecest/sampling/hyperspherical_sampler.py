@@ -236,8 +236,12 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
 
         # Step 1: Discretize the sphere using the Fibonacci grid
         spherical_sampler = SphericalFibonacciSampler()
-        phi, theta, _ = spherical_sampler.get_grid_spherical_coordinates(grid_density_parameter[0])
-        spherical_points = np.column_stack((theta, phi))  # stack to match expected shape
+        phi, theta, _ = spherical_sampler.get_grid_spherical_coordinates(
+            grid_density_parameter[0]
+        )
+        spherical_points = np.column_stack(
+            (theta, phi)
+        )  # stack to match expected shape
 
         # Step 2: Discretize the unit circle using the circular grid
         circular_sampler = CircularUniformSampler()

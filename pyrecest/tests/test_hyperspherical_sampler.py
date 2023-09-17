@@ -7,10 +7,10 @@ from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
 from ..sampling.hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,
     DriscollHealySampler,
+    FibonacciHopfSampler,
     HealpixHopfSampler,
     HealpixSampler,
     SphericalFibonacciSampler,
-    FibonacciHopfSampler,
 )
 
 
@@ -96,7 +96,7 @@ class TestHypersphericalSampler(unittest.TestCase):
             dim + 1,
             f"Expected {dim+1}-dimensional-output but got {grid.shape[1]}-dimensional output",
         )
-        
+
     def test_fibonacci_hopf_sampler(self):
         sampler = FibonacciHopfSampler()
         grid_density_parameter = [12, 4]
