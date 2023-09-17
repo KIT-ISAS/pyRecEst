@@ -10,6 +10,7 @@ from ..sampling.hyperspherical_sampler import (
     HealpixHopfSampler,
     HealpixSampler,
     SphericalFibonacciSampler,
+    FibonacciHopfSampler,
 )
 
 
@@ -94,6 +95,23 @@ class TestHypersphericalSampler(unittest.TestCase):
             grid.shape[1],
             dim + 1,
             f"Expected {dim+1}-dimensional-output but got {grid.shape[1]}-dimensional output",
+        )
+        
+    def test_fibonacci_hopf_sampler(self):
+        sampler = FibonacciHopfSampler()
+        grid_density_parameter = [12, 4]
+        grid, _ = sampler.get_grid(grid_density_parameter)
+
+        expected_points = np.prod(grid_density_parameter)
+        self.assertEqual(
+            grid.shape[0],
+            expected_points,
+            f"Expected {expected_points} points but got {grid.shape[0]}",
+        )
+        self.assertEqual(
+            grid.shape[1],
+            4,
+            f"Expected 4-dimensional-output but got {grid.shape[1]}-dimensional output",
         )
 
 
