@@ -32,13 +32,13 @@ jobs:
         run: python -m pip install --upgrade poetry
 
       - name: Install project dependencies
-        run: poetry update
+        run: python -m poetry update
 
       - name: Update requirements.txt
-        run: poetry export --format requirements.txt --output requirements.txt --extras healpy_support --without-hashes
+        run: python -m poetry export --format requirements.txt --output requirements.txt --extras healpy_support --without-hashes
 
-      - name: Update requirements_dev.txt
-        run: poetry export --dev --format requirements.txt --output requirements-dev.txt --without-hashes
+      - name: Update requirements-dev.txt
+        run: python -m poetry export --with dev --format requirements.txt --output requirements-dev.txt --without-hashes
 
       - name: Prepare commit
         run: sudo chown -Rc $UID .git/
