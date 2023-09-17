@@ -1,7 +1,12 @@
 import unittest
 
-from pyrecest.evaluation.eot_shape_database import Cross, Star, StarShapedPolygon, StarFish
-from shapely.geometry import Polygon, Point, LineString
+from pyrecest.evaluation.eot_shape_database import (
+    Cross,
+    Star,
+    StarFish,
+    StarShapedPolygon,
+)
+from shapely.geometry import LineString, Point, Polygon
 from shapely.plotting import plot_polygon
 
 
@@ -48,29 +53,31 @@ class TestCross(unittest.TestCase):
     def test_plotting(self):
         plot_polygon(self.cross_full)
         plot_polygon(self.cross_kernel, color="red")
-        
-        
-class TestStarfish(unittest.TestCase):
 
+
+class TestStarfish(unittest.TestCase):
     @classmethod
     def setUp(self):
         self.starfish = StarFish()
-        #self.starfish_kernel = self.starfish.compute_kernel()
+        # self.starfish_kernel = self.starfish.compute_kernel()
 
     def test_circle_containment(self):
         # Create a circle with a radius of 2
         circle = Point(0, 0).buffer(2)
-        self.assertTrue(self.starfish.contains(circle),
-                        "The polygon does not contain the circle.")
+        self.assertTrue(
+            self.starfish.contains(circle), "The polygon does not contain the circle."
+        )
 
     def test_line_containment(self):
         # Create a line from (-2,-4) to (2,4)
         line = LineString([(-2, -4), (2, 4)])
-        self.assertTrue(self.starfish.contains(line),
-                        "The polygon does not contain the line.")
-        
+        self.assertTrue(
+            self.starfish.contains(line), "The polygon does not contain the line."
+        )
+
     def test_plotting(self):
         plot_polygon(self.starfish)
+
 
 if __name__ == "__main__":
     unittest.main()
