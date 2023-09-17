@@ -75,4 +75,4 @@ class CircularUniformDistributionTest(unittest.TestCase):
         cu = CircularUniformDistribution()
         n = 10
         s = cu.sample(n)
-        np.testing.assert_allclose(s.shape[1], n)
+        np.testing.assert_allclose(s.shape[0], n)
