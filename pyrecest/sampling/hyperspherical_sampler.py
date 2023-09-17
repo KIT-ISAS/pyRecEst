@@ -220,3 +220,50 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
             "layer-parameter": grid_density_parameter,
         }
         return grid, grid_specific_description
+
+
+class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
+    @beartype
+    def get_grid(self, grid_density_parameter: int | list[int]):
+        """
+        Hopf coordinates are (θ, ϕ, ψ) where θ and ϕ are the angles for the sphere and ψ is the angle on the circle
+        First parameter is the number of points on the sphere, second parameter is the number of points on the circle.
+        """
+        if isinstance(grid_density_parameter, int):
+            grid_density_parameter = [grid_density_parameter]
+
+        s3_points_list = []
+
+        # Step 1: Discretize the sphere using the Fibonacci grid
+        spherical_sampler = SphericalFibonacciSampler()
+        phi, theta, _ = spherical_sampler.get_grid_spherical_coordinates(
+            grid_density_parameter[0]
+        )
+        spherical_points = np.column_stack(
+            (theta, phi)
+        )  # stack to match expected shape
+
+        # Step 2: Discretize the unit circle using the circular grid
+        circular_sampler = CircularUniformSampler()
+        if len(grid_density_parameter) == 2:
+            n_sample_circle = grid_density_parameter[1]
+        else:
+            n_sample_circle = np.sqrt(grid_density_parameter[0])
+        psi_points = circular_sampler.get_grid(n_sample_circle)
+
+        # Step 3: Combine the two grids to generate a grid for S3
+        for spherical_point in spherical_points:
+            for psi in psi_points:
+                s3_point = np.array([spherical_point[0], spherical_point[1], psi])
+                s3_points_list.append(s3_point)
+
+        s3_points = np.vstack(s3_points_list)
+        grid = AbstractHopfBasedS3Sampler.hopf_coordinates_to_quaterion_yershova(
+            s3_points[:, 0], s3_points[:, 1], s3_points[:, 2]
+        )
+
+        grid_specific_description = {
+            "scheme": "fibonacci_hopf",
+            "layer-parameter": grid_density_parameter,
+        }
+        return grid, grid_specific_description
