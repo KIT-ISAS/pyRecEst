@@ -151,6 +151,7 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
         "Generating Uniform Incremental Grids on SO(3) Using the Hopf Fibration"
         by
         Anna Yershova, Swati Jain, Steven M. LaValle, Julie C. Mitchell
+        As in appendix (or in Eq 4 if one reorders it).
         """
         quaterions = np.empty((θ.shape[0], 4))
 
