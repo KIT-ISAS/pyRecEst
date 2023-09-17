@@ -10,15 +10,11 @@ class TestGaussianSampler(unittest.TestCase):
         self.sampler = GaussianSampler()
         self.n_samples = 200
         self.dim = 2
-        self.samples = self.sampler.sample_stochastic(
-            self.n_samples, self.dim
-        )
+        self.samples = self.sampler.sample_stochastic(self.n_samples, self.dim)
 
     def test_sample_stochastic(self):
         # Check that the returned shape matches the requested number of samples and dimension
-        self.assertEqual(
-            self.samples.shape, (self.n_samples, self.dim)
-        )
+        self.assertEqual(self.samples.shape, (self.n_samples, self.dim))
 
     def test_gaussian_properties(self):
         # Check that the mean is close to 0 for each dimension
