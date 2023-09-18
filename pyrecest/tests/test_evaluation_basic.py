@@ -29,6 +29,7 @@ from pyrecest.evaluation import (
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 from shapely.geometry import Polygon
 
+
 class TestEvalationBase(unittest.TestCase):
     scenario_name: Optional[str] = None
 

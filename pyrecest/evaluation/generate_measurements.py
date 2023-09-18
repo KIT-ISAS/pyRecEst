@@ -6,10 +6,10 @@ from pyrecest.distributions import (
     VonMisesFisherDistribution,
     WatsonDistribution,
 )
+from pyrecest.evaluation.eot_shape_database import PolygonWithSampling
 from scipy.stats import poisson
 from shapely.affinity import rotate, translate
 from shapely.geometry import Polygon
-from pyrecest.evaluation.eot_shape_database import PolygonWithSampling
 
 
 # pylint: disable=too-many-branches,too-many-locals,too-many-statements
@@ -52,7 +52,7 @@ def generate_measurements(groundtruth, simulation_config):
         assert isinstance(
             shape, Polygon
         ), "Currently only StarConvexPolygon (based on shapely Polygons) are supported as target shapes."
-        
+
         for t in range(simulation_config["n_timesteps"]):
             if groundtruth[0].shape[-1] == 2:
                 curr_shape = translate(
@@ -71,8 +71,10 @@ def generate_measurements(groundtruth, simulation_config):
                     "Currently only R^2 and SE(2) scenarios are supported."
                 )
             if not isinstance(shape, PolygonWithSampling):
-                curr_shape.__class__ = PolygonWithSampling  # Evil class sugery to add sampling methods
-                
+                curr_shape.__class__ = (
+                    PolygonWithSampling  # Evil class sugery to add sampling methods
+                )
+
             if simulation_config.get("n_meas_at_individual_time_step", None):
                 assert (
                     "intensity_lambda" not in simulation_config
@@ -97,7 +99,9 @@ def generate_measurements(groundtruth, simulation_config):
             elif eot_sampling_style == "within":
                 measurements[t] = curr_shape.sample_within(n_meas_curr)
             else:
-                raise ValueError("eot_sampling_style must be either 'boundary' or 'within'.")
+                raise ValueError(
+                    "eot_sampling_style must be either 'boundary' or 'within'."
+                )
 
     elif simulation_config.get("mtt", False):
         assert (

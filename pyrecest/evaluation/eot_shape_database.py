@@ -1,5 +1,5 @@
 import numpy as np
-from shapely.geometry import MultiLineString, LineString, Point, Polygon
+from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import unary_union
 
 
@@ -10,7 +10,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
         polygon = super().__new__(cls, shell=shell, holes=holes)  # nosec
         polygon.__class__ = cls
         return polygon
-    
+
     def sample_on_boundary(self, num_points: int) -> np.ndarray:
         points = np.empty((num_points,), dtype=Point)
 
@@ -59,7 +59,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
 class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
     __slots__ = Polygon.__slots__
     # Inheriting __new__ of PolygonWithSampling
-    
+
     def is_convex(self):
         return self.area == self.convex_hull.area
 
