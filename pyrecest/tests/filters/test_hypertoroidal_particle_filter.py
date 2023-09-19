@@ -4,6 +4,7 @@ import numpy as np
 from pyrecest.distributions import HypertoroidalWNDistribution
 from pyrecest.filters import HypertoroidalParticleFilter
 
+
 class HypertoroidalParticleFilterTest(unittest.TestCase):
     def setUp(self):
         self.seed = 0
