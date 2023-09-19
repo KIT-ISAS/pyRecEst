@@ -4,6 +4,7 @@ name: Test workflow
 permissions: read-all
 
 on:
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -16,6 +17,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
