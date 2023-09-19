@@ -225,7 +225,7 @@ jobs:
                 "https://api.github.com/repos/${{ github.repository }}/actions/workflows/tests.yml/dispatches" \
                 -d '{"ref":"${{ steps.get_sha.outputs.sha }}"}'
       - name: Trigger try
-        run : |
+        run: |
           curl -X POST \
           -H "Authorization: Bearer ${{   secrets.PAT }}" \
           -H "Accept: application/vnd.github.v3+json" \
