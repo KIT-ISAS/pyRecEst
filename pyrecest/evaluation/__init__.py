@@ -1,3 +1,4 @@
+from .get_extract_mean import get_extract_mean
 from .check_and_fix_config import check_and_fix_config
 from .configure_for_filter import configure_for_filter
 from .determine_all_deviations import determine_all_deviations
@@ -9,7 +10,6 @@ from .generate_measurements import generate_measurements
 from .generate_simulated_scenarios import generate_simulated_scenarios
 from .get_axis_label import get_axis_label
 from .get_distance_function import get_distance_function
-from .get_extract_mean import get_extract_mean
 from .iterate_configs_and_runs import iterate_configs_and_runs
 from .perform_predict_update_cycles import perform_predict_update_cycles
 from .plot_results import plot_results
