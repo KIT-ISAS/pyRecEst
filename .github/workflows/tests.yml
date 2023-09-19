@@ -3,11 +3,9 @@ name: Test workflow
 
 permissions: read-all
 
-on: # yamllint disable-line rule:truthy
-  push:
-  pull_request:
-    branches:
-      - main
+on:
+  workflow_dispatch:
+    
 
 jobs:
   test:
