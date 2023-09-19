@@ -5,7 +5,6 @@ permissions: read-all
 
 on:
   workflow_dispatch:
-    
 
 jobs:
   test:
