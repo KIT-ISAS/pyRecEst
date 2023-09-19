@@ -211,7 +211,7 @@ jobs:
           commit_user_name: megalinter-bot
           commit_user_email: megalinter-bot@iar.kit.edu
       - name: Wait for a bit to ensure the commit has been processed
-        run: sleep 30
+        run: sleep 20
       - name: Get latest SHA
         id: get_sha
         run: echo "::set-output name=sha::$(git rev-parse HEAD)"
