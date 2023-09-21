@@ -211,12 +211,19 @@ jobs:
         run: sleep 20
       - name: Get latest SHA
         id: get_sha
-        run: echo "::set-output name=sha::$(git rev-parse HEAD)"
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
       - name: Fetch and Log
         run: |
           git fetch origin
           git log --oneline -n 5
           echo "SHA: ${{ steps.get_sha.outputs.sha }}"
+      - name: Trigger Test Workflow
+        run: |
+          curl -X POST \
+                -H "Authorization: Bearer ${{ secrets.PAT }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/${{ github.repository }}/actions/workflows/tests.yml/dispatches" \
+                -d '{"ref":"${{ env.sha }}"}'
       - name: Trigger Test Workflow
         run: |
           curl -X POST \
