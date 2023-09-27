@@ -4,6 +4,7 @@ name: Test workflow
 permissions: read-all
 
 on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
   push:
   pull_request:
     branches:
