@@ -217,20 +217,6 @@ jobs:
           git fetch origin
           git log --oneline -n 5
           echo "SHA: ${{ steps.get_sha.outputs.sha }}"
-      - name: Trigger Test Workflow
-        run: |
-          curl -X POST \
-                -H "Authorization: Bearer ${{ secrets.PAT }}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                "https://api.github.com/repos/${{ github.repository }}/actions/workflows/tests.yml/dispatches" \
-                -d '{"ref":"${{ env.sha }}"}'
-      - name: Trigger Test Workflow
-        run: |
-          curl -X POST \
-                -H "Authorization: Bearer ${{ secrets.PAT }}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                "https://api.github.com/repos/${{ github.repository }}/actions/workflows/tests.yml/dispatches" \
-                -d '{"ref":"${{ steps.get_sha.outputs.sha }}"}'
       - name: Trigger try
         run: |
           curl -X POST \
