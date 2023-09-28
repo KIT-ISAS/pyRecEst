@@ -56,7 +56,7 @@
               git config user.email "actions@github.com"
               git add ./pyrecest/filters/__init__.py
               git commit -m "Automatically swap first lines in __init__.py"
-              git push
+              git push origin ${{ github.head_ref }}
     
           - name: Trigger Test Workflow
             run: |
