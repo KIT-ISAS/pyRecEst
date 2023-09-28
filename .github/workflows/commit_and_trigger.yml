@@ -41,14 +41,21 @@
           - name: Swap first lines
             run: |
               file="./pyrecest/filters/__init__.py"
-              lines=$(cat $file)
-              first_line=$(echo "$lines" | head -n1)
-              rest=$(echo "$lines" | tail -n +2)
-              second_line=$(echo "$rest" | head -n1)
-              rest=$(echo "$rest" | tail -n +2)
-              echo "$second_line" > $file
-              echo "$first_line" >> $file
-              echo "$rest" >> $file
+              total_lines=$(wc -l < "$file")
+              nth_line=$(shuf -i 1-10 -n 1)
+
+              # Check if nth line is available
+              if [ "$nth_line" -le "$total_lines" ]; then
+                  # Fetch the first and nth lines
+                  first_line=$(sed -n '1p' "$file")
+                  nth_line_content=$(sed -n "${nth_line}p" "$file")
+
+                  # Replace the first line with the nth line and nth line with the first line
+                  sed -i "1s/.*/${nth_line_content}/" "$file"
+                  sed -i "${nth_line}s/.*/${first_line}/" "$file"
+              else
+                  echo "nth line exceeds the total number of lines in the file."
+              fi
       
           - name: Commit and push
             run: |
