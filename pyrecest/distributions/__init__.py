@@ -1,8 +1,8 @@
-from pyrecest.distributions.abstract_bounded_domain_distribution import (
-    AbstractBoundedDomainDistribution,
-)
 from pyrecest.distributions.abstract_bounded_nonperiodic_distribution import (
     AbstractBoundedNonPeriodicDistribution,
+)
+from pyrecest.distributions.abstract_bounded_domain_distribution import (
+    AbstractBoundedDomainDistribution,
 )
 from pyrecest.distributions.abstract_custom_distribution import (
     AbstractCustomDistribution,
