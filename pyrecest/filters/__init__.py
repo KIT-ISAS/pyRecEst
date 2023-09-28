@@ -1,5 +1,5 @@
-from .abstract_euclidean_filter import AbstractEuclideanFilter
 from .abstract_filter import AbstractFilter
+from .abstract_euclidean_filter import AbstractEuclideanFilter
 from .abstract_filter_type import AbstractFilterType
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_manifold_specific_filter import AbstractManifoldSpecificFilter
