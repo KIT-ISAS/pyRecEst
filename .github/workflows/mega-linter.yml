@@ -21,7 +21,7 @@ env: # Comment env block if you do not want to apply fixes
   # I tried around a lot to make the test workflow run on pull_request events,
   # but it it only worked when creating a new PR. By default, this would target the branch of the PR
   # and not the main branch. Instead of trying around to cherry-pick the commits from the PR
-  # etc. I decided to just run the workflow on push events to the main branch and then create 
+  # etc. I decided to just run the workflow on push events to the main branch and then create
   # a PR targeting the main branch.
   APPLY_FIXES_MODE: pull_request # If APPLY_FIXES is used, defines if the fixes are directly committed (commit) or posted in a PR (pull_request)
 
