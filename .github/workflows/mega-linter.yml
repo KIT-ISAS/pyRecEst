@@ -41,6 +41,32 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
+      # Your existing step for setting the original and new branch names
+      - name: Set original branch name
+        id: set-branch-name
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            ORIGINAL_BRANCH_NAME=${{ github.ref }}
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            ORIGINAL_BRANCH_NAME="$BRANCH_NAME"
+          fi
+          ORIGINAL_BRANCH_NAME="${ORIGINAL_BRANCH_NAME#refs/heads/}"  # Strip refs/heads/ prefix if any
+          NEW_BRANCH_NAME="${ORIGINAL_BRANCH_NAME}-linter-patched"
+          echo "NEW_BRANCH_NAME=${NEW_BRANCH_NAME}" >> "$GITHUB_ENV"
+  
+      # Checkout the original branch
+      - name: Checkout Original Branch
+        run: git checkout ${{ env.ORIGINAL_BRANCH_NAME }}
+  
+      # Duplicate the original branch to a new branch with linting patches
+      - name: Create New Lint-Patched Branch
+        run: git checkout -b ${{ env.NEW_BRANCH_NAME }}
+
+      - name: Push new branch
+        run: git push origin ${{ env.NEW_BRANCH_NAME }}
+
       - name: Create alpine-wheels folder
         run: mkdir alpine-wheels
 
@@ -182,33 +208,17 @@ jobs:
             megalinter-reports
             mega-linter.log
 
-      # Add a step to set the original branch name
-      - name: Set original branch name
-        id: set-branch-name
-        env:
-          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-        run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            ORIGINAL_BRANCH_NAME=${{ github.ref }}
-          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            ORIGINAL_BRANCH_NAME="$BRANCH_NAME"
-          fi
-          ORIGINAL_BRANCH_NAME="${ORIGINAL_BRANCH_NAME#refs/heads/}"  # Strip refs/heads/ prefix if any
-          NEW_BRANCH_NAME="${ORIGINAL_BRANCH_NAME}-linter-patched"
-          echo "NEW_BRANCH_NAME=${NEW_BRANCH_NAME}" >> "$GITHUB_ENV"
-
-      # Create Pull Request step
-      - name: Create Pull Request with applied fixes
+      # Create Pull Request
+      - name: Create Pull Request
         id: cpr
-        if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
           commit-message: "[MegaLinter] Apply linters automatic fixes"
           title: "[MegaLinter] Apply linters automatic fixes"
           branch: ${{ env.NEW_BRANCH_NAME }}
-          labels: bot
           base: main
+          labels: bot
 
       # Output PR details
       - name: Create PR output
