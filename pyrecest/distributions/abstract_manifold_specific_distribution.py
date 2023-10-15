@@ -43,6 +43,10 @@ class AbstractManifoldSpecificDistribution(ABC):
     @beartype
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         pass
+    
+    @beartype
+    def logpdf(self, xs: np.ndarray) -> np.ndarray:
+        return np.log(self.pdf(xs))
 
     @abstractmethod
     def mean(self) -> np.ndarray:
