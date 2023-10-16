@@ -7,6 +7,7 @@ from ..abstract_custom_nonperiodic_distribution import (
 )
 from .abstract_linear_distribution import AbstractLinearDistribution
 
+from pyrecest.backend import zeros
 
 class CustomLinearDistribution(
     AbstractLinearDistribution, AbstractCustomNonPeriodicDistribution
@@ -31,7 +32,7 @@ class CustomLinearDistribution(
         if shift_by is not None:
             self.shift_by = shift_by
         else:
-            self.shift_by = np.zeros(dim)
+            self.shift_by = zeros(dim)
 
     def shift(self, shift_by):
         assert self.dim == np.size(shift_by) and shift_by.ndim <= 1

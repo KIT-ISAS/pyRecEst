@@ -11,6 +11,7 @@ from scipy.stats import chi2
 from ..abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
+from pyrecest.backend import empty, ones
 
 
 class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
@@ -148,19 +149,19 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def integrate(self, left=None, right=None):
         if left is None:
-            left = -np.inf * np.ones(self.dim)
+            left = -np.inf * ones(self.dim)
         if right is None:
-            right = np.inf * np.ones(self.dim)
+            right = np.inf * ones(self.dim)
 
         result = self.integrate_numerically(left, right)
         return result
 
     def integrate_numerically(self, left=None, right=None):
         if left is None:
-            left = np.empty(self.dim)
+            left = empty(self.dim)
             left.fill(-np.inf)
         if right is None:
-            right = np.empty(self.dim)
+            right = empty(self.dim)
             right.fill(np.inf)
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right
@@ -217,7 +218,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
         if plot_range is None:
             scaling = np.sqrt(chi2.ppf(0.99, self.dim))
-            plot_range = np.empty(2 * self.dim)
+            plot_range = empty(2 * self.dim)
             for i in range(0, 2 * self.dim, 2):
                 plot_range[i] = mu[int(i / 2)] - scaling * np.sqrt(
                     C[int(i / 2), int(i / 2)]
