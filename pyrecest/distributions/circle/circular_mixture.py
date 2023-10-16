@@ -1,3 +1,5 @@
+from pyrecest.backend import sum
+from pyrecest.backend import shape
 import collections
 import warnings
 
@@ -32,7 +34,7 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
                 "All elements of 'dists' must be of type AbstractCircularDistribution."
             )
 
-        if np.shape(dists) != np.shape(w):
+        if shape(dists) != shape(w):
             raise ValueError("'dists' and 'w' must have the same shape.")
 
         if all(isinstance(cd, CircularFourierDistribution) for cd in dists):
@@ -45,4 +47,4 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
             )
 
         self.dists = dists
-        self.w = w / np.sum(w)
+        self.w = w / sum(w)

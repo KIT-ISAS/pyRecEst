@@ -1,3 +1,5 @@
+from pyrecest.backend import ones
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -9,25 +11,25 @@ from pyrecest.distributions.circle.circular_uniform_distribution import (
 class CircularUniformDistributionTest(unittest.TestCase):
     def test_pdf(self):
         cu = CircularUniformDistribution()
-        x = np.array([1, 2, 3, 4, 5, 6])
+        x = array([1, 2, 3, 4, 5, 6])
 
         # Test pdf
-        np.testing.assert_allclose(cu.pdf(x), 1 / (2 * np.pi) * np.ones(x.shape))
+        np.testing.assert_allclose(cu.pdf(x), 1 / (2 * np.pi) * ones(x.shape))
 
     def test_shift(self):
         cu = CircularUniformDistribution()
         cu2 = cu.shift(3)
-        x = np.array([1, 2, 3, 4, 5, 6])
-        np.testing.assert_allclose(cu2.pdf(x), 1 / (2 * np.pi) * np.ones(x.shape))
+        x = array([1, 2, 3, 4, 5, 6])
+        np.testing.assert_allclose(cu2.pdf(x), 1 / (2 * np.pi) * ones(x.shape))
 
     def test_cdf(self):
         cu = CircularUniformDistribution()
-        x = np.array([1, 2, 3, 4, 5, 6])
+        x = array([1, 2, 3, 4, 5, 6])
         np.testing.assert_allclose(cu.cdf(x), cu.cdf_numerical(x))
 
     def test_cdf_with_shift(self):
         cu = CircularUniformDistribution()
-        x = np.array([1, 2, 3, 4, 5, 6])
+        x = array([1, 2, 3, 4, 5, 6])
         cu2 = cu.shift(3)
         np.testing.assert_allclose(cu2.cdf(x), cu2.cdf_numerical(x))
 

@@ -1,3 +1,8 @@
+from pyrecest.backend import shape
+from pyrecest.backend import ones
+from pyrecest.backend import isnan
+from pyrecest.backend import array
+from pyrecest.backend import any
 import warnings
 
 import matplotlib.pyplot as plt
@@ -18,7 +23,7 @@ def plot_results(
 
     Args:
         filenames (str or list): File names to load results from.
-        plot_log (np.array of bool): Whether to plot in log scale for each axis.
+        plot_log (array of bool): Whether to plot in log scale for each axis.
         plot_stds (bool): Whether to plot standard deviations.
         omit_slow (bool): Whether to omit slow filters from plotting.
 
@@ -32,9 +37,9 @@ def plot_results(
 
     # Expand plot_log to handle all plots (pad it)
     if np.size(plot_log) == 1:
-        plot_log = False * np.ones((2, 3), dtype=bool)
+        plot_log = False * ones((2, 3), dtype=bool)
     else:
-        assert np.shape(plot_log) == (2, 3)
+        assert shape(plot_log) == (2, 3)
     plot_random_filter = True
 
     if filename is None:
@@ -76,7 +81,7 @@ def plot_results(
         plt.figure(0)
         if (
             params[0] is not None
-            and not np.any(np.isnan(params))
+            and not any(isnan(params))
             and np.size(params) > 1
         ):
             if plot_stds:
@@ -115,7 +120,7 @@ def plot_results(
         plt.figure(1)
         if (
             params[0] is not None
-            and not np.any(np.isnan(params))
+            and not any(isnan(params))
             and np.size(params) > 1
         ):
             plt.plot(
@@ -145,7 +150,7 @@ def plot_results(
         plt.figure(2)
         if (
             params[0] is not None
-            and not np.any(np.isnan(params))
+            and not any(isnan(params))
             and np.size(params) > 1
         ):
             plt.plot(

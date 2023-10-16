@@ -1,3 +1,4 @@
+from pyrecest.backend import concatenate
 import warnings
 from abc import abstractmethod
 
@@ -38,7 +39,7 @@ class LinBoundedCartProdDiracDistribution(
         periodic = self.marginalize_linear()
         linear = self.marginalize_periodic()
 
-        return np.concatenate((periodic.mean_direction(), linear.mean()))
+        return concatenate((periodic.mean_direction(), linear.mean()))
 
     @classmethod
     def from_distribution(cls, distribution, n_particles):

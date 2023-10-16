@@ -1,3 +1,9 @@
+from pyrecest.backend import ones
+from pyrecest.backend import meshgrid
+from pyrecest.backend import linspace
+from pyrecest.backend import array
+from pyrecest.backend import allclose
+from pyrecest.backend import all
 import unittest
 
 import numpy as np
@@ -11,7 +17,7 @@ from pyrecest.distributions.nonperiodic.hyperrectangular_uniform_distribution im
 
 class TestCustomHyperrectangularDistribution(unittest.TestCase):
     def setUp(self):
-        self.bounds = np.array([[1, 3], [2, 5]])
+        self.bounds = array([[1, 3], [2, 5]])
         self.hud = HyperrectangularUniformDistribution(self.bounds)
         self.cd = CustomHyperrectangularDistribution(self.hud.pdf, self.hud.bounds)
 
@@ -25,11 +31,11 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
 
     def test_pdf_method(self):
         """Test that the pdf method returns correct values."""
-        x_mesh, y_mesh = np.meshgrid(np.linspace(1, 3, 50), np.linspace(2, 5, 50))
-        expected_pdf = 1 / 6 * np.ones(50**2)
+        x_mesh, y_mesh = meshgrid(linspace(1, 3, 50), linspace(2, 5, 50))
+        expected_pdf = 1 / 6 * ones(50**2)
         calculated_pdf = self.cd.pdf(np.column_stack((x_mesh.ravel(), y_mesh.ravel())))
         self.assertTrue(
-            np.allclose(calculated_pdf, expected_pdf),
+            allclose(calculated_pdf, expected_pdf),
             "PDF calculated values do not match the expected values.",
         )
 

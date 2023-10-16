@@ -1,3 +1,5 @@
+from pyrecest.backend import mod
+from pyrecest.backend import zeros
 import numpy as np
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
@@ -21,13 +23,13 @@ class CustomHypertoroidalDistribution(
         AbstractCustomDistribution.__init__(self, f)
         AbstractHypertoroidalDistribution.__init__(self, dim)
         if shift_by is None:
-            self.shift_by = np.zeros(dim)
+            self.shift_by = zeros(dim)
         else:
             self.shift_by = shift_by
 
     def pdf(self, xs):
         return AbstractCustomDistribution.pdf(
-            self, np.mod(xs + self.shift_by, 2 * np.pi)
+            self, mod(xs + self.shift_by, 2 * np.pi)
         )
 
     def to_custom_circular(self):

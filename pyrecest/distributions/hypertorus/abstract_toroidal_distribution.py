@@ -1,3 +1,10 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import sin
+from pyrecest.backend import cos
+from pyrecest.backend import array
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import numpy as np
 from scipy.integrate import dblquad
 
@@ -14,18 +21,18 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         def f(
             x: float,
             y: float,
-            i: int | np.int32 | np.int64,
-            j: int | np.int32 | np.int64,
+            i: int | int32 | int64,
+            j: int | int32 | int64,
         ) -> float:
             funcs = [
-                lambda x, _: np.cos(x) - m[0],
-                lambda x, _: np.sin(x) - m[1],
-                lambda _, y: np.cos(y) - m[2],
-                lambda _, y: np.sin(y) - m[3],
+                lambda x, _: cos(x) - m[0],
+                lambda x, _: sin(x) - m[1],
+                lambda _, y: cos(y) - m[2],
+                lambda _, y: sin(y) - m[3],
             ]
-            return self.pdf(np.array([x, y])) * funcs[i](x, y) * funcs[j](x, y)
+            return self.pdf(array([x, y])) * funcs[i](x, y) * funcs[j](x, y)
 
-        C = np.zeros((4, 4))
+        C = zeros((4, 4))
         for i in range(4):
             for j in range(i, 4):
                 C[i, j], _ = dblquad(f, 0, 2 * np.pi, 0, 2 * np.pi, args=(i, j))
@@ -42,19 +49,19 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         m = self.mean_direction()
 
         def fsinAsinB(x, y):
-            return self.pdf(np.array([x, y])) * np.sin(x - m[0]) * np.sin(y - m[1])
+            return self.pdf(array([x, y])) * sin(x - m[0]) * sin(y - m[1])
 
         def fsinAsquared(x, y):
-            return self.pdf(np.array([x, y])) * np.sin(x - m[0]) ** 2
+            return self.pdf(array([x, y])) * sin(x - m[0]) ** 2
 
         def fsinBsquared(x, y):
-            return self.pdf(np.array([x, y])) * np.sin(y - m[1]) ** 2
+            return self.pdf(array([x, y])) * sin(y - m[1]) ** 2
 
         EsinAsinB, _ = dblquad(fsinAsinB, 0, 2 * np.pi, 0, 2 * np.pi)
         EsinAsquared, _ = dblquad(fsinAsquared, 0, 2 * np.pi, 0, 2 * np.pi)
         EsinBsquared, _ = dblquad(fsinBsquared, 0, 2 * np.pi, 0, 2 * np.pi)
 
-        rhoc = EsinAsinB / np.sqrt(EsinAsquared * EsinBsquared)
+        rhoc = EsinAsinB / sqrt(EsinAsquared * EsinBsquared)
         return rhoc
 
     def mean_4D(self) -> np.ndarray:
@@ -66,5 +73,5 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
             expectation value of [cos(x1), sin(x1), cos(x2), sin(x2)]
         """
         m = self.trigonometric_moment(1)
-        mu = np.array([m[0].real, m[0].imag, m[1].real, m[1].imag]).ravel()
+        mu = array([m[0].real, m[0].imag, m[1].real, m[1].imag]).ravel()
         return mu

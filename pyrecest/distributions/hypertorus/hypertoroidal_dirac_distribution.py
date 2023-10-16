@@ -1,3 +1,13 @@
+from pyrecest.backend import tile
+from pyrecest.backend import sum
+from pyrecest.backend import reshape
+from pyrecest.backend import real
+from pyrecest.backend import mod
+from pyrecest.backend import imag
+from pyrecest.backend import exp
+from pyrecest.backend import arctan2
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 import copy
 from collections.abc import Callable
 
@@ -26,7 +36,7 @@ class HypertoroidalDiracDistribution(
 
         AbstractHypertoroidalDistribution.__init__(self, dim)
         AbstractDiracDistribution.__init__(
-            self, np.atleast_1d(np.mod(d, 2 * np.pi)), w=w
+            self, np.atleast_1d(mod(d, 2 * np.pi)), w=w
         )
 
     def plot(self, *args, **kwargs):
@@ -40,11 +50,11 @@ class HypertoroidalDiracDistribution(
         :return: Mean direction
         """
         a = self.trigonometric_moment(1)
-        m = np.mod(np.arctan2(np.imag(a), np.real(a)), 2 * np.pi)
+        m = mod(arctan2(imag(a), real(a)), 2 * np.pi)
         return m
 
     @beartype
-    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def trigonometric_moment(self, n: int | int32 | int64) -> np.ndarray:
         """
         Calculate the trigonometric moment of the HypertoroidalDiracDistribution.
 
@@ -52,14 +62,14 @@ class HypertoroidalDiracDistribution(
         :param n: Integer moment order
         :return: Trigonometric moment
         """
-        return np.sum(
-            np.exp(1j * n * self.d.T) * np.tile(self.w, (self.dim, 1)), axis=1
+        return sum(
+            exp(1j * n * self.d.T) * tile(self.w, (self.dim, 1)), axis=1
         )
 
     @beartype
     def apply_function(self, f: Callable) -> "HypertoroidalDiracDistribution":
         dist = super().apply_function(f)
-        dist.d = np.mod(dist.d, 2 * np.pi)
+        dist.d = mod(dist.d, 2 * np.pi)
         return dist
 
     def to_toroidal_wd(self):
@@ -70,7 +80,7 @@ class HypertoroidalDiracDistribution(
         return twd
 
     @beartype
-    def marginalize_to_1D(self, dimension: int | np.int32 | np.int64):
+    def marginalize_to_1D(self, dimension: int | int32 | int64):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         return CircularDiracDistribution(self.d[:, dimension], self.w)
@@ -87,7 +97,7 @@ class HypertoroidalDiracDistribution(
     def shift(self, shift_by) -> "HypertoroidalDiracDistribution":
         assert shift_by.shape[-1] == self.dim
         hd = copy.copy(self)
-        hd.d = np.mod(self.d + np.reshape(shift_by, (1, -1)), 2 * np.pi)
+        hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2 * np.pi)
         return hd
 
     def entropy(self):

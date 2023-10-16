@@ -1,3 +1,11 @@
+from pyrecest.backend import sum
+from pyrecest.backend import ones
+from pyrecest.backend import log
+from pyrecest.backend import isclose
+from pyrecest.backend import argmax
+from pyrecest.backend import all
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 import copy
 import warnings
 from collections.abc import Callable
@@ -22,7 +30,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         :param w: Weights of Dirac locations as a numpy array. If not provided, defaults to uniform weights.
         """
         if w is None:
-            w = np.ones(d.shape[0]) / d.shape[0]
+            w = ones(d.shape[0]) / d.shape[0]
 
         assert d.shape[0] == np.size(w), "Number of Diracs and weights must match."
         self.d = copy.copy(d)
@@ -34,9 +42,9 @@ class AbstractDiracDistribution(AbstractDistributionType):
         """
         Normalize the weights in-place to ensure they sum to 1.
         """
-        if not np.isclose(np.sum(self.w), 1, atol=1e-10):
+        if not isclose(sum(self.w), 1, atol=1e-10):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
-            self.w = self.w / np.sum(self.w)
+            self.w = self.w / sum(self.w)
 
     @beartype
     def normalize(self) -> "AbstractDiracDistribution":
@@ -67,28 +75,28 @@ class AbstractDiracDistribution(AbstractDistributionType):
         wNew = f(dist.d)
 
         assert wNew.shape == dist.w.shape, "Function returned wrong output dimensions."
-        assert np.all(wNew >= 0), "All weights should be greater than or equal to 0."
-        assert np.sum(wNew) > 0, "The sum of all weights should be greater than 0."
+        assert all(wNew >= 0), "All weights should be greater than or equal to 0."
+        assert sum(wNew) > 0, "The sum of all weights should be greater than 0."
 
         dist.w = wNew * dist.w
-        dist.w = dist.w / np.sum(dist.w)
+        dist.w = dist.w / sum(dist.w)
 
         return dist
 
     @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: int | int32 | int64) -> np.ndarray:
         ids = np.random.choice(np.size(self.w), size=n, p=self.w)
         return self.d[ids]
 
     def entropy(self) -> float:
         warnings.warn("Entropy is not defined in a continuous sense")
-        return -np.sum(self.w * np.log(self.w))
+        return -sum(self.w * log(self.w))
 
     def integrate(self, left=None, right=None) -> np.ndarray:
         assert (
             left is None and right is None
         ), "Must overwrite in child class to use integral limits"
-        return np.sum(self.w)
+        return sum(self.w)
 
     def log_likelihood(self, *args):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
@@ -112,7 +120,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
     def mode(self, rel_tol=0.001):
-        highest_val, ind = np.max(self.w), np.argmax(self.w)
+        highest_val, ind = np.max(self.w), argmax(self.w)
         if (highest_val / self.w.size) < (1 + rel_tol):
             warnings.warn(
                 "The samples may be equally weighted, .mode is likely to return a bad result."

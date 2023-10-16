@@ -1,3 +1,14 @@
+from pyrecest.backend import vstack
+from pyrecest.backend import sin
+from pyrecest.backend import ones
+from pyrecest.backend import meshgrid
+from pyrecest.backend import linspace
+from pyrecest.backend import cos
+from pyrecest.backend import concatenate
+from pyrecest.backend import array
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
@@ -29,9 +40,9 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: int | int32 | int64,
+        burn_in: int | int32 | int64 = 10,
+        skipping: int | int32 | int64 = 5,
         proposal: Callable | None = None,
         start_point: np.ndarray | None = None,
     ) -> np.ndarray:
@@ -73,12 +84,12 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @beartype
     def plot(
         self,
-        faces: int | np.int32 | np.int64 = 100,
-        grid_faces: int | np.int32 | np.int64 = 20,
+        faces: int | int32 | int64 = 100,
+        grid_faces: int | int32 | int64 = 20,
     ) -> None:
         if self.dim == 1:
-            phi = np.linspace(0, 2 * np.pi, 320)
-            x = np.array([np.sin(phi), np.cos(phi)])
+            phi = linspace(0, 2 * np.pi, 320)
+            x = array([sin(phi), cos(phi)])
             p = self.pdf(x)
             plt.plot(phi, p)
             plt.show()
@@ -90,7 +101,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             x_sphere_inner, y_sphere_inner, z_sphere_inner = self.create_sphere(faces)
 
             c_sphere = self.pdf(
-                np.array(
+                array(
                     [
                         x_sphere_inner.flatten(),
                         y_sphere_inner.flatten(),
@@ -149,10 +160,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         if dim == 1:
             return [0, 2 * np.pi]
 
-        return np.vstack(
+        return vstack(
             (
-                np.zeros(dim),
-                np.concatenate(([2 * np.pi], np.pi * np.ones(dim - 1))),
+                zeros(dim),
+                concatenate(([2 * np.pi], np.pi * ones(dim - 1))),
             )
         ).T
 
@@ -203,9 +214,9 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             0.0 : np.pi : complex(0, faces),  # noqa: E203
             0.0 : 2.0 * np.pi : complex(0, faces),  # noqa: E203
         ]
-        x = np.sin(phi) * np.cos(theta)
-        y = np.sin(phi) * np.sin(theta)
-        z = np.cos(phi)
+        x = sin(phi) * cos(theta)
+        y = sin(phi) * sin(theta)
+        z = cos(phi)
         return x, y, z
 
     @staticmethod
@@ -223,16 +234,16 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         num_points = 1000
 
         # Generate theta and phi angles (in radians)
-        theta = np.linspace(0, 2 * np.pi, num_points)
-        phi = np.linspace(0, np.pi, num_points)
+        theta = linspace(0, 2 * np.pi, num_points)
+        phi = linspace(0, np.pi, num_points)
 
         # Create a meshgrid for theta and phi angles
-        theta, phi = np.meshgrid(theta, phi)
+        theta, phi = meshgrid(theta, phi)
 
         # Calculate the x, y, and z coordinates
-        x = np.sin(phi) * np.cos(theta)
-        y = np.sin(phi) * np.sin(theta)
-        z = np.cos(phi)
+        x = sin(phi) * cos(theta)
+        y = sin(phi) * sin(theta)
+        z = cos(phi)
 
         # Plot the unit circle in 3D space
         fig = plt.figure()

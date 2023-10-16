@@ -1,3 +1,7 @@
+from pyrecest.backend import prod
+from pyrecest.backend import hstack
+from pyrecest.backend import concatenate
+from pyrecest.backend import empty
 import numpy as np
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
@@ -10,15 +14,15 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
 
     def sample(self, n):
         assert n > 0 and isinstance(n, int), "n must be a positive integer"
-        return np.hstack([dist.sample(n) for dist in self.dists])
+        return hstack([dist.sample(n) for dist in self.dists])
 
     def pdf(self, xs):
-        ps = np.empty((len(self.dists), xs.shape[1]))
+        ps = empty((len(self.dists), xs.shape[1]))
         next_dim = 0
         for i, dist in enumerate(self.dists):
             ps[i, :] = dist.pdf(xs[next_dim : next_dim + dist.dim, :])  # noqa: E203
             next_dim += dist.dim
-        return np.prod(ps, axis=0)
+        return prod(ps, axis=0)
 
     def shift(self, shift_by):
         assert len(shift_by) == self.dim, "Incorrect number of offsets"
@@ -39,7 +43,7 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         return CartProdStackedDistribution(new_dists)
 
     def hybrid_mean(self):
-        return np.concatenate([dist.mean() for dist in self.dists])
+        return concatenate([dist.mean() for dist in self.dists])
 
     def mean(self):
         """
@@ -52,4 +56,4 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         return self.hybrid_mean()
 
     def mode(self):
-        return np.concatenate([dist.mode() for dist in self.dists])
+        return concatenate([dist.mode() for dist in self.dists])

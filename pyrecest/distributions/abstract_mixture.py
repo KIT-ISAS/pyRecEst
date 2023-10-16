@@ -1,3 +1,9 @@
+from pyrecest.backend import sum
+from pyrecest.backend import ones
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import empty
+from pyrecest.backend import zeros
 import collections
 import copy
 import warnings
@@ -27,7 +33,7 @@ class AbstractMixture(AbstractDistributionType):
         num_distributions = len(dists)
 
         if weights is None:
-            weights = np.ones(num_distributions) / num_distributions
+            weights = ones(num_distributions) / num_distributions
         else:
             weights = np.asarray(weights)
 
@@ -48,9 +54,9 @@ class AbstractMixture(AbstractDistributionType):
 
         self.dists = dists
 
-        if abs(np.sum(weights) - 1) > 1e-10:
+        if abs(sum(weights) - 1) > 1e-10:
             warnings.warn("Weights of mixture do not sum to one.")
-            self.w = weights / np.sum(weights)
+            self.w = weights / sum(weights)
         else:
             self.w = weights
 
@@ -59,12 +65,12 @@ class AbstractMixture(AbstractDistributionType):
         return self.dists[0].input_dim
 
     @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: int | int32 | int64) -> np.ndarray:
         d = np.random.choice(len(self.w), size=n, p=self.w)
 
         occurrences = np.bincount(d, minlength=len(self.dists))
         count = 0
-        s = np.empty((n, self.input_dim))
+        s = empty((n, self.input_dim))
         for i, occ in enumerate(occurrences):
             if occ != 0:
                 s[count : count + occ, :] = self.dists[i].sample(occ)  # noqa: E203
@@ -79,7 +85,7 @@ class AbstractMixture(AbstractDistributionType):
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         assert xs.shape[-1] == self.input_dim, "Dimension mismatch"
 
-        p = np.zeros(1) if xs.ndim == 1 else np.zeros(xs.shape[0])
+        p = zeros(1) if xs.ndim == 1 else zeros(xs.shape[0])
 
         for i, dist in enumerate(self.dists):
             p += self.w[i] * dist.pdf(xs)

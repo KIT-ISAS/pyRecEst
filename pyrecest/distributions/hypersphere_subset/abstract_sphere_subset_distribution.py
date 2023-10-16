@@ -1,3 +1,9 @@
+from pyrecest.backend import where
+from pyrecest.backend import sin
+from pyrecest.backend import ndim
+from pyrecest.backend import cos
+from pyrecest.backend import arctan2
+from pyrecest.backend import arccos
 import numpy as np
 from beartype import beartype
 
@@ -31,7 +37,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             tuple: Cartesian coordinates.
         """
-        assert np.ndim(phi) == 1 and np.ndim(theta) == 1, "Inputs must be 1-dimensional"
+        assert ndim(phi) == 1 and ndim(theta) == 1, "Inputs must be 1-dimensional"
         if mode == "colatitude":
             x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_colatitude(
                 phi, theta
@@ -62,7 +68,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             tuple: Spherical coordinates.
         """
         assert (
-            np.ndim(x) == 1 and np.ndim(y) == 1 and np.ndim(z)
+            ndim(x) == 1 and ndim(y) == 1 and ndim(z)
         ), "Inputs must be 1-dimensional"
         if mode == "colatitude":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_colatitude(
@@ -80,12 +86,12 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     @staticmethod
     @beartype
     def _sph_to_cart_colatitude(azimuth: np.ndarray, colatitude: np.ndarray) -> tuple:
-        assert np.ndim(azimuth) == 1 and np.ndim(
+        assert ndim(azimuth) == 1 and ndim(
             colatitude
         ), "Inputs must be 1-dimensional"
-        x = np.sin(colatitude) * np.cos(azimuth)
-        y = np.sin(colatitude) * np.sin(azimuth)
-        z = np.cos(colatitude)
+        x = sin(colatitude) * cos(azimuth)
+        y = sin(colatitude) * sin(azimuth)
+        z = cos(colatitude)
         return x, y, z
 
     @staticmethod
@@ -103,31 +109,31 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             tuple: Cartesian coordinates.
         """
         assert (
-            np.ndim(azimuth) == 1 and np.ndim(elevation) == 1
+            ndim(azimuth) == 1 and ndim(elevation) == 1
         ), "Inputs must be 1-dimensional"
         # elevation is π/2 - colatitude, so we calculate colatitude from elevation
         colatitude = np.pi / 2 - elevation
-        x = np.sin(colatitude) * np.cos(azimuth)
-        y = np.sin(colatitude) * np.sin(azimuth)
-        z = np.cos(colatitude)
+        x = sin(colatitude) * cos(azimuth)
+        y = sin(colatitude) * sin(azimuth)
+        z = cos(colatitude)
         return x, y, z
 
     @staticmethod
     @beartype
     def _cart_to_sph_colatitude(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
-        assert np.ndim(x) == 1 and np.ndim(y) == 1 and np.ndim(z)
+        assert ndim(x) == 1 and ndim(y) == 1 and ndim(z)
         radius = 1
-        azimuth = np.arctan2(y, x)
-        azimuth = np.where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
-        colatitude = np.arccos(z / radius)
+        azimuth = arctan2(y, x)
+        azimuth = where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
+        colatitude = arccos(z / radius)
         return azimuth, colatitude
 
     @staticmethod
     @beartype
     def _cart_to_sph_elevation(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
-        assert np.ndim(x) == 1 and np.ndim(y) == 1 and np.ndim(z) == 1
+        assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
         radius = 1
-        azimuth = np.arctan2(y, x)
-        azimuth = np.where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
-        elevation = np.pi / 2 - np.arccos(z / radius)  # elevation is π/2 - colatitude
+        azimuth = arctan2(y, x)
+        azimuth = where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
+        elevation = np.pi / 2 - arccos(z / radius)  # elevation is π/2 - colatitude
         return azimuth, elevation

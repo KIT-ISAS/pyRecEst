@@ -1,3 +1,5 @@
+from pyrecest.backend import squeeze
+from pyrecest.backend import shape
 import numpy as np
 from beartype import beartype
 
@@ -20,8 +22,8 @@ class CircularDiracDistribution(
         super().__init__(
             d, w, dim=1
         )  # Necessary so it is clear that the dimension is 1.
-        d = np.squeeze(d)
-        assert w is None or np.shape(d) == np.shape(
+        d = squeeze(d)
+        assert w is None or shape(d) == shape(
             w
         ), "The shapes of d and w should match."
 

@@ -1,3 +1,6 @@
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import collections
 import copy
 
@@ -28,14 +31,14 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
             AbstractHypertoroidalDistribution
         ] = self.dists
 
-    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def trigonometric_moment(self, n: int | int32 | int64) -> np.ndarray:
         """
         Calculate n-th trigonometric moment
 
         :param n: number of moment
         :returns: n-th trigonometric moment (complex number)
         """
-        m = np.zeros(self.dim, dtype=complex)
+        m = zeros(self.dim, dtype=complex)
         for i in range(len(self.dists)):
             # Calculate moments using moments of each component
             m += self.w[i] * self.dists[i].trigonometric_moment(n)

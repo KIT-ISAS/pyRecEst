@@ -1,3 +1,8 @@
+from pyrecest.backend import sum
+from pyrecest.backend import eye
+from pyrecest.backend import exp
+from pyrecest.backend import all
+from pyrecest.backend import abs
 import numpy as np
 from scipy.integrate import quad
 from scipy.special import iv
@@ -13,12 +18,12 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         assert Z.shape[0] == self.input_dim, "Z has wrong length"
         assert Z.ndim == 1, "Z needs to be a 1-D vector"
         assert Z[-1] == 0, "Last entry of Z needs to be zero"
-        assert np.all(Z[:-1] <= Z[1:]), "Values in Z have to be ascending"
+        assert all(Z[:-1] <= Z[1:]), "Values in Z have to be ascending"
 
         # Verify that M is orthogonal
         epsilon = 0.001
         assert (
-            np.max(np.abs(M @ M.T - np.eye(self.dim + 1))) < epsilon
+            np.max(abs(M @ M.T - eye(self.dim + 1))) < epsilon
         ), "M is not orthogonal"
 
         self.Z = Z
@@ -50,7 +55,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
             )
 
         def ifun(u):
-            return J(Z, u) * np.exp(
+            return J(Z, u) * exp(
                 0.5 * (Z[0] + Z[1]) * u + 0.5 * (Z[2] + Z[3]) * (1 - u)
             )
 
@@ -60,7 +65,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         assert xs.shape[-1] == self.dim + 1
 
         C = self.M @ np.diag(self.Z) @ self.M.T
-        p = 1 / self.F * np.exp(np.sum(xs.T * (C @ xs.T), axis=0))
+        p = 1 / self.F * exp(sum(xs.T * (C @ xs.T), axis=0))
         return p
 
     def mean_direction(self):
@@ -98,11 +103,11 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
 
     def calculate_dF(self):
         dim = self.Z.shape[0]  # Assuming Z is a property of the object
-        dF = np.zeros(dim)
+        dF = zeros(dim)
         epsilon = 0.001
         for i in range(dim):
             # Using finite differences
-            dZ = np.zeros(dim)
+            dZ = zeros(dim)
             dZ[i] = epsilon
             F1 = self.calculate_F(self.Z + dZ)
             F2 = self.calculate_F(self.Z - dZ)
@@ -119,7 +124,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         """
         D = np.diag(self.dF / self.F)
         # It should already be normalized, but numerical inaccuracies can lead to values unequal to 1
-        D = D / np.sum(np.diag(D))
+        D = D / sum(np.diag(D))
         S = self.M @ D @ self.M.T
         S = (S + S.T) / 2  # Enforce symmetry
         return S

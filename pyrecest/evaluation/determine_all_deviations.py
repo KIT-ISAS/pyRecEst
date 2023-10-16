@@ -1,3 +1,7 @@
+from pyrecest.backend import sum
+from pyrecest.backend import ndim
+from pyrecest.backend import any
+from pyrecest.backend import empty
 import warnings
 from typing import Callable
 
@@ -17,16 +21,16 @@ def determine_all_deviations(
         raise NotImplementedError("Not implemented yet")
 
     assert (
-        np.ndim(groundtruths) == 2
+        ndim(groundtruths) == 2
         and isinstance(groundtruths[0, 0], np.ndarray)
-        and np.ndim(groundtruths[0, 0])
+        and ndim(groundtruths[0, 0])
         in (
             1,
             2,
         )
     ), "Assuming groundtruths to be a 2-D array of shape (n_runs, n_timesteps) composed arrays of shape (n_dim,) or (n_targets,n_dim)."
 
-    all_deviations_last_mat = np.empty((len(results), groundtruths.shape[0]))
+    all_deviations_last_mat = empty((len(results), groundtruths.shape[0]))
 
     for config_no, result_curr_config in enumerate(results):
         for run in range(len(groundtruths)):
@@ -47,10 +51,10 @@ def determine_all_deviations(
                 warnings.warn("No estimate for this filter, setting error to inf.")
                 all_deviations_last_mat[config_no][run] = np.inf
 
-        if np.any(np.isinf(all_deviations_last_mat[config_no])):
+        if any(np.isinf(all_deviations_last_mat[config_no])):
             print(
                 f"Warning: {result_curr_config['filterName']} with {result_curr_config['filterParams']} "
-                f"parameters apparently failed {np.sum(np.isinf(all_deviations_last_mat[config_no]))} "
+                f"parameters apparently failed {sum(np.isinf(all_deviations_last_mat[config_no]))} "
                 "times. Check if this is plausible."
             )
 

@@ -1,3 +1,4 @@
+from pyrecest.backend import mod
 import copy
 import warnings
 
@@ -70,6 +71,6 @@ class VonMisesFilter(AbstractCircularFilter):
             )
             warnings.warn(warning_message)
 
-        muWnew = np.mod(z - vmMeas.mu, 2 * np.pi)
+        muWnew = mod(z - vmMeas.mu, 2 * np.pi)
         vmMeasShifted = VonMisesDistribution(muWnew, vmMeas.kappa)
         self.filter_state = self.filter_state.multiply(vmMeasShifted)

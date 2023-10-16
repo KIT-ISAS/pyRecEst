@@ -1,3 +1,5 @@
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 from collections.abc import Callable
 
 import numpy as np
@@ -16,7 +18,7 @@ class CustomHyperhemisphericalDistribution(
 ):
     @beartype
     def __init__(
-        self, f: Callable, dim: int | np.int32 | np.int64, scale_by: float = 1
+        self, f: Callable, dim: int | int32 | int64, scale_by: float = 1
     ):
         """
         Initialize a CustomHyperhemisphericalDistribution.

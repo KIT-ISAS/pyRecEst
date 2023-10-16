@@ -1,3 +1,6 @@
+from pyrecest.backend import ndim
+from pyrecest.backend import all
+from pyrecest.backend import empty
 import copy
 import warnings
 from abc import abstractmethod
@@ -85,7 +88,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         ), "system_matrices may be a single (dimSingleState, dimSingleState) matrix or a (dimSingleState, dimSingleState, noTargets) tensor."
 
         if isinstance(sys_noises, GaussianDistribution):
-            assert np.all(sys_noises.mu == 0)
+            assert all(sys_noises.mu == 0)
             sys_noises = np.dstack(sys_noises.C)
 
         curr_sys_matrix = system_matrices
@@ -94,11 +97,11 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
 
         for i in range(self.get_number_of_targets()):
             # Overwrite if different for each track
-            if np.ndim(system_matrices) == 3:
+            if ndim(system_matrices) == 3:
                 curr_sys_matrix = system_matrices[:, :, i]
-            if np.ndim(sys_noises) == 3:
+            if ndim(sys_noises) == 3:
                 curr_sys_noise = sys_noises[:, :, i]
-            if np.ndim(inputs) == 2:
+            if ndim(inputs) == 2:
                 curr_input = inputs[:, i]
 
             self.filter_bank[i].predict_linear(
@@ -140,7 +143,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             warnings.warn("Currently, there are zero targets.")
             point_ests = None
         else:
-            point_ests = np.empty((self.dim, num_targets))
+            point_ests = empty((self.dim, num_targets))
             point_ests[:] = np.nan
             for i in range(num_targets):
                 point_ests[:, i] = self.filter_bank[i].get_point_estimate()

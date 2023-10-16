@@ -1,3 +1,5 @@
+from pyrecest.backend import sum
+from pyrecest.backend import log
 import numpy as np
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
@@ -18,7 +20,7 @@ class AbstractHypersphereSubsetDiracDistribution(
         return m
 
     def entropy(self):
-        result = -np.sum(self.w * np.log(self.w))
+        result = -sum(self.w * log(self.w))
         return result
 
     def integrate(self, integration_boundaries=None):

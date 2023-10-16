@@ -1,3 +1,8 @@
+from pyrecest.backend import sum
+from pyrecest.backend import sqrt
+from pyrecest.backend import ones
+from pyrecest.backend import mod
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -9,11 +14,11 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution
 
 class HypersphericalDiracDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.d = np.array(
+        self.d = array(
             [[0.5, 3, 4, 6, 6], [2, 2, 5, 3, 0], [0.5, 0.2, 5.8, 4.3, 1.2]]
         ).T
         self.d = self.d / np.linalg.norm(self.d, axis=1)[:, None]
-        self.w = np.array([0.1, 0.1, 0.1, 0.1, 0.6])
+        self.w = array([0.1, 0.1, 0.1, 0.1, 0.6])
         self.hdd = HypersphericalDiracDistribution(self.d, self.w)
 
     def test_instance_creation(self):
@@ -23,9 +28,9 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         nSamples = 5
         s = self.hdd.sample(nSamples)
         self.assertEqual(s.shape, (nSamples, self.d.shape[-1]))
-        np.testing.assert_array_almost_equal(s, np.mod(s, 2 * np.pi))
+        np.testing.assert_array_almost_equal(s, mod(s, 2 * np.pi))
         np.testing.assert_array_almost_equal(
-            np.linalg.norm(s, axis=-1), np.ones(nSamples)
+            np.linalg.norm(s, axis=-1), ones(nSamples)
         )
 
     def test_apply_function(self):
@@ -39,7 +44,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
 
     def test_reweigh_identity(self):
         def f(x):
-            return 2 * np.ones(x.shape[0])
+            return 2 * ones(x.shape[0])
 
         twdNew = self.hdd.reweigh(f)
         self.assertIsInstance(twdNew, HypersphericalDiracDistribution)
@@ -53,13 +58,13 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         twdNew = self.hdd.reweigh(f)
         self.assertIsInstance(twdNew, HypersphericalDiracDistribution)
         np.testing.assert_array_almost_equal(twdNew.d, self.hdd.d)
-        self.assertAlmostEqual(np.sum(twdNew.w), 1, places=10)
+        self.assertAlmostEqual(sum(twdNew.w), 1, places=10)
         wNew = self.hdd.d[:, 1] * self.hdd.w
-        np.testing.assert_array_almost_equal(twdNew.w, wNew / np.sum(wNew))
+        np.testing.assert_array_almost_equal(twdNew.w, wNew / sum(wNew))
 
     def test_from_distribution(self):
         np.random.seed(0)
-        vmf = VonMisesFisherDistribution(np.array([1, 1, 1]) / np.sqrt(3), 1)
+        vmf = VonMisesFisherDistribution(array([1, 1, 1]) / sqrt(3), 1)
         dirac_dist = HypersphericalDiracDistribution.from_distribution(vmf, 100000)
         np.testing.assert_almost_equal(
             dirac_dist.mean_direction(), vmf.mean_direction(), decimal=2

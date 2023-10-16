@@ -1,3 +1,4 @@
+from pyrecest.backend import ones
 import numpy as np
 
 from .abstract_se3_distribution import AbstractSE3Distribution
@@ -42,6 +43,6 @@ class SE3DiracDistribution(
 
         ddist = SE3DiracDistribution(
             distribution.sample(n_particles),
-            1 / n_particles * np.ones((1, n_particles)),
+            1 / n_particles * ones((1, n_particles)),
         )
         return ddist

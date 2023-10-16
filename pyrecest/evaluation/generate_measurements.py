@@ -1,3 +1,11 @@
+from pyrecest.backend import tile
+from pyrecest.backend import sum
+from pyrecest.backend import squeeze
+from pyrecest.backend import shape
+from pyrecest.backend import mod
+from pyrecest.backend import dot
+from pyrecest.backend import empty
+from pyrecest.backend import zeros
 import numpy as np
 from beartype import beartype
 from pyrecest.distributions import (
@@ -27,10 +35,10 @@ def generate_measurements(groundtruth, simulation_config):
         Comprises timesteps elements, each of which is a numpy array of shape
         (n_meas_at_individual_time_step[t], n_dim).
     """
-    assert "n_meas_at_individual_time_step" not in simulation_config or np.shape(
+    assert "n_meas_at_individual_time_step" not in simulation_config or shape(
         simulation_config["n_meas_at_individual_time_step"]
     ) == (simulation_config["n_timesteps"],)
-    measurements = np.empty(simulation_config["n_timesteps"], dtype=np.ndarray)
+    measurements = empty(simulation_config["n_timesteps"], dtype=np.ndarray)
 
     if simulation_config.get("mtt", False) and simulation_config.get("eot", False):
         raise NotImplementedError(
@@ -47,21 +55,21 @@ def generate_measurements(groundtruth, simulation_config):
         assert ("intensity_lambda" in simulation_config.keys()) != (
             "n_meas_at_individual_time_step" in simulation_config.keys()
         ), "Must either give intensity_lambda or n_meas_at_individual_time_step for EOT"
-        shape = simulation_config["target_shape"]
+        target_shape = simulation_config["target_shape"]
         eot_sampling_style = simulation_config["eot_sampling_style"]
         assert isinstance(
-            shape, Polygon
+            target_shape, Polygon
         ), "Currently only StarConvexPolygon (based on shapely Polygons) are supported as target shapes."
 
         for t in range(simulation_config["n_timesteps"]):
             if groundtruth[0].shape[-1] == 2:
                 curr_shape = translate(
-                    shape, groundtruth[0][..., 0], yoff=groundtruth[0][..., 1]
+                    target_shape, groundtruth[0][..., 0], yoff=groundtruth[0][..., 1]
                 )
             elif groundtruth[0].shape[-1] == 3:
                 curr_shape = rotate(
                     translate(
-                        shape, groundtruth[0][..., 1], yoff=groundtruth[0][..., 2]
+                        target_shape, groundtruth[0][..., 1], yoff=groundtruth[0][..., 2]
                     ),
                     angle=groundtruth[0][..., 0],
                     origin="centroid",
@@ -70,7 +78,7 @@ def generate_measurements(groundtruth, simulation_config):
                 raise ValueError(
                     "Currently only R^2 and SE(2) scenarios are supported."
                 )
-            if not isinstance(shape, PolygonWithSampling):
+            if not isinstance(target_shape, PolygonWithSampling):
                 curr_shape.__class__ = (
                     PolygonWithSampling  # Evil class sugery to add sampling methods
                 )
@@ -115,8 +123,8 @@ def generate_measurements(groundtruth, simulation_config):
         )
 
         for t in range(simulation_config["n_timesteps"]):
-            n_meas_at_t = np.sum(n_observations[t, :])
-            measurements[t] = np.nan * np.zeros(
+            n_meas_at_t = sum(n_observations[t, :])
+            measurements[t] = np.nan * zeros(
                 (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
             )
 
@@ -124,7 +132,7 @@ def generate_measurements(groundtruth, simulation_config):
             for target_no in range(simulation_config["n_targets"]):
                 if n_observations[t, target_no] == 1:
                     meas_no += 1
-                    measurements[t][meas_no - 1, :] = np.dot(
+                    measurements[t][meas_no - 1, :] = dot(
                         simulation_config["meas_matrix_for_each_target"],
                         groundtruth[t, target_no, :],
                     ) + simulation_config["meas_noise"].sample(1)
@@ -146,9 +154,9 @@ def generate_measurements(groundtruth, simulation_config):
 
             if isinstance(meas_noise, AbstractHypertoroidalDistribution):
                 noise_samples = meas_noise.sample(n_meas)
-                measurements[t] = np.mod(
-                    np.squeeze(
-                        np.tile(
+                measurements[t] = mod(
+                    squeeze(
+                        tile(
                             groundtruth[t - 1],
                             (
                                 n_meas,
@@ -169,8 +177,8 @@ def generate_measurements(groundtruth, simulation_config):
 
             elif isinstance(meas_noise, GaussianDistribution):
                 noise_samples = meas_noise.sample(n_meas)
-                measurements[t] = np.squeeze(
-                    np.tile(
+                measurements[t] = squeeze(
+                    tile(
                         groundtruth[t - 1],
                         (
                             n_meas,

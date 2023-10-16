@@ -1,4 +1,9 @@
+from pyrecest.backend import sum
+from pyrecest.backend import ones_like
+from pyrecest.backend import ones
+from pyrecest.backend import ndim
 from collections.abc import Callable
+from pyrecest.backend import zeros
 
 import numpy as np
 from beartype import beartype
@@ -48,10 +53,10 @@ class AbstractParticleFilter(AbstractFilterType):
             samples.shape[0] == weights.size
         ), "samples and weights must match in size"
 
-        weights = weights / np.sum(weights)
+        weights = weights / sum(weights)
         n = self.filter_state.w.size
         noise_ids = np.random.choice(weights.size, n, p=weights)
-        d = np.zeros((n, self.filter_state.dim))
+        d = zeros((n, self.filter_state.dim))
         for i in range(n):
             d[i, :] = f(self.filter_state.d[i, :], samples[noise_ids[i]])
 
@@ -63,8 +68,8 @@ class AbstractParticleFilter(AbstractFilterType):
     ):
         assert measurement is None or np.size(measurement) == meas_noise.dim
         assert (
-            np.ndim(measurement) == 1
-            or np.ndim(measurement) == 0
+            ndim(measurement) == 1
+            or ndim(measurement) == 0
             and meas_noise.dim == 1
         )
         if not shift_instead_of_add:
@@ -86,12 +91,12 @@ class AbstractParticleFilter(AbstractFilterType):
 
         self.filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
         self.filter_state.w = (
-            1 / self.filter_state.w.shape[0] * np.ones_like(self.filter_state.w)
+            1 / self.filter_state.w.shape[0] * ones_like(self.filter_state.w)
         )
 
     @beartype
     def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
-        likelihood_val = np.sum(
+        likelihood_val = sum(
             likelihood.pdf(self.filter_state.d) * self.filter_state.w
         )
         return likelihood_val

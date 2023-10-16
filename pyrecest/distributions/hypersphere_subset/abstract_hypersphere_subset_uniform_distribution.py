@@ -1,3 +1,4 @@
+from pyrecest.backend import ones
 import numpy as np
 from beartype import beartype
 
@@ -32,5 +33,5 @@ class AbstractHypersphereSubsetUniformDistribution(
             raise ValueError("Manifold size cannot be zero.")
         if not isinstance(manifold_size, (int, float)):
             raise TypeError("Manifold size must be a numeric value.")
-        p = (1 / manifold_size) * np.ones(xs.size // (self.dim + 1))
+        p = (1 / manifold_size) * ones(xs.size // (self.dim + 1))
         return p

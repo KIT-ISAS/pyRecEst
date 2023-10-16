@@ -1,3 +1,15 @@
+from pyrecest.backend import where
+from pyrecest.backend import squeeze
+from pyrecest.backend import sqrt
+from pyrecest.backend import ndim
+from pyrecest.backend import mod
+from pyrecest.backend import log
+from pyrecest.backend import exp
+from pyrecest.backend import array
+from pyrecest.backend import abs
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import numbers
 
 import numpy as np
@@ -34,7 +46,7 @@ class WrappedNormalDistribution(
 
     @property
     def sigma(self):
-        return np.sqrt(self.C)
+        return sqrt(self.C)
 
     @beartype
     def pdf(self, xs: np.ndarray | np.number | numbers.Real):
@@ -42,28 +54,28 @@ class WrappedNormalDistribution(
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
         xs = np.asarray(xs)
-        if np.ndim(xs) == 0:
-            xs = np.array([xs])
+        if ndim(xs) == 0:
+            xs = array([xs])
         n_inputs = np.size(xs)
-        result = np.zeros(n_inputs)
+        result = zeros(n_inputs)
 
         # check if sigma is large and return uniform distribution in this case
         if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
             result[:] = 1.0 / (2 * np.pi)
             return result
 
-        x = np.mod(xs, 2 * np.pi)
+        x = mod(xs, 2 * np.pi)
         x[x < 0] += 2 * np.pi
         x -= self.mu
 
         max_iterations = 1000
 
         tmp = -1.0 / (2 * self.sigma**2)
-        nc = 1 / np.sqrt(2 * np.pi) / self.sigma
+        nc = 1 / sqrt(2 * np.pi) / self.sigma
 
         for i in range(n_inputs):
             old_result = 0
-            result[i] = np.exp(x[i] * x[i] * tmp)
+            result[i] = exp(x[i] * x[i] * tmp)
 
             for k in range(1, max_iterations + 1):
                 xp = x[i] + 2 * np.pi * k
@@ -71,7 +83,7 @@ class WrappedNormalDistribution(
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
                 old_result = result[i]
-                result[i] += np.exp(tp) + np.exp(tm)
+                result[i] += exp(tp) + exp(tm)
 
                 if result[i] == old_result:
                     break
@@ -85,18 +97,18 @@ class WrappedNormalDistribution(
         self,
         xs: np.ndarray,
         startingPoint: float = 0,
-        n_wraps: int | np.int32 | np.int64 = 10,
+        n_wraps: int | int32 | int64 = 10,
     ) -> np.ndarray:
-        startingPoint = np.mod(startingPoint, 2 * np.pi)
-        xs = np.mod(xs, 2 * np.pi)
+        startingPoint = mod(startingPoint, 2 * np.pi)
+        xs = mod(xs, 2 * np.pi)
 
         def ncdf(from_, to):
             return (
                 1
                 / 2
                 * (
-                    erf((self.mu - from_) / (np.sqrt(2) * self.sigma))
-                    - erf((self.mu - to) / (np.sqrt(2) * self.sigma))
+                    erf((self.mu - from_) / (sqrt(2) * self.sigma))
+                    - erf((self.mu - to) / (sqrt(2) * self.sigma))
                 )
             )
 
@@ -108,14 +120,14 @@ class WrappedNormalDistribution(
                 + ncdf(startingPoint - 2 * np.pi * i, xs - 2 * np.pi * i)
             )
         # Val should be negative when x < startingPoint
-        val = np.where(xs < startingPoint, 1 + val, val)
-        return np.squeeze(val)
+        val = where(xs < startingPoint, 1 + val, val)
+        return squeeze(val)
 
     @beartype
     def trigonometric_moment(
-        self, n: int | np.int32 | np.int64
+        self, n: int | int32 | int64
     ) -> complex | np.ndarray:
-        return np.exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
+        return exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
     def multiply(
         self, other: "WrappedNormalDistribution"
@@ -130,8 +142,8 @@ class WrappedNormalDistribution(
         return wn
 
     @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
-        return np.mod(self.mu + self.sigma * np.random.randn(1, n), 2 * np.pi)
+    def sample(self, n: int | int32 | int64) -> np.ndarray:
+        return mod(self.mu + self.sigma * np.random.randn(1, n), 2 * np.pi)
 
     @beartype
     def shift(self, shift_by):
@@ -145,8 +157,8 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def from_moment(m: complex) -> "WrappedNormalDistribution":
-        mu = np.mod(np.angle(m), 2 * np.pi)
-        sigma = np.sqrt(-2 * np.log(np.abs(m)))
+        mu = mod(np.angle(m), 2 * np.pi)
+        sigma = sqrt(-2 * log(abs(m)))
         return WrappedNormalDistribution(mu, sigma)
 
     @staticmethod

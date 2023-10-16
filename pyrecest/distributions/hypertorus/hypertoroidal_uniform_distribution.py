@@ -1,3 +1,10 @@
+from pyrecest.backend import prod
+from pyrecest.backend import ones
+from pyrecest.backend import ndim
+from pyrecest.backend import log
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import numpy as np
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
@@ -14,9 +21,9 @@ class HypertoroidalUniformDistribution(
         :param xs: Values at which to evaluate the PDF
         :returns: PDF evaluated at xs
         """
-        return 1 / self.get_manifold_size() * np.ones(xs.size // self.dim)
+        return 1 / self.get_manifold_size() * ones(xs.size // self.dim)
 
-    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def trigonometric_moment(self, n: int | int32 | int64) -> np.ndarray:
         """
         Returns the n-th trigonometric moment
 
@@ -24,9 +31,9 @@ class HypertoroidalUniformDistribution(
         :returns: n-th trigonometric moment
         """
         if n == 0:
-            return np.ones(self.dim)
+            return ones(self.dim)
 
-        return np.zeros(self.dim)
+        return zeros(self.dim)
 
     def entropy(self) -> float:
         """
@@ -34,7 +41,7 @@ class HypertoroidalUniformDistribution(
 
         :returns: Entropy
         """
-        return self.dim * np.log(2 * np.pi)
+        return self.dim * log(2 * np.pi)
 
     def mean_direction(self):
         """
@@ -47,7 +54,7 @@ class HypertoroidalUniformDistribution(
             "Hypertoroidal uniform distributions do not have a unique mean"
         )
 
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: int | int32 | int64) -> np.ndarray:
         """
         Returns a sample of size n from the distribution
 
@@ -78,12 +85,12 @@ class HypertoroidalUniformDistribution(
         :returns: Integral over the specified boundaries
         """
         if integration_boundaries is None:
-            left = np.zeros((self.dim,))
-            right = 2 * np.pi * np.ones((self.dim,))
+            left = zeros((self.dim,))
+            right = 2 * np.pi * ones((self.dim,))
         else:
             left, right = integration_boundaries
-        assert np.ndim(left) == 0 and self.dim == 1 or left.shape == (self.dim,)
-        assert np.ndim(right) == 0 and self.dim == 1 or right.shape == (self.dim,)
+        assert ndim(left) == 0 and self.dim == 1 or left.shape == (self.dim,)
+        assert ndim(right) == 0 and self.dim == 1 or right.shape == (self.dim,)
 
-        volume = np.prod(right - left)
+        volume = prod(right - left)
         return 1 / (2 * np.pi) ** self.dim * volume

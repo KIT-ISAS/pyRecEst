@@ -27,20 +27,32 @@ jobs:
 
       - name: Install dependencies
         run: |
+          export CUDA_VISIBLE_DEVICES=""
           python -m pip install --upgrade pip
           python -m pip install poetry
-          poetry install --extras healpy_support
+          poetry install --extras healpy_support --extras pytorch_support 
 
       - name: List files and check Python and package versions
         run: |
           ls -al
+          pip3 install --upgrade --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
           python -c 'import sys; print(sys.version_info[:])'
           python -m pip freeze
 
-      - name: Run tests
+      - name: Run tests with numpy backend
+        run: |
+          #poetry env use python
+          #export PYRECEST_BACKEND=numpy
+          #poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_numpy.xml ./pyrecest
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      - name: Run tests with pytorch backend
+        if: always()
         run: |
           poetry env use python
-          poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results.xml ./pyrecest
+          export PYRECEST_BACKEND=pytorch
+          poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_pytorch.xml ./pyrecest
         env:
           PYTHONPATH: ${{ github.workspace }}
 
@@ -48,4 +60,6 @@ jobs:
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: junit_test_results.xml
+          files: |
+            junit_test_results_numpy.xml
+            junit_test_results_pytorch.xml

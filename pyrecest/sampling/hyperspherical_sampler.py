@@ -1,3 +1,12 @@
+from pyrecest.backend import vstack
+from pyrecest.backend import sqrt
+from pyrecest.backend import sin
+from pyrecest.backend import cos
+from pyrecest.backend import array
+from pyrecest.backend import arctan2
+from pyrecest.backend import arccos
+from pyrecest.backend import arange
+from pyrecest.backend import empty
 import itertools
 from abc import abstractmethod
 
@@ -82,7 +91,7 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 
         n_side = grid_density_parameter
         n_areas = hp.nside2npix(n_side)
-        x, y, z = hp.pix2vec(n_side, np.arange(n_areas))
+        x, y, z = hp.pix2vec(n_side, arange(n_areas))
         grid = np.column_stack((x, y, z))
 
         grid_specific_description = {
@@ -106,7 +115,7 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
         phi_deg_mat = grid.lons()
         theta_deg_mat = grid.lats()
 
-        phi_theta_stacked_deg = np.array(
+        phi_theta_stacked_deg = array(
             list(itertools.product(phi_deg_mat, theta_deg_mat))
         )
         phi_theta_stacked_rad = np.radians(phi_theta_stacked_deg)
@@ -129,9 +138,9 @@ class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
     def get_grid_spherical_coordinates(
         self, grid_density_parameter: int
     ) -> tuple[np.ndarray, np.ndarray, dict]:
-        indices = np.arange(0, grid_density_parameter, dtype=float) + 0.5
+        indices = arange(0, grid_density_parameter, dtype=float) + 0.5
         phi = np.pi * (1 + 5**0.5) * indices
-        theta = np.arccos(1 - 2 * indices / grid_density_parameter)
+        theta = arccos(1 - 2 * indices / grid_density_parameter)
         grid_specific_description = {
             "scheme": "spherical_fibonacci",
             "n_samples": grid_density_parameter,
@@ -153,20 +162,20 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
         Anna Yershova, Swati Jain, Steven M. LaValle, Julie C. Mitchell
         As in appendix (or in Eq 4 if one reorders it).
         """
-        quaterions = np.empty((θ.shape[0], 4))
+        quaterions = empty((θ.shape[0], 4))
 
-        quaterions[:, 0] = np.cos(θ / 2) * np.cos(ψ / 2)
-        quaterions[:, 1] = np.cos(θ / 2) * np.sin(ψ / 2)
-        quaterions[:, 2] = np.sin(θ / 2) * np.cos(ϕ + ψ / 2)
-        quaterions[:, 3] = np.sin(θ / 2) * np.sin(ϕ + ψ / 2)
+        quaterions[:, 0] = cos(θ / 2) * cos(ψ / 2)
+        quaterions[:, 1] = cos(θ / 2) * sin(ψ / 2)
+        quaterions[:, 2] = sin(θ / 2) * cos(ϕ + ψ / 2)
+        quaterions[:, 3] = sin(θ / 2) * sin(ϕ + ψ / 2)
         return quaterions
 
     @staticmethod
     @beartype
     def quaternion_to_hopf_yershova(q: np.ndarray):
-        θ = 2 * np.arccos(np.sqrt(q[:, 0] ** 2 + q[:, 1] ** 2))
-        ϕ = np.arctan2(q[:, 3], q[:, 2]) - np.arctan2(q[:, 1], q[:, 0])
-        ψ = 2 * np.arctan2(q[:, 1], q[:, 0])
+        θ = 2 * arccos(sqrt(q[:, 0] ** 2 + q[:, 1] ** 2))
+        ϕ = arctan2(q[:, 3], q[:, 2]) - arctan2(q[:, 1], q[:, 0])
+        ψ = 2 * arctan2(q[:, 1], q[:, 0])
         return θ, ϕ, ψ
 
 
@@ -198,19 +207,19 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
             nside = 2**i
             numpixels = hp.nside2npix(nside)
 
-            healpix_points = np.empty((numpixels, 2))
+            healpix_points = empty((numpixels, 2))
             for j in range(numpixels):
                 theta, phi = hp.pix2ang(nside, j, nest=True)
                 healpix_points[j] = [theta, phi]
 
             for j in range(len(healpix_points)):
                 for k in range(len(psi_points)):
-                    temp = np.array(
+                    temp = array(
                         [healpix_points[j, 0], healpix_points[j, 1], psi_points[k]]
                     )
                     s3_points_list.append(temp)
 
-        s3_points = np.vstack(s3_points_list)  # Need to stack like this and unpack
+        s3_points = vstack(s3_points_list)  # Need to stack like this and unpack
         grid = AbstractHopfBasedS3Sampler.hopf_coordinates_to_quaterion_yershova(
             s3_points[:, 0], s3_points[:, 1], s3_points[:, 2]
         )
@@ -248,16 +257,16 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         if len(grid_density_parameter) == 2:
             n_sample_circle = grid_density_parameter[1]
         else:
-            n_sample_circle = np.sqrt(grid_density_parameter[0])
+            n_sample_circle = sqrt(grid_density_parameter[0])
         psi_points = circular_sampler.get_grid(n_sample_circle)
 
         # Step 3: Combine the two grids to generate a grid for S3
         for spherical_point in spherical_points:
             for psi in psi_points:
-                s3_point = np.array([spherical_point[0], spherical_point[1], psi])
+                s3_point = array([spherical_point[0], spherical_point[1], psi])
                 s3_points_list.append(s3_point)
 
-        s3_points = np.vstack(s3_points_list)
+        s3_points = vstack(s3_points_list)
         grid = AbstractHopfBasedS3Sampler.hopf_coordinates_to_quaterion_yershova(
             s3_points[:, 0], s3_points[:, 1], s3_points[:, 2]
         )

@@ -1,3 +1,6 @@
+from pyrecest.backend import prod
+from pyrecest.backend import allclose
+from pyrecest.backend import all
 import unittest
 
 import numpy as np
@@ -102,7 +105,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         grid_density_parameter = [12, 4]
         grid, _ = sampler.get_grid(grid_density_parameter)
 
-        expected_points = np.prod(grid_density_parameter)
+        expected_points = prod(grid_density_parameter)
         self.assertEqual(
             grid.shape[0],
             expected_points,
@@ -131,7 +134,7 @@ class TestHopfConversion(unittest.TestCase):
         )
 
         # Check if the original quaternions are close to the recovered quaternions.
-        self.assertTrue(np.allclose(unit_vectors, recovered_quaternions, atol=1e-8))
+        self.assertTrue(allclose(unit_vectors, recovered_quaternions, atol=1e-8))
 
 
 if __name__ == "__main__":

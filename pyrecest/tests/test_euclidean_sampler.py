@@ -1,3 +1,9 @@
+from pyrecest.backend import std
+from pyrecest.backend import ones
+from pyrecest.backend import mean
+from pyrecest.backend import allclose
+from pyrecest.backend import all
+from pyrecest.backend import zeros
 import unittest
 
 import numpy as np
@@ -18,12 +24,12 @@ class TestGaussianSampler(unittest.TestCase):
 
     def test_gaussian_properties(self):
         # Check that the mean is close to 0 for each dimension
-        means = np.mean(self.samples, axis=0)
-        self.assertTrue(np.allclose(means, np.zeros(self.dim), atol=0.1))
+        means = mean(self.samples, axis=0)
+        self.assertTrue(allclose(means, zeros(self.dim), atol=0.1))
 
         # Check that the standard deviation is close to 1 for each dimension
-        std_devs = np.std(self.samples, axis=0)
-        self.assertTrue(np.allclose(std_devs, np.ones(self.dim), atol=0.1))
+        std_devs = std(self.samples, axis=0)
+        self.assertTrue(allclose(std_devs, ones(self.dim), atol=0.1))
 
 
 if __name__ == "__main__":

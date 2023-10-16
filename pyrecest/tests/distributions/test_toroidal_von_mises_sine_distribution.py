@@ -1,3 +1,8 @@
+from pyrecest.backend import sin
+from pyrecest.backend import exp
+from pyrecest.backend import cos
+from pyrecest.backend import array
+from pyrecest.backend import arange
 import unittest
 
 import numpy as np
@@ -9,8 +14,8 @@ from pyrecest.distributions.hypertorus.toroidal_von_mises_sine_distribution impo
 
 class ToroidalVMSineDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.mu = np.array([1, 2])
-        self.kappa = np.array([0.7, 1.4])
+        self.mu = array([1, 2])
+        self.kappa = array([0.7, 1.4])
         self.lambda_ = 0.5
         self.tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, self.lambda_)
 
@@ -29,32 +34,32 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
 
     def test_trigonometric_moment_numerical(self):
         np.testing.assert_almost_equal(
-            self.tvm.trigonometric_moment_numerical(0), np.array([1, 1]), decimal=5
+            self.tvm.trigonometric_moment_numerical(0), array([1, 1]), decimal=5
         )
 
     # jscpd:ignore-start
     # pylint: disable=R0801
     def _unnormalized_pdf(self, xs):
-        return np.exp(
-            self.kappa[0] * np.cos(xs[..., 0] - self.mu[0])
-            + self.kappa[1] * np.cos(xs[..., 1] - self.mu[1])
+        return exp(
+            self.kappa[0] * cos(xs[..., 0] - self.mu[0])
+            + self.kappa[1] * cos(xs[..., 1] - self.mu[1])
             + self.lambda_
-            * np.sin(xs[..., 0] - self.mu[0])
-            * np.sin(xs[..., 1] - self.mu[1])
+            * sin(xs[..., 0] - self.mu[0])
+            * sin(xs[..., 1] - self.mu[1])
         )
 
     # jscpd:ignore-end
 
     @parameterized.expand(
         [
-            (np.array([3, 2]),),
-            (np.array([1, 4]),),
-            (np.array([5, 6]),),
-            (np.array([-3, 11]),),
-            (np.array([[5, 1], [6, 3]]),),
+            (array([3, 2]),),
+            (array([1, 4]),),
+            (array([5, 6]),),
+            (array([-3, 11]),),
+            (array([[5, 1], [6, 3]]),),
             (
                 np.column_stack(
-                    (np.arange(0, 2 * np.pi, 0.1), np.arange(1 * np.pi, 3 * np.pi, 0.1))
+                    (arange(0, 2 * np.pi, 0.1), arange(1 * np.pi, 3 * np.pi, 0.1))
                 ),
             ),
         ]

@@ -1,3 +1,10 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import linspace
+from pyrecest.backend import ceil
+from pyrecest.backend import array
+from pyrecest.backend import arange
+from pyrecest.backend import allclose
+from pyrecest.backend import all
 import copy
 import unittest
 
@@ -18,16 +25,16 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 "identity",
                 VonMisesDistribution,
                 0.4,
-                np.arange(0.1, 2.1, 0.1),
+                arange(0.1, 2.1, 0.1),
                 101,
                 1e-8,
             ),
-            ("sqrt", VonMisesDistribution, 0.5, np.arange(0.1, 2.1, 0.1), 101, 1e-8),
+            ("sqrt", VonMisesDistribution, 0.5, arange(0.1, 2.1, 0.1), 101, 1e-8),
             (
                 "identity",
                 WrappedNormalDistribution,
                 0.8,
-                np.arange(0.2, 2.1, 0.1),
+                arange(0.2, 2.1, 0.1),
                 101,
                 1e-8,
             ),
@@ -35,7 +42,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 "sqrt",
                 WrappedNormalDistribution,
                 0.8,
-                np.arange(0.2, 2.1, 0.1),
+                arange(0.2, 2.1, 0.1),
                 101,
                 1e-8,
             ),
@@ -50,17 +57,17 @@ class TestCircularFourierDistribution(unittest.TestCase):
         """
         for param in param_range:
             dist = dist_class(mu, param)
-            xvals = np.arange(-2 * np.pi, 3 * np.pi, 0.01)
+            xvals = arange(-2 * np.pi, 3 * np.pi, 0.01)
             fd = CircularFourierDistribution.from_distribution(
                 dist, coeffs, transformation
             )
             self.assertEqual(
                 np.size(fd.c),
-                np.ceil(coeffs / 2),
+                ceil(coeffs / 2),
                 "Length of Fourier Coefficients mismatch.",
             )
             self.assertTrue(
-                np.allclose(fd.pdf(xvals), dist.pdf(xvals), atol=tolerance),
+                allclose(fd.pdf(xvals), dist.pdf(xvals), atol=tolerance),
                 "PDF values do not match.",
             )
 
@@ -73,7 +80,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     def test_vm_to_fourier(self, mult_by_n, transformation):
-        xs = np.linspace(0, 2 * np.pi, 100)
+        xs = linspace(0, 2 * np.pi, 100)
         dist = VonMisesDistribution(2.5, 1.5)
         fd = CircularFourierDistribution.from_distribution(
             dist,
@@ -184,7 +191,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         )
         hel_like_distance, _ = integrate.quad(
             lambda x: (
-                np.sqrt(dist1.pdf(np.array(x))) - np.sqrt(dist2.pdf(np.array(x)))
+                sqrt(dist1.pdf(array(x))) - sqrt(dist2.pdf(array(x)))
             )
             ** 2,
             0,

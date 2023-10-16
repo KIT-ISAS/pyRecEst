@@ -1,3 +1,7 @@
+from pyrecest.backend import array
+from pyrecest.backend import arange
+from pyrecest.backend import allclose
+from pyrecest.backend import all
 import unittest
 
 import numpy as np
@@ -23,7 +27,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         self.wn = WrappedNormalDistribution(1.3, 0.8)
 
     def test_estimate(self):
-        self.assertTrue(np.allclose(self.dist.trigonometric_moment(1), 0, atol=1e-10))
+        self.assertTrue(allclose(self.dist.trigonometric_moment(1), 0, atol=1e-10))
 
     def test_set_state(self):
         # sanity check
@@ -35,7 +39,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         np.testing.assert_almost_equal(self.dist.w, dist1.w)
 
     def test_sampling(self):
-        positions = np.arange(0, 1.1, 0.1)
+        positions = arange(0, 1.1, 0.1)
         dist3 = CircularDiracDistribution(positions)
         np.random.seed(0)
         num_samples = 20
@@ -70,7 +74,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         def f(x):
             return x**2
 
-        no_noise = CircularDiracDistribution(np.array([0]))
+        no_noise = CircularDiracDistribution(array([0]))
         self.filter.predict_nonlinear(f, no_noise)
         predicted = self.filter.filter_state
         self.assertIsInstance(predicted, HypertoroidalDiracDistribution)
@@ -101,7 +105,7 @@ class CircularParticleFilterTest(unittest.TestCase):
 
     def test_association_likelihood(self):
         dist = CircularDiracDistribution(
-            np.array([1, 2, 3]), np.array([1 / 3, 1 / 3, 1 / 3])
+            array([1, 2, 3]), array([1 / 3, 1 / 3, 1 / 3])
         )
         pf = CircularParticleFilter(3)
         pf.set_state(dist)
@@ -115,7 +119,7 @@ class CircularParticleFilterTest(unittest.TestCase):
             pf.association_likelihood(VonMisesDistribution(2, 1)), 1 / (2 * np.pi)
         )
 
-        self.filter.set_state(CircularDiracDistribution(np.arange(0, 1.1, 0.1)))
+        self.filter.set_state(CircularDiracDistribution(arange(0, 1.1, 0.1)))
 
         def likelihood1(_, x):
             return x == 0.5

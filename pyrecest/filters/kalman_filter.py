@@ -1,3 +1,4 @@
+from pyrecest.backend import eye
 import numpy as np
 from beartype import beartype
 from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
@@ -63,8 +64,8 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param sys_noise_mean: System noise mean.
         :param sys_input: System noise covariance.
         """
-        system_matrix = np.eye(self._filter_state.x.shape[0])
-        B = np.eye(system_matrix.shape[0]) if sys_input is not None else None
+        system_matrix = eye(self._filter_state.x.shape[0])
+        B = eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
     @beartype
@@ -86,7 +87,7 @@ class KalmanFilter(AbstractEuclideanFilter):
                 "The number of rows in system_matrix should match the number of elements in sys_input"
             )
 
-        B = np.eye(system_matrix.shape[0]) if sys_input is not None else None
+        B = eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
     @beartype
@@ -99,7 +100,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         """
         self.update_linear(
             measurement=measurement,
-            measurement_matrix=np.eye(self.dim),
+            measurement_matrix=eye(self.dim),
             meas_noise=meas_noise,
         )
 

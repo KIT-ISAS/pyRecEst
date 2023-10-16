@@ -1,3 +1,11 @@
+from pyrecest.backend import sum
+from pyrecest.backend import squeeze
+from pyrecest.backend import outer
+from pyrecest.backend import ones_like
+from pyrecest.backend import ones
+from pyrecest.backend import mod
+from pyrecest.backend import exp
+from pyrecest.backend import array
 import copy
 import unittest
 
@@ -10,10 +18,10 @@ from pyrecest.distributions import (
 
 class TestHypertoroidalDiracDistribution(unittest.TestCase):
     def setUp(self):
-        self.d = np.array(
+        self.d = array(
             [[0.5, 2, 0.5], [3, 2, 0.2], [4, 5, 5.8], [6, 3, 4.3], [6, 0, 1.2]]
         )
-        self.w = np.array([0.1, 0.1, 0.1, 0.1, 0.6])
+        self.w = array([0.1, 0.1, 0.1, 0.1, 0.6])
         self.twd = HypertoroidalDiracDistribution(self.d, self.w)
 
     def test_init(self):
@@ -28,44 +36,44 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         np.testing.assert_almost_equal(m[0], m1, decimal=10)
         np.testing.assert_almost_equal(m[1], m2, decimal=10)
         np.testing.assert_almost_equal(
-            m[0], np.sum(self.w * np.exp(1j * self.d[:, 0])), decimal=10
+            m[0], sum(self.w * exp(1j * self.d[:, 0])), decimal=10
         )
         np.testing.assert_almost_equal(
-            m[1], np.sum(self.w * np.exp(1j * self.d[:, 1])), decimal=10
+            m[1], sum(self.w * exp(1j * self.d[:, 1])), decimal=10
         )
 
     def test_sample(self):
         n_samples = 5
         s = self.twd.sample(n_samples)
         self.assertEqual(s.shape, (n_samples, self.d.shape[-1]))
-        np.testing.assert_array_almost_equal(s, np.mod(s, 2 * np.pi))
+        np.testing.assert_array_almost_equal(s, mod(s, 2 * np.pi))
 
     def test_marginalize_to_1D(self):
         for i in range(self.d.shape[-1]):
             wd = self.twd.marginalize_to_1D(i)
             np.testing.assert_array_almost_equal(self.twd.w, wd.w)
-            np.testing.assert_array_almost_equal(np.squeeze(wd.d), self.twd.d[:, i])
+            np.testing.assert_array_almost_equal(squeeze(wd.d), self.twd.d[:, i])
 
     def test_apply_function(self):
         same = self.twd.apply_function(lambda x: x)
         np.testing.assert_array_almost_equal(
             same.trigonometric_moment(1), self.twd.trigonometric_moment(1)
         )
-        shift_offset = np.array([1.4, -0.3, np.pi])
+        shift_offset = array([1.4, -0.3, np.pi])
         shifted = self.twd.apply_function(lambda x: x + shift_offset)
         np.testing.assert_almost_equal(
             shifted.trigonometric_moment(1)[0],
-            np.sum(self.w * np.exp(1j * (self.d[:, 0] + shift_offset[0]))),
+            sum(self.w * exp(1j * (self.d[:, 0] + shift_offset[0]))),
             decimal=10,
         )
         np.testing.assert_almost_equal(
             shifted.trigonometric_moment(1)[1],
-            np.sum(self.w * np.exp(1j * (self.d[:, 1] + shift_offset[1]))),
+            sum(self.w * exp(1j * (self.d[:, 1] + shift_offset[1]))),
             decimal=10,
         )
 
     def test_shift(self):
-        d = np.array(
+        d = array(
             [
                 [4, -2, 0.01],
                 [3, 2, 0],
@@ -75,15 +83,15 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
             ]
         )
 
-        w = np.array([0.3, 0.3, 0.3, 0.05, 0.05])
+        w = array([0.3, 0.3, 0.3, 0.05, 0.05])
         twd = HypertoroidalDiracDistribution(d, w)
-        s = np.array([1, -3, 6])
+        s = array([1, -3, 6])
         twd_shifted = twd.shift(s)
         self.assertIsInstance(twd_shifted, HypertoroidalDiracDistribution)
         np.testing.assert_array_almost_equal(twd.w, twd_shifted.w)
         np.testing.assert_array_almost_equal(
             twd.d,
-            np.mod(twd_shifted.d - np.outer(np.ones_like(w), s), 2 * np.pi),
+            mod(twd_shifted.d - outer(ones_like(w), s), 2 * np.pi),
             decimal=10,
         )
 
@@ -93,7 +101,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         n = 20
         d = 2 * np.pi * np.random.rand(n, dim)
         w = np.random.rand(n)
-        w = w / np.sum(w)
+        w = w / sum(w)
         hwd = HypertoroidalDiracDistribution(d, w)
         return hwd
 
@@ -109,7 +117,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         hwd = TestHypertoroidalDiracDistribution.get_pseudorandom_hypertoroidal_wd(2)
         wd1 = hwd.marginalize_to_1D(0)
         wd2 = hwd.marginalize_out(1)
-        np.testing.assert_array_almost_equal(wd1.d, np.squeeze(wd2.d))
+        np.testing.assert_array_almost_equal(wd1.d, squeeze(wd2.d))
         np.testing.assert_array_almost_equal(wd1.w, wd2.w)
 
 

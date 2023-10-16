@@ -1,3 +1,4 @@
+from pyrecest.backend import eye, zeros
 import warnings
 from typing import Optional
 
@@ -28,13 +29,13 @@ def simulation_database(
         simulation_param["manifold"] = "Euclidean"
         simulation_param["n_timesteps"] = 10
         simulation_param["initial_prior"] = GaussianDistribution(
-            np.zeros(2), 0.5 * np.eye(2)
+            zeros(2), 0.5 * eye(2)
         )
         simulation_param["meas_noise"] = GaussianDistribution(
-            np.zeros(2), 0.5 * np.eye(2)
+            zeros(2), 0.5 * eye(2)
         )
         simulation_param["sys_noise"] = GaussianDistribution(
-            np.zeros(2), 0.5 * np.eye(2)
+            zeros(2), 0.5 * eye(2)
         )
         simulation_param["gen_next_state_without_noise_is_vectorized"] = True
     else:

@@ -1,3 +1,5 @@
+from pyrecest.backend import sum
+from pyrecest.backend import reshape
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -33,6 +35,6 @@ class HypersphericalDiracDistribution(
         return CircularDiracDistribution(np.atan2(self.d[1, :], self.d[0, :]), self.w)
 
     def mean_direction(self):
-        vec_sum = np.sum(self.d * np.reshape(self.w, (-1, 1)), axis=0)
+        vec_sum = sum(self.d * reshape(self.w, (-1, 1)), axis=0)
         mu = vec_sum / np.linalg.norm(vec_sum)
         return mu

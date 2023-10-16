@@ -1,3 +1,8 @@
+from pyrecest.backend import sin
+from pyrecest.backend import linspace
+from pyrecest.backend import cos
+from pyrecest.backend import array
+from pyrecest.backend import empty
 import numpy as np
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import unary_union
@@ -12,7 +17,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
         return polygon
 
     def sample_on_boundary(self, num_points: int) -> np.ndarray:
-        points = np.empty((num_points,), dtype=Point)
+        points = empty((num_points,), dtype=Point)
 
         if isinstance(self.boundary, LineString):
             lines = [self.boundary]
@@ -33,11 +38,11 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
                     break
                 distance -= line.length
 
-        return np.array([(point.x, point.y) for point in points])
+        return array([(point.x, point.y) for point in points])
 
     def sample_within(self, num_points: int) -> np.ndarray:
         min_x, min_y, max_x, max_y = self.bounds
-        points = np.empty((num_points,), dtype=Point)
+        points = empty((num_points,), dtype=Point)
 
         for i in range(num_points):
             random_point = Point(
@@ -53,7 +58,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
 
             points[i] = random_point
 
-        return np.array(points)
+        return array(points)
 
 
 class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
@@ -103,8 +108,8 @@ class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
                 segments.append(line_of_sight)
 
             # Check for intersections along the direction to the vertex
-            direction = np.array(vertex) - np.array(point.coords)
-            far_away_point = Point(np.array(vertex) + 1000 * direction)
+            direction = array(vertex) - array(point.coords)
+            far_away_point = Point(array(vertex) + 1000 * direction)
             ray = LineString([point, far_away_point])
 
             # Find intersection points with the polygon boundary
@@ -135,15 +140,15 @@ class Star(StarShapedPolygon):  # pylint: disable=abstract-method
             # External point
             points.append(
                 (
-                    center[0] + radius * np.cos(base_angle),
-                    center[1] + radius * np.sin(base_angle),
+                    center[0] + radius * cos(base_angle),
+                    center[1] + radius * sin(base_angle),
                 )
             )
             # Internal point
             points.append(
                 (
-                    center[0] + arm_width * np.cos(inner_angle),
-                    center[1] + arm_width * np.sin(inner_angle),
+                    center[0] + arm_width * cos(inner_angle),
+                    center[1] + arm_width * sin(inner_angle),
                 )
             )
         # Close the loop
@@ -174,7 +179,7 @@ class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
         half_width_2 = width_2 / 2
 
         # Define polygon points
-        polygon_points = np.array(
+        polygon_points = array(
             [
                 [half_width_1, half_height_1],
                 [half_height_2, half_height_1],
@@ -206,11 +211,11 @@ class StarFish(StarShapedPolygon):  # pylint: disable=abstract-method
 
     # pylint: disable=signature-differs
     def __new__(cls, scaling_factor=1):
-        theta = np.linspace(0, 2 * np.pi, 1000)
-        r = 5 + 1.5 * np.sin(6 * theta)
+        theta = linspace(0, 2 * np.pi, 1000)
+        r = 5 + 1.5 * sin(6 * theta)
 
-        x = r * np.cos(theta) * scaling_factor
-        y = r * np.sin(theta) * scaling_factor
+        x = r * cos(theta) * scaling_factor
+        y = r * sin(theta) * scaling_factor
 
         # Create polygon instance
         polygon = super().__new__(cls, shell=zip(x, y), holes=None)  # nosec

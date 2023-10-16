@@ -1,3 +1,5 @@
+from pyrecest.backend import reshape
+from pyrecest.backend import ndim
 import copy
 
 import numpy as np
@@ -48,9 +50,9 @@ class CustomLinearDistribution(
         assert np.size(xs) % self.input_dim == 0
         n_inputs = np.size(xs) // self.input_dim
         p = self.scale_by * self.f(
-            np.reshape(xs, (-1, self.input_dim)) - np.atleast_2d(self.shift_by)
+            reshape(xs, (-1, self.input_dim)) - np.atleast_2d(self.shift_by)
         )
-        assert np.ndim(p) <= 1 and np.size(p) == n_inputs
+        assert ndim(p) <= 1 and np.size(p) == n_inputs
         return p
 
     @staticmethod

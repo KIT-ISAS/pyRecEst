@@ -1,3 +1,5 @@
+from pyrecest.backend import reshape
+from pyrecest.backend import ones
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -16,7 +18,7 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
 
     def set_mean(self, new_mean):
         mean_offset = new_mean - self.mean
-        self.d += np.reshape(mean_offset, (1, -1))
+        self.d += reshape(mean_offset, (1, -1))
 
     def covariance(self):
         _, C = LinearDiracDistribution.weighted_samples_to_mean_and_cov(self.d, self.w)
@@ -41,12 +43,12 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
     @staticmethod
     def from_distribution(distribution, n_particles):
         samples = distribution.sample(n_particles)
-        return LinearDiracDistribution(samples, np.ones(n_particles) / n_particles)
+        return LinearDiracDistribution(samples, ones(n_particles) / n_particles)
 
     @staticmethod
     def weighted_samples_to_mean_and_cov(samples, weights=None):
         if weights is None:
-            weights = np.ones(samples.shape[1]) / samples.shape[1]
+            weights = ones(samples.shape[1]) / samples.shape[1]
 
         mean = np.average(samples, weights=weights, axis=0)
         deviation = samples - mean

@@ -1,3 +1,5 @@
+from pyrecest.backend import repeat
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -6,8 +8,8 @@ from pyrecest.utils.metrics import anees
 
 class TestANEES(unittest.TestCase):
     def setUp(self):
-        self.groundtruths = np.array([[1.5, 2.5], [2.5, 3.5], [4.5, 5.5]])
-        self.uncertainties = np.array(
+        self.groundtruths = array([[1.5, 2.5], [2.5, 3.5], [4.5, 5.5]])
+        self.uncertainties = array(
             [[[1, 0.5], [0.5, 2]], [[1, 0], [0, 1]], [[0.5, 0], [0, 1.5]]]
         )
         self.num_samples = 10000
@@ -23,9 +25,9 @@ class TestANEES(unittest.TestCase):
             )
             samples.extend(samples_for_i)
 
-        samples = np.array(samples)
-        repeated_groundtruths = np.repeat(self.groundtruths, self.num_samples, axis=0)
-        repeated_uncertainties = np.repeat(self.uncertainties, self.num_samples, axis=0)
+        samples = array(samples)
+        repeated_groundtruths = repeat(self.groundtruths, self.num_samples, axis=0)
+        repeated_uncertainties = repeat(self.uncertainties, self.num_samples, axis=0)
 
         computed_ANEES = anees(samples, repeated_uncertainties, repeated_groundtruths)
 

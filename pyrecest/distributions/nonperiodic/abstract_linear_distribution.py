@@ -1,3 +1,12 @@
+from pyrecest.backend import squeeze
+from pyrecest.backend import sqrt
+from pyrecest.backend import reshape
+from pyrecest.backend import ndim
+from pyrecest.backend import meshgrid
+from pyrecest.backend import linspace
+from pyrecest.backend import array
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 import numbers
 from collections.abc import Callable
 
@@ -34,12 +43,12 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def mode_numerical(self, starting_point=None):
         if starting_point is None:
             # Ensure 1-D for minimize
-            starting_point = np.squeeze(self.sample(1))
+            starting_point = squeeze(self.sample(1))
 
         def neg_pdf(x):
             return -self.pdf(x)
 
-        assert np.ndim(starting_point) <= 1, "Starting point must be a 1D array"
+        assert ndim(starting_point) <= 1, "Starting point must be a 1D array"
         starting_point = np.atleast_1d(
             starting_point
         )  # Avoid numpy warning "DeprecationWarning: Use of `minimize` with `x0.ndim != 1` is deprecated"
@@ -49,9 +58,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: int | int32 | int64,
+        burn_in: int | int32 | int64 = 10,
+        skipping: int | int32 | int64 = 5,
         proposal: Callable | None = None,
         start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:
@@ -79,32 +88,32 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         if self.dim == 1:
             mu = quad(lambda x: x * self.pdf(x), -np.inf, np.inf)[0]
         elif self.dim == 2:
-            mu = np.array([np.NaN, np.NaN])
+            mu = array([np.NaN, np.NaN])
             mu[0] = dblquad(
-                lambda x, y: x * self.pdf(np.array([x, y])),
+                lambda x, y: x * self.pdf(array([x, y])),
                 -np.inf,
                 np.inf,
                 lambda _: -np.inf,
                 lambda _: np.inf,
             )[0]
             mu[1] = dblquad(
-                lambda x, y: y * self.pdf(np.array([x, y])),
+                lambda x, y: y * self.pdf(array([x, y])),
                 -np.inf,
                 np.inf,
                 lambda _: -np.inf,
                 lambda _: np.inf,
             )[0]
         elif self.dim == 3:
-            mu = np.array([np.NaN, np.NaN, np.NaN])
+            mu = array([np.NaN, np.NaN, np.NaN])
 
             def integrand1(x, y, z):
-                return x * self.pdf(np.array([x, y, z]))
+                return x * self.pdf(array([x, y, z]))
 
             def integrand2(x, y, z):
-                return y * self.pdf(np.array([x, y, z]))
+                return y * self.pdf(array([x, y, z]))
 
             def integrand3(x, y, z):
-                return z * self.pdf(np.array([x, y, z]))
+                return z * self.pdf(array([x, y, z]))
 
             mu[0] = nquad(
                 integrand1, [[-np.inf, np.inf], [-np.inf, np.inf], [-np.inf, np.inf]]
@@ -126,16 +135,16 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         if self.dim == 1:
             C = quad(lambda x: (x - mu) ** 2 * self.pdf(x), -np.inf, np.inf)[0]
         elif self.dim == 2:
-            C = np.array([[np.NaN, np.NaN], [np.NaN, np.NaN]])
+            C = array([[np.NaN, np.NaN], [np.NaN, np.NaN]])
 
             def integrand1(x, y):
-                return (x - mu[0]) ** 2 * self.pdf(np.array([x, y]))
+                return (x - mu[0]) ** 2 * self.pdf(array([x, y]))
 
             def integrand2(x, y):
-                return (x - mu[0]) * (y - mu[1]) * self.pdf(np.array([x, y]))
+                return (x - mu[0]) * (y - mu[1]) * self.pdf(array([x, y]))
 
             def integrand3(x, y):
-                return (y - mu[1]) ** 2 * self.pdf(np.array([x, y]))
+                return (y - mu[1]) ** 2 * self.pdf(array([x, y]))
 
             C[0, 0] = nquad(integrand1, [[-np.inf, np.inf], [-np.inf, np.inf]])[0]
             C[0, 1] = nquad(integrand2, [[-np.inf, np.inf], [-np.inf, np.inf]])[0]
@@ -171,7 +180,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def integrate_fun_over_domain(f, dim, left, right):
         def f_for_nquad(*args):
             # Avoid DeprecationWarning: Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future.
-            return np.squeeze(f(np.array(args).reshape(-1, dim)))
+            return squeeze(f(array(args).reshape(-1, dim)))
 
         if dim == 1:
             result, _ = quad(f, left, right)
@@ -207,8 +216,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         right = np.full((self.dim,), np.nan)
 
         for i in range(self.dim):  # Change for linear dimensions
-            left[i] = m[i] - scaling_factor * np.sqrt(C[i, i])
-            right[i] = m[i] + scaling_factor * np.sqrt(C[i, i])
+            left[i] = m[i] - scaling_factor * sqrt(C[i, i])
+            right[i] = m[i] + scaling_factor * sqrt(C[i, i])
 
         return left, right
 
@@ -217,30 +226,30 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         C = self.covariance()
 
         if plot_range is None:
-            scaling = np.sqrt(chi2.ppf(0.99, self.dim))
+            scaling = sqrt(chi2.ppf(0.99, self.dim))
             plot_range = empty(2 * self.dim)
             for i in range(0, 2 * self.dim, 2):
-                plot_range[i] = mu[int(i / 2)] - scaling * np.sqrt(
+                plot_range[i] = mu[int(i / 2)] - scaling * sqrt(
                     C[int(i / 2), int(i / 2)]
                 )
-                plot_range[i + 1] = mu[int(i / 2)] + scaling * np.sqrt(
+                plot_range[i + 1] = mu[int(i / 2)] + scaling * sqrt(
                     C[int(i / 2), int(i / 2)]
                 )
 
         if self.dim == 1:
-            x = np.linspace(plot_range[0], plot_range[1], 1000)
+            x = linspace(plot_range[0], plot_range[1], 1000)
             y = self.pdf(x)
             plt.plot(x, y, *args, **kwargs)
             plt.show()
         elif self.dim == 2:
-            x = np.linspace(plot_range[0], plot_range[1], 100)
-            y = np.linspace(plot_range[2], plot_range[3], 100)
-            x_grid, y_grid = np.meshgrid(x, y)
+            x = linspace(plot_range[0], plot_range[1], 100)
+            y = linspace(plot_range[2], plot_range[3], 100)
+            x_grid, y_grid = meshgrid(x, y)
             z_grid = self.pdf(np.column_stack((x_grid.ravel(), y_grid.ravel())))
 
             ax = plt.axes(projection="3d")
             ax.plot_surface(
-                x_grid, y_grid, np.reshape(z_grid, x_grid.shape), *args, **kwargs
+                x_grid, y_grid, reshape(z_grid, x_grid.shape), *args, **kwargs
             )
             plt.show()
         else:

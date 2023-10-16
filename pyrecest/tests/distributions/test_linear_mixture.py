@@ -1,3 +1,6 @@
+from pyrecest.backend import meshgrid
+from pyrecest.backend import linspace
+from pyrecest.backend import array
 import unittest
 from warnings import catch_warnings, simplefilter
 
@@ -12,10 +15,10 @@ class LinearMixtureTest(unittest.TestCase):
             simplefilter("always")
             LinearMixture(
                 [
-                    GaussianDistribution(np.array(1), np.array(1)),
-                    GaussianDistribution(np.array(50), np.array(1)),
+                    GaussianDistribution(array(1), array(1)),
+                    GaussianDistribution(array(50), array(1)),
                 ],
-                np.array([0.3, 0.7]),
+                array([0.3, 0.7]),
             )
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, UserWarning))
@@ -25,14 +28,14 @@ class LinearMixtureTest(unittest.TestCase):
             )
 
     def test_pdf(self):
-        gm1 = GaussianDistribution(np.array([1, 1]), np.diag([2, 3]))
-        gm2 = GaussianDistribution(-np.array([3, 1]), np.diag([2, 3]))
+        gm1 = GaussianDistribution(array([1, 1]), np.diag([2, 3]))
+        gm2 = GaussianDistribution(-array([3, 1]), np.diag([2, 3]))
 
         with catch_warnings():
             simplefilter("ignore", category=UserWarning)
-            lm = LinearMixture([gm1, gm2], np.array([0.3, 0.7]))
+            lm = LinearMixture([gm1, gm2], array([0.3, 0.7]))
 
-        x, y = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-2, 2, 100))
+        x, y = meshgrid(linspace(-2, 2, 100), linspace(-2, 2, 100))
         points = np.column_stack((x.ravel(), y.ravel()))
 
         np.testing.assert_allclose(

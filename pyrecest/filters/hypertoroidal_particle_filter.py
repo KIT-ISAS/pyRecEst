@@ -1,3 +1,12 @@
+from pyrecest.backend import tile
+from pyrecest.backend import sum
+from pyrecest.backend import squeeze
+from pyrecest.backend import mod
+from pyrecest.backend import linspace
+from pyrecest.backend import arange
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros_like
 import copy
 from collections.abc import Callable
 
@@ -19,8 +28,8 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
     @beartype
     def __init__(
         self,
-        n_particles: int | np.int32 | np.int64,
-        dim: int | np.int32 | np.int64,
+        n_particles: int | int32 | int64,
+        dim: int | int32 | int64,
     ):
         assert np.isscalar(n_particles)
         assert n_particles > 1, "Use CircularParticleFilter for 1-D case"
@@ -28,12 +37,12 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         if dim == 1:
             # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
             filter_state = CircularDiracDistribution(
-                np.linspace(0, 2 * np.pi, n_particles, endpoint=False)
+                linspace(0, 2 * np.pi, n_particles, endpoint=False)
             )
         else:
             filter_state = HypertoroidalDiracDistribution(
-                np.tile(
-                    np.linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim, 1)
+                tile(
+                    linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim, 1)
                 ).T.squeeze(),
                 dim=dim,
             )
@@ -64,8 +73,8 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
 
         if noise_distribution is not None:
             noise = noise_distribution.sample(self.filter_state.w.size)
-            self.filter_state.d += np.squeeze(noise)
-            self.filter_state.d = np.mod(self.filter_state.d, 2 * np.pi)
+            self.filter_state.d += squeeze(noise)
+            self.filter_state.d = mod(self.filter_state.d, 2 * np.pi)
 
     @beartype
     def predict_nonlinear_nonadditive(
@@ -75,10 +84,10 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             samples.shape[0] == weights.size
         ), "samples and weights must match in size"
 
-        weights /= np.sum(weights)
+        weights /= sum(weights)
         n = self.filter_state.shape[0]
-        noise_ids = np.random.choice(np.arange(weights.size), size=n, p=weights)
-        d = np.zeros_like(self.filter_state)
+        noise_ids = np.random.choice(arange(weights.size), size=n, p=weights)
+        d = zeros_like(self.filter_state)
         for i in range(n):
             d[i, :] = f(self.filter_state[i, :], samples[noise_ids[i, :]])
         self.filter_state = d

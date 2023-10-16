@@ -1,3 +1,5 @@
+from pyrecest.backend import array
+from pyrecest.backend import zeros
 import unittest
 
 import numpy as np
@@ -8,13 +10,13 @@ from pyrecest.filters import HypertoroidalParticleFilter
 class HypertoroidalParticleFilterTest(unittest.TestCase):
     def setUp(self):
         self.seed = 0
-        self.covariance_matrix = np.array(
+        self.covariance_matrix = array(
             [[0.7, 0.4, 0.2], [0.4, 0.6, 0.1], [0.2, 0.1, 1]]
         )
-        self.mu = np.array([1, 1, 1]) + np.pi / 2
+        self.mu = array([1, 1, 1]) + np.pi / 2
         self.hwnd = HypertoroidalWNDistribution(self.mu, self.covariance_matrix)
         self.hpf = HypertoroidalParticleFilter(500, 3)
-        self.forced_mean = np.array([1, 2, 3])
+        self.forced_mean = array([1, 2, 3])
         np.random.seed(self.seed)
 
     def test_set_state(self):
@@ -22,13 +24,13 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
 
     def test_predict_identity(self):
         self.hpf.predict_identity(
-            HypertoroidalWNDistribution(np.zeros(3), 0.5 * self.covariance_matrix)
+            HypertoroidalWNDistribution(zeros(3), 0.5 * self.covariance_matrix)
         )
         self.assertEqual(self.hpf.get_point_estimate().shape, (3,))
 
     def test_update_identity(self):
         self.hpf.update_identity(
-            HypertoroidalWNDistribution(np.zeros(3), 0.5 * self.covariance_matrix),
+            HypertoroidalWNDistribution(zeros(3), 0.5 * self.covariance_matrix),
             self.forced_mean,
         )
         self.assertEqual(self.hpf.get_point_estimate().shape, (3,))

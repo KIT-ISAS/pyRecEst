@@ -1,3 +1,4 @@
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -9,15 +10,15 @@ from .test_von_mises_fisher_distribution import vectors_to_test_2d
 class TestBinghamDistribution(unittest.TestCase):
     def setUp(self):
         """Setup BinghamDistribution instance for testing."""
-        M = np.array(
+        M = array(
             [[1 / 3, 2 / 3, -2 / 3], [-2 / 3, 2 / 3, 1 / 3], [2 / 3, 1 / 3, 2 / 3]]
         )
-        Z = np.array([-5, -3, 0])
+        Z = array([-5, -3, 0])
         self.bd = BinghamDistribution(Z, M)
 
     def test_pdf(self):
         """Test pdf method with a fixed set of values."""
-        expected_values = np.array(
+        expected_values = array(
             [
                 0.0767812166360095,
                 0.0145020985787277,

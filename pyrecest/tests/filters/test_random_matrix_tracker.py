@@ -1,3 +1,8 @@
+from pyrecest.backend import mean
+from pyrecest.backend import eye
+from pyrecest.backend import concatenate
+from pyrecest.backend import array
+from pyrecest.backend import zeros
 import unittest
 from unittest.mock import patch
 
@@ -13,10 +18,10 @@ from pyrecest.filters.random_matrix_tracker import RandomMatrixTracker
 
 class TestRandomMatrixTracker(unittest.TestCase):
     def setUp(self):
-        self.initial_state = np.array([1, 2])
-        self.initial_covariance = np.array([[0.1, 0], [0, 0.1]])
-        self.initial_extent = np.array([[1, 0.1], [0.1, 1]])
-        self.measurement_noise = np.array([[0.2, 0], [0, 0.2]])
+        self.initial_state = array([1, 2])
+        self.initial_covariance = array([[0.1, 0], [0, 0.1]])
+        self.initial_extent = array([[1, 0.1], [0.1, 1]])
+        self.measurement_noise = array([[0.2, 0], [0, 0.2]])
 
         self.tracker = RandomMatrixTracker(
             self.initial_state, self.initial_covariance, self.initial_extent
@@ -28,8 +33,8 @@ class TestRandomMatrixTracker(unittest.TestCase):
         np.testing.assert_array_equal(self.tracker.extent, self.initial_extent)
 
     def test_get_point_estimate(self):
-        expected = np.concatenate(
-            [self.initial_state, np.array(self.initial_extent).flatten()]
+        expected = concatenate(
+            [self.initial_state, array(self.initial_extent).flatten()]
         )
         np.testing.assert_array_equal(self.tracker.get_point_estimate(), expected)
 
@@ -45,16 +50,16 @@ class TestRandomMatrixTracker(unittest.TestCase):
 
     def test_predict(self):
         dt = 0.1
-        Cw = np.array([[0.05, 0.0], [0.0, 0.05]])
+        Cw = array([[0.05, 0.0], [0.0, 0.05]])
         tau = 1.0
 
-        system_matrix = np.eye(2)  # 2-D random walk
+        system_matrix = eye(2)  # 2-D random walk
 
         # Call the predict method
         self.tracker.predict(dt, Cw, tau, system_matrix)
 
         # Check if state and state covariance are updated correctly
-        expected_state = np.array([1.0, 2.0])
+        expected_state = array([1.0, 2.0])
         expected_covariance = self.initial_covariance + Cw
         expected_extent = self.initial_extent
 
@@ -72,20 +77,20 @@ class TestRandomMatrixTracker(unittest.TestCase):
         [
             (
                 "smaller",
-                np.array([[0.1, 0], [0, 0.1], [-0.1, 0], [0, -0.1]]),
+                array([[0.1, 0], [0, 0.1], [-0.1, 0], [0, -0.1]]),
                 "The extent should now be smaller since the measurements are closely spaced",
             ),
             (
                 "larger",
-                np.array([[1, 0], [0, 1], [-1, 0], [0, -1]]),
+                array([[1, 0], [0, 1], [-1, 0], [0, -1]]),
                 "The extent should now be larger since the measurements are spaced more widely",
             ),
         ]
     )
     def test_update(self, name, offset, _):
-        ys = np.array([self.initial_state + offset_row for offset_row in offset]).T
-        Cv = np.array([[0.1, 0.0], [0.0, 0.1]])
-        H = np.eye(np.size(self.initial_state))
+        ys = array([self.initial_state + offset_row for offset_row in offset]).T
+        Cv = array([[0.1, 0.0], [0.0, 0.1]])
+        H = eye(np.size(self.initial_state))
 
         # Call the update method
         self.tracker.update(ys, H, Cv)
@@ -95,7 +100,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
             GaussianDistribution(self.initial_state, self.initial_covariance)
         )
         kf.update_linear(
-            np.mean(ys, axis=1), H, (self.initial_extent + Cv) / ys.shape[1]
+            mean(ys, axis=1), H, (self.initial_extent + Cv) / ys.shape[1]
         )
 
         np.testing.assert_array_almost_equal(
@@ -108,11 +113,11 @@ class TestRandomMatrixTracker(unittest.TestCase):
         # Check if extent has changed as expected
         if name == "smaller":
             np.testing.assert_array_less(
-                np.zeros(2), np.linalg.eig(self.initial_extent - self.tracker.extent)[0]
+                zeros(2), np.linalg.eig(self.initial_extent - self.tracker.extent)[0]
             )
         elif name == "larger":
             np.testing.assert_array_less(
-                np.zeros(2), np.linalg.eig(self.tracker.extent - self.initial_extent)[0]
+                zeros(2), np.linalg.eig(self.tracker.extent - self.initial_extent)[0]
             )
         else:
             raise ValueError(f"Invalid test name: {name}")
@@ -120,10 +125,10 @@ class TestRandomMatrixTracker(unittest.TestCase):
     @patch("matplotlib.pyplot.show")
     def test_draw_extent_3d(self, mock_show):
         self.tracker = RandomMatrixTracker(
-            np.zeros(3),
-            np.eye(3),
+            zeros(3),
+            eye(3),
             np.diag([1, 2, 3]),
-            kinematic_state_to_pos_matrix=np.eye(3),
+            kinematic_state_to_pos_matrix=eye(3),
         )
         self.tracker.plot_point_estimate()
 

@@ -1,3 +1,5 @@
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 from abc import abstractmethod
 
 import numpy as np
@@ -10,7 +12,7 @@ class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
     """Abstract class for a distributions on periodic manifolds."""
 
     @beartype
-    def __init__(self, dim: int | np.int32 | np.int64):
+    def __init__(self, dim: int | int32 | int64):
         super().__init__(dim=dim)
 
     @beartype

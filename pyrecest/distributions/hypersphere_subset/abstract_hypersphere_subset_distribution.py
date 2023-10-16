@@ -1,3 +1,13 @@
+from pyrecest.backend import sort
+from pyrecest.backend import squeeze
+from pyrecest.backend import sqrt
+from pyrecest.backend import sin
+from pyrecest.backend import log
+from pyrecest.backend import cos
+from pyrecest.backend import abs
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 from abc import abstractmethod
 from collections.abc import Callable
 
@@ -20,7 +30,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     @abstractmethod
     @beartype
-    def get_full_integration_boundaries(dim: int | np.int32 | np.int64):
+    def get_full_integration_boundaries(dim: int | int32 | int64):
         pass
 
     def mean_direction_numerical(self, integration_boundaries=None):
@@ -82,22 +92,22 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     @beartype
-    def gen_fun_hyperspherical_coords(f: Callable, dim: int | np.int32 | np.int64):
+    def gen_fun_hyperspherical_coords(f: Callable, dim: int | int32 | int64):
         def generate_input(angles):
             dim_eucl = dim + 1
             angles = np.column_stack(angles)
-            input_arr = np.zeros((angles.shape[0], dim_eucl))
+            input_arr = zeros((angles.shape[0], dim_eucl))
             # Start at last, which is just cos
-            input_arr[:, -1] = np.cos(angles[:, -1])
-            sin_product = np.sin(angles[:, -1])
+            input_arr[:, -1] = cos(angles[:, -1])
+            sin_product = sin(angles[:, -1])
             # Now, iterate over all from end to back and accumulate the sines
             for i in range(2, dim_eucl):
                 # All except the final one have a cos factor as their last one
-                input_arr[:, -i] = sin_product * np.cos(angles[:, -i])
-                sin_product *= np.sin(angles[:, -i])
+                input_arr[:, -i] = sin_product * cos(angles[:, -i])
+                sin_product *= sin(angles[:, -i])
             # The last one is all sines
             input_arr[:, 0] = sin_product
-            return np.squeeze(input_arr)
+            return squeeze(input_arr)
 
         def fangles(*angles):
             input_arr = generate_input(angles)
@@ -133,7 +143,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             if dim == 2:
 
                 def g_2d(phi1, phi2):
-                    return f_hypersph_coords(phi1, phi2) * np.sin(phi2)
+                    return f_hypersph_coords(phi1, phi2) * sin(phi2)
 
                 return g_2d
             if dim == 3:
@@ -141,8 +151,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 def g_3d(phi1, phi2, phi3):
                     return (
                         f_hypersph_coords(phi1, phi2, phi3)
-                        * np.sin(phi2)
-                        * np.sin(phi3) ** 2
+                        * sin(phi2)
+                        * sin(phi3) ** 2
                     )
 
                 return g_3d
@@ -162,7 +172,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @beartype
     def _compute_mean_axis_from_moment(moment_matrix: np.ndarray) -> np.ndarray:
         D, V = np.linalg.eig(moment_matrix)
-        Dsorted = np.sort(D)
+        Dsorted = sort(D)
         Vsorted = V[:, D.argsort()]
         if abs(Dsorted[-1] / Dsorted[-2]) < 1.01:
             print("Eigenvalues are very similar. Axis may be unreliable.")
@@ -194,7 +204,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @abstractmethod
     @beartype
     def integrate_fun_over_domain(
-        f_hypersph_coords: Callable, dim: int | np.int32 | np.int64
+        f_hypersph_coords: Callable, dim: int | int32 | int64
     ):
         # Overwrite with a function that specifies the integration_boundaries for the type of HypersphereSubsetDistribution
         pass
@@ -203,7 +213,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @beartype
     def integrate_fun_over_domain_part(
         f_hypersph_coords: Callable,
-        dim: int | np.int32 | np.int64,
+        dim: int | int32 | int64,
         integration_boundaries,
     ):
         if dim == 1:
@@ -216,7 +226,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         elif dim == 2:
 
             def g_2d(phi1, phi2):
-                return f_hypersph_coords(phi1, phi2) * np.sin(phi2)
+                return f_hypersph_coords(phi1, phi2) * sin(phi2)
 
             i, _ = nquad(
                 g_2d,
@@ -228,8 +238,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             def g_3d(phi1, phi2, phi3):
                 return (
                     f_hypersph_coords(phi1, phi2, phi3)
-                    * np.sin(phi2)
-                    * (np.sin(phi3)) ** 2
+                    * sin(phi2)
+                    * (sin(phi3)) ** 2
                 )
 
             i, _ = nquad(
@@ -262,7 +272,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def entropy_numerical(self):
         def entropy_f_gen():
             def f(points):
-                return self.pdf(points) * np.log(self.pdf(points))
+                return self.pdf(points) * log(self.pdf(points))
 
             return f
 
@@ -295,7 +305,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         ), "Cannot compare distributions with different number of dimensions"
 
         def hellinger_distance(pdf1, pdf2):
-            return (np.sqrt(pdf1) - np.sqrt(pdf2)) ** 2
+            return (sqrt(pdf1) - sqrt(pdf2)) ** 2
 
         f_hellinger = self._distance_f_gen(other, hellinger_distance)
         fangles_hellinger = (
@@ -320,7 +330,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         ), "Cannot compare distributions with different number of dimensions"
 
         def total_variation_distance(pdf1, pdf2):
-            return np.abs(pdf1 - pdf2)
+            return abs(pdf1 - pdf2)
 
         f_total_variation = self._distance_f_gen(other, total_variation_distance)
         fangles_total_variation = (
@@ -340,23 +350,23 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def polar_to_cart(polar_coords: np.ndarray) -> np.ndarray:
         polar_coords = np.atleast_2d(polar_coords)
 
-        coords = np.zeros(
+        coords = zeros(
             (
                 polar_coords.shape[0],
                 polar_coords.shape[1] + 1,
             )
         )
-        coords[:, 0] = np.sin(polar_coords[:, 0]) * np.cos(polar_coords[:, 1])
-        coords[:, 1] = np.sin(polar_coords[:, 0]) * np.sin(polar_coords[:, 1])
-        coords[:, 2] = np.cos(polar_coords[:, 0])
+        coords[:, 0] = sin(polar_coords[:, 0]) * cos(polar_coords[:, 1])
+        coords[:, 1] = sin(polar_coords[:, 0]) * sin(polar_coords[:, 1])
+        coords[:, 2] = cos(polar_coords[:, 0])
         for i in range(2, polar_coords.shape[1]):
-            coords[:, :-i] *= np.sin(polar_coords[:, i])  # noqa: E203
-            coords[:, -i] = np.cos(polar_coords[:, i])
-        return np.squeeze(coords)
+            coords[:, :-i] *= sin(polar_coords[:, i])  # noqa: E203
+            coords[:, -i] = cos(polar_coords[:, i])
+        return squeeze(coords)
 
     @staticmethod
     @beartype
-    def compute_unit_hypersphere_surface(dim: int | np.int32 | np.int64) -> float:
+    def compute_unit_hypersphere_surface(dim: int | int32 | int64) -> float:
         if dim == 1:
             surface_area = 2 * np.pi
         elif dim == 2:

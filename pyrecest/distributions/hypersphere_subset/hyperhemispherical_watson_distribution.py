@@ -1,3 +1,8 @@
+from pyrecest.backend import allclose
+from pyrecest.backend import all
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import numbers
 
 import numpy as np
@@ -28,7 +33,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return w
 
     @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: int | int32 | int64) -> np.ndarray:
         s_full = self.dist_full_sphere.sample(n)
         s = s_full * (-1) ** (s_full[-1] < 0)  # Mirror to upper hemisphere
         return s
@@ -56,8 +61,8 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
 
     @beartype
     def shift(self, shift_by) -> "HyperhemisphericalWatsonDistribution":
-        assert np.allclose(
-            self.mu, np.append(np.zeros(self.dim - 1), 1)
+        assert allclose(
+            self.mu, np.append(zeros(self.dim - 1), 1)
         ), "There is no true shifting for the hyperhemisphere. This is a function for compatibility and only works when mu is [0,0,...,1]."
         dist_shifted = self
         dist_shifted.mu = shift_by

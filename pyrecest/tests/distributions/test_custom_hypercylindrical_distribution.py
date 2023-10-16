@@ -1,3 +1,6 @@
+from pyrecest.backend import linspace
+from pyrecest.backend import eye
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -16,13 +19,13 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         mat = np.random.rand(6, 6)
         mat = mat @ mat.T
         self.pwn = PartiallyWrappedNormalDistribution(
-            np.array([2, 3, 4, 5, 6, 7]), mat, 3
+            array([2, 3, 4, 5, 6, 7]), mat, 3
         )
         grid = np.mgrid[-3:4, -3:4, -2:3, -2:3, -2:3, -2:3]
         self.grid_flat = grid.reshape(6, -1).T
 
         self.vm = VonMisesDistribution(0, 1)
-        self.gauss = GaussianDistribution(np.array([1, 2]), np.eye(2))
+        self.gauss = GaussianDistribution(array([1, 2]), eye(2))
 
         def fun(x):
             return self.vm.pdf(x[:, 0]) * self.gauss.pdf(x[:, 1:])
@@ -44,7 +47,7 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
     def test_condition_on_linear(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_linear([2, 1])
 
-        x = np.linspace(0, 2 * np.pi, 100)
+        x = linspace(0, 2 * np.pi, 100)
         np.testing.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     def test_condition_on_periodic(self):

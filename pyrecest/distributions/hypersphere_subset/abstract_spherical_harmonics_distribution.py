@@ -1,3 +1,10 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import real
+from pyrecest.backend import isnan
+from pyrecest.backend import imag
+from pyrecest.backend import array
+from pyrecest.backend import abs
+from pyrecest.backend import zeros
 import copy
 import warnings
 
@@ -23,12 +30,12 @@ class AbstractSphericalHarmonicsDistribution(
         coeff_mat = coeff_mat + np.block(
             [
                 [
-                    np.zeros((n - 1, 1)),
+                    zeros((n - 1, 1)),
                     np.kron(
-                        np.triu(np.full((n - 1, n - 1), np.nan)), np.array([[1, 1]])
+                        np.triu(np.full((n - 1, n - 1), np.nan)), array([[1, 1]])
                     ),
                 ],
-                [np.zeros((1, 2 * n - 1))],
+                [zeros((1, 2 * n - 1))],
             ]
         )
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
@@ -44,12 +51,12 @@ class AbstractSphericalHarmonicsDistribution(
                 "This can either be caused by a user error or due to negativity caused by "
                 "non-square rooted version"
             )
-        elif np.abs(int_val) < 1e-12:
+        elif abs(int_val) < 1e-12:
             raise ValueError(
                 "Normalization:almostZero - Coefficient for first degree is too close to zero, "
                 "this usually points to a user error"
             )
-        elif np.abs(int_val - 1) > 1e-5:
+        elif abs(int_val - 1) > 1e-5:
             warnings.warn(
                 "Warning: Normalization:notNormalized - Coefficients apparently do not belong "
                 "to normalized density. Normalizing..."
@@ -60,20 +67,20 @@ class AbstractSphericalHarmonicsDistribution(
         if self.transformation == "identity":
             self.coeff_mat = self.coeff_mat / int_val
         elif self.transformation == "sqrt":
-            self.coeff_mat = self.coeff_mat / np.sqrt(int_val)
+            self.coeff_mat = self.coeff_mat / sqrt(int_val)
         else:
             warnings.warn("Warning: Currently cannot normalize")
 
     def integrate(self):
         if self.transformation == "identity":
-            int_val = self.coeff_mat[0, 0] * np.sqrt(4 * np.pi)
+            int_val = self.coeff_mat[0, 0] * sqrt(4 * np.pi)
         elif self.transformation == "sqrt":
-            int_val = norm(self.coeff_mat[~np.isnan(self.coeff_mat)]) ** 2
+            int_val = norm(self.coeff_mat[~isnan(self.coeff_mat)]) ** 2
         else:
             raise ValueError("No analytical formula for normalization available")
 
-        assert np.abs(np.imag(int_val) < 1e-8)
-        return np.real(int_val)
+        assert abs(imag(int_val) < 1e-8)
+        return real(int_val)
 
     def truncate(self, degree):
         result = copy.deepcopy(self)
@@ -83,7 +90,7 @@ class AbstractSphericalHarmonicsDistribution(
             ]  # noqa: E203
         elif result.coeff_mat.shape[0] - 1 < degree:
             warnings.warn("Less coefficients than desired, filling up with zeros")
-            new_coeff_mat = np.zeros(
+            new_coeff_mat = zeros(
                 (degree + 1, 2 * degree + 1), dtype=self.coeff_mat.dtype
             )
             new_coeff_mat[

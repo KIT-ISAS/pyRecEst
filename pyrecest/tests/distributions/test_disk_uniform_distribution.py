@@ -1,3 +1,8 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import ones
+from pyrecest.backend import concatenate
+from pyrecest.backend import array
+from pyrecest.backend import zeros
 """ Test cases for DiskUniformDistribution"""
 import unittest
 
@@ -11,10 +16,10 @@ class TestDiskUniformDistribution(unittest.TestCase):
     def test_pdf(self):
         dist = DiskUniformDistribution()
 
-        xs = np.array(
+        xs = array(
             [
-                [0.5, 0, 1, 1 / np.sqrt(2), 0, 3, 1.5],
-                [0.5, 1, 0, 1 / np.sqrt(2), 3, 0, 1.5],
+                [0.5, 0, 1, 1 / sqrt(2), 0, 3, 1.5],
+                [0.5, 1, 0, 1 / sqrt(2), 3, 0, 1.5],
             ]
         ).T
         pdf_values = dist.pdf(xs)
@@ -23,10 +28,10 @@ class TestDiskUniformDistribution(unittest.TestCase):
             pdf_values,
             1
             / np.pi
-            * np.concatenate(
+            * concatenate(
                 (
-                    np.ones(4),
-                    np.zeros(3),
+                    ones(4),
+                    zeros(3),
                 )
             ),
             rtol=1e-12,

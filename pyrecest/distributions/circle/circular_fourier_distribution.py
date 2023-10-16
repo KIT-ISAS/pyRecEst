@@ -1,3 +1,16 @@
+from pyrecest.backend import sum
+from pyrecest.backend import sqrt
+from pyrecest.backend import sin
+from pyrecest.backend import real
+from pyrecest.backend import linspace
+from pyrecest.backend import imag
+from pyrecest.backend import hstack
+from pyrecest.backend import exp
+from pyrecest.backend import cos
+from pyrecest.backend import concatenate
+from pyrecest.backend import arange
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 import warnings
 
 import matplotlib.pyplot as plt
@@ -96,10 +109,10 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         xs = xs.reshape(-1, 1)
         a, b = self.get_a_b()
 
-        k_range = np.arange(1, a.shape[0]).astype(xs.dtype)
-        p = a[0] / 2 + np.sum(
-            a[1:].reshape(1, -1) * np.cos(xs * k_range)
-            + b.reshape(1, -1) * np.sin(xs * k_range),
+        k_range = arange(1, a.shape[0]).astype(xs.dtype)
+        p = a[0] / 2 + sum(
+            a[1:].reshape(1, -1) * cos(xs * k_range)
+            + b.reshape(1, -1) * sin(xs * k_range),
             axis=1,
         )
         if self.multiplied_by_n:
@@ -119,7 +132,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             if self.transformation == "identity":
                 scale_factor = 1 / integral_value
             elif self.transformation == "sqrt":
-                scale_factor = 1 / np.sqrt(integral_value)
+                scale_factor = 1 / sqrt(integral_value)
             else:
                 raise NotImplementedError("Transformation not supported.")
 
@@ -137,7 +150,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             if self.transformation == "identity":
                 scale_factor = 1 / integral_value
             elif self.transformation == "sqrt":
-                scale_factor = 1 / np.sqrt(integral_value)
+                scale_factor = 1 / sqrt(integral_value)
             else:
                 raise NotImplementedError("Transformation not supported.")
 
@@ -170,7 +183,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 a0_non_rooted = a[0]
             elif self.transformation == "sqrt":
                 from_a0 = a[0] ** 2 * 0.5
-                from_a1_to_end_and_b = np.sum(a[1:] ** 2) + np.sum(b**2)
+                from_a1_to_end_and_b = sum(a[1:] ** 2) + sum(b**2)
                 a0_non_rooted = from_a0 + from_a1_to_end_and_b
             else:
                 raise NotImplementedError("Transformation not supported.")
@@ -178,18 +191,18 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         elif self.c is not None:
             if self.transformation == "identity":
                 if self.multiplied_by_n:
-                    c0 = np.real(self.c[0]) * (1 / self.n)
+                    c0 = real(self.c[0]) * (1 / self.n)
                 else:
-                    c0 = np.real(self.c[0])
+                    c0 = real(self.c[0])
                 integral = 2 * np.pi * c0
             elif self.transformation == "sqrt":
                 if self.multiplied_by_n:
                     c = self.c * (1 / self.n)
                 else:
                     c = self.c
-                from_c0 = (np.real(c[0])) ** 2
-                from_c1_to_end = np.sum((np.real(c[1:])) ** 2) + np.sum(
-                    (np.imag(c[1:])) ** 2
+                from_c0 = (real(c[0])) ** 2
+                from_c1_to_end = sum((real(c[1:])) ** 2) + sum(
+                    (imag(c[1:])) ** 2
                 )
 
                 a0_non_rooted = 2 * from_c0 + 4 * from_c1_to_end
@@ -202,13 +215,13 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     def plot_grid(self):
         grid_values = irfft(self.get_c(), self.n)
-        xs = np.linspace(0, 2 * np.pi, grid_values.shape[0], endpoint=False)
+        xs = linspace(0, 2 * np.pi, grid_values.shape[0], endpoint=False)
         vals = grid_values.squeeze()
 
         if self.transformation == "sqrt":
             p = vals**2
         elif self.transformation == "log":
-            p = np.exp(vals)
+            p = exp(vals)
         elif self.transformation == "identity":
             p = vals
         else:
@@ -219,12 +232,12 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     @beartype
     def plot(self, resolution=128, **kwargs):
-        xs = np.linspace(0, 2 * np.pi, resolution)
+        xs = linspace(0, 2 * np.pi, resolution)
 
         if self.a is not None:
             xs = xs.astype(self.a.dtype)
         else:
-            xs = xs.astype(np.real(self.c).dtype)
+            xs = xs.astype(real(self.c).dtype)
 
         pdf_vals = self.pdf(xs)
 
@@ -238,8 +251,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             a = self.a
             b = self.b
         elif self.c is not None:
-            a = 2 * np.real(self.c)
-            b = -2 * np.imag(self.c[1:])
+            a = 2 * real(self.c)
+            b = -2 * imag(self.c[1:])
         assert (
             self.n is None or (np.size(a) + np.size(b)) == self.n
         )  # Other case not implemented yet!
@@ -247,7 +260,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     def get_c(self) -> np.ndarray:
         if self.a is not None:
-            c = (self.a[0] + 1j * np.hstack((0, self.b))) * 0.5
+            c = (self.a[0] + 1j * hstack((0, self.b))) * 0.5
         elif self.c is not None:
             c = self.c
         return c
@@ -271,7 +284,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         neg_c = np.conj(
             self.c[-1:0:-1]
         )  # Create array for negative-frequency components
-        full_c = np.concatenate(
+        full_c = concatenate(
             [neg_c, self.c]
         )  # Concatenate arrays to get full spectrum
         return full_c
@@ -280,7 +293,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     @beartype
     def from_distribution(
         distribution: AbstractCircularDistribution,
-        n: int | np.int32 | np.int64,
+        n: int | int32 | int64,
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
@@ -295,12 +308,12 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 warnings.warn("Scaling up for WD (this is not recommended).")
                 fd.c = fd.c * fd.n
         else:
-            xs = np.linspace(0, 2 * np.pi, n, endpoint=False)
+            xs = linspace(0, 2 * np.pi, n, endpoint=False)
             fvals = distribution.pdf(xs)
             if transformation == "identity":
                 pass
             elif transformation == "sqrt":
-                fvals = np.sqrt(fvals)
+                fvals = sqrt(fvals)
             else:
                 raise NotImplementedError("Transformation not supported.")
             fd = CircularFourierDistribution.from_function_values(

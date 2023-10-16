@@ -1,3 +1,13 @@
+from pyrecest.backend import sum
+from pyrecest.backend import sqrt
+from pyrecest.backend import ones_like
+from pyrecest.backend import ones
+from pyrecest.backend import exp
+from pyrecest.backend import array
+from pyrecest.backend import arange
+from pyrecest.backend import allclose
+from pyrecest.backend import all
+from pyrecest.backend import zeros
 import unittest
 
 import numpy as np
@@ -16,11 +26,11 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         """
 
         def approx_with_wrapping(x):
-            k = np.arange(-20, 21)
-            total = np.sum(
-                np.exp(-((x - self.mu + 2 * np.pi * k) ** 2) / (2 * self.sigma**2))
+            k = arange(-20, 21)
+            total = sum(
+                exp(-((x - self.mu + 2 * np.pi * k) ** 2) / (2 * self.sigma**2))
             )
-            return 1 / np.sqrt(2 * np.pi) / self.sigma * total
+            return 1 / sqrt(2 * np.pi) / self.sigma * total
 
         test_points = [self.mu, self.mu - 1, self.mu + 2]
         for point in test_points:
@@ -29,11 +39,11 @@ class WrappedNormalDistributionTest(unittest.TestCase):
                     self.wn.pdf(point), approx_with_wrapping(point), places=10
                 )
 
-        x = np.arange(0, 7)
+        x = arange(0, 7)
         self.assertTrue(
-            np.allclose(
+            allclose(
                 self.wn.pdf(x),
-                np.array([approx_with_wrapping(xi) for xi in x]),
+                array([approx_with_wrapping(xi) for xi in x]),
                 rtol=1e-10,
             )
         )
@@ -43,9 +53,9 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         Test that the pdf with large sigma is approximately a uniform distribution.
         """
         wn_large_sigma = WrappedNormalDistribution(0, 100)
-        x = np.arange(0, 7)
-        fx = np.ones_like(x) / (2 * np.pi)
-        self.assertTrue(np.allclose(wn_large_sigma.pdf(x), fx, rtol=1e-10))
+        x = arange(0, 7)
+        fx = ones_like(x) / (2 * np.pi)
+        self.assertTrue(allclose(wn_large_sigma.pdf(x), fx, rtol=1e-10))
 
 
 if __name__ == "__main__":

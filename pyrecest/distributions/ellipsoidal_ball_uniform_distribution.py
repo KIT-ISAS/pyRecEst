@@ -1,3 +1,9 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import power
+from pyrecest.backend import dot
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import numpy as np
 from beartype import beartype
 
@@ -38,19 +44,19 @@ class EllipsoidalBallUniformDistribution(
         """
         assert xs.shape[-1] == self.dim
         # Calculate the reciprocal of the volume of the ellipsoid
-        # reciprocal_volume = 1 / (np.power(np.pi, self.dim / 2) * np.sqrt(np.linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
+        # reciprocal_volume = 1 / (power(np.pi, self.dim / 2) * sqrt(np.linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
         reciprocal_volume = 1 / self.get_manifold_size()
         if xs.ndim == 1:
             return reciprocal_volume
 
         n = xs.shape[0]
-        results = np.zeros(n)
+        results = zeros(n)
 
         # Check if points are inside the ellipsoid
         for i in range(n):
             point = xs[i, :]
             diff = point - self.center
-            result = np.dot(diff.T, np.linalg.solve(self.shape_matrix, diff))
+            result = dot(diff.T, np.linalg.solve(self.shape_matrix, diff))
 
             # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
             if result <= 1:
@@ -59,7 +65,7 @@ class EllipsoidalBallUniformDistribution(
         return results
 
     @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: int | int32 | int64) -> np.ndarray:
         """
         Generate samples from the distribution.
 

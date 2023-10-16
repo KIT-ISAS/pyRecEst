@@ -1,3 +1,8 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import real
+from pyrecest.backend import imag
+from pyrecest.backend import all
+from pyrecest.backend import zeros
 import numpy as np
 
 # pylint: disable=E0611
@@ -11,7 +16,7 @@ from .abstract_spherical_harmonics_distribution import (
 
 class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution):
     def __init__(self, coeff_mat, transformation="identity"):
-        if not np.all(np.isreal(coeff_mat)):
+        if not all(np.isreal(coeff_mat)):
             raise ValueError("Coefficients must be real")
         AbstractSphericalHarmonicsDistribution.__init__(self, coeff_mat, transformation)
 
@@ -20,17 +25,17 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
         y_lm = sph_harm(m, n, phi, theta)
 
         if m < 0:
-            y_nm_real = -np.sqrt(2) * np.imag(y_lm)
+            y_nm_real = -sqrt(2) * imag(y_lm)
         elif m == 0:
-            y_nm_real = np.real(y_lm)
+            y_nm_real = real(y_lm)
         else:
-            y_nm_real = (-1) ** m * np.sqrt(2) * np.real(y_lm)
+            y_nm_real = (-1) ** m * sqrt(2) * real(y_lm)
 
         return y_nm_real
 
     def value(self, xs):
         xs = np.atleast_2d(xs)
-        vals = np.zeros(xs.shape[0])
+        vals = zeros(xs.shape[0])
         phi, theta = AbstractSphereSubsetDistribution.cart_to_sph(
             xs[:, 0], xs[:, 1], xs[:, 2]
         )
@@ -61,12 +66,12 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
                 if m < 0:
                     complex_coeff_mat[n, n + m] = (
                         1j * real_coeff_mat[n, n + m] + real_coeff_mat[n, n - m]
-                    ) / np.sqrt(2)
+                    ) / sqrt(2)
                 elif m > 0:
                     complex_coeff_mat[n, n + m] = (
                         (-1) ** m
                         * (-1j * real_coeff_mat[n, n - m] + real_coeff_mat[n, n + m])
-                        / np.sqrt(2)
+                        / sqrt(2)
                     )
                 else:  # m == 0
                     complex_coeff_mat[n, n] = real_coeff_mat[n, n]

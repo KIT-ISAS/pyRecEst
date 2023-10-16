@@ -1,3 +1,5 @@
+from pyrecest.backend import linspace
+from pyrecest.backend import array
 import unittest
 
 import matplotlib
@@ -17,10 +19,10 @@ class TestVonMisesDistribution(unittest.TestCase):
 
     def test_pdf(self):
         dist = VonMisesDistribution(2, 1)
-        xs = np.linspace(1, 7, 7)
+        xs = linspace(1, 7, 7)
         np.testing.assert_array_almost_equal(
             dist.pdf(xs),
-            np.array(
+            array(
                 [
                     0.215781465110296,
                     0.341710488623463,

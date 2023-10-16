@@ -1,3 +1,5 @@
+from pyrecest.backend import ndim
+from pyrecest.backend import dot
 import copy
 
 import numpy as np
@@ -15,7 +17,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         assert (
             1 == np.size(mu) == np.size(C) or np.size(mu) == C.shape[0] == C.shape[1]
         ), "Size of C invalid"
-        assert np.ndim(mu) <= 1
+        assert ndim(mu) <= 1
         self.mu = mu
 
         if check_validity:
@@ -64,8 +66,8 @@ class GaussianDistribution(AbstractLinearDistribution):
     def multiply(self, other):
         assert self.dim == other.dim
         K = np.linalg.solve(self.C + other.C, self.C)
-        new_mu = self.mu + np.dot(K, (other.mu - self.mu))
-        new_C = self.C - np.dot(K, self.C)
+        new_mu = self.mu + dot(K, (other.mu - self.mu))
+        new_C = self.C - dot(K, self.C)
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def convolve(self, other):

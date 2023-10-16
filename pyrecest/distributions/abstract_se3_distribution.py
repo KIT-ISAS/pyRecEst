@@ -1,3 +1,6 @@
+from pyrecest.backend import concatenate
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 import time
 from abc import abstractmethod
 
@@ -29,7 +32,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
 
     def plot_state(
         self,
-        orientationSamples: int | np.int32 | np.int64 = 10,
+        orientationSamples: int | int32 | int64 = 10,
         showMarginalized: bool = True,
     ):
         samples = self.sample(orientationSamples)
@@ -44,7 +47,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
                 linearPart = samples[4:, i]
             h.append(
                 AbstractSE3Distribution.plot_point(
-                    np.concatenate((samples[:4, i], linearPart), axis=0)
+                    concatenate((samples[:4, i], linearPart), axis=0)
                 )
             )
         return h
@@ -68,7 +71,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
             pos[0], pos[1], pos[2], rotMat[2, 0], rotMat[2, 1], rotMat[2, 2], color="b"
         )
         h = [h1, h2, h3]
-        relevant_coords = np.concatenate((pos.reshape(-1, 1), pos + rotMat), axis=1)
+        relevant_coords = concatenate((pos.reshape(-1, 1), pos + rotMat), axis=1)
         needed_boundaries = np.column_stack(
             (np.min(relevant_coords, axis=1), np.max(relevant_coords, axis=1))
         )
@@ -98,7 +101,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
         for i in range(periodicStates.shape[1]):
             h.append(
                 AbstractSE3Distribution.plot_point(
-                    np.concatenate((periodicStates[:, i], linStates[:, i]), axis=0)
+                    concatenate((periodicStates[:, i], linStates[:, i]), axis=0)
                 )
             )
             if animate:

@@ -1,3 +1,8 @@
+from pyrecest.backend import sin
+from pyrecest.backend import mod
+from pyrecest.backend import linspace
+from pyrecest.backend import cos
+from pyrecest.backend import array
 import numbers
 
 import matplotlib.pyplot as plt
@@ -28,7 +33,7 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         """
         assert xs.ndim == 1, "xs must be a 1D array"
 
-        return np.array([self._cdf_numerical_single(x, starting_point) for x in xs])
+        return array([self._cdf_numerical_single(x, starting_point) for x in xs])
 
     @beartype
     def _cdf_numerical_single(
@@ -37,8 +42,8 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         starting_point: np.number | numbers.Real,
     ) -> np.number | numbers.Real:
         """Helper method for cdf_numerical"""
-        starting_point_mod = np.mod(starting_point, 2 * np.pi)
-        x_mod = np.mod(x, 2 * np.pi)
+        starting_point_mod = mod(starting_point, 2 * np.pi)
+        x_mod = mod(x, 2 * np.pi)
 
         if x_mod < starting_point_mod:
             return 1 - self.integrate_numerically([x_mod, starting_point_mod])
@@ -71,6 +76,6 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
     @staticmethod
     def plot_circle(*args, **kwargs):
-        theta = np.append(np.linspace(0, 2 * np.pi, 320), 0)
-        p = plt.plot(np.cos(theta), np.sin(theta), *args, **kwargs)
+        theta = np.append(linspace(0, 2 * np.pi, 320), 0)
+        p = plt.plot(cos(theta), sin(theta), *args, **kwargs)
         return p

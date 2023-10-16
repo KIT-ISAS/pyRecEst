@@ -1,3 +1,6 @@
+from pyrecest.backend import mod
+from pyrecest.backend import log
+from pyrecest.backend import array
 from collections.abc import Callable
 from functools import partial
 
@@ -18,7 +21,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
         self.filter_state = self.filter_state.convolve(wn_sys)
 
     def update_identity(self, wn_meas, z):
-        mu_w_new = np.mod(z - wn_meas.mu, 2 * np.pi)
+        mu_w_new = mod(z - wn_meas.mu, 2 * np.pi)
         wn_meas_shifted = WrappedNormalDistribution(mu_w_new, wn_meas.sigma)
         self.filter_state = self.filter_state.multiply_vm(wn_meas_shifted)
 
@@ -41,7 +44,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
 
         while lambda_ > 0:
             wd = self.filter_state.to_dirac5()
-            likelihood_vals = np.array([likelihood(z, x) for x in wd.d])
+            likelihood_vals = array([likelihood(z, x) for x in wd.d])
             likelihood_vals_min: np.number = np.min(likelihood_vals)
             likelihood_vals_max: np.number = np.max(likelihood_vals)
 
@@ -57,8 +60,8 @@ class WrappedNormalFilter(AbstractCircularFilter):
                 raise ZeroDivisionError("Cannot perform division by zero")
 
             current_lambda = min(
-                np.log(tau * w_max / w_min)
-                / np.log(likelihood_vals_min / likelihood_vals_max),
+                log(tau * w_max / w_min)
+                / log(likelihood_vals_min / likelihood_vals_max),
                 lambda_,
             )
 

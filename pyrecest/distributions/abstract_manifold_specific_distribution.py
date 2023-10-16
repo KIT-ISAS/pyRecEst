@@ -1,3 +1,7 @@
+from pyrecest.backend import squeeze
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import empty
 import numbers
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -60,7 +64,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         raise NotImplementedError("set_mode is not implemented for this distribution")
 
     @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: int | int32 | int64) -> np.ndarray:
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
 
@@ -68,9 +72,9 @@ class AbstractManifoldSpecificDistribution(ABC):
     @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: int | int32 | int64,
+        burn_in: int | int32 | int64 = 10,
+        skipping: int | int32 | int64 = 5,
         proposal: Callable | None = None,
         start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:
@@ -83,7 +87,7 @@ class AbstractManifoldSpecificDistribution(ABC):
             )
 
         total_samples = burn_in + n * skipping
-        s = np.empty(
+        s = empty(
             (
                 total_samples,
                 self.input_dim,
@@ -105,4 +109,4 @@ class AbstractManifoldSpecificDistribution(ABC):
                 i += 1
 
         relevant_samples = s[burn_in::skipping, :]
-        return np.squeeze(relevant_samples)
+        return squeeze(relevant_samples)

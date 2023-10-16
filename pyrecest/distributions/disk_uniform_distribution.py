@@ -1,3 +1,5 @@
+from pyrecest.backend import eye
+from pyrecest.backend import array
 import numpy as np
 
 from .abstract_disk_distribution import AbstractDiskDistribution
@@ -19,4 +21,4 @@ class DiskUniformDistribution(
         The center of the disk is at [0, 0] and the shape matrix of the ellipsoid is an identity covariance matrix.
         """
         AbstractDiskDistribution.__init__(self)
-        EllipsoidalBallUniformDistribution.__init__(self, np.array([0, 0]), np.eye(2))
+        EllipsoidalBallUniformDistribution.__init__(self, array([0, 0]), eye(2))

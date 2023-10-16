@@ -1,3 +1,14 @@
+from pyrecest.backend import reshape
+from pyrecest.backend import mod
+from pyrecest.backend import meshgrid
+from pyrecest.backend import exp
+from pyrecest.backend import array
+from pyrecest.backend import arange
+from pyrecest.backend import allclose
+from pyrecest.backend import all
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import copy
 
 import numpy as np
@@ -18,18 +29,18 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         AbstractHypertoroidalDistribution.__init__(self, np.size(mu))
         # First check is for 1-D case
         assert np.size(C) == 1 or C.shape[0] == C.shape[1], "C must be dim x dim"
-        assert np.size(C) == 1 or np.allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        assert np.size(C) == 1 or allclose(C, C.T, atol=1e-8), "C must be symmetric"
         assert (
-            np.size(C) == 1 and C > 0 or np.all(np.linalg.eigvals(C) > 0)
+            np.size(C) == 1 and C > 0 or all(np.linalg.eigvals(C) > 0)
         ), "C must be positive definite"
         assert (
             np.size(C) == np.size(mu) or np.size(mu) == C.shape[1]
         ), "mu must be dim x 1"
 
-        self.mu = np.mod(mu, 2 * np.pi)
+        self.mu = mod(mu, 2 * np.pi)
         self.C = C
 
-    def pdf(self, xs: np.ndarray, m: int | np.int32 | np.int64 = 3) -> np.ndarray:
+    def pdf(self, xs: np.ndarray, m: int | int32 | int64 = 3) -> np.ndarray:
         """
         Compute the PDF at given points.
 
@@ -37,14 +48,14 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        xs = np.reshape(xs, (-1, self.dim))
+        xs = reshape(xs, (-1, self.dim))
 
         # Generate all combinations of offsets for each dimension
-        offsets = [np.arange(-m, m + 1) * 2 * np.pi for _ in range(self.dim)]
-        offset_combinations = np.array(np.meshgrid(*offsets)).T.reshape(-1, self.dim)
+        offsets = [arange(-m, m + 1) * 2 * np.pi for _ in range(self.dim)]
+        offset_combinations = array(meshgrid(*offsets)).T.reshape(-1, self.dim)
 
         # Calculate the PDF values by considering all combinations of offsets
-        pdf_values = np.zeros(xs.shape[0])
+        pdf_values = zeros(xs.shape[0])
         for offset in offset_combinations:
             shifted_xa = xs + offset[np.newaxis, :]
             pdf_values += multivariate_normal.pdf(
@@ -64,7 +75,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         assert shift_by.shape == (self.dim,)
 
         hd = self
-        hd.mu = np.mod(self.mu + shift_by, 2 * np.pi)
+        hd.mu = mod(self.mu + shift_by, 2 * np.pi)
         return hd
 
     def sample(self, n):
@@ -75,7 +86,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
             raise ValueError("n must be a positive integer")
 
         s = np.random.multivariate_normal(self.mu, self.C, n)
-        s = np.mod(s, 2 * np.pi)  # wrap the samples
+        s = mod(s, 2 * np.pi)  # wrap the samples
         return s
 
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
@@ -109,7 +120,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         """
         assert isinstance(n, int), "n must be an integer"
 
-        m = np.exp(
+        m = exp(
             [1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)]
         )
 

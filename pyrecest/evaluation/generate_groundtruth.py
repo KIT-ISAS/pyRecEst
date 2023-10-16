@@ -1,3 +1,7 @@
+from pyrecest.backend import squeeze
+from pyrecest.backend import ndim
+from pyrecest.backend import empty
+from pyrecest.backend import empty_like
 import numpy as np
 
 
@@ -19,13 +23,13 @@ def generate_groundtruth(simulation_param, x0=None):
         x0 = simulation_param["initial_prior"].sample(simulation_param["n_targets"])
 
     assert (
-        np.ndim(x0) == 1
+        ndim(x0) == 1
         and simulation_param["n_targets"] == 1
         or x0.shape[0] == simulation_param["n_targets"]
     ), "Mismatch in number of targets."
 
     # Initialize ground truth
-    groundtruth = np.empty(simulation_param["n_timesteps"], dtype=np.ndarray)
+    groundtruth = empty(simulation_param["n_timesteps"], dtype=np.ndarray)
 
     if "inputs" in simulation_param:
         assert (
@@ -35,7 +39,7 @@ def generate_groundtruth(simulation_param, x0=None):
     groundtruth[0] = np.atleast_2d(x0)
 
     for t in range(1, simulation_param["n_timesteps"]):
-        groundtruth[t] = np.empty_like(groundtruth[0])
+        groundtruth[t] = empty_like(groundtruth[0])
         for target_no in range(simulation_param["n_targets"]):
             if "gen_next_state_with_noise" in simulation_param:
                 if (
@@ -86,6 +90,6 @@ def generate_groundtruth(simulation_param, x0=None):
     assert groundtruth[0].shape[0] == simulation_param["n_targets"]
     assert groundtruth[0].shape[1] == simulation_param["initial_prior"].dim
     for t in range(simulation_param["n_timesteps"]):
-        groundtruth[t] = np.squeeze(groundtruth[t])
+        groundtruth[t] = squeeze(groundtruth[t])
 
     return groundtruth

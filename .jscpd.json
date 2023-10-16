@@ -1,0 +1,6 @@
+{
+    "ignore": [
+      "pyrecest/_backend/**"
+    ]
+}
+  

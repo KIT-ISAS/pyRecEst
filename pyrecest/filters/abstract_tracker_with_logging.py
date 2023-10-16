@@ -1,3 +1,5 @@
+from pyrecest.backend import hstack
+from pyrecest.backend import array
 from abc import ABC
 
 import numpy as np
@@ -10,7 +12,7 @@ class AbstractTrackerWithLogging(ABC):
             if value:
                 # Remove the 'log_' prefix from the key
                 clean_key = key[4:] if key.startswith("log_") else key
-                setattr(self, f"{clean_key}_over_time", np.array([[]]))
+                setattr(self, f"{clean_key}_over_time", array([[]]))
 
     def _store_estimates(self, curr_ests, estimates_over_time):
         # Ensure curr_ests is a 2D array
@@ -24,7 +26,7 @@ class AbstractTrackerWithLogging(ABC):
             curr_ests = np.pad(
                 curr_ests, ((0, m - n), (0, 0)), mode="constant", constant_values=np.nan
             )
-            estimates_over_time = np.hstack((estimates_over_time, curr_ests))
+            estimates_over_time = hstack((estimates_over_time, curr_ests))
         else:
             estimates_over_time_new = np.full((n, t + 1), np.nan)
             estimates_over_time_new[:m, :t] = estimates_over_time

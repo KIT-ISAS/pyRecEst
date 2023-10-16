@@ -1,3 +1,6 @@
+from pyrecest.backend import array
+from pyrecest.backend import allclose
+from pyrecest.backend import all
 import unittest
 
 import numpy as np
@@ -9,7 +12,7 @@ from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distributio
 
 class CustomHypersphericalDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.vmf = VonMisesFisherDistribution(np.array([0, 0, 1]), 10)
+        self.vmf = VonMisesFisherDistribution(array([0, 0, 1]), 10)
         self.custom_hyperspherical_distribution = (
             CustomHypersphericalDistribution.from_distribution(self.vmf)
         )
@@ -24,7 +27,7 @@ class CustomHypersphericalDistributionTest(unittest.TestCase):
         points /= np.linalg.norm(points, axis=1, keepdims=True)
 
         self.assertTrue(
-            np.allclose(
+            allclose(
                 self.custom_hyperspherical_distribution.pdf(points),
                 self.vmf.pdf(points),
                 atol=1e-5,

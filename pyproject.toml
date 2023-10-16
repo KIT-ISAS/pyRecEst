@@ -19,9 +19,11 @@ shapely = "*"
 
 [tool.poetry.extras]
 healpy_support = ["healpy"]
+pytorch_support = ["torch"]
 
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
+torch = "*"
 autopep8 = "^2.0.2"
 pytest = "*"
 parameterized = "*"

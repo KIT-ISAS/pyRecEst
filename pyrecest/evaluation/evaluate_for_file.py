@@ -1,3 +1,6 @@
+from pyrecest.backend import ones
+from pyrecest.backend import concatenate
+from pyrecest.backend import zeros
 import os
 from typing import Any
 
@@ -39,7 +42,7 @@ def evaluate_for_file(
     else:
         scenario_config["n_timesteps"] = data["groundtruths"].shape[1]
 
-    n_meas_at_individual_time_step = np.zeros(data["measurements"].shape[1], dtype=int)
+    n_meas_at_individual_time_step = zeros(data["measurements"].shape[1], dtype=int)
 
     for idx, inner_array in enumerate(data["measurements"][0]):
         if inner_array.ndim == 2:
@@ -52,8 +55,8 @@ def evaluate_for_file(
     )
     scenario_config.setdefault(
         "apply_sys_noise_times",
-        np.concatenate(
-            [np.ones(scenario_config["n_timesteps"] - 1, dtype=bool), [False]]
+        concatenate(
+            [ones(scenario_config["n_timesteps"] - 1, dtype=bool), [False]]
         ),
     )
 

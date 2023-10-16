@@ -1,3 +1,7 @@
+from pyrecest.backend import mean
+from pyrecest.backend import eye
+from pyrecest.backend import exp
+from pyrecest.backend import concatenate
 import numpy as np
 from pyrecest.utils.plotting import plot_ellipsoid
 
@@ -22,7 +26,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
 
     def get_point_estimate(self):
         # Combines the kinematic state and flattened extent matrix into one vector
-        return np.concatenate([self.kinematic_state, self.extent.flatten()])
+        return concatenate([self.kinematic_state, self.extent.flatten()])
 
     def get_point_estimate_kinematics(self):
         # Returns just the kinematic state
@@ -40,12 +44,12 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         y_rows = x_rows // 2
 
         if np.isscalar(Cw):
-            Cw = Cw * np.eye(x_rows)
+            Cw = Cw * eye(x_rows)
 
         self.kinematic_state = F @ self.kinematic_state
         self.covariance = F @ self.covariance @ F.T + Cw
 
-        self.alpha = y_rows + np.exp(-dt / tau) * (self.alpha - y_rows)
+        self.alpha = y_rows + exp(-dt / tau) * (self.alpha - y_rows)
 
     # pylint: disable=too-many-locals
     def update(self, measurements, meas_mat, meas_noise_cov):
@@ -61,7 +65,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         if y_cols < y_rows + 1:
             raise ValueError("Too few measurements.")
 
-        y_ = np.mean(ys, axis=1, keepdims=True)
+        y_ = mean(ys, axis=1, keepdims=True)
         ys_demean = ys - y_
         Y_ = ys_demean @ ys_demean.T
 

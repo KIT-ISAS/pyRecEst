@@ -1,3 +1,19 @@
+from pyrecest.backend import vstack
+from pyrecest.backend import tile
+from pyrecest.backend import sqrt
+from pyrecest.backend import ones
+from pyrecest.backend import ndim
+from pyrecest.backend import mod
+from pyrecest.backend import isnan
+from pyrecest.backend import concatenate
+from pyrecest.backend import array
+from pyrecest.backend import any
+from pyrecest.backend import allclose
+from pyrecest.backend import all
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import empty
+from pyrecest.backend import zeros
 from abc import abstractmethod
 
 import numpy as np
@@ -17,7 +33,7 @@ from .abstract_lin_periodic_cart_prod_distribution import (
 
 class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistribution):
     def __init__(
-        self, bound_dim: int | np.int32 | np.int64, lin_dim: int | np.int32 | np.int64
+        self, bound_dim: int | int32 | int64, lin_dim: int | int32 | int64
     ):
         AbstractLinPeriodicCartProdDistribution.__init__(self, bound_dim, lin_dim)
 
@@ -33,7 +49,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
             integration_boundaries = self.get_reasonable_integration_boundaries()
 
         def f(*args):
-            return self.pdf(np.array(args))
+            return self.pdf(array(args))
 
         integration_result = nquad(f, integration_boundaries)[0]
 
@@ -45,20 +61,20 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         Returns reasonable integration boundaries for the specific distribution
         based on the mode and covariance.
         """
-        left = np.empty((self.bound_dim + self.lin_dim, 1))
-        right = np.empty((self.bound_dim + self.lin_dim, 1))
+        left = empty((self.bound_dim + self.lin_dim, 1))
+        right = empty((self.bound_dim + self.lin_dim, 1))
         P = self.linear_covariance()
         m = self.mode()
 
         for i in range(self.bound_dim, self.bound_dim + self.lin_dim):
-            left[i] = m[i] - scalingFactor * np.sqrt(
+            left[i] = m[i] - scalingFactor * sqrt(
                 P[i - self.bound_dim, i - self.bound_dim]
             )
-            right[i] = m[i] + scalingFactor * np.sqrt(
+            right[i] = m[i] + scalingFactor * sqrt(
                 P[i - self.bound_dim, i - self.bound_dim]
             )
 
-        return np.vstack((left, right))
+        return vstack((left, right))
 
     def mode(self):
         """Find the mode of the distribution by calling mode_numerical."""
@@ -96,7 +112,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         - C : ndarray
           The linear covariance.
         """
-        if approximate_mean is None or np.any(np.isnan(approximate_mean)):
+        if approximate_mean is None or any(isnan(approximate_mean)):
             approximate_mean = self.linear_mean_numerical()
 
         if self.bound_dim == 1 and self.lin_dim == 1:
@@ -110,7 +126,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 [[0, 2 * np.pi], [0, 2 * np.pi], [-np.inf, np.inf]],
             )
         elif self.bound_dim == 1 and self.lin_dim == 2:
-            C = np.empty((2, 2))
+            C = empty((2, 2))
             C[0, 0], _ = nquad(
                 lambda x, y, z: (y - approximate_mean[0]) ** 2 * self.pdf([x, y, z]),
                 [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
@@ -146,12 +162,12 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
             The distribution after conditioning.
         """
         assert (
-            np.size(input_lin) == self.lin_dim and np.ndim(input_lin) <= 1
+            np.size(input_lin) == self.lin_dim and ndim(input_lin) <= 1
         ), "Input should be of size (lin_dim,)."
 
         def f_cond_unnorm(x, input_lin=input_lin):
-            n_inputs = np.size(x) // x.shape[-1] if np.ndim(x) > 1 else np.size(x)
-            input_repeated = np.tile(input_lin, (n_inputs, 1))
+            n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else np.size(x)
+            input_repeated = tile(input_lin, (n_inputs, 1))
             return self.pdf(np.column_stack((x, input_repeated)))
 
         dist = CustomHypertoroidalDistribution(f_cond_unnorm, self.bound_dim)
@@ -176,14 +192,14 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 CustomLinearDistribution instance
         """
         assert (
-            np.size(input_periodic) == self.bound_dim and np.ndim(input_periodic) <= 1
+            np.size(input_periodic) == self.bound_dim and ndim(input_periodic) <= 1
         ), "Input should be of size (lin_dim,)."
 
-        input_periodic = np.mod(input_periodic, 2 * np.pi)
+        input_periodic = mod(input_periodic, 2 * np.pi)
 
         def f_cond_unnorm(x, input_periodic=input_periodic):
-            n_inputs = np.size(x) // x.shape[-1] if np.ndim(x) > 1 else np.size(x)
-            input_repeated = np.tile(input_periodic, (n_inputs, 1))
+            n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else np.size(x)
+            input_repeated = tile(input_periodic, (n_inputs, 1))
             return self.pdf(np.column_stack((input_repeated, x)))
 
         dist = CustomLinearDistribution(f_cond_unnorm, self.lin_dim)
@@ -206,7 +222,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 [[0, 2 * np.pi], [0, 2 * np.pi], [-np.inf, np.inf]],
             )[0]
         elif self.bound_dim == 1 and self.lin_dim == 2:
-            mu = np.empty(2)
+            mu = empty(2)
             mu[0] = scipy.integrate.nquad(
                 lambda x, y, z: (y * self.pdf([x, y, z]))[0],
                 [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
@@ -234,8 +250,8 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
           The mode of the distribution.
         """
         if starting_point is None:
-            starting_point = np.concatenate(
-                [np.pi * np.ones(self.bound_dim), np.zeros(self.lin_dim)]
+            starting_point = concatenate(
+                [np.pi * ones(self.bound_dim), zeros(self.lin_dim)]
             )
 
         # Define bounds for the optimization
@@ -250,7 +266,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         )
 
         # Check if the optimization might have stopped early
-        if np.allclose(res.x, starting_point):
+        if allclose(res.x, starting_point):
             print(
                 "Warning: Mode was at the starting point. This may indicate the optimizer stopped early."
             )

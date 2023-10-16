@@ -1,3 +1,11 @@
+from pyrecest.backend import vstack
+from pyrecest.backend import ones
+from pyrecest.backend import meshgrid
+from pyrecest.backend import linspace
+from pyrecest.backend import concatenate
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import warnings
 from collections.abc import Callable
 
@@ -27,9 +35,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: int | int32 | int64,
+        burn_in: int | int32 | int64 = 10,
+        skipping: int | int32 | int64 = 5,
         proposal: Callable | None = None,
         start_point: np.ndarray | None = None,
     ) -> np.ndarray:
@@ -65,8 +73,8 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         elif self.dim <= 3:
             mu = super().mean_direction_numerical(
                 [
-                    np.zeros(self.dim),
-                    [2 * np.pi, *np.pi * np.ones(self.dim - 2), np.pi / 2],
+                    zeros(self.dim),
+                    [2 * np.pi, *np.pi * ones(self.dim - 2), np.pi / 2],
                 ]
             )
         else:
@@ -90,15 +98,15 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
     @beartype
     @staticmethod
-    def get_full_integration_boundaries(dim: int | np.int32 | np.int64) -> np.ndarray:
+    def get_full_integration_boundaries(dim: int | int32 | int64) -> np.ndarray:
         if dim == 1:
             integration_boundaries = [0, np.pi]
         else:
-            integration_boundaries = np.vstack(
+            integration_boundaries = vstack(
                 (
-                    np.zeros(dim),
-                    np.concatenate(
-                        ([2 * np.pi], np.pi * np.ones(dim - 2), [np.pi / 2])
+                    zeros(dim),
+                    concatenate(
+                        ([2 * np.pi], np.pi * ones(dim - 2), [np.pi / 2])
                     ),
                 )
             ).T
@@ -129,7 +137,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     @beartype
     @staticmethod
     def integrate_fun_over_domain(
-        f_hypersph_coords: Callable, dim: int | np.int32 | np.int64
+        f_hypersph_coords: Callable, dim: int | int32 | int64
     ) -> float:
         integration_boundaries = (
             AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(dim)
@@ -160,11 +168,11 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
     @beartype
     @staticmethod
-    def plot_hemisphere(resolution: int | np.int32 | np.int64 = 150):
-        x, y, z = np.meshgrid(
-            np.linspace(-1, 1, resolution),
-            np.linspace(-1, 1, resolution),
-            np.linspace(0, 1, resolution // 2),
+    def plot_hemisphere(resolution: int | int32 | int64 = 150):
+        x, y, z = meshgrid(
+            linspace(-1, 1, resolution),
+            linspace(-1, 1, resolution),
+            linspace(0, 1, resolution // 2),
         )
         mask = (x**2 + y**2 + z**2 <= 1) & (z >= 0)
         x, y, z = x[mask].reshape(-1, 1), y[mask].reshape(-1, 1), z[mask].reshape(-1, 1)

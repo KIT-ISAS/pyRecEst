@@ -1,3 +1,7 @@
+from pyrecest.backend import real
+from pyrecest.backend import imag
+from pyrecest.backend import exp
+from pyrecest.backend import all
 import copy
 import warnings
 from abc import abstractmethod
@@ -57,14 +61,14 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         val = self.value(xs)
         if self.transformation == "sqrt":
-            assert np.all(np.imag(val) < 0.0001)
-            return np.real(val) ** 2
+            assert all(imag(val) < 0.0001)
+            return real(val) ** 2
 
         if self.transformation == "identity":
             return val
 
         if self.transformation == "log":
             warnings.warn("Density may not be normalized")
-            return np.exp(val)
+            return exp(val)
 
         raise ValueError("Transformation not recognized or unsupported")

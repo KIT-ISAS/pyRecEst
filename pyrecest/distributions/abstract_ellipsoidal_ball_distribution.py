@@ -1,3 +1,4 @@
+from pyrecest.backend import sqrt
 import numbers
 
 import numpy as np
@@ -50,4 +51,4 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         else:
             c = (np.pi ** (self.dim / 2)) / gamma((self.dim / 2) + 1)
 
-        return c * np.sqrt(np.linalg.det(self.shape_matrix))
+        return c * sqrt(np.linalg.det(self.shape_matrix))

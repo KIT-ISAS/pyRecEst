@@ -1,3 +1,8 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import array
+from pyrecest.backend import allclose
+from pyrecest.backend import all
+from pyrecest.backend import empty_like
 import unittest
 
 import numpy as np
@@ -7,35 +12,35 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution
     HypersphericalDiracDistribution,
 )
 
-vectors_to_test_2d = np.array(
+vectors_to_test_2d = array(
     [
         [1, 0, 0],
         [0, 1, 0],
         [0, 0, 1],
-        [1, 1, 0] / np.sqrt(2),
+        [1, 1, 0] / sqrt(2),
         [1, 1, 2] / np.linalg.norm([1, 1, 2]),
-        -np.array([1, 1, 2]) / np.linalg.norm([1, 1, 2]),
+        -array([1, 1, 2]) / np.linalg.norm([1, 1, 2]),
     ]
 )
 
 
 class TestVonMisesFisherDistribution(unittest.TestCase):
     def setUp(self):
-        self.mu = np.array([1, 2, 3])
+        self.mu = array([1, 2, 3])
         self.mu = self.mu / np.linalg.norm(self.mu)
         self.kappa = 2
         self.vmf = VonMisesFisherDistribution(self.mu, self.kappa)
-        self.other = VonMisesFisherDistribution(np.array([0, 0, 1]), self.kappa / 3)
+        self.other = VonMisesFisherDistribution(array([0, 0, 1]), self.kappa / 3)
 
     def test_vmf_distribution_3d_sanity_check(self):
         self.assertIsInstance(self.vmf, VonMisesFisherDistribution)
-        self.assertTrue(np.allclose(self.vmf.mu, self.mu))
+        self.assertTrue(allclose(self.vmf.mu, self.mu))
         self.assertEqual(self.vmf.kappa, self.kappa)
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
 
     def test_vmf_distribution_3d_mode(self):
         self.assertTrue(
-            np.allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5)
+            allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5)
         )
 
     def test_vmf_distribution_3d_integral(self):
@@ -44,10 +49,10 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
     def test_vmf_distribution_3d_multiplication(self):
         vmf_mul = self.vmf.multiply(self.other)
         vmf_mul2 = self.other.multiply(self.vmf)
-        c = vmf_mul.pdf(np.array([1, 0, 0])) / (
-            self.vmf.pdf(np.array([1, 0, 0])) * self.other.pdf(np.array([1, 0, 0]))
+        c = vmf_mul.pdf(array([1, 0, 0])) / (
+            self.vmf.pdf(array([1, 0, 0])) * self.other.pdf(array([1, 0, 0]))
         )
-        x = np.array([0, 1, 0])
+        x = array([0, 1, 0])
         self.assertAlmostEqual(
             self.vmf.pdf(x) * self.other.pdf(x) * c, vmf_mul.pdf(x), delta=1e-10
         )
@@ -57,7 +62,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
 
     def test_vmf_distribution_3d_convolve(self):
         vmf_conv = self.vmf.convolve(self.other)
-        self.assertTrue(np.allclose(vmf_conv.mu, self.vmf.mu, atol=1e-10))
+        self.assertTrue(allclose(vmf_conv.mu, self.vmf.mu, atol=1e-10))
         d = 3
         self.assertAlmostEqual(
             VonMisesFisherDistribution.a_d(d, vmf_conv.kappa),
@@ -67,28 +72,28 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
 
     def test_init_2d(self):
-        mu = np.array([1, 1, 2])
+        mu = array([1, 1, 2])
         mu = mu / np.linalg.norm(mu)
         kappa = 10
         dist = VonMisesFisherDistribution(mu, kappa)
         np.testing.assert_array_almost_equal(dist.C, 7.22562325261744e-05)
 
     def test_init_3d(self):
-        mu = np.array([1, 1, 2, -3])
+        mu = array([1, 1, 2, -3])
         mu = mu / np.linalg.norm(mu)
         kappa = 2
         dist = VonMisesFisherDistribution(mu, kappa)
         np.testing.assert_array_almost_equal(dist.C, 0.0318492506152322)
 
     def test_pdf_2d(self):
-        mu = np.array([1, 1, 2])
+        mu = array([1, 1, 2])
         mu = mu / np.linalg.norm(mu)
         kappa = 10
         dist = VonMisesFisherDistribution(mu, kappa)
 
         np.testing.assert_array_almost_equal(
             dist.pdf(vectors_to_test_2d),
-            np.array(
+            array(
                 [
                     0.00428425301914546,
                     0.00428425301914546,
@@ -101,12 +106,12 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
 
     def test_pdf_3d(self):
-        mu = np.array([1, 1, 2, -3])
+        mu = array([1, 1, 2, -3])
         mu = mu / np.linalg.norm(mu)
         kappa = 2
         dist = VonMisesFisherDistribution(mu, kappa)
 
-        xs_unnorm = np.array(
+        xs_unnorm = array(
             [
                 [1, 0, 0, 0],
                 [0, 1, 0, 0],
@@ -124,7 +129,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(
             dist.pdf(xs),
-            np.array(
+            array(
                 [
                     0.0533786916025838,
                     0.0533786916025838,
@@ -141,9 +146,9 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
 
     def test_mean_direction(self):
-        mu = 1 / np.sqrt(2) * np.array([1, 1, 0])
+        mu = 1 / sqrt(2) * array([1, 1, 0])
         vmf = VonMisesFisherDistribution(mu, 1)
-        self.assertTrue(np.allclose(vmf.mean_direction(), mu, atol=1e-13))
+        self.assertTrue(allclose(vmf.mean_direction(), mu, atol=1e-13))
 
     def _test_hellinger_distance_helper(
         self, dist1, dist2, delta=1e-10, numerical_delta=1e-10
@@ -163,21 +168,21 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
 
     def test_hellinger_distance_2d(self):
         # 2D
-        vmf1 = VonMisesFisherDistribution(np.array([1, 0]), 0.9)
-        vmf2 = VonMisesFisherDistribution(np.array([0, 1]), 1.7)
+        vmf1 = VonMisesFisherDistribution(array([1, 0]), 0.9)
+        vmf2 = VonMisesFisherDistribution(array([0, 1]), 1.7)
         self._test_hellinger_distance_helper(vmf1, vmf2)
 
     def test_hellinger_distance_3d(self):
         # 3D
-        vmf1 = VonMisesFisherDistribution(np.array([1, 0, 0]), 0.6)
-        mu2 = np.array([1, 2, 3])
+        vmf1 = VonMisesFisherDistribution(array([1, 0, 0]), 0.6)
+        mu2 = array([1, 2, 3])
         vmf2 = VonMisesFisherDistribution(mu2 / np.linalg.norm(mu2), 2.1)
         self._test_hellinger_distance_helper(vmf1, vmf2, numerical_delta=1e-6)
 
     @parameterized.expand(
         [
-            ("2D_case", np.array([-1, 0, 0]), 1.3),
-            ("3D_case", np.array([0, 1, 0, 0]), 0.5),
+            ("2D_case", array([-1, 0, 0]), 1.3),
+            ("3D_case", array([0, 1, 0, 0]), 0.5),
         ]
     )
     def test_from_distribution_vmf(self, _, mu, kappa):
@@ -189,7 +194,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
 
     def test_from_distribution_dirac(self):
         dirac_dist = HypersphericalDiracDistribution(
-            np.array(
+            array(
                 [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 1] / np.linalg.norm([0, 1, 1])]
             )
         )

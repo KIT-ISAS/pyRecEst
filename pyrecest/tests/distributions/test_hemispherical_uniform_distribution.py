@@ -1,3 +1,6 @@
+from pyrecest.backend import ones
+from pyrecest.backend import allclose
+from pyrecest.backend import all
 import unittest
 
 import numpy as np
@@ -19,8 +22,8 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
 
         # jscpd:ignore-start
         self.assertTrue(
-            np.allclose(
-                hhud.pdf(points), np.ones(points.shape[0]) / (2 * np.pi), atol=1e-6
+            allclose(
+                hhud.pdf(points), ones(points.shape[0]) / (2 * np.pi), atol=1e-6
             )
         )
         # jscpd:ignore-end

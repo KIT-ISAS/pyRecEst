@@ -1,3 +1,5 @@
+from pyrecest.backend import empty
+from pyrecest.backend import zeros
 import warnings
 from typing import Any, Dict
 
@@ -22,13 +24,13 @@ def iterate_configs_and_runs(
 
     n_configs = sum(np.size(f["parameter"]) for f in filter_configs)
     n_runs = groundtruths.shape[0]
-    run_times = np.empty((n_configs, n_runs))
-    run_failed = np.zeros((n_configs, n_runs), dtype=bool)
+    run_times = empty((n_configs, n_runs))
+    run_failed = zeros((n_configs, n_runs), dtype=bool)
 
     if evaluation_config["convert_to_point_estimate_during_runtime"]:
         raise NotImplementedError("This is not implemented yet.")
 
-    last_filter_states = np.empty((n_configs, n_runs), dtype=object)
+    last_filter_states = empty((n_configs, n_runs), dtype=object)
 
     for run in range(n_runs):
         for config_no, filter_config in enumerate(filter_configs):

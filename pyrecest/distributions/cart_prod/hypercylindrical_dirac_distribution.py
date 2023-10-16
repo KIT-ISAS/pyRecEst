@@ -1,3 +1,9 @@
+from pyrecest.backend import tile
+from pyrecest.backend import sum
+from pyrecest.backend import sin
+from pyrecest.backend import cos
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 import numpy as np
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
@@ -10,7 +16,7 @@ from .lin_bounded_cart_prod_dirac_distribution import (
 class HypercylindricalDiracDistribution(
     LinBoundedCartProdDiracDistribution, AbstractHypercylindricalDistribution
 ):
-    def __init__(self, bound_dim: int | np.int32 | np.int64, d, w=None):
+    def __init__(self, bound_dim: int | int32 | int64, d, w=None):
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim, d.shape[-1] - bound_dim
         )
@@ -33,9 +39,9 @@ class HypercylindricalDiracDistribution(
         S[2 * self.bound_dim :, :] = self.d[:, self.bound_dim :].T  # noqa: E203
 
         for i in range(self.bound_dim):
-            S[2 * i, :] = np.cos(self.d[:, i])  # noqa: E203
-            S[2 * i + 1, :] = np.sin(self.d[:, i])  # noqa: E203
+            S[2 * i, :] = cos(self.d[:, i])  # noqa: E203
+            S[2 * i + 1, :] = sin(self.d[:, i])  # noqa: E203
 
-        return np.sum(
-            np.tile(self.w, (self.lin_dim + 2 * self.bound_dim, 1)) * S, axis=1
+        return sum(
+            tile(self.w, (self.lin_dim + 2 * self.bound_dim, 1)) * S, axis=1
         )

@@ -1,3 +1,4 @@
+from pyrecest.backend import linspace
 import numpy as np
 from beartype import beartype
 from pyrecest.distributions import CircularUniformDistribution
@@ -23,7 +24,7 @@ class CircularUniformSampler(AbstractCircularSampler):
         """
         Returns an equidistant grid of points on the circle [0,2*pi).
         """
-        points = np.linspace(0, 2 * np.pi, grid_density_parameter, endpoint=False)
+        points = linspace(0, 2 * np.pi, grid_density_parameter, endpoint=False)
         # Set it to the middle of the interval instead of the start
         points += (2 * np.pi / grid_density_parameter) / 2
         return points

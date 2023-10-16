@@ -1,3 +1,6 @@
+from pyrecest.backend import int64
+from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import copy
 from collections.abc import Callable
 
@@ -19,15 +22,15 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
     def __init__(
         self,
-        n_particles: int | np.int32 | np.int64,
-        dim: int | np.int32 | np.int64,
+        n_particles: int | int32 | int64,
+        dim: int | int32 | int64,
     ):
         if not (isinstance(n_particles, int) and n_particles > 0):
             raise ValueError("n_particles must be a positive integer")
         if not (isinstance(dim, int) and dim > 0):
             raise ValueError("dim must be a positive integer")
 
-        initial_distribution = LinearDiracDistribution(np.zeros((n_particles, dim)))
+        initial_distribution = LinearDiracDistribution(zeros((n_particles, dim)))
         AbstractParticleFilter.__init__(self, initial_distribution)
         AbstractEuclideanFilter.__init__(self, initial_distribution)
 

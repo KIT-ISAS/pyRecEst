@@ -1,3 +1,5 @@
+from pyrecest.backend import int64
+from pyrecest.backend import int32
 from abc import abstractmethod
 
 import numpy as np
@@ -15,7 +17,7 @@ class AbstractLinBoundedCartProdDistribution(AbstractCartProdDistribution):
 
     @beartype
     def __init__(
-        self, bound_dim: int | np.int32 | np.int64, lin_dim: int | np.int32 | np.int64
+        self, bound_dim: int | int32 | int64, lin_dim: int | int32 | int64
     ):
         """
         Parameters:

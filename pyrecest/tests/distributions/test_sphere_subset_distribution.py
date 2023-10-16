@@ -1,3 +1,4 @@
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -16,9 +17,9 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
     )
     def test_cart_to_sph_to_cart(self, mode):
         # Create some Cartesian coordinates
-        x = np.array([1.0, 0.0, 0.0])
-        y = np.array([0.0, 1.0, 0.0])
-        z = np.array([0.0, 0.0, 1.0])
+        x = array([1.0, 0.0, 0.0])
+        y = array([0.0, 1.0, 0.0])
+        z = array([0.0, 0.0, 1.0])
 
         # Convert to spherical coordinates and back
         azimuth, theta = AbstractSphereSubsetDistribution.cart_to_sph(
@@ -43,8 +44,8 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         # Create some spherical coordinates. Do *not* use 0 as theta because
         # the transformation from spherical to Cartesian coordinates is not
         # uniquely invertible in this case.
-        azimuth = np.array([0.0, np.pi / 4, np.pi / 2])
-        theta = np.array([np.pi / 2, np.pi / 4, 0.1])
+        azimuth = array([0.0, np.pi / 4, np.pi / 2])
+        theta = array([np.pi / 2, np.pi / 4, 0.1])
 
         # Convert to Cartesian coordinates and back
         x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(

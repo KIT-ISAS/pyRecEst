@@ -1,3 +1,13 @@
+from pyrecest.backend import vstack
+from pyrecest.backend import tile
+from pyrecest.backend import hstack
+from pyrecest.backend import eye
+from pyrecest.backend import exp
+from pyrecest.backend import dot
+from pyrecest.backend import array
+from pyrecest.backend import abs
+from pyrecest.backend import float64
+from pyrecest.backend import zeros
 import numbers
 
 import mpmath
@@ -23,7 +33,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         """
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         assert mu.ndim == 1, "mu must be a 1-D vector"
-        assert np.abs(np.linalg.norm(mu) - 1) < self.EPSILON, "mu is unnormalized"
+        assert abs(np.linalg.norm(mu) - 1) < self.EPSILON, "mu is unnormalized"
 
         self.mu = mu
         self.kappa = kappa
@@ -33,7 +43,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             / (2 * mpmath.pi ** ((self.dim + 1) / 2))
             / mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
         )
-        self.C = np.float64(C_mpf)
+        self.C = float64(C_mpf)
 
     def pdf(self, xs):
         """
@@ -46,7 +56,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             np.generic: The value of the pdf at xs.
         """
         assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
-        p = self.C * np.exp(self.kappa * np.dot(self.mu.T, xs.T) ** 2)
+        p = self.C * exp(self.kappa * (self.mu.T @ xs.T) ** 2)
         return p
 
     def to_bingham(self) -> BinghamDistribution:
@@ -55,13 +65,13 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
                 "Conversion to Bingham is not implemented for kappa<0"
             )
 
-        M = np.tile(self.mu.reshape(-1, 1), (1, self.input_dim))
-        E = np.eye(self.input_dim)
+        M = tile(self.mu.reshape(-1, 1), (1, self.input_dim))
+        E = eye(self.input_dim)
         E[0, 0] = 0
         M = M + E
         Q, _ = qr(M)
-        M = np.hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])
-        Z = np.hstack([np.full((self.dim), -self.kappa), 0])
+        M = hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])
+        Z = hstack([np.full((self.dim), -self.kappa), 0])
         return BinghamDistribution(Z, M)
 
     def sample(self, n):
@@ -83,7 +93,5 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         return dist
 
     def shift(self, shift_by):
-        assert np.array_equal(
-            self.mu, np.vstack([np.zeros((self.dim, 1)), 1])
-        ), "There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1]."
+        np.testing.assert_almost_equal(self.mu, vstack([zeros((self.dim, 1)), 1]), "There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].")
         return self.set_mode(shift_by)

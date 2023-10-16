@@ -1,3 +1,4 @@
+from pyrecest.backend import ones
 from abc import abstractmethod
 
 import numpy as np
@@ -19,7 +20,7 @@ class AbstractUniformDistribution(AbstractDistributionType):
         :return: The pdf evaluated at each point in xs.
         :rtype: np.ndarray
         """
-        return 1 / self.get_manifold_size() * np.ones(xs.shape[0])
+        return 1 / self.get_manifold_size() * ones(xs.shape[0])
 
     @abstractmethod
     def get_manifold_size(self) -> np.ndarray:

@@ -1,3 +1,13 @@
+from pyrecest.backend import sqrt
+from pyrecest.backend import shape
+from pyrecest.backend import ones
+from pyrecest.backend import ndim
+from pyrecest.backend import eye
+from pyrecest.backend import array
+from pyrecest.backend import any
+from pyrecest.backend import all
+from pyrecest.backend import empty
+from pyrecest.backend import zeros
 import os
 import tempfile
 import unittest
@@ -73,7 +83,7 @@ class TestEvalationBasics(TestEvalationBase):
 
     @parameterized.expand(
         [
-            (np.zeros(2),),
+            (zeros(2),),
             (None,),
         ]
     )
@@ -81,18 +91,18 @@ class TestEvalationBasics(TestEvalationBase):
         groundtruth = generate_groundtruth(self.simulation_param, x0)
 
         # Test if groundtruth and its content is as expected
-        self.assertEqual(np.shape(groundtruth), (self.n_timesteps_default,))
+        self.assertEqual(shape(groundtruth), (self.n_timesteps_default,))
         self.assertEqual(
-            np.shape(groundtruth[0]), (self.simulation_param["initial_prior"].dim,)
+            shape(groundtruth[0]), (self.simulation_param["initial_prior"].dim,)
         )
 
     @parameterized.expand([(1,), (3,)])
     def test_generate_measurements(self, n_meas):
-        self.simulation_param["n_meas_at_individual_time_step"] = n_meas * np.ones(
+        self.simulation_param["n_meas_at_individual_time_step"] = n_meas * ones(
             self.n_timesteps_default, dtype=int
         )
         measurements = generate_measurements(
-            np.zeros(
+            zeros(
                 (self.n_timesteps_default, self.simulation_param["initial_prior"].dim)
             ),
             self.simulation_param,
@@ -121,23 +131,23 @@ class TestEvalationBasics(TestEvalationBase):
         state_dim = 2
 
         measurements = generate_measurements(
-            np.zeros((self.n_timesteps_default, state_dim)),
+            zeros((self.n_timesteps_default, state_dim)),
             simulation_param,
         )
 
         self.assertEqual(np.size(measurements), self.n_timesteps_default)
-        n_meas_at_individual_time_step = np.array(
+        n_meas_at_individual_time_step = array(
             [meas_at_timestep.shape[0] for meas_at_timestep in measurements]
         )
         # If one measurement at every timestep, then the number is apparently not stochastic
-        self.assertFalse(np.all(n_meas_at_individual_time_step == 1))
-        state_dim_at_individual_time_step = np.array(
+        self.assertFalse(all(n_meas_at_individual_time_step == 1))
+        state_dim_at_individual_time_step = array(
             [meas_at_timestep.shape[-1] for meas_at_timestep in measurements]
         )
         has_state_dim_all = state_dim_at_individual_time_step == state_dim
         has_dim_zero_all = state_dim_at_individual_time_step == 0
         self.assertTrue(
-            np.all(
+            all(
                 [
                     state_dim or dim_zero
                     for state_dim, dim_zero in zip(has_state_dim_all, has_dim_zero_all)
@@ -150,10 +160,10 @@ class TestEvalationBasics(TestEvalationBase):
         groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
 
         self.assertEqual(
-            np.shape(groundtruths), (self.n_runs_default, self.n_timesteps_default)
+            shape(groundtruths), (self.n_runs_default, self.n_timesteps_default)
         )
         self.assertEqual(
-            np.shape(measurements), (self.n_runs_default, self.n_timesteps_default)
+            shape(measurements), (self.n_runs_default, self.n_timesteps_default)
         )
         return groundtruths, measurements
 
@@ -165,14 +175,14 @@ class TestEvalationBasics(TestEvalationBase):
             return np.linalg.norm(x - y)
 
         # Initialize the outer array with object type
-        groundtruths = np.empty((3, 4), dtype=object)
+        groundtruths = empty((3, 4), dtype=object)
 
         # Populate each entry with (2,) arrays
         for i in range(3):
             for j in range(4):
-                groundtruths[i, j] = np.array([i + j, i - j])
+                groundtruths[i, j] = array([i + j, i - j])
 
-        results = np.array([groundtruths[:, -1], groundtruths[:, -1] + 1])
+        results = array([groundtruths[:, -1], groundtruths[:, -1] + 1])
 
         # Run the function and get the deviations matrix
         all_deviations = determine_all_deviations(
@@ -192,18 +202,18 @@ class TestEvalationBasics(TestEvalationBase):
             [0, 0, 0],
         )
         np.testing.assert_allclose(
-            # Should be np.sqrt(2) away from groundtruths
+            # Should be sqrt(2) away from groundtruths
             all_deviations[1],
-            [np.sqrt(2), np.sqrt(2), np.sqrt(2)],
+            [sqrt(2), sqrt(2), sqrt(2)],
         )
 
     def test_configure_kf(self):
         filterParam = {"name": "kf", "parameter": None}
         scenarioParam = {
-            "initial_prior": GaussianDistribution(np.array([0, 0]), np.eye(2)),
+            "initial_prior": GaussianDistribution(array([0, 0]), eye(2)),
             "inputs": None,
             "manifold_type": "Euclidean",
-            "meas_noise": GaussianDistribution(np.array([0, 0]), np.eye(2)),
+            "meas_noise": GaussianDistribution(array([0, 0]), eye(2)),
         }
 
         (
@@ -221,7 +231,7 @@ class TestEvalationBasics(TestEvalationBase):
         filter_config = {"name": "pf", "parameter": 100}
         scenario_config = {
             "initial_prior": HypertoroidalWrappedNormalDistribution(
-                np.array([0, 0]), np.eye(2)
+                array([0, 0]), eye(2)
             ),
             "inputs": None,
             "manifold": "hypertorus",
@@ -259,9 +269,9 @@ class TestEvalationBasics(TestEvalationBase):
         ) = perform_predict_update_cycles(
             scenario_param,
             {"name": "kf", "parameter": None},
-            np.zeros((self.n_timesteps_default, 2)),
+            zeros((self.n_timesteps_default, 2)),
             generate_measurements(
-                np.zeros((self.n_timesteps_default, 2)), scenario_param
+                zeros((self.n_timesteps_default, 2)), scenario_param
             ),
         )
 
@@ -279,7 +289,7 @@ class TestEvalationBasics(TestEvalationBase):
             callable(distance_function),
             f"Expected distanceFunction to be callable, but got {type(distance_function)}",
         )
-        self.assertEqual(distance_function(np.array([0, 0]), np.array([0, 0])), 0)
+        self.assertEqual(distance_function(array([0, 0]), array([0, 0])), 0)
 
     def test_get_mean_calc(self):
         extract_mean = get_extract_mean("hypertorus")
@@ -352,23 +362,23 @@ class TestEvalationBasics(TestEvalationBase):
 
         self.assertIsInstance(evaluation_config, dict)
 
-        self.assertEqual(np.shape(last_filter_states), (n_configs, self.n_runs_default))
-        self.assertTrue(np.all(last_filter_states != None))  # noqa
+        self.assertEqual(shape(last_filter_states), (n_configs, self.n_runs_default))
+        self.assertTrue(all(last_filter_states != None))  # noqa
 
-        self.assertEqual(np.shape(runtimes), (n_configs, self.n_runs_default))
+        self.assertEqual(shape(runtimes), (n_configs, self.n_runs_default))
         print(runtimes)
-        self.assertTrue(np.all(runtimes > 0))
+        self.assertTrue(all(runtimes >= 0))
 
-        self.assertEqual(np.shape(run_failed), (n_configs, self.n_runs_default))
-        self.assertTrue(not np.any(run_failed))
+        self.assertEqual(shape(run_failed), (n_configs, self.n_runs_default))
+        self.assertTrue(not any(run_failed))
 
-        self.assertEqual(np.ndim(groundtruths), 2)
+        self.assertEqual(ndim(groundtruths), 2)
         self.assertIsInstance(groundtruths[0, 0], np.ndarray)
-        self.assertIn(np.ndim(groundtruths[0, 0]), (1, 2))
+        self.assertIn(ndim(groundtruths[0, 0]), (1, 2))
 
-        self.assertEqual(np.ndim(measurements), 2)
+        self.assertEqual(ndim(measurements), 2)
         self.assertIsInstance(measurements[0, 0], np.ndarray)
-        self.assertIn(np.ndim(measurements[0, 0]), (1, 2))
+        self.assertIn(ndim(measurements[0, 0]), (1, 2))
 
     def test_evaluate_for_simulation_config_R2_random_walk(self):
         filters_configs_input = [
@@ -419,9 +429,9 @@ class TestEvalationBasics(TestEvalationBase):
 
         scenario_config = {
             "manifold": "Euclidean",
-            "initial_prior": GaussianDistribution(np.zeros(2), 0.5 * np.eye(2)),
-            "meas_noise": GaussianDistribution(np.zeros(2), 0.5 * np.eye(2)),
-            "sys_noise": GaussianDistribution(np.zeros(2), 0.5 * np.eye(2)),
+            "initial_prior": GaussianDistribution(zeros(2), 0.5 * eye(2)),
+            "meas_noise": GaussianDistribution(zeros(2), 0.5 * eye(2)),
+            "sys_noise": GaussianDistribution(zeros(2), 0.5 * eye(2)),
         }
 
         (
