@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import random
 from pyrecest.backend import prod
 from pyrecest.backend import allclose
@@ -125,7 +126,7 @@ class TestHopfConversion(unittest.TestCase):
         n = 100  # sample size
         random_vectors = random.randn(n, 4)
         unit_vectors = (
-            random_vectors / np.linalg.norm(random_vectors, axis=1)[:, np.newaxis]
+            random_vectors / linalg.norm(random_vectors, axis=1)[:, np.newaxis]
         )
 
         # Pass the quaternions through the conversion functions

@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import ones
 from pyrecest.backend import eye
 from pyrecest.backend import array
@@ -38,7 +39,7 @@ class AbstractMixtureTest(unittest.TestCase):
         vmf2 = VonMisesFisherDistribution(array([0, 1, 0]), 2)
         mix = HypersphericalMixture([vmf1, vmf2], [0.5, 0.5])
         s = self._test_sample(mix, 10)
-        self.assertTrue(allclose(np.linalg.norm(s, axis=1), ones(10), rtol=1e-10))
+        self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=1e-10))
 
     def test_sample_metropolis_hastings_basics_only_h2(self):
         vmf = VonMisesFisherDistribution(array([1, 0, 0]), 2)
@@ -46,7 +47,7 @@ class AbstractMixtureTest(unittest.TestCase):
             lambda x: vmf.pdf(x) + vmf.pdf(-x), 2
         )
         s = self._test_sample(mix, 10)
-        self.assertTrue(allclose(np.linalg.norm(s, axis=1), ones(10), rtol=1e-10))
+        self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=1e-10))
 
 
 if __name__ == "__main__":

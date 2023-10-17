@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from typing import Union
 from pyrecest.backend import sort
@@ -73,12 +74,12 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Unsupported")
 
-        if np.linalg.norm(mu) < 1e-9:
+        if linalg.norm(mu) < 1e-9:
             print(
                 "Warning: Density may not actually have a mean direction because integral yields a point very close to the origin."
             )
 
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         return mu
 
     def gen_pdf_hyperspherical_coords(self):
@@ -170,7 +171,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     def _compute_mean_axis_from_moment(moment_matrix: np.ndarray) -> np.ndarray:
-        D, V = np.linalg.eig(moment_matrix)
+        D, V = linalg.eig(moment_matrix)
         Dsorted = sort(D)
         Vsorted = V[:, D.argsort()]
         if abs(Dsorted[-1] / Dsorted[-2]) < 1.01:

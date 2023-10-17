@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from typing import Union
 from pyrecest.backend import sinh
@@ -28,7 +29,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         assert (
             mu.shape[0] >= 2
         ), "mu must be at least two-dimensional for the circular case"
-        assert abs(np.linalg.norm(mu) - 1) < epsilon, "mu must be a normalized"
+        assert abs(linalg.norm(mu) - 1) < epsilon, "mu must be a normalized"
 
         self.mu = mu
         self.kappa = kappa
@@ -112,8 +113,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         assert ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
-        mu_ = m / np.linalg.norm(m)
-        Rbar = np.linalg.norm(m)
+        mu_ = m / linalg.norm(m)
+        Rbar = linalg.norm(m)
         kappa_ = VonMisesFisherDistribution.a_d_inverse(np.size(m), Rbar)
 
         V = VonMisesFisherDistribution(mu_, kappa_)
@@ -132,7 +133,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         assert self.mu.shape == other.mu.shape
 
         mu_ = self.kappa * self.mu + other.kappa * other.mu
-        kappa_ = np.linalg.norm(mu_)
+        kappa_ = linalg.norm(mu_)
         mu_ = mu_ / kappa_
         return VonMisesFisherDistribution(mu_, kappa_)
 

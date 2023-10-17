@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import random
 from pyrecest.backend import sqrt
 from pyrecest.backend import shape
@@ -173,7 +174,7 @@ class TestEvalationBasics(TestEvalationBase):
             return x
 
         def dummy_distance_function(x, y):
-            return np.linalg.norm(x - y)
+            return linalg.norm(x - y)
 
         # Initialize the outer array with object type
         groundtruths = empty((3, 4), dtype=object)

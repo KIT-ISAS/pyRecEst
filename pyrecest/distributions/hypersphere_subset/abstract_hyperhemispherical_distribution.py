@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import random
 from typing import Union
@@ -88,12 +89,12 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             p = self.pdf(r)
             mu = r @ p / n * Sd
 
-        if np.linalg.norm(mu) < 1e-9:
+        if linalg.norm(mu) < 1e-9:
             warnings.warn(
                 "Density may not have actually have a mean direction because integral yields a point very close to the origin."
             )
 
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         return mu
 
     @staticmethod

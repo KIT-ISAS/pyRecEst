@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import tile
 from pyrecest.backend import sum
 from pyrecest.backend import concatenate
@@ -25,7 +26,7 @@ class SE3DiracDistributionTest(unittest.TestCase):
                 [2, 31, 42, 3, 9.9, 5],
             ]
         ).T
-        dSph = dSph / np.linalg.norm(dSph, axis=-1, keepdims=True)
+        dSph = dSph / linalg.norm(dSph, axis=-1, keepdims=True)
         dLin = tile(array([-5, 0, 5, 10, 15, 20]), (3, 1)).T
         w = array([1, 2, 3, 1, 2, 3])
         w = w / sum(w)

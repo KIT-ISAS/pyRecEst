@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import random
 from pyrecest.backend import ones
 from pyrecest.backend import allclose
@@ -26,7 +27,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         for dim in range(2, 5):
             hud = HypersphericalUniformDistribution(dim)
             x = random.rand(dim + 1)
-            x = x / np.linalg.norm(x)
+            x = x / linalg.norm(x)
             self.assertAlmostEqual(
                 hud.pdf(x),
                 1
@@ -43,7 +44,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             samples = hud.sample(n)
             self.assertEqual(samples.shape, (n, hud.dim + 1))
             self.assertTrue(
-                allclose(np.linalg.norm(samples, axis=1), ones(n), rtol=1e-10)
+                allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-10)
             )
 
 

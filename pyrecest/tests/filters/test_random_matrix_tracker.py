@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import mean
 from pyrecest.backend import eye
 from pyrecest.backend import concatenate
@@ -113,11 +114,11 @@ class TestRandomMatrixTracker(unittest.TestCase):
         # Check if extent has changed as expected
         if name == "smaller":
             np.testing.assert_array_less(
-                zeros(2), np.linalg.eig(self.initial_extent - self.tracker.extent)[0]
+                zeros(2), linalg.eig(self.initial_extent - self.tracker.extent)[0]
             )
         elif name == "larger":
             np.testing.assert_array_less(
-                zeros(2), np.linalg.eig(self.tracker.extent - self.initial_extent)[0]
+                zeros(2), linalg.eig(self.tracker.extent - self.initial_extent)[0]
             )
         else:
             raise ValueError(f"Invalid test name: {name}")

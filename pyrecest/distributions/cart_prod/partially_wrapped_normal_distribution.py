@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import random
 from typing import Union
@@ -39,7 +40,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         assert ndim(mu) == 1, "mu must be a 1-dimensional array"
         assert shape(C) == (np.size(mu), np.size(mu)), "C must match size of mu"
         assert allclose(C, C.T), "C must be symmetric"
-        assert all(np.linalg.eigvals(C) > 0), "C must be positive definite"
+        assert all(linalg.eigvals(C) > 0), "C must be positive definite"
         assert bound_dim <= np.size(mu)
         assert ndim(mu) == 1
         if bound_dim > 0:  # This decreases the need for many wrappings

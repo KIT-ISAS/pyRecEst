@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import sum
 from pyrecest.backend import reshape
 import matplotlib.pyplot as plt
@@ -36,5 +37,5 @@ class HypersphericalDiracDistribution(
 
     def mean_direction(self):
         vec_sum = sum(self.d * reshape(self.w, (-1, 1)), axis=0)
-        mu = vec_sum / np.linalg.norm(vec_sum)
+        mu = vec_sum / linalg.norm(vec_sum)
         return mu

@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import random
 from pyrecest.backend import array
 from pyrecest.backend import allclose
@@ -25,7 +26,7 @@ class CustomHypersphericalDistributionTest(unittest.TestCase):
 
         random.seed(10)
         points = random.randn(100, 3)
-        points /= np.linalg.norm(points, axis=1, keepdims=True)
+        points /= linalg.norm(points, axis=1, keepdims=True)
 
         self.assertTrue(
             allclose(

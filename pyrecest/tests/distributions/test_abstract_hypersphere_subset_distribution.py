@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import sin
 from pyrecest.backend import cos
 from pyrecest.backend import array
@@ -9,7 +10,7 @@ from pyrecest.distributions import VonMisesFisherDistribution
 
 class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     def test_pdf_hyperspherical_coords_1d(self):
-        mu_ = array([0.5, 1.0]) / np.linalg.norm([0.5, 1.0])
+        mu_ = array([0.5, 1.0]) / linalg.norm([0.5, 1.0])
         kappa_ = 2.0
         vmf = VonMisesFisherDistribution(mu_, kappa_)
 
@@ -25,7 +26,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         )
 
     def test_pdf_hyperspherical_coords_2d(self):
-        mu_ = array([0.5, 1.0, 1.0]) / np.linalg.norm([0.5, 1.0, 1.0])
+        mu_ = array([0.5, 1.0, 1.0]) / linalg.norm([0.5, 1.0, 1.0])
         kappa_ = 2.0
         vmf = VonMisesFisherDistribution(mu_, kappa_)
 
@@ -51,7 +52,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         )
 
     def test_pdf_hyperspherical_coords_3d(self):
-        mu_ = array([0.5, 1.0, 1.0, -0.5]) / np.linalg.norm([0.5, 1.0, 1.0, -0.5])
+        mu_ = array([0.5, 1.0, 1.0, -0.5]) / linalg.norm([0.5, 1.0, 1.0, -0.5])
         kappa_ = 2.0
         vmf = VonMisesFisherDistribution(mu_, kappa_)
 

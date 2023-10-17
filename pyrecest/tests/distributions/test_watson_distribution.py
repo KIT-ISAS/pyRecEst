@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import array
 import unittest
 
@@ -11,11 +12,11 @@ class TestWatsonDistribution(unittest.TestCase):
             [[1, 0, 0], [1, 2, 2], [0, 1, 0], [0, 0, 1], [1, 1, 1], [-1, -1, -1]],
             dtype=float,
         )
-        self.xs = self.xs / np.linalg.norm(self.xs, axis=1, keepdims=True)
+        self.xs = self.xs / linalg.norm(self.xs, axis=1, keepdims=True)
 
     def test_constructor(self):
         mu = array([1, 2, 3])
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         kappa = 2
         w = WatsonDistribution(mu, kappa)
 
@@ -26,7 +27,7 @@ class TestWatsonDistribution(unittest.TestCase):
 
     def test_pdf(self):
         mu = array([1, 2, 3])
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         kappa = 2
         w = WatsonDistribution(mu, kappa)
 
@@ -46,7 +47,7 @@ class TestWatsonDistribution(unittest.TestCase):
 
     def test_integrate(self):
         mu = array([1, 2, 3])
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         kappa = 2
         w = WatsonDistribution(mu, kappa)
         self.assertAlmostEqual(w.integrate(), 1, delta=1e-5)

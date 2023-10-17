@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -102,12 +103,12 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         x = real(self.coeff_mat[1, 0] - self.coeff_mat[1, 2]) / sqrt(2)
         z = real(self.coeff_mat[1, 1])
 
-        if np.linalg.norm(array([x, y, z])) < 1e-9:
+        if linalg.norm(array([x, y, z])) < 1e-9:
             raise ValueError(
                 "Coefficients of degree 1 are almost zero. Therefore, no meaningful mean is available"
             )
 
-        mu = array([x, y, z]) / np.linalg.norm(array([x, y, z]))
+        mu = array([x, y, z]) / linalg.norm(array([x, y, z]))
 
         return mu
 

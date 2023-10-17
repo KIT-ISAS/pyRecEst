@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import mean
 from pyrecest.backend import eye
 from pyrecest.backend import exp
@@ -73,17 +74,17 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
 
         Y = self.extent + Cv
         S = H @ self.covariance @ H.T + Y / y_cols
-        K = self.covariance @ np.linalg.solve(S, H).T
+        K = self.covariance @ linalg.solve(S, H).T
         self.kinematic_state = self.kinematic_state + K @ (y_.flatten() - Hx)
         self.covariance = self.covariance - K @ S @ K.T
 
-        Xsqrt = np.linalg.cholesky(self.extent)
-        Ssqrt = np.linalg.cholesky(S)
-        Ysqrt = np.linalg.cholesky(Y)
+        Xsqrt = linalg.cholesky(self.extent)
+        Ssqrt = linalg.cholesky(S)
+        Ysqrt = linalg.cholesky(Y)
 
-        Nsqrt = Xsqrt * np.linalg.inv(Ssqrt) @ (y_ - Hx)
+        Nsqrt = Xsqrt * linalg.inv(Ssqrt) @ (y_ - Hx)
         N = Nsqrt @ Nsqrt.T
-        XYsqrt = Xsqrt * np.linalg.inv(Ysqrt)
+        XYsqrt = Xsqrt * linalg.inv(Ysqrt)
 
         self.extent = (self.alpha * self.extent + N + XYsqrt @ Y_ @ XYsqrt.T) / (
             self.alpha + y_cols

@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import vstack
 from pyrecest.backend import tile
 from pyrecest.backend import hstack
@@ -32,7 +33,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         """
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         assert mu.ndim == 1, "mu must be a 1-D vector"
-        assert abs(np.linalg.norm(mu) - 1) < self.EPSILON, "mu is unnormalized"
+        assert abs(linalg.norm(mu) - 1) < self.EPSILON, "mu is unnormalized"
 
         self.mu = mu
         self.kappa = kappa

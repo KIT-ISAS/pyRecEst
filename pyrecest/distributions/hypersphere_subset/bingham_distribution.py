@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import sum
 from pyrecest.backend import eye
@@ -85,7 +86,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         )  # New exponent
 
         C = 0.5 * (C + C.T)  # Symmetrize
-        D, V = np.linalg.eig(C)
+        D, V = linalg.eig(C)
         order = np.argsort(D)  # Sort eigenvalues
         V = V[:, order]
         Z_ = D[order]

@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import sqrt
 import numbers
@@ -50,4 +51,4 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         else:
             c = (pi ** (self.dim / 2)) / gamma((self.dim / 2) + 1)
 
-        return c * sqrt(np.linalg.det(self.shape_matrix))
+        return c * sqrt(linalg.det(self.shape_matrix))

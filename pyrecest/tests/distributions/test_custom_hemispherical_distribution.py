@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import random
 from pyrecest.backend import eye
 from pyrecest.backend import array
@@ -31,7 +32,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         random.seed(10)
         points = random.randn(100, 3)
         points = points[points[:, 2] >= 0, :]
-        points /= np.linalg.norm(points, axis=1, keepdims=True)
+        points /= linalg.norm(points, axis=1, keepdims=True)
 
         self.assertTrue(
             allclose(

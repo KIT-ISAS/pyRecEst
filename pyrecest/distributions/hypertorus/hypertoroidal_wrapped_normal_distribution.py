@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import random
 from typing import Union
@@ -34,7 +35,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         assert np.size(C) == 1 or C.shape[0] == C.shape[1], "C must be dim x dim"
         assert np.size(C) == 1 or allclose(C, C.T, atol=1e-8), "C must be symmetric"
         assert (
-            np.size(C) == 1 and C > 0 or all(np.linalg.eigvals(C) > 0)
+            np.size(C) == 1 and C > 0 or all(linalg.eigvals(C) > 0)
         ), "C must be positive definite"
         assert (
             np.size(C) == np.size(mu) or np.size(mu) == C.shape[1]

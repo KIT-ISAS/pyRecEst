@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from pyrecest.backend import random
 from pyrecest.backend import ndim
 from pyrecest.backend import dot
@@ -25,7 +26,7 @@ class GaussianDistribution(AbstractLinearDistribution):
                 assert C > 0, "C must be positive definite"
             elif self.dim == 2:
                 assert (
-                    C[0, 0] > 0 and np.linalg.det(C) > 0
+                    C[0, 0] > 0 and linalg.det(C) > 0
                 ), "C must be positive definite"
             else:
                 cholesky(C)  # Will fail if C is not positive definite
@@ -65,7 +66,7 @@ class GaussianDistribution(AbstractLinearDistribution):
 
     def multiply(self, other):
         assert self.dim == other.dim
-        K = np.linalg.solve(self.C + other.C, self.C)
+        K = linalg.solve(self.C + other.C, self.C)
         new_mu = self.mu + dot(K, (other.mu - self.mu))
         new_C = self.C - dot(K, self.C)
         return GaussianDistribution(new_mu, new_C, check_validity=False)

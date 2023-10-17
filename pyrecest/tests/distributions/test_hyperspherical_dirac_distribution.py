@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sum
@@ -19,7 +20,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         self.d = array(
             [[0.5, 3, 4, 6, 6], [2, 2, 5, 3, 0], [0.5, 0.2, 5.8, 4.3, 1.2]]
         ).T
-        self.d = self.d / np.linalg.norm(self.d, axis=1)[:, None]
+        self.d = self.d / linalg.norm(self.d, axis=1)[:, None]
         self.w = array([0.1, 0.1, 0.1, 0.1, 0.6])
         self.hdd = HypersphericalDiracDistribution(self.d, self.w)
 
@@ -32,7 +33,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         self.assertEqual(s.shape, (nSamples, self.d.shape[-1]))
         np.testing.assert_array_almost_equal(s, mod(s, 2 * pi))
         np.testing.assert_array_almost_equal(
-            np.linalg.norm(s, axis=-1), ones(nSamples)
+            linalg.norm(s, axis=-1), ones(nSamples)
         )
 
     def test_apply_function(self):

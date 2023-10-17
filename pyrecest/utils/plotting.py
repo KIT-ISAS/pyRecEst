@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -36,7 +37,7 @@ def plot_ellipsoid_3d(center, shape_matrix, scaling_factor=1, color="blue"):
     y = outer(sin(u), sin(v))
     z = outer(ones(np.size(u)), cos(v))
 
-    V, D = np.linalg.eig(shape_matrix)
+    V, D = linalg.eig(shape_matrix)
     all_coords = V @ sqrt(D) @ array(
         [x.ravel(), y.ravel(), z.ravel()]
     ) + center.reshape(-1, 1)

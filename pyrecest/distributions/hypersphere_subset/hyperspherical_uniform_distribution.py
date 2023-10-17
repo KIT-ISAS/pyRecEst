@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import random
 from typing import Union
@@ -42,7 +43,7 @@ class HypersphericalUniformDistribution(
             s[:, 1] = r * sin(phi)
         else:
             samples_unnorm = random.randn(n, self.dim + 1)
-            s = samples_unnorm / np.linalg.norm(samples_unnorm, axis=1, keepdims=True)
+            s = samples_unnorm / linalg.norm(samples_unnorm, axis=1, keepdims=True)
         return s
 
     def get_manifold_size(self):

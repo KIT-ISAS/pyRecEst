@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import random
 from typing import Union
@@ -46,7 +47,7 @@ class EllipsoidalBallUniformDistribution(
         """
         assert xs.shape[-1] == self.dim
         # Calculate the reciprocal of the volume of the ellipsoid
-        # reciprocal_volume = 1 / (power(pi, self.dim / 2) * sqrt(np.linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
+        # reciprocal_volume = 1 / (power(pi, self.dim / 2) * sqrt(linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
         reciprocal_volume = 1 / self.get_manifold_size()
         if xs.ndim == 1:
             return reciprocal_volume
@@ -58,7 +59,7 @@ class EllipsoidalBallUniformDistribution(
         for i in range(n):
             point = xs[i, :]
             diff = point - self.center
-            result = dot(diff.T, np.linalg.solve(self.shape_matrix, diff))
+            result = dot(diff.T, linalg.solve(self.shape_matrix, diff))
 
             # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
             if result <= 1:
@@ -74,7 +75,7 @@ class EllipsoidalBallUniformDistribution(
         :returns: Generated samples.
         """
         random_points = random.randn(n, self.dim)
-        random_points /= np.linalg.norm(random_points, axis=1, keepdims=True)
+        random_points /= linalg.norm(random_points, axis=1, keepdims=True)
 
         random_radii = random.rand(n, 1)
         random_radii = random_radii ** (
@@ -85,7 +86,7 @@ class EllipsoidalBallUniformDistribution(
         random_points *= random_radii
 
         # Rotate the points according to the shape matrix
-        L = np.linalg.cholesky(self.shape_matrix)
+        L = linalg.cholesky(self.shape_matrix)
         # For points (d, n), this would be L @ random_points
         transformed_points = random_points @ L.T + self.center.reshape(1, -1)
 

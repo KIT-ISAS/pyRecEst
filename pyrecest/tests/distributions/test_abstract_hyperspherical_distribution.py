@@ -1,3 +1,4 @@
+from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import array
@@ -17,7 +18,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
     def testIntegral2D(self):
         """Tests the integral calculation in 2D."""
         mu = array([1, 1, 2])
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         kappa = 10
         vmf = VonMisesFisherDistribution(mu, kappa)
         self.assertAlmostEqual(vmf.integrate(), 1, delta=1e-8)
@@ -25,7 +26,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
     def testIntegral3D(self):
         """Tests the integral calculation in 3D."""
         mu = array([1, 1, 2, 2])
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         kappa = 10
         vmf = VonMisesFisherDistribution(mu, kappa)
         self.assertAlmostEqual(vmf.integrate(), 1, delta=1e-7)
@@ -53,13 +54,13 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         mu = 1 / sqrt(2) * array([1, 1, 0])
         kappa = 10
         vmf = VonMisesFisherDistribution(mu, kappa)
-        self.assertLess(np.linalg.norm(vmf.mean_direction_numerical() - mu), 1e-6)
+        self.assertLess(linalg.norm(vmf.mean_direction_numerical() - mu), 1e-6)
 
     def test_plotting_error_free_2d(self):
         """Tests the plotting function"""
 
         mu = array([1, 1, 2])
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         kappa = 10
         vmf = VonMisesFisherDistribution(mu, kappa)
         vmf.plot()
