@@ -21,7 +21,6 @@ from .abstract_sampler import AbstractSampler
 from .hypertoroidal_sampler import CircularUniformSampler
 
 
-@beartype
 def get_grid_hypersphere(method: str, grid_density_parameter: int):
     if method == "healpix":
         samples, grid_specific_description = HealpixSampler().get_grid(
@@ -49,7 +48,6 @@ get_grid_sphere = get_grid_hypersphere
 
 
 class AbstractHypersphericalUniformSampler(AbstractSampler):
-    @beartype
     def sample_stochastic(self, n_samples: int, dim: int) -> np.ndarray:
         return HypersphericalUniformDistribution(dim).sample(n_samples)
 
@@ -73,7 +71,6 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
     ) -> tuple[np.ndarray, np.ndarray, dict]:
         raise NotImplementedError()
 
-    @beartype
     def get_grid(self, grid_density_parameter: int) -> tuple[np.ndarray, dict]:
         phi, theta, grid_specific_description = self.get_grid_spherical_coordinates(
             grid_density_parameter
@@ -85,7 +82,6 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
 
 
 class HealpixSampler(AbstractHypersphericalUniformSampler):
-    @beartype
     def get_grid(self, grid_density_parameter: int) -> tuple[np.ndarray, dict]:
         import healpy as hp
 
@@ -103,7 +99,6 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 
 
 class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
-    @beartype
     def get_grid_spherical_coordinates(
         self, grid_density_parameter: int
     ) -> tuple[np.ndarray, np.ndarray, dict]:
@@ -134,7 +129,6 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
 
 
 class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
-    @beartype
     def get_grid_spherical_coordinates(
         self, grid_density_parameter: int
     ) -> tuple[np.ndarray, np.ndarray, dict]:
@@ -150,7 +144,6 @@ class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
 
 class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
     @staticmethod
-    @beartype
     def hopf_coordinates_to_quaterion_yershova(
         θ: np.ndarray, ϕ: np.ndarray, ψ: np.ndarray
     ):
@@ -171,7 +164,6 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
         return quaterions
 
     @staticmethod
-    @beartype
     def quaternion_to_hopf_yershova(q: np.ndarray):
         θ = 2 * arccos(sqrt(q[:, 0] ** 2 + q[:, 1] ** 2))
         ϕ = arctan2(q[:, 3], q[:, 2]) - arctan2(q[:, 1], q[:, 0])
@@ -181,7 +173,6 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
 
 # pylint: disable=too-many-locals
 class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
-    @beartype
     def get_grid(self, grid_density_parameter: int | list[int]):
         """
         Hopf coordinates are (θ, ϕ, ψ) where θ and ϕ are the angles for the sphere and ψ is the angle on the circle
@@ -232,7 +223,6 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
 
 
 class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
-    @beartype
     def get_grid(self, grid_density_parameter: int | list[int]):
         """
         Hopf coordinates are (θ, ϕ, ψ) where θ and ϕ are the angles for the sphere and ψ is the angle on the circle

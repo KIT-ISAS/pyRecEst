@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from abc import abstractmethod
@@ -15,9 +16,8 @@ class AbstractLinBoundedCartProdDistribution(AbstractCartProdDistribution):
     are ordered as follows: bounded dimensions first, then linear dimensions.
     """
 
-    @beartype
     def __init__(
-        self, bound_dim: int | int32 | int64, lin_dim: int | int32 | int64
+        self, bound_dim: Union[int, int32, int64], lin_dim: Union[int, int32, int64]
     ):
         """
         Parameters:

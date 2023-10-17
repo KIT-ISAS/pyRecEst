@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import reshape
 from pyrecest.backend import mod
 from pyrecest.backend import meshgrid
@@ -40,7 +41,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         self.mu = mod(mu, 2 * np.pi)
         self.C = C
 
-    def pdf(self, xs: np.ndarray, m: int | int32 | int64 = 3) -> np.ndarray:
+    def pdf(self, xs: np.ndarray, m: Union[int, int32, int64] = 3) -> np.ndarray:
         """
         Compute the PDF at given points.
 

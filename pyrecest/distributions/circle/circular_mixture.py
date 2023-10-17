@@ -13,7 +13,6 @@ from .circular_fourier_distribution import CircularFourierDistribution
 
 
 class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
-    @beartype
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractCircularDistribution],

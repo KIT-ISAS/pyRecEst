@@ -13,7 +13,6 @@ class AbstractCustomLinBoundedCartProdDistribution(
 ):
     """Is abstract because .input_dim (among others) cannot be properly defined without specifying the specific periodic dimension"""
 
-    @beartype
     def __init__(self, f_: Callable, bound_dim: int, lin_dim: int):
         """
         Parameters:
@@ -33,7 +32,6 @@ class AbstractCustomLinBoundedCartProdDistribution(
         AbstractLinPeriodicCartProdDistribution.__init__(self, bound_dim, lin_dim)
 
     @staticmethod
-    @beartype
     def from_distribution(distribution: AbstractLinPeriodicCartProdDistribution):
         chhd = AbstractCustomLinBoundedCartProdDistribution(
             distribution.pdf, distribution.bound_dim, distribution.lin_dim

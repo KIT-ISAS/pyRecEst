@@ -10,7 +10,6 @@ class HypersphericalMixture(AbstractMixture, AbstractHypersphericalDistribution)
     A class used to represent a mixture of hyperspherical distributions.
     """
 
-    @beartype
     def __init__(
         self,
         dists: list[AbstractHypersphericalDistribution],

@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import tile
 from pyrecest.backend import sum
 from pyrecest.backend import sin
@@ -16,7 +17,7 @@ from .lin_bounded_cart_prod_dirac_distribution import (
 class HypercylindricalDiracDistribution(
     LinBoundedCartProdDiracDistribution, AbstractHypercylindricalDistribution
 ):
-    def __init__(self, bound_dim: int | int32 | int64, d, w=None):
+    def __init__(self, bound_dim: Union[int, int32, int64], d, w=None):
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim, d.shape[-1] - bound_dim
         )

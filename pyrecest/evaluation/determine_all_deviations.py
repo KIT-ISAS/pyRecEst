@@ -9,7 +9,6 @@ import numpy as np
 from beartype import beartype
 
 
-@beartype
 def determine_all_deviations(
     results,
     extract_mean,

@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from collections.abc import Callable
@@ -16,9 +17,8 @@ from .bingham_distribution import BinghamDistribution
 class CustomHyperhemisphericalDistribution(
     AbstractCustomDistribution, AbstractHyperhemisphericalDistribution
 ):
-    @beartype
     def __init__(
-        self, f: Callable, dim: int | int32 | int64, scale_by: float = 1
+        self, f: Callable, dim: Union[int, int32, int64], scale_by: float = 1
     ):
         """
         Initialize a CustomHyperhemisphericalDistribution.
@@ -30,7 +30,6 @@ class CustomHyperhemisphericalDistribution(
         AbstractHyperhemisphericalDistribution.__init__(self, dim=dim)
         AbstractCustomDistribution.__init__(self, f=f, scale_by=scale_by)
 
-    @beartype
     def pdf(self, xs):
         """
         Calculate the probability density function at given points.
@@ -55,7 +54,6 @@ class CustomHyperhemisphericalDistribution(
         )
 
     @staticmethod
-    @beartype
     def from_distribution(distribution: "AbstractHypersphericalDistribution"):
         """
         Create a CustomHyperhemisphericalDistribution from another distribution.

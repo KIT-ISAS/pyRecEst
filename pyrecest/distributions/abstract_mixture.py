@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sum
 from pyrecest.backend import ones
 from pyrecest.backend import int64
@@ -22,7 +23,6 @@ class AbstractMixture(AbstractDistributionType):
     Abstract base class for mixture distributions.
     """
 
-    @beartype
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractManifoldSpecificDistribution],
@@ -64,8 +64,7 @@ class AbstractMixture(AbstractDistributionType):
     def input_dim(self) -> int:
         return self.dists[0].input_dim
 
-    @beartype
-    def sample(self, n: int | int32 | int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
         d = np.random.choice(len(self.w), size=n, p=self.w)
 
         occurrences = np.bincount(d, minlength=len(self.dists))
@@ -81,7 +80,6 @@ class AbstractMixture(AbstractDistributionType):
 
         return s
 
-    @beartype
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         assert xs.shape[-1] == self.input_dim, "Dimension mismatch"
 

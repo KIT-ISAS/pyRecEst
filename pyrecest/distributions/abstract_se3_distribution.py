@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import concatenate
 from pyrecest.backend import int64
 from pyrecest.backend import int32
@@ -32,7 +33,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
 
     def plot_state(
         self,
-        orientationSamples: int | int32 | int64 = 10,
+        orientationSamples: Union[int, int32, int64] = 10,
         showMarginalized: bool = True,
     ):
         samples = self.sample(orientationSamples)

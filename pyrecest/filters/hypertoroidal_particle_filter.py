@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import tile
 from pyrecest.backend import sum
 from pyrecest.backend import squeeze
@@ -25,11 +26,10 @@ from .abstract_particle_filter import AbstractParticleFilter
 
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
-    @beartype
     def __init__(
         self,
-        n_particles: int | int32 | int64,
-        dim: int | int32 | int64,
+        n_particles: Union[int, int32, int64],
+        dim: Union[int, int32, int64],
     ):
         assert np.isscalar(n_particles)
         assert n_particles > 1, "Use CircularParticleFilter for 1-D case"
@@ -49,7 +49,6 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)
 
-    @beartype
     def set_state(self, new_state: AbstractHypertoroidalDistribution):
         if not isinstance(new_state, HypertoroidalDiracDistribution):
             # Convert to DiracDistribution if it is a different type of distribution
@@ -59,7 +58,6 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             )
         self.filter_state = copy.deepcopy(new_state)
 
-    @beartype
     def predict_nonlinear(
         self,
         f: Callable,
@@ -76,7 +74,6 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             self.filter_state.d += squeeze(noise)
             self.filter_state.d = mod(self.filter_state.d, 2 * np.pi)
 
-    @beartype
     def predict_nonlinear_nonadditive(
         self, f: Callable, samples: np.ndarray, weights: np.ndarray
     ):

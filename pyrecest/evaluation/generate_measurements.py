@@ -191,7 +191,6 @@ def generate_measurements(groundtruth, simulation_config):
     return measurements
 
 
-@beartype
 def generate_n_measurements_PPP(area: float, intensity_lambda: float) -> int:
     # Compute the expected number of points
     expected_num_points = intensity_lambda * area

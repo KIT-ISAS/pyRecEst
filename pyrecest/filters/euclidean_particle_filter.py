@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
@@ -22,8 +23,8 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
     def __init__(
         self,
-        n_particles: int | int32 | int64,
-        dim: int | int32 | int64,
+        n_particles: Union[int, int32, int64],
+        dim: Union[int, int32, int64],
     ):
         if not (isinstance(n_particles, int) and n_particles > 0):
             raise ValueError("n_particles must be a positive integer")
@@ -58,7 +59,6 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
         self._filter_state = dist_dirac
 
-    @beartype
     def predict_nonlinear(
         self,
         f: Callable,

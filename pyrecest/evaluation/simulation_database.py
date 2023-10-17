@@ -7,7 +7,6 @@ from beartype import beartype
 from pyrecest.distributions import GaussianDistribution
 
 
-@beartype
 def simulation_database(
     scenario_name: str = "custom", scenario_customization_params: Optional[dict] = None
 ) -> dict:

@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
@@ -12,7 +13,6 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 
 
 class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
-    @beartype
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractHypertoroidalDistribution],
@@ -31,7 +31,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
             AbstractHypertoroidalDistribution
         ] = self.dists
 
-    def trigonometric_moment(self, n: int | int32 | int64) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
         """
         Calculate n-th trigonometric moment
 

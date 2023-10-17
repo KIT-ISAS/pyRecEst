@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import vstack
 from pyrecest.backend import sin
 from pyrecest.backend import ones
@@ -37,12 +38,11 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return self.mean_direction()
 
     # jscpd:ignore-start
-    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | int32 | int64,
-        burn_in: int | int32 | int64 = 10,
-        skipping: int | int32 | int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point: np.ndarray | None = None,
     ) -> np.ndarray:
@@ -81,11 +81,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             start_point=start_point,
         )
 
-    @beartype
     def plot(
         self,
-        faces: int | int32 | int64 = 100,
-        grid_faces: int | int32 | int64 = 20,
+        faces: Union[int, int32, int64] = 100,
+        grid_faces: Union[int, int32, int64] = 20,
     ) -> None:
         if self.dim == 1:
             phi = linspace(0, 2 * np.pi, 320)
@@ -151,7 +150,6 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 "Cannot plot hyperspherical distribution with this number of dimensions."
             )
 
-    @beartype
     def moment(self) -> np.ndarray:
         return self.moment_numerical()
 
@@ -186,7 +184,6 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def entropy(self):
         return super().entropy_numerical()
 
-    @beartype
     def mode_numerical(self) -> np.ndarray:
         def fun(s):
             return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
@@ -204,7 +201,6 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def hellinger_distance(self, other):
         return super().hellinger_distance_numerical(other)
 
-    @beartype
     def total_variation_distance(self, other: "AbstractHypersphericalDistribution"):
         return super().total_variation_distance_numerical(other)
 

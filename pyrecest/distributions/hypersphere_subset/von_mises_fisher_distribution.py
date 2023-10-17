@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sinh
 from pyrecest.backend import sin
 from pyrecest.backend import ndim
@@ -20,7 +21,6 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
-    @beartype
     def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6
@@ -39,7 +39,6 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
                 (2 * np.pi) ** ((self.dim + 1) / 2) * iv((self.dim + 1) / 2 - 1, kappa)
             )
 
-    @beartype
     def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
         assert xs.shape[-1] == self.input_dim
 
@@ -93,7 +92,6 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             Q = -Q
         return Q
 
-    @beartype
     def moment(self) -> np.ndarray:
         """
         Returns the mean resultant vector.
@@ -102,7 +100,6 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return r
 
     @staticmethod
-    @beartype
     def from_distribution(d: AbstractHypersphericalDistribution):
         assert d.input_dim >= 2, "mu must be at least 2-D for the circular case"
 
@@ -110,7 +107,6 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution.from_moment(m)
 
     @staticmethod
-    @beartype
     def from_moment(m: np.ndarray):
         assert ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
@@ -125,14 +121,12 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def mode(self):
         return self.mu
 
-    @beartype
     def set_mode(self, new_mode: np.ndarray):
         assert new_mode.shape == self.mu.shape
         dist = self
         dist.mu = new_mode
         return dist
 
-    @beartype
     def multiply(self, other: "VonMisesFisherDistribution"):
         assert self.mu.shape == other.mu.shape
 
@@ -141,7 +135,6 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         mu_ = mu_ / kappa_
         return VonMisesFisherDistribution(mu_, kappa_)
 
-    @beartype
     def convolve(self, other: "VonMisesFisherDistribution"):
         assert other.mu[-1] == 1, "Other is not zonal"
         assert all(self.mu.shape == other.mu.shape)
@@ -156,8 +149,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution(mu_, kappa_)
 
     @staticmethod
-    @beartype
-    def a_d(d: int | int32 | int64, kappa: np.number | numbers.Real):
+    def a_d(d: Union[int, int32, int64], kappa: np.number | numbers.Real):
         bessel1 = iv(d / 2, kappa)
         bessel2 = iv(d / 2 - 1, kappa)
         if isnan(bessel1) or isnan(bessel2):
@@ -165,8 +157,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return bessel1 / bessel2
 
     @staticmethod
-    @beartype
-    def a_d_inverse(d: int | int32 | int64, x: float):
+    def a_d_inverse(d: Union[int, int32, int64], x: float):
         kappa_ = x * (d - x**2) / (1 - x**2)
         if isnan(kappa_):
             print(f"Initial kappa_ is NaN for d={d}, x={x}")

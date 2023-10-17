@@ -10,7 +10,6 @@ from .abstract_distribution_type import AbstractDistributionType
 class AbstractUniformDistribution(AbstractDistributionType):
     """Abstract class for a uniform distribution on a manifold."""
 
-    @beartype
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         """Compute the probability density function at each point in xs.
 

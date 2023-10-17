@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import prod
 from pyrecest.backend import ones
 from pyrecest.backend import ndim
@@ -23,7 +24,7 @@ class HypertoroidalUniformDistribution(
         """
         return 1 / self.get_manifold_size() * ones(xs.size // self.dim)
 
-    def trigonometric_moment(self, n: int | int32 | int64) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
         """
         Returns the n-th trigonometric moment
 
@@ -54,7 +55,7 @@ class HypertoroidalUniformDistribution(
             "Hypertoroidal uniform distributions do not have a unique mean"
         )
 
-    def sample(self, n: int | int32 | int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
         """
         Returns a sample of size n from the distribution
 

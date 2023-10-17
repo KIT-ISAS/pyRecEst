@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sqrt
 from pyrecest.backend import power
 from pyrecest.backend import dot
@@ -34,7 +35,6 @@ class EllipsoidalBallUniformDistribution(
     def mean(self):
         raise NotImplementedError()
 
-    @beartype
     def pdf(self, xs: np.ndarray):
         """
         Compute the probability density function at given points.
@@ -64,8 +64,7 @@ class EllipsoidalBallUniformDistribution(
 
         return results
 
-    @beartype
-    def sample(self, n: int | int32 | int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
         """
         Generate samples from the distribution.
 

@@ -38,13 +38,11 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return self.mu, self.kappa
 
     @property
-    @beartype
     def norm_const(self) -> np.number:
         if self._norm_const is None:
             self._norm_const = 2 * np.pi * iv(0, self.kappa)
         return self._norm_const
 
-    @beartype
     def pdf(self, xs: np.ndarray) -> np.ndarray | np.number:
         p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
@@ -97,7 +95,6 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return r
 
     @staticmethod
-    @beartype
     def besselratio_inverse(
         v: np.number | numbers.Real, x: np.number | numbers.Real
     ) -> np.number | numbers.Real:
@@ -108,7 +105,6 @@ class VonMisesDistribution(AbstractCircularDistribution):
         (kappa,) = fsolve(f, start)
         return kappa
 
-    @beartype
     def multiply(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
         C = self.kappa * cos(self.mu) + vm2.kappa * cos(vm2.mu)
         S = self.kappa * sin(self.mu) + vm2.kappa * sin(vm2.mu)
@@ -116,7 +112,6 @@ class VonMisesDistribution(AbstractCircularDistribution):
         kappa_ = sqrt(C**2 + S**2)
         return VonMisesDistribution(mu_, kappa_)
 
-    @beartype
     def convolve(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
         mu_ = mod(self.mu + vm2.mu, 2 * np.pi)
         t = VonMisesDistribution.besselratio(

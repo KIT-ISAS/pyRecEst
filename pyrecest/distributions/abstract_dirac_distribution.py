@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sum
 from pyrecest.backend import ones
 from pyrecest.backend import log
@@ -21,7 +22,6 @@ class AbstractDiracDistribution(AbstractDistributionType):
     This class represents an abstract base for Dirac distributions.
     """
 
-    @beartype
     def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
@@ -37,7 +37,6 @@ class AbstractDiracDistribution(AbstractDistributionType):
         self.w = copy.copy(w)
         self.normalize_in_place()
 
-    @beartype
     def normalize_in_place(self):
         """
         Normalize the weights in-place to ensure they sum to 1.
@@ -46,13 +45,11 @@ class AbstractDiracDistribution(AbstractDistributionType):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
             self.w = self.w / sum(self.w)
 
-    @beartype
     def normalize(self) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
         dist.normalize_in_place()
         return dist
 
-    @beartype
     def apply_function(
         self, f: Callable, f_supports_multiple: bool = True
     ) -> "AbstractDiracDistribution":
@@ -69,7 +66,6 @@ class AbstractDiracDistribution(AbstractDistributionType):
             dist.d = np.apply_along_axis(f, 1, dist.d)
         return dist
 
-    @beartype
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
         wNew = f(dist.d)
@@ -83,8 +79,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
         return dist
 
-    @beartype
-    def sample(self, n: int | int32 | int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
         ids = np.random.choice(np.size(self.w), size=n, p=self.w)
         return self.d[ids]
 

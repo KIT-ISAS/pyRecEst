@@ -10,7 +10,6 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class CircularDiracDistribution(
     HypertoroidalDiracDistribution, AbstractCircularDistribution
 ):
-    @beartype
     def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
         """
         Initializes a CircularDiracDistribution instance.

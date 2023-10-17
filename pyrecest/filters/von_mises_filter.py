@@ -28,7 +28,6 @@ class VonMisesFilter(AbstractCircularFilter):
         """
         AbstractCircularFilter.__init__(self, VonMisesDistribution(0, 1))
 
-    @beartype
     def set_state(self, new_state: VonMisesDistribution):
         """
         Sets the current system state
@@ -38,7 +37,6 @@ class VonMisesFilter(AbstractCircularFilter):
         """
         self.filter_state = copy.deepcopy(new_state)
 
-    @beartype
     def predict_identity(self, vmSys: VonMisesDistribution):
         """
         Predicts assuming identity system model, i.e.,
@@ -50,7 +48,6 @@ class VonMisesFilter(AbstractCircularFilter):
         """
         self.filter_state = self.filter_state.convolve(vmSys)
 
-    @beartype
     def update_identity(self, vmMeas: VonMisesDistribution, z=0.0):
         """
         Updates assuming identity measurement model, i.e.,

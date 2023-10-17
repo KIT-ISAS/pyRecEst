@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import tile
 from pyrecest.backend import sum
 from pyrecest.backend import reshape
@@ -21,7 +22,6 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
 ):
-    @beartype
     def __init__(
         self, d: np.ndarray, w: np.ndarray | None = None, dim: int | None = None
     ):
@@ -53,8 +53,7 @@ class HypertoroidalDiracDistribution(
         m = mod(arctan2(imag(a), real(a)), 2 * np.pi)
         return m
 
-    @beartype
-    def trigonometric_moment(self, n: int | int32 | int64) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
         """
         Calculate the trigonometric moment of the HypertoroidalDiracDistribution.
 
@@ -66,7 +65,6 @@ class HypertoroidalDiracDistribution(
             exp(1j * n * self.d.T) * tile(self.w, (self.dim, 1)), axis=1
         )
 
-    @beartype
     def apply_function(self, f: Callable) -> "HypertoroidalDiracDistribution":
         dist = super().apply_function(f)
         dist.d = mod(dist.d, 2 * np.pi)
@@ -79,13 +77,11 @@ class HypertoroidalDiracDistribution(
         twd = ToroidalDiracDistribution(self.d, self.w)
         return twd
 
-    @beartype
-    def marginalize_to_1D(self, dimension: int | int32 | int64):
+    def marginalize_to_1D(self, dimension: Union[int, int32, int64]):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
         return CircularDiracDistribution(self.d[:, dimension], self.w)
 
-    @beartype
     def marginalize_out(self, dimensions: int | list[int]):
         from ..circle.circular_dirac_distribution import CircularDiracDistribution
 
@@ -93,7 +89,6 @@ class HypertoroidalDiracDistribution(
         remaining_dims = [dim for dim in remaining_dims if dim != dimensions]
         return CircularDiracDistribution(self.d[:, remaining_dims], self.w)
 
-    @beartype
     def shift(self, shift_by) -> "HypertoroidalDiracDistribution":
         assert shift_by.shape[-1] == self.dim
         hd = copy.copy(self)

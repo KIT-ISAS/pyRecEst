@@ -70,7 +70,6 @@ def evaluate_for_simulation_config(
     )
 
 
-@beartype
 def get_all_seeds(n_runs: int, seed_input=None, consecutive_seed: bool = True):
     if seed_input is None:
         seed_input = np.uint32(random.randint(1, 0xFFFFFFFF))  # nosec

@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import int64
@@ -15,7 +16,6 @@ from .watson_distribution import WatsonDistribution
 
 
 class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistribution):
-    @beartype
     def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
         assert mu[-1] >= 0
         self.dist_full_sphere = WatsonDistribution(mu, kappa)
@@ -26,14 +26,12 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
     def pdf(self, xs):
         return 2 * self.dist_full_sphere.pdf(xs)
 
-    @beartype
     def set_mode(self, mu: np.ndarray) -> "HyperhemisphericalWatsonDistribution":
         w = self
         w.mu = mu
         return w
 
-    @beartype
-    def sample(self, n: int | int32 | int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
         s_full = self.dist_full_sphere.sample(n)
         s = s_full * (-1) ** (s_full[-1] < 0)  # Mirror to upper hemisphere
         return s
@@ -43,7 +41,6 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return self.dist_full_sphere.mu
 
     @mu.setter
-    @beartype
     def mu(self, mu: np.ndarray):
         self.dist_full_sphere.mu = mu
 
@@ -52,14 +49,12 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return self.dist_full_sphere.kappa
 
     @kappa.setter
-    @beartype
     def kappa(self, kappa: float):
         self.dist_full_sphere.kappa = kappa
 
     def mode(self) -> np.ndarray:
         return self.mu
 
-    @beartype
     def shift(self, shift_by) -> "HyperhemisphericalWatsonDistribution":
         assert allclose(
             self.mu, np.append(zeros(self.dim - 1), 1)

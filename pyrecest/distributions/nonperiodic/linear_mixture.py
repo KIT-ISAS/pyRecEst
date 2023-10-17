@@ -9,7 +9,6 @@ from .gaussian_distribution import GaussianDistribution
 
 
 class LinearMixture(AbstractMixture, AbstractLinearDistribution):
-    @beartype
     def __init__(self, dists: list[AbstractLinearDistribution], w: np.ndarray):
         from .gaussian_mixture import GaussianMixture
 

@@ -11,7 +11,6 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 
 
 class GaussianDistribution(AbstractLinearDistribution):
-    @beartype
     def __init__(self, mu: np.ndarray, C: np.ndarray, check_validity=True):
         AbstractLinearDistribution.__init__(self, dim=np.size(mu))
         assert (

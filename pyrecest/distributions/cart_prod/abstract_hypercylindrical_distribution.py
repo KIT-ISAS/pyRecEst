@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import vstack
 from pyrecest.backend import tile
 from pyrecest.backend import sqrt
@@ -33,7 +34,7 @@ from .abstract_lin_periodic_cart_prod_distribution import (
 
 class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistribution):
     def __init__(
-        self, bound_dim: int | int32 | int64, lin_dim: int | int32 | int64
+        self, bound_dim: Union[int, int32, int64], lin_dim: Union[int, int32, int64]
     ):
         AbstractLinPeriodicCartProdDistribution.__init__(self, bound_dim, lin_dim)
 
@@ -55,7 +56,6 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         return integration_result
 
-    @beartype
     def get_reasonable_integration_boundaries(self, scalingFactor=10) -> np.ndarray:
         """
         Returns reasonable integration boundaries for the specific distribution

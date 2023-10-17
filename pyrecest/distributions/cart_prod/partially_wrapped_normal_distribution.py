@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import tile
 from pyrecest.backend import sum
 from pyrecest.backend import sin
@@ -29,9 +30,8 @@ from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDist
 
 
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
-    @beartype
     def __init__(
-        self, mu: np.ndarray, C: np.ndarray, bound_dim: int | int32 | int64
+        self, mu: np.ndarray, C: np.ndarray, bound_dim: Union[int, int32, int64]
     ):
         assert bound_dim >= 0, "bound_dim must be non-negative"
         assert ndim(mu) == 1, "mu must be a 1-dimensional array"
@@ -51,7 +51,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         self.mu[:bound_dim] = mod(self.mu[:bound_dim], 2 * np.pi)
         self.C = C
 
-    def pdf(self, xs: np.ndarray, m: int | int32 | int64 = 3):
+    def pdf(self, xs: np.ndarray, m: Union[int, int32, int64] = 3):
         xs = np.atleast_2d(xs)
         if self.bound_dim > 0:
             xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2 * np.pi)

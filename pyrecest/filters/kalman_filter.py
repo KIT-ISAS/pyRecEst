@@ -8,7 +8,6 @@ from .abstract_euclidean_filter import AbstractEuclideanFilter
 
 
 class KalmanFilter(AbstractEuclideanFilter):
-    @beartype
     def __init__(
         self, initial_state: GaussianDistribution | tuple[np.ndarray, np.ndarray]
     ):
@@ -36,7 +35,6 @@ class KalmanFilter(AbstractEuclideanFilter):
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
 
     @filter_state.setter
-    @beartype
     def filter_state(
         self, new_state: GaussianDistribution | tuple[np.ndarray, np.ndarray]
     ):
@@ -56,7 +54,6 @@ class KalmanFilter(AbstractEuclideanFilter):
                 "new_state must be a GaussianDistribution or a tuple of (mean, covariance)"
             )
 
-    @beartype
     def predict_identity(self, sys_noise_cov: np.ndarray, sys_input: np.ndarray = None):
         """
         Predicts the next state assuming identity transition matrix.
@@ -68,7 +65,6 @@ class KalmanFilter(AbstractEuclideanFilter):
         B = eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
-    @beartype
     def predict_linear(
         self,
         system_matrix: np.ndarray,
@@ -90,7 +86,6 @@ class KalmanFilter(AbstractEuclideanFilter):
         B = eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
-    @beartype
     def update_identity(self, meas_noise: np.ndarray, measurement: np.ndarray):
         """
         Update the filter state with measurement, assuming identity measurement matrix.
@@ -104,7 +99,6 @@ class KalmanFilter(AbstractEuclideanFilter):
             meas_noise=meas_noise,
         )
 
-    @beartype
     def update_linear(
         self,
         measurement: np.ndarray,
@@ -121,7 +115,6 @@ class KalmanFilter(AbstractEuclideanFilter):
         self._filter_state.dim_z = measurement_matrix.shape[0]
         self._filter_state.update(z=measurement, R=meas_noise, H=measurement_matrix)
 
-    @beartype
     def get_point_estimate(self) -> np.ndarray:
         """Returns the mean of the current filter state."""
         return self._filter_state.x

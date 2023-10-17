@@ -17,7 +17,6 @@ class AbstractManifoldSpecificDistribution(ABC):
     Should be inerhited by (abstract) classes limited to specific manifolds.
     """
 
-    @beartype
     def __init__(self, dim: int):
         self._dim = dim
 
@@ -31,7 +30,6 @@ class AbstractManifoldSpecificDistribution(ABC):
         return self._dim
 
     @dim.setter
-    @beartype
     def dim(self, value: int):
         """Set dimension of the manifold. Must be a positive integer or None."""
         if value <= 0:
@@ -45,7 +43,6 @@ class AbstractManifoldSpecificDistribution(ABC):
         pass
 
     @abstractmethod
-    @beartype
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         pass
 

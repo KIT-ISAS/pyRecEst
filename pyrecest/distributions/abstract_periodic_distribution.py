@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from abc import abstractmethod
@@ -11,11 +12,9 @@ from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribut
 class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
     """Abstract class for a distributions on periodic manifolds."""
 
-    @beartype
-    def __init__(self, dim: int | int32 | int64):
+    def __init__(self, dim: Union[int, int32, int64]):
         super().__init__(dim=dim)
 
-    @beartype
     def mean(self) -> np.ndarray:
         """
         Convenient access to mean_direction to have a consistent interface

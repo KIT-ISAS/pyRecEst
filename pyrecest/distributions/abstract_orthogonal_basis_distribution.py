@@ -51,7 +51,6 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         result = copy.deepcopy(self)
         return result.normalize_in_place()
 
-    @beartype
     def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
         """
         Calculates probability density function for the given input.

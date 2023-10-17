@@ -235,7 +235,6 @@ def get_plot_style_for_filter(filter_name):
     return color, style_marker, style_line
 
 
-@beartype
 def long_name_to_short_name(short_name: str) -> str:
     """Get short name from long name."""
 

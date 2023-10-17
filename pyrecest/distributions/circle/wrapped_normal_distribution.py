@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import where
 from pyrecest.backend import squeeze
 from pyrecest.backend import sqrt
@@ -32,7 +33,6 @@ class WrappedNormalDistribution(
 
     MAX_SIGMA_BEFORE_UNIFORM = 10
 
-    @beartype
     def __init__(
         self,
         mu: np.number | numbers.Real | np.ndarray,
@@ -48,7 +48,6 @@ class WrappedNormalDistribution(
     def sigma(self):
         return sqrt(self.C)
 
-    @beartype
     def pdf(self, xs: np.ndarray | np.number | numbers.Real):
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
@@ -92,12 +91,11 @@ class WrappedNormalDistribution(
 
         return result.squeeze()
 
-    @beartype
     def cdf(
         self,
         xs: np.ndarray,
         startingPoint: float = 0,
-        n_wraps: int | int32 | int64 = 10,
+        n_wraps: Union[int, int32, int64] = 10,
     ) -> np.ndarray:
         startingPoint = mod(startingPoint, 2 * np.pi)
         xs = mod(xs, 2 * np.pi)
@@ -123,9 +121,8 @@ class WrappedNormalDistribution(
         val = where(xs < startingPoint, 1 + val, val)
         return squeeze(val)
 
-    @beartype
     def trigonometric_moment(
-        self, n: int | int32 | int64
+        self, n: Union[int, int32, int64]
     ) -> complex | np.ndarray:
         return exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
@@ -141,11 +138,9 @@ class WrappedNormalDistribution(
         wn = vm.to_wn()
         return wn
 
-    @beartype
-    def sample(self, n: int | int32 | int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
         return mod(self.mu + self.sigma * np.random.randn(1, n), 2 * np.pi)
 
-    @beartype
     def shift(self, shift_by):
         assert np.isscalar(shift_by)
         return WrappedNormalDistribution(self.mu + shift_by, self.sigma)

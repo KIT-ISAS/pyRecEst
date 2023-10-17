@@ -22,7 +22,6 @@ from .bingham_distribution import BinghamDistribution
 class WatsonDistribution(AbstractHypersphericalDistribution):
     EPSILON = 1e-6
 
-    @beartype
     def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
         """
         Initializes a new instance of the WatsonDistribution class.
@@ -43,7 +42,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             / (2 * mpmath.pi ** ((self.dim + 1) / 2))
             / mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
         )
-        self.C = float64(C_mpf)
+        self.C = array(float(C_mpf))
 
     def pdf(self, xs):
         """

@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sum
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -27,7 +28,6 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     Circular Fourier Distribution. This is based on my implementation for pytorch in pyDirectional
     """
 
-    @beartype
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -67,7 +67,6 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         self.multiplied_by_n = multiplied_by_n
         self.transformation = transformation
 
-    @beartype
     def __sub__(
         self, other: "CircularFourierDistribution"
     ) -> "CircularFourierDistribution":
@@ -103,7 +102,6 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         )  # The number should not change! We store it if we use a complex one now and set it to None if we falsely believe we know the number (it is not clear for complex ones)
         return fdNew
 
-    @beartype
     def pdf(self, xs: np.ndarray) -> np.ndarray:
         assert xs.ndim <= 2, "xs should have at most 2 dimensions."
         xs = xs.reshape(-1, 1)
@@ -230,7 +228,6 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         plt.plot(xs, p, "r+")
         plt.show()
 
-    @beartype
     def plot(self, resolution=128, **kwargs):
         xs = linspace(0, 2 * np.pi, resolution)
 
@@ -290,10 +287,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         return full_c
 
     @staticmethod
-    @beartype
     def from_distribution(
         distribution: AbstractCircularDistribution,
-        n: int | int32 | int64,
+        n: Union[int, int32, int64],
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
@@ -323,7 +319,6 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         return fd
 
     @staticmethod
-    @beartype
     def from_function_values(
         fvals: np.ndarray,
         transformation: str = "sqrt",

@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sum
 from pyrecest.backend import float64
 from pyrecest.backend import int64
@@ -8,7 +9,7 @@ from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 
 
 class CircularParticleFilter(HypertoroidalParticleFilter):
-    def __init__(self, n_particles: int | int32 | int64) -> None:
+    def __init__(self, n_particles: Union[int, int32, int64]) -> None:
         """
         Initialize the CircularParticleFilter.
 

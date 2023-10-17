@@ -15,11 +15,9 @@ from ..hypertorus.abstract_hypertoroidal_distribution import (
 
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
-    @beartype
     def __init__(self):
         AbstractHypertoroidalDistribution.__init__(self, dim=1)
 
-    @beartype
     def cdf_numerical(self, xs: np.ndarray, starting_point: float = 0.0) -> np.ndarray:
         """
         Calculates the cumulative distribution function.
@@ -35,7 +33,6 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
         return array([self._cdf_numerical_single(x, starting_point) for x in xs])
 
-    @beartype
     def _cdf_numerical_single(
         self,
         x: np.number | numbers.Real,

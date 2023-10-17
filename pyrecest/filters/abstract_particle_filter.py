@@ -21,7 +21,6 @@ class AbstractParticleFilter(AbstractFilterType):
     def predict_identity(self, noise_distribution):
         self.predict_nonlinear(f=lambda x: x, noise_distribution=noise_distribution)
 
-    @beartype
     def predict_nonlinear(
         self,
         f: Callable,
@@ -62,7 +61,6 @@ class AbstractParticleFilter(AbstractFilterType):
 
         self.filter_state.d = d
 
-    @beartype
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True
     ):
@@ -94,7 +92,6 @@ class AbstractParticleFilter(AbstractFilterType):
             1 / self.filter_state.w.shape[0] * ones_like(self.filter_state.w)
         )
 
-    @beartype
     def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
         likelihood_val = sum(
             likelihood.pdf(self.filter_state.d) * self.filter_state.w

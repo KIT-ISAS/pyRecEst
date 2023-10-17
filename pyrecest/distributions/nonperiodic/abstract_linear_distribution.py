@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import squeeze
 from pyrecest.backend import sqrt
 from pyrecest.backend import reshape
@@ -58,9 +59,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def sample_metropolis_hastings(
         self,
-        n: int | int32 | int64,
-        burn_in: int | int32 | int64 = 10,
-        skipping: int | int32 | int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:

@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
 from pyrecest.backend import cos
@@ -21,8 +22,8 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         def f(
             x: float,
             y: float,
-            i: int | int32 | int64,
-            j: int | int32 | int64,
+            i: Union[int, int32, int64],
+            j: Union[int, int32, int64],
         ) -> float:
             funcs = [
                 lambda x, _: cos(x) - m[0],

@@ -15,7 +15,6 @@ from .linear_mixture import LinearMixture
 
 
 class GaussianMixture(LinearMixture, AbstractLinearDistribution):
-    @beartype
     def __init__(self, dists: list[GaussianDistribution], w: np.ndarray):
         AbstractLinearDistribution.__init__(self, dim=dists[0].dim)
         LinearMixture.__init__(self, dists, w)
@@ -24,7 +23,6 @@ class GaussianMixture(LinearMixture, AbstractLinearDistribution):
         gauss_array = self.dists
         return dot(array([g.mu for g in gauss_array]), self.w)
 
-    @beartype
     def set_mean(self, new_mean: np.ndarray | numbers.Real):
         mean_offset = new_mean - self.mean()
         for dist in self.dists:

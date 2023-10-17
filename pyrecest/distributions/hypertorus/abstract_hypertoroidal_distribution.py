@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import vstack
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -37,8 +38,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return self.dim
 
     @staticmethod
-    @beartype
-    def integrate_fun_over_domain(f: Callable, dim: int | int32 | int64) -> float:
+    def integrate_fun_over_domain(f: Callable, dim: Union[int, int32, int64]) -> float:
         integration_boundaries = [(0, 2 * np.pi)] * dim
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
             f, dim, integration_boundaries
@@ -72,9 +72,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return shifted_distribution
 
     @staticmethod
-    @beartype
     def integrate_fun_over_domain_part(
-        f: Callable, dim: int | int32 | int64, integration_boundaries
+        f: Callable, dim: Union[int, int32, int64], integration_boundaries
     ) -> float:
         if len(integration_boundaries) != dim:
             raise ValueError(
@@ -99,9 +98,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             lambda *args: self.pdf(array(args)), self.dim, integration_boundaries
         )
 
-    @beartype
     def trigonometric_moment_numerical(
-        self, n: int | int32 | int64
+        self, n: Union[int, int32, int64]
     ) -> np.ndarray:
         """Calculates the complex trignometric moments. Since nquad does not support complex functions,
         the calculation is split up (as used in the alternative representation of trigonometric polonymials
@@ -238,8 +236,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         # Implement the optimization function fminunc equivalent in Python (e.g., using scipy.optimize.minimize)
         raise NotImplementedError("Mode calculation is not implemented")
 
-    @beartype
-    def trigonometric_moment(self, n: int | int32 | int64) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
         return self.trigonometric_moment_numerical(n)
 
     def integrate(self, integration_boundaries=None):
@@ -253,9 +250,9 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     # jscpd:ignore-start
     def sample_metropolis_hastings(
         self,
-        n: int | int32 | int64,
-        burn_in: int | int32 | int64 = 10,
-        skipping: int | int32 | int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:
@@ -275,7 +272,6 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return s
 
     @staticmethod
-    @beartype
     def setup_axis_circular(axis_name: str = "x", ax=plt.gca()) -> None:
         ticks = [0, np.pi, 2 * np.pi]
         tick_labels = ["0", r"$\pi$", r"$2\pi$"]

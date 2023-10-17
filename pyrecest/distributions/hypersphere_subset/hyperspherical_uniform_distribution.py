@@ -1,3 +1,4 @@
+from typing import Union
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
 from pyrecest.backend import cos
@@ -16,16 +17,13 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 class HypersphericalUniformDistribution(
     AbstractHypersphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
-    @beartype
-    def __init__(self, dim: int | int32 | int64):
+    def __init__(self, dim: Union[int, int32, int64]):
         AbstractHypersphereSubsetUniformDistribution.__init__(self, dim)
 
-    @beartype
     def pdf(self, xs: np.ndarray):
         return AbstractHypersphereSubsetUniformDistribution.pdf(self, xs)
 
-    @beartype
-    def sample(self, n: int | int32 | int64):
+    def sample(self, n: Union[int, int32, int64]):
         assert isinstance(n, int) and n > 0, "n must be a positive integer"
 
         if self.dim == 2:
