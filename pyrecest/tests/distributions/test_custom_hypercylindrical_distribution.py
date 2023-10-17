@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import linspace
 from pyrecest.backend import eye
 from pyrecest.backend import array
@@ -16,7 +17,7 @@ from pyrecest.distributions.cart_prod.custom_hypercylindrical_distribution impor
 
 class CustomHypercylindricalDistributionTest(unittest.TestCase):
     def setUp(self) -> None:
-        mat = np.random.rand(6, 6)
+        mat = random.rand(6, 6)
         mat = mat @ mat.T
         self.pwn = PartiallyWrappedNormalDistribution(
             array([2, 3, 4, 5, 6, 7]), mat, 3

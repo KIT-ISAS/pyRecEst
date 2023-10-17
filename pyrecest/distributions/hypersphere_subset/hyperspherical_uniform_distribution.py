@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -33,13 +34,13 @@ class HypersphericalUniformDistribution(
                     self.dim + 1,
                 )
             )
-            phi = 2 * np.pi * np.random.rand(n)
-            s[:, 2] = np.random.rand(n) * 2 - 1
+            phi = 2 * np.pi * random.rand(n)
+            s[:, 2] = random.rand(n) * 2 - 1
             r = sqrt(1 - s[:, 2] ** 2)
             s[:, 0] = r * cos(phi)
             s[:, 1] = r * sin(phi)
         else:
-            samples_unnorm = np.random.randn(n, self.dim + 1)
+            samples_unnorm = random.randn(n, self.dim + 1)
             s = samples_unnorm / np.linalg.norm(samples_unnorm, axis=1, keepdims=True)
         return s
 

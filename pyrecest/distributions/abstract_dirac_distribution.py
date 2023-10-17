@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import sum
 from pyrecest.backend import ones
@@ -80,7 +81,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
-        ids = np.random.choice(np.size(self.w), size=n, p=self.w)
+        ids = random.choice(np.size(self.w), size=n, p=self.w)
         return self.d[ids]
 
     def entropy(self) -> float:

@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import vstack
 from pyrecest.backend import sin
@@ -188,7 +189,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         def fun(s):
             return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
 
-        s0 = np.random.rand(self.dim) * np.pi
+        s0 = random.rand(self.dim) * np.pi
         res = minimize(
             fun,
             s0,

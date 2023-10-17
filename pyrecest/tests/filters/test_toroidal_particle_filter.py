@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import array
 from pyrecest.backend import allclose
 from pyrecest.backend import all
@@ -15,7 +16,7 @@ from pyrecest.filters.toroidal_particle_filter import ToroidalParticleFilter
 
 class ToroidalParticleFilterTest(unittest.TestCase):
     def test_toroidal_particle_filter(self):
-        np.random.seed(0)
+        random.seed(0)
         C = array([[0.7, 0.4], [0.4, 0.6]])
         mu = array([1, 1]) + np.pi / 2
         hwnd = ToroidalWrappedNormalDistribution(mu, C)

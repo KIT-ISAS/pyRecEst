@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import sqrt
 from pyrecest.backend import shape
 from pyrecest.backend import ones
@@ -120,7 +121,7 @@ class TestEvalationBasics(TestEvalationBase):
 
     @parameterized.expand([("boundary",), ("within",)])
     def test_generate_measurements_eot(self, eot_sampling_style: str):
-        np.random.seed(0)
+        random.seed(0)
         simulation_param = {
             "eot": True,
             "intensity_lambda": 0.2,

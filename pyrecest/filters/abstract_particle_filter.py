@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import sum
 from pyrecest.backend import ones_like
 from pyrecest.backend import ones
@@ -54,7 +55,7 @@ class AbstractParticleFilter(AbstractFilterType):
 
         weights = weights / sum(weights)
         n = self.filter_state.w.size
-        noise_ids = np.random.choice(weights.size, n, p=weights)
+        noise_ids = random.choice(weights.size, n, p=weights)
         d = zeros((n, self.filter_state.dim))
         for i in range(n):
             d[i, :] = f(self.filter_state.d[i, :], samples[noise_ids[i]])

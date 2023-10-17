@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import prod
 from pyrecest.backend import ones
@@ -62,7 +63,7 @@ class HypertoroidalUniformDistribution(
         :param n: Sample size
         :returns: Sample of size n
         """
-        return 2 * np.pi * np.random.rand(n, self.dim)
+        return 2 * np.pi * random.rand(n, self.dim)
 
     def shift(self, shift_by) -> "HypertoroidalUniformDistribution":
         """

@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import squeeze
 from pyrecest.backend import int64
 from pyrecest.backend import int32
@@ -90,7 +91,6 @@ class AbstractManifoldSpecificDistribution(ABC):
                 self.input_dim,
             ),
         )
-        s.fill(np.nan)
         x = start_point
         i = 0
         pdfx = self.pdf(x)
@@ -99,7 +99,7 @@ class AbstractManifoldSpecificDistribution(ABC):
             x_new = proposal(x)
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
-            if a.item() > 1 or a.item() > np.random.rand():
+            if a.item() > 1 or a.item() > random.rand(1):
                 s[i, :] = x_new.squeeze()
                 x = x_new
                 pdfx = pdfx_new

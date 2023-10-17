@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import std
 from pyrecest.backend import ones
 from pyrecest.backend import mean
@@ -12,7 +13,7 @@ from pyrecest.sampling.euclidean_sampler import GaussianSampler
 
 class TestGaussianSampler(unittest.TestCase):
     def setUp(self):
-        np.random.seed(0)
+        random.seed(0)
         self.sampler = GaussianSampler()
         self.n_samples = 200
         self.dim = 2

@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import sqrt
 from pyrecest.backend import power
@@ -71,10 +72,10 @@ class EllipsoidalBallUniformDistribution(
         :param n: Number of samples to generate.
         :returns: Generated samples.
         """
-        random_points = np.random.randn(n, self.dim)
+        random_points = random.randn(n, self.dim)
         random_points /= np.linalg.norm(random_points, axis=1, keepdims=True)
 
-        random_radii = np.random.rand(n, 1)
+        random_radii = random.rand(n, 1)
         random_radii = random_radii ** (
             1 / self.dim
         )  # Consider that the ellipsoid surfaces with higher radii are larger

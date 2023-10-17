@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import array
 from pyrecest.backend import zeros
 import unittest
@@ -17,7 +18,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.hwnd = HypertoroidalWNDistribution(self.mu, self.covariance_matrix)
         self.hpf = HypertoroidalParticleFilter(500, 3)
         self.forced_mean = array([1, 2, 3])
-        np.random.seed(self.seed)
+        random.seed(self.seed)
 
     def test_set_state(self):
         self.hpf.set_state(self.hwnd)

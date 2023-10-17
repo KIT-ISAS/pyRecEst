@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import repeat
 from pyrecest.backend import array
 import unittest
@@ -18,7 +19,7 @@ class TestANEES(unittest.TestCase):
         samples = []
 
         for i in range(len(self.groundtruths)):
-            samples_for_i = np.random.multivariate_normal(
+            samples_for_i = random.multivariate_normal(
                 mean=self.groundtruths[i],
                 cov=self.uncertainties[i],
                 size=self.num_samples,

@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import squeeze
 from pyrecest.backend import sqrt
@@ -68,7 +69,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         if proposal is None:
 
             def proposal(x):
-                return x + np.random.randn(self.dim)
+                return x + random.randn(self.dim)
 
         if start_point is None:
             start_point = (

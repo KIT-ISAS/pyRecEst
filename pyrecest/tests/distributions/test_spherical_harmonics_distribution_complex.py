@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
 from pyrecest.backend import ones_like
@@ -29,8 +30,8 @@ from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_
 
 class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def setUp(self):
-        np.random.seed(1)
-        coeff_rand = np.random.rand(9)
+        random.seed(1)
+        coeff_rand = random.rand(9)
         self.unnormalized_coeffs = array(
             [
                 [coeff_rand[0], np.nan, np.nan, np.nan, np.nan],
@@ -62,8 +63,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
         # Enforce unnormalized coefficients and compare ratio
         phi, theta = (
-            np.random.rand(1, 10) * 2 * np.pi,
-            np.random.rand(1, 10) * np.pi - np.pi / 2,
+            random.rand(1, 10) * 2 * np.pi,
+            random.rand(1, 10) * np.pi - np.pi / 2,
         )
         x, y, z = array(
             [cos(theta) * cos(phi), cos(theta) * sin(phi), sin(theta)]
@@ -82,8 +83,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     @parameterized.expand([("identity",), ("sqrt",)])
     def test_integral_analytical(self, transformation):
         """Test if the analytical integral is equal to the numerical integral"""
-        np.random.seed(10)
-        coeff_rand = np.random.rand(1, 9)
+        random.seed(10)
+        coeff_rand = random.rand(1, 9)
         unnormalized_coeffs = array(
             [
                 [coeff_rand[0, 0], np.nan, np.nan, np.nan, np.nan],
@@ -135,7 +136,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd5 = shd3.truncate(3)
         self.assertEqual(shd5.coeff_mat.shape, (4, 7))
 
-        phi, theta = np.random.rand(10) * 2 * np.pi, np.random.rand(10) * np.pi
+        phi, theta = random.rand(10) * 2 * np.pi, random.rand(10) * np.pi
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
         self.assertTrue(
             allclose(

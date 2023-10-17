@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import where
 from pyrecest.backend import squeeze
@@ -139,7 +140,7 @@ class WrappedNormalDistribution(
         return wn
 
     def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
-        return mod(self.mu + self.sigma * np.random.randn(1, n), 2 * np.pi)
+        return mod(self.mu + self.sigma * random.randn(1, n), 2 * np.pi)
 
     def shift(self, shift_by):
         assert np.isscalar(shift_by)

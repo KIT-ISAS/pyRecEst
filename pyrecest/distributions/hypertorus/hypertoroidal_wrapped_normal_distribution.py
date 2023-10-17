@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import reshape
 from pyrecest.backend import mod
@@ -86,7 +87,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         ):
             raise ValueError("n must be a positive integer")
 
-        s = np.random.multivariate_normal(self.mu, self.C, n)
+        s = random.multivariate_normal(self.mu, self.C, n)
         s = mod(s, 2 * np.pi)  # wrap the samples
         return s
 

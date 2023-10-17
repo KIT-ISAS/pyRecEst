@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import array
 from pyrecest.backend import arange
 from pyrecest.backend import allclose
@@ -41,7 +42,7 @@ class CircularParticleFilterTest(unittest.TestCase):
     def test_sampling(self):
         positions = arange(0, 1.1, 0.1)
         dist3 = CircularDiracDistribution(positions)
-        np.random.seed(0)
+        random.seed(0)
         num_samples = 20
         samples = dist3.sample(num_samples)
         self.assertEqual(samples.shape, (num_samples,))
@@ -84,7 +85,7 @@ class CircularParticleFilterTest(unittest.TestCase):
 
     def test_update(self):
         # test update
-        np.random.seed(0)
+        random.seed(0)
         self.filter.set_state(self.dist)
 
         def h(x):
@@ -131,7 +132,7 @@ class CircularParticleFilterTest(unittest.TestCase):
             self.assertEqual(estimation.d[i], 0.5)
 
         # test update with single parameter likelihood
-        np.random.seed(0)
+        random.seed(0)
         self.filter.filter_state = self.dist
         wn = WrappedNormalDistribution(1.3, 0.8)
 

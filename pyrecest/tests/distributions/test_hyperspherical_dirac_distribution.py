@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import sum
 from pyrecest.backend import sqrt
 from pyrecest.backend import ones
@@ -63,7 +64,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(twdNew.w, wNew / sum(wNew))
 
     def test_from_distribution(self):
-        np.random.seed(0)
+        random.seed(0)
         vmf = VonMisesFisherDistribution(array([1, 1, 1]) / sqrt(3), 1)
         dirac_dist = HypersphericalDiracDistribution.from_distribution(vmf, 100000)
         np.testing.assert_almost_equal(

@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import sum
 from pyrecest.backend import ones_like
 from pyrecest.backend import ones
@@ -90,7 +91,7 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         np.testing.assert_array_equal(pwd_rew3.w, w_new / sum(w_new))
 
     def test_sampling(self):
-        np.random.seed(0)
+        random.seed(0)
         n = 10
         s = self.pwd.sample(n)
         assert s.shape == (n, 3)
@@ -99,7 +100,7 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         self.assertTrue(all(s < 2 * np.pi * ones_like(s)))
 
     def test_from_distribution(self):
-        random_gen = np.random.default_rng(0)  # Could fail randomly otherwise
+        random_gen = random.default_rng(0)  # Could fail randomly otherwise
         df = 4
         scale = eye(4)
         C = wishart.rvs(df, scale, random_state=random_gen)

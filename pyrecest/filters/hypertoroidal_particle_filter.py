@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import tile
 from pyrecest.backend import sum
@@ -83,7 +84,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
 
         weights /= sum(weights)
         n = self.filter_state.shape[0]
-        noise_ids = np.random.choice(arange(weights.size), size=n, p=weights)
+        noise_ids = random.choice(arange(weights.size), size=n, p=weights)
         d = zeros_like(self.filter_state)
         for i in range(n):
             d[i, :] = f(self.filter_state[i, :], samples[noise_ids[i, :]])

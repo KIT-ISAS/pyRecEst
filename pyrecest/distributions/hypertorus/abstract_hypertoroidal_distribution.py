@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import vstack
 from pyrecest.backend import sqrt
@@ -260,7 +261,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         if proposal is None:
 
             def proposal(x):
-                return mod(x + np.random.randn(self.dim), 2 * np.pi)
+                return mod(x + random.randn(self.dim), 2 * np.pi)
 
         if start_point is None:
             start_point = self.mean_direction()

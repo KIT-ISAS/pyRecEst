@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import vstack
 from pyrecest.backend import ones
@@ -146,7 +147,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
         assert self.dim == 2, "Currently only implemented for 2D hemispheres."
 
-        s0 = np.random.rand(self.dim) * np.pi
+        s0 = random.rand(self.dim) * np.pi
         result = minimize(
             objective_function_2d,
             s0,

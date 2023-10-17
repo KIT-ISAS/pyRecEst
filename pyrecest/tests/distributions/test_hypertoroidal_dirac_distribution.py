@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import sum
 from pyrecest.backend import squeeze
 from pyrecest.backend import outer
@@ -97,10 +98,10 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
 
     @staticmethod
     def get_pseudorandom_hypertoroidal_wd(dim=2):
-        np.random.seed(0)
+        random.seed(0)
         n = 20
-        d = 2 * np.pi * np.random.rand(n, dim)
-        w = np.random.rand(n)
+        d = 2 * np.pi * random.rand(n, dim)
+        w = random.rand(n)
         w = w / sum(w)
         hwd = HypertoroidalDiracDistribution(d, w)
         return hwd

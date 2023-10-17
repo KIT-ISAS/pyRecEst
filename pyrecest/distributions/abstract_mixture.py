@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import sum
 from pyrecest.backend import ones
@@ -65,7 +66,7 @@ class AbstractMixture(AbstractDistributionType):
         return self.dists[0].input_dim
 
     def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
-        d = np.random.choice(len(self.w), size=n, p=self.w)
+        d = random.choice(len(self.w), size=n, p=self.w)
 
         occurrences = np.bincount(d, minlength=len(self.dists))
         count = 0

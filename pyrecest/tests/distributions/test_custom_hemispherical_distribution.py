@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import eye
 from pyrecest.backend import array
 from pyrecest.backend import allclose
@@ -27,8 +28,8 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         p = self.custom_hemispherical_distribution.pdf(np.asarray([1, 0, 0]))
         self.assertEqual(p.size, 1, "PDF size mismatch.")
 
-        np.random.seed(10)
-        points = np.random.randn(100, 3)
+        random.seed(10)
+        points = random.randn(100, 3)
         points = points[points[:, 2] >= 0, :]
         points /= np.linalg.norm(points, axis=1, keepdims=True)
 

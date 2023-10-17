@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import sin
 from pyrecest.backend import linspace
 from pyrecest.backend import cos
@@ -29,7 +30,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
             perimeter = self.length
 
             # Generate a random distance along the perimeter
-            distance = np.random.uniform(0, perimeter)
+            distance = random.uniform(0, perimeter)
 
             # Traverse the edges to place the point
             for line in lines:
@@ -46,13 +47,13 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
 
         for i in range(num_points):
             random_point = Point(
-                [np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)]
+                [random.uniform(min_x, max_x), random.uniform(min_y, max_y)]
             )
             while not random_point.within(self):
                 random_point = Point(
                     [
-                        np.random.uniform(min_x, max_x),
-                        np.random.uniform(min_y, max_y),
+                        random.uniform(min_x, max_x),
+                        random.uniform(min_y, max_y),
                     ]
                 )
 

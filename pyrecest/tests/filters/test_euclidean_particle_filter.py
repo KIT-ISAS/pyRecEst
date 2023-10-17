@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import ones
 from pyrecest.backend import mean
 from pyrecest.backend import array
@@ -12,7 +13,7 @@ from pyrecest.filters.euclidean_particle_filter import EuclideanParticleFilter
 
 class EuclideanParticleFilterTest(unittest.TestCase):
     def setUp(self):
-        np.random.seed(42)
+        random.seed(42)
         self.C_prior = array([[0.7, 0.4, 0.2], [0.4, 0.6, 0.1], [0.2, 0.1, 1]])
         self.mu = array([5, 6, 7])
         self.prior = GaussianDistribution(self.mu, self.C_prior)
@@ -39,7 +40,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
 
     def test_predict_nonlinear_nonadditive(self):
         n = 5
-        samples = np.random.rand(n, 3)
+        samples = random.rand(n, 3)
         weights = ones(n) / n
 
         def f(x, w):

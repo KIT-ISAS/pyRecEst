@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import ones
 from pyrecest.backend import allclose
 from pyrecest.backend import all
@@ -21,10 +22,10 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(hud.integrate(), 1, delta=1e-6)
 
     def test_pdf(self):
-        np.random.seed(0)
+        random.seed(0)
         for dim in range(2, 5):
             hud = HypersphericalUniformDistribution(dim)
-            x = np.random.rand(dim + 1)
+            x = random.rand(dim + 1)
             x = x / np.linalg.norm(x)
             self.assertAlmostEqual(
                 hud.pdf(x),

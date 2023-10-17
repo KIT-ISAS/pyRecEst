@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import empty
 import numpy as np
 
@@ -32,7 +33,7 @@ def generate_simulated_scenarios(
     )
 
     for run, seed in enumerate(simulation_params["all_seeds"]):
-        np.random.seed(seed)
+        random.seed(seed)
         groundtruths[run, :] = generate_groundtruth(simulation_params)
         measurements[run, :] = generate_measurements(
             groundtruths[run, :], simulation_params

@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import tile
 from pyrecest.backend import sum
@@ -129,7 +130,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             n (int): number of points to sample
         """
         assert n > 0, "n must be positive"
-        s = np.random.multivariate_normal(self.mu, self.C, n)
+        s = random.multivariate_normal(self.mu, self.C, n)
         s[:, : self.bound_dim] = mod(s[:, : self.bound_dim], 2 * np.pi)  # noqa: E203
         return s
 

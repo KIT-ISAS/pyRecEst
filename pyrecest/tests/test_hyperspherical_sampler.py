@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import prod
 from pyrecest.backend import allclose
 from pyrecest.backend import all
@@ -122,7 +123,7 @@ class TestHopfConversion(unittest.TestCase):
     def test_conversion(self):
         # Generate a sample matrix of size (n, 4) containing unit vectors.
         n = 100  # sample size
-        random_vectors = np.random.randn(n, 4)
+        random_vectors = random.randn(n, 4)
         unit_vectors = (
             random_vectors / np.linalg.norm(random_vectors, axis=1)[:, np.newaxis]
         )

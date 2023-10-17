@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import ndim
 from pyrecest.backend import dot
 import copy
@@ -85,7 +86,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def sample(self, n):
-        return np.random.multivariate_normal(self.mu, self.C, n)
+        return random.multivariate_normal(self.mu, self.C, n)
 
     @staticmethod
     def from_distribution(distribution):

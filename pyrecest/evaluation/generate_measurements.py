@@ -1,3 +1,4 @@
+from pyrecest.backend import random
 from pyrecest.backend import tile
 from pyrecest.backend import sum
 from pyrecest.backend import squeeze
@@ -116,7 +117,7 @@ def generate_measurements(groundtruth, simulation_config):
             simulation_config["clutter_rate"] == 0
         ), "Clutter currently not supported."
 
-        n_observations = np.random.binomial(
+        n_observations = random.binomial(
             1,
             simulation_config["detection_probability"],
             (simulation_config["n_timesteps"], simulation_config["n_targets"]),
