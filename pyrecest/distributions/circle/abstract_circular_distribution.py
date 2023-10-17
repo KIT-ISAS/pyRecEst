@@ -44,9 +44,9 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         x_mod = mod(x, 2 * pi)
 
         if x_mod < starting_point_mod:
-            return 1 - self.integrate_numerically([x_mod, starting_point_mod])
+            return 1 - self.integrate_numerically(array([x_mod, starting_point_mod]))
 
-        return self.integrate_numerically([starting_point_mod, x_mod])
+        return self.integrate_numerically(array([starting_point_mod, x_mod]))
 
     def to_vm(self):
         """
