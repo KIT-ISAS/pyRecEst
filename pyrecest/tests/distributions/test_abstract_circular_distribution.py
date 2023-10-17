@@ -2,6 +2,7 @@ from math import pi
 from pyrecest.backend import arange
 from pyrecest.backend import allclose
 from pyrecest.backend import all
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -67,8 +68,8 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                 with self.subTest(distribution=dist, interval=interval):
                     self.assertTrue(
                         allclose(
-                            dist.integrate_numerically(interval),
-                            dist.integrate(interval),
+                            dist.integrate_numerically(array(interval)),
+                            dist.integrate(array(interval)),
                             rtol=1e-10,
                         )
                     )
