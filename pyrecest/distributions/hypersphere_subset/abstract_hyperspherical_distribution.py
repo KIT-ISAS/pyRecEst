@@ -163,7 +163,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return vstack(
             (
                 zeros(dim),
-                concatenate(([2 * pi], pi * ones(dim - 1))),
+                concatenate((array([2 * pi]), pi * ones(dim - 1))),
             )
         ).T
 
