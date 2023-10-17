@@ -38,7 +38,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     ):
         assert bound_dim >= 0, "bound_dim must be non-negative"
         assert ndim(mu) == 1, "mu must be a 1-dimensional array"
-        assert shape(C) == (np.size(mu), np.size(mu)), "C must match size of mu"
+        assert C.shape == (mu.shape[-1], mu.shape[-1]), "C must match size of mu"
         assert allclose(C, C.T), "C must be symmetric"
         assert all(linalg.eigvals(C) > 0), "C must be positive definite"
         assert bound_dim <= np.size(mu)
