@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import mod
 from pyrecest.backend import zeros
 import numpy as np
@@ -29,7 +30,7 @@ class CustomHypertoroidalDistribution(
 
     def pdf(self, xs):
         return AbstractCustomDistribution.pdf(
-            self, mod(xs + self.shift_by, 2 * np.pi)
+            self, mod(xs + self.shift_by, 2 * pi)
         )
 
     def to_custom_circular(self):

@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import linspace
 from pyrecest.backend import exp
 from pyrecest.backend import arange
@@ -30,7 +31,7 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
             )
 
         def pdftemp(x):
-            return sum(laplace(z) for z in x + 2 * np.pi * arange(-20, 21))
+            return sum(laplace(z) for z in x + 2 * pi * arange(-20, 21))
 
         for x in [0, 1, 2, 3, 4]:
             np.testing.assert_allclose(self.wl.pdf(x), pdftemp(x), rtol=1e-10)
@@ -39,7 +40,7 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
         np.testing.assert_allclose(self.wl.integrate(), 1, rtol=1e-10)
         np.testing.assert_allclose(self.wl.integrate_numerically(), 1, rtol=1e-10)
         np.testing.assert_allclose(
-            self.wl.integrate([0, np.pi]) + self.wl.integrate([np.pi, 2 * np.pi]),
+            self.wl.integrate([0, pi]) + self.wl.integrate([pi, 2 * pi]),
             1,
             rtol=1e-10,
         )
@@ -54,8 +55,8 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
 
     def test_periodicity(self):
         np.testing.assert_allclose(
-            self.wl.pdf(linspace(-2 * np.pi, 0, 100)),
-            self.wl.pdf(linspace(0, 2 * np.pi, 100)),
+            self.wl.pdf(linspace(-2 * pi, 0, 100)),
+            self.wl.pdf(linspace(0, 2 * pi, 100)),
             rtol=1e-10,
         )
 

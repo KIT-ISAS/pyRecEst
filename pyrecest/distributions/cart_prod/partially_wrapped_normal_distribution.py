@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import tile
@@ -42,25 +43,25 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         assert bound_dim <= np.size(mu)
         assert ndim(mu) == 1
         if bound_dim > 0:  # This decreases the need for many wrappings
-            mu[:bound_dim] = mod(mu[:bound_dim], 2 * np.pi)
+            mu[:bound_dim] = mod(mu[:bound_dim], 2 * pi)
 
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim=bound_dim, lin_dim=np.size(mu) - bound_dim
         )
 
         self.mu = mu
-        self.mu[:bound_dim] = mod(self.mu[:bound_dim], 2 * np.pi)
+        self.mu[:bound_dim] = mod(self.mu[:bound_dim], 2 * pi)
         self.C = C
 
     def pdf(self, xs: np.ndarray, m: Union[int, int32, int64] = 3):
         xs = np.atleast_2d(xs)
         if self.bound_dim > 0:
-            xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2 * np.pi)
+            xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2 * pi)
 
         assert xs.shape[-1] == self.input_dim
 
         # generate multiples for wrapping
-        multiples = array(range(-m, m + 1)) * 2 * np.pi
+        multiples = array(range(-m, m + 1)) * 2 * pi
 
         # create meshgrid for all combinations of multiples
         mesh = array(meshgrid(*[multiples] * self.bound_dim)).reshape(
@@ -131,7 +132,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         """
         assert n > 0, "n must be positive"
         s = random.multivariate_normal(self.mu, self.C, n)
-        s[:, : self.bound_dim] = mod(s[:, : self.bound_dim], 2 * np.pi)  # noqa: E203
+        s[:, : self.bound_dim] = mod(s[:, : self.bound_dim], 2 * pi)  # noqa: E203
         return s
 
     def to_gaussian(self):

@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sin
 from pyrecest.backend import exp
 from pyrecest.backend import cos
@@ -59,7 +60,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
             (array([[5, 1], [6, 3]]),),
             (
                 np.column_stack(
-                    (arange(0, 2 * np.pi, 0.1), arange(1 * np.pi, 3 * np.pi, 0.1))
+                    (arange(0, 2 * pi, 0.1), arange(1 * pi, 3 * pi, 0.1))
                 ),
             ),
         ]

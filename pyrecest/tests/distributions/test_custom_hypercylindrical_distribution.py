@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import linspace
 from pyrecest.backend import eye
@@ -48,7 +49,7 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
     def test_condition_on_linear(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_linear([2, 1])
 
-        x = linspace(0, 2 * np.pi, 100)
+        x = linspace(0, 2 * pi, 100)
         np.testing.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     def test_condition_on_periodic(self):

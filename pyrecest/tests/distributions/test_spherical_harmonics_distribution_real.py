@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sqrt
 from pyrecest.backend import ones_like
@@ -55,7 +56,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [0, 0, 0, np.nan, np.nan],
                     [0, 0, 0, 0, 0],
                 ],
-                lambda x, _, __: ones_like(x) * sqrt(1 / (4 * np.pi)),
+                lambda x, _, __: ones_like(x) * sqrt(1 / (4 * pi)),
             ),
             (
                 "l1mneg1",
@@ -64,7 +65,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [1, 0, 0, np.nan, np.nan],
                     [0, 0, 0, 0, 0],
                 ],
-                lambda _, y, __: sqrt(3 / (4 * np.pi)) * y,
+                lambda _, y, __: sqrt(3 / (4 * pi)) * y,
             ),
             (
                 "l1_m0",
@@ -73,7 +74,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [0, 1, 0, np.nan, np.nan],
                     [0, 0, 0, 0, 0],
                 ],
-                lambda _, __, z: sqrt(3 / (4 * np.pi)) * z,
+                lambda _, __, z: sqrt(3 / (4 * pi)) * z,
             ),
             (
                 "l1_m1",
@@ -82,7 +83,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [0, 0, 1, np.nan, np.nan],
                     [0, 0, 0, 0, 0],
                 ],
-                lambda x, _, __: sqrt(3 / (4 * np.pi)) * x,
+                lambda x, _, __: sqrt(3 / (4 * pi)) * x,
             ),
             (
                 "l2_mneg2",
@@ -91,7 +92,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [0, 0, 0, np.nan, np.nan],
                     [1, 0, 0, 0, 0],
                 ],
-                lambda x, y, __: 1 / 2 * sqrt(15 / np.pi) * x * y,
+                lambda x, y, __: 1 / 2 * sqrt(15 / pi) * x * y,
             ),
             (
                 "l2_mneg1",
@@ -100,7 +101,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [0, 0, 0, np.nan, np.nan],
                     [0, 1, 0, 0, 0],
                 ],
-                lambda _, y, z: 1 / 2 * sqrt(15 / np.pi) * y * z,
+                lambda _, y, z: 1 / 2 * sqrt(15 / pi) * y * z,
             ),
             (
                 "l2_m0",
@@ -111,7 +112,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                 ],
                 lambda x, y, z: 1
                 / 4
-                * sqrt(5 / np.pi)
+                * sqrt(5 / pi)
                 * (2 * z**2 - x**2 - y**2),
             ),
             (
@@ -121,7 +122,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [0, 0, 0, np.nan, np.nan],
                     [0, 0, 0, 1, 0],
                 ],
-                lambda x, _, z: 1 / 2 * sqrt(15 / np.pi) * x * z,
+                lambda x, _, z: 1 / 2 * sqrt(15 / pi) * x * z,
             ),
             (
                 "l2_m2",
@@ -130,13 +131,13 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     [0, 0, 0, np.nan, np.nan],
                     [0, 0, 0, 0, 1],
                 ],
-                lambda x, y, _: 1 / 4 * sqrt(15 / np.pi) * (x**2 - y**2),
+                lambda x, y, _: 1 / 4 * sqrt(15 / pi) * (x**2 - y**2),
             ),
         ]  # jscpd:ignore-end
     )
     def test_basis_function(self, name, coeff_mat, result_func):
         random.seed(10)
-        shd = SphericalHarmonicsDistributionReal(1 / sqrt(4 * np.pi))
+        shd = SphericalHarmonicsDistributionReal(1 / sqrt(4 * pi))
         shd.coeff_mat = array(coeff_mat)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)
         np.testing.assert_allclose(
@@ -148,8 +149,8 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
     @staticmethod
     def _gen_naive_grid(n_per_dim):
-        phi = random.rand(n_per_dim) * 2 * np.pi
-        theta = random.rand(n_per_dim) * np.pi - np.pi / 2
+        phi = random.rand(n_per_dim) * 2 * pi
+        theta = random.rand(n_per_dim) * pi - pi / 2
         return AbstractSphericalDistribution.sph_to_cart(phi, theta)
 
     @parameterized.expand(
@@ -328,8 +329,8 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         rshd = SphericalHarmonicsDistributionReal(coeff_mat)
         cshd = rshd.to_spherical_harmonics_distribution_complex()
         phi_to_test, theta_to_test = (
-            random.rand(10) * 2 * np.pi,
-            random.rand(10) * np.pi - np.pi / 2,
+            random.rand(10) * 2 * pi,
+            random.rand(10) * pi - pi / 2,
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi_to_test, theta_to_test)
         np.testing.assert_allclose(

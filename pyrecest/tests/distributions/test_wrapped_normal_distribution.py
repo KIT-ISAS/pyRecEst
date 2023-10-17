@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sum
 from pyrecest.backend import sqrt
 from pyrecest.backend import ones_like
@@ -28,9 +29,9 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         def approx_with_wrapping(x):
             k = arange(-20, 21)
             total = sum(
-                exp(-((x - self.mu + 2 * np.pi * k) ** 2) / (2 * self.sigma**2))
+                exp(-((x - self.mu + 2 * pi * k) ** 2) / (2 * self.sigma**2))
             )
-            return 1 / sqrt(2 * np.pi) / self.sigma * total
+            return 1 / sqrt(2 * pi) / self.sigma * total
 
         test_points = [self.mu, self.mu - 1, self.mu + 2]
         for point in test_points:
@@ -54,7 +55,7 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         """
         wn_large_sigma = WrappedNormalDistribution(0, 100)
         x = arange(0, 7)
-        fx = ones_like(x) / (2 * np.pi)
+        fx = ones_like(x) / (2 * pi)
         self.assertTrue(allclose(wn_large_sigma.pdf(x), fx, rtol=1e-10))
 
 

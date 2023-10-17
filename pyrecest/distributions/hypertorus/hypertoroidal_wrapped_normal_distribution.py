@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import reshape
@@ -39,7 +40,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
             np.size(C) == np.size(mu) or np.size(mu) == C.shape[1]
         ), "mu must be dim x 1"
 
-        self.mu = mod(mu, 2 * np.pi)
+        self.mu = mod(mu, 2 * pi)
         self.C = C
 
     def pdf(self, xs: np.ndarray, m: Union[int, int32, int64] = 3) -> np.ndarray:
@@ -53,7 +54,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         xs = reshape(xs, (-1, self.dim))
 
         # Generate all combinations of offsets for each dimension
-        offsets = [arange(-m, m + 1) * 2 * np.pi for _ in range(self.dim)]
+        offsets = [arange(-m, m + 1) * 2 * pi for _ in range(self.dim)]
         offset_combinations = array(meshgrid(*offsets)).T.reshape(-1, self.dim)
 
         # Calculate the PDF values by considering all combinations of offsets
@@ -77,7 +78,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         assert shift_by.shape == (self.dim,)
 
         hd = self
-        hd.mu = mod(self.mu + shift_by, 2 * np.pi)
+        hd.mu = mod(self.mu + shift_by, 2 * pi)
         return hd
 
     def sample(self, n):
@@ -88,12 +89,12 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
             raise ValueError("n must be a positive integer")
 
         s = random.multivariate_normal(self.mu, self.C, n)
-        s = mod(s, 2 * np.pi)  # wrap the samples
+        s = mod(s, 2 * pi)  # wrap the samples
         return s
 
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
         assert self.dim == other.dim, "Dimensions of the two distributions must match"
-        mu_ = (self.mu + other.mu) % (2 * np.pi)
+        mu_ = (self.mu + other.mu) % (2 * pi)
         C_ = self.C + other.C
         dist_result = self.__class__(mu_, C_)
         return dist_result

@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import where
@@ -61,25 +62,25 @@ class WrappedNormalDistribution(
 
         # check if sigma is large and return uniform distribution in this case
         if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
-            result[:] = 1.0 / (2 * np.pi)
+            result[:] = 1.0 / (2 * pi)
             return result
 
-        x = mod(xs, 2 * np.pi)
-        x[x < 0] += 2 * np.pi
+        x = mod(xs, 2 * pi)
+        x[x < 0] += 2 * pi
         x -= self.mu
 
         max_iterations = 1000
 
         tmp = -1.0 / (2 * self.sigma**2)
-        nc = 1 / sqrt(2 * np.pi) / self.sigma
+        nc = 1 / sqrt(2 * pi) / self.sigma
 
         for i in range(n_inputs):
             old_result = 0
             result[i] = exp(x[i] * x[i] * tmp)
 
             for k in range(1, max_iterations + 1):
-                xp = x[i] + 2 * np.pi * k
-                xm = x[i] - 2 * np.pi * k
+                xp = x[i] + 2 * pi * k
+                xm = x[i] - 2 * pi * k
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
                 old_result = result[i]
@@ -98,8 +99,8 @@ class WrappedNormalDistribution(
         startingPoint: float = 0,
         n_wraps: Union[int, int32, int64] = 10,
     ) -> np.ndarray:
-        startingPoint = mod(startingPoint, 2 * np.pi)
-        xs = mod(xs, 2 * np.pi)
+        startingPoint = mod(startingPoint, 2 * pi)
+        xs = mod(xs, 2 * pi)
 
         def ncdf(from_, to):
             return (
@@ -115,8 +116,8 @@ class WrappedNormalDistribution(
         for i in range(1, n_wraps + 1):
             val = (
                 val
-                + ncdf(startingPoint + 2 * np.pi * i, xs + 2 * np.pi * i)
-                + ncdf(startingPoint - 2 * np.pi * i, xs - 2 * np.pi * i)
+                + ncdf(startingPoint + 2 * pi * i, xs + 2 * pi * i)
+                + ncdf(startingPoint - 2 * pi * i, xs - 2 * pi * i)
             )
         # Val should be negative when x < startingPoint
         val = where(xs < startingPoint, 1 + val, val)
@@ -140,7 +141,7 @@ class WrappedNormalDistribution(
         return wn
 
     def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
-        return mod(self.mu + self.sigma * random.randn(1, n), 2 * np.pi)
+        return mod(self.mu + self.sigma * random.randn(1, n), 2 * pi)
 
     def shift(self, shift_by):
         assert np.isscalar(shift_by)
@@ -153,7 +154,7 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def from_moment(m: complex) -> "WrappedNormalDistribution":
-        mu = mod(np.angle(m), 2 * np.pi)
+        mu = mod(np.angle(m), 2 * pi)
         sigma = sqrt(-2 * log(abs(m)))
         return WrappedNormalDistribution(mu, sigma)
 

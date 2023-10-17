@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import ones
 from pyrecest.backend import concatenate
@@ -27,7 +28,7 @@ class TestDiskUniformDistribution(unittest.TestCase):
         np.testing.assert_allclose(
             pdf_values,
             1
-            / np.pi
+            / pi
             * concatenate(
                 (
                     ones(4),

@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import array
 from pyrecest.backend import arange
 import unittest
@@ -24,7 +25,7 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
             summation = 0
             for k in range(-terms, terms + 1):
                 summation += gamma / (
-                    np.pi * (gamma**2 + (x - mu + 2 * np.pi * k) ** 2)
+                    pi * (gamma**2 + (x - mu + 2 * pi * k) ** 2)
                 )
             return summation
 

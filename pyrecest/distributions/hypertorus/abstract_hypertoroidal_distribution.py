@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import vstack
@@ -40,7 +41,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def integrate_fun_over_domain(f: Callable, dim: Union[int, int32, int64]) -> float:
-        integration_boundaries = [(0, 2 * np.pi)] * dim
+        integration_boundaries = [(0, 2 * pi)] * dim
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
             f, dim, integration_boundaries
         )
@@ -65,7 +66,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         # Define the shifted PDF
         def shifted_pdf(xs):
-            return self.pdf(mod(xs + shift_by, 2 * np.pi))
+            return self.pdf(mod(xs + shift_by, 2 * pi))
 
         # Create the shifted distribution
         shifted_distribution = CustomHypertoroidalDistribution(shifted_pdf, self.dim)
@@ -88,7 +89,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     ) -> np.number | numbers.Real:
         if integration_boundaries is None:
             integration_boundaries = vstack(
-                (zeros(self.dim), 2 * np.pi * ones(self.dim))
+                (zeros(self.dim), 2 * pi * ones(self.dim))
             )
 
         integration_boundaries = reshape(integration_boundaries, (2, -1))
@@ -137,7 +138,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return -self.integrate_fun_over_domain(entropy_fun, self.dim)
 
     def get_manifold_size(self):
-        return (2 * np.pi) ** self.dim
+        return (2 * pi) ** self.dim
 
     @staticmethod
     def angular_error(alpha, beta):
@@ -153,14 +154,14 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         """
         assert not isnan(alpha).any() and not isnan(beta).any()
         # Ensure the angles are between 0 and 2*pi
-        alpha = mod(alpha, 2 * np.pi)
-        beta = mod(beta, 2 * np.pi)
+        alpha = mod(alpha, 2 * pi)
+        beta = mod(beta, 2 * pi)
 
         # Calculate the absolute difference
         diff = abs(alpha - beta)
 
         # Calculate the angular error
-        e = np.minimum(diff, 2 * np.pi - diff)
+        e = np.minimum(diff, 2 * pi - diff)
 
         return e
 
@@ -192,14 +193,14 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def plot(self, resolution=128, **kwargs):
         if self.dim == 1:
-            theta = linspace(0, 2 * np.pi, resolution)
+            theta = linspace(0, 2 * pi, resolution)
             f_theta = self.pdf(theta)
             p = plt.plot(theta, f_theta, **kwargs)
             AbstractHypertoroidalDistribution.setup_axis_circular("x")
         elif self.dim == 2:
-            step = 2 * np.pi / resolution
+            step = 2 * pi / resolution
             alpha, beta = meshgrid(
-                arange(0, 2 * np.pi, step), arange(0, 2 * np.pi, step)
+                arange(0, 2 * pi, step), arange(0, 2 * pi, step)
             )
             f = self.pdf(vstack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
@@ -227,7 +228,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def mean_direction(self) -> np.ndarray:
         a = self.trigonometric_moment(1)
-        m = mod(np.angle(a), 2 * np.pi)
+        m = mod(np.angle(a), 2 * pi)
         return m
 
     def mode(self) -> np.ndarray:
@@ -261,7 +262,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         if proposal is None:
 
             def proposal(x):
-                return mod(x + random.randn(self.dim), 2 * np.pi)
+                return mod(x + random.randn(self.dim), 2 * pi)
 
         if start_point is None:
             start_point = self.mean_direction()
@@ -274,18 +275,18 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def setup_axis_circular(axis_name: str = "x", ax=plt.gca()) -> None:
-        ticks = [0, np.pi, 2 * np.pi]
+        ticks = [0, pi, 2 * pi]
         tick_labels = ["0", r"$\pi$", r"$2\pi$"]
         if axis_name == "x":
-            ax.set_xlim(left=0, right=2 * np.pi)
+            ax.set_xlim(left=0, right=2 * pi)
             ax.set_xticks(ticks)
             ax.set_xticklabels(tick_labels)
         elif axis_name == "y":
-            ax.set_ylim(left=0, right=2 * np.pi)
+            ax.set_ylim(left=0, right=2 * pi)
             ax.set_yticks(ticks)
             ax.set_yticklabels(tick_labels)
         elif axis_name == "z":
-            ax.set_zlim(left=0, right=2 * np.pi)
+            ax.set_zlim(left=0, right=2 * pi)
             ax.set_zticks(ticks)
             ax.set_zticklabels(tick_labels)
         else:

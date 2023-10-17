@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import ones
 from pyrecest.backend import array
 import unittest
@@ -14,13 +15,13 @@ class CircularUniformDistributionTest(unittest.TestCase):
         x = array([1, 2, 3, 4, 5, 6])
 
         # Test pdf
-        np.testing.assert_allclose(cu.pdf(x), 1 / (2 * np.pi) * ones(x.shape))
+        np.testing.assert_allclose(cu.pdf(x), 1 / (2 * pi) * ones(x.shape))
 
     def test_shift(self):
         cu = CircularUniformDistribution()
         cu2 = cu.shift(3)
         x = array([1, 2, 3, 4, 5, 6])
-        np.testing.assert_allclose(cu2.pdf(x), 1 / (2 * np.pi) * ones(x.shape))
+        np.testing.assert_allclose(cu2.pdf(x), 1 / (2 * pi) * ones(x.shape))
 
     def test_cdf(self):
         cu = CircularUniformDistribution()
@@ -61,7 +62,7 @@ class CircularUniformDistributionTest(unittest.TestCase):
             cu.integrate([-4, 11]), cu.integrate_numerically([-4, 11])
         )
         np.testing.assert_allclose(
-            cu.integrate([2 * np.pi, -1]), cu.integrate_numerically([2 * np.pi, -1])
+            cu.integrate([2 * pi, -1]), cu.integrate_numerically([2 * pi, -1])
         )
 
     def test_mean(self):

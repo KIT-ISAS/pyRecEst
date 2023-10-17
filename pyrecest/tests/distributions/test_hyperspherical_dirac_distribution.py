@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sum
 from pyrecest.backend import sqrt
@@ -29,7 +30,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         nSamples = 5
         s = self.hdd.sample(nSamples)
         self.assertEqual(s.shape, (nSamples, self.d.shape[-1]))
-        np.testing.assert_array_almost_equal(s, mod(s, 2 * np.pi))
+        np.testing.assert_array_almost_equal(s, mod(s, 2 * pi))
         np.testing.assert_array_almost_equal(
             np.linalg.norm(s, axis=-1), ones(nSamples)
         )

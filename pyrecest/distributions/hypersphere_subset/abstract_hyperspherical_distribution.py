@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import vstack
@@ -88,7 +89,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         grid_faces: Union[int, int32, int64] = 20,
     ) -> None:
         if self.dim == 1:
-            phi = linspace(0, 2 * np.pi, 320)
+            phi = linspace(0, 2 * pi, 320)
             x = array([sin(phi), cos(phi)])
             p = self.pdf(x)
             plt.plot(phi, p)
@@ -157,12 +158,12 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @staticmethod
     def get_full_integration_boundaries(dim):
         if dim == 1:
-            return [0, 2 * np.pi]
+            return [0, 2 * pi]
 
         return vstack(
             (
                 zeros(dim),
-                concatenate(([2 * np.pi], np.pi * ones(dim - 1))),
+                concatenate(([2 * pi], pi * ones(dim - 1))),
             )
         ).T
 
@@ -189,7 +190,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         def fun(s):
             return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
 
-        s0 = random.rand(self.dim) * np.pi
+        s0 = random.rand(self.dim) * pi
         res = minimize(
             fun,
             s0,
@@ -208,8 +209,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @staticmethod
     def create_sphere(faces):
         phi, theta = np.mgrid[
-            0.0 : np.pi : complex(0, faces),  # noqa: E203
-            0.0 : 2.0 * np.pi : complex(0, faces),  # noqa: E203
+            0.0 : pi : complex(0, faces),  # noqa: E203
+            0.0 : 2.0 * pi : complex(0, faces),  # noqa: E203
         ]
         x = sin(phi) * cos(theta)
         y = sin(phi) * sin(theta)
@@ -231,8 +232,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         num_points = 1000
 
         # Generate theta and phi angles (in radians)
-        theta = linspace(0, 2 * np.pi, num_points)
-        phi = linspace(0, np.pi, num_points)
+        theta = linspace(0, 2 * pi, num_points)
+        phi = linspace(0, pi, num_points)
 
         # Create a meshgrid for theta and phi angles
         theta, phi = meshgrid(theta, phi)

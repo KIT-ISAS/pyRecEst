@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sum
 from pyrecest.backend import eye
 from pyrecest.backend import exp
@@ -59,7 +60,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
                 0.5 * (Z[0] + Z[1]) * u + 0.5 * (Z[2] + Z[3]) * (1 - u)
             )
 
-        return 2 * np.pi**2 * quad(ifun, 0, 1)[0]
+        return 2 * pi**2 * quad(ifun, 0, 1)[0]
 
     def pdf(self, xs):
         assert xs.shape[-1] == self.dim + 1

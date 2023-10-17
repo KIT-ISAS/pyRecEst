@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import mod
 from pyrecest.backend import array
 import unittest
@@ -33,6 +34,6 @@ class ToroidalWrappedNormalFilterTest(unittest.TestCase):
         dist_result = curr_filter.filter_state
         self.assertIsInstance(dist_result, ToroidalWrappedNormalDistribution)
         np.testing.assert_array_almost_equal(
-            dist_result.mu, mod(self.twn.mu + self.twn.mu, 2 * np.pi)
+            dist_result.mu, mod(self.twn.mu + self.twn.mu, 2 * pi)
         )
         np.testing.assert_array_almost_equal(dist_result.C, self.twn.C + self.twn.C)

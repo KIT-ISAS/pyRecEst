@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import array
 from pyrecest.backend import arange
@@ -113,11 +114,11 @@ class CircularParticleFilterTest(unittest.TestCase):
 
         self.assertAlmostEqual(
             pf.association_likelihood(CircularUniformDistribution()),
-            1 / (2 * np.pi),
+            1 / (2 * pi),
             places=10,
         )
         self.assertGreater(
-            pf.association_likelihood(VonMisesDistribution(2, 1)), 1 / (2 * np.pi)
+            pf.association_likelihood(VonMisesDistribution(2, 1)), 1 / (2 * pi)
         )
 
         self.filter.set_state(CircularDiracDistribution(arange(0, 1.1, 0.1)))

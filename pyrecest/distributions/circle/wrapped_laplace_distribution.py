@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import ndim
 from pyrecest.backend import mod
 from pyrecest.backend import exp
@@ -25,16 +26,16 @@ class WrappedLaplaceDistribution(AbstractCircularDistribution):
 
     def pdf(self, xs):
         assert ndim(xs) <= 1
-        xs = mod(xs, 2 * np.pi)
+        xs = mod(xs, 2 * pi)
         p = (
             self.lambda_
             * self.kappa
             / (1 + self.kappa**2)
             * (
                 exp(-self.lambda_ * self.kappa * xs)
-                / (1 - exp(-2 * np.pi * self.lambda_ * self.kappa))
+                / (1 - exp(-2 * pi * self.lambda_ * self.kappa))
                 + exp(self.lambda_ / self.kappa * xs)
-                / (exp(2 * np.pi * self.lambda_ / self.kappa) - 1)
+                / (exp(2 * pi * self.lambda_ / self.kappa) - 1)
             )
         )
         return p

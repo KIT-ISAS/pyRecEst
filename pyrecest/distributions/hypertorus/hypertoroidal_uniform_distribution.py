@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import prod
@@ -43,7 +44,7 @@ class HypertoroidalUniformDistribution(
 
         :returns: Entropy
         """
-        return self.dim * log(2 * np.pi)
+        return self.dim * log(2 * pi)
 
     def mean_direction(self):
         """
@@ -63,7 +64,7 @@ class HypertoroidalUniformDistribution(
         :param n: Sample size
         :returns: Sample of size n
         """
-        return 2 * np.pi * random.rand(n, self.dim)
+        return 2 * pi * random.rand(n, self.dim)
 
     def shift(self, shift_by) -> "HypertoroidalUniformDistribution":
         """
@@ -88,11 +89,11 @@ class HypertoroidalUniformDistribution(
         """
         if integration_boundaries is None:
             left = zeros((self.dim,))
-            right = 2 * np.pi * ones((self.dim,))
+            right = 2 * pi * ones((self.dim,))
         else:
             left, right = integration_boundaries
         assert ndim(left) == 0 and self.dim == 1 or left.shape == (self.dim,)
         assert ndim(right) == 0 and self.dim == 1 or right.shape == (self.dim,)
 
         volume = prod(right - left)
-        return 1 / (2 * np.pi) ** self.dim * volume
+        return 1 / (2 * pi) ** self.dim * volume

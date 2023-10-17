@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import where
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -40,7 +41,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
     @property
     def norm_const(self) -> np.number:
         if self._norm_const is None:
-            self._norm_const = 2 * np.pi * iv(0, self.kappa)
+            self._norm_const = 2 * pi * iv(0, self.kappa)
         return self._norm_const
 
     def pdf(self, xs: np.ndarray) -> np.ndarray | np.number:
@@ -75,7 +76,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         def to_minus_pi_to_pi_range(
             angle: np.number | numbers.Real | np.ndarray,
         ) -> np.number | numbers.Real | np.ndarray:
-            return mod(angle + np.pi, 2 * np.pi) - np.pi
+            return mod(angle + pi, 2 * pi) - pi
 
         r = vonmises.cdf(
             to_minus_pi_to_pi_range(xs),
@@ -108,12 +109,12 @@ class VonMisesDistribution(AbstractCircularDistribution):
     def multiply(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
         C = self.kappa * cos(self.mu) + vm2.kappa * cos(vm2.mu)
         S = self.kappa * sin(self.mu) + vm2.kappa * sin(vm2.mu)
-        mu_ = mod(arctan2(S, C), 2 * np.pi)
+        mu_ = mod(arctan2(S, C), 2 * pi)
         kappa_ = sqrt(C**2 + S**2)
         return VonMisesDistribution(mu_, kappa_)
 
     def convolve(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
-        mu_ = mod(self.mu + vm2.mu, 2 * np.pi)
+        mu_ = mod(self.mu + vm2.mu, 2 * pi)
         t = VonMisesDistribution.besselratio(
             0, self.kappa
         ) * VonMisesDistribution.besselratio(0, vm2.kappa)
@@ -122,7 +123,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     def entropy(self):
         result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + log(
-            2 * np.pi * iv(0, self.kappa)
+            2 * pi * iv(0, self.kappa)
         )
         return result
 
@@ -137,7 +138,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         Returns:
             vm (VMDistribution): VM distribution obtained by moment matching.
         """
-        mu_ = mod(arctan2(imag(m), real(m)), 2 * np.pi)
+        mu_ = mod(arctan2(imag(m), real(m)), 2 * pi)
         kappa_ = VonMisesDistribution.besselratio_inverse(0, abs(m))
         vm = VonMisesDistribution(mu_, kappa_)
         return vm

@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import tile
 from pyrecest.backend import sum
@@ -166,7 +167,7 @@ def generate_measurements(groundtruth, simulation_config):
                         )
                         + noise_samples
                     ),
-                    2 * np.pi,
+                    2 * pi,
                 )
 
             elif isinstance(

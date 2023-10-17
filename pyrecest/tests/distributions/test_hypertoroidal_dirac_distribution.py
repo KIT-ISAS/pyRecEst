@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sum
 from pyrecest.backend import squeeze
@@ -47,7 +48,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         n_samples = 5
         s = self.twd.sample(n_samples)
         self.assertEqual(s.shape, (n_samples, self.d.shape[-1]))
-        np.testing.assert_array_almost_equal(s, mod(s, 2 * np.pi))
+        np.testing.assert_array_almost_equal(s, mod(s, 2 * pi))
 
     def test_marginalize_to_1D(self):
         for i in range(self.d.shape[-1]):
@@ -60,7 +61,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             same.trigonometric_moment(1), self.twd.trigonometric_moment(1)
         )
-        shift_offset = array([1.4, -0.3, np.pi])
+        shift_offset = array([1.4, -0.3, pi])
         shifted = self.twd.apply_function(lambda x: x + shift_offset)
         np.testing.assert_almost_equal(
             shifted.trigonometric_moment(1)[0],
@@ -92,7 +93,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         np.testing.assert_array_almost_equal(twd.w, twd_shifted.w)
         np.testing.assert_array_almost_equal(
             twd.d,
-            mod(twd_shifted.d - outer(ones_like(w), s), 2 * np.pi),
+            mod(twd_shifted.d - outer(ones_like(w), s), 2 * pi),
             decimal=10,
         )
 
@@ -100,7 +101,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
     def get_pseudorandom_hypertoroidal_wd(dim=2):
         random.seed(0)
         n = 20
-        d = 2 * np.pi * random.rand(n, dim)
+        d = 2 * pi * random.rand(n, dim)
         w = random.rand(n)
         w = w / sum(w)
         hwd = HypertoroidalDiracDistribution(d, w)

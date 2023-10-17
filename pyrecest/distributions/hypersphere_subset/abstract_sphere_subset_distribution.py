@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import where
 from pyrecest.backend import sin
 from pyrecest.backend import ndim
@@ -108,7 +109,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             ndim(azimuth) == 1 and ndim(elevation) == 1
         ), "Inputs must be 1-dimensional"
         # elevation is π/2 - colatitude, so we calculate colatitude from elevation
-        colatitude = np.pi / 2 - elevation
+        colatitude = pi / 2 - elevation
         x = sin(colatitude) * cos(azimuth)
         y = sin(colatitude) * sin(azimuth)
         z = cos(colatitude)
@@ -119,7 +120,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z)
         radius = 1
         azimuth = arctan2(y, x)
-        azimuth = where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
+        azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
         colatitude = arccos(z / radius)
         return azimuth, colatitude
 
@@ -128,6 +129,6 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
         radius = 1
         azimuth = arctan2(y, x)
-        azimuth = where(azimuth < 0, azimuth + 2 * np.pi, azimuth)
-        elevation = np.pi / 2 - arccos(z / radius)  # elevation is π/2 - colatitude
+        azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
+        elevation = pi / 2 - arccos(z / radius)  # elevation is π/2 - colatitude
         return azimuth, elevation

@@ -1,3 +1,4 @@
+from math import pi
 from typing import Union
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -36,7 +37,7 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         C = zeros((4, 4))
         for i in range(4):
             for j in range(i, 4):
-                C[i, j], _ = dblquad(f, 0, 2 * np.pi, 0, 2 * np.pi, args=(i, j))
+                C[i, j], _ = dblquad(f, 0, 2 * pi, 0, 2 * pi, args=(i, j))
                 if i != j:
                     C[j, i] = C[i, j]
 
@@ -58,9 +59,9 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         def fsinBsquared(x, y):
             return self.pdf(array([x, y])) * sin(y - m[1]) ** 2
 
-        EsinAsinB, _ = dblquad(fsinAsinB, 0, 2 * np.pi, 0, 2 * np.pi)
-        EsinAsquared, _ = dblquad(fsinAsquared, 0, 2 * np.pi, 0, 2 * np.pi)
-        EsinBsquared, _ = dblquad(fsinBsquared, 0, 2 * np.pi, 0, 2 * np.pi)
+        EsinAsinB, _ = dblquad(fsinAsinB, 0, 2 * pi, 0, 2 * pi)
+        EsinAsquared, _ = dblquad(fsinAsquared, 0, 2 * pi, 0, 2 * pi)
+        EsinBsquared, _ = dblquad(fsinBsquared, 0, 2 * pi, 0, 2 * pi)
 
         rhoc = EsinAsinB / sqrt(EsinAsquared * EsinBsquared)
         return rhoc

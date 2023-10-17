@@ -1,3 +1,4 @@
+from math import pi
 from typing import Union
 from pyrecest.backend import sum
 from pyrecest.backend import sqrt
@@ -185,14 +186,14 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 a0_non_rooted = from_a0 + from_a1_to_end_and_b
             else:
                 raise NotImplementedError("Transformation not supported.")
-            integral = a0_non_rooted * np.pi
+            integral = a0_non_rooted * pi
         elif self.c is not None:
             if self.transformation == "identity":
                 if self.multiplied_by_n:
                     c0 = real(self.c[0]) * (1 / self.n)
                 else:
                     c0 = real(self.c[0])
-                integral = 2 * np.pi * c0
+                integral = 2 * pi * c0
             elif self.transformation == "sqrt":
                 if self.multiplied_by_n:
                     c = self.c * (1 / self.n)
@@ -204,7 +205,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 )
 
                 a0_non_rooted = 2 * from_c0 + 4 * from_c1_to_end
-                integral = a0_non_rooted * np.pi
+                integral = a0_non_rooted * pi
             else:
                 raise NotImplementedError("Transformation not supported.")
         else:
@@ -213,7 +214,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     def plot_grid(self):
         grid_values = irfft(self.get_c(), self.n)
-        xs = linspace(0, 2 * np.pi, grid_values.shape[0], endpoint=False)
+        xs = linspace(0, 2 * pi, grid_values.shape[0], endpoint=False)
         vals = grid_values.squeeze()
 
         if self.transformation == "sqrt":
@@ -229,7 +230,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         plt.show()
 
     def plot(self, resolution=128, **kwargs):
-        xs = linspace(0, 2 * np.pi, resolution)
+        xs = linspace(0, 2 * pi, resolution)
 
         if self.a is not None:
             xs = xs.astype(self.a.dtype)
@@ -296,7 +297,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         if isinstance(distribution, CircularDiracDistribution):
             fd = CircularFourierDistribution(
                 np.conj(distribution.trigonometric_moment(n, whole_range=True))
-                / (2 * np.pi),
+                / (2 * pi),
                 transformation,
                 multiplied_by_n=False,
             )
@@ -304,7 +305,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 warnings.warn("Scaling up for WD (this is not recommended).")
                 fd.c = fd.c * fd.n
         else:
-            xs = linspace(0, 2 * np.pi, n, endpoint=False)
+            xs = linspace(0, 2 * pi, n, endpoint=False)
             fvals = distribution.pdf(xs)
             if transformation == "identity":
                 pass

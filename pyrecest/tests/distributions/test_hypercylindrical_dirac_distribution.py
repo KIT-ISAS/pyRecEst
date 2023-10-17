@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sum
 from pyrecest.backend import ones_like
@@ -97,7 +98,7 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         assert s.shape == (n, 3)
         s = s[:, 0]
         self.assertTrue(all(s >= zeros_like(s)))
-        self.assertTrue(all(s < 2 * np.pi * ones_like(s)))
+        self.assertTrue(all(s < 2 * pi * ones_like(s)))
 
     def test_from_distribution(self):
         random_gen = random.default_rng(0)  # Could fail randomly otherwise

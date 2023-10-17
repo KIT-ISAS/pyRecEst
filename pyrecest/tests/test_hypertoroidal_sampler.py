@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import std
 from pyrecest.backend import all
 import unittest
@@ -19,7 +20,7 @@ class TestCircularUniformSampler(unittest.TestCase):
 
         # Check that all samples are within the range [0, 2*pi)
         self.assertTrue(all(samples >= 0))
-        self.assertTrue(all(samples < 2 * np.pi))
+        self.assertTrue(all(samples < 2 * pi))
 
     def test_get_grid(self):
         grid_density_parameter = 100
@@ -30,7 +31,7 @@ class TestCircularUniformSampler(unittest.TestCase):
 
         # Check that all grid points are within the range [0, 2*pi)
         self.assertTrue(all(grid_points >= 0))
-        self.assertTrue(all(grid_points < 2 * np.pi))
+        self.assertTrue(all(grid_points < 2 * pi))
 
         # Check that the grid points are equidistant
         diff = np.diff(grid_points)

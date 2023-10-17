@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import sqrt
@@ -45,7 +46,7 @@ class EllipsoidalBallUniformDistribution(
         """
         assert xs.shape[-1] == self.dim
         # Calculate the reciprocal of the volume of the ellipsoid
-        # reciprocal_volume = 1 / (power(np.pi, self.dim / 2) * sqrt(np.linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
+        # reciprocal_volume = 1 / (power(pi, self.dim / 2) * sqrt(np.linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
         reciprocal_volume = 1 / self.get_manifold_size()
         if xs.ndim == 1:
             return reciprocal_volume

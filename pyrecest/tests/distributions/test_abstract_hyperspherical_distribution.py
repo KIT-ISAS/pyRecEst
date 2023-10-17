@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import array
 import unittest
@@ -33,17 +34,17 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         """Tests the unit sphere surface computation."""
         self.assertAlmostEqual(
             AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(1),
-            2 * np.pi,
+            2 * pi,
             delta=1e-10,
         )
         self.assertAlmostEqual(
             AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(2),
-            4 * np.pi,
+            4 * pi,
             delta=1e-10,
         )
         self.assertAlmostEqual(
             AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(3),
-            2 * np.pi**2,
+            2 * pi**2,
             delta=1e-10,
         )
 

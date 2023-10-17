@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import array
 from pyrecest.backend import allclose
@@ -18,7 +19,7 @@ class ToroidalParticleFilterTest(unittest.TestCase):
     def test_toroidal_particle_filter(self):
         random.seed(0)
         C = array([[0.7, 0.4], [0.4, 0.6]])
-        mu = array([1, 1]) + np.pi / 2
+        mu = array([1, 1]) + pi / 2
         hwnd = ToroidalWrappedNormalDistribution(mu, C)
         tpf = ToroidalParticleFilter(200)
         tpf.set_state(hwnd)

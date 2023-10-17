@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import arange
 from pyrecest.backend import allclose
 from pyrecest.backend import all
@@ -53,10 +54,10 @@ class AbstractCircularDistributionTest(unittest.TestCase):
             (2, 2),
             (2, 3),
             (5, 4),
-            (0, 4 * np.pi),
-            (-np.pi, np.pi),
-            (0, 4 * np.pi),
-            (-3 * np.pi, 3 * np.pi),
+            (0, 4 * pi),
+            (-pi, pi),
+            (0, 4 * pi),
+            (-3 * pi, 3 * pi),
             (-1, 20),
             (12, -3),
         ]

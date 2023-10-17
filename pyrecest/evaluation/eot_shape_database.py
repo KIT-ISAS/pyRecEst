@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sin
 from pyrecest.backend import linspace
@@ -133,7 +134,7 @@ class Star(StarShapedPolygon):  # pylint: disable=abstract-method
     __slots__ = Polygon.__slots__
 
     def __new__(cls, radius=1, arms=5, arm_width=0.3, center=(0, 0)):
-        arm_angle = 2 * np.pi / arms
+        arm_angle = 2 * pi / arms
         points = []
         for i in range(arms):
             base_angle = i * arm_angle
@@ -212,7 +213,7 @@ class StarFish(StarShapedPolygon):  # pylint: disable=abstract-method
 
     # pylint: disable=signature-differs
     def __new__(cls, scaling_factor=1):
-        theta = linspace(0, 2 * np.pi, 1000)
+        theta = linspace(0, 2 * pi, 1000)
         r = 5 + 1.5 * sin(6 * theta)
 
         x = r * cos(theta) * scaling_factor

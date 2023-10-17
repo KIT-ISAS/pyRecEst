@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import mod
 from pyrecest.backend import array
 from pyrecest.backend import allclose
@@ -31,7 +32,7 @@ class TestToroidalWrappedNormalDistribution(unittest.TestCase):
         n_samples = 5
         s = self.twn.sample(n_samples)
         self.assertEqual(s.shape, (n_samples, 2))
-        self.assertTrue(allclose(s, mod(s, 2 * np.pi)))
+        self.assertTrue(allclose(s, mod(s, 2 * pi)))
 
 
 if __name__ == "__main__":

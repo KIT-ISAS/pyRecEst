@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sum
 from pyrecest.backend import ones
 from pyrecest.backend import array
@@ -23,7 +24,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
 
     def test_get_manifold_size(self):
         """Tests get_manifold_size function with different dimensions."""
-        dimensions = [(1, np.pi), (2, 2 * np.pi)]
+        dimensions = [(1, pi), (2, 2 * pi)]
         for dim, expected in dimensions:
             with self.subTest(dim=dim):
                 hud = HyperhemisphericalUniformDistribution(dim)

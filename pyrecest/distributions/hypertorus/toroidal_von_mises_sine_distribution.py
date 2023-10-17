@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sum
 from pyrecest.backend import sin
 from pyrecest.backend import mod
@@ -18,7 +19,7 @@ class ToroidalVonMisesSineDistribution(AbstractToroidalDistribution):
         assert np.isscalar(lambda_)
         assert all(kappa >= 0)
 
-        self.mu = mod(mu, 2 * np.pi)
+        self.mu = mod(mu, 2 * pi)
         self.kappa = kappa
         self.lambda_ = lambda_
 
@@ -34,7 +35,7 @@ class ToroidalVonMisesSineDistribution(AbstractToroidalDistribution):
                 * iv(m, self.kappa[1])
             )
 
-        Cinv = 4 * np.pi**2 * sum([s(m) for m in range(11)])
+        Cinv = 4 * pi**2 * sum([s(m) for m in range(11)])
         return Cinv
 
     def pdf(self, xs):

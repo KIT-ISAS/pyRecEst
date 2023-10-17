@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -63,8 +64,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
         # Enforce unnormalized coefficients and compare ratio
         phi, theta = (
-            random.rand(1, 10) * 2 * np.pi,
-            random.rand(1, 10) * np.pi - np.pi / 2,
+            random.rand(1, 10) * 2 * pi,
+            random.rand(1, 10) * pi - pi / 2,
         )
         x, y, z = array(
             [cos(theta) * cos(phi), cos(theta) * sin(phi), sin(theta)]
@@ -136,7 +137,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd5 = shd3.truncate(3)
         self.assertEqual(shd5.coeff_mat.shape, (4, 7))
 
-        phi, theta = random.rand(10) * 2 * np.pi, random.rand(10) * np.pi
+        phi, theta = random.rand(10) * 2 * pi, random.rand(10) * pi
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
         self.assertTrue(
             allclose(
@@ -179,7 +180,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 0, 0],
                     ]
                 ),
-                lambda _, _1, z: ones_like(z) * sqrt(1 / (4 * np.pi)),
+                lambda _, _1, z: ones_like(z) * sqrt(1 / (4 * pi)),
             ),
             (
                 "testl1m0",
@@ -190,7 +191,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 0, 0],
                     ]
                 ),
-                lambda _, _1, z: sqrt(3 / (4 * np.pi)) * z,
+                lambda _, _1, z: sqrt(3 / (4 * pi)) * z,
             ),
             (
                 "testl2m0",
@@ -203,7 +204,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 ),
                 lambda x, y, z: 1
                 / 4
-                * sqrt(5 / np.pi)
+                * sqrt(5 / pi)
                 * (2 * z**2 - x**2 - y**2),
             ),
             (
@@ -218,7 +219,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 ),
                 lambda x, y, z: 1
                 / 4
-                * sqrt(7 / np.pi)
+                * sqrt(7 / pi)
                 * (z * (2 * z**2 - 3 * x**2 - 3 * y**2)),
             ),
             # For the other basis functions, complex values would be obtained.
@@ -233,7 +234,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 0, 0],
                     ]
                 ),
-                lambda _, y, _1: sqrt(3 / (4 * np.pi)) * y,
+                lambda _, y, _1: sqrt(3 / (4 * pi)) * y,
             ),
             (
                 "test_l1m1real",
@@ -244,7 +245,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 0, 0],
                     ]
                 ),
-                lambda x, _, _1: sqrt(3 / (4 * np.pi)) * x,
+                lambda x, _, _1: sqrt(3 / (4 * pi)) * x,
             ),
             (
                 "test_l2mneg2real",
@@ -255,7 +256,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [1j * sqrt(1 / 2), 0, 0, 0, -1j * sqrt(1 / 2)],
                     ]
                 ),
-                lambda x, y, _: 1 / 2 * sqrt(15 / np.pi) * x * y,
+                lambda x, y, _: 1 / 2 * sqrt(15 / pi) * x * y,
             ),
             (
                 "test_l2mneg1real",
@@ -266,7 +267,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2), 0],
                     ]
                 ),
-                lambda _, y, z: 1 / 2 * sqrt(15 / np.pi) * y * z,
+                lambda _, y, z: 1 / 2 * sqrt(15 / pi) * y * z,
             ),
             (
                 "test_l2m1real",
@@ -277,7 +278,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, sqrt(1 / 2), 0, -sqrt(1 / 2), 0],
                     ]
                 ),
-                lambda x, _, z: 1 / 2 * sqrt(15 / np.pi) * x * z,
+                lambda x, _, z: 1 / 2 * sqrt(15 / pi) * x * z,
             ),
             (
                 "test_l2m2real",
@@ -288,7 +289,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [sqrt(1 / 2), 0, 0, 0, sqrt(1 / 2)],
                     ]
                 ),
-                lambda x, y, _: 1 / 4 * sqrt(15 / np.pi) * (x**2 - y**2),
+                lambda x, y, _: 1 / 4 * sqrt(15 / pi) * (x**2 - y**2),
             ),
             (
                 "test_l3mneg3real",
@@ -302,7 +303,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 ),
                 lambda x, y, z: 1
                 / 4
-                * sqrt(35 / (2 * np.pi))
+                * sqrt(35 / (2 * pi))
                 * y
                 * (3 * x**2 - y**2),
             ),
@@ -316,7 +317,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 1j / sqrt(2), 0, 0, 0, -1j / sqrt(2), 0],
                     ]
                 ),
-                lambda x, y, z: 1 / 2 * sqrt(105 / np.pi) * x * y * z,
+                lambda x, y, z: 1 / 2 * sqrt(105 / pi) * x * y * z,
             ),
             (
                 "test_l3mneg1real",
@@ -330,7 +331,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 ),
                 lambda x, y, z: 1
                 / 4
-                * sqrt(21 / (2 * np.pi))
+                * sqrt(21 / (2 * pi))
                 * y
                 * (4 * z**2 - x**2 - y**2),
             ),
@@ -346,7 +347,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 ),
                 lambda x, y, z: 1
                 / 4
-                * sqrt(21 / (2 * np.pi))
+                * sqrt(21 / (2 * pi))
                 * x
                 * (4 * z**2 - x**2 - y**2),
             ),
@@ -360,7 +361,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 1 / sqrt(2), 0, 0, 0, 1 / sqrt(2), 0],
                     ]
                 ),
-                lambda x, y, z: 1 / 4 * sqrt(105 / np.pi) * z * (x**2 - y**2),
+                lambda x, y, z: 1 / 4 * sqrt(105 / pi) * z * (x**2 - y**2),
             ),
             (
                 "test_l3m3real",
@@ -374,17 +375,17 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 ),
                 lambda x, y, z: 1
                 / 4
-                * sqrt(35 / (2 * np.pi))
+                * sqrt(35 / (2 * pi))
                 * x
                 * (x**2 - 3 * y**2),
             ),
         ]
     )
     def test_basis_function(self, _, coeff_mat, expected_func):
-        shd = SphericalHarmonicsDistributionComplex(1 / sqrt(4 * np.pi))
+        shd = SphericalHarmonicsDistributionComplex(1 / sqrt(4 * pi))
         shd.coeff_mat = coeff_mat
         phi, theta = meshgrid(
-            linspace(0, 2 * np.pi, 10), linspace(0, np.pi, 10)
+            linspace(0, 2 * pi, 10), linspace(0, pi, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         np.testing.assert_allclose(
@@ -403,7 +404,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 0, 0],
                     ]
                 ),
-                lambda x, y, _: 0.5 * sqrt(3 / (2 * np.pi)) * (x - 1j * y),
+                lambda x, y, _: 0.5 * sqrt(3 / (2 * pi)) * (x - 1j * y),
             ),
             (
                 "testl1m1_cart",
@@ -414,7 +415,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 0, 0],
                     ]
                 ),
-                lambda x, y, _: -0.5 * sqrt(3 / (2 * np.pi)) * (x + 1j * y),
+                lambda x, y, _: -0.5 * sqrt(3 / (2 * pi)) * (x + 1j * y),
             ),
             (
                 "testl2mneg2_cart",
@@ -425,7 +426,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [1, 0, 0, 0, 0],
                     ]
                 ),
-                lambda x, y, _: 0.25 * sqrt(15 / (2 * np.pi)) * (x - 1j * y) ** 2,
+                lambda x, y, _: 0.25 * sqrt(15 / (2 * pi)) * (x - 1j * y) ** 2,
             ),
             (
                 "testl2mneg1_cart",
@@ -436,7 +437,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 1, 0, 0, 0],
                     ]
                 ),
-                lambda x, y, z: 0.5 * sqrt(15 / (2 * np.pi)) * (x - 1j * y) * z,
+                lambda x, y, z: 0.5 * sqrt(15 / (2 * pi)) * (x - 1j * y) * z,
             ),
             (
                 "testl2m1_cart",
@@ -447,7 +448,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 1, 0],
                     ]
                 ),
-                lambda x, y, z: -0.5 * sqrt(15 / (2 * np.pi)) * (x + 1j * y) * z,
+                lambda x, y, z: -0.5 * sqrt(15 / (2 * pi)) * (x + 1j * y) * z,
             ),
             (
                 "testl2m2_cart",
@@ -458,7 +459,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0, 0, 0, 0, 1],
                     ]
                 ),
-                lambda x, y, _: 0.25 * sqrt(15 / (2 * np.pi)) * (x + 1j * y) ** 2,
+                lambda x, y, _: 0.25 * sqrt(15 / (2 * pi)) * (x + 1j * y) ** 2,
             ),
             # For spherical coordinates
             (
@@ -471,7 +472,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.5
-                * sqrt(3 / (2 * np.pi))
+                * sqrt(3 / (2 * pi))
                 * sin(theta)
                 * exp(-1j * phi),
             ),
@@ -485,7 +486,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: -0.5
-                * sqrt(3 / (2 * np.pi))
+                * sqrt(3 / (2 * pi))
                 * sin(theta)
                 * exp(1j * phi),
             ),
@@ -499,7 +500,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.25
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta) ** 2
                 * exp(-2j * phi),
             ),
@@ -513,7 +514,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.5
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta)
                 * cos(theta)
                 * exp(-1j * phi),
@@ -528,7 +529,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: -0.5
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta)
                 * cos(theta)
                 * exp(1j * phi),
@@ -543,7 +544,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.25
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta) ** 2
                 * exp(2j * phi),
             ),
@@ -557,7 +558,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.5
-                * sqrt(3 / (2 * np.pi))
+                * sqrt(3 / (2 * pi))
                 * sin(theta)
                 * exp(-1j * phi),
             ),
@@ -571,7 +572,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: -0.5
-                * sqrt(3 / (2 * np.pi))
+                * sqrt(3 / (2 * pi))
                 * sin(theta)
                 * exp(1j * phi),
             ),
@@ -585,7 +586,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.25
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta) ** 2
                 * exp(-2j * phi),
             ),
@@ -599,7 +600,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.5
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta)
                 * cos(theta)
                 * exp(-1j * phi),
@@ -614,7 +615,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: -0.5
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta)
                 * cos(theta)
                 * exp(1j * phi),
@@ -629,7 +630,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     ]
                 ),
                 lambda phi, theta: 0.25
-                * sqrt(15 / (2 * np.pi))
+                * sqrt(15 / (2 * pi))
                 * sin(theta) ** 2
                 * exp(2j * phi),
             ),
@@ -637,11 +638,11 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     )
     def test_basis_function_complex(self, name, coeff_mat, expected_func):
         shd = SphericalHarmonicsDistributionComplex(
-            1 / sqrt(4 * np.pi), assert_real=False
+            1 / sqrt(4 * pi), assert_real=False
         )
         shd.coeff_mat = coeff_mat
         phi, theta = meshgrid(
-            linspace(0, 2 * np.pi, 10), linspace(-np.pi / 2, np.pi / 2, 10)
+            linspace(0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
 
@@ -833,7 +834,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionComplex(coeff_mat)
         rshd = shd.to_spherical_harmonics_distribution_real()
         phi, theta = meshgrid(
-            linspace(0, 2 * np.pi, 10), linspace(-np.pi / 2, np.pi / 2, 10)
+            linspace(0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         np.testing.assert_allclose(
@@ -926,7 +927,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             dist, 3
         )
         phi, theta = meshgrid(
-            linspace(0, 2 * np.pi, 10), linspace(-np.pi / 2, np.pi / 2, 10)
+            linspace(0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         np.testing.assert_allclose(
@@ -948,7 +949,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionComplex.from_distribution_via_integral(
             HypersphericalUniformDistribution(2), degree=0
         )
-        np.testing.assert_allclose(shd.coeff_mat, array([[1 / sqrt(4 * np.pi)]]))
+        np.testing.assert_allclose(shd.coeff_mat, array([[1 / sqrt(4 * pi)]]))
 
     def test_transformation_via_integral_shd(self):
         # Test approximating a spherical harmonic distribution
@@ -977,16 +978,16 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
     @parameterized.expand(
         [
-            ("zplus", [[1 / sqrt(4 * np.pi), np.nan, np.nan], [0, 1, 0]], [0, 0, 1]),
+            ("zplus", [[1 / sqrt(4 * pi), np.nan, np.nan], [0, 1, 0]], [0, 0, 1]),
             (
                 "zminus",
-                [[1 / sqrt(4 * np.pi), np.nan, np.nan], [0, -1, 0]],
+                [[1 / sqrt(4 * pi), np.nan, np.nan], [0, -1, 0]],
                 [0, 0, -1],
             ),
             (
                 "yplus",
                 [
-                    [1 / sqrt(4 * np.pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), np.nan, np.nan],
                     [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2)],
                 ],
                 [0, 1, 0],
@@ -994,7 +995,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "yminus",
                 [
-                    [1 / sqrt(4 * np.pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), np.nan, np.nan],
                     [-1j * sqrt(1 / 2), 0, -1j * sqrt(1 / 2)],
                 ],
                 [0, -1, 0],
@@ -1002,7 +1003,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xplus",
                 [
-                    [1 / sqrt(4 * np.pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), np.nan, np.nan],
                     [sqrt(1 / 2), 0, -sqrt(1 / 2)],
                 ],
                 [1, 0, 0],
@@ -1010,7 +1011,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xminus",
                 [
-                    [1 / sqrt(4 * np.pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), np.nan, np.nan],
                     [-sqrt(1 / 2), 0, sqrt(1 / 2)],
                 ],
                 [-1, 0, 0],
@@ -1018,7 +1019,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xyplus",
                 [
-                    [1 / sqrt(4 * np.pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), np.nan, np.nan],
                     [
                         1j * sqrt(1 / 2) + sqrt(1 / 2),
                         1,
@@ -1030,7 +1031,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xyminus",
                 [
-                    [1 / sqrt(4 * np.pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), np.nan, np.nan],
                     [
                         -1j * sqrt(1 / 2) - sqrt(1 / 2),
                         0,

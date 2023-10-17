@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sin
 from pyrecest.backend import mod
 from pyrecest.backend import linspace
@@ -39,8 +40,8 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         starting_point: np.number | numbers.Real,
     ) -> np.number | numbers.Real:
         """Helper method for cdf_numerical"""
-        starting_point_mod = mod(starting_point, 2 * np.pi)
-        x_mod = mod(x, 2 * np.pi)
+        starting_point_mod = mod(starting_point, 2 * pi)
+        x_mod = mod(x, 2 * pi)
 
         if x_mod < starting_point_mod:
             return 1 - self.integrate_numerically([x_mod, starting_point_mod])
@@ -73,6 +74,6 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
     @staticmethod
     def plot_circle(*args, **kwargs):
-        theta = np.append(linspace(0, 2 * np.pi, 320), 0)
+        theta = np.append(linspace(0, 2 * pi, 320), 0)
         p = plt.plot(cos(theta), sin(theta), *args, **kwargs)
         return p

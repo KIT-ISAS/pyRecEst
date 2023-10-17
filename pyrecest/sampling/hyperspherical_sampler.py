@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import vstack
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -133,7 +134,7 @@ class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
         self, grid_density_parameter: int
     ) -> tuple[np.ndarray, np.ndarray, dict]:
         indices = arange(0, grid_density_parameter, dtype=float) + 0.5
-        phi = np.pi * (1 + 5**0.5) * indices
+        phi = pi * (1 + 5**0.5) * indices
         theta = arccos(1 - 2 * indices / grid_density_parameter)
         grid_specific_description = {
             "scheme": "spherical_fibonacci",

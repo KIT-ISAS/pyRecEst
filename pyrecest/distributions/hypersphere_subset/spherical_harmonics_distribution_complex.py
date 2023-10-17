@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
 from pyrecest.backend import shape
@@ -169,10 +170,10 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         for n in range(degree + 1):  # Use n instead of l to comply with PEP 8
             for m in range(-n, n + 1):
                 real_integral, _ = scipy.integrate.nquad(
-                    real_part, [[0, 2 * np.pi], [0, np.pi]], args=(n, m)
+                    real_part, [[0, 2 * pi], [0, pi]], args=(n, m)
                 )
                 imag_integral, _ = scipy.integrate.nquad(
-                    imag_part, [[0, 2 * np.pi], [0, np.pi]], args=(n, m)
+                    imag_part, [[0, 2 * pi], [0, pi]], args=(n, m)
                 )
 
                 if isnan(real_integral) or isnan(imag_integral):

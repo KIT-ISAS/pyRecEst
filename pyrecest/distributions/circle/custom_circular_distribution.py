@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import mod
 from pyrecest.backend import array
 from collections.abc import Callable
@@ -40,7 +41,7 @@ class CustomCircularDistribution(
             np.ndarray: The value of the pdf at xs.
         """
         return AbstractCustomDistribution.pdf(
-            self, mod(xs + self.shift_by, 2 * np.pi)
+            self, mod(xs + self.shift_by, 2 * pi)
         )
 
     def integrate(self, integration_boundaries: np.ndarray | None = None) -> float:
@@ -49,11 +50,11 @@ class CustomCircularDistribution(
 
         Args:
             integration_boundaries (np.ndarray, optional): The boundaries of the integral.
-                Defaults to [0, 2 * np.pi].
+                Defaults to [0, 2 * pi].
 
         Returns:
             float: The value of the integral.
         """
         if integration_boundaries is None:
-            integration_boundaries = array([0, 2 * np.pi])
+            integration_boundaries = array([0, 2 * pi])
         return AbstractCircularDistribution.integrate(self, integration_boundaries)

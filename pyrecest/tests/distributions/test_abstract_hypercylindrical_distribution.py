@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import ones
 from pyrecest.backend import array
 from pyrecest.backend import arange
@@ -39,7 +40,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             zeros(10),
             atol=1e-10,
         )
-        dist_cond2 = hwn.condition_on_periodic(array(1.5) + 2 * np.pi)
+        dist_cond2 = hwn.condition_on_periodic(array(1.5) + 2 * pi)
         np.testing.assert_allclose(
             np.diff(
                 hwn.pdf(np.column_stack([1.5 * ones(11), arange(-5, 6)]))
@@ -62,7 +63,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             zeros(10),
             atol=1e-10,
         )
-        dist_cond2 = hwn.condition_on_linear(array(1.5 + 2 * np.pi))
+        dist_cond2 = hwn.condition_on_linear(array(1.5 + 2 * pi))
         self.assertFalse(
             (
                 allclose(

@@ -1,3 +1,4 @@
+from math import pi
 from typing import Union
 from pyrecest.backend import vstack
 from pyrecest.backend import tile
@@ -118,29 +119,29 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         if self.bound_dim == 1 and self.lin_dim == 1:
             C, _ = nquad(
                 lambda x, y: (y - approximate_mean) ** 2 * self.pdf([x, y]),
-                [[0, 2 * np.pi], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-np.inf, np.inf]],
             )
         elif self.bound_dim == 2 and self.lin_dim == 1:
             C, _ = nquad(
                 lambda x, y, z: (z - approximate_mean) ** 2 * self.pdf([x, y, z]),
-                [[0, 2 * np.pi], [0, 2 * np.pi], [-np.inf, np.inf]],
+                [[0, 2 * pi], [0, 2 * pi], [-np.inf, np.inf]],
             )
         elif self.bound_dim == 1 and self.lin_dim == 2:
             C = empty((2, 2))
             C[0, 0], _ = nquad(
                 lambda x, y, z: (y - approximate_mean[0]) ** 2 * self.pdf([x, y, z]),
-                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
             )
             C[0, 1], _ = nquad(
                 lambda x, y, z: (y - approximate_mean[0])
                 * (z - approximate_mean[1])
                 * self.pdf([x, y, z]),
-                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
             )
             C[1, 0] = C[0, 1]
             C[1, 1], _ = nquad(
                 lambda x, y, z: (z - approximate_mean[1]) ** 2 * self.pdf([x, y, z]),
-                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
             )
         else:
             raise ValueError("Cannot determine linear covariance for this dimension.")
@@ -195,7 +196,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
             np.size(input_periodic) == self.bound_dim and ndim(input_periodic) <= 1
         ), "Input should be of size (lin_dim,)."
 
-        input_periodic = mod(input_periodic, 2 * np.pi)
+        input_periodic = mod(input_periodic, 2 * pi)
 
         def f_cond_unnorm(x, input_periodic=input_periodic):
             n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else np.size(x)
@@ -214,22 +215,22 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         if self.lin_dim == 1 and self.bound_dim == 1:
             mu = scipy.integrate.nquad(
                 lambda x, y: (y * self.pdf([x, y]))[0],
-                [[0, 2 * np.pi], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-np.inf, np.inf]],
             )[0]
         elif self.bound_dim == 2 and self.lin_dim == 1:
             mu = scipy.integrate.nquad(
                 lambda x, y, z: (z * self.pdf([x, y, z]))[0],
-                [[0, 2 * np.pi], [0, 2 * np.pi], [-np.inf, np.inf]],
+                [[0, 2 * pi], [0, 2 * pi], [-np.inf, np.inf]],
             )[0]
         elif self.bound_dim == 1 and self.lin_dim == 2:
             mu = empty(2)
             mu[0] = scipy.integrate.nquad(
                 lambda x, y, z: (y * self.pdf([x, y, z]))[0],
-                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
             )[0]
             mu[1] = scipy.integrate.nquad(
                 lambda x, y, z: (z * self.pdf([x, y, z]))[0],
-                [[0, 2 * np.pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
             )[0]
         else:
             raise ValueError("Cannot determine linear mean for this dimension.")
@@ -251,12 +252,12 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         """
         if starting_point is None:
             starting_point = concatenate(
-                [np.pi * ones(self.bound_dim), zeros(self.lin_dim)]
+                [pi * ones(self.bound_dim), zeros(self.lin_dim)]
             )
 
         # Define bounds for the optimization
         bounds = [
-            (0, 2 * np.pi) if i < self.bound_dim else (-np.inf, np.inf)
+            (0, 2 * pi) if i < self.bound_dim else (-np.inf, np.inf)
             for i in range(self.bound_dim + self.lin_dim)
         ]
 

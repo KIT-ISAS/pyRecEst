@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import mod
 from pyrecest.backend import log
 from pyrecest.backend import array
@@ -21,7 +22,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
         self.filter_state = self.filter_state.convolve(wn_sys)
 
     def update_identity(self, wn_meas, z):
-        mu_w_new = mod(z - wn_meas.mu, 2 * np.pi)
+        mu_w_new = mod(z - wn_meas.mu, 2 * pi)
         wn_meas_shifted = WrappedNormalDistribution(mu_w_new, wn_meas.sigma)
         self.filter_state = self.filter_state.multiply_vm(wn_meas_shifted)
 

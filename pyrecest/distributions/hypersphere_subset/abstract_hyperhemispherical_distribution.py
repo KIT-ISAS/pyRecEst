@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import vstack
@@ -68,12 +69,12 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         warnings.warn(warning_msg)
 
         if self.dim == 1:
-            mu = super().mean_direction_numerical([0, np.pi])
+            mu = super().mean_direction_numerical([0, pi])
         elif self.dim <= 3:
             mu = super().mean_direction_numerical(
                 [
                     zeros(self.dim),
-                    [2 * np.pi, *np.pi * ones(self.dim - 2), np.pi / 2],
+                    [2 * pi, *pi * ones(self.dim - 2), pi / 2],
                 ]
             )
         else:
@@ -98,13 +99,13 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     @staticmethod
     def get_full_integration_boundaries(dim: Union[int, int32, int64]) -> np.ndarray:
         if dim == 1:
-            integration_boundaries = [0, np.pi]
+            integration_boundaries = [0, pi]
         else:
             integration_boundaries = vstack(
                 (
                     zeros(dim),
                     concatenate(
-                        ([2 * np.pi], np.pi * ones(dim - 2), [np.pi / 2])
+                        ([2 * pi], pi * ones(dim - 2), [pi / 2])
                     ),
                 )
             ).T
@@ -147,7 +148,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
         assert self.dim == 2, "Currently only implemented for 2D hemispheres."
 
-        s0 = random.rand(self.dim) * np.pi
+        s0 = random.rand(self.dim) * pi
         result = minimize(
             objective_function_2d,
             s0,

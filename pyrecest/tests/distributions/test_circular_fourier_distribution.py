@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import linspace
 from pyrecest.backend import ceil
@@ -57,7 +58,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         """
         for param in param_range:
             dist = dist_class(mu, param)
-            xvals = arange(-2 * np.pi, 3 * np.pi, 0.01)
+            xvals = arange(-2 * pi, 3 * pi, 0.01)
             fd = CircularFourierDistribution.from_distribution(
                 dist, coeffs, transformation
             )
@@ -80,7 +81,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     def test_vm_to_fourier(self, mult_by_n, transformation):
-        xs = linspace(0, 2 * np.pi, 100)
+        xs = linspace(0, 2 * pi, 100)
         dist = VonMisesDistribution(2.5, 1.5)
         fd = CircularFourierDistribution.from_distribution(
             dist,
@@ -195,7 +196,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
             )
             ** 2,
             0,
-            2 * np.pi,
+            2 * pi,
         )
         fd_diff = fd1 - fd2
         np.testing.assert_array_almost_equal(fd_diff.integrate(), hel_like_distance)

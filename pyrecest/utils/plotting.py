@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
 from pyrecest.backend import reshape
@@ -20,7 +21,7 @@ def plot_ellipsoid(center, shape_matrix, scaling_factor=1, color="blue"):
 
 
 def plot_ellipsoid_2d(center, shape_matrix, scaling_factor=1, color="blue"):
-    xs = linspace(0, 2 * np.pi, 100)
+    xs = linspace(0, 2 * pi, 100)
     ps = scaling_factor * shape_matrix @ np.column_stack((cos(xs), sin(xs)))
     plt.plot(ps[0] + center[0], ps[1] + center[1], color=color)
     plt.show()
@@ -29,8 +30,8 @@ def plot_ellipsoid_2d(center, shape_matrix, scaling_factor=1, color="blue"):
 def plot_ellipsoid_3d(center, shape_matrix, scaling_factor=1, color="blue"):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    u = linspace(0, 2 * np.pi, 100)
-    v = linspace(0, np.pi, 100)
+    u = linspace(0, 2 * pi, 100)
+    v = linspace(0, pi, 100)
     x = outer(cos(u), sin(v))
     y = outer(sin(u), sin(v))
     z = outer(ones(np.size(u)), cos(v))

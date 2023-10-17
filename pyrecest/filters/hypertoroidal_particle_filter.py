@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import tile
@@ -38,12 +39,12 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         if dim == 1:
             # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
             filter_state = CircularDiracDistribution(
-                linspace(0, 2 * np.pi, n_particles, endpoint=False)
+                linspace(0, 2 * pi, n_particles, endpoint=False)
             )
         else:
             filter_state = HypertoroidalDiracDistribution(
                 tile(
-                    linspace(0, 2 * np.pi, n_particles, endpoint=False), (dim, 1)
+                    linspace(0, 2 * pi, n_particles, endpoint=False), (dim, 1)
                 ).T.squeeze(),
                 dim=dim,
             )
@@ -73,7 +74,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         if noise_distribution is not None:
             noise = noise_distribution.sample(self.filter_state.w.size)
             self.filter_state.d += squeeze(noise)
-            self.filter_state.d = mod(self.filter_state.d, 2 * np.pi)
+            self.filter_state.d = mod(self.filter_state.d, 2 * pi)
 
     def predict_nonlinear_nonadditive(
         self, f: Callable, samples: np.ndarray, weights: np.ndarray

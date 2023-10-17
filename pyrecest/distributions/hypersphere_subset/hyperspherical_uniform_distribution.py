@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import sqrt
@@ -34,7 +35,7 @@ class HypersphericalUniformDistribution(
                     self.dim + 1,
                 )
             )
-            phi = 2 * np.pi * random.rand(n)
+            phi = 2 * pi * random.rand(n)
             s[:, 2] = random.rand(n) * 2 - 1
             r = sqrt(1 - s[:, 2] ** 2)
             s[:, 0] = r * cos(phi)

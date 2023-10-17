@@ -1,3 +1,4 @@
+from math import pi
 from typing import Union
 from pyrecest.backend import tile
 from pyrecest.backend import sum
@@ -36,7 +37,7 @@ class HypertoroidalDiracDistribution(
 
         AbstractHypertoroidalDistribution.__init__(self, dim)
         AbstractDiracDistribution.__init__(
-            self, np.atleast_1d(mod(d, 2 * np.pi)), w=w
+            self, np.atleast_1d(mod(d, 2 * pi)), w=w
         )
 
     def plot(self, *args, **kwargs):
@@ -50,7 +51,7 @@ class HypertoroidalDiracDistribution(
         :return: Mean direction
         """
         a = self.trigonometric_moment(1)
-        m = mod(arctan2(imag(a), real(a)), 2 * np.pi)
+        m = mod(arctan2(imag(a), real(a)), 2 * pi)
         return m
 
     def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
@@ -67,7 +68,7 @@ class HypertoroidalDiracDistribution(
 
     def apply_function(self, f: Callable) -> "HypertoroidalDiracDistribution":
         dist = super().apply_function(f)
-        dist.d = mod(dist.d, 2 * np.pi)
+        dist.d = mod(dist.d, 2 * pi)
         return dist
 
     def to_toroidal_wd(self):
@@ -92,7 +93,7 @@ class HypertoroidalDiracDistribution(
     def shift(self, shift_by) -> "HypertoroidalDiracDistribution":
         assert shift_by.shape[-1] == self.dim
         hd = copy.copy(self)
-        hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2 * np.pi)
+        hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2 * pi)
         return hd
 
     def entropy(self):

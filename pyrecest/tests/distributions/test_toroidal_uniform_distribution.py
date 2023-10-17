@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import tile
 from pyrecest.backend import ones
 from pyrecest.backend import array
@@ -20,7 +21,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
     def test_pdf(self):
         self.assertTrue(
             allclose(
-                self.tud.pdf(self.x), (1 / (2 * np.pi) ** 2) * ones(self.x.shape[1])
+                self.tud.pdf(self.x), (1 / (2 * pi) ** 2) * ones(self.x.shape[1])
             )
         )
 
@@ -29,7 +30,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
         self.assertTrue(
             allclose(
                 tud_shifted.pdf(self.x),
-                (1 / (2 * np.pi) ** 2) * ones(self.x.shape[1]),
+                (1 / (2 * pi) ** 2) * ones(self.x.shape[1]),
             )
         )
 
@@ -74,7 +75,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
         s = self.tud.sample(n)
         self.assertEqual(s.shape, (n, 2))
         self.assertTrue(all(s >= 0))
-        self.assertTrue(all(s < 2 * np.pi))
+        self.assertTrue(all(s < 2 * pi))
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import real
 from pyrecest.backend import isnan
@@ -73,7 +74,7 @@ class AbstractSphericalHarmonicsDistribution(
 
     def integrate(self):
         if self.transformation == "identity":
-            int_val = self.coeff_mat[0, 0] * sqrt(4 * np.pi)
+            int_val = self.coeff_mat[0, 0] * sqrt(4 * pi)
         elif self.transformation == "sqrt":
             int_val = norm(self.coeff_mat[~isnan(self.coeff_mat)]) ** 2
         else:
