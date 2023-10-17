@@ -19,8 +19,8 @@ vectors_to_test_2d = array(
         [0, 1, 0],
         [0, 0, 1],
         array([1, 1, 0]) / sqrt(2),
-        array([1, 1, 2]) / linalg.norm([1, 1, 2]),
-        -array([1, 1, 2]) / linalg.norm([1, 1, 2]),
+        array([1, 1, 2]) / linalg.norm(array([1, 1, 2])),
+        -array([1, 1, 2]) / linalg.norm(array([1, 1, 2])),
     ]
 )
 

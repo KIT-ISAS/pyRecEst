@@ -20,7 +20,7 @@ from pyrecest.distributions.hypersphere_subset.hyperhemispherical_uniform_distri
 
 class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
     def setUp(self):
-        self.mu_ = array([0.5, 1.0, 1.0]) / linalg.norm([0.5, 1.0, 1.0])
+        self.mu_ = array([0.5, 1.0, 1.0]) / linalg.norm(array([0.5, 1.0, 1.0]))
         self.kappa_ = 2.0
 
     def test_get_manifold_size(self):
