@@ -36,8 +36,7 @@ jobs:
       - name: List files and check Python and package versions
         run: |
           poetry env use python
-          ls -al
-          poetry run python -c "import torch; print(torch.version.cuda)"
+          #poetry run python -c "import torch; print(torch.version.cuda)"
           poetry run python -m pip3 install --upgrade --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
           poetry run python -c "import torch; print(torch.version.cuda)"
           poetry run python -c 'import sys; print(sys.version_info[:])'
