@@ -27,6 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          poetry env use python
           export CUDA_VISIBLE_DEVICES=""
           python -m pip install --upgrade pip
           python -m pip install poetry
