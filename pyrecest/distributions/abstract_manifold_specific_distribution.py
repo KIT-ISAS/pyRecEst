@@ -2,6 +2,7 @@ from pyrecest.backend import squeeze
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import empty
+from typing import Union
 import numbers
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -63,18 +64,17 @@ class AbstractManifoldSpecificDistribution(ABC):
         """
         raise NotImplementedError("set_mode is not implemented for this distribution")
 
-    @beartype
-    def sample(self, n: int | int32 | int64) -> np.ndarray:
+    # Need to use Union instead of | to support torch.dtype
+    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
 
     # jscpd:ignore-start
-    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | int32 | int64,
-        burn_in: int | int32 | int64 = 10,
-        skipping: int | int32 | int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point: np.number | numbers.Real | np.ndarray | None = None,
     ) -> np.ndarray:
