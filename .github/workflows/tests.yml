@@ -35,7 +35,9 @@ jobs:
       - name: List files and check Python and package versions
         run: |
           ls -al
+          python -c "import torch; print(torch.version.cuda)"
           pip3 install --upgrade --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+          python -c "import torch; print(torch.version.cuda)"
           python -c 'import sys; print(sys.version_info[:])'
           python -m pip freeze
 
