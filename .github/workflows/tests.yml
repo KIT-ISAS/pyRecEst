@@ -27,10 +27,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry env use python
           export CUDA_VISIBLE_DEVICES=""
           python -m pip install --upgrade pip
           python -m pip install poetry
+          poetry env use python
           poetry install --extras healpy_support --extras pytorch_support 
 
       - name: List files and check Python and package versions
