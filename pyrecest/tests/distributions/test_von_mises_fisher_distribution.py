@@ -15,12 +15,12 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution
 
 vectors_to_test_2d = array(
     [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-        array([1, 1, 0]) / sqrt(2),
-        array([1, 1, 2]) / linalg.norm(array([1, 1, 2])),
-        -array([1, 1, 2]) / linalg.norm(array([1, 1, 2])),
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        array([1.0, 1.0, 0.0]) / sqrt(2.0),
+        array([1.0, 1.0, 2.0]) / linalg.norm(array([1.0, 1.0, 2.0])),
+        -array([1.0, 1.0, 2.0]) / linalg.norm(array([1.0, 1.0, 2.0])),
     ]
 )
 

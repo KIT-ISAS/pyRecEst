@@ -10,7 +10,7 @@ from pyrecest.distributions import VonMisesFisherDistribution
 
 class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     def test_pdf_hyperspherical_coords_1d(self):
-        mu_ = array([0.5, 1.0]) / linalg.norm([0.5, 1.0])
+        mu_ = array([0.5, 1.0]) / linalg.norm(array([0.5, 1.0]))
         kappa_ = 2.0
         vmf = VonMisesFisherDistribution(mu_, kappa_)
 
