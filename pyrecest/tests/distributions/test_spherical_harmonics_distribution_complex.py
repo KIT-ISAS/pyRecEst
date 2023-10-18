@@ -877,7 +877,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         ],
                     ]
                 ),
-                array([1, 1, 0]) / sqrt(2.0)),
+                array([1, 1, 0]) / sqrt(2.0),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
