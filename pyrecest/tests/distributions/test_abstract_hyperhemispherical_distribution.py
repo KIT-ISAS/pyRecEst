@@ -39,7 +39,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
 
     def test_sample_metropolis_hastings_basics_only(self):
         """Tests the sample_metropolis_hastings sampling"""
-        vmf = VonMisesFisherDistribution(array([1, 0, 0]), 2.0)
+        vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 2.0)
         chd = CustomHyperhemisphericalDistribution(
             lambda x: vmf.pdf(x) + vmf.pdf(-x), vmf.dim
         )

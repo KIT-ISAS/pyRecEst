@@ -883,7 +883,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "shd_xz",
                 array([[1, np.nan, np.nan], [sqrt(1 / 2), 1, -sqrt(1 / 2)]]),
-                array([1, 0, 1] / sqrt(2)),
+                array([1, 0, 1]) / sqrt(2),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
@@ -891,7 +891,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 array(
                     [[1, np.nan, np.nan], [1j * sqrt(1 / 2), 1, 1j * sqrt(1 / 2)]]
                 ),
-                array([0, 1, 1] / sqrt(2)),
+                array([0, 1, 1]) / sqrt(2),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
