@@ -26,14 +26,14 @@ class GlobalNearestNeighborTest(unittest.TestCase):
                 GaussianDistribution(array([1.0, 2.0, 3.0, 4.0]), diag(array([2.0, 2.0, 2.0, 2.0])))
             ),
             KalmanFilter(
-                GaussianDistribution(-array([1.0, 2.0, 3.0, 4.0]), diag([4.0, 3.0, 2.0, 1.0]))
+                GaussianDistribution(-array([1.0, 2.0, 3.0, 4.0]), diag(array([4.0, 3.0, 2.0, 1.0])))
             ),
         ]
         self.meas_mat = array([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
-        self.sys_mat = scipy.linalg.block_diag([[1.0, 1.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 1.0]])
+        self.sys_mat = scipy.linalg.block_diag(array([[1.0, 1.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 1.0]]))
         self.all_different_meas_covs = np.dstack(
             [
-                diag([1.0, 2.0]),
+                diag(array([1.0, 2.0])),
                 array([[5.0, 0.1], [0.1, 3.0]]),
                 array([[2.0, -0.5], [-0.5, 0.5]]),
             ]

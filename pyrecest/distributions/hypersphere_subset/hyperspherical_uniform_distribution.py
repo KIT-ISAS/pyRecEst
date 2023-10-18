@@ -37,12 +37,12 @@ class HypersphericalUniformDistribution(
                 )
             )
             phi = 2 * pi * random.rand(n)
-            s[:, 2] = random.rand(n) * 2 - 1
+            s[:, 2] = random.rand(n) * 2.0 - 1.0
             r = sqrt(1 - s[:, 2] ** 2)
             s[:, 0] = r * cos(phi)
             s[:, 1] = r * sin(phi)
         else:
-            samples_unnorm = random.randn(n, self.dim + 1)
+            samples_unnorm = random.random(0.0, 1.0, (n, self.dim + 1))
             s = samples_unnorm / linalg.norm(samples_unnorm, axis=1, keepdims=True)
         return s
 

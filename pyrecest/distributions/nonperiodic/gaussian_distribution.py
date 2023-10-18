@@ -45,7 +45,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         return mvn.pdf(xs, self.mu, self.C)
 
     def shift(self, shift_by):
-        assert shift_by.size == self.dim
+        assert shift_by.ndim == 0 and self.dim == 1 or shift_by.shape[0] == self.dim
         new_gaussian = copy.deepcopy(self)
         new_gaussian.mu = self.mu + shift_by
         return new_gaussian

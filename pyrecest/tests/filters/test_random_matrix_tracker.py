@@ -20,10 +20,10 @@ from pyrecest.filters.random_matrix_tracker import RandomMatrixTracker
 
 class TestRandomMatrixTracker(unittest.TestCase):
     def setUp(self):
-        self.initial_state = array([1, 2])
-        self.initial_covariance = array([[0.1, 0], [0, 0.1]])
-        self.initial_extent = array([[1, 0.1], [0.1, 1]])
-        self.measurement_noise = array([[0.2, 0], [0, 0.2]])
+        self.initial_state = array([1.0, 2.0])
+        self.initial_covariance = array([[0.1, 0.0], [0.0, 0.1]])
+        self.initial_extent = array([[1.0, 0.1], [0.1, 1.0]])
+        self.measurement_noise = array([[0.2, 0.0], [0.0, 0.2]])
 
         self.tracker = RandomMatrixTracker(
             self.initial_state, self.initial_covariance, self.initial_extent

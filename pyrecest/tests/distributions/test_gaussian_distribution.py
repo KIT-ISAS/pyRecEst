@@ -49,7 +49,7 @@ class GaussianDistributionTest(unittest.TestCase):
         C = array([[1.1, -0.4, 0.00], [-0.4, 0.9, 0.0], [0.0, 0.0, 1.0]])
         g = GaussianDistribution(mu, C)
 
-        shift_by = array([2, -2, 3])
+        shift_by = array([2.0, -2.0, 3.0])
         g_shifted = g.shift(shift_by)
 
         self.assertTrue(allclose(g_shifted.mode(), mu + shift_by, atol=1e-6))

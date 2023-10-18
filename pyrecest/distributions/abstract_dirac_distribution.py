@@ -42,7 +42,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         """
         Normalize the weights in-place to ensure they sum to 1.
         """
-        if not isclose(sum(self.w), 1, atol=1e-10):
+        if not isclose(sum(self.w), 1.0, atol=1e-10):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
             self.w = self.w / sum(self.w)
 

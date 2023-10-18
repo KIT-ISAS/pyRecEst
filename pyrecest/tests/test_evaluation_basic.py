@@ -232,7 +232,7 @@ class TestEvalationBasics(TestEvalationBase):
         filter_config = {"name": "pf", "parameter": 100}
         scenario_config = {
             "initial_prior": HypertoroidalWrappedNormalDistribution(
-                array([0, 0]), eye(2)
+                array([0.0, 0.0]), eye(2)
             ),
             "inputs": None,
             "manifold": "hypertorus",
