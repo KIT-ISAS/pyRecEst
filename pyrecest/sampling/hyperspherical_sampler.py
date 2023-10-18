@@ -194,7 +194,7 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
 
             psi_points = CircularUniformSampler().get_grid(n_sample_circle)
 
-            assert np.size(psi_points) != 0
+            assert len(psi_points) != 0
 
             nside = 2**i
             numpixels = hp.nside2npix(nside)

@@ -63,7 +63,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 dist, coeffs, transformation
             )
             self.assertEqual(
-                np.size(fd.c),
+                fd.c.shape[0],
                 ceil(coeffs / 2),
                 "Length of Fourier Coefficients mismatch.",
             )

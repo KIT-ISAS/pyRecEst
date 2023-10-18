@@ -91,7 +91,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
     def test_update(self, name, offset, _):
         ys = array([self.initial_state + offset_row for offset_row in offset]).T
         Cv = array([[0.1, 0.0], [0.0, 0.1]])
-        H = eye(np.size(self.initial_state))
+        H = eye(self.initial_state.shape[0])
 
         # Call the update method
         self.tracker.update(ys, H, Cv)

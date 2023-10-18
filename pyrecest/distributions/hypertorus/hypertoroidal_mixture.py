@@ -51,7 +51,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param shift_angles: angles to shift by
         :returns: shifted distribution
         """
-        assert np.size(shift_by) == self.dim
+        assert shift_by.shape == (self.dim,)
         hd_shifted = copy.deepcopy(self)
         hd_shifted.dists = [dist.shift(shift_by) for dist in hd_shifted.dists]
         return hd_shifted
