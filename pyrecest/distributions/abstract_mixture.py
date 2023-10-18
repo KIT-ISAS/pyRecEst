@@ -55,7 +55,7 @@ class AbstractMixture(AbstractDistributionType):
 
         self.dists = dists
 
-        if abs(sum(weights) - 1) > 1e-10:
+        if abs(sum(weights) - 1.0) > 1e-10:
             warnings.warn("Weights of mixture do not sum to one.")
             self.w = weights / sum(weights)
         else:

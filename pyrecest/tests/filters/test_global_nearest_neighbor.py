@@ -30,7 +30,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             ),
         ]
         self.meas_mat = array([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
-        self.sys_mat = scipy.linalg.block_diag(array([[1.0, 1.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 1.0]]))
+        self.sys_mat = array(scipy.linalg.block_diag(array([[1.0, 1.0], [0.0, 1.0]]), array([[1.0, 1.0], [0.0, 1.0]])))
         self.all_different_meas_covs = np.dstack(
             [
                 diag(array([1.0, 2.0])),

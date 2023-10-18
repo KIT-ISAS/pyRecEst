@@ -50,7 +50,7 @@ class AbstractParticleFilter(AbstractFilterType):
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
-            samples.shape[0] == weights.size
+            samples.shape[0] == weights.shape[0]
         ), "samples and weights must match in size"
 
         weights = weights / sum(weights)

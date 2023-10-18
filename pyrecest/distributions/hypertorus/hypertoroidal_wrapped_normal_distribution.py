@@ -33,7 +33,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         assert C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1], "C must be dim x dim"
         assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
         assert (C.ndim == 0 and C > 0.0 or
-            linalg.cholesky(C) # fails if not positiv definite
+            len(linalg.cholesky(C))>0 # fails if not positiv definite
         ), "C must be positive definite"
         assert (
             np.shape(mu) == (C.shape[1],)

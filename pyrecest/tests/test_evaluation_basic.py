@@ -170,6 +170,7 @@ class TestEvalationBasics(TestEvalationBase):
         return groundtruths, measurements
 
     def test_determine_all_deviations(self):
+        import numpy as _np
         def dummy_extract_mean(x):
             return x
 
@@ -177,7 +178,7 @@ class TestEvalationBasics(TestEvalationBase):
             return linalg.norm(x - y)
 
         # Initialize the outer array with object type
-        groundtruths = empty((3, 4), dtype=object)
+        groundtruths = _np.empty((3, 4), dtype=object)
 
         # Populate each entry with (2,) arrays
         for i in range(3):
@@ -201,7 +202,7 @@ class TestEvalationBasics(TestEvalationBase):
         np.testing.assert_allclose(
             # Should be zeros as the lastEstimates match groundtruths
             all_deviations[0],
-            [0, 0, 0],
+            [0.0, 0.0, 0.0],
         )
         np.testing.assert_allclose(
             # Should be sqrt(2) away from groundtruths
@@ -212,10 +213,10 @@ class TestEvalationBasics(TestEvalationBase):
     def test_configure_kf(self):
         filterParam = {"name": "kf", "parameter": None}
         scenarioParam = {
-            "initial_prior": GaussianDistribution(array([0, 0]), eye(2)),
+            "initial_prior": GaussianDistribution(array([0.0, 0.0]), eye(2)),
             "inputs": None,
             "manifold_type": "Euclidean",
-            "meas_noise": GaussianDistribution(array([0, 0]), eye(2)),
+            "meas_noise": GaussianDistribution(array([0.0, 0.0]), eye(2)),
         }
 
         (

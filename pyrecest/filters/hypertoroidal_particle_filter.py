@@ -44,7 +44,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         else:
             filter_state = HypertoroidalDiracDistribution(
                 tile(
-                    linspace(0, 2 * pi, n_particles, endpoint=False), (dim, 1)
+                    arange(0, 2.0*pi, 2.0*pi/n_particles), (dim, 1)
                 ).T.squeeze(),
                 dim=dim,
             )
@@ -56,7 +56,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             # Convert to DiracDistribution if it is a different type of distribution
             # Use .__class__ to convert it to CircularDiracDistribution
             new_state = self.filter_state.__class__(
-                new_state.sample(self.filter_state.w.size)
+                new_state.sample(self.filter_state.w.shape[0])
             )
         self.filter_state = copy.deepcopy(new_state)
 

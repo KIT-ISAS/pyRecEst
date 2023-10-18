@@ -67,7 +67,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
 
     def test_from_distribution(self):
         random.seed(0)
-        vmf = VonMisesFisherDistribution(array([1, 1, 1]) / sqrt(3), 1)
+        vmf = VonMisesFisherDistribution(array([1.0, 1.0, 1.0]) / sqrt(3), 1.0)
         dirac_dist = HypersphericalDiracDistribution.from_distribution(vmf, 100000)
         np.testing.assert_almost_equal(
             dirac_dist.mean_direction(), vmf.mean_direction(), decimal=2

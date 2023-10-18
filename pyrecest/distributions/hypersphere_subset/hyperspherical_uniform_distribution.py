@@ -42,8 +42,8 @@ class HypersphericalUniformDistribution(
             s[:, 0] = r * cos(phi)
             s[:, 1] = r * sin(phi)
         else:
-            samples_unnorm = random.random(0.0, 1.0, (n, self.dim + 1))
-            s = samples_unnorm / linalg.norm(samples_unnorm, axis=1, keepdims=True)
+            samples_unnorm = random.normal(0.0, 1.0, (n, self.dim + 1))
+            s = samples_unnorm / linalg.norm(samples_unnorm, axis=1).reshape(-1, 1)
         return s
 
     def get_manifold_size(self):

@@ -48,7 +48,7 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
 
     def test_integrate_S2(self):
         hhud = HyperhemisphericalUniformDistribution(2)
-        self.assertAlmostEqual(hhud.integrate(), 1, delta=1e-6)
+        self.assertAlmostEqual(hhud.integrate(), 1.0, delta=1e-6)
 
     def test_integrate_S3(self):
         hhud = HyperhemisphericalUniformDistribution(3)

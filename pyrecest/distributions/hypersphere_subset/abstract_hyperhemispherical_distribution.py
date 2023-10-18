@@ -10,6 +10,7 @@ from pyrecest.backend import concatenate
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
+from pyrecest.backend import array
 import warnings
 from collections.abc import Callable
 
@@ -106,7 +107,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                 (
                     zeros(dim),
                     concatenate(
-                        ([2 * pi], pi * ones(dim - 2), [pi / 2])
+                        (array([2 * pi]), pi * ones(dim - 2), array([pi / 2]))
                     ),
                 )
             ).T
