@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import array
 import unittest
 
@@ -8,7 +9,7 @@ from pyrecest.distributions import EllipsoidalBallUniformDistribution
 class TestEllipsoidalBallUniformDistribution(unittest.TestCase):
     def test_pdf(self):
         dist = EllipsoidalBallUniformDistribution(
-            array([0, 0, 0]), np.diag([4, 9, 16])
+            array([0, 0, 0]), diag([4, 9, 16])
         )
         self.assertAlmostEqual(dist.pdf(array([0, 0, 0])), 1 / 100.53096491)
 

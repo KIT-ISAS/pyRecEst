@@ -4,6 +4,7 @@ from pyrecest.backend import eye
 from pyrecest.backend import array
 from pyrecest.backend import allclose
 from pyrecest.backend import all, zeros
+from pyrecest.backend import diag
 import unittest
 
 import numpy as np
@@ -20,25 +21,25 @@ class GlobalNearestNeighborTest(unittest.TestCase):
     def setUp(self):
         """Initialize test variables before each test is run."""
         self.kfs_init = [
-            KalmanFilter(GaussianDistribution(zeros(4), np.diag([1, 2, 3, 4]))),
+            KalmanFilter(GaussianDistribution(zeros(4), diag([1.0, 2.0, 3.0, 4.0]))),
             KalmanFilter(
-                GaussianDistribution(array([1, 2, 3, 4]), np.diag([2, 2, 2, 2]))
+                GaussianDistribution(array([1.0, 2.0, 3.0, 4.0]), diag([2.0, 2.0, 2.0, 2.0]))
             ),
             KalmanFilter(
-                GaussianDistribution(-array([1, 2, 3, 4]), np.diag([4, 3, 2, 1]))
+                GaussianDistribution(-array([1.0, 2.0, 3.0, 4.0]), diag([4.0, 3.0, 2.0, 1.0]))
             ),
         ]
-        self.meas_mat = array([[1, 0, 0, 0], [0, 0, 1, 0]])
-        self.sys_mat = scipy.linalg.block_diag([[1, 1], [0, 1]], [[1, 1], [0, 1]])
+        self.meas_mat = array([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
+        self.sys_mat = scipy.linalg.block_diag([[1.0, 1.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 1.0]])
         self.all_different_meas_covs = np.dstack(
             [
-                np.diag([1, 2]),
+                diag([1.0, 2.0]),
                 array([[5, 0.1], [0.1, 3]]),
                 array([[2, -0.5], [-0.5, 0.5]]),
             ]
         )
         self.all_different_meas_covs_4 = np.dstack(
-            (self.all_different_meas_covs, array([[2, -0.5], [-0.5, 0.5]]))
+            (self.all_different_meas_covs, array([[2.0, -0.5], [-0.5, 0.5]]))
         )
 
     def test_set_state_sets_correct_state(self):
@@ -57,13 +58,13 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         self.assertEqual(tracker.get_point_estimate(True).shape, (12,))
 
     @parameterized.expand(
-        [("no_inputs", zeros(4)), ("with_inputs", array([1, -1, 1, -1]))]
+        [("no_inputs", zeros(4)), ("with_inputs", array([1.0, -1.0, 1.0, -1.0]))]
     )
     def test_predict_linear(self, name, sys_input):
         C_matrices = [
-            scipy.linalg.block_diag([[3, 2], [2, 2]], [[7, 4], [4, 4]]) + eye(4),
-            scipy.linalg.block_diag([[4, 2], [2, 2]], [[4, 2], [2, 2]]) + eye(4),
-            scipy.linalg.block_diag([[7, 3], [3, 3]], [[3, 1], [1, 1]]) + eye(4),
+            scipy.linalg.block_diag([[3.0, 2.0], [2.0, 2.0]], [[7.0, 4.0], [4.0, 4.0]]) + eye(4),
+            scipy.linalg.block_diag([[4.0, 2.0], [2.0, 2.0]], [[4.0, 2.0], [2.0, 2.0]]) + eye(4),
+            scipy.linalg.block_diag([[7.0, 3.0], [3.0, 3.0]], [[3.0, 1.0], [1.0, 1.0]]) + eye(4),
         ]
 
         tracker = GlobalNearestNeighbor()
@@ -89,37 +90,37 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
         sys_mats = np.dstack(
             (
-                scipy.linalg.block_diag([[1, 1], [0, 1]], [[1, 1], [0, 1]]),
+                scipy.linalg.block_diag([[1.0, 1.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 1.0]]),
                 eye(4),
-                array([[0, 0, 1, 1], [0, 0, 0, 1], [1, 1, 0, 0], [0, 1, 0, 0]]),
+                array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]]),
             )
         )
         sys_noises = np.dstack(
-            (eye(4), np.diag([10, 11, 12, 13]), np.diag([1, 5, 3, 5]))
+            (eye(4), diag([10.0, 11.0, 12.0, 13.0]), diag([1.0, 5.0, 3.0, 5.0]))
         )
-        sys_inputs = array([[-1, 1, -1, 1], [1, 2, 3, 4], -array([4, 3, 2, 1])]).T
+        sys_inputs = array([[-1.0, 1.0, -1.0, 1.0], [1.0, 2.0, 3.0, 4.0], -array([4.0, 3.0, 2.0, 1.0])]).T
 
         tracker.predict_linear(sys_mats, sys_noises, sys_inputs)
 
         np.testing.assert_array_equal(
-            tracker.filter_bank[0].filter_state.mu, array([-1, 1, -1, 1])
+            tracker.filter_bank[0].filter_state.mu, array([-1.0, 1.0, -1.0, 1.0])
         )
         np.testing.assert_array_equal(
-            tracker.filter_bank[1].filter_state.mu, array([2, 4, 6, 8])
+            tracker.filter_bank[1].filter_state.mu, array([2.0, 4.0, 6.0, 8.0])
         )
         np.testing.assert_array_equal(
-            tracker.filter_bank[2].filter_state.mu, array([-11, -7, -5, -3])
+            tracker.filter_bank[2].filter_state.mu, array([-11.0, -7.0, -5.0, -3.0])
         )
         np.testing.assert_array_equal(
             tracker.filter_bank[0].filter_state.C,
-            scipy.linalg.block_diag([[4, 2], [2, 3]], [[8, 4], [4, 5]]),
+            scipy.linalg.block_diag([[4.0, 2.0], [2.0, 3.0]], [[8.0, 4.0], [4.0, 5.0]]),
         )
         np.testing.assert_array_equal(
-            tracker.filter_bank[1].filter_state.C, np.diag([12, 13, 14, 15])
+            tracker.filter_bank[1].filter_state.C, diag([12.0, 13.0, 14.0, 15.0])
         )
         np.testing.assert_array_equal(
             tracker.filter_bank[2].filter_state.C,
-            scipy.linalg.block_diag([[4, 1], [1, 6]], [[10, 3], [3, 8]]),
+            scipy.linalg.block_diag([[4.0, 1.0], [1.0, 6.0]], [[10.0, 3.0], [3.0, 8.0]]),
         )
 
     def test_association_no_clutter(self):

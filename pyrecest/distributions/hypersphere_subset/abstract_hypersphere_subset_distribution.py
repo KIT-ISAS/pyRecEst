@@ -11,6 +11,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
+from pyrecest.backend import empty
 from abc import abstractmethod
 from collections.abc import Callable
 
@@ -41,7 +42,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 self.dim
             )
 
-        mu = np.full(self.dim + 1, np.nan)
+        mu = empty(self.dim + 1)
 
         if 1 <= self.dim <= 3:
             for i in range(self.dim + 1):

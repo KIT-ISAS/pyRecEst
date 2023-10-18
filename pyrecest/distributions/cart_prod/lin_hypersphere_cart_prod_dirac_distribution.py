@@ -1,5 +1,6 @@
 from pyrecest.backend import linalg
 from pyrecest.backend import abs
+from pyrecest.backend import amax
 import numpy as np
 
 from ..abstract_se3_distribution import AbstractSE3Distribution
@@ -13,7 +14,7 @@ class LinHypersphereCartProdDiracDistribution(
 ):
     def __init__(self, bound_dim, d, w=None):
         assert (
-            np.max(abs(linalg.norm(d[:, : (bound_dim + 1)], axis=-1) - 1)) < 1e-5
+            amax(abs(linalg.norm(d[:, : (bound_dim + 1)], None, -1) - 1), 0) < 1e-5
         ), "The hypersphere ssubset part of d must be normalized"
         AbstractSE3Distribution.__init__(self)
         LinBoundedCartProdDiracDistribution.__init__(self, d, w)

@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import linalg
 from pyrecest.backend import tile
 from pyrecest.backend import sum
@@ -36,7 +37,7 @@ class SE3DiracDistributionTest(unittest.TestCase):
         cpsd = SE3CartProdStackedDistribution(
             [
                 HyperhemisphericalUniformDistribution(3),
-                GaussianDistribution(array([1, 2, 3]).T, np.diag([3, 2, 1])),
+                GaussianDistribution(array([1, 2, 3]).T, diag([3, 2, 1])),
             ]
         )
         SE3DiracDistribution.from_distribution(cpsd, 100)

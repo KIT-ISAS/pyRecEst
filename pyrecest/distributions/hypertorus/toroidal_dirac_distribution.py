@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import tile
 from pyrecest.backend import sum
 from pyrecest.backend import sqrt
@@ -56,6 +57,6 @@ class ToroidalDiracDistribution(
         mu = dot(self.w, dbar)
         n = len(self.d)
         C = (dbar - tile(mu, (n, 1))).T @ (
-            np.diag(self.w) @ (dbar - tile(mu, (n, 1)))
+            diag(self.w) @ (dbar - tile(mu, (n, 1)))
         )
         return C

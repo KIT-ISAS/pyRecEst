@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import squeeze
 from pyrecest.backend import isclose
 from pyrecest.backend import array
@@ -24,14 +25,14 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         self.g_3D = GaussianDistribution(self.mu_3D, self.C_3D)
 
         """Test that the numerical integration of a Gaussian distribution equals 1."""
-        dist = GaussianDistribution(array([1, 2]), np.diag([1, 2]))
+        dist = GaussianDistribution(array([1.0, 2.0]), diag([1.0, 2.0]))
         integration_result = dist.integrate_numerically()
         assert isclose(
             integration_result, 1, rtol=1e-5
         ), f"Expected 1, but got {integration_result}"
 
     def test_integrate_fun_over_domain(self):
-        dist = GaussianDistribution(array([1, 2]), np.diag([1, 2]))
+        dist = GaussianDistribution(array([1.0, 2.0]), diag([1.0, 2.0]))
 
         def f(x):
             return 0.3 * dist.pdf(x)
@@ -50,7 +51,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
     def test_mode_numerical_custom_1D(self):
         cd = CustomLinearDistribution(
             lambda x: squeeze(
-                ((x > -1) & (x <= 0)) * (1 + x) + ((x > 0) & (x <= 1)) * (1 - x)
+                ((x > -1.0) & (x <= 0.0)) * (1.0 + x) + ((x > 0.0) & (x <= 1.0)) * (1 - x)
             ),
             1,
         )
@@ -61,8 +62,8 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         np.testing.assert_allclose(self.g_2D.mean_numerical(), self.mu_2D, atol=1e-6)
 
     def test_mode_numerical_gaussian_2D_mean_far_away(self):
-        mu = array([5, 10])
-        C = array([[2, 1], [1, 1]])
+        mu = array([5.0, 10.0])
+        C = array([[2.0, 1.0], [1.0, 1.0]])
         g = GaussianDistribution(mu, C)
         np.testing.assert_allclose(g.mode_numerical(), mu, atol=2e-4)
 

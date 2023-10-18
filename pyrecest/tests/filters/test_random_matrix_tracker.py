@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import linalg
 from pyrecest.backend import mean
 from pyrecest.backend import eye
@@ -128,7 +129,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         self.tracker = RandomMatrixTracker(
             zeros(3),
             eye(3),
-            np.diag([1, 2, 3]),
+            diag([1, 2, 3]),
             kinematic_state_to_pos_matrix=eye(3),
         )
         self.tracker.plot_point_estimate()

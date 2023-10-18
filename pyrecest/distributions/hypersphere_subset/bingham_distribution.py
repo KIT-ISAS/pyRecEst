@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import sum
@@ -66,7 +67,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
     def pdf(self, xs):
         assert xs.shape[-1] == self.dim + 1
 
-        C = self.M @ np.diag(self.Z) @ self.M.T
+        C = self.M @ diag(self.Z) @ self.M.T
         p = 1 / self.F * exp(sum(xs.T * (C @ xs.T), axis=0))
         return p
 
@@ -81,8 +82,8 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
             raise ValueError("Dimensions do not match")
 
         C = (
-            self.M @ np.diag(self.Z.ravel()) @ self.M.T
-            + B2.M @ np.diag(B2.Z.ravel()) @ B2.M.T
+            self.M @ diag(self.Z.ravel()) @ self.M.T
+            + B2.M @ diag(B2.Z.ravel()) @ B2.M.T
         )  # New exponent
 
         C = 0.5 * (C + C.T)  # Symmetrize
@@ -124,9 +125,9 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         Returns:
             S (numpy.ndarray): scatter/covariance matrix in R^d
         """
-        D = np.diag(self.dF / self.F)
+        D = diag(self.dF / self.F)
         # It should already be normalized, but numerical inaccuracies can lead to values unequal to 1
-        D = D / sum(np.diag(D))
+        D = D / sum(diag(D))
         S = self.M @ D @ self.M.T
         S = (S + S.T) / 2  # Enforce symmetry
         return S

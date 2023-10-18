@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import eye
 from pyrecest.backend import array
 from pyrecest.backend import allclose
@@ -33,9 +34,9 @@ class KalmanFilterTest(unittest.TestCase):
         self.assertEqual(kf.get_point_estimate(), 2)
 
     def test_update_linear_2d(self):
-        filter_add = KalmanFilter((array([0, 1]), np.diag([1, 2])))
+        filter_add = KalmanFilter((array([0, 1]), diag([1, 2])))
         filter_id = copy.deepcopy(filter_add)
-        gauss = GaussianDistribution(array([1, 0]), np.diag([2, 1]))
+        gauss = GaussianDistribution(array([1, 0]), diag([2, 1]))
         filter_add.update_linear(gauss.mu, eye(2), gauss.C)
         filter_id.update_identity(gauss.C, gauss.mu)
         self.assertTrue(
@@ -52,11 +53,11 @@ class KalmanFilterTest(unittest.TestCase):
         self.assertEqual(kf.filter_state.C, 4)
 
     def test_predict_linear_2d(self):
-        kf = KalmanFilter((array([0, 1]), np.diag([1, 2])))
-        kf.predict_linear(np.diag([1, 2]), np.diag([2, 1]))
+        kf = KalmanFilter((array([0, 1]), diag([1, 2])))
+        kf.predict_linear(diag([1, 2]), diag([2, 1]))
         self.assertTrue(allclose(kf.get_point_estimate(), array([0, 2])))
-        self.assertTrue(allclose(kf.filter_state.C, np.diag([3, 9])))
-        kf.predict_linear(np.diag([1, 2]), np.diag([2, 1]), array([2, -2]))
+        self.assertTrue(allclose(kf.filter_state.C, diag([3, 9])))
+        kf.predict_linear(diag([1, 2]), diag([2, 1]), array([2, -2]))
         self.assertTrue(allclose(kf.get_point_estimate(), array([2, 2])))
 
 

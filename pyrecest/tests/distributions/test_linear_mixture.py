@@ -1,3 +1,4 @@
+from pyrecest.backend import diag
 from pyrecest.backend import meshgrid
 from pyrecest.backend import linspace
 from pyrecest.backend import array
@@ -28,8 +29,8 @@ class LinearMixtureTest(unittest.TestCase):
             )
 
     def test_pdf(self):
-        gm1 = GaussianDistribution(array([1, 1]), np.diag([2, 3]))
-        gm2 = GaussianDistribution(-array([3, 1]), np.diag([2, 3]))
+        gm1 = GaussianDistribution(array([1, 1]), diag([2, 3]))
+        gm2 = GaussianDistribution(-array([3, 1]), diag([2, 3]))
 
         with catch_warnings():
             simplefilter("ignore", category=UserWarning)
