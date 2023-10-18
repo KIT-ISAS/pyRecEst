@@ -9,6 +9,7 @@ from pyrecest.backend import ones
 from pyrecest.backend import linspace
 from pyrecest.backend import cos
 from pyrecest.backend import array
+from pyrecest.backend import complex64
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -40,7 +41,7 @@ def plot_ellipsoid_3d(center, shape_matrix, scaling_factor=1, color="blue"):
 
     V, D = linalg.eig(shape_matrix)
     all_coords = V @ sqrt(D) @ array(
-        [x.ravel(), y.ravel(), z.ravel()]
+        [x.ravel(), y.ravel(), z.ravel()], dtype=complex64
     ) + center.reshape(-1, 1)
     x = reshape(all_coords[0], x.shape)
     y = reshape(all_coords[1], y.shape)
