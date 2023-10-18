@@ -21,7 +21,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
     def setUp(self):
         """Initialize test variables before each test is run."""
         self.kfs_init = [
-            KalmanFilter(GaussianDistribution(zeros(4), diag([1.0, 2.0, 3.0, 4.0]))),
+            KalmanFilter(GaussianDistribution(zeros(4), diag(array([1.0, 2.0, 3.0, 4.0])))),
             KalmanFilter(
                 GaussianDistribution(array([1.0, 2.0, 3.0, 4.0]), diag([2.0, 2.0, 2.0, 2.0]))
             ),

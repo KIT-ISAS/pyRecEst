@@ -129,7 +129,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         self.tracker = RandomMatrixTracker(
             zeros(3),
             eye(3),
-            diag([1, 2, 3]),
+            diag(array([1.0, 2.0, 3.0])),
             kinematic_state_to_pos_matrix=eye(3),
         )
         self.tracker.plot_point_estimate()
