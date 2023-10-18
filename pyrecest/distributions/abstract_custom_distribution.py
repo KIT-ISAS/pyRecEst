@@ -2,6 +2,7 @@ import copy
 import warnings
 from abc import abstractmethod
 from collections.abc import Callable
+import pyrecest.backend
 
 import numpy as np
 from beartype import beartype
@@ -61,6 +62,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :param verify: Whether to verify if the density is properly normalized, default is None.
         :returns: A copy of the original distribution, with the PDF normalized.
         """
+        assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
         cd = copy.deepcopy(self)
 
         integral = self.integrate()
