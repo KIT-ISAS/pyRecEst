@@ -227,7 +227,6 @@ class TestEvalationBasics(TestEvalationBase):
 
         self.assertIsInstance(configured_filter, KalmanFilter)
         self.assertIsNotNone(predictionRoutine)
-        self.assertIsInstance(meas_noise_for_filter, np.ndarray)
 
     def test_configure_pf(self):
         filter_config = {"name": "pf", "parameter": 100}

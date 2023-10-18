@@ -14,7 +14,7 @@ from pyrecest.distributions import HyperhemisphericalUniformDistribution
 
 def get_random_points(n, d):
     random.seed(10)
-    points = random.randn(n, d + 1)
+    points = random.normal(n, d + 1)
     points = points[points[:, -1] >= 0, :]
     points /= reshape(linalg.norm(points, axis=1), (-1, 1))
     return points

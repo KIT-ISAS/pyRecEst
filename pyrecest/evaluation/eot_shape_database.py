@@ -172,7 +172,7 @@ class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
 
         # Use a default centroid if none is provided
         if centroid is None:
-            centroid = [0, 0]
+            centroid = array([0, 0])
 
         # Calculate half dimensions for clarity
         half_height_1 = height_1 / 2

@@ -33,7 +33,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         if w is None:
             w = ones(d.shape[0]) / d.shape[0]
 
-        assert d.shape[0] == np.size(w), "Number of Diracs and weights must match."
+        assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
         self.d = copy.copy(d)
         self.w = copy.copy(w)
         self.normalize_in_place()

@@ -34,8 +34,8 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         self.all_different_meas_covs = np.dstack(
             [
                 diag([1.0, 2.0]),
-                array([[5, 0.1], [0.1, 3]]),
-                array([[2, -0.5], [-0.5, 0.5]]),
+                array([[5.0, 0.1], [0.1, 3.0]]),
+                array([[2.0, -0.5], [-0.5, 0.5]]),
             ]
         )
         self.all_different_meas_covs_4 = np.dstack(
