@@ -30,17 +30,15 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param C: Covariance matrix.
         :raises AssertionError: If C_ is not square, not symmetric, not positive definite, or its dimension does not match with mu_.
         """
-        AbstractHypertoroidalDistribution.__init__(self, np.size(mu))
-        # First check is for 1-D case
-        assert np.size(C) == 1 or C.shape[0] == C.shape[1], "C must be dim x dim"
-        assert np.size(C) == 1 or allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        assert C.shape[0] == C.shape[1], "C must be dim x dim"
+        assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
         assert (
-            np.size(C) == 1 and C > 0 or all(linalg.eigvals(C) > 0)
+            linalg.cholesky(C) # fails if not positiv definite
         ), "C must be positive definite"
         assert (
-            np.size(C) == np.size(mu) or np.size(mu) == C.shape[1]
-        ), "mu must be dim x 1"
-
+            np.shape(mu) == (C.shape[1],)
+        ), "mu must be of shape (dim,)"
+        AbstractHypertoroidalDistribution.__init__(self, mu.shape[0])
         self.mu = mod(mu, 2 * pi)
         self.C = C
 

@@ -151,7 +151,7 @@ def plot_results(
         if (
             params[0] is not None
             and not any(isnan(params))
-            and np.size(params) > 1
+            and params.shape[0] > 1
         ):
             plt.plot(
                 times_factor * times_mean,

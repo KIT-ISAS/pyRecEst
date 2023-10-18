@@ -163,11 +163,11 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
             The distribution after conditioning.
         """
         assert (
-            np.size(input_lin) == self.lin_dim and ndim(input_lin) <= 1
+            input_lin.shape[0] == self.lin_dim and ndim(input_lin) <= 1
         ), "Input should be of size (lin_dim,)."
 
         def f_cond_unnorm(x, input_lin=input_lin):
-            n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else np.size(x)
+            n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else x.shape[0]
             input_repeated = tile(input_lin, (n_inputs, 1))
             return self.pdf(np.column_stack((x, input_repeated)))
 
