@@ -23,7 +23,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         self.kfs_init = [
             KalmanFilter(GaussianDistribution(zeros(4), diag(array([1.0, 2.0, 3.0, 4.0])))),
             KalmanFilter(
-                GaussianDistribution(array([1.0, 2.0, 3.0, 4.0]), diag([2.0, 2.0, 2.0, 2.0]))
+                GaussianDistribution(array([1.0, 2.0, 3.0, 4.0]), diag(array([2.0, 2.0, 2.0, 2.0])))
             ),
             KalmanFilter(
                 GaussianDistribution(-array([1.0, 2.0, 3.0, 4.0]), diag([4.0, 3.0, 2.0, 1.0]))

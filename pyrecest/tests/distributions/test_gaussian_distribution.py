@@ -12,15 +12,15 @@ from scipy.stats import multivariate_normal
 
 class GaussianDistributionTest(unittest.TestCase):
     def test_gaussian_distribution_3d(self):
-        mu = array([2, 3, 4])
-        C = array([[1.1, 0.4, 0], [0.4, 0.9, 0], [0, 0, 0.1]])
+        mu = array([2.0, 3.0, 4.0])
+        C = array([[1.1, 0.4, 0.0], [0.4, 0.9, 0.0], [0.0, 0.0, 0.1]])
         g = GaussianDistribution(mu, C)
 
         xs = array(
             [
-                [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5],
-                [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7],
-                [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8],
+                [-5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0],
+                [-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+                [-2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
             ]
         ).T
         self.assertTrue(
@@ -38,15 +38,15 @@ class GaussianDistributionTest(unittest.TestCase):
         )
 
     def test_mode(self):
-        mu = array([1, 2, 3])
-        C = array([[1.1, 0.4, 0], [0.4, 0.9, 0], [0, 0, 1]])
+        mu = array([1.0, 2.0, 3.0])
+        C = array([[1.1, 0.4, 0.0], [0.4, 0.9, 0.0], [0.0, 0.0, 1.0]])
         g = GaussianDistribution(mu, C)
 
         self.assertTrue(allclose(g.mode(), mu, atol=1e-6))
 
     def test_shift(self):
-        mu = array([3, 2, 1])
-        C = array([[1.1, -0.4, 0], [-0.4, 0.9, 0], [0, 0, 1]])
+        mu = array([3.0, 2.0, 1.0])
+        C = array([[1.1, -0.4, 0.00], [-0.4, 0.9, 0.0], [0.0, 0.0, 1.0]])
         g = GaussianDistribution(mu, C)
 
         shift_by = array([2, -2, 3])
