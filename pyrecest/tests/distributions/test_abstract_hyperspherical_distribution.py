@@ -51,8 +51,8 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
 
     def test_mean_direction_numerical(self):
         """Tests the numerical mean direction calculation."""
-        mu = 1 / sqrt(2) * array([1.0, 1.0, 0.0])
-        kappa = 10
+        mu = 1 / sqrt(2.0) * array([1.0, 1.0, 0.0])
+        kappa = 10.0
         vmf = VonMisesFisherDistribution(mu, kappa)
         self.assertLess(linalg.norm(vmf.mean_direction_numerical() - mu), 1e-6)
 
@@ -61,7 +61,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
 
         mu = array([1.0, 1.0, 2.0])
         mu = mu / linalg.norm(mu)
-        kappa = 10
+        kappa = 10.0
         vmf = VonMisesFisherDistribution(mu, kappa)
         vmf.plot()
 

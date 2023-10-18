@@ -26,9 +26,9 @@ class SE3DiracDistributionTest(unittest.TestCase):
                 [2, 31, 42, 3, 9.9, 5],
             ]
         ).T
-        dSph = dSph / linalg.norm(dSph, axis=-1, keepdims=True)
-        dLin = tile(array([-5, 0, 5, 10, 15, 20]), (3, 1)).T
-        w = array([1, 2, 3, 1, 2, 3])
+        dSph = dSph / linalg.norm(dSph, None, -1).reshape(-1, 1)
+        dLin = tile(array([-5.0, 0.0, 5.0, 10.0, 15.0, 20.0]), (3, 1)).T
+        w = array([1.0, 2.0, 3.0, 1.0, 2.0, 3.0])
         w = w / sum(w)
         SE3DiracDistribution(concatenate((dSph, dLin), axis=-1), w)
 
