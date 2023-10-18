@@ -71,6 +71,7 @@ from numpy import (
     vstack,
     where,
     zeros_like,
+    diag,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

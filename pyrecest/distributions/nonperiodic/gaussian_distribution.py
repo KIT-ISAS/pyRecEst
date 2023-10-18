@@ -15,10 +15,10 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 class GaussianDistribution(AbstractLinearDistribution):
     def __init__(self, mu: np.ndarray, C: np.ndarray, check_validity=True):
         AbstractLinearDistribution.__init__(self, dim=np.size(mu))
-        assert (
-            1 == np.size(mu) == np.size(C) or np.size(mu) == C.shape[0] == C.shape[1]
-        ), "Size of C invalid"
         assert ndim(mu) <= 1
+        assert (
+            1 == mu.shape[0] == C.shape[0] or mu.shape[0] == C.shape[0] == C.shape[1]
+        ), "Size of C invalid"
         self.mu = mu
 
         if check_validity:

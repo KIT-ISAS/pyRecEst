@@ -1,4 +1,5 @@
 from pyrecest.backend import linalg
+from pyrecest.backend import diag
 from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin

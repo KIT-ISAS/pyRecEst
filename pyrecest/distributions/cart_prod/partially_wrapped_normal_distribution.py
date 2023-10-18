@@ -40,14 +40,13 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         assert ndim(mu) == 1, "mu must be a 1-dimensional array"
         assert C.shape == (mu.shape[-1], mu.shape[-1]), "C must match size of mu"
         assert allclose(C, C.T), "C must be symmetric"
-        assert all(linalg.eigvals(C) > 0), "C must be positive definite"
-        assert bound_dim <= np.size(mu)
-        assert ndim(mu) == 1
+        assert len(linalg.cholesky(C)) > 0, "C must be positive definite" # Will fail if not positive definite
+        assert bound_dim <= mu.shape[0]
         if bound_dim > 0:  # This decreases the need for many wrappings
             mu[:bound_dim] = mod(mu[:bound_dim], 2 * pi)
 
         AbstractHypercylindricalDistribution.__init__(
-            self, bound_dim=bound_dim, lin_dim=np.size(mu) - bound_dim
+            self, bound_dim=bound_dim, lin_dim=mu.shape[0] - bound_dim
         )
 
         self.mu = mu
