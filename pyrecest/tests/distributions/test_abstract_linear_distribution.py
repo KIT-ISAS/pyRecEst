@@ -16,14 +16,13 @@ matplotlib.use("Agg")
 
 class TestAbstractLinearDistribution(unittest.TestCase):
     def setUp(self):
-        self.mu_2D = array([5, 1])
-        self.C_2D = array([[2, 1], [1, 1]])
-        self.mu_3D = array([1, 2, 3])
-        self.C_3D = array([[1.1, 0.4, 0], [0.4, 0.9, 0], [0, 0, 1]])
+        self.mu_2D = array([5.0, 1.0])
+        self.C_2D = array([[2.0, 1.0], [1.0, 1.0]])
+        self.mu_3D = array([1.0, 2.0, 3.0])
+        self.C_3D = array([[1.1, 0.4, 0.0], [0.4, 0.9, 0.0], [0.0, 0.0, 1.0]])
         self.g_2D = GaussianDistribution(self.mu_2D, self.C_2D)
         self.g_3D = GaussianDistribution(self.mu_3D, self.C_3D)
 
-    def test_integrate_numerically(self):
         """Test that the numerical integration of a Gaussian distribution equals 1."""
         dist = GaussianDistribution(array([1, 2]), np.diag([1, 2]))
         integration_result = dist.integrate_numerically()

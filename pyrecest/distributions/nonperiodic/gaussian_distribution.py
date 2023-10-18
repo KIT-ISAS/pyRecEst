@@ -14,7 +14,7 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 
 class GaussianDistribution(AbstractLinearDistribution):
     def __init__(self, mu: np.ndarray, C: np.ndarray, check_validity=True):
-        AbstractLinearDistribution.__init__(self, dim=np.size(mu))
+        AbstractLinearDistribution.__init__(self, dim=mu.shape[0])
         assert ndim(mu) <= 1
         assert (
             1 == mu.shape[0] == C.shape[0] or mu.shape[0] == C.shape[0] == C.shape[1]
