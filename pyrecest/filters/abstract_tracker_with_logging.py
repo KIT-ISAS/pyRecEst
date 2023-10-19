@@ -20,7 +20,7 @@ class AbstractTrackerWithLogging(ABC):
             curr_ests = curr_ests.reshape(-1, 1)
 
         m, t = estimates_over_time.shape
-        n = np.size(curr_ests)
+        n = curr_ests.shape[0]
 
         if n <= m:
             curr_ests = np.pad(

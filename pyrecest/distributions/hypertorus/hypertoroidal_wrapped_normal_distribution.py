@@ -16,6 +16,7 @@ from pyrecest.backend import zeros
 import copy
 
 import numpy as np
+from beartype import beartype
 from scipy.stats import multivariate_normal
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -81,20 +82,17 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         hd.mu = mod(self.mu + shift_by, 2 * pi)
         return hd
 
-    def sample(self, n):
-        if n <= 0 or not (
-            isinstance(n, int)
-            or (np.isscalar(n) and np.issubdtype(type(n), np.integer))
-        ):
+    def sample(self, n: Union[int, int32, int64]):
+        if n <= 0:
             raise ValueError("n must be a positive integer")
 
         s = random.multivariate_normal(self.mu, self.C, n)
-        s = mod(s, 2 * pi)  # wrap the samples
+        s = mod(s, 2.0 * pi)  # wrap the samples
         return s
 
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
         assert self.dim == other.dim, "Dimensions of the two distributions must match"
-        mu_ = (self.mu + other.mu) % (2 * pi)
+        mu_ = (self.mu + other.mu) % (2.0 * pi)
         C_ = self.C + other.C
         dist_result = self.__class__(mu_, C_)
         return dist_result

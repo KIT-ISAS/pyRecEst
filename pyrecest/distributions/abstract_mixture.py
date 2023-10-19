@@ -64,18 +64,14 @@ class AbstractMixture(AbstractDistributionType):
         return self.dists[0].input_dim
 
     def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
-        d = random.choice(len(self.w), size=n, p=self.w)
 
-        occurrences = np.bincount(d, minlength=len(self.dists))
+        occurrences = random.multinomial(n, self.w)
         count = 0
         s = empty((n, self.input_dim))
         for i, occ in enumerate(occurrences):
             if occ != 0:
                 s[count : count + occ, :] = self.dists[i].sample(occ)  # noqa: E203
                 count += occ
-
-        order = np.argsort(d)
-        s = s[order, :]  # noqa: E203
 
         return s
 

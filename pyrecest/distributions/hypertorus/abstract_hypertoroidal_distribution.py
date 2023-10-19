@@ -262,7 +262,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         if proposal is None:
 
             def proposal(x):
-                return mod(x + random.randn(self.dim), 2.0 * pi)
+                return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
 
         if start_point is None:
             start_point = self.mean_direction()
