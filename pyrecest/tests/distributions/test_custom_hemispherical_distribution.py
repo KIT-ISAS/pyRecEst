@@ -26,12 +26,12 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
 
     def test_simple_distribution_2D(self):
         """Test that pdf function returns the correct size and values for given points."""
-        p = self.custom_hemispherical_distribution.pdf(np.asarray([1, 0, 0]))
+        p = self.custom_hemispherical_distribution.pdf(array([1.0, 0.0, 0.0]))
         self.assertEqual(p.size, 1, "PDF size mismatch.")
 
         random.seed(10)
-        points = random.randn(100, 3)
-        points = points[points[:, 2] >= 0, :]
+        points = random.normal(0.0, 1.0, (100, 3))
+        points = points[points[:, 2] >= 0.0, :]
         points /= linalg.norm(points, axis=1, keepdims=True)
 
         self.assertTrue(
@@ -45,7 +45,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
 
     def test_integrate_bingham_s2(self):
         """Test that the distribution integrates to 1."""
-        self.custom_hemispherical_distribution.pdf(np.asarray([1, 0, 0]))
+        self.custom_hemispherical_distribution.pdf(array([1.0, 0.0, 0.0]))
         self.assertAlmostEqual(
             self.custom_hemispherical_distribution.integrate_numerically(),
             1,
@@ -55,7 +55,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
 
     def test_warning_asymmetric(self):
         """Test that creating a custom distribution based on a full hypersphere distribution raises a warning."""
-        vmf = VonMisesFisherDistribution(array([0, 0, 1]), 10)
+        vmf = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 10.0)
         expected_warning_message = (
             "You are creating a CustomHyperhemispherical distribution based on a distribution on the full hypersphere. "
             + "Using numerical integration to calculate the normalization constant."

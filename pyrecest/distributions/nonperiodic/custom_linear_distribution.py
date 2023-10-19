@@ -47,12 +47,12 @@ class CustomLinearDistribution(
         self.shift_by *= mean_offset
 
     def pdf(self, xs):
-        assert np.size(xs) % self.input_dim == 0
-        n_inputs = np.size(xs) // self.input_dim
+        assert xs.shape[-1] == self.dim
         p = self.scale_by * self.f(
-            reshape(xs, (-1, self.input_dim)) - reshape(self.shift_by, (1, -1))
+            # To ensure 2-d for broadcasting
+            reshape(xs, (-1, self.dim)) - reshape(self.shift_by, (1, -1))
         )
-        assert ndim(p) <= 1 and np.size(p) == n_inputs
+        assert ndim(p) <= 1 and p.shape[0] == n_inputs
         return p
 
     @staticmethod
