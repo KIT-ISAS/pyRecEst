@@ -55,7 +55,7 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         np.testing.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     def test_condition_on_periodic(self):
-        dist = self.chcd_vm_gauss_stacked.condition_on_periodic(1)
+        dist = self.chcd_vm_gauss_stacked.condition_on_periodic(array(1.0))
 
         grid = np.mgrid[-3:4, -3:4].reshape(2, -1).T
         np.testing.assert_allclose(dist.pdf(grid), self.gauss.pdf(grid))
