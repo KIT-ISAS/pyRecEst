@@ -1,3 +1,4 @@
+import pyrecest.backend
 from pyrecest.backend import linalg
 from math import pi
 from typing import Union
@@ -60,7 +61,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         array: n von Mises-Fisher distributed random vectors.
         # Requires scipy 1.11 or later
         """
-
+        assert pyrecest.backend.__name__ == "pyrec.backend.numpy", "Only supported on NumPy backend"
         from scipy.stats import vonmises_fisher
 
         # Create a von Mises-Fisher distribution object

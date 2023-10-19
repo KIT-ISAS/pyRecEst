@@ -71,7 +71,8 @@ from numpy import (
     vstack,
     where,
     zeros_like,
-    diag,
+    diag,  # For pyrecest
+    diff,  # For pyrecest
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

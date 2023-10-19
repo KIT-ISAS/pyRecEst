@@ -33,7 +33,8 @@ from torch import (
     ones_like,
     polygamma,
     quantile,
-    diag,
+    diag,  # For pyrecest
+    diff,  # For pyrecest
 )
 from torch import repeat_interleave as repeat
 from torch import (

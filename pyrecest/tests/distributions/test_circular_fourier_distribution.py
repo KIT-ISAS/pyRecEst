@@ -195,7 +195,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 sqrt(dist1.pdf(array(x))) - sqrt(dist2.pdf(array(x)))
             )
             ** 2,
-            0,
+            0.0,
             2 * pi,
         )
         fd_diff = fd1 - fd2

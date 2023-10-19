@@ -51,7 +51,7 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
     def test_condition_on_linear(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_linear(array([2.0, 1.0]))
 
-        x = linspace(0.0, 2 * pi, 100)
+        x = linspace(0.0, 2.0 * pi, 100)
         np.testing.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     def test_condition_on_periodic(self):

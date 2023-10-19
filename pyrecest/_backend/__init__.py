@@ -167,6 +167,7 @@ BACKEND_ATTRIBUTES = {
         "zeros_like",
         "trapz",
         "diag",  # Added for pyrecest
+        "diff",  # Added for pyrecest
     ],
     "autodiff": [
         "custom_gradient",
