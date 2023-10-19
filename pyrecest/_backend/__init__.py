@@ -168,6 +168,7 @@ BACKEND_ATTRIBUTES = {
         "trapz",
         "diag",  # Added for pyrecest
         "diff",  # Added for pyrecest
+        "apply_along_axis",  # Added for pyrecest
     ],
     "autodiff": [
         "custom_gradient",

@@ -38,8 +38,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         if self.dim == 2:
             self.C = kappa / (4 * pi * sinh(kappa))
         else:
-            self.C = kappa ** ((self.dim + 1) / 2 - 1) / (
-                (2 * pi) ** ((self.dim + 1) / 2) * iv((self.dim + 1) / 2 - 1, kappa)
+            self.C = kappa ** ((self.dim + 1) / 2.0 - 1) / (
+                (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, kappa)
             )
 
     def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:

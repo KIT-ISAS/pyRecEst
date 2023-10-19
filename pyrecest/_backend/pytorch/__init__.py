@@ -275,6 +275,30 @@ def allclose(a, b, atol=atol, rtol=rtol):
     return _torch.allclose(a, b, atol=atol, rtol=rtol)
 
 
+def apply_along_axis(func, axis, tensor):
+    # Create a list to hold the output results
+    output_list = []
+    
+    # Loop through the tensor along the specified axis
+    for index in range(tensor.shape[axis]):
+        # Create a slice object that selects `index` along the specified axis
+        slice_obj = [slice(None)] * tensor.ndim
+        slice_obj[axis] = index
+        
+        # Extract the slice and apply the function
+        tensor_slice = tensor[slice_obj]
+        result_slice = func(tensor_slice)
+        
+        # Convert the result to a tensor and append to the list
+        result_tensor = array(result_slice)
+        output_list.append(result_tensor)
+        
+    # Stack the output tensors along the same axis
+    output_tensor = stack(output_list, dim=axis)
+    
+    return output_tensor
+
+
 def shape(val):
     if not is_array(val):
         val = array(val)

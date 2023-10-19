@@ -73,6 +73,7 @@ from numpy import (
     zeros_like,
     diag,  # For pyrecest
     diff,  # For pyrecest
+    apply_along_axis,  # For pyrecest
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

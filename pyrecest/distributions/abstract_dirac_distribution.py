@@ -8,6 +8,7 @@ from pyrecest.backend import argmax
 from pyrecest.backend import all
 from pyrecest.backend import int64
 from pyrecest.backend import int32
+from pyrecest.backend import apply_along_axis
 import copy
 import warnings
 from collections.abc import Callable
@@ -64,7 +65,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         if f_supports_multiple:
             dist.d = f(dist.d)
         else:
-            dist.d = np.apply_along_axis(f, 1, dist.d)
+            dist.d = apply_along_axis(f, 1, dist.d)
         return dist
 
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
