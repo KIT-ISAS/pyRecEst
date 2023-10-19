@@ -24,9 +24,9 @@ from scipy.stats import wishart
 class TestHypercylindricalDiracDistribution(unittest.TestCase):
     def setUp(self):
         self.d = array(
-            [[1, 2, 3, 4, 5, 6], [2, 4, 0, 0.5, 1, 1], [0, 10, 20, 30, 40, 50]]
+            [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [2.0, 4.0, 0.0, 0.5, 1.0, 1.0], [0.0, 10.0, 20.0, 30.0, 40.0, 50.0]]
         ).T
-        self.w = array([1, 2, 3, 1, 2, 3])
+        self.w = array([1.0, 2.0, 3.0, 1.0, 2.0, 3.0])
         self.w = self.w / sum(self.w)
         self.pwd = HypercylindricalDiracDistribution(1, self.d, self.w)
 
@@ -101,10 +101,12 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         self.assertTrue(all(s < 2 * pi * ones_like(s)))
 
     def test_from_distribution(self):
-        random_gen = random.seed(0)  # Could fail randomly otherwise
+        import numpy as _np
+        random_gen = _np.random.default_rng(0)  # Could fail randomly otherwise
         df = 4
         scale = eye(4)
-        C = wishart.rvs(df, scale, random_state=random_gen)
+        # Call array(...) to be compatibel with all backends
+        C = array(wishart.rvs(df, scale, random_state=random_gen))
         hwn = PartiallyWrappedNormalDistribution(array([1.0, 2.0, 3.0, 4.0]), C, 2)
         hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 100000)
         np.testing.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.15)

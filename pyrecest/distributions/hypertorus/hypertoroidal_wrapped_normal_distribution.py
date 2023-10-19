@@ -36,7 +36,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
             len(linalg.cholesky(C))>0 # fails if not positiv definite
         ), "C must be positive definite"
         assert (
-            np.shape(mu) == (C.shape[1],)
+            mu.shape == (C.shape[1],)
         ), "mu must be of shape (dim,)"
         AbstractHypertoroidalDistribution.__init__(self, mu.shape[0])
         self.mu = mod(mu, 2 * pi)

@@ -81,7 +81,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
-        ids = random.choice(np.size(self.w), size=n, p=self.w)
+        ids = random.choice(self.w.shape[0], size=n, p=self.w)
         return self.d[ids]
 
     def entropy(self) -> float:

@@ -83,7 +83,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
 
         # evaluate normal for all xs_wrapped
         mvn = multivariate_normal(self.mu, self.C)
-        evals = mvn.pdf(xs_wrapped)
+        evals = array(mvn.pdf(xs_wrapped))  # For being compatible with all backends
 
         # sum evaluations for the wrapped dimensions
         summed_evals = sum(evals.reshape(-1, (2 * m + 1) ** self.bound_dim), axis=1)
