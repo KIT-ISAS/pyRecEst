@@ -3,6 +3,7 @@ from pyrecest.backend import random
 from pyrecest.backend import linspace
 from pyrecest.backend import eye
 from pyrecest.backend import array
+import pyrecest.backend
 import unittest
 
 import numpy as np
@@ -46,10 +47,11 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
             self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat)
         )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_condition_on_linear(self):
-        dist = self.chcd_vm_gauss_stacked.condition_on_linear(array([2, 1]))
+        dist = self.chcd_vm_gauss_stacked.condition_on_linear(array([2.0, 1.0]))
 
-        x = linspace(0, 2 * pi, 100)
+        x = linspace(0.0, 2 * pi, 100)
         np.testing.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     def test_condition_on_periodic(self):

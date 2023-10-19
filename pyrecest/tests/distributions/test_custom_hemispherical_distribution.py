@@ -4,6 +4,7 @@ from pyrecest.backend import eye
 from pyrecest.backend import array
 from pyrecest.backend import allclose
 from pyrecest.backend import all
+from pyrecest.backend import ndim
 import unittest
 import warnings
 
@@ -27,17 +28,17 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
     def test_simple_distribution_2D(self):
         """Test that pdf function returns the correct size and values for given points."""
         p = self.custom_hemispherical_distribution.pdf(array([1.0, 0.0, 0.0]))
-        self.assertEqual(p.size, 1, "PDF size mismatch.")
+        self.assertEqual(ndim(p), 0, "PDF size mismatch.")
 
         random.seed(10)
         points = random.normal(0.0, 1.0, (100, 3))
         points = points[points[:, 2] >= 0.0, :]
-        points /= linalg.norm(points, axis=1, keepdims=True)
+        points /= linalg.norm(points, axis=1).reshape(-1, 1)
 
         self.assertTrue(
             allclose(
                 self.custom_hemispherical_distribution.pdf(points),
-                2 * self.bingham_distribution.pdf(points),
+                2.0 * self.bingham_distribution.pdf(points),
                 atol=1e-5,
             ),
             "PDF values do not match.",

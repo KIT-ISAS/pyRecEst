@@ -28,8 +28,8 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         dist = GaussianDistribution(array([1.0, 2.0]), diag(array([1.0, 2.0])))
         integration_result = dist.integrate_numerically()
         assert isclose(
-            integration_result, 1, rtol=1e-5
-        ), f"Expected 1, but got {integration_result}"
+            integration_result, 1.0, rtol=1e-5
+        ), f"Expected 1.0, but got {integration_result}"
 
     def test_integrate_fun_over_domain(self):
         dist = GaussianDistribution(array([1.0, 2.0]), diag(array([1.0, 2.0])))
@@ -76,7 +76,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         )
 
     def test_plot_state_r2(self):
-        gd = GaussianDistribution(array([1, 2]), array([[1, 0.5], [0.5, 1]]))
+        gd = GaussianDistribution(array([1.0, 2.0]), array([[1, 0.5], [0.5, 1]]))
         gd.plot()
 
 
