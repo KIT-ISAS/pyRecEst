@@ -56,13 +56,13 @@ class CircularUniformDistributionTest(unittest.TestCase):
     def test_integral_with_range(self):
         cu = CircularUniformDistribution()
         np.testing.assert_allclose(
-            cu.integrate([1, 4]), cu.integrate_numerically([1, 4])
+            cu.integrate(array([1.0, 4.0])), cu.integrate_numerically(array([1.0, 4.0]))
         )
         np.testing.assert_allclose(
-            cu.integrate([-4, 11]), cu.integrate_numerically([-4, 11])
+            cu.integrate(array([-4.0, 11.0])), cu.integrate_numerically(array([-4.0, 11.0]))
         )
         np.testing.assert_allclose(
-            cu.integrate([2 * pi, -1]), cu.integrate_numerically([2 * pi, -1])
+            cu.integrate(array([2.0 * pi, -1.0])), cu.integrate_numerically(array([2.0 * pi, -1.0]))
         )
 
     def test_mean(self):
