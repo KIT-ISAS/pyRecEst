@@ -50,7 +50,7 @@ class CustomLinearDistribution(
         assert np.size(xs) % self.input_dim == 0
         n_inputs = np.size(xs) // self.input_dim
         p = self.scale_by * self.f(
-            reshape(xs, (-1, self.input_dim)) - np.atleast_2d(self.shift_by)
+            reshape(xs, (-1, self.input_dim)) - reshape(self.shift_by, (1, -1))
         )
         assert ndim(p) <= 1 and np.size(p) == n_inputs
         return p

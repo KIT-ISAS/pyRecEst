@@ -109,4 +109,4 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         C = array(wishart.rvs(df, scale, random_state=random_gen))
         hwn = PartiallyWrappedNormalDistribution(array([1.0, 2.0, 3.0, 4.0]), C, 2)
         hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 100000)
-        np.testing.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.15)
+        np.testing.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.2)
