@@ -11,7 +11,7 @@ from ..abstract_bounded_nonperiodic_distribution import (
 
 class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistribution):
     def __init__(self, bounds):
-        AbstractBoundedNonPeriodicDistribution.__init__(self, np.size(bounds[0]))
+        AbstractBoundedNonPeriodicDistribution.__init__(self, bounds.shape[1])
         self.bounds = bounds
 
     def get_manifold_size(self):
