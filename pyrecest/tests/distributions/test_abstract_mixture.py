@@ -28,21 +28,21 @@ class AbstractMixtureTest(unittest.TestCase):
         return s
 
     def test_sample_metropolis_hastings_basics_only_t2(self):
-        vmf = ToroidalWrappedNormalDistribution(array([1, 0]), eye(2))
+        vmf = ToroidalWrappedNormalDistribution(array([1.0, 0.0]), eye(2))
         mix = HypertoroidalMixture(
             [vmf, vmf.shift(array([1.0, 1.0]))], array([0.5, 0.5])
         )
         self._test_sample(mix, 10)
 
     def test_sample_metropolis_hastings_basics_only_s2(self):
-        vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 2.0)
-        vmf2 = VonMisesFisherDistribution(array([0.0, 1.0, 0.0]), 2.0)
-        mix = HypersphericalMixture([vmf1, vmf2], [0.5, 0.5])
+        vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), array(2.0))
+        vmf2 = VonMisesFisherDistribution(array([0.0, 1.0, 0.0]), array(2.0))
+        mix = HypersphericalMixture([vmf1, vmf2], array([0.5, 0.5]))
         s = self._test_sample(mix, 10)
         self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=1e-10))
 
     def test_sample_metropolis_hastings_basics_only_h2(self):
-        vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 2.0)
+        vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), array(2.0))
         mix = CustomHyperhemisphericalDistribution(
             lambda x: vmf.pdf(x) + vmf.pdf(-x), 2
         )

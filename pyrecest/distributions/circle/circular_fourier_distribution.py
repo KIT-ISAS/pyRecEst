@@ -129,9 +129,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
         if self.a is not None and self.b is not None:
             if self.transformation == "identity":
-                scale_factor = 1 / integral_value
+                scale_factor = 1.0 / integral_value
             elif self.transformation == "sqrt":
-                scale_factor = 1 / sqrt(integral_value)
+                scale_factor = 1.0 / sqrt(integral_value)
             else:
                 raise NotImplementedError("Transformation not supported.")
 
@@ -147,9 +147,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
         elif self.c is not None:
             if self.transformation == "identity":
-                scale_factor = 1 / integral_value
+                scale_factor = 1.0 / integral_value
             elif self.transformation == "sqrt":
-                scale_factor = 1 / sqrt(integral_value)
+                scale_factor = 1.0 / sqrt(integral_value)
             else:
                 raise NotImplementedError("Transformation not supported.")
 
@@ -305,7 +305,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 warnings.warn("Scaling up for WD (this is not recommended).")
                 fd.c = fd.c * fd.n
         else:
-            xs = linspace(0, 2 * pi, n, endpoint=False)
+            xs = arange(0.0, 2.0 * pi, 2.0 * pi/n)  # Like linspace without endpoint but with compatbiility for pytroch
             fvals = distribution.pdf(xs)
             if transformation == "identity":
                 pass
@@ -327,7 +327,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     ) -> "CircularFourierDistribution":
         c = rfft(fvals)
         if not store_values_multiplied_by_n:
-            c = c * (1 / np.size(fvals))
+            c = c * (1.0 / fvals.shape[0])
 
         fd = CircularFourierDistribution(
             c=c,
