@@ -6,6 +6,7 @@ from pyrecest.backend import eye
 from pyrecest.backend import exp
 from pyrecest.backend import all
 from pyrecest.backend import abs
+from pyrecest.backend import amax
 import numpy as np
 from scipy.integrate import quad
 from scipy.special import iv
@@ -26,7 +27,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         # Verify that M is orthogonal
         epsilon = 0.001
         assert (
-            np.max(abs(M @ M.T - eye(self.dim + 1))) < epsilon
+            amax(abs(M @ M.T - eye(self.dim + 1))) < epsilon
         ), "M is not orthogonal"
 
         self.Z = Z

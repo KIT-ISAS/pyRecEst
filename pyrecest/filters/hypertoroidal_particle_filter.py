@@ -10,6 +10,7 @@ from pyrecest.backend import arange
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros_like
+from pyrecest.backend import arange
 import copy
 from collections.abc import Callable
 
@@ -39,7 +40,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         if dim == 1:
             # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
             filter_state = CircularDiracDistribution(
-                linspace(0, 2 * pi, n_particles, endpoint=False)
+                arange(0.0, 2.0 * pi, n_particles) # Like linspace without endpoint but with compatbiility for pytroch
             )
         else:
             filter_state = HypertoroidalDiracDistribution(

@@ -18,7 +18,7 @@ from pyrecest.distributions import (
 class CustomHemisphericalDistributionTest(unittest.TestCase):
     def setUp(self):
         self.M = eye(3)
-        self.Z = array([-2, -0.5, 0])
+        self.Z = array([-2.0, -0.5, 0.0])
         self.bingham_distribution = BinghamDistribution(self.Z, self.M)
         self.custom_hemispherical_distribution = (
             CustomHemisphericalDistribution.from_distribution(self.bingham_distribution)
