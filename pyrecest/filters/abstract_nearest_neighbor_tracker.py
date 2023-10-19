@@ -1,5 +1,4 @@
 from pyrecest.backend import ndim
-from pyrecest.backend import all
 from pyrecest.backend import empty
 import copy
 import warnings

@@ -43,6 +43,6 @@ class SE3DiracDistribution(
 
         ddist = SE3DiracDistribution(
             distribution.sample(n_particles),
-            1 / n_particles * ones((1, n_particles)),
+            1 / n_particles * ones(n_particles),
         )
         return ddist

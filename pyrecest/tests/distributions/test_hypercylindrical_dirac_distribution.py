@@ -101,10 +101,10 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         self.assertTrue(all(s < 2 * pi * ones_like(s)))
 
     def test_from_distribution(self):
-        random_gen = random.default_rng(0)  # Could fail randomly otherwise
+        random_gen = random.seed(0)  # Could fail randomly otherwise
         df = 4
         scale = eye(4)
         C = wishart.rvs(df, scale, random_state=random_gen)
-        hwn = PartiallyWrappedNormalDistribution(array([1, 2, 3, 4]), C, 2)
+        hwn = PartiallyWrappedNormalDistribution(array([1.0, 2.0, 3.0, 4.0]), C, 2)
         hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 100000)
         np.testing.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.15)

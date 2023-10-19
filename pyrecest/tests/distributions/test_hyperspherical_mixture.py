@@ -19,9 +19,9 @@ from pyrecest.distributions import (
 
 class HypersphericalMixtureTest(unittest.TestCase):
     def test_pdf_3d(self):
-        wad = WatsonDistribution(array([0.0, 0.0, 1.0]), -10)
+        wad = WatsonDistribution(array([0.0, 0.0, 1.0]), -10.0)
         vmf = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 1.0)
-        w = [0.3, 0.7]
+        w = array([0.3, 0.7])
         smix = HypersphericalMixture([wad, vmf], w)
 
         phi, theta = meshgrid(
@@ -40,7 +40,7 @@ class HypersphericalMixtureTest(unittest.TestCase):
     def test_pdf_4d(self):
         wad = WatsonDistribution(array([0.0, 0.0, 0.0, 1.0]), -10)
         vmf = VonMisesFisherDistribution(array([0.0, 1.0, 0.0, 0.0]), 1)
-        w = [0.3, 0.7]
+        w = array([0.3, 0.7])
         smix = HypersphericalMixture([wad, vmf], w)
 
         a, b, c, d = np.mgrid[-1:1:4j, -1:1:4j, -1:1:4j, -1:1:4j]

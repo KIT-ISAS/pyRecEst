@@ -18,7 +18,7 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution
 class HypersphericalDiracDistributionTest(unittest.TestCase):
     def setUp(self):
         self.d = array(
-            [[0.5, 3, 4, 6, 6], [2, 2, 5, 3, 0], [0.5, 0.2, 5.8, 4.3, 1.2]]
+            [[0.5, 3.0, 4.0, 6.0, 6.0], [2.0, 2.0, 5.0, 3.0, 0.0], [0.5, 0.2, 5.8, 4.3, 1.2]]
         ).T
         self.d = self.d / linalg.norm(self.d, axis=1)[:, None]
         self.w = array([0.1, 0.1, 0.1, 0.1, 0.6])

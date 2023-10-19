@@ -13,8 +13,7 @@ class HypersphericalMixture(AbstractMixture, AbstractHypersphericalDistribution)
     def __init__(
         self,
         dists: list[AbstractHypersphericalDistribution],
-        w: list[float] | np.ndarray,
-    ):
+        w):
         """
         Initializes the HypersphericalMixture with a list of distributions and weights.
 

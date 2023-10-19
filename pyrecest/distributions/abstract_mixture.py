@@ -35,8 +35,6 @@ class AbstractMixture(AbstractDistributionType):
 
         if weights is None:
             weights = ones(num_distributions) / num_distributions
-        else:
-            weights = np.asarray(weights)
 
         if num_distributions != len(weights):
             raise ValueError("Sizes of distributions and weights must be equal")

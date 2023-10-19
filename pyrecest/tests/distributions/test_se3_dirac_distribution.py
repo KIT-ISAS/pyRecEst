@@ -21,10 +21,10 @@ class SE3DiracDistributionTest(unittest.TestCase):
     def test_constructor(self):
         dSph = array(
             [
-                [1, 2, 3, 4, 5, 6],
-                [2, 4, 0, 0.5, 1, 1],
-                [5, 10, 20, 30, 40, 50],
-                [2, 31, 42, 3, 9.9, 5],
+                [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                [2.0, 4.0, 0.0, 0.5, 1.0, 1.0],
+                [5.0, 10.0, 20, 30, 40, 50],
+                [2.0, 31.0, 42, 3, 9.9, 5],
             ]
         ).T
         dSph = dSph / linalg.norm(dSph, None, -1).reshape(-1, 1)
@@ -37,7 +37,7 @@ class SE3DiracDistributionTest(unittest.TestCase):
         cpsd = SE3CartProdStackedDistribution(
             [
                 HyperhemisphericalUniformDistribution(3),
-                GaussianDistribution(array([1, 2, 3]).T, diag(array([3, 2, 1]))),
+                GaussianDistribution(array([1.0, 2.0, 3.0]).T, diag(array([3.0, 2.0, 1.0]))),
             ]
         )
         SE3DiracDistribution.from_distribution(cpsd, 100)

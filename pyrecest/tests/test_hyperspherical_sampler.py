@@ -4,6 +4,8 @@ from pyrecest.backend import prod
 from pyrecest.backend import allclose
 from pyrecest.backend import all
 import unittest
+import importlib.util
+healpy_installed = importlib.util.find_spec("healpy") is not None
 
 import numpy as np
 from parameterized import parameterized
@@ -47,6 +49,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         )
         self.assertEqual(grid_specific_description[desc_key], grid_density_parameter)
 
+    @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_get_grid_hypersphere(self):
         samples, _ = get_grid_hypersphere("healpix_hopf", 0)
 
