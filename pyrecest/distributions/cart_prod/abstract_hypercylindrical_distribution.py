@@ -193,10 +193,10 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 CustomLinearDistribution instance
         """
         assert (
-            input_periodic.ndim == 1 or input_periodic.shape[0] == self.bound_dim and ndim(input_periodic) == 2
+            input_periodic.ndim == 0 or input_periodic.shape[0] == self.bound_dim and ndim(input_periodic) == 2
         ), "Input should be of size (lin_dim,)."
 
-        input_periodic = mod(input_periodic, 2 * pi)
+        input_periodic = mod(input_periodic, 2.0 * pi)
 
         def f_cond_unnorm(x, input_periodic=input_periodic):
             n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else np.size(x)

@@ -51,7 +51,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 warnings.warn(
                     "It is not clear for complex ones since they may include another coefficient or not (imaginary part of the last coefficient). Assuming it is relevant."
                 )
-                self.n = 2 * np.size(c) - 1
+                self.n = 2 * c.shape[0] - 1
             else:
                 self.n = n
         elif a is not None and b is not None:
@@ -252,7 +252,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             a = 2 * real(self.c)
             b = -2 * imag(self.c[1:])
         assert (
-            self.n is None or (np.size(a) + np.size(b)) == self.n
+            self.n is None or (a.shape[0] + b.shape[0]) == self.n
         )  # Other case not implemented yet!
         return a, b
 
