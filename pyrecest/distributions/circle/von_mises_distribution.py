@@ -39,12 +39,12 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return self.mu, self.kappa
 
     @property
-    def norm_const(self) -> np.number:
+    def norm_const(self):
         if self._norm_const is None:
-            self._norm_const = 2 * pi * iv(0, self.kappa)
+            self._norm_const = 2.0 * pi * iv(0, self.kappa)
         return self._norm_const
 
-    def pdf(self, xs: np.ndarray) -> np.ndarray | np.number:
+    def pdf(self, xs):
         p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
 

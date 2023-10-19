@@ -3,8 +3,10 @@ from pyrecest.backend import real
 from pyrecest.backend import eye
 from pyrecest.backend import array
 from pyrecest.backend import allclose
-from pyrecest.backend import all, zeros
+from pyrecest.backend import all
+from pyrecest.backend import zeros
 from pyrecest.backend import diag
+import pyrecest.backend
 import unittest
 
 import numpy as np
@@ -61,11 +63,14 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         [("no_inputs", zeros(4)), ("with_inputs", array([1.0, -1.0, 1.0, -1.0]))]
     )
     def test_predict_linear(self, name, sys_input):
-        C_matrices = [
-            scipy.linalg.block_diag([[3.0, 2.0], [2.0, 2.0]], [[7.0, 4.0], [4.0, 4.0]]) + eye(4),
-            scipy.linalg.block_diag([[4.0, 2.0], [2.0, 2.0]], [[4.0, 2.0], [2.0, 2.0]]) + eye(4),
-            scipy.linalg.block_diag([[7.0, 3.0], [3.0, 3.0]], [[3.0, 1.0], [1.0, 1.0]]) + eye(4),
-        ]
+        import numpy as _np
+        # Can use scipy.linalg.block_diag instead of native backend functions here because the efficiency does not matter
+        # for the test.
+        C_matrices = array([
+            scipy.linalg.block_diag([[3.0, 2.0], [2.0, 2.0]], [[7.0, 4.0], [4.0, 4.0]]) + _np.eye(4),
+            scipy.linalg.block_diag([[4.0, 2.0], [2.0, 2.0]], [[4.0, 2.0], [2.0, 2.0]]) + _np.eye(4),
+            scipy.linalg.block_diag([[7.0, 3.0], [3.0, 3.0]], [[3.0, 1.0], [1.0, 1.0]]) + _np.eye(4),
+        ])
 
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init
@@ -123,6 +128,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             scipy.linalg.block_diag([[4.0, 1.0], [1.0, 6.0]], [[10.0, 3.0], [3.0, 8.0]]),
         )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_association_no_clutter(self):
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init
@@ -162,6 +168,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             measurements[:, association], perfect_meas_ordered + 0.1
         )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_association_with_clutter(self):
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init

@@ -34,8 +34,6 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         n_particles: Union[int, int32, int64],
         dim: Union[int, int32, int64],
     ):
-        assert np.isscalar(n_particles)
-        assert n_particles > 1, "Use CircularParticleFilter for 1-D case"
 
         if dim == 1:
             # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
@@ -45,7 +43,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         else:
             filter_state = HypertoroidalDiracDistribution(
                 tile(
-                    arange(0, 2.0*pi, 2.0*pi/n_particles), (dim, 1)
+                    arange(0.0, 2.0*pi, 2.0*pi/n_particles), (dim, 1)
                 ).T.squeeze(),
                 dim=dim,
             )

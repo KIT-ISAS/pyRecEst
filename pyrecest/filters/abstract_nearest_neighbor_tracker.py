@@ -96,11 +96,11 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
 
         for i in range(self.get_number_of_targets()):
             # Overwrite if different for each track
-            if ndim(system_matrices) == 3:
+            if system_matrices is not None and ndim(system_matrices) == 3:
                 curr_sys_matrix = system_matrices[:, :, i]
-            if ndim(sys_noises) == 3:
+            if sys_noises is not None and ndim(sys_noises) == 3:
                 curr_sys_noise = sys_noises[:, :, i]
-            if ndim(inputs) == 2:
+            if inputs is not None and ndim(inputs) == 2:
                 curr_input = inputs[:, i]
 
             self.filter_bank[i].predict_linear(

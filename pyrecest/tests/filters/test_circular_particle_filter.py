@@ -107,24 +107,24 @@ class CircularParticleFilterTest(unittest.TestCase):
 
     def test_association_likelihood(self):
         dist = CircularDiracDistribution(
-            array([1, 2, 3]), array([1 / 3, 1 / 3, 1 / 3])
+            array([1.0, 2.0, 3.0]), array([1 / 3, 1 / 3, 1 / 3])
         )
         pf = CircularParticleFilter(3)
         pf.set_state(dist)
 
         self.assertAlmostEqual(
             pf.association_likelihood(CircularUniformDistribution()),
-            1 / (2 * pi),
+            1.0 / (2.0 * pi),
             places=10,
         )
         self.assertGreater(
-            pf.association_likelihood(VonMisesDistribution(2, 1)), 1 / (2 * pi)
+            pf.association_likelihood(VonMisesDistribution(array(2), array(1))), 1.0 / (2.0 * pi)
         )
 
-        self.filter.set_state(CircularDiracDistribution(arange(0, 1.1, 0.1)))
+        self.filter.set_state(CircularDiracDistribution(arange(0.0, 1.1, 0.1)))
 
         def likelihood1(_, x):
-            return x == 0.5
+            return (x == 0.5) + 0.0  # To convert it to double regardless of the backend
 
         self.filter.update_nonlinear_using_likelihood(likelihood1, 42)
         estimation = self.filter.filter_state

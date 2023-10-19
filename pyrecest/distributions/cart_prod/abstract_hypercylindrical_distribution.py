@@ -193,7 +193,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 CustomLinearDistribution instance
         """
         assert (
-            np.size(input_periodic) == self.bound_dim and ndim(input_periodic) <= 1
+            input_periodic.ndim == 1 or input_periodic.shape[0] == self.bound_dim and ndim(input_periodic) == 2
         ), "Input should be of size (lin_dim,)."
 
         input_periodic = mod(input_periodic, 2 * pi)
