@@ -170,10 +170,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def integrate_numerically(self, left=None, right=None):
         if left is None:
             left = empty(self.dim)
-            left.fill(-np.inf)
+            left[:] = -float('inf')
         if right is None:
             right = empty(self.dim)
-            right.fill(np.inf)
+            right[:] = float('inf')
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right
         )

@@ -25,14 +25,14 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         self.g_3D = GaussianDistribution(self.mu_3D, self.C_3D)
 
         """Test that the numerical integration of a Gaussian distribution equals 1."""
-        dist = GaussianDistribution(array([1.0, 2.0]), diag([1.0, 2.0]))
+        dist = GaussianDistribution(array([1.0, 2.0]), diag(array([1.0, 2.0])))
         integration_result = dist.integrate_numerically()
         assert isclose(
             integration_result, 1, rtol=1e-5
         ), f"Expected 1, but got {integration_result}"
 
     def test_integrate_fun_over_domain(self):
-        dist = GaussianDistribution(array([1.0, 2.0]), diag([1.0, 2.0]))
+        dist = GaussianDistribution(array([1.0, 2.0]), diag(array([1.0, 2.0])))
 
         def f(x):
             return 0.3 * dist.pdf(x)
