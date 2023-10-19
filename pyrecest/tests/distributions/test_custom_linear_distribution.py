@@ -3,6 +3,7 @@ from pyrecest.backend import meshgrid
 from pyrecest.backend import linspace
 from pyrecest.backend import eye
 from pyrecest.backend import array
+from pyrecest.backend import concatenate
 import unittest
 
 import numpy as np
@@ -31,10 +32,10 @@ class CustomLinearDistributionTest(unittest.TestCase):
 
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):
-        x, y = meshgrid(linspace(0.0, 2 * pi, 10), linspace(0.0, 2 * pi, 10))
+        x, y = meshgrid(linspace(0.0, 2.0 * pi, 10), linspace(0.0, 2.0 * pi, 10))
         np.testing.assert_allclose(
-            dist1.pdf(np.column_stack((x.ravel(), y.ravel()))),
-            dist2.pdf(np.column_stack((x.ravel(), y.ravel()))),
+            dist1.pdf(concatenate((x, y)).reshape(2, -1).T),
+            dist2.pdf(concatenate((x, y)).reshape(2, -1).T),
             atol=tol,
         )
 

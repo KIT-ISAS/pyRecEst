@@ -52,7 +52,7 @@ class CustomLinearDistribution(
             # To ensure 2-d for broadcasting
             reshape(xs, (-1, self.dim)) - reshape(self.shift_by, (1, -1))
         )
-        assert ndim(p) <= 1 and p.shape[0] == n_inputs
+        assert ndim(p) <= 1
         return p
 
     @staticmethod

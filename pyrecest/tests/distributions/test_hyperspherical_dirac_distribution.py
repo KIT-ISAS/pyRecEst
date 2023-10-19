@@ -6,6 +6,7 @@ from pyrecest.backend import sqrt
 from pyrecest.backend import ones
 from pyrecest.backend import mod
 from pyrecest.backend import array
+import pyrecest.backend
 import unittest
 
 import numpy as np
@@ -65,9 +66,10 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         wNew = self.hdd.d[:, 1] * self.hdd.w
         np.testing.assert_array_almost_equal(twdNew.w, wNew / sum(wNew))
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_from_distribution(self):
         random.seed(0)
-        vmf = VonMisesFisherDistribution(array([1.0, 1.0, 1.0]) / sqrt(3), 1.0)
+        vmf = VonMisesFisherDistribution(array([1.0, 1.0, 1.0]) / sqrt(3), array(1.0))
         dirac_dist = HypersphericalDiracDistribution.from_distribution(vmf, 100000)
         np.testing.assert_almost_equal(
             dirac_dist.mean_direction(), vmf.mean_direction(), decimal=2

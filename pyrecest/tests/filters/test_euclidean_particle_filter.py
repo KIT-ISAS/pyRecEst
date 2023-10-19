@@ -55,7 +55,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         )
 
     def test_predict_update_cycle_3d_forced_particle_pos_no_pred(self):
-        self.pf.filter_state = self.prior.set_mean(ones(3) + pi / 2)
+        self.pf.filter_state = self.prior.set_mean(ones(3) + pi / 2.0)
 
         force_first_particle_pos = array([1.1, 2.0, 3.0])
         self.pf.filter_state.d[0, :] = force_first_particle_pos
