@@ -21,6 +21,11 @@ def seed(*args, **kwargs):
     return _torch.manual_seed(*args, **kwargs)
 
 
+def multinomial(n, pvals):
+    pvals = pvals / pvals.sum()
+    return _torch.multinomial(pvals, n, replacement=True).bincount(minlength=len(pvals))
+
+
 @_allow_complex_dtype
 def normal(loc=0.0, scale=1.0, size=(1,)):
     if not hasattr(size, "__iter__"):

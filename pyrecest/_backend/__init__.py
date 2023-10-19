@@ -201,6 +201,7 @@ BACKEND_ATTRIBUTES = {
     "random": [
         "choice",
         "normal",
+        "multinomial",
         "multivariate_normal",
         # TODO (nkoep): Remove 'rand' and replace it by 'uniform'. Much like
         #              'randn' is a convenience wrapper (which we don't use)
