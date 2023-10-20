@@ -35,6 +35,7 @@ from torch import (
     quantile,
     diag,  # For pyrecest
     diff,  # For pyrecest
+    nonzero,  # For pyrecest
 )
 from torch import repeat_interleave as repeat
 from torch import (

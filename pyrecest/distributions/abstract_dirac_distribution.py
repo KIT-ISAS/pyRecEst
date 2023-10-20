@@ -82,8 +82,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
-        ids = random.choice(self.w.shape[0], size=n, p=self.w)
-        return self.d[ids]
+        samples = random.choice(self.d, size=n, p=self.w)
+        return samples
 
     def entropy(self) -> float:
         warnings.warn("Entropy is not defined in a continuous sense")
