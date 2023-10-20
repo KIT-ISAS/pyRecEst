@@ -44,7 +44,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         pass
 
     @abstractmethod
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         pass
 
     @abstractmethod

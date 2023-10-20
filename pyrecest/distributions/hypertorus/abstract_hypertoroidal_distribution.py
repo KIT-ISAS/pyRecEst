@@ -18,6 +18,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
+import pyrecest.backend
 import numbers
 from collections.abc import Callable
 
@@ -41,7 +42,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def integrate_fun_over_domain(f: Callable, dim: Union[int, int32, int64]) -> float:
-        integration_boundaries = [(0, 2 * pi)] * dim
+        integration_boundaries = [(0.0, 2 * pi)] * dim
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
             f, dim, integration_boundaries
         )
@@ -85,9 +86,9 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return nquad(f, integration_boundaries)[0]
 
     def integrate_numerically(
-        assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
         self, integration_boundaries=None
     ) -> np.number | numbers.Real:
+        assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
         if integration_boundaries is None:
             integration_boundaries = vstack(
                 (zeros(self.dim), 2.0 * pi * ones(self.dim))
@@ -139,7 +140,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return -self.integrate_fun_over_domain(entropy_fun, self.dim)
 
     def get_manifold_size(self):
-        return (2 * pi) ** self.dim
+        return (2.0 * pi) ** self.dim
 
     @staticmethod
     def angular_error(alpha, beta):
@@ -155,14 +156,14 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         """
         assert not isnan(alpha).any() and not isnan(beta).any()
         # Ensure the angles are between 0 and 2*pi
-        alpha = mod(alpha, 2 * pi)
-        beta = mod(beta, 2 * pi)
+        alpha = mod(alpha, 2.0 * pi)
+        beta = mod(beta, 2.0 * pi)
 
         # Calculate the absolute difference
         diff = abs(alpha - beta)
 
         # Calculate the angular error
-        e = np.minimum(diff, 2 * pi - diff)
+        e = np.minimum(diff, 2.0 * pi - diff)
 
         return e
 
@@ -194,14 +195,14 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def plot(self, resolution=128, **kwargs):
         if self.dim == 1:
-            theta = linspace(0, 2 * pi, resolution)
+            theta = linspace(0.0, 2 * pi, resolution)
             f_theta = self.pdf(theta)
             p = plt.plot(theta, f_theta, **kwargs)
             AbstractHypertoroidalDistribution.setup_axis_circular("x")
         elif self.dim == 2:
             step = 2 * pi / resolution
             alpha, beta = meshgrid(
-                arange(0, 2 * pi, step), arange(0, 2 * pi, step)
+                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step)
             )
             f = self.pdf(vstack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
@@ -276,18 +277,18 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def setup_axis_circular(axis_name: str = "x", ax=plt.gca()) -> None:
-        ticks = [0, pi, 2 * pi]
+        ticks = [0.0, pi, 2.0 * pi]
         tick_labels = ["0", r"$\pi$", r"$2\pi$"]
         if axis_name == "x":
-            ax.set_xlim(left=0, right=2 * pi)
+            ax.set_xlim(left=0.0, right=2.0 * pi)
             ax.set_xticks(ticks)
             ax.set_xticklabels(tick_labels)
         elif axis_name == "y":
-            ax.set_ylim(left=0, right=2 * pi)
+            ax.set_ylim(left=0.0, right=2.0 * pi)
             ax.set_yticks(ticks)
             ax.set_yticklabels(tick_labels)
         elif axis_name == "z":
-            ax.set_zlim(left=0, right=2 * pi)
+            ax.set_zlim(left=0.0, right=2.0 * pi)
             ax.set_zticks(ticks)
             ax.set_zticklabels(tick_labels)
         else:

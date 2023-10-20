@@ -10,10 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from beartype import beartype
 
-from ..hypertorus.abstract_hypertoroidal_distribution import (
-    AbstractHypertoroidalDistribution,
-)
-
+from ..hypertorus.abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):

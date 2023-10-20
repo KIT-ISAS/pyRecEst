@@ -3,6 +3,7 @@ from pyrecest.backend import arange
 from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import array
+import pyrecest.backend
 import unittest
 
 import numpy as np
@@ -16,6 +17,7 @@ class AbstractCircularDistributionTest(unittest.TestCase):
             VonMisesDistribution(array(6.0), array(1.2)),
         ]
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_cdf_numerical(self):
         """Tests if the numerical computation of cdf matches the actual cdf."""
         x = arange(0, 7)
