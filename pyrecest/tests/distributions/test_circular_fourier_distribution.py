@@ -196,7 +196,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
             )
             ** 2,
             0.0,
-            2 * pi,
+            2.0 * pi,
         )
         fd_diff = fd1 - fd2
         np.testing.assert_array_almost_equal(fd_diff.integrate(), hel_like_distance)

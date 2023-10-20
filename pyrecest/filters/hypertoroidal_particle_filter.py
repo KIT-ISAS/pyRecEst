@@ -72,8 +72,8 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
 
         if noise_distribution is not None:
             noise = noise_distribution.sample(self.filter_state.w.size)
-            self.filter_state.d += squeeze(noise)
-            self.filter_state.d = mod(self.filter_state.d, 2 * pi)
+            self.filter_state.d += noise.squeeze()
+            self.filter_state.d = mod(self.filter_state.d, 2.0 * pi)
 
     def predict_nonlinear_nonadditive(
         self, f: Callable, samples: np.ndarray, weights: np.ndarray

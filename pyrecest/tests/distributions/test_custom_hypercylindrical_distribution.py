@@ -54,6 +54,7 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         x = linspace(0.0, 2.0 * pi, 100)
         np.testing.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_condition_on_periodic(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_periodic(array(1.0))
 

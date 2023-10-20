@@ -9,12 +9,26 @@ from torch.distributions.multivariate_normal import (
 from ._dtype import _allow_complex_dtype, _modify_func_default_dtype
 
 
-def choice(x, a):
-    """Generate a random sample from an array of given size."""
-    if _torch.is_tensor(x):
-        return x[_torch.randint(len(x), (a,))]
-
-    return x
+def choice(a, size=None, replace=True, p=None):
+    assert _torch.is_tensor(a), "a must be a tensor"
+    if p is not None:
+        assert _torch.is_tensor(p), "p must be a tensor"
+        if not replace:
+            raise ValueError("Sampling without replacement is not supported with PyTorch when probabilities are given.")
+        
+        p = _torch.tensor(p, dtype=_torch.float32)
+        p = p / p.sum()  # Normalize probabilities
+        indices = _torch.multinomial(p, num_samples=_torch.prod(size), replacement=True)
+    else:
+        indices = _torch.randint(0, len(a), size)
+    
+    result = a[indices]
+    
+    # Reshape the result to match the given size
+    if size is not None:
+        result = result.reshape(size)
+    
+    return result
 
 
 def seed(*args, **kwargs):

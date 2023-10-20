@@ -93,7 +93,7 @@ class HypertoroidalDiracDistribution(
     def shift(self, shift_by) -> "HypertoroidalDiracDistribution":
         assert shift_by.shape[-1] == self.dim
         hd = copy.copy(self)
-        hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2 * pi)
+        hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2.0 * pi)
         return hd
 
     def entropy(self):

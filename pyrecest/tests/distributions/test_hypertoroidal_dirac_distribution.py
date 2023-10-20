@@ -54,7 +54,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         for i in range(self.d.shape[-1]):
             wd = self.twd.marginalize_to_1D(i)
             np.testing.assert_array_almost_equal(self.twd.w, wd.w)
-            np.testing.assert_array_almost_equal(squeeze(wd.d), self.twd.d[:, i])
+            np.testing.assert_array_almost_equal(wd.d, self.twd.d[:, i])
 
     def test_apply_function(self):
         same = self.twd.apply_function(lambda x: x)
@@ -119,7 +119,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         hwd = TestHypertoroidalDiracDistribution.get_pseudorandom_hypertoroidal_wd(2)
         wd1 = hwd.marginalize_to_1D(0)
         wd2 = hwd.marginalize_out(1)
-        np.testing.assert_array_almost_equal(wd1.d, squeeze(wd2.d))
+        np.testing.assert_array_almost_equal(wd1.d, wd2.d)
         np.testing.assert_array_almost_equal(wd1.w, wd2.w)
 
 
