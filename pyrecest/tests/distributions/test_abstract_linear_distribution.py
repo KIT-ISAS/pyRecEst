@@ -2,6 +2,7 @@ from pyrecest.backend import diag
 from pyrecest.backend import squeeze
 from pyrecest.backend import isclose
 from pyrecest.backend import array
+import pyrecest.backend
 import unittest
 
 import matplotlib
@@ -48,11 +49,12 @@ class TestAbstractLinearDistribution(unittest.TestCase):
             integration_result, 0.3, rtol=1e-5
         ), f"Expected 0.3, but got {integration_result}"
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_mode_numerical_custom_1D(self):
         cd = CustomLinearDistribution(
-            lambda x: squeeze(
-                ((x > -1.0) & (x <= 0.0)) * (1.0 + x) + ((x > 0.0) & (x <= 1.0)) * (1 - x)
-            ),
+            lambda x: array(
+                ((x > -1.0) & (x <= 0.0)) * (1.0 + x) + ((x > 0.0) & (x <= 1.0)) * (1.0 - x)
+            ).squeeze(),
             1,
         )
         cd = cd.shift(array(0.5))

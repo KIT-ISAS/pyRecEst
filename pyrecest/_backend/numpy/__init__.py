@@ -75,6 +75,7 @@ from numpy import (
     diff,  # For pyrecest
     apply_along_axis,  # For pyrecest
     nonzero,  # For pyrecest
+    column_stack,  # For pyrecest
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

@@ -85,11 +85,12 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return nquad(f, integration_boundaries)[0]
 
     def integrate_numerically(
+        assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
         self, integration_boundaries=None
     ) -> np.number | numbers.Real:
         if integration_boundaries is None:
             integration_boundaries = vstack(
-                (zeros(self.dim), 2 * pi * ones(self.dim))
+                (zeros(self.dim), 2.0 * pi * ones(self.dim))
             )
 
         integration_boundaries = reshape(integration_boundaries, (2, -1))

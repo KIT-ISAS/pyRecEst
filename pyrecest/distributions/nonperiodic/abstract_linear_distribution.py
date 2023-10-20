@@ -9,6 +9,8 @@ from pyrecest.backend import linspace
 from pyrecest.backend import array
 from pyrecest.backend import int64
 from pyrecest.backend import int32
+from pyrecest.backend import column_stack
+import pyrecest.backend
 import numbers
 from collections.abc import Callable
 
@@ -43,9 +45,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         return self.mode_numerical(starting_point)
 
     def mode_numerical(self, starting_point=None):
+        assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
         if starting_point is None:
             # Ensure 1-D for minimize
-            starting_point = squeeze(self.sample(1))
+            starting_point = self.sample(1).squeeze()
 
         def neg_pdf(x):
             return -self.pdf(x)
@@ -87,10 +90,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         )
 
     def mean_numerical(self):
+        mu = empty(self.dim)
         if self.dim == 1:
-            mu = quad(lambda x: x * self.pdf(x), -np.inf, np.inf)[0]
+            mu = quad(lambda x: x * self.pdf(x), array(-float('inf')), array(float('inf')))[0]
         elif self.dim == 2:
-            mu = array([np.NaN, np.NaN])
             mu[0] = dblquad(
                 lambda x, y: x * self.pdf(array([x, y])),
                 -np.inf,
@@ -106,8 +109,6 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                 lambda _: np.inf,
             )[0]
         elif self.dim == 3:
-            mu = array([np.NaN, np.NaN, np.NaN])
-
             def integrand1(x, y, z):
                 return x * self.pdf(array([x, y, z]))
 
@@ -137,7 +138,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         if self.dim == 1:
             C = quad(lambda x: (x - mu) ** 2 * self.pdf(x), -np.inf, np.inf)[0]
         elif self.dim == 2:
-            C = array([[np.NaN, np.NaN], [np.NaN, np.NaN]])
+            C = empty((2, 2))
 
             def integrand1(x, y):
                 return (x - mu[0]) ** 2 * self.pdf(array([x, y]))
@@ -247,7 +248,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             x = linspace(plot_range[0], plot_range[1], 100)
             y = linspace(plot_range[2], plot_range[3], 100)
             x_grid, y_grid = meshgrid(x, y)
-            z_grid = self.pdf(np.column_stack((x_grid.ravel(), y_grid.ravel())))
+            z_grid = self.pdf(column_stack((x_grid.ravel(), y_grid.ravel())))
 
             ax = plt.axes(projection="3d")
             ax.plot_surface(

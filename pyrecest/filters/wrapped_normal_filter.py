@@ -14,7 +14,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
     def __init__(self, wn=None):
         """Initialize the filter."""
         if wn is None:
-            wn = WrappedNormalDistribution(0, 1)
+            wn = WrappedNormalDistribution(array(0.0), array(1.0))
         AbstractCircularFilter.__init__(self, wn)
 
     def predict_identity(self, wn_sys):

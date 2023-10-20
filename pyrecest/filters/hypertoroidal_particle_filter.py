@@ -38,7 +38,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         if dim == 1:
             # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
             filter_state = CircularDiracDistribution(
-                arange(0.0, 2.0 * pi, n_particles) # Like linspace without endpoint but with compatbiility for pytroch
+                linspace(0.0, 2.0 * pi, num = n_particles, endpoint=False)  # Like linspace without endpoint but with compatbiility for pytroch
             )
         else:
             filter_state = HypertoroidalDiracDistribution(

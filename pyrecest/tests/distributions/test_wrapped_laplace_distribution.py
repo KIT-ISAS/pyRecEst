@@ -2,6 +2,7 @@ from math import pi
 from pyrecest.backend import linspace
 from pyrecest.backend import exp
 from pyrecest.backend import arange
+from pyrecest.backend import array
 import unittest
 
 import numpy as np
@@ -12,8 +13,8 @@ from pyrecest.distributions.circle.wrapped_laplace_distribution import (
 
 class WrappedLaplaceDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.lambda_ = 2
-        self.kappa = 1.3
+        self.lambda_ = array(2.0)
+        self.kappa = array(1.3)
         self.wl = WrappedLaplaceDistribution(self.lambda_, self.kappa)
 
     def test_pdf(self):
@@ -31,16 +32,16 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
             )
 
         def pdftemp(x):
-            return sum(laplace(z) for z in x + 2 * pi * arange(-20, 21))
+            return sum(laplace(z) for z in x + 2.0 * pi * arange(-20, 21))
 
-        for x in [0, 1, 2, 3, 4]:
+        for x in [0.0, 1.0, 2.0, 3.0, 4.0]:
             np.testing.assert_allclose(self.wl.pdf(x), pdftemp(x), rtol=1e-10)
 
     def test_integral(self):
-        np.testing.assert_allclose(self.wl.integrate(), 1, rtol=1e-10)
-        np.testing.assert_allclose(self.wl.integrate_numerically(), 1, rtol=1e-10)
+        np.testing.assert_allclose(self.wl.integrate(), 1.0, rtol=1e-10)
+        np.testing.assert_allclose(self.wl.integrate_numerically(), 1.0, rtol=1e-10)
         np.testing.assert_allclose(
-            self.wl.integrate([0, pi]) + self.wl.integrate([pi, 2 * pi]),
+            self.wl.integrate(array([0.0, pi])) + self.wl.integrate(array([pi, 2.0 * pi])),
             1,
             rtol=1e-10,
         )

@@ -81,7 +81,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     def test_vm_to_fourier(self, mult_by_n, transformation):
-        xs = linspace(0, 2 * pi, 100)
+        xs = linspace(0.0, 2.0 * pi, 100)
         dist = VonMisesDistribution(2.5, 1.5)
         fd = CircularFourierDistribution.from_distribution(
             dist,
@@ -166,8 +166,8 @@ class TestCircularFourierDistribution(unittest.TestCase):
         fd_norm = fd_unnorm.normalize()
         fd_unnorm_real = fd_unnorm.to_real_fd()
         fd_norm_real = fd_unnorm_real.normalize()
-        np.testing.assert_array_almost_equal(fd_norm.integrate(), 1)
-        np.testing.assert_array_almost_equal(fd_norm_real.integrate(), 1)
+        np.testing.assert_array_almost_equal(fd_norm.integrate(), 1.0)
+        np.testing.assert_array_almost_equal(fd_norm_real.integrate(), 1.0)
 
     @parameterized.expand(
         [
@@ -176,8 +176,8 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     def test_distance(self, mult_by_n):
-        dist1 = VonMisesDistribution(0.0, 1.0)
-        dist2 = VonMisesDistribution(2.0, 1.0)
+        dist1 = VonMisesDistribution(array(0.0), array(1.0))
+        dist2 = VonMisesDistribution(array(2.0), array(1.0))
         fd1 = CircularFourierDistribution.from_distribution(
             dist1,
             n=31,

@@ -37,7 +37,7 @@ class CustomLinearDistribution(
             self.shift_by = zeros(dim)
 
     def shift(self, shift_by):
-        assert self.dim == np.size(shift_by) and shift_by.ndim <= 1
+        assert self.dim == 1 or self.dim == shift_by.shape[0] and shift_by.ndim == 1
         cd = copy.deepcopy(self)
         cd.shift_by = self.shift_by + shift_by
         return cd

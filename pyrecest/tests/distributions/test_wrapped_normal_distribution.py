@@ -17,8 +17,8 @@ from pyrecest.distributions import WrappedNormalDistribution
 
 class WrappedNormalDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.mu = 3
-        self.sigma = 1.5
+        self.mu = array(3.0)
+        self.sigma = array(1.5)
         self.wn = WrappedNormalDistribution(self.mu, self.sigma)
 
     def test_pdf_values_are_as_expected(self):
@@ -36,8 +36,8 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         test_points = [self.mu, self.mu - 1, self.mu + 2]
         for point in test_points:
             with self.subTest(x=point):
-                self.assertAlmostEqual(
-                    self.wn.pdf(point), approx_with_wrapping(point), places=10
+                np.testing.assert_almost_equal(
+                    self.wn.pdf(point), approx_with_wrapping(point), decimal=10
                 )
 
         x = arange(0, 7)

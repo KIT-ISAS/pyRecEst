@@ -36,6 +36,7 @@ from torch import (
     diag,  # For pyrecest
     diff,  # For pyrecest
     nonzero,  # For pyrecest
+    column_stack,  # For pyrecest
 )
 from torch import repeat_interleave as repeat
 from torch import (
@@ -385,12 +386,16 @@ def trace(x):
     return _torch.einsum("...ii", x)
 
 
-def linspace(start, stop, num=50, dtype=None):
+def linspace(start, stop, endpoint=True, num=50, dtype=None):
     start_is_array = _torch.is_tensor(start)
     stop_is_array = _torch.is_tensor(stop)
 
-    if not (start_is_array or stop_is_array):
+    if not (start_is_array or stop_is_array) and endpoint:
         return _torch.linspace(start=start, end=stop, steps=num, dtype=dtype)
+    elif not (start_is_array or stop_is_array): # Added for pyrecest
+        return _torch.arange(start=start, end=stop, step=(stop-start)/num, dtype=dtype)
+    else:
+        raise ValueError("endpoint=False not supported for vectors")
 
     if not start_is_array:
         start = _torch.tensor(start)
@@ -696,7 +701,7 @@ def triu_to_vec(x, k=0):
     return x[..., rows, cols]
 
 
-def mat_from_diag_triu_tril(diag, tri_upp, tri_low):
+def mat_from_diag_triu_tril(diag_entries, tri_upp, tri_low):
     """Build matrix from given components.
 
     Forms a matrix from diagonal, strictly upper triangular and
@@ -712,13 +717,13 @@ def mat_from_diag_triu_tril(diag, tri_upp, tri_low):
     -------
     mat : array_like, shape=[..., n, n]
     """
-    diag, tri_upp, tri_low = convert_to_wider_dtype([diag, tri_upp, tri_low])
+    diag_entries, tri_upp, tri_low = convert_to_wider_dtype([diag_entries, tri_upp, tri_low])
 
-    n = diag.shape[-1]
+    n = diag_entries.shape[-1]
     (i,) = diag_indices(n, ndim=1)
     j, k = triu_indices(n, k=1)
-    mat = _torch.zeros((diag.shape + (n,)), dtype=diag.dtype)
-    mat[..., i, i] = diag
+    mat = _torch.zeros((diag_entries.shape + (n,)), dtype=diag_entries.dtype)
+    mat[..., i, i] = diag_entries
     mat[..., j, k] = tri_upp
     mat[..., k, j] = tri_low
     return mat
