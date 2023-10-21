@@ -4,7 +4,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions.hypersphere_subset.hemispherical_uniform_distribution import (
     HemisphericalUniformDistribution,
 )

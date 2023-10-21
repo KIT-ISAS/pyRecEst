@@ -7,7 +7,7 @@ import unittest
 import importlib.util
 healpy_installed = importlib.util.find_spec("healpy") is not None
 
-import numpy as np
+
 from parameterized import parameterized
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
 

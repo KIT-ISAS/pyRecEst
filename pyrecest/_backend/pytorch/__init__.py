@@ -37,6 +37,7 @@ from torch import (
     diff,  # For pyrecest
     nonzero,  # For pyrecest
     column_stack,  # For pyrecest
+    conj,  # For pyrecest
 )
 from torch import repeat_interleave as repeat
 from torch import (

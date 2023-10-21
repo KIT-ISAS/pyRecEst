@@ -8,10 +8,11 @@ from pyrecest.backend import arctan2
 from pyrecest.backend import arccos
 from pyrecest.backend import arange
 from pyrecest.backend import empty
+from pyrecest.backend import column_stack
 import itertools
 from abc import abstractmethod
 
-import numpy as np
+
 from beartype import beartype
 from pyrecest.distributions import (
     AbstractSphericalDistribution,
@@ -49,7 +50,7 @@ get_grid_sphere = get_grid_hypersphere
 
 
 class AbstractHypersphericalUniformSampler(AbstractSampler):
-    def sample_stochastic(self, n_samples: int, dim: int) -> np.ndarray:
+    def sample_stochastic(self, n_samples: int, dim: int):
         return HypersphericalUniformDistribution(dim).sample(n_samples)
 
     @abstractmethod
@@ -69,27 +70,27 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
     @abstractmethod
     def get_grid_spherical_coordinates(
         self, grid_density_parameter: int
-    ) -> tuple[np.ndarray, np.ndarray, dict]:
+    ):
         raise NotImplementedError()
 
-    def get_grid(self, grid_density_parameter: int) -> tuple[np.ndarray, dict]:
+    def get_grid(self, grid_density_parameter: int):
         phi, theta, grid_specific_description = self.get_grid_spherical_coordinates(
             grid_density_parameter
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
-        grid = np.column_stack((x, y, z))
+        grid = column_stack((x, y, z))
 
         return grid, grid_specific_description
 
 
 class HealpixSampler(AbstractHypersphericalUniformSampler):
-    def get_grid(self, grid_density_parameter: int) -> tuple[np.ndarray, dict]:
+    def get_grid(self, grid_density_parameter: int):
         import healpy as hp
 
         n_side = grid_density_parameter
         n_areas = hp.nside2npix(n_side)
         x, y, z = hp.pix2vec(n_side, arange(n_areas))
-        grid = np.column_stack((x, y, z))
+        grid = column_stack((x, y, z))
 
         grid_specific_description = {
             "scheme": "healpix",
@@ -102,7 +103,7 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
     def get_grid_spherical_coordinates(
         self, grid_density_parameter: int
-    ) -> tuple[np.ndarray, np.ndarray, dict]:
+    ):
         import pyshtools as pysh
 
         grid = pysh.SHGrid.from_zeros(grid_density_parameter)
@@ -132,7 +133,7 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
 class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
     def get_grid_spherical_coordinates(
         self, grid_density_parameter: int
-    ) -> tuple[np.ndarray, np.ndarray, dict]:
+    ):
         indices = arange(0, grid_density_parameter, dtype=float) + 0.5
         phi = pi * (1 + 5**0.5) * indices
         theta = arccos(1 - 2 * indices / grid_density_parameter)
@@ -145,9 +146,7 @@ class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
 
 class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
     @staticmethod
-    def hopf_coordinates_to_quaterion_yershova(
-        θ: np.ndarray, ϕ: np.ndarray, ψ: np.ndarray
-    ):
+    def hopf_coordinates_to_quaterion_yershova(θ, ϕ, ψ):
         """
         One possible way to index the S3-sphere via the hopf fibration.
         Using the convention from
@@ -165,7 +164,7 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
         return quaterions
 
     @staticmethod
-    def quaternion_to_hopf_yershova(q: np.ndarray):
+    def quaternion_to_hopf_yershova(q):
         θ = 2 * arccos(sqrt(q[:, 0] ** 2 + q[:, 1] ** 2))
         ϕ = arctan2(q[:, 3], q[:, 2]) - arctan2(q[:, 1], q[:, 0])
         ψ = 2 * arctan2(q[:, 1], q[:, 0])
@@ -187,7 +186,7 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
         s3_points_list = []
 
         for i in range(grid_density_parameter[0] + 1):
-            if np.size(grid_density_parameter) == 2:
+            if grid_density_parameter.shape[0] == 2:
                 n_sample_circle = grid_density_parameter[1]
             else:
                 n_sample_circle = 2**i * 6

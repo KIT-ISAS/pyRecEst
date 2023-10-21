@@ -8,7 +8,7 @@ from pyrecest.backend import all
 """ Test for uniform distribution for hyperhemispheres """
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
 
 

@@ -4,7 +4,7 @@ import copy
 import warnings
 from abc import abstractmethod
 
-import numpy as np
+
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter

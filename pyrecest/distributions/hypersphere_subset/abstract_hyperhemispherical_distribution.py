@@ -15,7 +15,7 @@ import warnings
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from beartype import beartype
 from scipy.optimize import minimize
 
@@ -25,13 +25,13 @@ from .abstract_hypersphere_subset_distribution import (
 
 
 class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
-    def mean(self) -> np.ndarray:
+    def mean(self):
         """
         Convenient access to axis to have a consistent interface
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype: 
         """
         return self.mean_axis()
 
@@ -42,8 +42,8 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point:  | None = None,
+    ):
         # jscpd:ignore-end
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
@@ -61,7 +61,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             n, burn_in, skipping, proposal=proposal, start_point=start_point
         )
 
-    def mean_direction_numerical(self) -> np.ndarray:
+    def mean_direction_numerical(self):
         warning_msg = (
             "The result is the mean direction on the upper hemisphere along the last dimension. "
             "It is not a mean of a symmetric distribution, which would not have a proper mean. "
@@ -99,7 +99,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return mu
 
     @staticmethod
-    def get_full_integration_boundaries(dim: Union[int, int32, int64]) -> np.ndarray:
+    def get_full_integration_boundaries(dim: Union[int, int32, int64]):
         if dim == 1:
             integration_boundaries = [0, pi]
         else:
@@ -113,7 +113,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             ).T
         return integration_boundaries
 
-    def integrate(self, integration_boundaries: np.ndarray | None = None) -> float:
+    def integrate(self, integration_boundaries:  | None = None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -123,7 +123,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return super().integrate(integration_boundaries)
 
     def integrate_numerically(
-        self, integration_boundaries: np.ndarray | None = None
+        self, integration_boundaries:  | None = None
     ) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
@@ -144,7 +144,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             f_hypersph_coords, dim, integration_boundaries
         )
 
-    def mode_numerical(self) -> np.ndarray:
+    def mode_numerical(self):
         def objective_function_2d(s):
             return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
 

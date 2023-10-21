@@ -6,7 +6,7 @@ from pyrecest.backend import array
 import pyrecest.backend
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
 
 

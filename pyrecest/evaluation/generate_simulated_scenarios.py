@@ -1,6 +1,6 @@
 from pyrecest.backend import random
 from pyrecest.backend import empty
-import numpy as np
+
 
 from .check_and_fix_config import check_and_fix_config
 from .generate_groundtruth import generate_groundtruth
@@ -25,11 +25,11 @@ def generate_simulated_scenarios(
 
     groundtruths = empty(
         (np.size(simulation_params["all_seeds"]), simulation_params["n_timesteps"]),
-        dtype=np.ndarray,
+        dtype=,
     )
     measurements = empty(
         (np.size(simulation_params["all_seeds"]), simulation_params["n_timesteps"]),
-        dtype=np.ndarray,
+        dtype=,
     )
 
     for run, seed in enumerate(simulation_params["all_seeds"]):

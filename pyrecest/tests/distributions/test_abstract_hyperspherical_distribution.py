@@ -5,7 +5,7 @@ from pyrecest.backend import array
 import unittest
 
 import matplotlib
-import numpy as np
+
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     VonMisesFisherDistribution,

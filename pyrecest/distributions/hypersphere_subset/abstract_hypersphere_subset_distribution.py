@@ -15,7 +15,7 @@ from pyrecest.backend import empty
 from abc import abstractmethod
 from collections.abc import Callable
 
-import numpy as np
+
 from beartype import beartype
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
@@ -171,7 +171,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return m
 
     @staticmethod
-    def _compute_mean_axis_from_moment(moment_matrix: np.ndarray) -> np.ndarray:
+    def _compute_mean_axis_from_moment(moment_matrix):
         D, V = linalg.eig(moment_matrix)
         Dsorted = sort(D)
         Vsorted = V[:, D.argsort()]
@@ -183,15 +183,15 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             m = -Vsorted[:, -1]
         return m
 
-    def mean_axis(self) -> np.ndarray:
+    def mean_axis(self):
         mom = self.moment()
         return AbstractHypersphereSubsetDistribution._compute_mean_axis_from_moment(mom)
 
-    def mean_axis_numerical(self) -> np.ndarray:
+    def mean_axis_numerical(self):
         mom = self.moment_numerical()
         return AbstractHypersphereSubsetDistribution._compute_mean_axis_from_moment(mom)
 
-    def integrate(self, integration_boundaries: np.ndarray | None = None):
+    def integrate(self, integration_boundaries:  | None = None):
         if integration_boundaries is None:
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim
@@ -342,7 +342,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return 0.5 * distance_integral
 
     @staticmethod
-    def polar_to_cart(polar_coords: np.ndarray) -> np.ndarray:
+    def polar_to_cart(polar_coords):
         polar_coords = np.atleast_2d(polar_coords)
 
         coords = zeros(

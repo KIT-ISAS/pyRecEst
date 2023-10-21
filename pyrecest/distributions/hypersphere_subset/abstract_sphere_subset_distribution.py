@@ -5,7 +5,7 @@ from pyrecest.backend import ndim
 from pyrecest.backend import cos
 from pyrecest.backend import arctan2
 from pyrecest.backend import arccos
-import numpy as np
+
 from beartype import beartype
 
 from .abstract_hypersphere_subset_distribution import (
@@ -25,13 +25,13 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         super().__init__(2)
 
     @staticmethod
-    def sph_to_cart(phi: np.ndarray, theta: np.ndarray, mode="colatitude") -> tuple:
+    def sph_to_cart(phi, theta, mode="colatitude") -> tuple:
         """
         Convert spherical coordinates to Cartesian coordinates.
 
         Args:
-            phi (np.ndarray): Azimuth angles.
-            theta (np.ndarray): Colatitude angles or elevation angles based on the mode.
+            phi (): Azimuth angles.
+            theta (): Colatitude angles or elevation angles based on the mode.
             mode (str): Either 'colatitude' or 'elevation'.
 
         Returns:
@@ -53,15 +53,15 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
 
     @staticmethod
     def cart_to_sph(
-        x: np.ndarray, y: np.ndarray, z: np.ndarray, mode="colatitude"
+        x, y, z, mode="colatitude"
     ) -> tuple:
         """
         Convert Cartesian coordinates to spherical coordinates.
 
         Args:
-            x (np.ndarray): X coordinates.
-            y (np.ndarray): Y coordinates.
-            z (np.ndarray): Z coordinates.
+            x (): X coordinates.
+            y (): Y coordinates.
+            z (): Z coordinates.
 
         Returns:
             tuple: Spherical coordinates.
@@ -83,7 +83,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return phi, theta
 
     @staticmethod
-    def _sph_to_cart_colatitude(azimuth: np.ndarray, colatitude: np.ndarray) -> tuple:
+    def _sph_to_cart_colatitude(azimuth, colatitude: ) -> tuple:
         assert ndim(azimuth) == 1 and ndim(
             colatitude
         ), "Inputs must be 1-dimensional"
@@ -93,14 +93,14 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, z
 
     @staticmethod
-    def _sph_to_cart_elevation(azimuth: np.ndarray, elevation: np.ndarray) -> tuple:
+    def _sph_to_cart_elevation(azimuth, elevation: ) -> tuple:
         """
         Convert spherical coordinates (using elevation) to Cartesian coordinates.
         Assumes a radius of 1.
 
         Args:
-            azimuth (np.ndarray): Azimuth angles.
-            elevation (np.ndarray): Elevation angles.
+            azimuth (): Azimuth angles.
+            elevation (): Elevation angles.
 
         Returns:
             tuple: Cartesian coordinates.
@@ -116,7 +116,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, z
 
     @staticmethod
-    def _cart_to_sph_colatitude(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
+    def _cart_to_sph_colatitude(x, y, z: ) -> tuple:
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z)
         radius = 1
         azimuth = arctan2(y, x)
@@ -125,7 +125,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return azimuth, colatitude
 
     @staticmethod
-    def _cart_to_sph_elevation(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> tuple:
+    def _cart_to_sph_elevation(x, y, z: ) -> tuple:
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
         radius = 1
         azimuth = arctan2(y, x)

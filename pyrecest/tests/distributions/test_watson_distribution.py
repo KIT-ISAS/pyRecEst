@@ -2,7 +2,7 @@ from pyrecest.backend import linalg
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import BinghamDistribution, WatsonDistribution
 
 

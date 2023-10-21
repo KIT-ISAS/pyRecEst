@@ -3,7 +3,7 @@ from pyrecest.backend import ones
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions.circle.circular_uniform_distribution import (
     CircularUniformDistribution,
 )

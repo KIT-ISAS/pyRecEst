@@ -18,7 +18,7 @@ from pyrecest.backend import empty
 from pyrecest.backend import zeros
 from abc import abstractmethod
 
-import numpy as np
+
 import scipy.integrate
 import scipy.optimize
 from beartype import beartype
@@ -57,7 +57,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         return integration_result
 
-    def get_reasonable_integration_boundaries(self, scalingFactor=10) -> np.ndarray:
+    def get_reasonable_integration_boundaries(self, scalingFactor=10):
         """
         Returns reasonable integration boundaries for the specific distribution
         based on the mode and covariance.
@@ -119,29 +119,29 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         if self.bound_dim == 1 and self.lin_dim == 1:
             C, _ = nquad(
                 lambda x, y: (y - approximate_mean) ** 2 * self.pdf([x, y]),
-                [[0, 2 * pi], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-float('inf'), float('inf')]],
             )
         elif self.bound_dim == 2 and self.lin_dim == 1:
             C, _ = nquad(
                 lambda x, y, z: (z - approximate_mean) ** 2 * self.pdf([x, y, z]),
-                [[0, 2 * pi], [0, 2 * pi], [-np.inf, np.inf]],
+                [[0, 2 * pi], [0, 2 * pi], [-float('inf'), float('inf')]],
             )
         elif self.bound_dim == 1 and self.lin_dim == 2:
             C = empty((2, 2))
             C[0, 0], _ = nquad(
                 lambda x, y, z: (y - approximate_mean[0]) ** 2 * self.pdf([x, y, z]),
-                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-float('inf'), float('inf')], [-float('inf'), float('inf')]],
             )
             C[0, 1], _ = nquad(
                 lambda x, y, z: (y - approximate_mean[0])
                 * (z - approximate_mean[1])
                 * self.pdf([x, y, z]),
-                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-float('inf'), float('inf')], [-float('inf'), float('inf')]],
             )
             C[1, 0] = C[0, 1]
             C[1, 1], _ = nquad(
                 lambda x, y, z: (z - approximate_mean[1]) ** 2 * self.pdf([x, y, z]),
-                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-float('inf'), float('inf')], [-float('inf'), float('inf')]],
             )
         else:
             raise ValueError("Cannot determine linear covariance for this dimension.")
@@ -215,22 +215,22 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         if self.lin_dim == 1 and self.bound_dim == 1:
             mu = scipy.integrate.nquad(
                 lambda x, y: (y * self.pdf([x, y]))[0],
-                [[0.0, 2 * pi], [-np.inf, np.inf]],
+                [[0.0, 2 * pi], [-float('inf'), float('inf')]],
             )[0]
         elif self.bound_dim == 2 and self.lin_dim == 1:
             mu = scipy.integrate.nquad(
                 lambda x, y, z: (z * self.pdf([x, y, z]))[0],
-                [[0.0, 2 * pi], [0.0, 2 * pi], [-np.inf, np.inf]],
+                [[0.0, 2 * pi], [0.0, 2 * pi], [-float('inf'), float('inf')]],
             )[0]
         elif self.bound_dim == 1 and self.lin_dim == 2:
             mu = empty(2)
             mu[0] = scipy.integrate.nquad(
                 lambda x, y, z: (y * self.pdf([x, y, z]))[0],
-                [[0.0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0.0, 2 * pi], [-float('inf'), float('inf')], [-float('inf'), float('inf')]],
             )[0]
             mu[1] = scipy.integrate.nquad(
                 lambda x, y, z: (z * self.pdf([x, y, z]))[0],
-                [[0, 2 * pi], [-np.inf, np.inf], [-np.inf, np.inf]],
+                [[0, 2 * pi], [-float('inf'), float('inf')], [-float('inf'), float('inf')]],
             )[0]
         else:
             raise ValueError("Cannot determine linear mean for this dimension.")
@@ -257,7 +257,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         # Define bounds for the optimization
         bounds = [
-            (0, 2 * pi) if i < self.bound_dim else (-np.inf, np.inf)
+            (0, 2 * pi) if i < self.bound_dim else (-float('inf'), float('inf'))
             for i in range(self.bound_dim + self.lin_dim)
         ]
 

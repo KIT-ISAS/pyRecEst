@@ -11,7 +11,7 @@ from pyrecest.backend import zeros_like
 from pyrecest.backend import zeros
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions.cart_prod.hypercylindrical_dirac_distribution import (
     HypercylindricalDiracDistribution,
 )

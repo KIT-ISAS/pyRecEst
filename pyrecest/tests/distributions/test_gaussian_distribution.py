@@ -4,7 +4,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 import unittest
 
-import numpy as np
+
 import scipy
 from pyrecest.distributions import GaussianDistribution
 from scipy.stats import multivariate_normal
@@ -69,7 +69,7 @@ class GaussianDistributionTest(unittest.TestCase):
             result = []
             for x_curr in xs:
                 integral_value, _ = scipy.integrate.quad(
-                    integrand, -np.inf, np.inf, args=x_curr
+                    integrand, -float('inf'), float('inf'), args=x_curr
                 )
                 result.append(integral_value)
             return array(result)

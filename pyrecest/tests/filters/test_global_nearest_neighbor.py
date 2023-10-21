@@ -9,7 +9,7 @@ from pyrecest.backend import diag
 import pyrecest.backend
 import unittest
 
-import numpy as np
+
 import scipy
 from parameterized import parameterized
 from pyrecest.distributions import GaussianDistribution

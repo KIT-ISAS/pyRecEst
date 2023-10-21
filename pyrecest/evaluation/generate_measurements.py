@@ -8,7 +8,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import dot
 from pyrecest.backend import empty
 from pyrecest.backend import zeros
-import numpy as np
+
 from beartype import beartype
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
@@ -40,7 +40,7 @@ def generate_measurements(groundtruth, simulation_config):
     assert "n_meas_at_individual_time_step" not in simulation_config or shape(
         simulation_config["n_meas_at_individual_time_step"]
     ) == (simulation_config["n_timesteps"],)
-    measurements = empty(simulation_config["n_timesteps"], dtype=np.ndarray)
+    measurements = empty(simulation_config["n_timesteps"], dtype=)
 
     if simulation_config.get("mtt", False) and simulation_config.get("eot", False):
         raise NotImplementedError(

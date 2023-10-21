@@ -1,10 +1,10 @@
 from math import pi
 from pyrecest.backend import mod
 from pyrecest.backend import zeros
-import numpy as np
+
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
-from ..circle.custom_circular_distribution import CustomCircularDistribution
+
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 

@@ -3,7 +3,7 @@ from pyrecest.backend import real
 from pyrecest.backend import imag
 from pyrecest.backend import all
 from pyrecest.backend import zeros
-import numpy as np
+
 
 # pylint: disable=E0611
 from scipy.special import sph_harm

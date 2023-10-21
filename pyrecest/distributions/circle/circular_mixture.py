@@ -3,7 +3,7 @@ from pyrecest.backend import shape
 import collections
 import warnings
 
-import numpy as np
+
 from beartype import beartype
 
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
@@ -16,7 +16,7 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractCircularDistribution],
-        w: np.ndarray,
+        w: ,
     ):
         """
         Creates a new circular mixture.

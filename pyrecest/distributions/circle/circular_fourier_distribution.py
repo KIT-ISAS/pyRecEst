@@ -13,10 +13,12 @@ from pyrecest.backend import concatenate
 from pyrecest.backend import arange
 from pyrecest.backend import int64
 from pyrecest.backend import int32
+from pyrecest.backend import array
+from pyrecest
 import warnings
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from beartype import beartype
 from numpy.fft import irfft, rfft
 
@@ -33,9 +35,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     def __init__(
         self,
         transformation: str = "sqrt",
-        c: np.ndarray | None = None,
-        a: np.ndarray | None = None,
-        b: np.ndarray | None = None,
+        c:  | None = None,
+        a:  | None = None,
+        b:  | None = None,
         n: int | None = None,
         multiplied_by_n: bool = True,
     ):
@@ -103,13 +105,13 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         )  # The number should not change! We store it if we use a complex one now and set it to None if we falsely believe we know the number (it is not clear for complex ones)
         return fdNew
 
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         assert xs.ndim <= 2, "xs should have at most 2 dimensions."
         xs = xs.reshape(-1, 1)
         a, b = self.get_a_b()
 
-        k_range = arange(1, a.shape[0]).astype(xs.dtype)
-        p = a[0] / 2 + sum(
+        k_range = arange(1, a.shape[0], dtype=xs.dtype)
+        p = a[0] / 2.0 + sum(
             a[1:].reshape(1, -1) * cos(xs * k_range)
             + b.reshape(1, -1) * sin(xs * k_range),
             axis=1,
@@ -172,8 +174,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             integration_boundaries is None
         ), "Currently, only supported for entire domain."
         if self.a is not None and self.b is not None:
-            a: np.ndarray = self.a
-            b: np.ndarray = self.b
+            a: array = self.a
+            b: array = self.b
             if self.multiplied_by_n:
                 a = a * (1 / self.n)
                 b = b * (1 / self.n)
@@ -193,7 +195,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                     c0 = real(self.c[0]) * (1 / self.n)
                 else:
                     c0 = real(self.c[0])
-                integral = 2 * pi * c0
+                integral = 2.0 * pi * c0
             elif self.transformation == "sqrt":
                 if self.multiplied_by_n:
                     c = self.c * (1 / self.n)
@@ -230,7 +232,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         plt.show()
 
     def plot(self, resolution=128, **kwargs):
-        xs = linspace(0, 2 * pi, resolution)
+        xs = linspace(0.0, 2.0 * pi, resolution)
 
         if self.a is not None:
             xs = xs.astype(self.a.dtype)
@@ -244,7 +246,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
         return p
 
-    def get_a_b(self) -> tuple[np.ndarray, np.ndarray]:
+    def get_a_b(self) -> tuple[, ]:
         if self.a is not None:
             a = self.a
             b = self.b
@@ -256,7 +258,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         )  # Other case not implemented yet!
         return a, b
 
-    def get_c(self) -> np.ndarray:
+    def get_c(self):
         if self.a is not None:
             c = (self.a[0] + 1j * hstack((0, self.b))) * 0.5
         elif self.c is not None:
@@ -279,7 +281,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     def get_full_c(self):
         assert self.c is not None
-        neg_c = np.conj(
+        neg_c = conj(
             self.c[-1:0:-1]
         )  # Create array for negative-frequency components
         full_c = concatenate(
@@ -321,7 +323,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def from_function_values(
-        fvals: np.ndarray,
+        fvals: ,
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
@@ -332,7 +334,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         fd = CircularFourierDistribution(
             c=c,
             transformation=transformation,
-            n=np.size(fvals),
+            n=fvals.shape[0],
             multiplied_by_n=store_values_multiplied_by_n,
         )
 

@@ -2,7 +2,7 @@ from pyrecest.backend import reshape
 from pyrecest.backend import ndim
 import copy
 
-import numpy as np
+
 
 from ..abstract_custom_nonperiodic_distribution import (
     AbstractCustomNonPeriodicDistribution,

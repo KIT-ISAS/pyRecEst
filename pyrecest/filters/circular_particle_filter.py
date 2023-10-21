@@ -3,7 +3,7 @@ from pyrecest.backend import sum
 from pyrecest.backend import float64
 from pyrecest.backend import int64
 from pyrecest.backend import int32
-import numpy as np
+
 
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 

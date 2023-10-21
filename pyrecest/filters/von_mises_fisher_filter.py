@@ -1,6 +1,6 @@
 from pyrecest.backend import ndim
 from pyrecest.backend import array
-import numpy as np
+
 from pyrecest.distributions import VonMisesFisherDistribution
 
 from .abstract_hyperspherical_filter import AbstractHypersphericalFilter

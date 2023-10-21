@@ -6,7 +6,7 @@ from pyrecest.backend import any
 import warnings
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from beartype import beartype
 
 from .get_axis_label import get_axis_label

@@ -7,7 +7,7 @@ from pyrecest.backend import array
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
-import numpy as np
+
 from scipy.integrate import dblquad
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -17,7 +17,7 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):
         AbstractHypertoroidalDistribution.__init__(self, 2)
 
-    def covariance_4D_numerical(self) -> np.ndarray:
+    def covariance_4D_numerical(self):
         m = self.mean_4D()
 
         def f(
@@ -66,7 +66,7 @@ class AbstractToroidalDistribution(AbstractHypertoroidalDistribution):
         rhoc = EsinAsinB / sqrt(EsinAsquared * EsinBsquared)
         return rhoc
 
-    def mean_4D(self) -> np.ndarray:
+    def mean_4D(self):
         """
         Calculates the 4D mean of [cos(x1), sin(x1), cos(x2), sin(x2)]
 

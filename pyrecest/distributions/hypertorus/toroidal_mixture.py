@@ -1,11 +1,11 @@
-import numpy as np
+
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_mixture import HypertoroidalMixture
 
 
 class ToroidalMixture(HypertoroidalMixture, AbstractToroidalDistribution):
-    def __init__(self, hds: list[AbstractToroidalDistribution], w: np.ndarray):
+    def __init__(self, hds: list[AbstractToroidalDistribution], w):
         """
         Constructor
 

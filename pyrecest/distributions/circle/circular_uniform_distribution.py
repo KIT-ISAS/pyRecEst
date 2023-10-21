@@ -1,5 +1,5 @@
 from math import pi
-import numpy as np
+
 
 from ..hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,

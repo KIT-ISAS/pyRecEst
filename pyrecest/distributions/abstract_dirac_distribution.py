@@ -13,7 +13,6 @@ import copy
 import warnings
 from collections.abc import Callable
 
-import numpy as np
 from beartype import beartype
 
 from .abstract_distribution_type import AbstractDistributionType
@@ -24,7 +23,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
     This class represents an abstract base for Dirac distributions.
     """
 
-    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
+    def __init__(self, d, w = None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
 
@@ -81,7 +80,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
         return dist
 
-    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         samples = random.choice(self.d, size=n, p=self.w)
         return samples
 
@@ -89,7 +88,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         warnings.warn("Entropy is not defined in a continuous sense")
         return -sum(self.w * log(self.w))
 
-    def integrate(self, left=None, right=None) -> np.ndarray:
+    def integrate(self, left=None, right=None):
         assert (
             left is None and right is None
         ), "Must overwrite in child class to use integral limits"

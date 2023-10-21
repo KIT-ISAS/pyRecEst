@@ -13,7 +13,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import zeros_like
 import numbers
 
-import numpy as np
+
 from beartype import beartype
 from scipy.optimize import fsolve
 from scipy.special import iv
@@ -25,7 +25,7 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class VonMisesDistribution(AbstractCircularDistribution):
     def __init__(
         self,
-        mu: np.number | numbers.Real,
+        mu: Any | numbers.Real,
         kappa,
         norm_const: float | None = None,
     ):
@@ -50,8 +50,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def besselratio(
-        nu: np.number | numbers.Real, kappa: np.number | numbers.Real
-    ) -> np.number | numbers.Real:
+        nu: Any | numbers.Real, kappa: Any | numbers.Real
+    ) -> Any | numbers.Real:
         return iv(nu + 1, kappa) / iv(nu, kappa)
 
     def cdf(self, xs, starting_point=0):
@@ -74,8 +74,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
         r = zeros_like(xs)
 
         def to_minus_pi_to_pi_range(
-            angle: np.number | numbers.Real | np.ndarray,
-        ) -> np.number | numbers.Real | np.ndarray:
+            angle: Any | numbers.Real | ,
+        ) -> Any | numbers.Real | :
             return mod(angle + pi, 2 * pi) - pi
 
         r = vonmises.cdf(
@@ -97,8 +97,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def besselratio_inverse(
-        v: np.number | numbers.Real, x: np.number | numbers.Real
-    ) -> np.number | numbers.Real:
+        v: Any | numbers.Real, x: Any | numbers.Real
+    ) -> Any | numbers.Real:
         def f(t: float) -> float:
             return VonMisesDistribution.besselratio(v, t) - x
 

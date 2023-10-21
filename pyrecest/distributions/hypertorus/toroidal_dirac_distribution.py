@@ -5,7 +5,7 @@ from pyrecest.backend import sqrt
 from pyrecest.backend import sin
 from pyrecest.backend import dot
 from pyrecest.backend import cos
-import numpy as np
+
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
@@ -14,7 +14,7 @@ from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 class ToroidalDiracDistribution(
     HypertoroidalDiracDistribution, AbstractToroidalDistribution
 ):
-    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
+    def __init__(self, d, w:  | None = None):
         """
         Initialize ToroidalDiracDistribution.
 
@@ -40,7 +40,7 @@ class ToroidalDiracDistribution(
         rhoc = x / y
         return rhoc
 
-    def covariance_4D(self) -> np.ndarray:
+    def covariance_4D(self):
         """
         Compute the 4D covariance matrix.
 

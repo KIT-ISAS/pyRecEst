@@ -3,7 +3,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )

@@ -10,7 +10,7 @@ from pyrecest.backend import zeros
 import unittest
 import warnings
 
-import numpy as np
+
 from parameterized import parameterized
 from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution import (
     AbstractSphericalDistribution,

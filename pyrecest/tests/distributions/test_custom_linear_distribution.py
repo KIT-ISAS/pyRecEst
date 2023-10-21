@@ -6,7 +6,7 @@ from pyrecest.backend import array
 from pyrecest.backend import concatenate
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import CustomLinearDistribution, GaussianDistribution
 from pyrecest.distributions.nonperiodic.gaussian_mixture import GaussianMixture
 

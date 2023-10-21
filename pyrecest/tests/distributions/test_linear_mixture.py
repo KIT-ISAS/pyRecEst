@@ -5,7 +5,7 @@ from pyrecest.backend import array
 import unittest
 from warnings import catch_warnings, simplefilter
 
-import numpy as np
+
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_mixture import LinearMixture
 

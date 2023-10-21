@@ -13,7 +13,7 @@ from pyrecest.backend import all
 from pyrecest.backend import abs
 from pyrecest.backend import empty
 from pyrecest.backend import zeros
-import numpy as np
+
 import scipy
 
 # pylint: disable=E0611

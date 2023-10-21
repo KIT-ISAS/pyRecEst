@@ -15,7 +15,7 @@ from pyrecest.backend import int32
 from pyrecest.backend import zeros
 import copy
 
-import numpy as np
+
 from beartype import beartype
 from scipy.stats import multivariate_normal
 
@@ -23,7 +23,7 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
-    def __init__(self, mu: np.ndarray, C: np.ndarray):
+    def __init__(self, mu, C):
         """
         Initialize HypertoroidalWrappedNormalDistribution.
 
@@ -44,7 +44,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         self.mu = mod(mu, 2.0 * pi)
         self.C = C
 
-    def pdf(self, xs: np.ndarray, m: Union[int, int32, int64] = 3) -> np.ndarray:
+    def pdf(self, xs, m: Union[int, int32, int64] = 3):
         """
         Compute the PDF at given points.
 

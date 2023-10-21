@@ -1,6 +1,6 @@
 from math import pi
 from pyrecest.backend import linspace
-import numpy as np
+
 from beartype import beartype
 from pyrecest.distributions import CircularUniformDistribution
 
@@ -19,7 +19,7 @@ class CircularUniformSampler(AbstractCircularSampler):
     def sample_stochastic(self, n_samples: int):
         return CircularUniformDistribution().sample(n_samples)
 
-    def get_grid(self, grid_density_parameter: int) -> np.ndarray:
+    def get_grid(self, grid_density_parameter: int):
         """
         Returns an equidistant grid of points on the circle [0,2*pi).
         """

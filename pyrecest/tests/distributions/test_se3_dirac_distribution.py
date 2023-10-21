@@ -6,7 +6,7 @@ from pyrecest.backend import concatenate
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import (
     GaussianDistribution,
     HyperhemisphericalUniformDistribution,

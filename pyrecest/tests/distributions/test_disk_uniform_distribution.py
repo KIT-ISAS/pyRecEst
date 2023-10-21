@@ -7,7 +7,7 @@ from pyrecest.backend import zeros
 """ Test cases for DiskUniformDistribution"""
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import DiskUniformDistribution
 
 

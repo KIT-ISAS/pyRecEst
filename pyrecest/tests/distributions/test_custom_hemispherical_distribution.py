@@ -8,7 +8,7 @@ from pyrecest.backend import ndim
 import unittest
 import warnings
 
-import numpy as np
+
 from pyrecest.distributions import (
     BinghamDistribution,
     CustomHemisphericalDistribution,

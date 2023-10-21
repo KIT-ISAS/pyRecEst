@@ -1,6 +1,6 @@
 import unittest
 from pyrecest.backend import array
-import numpy as np
+
 from pyrecest.distributions import WrappedNormalDistribution
 from pyrecest.filters.wrapped_normal_filter import WrappedNormalFilter
 

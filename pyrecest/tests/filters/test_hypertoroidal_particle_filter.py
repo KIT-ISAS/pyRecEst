@@ -4,7 +4,7 @@ from pyrecest.backend import array
 from pyrecest.backend import zeros
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import HypertoroidalWNDistribution
 from pyrecest.filters import HypertoroidalParticleFilter
 

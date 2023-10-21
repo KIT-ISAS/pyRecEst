@@ -15,7 +15,7 @@ from pyrecest.backend import all
 from pyrecest.backend import zeros
 import unittest
 
-import numpy as np
+
 from parameterized import parameterized
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution import (

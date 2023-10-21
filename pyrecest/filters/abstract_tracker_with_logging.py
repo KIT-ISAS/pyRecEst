@@ -2,7 +2,7 @@ from pyrecest.backend import hstack
 from pyrecest.backend import array
 from abc import ABC
 
-import numpy as np
+
 
 
 class AbstractTrackerWithLogging(ABC):

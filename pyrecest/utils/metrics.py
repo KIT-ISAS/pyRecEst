@@ -1,7 +1,7 @@
 from pyrecest.backend import linalg
 from pyrecest.backend import mean
 from pyrecest.backend import zeros
-import numpy as np
+
 
 
 def anees(estimates, uncertainties, groundtruths):

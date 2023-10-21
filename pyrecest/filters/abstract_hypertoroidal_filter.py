@@ -1,6 +1,6 @@
 import copy
 
-import numpy as np
+
 
 from .abstract_manifold_specific_filter import AbstractManifoldSpecificFilter
 
@@ -16,7 +16,7 @@ class AbstractHypertoroidalFilter(AbstractManifoldSpecificFilter):
     def __init__(self, filter_state=None):
         self._filter_state = copy.deepcopy(filter_state)
 
-    def get_point_estimate(self) -> np.ndarray:
+    def get_point_estimate(self):
         """
         Get the point estimate.
 

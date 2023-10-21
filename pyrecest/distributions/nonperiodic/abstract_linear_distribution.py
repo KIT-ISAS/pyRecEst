@@ -15,7 +15,7 @@ import numbers
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from pyrecest.utils.plotting import plot_ellipsoid
 from scipy.integrate import dblquad, nquad, quad
 from scipy.optimize import minimize
@@ -39,7 +39,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         return self.covariance_numerical()
 
     def get_manifold_size(self):
-        return np.inf
+        return float('inf')
 
     def mode(self, starting_point=None):
         return self.mode_numerical(starting_point)
@@ -67,8 +67,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.number | numbers.Real | np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point = None,
+    ):
         if proposal is None:
 
             def proposal(x):
@@ -96,17 +96,17 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         elif self.dim == 2:
             mu[0] = dblquad(
                 lambda x, y: x * self.pdf(array([x, y])),
-                -np.inf,
-                np.inf,
-                lambda _: -np.inf,
-                lambda _: np.inf,
+                -float('inf'),
+                float('inf'),
+                lambda _: -float('inf'),
+                lambda _: float('inf'),
             )[0]
             mu[1] = dblquad(
                 lambda x, y: y * self.pdf(array([x, y])),
-                -np.inf,
-                np.inf,
-                lambda _: -np.inf,
-                lambda _: np.inf,
+                -float('inf'),
+                float('inf'),
+                lambda _: -float('inf'),
+                lambda _: float('inf'),
             )[0]
         elif self.dim == 3:
             def integrand1(x, y, z):
@@ -119,13 +119,13 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                 return z * self.pdf(array([x, y, z]))
 
             mu[0] = nquad(
-                integrand1, [[-np.inf, np.inf], [-np.inf, np.inf], [-np.inf, np.inf]]
+                integrand1, [[-float('inf'), float('inf')], [-float('inf'), float('inf')], [-float('inf'), float('inf')]]
             )[0]
             mu[1] = nquad(
-                integrand2, [[-np.inf, np.inf], [-np.inf, np.inf], [-np.inf, np.inf]]
+                integrand2, [[-float('inf'), float('inf')], [-float('inf'), float('inf')], [-float('inf'), float('inf')]]
             )[0]
             mu[2] = nquad(
-                integrand3, [[-np.inf, np.inf], [-np.inf, np.inf], [-np.inf, np.inf]]
+                integrand3, [[-float('inf'), float('inf')], [-float('inf'), float('inf')], [-float('inf'), float('inf')]]
             )[0]
         else:
             raise ValueError(
@@ -136,7 +136,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def covariance_numerical(self):
         mu = self.mean()
         if self.dim == 1:
-            C = quad(lambda x: (x - mu) ** 2 * self.pdf(x), -np.inf, np.inf)[0]
+            C = quad(lambda x: (x - mu) ** 2 * self.pdf(x), -float('inf'), float('inf'))[0]
         elif self.dim == 2:
             C = empty((2, 2))
 
@@ -149,10 +149,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             def integrand3(x, y):
                 return (y - mu[1]) ** 2 * self.pdf(array([x, y]))
 
-            C[0, 0] = nquad(integrand1, [[-np.inf, np.inf], [-np.inf, np.inf]])[0]
-            C[0, 1] = nquad(integrand2, [[-np.inf, np.inf], [-np.inf, np.inf]])[0]
+            C[0, 0] = nquad(integrand1, [[-float('inf'), float('inf')], [-float('inf'), float('inf')]])[0]
+            C[0, 1] = nquad(integrand2, [[-float('inf'), float('inf')], [-float('inf'), float('inf')]])[0]
             C[1, 0] = C[0, 1]
-            C[1, 1] = nquad(integrand3, [[-np.inf, np.inf], [-np.inf, np.inf]])[0]
+            C[1, 1] = nquad(integrand3, [[-float('inf'), float('inf')], [-float('inf'), float('inf')]])[0]
         else:
             raise NotImplementedError(
                 "Covariance numerical not supported for this dimension."
@@ -161,9 +161,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def integrate(self, left=None, right=None):
         if left is None:
-            left = -np.inf * ones(self.dim)
+            left = -float('inf') * ones(self.dim)
         if right is None:
-            right = np.inf * ones(self.dim)
+            right = float('inf') * ones(self.dim)
 
         result = self.integrate_numerically(left, right)
         return result

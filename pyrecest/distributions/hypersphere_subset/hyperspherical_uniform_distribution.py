@@ -8,7 +8,7 @@ from pyrecest.backend import cos
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import empty
-import numpy as np
+
 from beartype import beartype
 
 from .abstract_hypersphere_subset_uniform_distribution import (
@@ -23,7 +23,7 @@ class HypersphericalUniformDistribution(
     def __init__(self, dim: Union[int, int32, int64]):
         AbstractHypersphereSubsetUniformDistribution.__init__(self, dim)
 
-    def pdf(self, xs: np.ndarray):
+    def pdf(self, xs):
         return AbstractHypersphereSubsetUniformDistribution.pdf(self, xs)
 
     def sample(self, n: Union[int, int32, int64]):

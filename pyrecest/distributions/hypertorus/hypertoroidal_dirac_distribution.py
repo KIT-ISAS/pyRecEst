@@ -13,7 +13,7 @@ from pyrecest.backend import int32
 import copy
 from collections.abc import Callable
 
-import numpy as np
+
 from beartype import beartype
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
@@ -24,7 +24,7 @@ class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
 ):
     def __init__(
-        self, d: np.ndarray, w: np.ndarray | None = None, dim: int | None = None
+        self, d, w=None, dim: int | None = None
     ):
         """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
         if dim is None:
@@ -43,7 +43,7 @@ class HypertoroidalDiracDistribution(
     def plot(self, *args, **kwargs):
         raise NotImplementedError("Plotting is not implemented")
 
-    def mean_direction(self) -> np.ndarray:
+    def mean_direction(self):
         """
         Calculate the mean direction of the HypertoroidalDiracDistribution.
 
@@ -54,7 +54,7 @@ class HypertoroidalDiracDistribution(
         m = mod(arctan2(imag(a), real(a)), 2 * pi)
         return m
 
-    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         """
         Calculate the trigonometric moment of the HypertoroidalDiracDistribution.
 

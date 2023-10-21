@@ -2,7 +2,7 @@ import datetime
 import os
 from typing import Any
 
-import numpy as np
+
 
 from .iterate_configs_and_runs import iterate_configs_and_runs
 

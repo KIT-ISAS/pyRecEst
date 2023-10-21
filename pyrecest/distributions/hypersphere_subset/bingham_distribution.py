@@ -7,7 +7,7 @@ from pyrecest.backend import exp
 from pyrecest.backend import all
 from pyrecest.backend import abs
 from pyrecest.backend import amax
-import numpy as np
+
 from scipy.integrate import quad
 from scipy.special import iv
 
@@ -15,7 +15,7 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class BinghamDistribution(AbstractHypersphericalDistribution):
-    def __init__(self, Z: np.ndarray, M: np.ndarray):
+    def __init__(self, Z, M):
         AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
         assert M.shape[1] == self.input_dim, "M is not square"

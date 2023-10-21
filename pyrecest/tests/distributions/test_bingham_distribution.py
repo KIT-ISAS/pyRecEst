@@ -1,7 +1,7 @@
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import BinghamDistribution
 
 from .test_von_mises_fisher_distribution import vectors_to_test_2d

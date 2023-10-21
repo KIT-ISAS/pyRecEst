@@ -2,7 +2,7 @@ from math import pi
 from pyrecest.backend import ndim
 from pyrecest.backend import mod
 from pyrecest.backend import exp
-import numpy as np
+
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 

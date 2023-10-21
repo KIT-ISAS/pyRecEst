@@ -1,6 +1,5 @@
 from pyrecest.backend import eye
 from pyrecest.backend import array
-import numpy as np
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 

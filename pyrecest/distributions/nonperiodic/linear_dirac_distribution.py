@@ -1,7 +1,7 @@
 from pyrecest.backend import reshape
 from pyrecest.backend import ones
 import matplotlib.pyplot as plt
-import numpy as np
+
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_linear_distribution import AbstractLinearDistribution

@@ -11,7 +11,7 @@ import collections
 import copy
 import warnings
 
-import numpy as np
+
 from beartype import beartype
 
 from .abstract_distribution_type import AbstractDistributionType
@@ -64,7 +64,7 @@ class AbstractMixture(AbstractDistributionType):
     def input_dim(self) -> int:
         return self.dists[0].input_dim
 
-    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
 
         occurrences = random.multinomial(n, self.w)
         count = 0
@@ -76,7 +76,7 @@ class AbstractMixture(AbstractDistributionType):
 
         return s
 
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         assert xs.shape[-1] == self.input_dim, "Dimension mismatch"
 
         p = zeros(1) if xs.ndim == 1 else zeros(xs.shape[0])

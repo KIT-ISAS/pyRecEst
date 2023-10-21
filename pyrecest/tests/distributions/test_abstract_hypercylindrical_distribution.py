@@ -8,7 +8,7 @@ from pyrecest.backend import zeros
 import unittest
 import pyrecest.backend
 
-import numpy as np
+
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )

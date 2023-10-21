@@ -11,7 +11,7 @@ from pyrecest.backend import all
 from pyrecest.backend import zeros
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import WrappedNormalDistribution
 
 

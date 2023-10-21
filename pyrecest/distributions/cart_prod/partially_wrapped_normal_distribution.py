@@ -21,7 +21,7 @@ from pyrecest.backend import int32
 from pyrecest.backend import empty
 import copy
 
-import numpy as np
+
 from beartype import beartype
 from scipy.stats import multivariate_normal
 
@@ -34,7 +34,7 @@ from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDist
 
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     def __init__(
-        self, mu: np.ndarray, C: np.ndarray, bound_dim: Union[int, int32, int64]
+        self, mu, C, bound_dim: Union[int, int32, int64]
     ):
         assert bound_dim >= 0, "bound_dim must be non-negative"
         assert ndim(mu) == 1, "mu must be a 1-dimensional array"
@@ -53,7 +53,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         self.mu[:bound_dim] = mod(self.mu[:bound_dim], 2 * pi)
         self.C = C
 
-    def pdf(self, xs: np.ndarray, m: Union[int, int32, int64] = 3):
+    def pdf(self, xs, m: Union[int, int32, int64] = 3):
         xs = np.atleast_2d(xs)
         if self.bound_dim > 0:
             xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2 * pi)
@@ -98,7 +98,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         """
         return self.mu
 
-    def set_mode(self, new_mode: np.ndarray):
+    def set_mode(self, new_mode):
         self.mu = copy.copy(new_mode)
         return self
 

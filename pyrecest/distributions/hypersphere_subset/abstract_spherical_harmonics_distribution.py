@@ -9,7 +9,7 @@ from pyrecest.backend import zeros
 import copy
 import warnings
 
-import numpy as np
+
 from scipy.linalg import norm
 
 from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution

@@ -3,7 +3,7 @@ from pyrecest.backend import std
 from pyrecest.backend import all
 import unittest
 
-import numpy as np
+
 from pyrecest.sampling.hypertoroidal_sampler import CircularUniformSampler
 
 

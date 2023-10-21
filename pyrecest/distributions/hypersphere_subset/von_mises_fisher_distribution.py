@@ -15,7 +15,7 @@ from pyrecest.backend import int64
 from pyrecest.backend import int32
 import numbers
 
-import numpy as np
+
 from beartype import beartype
 from scipy.linalg import qr
 from scipy.special import iv
@@ -24,7 +24,7 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
-    def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
+    def __init__(self, mu, kappa: Any | numbers.Real):
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6
         assert (
@@ -42,7 +42,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
                 (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, kappa)
             )
 
-    def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
+    def pdf(self, xs:  | Any) ->  | Any:
         assert xs.shape[-1] == self.input_dim
 
         return self.C * exp(self.kappa * self.mu.T @ xs.T)
@@ -95,7 +95,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             Q = -Q
         return Q
 
-    def moment(self) -> np.ndarray:
+    def moment(self):
         """
         Returns the mean resultant vector.
         """
@@ -110,7 +110,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution.from_moment(m)
 
     @staticmethod
-    def from_moment(m: np.ndarray):
+    def from_moment(m):
         assert ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
@@ -124,7 +124,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def mode(self):
         return self.mu
 
-    def set_mode(self, new_mode: np.ndarray):
+    def set_mode(self, new_mode):
         assert new_mode.shape == self.mu.shape
         dist = self
         dist.mu = new_mode
@@ -152,7 +152,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution(mu_, kappa_)
 
     @staticmethod
-    def a_d(d: Union[int, int32, int64], kappa: np.number | numbers.Real):
+    def a_d(d: Union[int, int32, int64], kappa: Any | numbers.Real):
         bessel1 = iv(d / 2, kappa)
         bessel2 = iv(d / 2 - 1, kappa)
         if isnan(bessel1) or isnan(bessel2):

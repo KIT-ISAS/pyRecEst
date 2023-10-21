@@ -6,7 +6,7 @@ from pyrecest.backend import all
 """ Test for uniform distribution on the hypersphere """
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,

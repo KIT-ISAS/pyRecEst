@@ -6,7 +6,7 @@ from pyrecest.backend import array
 from pyrecest.backend import arange
 import unittest
 
-import numpy as np
+
 from parameterized import parameterized
 from pyrecest.distributions.hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,

@@ -7,7 +7,7 @@ from pyrecest.backend import linspace
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from numpy.testing import assert_allclose
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,

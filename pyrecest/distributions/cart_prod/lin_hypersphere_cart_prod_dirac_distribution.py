@@ -1,7 +1,7 @@
 from pyrecest.backend import linalg
 from pyrecest.backend import abs
 from pyrecest.backend import amax
-import numpy as np
+
 
 from ..abstract_se3_distribution import AbstractSE3Distribution
 from .lin_bounded_cart_prod_dirac_distribution import (

@@ -5,7 +5,7 @@ from pyrecest.backend import empty
 import warnings
 from typing import Callable
 
-import numpy as np
+
 from beartype import beartype
 
 
@@ -13,15 +13,15 @@ def determine_all_deviations(
     results,
     extract_mean,
     distance_function: Callable,
-    groundtruths: np.ndarray,
+    groundtruths: ,
     mean_calculation_symm: str = "",
-) -> np.ndarray:
+):
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
     assert (
         ndim(groundtruths) == 2
-        and isinstance(groundtruths[0, 0], np.ndarray)
+        and isinstance(groundtruths[0, 0], )
         and ndim(groundtruths[0, 0])
         in (
             1,
@@ -33,7 +33,7 @@ def determine_all_deviations(
 
     for config_no, result_curr_config in enumerate(results):
         for run in range(len(groundtruths)):
-            if isinstance(result_curr_config[run], np.ndarray):
+            if isinstance(result_curr_config[run], ):
                 # If estimates are already given as numpy array, use it
                 final_estimate = result_curr_config[run]
             elif callable(extract_mean):
@@ -48,7 +48,7 @@ def determine_all_deviations(
                 )
             else:
                 warnings.warn("No estimate for this filter, setting error to inf.")
-                all_deviations_last_mat[config_no][run] = np.inf
+                all_deviations_last_mat[config_no][run] = float('inf')
 
         if any(np.isinf(all_deviations_last_mat[config_no])):
             print(

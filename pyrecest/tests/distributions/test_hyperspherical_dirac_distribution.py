@@ -9,7 +9,7 @@ from pyrecest.backend import array
 import pyrecest.backend
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,

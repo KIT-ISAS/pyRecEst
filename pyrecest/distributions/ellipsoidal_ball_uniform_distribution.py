@@ -8,7 +8,7 @@ from pyrecest.backend import dot
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
-import numpy as np
+
 from beartype import beartype
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
@@ -38,7 +38,7 @@ class EllipsoidalBallUniformDistribution(
     def mean(self):
         raise NotImplementedError()
 
-    def pdf(self, xs: np.ndarray):
+    def pdf(self, xs):
         """
         Compute the probability density function at given points.
 
@@ -67,7 +67,7 @@ class EllipsoidalBallUniformDistribution(
 
         return results
 
-    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         """
         Generate samples from the distribution.
 

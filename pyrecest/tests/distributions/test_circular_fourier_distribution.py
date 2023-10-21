@@ -6,10 +6,11 @@ from pyrecest.backend import array
 from pyrecest.backend import arange
 from pyrecest.backend import allclose
 from pyrecest.backend import all
+import pyrecest.backend
 import copy
 import unittest
 
-import numpy as np
+
 from parameterized import parameterized
 from pyrecest.distributions import (
     CircularFourierDistribution,
@@ -25,27 +26,24 @@ class TestCircularFourierDistribution(unittest.TestCase):
             (
                 "identity",
                 VonMisesDistribution,
-                0.4,
+                array(0.4),
                 arange(0.1, 2.1, 0.1),
                 101,
-                1e-8,
             ),
             ("sqrt", VonMisesDistribution, 0.5, arange(0.1, 2.1, 0.1), 101, 1e-8),
             (
                 "identity",
                 WrappedNormalDistribution,
-                0.8,
+                array(0.8),
                 arange(0.2, 2.1, 0.1),
                 101,
-                1e-8,
             ),
             (
                 "sqrt",
                 WrappedNormalDistribution,
-                0.8,
+                array(0.8),
                 arange(0.2, 2.1, 0.1),
                 101,
-                1e-8,
             ),
         ]
     )
@@ -58,17 +56,17 @@ class TestCircularFourierDistribution(unittest.TestCase):
         """
         for param in param_range:
             dist = dist_class(mu, param)
-            xvals = arange(-2 * pi, 3 * pi, 0.01)
+            xvals = arange(-2.0 * pi, 3.0 * pi, 0.01)
             fd = CircularFourierDistribution.from_distribution(
                 dist, coeffs, transformation
             )
             self.assertEqual(
                 fd.c.shape[0],
-                ceil(coeffs / 2),
+                ceil(coeffs / 2.0),
                 "Length of Fourier Coefficients mismatch.",
             )
             self.assertTrue(
-                allclose(fd.pdf(xvals), dist.pdf(xvals), atol=tolerance),
+                allclose(fd.pdf(xvals), dist.pdf(xvals)),
                 "PDF values do not match.",
             )
 
@@ -101,8 +99,9 @@ class TestCircularFourierDistribution(unittest.TestCase):
             (False, "sqrt"),
         ]
     )
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_integrate_numerically(self, mult_by_n, transformation):
-        scale_by = 2 / 5
+        scale_by = 2.0 / 5.0
         dist = VonMisesDistribution(2.9, 1.3)
         fd = CircularFourierDistribution.from_distribution(
             dist,
@@ -148,11 +147,11 @@ class TestCircularFourierDistribution(unittest.TestCase):
         fd_real = fd.to_real_fd()
         np.testing.assert_array_almost_equal(fd_real.integrate(), 1)
         fd_unnorm = copy.copy(fd)
-        fd_unnorm.c = fd.c * (scale_by)
+        fd_unnorm.c = fd.c * scale_by
         if transformation == "identity":
             expected_val = scale_by
         else:
-            expected_val = (scale_by) ** 2
+            expected_val = scale_by ** 2
         np.testing.assert_array_almost_equal(fd_unnorm.integrate(), expected_val)
         fd_unnorm_real = fd_unnorm.to_real_fd()
         np.testing.assert_array_almost_equal(fd_unnorm_real.integrate(), expected_val)

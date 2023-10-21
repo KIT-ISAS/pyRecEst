@@ -3,7 +3,7 @@ from pyrecest.backend import int64
 from pyrecest.backend import int32
 from collections.abc import Callable
 
-import numpy as np
+
 from beartype import beartype
 
 from ..abstract_custom_distribution import AbstractCustomDistribution

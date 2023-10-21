@@ -11,7 +11,7 @@ from pyrecest.backend import array
 import copy
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
     ToroidalDiracDistribution,

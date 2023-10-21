@@ -1,4 +1,4 @@
-import numpy as np
+
 
 from .abstract_se3_distribution import AbstractSE3Distribution
 from .cart_prod.cart_prod_stacked_distribution import CartProdStackedDistribution
@@ -18,7 +18,7 @@ class SE3CartProdStackedDistribution(
         return self.dists[1]
 
     def get_manifold_size(self):
-        return np.inf
+        return float('inf')
 
     def pdf(self, xs):
         return CartProdStackedDistribution.pdf(self, xs)

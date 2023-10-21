@@ -171,6 +171,7 @@ BACKEND_ATTRIBUTES = {
         "apply_along_axis",  # Added for pyrecest
         "nonzero",  # Added for pyrecest
         "column_stack",  # Added for pyrecest
+        "conj",  # Added for pyrecest
     ],
     "autodiff": [
         "custom_gradient",

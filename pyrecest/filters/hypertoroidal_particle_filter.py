@@ -14,7 +14,7 @@ from pyrecest.backend import arange
 import copy
 from collections.abc import Callable
 
-import numpy as np
+
 from beartype import beartype
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
@@ -76,7 +76,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             self.filter_state.d = mod(self.filter_state.d, 2.0 * pi)
 
     def predict_nonlinear_nonadditive(
-        self, f: Callable, samples: np.ndarray, weights: np.ndarray
+        self, f: Callable, samples, weights: 
     ):
         assert (
             samples.shape[0] == weights.size

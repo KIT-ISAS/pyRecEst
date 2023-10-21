@@ -4,7 +4,7 @@ from pyrecest.backend import empty
 import time
 import warnings
 
-import numpy as np
+
 
 from .configure_for_filter import configure_for_filter
 

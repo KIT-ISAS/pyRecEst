@@ -5,7 +5,7 @@ from pyrecest.backend import linspace
 from pyrecest.backend import cos
 from pyrecest.backend import array
 from pyrecest.backend import empty
-import numpy as np
+
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import unary_union
 
@@ -18,7 +18,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
         polygon.__class__ = cls
         return polygon
 
-    def sample_on_boundary(self, num_points: int) -> np.ndarray:
+    def sample_on_boundary(self, num_points: int):
         points = empty((num_points,), dtype=Point)
 
         if isinstance(self.boundary, LineString):
@@ -42,7 +42,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
 
         return array([(point.x, point.y) for point in points])
 
-    def sample_within(self, num_points: int) -> np.ndarray:
+    def sample_within(self, num_points: int):
         min_x, min_y, max_x, max_y = self.bounds
         points = empty((num_points,), dtype=Point)
 

@@ -4,7 +4,7 @@ import unittest
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
+
 from pyrecest.distributions import VonMisesDistribution
 
 matplotlib.use("Agg")

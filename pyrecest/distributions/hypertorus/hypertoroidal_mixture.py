@@ -6,7 +6,7 @@ from pyrecest.backend import complex128
 import collections
 import copy
 
-import numpy as np
+
 from beartype import beartype
 
 from ..abstract_mixture import AbstractMixture
@@ -17,7 +17,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractHypertoroidalDistribution],
-        w: np.ndarray | None = None,
+        w:  | None = None,
     ):
         """
         Constructor
@@ -32,7 +32,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
             AbstractHypertoroidalDistribution
         ] = self.dists
 
-    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         """
         Calculate n-th trigonometric moment
 

@@ -3,7 +3,7 @@ from pyrecest.backend import std
 from pyrecest.backend import mean
 import warnings
 
-import numpy as np
+
 
 from .determine_all_deviations import determine_all_deviations
 from .get_distance_function import get_distance_function

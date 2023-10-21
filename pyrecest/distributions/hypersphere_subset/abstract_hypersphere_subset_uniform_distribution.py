@@ -1,5 +1,5 @@
 from pyrecest.backend import ones
-import numpy as np
+
 from beartype import beartype
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
@@ -15,15 +15,15 @@ class AbstractHypersphereSubsetUniformDistribution(
     This is an abstract class for a uniform distribution over a subset of a hypersphere.
     """
 
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         """
         Calculates the probability density function over the subset of the hypersphere.
 
         Args:
-            xs (np.ndarray): Input data points.
+            xs (): Input data points.
 
         Returns:
-            np.ndarray: Probability density at the given data points.
+            : Probability density at the given data points.
         """
         if xs.shape[-1] != self.input_dim:
             raise ValueError("Invalid shape of input data points.")

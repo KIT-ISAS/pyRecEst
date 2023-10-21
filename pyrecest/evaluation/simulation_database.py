@@ -2,7 +2,7 @@ from pyrecest.backend import eye, zeros
 import warnings
 from typing import Optional
 
-import numpy as np
+
 from beartype import beartype
 from pyrecest.distributions import GaussianDistribution
 

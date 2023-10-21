@@ -7,7 +7,7 @@ from pyrecest.backend import zeros_like
 from pyrecest.backend import zeros
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.euclidean_particle_filter import EuclideanParticleFilter
 

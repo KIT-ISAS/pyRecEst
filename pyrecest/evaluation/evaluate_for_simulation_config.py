@@ -1,7 +1,7 @@
 import random
 from typing import Any, Optional
 
-import numpy as np
+
 from beartype import beartype
 
 from .evaluate_for_variables import evaluate_for_variables
@@ -29,11 +29,11 @@ def evaluate_for_simulation_config(
 ) -> tuple[
     dict,
     list[dict],
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray[np.ndarray],
+    ,
+    ,
+    ,
+    ,
+    [],
 ]:
     if isinstance(simulation_config, str):
         simulation_name = simulation_config

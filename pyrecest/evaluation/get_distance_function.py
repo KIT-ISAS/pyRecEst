@@ -1,6 +1,6 @@
 from pyrecest.backend import dot
 from pyrecest.backend import arccos
-import numpy as np
+
 from numpy.linalg import norm
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 

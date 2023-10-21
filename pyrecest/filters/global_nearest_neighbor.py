@@ -4,7 +4,7 @@ from pyrecest.backend import repeat
 from pyrecest.backend import any
 from pyrecest.backend import all
 from pyrecest.backend import empty
-import numpy as np
+
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2

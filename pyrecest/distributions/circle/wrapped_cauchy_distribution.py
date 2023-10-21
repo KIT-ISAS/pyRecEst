@@ -7,7 +7,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import exp
 from pyrecest.backend import cosh
 from pyrecest.backend import cos
-import numpy as np
+
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 

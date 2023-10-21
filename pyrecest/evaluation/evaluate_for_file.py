@@ -4,7 +4,7 @@ from pyrecest.backend import zeros
 import os
 from typing import Any
 
-import numpy as np
+
 
 from .evaluate_for_variables import evaluate_for_variables
 
@@ -25,11 +25,11 @@ def evaluate_for_file(
 ) -> tuple[
     dict,
     list[dict],
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray[np.ndarray],
+    ,
+    ,
+    ,
+    ,
+    [],
 ]:
     data = np.load(input_file_name, allow_pickle=True).item()
 

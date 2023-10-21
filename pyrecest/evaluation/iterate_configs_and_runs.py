@@ -3,7 +3,7 @@ from pyrecest.backend import zeros
 import warnings
 from typing import Any, Dict
 
-import numpy as np
+
 
 from .perform_predict_update_cycles import perform_predict_update_cycles
 

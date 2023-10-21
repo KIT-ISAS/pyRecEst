@@ -12,7 +12,7 @@ from pyrecest.backend import zeros
 import numbers
 
 import mpmath
-import numpy as np
+
 from beartype import beartype
 from scipy.linalg import qr
 
@@ -23,12 +23,12 @@ from .bingham_distribution import BinghamDistribution
 class WatsonDistribution(AbstractHypersphericalDistribution):
     EPSILON = 1e-6
 
-    def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
+    def __init__(self, mu, kappa: Any | numbers.Real):
         """
         Initializes a new instance of the WatsonDistribution class.
 
         Args:
-            mu (np.ndarray): The mean direction of the distribution.
+            mu (): The mean direction of the distribution.
             kappa (float): The concentration parameter of the distribution.
         """
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)

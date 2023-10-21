@@ -1,7 +1,7 @@
 from typing import Union
 from pyrecest.backend import int64
 from pyrecest.backend import int32
-import numpy as np
+
 
 from .abstract_lin_hyperhemisphere_cart_prod_distribution import (
     AbstractLinHypersphereSubsetCartProdDistribution,

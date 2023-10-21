@@ -23,7 +23,7 @@ import numbers
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from beartype import beartype
 from scipy.integrate import nquad
 
@@ -87,7 +87,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def integrate_numerically(
         self, integration_boundaries=None
-    ) -> np.number | numbers.Real:
+    ):
         assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
         if integration_boundaries is None:
             integration_boundaries = vstack(
@@ -104,7 +104,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def trigonometric_moment_numerical(
         self, n: Union[int, int32, int64]
-    ) -> np.ndarray:
+    ):
         """Calculates the complex trignometric moments. Since nquad does not support complex functions,
         the calculation is split up (as used in the alternative representation of trigonometric polonymials
         involving the two real numbers alpha and beta"""
@@ -218,35 +218,35 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         plt.show()
         return p
 
-    def mean(self) -> np.ndarray:
+    def mean(self):
         """
         Convenient access to mean_direction to have a consistent interface
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype: 
         """
         return self.mean_direction()
 
-    def mean_direction(self) -> np.ndarray:
+    def mean_direction(self):
         a = self.trigonometric_moment(1)
         m = mod(np.angle(a), 2.0 * pi)
         return m
 
-    def mode(self) -> np.ndarray:
+    def mode(self):
         return self.mode_numerical()
 
-    def mode_numerical(self) -> np.ndarray:
+    def mode_numerical(self):
         # Implement the optimization function fminunc equivalent in Python (e.g., using scipy.optimize.minimize)
         raise NotImplementedError("Mode calculation is not implemented")
 
-    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         return self.trigonometric_moment_numerical(n)
 
     def integrate(self, integration_boundaries=None):
         return self.integrate_numerically(integration_boundaries)
 
-    def mean_2dimD(self) -> np.ndarray:
+    def mean_2dimD(self):
         m = self.trigonometric_moment_numerical(1)
         mu = vstack((m.real, m.imag))
         return mu
@@ -258,8 +258,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.number | numbers.Real | np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point = None,
+    ):
         # jscpd:ignore-end
         if proposal is None:
 

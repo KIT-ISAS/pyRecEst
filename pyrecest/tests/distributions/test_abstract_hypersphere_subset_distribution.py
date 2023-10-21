@@ -4,7 +4,7 @@ from pyrecest.backend import cos
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import VonMisesFisherDistribution
 
 

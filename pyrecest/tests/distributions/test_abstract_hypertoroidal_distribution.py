@@ -1,7 +1,7 @@
 from math import pi
 import unittest
 from pyrecest.backend import array
-import numpy as np
+
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 
 

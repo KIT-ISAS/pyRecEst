@@ -5,7 +5,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,

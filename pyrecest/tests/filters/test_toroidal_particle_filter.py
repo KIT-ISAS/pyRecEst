@@ -5,7 +5,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )

@@ -7,7 +7,7 @@ from pyrecest.backend import all
 import pyrecest.backend
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperhemispherical_distribution import (
     CustomHyperhemisphericalDistribution,

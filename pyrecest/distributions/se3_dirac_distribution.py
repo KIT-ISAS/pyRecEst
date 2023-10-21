@@ -1,5 +1,5 @@
 from pyrecest.backend import ones
-import numpy as np
+
 
 from .abstract_se3_distribution import AbstractSE3Distribution
 from .cart_prod.lin_hypersphere_cart_prod_dirac_distribution import (
@@ -27,7 +27,7 @@ class SE3DiracDistribution(
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype: 
         """
         m = self.hybrid_mean()
         return m

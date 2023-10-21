@@ -1,4 +1,4 @@
-import numpy as np
+
 from beartype import beartype
 
 from ..abstract_mixture import AbstractMixture

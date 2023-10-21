@@ -6,7 +6,7 @@ import pyrecest.backend
 import unittest
 
 import matplotlib
-import numpy as np
+
 from pyrecest.distributions import (
     AbstractLinearDistribution,
     CustomLinearDistribution,
@@ -39,8 +39,8 @@ class TestAbstractLinearDistribution(unittest.TestCase):
             return 0.3 * dist.pdf(x)
 
         dim = 2
-        left = [-np.inf, -np.inf]
-        right = [np.inf, np.inf]
+        left = [-float('inf'), -float('inf')]
+        right = [float('inf'), float('inf')]
 
         integration_result = AbstractLinearDistribution.integrate_fun_over_domain(
             f, dim, left, right

@@ -15,7 +15,7 @@ from pyrecest.backend import zeros
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from beartype import beartype
 from scipy.optimize import minimize
 
@@ -35,7 +35,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype: 
         """
         return self.mean_direction()
 
@@ -46,8 +46,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point:  | None = None,
+    ):
         # jscpd:ignore-end
         """
         Sample from the distribution using Metropolis-Hastings algorithm.
@@ -57,10 +57,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             burn_in (int, optional): Number of samples to discard at the start. Defaults to 10.
             skipping (int, optional): Number of samples to skip between each kept sample. Defaults to 5.
             proposal (function, optional): Proposal distribution for the Metropolis-Hastings algorithm. Defaults to None.
-            start_point (np.ndarray, optional): Starting point for the Metropolis-Hastings algorithm. Defaults to None.
+            start_point (, optional): Starting point for the Metropolis-Hastings algorithm. Defaults to None.
 
         Returns:
-            np.ndarray: Sampled points.
+            : Sampled points.
         """
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
@@ -152,7 +152,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 "Cannot plot hyperspherical distribution with this number of dimensions."
             )
 
-    def moment(self) -> np.ndarray:
+    def moment(self):
         return self.moment_numerical()
 
     @staticmethod
@@ -186,7 +186,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def entropy(self):
         return super().entropy_numerical()
 
-    def mode_numerical(self) -> np.ndarray:
+    def mode_numerical(self):
         def fun(s):
             return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
 

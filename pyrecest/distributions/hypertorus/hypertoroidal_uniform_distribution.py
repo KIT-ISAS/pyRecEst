@@ -8,7 +8,7 @@ from pyrecest.backend import log
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
-import numpy as np
+
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -17,7 +17,7 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 class HypertoroidalUniformDistribution(
     AbstractUniformDistribution, AbstractHypertoroidalDistribution
 ):
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         """
         Returns the Probability Density Function evaluated at xs
 
@@ -26,7 +26,7 @@ class HypertoroidalUniformDistribution(
         """
         return 1 / self.get_manifold_size() * ones(xs.shape[0])
 
-    def trigonometric_moment(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         """
         Returns the n-th trigonometric moment
 
@@ -57,7 +57,7 @@ class HypertoroidalUniformDistribution(
             "Hypertoroidal uniform distributions do not have a unique mean"
         )
 
-    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         """
         Returns a sample of size n from the distribution
 
@@ -78,7 +78,7 @@ class HypertoroidalUniformDistribution(
         return self
 
     def integrate(
-        self, integration_boundaries: tuple[np.ndarray, np.ndarray] | None = None
+        self, integration_boundaries: tuple[, ] | None = None
     ) -> float:
         """
         Returns the integral of the distribution over the specified boundaries

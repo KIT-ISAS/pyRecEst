@@ -1,6 +1,6 @@
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions import VonMisesDistribution
 from pyrecest.filters.von_mises_filter import VonMisesFilter
 

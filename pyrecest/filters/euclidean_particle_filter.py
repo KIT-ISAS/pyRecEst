@@ -5,7 +5,7 @@ from pyrecest.backend import zeros
 import copy
 from collections.abc import Callable
 
-import numpy as np
+
 from beartype import beartype
 
 from ..distributions.nonperiodic.abstract_linear_distribution import (

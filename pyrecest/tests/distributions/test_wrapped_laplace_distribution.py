@@ -5,7 +5,7 @@ from pyrecest.backend import arange
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions.circle.wrapped_laplace_distribution import (
     WrappedLaplaceDistribution,
 )

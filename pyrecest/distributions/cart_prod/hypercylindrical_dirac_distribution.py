@@ -5,7 +5,7 @@ from pyrecest.backend import sin
 from pyrecest.backend import cos
 from pyrecest.backend import int64
 from pyrecest.backend import int32
-import numpy as np
+
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution

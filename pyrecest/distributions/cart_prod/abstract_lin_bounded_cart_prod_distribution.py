@@ -3,7 +3,7 @@ from pyrecest.backend import int64
 from pyrecest.backend import int32
 from abc import abstractmethod
 
-import numpy as np
+
 from beartype import beartype
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
@@ -42,7 +42,7 @@ class AbstractLinBoundedCartProdDistribution(AbstractCartProdDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype: 
         """
         return self.hybrid_mean()
 

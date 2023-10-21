@@ -1,4 +1,4 @@
-import numpy as np
+
 from beartype import beartype
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
@@ -8,13 +8,13 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class CircularDiracDistribution(
     HypertoroidalDiracDistribution, AbstractCircularDistribution
 ):
-    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
+    def __init__(self, d, w:  | None = None):
         """
         Initializes a CircularDiracDistribution instance.
 
         Args:
-            d (np.ndarray): The Dirac locations.
-            w (Optional[np.ndarray]): The weights for each Dirac location.
+            d (): The Dirac locations.
+            w (Optional[]): The weights for each Dirac location.
         """
         super().__init__(
             d, w, dim=1

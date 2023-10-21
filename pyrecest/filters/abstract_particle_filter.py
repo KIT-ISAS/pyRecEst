@@ -6,7 +6,7 @@ from pyrecest.backend import ndim
 from collections.abc import Callable
 from pyrecest.backend import zeros
 
-import numpy as np
+
 from beartype import beartype
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,

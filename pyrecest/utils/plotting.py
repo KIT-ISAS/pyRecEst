@@ -11,7 +11,7 @@ from pyrecest.backend import cos
 from pyrecest.backend import array
 from pyrecest.backend import complex64
 import matplotlib.pyplot as plt
-import numpy as np
+
 
 
 def plot_ellipsoid(center, shape_matrix, scaling_factor=1, color="blue"):

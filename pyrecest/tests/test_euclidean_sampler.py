@@ -7,7 +7,7 @@ from pyrecest.backend import all
 from pyrecest.backend import zeros
 import unittest
 
-import numpy as np
+
 from pyrecest.sampling.euclidean_sampler import GaussianSampler
 
 

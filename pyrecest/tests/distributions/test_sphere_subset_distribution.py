@@ -2,7 +2,7 @@ from math import pi
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from parameterized import parameterized
 from pyrecest.distributions.hypersphere_subset.abstract_sphere_subset_distribution import (
     AbstractSphereSubsetDistribution,

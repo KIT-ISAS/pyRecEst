@@ -15,7 +15,7 @@ from pyrecest.backend import int32
 from pyrecest.backend import zeros
 import numbers
 
-import numpy as np
+
 from beartype import beartype
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
@@ -37,8 +37,8 @@ class WrappedNormalDistribution(
 
     def __init__(
         self,
-        mu: np.number | numbers.Real | np.ndarray,
-        sigma: np.number | numbers.Real | np.ndarray,
+        mu: Any | numbers.Real | ,
+        sigma: Any | numbers.Real | ,
     ):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
@@ -50,7 +50,7 @@ class WrappedNormalDistribution(
     def sigma(self):
         return sqrt(self.C)
 
-    def pdf(self, xs: np.ndarray | np.number | numbers.Real):
+    def pdf(self, xs:  | Any | numbers.Real):
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
@@ -95,10 +95,10 @@ class WrappedNormalDistribution(
 
     def cdf(
         self,
-        xs: np.ndarray,
+        xs: ,
         startingPoint: float = 0,
         n_wraps: Union[int, int32, int64] = 10,
-    ) -> np.ndarray:
+    ):
         startingPoint = mod(startingPoint, 2 * pi)
         xs = mod(xs, 2 * pi)
 
@@ -125,7 +125,7 @@ class WrappedNormalDistribution(
 
     def trigonometric_moment(
         self, n: Union[int, int32, int64]
-    ) -> complex | np.ndarray:
+    ) -> complex | :
         return exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
     def multiply(
@@ -140,7 +140,7 @@ class WrappedNormalDistribution(
         wn = vm.to_wn()
         return wn
 
-    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         return mod(self.mu + self.sigma * random.randn(1, n), 2 * pi)
 
     def shift(self, shift_by):

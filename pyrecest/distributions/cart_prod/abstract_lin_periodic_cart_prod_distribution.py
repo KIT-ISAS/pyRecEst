@@ -1,4 +1,4 @@
-import numpy as np
+
 
 from .abstract_lin_bounded_cart_prod_distribution import (
     AbstractLinBoundedCartProdDistribution,
@@ -18,4 +18,4 @@ class AbstractLinPeriodicCartProdDistribution(AbstractLinBoundedCartProdDistribu
         assert (
             self.lin_dim > 0
         ), "This class is not intended to be used for purely periodic domains."
-        return np.inf
+        return float('inf')

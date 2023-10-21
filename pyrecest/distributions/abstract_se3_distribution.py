@@ -6,7 +6,7 @@ import time
 from abc import abstractmethod
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 import quaternion
 
 from .cart_prod.abstract_lin_bounded_cart_prod_distribution import (
@@ -110,4 +110,4 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
         return h
 
     def get_manifold_size(self):
-        return np.inf
+        return float('inf')

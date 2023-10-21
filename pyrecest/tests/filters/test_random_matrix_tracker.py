@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from parameterized import parameterized
 from pyrecest.distributions.nonperiodic.gaussian_distribution import (
     GaussianDistribution,

@@ -5,7 +5,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import exp
 from pyrecest.backend import cos
 from pyrecest.backend import all
-import numpy as np
+
 from scipy.special import comb, iv
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution

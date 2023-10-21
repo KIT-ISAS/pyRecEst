@@ -2,7 +2,7 @@ from pyrecest.backend import concatenate
 import warnings
 from abc import abstractmethod
 
-import numpy as np
+
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution

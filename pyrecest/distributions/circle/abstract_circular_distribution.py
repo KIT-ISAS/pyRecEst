@@ -7,7 +7,7 @@ from pyrecest.backend import array
 import numbers
 
 import matplotlib.pyplot as plt
-import numpy as np
+
 from beartype import beartype
 
 from ..hypertorus.abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -16,16 +16,16 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):
         AbstractHypertoroidalDistribution.__init__(self, dim=1)
 
-    def cdf_numerical(self, xs: np.ndarray, starting_point: float = 0.0) -> np.ndarray:
+    def cdf_numerical(self, xs, starting_point: float = 0.0):
         """
         Calculates the cumulative distribution function.
 
         Args:
-            xs (np.ndarray): The 1D array to calculate the CDF on.
+            xs (): The 1D array to calculate the CDF on.
             starting_point (float, optional): Defaults to 0.
 
         Returns:
-            np.ndarray: The computed CDF as a numpy array.
+            : The computed CDF as a numpy array.
         """
         assert xs.ndim == 1, "xs must be a 1D array"
 
@@ -33,9 +33,9 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
     def _cdf_numerical_single(
         self,
-        x: np.number | numbers.Real,
-        starting_point: np.number | numbers.Real,
-    ) -> np.number | numbers.Real:
+        x,
+        starting_point,
+    ):
         """Helper method for cdf_numerical"""
         starting_point_mod = mod(starting_point, 2 * pi)
         x_mod = mod(x, 2 * pi)

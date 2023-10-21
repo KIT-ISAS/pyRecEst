@@ -6,7 +6,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 import unittest
 
-import numpy as np
+
 from pyrecest.distributions.custom_hyperrectangular_distribution import (
     CustomHyperrectangularDistribution,
 )

@@ -1,5 +1,5 @@
 from pyrecest.backend import array
-import numpy as np
+
 from numpy import cos, exp, sin
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
@@ -15,7 +15,7 @@ class ToroidalWrappedNormalDistribution(
     Toroidal Wrapped Normal Distribution.
     """
 
-    def mean_4D(self) -> np.ndarray:
+    def mean_4D(self):
         """
         Compute the 4D mean of the distribution.
 
@@ -33,7 +33,7 @@ class ToroidalWrappedNormalDistribution(
         )
         return mu
 
-    def covariance_4D(self) -> np.ndarray:
+    def covariance_4D(self):
         """
         Compute the 4D covariance of the distribution.
 

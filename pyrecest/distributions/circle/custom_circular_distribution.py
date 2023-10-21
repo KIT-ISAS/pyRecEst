@@ -3,7 +3,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import array
 from collections.abc import Callable
 
-import numpy as np
+
 from beartype import beartype
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
@@ -30,26 +30,26 @@ class CustomCircularDistribution(
         AbstractCustomDistribution.__init__(self, f_, scale_by)
         self.shift_by = shift_by
 
-    def pdf(self, xs: np.ndarray):
+    def pdf(self, xs):
         """
         Computes the probability density function at xs.
 
         Args:
-            xs (np.ndarray): The values at which to evaluate the pdf.
+            xs (): The values at which to evaluate the pdf.
 
         Returns:
-            np.ndarray: The value of the pdf at xs.
+            : The value of the pdf at xs.
         """
         return AbstractCustomDistribution.pdf(
             self, mod(xs + self.shift_by, 2 * pi)
         )
 
-    def integrate(self, integration_boundaries: np.ndarray | None = None) -> float:
+    def integrate(self, integration_boundaries:  | None = None) -> float:
         """
         Computes the integral of the pdf over the given boundaries.
 
         Args:
-            integration_boundaries (np.ndarray, optional): The boundaries of the integral.
+            integration_boundaries (, optional): The boundaries of the integral.
                 Defaults to [0, 2 * pi].
 
         Returns:

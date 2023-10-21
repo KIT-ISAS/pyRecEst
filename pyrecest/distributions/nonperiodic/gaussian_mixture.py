@@ -5,7 +5,7 @@ from pyrecest.backend import dot
 from pyrecest.backend import array
 import numbers
 
-import numpy as np
+
 from beartype import beartype
 
 from .abstract_linear_distribution import AbstractLinearDistribution
@@ -15,7 +15,7 @@ from .linear_mixture import LinearMixture
 
 
 class GaussianMixture(LinearMixture, AbstractLinearDistribution):
-    def __init__(self, dists: list[GaussianDistribution], w: np.ndarray):
+    def __init__(self, dists: list[GaussianDistribution], w):
         AbstractLinearDistribution.__init__(self, dim=dists[0].dim)
         LinearMixture.__init__(self, dists, w)
 
@@ -23,7 +23,7 @@ class GaussianMixture(LinearMixture, AbstractLinearDistribution):
         gauss_array = self.dists
         return dot(array([g.mu for g in gauss_array]), self.w)
 
-    def set_mean(self, new_mean: np.ndarray | numbers.Real):
+    def set_mean(self, new_mean:  | numbers.Real):
         mean_offset = new_mean - self.mean()
         for dist in self.dists:
             dist.mu += mean_offset  # type: ignore

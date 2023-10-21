@@ -6,7 +6,6 @@ import copy
 import warnings
 from abc import abstractmethod
 
-import numpy as np
 from beartype import beartype
 
 from .abstract_distribution_type import AbstractDistributionType
@@ -35,7 +34,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
 
     @abstractmethod
-    def value(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
+    def value(self, xs):
         """
         Abstract method to get value of the distribution for given input. Implementation required in subclasses.
 
@@ -51,7 +50,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         result = copy.deepcopy(self)
         return result.normalize_in_place()
 
-    def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
+    def pdf(self, xs):
         """
         Calculates probability density function for the given input.
 

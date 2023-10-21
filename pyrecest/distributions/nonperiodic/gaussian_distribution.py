@@ -4,7 +4,7 @@ from pyrecest.backend import ndim
 from pyrecest.backend import dot
 import copy
 
-import numpy as np
+
 from beartype import beartype
 from scipy.linalg import cholesky
 from scipy.stats import multivariate_normal as mvn
@@ -13,7 +13,7 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 
 
 class GaussianDistribution(AbstractLinearDistribution):
-    def __init__(self, mu: np.ndarray, C: np.ndarray, check_validity=True):
+    def __init__(self, mu, C, check_validity=True):
         AbstractLinearDistribution.__init__(self, dim=mu.shape[0])
         assert ndim(mu) <= 1
         assert (

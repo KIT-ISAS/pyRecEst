@@ -2,7 +2,7 @@ from pyrecest.backend import ones
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 import scipy.linalg
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,

@@ -3,7 +3,7 @@ from pyrecest.backend import repeat
 from pyrecest.backend import array
 import unittest
 
-import numpy as np
+
 from pyrecest.utils.metrics import anees
 
 

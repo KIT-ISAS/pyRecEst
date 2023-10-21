@@ -8,7 +8,6 @@ import numbers
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
-import numpy as np
 from beartype import beartype
 
 
@@ -48,12 +47,12 @@ class AbstractManifoldSpecificDistribution(ABC):
         pass
 
     @abstractmethod
-    def mean(self) -> np.ndarray:
+    def mean(self):
         """
         Convenient access to a reasonable "mean" for different manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype: 
         """
 
     def set_mode(self, _):
@@ -63,7 +62,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         raise NotImplementedError("set_mode is not implemented for this distribution")
 
     # Need to use Union instead of | to support torch.dtype
-    def sample(self, n: Union[int, int32, int64]) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
 
@@ -74,8 +73,8 @@ class AbstractManifoldSpecificDistribution(ABC):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.number | numbers.Real | np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point = None,
+    ):
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""
 

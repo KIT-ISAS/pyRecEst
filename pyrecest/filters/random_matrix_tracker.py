@@ -3,7 +3,7 @@ from pyrecest.backend import mean
 from pyrecest.backend import eye
 from pyrecest.backend import exp
 from pyrecest.backend import concatenate
-import numpy as np
+
 from pyrecest.utils.plotting import plot_ellipsoid
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker

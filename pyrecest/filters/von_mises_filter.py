@@ -3,7 +3,7 @@ from pyrecest.backend import mod
 import copy
 import warnings
 
-import numpy as np
+
 from beartype import beartype
 from pyrecest.distributions import VonMisesDistribution
 
