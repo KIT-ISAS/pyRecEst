@@ -1,3 +1,4 @@
+from pyrecest.backend import diff
 from math import pi
 from pyrecest.backend import std
 from pyrecest.backend import all
@@ -34,7 +35,7 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertTrue(all(grid_points < 2 * pi))
 
         # Check that the grid points are equidistant
-        diff = np.diff(grid_points)
+        diff = diff(grid_points)
         self.assertAlmostEqual(std(diff), 0, places=5)
 
 

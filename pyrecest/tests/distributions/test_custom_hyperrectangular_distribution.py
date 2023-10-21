@@ -1,3 +1,4 @@
+from pyrecest.backend import column_stack
 from pyrecest.backend import ones
 from pyrecest.backend import meshgrid
 from pyrecest.backend import linspace
@@ -33,7 +34,7 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
         """Test that the pdf method returns correct values."""
         x_mesh, y_mesh = meshgrid(linspace(1.0, 3.0, 50), linspace(2.0, 5.0, 50))
         expected_pdf = 1.0 / 6.0 * ones(50**2)
-        calculated_pdf = self.cd.pdf(np.column_stack((x_mesh.ravel(), y_mesh.ravel())))
+        calculated_pdf = self.cd.pdf(column_stack((x_mesh.ravel(), y_mesh.ravel())))
         self.assertTrue(
             allclose(calculated_pdf, expected_pdf),
             "PDF calculated values do not match the expected values.",

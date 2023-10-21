@@ -1,3 +1,4 @@
+from pyrecest.backend import atleast_2d
 from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import random
@@ -54,7 +55,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         self.C = C
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
-        xs = np.atleast_2d(xs)
+        xs = atleast_2d(xs)
         if self.bound_dim > 0:
             xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2 * pi)
 

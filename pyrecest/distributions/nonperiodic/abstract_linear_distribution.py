@@ -1,3 +1,5 @@
+from pyrecest.backend import full
+from pyrecest.backend import atleast_1d
 from pyrecest.backend import random
 from typing import Union
 from pyrecest.backend import squeeze
@@ -54,7 +56,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             return -self.pdf(x)
 
         assert ndim(starting_point) <= 1, "Starting point must be a 1D array"
-        starting_point = np.atleast_1d(
+        starting_point = atleast_1d(
             starting_point
         )  # Avoid numpy warning "DeprecationWarning: Use of `minimize` with `x0.ndim != 1` is deprecated"
 
@@ -215,8 +217,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         """
         C = self.covariance()
         m = self.mode()
-        left = np.full((self.dim,), float('NaN'))
-        right = np.full((self.dim,), float('NaN'))
+        left = full((self.dim,), float('NaN'))
+        right = full((self.dim,), float('NaN'))
 
         for i in range(self.dim):  # Change for linear dimensions
             left[i] = m[i] - scaling_factor * sqrt(C[i, i])

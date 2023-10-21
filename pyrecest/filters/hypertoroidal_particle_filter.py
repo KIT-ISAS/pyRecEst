@@ -69,14 +69,14 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             self.filter_state.d = self.filter_state.apply_function(f)
 
         if noise_distribution is not None:
-            noise = noise_distribution.sample(self.filter_state.w.size)
+            noise = noise_distribution.sample(self.filter_state.w.shape[0])
             self.filter_state.d += noise.squeeze()
             self.filter_state.d = mod(self.filter_state.d, 2.0 * pi)
 
     def predict_nonlinear_nonadditive(
         self, f: Callable, samples, weights):
         assert (
-            samples.shape[0] == weights.size
+            samples.shape == weights.size
         ), "samples and weights must match in size"
 
         weights /= sum(weights)

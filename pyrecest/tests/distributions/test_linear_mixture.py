@@ -1,3 +1,4 @@
+from pyrecest.backend import column_stack
 from pyrecest.backend import diag
 from pyrecest.backend import meshgrid
 from pyrecest.backend import linspace
@@ -37,7 +38,7 @@ class LinearMixtureTest(unittest.TestCase):
             lm = LinearMixture([gm1, gm2], array([0.3, 0.7]))
 
         x, y = meshgrid(linspace(-2, 2, 100), linspace(-2, 2, 100))
-        points = np.column_stack((x.ravel(), y.ravel()))
+        points = column_stack((x.ravel(), y.ravel()))
 
         np.testing.assert_allclose(
             lm.pdf(points), 0.3 * gm1.pdf(points) + 0.7 * gm2.pdf(points), atol=1e-20

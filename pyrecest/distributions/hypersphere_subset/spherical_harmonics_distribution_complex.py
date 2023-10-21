@@ -1,3 +1,7 @@
+from pyrecest.backend import full
+from pyrecest.backend import atleast_2d
+from pyrecest.backend import conj
+from pyrecest.backend import column_stack
 from pyrecest.backend import linalg
 from math import pi
 from pyrecest.backend import sqrt
@@ -33,7 +37,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         self.assert_real = assert_real
 
     def value(self, xs):
-        xs = np.atleast_2d(xs)
+        xs = atleast_2d(xs)
         phi, theta = AbstractSphereSubsetDistribution.cart_to_sph(
             xs[:, 0], xs[:, 1], xs[:, 2]
         )
@@ -130,7 +134,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             x, y, z = AbstractSphericalDistribution.sph_to_cart(
                 np.ravel(phi), np.ravel(theta)
             )
-            vals = fun_cart(np.column_stack((x, y, z)))
+            vals = fun_cart(column_stack((x, y, z)))
             return reshape(vals, shape(theta))
 
         return fun_sph
@@ -152,19 +156,19 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         else:
             raise ValueError("Transformation not supported")
 
-        coeff_mat = np.full((degree + 1, 2 * degree + 1), float('NaN'), dtype=complex)
+        coeff_mat = full((degree + 1, 2 * degree + 1), float('NaN'), dtype=complex)
 
         def real_part(phi, theta, n, m):
             return real(
                 fun_with_trans(array(phi), array(theta))
-                * np.conj(sph_harm(m, n, phi, theta))
+                * conj(sph_harm(m, n, phi, theta))
                 * sin(theta)
             )
 
         def imag_part(phi, theta, n, m):
             return imag(
                 fun_with_trans(array(phi), array(theta))
-                * np.conj(sph_harm(m, n, phi, theta))
+                * conj(sph_harm(m, n, phi, theta))
                 * sin(theta)
             )
 

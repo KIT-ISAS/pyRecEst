@@ -55,13 +55,13 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         xs = reshape(xs, (-1, self.dim))
 
         # Generate all combinations of offsets for each dimension
-        offsets = [arange(-m, m + 1) * 2 * pi for _ in range(self.dim)]
+        offsets = [arange(-m, m + 1) * 2.0 * pi for _ in range(self.dim)]
         offset_combinations = array(meshgrid(*offsets)).T.reshape(-1, self.dim)
 
         # Calculate the PDF values by considering all combinations of offsets
         pdf_values = zeros(xs.shape[0])
         for offset in offset_combinations:
-            shifted_xa = xs + offset[np.newaxis, :]
+            shifted_xa = xs + offset[None, :]
             pdf_values += multivariate_normal.pdf(
                 shifted_xa, mean=self.mu.flatten(), cov=self.C
             )

@@ -1,3 +1,4 @@
+from pyrecest.backend import full
 from pyrecest.backend import hstack
 from pyrecest.backend import array
 from abc import ABC
@@ -28,7 +29,7 @@ class AbstractTrackerWithLogging(ABC):
             )
             estimates_over_time = hstack((estimates_over_time, curr_ests))
         else:
-            estimates_over_time_new = np.full((n, t + 1), float('NaN'))
+            estimates_over_time_new = full((n, t + 1), float('NaN'))
             estimates_over_time_new[:m, :t] = estimates_over_time
             estimates_over_time_new[:, -1] = curr_ests.flatten()
             estimates_over_time = estimates_over_time_new

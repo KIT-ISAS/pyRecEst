@@ -1,3 +1,4 @@
+from pyrecest.backend import full
 from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import real
@@ -6,6 +7,7 @@ from pyrecest.backend import imag
 from pyrecest.backend import array
 from pyrecest.backend import abs
 from pyrecest.backend import zeros
+from pyrecest.backend import atleast_2d
 import copy
 import warnings
 
@@ -21,7 +23,7 @@ class AbstractSphericalHarmonicsDistribution(
 ):
     def __init__(self, coeff_mat, transformation="identity"):
         AbstractSphericalDistribution.__init__(self)
-        coeff_mat = np.atleast_2d(coeff_mat)
+        coeff_mat = atleast_2d(coeff_mat)
         assert (
             coeff_mat.shape[1] == coeff_mat.shape[0] * 2 - 1
         ), "CoefficientMatrix:Size, Dimensions of coefficient Matrix are incompatible."
@@ -33,7 +35,7 @@ class AbstractSphericalHarmonicsDistribution(
                 [
                     zeros((n - 1, 1)),
                     np.kron(
-                        np.triu(np.full((n - 1, n - 1), float('NaN'))), array([[1, 1]])
+                        np.triu(full((n - 1, n - 1), float('NaN'))), array([[1, 1]])
                     ),
                 ],
                 [zeros((1, 2 * n - 1))],

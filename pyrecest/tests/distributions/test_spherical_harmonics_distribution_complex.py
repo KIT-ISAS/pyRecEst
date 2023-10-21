@@ -1,3 +1,5 @@
+from pyrecest.backend import column_stack
+from pyrecest.backend import diff
 from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sqrt
@@ -70,12 +72,12 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         x, y, z = array(
             [cos(theta) * cos(phi), cos(theta) * sin(phi), sin(theta)]
         )
-        vals_normalized = shd.pdf(np.column_stack([x, y, z]))
+        vals_normalized = shd.pdf(column_stack([x, y, z]))
         shd.coeff_mat = self.unnormalized_coeffs
-        vals_unnormalized = shd.pdf(np.column_stack([x, y, z]))
+        vals_unnormalized = shd.pdf(column_stack([x, y, z]))
         self.assertTrue(
             allclose(
-                np.diff(vals_normalized / vals_unnormalized),
+                diff(vals_normalized / vals_unnormalized),
                 zeros(vals_normalized.shape[0] - 1),
                 atol=1e-6,
             )
@@ -141,29 +143,29 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
         self.assertTrue(
             allclose(
-                shd2.pdf(np.column_stack((x, y, z))),
-                shd.pdf(np.column_stack((x, y, z))),
+                shd2.pdf(column_stack((x, y, z))),
+                shd.pdf(column_stack((x, y, z))),
                 atol=1e-6,
             )
         )
         self.assertTrue(
             allclose(
-                shd3.pdf(np.column_stack((x, y, z))),
-                shd.pdf(np.column_stack((x, y, z))),
+                shd3.pdf(column_stack((x, y, z))),
+                shd.pdf(column_stack((x, y, z))),
                 atol=1e-6,
             )
         )
         self.assertTrue(
             allclose(
-                shd4.pdf(np.column_stack((x, y, z))),
-                shd.pdf(np.column_stack((x, y, z))),
+                shd4.pdf(column_stack((x, y, z))),
+                shd.pdf(column_stack((x, y, z))),
                 atol=1e-6,
             )
         )
         self.assertTrue(
             allclose(
-                shd5.pdf(np.column_stack((x, y, z))),
-                shd.pdf(np.column_stack((x, y, z))),
+                shd5.pdf(column_stack((x, y, z))),
+                shd.pdf(column_stack((x, y, z))),
                 atol=1e-6,
             )
         )
@@ -389,7 +391,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         np.testing.assert_allclose(
-            shd.pdf(np.column_stack([x, y, z])), expected_func(x, y, z), atol=1e-6
+            shd.pdf(column_stack([x, y, z])), expected_func(x, y, z), atol=1e-6
         )
 
     @parameterized.expand(
@@ -646,7 +648,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
 
-        vals_to_test = shd.pdf(np.column_stack([x, y, z]))
+        vals_to_test = shd.pdf(column_stack([x, y, z]))
         if name.endswith("cart"):
             expected_func_vals = expected_func(x, y, z)
         elif name.endswith("sph"):
@@ -838,8 +840,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         np.testing.assert_allclose(
-            rshd.pdf(np.column_stack((x, y, z))),
-            shd.pdf(np.column_stack((x, y, z))),
+            rshd.pdf(column_stack((x, y, z))),
+            shd.pdf(column_stack((x, y, z))),
             atol=1e-6,
         )
 
@@ -940,8 +942,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             shd.integrate_numerically(), dist.integrate_numerically(), atol=1e-10
         )
         np.testing.assert_allclose(
-            shd.pdf(np.column_stack([x, y, z])),
-            dist.pdf(np.column_stack([x, y, z])),
+            shd.pdf(column_stack([x, y, z])),
+            dist.pdf(column_stack([x, y, z])),
             atol=0.001,
         )
 
@@ -974,7 +976,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             diffs[i] = shd.total_variation_distance_numerical(dist)
 
         # Check if the deviation from true density is decreasing
-        self.assertTrue(all(np.diff(diffs) < 0))
+        self.assertTrue(all(diff(diffs) < 0))
 
     @parameterized.expand(
         [

@@ -1,3 +1,5 @@
+from pyrecest.backend import full
+from pyrecest.backend import column_stack
 from math import pi
 from typing import Union
 from pyrecest.backend import vstack
@@ -95,7 +97,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
           The linear covariance.
         """
         if approximate_mean is None:
-            approximate_mean = np.full((self.lin_dim,), float('NaN'))
+            approximate_mean = full((self.lin_dim,), float('NaN'))
 
         assert approximate_mean.shape[0] == self.lin_dim
 
@@ -169,7 +171,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         def f_cond_unnorm(x, input_lin=input_lin):
             n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else x.shape[0]
             input_repeated = tile(input_lin, (n_inputs, 1))
-            return self.pdf(np.column_stack((x, input_repeated)))
+            return self.pdf(column_stack((x, input_repeated)))
 
         dist = CustomHypertoroidalDistribution(f_cond_unnorm, self.bound_dim)
 
@@ -201,7 +203,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         def f_cond_unnorm(x, input_periodic=input_periodic):
             n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else np.size(x)
             input_repeated = tile(input_periodic, (n_inputs, 1))
-            return self.pdf(np.column_stack((input_repeated, x)))
+            return self.pdf(column_stack((input_repeated, x)))
 
         dist = CustomLinearDistribution(f_cond_unnorm, self.lin_dim)
 

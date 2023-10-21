@@ -1,3 +1,4 @@
+from pyrecest.backend import full
 from pyrecest.backend import linalg
 from pyrecest.backend import vstack
 from pyrecest.backend import tile
@@ -71,7 +72,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         M = M + E
         Q, _ = qr(M)
         M = hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])
-        Z = hstack([np.full((self.dim), -self.kappa), 0])
+        Z = hstack([full((self.dim), -self.kappa), 0])
         return BinghamDistribution(Z, M)
 
     def sample(self, n):

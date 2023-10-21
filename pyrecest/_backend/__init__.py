@@ -175,6 +175,7 @@ BACKEND_ATTRIBUTES = {
         "atleast_1d",  # Added for pyrecest
         "atleast_2d",  # Added for pyrecest
         "dstack",  # Added for pyrecest
+        "full",  # Added for pyrecest
     ],
     "autodiff": [
         "custom_gradient",

@@ -1,3 +1,6 @@
+from pyrecest.backend import full
+from pyrecest.backend import atleast_2d
+from pyrecest.backend import column_stack
 from pyrecest.backend import linalg
 from math import pi
 from typing import Union
@@ -97,7 +100,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, int32, int64]):
         def generate_input(angles):
             dim_eucl = dim + 1
-            angles = np.column_stack(angles)
+            angles = column_stack(angles)
             input_arr = zeros((angles.shape[0], dim_eucl))
             # Start at last, which is just cos
             input_arr[:, -1] = cos(angles[:, -1])
@@ -121,7 +124,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return self.moment_numerical()
 
     def moment_numerical(self):
-        m = np.full(
+        m = full(
             (
                 self.dim + 1,
                 self.dim + 1,
@@ -343,7 +346,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     def polar_to_cart(polar_coords):
-        polar_coords = np.atleast_2d(polar_coords)
+        polar_coords = atleast_2d(polar_coords)
 
         coords = zeros(
             (

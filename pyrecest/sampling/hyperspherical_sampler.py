@@ -238,7 +238,7 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         phi, theta, _ = spherical_sampler.get_grid_spherical_coordinates(
             grid_density_parameter[0]
         )
-        spherical_points = np.column_stack(
+        spherical_points = column_stack(
             (theta, phi)
         )  # stack to match expected shape
 

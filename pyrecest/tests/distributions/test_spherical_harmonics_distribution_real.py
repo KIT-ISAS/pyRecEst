@@ -1,3 +1,4 @@
+from pyrecest.backend import diff
 from math import pi
 from pyrecest.backend import random
 from pyrecest.backend import sqrt
@@ -42,7 +43,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         vals_unnormalized = shd.pdf(column_stack((x, y, z)))
         self.assertTrue(
             allclose(
-                np.diff(vals_normalized / vals_unnormalized),
+                diff(vals_normalized / vals_unnormalized),
                 zeros((1, x.size - 1)),
                 atol=1e-6,
             )
@@ -142,7 +143,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         shd.coeff_mat = array(coeff_mat)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)
         np.testing.assert_allclose(
-            shd.pdf(np.column_stack((x, y, z))),
+            shd.pdf(column_stack((x, y, z))),
             result_func(x, y, z),
             rtol=1e-6,
             err_msg=name,
@@ -335,8 +336,8 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi_to_test, theta_to_test)
         np.testing.assert_allclose(
-            cshd.pdf(np.column_stack((x, y, z))),
-            rshd.pdf(np.column_stack((x, y, z))),
+            cshd.pdf(column_stack((x, y, z))),
+            rshd.pdf(column_stack((x, y, z))),
             atol=1e-6,
         )
 

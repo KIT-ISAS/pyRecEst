@@ -80,6 +80,7 @@ from numpy import (
     atleast_1d,  # For pyrecest
     atleast_2d,  # For pyrecest
     dstack,  # For pyrecest
+    full,  # For pyrecest
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

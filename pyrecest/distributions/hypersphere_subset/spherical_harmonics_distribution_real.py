@@ -1,3 +1,5 @@
+from pyrecest.backend import full
+from pyrecest.backend import atleast_2d
 from pyrecest.backend import sqrt
 from pyrecest.backend import real
 from pyrecest.backend import imag
@@ -34,7 +36,7 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
         return y_nm_real
 
     def value(self, xs):
-        xs = np.atleast_2d(xs)
+        xs = atleast_2d(xs)
         vals = zeros(xs.shape[0])
         phi, theta = AbstractSphereSubsetDistribution.cart_to_sph(
             xs[:, 0], xs[:, 1], xs[:, 2]
@@ -59,7 +61,7 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
             raise NotImplementedError("Transformation currently not supported")
 
         real_coeff_mat = self.coeff_mat
-        complex_coeff_mat = np.full_like(real_coeff_mat, float('NaN'), dtype=complex)
+        complex_coeff_mat = full_like(real_coeff_mat, float('NaN'), dtype=complex)
 
         for n in range(real_coeff_mat.shape[0]):
             for m in range(-n, n + 1):

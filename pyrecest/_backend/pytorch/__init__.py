@@ -41,6 +41,7 @@ from torch import (
     atleast_1d,  # For pyrecest
     atleast_2d,  # For pyrecest
     dstack,  # For pyrecest
+    full,  # For pyrecest
 )
 from torch import repeat_interleave as repeat
 from torch import (

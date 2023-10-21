@@ -3,6 +3,7 @@ from pyrecest.backend import random
 from pyrecest.backend import array
 from pyrecest.backend import zeros
 import unittest
+import numpy.testing as npt
 
 
 from pyrecest.distributions import HypertoroidalWNDistribution
@@ -43,7 +44,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
             self.test_predict_identity()
             for _ in range(3):
                 self.test_update_identity()
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             self.hpf.get_point_estimate(), self.forced_mean, atol=0.1
         )
 

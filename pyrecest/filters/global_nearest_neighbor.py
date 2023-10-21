@@ -1,3 +1,4 @@
+from pyrecest.backend import full
 from pyrecest.backend import stack
 from pyrecest.backend import squeeze
 from pyrecest.backend import repeat
@@ -136,7 +137,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
 
         # Pad to square and add max_new_tracks rows and columns
         pad_to = max(n_targets, n_meas) + self.association_param["max_new_tracks"]
-        association_matrix = np.full(
+        association_matrix = full(
             (pad_to, pad_to), self.association_param["gating_distance_threshold"]
         )
         association_matrix[: dists.shape[0], : dists.shape[1]] = dists

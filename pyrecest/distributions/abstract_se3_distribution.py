@@ -1,3 +1,4 @@
+from pyrecest.backend import column_stack
 from typing import Union
 from pyrecest.backend import concatenate
 from pyrecest.backend import int64
@@ -73,7 +74,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
         )
         h = [h1, h2, h3]
         relevant_coords = concatenate((pos.reshape(-1, 1), pos + rotMat), axis=1)
-        needed_boundaries = np.column_stack(
+        needed_boundaries = column_stack(
             (np.min(relevant_coords, axis=1), np.max(relevant_coords, axis=1))
         )
 

@@ -1,3 +1,5 @@
+from pyrecest.backend import column_stack
+from pyrecest.backend import diff
 from math import pi
 from pyrecest.backend import ones
 from pyrecest.backend import array
@@ -35,8 +37,8 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         dist_cond1 = hwn.condition_on_periodic(array(1.5))
         # There is some normalization constant involved, therefore, test if ratio stays the same
         np.testing.assert_allclose(
-            np.diff(
-                hwn.pdf(np.column_stack([1.5 * ones(11), arange(-5, 6)]))
+            diff(
+                hwn.pdf(column_stack([1.5 * ones(11), arange(-5, 6)]))
                 / dist_cond1.pdf(arange(-5, 6))
             ),
             zeros(10),
@@ -44,8 +46,8 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         )
         dist_cond2 = hwn.condition_on_periodic(array(1.5) + 2 * pi)
         np.testing.assert_allclose(
-            np.diff(
-                hwn.pdf(np.column_stack([1.5 * ones(11), arange(-5, 6)]))
+            diff(
+                hwn.pdf(column_stack([1.5 * ones(11), arange(-5, 6)]))
                 / dist_cond2.pdf(arange(-5, 6))
             ),
             zeros(10),
@@ -59,8 +61,8 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         )
         dist_cond1 = hwn.condition_on_linear(array(1.5))
         np.testing.assert_allclose(
-            np.diff(
-                hwn.pdf(np.column_stack([arange(-5, 6), 1.5 * ones(11)]))
+            diff(
+                hwn.pdf(column_stack([arange(-5, 6), 1.5 * ones(11)]))
                 / dist_cond1.pdf(arange(-5, 6))
             ),
             zeros(10),
@@ -70,8 +72,8 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         self.assertFalse(
             (
                 allclose(
-                    np.diff(
-                        hwn.pdf(np.column_stack([arange(-5, 6), 1.5 * ones(11)]))
+                    diff(
+                        hwn.pdf(column_stack([arange(-5, 6), 1.5 * ones(11)]))
                         / dist_cond2.pdf(arange(-5, 6))
                     ),
                     zeros(10),

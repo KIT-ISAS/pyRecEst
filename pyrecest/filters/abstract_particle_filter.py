@@ -41,7 +41,7 @@ class AbstractParticleFilter(AbstractFilterType):
 
         if noise_distribution is not None:
             if not shift_instead_of_add:
-                noise = noise_distribution.sample(self.filter_state.w.size)
+                noise = noise_distribution.sample(self.filter_state.w.shape[0])
                 self.filter_state.d = self.filter_state.d + noise
             else:
                 for i in range(self.filter_state.d.shape[1]):
@@ -65,7 +65,7 @@ class AbstractParticleFilter(AbstractFilterType):
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True
     ):
-        assert measurement is None or np.size(measurement) == meas_noise.dim
+        assert measurement is None or measurement.shape == (meas_noise.dim,)
         assert (
             ndim(measurement) == 1
             or ndim(measurement) == 0

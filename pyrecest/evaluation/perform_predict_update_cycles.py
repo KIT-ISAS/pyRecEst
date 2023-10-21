@@ -1,3 +1,4 @@
+from pyrecest.backend import atleast_2d
 from pyrecest.backend import squeeze
 from pyrecest.backend import array
 from pyrecest.backend import empty
@@ -52,7 +53,7 @@ def perform_predict_update_cycles(
         if perform_cumulative_updates:
             raise NotImplementedError("Cumulative updates not implemented yet.")
 
-        all_meas_curr_time_step = np.atleast_2d(measurements[t])
+        all_meas_curr_time_step = atleast_2d(measurements[t])
         n_updates = all_meas_curr_time_step.shape[0]
         for m in range(n_updates):
             curr_meas = all_meas_curr_time_step[m, :]

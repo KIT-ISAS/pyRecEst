@@ -1,3 +1,4 @@
+from pyrecest.backend import column_stack
 from pyrecest.backend import sort
 from pyrecest.backend import real
 from pyrecest.backend import eye
@@ -177,15 +178,15 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
         # Generate perfect measurements, association should then be
         # optimal.
-        perfect_meas_ordered = self.meas_mat @ np.column_stack(
+        perfect_meas_ordered = self.meas_mat @ column_stack(
             [gaussian.mu for gaussian in all_gaussians]
         )
-        measurements = np.column_stack([perfect_meas_ordered, array([3, 2])])
+        measurements = column_stack([perfect_meas_ordered, array([3, 2])])
         association = tracker.find_association(measurements, self.meas_mat, eye(2))
         np.testing.assert_array_equal(association, [0, 1, 2])
 
         # Shift them and add one measurement
-        measurements = np.column_stack(
+        measurements = column_stack(
             [
                 perfect_meas_ordered[:, 1],
                 perfect_meas_ordered[:, 2],
@@ -221,7 +222,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         tracker_clut.filter_state = self.kfs_init
         all_gaussians = [kf.filter_state for kf in self.kfs_init]
 
-        perfect_meas_ordered = self.meas_mat @ np.column_stack(
+        perfect_meas_ordered = self.meas_mat @ column_stack(
             [gaussian.mu for gaussian in all_gaussians]
         )
         measurements_no_clut = perfect_meas_ordered
@@ -238,7 +239,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             all(curr_covs <= dstack([dist.C for dist in all_gaussians]))
         )
 
-        measurements_clut = np.column_stack(
+        measurements_clut = column_stack(
             [measurements_no_clut, array([2, 2]).reshape(-1, 1)]
         )
         tracker_clut.update_linear(measurements_clut, self.meas_mat, eye(2))
@@ -260,7 +261,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         curr_covs = dstack([dist.C for dist in tracker_no_clut.filter_state])
         self.assertTrue(all(curr_covs <= previous_covs))
 
-        measurements_clut = np.column_stack(
+        measurements_clut = column_stack(
             [
                 perfect_meas_ordered[:, [1, 2]],
                 array([2, 2]).reshape(-1, 1),

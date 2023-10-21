@@ -1,3 +1,4 @@
+from pyrecest.backend import atleast_2d
 from pyrecest.backend import linalg
 from pyrecest.backend import random
 from pyrecest.backend import sqrt
@@ -113,7 +114,7 @@ class TestEvalationBasics(TestEvalationBase):
         self.assertEqual(np.size(measurements), self.n_timesteps_default)
         for i in range(self.n_timesteps_default):
             self.assertEqual(
-                np.atleast_2d(measurements[i]).shape,
+                atleast_2d(measurements[i]).shape,
                 (
                     self.simulation_param["n_meas_at_individual_time_step"][i],
                     self.simulation_param["initial_prior"].dim,
