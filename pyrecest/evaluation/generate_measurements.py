@@ -126,7 +126,7 @@ def generate_measurements(groundtruth, simulation_config):
 
         for t in range(simulation_config["n_timesteps"]):
             n_meas_at_t = sum(n_observations[t, :])
-            measurements[t] = np.nan * zeros(
+            measurements[t] = float('NaN') * zeros(
                 (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
             )
 

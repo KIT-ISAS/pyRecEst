@@ -152,7 +152,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         else:
             raise ValueError("Transformation not supported")
 
-        coeff_mat = np.full((degree + 1, 2 * degree + 1), np.nan, dtype=complex)
+        coeff_mat = np.full((degree + 1, 2 * degree + 1), float('NaN'), dtype=complex)
 
         def real_part(phi, theta, n, m):
             return real(

@@ -35,13 +35,13 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         coeff_rand = random.rand(9)
         self.unnormalized_coeffs = array(
             [
-                [coeff_rand[0], np.nan, np.nan, np.nan, np.nan],
+                [coeff_rand[0], float('NaN'), float('NaN'), float('NaN'), float('NaN')],
                 [
                     coeff_rand[1] + 1j * coeff_rand[2],
                     coeff_rand[3],
                     -coeff_rand[1] + 1j * coeff_rand[2],
-                    np.nan,
-                    np.nan,
+                    float('NaN'),
+                    float('NaN'),
                 ],
                 [
                     coeff_rand[4] + 1j * coeff_rand[5],
@@ -88,13 +88,13 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         coeff_rand = random.rand(1, 9)
         unnormalized_coeffs = array(
             [
-                [coeff_rand[0, 0], np.nan, np.nan, np.nan, np.nan],
+                [coeff_rand[0, 0], float('NaN'), float('NaN'), float('NaN'), float('NaN')],
                 [
                     coeff_rand[0, 1] + 1j * coeff_rand[0, 2],
                     coeff_rand[0, 3],
                     -coeff_rand[0, 1] + 1j * coeff_rand[0, 2],
-                    np.nan,
-                    np.nan,
+                    float('NaN'),
+                    float('NaN'),
                 ],
                 [
                     coeff_rand[0, 4] + 1j * coeff_rand[0, 5],
@@ -107,7 +107,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
         # First initialize and overwrite afterward to prevent normalization
         shd = SphericalHarmonicsDistributionComplex(
-            array([[1, np.nan, np.nan], [0, 0, 0]])
+            array([[1, float('NaN'), float('NaN')], [0, 0, 0]])
         )
         shd.coeff_mat = unnormalized_coeffs
         shd.transformation = transformation
@@ -175,8 +175,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl0m0",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -186,8 +186,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl1m0",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 1, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 1, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -197,8 +197,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2m0",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 1, 0, 0],
                     ]
                 ),
@@ -211,9 +211,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl3m0",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 1, 0, 0, 0],
                     ]
                 ),
@@ -229,8 +229,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l1mneg1real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2), np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2), float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -240,8 +240,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l1m1real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [sqrt(1 / 2), 0, -sqrt(1 / 2), np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [sqrt(1 / 2), 0, -sqrt(1 / 2), float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -251,8 +251,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l2mneg2real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [1j * sqrt(1 / 2), 0, 0, 0, -1j * sqrt(1 / 2)],
                     ]
                 ),
@@ -262,8 +262,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l2mneg1real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2), 0],
                     ]
                 ),
@@ -273,8 +273,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l2m1real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, sqrt(1 / 2), 0, -sqrt(1 / 2), 0],
                     ]
                 ),
@@ -284,8 +284,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l2m2real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [sqrt(1 / 2), 0, 0, 0, sqrt(1 / 2)],
                     ]
                 ),
@@ -295,9 +295,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l3mneg3real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [1j / sqrt(2), 0, 0, 0, 0, 0, 1j / sqrt(2)],
                     ]
                 ),
@@ -311,9 +311,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l3mneg2real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1j / sqrt(2), 0, 0, 0, -1j / sqrt(2), 0],
                     ]
                 ),
@@ -323,9 +323,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l3mneg1real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 1j / sqrt(2), 0, 1j / sqrt(2), 0, 0],
                     ]
                 ),
@@ -339,9 +339,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l3m1real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 1 / sqrt(2), 0, -1 / sqrt(2), 0, 0],
                     ]
                 ),
@@ -355,9 +355,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l3m2real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1 / sqrt(2), 0, 0, 0, 1 / sqrt(2), 0],
                     ]
                 ),
@@ -367,9 +367,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "test_l3m3real",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [1 / sqrt(2), 0, 0, 0, 0, 0, -1 / sqrt(2)],
                     ]
                 ),
@@ -399,8 +399,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl1mneg1_cart",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [1, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [1, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -410,8 +410,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl1m1_cart",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 1, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 1, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -421,8 +421,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2mneg2_cart",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [1, 0, 0, 0, 0],
                     ]
                 ),
@@ -432,8 +432,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2mneg1_cart",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1, 0, 0, 0],
                     ]
                 ),
@@ -443,8 +443,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2m1_cart",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 1, 0],
                     ]
                 ),
@@ -454,8 +454,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2m2_cart",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 1],
                     ]
                 ),
@@ -466,8 +466,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl1mneg1_sph",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [1, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [1, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -480,8 +480,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl1m1_sph",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 1, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 1, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -494,8 +494,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2mneg2_sph",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [1, 0, 0, 0, 0],
                     ]
                 ),
@@ -508,8 +508,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2mneg1_sph",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1, 0, 0, 0],
                     ]
                 ),
@@ -523,8 +523,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2m1_sph",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 1, 0],
                     ]
                 ),
@@ -538,8 +538,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2m2_sph",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 1],
                     ]
                 ),
@@ -552,8 +552,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl1mneg1_sphconv_colatitude",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [1, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [1, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -566,8 +566,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl1m1_sphconv_colatitude",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 1, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 1, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -580,8 +580,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2mneg2_sphconv_colatitude",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [1, 0, 0, 0, 0],
                     ]
                 ),
@@ -594,8 +594,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2mneg1_sphconv_colatitude",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1, 0, 0, 0],
                     ]
                 ),
@@ -609,8 +609,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2m1_sphconv_colatitude",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 1, 0],
                     ]
                 ),
@@ -624,8 +624,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "testl2m2_sphconv_colatitude",
                 array(
                     [
-                        [0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 1],
                     ]
                 ),
@@ -665,8 +665,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l0m0",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -675,8 +675,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l1mneg1",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2), np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2), float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -685,8 +685,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l1m0",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 1, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 1, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -695,8 +695,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l1m1",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [sqrt(1 / 2), 0, -sqrt(1 / 2), np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [sqrt(1 / 2), 0, -sqrt(1 / 2), float('NaN'), float('NaN')],
                         [0, 0, 0, 0, 0],
                     ]
                 ),
@@ -705,8 +705,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l2mneg2",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [1j * sqrt(1 / 2), 0, 0, 0, -1j * sqrt(1 / 2)],
                     ]
                 ),
@@ -715,8 +715,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l2mneg1",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2), 0],
                     ]
                 ),
@@ -725,8 +725,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l2m0",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 1, 0, 0],
                     ]
                 ),
@@ -735,8 +735,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l2m1",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [0, sqrt(1 / 2), 0, -sqrt(1 / 2), 0],
                     ]
                 ),
@@ -745,8 +745,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l2m2",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN')],
                         [sqrt(1 / 2), 0, 0, 0, sqrt(1 / 2)],
                     ]
                 ),
@@ -755,9 +755,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l3mneg3",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [1j / sqrt(2), 0, 0, 0, 0, 0, 1j / sqrt(2)],
                     ]
                 ),
@@ -766,9 +766,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l3mneg2",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1j / sqrt(2), 0, 0, 0, -1j / sqrt(2), 0],
                     ]
                 ),
@@ -777,9 +777,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l3mneg1",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 1j / sqrt(2), 0, 1j / sqrt(2), 0, 0],
                     ]
                 ),
@@ -788,9 +788,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l3m0",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 0, 1, 0, 0, 0],
                     ]
                 ),
@@ -799,9 +799,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l3m1",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 0, 1 / sqrt(2), 0, -1 / sqrt(2), 0, 0],
                     ]
                 ),
@@ -810,9 +810,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l3m2",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [0, 1 / sqrt(2), 0, 0, 0, 1 / sqrt(2), 0],
                     ]
                 ),
@@ -821,9 +821,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "l3m3",
                 array(
                     [
-                        [1, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, np.nan, np.nan, np.nan, np.nan],
-                        [0, 0, 0, 0, 0, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, float('NaN'), float('NaN'), float('NaN'), float('NaN')],
+                        [0, 0, 0, 0, 0, float('NaN'), float('NaN')],
                         [1 / sqrt(2), 0, 0, 0, 0, 0, -1 / sqrt(2)],
                     ]
                 ),
@@ -847,21 +847,21 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         [
             (
                 "shd_x",
-                array([[1, np.nan, np.nan], [sqrt(1 / 2), 0, -sqrt(1 / 2)]]),
+                array([[1, float('NaN'), float('NaN')], [sqrt(1 / 2), 0, -sqrt(1 / 2)]]),
                 array([1, 0, 0]),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
                 "shd_y",
                 array(
-                    [[1, np.nan, np.nan], [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2)]]
+                    [[1, float('NaN'), float('NaN')], [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2)]]
                 ),
                 array([0, 1, 0]),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
                 "shd_z",
-                array([[1, np.nan, np.nan], [0, 1, 0]]),
+                array([[1, float('NaN'), float('NaN')], [0, 1, 0]]),
                 array([0, 0, 1]),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
@@ -869,7 +869,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 "shd_xy",
                 array(
                     [
-                        [1, np.nan, np.nan],
+                        [1, float('NaN'), float('NaN')],
                         [
                             sqrt(1 / 2) + 1j * sqrt(1 / 2),
                             0,
@@ -882,35 +882,35 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             ),
             (
                 "shd_xz",
-                array([[1, np.nan, np.nan], [sqrt(1 / 2), 1, -sqrt(1 / 2)]]),
+                array([[1, float('NaN'), float('NaN')], [sqrt(1 / 2), 1, -sqrt(1 / 2)]]),
                 array([1, 0, 1]) / sqrt(2),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
                 "shd_yz",
                 array(
-                    [[1, np.nan, np.nan], [1j * sqrt(1 / 2), 1, 1j * sqrt(1 / 2)]]
+                    [[1, float('NaN'), float('NaN')], [1j * sqrt(1 / 2), 1, 1j * sqrt(1 / 2)]]
                 ),
                 array([0, 1, 1]) / sqrt(2),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
                 "numerical_shd_x",
-                array([[1, np.nan, np.nan], [sqrt(1 / 2), 0, -sqrt(1 / 2)]]),
+                array([[1, float('NaN'), float('NaN')], [sqrt(1 / 2), 0, -sqrt(1 / 2)]]),
                 array([1, 0, 0]),
                 SphericalHarmonicsDistributionComplex.mean_direction_numerical,
             ),
             (
                 "numerical_shd_y",
                 array(
-                    [[1, np.nan, np.nan], [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2)]]
+                    [[1, float('NaN'), float('NaN')], [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2)]]
                 ),
                 array([0, 1, 0]),
                 SphericalHarmonicsDistributionComplex.mean_direction_numerical,
             ),
             (
                 "numerical_shd_z",
-                array([[1, np.nan, np.nan], [0, 1, 0]]),
+                array([[1, float('NaN'), float('NaN')], [0, 1, 0]]),
                 array([0, 0, 1]),
                 SphericalHarmonicsDistributionComplex.mean_direction_numerical,
             ),
@@ -954,7 +954,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def test_transformation_via_integral_shd(self):
         # Test approximating a spherical harmonic distribution
         dist = SphericalHarmonicsDistributionComplex(
-            array([[1, np.nan, np.nan], [0, 1, 0]])
+            array([[1, float('NaN'), float('NaN')], [0, 1, 0]])
         )
 
         shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
@@ -978,16 +978,16 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
     @parameterized.expand(
         [
-            ("zplus", [[1 / sqrt(4 * pi), np.nan, np.nan], [0, 1, 0]], [0, 0, 1]),
+            ("zplus", [[1 / sqrt(4 * pi), float('NaN'), float('NaN')], [0, 1, 0]], [0, 0, 1]),
             (
                 "zminus",
-                [[1 / sqrt(4 * pi), np.nan, np.nan], [0, -1, 0]],
+                [[1 / sqrt(4 * pi), float('NaN'), float('NaN')], [0, -1, 0]],
                 [0, 0, -1],
             ),
             (
                 "yplus",
                 [
-                    [1 / sqrt(4 * pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), float('NaN'), float('NaN')],
                     [1j * sqrt(1 / 2), 0, 1j * sqrt(1 / 2)],
                 ],
                 [0, 1, 0],
@@ -995,7 +995,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "yminus",
                 [
-                    [1 / sqrt(4 * pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), float('NaN'), float('NaN')],
                     [-1j * sqrt(1 / 2), 0, -1j * sqrt(1 / 2)],
                 ],
                 [0, -1, 0],
@@ -1003,7 +1003,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xplus",
                 [
-                    [1 / sqrt(4 * pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), float('NaN'), float('NaN')],
                     [sqrt(1 / 2), 0, -sqrt(1 / 2)],
                 ],
                 [1, 0, 0],
@@ -1011,7 +1011,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xminus",
                 [
-                    [1 / sqrt(4 * pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), float('NaN'), float('NaN')],
                     [-sqrt(1 / 2), 0, sqrt(1 / 2)],
                 ],
                 [-1, 0, 0],
@@ -1019,7 +1019,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xyplus",
                 [
-                    [1 / sqrt(4 * pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), float('NaN'), float('NaN')],
                     [
                         1j * sqrt(1 / 2) + sqrt(1 / 2),
                         1,
@@ -1031,7 +1031,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xyminus",
                 [
-                    [1 / sqrt(4 * pi), np.nan, np.nan],
+                    [1 / sqrt(4 * pi), float('NaN'), float('NaN')],
                     [
                         -1j * sqrt(1 / 2) - sqrt(1 / 2),
                         0,

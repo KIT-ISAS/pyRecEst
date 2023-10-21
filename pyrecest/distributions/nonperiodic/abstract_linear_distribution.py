@@ -215,8 +215,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         """
         C = self.covariance()
         m = self.mode()
-        left = np.full((self.dim,), np.nan)
-        right = np.full((self.dim,), np.nan)
+        left = np.full((self.dim,), float('NaN'))
+        right = np.full((self.dim,), float('NaN'))
 
         for i in range(self.dim):  # Change for linear dimensions
             left[i] = m[i] - scaling_factor * sqrt(C[i, i])

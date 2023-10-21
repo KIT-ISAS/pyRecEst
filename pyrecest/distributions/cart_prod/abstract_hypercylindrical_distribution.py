@@ -95,7 +95,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
           The linear covariance.
         """
         if approximate_mean is None:
-            approximate_mean = np.full((self.lin_dim,), np.nan)
+            approximate_mean = np.full((self.lin_dim,), float('NaN'))
 
         assert approximate_mean.shape[0] == self.lin_dim
 

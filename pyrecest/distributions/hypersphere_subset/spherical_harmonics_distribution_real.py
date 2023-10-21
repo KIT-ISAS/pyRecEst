@@ -59,7 +59,7 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
             raise NotImplementedError("Transformation currently not supported")
 
         real_coeff_mat = self.coeff_mat
-        complex_coeff_mat = np.full_like(real_coeff_mat, np.nan, dtype=complex)
+        complex_coeff_mat = np.full_like(real_coeff_mat, float('NaN'), dtype=complex)
 
         for n in range(real_coeff_mat.shape[0]):
             for m in range(-n, n + 1):

@@ -153,7 +153,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution(mu_, kappa_)
 
     @staticmethod
-    def a_d(d: Union[int, int32, int64], kappa: Any | numbers.Real):
+    def a_d(d: Union[int, int32, int64], kappa):
         bessel1 = iv(d / 2, kappa)
         bessel2 = iv(d / 2 - 1, kappa)
         if isnan(bessel1) or isnan(bessel2):

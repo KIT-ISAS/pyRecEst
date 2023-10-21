@@ -36,7 +36,7 @@ class HypercylindricalDiracDistribution(
 
     def hybrid_moment(self):
         # Specific for Cartesian products of hypertori and R^lin_dim
-        S = np.full((self.bound_dim * 2 + self.lin_dim, self.d.shape[0]), np.nan)
+        S = np.full((self.bound_dim * 2 + self.lin_dim, self.d.shape[0]), float('NaN'))
         S[2 * self.bound_dim :, :] = self.d[:, self.bound_dim :].T  # noqa: E203
 
         for i in range(self.bound_dim):

@@ -126,7 +126,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 self.dim + 1,
                 self.dim + 1,
             ),
-            np.nan,
+            float('NaN'),
         )
 
         def f_gen(i, j):

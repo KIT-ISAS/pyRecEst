@@ -37,9 +37,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
 
         if dim == 1:
             # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
-            filter_state = CircularDiracDistribution(
-                linspace(0.0, 2.0 * pi, num = n_particles, endpoint=False)  # Like linspace without endpoint but with compatbiility for pytroch
-            )
+            filter_state = CircularDiracDistribution(linspace(0.0, 2.0 * pi, num = n_particles, endpoint=False)
         else:
             filter_state = HypertoroidalDiracDistribution(
                 tile(
@@ -76,8 +74,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             self.filter_state.d = mod(self.filter_state.d, 2.0 * pi)
 
     def predict_nonlinear_nonadditive(
-        self, f: Callable, samples, weights: 
-    ):
+        self, f: Callable, samples, weights):
         assert (
             samples.shape[0] == weights.size
         ), "samples and weights must match in size"

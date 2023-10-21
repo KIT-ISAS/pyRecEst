@@ -33,7 +33,7 @@ class AbstractSphericalHarmonicsDistribution(
                 [
                     zeros((n - 1, 1)),
                     np.kron(
-                        np.triu(np.full((n - 1, n - 1), np.nan)), array([[1, 1]])
+                        np.triu(np.full((n - 1, n - 1), float('NaN'))), array([[1, 1]])
                     ),
                 ],
                 [zeros((1, 2 * n - 1))],
@@ -99,7 +99,7 @@ class AbstractSphericalHarmonicsDistribution(
                 : 2 * result.coeff_mat.shape[0] - 1,  # noqa: E203
             ] = result.coeff_mat
             for i in range(new_coeff_mat.shape[0] - 1):
-                new_coeff_mat[i, 2 * i + 1 :] = np.nan  # noqa: E203
+                new_coeff_mat[i, 2 * i + 1 :] = float('NaN')  # noqa: E203
             result.coeff_mat = new_coeff_mat
 
         return result

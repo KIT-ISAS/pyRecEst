@@ -50,19 +50,20 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                             rtol=1e-10,
                         )
                     )
-
+                    
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_integral_numerical(self):
         """Tests if the numerical computation of integral matches the actual integral."""
         intervals = [
-            (2, 2),
-            (2, 3),
-            (5, 4),
-            (0, 4 * pi),
+            (2.0, 2.0),
+            (2.0, 3.0),
+            (5.0, 4.0),
+            (0.0, 4.0 * pi),
             (-pi, pi),
-            (0, 4 * pi),
-            (-3 * pi, 3 * pi),
-            (-1, 20),
-            (12, -3),
+            (0.0, 4.0 * pi),
+            (-3.0 * pi, 3.0 * pi),
+            (-1.0, 20.0),
+            (12.0, -3.0),
         ]
 
         for dist in self.distributions:
