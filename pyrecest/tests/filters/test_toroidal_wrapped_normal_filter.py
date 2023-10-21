@@ -2,6 +2,7 @@ from math import pi
 from pyrecest.backend import mod
 from pyrecest.backend import array
 import unittest
+import numpy as np
 
 
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
@@ -13,8 +14,8 @@ from pyrecest.filters.toroidal_wrapped_normal_filter import ToroidalWrappedNorma
 class ToroidalWrappedNormalFilterTest(unittest.TestCase):
     def setUp(self):
         """Initial setup for each test."""
-        self.mu = array([5, 2.5])
-        self.C = array([[1.3, 1.4], [1.4, 2]])
+        self.mu = array([5.0, 2.5])
+        self.C = array([[1.3, 1.4], [1.4, 2.0]])
         self.twn = ToroidalWrappedNormalDistribution(self.mu, self.C)
 
     def test_sanity_check(self):

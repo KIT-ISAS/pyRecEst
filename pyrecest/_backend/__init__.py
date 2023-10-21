@@ -172,6 +172,9 @@ BACKEND_ATTRIBUTES = {
         "nonzero",  # Added for pyrecest
         "column_stack",  # Added for pyrecest
         "conj",  # Added for pyrecest
+        "atleast_1d",  # Added for pyrecest
+        "atleast_2d",  # Added for pyrecest
+        "dstack",  # Added for pyrecest
     ],
     "autodiff": [
         "custom_gradient",

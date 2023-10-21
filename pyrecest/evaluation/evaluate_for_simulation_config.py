@@ -16,7 +16,7 @@ def evaluate_for_simulation_config(
     filter_configs: list[dict[str, Any]],
     n_runs: int,
     n_timesteps: Optional[int] = None,
-    initial_seed: Optional[int | np.uint32] = None,
+    initial_seed=None,
     consecutive_seed: bool = False,
     save_folder: str = ".",
     scenario_customization_params: Optional[dict] = None,
@@ -26,15 +26,7 @@ def evaluate_for_simulation_config(
     tolerate_failure: bool = False,
     auto_warning_on_off: bool = False,
     # jscpd:ignore-end
-) -> tuple[
-    dict,
-    list[dict],
-    ,
-    ,
-    ,
-    ,
-    [],
-]:
+):
     if isinstance(simulation_config, str):
         simulation_name = simulation_config
         simulation_config = simulation_database(
@@ -74,9 +66,9 @@ def get_all_seeds(n_runs: int, seed_input=None, consecutive_seed: bool = True):
     if seed_input is None:
         seed_input = np.uint32(random.randint(1, 0xFFFFFFFF))  # nosec
 
-    if np.size(seed_input) == n_runs:
+    if seed_input.shape[0] == n_runs:
         all_seeds = seed_input
-    elif np.size(seed_input) == 1 and n_runs > 1:
+    elif seed_input.shape[0] == 1 and n_runs > 1:
         if consecutive_seed:
             all_seeds = list(range(seed_input, seed_input + n_runs))
         else:

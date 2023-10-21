@@ -77,6 +77,9 @@ from numpy import (
     nonzero,  # For pyrecest
     column_stack,  # For pyrecest
     conj,  # For pyrecest
+    atleast_1d,  # For pyrecest
+    atleast_2d,  # For pyrecest
+    dstack,  # For pyrecest
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

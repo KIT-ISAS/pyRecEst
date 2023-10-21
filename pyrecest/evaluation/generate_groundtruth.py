@@ -1,8 +1,9 @@
-from pyrecest.backend import squeeze
-from pyrecest.backend import ndim
-from pyrecest.backend import empty
-from pyrecest.backend import empty_like
-
+from numpy import squeeze
+from numpy import ndim
+from numpy import empty
+from numpy import empty_like
+from numpy import atleast_2d
+import numpy as np
 
 
 # pylint: disable=too-many-branches
@@ -29,14 +30,14 @@ def generate_groundtruth(simulation_param, x0=None):
     ), "Mismatch in number of targets."
 
     # Initialize ground truth
-    groundtruth = empty(simulation_param["n_timesteps"], dtype=)
+    groundtruth = empty(simulation_param["n_timesteps"], dtype=np.ndarray)
 
     if "inputs" in simulation_param:
         assert (
             simulation_param["inputs"].shape[1] == simulation_param["n_timesteps"] - 1
         ), "Mismatch in number of timesteps."
 
-    groundtruth[0] = np.atleast_2d(x0)
+    groundtruth[0] = atleast_2d(x0)
 
     for t in range(1, simulation_param["n_timesteps"]):
         groundtruth[t] = empty_like(groundtruth[0])

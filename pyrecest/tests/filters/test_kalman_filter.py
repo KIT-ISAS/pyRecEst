@@ -3,6 +3,7 @@ from pyrecest.backend import eye
 from pyrecest.backend import array
 from pyrecest.backend import allclose
 from pyrecest.backend import all
+import numpy.testing as npt
 import copy
 import unittest
 
@@ -14,24 +15,24 @@ from pyrecest.filters.kalman_filter import KalmanFilter
 class KalmanFilterTest(unittest.TestCase):
     def test_initialization_mean_cov(self):
         filter_custom = KalmanFilter((array([1]), array([[10000]])))
-        self.assertEqual(filter_custom.get_point_estimate(), [1])
+        npt.assert_equal(filter_custom.get_point_estimate(), array([1]))
 
     def test_initialization_gauss(self):
         filter_custom = KalmanFilter(
             initial_state=GaussianDistribution(array([4]), array([[10000]]))
         )
-        self.assertEqual(filter_custom.get_point_estimate(), [4])
+        npt.assert_equal(filter_custom.get_point_estimate(), array([4]))
 
     def test_update_with_likelihood_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.update_identity(array(1), array(3))
-        self.assertEqual(kf.get_point_estimate(), 1.5)
+        npt.assert_equal(kf.get_point_estimate(), 1.5)
 
     def test_update_with_meas_noise_and_meas_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.update_identity(array(1), array(4))
-        self.assertEqual(kf.filter_state.C, 0.5)
-        self.assertEqual(kf.get_point_estimate(), 2)
+        npt.assert_equal(kf.filter_state.C, 0.5)
+        npt.assert_equal(kf.get_point_estimate(), 2)
 
     def test_update_linear_2d(self):
         filter_add = KalmanFilter((array([0, 1]), diag([1, 2])))
@@ -49,8 +50,8 @@ class KalmanFilterTest(unittest.TestCase):
     def test_predict_identity_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.predict_identity(array([[3]]), array([1]))
-        self.assertEqual(kf.get_point_estimate(), 1)
-        self.assertEqual(kf.filter_state.C, 4)
+        npt.assert_equal(kf.get_point_estimate(), array(1))
+        npt.assert_equal(kf.filter_state.C, array(4))
 
     def test_predict_linear_2d(self):
         kf = KalmanFilter((array([0, 1]), diag([1, 2])))

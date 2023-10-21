@@ -1,6 +1,7 @@
-from pyrecest.backend import ones
-from pyrecest.backend import concatenate
-from pyrecest.backend import zeros
+from numpy import ones
+from numpy import concatenate
+from numpy import zeros
+import numpy as np
 import os
 from typing import Any
 
@@ -22,15 +23,7 @@ def evaluate_for_file(
     tolerate_failure: bool = False,
     auto_warning_on_off: bool = False,
     # jscpd:ignore-end
-) -> tuple[
-    dict,
-    list[dict],
-    ,
-    ,
-    ,
-    ,
-    [],
-]:
+    ):
     data = np.load(input_file_name, allow_pickle=True).item()
 
     if "name" not in scenario_config:

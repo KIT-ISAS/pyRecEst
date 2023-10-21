@@ -1,13 +1,14 @@
 from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import tile
-from pyrecest.backend import sum
-from pyrecest.backend import squeeze
-from pyrecest.backend import shape
-from pyrecest.backend import mod
-from pyrecest.backend import dot
-from pyrecest.backend import empty
-from pyrecest.backend import zeros
+from numpy import random
+from numpy import tile
+from numpy import sum
+from numpy import squeeze
+from numpy import shape
+from numpy import mod
+from numpy import dot
+from numpy import empty
+from numpy import zeros
+import numpy as np
 
 from beartype import beartype
 from pyrecest.distributions import (
@@ -40,7 +41,7 @@ def generate_measurements(groundtruth, simulation_config):
     assert "n_meas_at_individual_time_step" not in simulation_config or shape(
         simulation_config["n_meas_at_individual_time_step"]
     ) == (simulation_config["n_timesteps"],)
-    measurements = empty(simulation_config["n_timesteps"], dtype=)
+    measurements = empty(simulation_config["n_timesteps"], dtype=np.ndarray)
 
     if simulation_config.get("mtt", False) and simulation_config.get("eot", False):
         raise NotImplementedError(

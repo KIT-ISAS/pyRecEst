@@ -6,6 +6,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import zeros
 from pyrecest.backend import diag
+from pyrecest.backend import dstack
 import pyrecest.backend
 import unittest
 
@@ -33,14 +34,14 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         ]
         self.meas_mat = array([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
         self.sys_mat = array(scipy.linalg.block_diag(array([[1.0, 1.0], [0.0, 1.0]]), array([[1.0, 1.0], [0.0, 1.0]])))
-        self.all_different_meas_covs = np.dstack(
+        self.all_different_meas_covs = dstack(
             [
                 diag(array([1.0, 2.0])),
                 array([[5.0, 0.1], [0.1, 3.0]]),
                 array([[2.0, -0.5], [-0.5, 0.5]]),
             ]
         )
-        self.all_different_meas_covs_4 = np.dstack(
+        self.all_different_meas_covs_4 = dstack(
             (self.all_different_meas_covs, array([[2.0, -0.5], [-0.5, 0.5]]))
         )
 
@@ -93,14 +94,14 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init
 
-        sys_mats = np.dstack(
+        sys_mats = dstack(
             (
                 scipy.linalg.block_diag([[1.0, 1.0], [0.0, 1.0]], [[1.0, 1.0], [0.0, 1.0]]),
                 eye(4),
                 array([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]]),
             )
         )
-        sys_noises = np.dstack(
+        sys_noises = dstack(
             (eye(4), diag([10.0, 11.0, 12.0, 13.0]), diag([1.0, 5.0, 3.0, 5.0]))
         )
         sys_inputs = array([[-1.0, 1.0, -1.0, 1.0], [1.0, 2.0, 3.0, 4.0], -array([4.0, 3.0, 2.0, 1.0])]).T
@@ -232,9 +233,9 @@ class GlobalNearestNeighborTest(unittest.TestCase):
                 [dist.mu for dist in all_gaussians],
             )
         )
-        curr_covs = np.dstack([dist.C for dist in tracker_no_clut.filter_state])
+        curr_covs = dstack([dist.C for dist in tracker_no_clut.filter_state])
         self.assertTrue(
-            all(curr_covs <= np.dstack([dist.C for dist in all_gaussians]))
+            all(curr_covs <= dstack([dist.C for dist in all_gaussians]))
         )
 
         measurements_clut = np.column_stack(
@@ -256,7 +257,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             )
         )
         previous_covs = curr_covs
-        curr_covs = np.dstack([dist.C for dist in tracker_no_clut.filter_state])
+        curr_covs = dstack([dist.C for dist in tracker_no_clut.filter_state])
         self.assertTrue(all(curr_covs <= previous_covs))
 
         measurements_clut = np.column_stack(
@@ -278,7 +279,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         curr_means = [dist.mu for dist in tracker_no_clut.filter_state]
         self.assertFalse(allclose(curr_means, [dist.mu for dist in all_gaussians]))
         previous_covs = curr_covs
-        curr_covs = np.dstack([dist.C for dist in tracker_no_clut.filter_state])
+        curr_covs = dstack([dist.C for dist in tracker_no_clut.filter_state])
         self.assertTrue(all(curr_covs <= previous_covs))
 
         measurements_clut += 0.1
@@ -299,7 +300,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             )
         )
         previous_covs = curr_covs
-        curr_covs = np.dstack([dist.C for dist in tracker_no_clut.filter_state])
+        curr_covs = dstack([dist.C for dist in tracker_no_clut.filter_state])
         for i in range(curr_covs.shape[2]):
             self.assertTrue(
                 all(

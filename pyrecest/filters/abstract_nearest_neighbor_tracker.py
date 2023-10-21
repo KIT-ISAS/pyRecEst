@@ -88,7 +88,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
 
         if isinstance(sys_noises, GaussianDistribution):
             assert all(sys_noises.mu == 0)
-            sys_noises = np.dstack(sys_noises.C)
+            sys_noises = dstack(sys_noises.C)
 
         curr_sys_matrix = system_matrices
         curr_sys_noise = sys_noises

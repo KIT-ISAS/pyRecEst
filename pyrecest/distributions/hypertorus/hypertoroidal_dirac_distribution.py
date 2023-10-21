@@ -9,6 +9,7 @@ from pyrecest.backend import imag
 from pyrecest.backend import exp
 from pyrecest.backend import arctan2
 from pyrecest.backend import int64
+from pyrecest.backend import atleast_1d
 from pyrecest.backend import int32
 import copy
 from collections.abc import Callable
@@ -30,14 +31,12 @@ class HypertoroidalDiracDistribution(
         if dim is None:
             if d.ndim > 1:
                 dim = d.shape[-1]
-            elif w is not None:
-                dim = np.size(d) // np.size(w)
             else:
-                raise ValueError("Cannot determine dimension.")
+                raise ValueError("Cannot automatically determine dimension.")
 
         AbstractHypertoroidalDistribution.__init__(self, dim)
         AbstractDiracDistribution.__init__(
-            self, np.atleast_1d(mod(d, 2 * pi)), w=w
+            self, atleast_1d(mod(d, 2.0 * pi)), w=w
         )
 
     def plot(self, *args, **kwargs):
@@ -51,7 +50,7 @@ class HypertoroidalDiracDistribution(
         :return: Mean direction
         """
         a = self.trigonometric_moment(1)
-        m = mod(arctan2(imag(a), real(a)), 2 * pi)
+        m = mod(arctan2(imag(a), real(a)), 2.0 * pi)
         return m
 
     def trigonometric_moment(self, n: Union[int, int32, int64]):
