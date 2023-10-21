@@ -1,7 +1,7 @@
 from pyrecest.backend import diag
 from pyrecest.backend import array
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import EllipsoidalBallUniformDistribution
 
@@ -11,7 +11,7 @@ class TestEllipsoidalBallUniformDistribution(unittest.TestCase):
         dist = EllipsoidalBallUniformDistribution(
             array([0.0, 0.0, 0.0]), diag(array([4.0, 9.0, 16.0]))
         )
-        np.testing.assert_allclose(dist.pdf(array([0.0, 0.0, 0.0])), 1 / 100.53096491)
+        npt.assert_allclose(dist.pdf(array([0.0, 0.0, 0.0])), 1 / 100.53096491)
 
     def test_sampling(self):
         dist = EllipsoidalBallUniformDistribution(

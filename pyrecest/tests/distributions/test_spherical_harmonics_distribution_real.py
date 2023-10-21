@@ -11,7 +11,7 @@ from pyrecest.backend import zeros
 from pyrecest.backend import column_stack
 import unittest
 import warnings
-
+import numpy.testing as npt
 
 from parameterized import parameterized
 from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution import (
@@ -142,7 +142,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionReal(1 / sqrt(4 * pi))
         shd.coeff_mat = array(coeff_mat)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             shd.pdf(column_stack((x, y, z))),
             result_func(x, y, z),
             rtol=1e-6,
@@ -335,7 +335,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             random.rand(10) * pi - pi / 2,
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi_to_test, theta_to_test)
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             cshd.pdf(column_stack((x, y, z))),
             rshd.pdf(column_stack((x, y, z))),
             atol=1e-6,
@@ -349,7 +349,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
         cshd = rshd.to_spherical_harmonics_distribution_complex()
         rshd2 = cshd.to_spherical_harmonics_distribution_real()
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             rshd2.coeff_mat, rshd.coeff_mat, atol=1e-6, equal_nan=True
         )
 
@@ -360,7 +360,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             warnings.simplefilter("ignore")
             shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)
 
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             shd.integrate_numerically(), shd.integrate(), atol=1e-6
         )
 

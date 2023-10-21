@@ -5,7 +5,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import empty_like
 import unittest
-
+import numpy.testing as npt
 
 from parameterized import parameterized
 from pyrecest.distributions import VonMisesFisherDistribution
@@ -77,14 +77,14 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         mu = mu / linalg.norm(mu)
         kappa = 10
         dist = VonMisesFisherDistribution(mu, kappa)
-        np.testing.assert_array_almost_equal(dist.C, 7.22562325261744e-05)
+        npt.assert_array_almost_equal(dist.C, 7.22562325261744e-05)
 
     def test_init_3d(self):
         mu = array([1, 1, 2, -3])
         mu = mu / linalg.norm(mu)
         kappa = 2
         dist = VonMisesFisherDistribution(mu, kappa)
-        np.testing.assert_array_almost_equal(dist.C, 0.0318492506152322)
+        npt.assert_array_almost_equal(dist.C, 0.0318492506152322)
 
     def test_pdf_2d(self):
         mu = array([1, 1, 2])
@@ -92,7 +92,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         kappa = 10
         dist = VonMisesFisherDistribution(mu, kappa)
 
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             dist.pdf(vectors_to_test_2d),
             array(
                 [
@@ -128,7 +128,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
         xs = xs_unnorm / linalg.norm(xs_unnorm, axis=1, keepdims=True)
 
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             dist.pdf(xs),
             array(
                 [
@@ -190,8 +190,8 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         vmf1 = VonMisesFisherDistribution(mu, kappa)
         vmf2 = VonMisesFisherDistribution.from_distribution(vmf1)
 
-        np.testing.assert_allclose(vmf1.mu, vmf2.mu, rtol=1e-10)
-        np.testing.assert_allclose(vmf1.kappa, vmf2.kappa, rtol=1e-10)
+        npt.assert_allclose(vmf1.mu, vmf2.mu, rtol=1e-10)
+        npt.assert_allclose(vmf1.kappa, vmf2.kappa, rtol=1e-10)
 
     def test_from_distribution_dirac(self):
         dirac_dist = HypersphericalDiracDistribution(
@@ -201,7 +201,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
         vmf = VonMisesFisherDistribution.from_distribution(dirac_dist)
 
-        np.testing.assert_allclose(dirac_dist.mean(), vmf.mean())
+        npt.assert_allclose(dirac_dist.mean(), vmf.mean())
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from pyrecest.backend import sin
 from pyrecest.backend import cos
 from pyrecest.backend import array
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import VonMisesFisherDistribution
 
@@ -21,7 +21,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
 
         phi_test = array([1.0, 2.0, 0.0, 0.3, 1.1])
 
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             pdf_hyperspherical(phi_test), fangles_1d(phi_test)
         )
 
@@ -47,7 +47,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         phi1_test = [1.0, 2.0, 0.0, 0.3, 1.1]
         phi2_test = [2.0, 3.0, 0.1, 3.0, 1.1]
 
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             pdf_hyperspherical(phi1_test, phi2_test), fangles_2d(phi1_test, phi2_test)
         )
 
@@ -75,7 +75,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         phi2_test = array([2.0, 3.0, 0.1, 3.0, 1.1])
         phi3_test = phi2_test + 0.2
 
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             pdf_hyperspherical(phi1_test, phi2_test, phi3_test),
             fangles_3d(phi1_test, phi2_test, phi3_test),
         )

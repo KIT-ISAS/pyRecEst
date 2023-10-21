@@ -10,7 +10,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import zeros
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import WrappedNormalDistribution
 
@@ -36,7 +36,7 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         test_points = [self.mu, self.mu - 1, self.mu + 2]
         for point in test_points:
             with self.subTest(x=point):
-                np.testing.assert_almost_equal(
+                npt.assert_almost_equal(
                     self.wn.pdf(point), approx_with_wrapping(point), decimal=10
                 )
 

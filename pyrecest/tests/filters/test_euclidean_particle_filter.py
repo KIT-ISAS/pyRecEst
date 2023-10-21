@@ -6,7 +6,7 @@ from pyrecest.backend import array
 from pyrecest.backend import zeros_like
 from pyrecest.backend import zeros
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.euclidean_particle_filter import EuclideanParticleFilter
@@ -35,7 +35,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
             # jscpd:ignore-end
 
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
-        np.testing.assert_almost_equal(
+        npt.assert_almost_equal(
             self.pf.get_point_estimate(), self.forced_mean, decimal=1
         )
 
@@ -50,7 +50,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         self.pf.predict_nonlinear_nonadditive(f, samples, weights)
         est = self.pf.get_point_estimate()
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             est, self.prior.mu + mean(samples, axis=0), atol=0.1
         )
 
@@ -67,7 +67,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
             # jscpd:ignore-end
 
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             self.pf.get_point_estimate(), force_first_particle_pos, atol=1e-10
         )
 

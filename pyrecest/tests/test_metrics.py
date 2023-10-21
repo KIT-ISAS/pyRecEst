@@ -33,7 +33,7 @@ class TestANEES(unittest.TestCase):
         computed_ANEES = anees(samples, repeated_uncertainties, repeated_groundtruths)
 
         # Assert that computed ANEES is close to 1 with a tolerance of 0.05.
-        np.testing.assert_almost_equal(
+        npt.assert_almost_equal(
             computed_ANEES, self.groundtruths.shape[-1], decimal=2
         )
 

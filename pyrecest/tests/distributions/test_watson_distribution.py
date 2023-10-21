@@ -1,7 +1,7 @@
 from pyrecest.backend import linalg
 from pyrecest.backend import array
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import BinghamDistribution, WatsonDistribution
 
@@ -21,7 +21,7 @@ class TestWatsonDistribution(unittest.TestCase):
         w = WatsonDistribution(mu, kappa)
 
         self.assertIsInstance(w, WatsonDistribution)
-        np.testing.assert_array_equal(w.mu, mu)
+        npt.assert_array_equal(w.mu, mu)
         self.assertEqual(w.kappa, kappa)
         self.assertEqual(w.input_dim, mu.shape[0])
 
@@ -43,7 +43,7 @@ class TestWatsonDistribution(unittest.TestCase):
         )
 
         pdf_values = w.pdf(self.xs)
-        np.testing.assert_almost_equal(pdf_values, expected_pdf_values, decimal=5)
+        npt.assert_almost_equal(pdf_values, expected_pdf_values, decimal=5)
 
     def test_integrate(self):
         mu = array([1, 2, 3])
@@ -58,7 +58,7 @@ class TestWatsonDistribution(unittest.TestCase):
         watson_dist = WatsonDistribution(mu, kappa)
         bingham_dist = watson_dist.to_bingham()
         self.assertIsInstance(bingham_dist, BinghamDistribution)
-        np.testing.assert_almost_equal(
+        npt.assert_almost_equal(
             watson_dist.pdf(self.xs), bingham_dist.pdf(self.xs), decimal=5
         )
 

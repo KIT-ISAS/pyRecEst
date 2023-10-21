@@ -10,7 +10,7 @@ from pyrecest.backend import array
 from pyrecest.backend import zeros_like
 from pyrecest.backend import zeros
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions.cart_prod.hypercylindrical_dirac_distribution import (
     HypercylindricalDiracDistribution,
@@ -44,8 +44,8 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
 
     def test_apply_function_identity(self):
         same = self.pwd.apply_function(lambda x: x)
-        np.testing.assert_array_equal(self.pwd.d, same.d)
-        np.testing.assert_array_equal(self.pwd.w, same.w)
+        npt.assert_array_equal(self.pwd.d, same.d)
+        npt.assert_array_equal(self.pwd.w, same.w)
         assert self.pwd.lin_dim == same.lin_dim
         assert self.pwd.bound_dim == same.bound_dim
 
@@ -79,17 +79,17 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         pwd_rew3 = self.pwd.reweigh(f3)
 
         assert isinstance(pwd_rew1, HypercylindricalDiracDistribution)
-        np.testing.assert_array_equal(pwd_rew1.d, self.pwd.d)
-        np.testing.assert_array_equal(pwd_rew1.w, f1(self.pwd.d))
+        npt.assert_array_equal(pwd_rew1.d, self.pwd.d)
+        npt.assert_array_equal(pwd_rew1.w, f1(self.pwd.d))
 
         assert isinstance(pwd_rew2, HypercylindricalDiracDistribution)
-        np.testing.assert_array_equal(pwd_rew2.d, self.pwd.d)
-        np.testing.assert_array_equal(pwd_rew2.w, self.pwd.w)
+        npt.assert_array_equal(pwd_rew2.d, self.pwd.d)
+        npt.assert_array_equal(pwd_rew2.w, self.pwd.w)
 
         assert isinstance(pwd_rew3, HypercylindricalDiracDistribution)
-        np.testing.assert_array_equal(pwd_rew3.d, self.pwd.d)
+        npt.assert_array_equal(pwd_rew3.d, self.pwd.d)
         w_new = self.pwd.d[:, 0] * self.pwd.w
-        np.testing.assert_array_equal(pwd_rew3.w, w_new / sum(w_new))
+        npt.assert_array_equal(pwd_rew3.w, w_new / sum(w_new))
 
     def test_sampling(self):
         random.seed(0)
@@ -109,4 +109,4 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         C = array(wishart.rvs(df, scale, random_state=random_gen))
         hwn = PartiallyWrappedNormalDistribution(array([1.0, 2.0, 3.0, 4.0]), C, 2)
         hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 100000)
-        np.testing.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.2)
+        npt.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.2)

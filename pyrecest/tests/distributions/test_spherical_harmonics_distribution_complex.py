@@ -16,6 +16,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import zeros
 import unittest
+import numpy.testing as npt
 
 
 from parameterized import parameterized
@@ -390,7 +391,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             linspace(0, 2 * pi, 10), linspace(0, pi, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             shd.pdf(column_stack([x, y, z])), expected_func(x, y, z), atol=1e-6
         )
 
@@ -659,7 +660,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             )
             expected_func_vals = expected_func(phi, theta)
 
-        np.testing.assert_allclose(vals_to_test, expected_func_vals, atol=1e-6)
+        npt.assert_allclose(vals_to_test, expected_func_vals, atol=1e-6)
 
     @parameterized.expand(
         [
@@ -839,7 +840,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             linspace(0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             rshd.pdf(column_stack((x, y, z))),
             shd.pdf(column_stack((x, y, z))),
             atol=1e-6,
@@ -920,7 +921,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     )
     def test_mean_direction(self, _, input_array, expected_output, fun_to_test):
         shd = SphericalHarmonicsDistributionComplex(input_array)
-        np.testing.assert_allclose(fun_to_test(shd), expected_output, atol=1e-10)
+        npt.assert_allclose(fun_to_test(shd), expected_output, atol=1e-10)
 
     def test_from_distribution_via_integral_vmf(self):
         # Test approximating a VMF
@@ -932,16 +933,16 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             linspace(0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             shd.mean_direction(), dist.mean_direction(), atol=1e-10
         )
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             shd.mean_direction_numerical(), dist.mean_direction(), atol=1e-10
         )
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             shd.integrate_numerically(), dist.integrate_numerically(), atol=1e-10
         )
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             shd.pdf(column_stack([x, y, z])),
             dist.pdf(column_stack([x, y, z])),
             atol=0.001,
@@ -951,7 +952,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionComplex.from_distribution_via_integral(
             HypersphericalUniformDistribution(2), degree=0
         )
-        np.testing.assert_allclose(shd.coeff_mat, array([[1 / sqrt(4 * pi)]]))
+        npt.assert_allclose(shd.coeff_mat, array([[1 / sqrt(4 * pi)]]))
 
     def test_transformation_via_integral_shd(self):
         # Test approximating a spherical harmonic distribution
@@ -962,7 +963,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
             dist.pdf, 1
         )
-        np.testing.assert_allclose(shd.coeff_mat, dist.coeff_mat, atol=1e-6)
+        npt.assert_allclose(shd.coeff_mat, dist.coeff_mat, atol=1e-6)
 
     def test_convergence(self):
         no_diffs = 3
@@ -1046,7 +1047,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     )
     def test_mean(self, _, coeff_mat, expected_output):
         shd = SphericalHarmonicsDistributionComplex(coeff_mat)
-        np.testing.assert_allclose(shd.mean_direction(), expected_output, atol=1e-6)
+        npt.assert_allclose(shd.mean_direction(), expected_output, atol=1e-6)
 
 
 if __name__ == "__main__":

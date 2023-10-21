@@ -1,7 +1,7 @@
 from math import pi
 from pyrecest.backend import array
 import unittest
-
+import numpy.testing as npt
 
 from parameterized import parameterized
 from pyrecest.distributions.hypersphere_subset.abstract_sphere_subset_distribution import (
@@ -31,9 +31,9 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         )
 
         # The new Cartesian coordinates should be close to the original ones
-        np.testing.assert_allclose(x_new, x, atol=1e-15)
-        np.testing.assert_allclose(y_new, y, atol=1e-15)
-        np.testing.assert_allclose(z_new, z, atol=1e-15)
+        npt.assert_allclose(x_new, x, atol=1e-15)
+        npt.assert_allclose(y_new, y, atol=1e-15)
+        npt.assert_allclose(z_new, z, atol=1e-15)
 
     @parameterized.expand(
         [
@@ -57,5 +57,5 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         )
 
         # The new spherical coordinates should be close to the original ones
-        np.testing.assert_allclose(azimuth_new, azimuth, atol=1e-15)
-        np.testing.assert_allclose(theta_new, theta, atol=1e-15)
+        npt.assert_allclose(azimuth_new, azimuth, atol=1e-15)
+        npt.assert_allclose(theta_new, theta, atol=1e-15)

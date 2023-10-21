@@ -10,7 +10,7 @@ import pyrecest.backend
 import copy
 import unittest
 
-
+import numpy.testing as npt
 from parameterized import parameterized
 from pyrecest.distributions import (
     CircularFourierDistribution,
@@ -87,9 +87,9 @@ class TestCircularFourierDistribution(unittest.TestCase):
             transformation=transformation,
             store_values_multiplied_by_n=mult_by_n,
         )
-        np.testing.assert_array_almost_equal(dist.pdf(xs), fd.pdf(xs))
+        npt.assert_array_almost_equal(dist.pdf(xs), fd.pdf(xs))
         fd_real = fd.to_real_fd()
-        np.testing.assert_array_almost_equal(dist.pdf(xs), fd_real.pdf(xs))
+        npt.assert_array_almost_equal(dist.pdf(xs), fd_real.pdf(xs))
 
     @parameterized.expand(
         [
@@ -109,20 +109,20 @@ class TestCircularFourierDistribution(unittest.TestCase):
             transformation=transformation,
             store_values_multiplied_by_n=mult_by_n,
         )
-        np.testing.assert_array_almost_equal(fd.integrate_numerically(), 1)
+        npt.assert_array_almost_equal(fd.integrate_numerically(), 1)
         fd_real = fd.to_real_fd()
-        np.testing.assert_array_almost_equal(fd_real.integrate_numerically(), 1)
+        npt.assert_array_almost_equal(fd_real.integrate_numerically(), 1)
         fd_unnorm = copy.copy(fd)
         fd_unnorm.c = fd.c * (scale_by)
         if transformation == "identity":
             expected_val = scale_by
         else:
             expected_val = (scale_by) ** 2
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             fd_unnorm.integrate_numerically(), expected_val
         )
         fd_unnorm_real = fd_unnorm.to_real_fd()
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             fd_unnorm_real.integrate_numerically(), expected_val
         )
 
@@ -143,18 +143,18 @@ class TestCircularFourierDistribution(unittest.TestCase):
             transformation=transformation,
             store_values_multiplied_by_n=mult_by_n,
         )
-        np.testing.assert_array_almost_equal(fd.integrate(), 1)
+        npt.assert_array_almost_equal(fd.integrate(), 1)
         fd_real = fd.to_real_fd()
-        np.testing.assert_array_almost_equal(fd_real.integrate(), 1)
+        npt.assert_array_almost_equal(fd_real.integrate(), 1)
         fd_unnorm = copy.copy(fd)
         fd_unnorm.c = fd.c * scale_by
         if transformation == "identity":
             expected_val = scale_by
         else:
             expected_val = scale_by ** 2
-        np.testing.assert_array_almost_equal(fd_unnorm.integrate(), expected_val)
+        npt.assert_array_almost_equal(fd_unnorm.integrate(), expected_val)
         fd_unnorm_real = fd_unnorm.to_real_fd()
-        np.testing.assert_array_almost_equal(fd_unnorm_real.integrate(), expected_val)
+        npt.assert_array_almost_equal(fd_unnorm_real.integrate(), expected_val)
         fd_unnorm = CircularFourierDistribution.from_distribution(
             dist,
             n=31,
@@ -165,8 +165,8 @@ class TestCircularFourierDistribution(unittest.TestCase):
         fd_norm = fd_unnorm.normalize()
         fd_unnorm_real = fd_unnorm.to_real_fd()
         fd_norm_real = fd_unnorm_real.normalize()
-        np.testing.assert_array_almost_equal(fd_norm.integrate(), 1.0)
-        np.testing.assert_array_almost_equal(fd_norm_real.integrate(), 1.0)
+        npt.assert_array_almost_equal(fd_norm.integrate(), 1.0)
+        npt.assert_array_almost_equal(fd_norm_real.integrate(), 1.0)
 
     @parameterized.expand(
         [
@@ -198,7 +198,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
             2.0 * pi,
         )
         fd_diff = fd1 - fd2
-        np.testing.assert_array_almost_equal(fd_diff.integrate(), hel_like_distance)
+        npt.assert_array_almost_equal(fd_diff.integrate(), hel_like_distance)
 
 
 if __name__ == "__main__":

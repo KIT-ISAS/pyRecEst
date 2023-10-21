@@ -2,7 +2,7 @@ from math import pi
 from pyrecest.backend import array
 from pyrecest.backend import arange
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions.circle.custom_circular_distribution import (
     CustomCircularDistribution,
@@ -33,13 +33,13 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
             lambda xs: array([pdf_wrapped(x, self.mu, self.gamma) for x in xs])
         )
 
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             dist.pdf(xs=self.xs), custom_wrapped.pdf(xs=self.xs), atol=0.0001
         )
 
     def test_cdf(self):
         dist = WrappedCauchyDistribution(self.mu, self.gamma)
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             dist.cdf(array([1])), dist.integrate(array([0, 1]))
         )
 

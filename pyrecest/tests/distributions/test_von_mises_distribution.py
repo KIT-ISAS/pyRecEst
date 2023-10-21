@@ -6,7 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from pyrecest.distributions import VonMisesDistribution
-
+import numpy.testing as npt
 matplotlib.use("Agg")
 
 
@@ -20,7 +20,7 @@ class TestVonMisesDistribution(unittest.TestCase):
     def test_pdf(self):
         dist = VonMisesDistribution(2, 1)
         xs = linspace(1, 7, 7)
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             dist.pdf(xs),
             array(
                 [

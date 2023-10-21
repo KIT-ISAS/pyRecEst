@@ -3,7 +3,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import array
 import unittest
 import numpy as np
-
+import numpy.testing as npt
 
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
@@ -24,8 +24,8 @@ class ToroidalWrappedNormalFilterTest(unittest.TestCase):
         curr_filter.filter_state = self.twn
         twn1 = curr_filter.filter_state
         self.assertIsInstance(twn1, ToroidalWrappedNormalDistribution)
-        np.testing.assert_array_almost_equal(twn1.mu, self.twn.mu)
-        np.testing.assert_array_almost_equal(twn1.C, self.twn.C)
+        npt.assert_array_almost_equal(twn1.mu, self.twn.mu)
+        npt.assert_array_almost_equal(twn1.C, self.twn.C)
 
     def test_predict_identity(self):
         """Test identity prediction of the filter."""
@@ -34,7 +34,7 @@ class ToroidalWrappedNormalFilterTest(unittest.TestCase):
         curr_filter.predict_identity(self.twn)
         dist_result = curr_filter.filter_state
         self.assertIsInstance(dist_result, ToroidalWrappedNormalDistribution)
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             dist_result.mu, mod(self.twn.mu + self.twn.mu, 2 * pi)
         )
-        np.testing.assert_array_almost_equal(dist_result.C, self.twn.C + self.twn.C)
+        npt.assert_array_almost_equal(dist_result.C, self.twn.C + self.twn.C)

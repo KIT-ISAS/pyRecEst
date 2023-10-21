@@ -9,6 +9,7 @@ from pyrecest.backend import all
 from pyrecest.backend import zeros
 import unittest
 import pyrecest.backend
+import numpy.testing as npt
 
 
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
@@ -27,7 +28,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         hwn = PartiallyWrappedNormalDistribution(
             array([1, 2]), array([[2.0, 0.3], [0.3, 1.0]]), 1
         )
-        np.testing.assert_allclose(hwn.linear_mean_numerical(), hwn.mu[-1])
+        npt.assert_allclose(hwn.linear_mean_numerical(), hwn.mu[-1])
 
     @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_condition_on_periodic(self):
@@ -36,7 +37,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         )
         dist_cond1 = hwn.condition_on_periodic(array(1.5))
         # There is some normalization constant involved, therefore, test if ratio stays the same
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             diff(
                 hwn.pdf(column_stack([1.5 * ones(11), arange(-5, 6)]))
                 / dist_cond1.pdf(arange(-5, 6))
@@ -45,7 +46,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             atol=1e-10,
         )
         dist_cond2 = hwn.condition_on_periodic(array(1.5) + 2 * pi)
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             diff(
                 hwn.pdf(column_stack([1.5 * ones(11), arange(-5, 6)]))
                 / dist_cond2.pdf(arange(-5, 6))
@@ -60,7 +61,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 1.0]]), 1
         )
         dist_cond1 = hwn.condition_on_linear(array(1.5))
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             diff(
                 hwn.pdf(column_stack([arange(-5, 6), 1.5 * ones(11)]))
                 / dist_cond1.pdf(arange(-5, 6))

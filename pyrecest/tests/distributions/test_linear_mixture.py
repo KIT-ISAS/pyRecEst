@@ -5,7 +5,7 @@ from pyrecest.backend import linspace
 from pyrecest.backend import array
 import unittest
 from warnings import catch_warnings, simplefilter
-
+import numpy.testing as npt
 
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_mixture import LinearMixture
@@ -40,7 +40,7 @@ class LinearMixtureTest(unittest.TestCase):
         x, y = meshgrid(linspace(-2, 2, 100), linspace(-2, 2, 100))
         points = column_stack((x.ravel(), y.ravel()))
 
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             lm.pdf(points), 0.3 * gm1.pdf(points) + 0.7 * gm2.pdf(points), atol=1e-20
         )
 

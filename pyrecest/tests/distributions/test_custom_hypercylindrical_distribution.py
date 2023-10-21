@@ -5,7 +5,7 @@ from pyrecest.backend import eye
 from pyrecest.backend import array
 import pyrecest.backend
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import (
     GaussianDistribution,
@@ -37,13 +37,13 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
 
     def test_constructor(self):
         chd = CustomHypercylindricalDistribution(self.pwn.pdf, 3, 3)
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat)
         )
 
     def test_from_distribution(self):
         chd = CustomHypercylindricalDistribution.from_distribution(self.pwn)
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat)
         )
 
@@ -52,14 +52,14 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         dist = self.chcd_vm_gauss_stacked.condition_on_linear(array([2.0, 1.0]))
 
         x = linspace(0.0, 2.0 * pi, 100)
-        np.testing.assert_allclose(dist.pdf(x), self.vm.pdf(x))
+        npt.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_condition_on_periodic(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_periodic(array(1.0))
 
         grid = np.mgrid[-3:4, -3:4].reshape(2, -1).T
-        np.testing.assert_allclose(dist.pdf(grid), self.gauss.pdf(grid))
+        npt.assert_allclose(dist.pdf(grid), self.gauss.pdf(grid))
 
 
 if __name__ == "__main__":

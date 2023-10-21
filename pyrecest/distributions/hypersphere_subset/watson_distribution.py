@@ -11,6 +11,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import float64
 from pyrecest.backend import zeros
 import numbers
+import numpy.testing as npt
 
 import mpmath
 
@@ -94,5 +95,5 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         return dist
 
     def shift(self, shift_by):
-        np.testing.assert_almost_equal(self.mu, vstack([zeros((self.dim, 1)), 1]), "There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].")
+        npt.assert_almost_equal(self.mu, vstack([zeros((self.dim, 1)), 1]), "There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].")
         return self.set_mode(shift_by)

@@ -5,7 +5,7 @@ from pyrecest.backend import eye
 from pyrecest.backend import array
 from pyrecest.backend import concatenate
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import CustomLinearDistribution, GaussianDistribution
 from pyrecest.distributions.nonperiodic.gaussian_mixture import GaussianMixture
@@ -33,7 +33,7 @@ class CustomLinearDistributionTest(unittest.TestCase):
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):
         x, y = meshgrid(linspace(0.0, 2.0 * pi, 10), linspace(0.0, 2.0 * pi, 10))
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             dist1.pdf(concatenate((x, y)).reshape(2, -1).T),
             dist2.pdf(concatenate((x, y)).reshape(2, -1).T),
             atol=tol,

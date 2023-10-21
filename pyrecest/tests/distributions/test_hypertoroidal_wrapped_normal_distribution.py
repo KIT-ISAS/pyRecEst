@@ -1,6 +1,6 @@
 from pyrecest.backend import array
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import HypertoroidalWNDistribution
 
@@ -18,7 +18,7 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         expected_values = array(
             [0.0499028191873498, 0.425359477472412, 0.0499028191873498]
         )
-        np.testing.assert_allclose(pdf_values, expected_values, rtol=1e-12)
+        npt.assert_allclose(pdf_values, expected_values, rtol=1e-12)
 
 
 if __name__ == "__main__":

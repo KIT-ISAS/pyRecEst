@@ -6,6 +6,7 @@ from pyrecest.backend import cos
 from pyrecest.backend import array
 from pyrecest.backend import arange
 import unittest
+import numpy.testing as npt
 
 
 from parameterized import parameterized
@@ -18,7 +19,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
     def setUp(self):
         self.mu = array([1, 2])
         self.kappa = array([0.7, 1.4])
-        self.lambda_ = 0.5
+        self.lambda_ = array(0.5)
         self.tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, self.lambda_)
 
     def test_instance(self):
@@ -26,16 +27,16 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         self.assertIsInstance(self.tvm, ToroidalVonMisesSineDistribution)
 
     def test_mu_kappa_lambda(self):
-        np.testing.assert_almost_equal(self.tvm.mu, self.mu, decimal=6)
-        np.testing.assert_almost_equal(self.tvm.kappa, self.kappa, decimal=6)
+        npt.assert_almost_equal(self.tvm.mu, self.mu, decimal=6)
+        npt.assert_almost_equal(self.tvm.kappa, self.kappa, decimal=6)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
     def test_integral(self):
         # test integral
-        self.assertAlmostEqual(self.tvm.integrate(), 1, delta=1e-5)
+        self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-5)
 
     def test_trigonometric_moment_numerical(self):
-        np.testing.assert_almost_equal(
+        npt.assert_almost_equal(
             self.tvm.trigonometric_moment_numerical(0), array([1, 1]), decimal=5
         )
 
@@ -74,7 +75,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
 
         expected = pdf(x)
 
-        np.testing.assert_almost_equal(self.tvm.pdf(x), expected, decimal=10)
+        npt.assert_almost_equal(self.tvm.pdf(x), expected, decimal=10)
 
 
 if __name__ == "__main__":

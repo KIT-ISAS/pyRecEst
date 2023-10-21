@@ -5,6 +5,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import exp
 from pyrecest.backend import cos
 from pyrecest.backend import all
+from pyrecest.backend import array
 
 from scipy.special import comb, iv
 
@@ -14,16 +15,16 @@ from .abstract_toroidal_distribution import AbstractToroidalDistribution
 class ToroidalVonMisesSineDistribution(AbstractToroidalDistribution):
     def __init__(self, mu, kappa, lambda_):
         AbstractToroidalDistribution.__init__(self)
-        assert np.size(mu) == 2
-        assert np.size(kappa) == 2
-        assert np.isscalar(lambda_)
-        assert all(kappa >= 0)
+        assert mu.shape == (2,)
+        assert kappa.shape == (2,)
+        assert lambda_.shape == ()
+        assert all(kappa >= 0.0)
 
-        self.mu = mod(mu, 2 * pi)
+        self.mu = mod(mu, 2.0 * pi)
         self.kappa = kappa
         self.lambda_ = lambda_
 
-        self.C = 1 / self.norm_const
+        self.C = 1.0 / self.norm_const
 
     @property
     def norm_const(self):
@@ -35,7 +36,7 @@ class ToroidalVonMisesSineDistribution(AbstractToroidalDistribution):
                 * iv(m, self.kappa[1])
             )
 
-        Cinv = 4 * pi**2 * sum([s(m) for m in range(11)])
+        Cinv = 4.0 * pi**2 * sum(array([s(m) for m in range(11)]))
         return Cinv
 
     def pdf(self, xs):

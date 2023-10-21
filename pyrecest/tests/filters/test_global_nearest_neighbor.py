@@ -10,6 +10,7 @@ from pyrecest.backend import diag
 from pyrecest.backend import dstack
 import pyrecest.backend
 import unittest
+import numpy.testing as npt
 
 
 import scipy
@@ -83,11 +84,11 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
         for i in range(3):
             with self.subTest(i=i):
-                np.testing.assert_array_equal(
+                npt.assert_array_equal(
                     tracker.filter_bank[i].get_point_estimate(),
                     self.sys_mat @ self.kfs_init[i].get_point_estimate() + sys_input,
                 )
-                np.testing.assert_array_equal(
+                npt.assert_array_equal(
                     tracker.filter_bank[i].filter_state.C, C_matrices[i]
                 )
 
@@ -109,23 +110,23 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
         tracker.predict_linear(sys_mats, sys_noises, sys_inputs)
 
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             tracker.filter_bank[0].filter_state.mu, array([-1.0, 1.0, -1.0, 1.0])
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             tracker.filter_bank[1].filter_state.mu, array([2.0, 4.0, 6.0, 8.0])
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             tracker.filter_bank[2].filter_state.mu, array([-11.0, -7.0, -5.0, -3.0])
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             tracker.filter_bank[0].filter_state.C,
             scipy.linalg.block_diag([[4.0, 2.0], [2.0, 3.0]], [[8.0, 4.0], [4.0, 5.0]]),
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             tracker.filter_bank[1].filter_state.C, diag([12.0, 13.0, 14.0, 15.0])
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             tracker.filter_bank[2].filter_state.C,
             scipy.linalg.block_diag([[4.0, 1.0], [1.0, 6.0]], [[10.0, 3.0], [3.0, 8.0]]),
         )
@@ -144,19 +145,19 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         association = tracker.find_association(
             perfect_meas_ordered, self.meas_mat, eye(2)
         )
-        np.testing.assert_array_equal(association, [0, 1, 2])
+        npt.assert_array_equal(association, [0, 1, 2])
 
         # Shift them
         measurements = np.roll(perfect_meas_ordered, 1, axis=1)
         association = tracker.find_association(measurements, self.meas_mat, eye(2))
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             measurements[:, association], perfect_meas_ordered
         )
 
         # Shift them and add a bit of noise
         measurements = np.roll(perfect_meas_ordered, 1, axis=1) + 0.1
         association = tracker.find_association(measurements, self.meas_mat, eye(2))
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             measurements[:, association], perfect_meas_ordered + 0.1
         )
 
@@ -166,7 +167,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             self.meas_mat,
             self.all_different_meas_covs,
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             measurements[:, association], perfect_meas_ordered + 0.1
         )
 
@@ -183,7 +184,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         )
         measurements = column_stack([perfect_meas_ordered, array([3, 2])])
         association = tracker.find_association(measurements, self.meas_mat, eye(2))
-        np.testing.assert_array_equal(association, [0, 1, 2])
+        npt.assert_array_equal(association, [0, 1, 2])
 
         # Shift them and add one measurement
         measurements = column_stack(
@@ -195,7 +196,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             ]
         )
         association = tracker.find_association(measurements, self.meas_mat, eye(2))
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             measurements[:, association], perfect_meas_ordered
         )
 
@@ -203,7 +204,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         association = tracker.find_association(
             measurements + 0.1, self.meas_mat, eye(2)
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             measurements[:, association] + 0.1, perfect_meas_ordered + 0.1
         )
 
@@ -211,7 +212,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         association = tracker.find_association(
             measurements + 0.1, self.meas_mat, self.all_different_meas_covs_4
         )
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             measurements[:, association] + 0.1, perfect_meas_ordered + 0.1
         )
 

@@ -6,7 +6,7 @@ from pyrecest.backend import array
 from pyrecest.backend import zeros
 """ Test cases for DiskUniformDistribution"""
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.distributions import DiskUniformDistribution
 
@@ -25,7 +25,7 @@ class TestDiskUniformDistribution(unittest.TestCase):
         ).T
         pdf_values = dist.pdf(xs)
 
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             pdf_values,
             1
             / pi

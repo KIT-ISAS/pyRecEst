@@ -30,23 +30,23 @@ class TestRandomMatrixTracker(unittest.TestCase):
         )
 
     def test_initialization(self):
-        np.testing.assert_array_equal(self.tracker.kinematic_state, self.initial_state)
-        np.testing.assert_array_equal(self.tracker.covariance, self.initial_covariance)
-        np.testing.assert_array_equal(self.tracker.extent, self.initial_extent)
+        npt.assert_array_equal(self.tracker.kinematic_state, self.initial_state)
+        npt.assert_array_equal(self.tracker.covariance, self.initial_covariance)
+        npt.assert_array_equal(self.tracker.extent, self.initial_extent)
 
     def test_get_point_estimate(self):
         expected = concatenate(
             [self.initial_state, array(self.initial_extent).flatten()]
         )
-        np.testing.assert_array_equal(self.tracker.get_point_estimate(), expected)
+        npt.assert_array_equal(self.tracker.get_point_estimate(), expected)
 
     def test_get_point_estimate_kinematics(self):
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             self.tracker.get_point_estimate_kinematics(), self.initial_state
         )
 
     def test_get_point_estimate_extent(self):
-        np.testing.assert_array_equal(
+        npt.assert_array_equal(
             self.tracker.get_point_estimate_extent(), self.initial_extent
         )
 
@@ -65,13 +65,13 @@ class TestRandomMatrixTracker(unittest.TestCase):
         expected_covariance = self.initial_covariance + Cw
         expected_extent = self.initial_extent
 
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             self.tracker.kinematic_state, expected_state, decimal=5
         )
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             self.tracker.covariance, expected_covariance, decimal=5
         )
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             self.tracker.extent, expected_extent, decimal=5
         )
 
@@ -105,20 +105,20 @@ class TestRandomMatrixTracker(unittest.TestCase):
             mean(ys, axis=1), H, (self.initial_extent + Cv) / ys.shape[1]
         )
 
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             self.tracker.kinematic_state, kf.get_point_estimate(), decimal=5
         )
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             self.tracker.covariance, kf.filter_state.C, decimal=5
         )
 
         # Check if extent has changed as expected
         if name == "smaller":
-            np.testing.assert_array_less(
+            npt.assert_array_less(
                 zeros(2), linalg.eig(self.initial_extent - self.tracker.extent)[0]
             )
         elif name == "larger":
-            np.testing.assert_array_less(
+            npt.assert_array_less(
                 zeros(2), linalg.eig(self.tracker.extent - self.initial_extent)[0]
             )
         else:

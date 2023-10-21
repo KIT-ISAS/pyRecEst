@@ -41,6 +41,7 @@ from pyrecest.evaluation import (
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 from shapely.geometry import Polygon
+import numpy.testing as npt
 
 
 class TestEvalationBase(unittest.TestCase):
@@ -200,12 +201,12 @@ class TestEvalationBasics(TestEvalationBase):
         assert len(all_deviations) == len(results)
 
         # Validate some of the results
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             # Should be zeros as the lastEstimates match groundtruths
             all_deviations[0],
             [0.0, 0.0, 0.0],
         )
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             # Should be sqrt(2) away from groundtruths
             all_deviations[1],
             [sqrt(2), sqrt(2), sqrt(2)],

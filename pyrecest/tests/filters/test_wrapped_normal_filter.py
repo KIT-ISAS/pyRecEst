@@ -3,7 +3,7 @@ from pyrecest.backend import array
 
 from pyrecest.distributions import WrappedNormalDistribution
 from pyrecest.filters.wrapped_normal_filter import WrappedNormalFilter
-
+import numpy.testing as npt
 
 class WrappedNormalFilterTest(unittest.TestCase):
 
@@ -31,7 +31,7 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.wn_filter.update_identity(self.meas_noise, self.wn.mu)
         wn_identity = self.wn_filter.filter_state
         self.assertIsInstance(wn_identity, WrappedNormalDistribution)
-        np.testing.assert_almost_equal(self.wn.mu, wn_identity.mu)
+        npt.assert_almost_equal(self.wn.mu, wn_identity.mu)
         self.assertGreater(self.wn.sigma, wn_identity.sigma)
 
         # reset filter state for the next test within this function

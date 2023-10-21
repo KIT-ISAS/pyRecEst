@@ -4,6 +4,7 @@ from pyrecest.backend import sum
 from pyrecest.backend import ones
 from pyrecest.backend import array
 import unittest
+import numpy.testing as npt
 
 
 from pyrecest.distributions import (
@@ -35,7 +36,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         """Tests mode_numerical."""
         watson_dist = HyperhemisphericalWatsonDistribution(self.mu_, self.kappa_)
         mode_numerical = watson_dist.mode_numerical()
-        np.testing.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
+        npt.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
 
     def test_sample_metropolis_hastings_basics_only(self):
         """Tests the sample_metropolis_hastings sampling"""
@@ -48,7 +49,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         for s in samples:
             with self.subTest(sample=s):
                 self.assertEqual(s.shape, (n, chd.input_dim))
-                np.testing.assert_allclose(
+                npt.assert_allclose(
                     sum(s**2, axis=1), ones(n), rtol=1e-10
                 )
 
