@@ -7,6 +7,7 @@ from pyrecest.backend import array
 from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import zeros
+from pyrecest.backend import column_stack
 import unittest
 import warnings
 
@@ -36,9 +37,9 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         self.assertAlmostEqual(shd.integrate(), 1, delta=1e-6)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)
 
-        vals_normalized = shd.pdf(np.column_stack((x, y, z)))
+        vals_normalized = shd.pdf(column_stack((x, y, z)))
         shd.coeff_mat = unnormalized_coeffs
-        vals_unnormalized = shd.pdf(np.column_stack((x, y, z)))
+        vals_unnormalized = shd.pdf(column_stack((x, y, z)))
         self.assertTrue(
             allclose(
                 np.diff(vals_normalized / vals_unnormalized),

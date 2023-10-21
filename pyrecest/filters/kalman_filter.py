@@ -8,9 +8,7 @@ from .abstract_euclidean_filter import AbstractEuclideanFilter
 
 
 class KalmanFilter(AbstractEuclideanFilter):
-    def __init__(
-        self, initial_state: GaussianDistribution | tuple[, ]
-    ):
+    def __init__(self, initial_state):
         """
         Initialize the Kalman filter with the initial state.
 
@@ -35,9 +33,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
 
     @filter_state.setter
-    def filter_state(
-        self, new_state: GaussianDistribution | tuple[, ]
-    ):
+    def filter_state(self, new_state):
         """
         Set the filter state.
 
@@ -54,7 +50,7 @@ class KalmanFilter(AbstractEuclideanFilter):
                 "new_state must be a GaussianDistribution or a tuple of (mean, covariance)"
             )
 
-    def predict_identity(self, sys_noise_cov, sys_input:  = None):
+    def predict_identity(self, sys_noise_cov, sys_input = None):
         """
         Predicts the next state assuming identity transition matrix.
 

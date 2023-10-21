@@ -37,7 +37,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
 
         if dim == 1:
             # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
-            filter_state = CircularDiracDistribution(linspace(0.0, 2.0 * pi, num = n_particles, endpoint=False)
+            filter_state = CircularDiracDistribution(linspace(0.0, 2.0 * pi, num = n_particles, endpoint=False))
         else:
             filter_state = HypertoroidalDiracDistribution(
                 tile(

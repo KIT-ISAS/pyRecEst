@@ -8,7 +8,7 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class CircularDiracDistribution(
     HypertoroidalDiracDistribution, AbstractCircularDistribution
 ):
-    def __init__(self, d, w):
+    def __init__(self, d, w=None):
         """
         Initializes a CircularDiracDistribution instance.
 
