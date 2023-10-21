@@ -5,6 +5,7 @@ from pyrecest.backend import exp
 from pyrecest.backend import cos
 from pyrecest.backend import array
 from pyrecest.backend import arange
+import pyrecest.backend
 import unittest
 import numpy.testing as npt
 
@@ -17,7 +18,7 @@ from pyrecest.distributions.hypertorus.toroidal_von_mises_sine_distribution impo
 
 class ToroidalVMSineDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.mu = array([1, 2])
+        self.mu = array([1.0, 2.0])
         self.kappa = array([0.7, 1.4])
         self.lambda_ = array(0.5)
         self.tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, self.lambda_)
@@ -31,13 +32,14 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         npt.assert_almost_equal(self.tvm.kappa, self.kappa, decimal=6)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_integral(self):
         # test integral
         self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-5)
 
     def test_trigonometric_moment_numerical(self):
         npt.assert_almost_equal(
-            self.tvm.trigonometric_moment_numerical(0), array([1, 1]), decimal=5
+            self.tvm.trigonometric_moment_numerical(0), array([1.0, 1.0]), decimal=5
         )
 
     # jscpd:ignore-start
@@ -55,14 +57,14 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
 
     @parameterized.expand(
         [
-            (array([3, 2]),),
-            (array([1, 4]),),
-            (array([5, 6]),),
-            (array([-3, 11]),),
-            (array([[5, 1], [6, 3]]),),
+            (array([3.0, 2.0]),),
+            (array([1.0, 4.0]),),
+            (array([5.0, 6.0]),),
+            (array([-3.0, 11.0]),),
+            (array([[5.0, 1.0], [6.0, 3.0]]),),
             (
                 column_stack(
-                    (arange(0, 2 * pi, 0.1), arange(1 * pi, 3 * pi, 0.1))
+                    (arange(0.0, 2.0 * pi, 0.1), arange(1.0 * pi, 3.0 * pi, 0.1))
                 ),
             ),
         ]

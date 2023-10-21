@@ -44,8 +44,8 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
                 ).T
             )
 
-        phi1_test = [1.0, 2.0, 0.0, 0.3, 1.1]
-        phi2_test = [2.0, 3.0, 0.1, 3.0, 1.1]
+        phi1_test = array([1.0, 2.0, 0.0, 0.3, 1.1])
+        phi2_test = array([2.0, 3.0, 0.1, 3.0, 1.1])
 
         npt.assert_array_almost_equal(
             pdf_hyperspherical(phi1_test, phi2_test), fangles_2d(phi1_test, phi2_test)

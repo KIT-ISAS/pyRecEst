@@ -259,13 +259,13 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         # Define bounds for the optimization
         bounds = [
-            (0, 2 * pi) if i < self.bound_dim else (-float('inf'), float('inf'))
+            (0.0, 2.0 * pi) if i < self.bound_dim else (-float('inf'), float('inf'))
             for i in range(self.bound_dim + self.lin_dim)
         ]
 
         # Perform the optimization
         res = scipy.optimize.minimize(
-            lambda x: -self.pdf(x), starting_point, bounds=bounds
+            lambda x: -self.pdf(array(x)), starting_point, bounds=bounds
         )
 
         # Check if the optimization might have stopped early

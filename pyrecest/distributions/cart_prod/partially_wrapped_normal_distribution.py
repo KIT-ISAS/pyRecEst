@@ -57,12 +57,12 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
         xs = atleast_2d(xs)
         if self.bound_dim > 0:
-            xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2 * pi)
+            xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2.0 * pi)
 
         assert xs.shape[-1] == self.input_dim
 
         # generate multiples for wrapping
-        multiples = array(range(-m, m + 1)) * 2 * pi
+        multiples = array(range(-m, m + 1)) * 2.0 * pi
 
         # create meshgrid for all combinations of multiples
         mesh = array(meshgrid(*[multiples] * self.bound_dim)).reshape(
