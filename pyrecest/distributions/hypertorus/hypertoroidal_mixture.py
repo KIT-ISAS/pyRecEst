@@ -17,7 +17,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractHypertoroidalDistribution],
-        w:  | None = None,
+        w = None,
     ):
         """
         Constructor

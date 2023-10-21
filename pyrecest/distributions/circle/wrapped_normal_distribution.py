@@ -95,7 +95,7 @@ class WrappedNormalDistribution(
 
     def cdf(
         self,
-        xs: ,
+        xs,
         startingPoint: float = 0,
         n_wraps: Union[int, int32, int64] = 10,
     ):

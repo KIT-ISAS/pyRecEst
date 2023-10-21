@@ -16,7 +16,7 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractCircularDistribution],
-        w: ,
+        w,
     ):
         """
         Creates a new circular mixture.

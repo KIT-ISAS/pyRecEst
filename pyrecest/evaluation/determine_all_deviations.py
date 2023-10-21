@@ -13,7 +13,7 @@ def determine_all_deviations(
     results,
     extract_mean,
     distance_function: Callable,
-    groundtruths: ,
+    groundtruths,
     mean_calculation_symm: str = "",
 ):
     if mean_calculation_symm != "":

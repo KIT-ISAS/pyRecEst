@@ -35,9 +35,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     def __init__(
         self,
         transformation: str = "sqrt",
-        c:  | None = None,
-        a:  | None = None,
-        b:  | None = None,
+        c = None,
+        a = None,
+        b = None,
         n: int | None = None,
         multiplied_by_n: bool = True,
     ):
@@ -177,8 +177,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             a: array = self.a
             b: array = self.b
             if self.multiplied_by_n:
-                a = a * (1 / self.n)
-                b = b * (1 / self.n)
+                a = a * (1.0 / self.n)
+                b = b * (1.0 / self.n)
 
             if self.transformation == "identity":
                 a0_non_rooted = a[0]
@@ -192,7 +192,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         elif self.c is not None:
             if self.transformation == "identity":
                 if self.multiplied_by_n:
-                    c0 = real(self.c[0]) * (1 / self.n)
+                    c0 = real(self.c[0]) * (1.0 / self.n)
                 else:
                     c0 = real(self.c[0])
                 integral = 2.0 * pi * c0
@@ -206,7 +206,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                     (imag(c[1:])) ** 2
                 )
 
-                a0_non_rooted = 2 * from_c0 + 4 * from_c1_to_end
+                a0_non_rooted = 2.0 * from_c0 + 4.0 * from_c1_to_end
                 integral = a0_non_rooted * pi
             else:
                 raise NotImplementedError("Transformation not supported.")
@@ -323,7 +323,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def from_function_values(
-        fvals: ,
+        fvals,
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":

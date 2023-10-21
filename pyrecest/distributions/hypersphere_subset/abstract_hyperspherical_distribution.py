@@ -46,7 +46,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point:  | None = None,
+        start_point = None,
     ):
         # jscpd:ignore-end
         """

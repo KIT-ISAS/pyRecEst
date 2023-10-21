@@ -67,9 +67,9 @@ class KalmanFilter(AbstractEuclideanFilter):
 
     def predict_linear(
         self,
-        system_matrix: ,
-        sys_noise_cov: ,
-        sys_input:  | None = None,
+        system_matrix,
+        sys_noise_cov,
+        sys_input = None,
     ):
         """
         Predicts the next state assuming a linear system model.
@@ -101,9 +101,9 @@ class KalmanFilter(AbstractEuclideanFilter):
 
     def update_linear(
         self,
-        measurement: ,
-        measurement_matrix: ,
-        meas_noise: ,
+        measurement,
+        measurement_matrix,
+        meas_noise,
     ):
         """
         Update the filter state with measurement, assuming a linear measurement model.
