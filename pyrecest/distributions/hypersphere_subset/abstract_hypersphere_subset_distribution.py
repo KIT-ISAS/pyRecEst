@@ -15,6 +15,7 @@ from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
 from pyrecest.backend import empty
+from pyrecest.backend import array
 from abc import abstractmethod
 from collections.abc import Callable
 

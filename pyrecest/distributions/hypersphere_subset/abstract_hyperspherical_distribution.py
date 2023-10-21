@@ -12,6 +12,7 @@ from pyrecest.backend import array
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
+from pyrecest.backend import meshgrid
 from collections.abc import Callable
 
 import matplotlib.pyplot as plt
@@ -208,10 +209,9 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
 
     @staticmethod
     def create_sphere(faces):
-        phi, theta = np.mgrid[
-            0.0 : pi : complex(0, faces),  # noqa: E203
-            0.0 : 2.0 * pi : complex(0, faces),  # noqa: E203
-        ]
+        phi_linspace = linspace(0.0, pi, faces)
+        theta_linspace = linspace(0.0, 2.0 * pi, faces)
+        phi, theta = meshgrid(phi_linspace, theta_linspace, indexing='ij')
         x = sin(phi) * cos(theta)
         y = sin(phi) * sin(theta)
         z = cos(phi)
