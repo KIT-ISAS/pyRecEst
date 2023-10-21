@@ -191,7 +191,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         mom = self.moment_numerical()
         return AbstractHypersphereSubsetDistribution._compute_mean_axis_from_moment(mom)
 
-    def integrate(self, integration_boundaries:  | None = None):
+    def integrate(self, integration_boundaries):
         if integration_boundaries is None:
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim

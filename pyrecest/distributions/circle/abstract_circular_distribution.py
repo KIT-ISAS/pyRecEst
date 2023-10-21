@@ -37,11 +37,11 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         starting_point,
     ):
         """Helper method for cdf_numerical"""
-        starting_point_mod = mod(starting_point, 2 * pi)
-        x_mod = mod(x, 2 * pi)
+        starting_point_mod = mod(starting_point, 2.0 * pi)
+        x_mod = mod(x, 2.0 * pi)
 
         if x_mod < starting_point_mod:
-            return 1 - self.integrate_numerically(array([x_mod, starting_point_mod]))
+            return 1.0 - self.integrate_numerically(array([x_mod, starting_point_mod]))
 
         return self.integrate_numerically(array([starting_point_mod, x_mod]))
 
