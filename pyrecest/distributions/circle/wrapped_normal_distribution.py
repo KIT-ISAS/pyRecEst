@@ -37,8 +37,8 @@ class WrappedNormalDistribution(
 
     def __init__(
         self,
-        mu: Any | numbers.Real | ,
-        sigma: Any | numbers.Real | ,
+        mu,
+        sigma,
     ):
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
@@ -50,7 +50,7 @@ class WrappedNormalDistribution(
     def sigma(self):
         return sqrt(self.C)
 
-    def pdf(self, xs:  | Any | numbers.Real):
+    def pdf(self, xs):
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
@@ -65,14 +65,14 @@ class WrappedNormalDistribution(
             result[:] = 1.0 / (2 * pi)
             return result
 
-        x = mod(xs, 2 * pi)
-        x[x < 0] += 2 * pi
+        x = mod(xs, 2.0 * pi)
+        x[x < 0] += 2.0 * pi
         x -= self.mu
 
         max_iterations = 1000
 
-        tmp = -1.0 / (2 * self.sigma**2)
-        nc = 1 / sqrt(2 * pi) / self.sigma
+        tmp = -1.0 / (2.0 * self.sigma**2)
+        nc = 1.0 / sqrt(2.0 * pi) / self.sigma
 
         for i in range(n_inputs):
             old_result = 0
@@ -125,7 +125,7 @@ class WrappedNormalDistribution(
 
     def trigonometric_moment(
         self, n: Union[int, int32, int64]
-    ) -> complex | :
+    ):
         return exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
     def multiply(

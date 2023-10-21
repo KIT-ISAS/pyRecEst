@@ -113,7 +113,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             ).T
         return integration_boundaries
 
-    def integrate(self, integration_boundaries:  | None = None) -> float:
+    def integrate(self, integration_boundaries = None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -123,7 +123,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return super().integrate(integration_boundaries)
 
     def integrate_numerically(
-        self, integration_boundaries:  | None = None
+        self, integration_boundaries=None
     ) -> float:
         if integration_boundaries is None:
             integration_boundaries = (

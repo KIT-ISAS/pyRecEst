@@ -44,7 +44,7 @@ class CustomCircularDistribution(
             self, mod(xs + self.shift_by, 2 * pi)
         )
 
-    def integrate(self, integration_boundaries:  | None = None) -> float:
+    def integrate(self, integration_boundaries=None) -> float:
         """
         Computes the integral of the pdf over the given boundaries.
 
@@ -56,5 +56,5 @@ class CustomCircularDistribution(
             float: The value of the integral.
         """
         if integration_boundaries is None:
-            integration_boundaries = array([0, 2 * pi])
+            integration_boundaries = array([0.0, 2.0 * pi])
         return AbstractCircularDistribution.integrate(self, integration_boundaries)

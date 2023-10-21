@@ -25,7 +25,7 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class VonMisesDistribution(AbstractCircularDistribution):
     def __init__(
         self,
-        mu: Any | numbers.Real,
+        mu,
         kappa,
         norm_const: float | None = None,
     ):
@@ -50,8 +50,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def besselratio(
-        nu: Any | numbers.Real, kappa: Any | numbers.Real
-    ) -> Any | numbers.Real:
+        nu, kappa):
         return iv(nu + 1, kappa) / iv(nu, kappa)
 
     def cdf(self, xs, starting_point=0):
@@ -73,9 +72,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
         r = zeros_like(xs)
 
-        def to_minus_pi_to_pi_range(
-            angle: Any | numbers.Real | ,
-        ) -> Any | numbers.Real | :
+        def to_minus_pi_to_pi_range(angle):
             return mod(angle + pi, 2 * pi) - pi
 
         r = vonmises.cdf(
@@ -96,9 +93,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return r
 
     @staticmethod
-    def besselratio_inverse(
-        v: Any | numbers.Real, x: Any | numbers.Real
-    ) -> Any | numbers.Real:
+    def besselratio_inverse(v, x):
         def f(t: float) -> float:
             return VonMisesDistribution.besselratio(v, t) - x
 
@@ -114,7 +109,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return VonMisesDistribution(mu_, kappa_)
 
     def convolve(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
-        mu_ = mod(self.mu + vm2.mu, 2 * pi)
+        mu_ = mod(self.mu + vm2.mu, 2.0 * pi)
         t = VonMisesDistribution.besselratio(
             0, self.kappa
         ) * VonMisesDistribution.besselratio(0, vm2.kappa)
@@ -123,7 +118,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     def entropy(self):
         result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + log(
-            2 * pi * iv(0, self.kappa)
+            2.0 * pi * iv(0, self.kappa)
         )
         return result
 
@@ -138,7 +133,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         Returns:
             vm (VMDistribution): VM distribution obtained by moment matching.
         """
-        mu_ = mod(arctan2(imag(m), real(m)), 2 * pi)
+        mu_ = mod(arctan2(imag(m), real(m)), 2.0 * pi)
         kappa_ = VonMisesDistribution.besselratio_inverse(0, abs(m))
         vm = VonMisesDistribution(mu_, kappa_)
         return vm

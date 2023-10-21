@@ -23,7 +23,7 @@ from .bingham_distribution import BinghamDistribution
 class WatsonDistribution(AbstractHypersphericalDistribution):
     EPSILON = 1e-6
 
-    def __init__(self, mu, kappa: Any | numbers.Real):
+    def __init__(self, mu, kappa):
         """
         Initializes a new instance of the WatsonDistribution class.
 

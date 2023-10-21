@@ -13,6 +13,7 @@ from pyrecest.backend import all
 from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
+from pyrecest.backend import zeros
 import numbers
 
 
@@ -24,7 +25,7 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
-    def __init__(self, mu, kappa: Any | numbers.Real):
+    def __init__(self, mu, kappa):
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6
         assert (
@@ -42,7 +43,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
                 (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, kappa)
             )
 
-    def pdf(self, xs:  | Any) ->  | Any:
+    def pdf(self, xs):
         assert xs.shape[-1] == self.input_dim
 
         return self.C * exp(self.kappa * self.mu.T @ xs.T)

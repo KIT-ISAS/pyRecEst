@@ -14,7 +14,7 @@ from pyrecest.backend import arange
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import array
-from pyrecest
+from pyrecest.backend import conj
 import warnings
 
 import matplotlib.pyplot as plt
@@ -246,13 +246,13 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
         return p
 
-    def get_a_b(self) -> tuple[, ]:
+    def get_a_b(self):
         if self.a is not None:
             a = self.a
             b = self.b
         elif self.c is not None:
-            a = 2 * real(self.c)
-            b = -2 * imag(self.c[1:])
+            a = 2.0 * real(self.c)
+            b = -2.0 * imag(self.c[1:])
         assert (
             self.n is None or (a.shape[0] + b.shape[0]) == self.n
         )  # Other case not implemented yet!

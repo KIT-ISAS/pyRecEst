@@ -16,7 +16,7 @@ from .watson_distribution import WatsonDistribution
 
 
 class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistribution):
-    def __init__(self, mu, kappa: Any | numbers.Real):
+    def __init__(self, mu, kappa):
         assert mu[-1] >= 0
         self.dist_full_sphere = WatsonDistribution(mu, kappa)
         AbstractHyperhemisphericalDistribution.__init__(
@@ -26,7 +26,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
     def pdf(self, xs):
         return 2 * self.dist_full_sphere.pdf(xs)
 
-    def set_mode(self, mu: ) -> "HyperhemisphericalWatsonDistribution":
+    def set_mode(self, mu) -> "HyperhemisphericalWatsonDistribution":
         w = self
         w.mu = mu
         return w
