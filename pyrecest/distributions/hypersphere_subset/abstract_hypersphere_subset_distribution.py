@@ -152,7 +152,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             if dim == 1:
 
                 def g_1d(phi):
-                    return f_hypersph_coords(phi)
+                    return f_hypersph_coords(array(phi))
 
                 return g_1d
             if dim == 2:
@@ -165,7 +165,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
                 def g_3d(phi1, phi2, phi3):
                     return (
-                        f_hypersph_coords(phi1, phi2, phi3)
+                        f_hypersph_coords(array(phi1), array(phi2), array(phi3))
                         * sin(phi2)
                         * sin(phi3) ** 2
                     )
@@ -227,7 +227,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     ):
         if dim == 1:
             i, _ = quad(
-                f_hypersph_coords,
+                lambda phi: f_hypersph_coords(array(phi)),
                 integration_boundaries[0],
                 integration_boundaries[1],
                 epsabs=0.01,

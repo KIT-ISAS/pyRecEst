@@ -126,7 +126,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
                 [1.0, 0.0, 0.0, -1.0],
             ]
         )
-        xs = xs_unnorm / linalg.norm(xs_unnorm, axis=1, keepdims=True)
+        xs = xs_unnorm / linalg.norm(xs_unnorm, axis=1).reshape(-1, 1)
 
         npt.assert_array_almost_equal(
             dist.pdf(xs),
@@ -169,15 +169,15 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
 
     def test_hellinger_distance_2d(self):
         # 2D
-        vmf1 = VonMisesFisherDistribution(array([1.0, 0.0]), 0.9)
-        vmf2 = VonMisesFisherDistribution(array([0.0, 1.0]), 1.7)
+        vmf1 = VonMisesFisherDistribution(array([1.0, 0.0]), array(0.9))
+        vmf2 = VonMisesFisherDistribution(array([0.0, 1.0]), array(1.7))
         self._test_hellinger_distance_helper(vmf1, vmf2)
 
     def test_hellinger_distance_3d(self):
         # 3D
-        vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 0.6)
-        mu2 = array([1, 2, 3])
-        vmf2 = VonMisesFisherDistribution(mu2 / linalg.norm(mu2), 2.1)
+        vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), array(0.6))
+        mu2 = array([1.0, 2.0, 3.0])
+        vmf2 = VonMisesFisherDistribution(mu2 / linalg.norm(mu2), array(2.1))
         self._test_hellinger_distance_helper(vmf1, vmf2, numerical_delta=1e-6)
 
     @parameterized.expand(
@@ -196,7 +196,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
     def test_from_distribution_dirac(self):
         dirac_dist = HypersphericalDiracDistribution(
             array(
-                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 1.0] / linalg.norm(array([0.0, 1.0, 1.0]))]
+                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], array([0.0, 1.0, 1.0]) / linalg.norm(array([0.0, 1.0, 1.0]))]
             )
         )
         vmf = VonMisesFisherDistribution.from_distribution(dirac_dist)
