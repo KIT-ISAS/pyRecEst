@@ -11,6 +11,7 @@ from pyrecest.backend import meshgrid
 from pyrecest.backend import log
 from pyrecest.backend import linspace
 from pyrecest.backend import isnan
+from pyrecest.backend import angle
 from pyrecest.backend import cos
 from pyrecest.backend import array
 from pyrecest.backend import arange
@@ -231,7 +232,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def mean_direction(self):
         a = self.trigonometric_moment(1)
-        m = mod(np.angle(a), 2.0 * pi)
+        m = mod(angle(a), 2.0 * pi)
         return m
 
     def mode(self):
