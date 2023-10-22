@@ -13,7 +13,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
-from pyrecestd.backend import angle
+from pyrecest.backend import angle
 import numbers
 
 

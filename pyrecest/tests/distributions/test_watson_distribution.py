@@ -43,7 +43,7 @@ class TestWatsonDistribution(unittest.TestCase):
         )
 
         pdf_values = w.pdf(self.xs)
-        npt.assert_almost_equal(pdf_values, expected_pdf_values, decimal=5)
+        npt.assert_array_almost_equal(pdf_values, expected_pdf_values, decimal=5)
 
     def test_integrate(self):
         mu = array([1.0, 2.0, 3.0])

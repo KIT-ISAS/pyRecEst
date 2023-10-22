@@ -3,6 +3,7 @@ from pyrecest.backend import linspace
 from pyrecest.backend import exp
 from pyrecest.backend import arange
 from pyrecest.backend import array
+import pyrecest.backend
 import unittest
 import numpy.testing as npt
 
@@ -37,6 +38,7 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
         for x in [0.0, 1.0, 2.0, 3.0, 4.0]:
             npt.assert_allclose(self.wl.pdf(x), pdftemp(x), rtol=1e-10)
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_integral(self):
         npt.assert_allclose(self.wl.integrate(), 1.0, rtol=1e-10)
         npt.assert_allclose(self.wl.integrate_numerically(), 1.0, rtol=1e-10)

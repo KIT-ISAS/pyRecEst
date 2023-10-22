@@ -14,6 +14,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
+from pyrecest.backend import array
 import numbers
 
 
@@ -154,8 +155,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def a_d(d: Union[int, int32, int64], kappa):
-        bessel1 = iv(d / 2, kappa)
-        bessel2 = iv(d / 2 - 1, kappa)
+        bessel1 = array(iv(d / 2, kappa))
+        bessel2 = array(iv(d / 2 - 1, kappa))
         if isnan(bessel1) or isnan(bessel2):
             print(f"Bessel functions returned NaN for d={d}, kappa={kappa}")
         return bessel1 / bessel2
