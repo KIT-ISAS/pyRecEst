@@ -101,11 +101,11 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         return shd
 
     def mean_direction(self):
-        if prod(self.coeff_mat.shape) <= 1:
+        if self.coeff_mat.shape[0] <= 1:
             raise ValueError("Too few coefficients available to calculate the mean")
 
-        y = imag(self.coeff_mat[1, 0] + self.coeff_mat[1, 2]) / sqrt(2)
-        x = real(self.coeff_mat[1, 0] - self.coeff_mat[1, 2]) / sqrt(2)
+        y = imag(self.coeff_mat[1, 0] + self.coeff_mat[1, 2]) / sqrt(2.0)
+        x = real(self.coeff_mat[1, 0] - self.coeff_mat[1, 2]) / sqrt(2.0)
         z = real(self.coeff_mat[1, 1])
 
         if linalg.norm(array([x, y, z])) < 1e-9:

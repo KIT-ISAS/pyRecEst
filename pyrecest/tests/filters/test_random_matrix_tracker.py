@@ -7,6 +7,7 @@ from pyrecest.backend import array
 from pyrecest.backend import zeros
 import unittest
 from unittest.mock import patch
+import pyrecest.backend
 import numpy.testing as npt
 
 import matplotlib.pyplot as plt
@@ -76,6 +77,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
             self.tracker.extent, expected_extent, decimal=5
         )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     @parameterized.expand(
         [
             (

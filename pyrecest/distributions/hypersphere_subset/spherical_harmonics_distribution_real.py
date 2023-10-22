@@ -1,4 +1,4 @@
-from pyrecest.backend import full
+from pyrecest.backend import full_like
 from pyrecest.backend import atleast_2d
 from pyrecest.backend import sqrt
 from pyrecest.backend import real
@@ -6,6 +6,7 @@ from pyrecest.backend import imag
 from pyrecest.backend import all
 from pyrecest.backend import zeros
 from pyrecest.backend import isreal
+from pyrecest.backend import complex128
 
 
 
@@ -63,19 +64,19 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
             raise NotImplementedError("Transformation currently not supported")
 
         real_coeff_mat = self.coeff_mat
-        complex_coeff_mat = full_like(real_coeff_mat, float('NaN'), dtype=complex)
+        complex_coeff_mat = full_like(real_coeff_mat, float('NaN'), dtype=complex128)
 
         for n in range(real_coeff_mat.shape[0]):
             for m in range(-n, n + 1):
                 if m < 0:
                     complex_coeff_mat[n, n + m] = (
                         1j * real_coeff_mat[n, n + m] + real_coeff_mat[n, n - m]
-                    ) / sqrt(2)
+                    ) / sqrt(2.0)
                 elif m > 0:
                     complex_coeff_mat[n, n + m] = (
                         (-1) ** m
                         * (-1j * real_coeff_mat[n, n - m] + real_coeff_mat[n, n + m])
-                        / sqrt(2)
+                        / sqrt(2.0)
                     )
                 else:  # m == 0
                     complex_coeff_mat[n, n] = real_coeff_mat[n, n]

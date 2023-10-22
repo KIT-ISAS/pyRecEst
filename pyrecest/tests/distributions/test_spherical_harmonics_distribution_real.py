@@ -24,7 +24,7 @@ from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_
 
 class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
     def testNormalizationError(self):
-        self.assertRaises(ValueError, SphericalHarmonicsDistributionReal, 0)
+        self.assertRaises(ValueError, SphericalHarmonicsDistributionReal, array(0.0))
 
     def testNormalizationWarning(self):
         with warnings.catch_warnings(record=True) as w:

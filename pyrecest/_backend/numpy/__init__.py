@@ -88,7 +88,8 @@ from numpy import (
     angle,
     arctan,
     cov,
-    count_nonzero
+    count_nonzero,
+    full_like,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

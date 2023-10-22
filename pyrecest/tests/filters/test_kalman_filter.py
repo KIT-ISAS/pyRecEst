@@ -6,7 +6,7 @@ from pyrecest.backend import all
 import numpy.testing as npt
 import copy
 import unittest
-
+import pyrecest.backend
 
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.kalman_filter import KalmanFilter
@@ -23,17 +23,20 @@ class KalmanFilterTest(unittest.TestCase):
         )
         npt.assert_equal(filter_custom.get_point_estimate(), array([4]))
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_update_with_likelihood_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.update_identity(array(1), array(3))
         npt.assert_equal(kf.get_point_estimate(), 1.5)
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_update_with_meas_noise_and_meas_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.update_identity(array(1), array(4))
         npt.assert_equal(kf.filter_state.C, 0.5)
         npt.assert_equal(kf.get_point_estimate(), 2)
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_update_linear_2d(self):
         filter_add = KalmanFilter((array([0, 1]), diag([1, 2])))
         filter_id = copy.deepcopy(filter_add)
@@ -47,18 +50,20 @@ class KalmanFilterTest(unittest.TestCase):
             allclose(filter_add.filter_state.C, filter_id.filter_state.C)
         )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_predict_identity_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.predict_identity(array([[3]]), array([1]))
         npt.assert_equal(kf.get_point_estimate(), array(1))
         npt.assert_equal(kf.filter_state.C, array(4))
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_predict_linear_2d(self):
-        kf = KalmanFilter((array([0, 1]), diag([1, 2])))
-        kf.predict_linear(diag([1, 2]), diag([2, 1]))
+        kf = KalmanFilter((array([0, 1]), diag(array([1, 2]))))
+        kf.predict_linear(diag(array([1, 2])), diag(array([2, 1])))
         self.assertTrue(allclose(kf.get_point_estimate(), array([0, 2])))
-        self.assertTrue(allclose(kf.filter_state.C, diag([3, 9])))
-        kf.predict_linear(diag([1, 2]), diag([2, 1]), array([2, -2]))
+        self.assertTrue(allclose(kf.filter_state.C, diag(array([3, 9]))))
+        kf.predict_linear(diag(array([1, 2])), diag(array([2, 1])), array([2, -2]))
         self.assertTrue(allclose(kf.get_point_estimate(), array([2, 2])))
 
 

@@ -57,7 +57,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
 
     def test_mormalization_error(self):
-        self.assertRaises(ValueError, SphericalHarmonicsDistributionComplex, 0)
+        self.assertRaises(ValueError, SphericalHarmonicsDistributionComplex, array(0.0))
 
     def test_normalization(self):
         with self.assertWarns(Warning):
@@ -67,8 +67,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
         # Enforce unnormalized coefficients and compare ratio
         phi, theta = (
-            random.rand(1, 10) * 2 * pi,
-            random.rand(1, 10) * pi - pi / 2,
+            random.rand(1, 10) * 2.0 * pi,
+            random.rand(1, 10) * pi - pi / 2.0,
         )
         x, y, z = array(
             [cos(theta) * cos(phi), cos(theta) * sin(phi), sin(theta)]
@@ -110,13 +110,13 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
         # First initialize and overwrite afterward to prevent normalization
         shd = SphericalHarmonicsDistributionComplex(
-            array([[1, float('NaN'), float('NaN')], [0.0, 0.0, 0]])
+            array([[1.0, float('NaN'), float('NaN')], [0.0, 0.0, 0.0]])
         )
         shd.coeff_mat = unnormalized_coeffs
         shd.transformation = transformation
         int_val_num = shd.integrate_numerically()
         int_val_ana = shd.integrate()
-        self.assertAlmostEqual(int_val_ana, int_val_num, places=5)
+        npt.assert_almost_equal(int_val_ana, int_val_num)
 
     def test_truncation(self):
         shd = SphericalHarmonicsDistributionComplex(self.unnormalized_coeffs)
@@ -874,19 +874,19 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                     [
                         [1, float('NaN'), float('NaN')],
                         [
-                            sqrt(1 / 2) + 1j * sqrt(1 / 2),
+                            sqrt(1.0 / 2.0) + 1j * sqrt(1.0 / 2.0),
                             0.0,
-                            -sqrt(1 / 2) + 1j * sqrt(1 / 2),
+                            -sqrt(1.0 / 2.0) + 1j * sqrt(1.0 / 2.0),
                         ],
                     ]
                 ),
-                array([1, 1, 0]) / sqrt(2.0),
+                array([1.0, 1.0, 0.0]) / sqrt(2.0),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
                 "shd_xz",
-                array([[1, float('NaN'), float('NaN')], [sqrt(1 / 2), 1, -sqrt(1 / 2)]]),
-                array([1, 0.0, 1]) / sqrt(2),
+                array([[1.0, float('NaN'), float('NaN')], [sqrt(1 / 2), 1, -sqrt(1.0 / 2.0)]]),
+                array([1., 0.0, 1.0]) / sqrt(2.0),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
@@ -894,43 +894,41 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 array(
                     [[1, float('NaN'), float('NaN')], [1j * sqrt(1 / 2), 1, 1j * sqrt(1 / 2)]]
                 ),
-                array([0.0, 1, 1]) / sqrt(2),
+                array([0.0, 1.0, 1.0]) / sqrt(2.0),
                 SphericalHarmonicsDistributionComplex.mean_direction,
             ),
             (
                 "numerical_shd_x",
-                array([[1, float('NaN'), float('NaN')], [sqrt(1 / 2), 0.0, -sqrt(1 / 2)]]),
-                array([1, 0.0, 0]),
+                [[1, float('NaN'), float('NaN')], [sqrt(1 / 2), 0.0, -sqrt(1 / 2)]],
+                [1, 0.0, 0.0],
                 SphericalHarmonicsDistributionComplex.mean_direction_numerical,
             ),
             (
                 "numerical_shd_y",
-                array(
-                    [[1, float('NaN'), float('NaN')], [1j * sqrt(1 / 2), 0.0, 1j * sqrt(1 / 2)]]
-                ),
-                array([0.0, 1, 0]),
+                [[1.0, float('NaN'), float('NaN')], [1j * sqrt(1 / 2), 0.0, 1j * sqrt(1.0 / 2.0)]],
+                [0.0, 1.0, 0.0],
                 SphericalHarmonicsDistributionComplex.mean_direction_numerical,
             ),
             (
                 "numerical_shd_z",
-                array([[1, float('NaN'), float('NaN')], [0.0, 1, 0]]),
-                array([0.0, 0.0, 1]),
+                [[1.0, float('NaN'), float('NaN')], [0.0, 1.0, 0]],
+                [0.0, 0.0, 1.0],
                 SphericalHarmonicsDistributionComplex.mean_direction_numerical,
             ),
         ]
     )
     def test_mean_direction(self, _, input_array, expected_output, fun_to_test):
-        shd = SphericalHarmonicsDistributionComplex(input_array)
+        shd = SphericalHarmonicsDistributionComplex(array(input_array))
         npt.assert_allclose(fun_to_test(shd), expected_output, atol=1e-10)
 
     def test_from_distribution_via_integral_vmf(self):
         # Test approximating a VMF
-        dist = VonMisesFisherDistribution(array([-1, -1, 0] / sqrt(2)), 1)
+        dist = VonMisesFisherDistribution(array([-1.0, -1.0, 0.0]) / sqrt(2.0), array(1.0))
         shd = SphericalHarmonicsDistributionComplex.from_distribution_via_integral(
             dist, 3
         )
         phi, theta = meshgrid(
-            linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10)
+            linspace(0.0, 2.0 * pi, 10), linspace(-pi / 2.0, pi / 2.0, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(
@@ -1034,19 +1032,19 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             (
                 "xyminus",
                 [
-                    [1 / sqrt(4 * pi), float('NaN'), float('NaN')],
+                    [1.0 / sqrt(4 * pi), float('NaN'), float('NaN')],
                     [
-                        -1j * sqrt(1 / 2) - sqrt(1 / 2),
+                        -1j * sqrt(1 / 2) - sqrt(1.0 / 2.0),
                         0.0,
-                        -1j * sqrt(1 / 2) + sqrt(1 / 2),
+                        -1j * sqrt(1 / 2) + sqrt(1.0 / 2.0),
                     ],
                 ],
-                1 / sqrt(2) * array([-1, -1, 0]),
+                1 / sqrt(2) * array([-1.0, -1.0, 0.0]),
             ),
         ]
     )
     def test_mean(self, _, coeff_mat, expected_output):
-        shd = SphericalHarmonicsDistributionComplex(coeff_mat)
+        shd = SphericalHarmonicsDistributionComplex(array(coeff_mat))
         npt.assert_allclose(shd.mean_direction(), expected_output, atol=1e-6)
 
 

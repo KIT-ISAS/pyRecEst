@@ -184,6 +184,7 @@ BACKEND_ATTRIBUTES = {
         "arctan",
         "cov",
         "count_nonzero",
+        "full_like",
     ],
     "autodiff": [
         "custom_gradient",

@@ -44,7 +44,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         x_rows = self.kinematic_state.shape[0]
         y_rows = x_rows // 2
 
-        if np.isscalar(Cw):
+        if Cw.shape in ((), (1,)):
             Cw = Cw * eye(x_rows)
 
         self.kinematic_state = F @ self.kinematic_state
