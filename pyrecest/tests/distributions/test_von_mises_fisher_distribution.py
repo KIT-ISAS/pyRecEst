@@ -27,11 +27,11 @@ vectors_to_test_2d = array(
 
 class TestVonMisesFisherDistribution(unittest.TestCase):
     def setUp(self):
-        self.mu = array([1, 2, 3])
+        self.mu = array([1.0, 2.0, 3.0])
         self.mu = self.mu / linalg.norm(self.mu)
         self.kappa = 2
         self.vmf = VonMisesFisherDistribution(self.mu, self.kappa)
-        self.other = VonMisesFisherDistribution(array([0, 0, 1]), self.kappa / 3)
+        self.other = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), self.kappa / 3.0)
 
     def test_vmf_distribution_3d_sanity_check(self):
         self.assertIsInstance(self.vmf, VonMisesFisherDistribution)
@@ -50,10 +50,10 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
     def test_vmf_distribution_3d_multiplication(self):
         vmf_mul = self.vmf.multiply(self.other)
         vmf_mul2 = self.other.multiply(self.vmf)
-        c = vmf_mul.pdf(array([1, 0, 0])) / (
-            self.vmf.pdf(array([1, 0, 0])) * self.other.pdf(array([1, 0, 0]))
+        c = vmf_mul.pdf(array([1.0, 0.0, 0.0])) / (
+            self.vmf.pdf(array([1.0, 0.0, 0.0])) * self.other.pdf(array([1.0, 0.0, 0.0]))
         )
-        x = array([0, 1, 0])
+        x = array([0.0, 1.0, 0.0])
         self.assertAlmostEqual(
             self.vmf.pdf(x) * self.other.pdf(x) * c, vmf_mul.pdf(x), delta=1e-10
         )
@@ -73,23 +73,23 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
 
     def test_init_2d(self):
-        mu = array([1, 1, 2])
+        mu = array([1.0, 1.0, 2.0])
         mu = mu / linalg.norm(mu)
-        kappa = 10
+        kappa = 10.0
         dist = VonMisesFisherDistribution(mu, kappa)
         npt.assert_array_almost_equal(dist.C, 7.22562325261744e-05)
 
     def test_init_3d(self):
-        mu = array([1, 1, 2, -3])
+        mu = array([1.0, 1.0, 2.0, -3.0])
         mu = mu / linalg.norm(mu)
-        kappa = 2
+        kappa = 2.0
         dist = VonMisesFisherDistribution(mu, kappa)
         npt.assert_array_almost_equal(dist.C, 0.0318492506152322)
 
     def test_pdf_2d(self):
-        mu = array([1, 1, 2])
+        mu = array([1.0, 1.0, 2.0])
         mu = mu / linalg.norm(mu)
-        kappa = 10
+        kappa = 10.0
         dist = VonMisesFisherDistribution(mu, kappa)
 
         npt.assert_array_almost_equal(
@@ -107,23 +107,23 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
 
     def test_pdf_3d(self):
-        mu = array([1, 1, 2, -3])
+        mu = array([1.0, 1.0, 2.0, -3.0])
         mu = mu / linalg.norm(mu)
-        kappa = 2
+        kappa = 2.0
         dist = VonMisesFisherDistribution(mu, kappa)
 
         xs_unnorm = array(
             [
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1],
-                [1, 1, 0, 0],
-                [1, -1, 0, 0],
-                [1, 0, 1, 0],
-                [1, 0, -1, 0],
-                [1, 0, 0, 1],
-                [1, 0, 0, -1],
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0, 0.0],
+                [1.0, -1.0, 0.0, 0.0],
+                [1.0, 0.0, 1.0, 0.0],
+                [1.0, 0.0, -1.0, 0.0],
+                [1.0, 0.0, 0.0, 1.0],
+                [1.0, 0.0, 0.0, -1.0],
             ]
         )
         xs = xs_unnorm / linalg.norm(xs_unnorm, axis=1, keepdims=True)
