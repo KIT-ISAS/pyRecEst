@@ -72,6 +72,7 @@ from .._backend_config import pytorch_rtol as rtol
 from . import autodiff  # NOQA
 from . import linalg  # NOQA
 from . import random  # NOQA
+from . import fft  # NOQA
 from ._common import array, cast, from_numpy
 from ._dtype import (
     _add_default_dtype_by_casting,

@@ -9,6 +9,7 @@ from pyrecest.backend import all
 import pyrecest.backend
 import copy
 import unittest
+import numpy.testing as npt
 
 import numpy.testing as npt
 from parameterized import parameterized
@@ -49,7 +50,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
     )
     # pylint: disable=too-many-arguments
     def test_fourier_conversion(
-        self, transformation, dist_class, mu, param_range, coeffs, tolerance
+        self, transformation, dist_class, mu, param_range, coeffs
     ):
         """
         Test fourier conversion of the given distribution with varying parameter.
@@ -65,10 +66,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 ceil(coeffs / 2.0),
                 "Length of Fourier Coefficients mismatch.",
             )
-            self.assertTrue(
-                allclose(fd.pdf(xvals), dist.pdf(xvals)),
-                "PDF values do not match.",
-            )
+            npt.assert_allclose(fd.pdf(xvals), dist.pdf(xvals), atol=1e-5)
 
     @parameterized.expand(
         [
@@ -143,9 +141,9 @@ class TestCircularFourierDistribution(unittest.TestCase):
             transformation=transformation,
             store_values_multiplied_by_n=mult_by_n,
         )
-        npt.assert_array_almost_equal(fd.integrate(), 1)
+        npt.assert_array_almost_equal(fd.integrate(), 1.0)
         fd_real = fd.to_real_fd()
-        npt.assert_array_almost_equal(fd_real.integrate(), 1)
+        npt.assert_array_almost_equal(fd_real.integrate(), 1.0)
         fd_unnorm = copy.copy(fd)
         fd_unnorm.c = fd.c * scale_by
         if transformation == "identity":

@@ -231,6 +231,10 @@ BACKEND_ATTRIBUTES = {
         "seed",
         "uniform",
     ],
+    "fft": [  # For pyrecest
+        "rfft",
+        "irfft",
+     ],
 }
 
 

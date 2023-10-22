@@ -20,7 +20,7 @@ import warnings
 import matplotlib.pyplot as plt
 
 from beartype import beartype
-from numpy.fft import irfft, rfft
+from pyrecest.backend import fft
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
@@ -215,7 +215,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         return integral
 
     def plot_grid(self):
-        grid_values = irfft(self.get_c(), self.n)
+        grid_values = fft.irfft(self.get_c(), self.n)
         xs = linspace(0, 2 * pi, grid_values.shape[0], endpoint=False)
         vals = grid_values.squeeze()
 
@@ -327,7 +327,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
-        c = rfft(fvals)
+        c = fft.rfft(fvals)
         if not store_values_multiplied_by_n:
             c = c * (1.0 / fvals.shape[0])
 

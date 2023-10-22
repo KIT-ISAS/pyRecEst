@@ -149,6 +149,7 @@ from .._shared_numpy import (
 from . import autodiff  # NOQA
 from . import linalg  # NOQA
 from . import random  # NOQA
+from . import fft  # NOQA
 from ._common import (
     _box_binary_scalar,
     _box_unary_scalar,
