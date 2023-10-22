@@ -93,6 +93,12 @@ jobs:
           sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt
         shell: alpine.sh {0}
 
+      - name: Remove torch entry (unsupported by alpine)
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
+        run: |
+          sed -i '/^torch/d' requirements-dev_no_version.txt
+        shell: alpine.sh {0}
+
       - name: Run CMake to find LAPACK
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
