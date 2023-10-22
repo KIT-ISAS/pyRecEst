@@ -47,6 +47,7 @@ from torch import (
     triu,
     kron,
     angle,
+    arctan,
 )
 from torch import repeat_interleave as repeat
 from torch import (

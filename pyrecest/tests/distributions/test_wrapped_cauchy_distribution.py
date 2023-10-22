@@ -14,7 +14,7 @@ from pyrecest.distributions.circle.wrapped_cauchy_distribution import (
 
 class WrappedCauchyDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.mu = 0
+        self.mu = 0.0
         self.gamma = 0.5
         self.xs = arange(10)
 
@@ -25,7 +25,7 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
             summation = 0
             for k in range(-terms, terms + 1):
                 summation += gamma / (
-                    pi * (gamma**2 + (x - mu + 2 * pi * k) ** 2)
+                    pi * (gamma**2 + (x - mu + 2.0 * pi * k) ** 2)
                 )
             return summation
 
@@ -40,7 +40,7 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
     def test_cdf(self):
         dist = WrappedCauchyDistribution(self.mu, self.gamma)
         npt.assert_allclose(
-            dist.cdf(array([1])), dist.integrate(array([0, 1]))
+            dist.cdf(array([1.0])), dist.integrate(array([0.0, 1.0]))
         )
 
 

@@ -7,6 +7,7 @@ from pyrecest.backend import mod
 from pyrecest.backend import exp
 from pyrecest.backend import cosh
 from pyrecest.backend import cos
+from pyrecest.backend import arctan
 
 
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -34,7 +35,7 @@ class WrappedCauchyDistribution(AbstractCircularDistribution):
             return 1 / tanh(x)
 
         assert xs.ndim == 1
-        return np.arctan(coth(self.gamma / 2) * tan((xs - self.mu) / 2)) / pi
+        return arctan(coth(self.gamma / 2.0) * tan((xs - self.mu) / 2.0)) / pi
 
     def trigonometric_moment(self, n):
         m = exp(1j * n * self.mu - abs(n) * self.gamma)

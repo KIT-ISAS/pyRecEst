@@ -30,14 +30,14 @@ class VMFFilterTest(unittest.TestCase):
     def test_prediction_identity(self):
         """Test prediction identity."""
         self.filter.state = self.vmf
-        noise_distribution = VonMisesFisherDistribution(array([0, 1]), 0.9)
+        noise_distribution = VonMisesFisherDistribution(array([0.0, 1.0]), 0.9)
         self.filter.predict_identity(noise_distribution)
         # Add other assertions and logic here
 
     def test_update_identity(self):
         """Test update identity."""
         self.filter.filter_state = self.vmf
-        noise_distribution = VonMisesFisherDistribution(array([0, 1]), 0.9)
+        noise_distribution = VonMisesFisherDistribution(array([0.0, 1.0]), 0.9)
         self.filter.update_identity(noise_distribution, self.vmf.mu)
         vmf_updated_identity = self.filter.filter_state
         self.assertEqual(type(vmf_updated_identity), VonMisesFisherDistribution)

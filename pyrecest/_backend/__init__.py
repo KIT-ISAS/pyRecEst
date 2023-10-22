@@ -181,6 +181,7 @@ BACKEND_ATTRIBUTES = {
         "triu",
         "kron",
         "angle",
+        "arctan",
     ],
     "autodiff": [
         "custom_gradient",

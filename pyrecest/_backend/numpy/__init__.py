@@ -86,6 +86,7 @@ from numpy import (
     triu,
     kron,
     angle,
+    arctan,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

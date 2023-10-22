@@ -9,15 +9,15 @@ from pyrecest.distributions import BinghamDistribution, WatsonDistribution
 class TestWatsonDistribution(unittest.TestCase):
     def setUp(self):
         self.xs = array(
-            [[1, 0, 0], [1, 2, 2], [0, 1, 0], [0, 0, 1], [1, 1, 1], [-1, -1, -1]],
+            [[1.0, 0.0, 0.0], [1.0, 2.0, 2.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0], [-1.0, -1.0, -1.0]],
             dtype=float,
         )
         self.xs = self.xs / linalg.norm(self.xs, axis=1, keepdims=True)
 
     def test_constructor(self):
-        mu = array([1, 2, 3])
+        mu = array([1.0, 2.0, 3.0])
         mu = mu / linalg.norm(mu)
-        kappa = 2
+        kappa = 2.0
         w = WatsonDistribution(mu, kappa)
 
         self.assertIsInstance(w, WatsonDistribution)
@@ -26,9 +26,9 @@ class TestWatsonDistribution(unittest.TestCase):
         self.assertEqual(w.input_dim, mu.shape[0])
 
     def test_pdf(self):
-        mu = array([1, 2, 3])
+        mu = array([1.0, 2.0, 3.0])
         mu = mu / linalg.norm(mu)
-        kappa = 2
+        kappa = 2.0
         w = WatsonDistribution(mu, kappa)
 
         expected_pdf_values = array(
@@ -46,9 +46,9 @@ class TestWatsonDistribution(unittest.TestCase):
         npt.assert_almost_equal(pdf_values, expected_pdf_values, decimal=5)
 
     def test_integrate(self):
-        mu = array([1, 2, 3])
+        mu = array([1.0, 2.0, 3.0])
         mu = mu / linalg.norm(mu)
-        kappa = 2
+        kappa = 2.0
         w = WatsonDistribution(mu, kappa)
         self.assertAlmostEqual(w.integrate(), 1, delta=1e-5)
 

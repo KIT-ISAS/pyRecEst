@@ -19,19 +19,19 @@ class ToroidalParticleFilterTest(unittest.TestCase):
     def test_toroidal_particle_filter(self):
         random.seed(0)
         C = array([[0.7, 0.4], [0.4, 0.6]])
-        mu = array([1, 1]) + pi / 2
+        mu = array([1.0, 1.0]) + pi / 2.0
         hwnd = ToroidalWrappedNormalDistribution(mu, C)
         tpf = ToroidalParticleFilter(200)
         tpf.set_state(hwnd)
-        forced_mean = array([1, 1])
+        forced_mean = array([1.0, 1.0])
 
         for _ in range(50):
             tpf.predict_identity(
-                HypertoroidalWrappedNormalDistribution(array([0, 0]), C)
+                HypertoroidalWrappedNormalDistribution(array([0.0, 0.0]), C)
             )
             for _ in range(3):
                 tpf.update_identity(
-                    HypertoroidalWrappedNormalDistribution(array([0, 0]), 0.5 * C),
+                    HypertoroidalWrappedNormalDistribution(array([0.0, 0.0]), 0.5 * C),
                     forced_mean,
                 )
 
