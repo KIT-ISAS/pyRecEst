@@ -977,7 +977,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             diffs[i] = shd.total_variation_distance_numerical(dist)
 
         # Check if the deviation from true density is decreasing
-        self.assertTrue(all(diff(diffs) < 0))
+        self.assertTrue(all(diff(diffs) < 0.0))
 
     @parameterized.expand(
         [

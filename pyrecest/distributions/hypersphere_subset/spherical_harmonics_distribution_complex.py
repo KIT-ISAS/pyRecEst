@@ -133,7 +133,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
         def fun_sph(phi, theta):
             x, y, z = AbstractSphericalDistribution.sph_to_cart(
-                np.ravel(phi), np.ravel(theta)
+                phi.ravel(), theta.ravel()
             )
             vals = fun_cart(column_stack((x, y, z)))
             return reshape(vals, shape(theta))
@@ -157,31 +157,32 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         else:
             raise ValueError("Transformation not supported")
 
-        coeff_mat = full((degree + 1, 2 * degree + 1), float('NaN'), dtype=complex)
+        coeff_mat = full((degree + 1, 2 * degree + 1), float('NaN'), dtype=complex128)
 
         def real_part(phi, theta, n, m):
             return real(
                 fun_with_trans(array(phi), array(theta))
-                * conj(sph_harm(m, n, phi, theta))
+                * conj(array(sph_harm(m, n, phi, theta)))
                 * sin(theta)
             )
 
         def imag_part(phi, theta, n, m):
             return imag(
                 fun_with_trans(array(phi), array(theta))
-                * conj(sph_harm(m, n, phi, theta))
+                * conj(array(sph_harm(m, n, phi, theta)))
                 * sin(theta)
             )
 
         for n in range(degree + 1):  # Use n instead of l to comply with PEP 8
             for m in range(-n, n + 1):
                 real_integral, _ = scipy.integrate.nquad(
-                    real_part, [[0, 2 * pi], [0, pi]], args=(n, m)
+                    real_part, [[0.0, 2.0 * pi], [0.0, pi]], args=(n, m)
                 )
                 imag_integral, _ = scipy.integrate.nquad(
-                    imag_part, [[0, 2 * pi], [0, pi]], args=(n, m)
+                    imag_part, [[0.0, 2.0 * pi], [0.0, pi]], args=(n, m)
                 )
-
+                real_integral = array(real_integral)
+                imag_integral = array(imag_integral)
                 if isnan(real_integral) or isnan(imag_integral):
                     print(f"Integration failed for l={n}, m={m}")
 
