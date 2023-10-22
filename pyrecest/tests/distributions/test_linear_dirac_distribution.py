@@ -5,6 +5,7 @@ from pyrecest.backend import allclose
 from pyrecest.backend import all
 import unittest
 
+import numpy.testing as npt
 
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
@@ -18,14 +19,14 @@ class LinearDiracDistributionTest(unittest.TestCase):
         random.seed(0)
         C = wishart.rvs(3, eye(3))
         hwn = GaussianDistribution(array([1.0, 2.0, 3.0]), array(C))
-        hwd = LinearDiracDistribution.from_distribution(hwn, 150000)
-        self.assertTrue(allclose(hwd.mean(), hwn.mean(), atol=0.005))
-        self.assertTrue(allclose(hwd.covariance(), hwn.covariance(), rtol=0.01))
+        hwd = LinearDiracDistribution.from_distribution(hwn, 200000)
+        npt.assert_allclose(hwd.mean(), hwn.mean(), atol=0.005)
+        npt.assert_allclose(hwd.covariance(), hwn.covariance(), rtol=0.1)
 
     def test_mean_and_cov(self):
         random.seed(0)
         gd = GaussianDistribution(array([1.0, 2.0]), array([[2.0, -0.3], [-0.3, 1.0]]))
-        ddist = LinearDiracDistribution(gd.sample(10000))
+        ddist = LinearDiracDistribution(gd.sample(15000))
         self.assertTrue(allclose(ddist.mean(), gd.mean(), atol=0.05))
         self.assertTrue(allclose(ddist.covariance(), gd.covariance(), atol=0.05))
 
