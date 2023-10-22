@@ -18,6 +18,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
+from pyrecest.backend import minimum
 import pyrecest.backend
 import numbers
 from collections.abc import Callable
@@ -163,7 +164,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         diff = abs(alpha - beta)
 
         # Calculate the angular error
-        e = np.minimum(diff, 2.0 * pi - diff)
+        e = minimum(diff, 2.0 * pi - diff)
 
         return e
 

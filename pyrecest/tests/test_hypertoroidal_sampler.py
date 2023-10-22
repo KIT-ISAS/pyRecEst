@@ -3,7 +3,7 @@ from math import pi
 from pyrecest.backend import std
 from pyrecest.backend import all
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.sampling.hypertoroidal_sampler import CircularUniformSampler
 
@@ -20,8 +20,8 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertEqual(samples.shape[0], n_samples)
 
         # Check that all samples are within the range [0, 2*pi)
-        self.assertTrue(all(samples >= 0))
-        self.assertTrue(all(samples < 2 * pi))
+        self.assertTrue(all(samples >= 0.0))
+        self.assertTrue(all(samples < 2.0 * pi))
 
     def test_get_grid(self):
         grid_density_parameter = 100
@@ -31,11 +31,11 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertEqual(grid_points.shape[0], grid_density_parameter)
 
         # Check that all grid points are within the range [0, 2*pi)
-        self.assertTrue(all(grid_points >= 0))
-        self.assertTrue(all(grid_points < 2 * pi))
+        self.assertTrue(all(grid_points >= 0.0))
+        self.assertTrue(all(grid_points < 2.0 * pi))
 
         # Check that the grid points are equidistant
-        self.assertAlmostEqual(std(diff(grid_points)), 0.0, places=5)
+        npt.assert_array_almost_equal(std(diff(grid_points)), 0.0)
 
 
 if __name__ == "__main__":

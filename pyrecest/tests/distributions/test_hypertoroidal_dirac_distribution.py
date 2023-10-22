@@ -48,7 +48,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         n_samples = 5
         s = self.twd.sample(n_samples)
         self.assertEqual(s.shape, (n_samples, self.d.shape[-1]))
-        npt.assert_array_almost_equal(s, mod(s, 2 * pi))
+        npt.assert_array_almost_equal(s, mod(s, 2.0 * pi))
 
     def test_marginalize_to_1D(self):
         for i in range(self.d.shape[-1]):

@@ -18,7 +18,7 @@ def choice(a, size=None, replace=True, p=None):
         
         p = _torch.tensor(p, dtype=_torch.float32)
         p = p / p.sum()  # Normalize probabilities
-        indices = _torch.multinomial(p, num_samples=_torch.prod(size), replacement=True)
+        indices = _torch.multinomial(p, num_samples=_torch.prod(_torch.tensor(size)), replacement=True)
     else:
         indices = _torch.randint(0, len(a), size)
     

@@ -87,7 +87,7 @@ class HypertoroidalDiracDistribution(
 
         remaining_dims = list(range(self.dim))
         remaining_dims = [dim for dim in remaining_dims if dim != dimensions]
-        return CircularDiracDistribution(self.d[:, remaining_dims], self.w)
+        return CircularDiracDistribution(self.d[:, remaining_dims].squeeze(), self.w)
 
     def shift(self, shift_by) -> "HypertoroidalDiracDistribution":
         assert shift_by.shape[-1] == self.dim
