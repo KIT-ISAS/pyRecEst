@@ -28,8 +28,8 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         self.assertIsInstance(self.tvm, ToroidalVonMisesSineDistribution)
 
     def test_mu_kappa_lambda(self):
-        npt.assert_almost_equal(self.tvm.mu, self.mu, decimal=6)
-        npt.assert_almost_equal(self.tvm.kappa, self.kappa, decimal=6)
+        npt.assert_allclose(self.tvm.mu, self.mu)
+        npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
     @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
@@ -38,8 +38,8 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-5)
 
     def test_trigonometric_moment_numerical(self):
-        npt.assert_almost_equal(
-            self.tvm.trigonometric_moment_numerical(0), array([1.0, 1.0]), decimal=5
+        npt.assert_allclose(
+            self.tvm.trigonometric_moment_numerical(0), array([1.0, 1.0])
         )
 
     # jscpd:ignore-start
@@ -77,7 +77,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
 
         expected = pdf(x)
 
-        npt.assert_almost_equal(self.tvm.pdf(x), expected, decimal=10)
+        npt.assert_allclose(self.tvm.pdf(x), expected)
 
 
 if __name__ == "__main__":

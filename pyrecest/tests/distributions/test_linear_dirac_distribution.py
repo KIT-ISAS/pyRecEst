@@ -17,7 +17,7 @@ class LinearDiracDistributionTest(unittest.TestCase):
     def test_from_distribution(self):
         random.seed(0)
         C = wishart.rvs(3, eye(3))
-        hwn = GaussianDistribution(array([1, 2, 3]), C)
+        hwn = GaussianDistribution(array([1, 2, 3]), array(C))
         hwd = LinearDiracDistribution.from_distribution(hwn, 100000)
         self.assertTrue(allclose(hwd.mean(), hwn.mean(), atol=0.005))
         self.assertTrue(allclose(hwd.covariance(), hwn.covariance(), rtol=0.01))

@@ -17,8 +17,8 @@ class LinearMixtureTest(unittest.TestCase):
             simplefilter("always")
             LinearMixture(
                 [
-                    GaussianDistribution(array([1]), array([1])),
-                    GaussianDistribution(array([[50]]), array([1])),
+                    GaussianDistribution(array([1]), array([[1]])),
+                    GaussianDistribution(array([50]), array([[1]])),
                 ],
                 array([0.3, 0.7]),
             )

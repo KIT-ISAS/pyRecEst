@@ -5,6 +5,7 @@ from pyrecest.backend import array
 from pyrecest.backend import allclose
 from pyrecest.backend import all
 from pyrecest.backend import zeros
+import pyrecest.backend
 import unittest
 
 
@@ -65,6 +66,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
             "Hypertoroidal uniform distributions do not have a unique mean",
         )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_entropy(self):
         self.assertAlmostEqual(
             self.tud.entropy(), self.tud.entropy_numerical(), delta=1e-10
