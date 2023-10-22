@@ -65,7 +65,7 @@ class AbstractParticleFilter(AbstractFilterType):
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True
     ):
-        assert measurement is None or measurement.shape == (meas_noise.dim,)
+        assert measurement is None or measurement.shape == (meas_noise.dim,) or meas_noise.dim == 1 and measurement.shape == ()
         assert (
             ndim(measurement) == 1
             or ndim(measurement) == 0

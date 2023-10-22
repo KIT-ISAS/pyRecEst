@@ -37,8 +37,8 @@ class CircularParticleFilterTest(unittest.TestCase):
         dist1 = self.filter.filter_state
         self.assertIsInstance(dist1, HypertoroidalDiracDistribution)
         self.assertEqual(dist1.dim, 1)
-        npt.assert_almost_equal(self.dist.d, dist1.d)
-        npt.assert_almost_equal(self.dist.w, dist1.w)
+        npt.assert_array_almost_equal(self.dist.d, dist1.d)
+        npt.assert_array_almost_equal(self.dist.w, dist1.w)
 
     def test_sampling(self):
         positions = arange(0, 1.1, 0.1)
@@ -67,7 +67,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         dist2_identity = self.filter.filter_state
         self.assertIsInstance(dist2_identity, HypertoroidalDiracDistribution)
         self.assertEqual(dist2_identity.dim, 1)
-        npt.assert_almost_equal(dist2.w, dist2_identity.w)
+        npt.assert_array_almost_equal(dist2.w, dist2_identity.w)
 
     def test_nonlinear_prediction_without_noise(self):
         # nonlinear test without noise
@@ -81,8 +81,8 @@ class CircularParticleFilterTest(unittest.TestCase):
         predicted = self.filter.filter_state
         self.assertIsInstance(predicted, HypertoroidalDiracDistribution)
         dist_f = self.dist.apply_function(f)
-        npt.assert_almost_equal(predicted.d, dist_f.d, decimal=10)
-        npt.assert_almost_equal(predicted.w, dist_f.w, decimal=10)
+        npt.assert_array_almost_equal(predicted.d, dist_f.d, decimal=10)
+        npt.assert_array_almost_equal(predicted.w, dist_f.w, decimal=10)
 
     def test_update(self):
         # test update
@@ -92,7 +92,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         def h(x):
             return x
 
-        z = 0
+        z = array(0.0)
 
         def likelihood(z, x):
             return self.wn.pdf(z - h(x))

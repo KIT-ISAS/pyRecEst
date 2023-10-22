@@ -142,7 +142,7 @@ class WrappedNormalDistribution(
         return wn
 
     def sample(self, n: Union[int, int32, int64]):
-        return mod(self.mu + self.sigma * random.randn(1, n), 2.0 * pi)
+        return mod(self.mu + self.sigma * random.normal(0.0, 1.0, (1, n)), 2.0 * pi)
 
     def shift(self, shift_by):
         assert shift_by.shape in ((1,), ())
