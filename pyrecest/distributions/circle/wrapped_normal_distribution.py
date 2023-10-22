@@ -154,9 +154,9 @@ class WrappedNormalDistribution(
         return VonMisesDistribution(self.mu, kappa)
 
     @staticmethod
-    def from_moment(m: complex) -> "WrappedNormalDistribution":
-        mu = mod(angle(m), 2.0 * pi)
-        sigma = sqrt(-2 * log(abs(m)))
+    def from_moment(m) -> "WrappedNormalDistribution":
+        mu = mod(angle(m.squeeze()), 2.0 * pi)
+        sigma = sqrt(-2 * log(abs(m.squeeze())))
         return WrappedNormalDistribution(mu, sigma)
 
     @staticmethod

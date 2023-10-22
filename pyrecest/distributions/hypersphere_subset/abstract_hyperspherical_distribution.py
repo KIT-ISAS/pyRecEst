@@ -198,7 +198,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             method="BFGS",
             options={"disp": False, "gtol": 1e-12, "maxiter": 2000},
         )
-        m = AbstractHypersphereSubsetDistribution.polar_to_cart(res.x)
+        m = AbstractHypersphereSubsetDistribution.polar_to_cart(array(res.x))
         return m
 
     def hellinger_distance(self, other):

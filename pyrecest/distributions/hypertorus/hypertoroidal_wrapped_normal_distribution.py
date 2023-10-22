@@ -32,7 +32,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :raises AssertionError: If C_ is not square, not symmetric, not positive definite, or its dimension does not match with mu_.
         """
         numel_mu = 1 if mu.ndim == 0 else mu.shape[0]
-        assert C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1], "C must be dim x dim"
+        assert C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1], "C must be of shape (dim, dim)"
         assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
         assert (C.ndim == 0 and C > 0.0 or
             len(linalg.cholesky(C)) > 0  # fails if not positiv definite
