@@ -166,16 +166,20 @@ BACKEND_ATTRIBUTES = {
         "zeros",
         "zeros_like",
         "trapz",
-        "diag",  # Added for pyrecest
-        "diff",  # Added for pyrecest
-        "apply_along_axis",  # Added for pyrecest
-        "nonzero",  # Added for pyrecest
-        "column_stack",  # Added for pyrecest
-        "conj",  # Added for pyrecest
-        "atleast_1d",  # Added for pyrecest
-        "atleast_2d",  # Added for pyrecest
-        "dstack",  # Added for pyrecest
-        "full",  # Added for pyrecest
+        # The ones below are for pyrecest
+        "diag",
+        "diff",
+        "apply_along_axis",
+        "nonzero",
+        "column_stack",
+        "conj",
+        "atleast_1d",
+        "atleast_2d",
+        "dstack",
+        "full",
+        "isreal",
+        "triu",
+        "kron",
     ],
     "autodiff": [
         "custom_gradient",

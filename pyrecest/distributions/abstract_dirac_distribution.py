@@ -9,6 +9,7 @@ from pyrecest.backend import all
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import apply_along_axis
+from pyrecest.backend import array
 import copy
 import warnings
 from collections.abc import Callable
@@ -81,7 +82,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     def sample(self, n: Union[int, int32, int64]):
-        samples = random.choice(self.d, size=n, p=self.w)
+        samples = random.choice(self.d, size=array(n), p=self.w)
         return samples
 
     def entropy(self) -> float:

@@ -388,7 +388,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionComplex(1 / sqrt(4 * pi))
         shd.coeff_mat = coeff_mat
         phi, theta = meshgrid(
-            linspace(0, 2 * pi, 10), linspace(0, pi, 10)
+            linspace(0.0, 2 * pi, 10), linspace(0.0, pi, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(

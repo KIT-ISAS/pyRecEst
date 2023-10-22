@@ -71,16 +71,20 @@ from numpy import (
     vstack,
     where,
     zeros_like,
-    diag,  # For pyrecest
-    diff,  # For pyrecest
-    apply_along_axis,  # For pyrecest
-    nonzero,  # For pyrecest
-    column_stack,  # For pyrecest
-    conj,  # For pyrecest
-    atleast_1d,  # For pyrecest
-    atleast_2d,  # For pyrecest
-    dstack,  # For pyrecest
-    full,  # For pyrecest
+    # The ones below are for pyrecest
+    diag,
+    diff,
+    apply_along_axis,
+    nonzero,
+    column_stack,
+    conj,
+    atleast_1d,
+    atleast_2d,
+    dstack,
+    full,
+    isreal,
+    triu,
+    kron,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

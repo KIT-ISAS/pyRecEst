@@ -33,15 +33,19 @@ from torch import (
     ones_like,
     polygamma,
     quantile,
-    diag,  # For pyrecest
-    diff,  # For pyrecest
-    nonzero,  # For pyrecest
-    column_stack,  # For pyrecest
-    conj,  # For pyrecest
-    atleast_1d,  # For pyrecest
-    atleast_2d,  # For pyrecest
-    dstack,  # For pyrecest
-    full,  # For pyrecest
+    # The ones below are for pyrecest
+    diag,
+    diff,
+    nonzero,
+    column_stack,
+    conj,
+    atleast_1d,
+    atleast_2d,
+    dstack,
+    full,
+    isreal,
+    triu,
+    kron,
 )
 from torch import repeat_interleave as repeat
 from torch import (
@@ -391,13 +395,13 @@ def trace(x):
     return _torch.einsum("...ii", x)
 
 
-def linspace(start, stop, endpoint=True, num=50, dtype=None):
+def linspace(start, stop, num=50, endpoint=True, dtype=None):
     start_is_array = _torch.is_tensor(start)
     stop_is_array = _torch.is_tensor(stop)
 
     if not (start_is_array or stop_is_array) and endpoint:
         return _torch.linspace(start=start, end=stop, steps=num, dtype=dtype)
-    elif not (start_is_array or stop_is_array): # Added for pyrecest
+    elif not (start_is_array or stop_is_array):  # Added for pyrecest
         return _torch.arange(start=start, end=stop, step=(stop-start)/num, dtype=dtype)
     else:
         raise ValueError("endpoint=False not supported for vectors")

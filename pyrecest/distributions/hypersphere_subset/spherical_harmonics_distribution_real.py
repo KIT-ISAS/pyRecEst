@@ -5,6 +5,8 @@ from pyrecest.backend import real
 from pyrecest.backend import imag
 from pyrecest.backend import all
 from pyrecest.backend import zeros
+from pyrecest.backend import isreal
+
 
 
 # pylint: disable=E0611
@@ -18,7 +20,7 @@ from .abstract_spherical_harmonics_distribution import (
 
 class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution):
     def __init__(self, coeff_mat, transformation="identity"):
-        if not all(np.isreal(coeff_mat)):
+        if not all(isreal(coeff_mat)):
             raise ValueError("Coefficients must be real")
         AbstractSphericalHarmonicsDistribution.__init__(self, coeff_mat, transformation)
 
@@ -27,11 +29,11 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
         y_lm = sph_harm(m, n, phi, theta)
 
         if m < 0:
-            y_nm_real = -sqrt(2) * imag(y_lm)
+            y_nm_real = -sqrt(2.0) * imag(y_lm)
         elif m == 0:
             y_nm_real = real(y_lm)
         else:
-            y_nm_real = (-1) ** m * sqrt(2) * real(y_lm)
+            y_nm_real = (-1) ** m * sqrt(2.0) * real(y_lm)
 
         return y_nm_real
 

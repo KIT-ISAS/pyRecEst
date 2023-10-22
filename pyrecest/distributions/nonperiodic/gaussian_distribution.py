@@ -14,8 +14,9 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 
 class GaussianDistribution(AbstractLinearDistribution):
     def __init__(self, mu, C, check_validity=True):
+        assert ndim(mu) == 1, "mu must be 1-dimensional"
+        assert ndim(C) == 2, "C must be 2-dimensional"
         AbstractLinearDistribution.__init__(self, dim=mu.shape[0])
-        assert ndim(mu) <= 1
         assert (
             1 == mu.shape[0] == C.shape[0] or mu.shape[0] == C.shape[0] == C.shape[1]
         ), "Size of C invalid"

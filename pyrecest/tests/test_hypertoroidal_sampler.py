@@ -35,8 +35,7 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertTrue(all(grid_points < 2 * pi))
 
         # Check that the grid points are equidistant
-        diff = diff(grid_points)
-        self.assertAlmostEqual(std(diff), 0, places=5)
+        self.assertAlmostEqual(std(diff(grid_points)), 0, places=5)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from pyrecest.distributions import HypertoroidalWNDistribution
 
 class TestHypertoroidalWNDistribution(unittest.TestCase):
     def test_pdf(self):
-        mu = array([[1], [2]])
+        mu = array([1, 2])
         C = array([[0.5, 0.1], [0.1, 0.3]])
 
         hwn = HypertoroidalWNDistribution(mu, C)
