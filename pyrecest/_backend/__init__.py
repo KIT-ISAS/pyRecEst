@@ -185,6 +185,7 @@ BACKEND_ATTRIBUTES = {
         "cov",
         "count_nonzero",
         "full_like",
+        "isinf",
     ],
     "autodiff": [
         "custom_gradient",

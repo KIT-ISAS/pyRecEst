@@ -4,7 +4,8 @@ from pyrecest.backend import any
 from pyrecest.backend import empty
 import warnings
 from typing import Callable
-
+import numpy as np
+from pyrecest.backend import isinf
 
 from beartype import beartype
 
@@ -21,7 +22,7 @@ def determine_all_deviations(
 
     assert (
         ndim(groundtruths) == 2
-        and isinstance(groundtruths[0, 0], )
+        and isinstance(groundtruths[0, 0], np.ndarray)
         and ndim(groundtruths[0, 0])
         in (
             1,
@@ -33,7 +34,7 @@ def determine_all_deviations(
 
     for config_no, result_curr_config in enumerate(results):
         for run in range(len(groundtruths)):
-            if isinstance(result_curr_config[run], ):
+            if isinstance(result_curr_config[run], np.ndarray):
                 # If estimates are already given as numpy array, use it
                 final_estimate = result_curr_config[run]
             elif callable(extract_mean):
@@ -50,10 +51,10 @@ def determine_all_deviations(
                 warnings.warn("No estimate for this filter, setting error to inf.")
                 all_deviations_last_mat[config_no][run] = float('inf')
 
-        if any(np.isinf(all_deviations_last_mat[config_no])):
+        if any(isinf(all_deviations_last_mat[config_no])):
             print(
                 f"Warning: {result_curr_config['filterName']} with {result_curr_config['filterParams']} "
-                f"parameters apparently failed {sum(np.isinf(all_deviations_last_mat[config_no]))} "
+                f"parameters apparently failed {sum(isinf(all_deviations_last_mat[config_no]))} "
                 "times. Check if this is plausible."
             )
 

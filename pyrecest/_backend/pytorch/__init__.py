@@ -50,6 +50,7 @@ from torch import (
     arctan,
     count_nonzero,
     full_like,
+    isinf,
 )
 from torch import repeat_interleave as repeat
 from torch import (

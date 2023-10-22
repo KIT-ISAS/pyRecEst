@@ -90,6 +90,7 @@ from numpy import (
     cov,
     count_nonzero,
     full_like,
+    isinf,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 
