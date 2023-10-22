@@ -3,6 +3,7 @@ from pyrecest.backend import atleast_2d
 from pyrecest.backend import conj
 from pyrecest.backend import column_stack
 from pyrecest.backend import linalg
+from pyrecest.backend import complex128
 from math import pi
 from pyrecest.backend import sqrt
 from pyrecest.backend import sin
@@ -44,7 +45,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         return self.value_sph(phi, theta)
 
     def value_sph(self, phi, theta):
-        vals = zeros(theta.shape[0], dtype=complex)
+        vals = zeros((theta.shape[0],), dtype=complex128)
         for n_curr in range(self.coeff_mat.shape[0]):
             for m_curr in range(-n_curr, n_curr + 1):
                 # Evaluate it for all query points at once

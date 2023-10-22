@@ -24,7 +24,9 @@ class HypertoroidalUniformDistribution(
         :param xs: Values at which to evaluate the PDF
         :returns: PDF evaluated at xs
         """
-        return 1 / self.get_manifold_size() * ones(xs.shape[0])
+        assert self.dim == xs.shape[-1]
+        n_inputs = xs.shape[0] if xs.ndim == 2 else 1
+        return 1.0 / self.get_manifold_size() * ones(n_inputs)
 
     def trigonometric_moment(self, n: Union[int, int32, int64]):
         """

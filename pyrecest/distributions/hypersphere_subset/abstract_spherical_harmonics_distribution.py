@@ -73,13 +73,13 @@ class AbstractSphericalHarmonicsDistribution(
 
     def integrate(self):
         if self.transformation == "identity":
-            int_val = self.coeff_mat[0, 0] * sqrt(4 * pi)
+            int_val = self.coeff_mat[0, 0] * sqrt(4.0 * pi)
         elif self.transformation == "sqrt":
             int_val = norm(self.coeff_mat[~isnan(self.coeff_mat)]) ** 2
         else:
             raise ValueError("No analytical formula for normalization available")
 
-        assert abs(imag(int_val) < 1e-8)
+        assert abs(imag(int_val)) < 1e-8
         return real(int_val)
 
     def truncate(self, degree):

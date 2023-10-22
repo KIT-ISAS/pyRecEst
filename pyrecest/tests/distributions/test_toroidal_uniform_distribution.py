@@ -17,7 +17,7 @@ from pyrecest.distributions.hypertorus.toroidal_uniform_distribution import (
 class TestToroidalUniformDistribution(unittest.TestCase):
     def setUp(self):
         self.tud = ToroidalUniformDistribution()
-        self.x = tile(array([[1, 2, 3, 4, 5, 6]]), (2, 1))
+        self.x = tile(array([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0]]), (2, 1))
 
     def test_pdf(self):
         self.assertTrue(

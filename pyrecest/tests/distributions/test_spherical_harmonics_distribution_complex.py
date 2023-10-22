@@ -967,7 +967,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
     def test_convergence(self):
         no_diffs = 3
-        dist = VonMisesFisherDistribution(array([0, -1, 0]), 1)
+        dist = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), 1.0)
         diffs = zeros(no_diffs)
 
         for i in range(0, no_diffs):
