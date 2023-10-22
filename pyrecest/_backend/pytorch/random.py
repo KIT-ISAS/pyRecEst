@@ -22,13 +22,7 @@ def choice(a, size=None, replace=True, p=None):
     else:
         indices = _torch.randint(0, len(a), size)
     
-    result = a[indices]
-    
-    # Reshape the result to match the given size
-    if size is not None:
-        result = result.reshape(size)
-    
-    return result
+    return a[indices]
 
 
 def seed(*args, **kwargs):
