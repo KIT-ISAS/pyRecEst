@@ -19,7 +19,6 @@ import numbers
 
 
 from beartype import beartype
-from scipy.linalg import qr
 from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
@@ -92,7 +91,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def get_rotation_matrix(self):
         M = zeros((self.dim + 1, self.dim + 1))
         M[:, 0] = self.mu
-        Q, R = qr(M)
+        Q, R = linalg.qr(M)
         if R[0, 0] < 0:
             Q = -Q
         return Q

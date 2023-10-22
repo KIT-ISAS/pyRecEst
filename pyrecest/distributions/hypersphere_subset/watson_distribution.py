@@ -71,7 +71,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         E = eye(self.input_dim)
         E[0, 0] = 0
         M = M + E
-        Q, _ = array(qr(M))
+        Q, _ = linalg.qr(M)
         M = hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])
         Z = hstack((full((self.dim,), -self.kappa), array(0.0)))
         return BinghamDistribution(Z, M)
