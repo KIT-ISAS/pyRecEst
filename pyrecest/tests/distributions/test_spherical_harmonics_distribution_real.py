@@ -44,7 +44,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         self.assertTrue(
             allclose(
                 diff(vals_normalized / vals_unnormalized),
-                zeros((1, x.size - 1)),
+                zeros(x.shape[0] - 1),
                 atol=1e-6,
             )
         )

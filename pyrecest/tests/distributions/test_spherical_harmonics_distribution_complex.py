@@ -388,7 +388,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionComplex(1.0 / sqrt(4.0 * pi))
         shd.coeff_mat = coeff_mat
         phi, theta = meshgrid(
-            linspace(0.0.0, 2.0 * pi, 10), linspace(0.0.0, pi, 10)
+            linspace(0.0, 2.0 * pi, 10), linspace(0.0, pi, 10)
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(
@@ -970,7 +970,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         dist = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), 1.0)
         diffs = zeros(no_diffs)
 
-        for i in range(0.0, no_diffs):
+        for i in range(0, no_diffs):
             shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
                 dist.pdf, i
             )

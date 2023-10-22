@@ -31,13 +31,8 @@ class AbstractSphericalHarmonicsDistribution(
         # Ignore irrelevant entries of coeff_mat and set to NaN
         n = coeff_mat.shape[0]
         for i in range(n):
-            # Calculate the range of column indices to keep
-            start_idx = n - i - 1
-            end_idx = n + i
-
-            # Set the elements outside this range to NaN
-            coeff_mat[i, :start_idx] = float('nan')
-            coeff_mat[i, end_idx:] = float('nan')
+            # Set the irrelevant elements to nan
+            coeff_mat[i, 2*i+1:] = float('NaN')
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
 
     def pdf(self, xs):
