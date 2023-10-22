@@ -65,6 +65,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
     @parameterized.expand(
         [("no_inputs", zeros(4)), ("with_inputs", array([1.0, -1.0, 1.0, -1.0]))]
     )
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_predict_linear(self, name, sys_input):
         import numpy as _np
         # Can use scipy.linalg.block_diag instead of native backend functions here because the efficiency does not matter

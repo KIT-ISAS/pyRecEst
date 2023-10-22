@@ -19,7 +19,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.mu = array([1, 1, 1]) + pi / 2
         self.hwnd = HypertoroidalWNDistribution(self.mu, self.covariance_matrix)
         self.hpf = HypertoroidalParticleFilter(500, 3)
-        self.forced_mean = array([1, 2, 3])
+        self.forced_mean = array([1.0, 2.0, 3.0])
         random.seed(self.seed)
 
     def test_set_state(self):

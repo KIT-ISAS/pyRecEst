@@ -77,21 +77,21 @@ class TestRandomMatrixTracker(unittest.TestCase):
             self.tracker.extent, expected_extent, decimal=5
         )
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     @parameterized.expand(
         [
             (
                 "smaller",
-                array([[0.1, 0], [0, 0.1], [-0.1, 0], [0, -0.1]]),
+                array([[0.1, 0.0], [0.0, 0.1], [-0.1, 0.0], [0.0, -0.1]]),
                 "The extent should now be smaller since the measurements are closely spaced",
             ),
             (
                 "larger",
-                array([[1, 0], [0, 1], [-1, 0], [0, -1]]),
+                array([[1.0, 0.0], [0.0, 1.0], [-1.0, 0.0], [0.0, -1.0]]),
                 "The extent should now be larger since the measurements are spaced more widely",
             ),
         ]
     )
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_update(self, name, offset, _):
         ys = array([self.initial_state + offset_row for offset_row in offset]).T
         Cv = array([[0.1, 0.0], [0.0, 0.1]])

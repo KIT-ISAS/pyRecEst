@@ -36,7 +36,7 @@ def plot_results(
         print("Not all warnings are enabled.")
 
     # Expand plot_log to handle all plots (pad it)
-    if np.size(plot_log) == 1:
+    if plot_log.shape in ((), (1,)):
         plot_log = False * ones((2, 3), dtype=bool)
     else:
         assert shape(plot_log) == (2, 3)
@@ -67,10 +67,10 @@ def plot_results(
         # Iterate over all possible names and plot the lines for those that were evaluated
         color, style_marker, style_line = get_plot_style_for_filter(curr_filter_name)
 
-        params = np.asarray(results_grouped[curr_filter_name]["parameter"])
-        errors_mean = np.asarray(results_grouped[curr_filter_name]["error_mean"])
-        errors_std = np.asarray(results_grouped[curr_filter_name]["error_std"])
-        times_mean = np.asarray(results_grouped[curr_filter_name]["time_mean"])
+        params = array(results_grouped[curr_filter_name]["parameter"])
+        errors_mean = array(results_grouped[curr_filter_name]["error_mean"])
+        errors_std = array(results_grouped[curr_filter_name]["error_std"])
+        times_mean = array(results_grouped[curr_filter_name]["time_mean"])
 
         if curr_filter_name.startswith("ff") or curr_filter_name == "htgf":
             params = params**state_dim
@@ -82,7 +82,7 @@ def plot_results(
         if (
             params[0] is not None
             and not any(isnan(params))
-            and np.size(params) > 1
+            and params.shape[0] > 1
         ):
             if plot_stds:
                 plt.plot(
@@ -121,7 +121,7 @@ def plot_results(
         if (
             params[0] is not None
             and not any(isnan(params))
-            and np.size(params) > 1
+            and params.shape[0] > 1
         ):
             plt.plot(
                 params,

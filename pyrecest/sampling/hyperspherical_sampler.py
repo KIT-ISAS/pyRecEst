@@ -9,6 +9,7 @@ from pyrecest.backend import arccos
 from pyrecest.backend import arange
 from pyrecest.backend import empty
 from pyrecest.backend import column_stack
+from pyrecest.backend import deg2rad
 import itertools
 from abc import abstractmethod
 
@@ -115,7 +116,7 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
         phi_theta_stacked_deg = array(
             list(itertools.product(phi_deg_mat, theta_deg_mat))
         )
-        phi_theta_stacked_rad = np.radians(phi_theta_stacked_deg)
+        phi_theta_stacked_rad = deg2rad(phi_theta_stacked_deg)
 
         phi = phi_theta_stacked_rad[:, 0]
         theta = phi_theta_stacked_rad[:, 1]

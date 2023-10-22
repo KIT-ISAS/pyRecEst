@@ -186,6 +186,7 @@ BACKEND_ATTRIBUTES = {
         "count_nonzero",
         "full_like",
         "isinf",
+        "deg2rad",
     ],
     "autodiff": [
         "custom_gradient",

@@ -84,7 +84,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         assert all(dim <= self.dim for dim in dimensions)
         remaining_dims = [i for i in range(self.dim) if i not in dimensions]
         new_mu = self.mu[remaining_dims]
-        new_C = self.C[np.ix_(remaining_dims, remaining_dims)]
+        new_C = self.C[remaining_dims][:, remaining_dims] # Instead of np.ix_ for interface compatibiliy
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def sample(self, n):

@@ -51,6 +51,7 @@ from torch import (
     count_nonzero,
     full_like,
     isinf,
+    deg2rad,
 )
 from torch import repeat_interleave as repeat
 from torch import (

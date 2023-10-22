@@ -86,7 +86,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         if n <= 0:
             raise ValueError("n must be a positive integer")
 
-        s = random.multivariate_normal(self.mu, self.C, n)
+        s = random.multivariate_normal(self.mu, self.C, (n,))
         s = mod(s, 2.0 * pi)  # wrap the samples
         return s
 
