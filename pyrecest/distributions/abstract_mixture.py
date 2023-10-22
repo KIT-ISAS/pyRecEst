@@ -6,7 +6,7 @@ from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import empty
 from pyrecest.backend import zeros
-from pyrecest.backend import nonzero
+from pyrecest.backend import count_nonzero
 import collections
 import copy
 import warnings
@@ -43,9 +43,9 @@ class AbstractMixture(AbstractDistributionType):
         if not all(dists[0].dim == dist.dim for dist in dists):
             raise ValueError("All distributions must have the same dimension")
 
-        non_zero_indices = nonzero(weights)[0]
+        non_zero_indices = count_nonzero(weights)
 
-        if len(non_zero_indices) < len(weights):
+        if non_zero_indices < len(weights):
             warnings.warn(
                 "Elements with zero weights detected. Pruning elements in mixture with weight zero."
             )

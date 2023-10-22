@@ -48,6 +48,7 @@ from torch import (
     kron,
     angle,
     arctan,
+    count_nonzero,
 )
 from torch import repeat_interleave as repeat
 from torch import (
@@ -128,6 +129,25 @@ power = _box_binary_scalar(target=_torch.pow, box_x2=False)
 
 std = _preserve_input_dtype(_add_default_dtype_by_casting(target=_torch.std))
 
+def cov(input, correction=1, fweights=None, aweights=None, bias=False):
+    # for pyrecest
+    if not bias:
+        return _torch.cov(input, correction=correction, fweights=fweights, aweights=aweights)
+    else:
+        assert fweights==None
+        # Ensure weights sum to 1
+        aweights = aweights / aweights.sum()
+        
+        # Calculate weighted means
+        means = (input * aweights).sum(dim=1, keepdim=True)
+        
+        deviation_centered = input - means
+        
+        # Calculate weighted biased covariance
+        cov_matrix = _torch.einsum('ij,kj,j->ik', deviation_centered, deviation_centered, aweights)
+
+        return cov_matrix
+        
 
 def matmul(x, y, out=None):
     for array_ in [x, y]:

@@ -7,6 +7,7 @@ from pyrecest.backend import array
 from pyrecest.backend import zeros
 import unittest
 from unittest.mock import patch
+import numpy.testing as npt
 
 import matplotlib.pyplot as plt
 

@@ -1,5 +1,6 @@
 from pyrecest.backend import reshape
 from pyrecest.backend import ones
+from pyrecest.backend import cov
 import matplotlib.pyplot as plt
 
 
@@ -51,8 +52,8 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
         if weights is None:
             weights = ones(samples.shape[1]) / samples.shape[1]
 
-        mean = np.average(samples, weights=weights, axis=0)
+        mean = (samples * weights.reshape(-1, 1)).sum(dim=0)
         deviation = samples - mean
-        covariance = np.cov(deviation.T, aweights=weights, bias=True)
+        covariance = cov(deviation.T, aweights=weights, bias=True)
 
         return mean, covariance

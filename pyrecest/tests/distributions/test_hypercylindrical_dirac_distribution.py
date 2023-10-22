@@ -50,7 +50,7 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         assert self.pwd.bound_dim == same.bound_dim
 
     def test_apply_function_shift(self):
-        shift_offset = array([1.4, -0.3, 1])
+        shift_offset = array([1.4, -0.3, 1.0])
 
         def shift(x, shift_by=shift_offset):
             return x + shift_by

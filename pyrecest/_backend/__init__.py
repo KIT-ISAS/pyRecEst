@@ -182,6 +182,8 @@ BACKEND_ATTRIBUTES = {
         "kron",
         "angle",
         "arctan",
+        "cov",
+        "count_nonzero",
     ],
     "autodiff": [
         "custom_gradient",

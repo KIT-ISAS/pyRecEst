@@ -17,8 +17,8 @@ class LinearMixtureTest(unittest.TestCase):
             simplefilter("always")
             LinearMixture(
                 [
-                    GaussianDistribution(array([1]), array([[1]])),
-                    GaussianDistribution(array([50]), array([[1]])),
+                    GaussianDistribution(array([1.0]), array([[1.0]])),
+                    GaussianDistribution(array([50.0]), array([[1.0]])),
                 ],
                 array([0.3, 0.7]),
             )
@@ -30,8 +30,8 @@ class LinearMixtureTest(unittest.TestCase):
             )
 
     def test_pdf(self):
-        gm1 = GaussianDistribution(array([1, 1]), diag([2, 3]))
-        gm2 = GaussianDistribution(-array([3, 1]), diag([2, 3]))
+        gm1 = GaussianDistribution(array([1.0, 1.0]), diag(array([2.0, 3.0])))
+        gm2 = GaussianDistribution(-array([3.0, 1.0]), diag(array([2.0, 3.0])))
 
         with catch_warnings():
             simplefilter("ignore", category=UserWarning)
