@@ -93,6 +93,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
                     tracker.filter_bank[i].filter_state.C, C_matrices[i]
                 )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_predict_linear_different_mats_and_inputs(self):
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init

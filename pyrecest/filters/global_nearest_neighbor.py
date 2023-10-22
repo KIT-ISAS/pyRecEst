@@ -64,7 +64,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             all_cov_mat_state_equal = all(
                 all_cov_mats_prior
                 == repeat(
-                    all_cov_mats_prior[:, :, 0][:, :, np.newaxis],
+                    all_cov_mats_prior[:, :, 0][:, :, None],
                     all_cov_mats_prior.shape[2],
                     axis=2,
                 )
@@ -72,7 +72,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             all_cov_mat_meas_equal = cov_mats_meas.ndim == 2 or all(
                 cov_mats_meas
                 == repeat(
-                    cov_mats_meas[:, :, 0][:, :, np.newaxis],
+                    cov_mats_meas[:, :, 0][:, :, None],
                     cov_mats_meas.shape[2],
                     axis=2,
                 )
@@ -108,7 +108,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                     )
                 for i in range(n_targets):
                     dists[i, :] = cdist(
-                        (measurement_matrix @ all_means_prior[:, i]).T[np.newaxis],
+                        (measurement_matrix @ all_means_prior[:, i]).T[None],
                         measurements.T,
                         "mahalanobis",
                         VI=all_mats_mahalanobis[:, :, i],
@@ -125,9 +125,9 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                         dists[i, j] = squeeze(
                             cdist(
                                 (measurement_matrix @ all_means_prior[:, i]).T[
-                                    np.newaxis
+                                    None
                                 ],
-                                measurements[:, j].T[np.newaxis],
+                                measurements[:, j].T[None],
                                 "mahalanobis",
                                 VI=curr_cov_mahalanobis,
                             )
