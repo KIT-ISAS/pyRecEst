@@ -13,6 +13,7 @@ from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
 from pyrecest.backend import zeros
+from pyrecestd.backend import angle
 import numbers
 
 
@@ -96,7 +97,7 @@ class WrappedNormalDistribution(
     def cdf(
         self,
         xs,
-        startingPoint: float = 0,
+        startingPoint: float = 0.0,
         n_wraps: Union[int, int32, int64] = 10,
     ):
         startingPoint = mod(startingPoint, 2 * pi)
@@ -141,10 +142,10 @@ class WrappedNormalDistribution(
         return wn
 
     def sample(self, n: Union[int, int32, int64]):
-        return mod(self.mu + self.sigma * random.randn(1, n), 2 * pi)
+        return mod(self.mu + self.sigma * random.randn(1, n), 2.0 * pi)
 
     def shift(self, shift_by):
-        assert np.isscalar(shift_by)
+        assert shift_by.shape in ((1,), ())
         return WrappedNormalDistribution(self.mu + shift_by, self.sigma)
 
     def to_vm(self) -> VonMisesDistribution:
@@ -154,11 +155,11 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def from_moment(m: complex) -> "WrappedNormalDistribution":
-        mu = mod(np.angle(m), 2 * pi)
+        mu = mod(angle(m), 2.0 * pi)
         sigma = sqrt(-2 * log(abs(m)))
         return WrappedNormalDistribution(mu, sigma)
 
     @staticmethod
     def sigma_to_kappa(sigma):
         # Approximate conversion from sigma to kappa for a Von Mises distribution
-        return 1 / sigma**2
+        return 1.0 / sigma**2

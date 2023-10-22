@@ -12,7 +12,7 @@ class TestWatsonDistribution(unittest.TestCase):
             [[1.0, 0.0, 0.0], [1.0, 2.0, 2.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0], [-1.0, -1.0, -1.0]],
             dtype=float,
         )
-        self.xs = self.xs / linalg.norm(self.xs, axis=1, keepdims=True)
+        self.xs = self.xs / linalg.norm(self.xs, axis=1).reshape((-1, 1))
 
     def test_constructor(self):
         mu = array([1.0, 2.0, 3.0])

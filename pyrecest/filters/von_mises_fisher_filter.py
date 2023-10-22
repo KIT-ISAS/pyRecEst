@@ -9,7 +9,7 @@ from .abstract_hyperspherical_filter import AbstractHypersphericalFilter
 class VonMisesFisherFilter(AbstractHypersphericalFilter):
     def __init__(self):
         AbstractHypersphericalFilter.__init__(
-            self, VonMisesFisherDistribution(array([1, 0]), 1)
+            self, VonMisesFisherDistribution(array([1.0, 0.0]), 1.0)
         )
 
     @property

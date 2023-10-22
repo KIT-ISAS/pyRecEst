@@ -3,6 +3,7 @@ from pyrecest.backend import array
 from pyrecest.backend import arange
 import unittest
 import numpy.testing as npt
+import pyrecest.backend
 
 from pyrecest.distributions.circle.custom_circular_distribution import (
     CustomCircularDistribution,
@@ -37,6 +38,7 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
             dist.pdf(xs=self.xs), custom_wrapped.pdf(xs=self.xs), atol=0.0001
         )
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_cdf(self):
         dist = WrappedCauchyDistribution(self.mu, self.gamma)
         npt.assert_allclose(

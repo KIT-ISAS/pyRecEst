@@ -53,7 +53,7 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         """
         Test that the pdf with large sigma is approximately a uniform distribution.
         """
-        wn_large_sigma = WrappedNormalDistribution(0.0, 100.0)
+        wn_large_sigma = WrappedNormalDistribution(array(0.0), array(100.0))
         x = arange(0, 7)
         fx = ones_like(x) / (2.0 * pi)
         self.assertTrue(allclose(wn_large_sigma.pdf(x), fx, rtol=1e-10))

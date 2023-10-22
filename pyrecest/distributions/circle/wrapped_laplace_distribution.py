@@ -10,10 +10,10 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class WrappedLaplaceDistribution(AbstractCircularDistribution):
     def __init__(self, lambda_, kappa_):
         AbstractCircularDistribution.__init__(self)
-        assert np.isscalar(lambda_)
-        assert np.isscalar(kappa_)
-        assert lambda_ > 0
-        assert kappa_ > 0
+        assert lambda_.shape in ((1,), ())
+        assert kappa_.shape in ((1,), ())
+        assert lambda_ > 0.0
+        assert kappa_ > 0.0
         self.lambda_ = lambda_
         self.kappa = kappa_
 
