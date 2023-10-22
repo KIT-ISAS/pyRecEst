@@ -118,7 +118,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
         mu_ = m / linalg.norm(m)
         Rbar = linalg.norm(m)
-        kappa_ = VonMisesFisherDistribution.a_d_inverse(np.size(m), Rbar)
+        kappa_ = VonMisesFisherDistribution.a_d_inverse(m.shape[0], Rbar)
 
         V = VonMisesFisherDistribution(mu_, kappa_)
         return V

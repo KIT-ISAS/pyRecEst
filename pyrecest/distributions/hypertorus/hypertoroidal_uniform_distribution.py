@@ -26,10 +26,12 @@ class HypertoroidalUniformDistribution(
         """
         if xs.ndim == 0:
             assert self.dim==1
+            n_inputs = 1
         elif xs.ndim == 1 and self.dim==1:
             n_inputs = xs.shape[0]
         elif xs.ndim == 1:
             assert self.dim==xs.shape[0]
+            n_inputs = 1
         else:
             n_inputs = xs.shape[0]
         

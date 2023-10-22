@@ -3,6 +3,8 @@ from pyrecest.backend import random
 from pyrecest.backend import linspace
 from pyrecest.backend import eye
 from pyrecest.backend import array
+from pyrecest.backend import arange
+from pyrecest.backend import meshgrid
 import pyrecest.backend
 import unittest
 import numpy.testing as npt
@@ -24,10 +26,10 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         self.pwn = PartiallyWrappedNormalDistribution(
             array([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]), mat, 3
         )
-        grid = np.mgrid[-3:4, -3:4, -2:3, -2:3, -2:3, -2:3]
-        self.grid_flat = grid.reshape(6, -1).T
+        grid = meshgrid(arange(-3, 4), arange(-3, 4), arange(-2, 3), arange(-2, 3), arange(-2, 3), arange(-2, 3))
+        self.grid_flat = array(grid).reshape(6, -1).T
 
-        self.vm = VonMisesDistribution(0.0, 1.0)
+        self.vm = VonMisesDistribution(array(0.0), array(1.0))
         self.gauss = GaussianDistribution(array([1.0, 2.0]), eye(2))
 
         def fun(x):
@@ -58,7 +60,8 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
     def test_condition_on_periodic(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_periodic(array(1.0))
 
-        grid = np.mgrid[-3:4, -3:4].reshape(2, -1).T
+        grid = meshgrid(arange(-3, 4), arange(-3, 4))
+        self.grid_flat = array(grid).reshape(2, -1).T
         npt.assert_allclose(dist.pdf(grid), self.gauss.pdf(grid))
 
 

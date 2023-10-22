@@ -54,11 +54,11 @@ class AbstractParticleFilter(AbstractFilterType):
         ), "samples and weights must match in size"
 
         weights = weights / sum(weights)
-        n = self.filter_state.w.size
-        noise_ids = random.choice(weights.size, n, p=weights)
+        n = self.filter_state.w.shape[0]
+        noise_samples = random.choice(self.filter_state.d, n, p=weights)
         d = zeros((n, self.filter_state.dim))
         for i in range(n):
-            d[i, :] = f(self.filter_state.d[i, :], samples[noise_ids[i]])
+            d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
 
         self.filter_state.d = d
 

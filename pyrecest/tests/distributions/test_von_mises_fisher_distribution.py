@@ -196,7 +196,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
     def test_from_distribution_dirac(self):
         dirac_dist = HypersphericalDiracDistribution(
             array(
-                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 1.0] / linalg.norm([0.0, 1.0, 1.0])]
+                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 1.0] / linalg.norm(array([0.0, 1.0, 1.0]))]
             )
         )
         vmf = VonMisesFisherDistribution.from_distribution(dirac_dist)
