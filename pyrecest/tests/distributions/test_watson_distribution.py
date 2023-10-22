@@ -58,7 +58,7 @@ class TestWatsonDistribution(unittest.TestCase):
         watson_dist = WatsonDistribution(mu, kappa)
         bingham_dist = watson_dist.to_bingham()
         self.assertIsInstance(bingham_dist, BinghamDistribution)
-        npt.assert_almost_equal(
+        npt.assert_array_almost_equal(
             watson_dist.pdf(self.xs), bingham_dist.pdf(self.xs), decimal=5
         )
 

@@ -2,7 +2,7 @@ from pyrecest.backend import random
 from pyrecest.backend import repeat
 from pyrecest.backend import array
 import unittest
-
+import numpy.testing as npt
 
 from pyrecest.utils.metrics import anees
 
