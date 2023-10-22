@@ -22,6 +22,8 @@ from ..sampling.hyperspherical_sampler import (
 
 
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):
+    
+    @unittest.skipIf(not healpy_installed, "healpy is not installed")
     @parameterized.expand(
         [
             ("healpix", 2, 48, "n_side"),

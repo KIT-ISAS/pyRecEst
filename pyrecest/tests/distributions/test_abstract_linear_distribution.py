@@ -64,12 +64,14 @@ class TestAbstractLinearDistribution(unittest.TestCase):
     def test_mean_numerical_gaussian_2D(self):
         npt.assert_allclose(self.g_2D.mean_numerical(), self.mu_2D, atol=1e-6)
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_mode_numerical_gaussian_2D_mean_far_away(self):
         mu = array([5.0, 10.0])
         C = array([[2.0, 1.0], [1.0, 1.0]])
         g = GaussianDistribution(mu, C)
         npt.assert_allclose(g.mode_numerical(), mu, atol=2e-4)
 
+    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
     def test_mode_numerical_gaussian_3D(self):
         npt.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
 

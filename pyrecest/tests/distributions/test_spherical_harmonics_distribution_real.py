@@ -35,7 +35,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
     def testNormalization(self):
         unnormalized_coeffs = random.rand(3, 5)
         shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)
-        self.assertAlmostEqual(shd.integrate(), 1, delta=1e-6)
+        self.assertAlmostEqual(shd.integrate(), 1.0, delta=1e-6)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)
 
         vals_normalized = shd.pdf(column_stack((x, y, z)))
