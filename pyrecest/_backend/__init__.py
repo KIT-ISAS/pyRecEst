@@ -180,6 +180,7 @@ BACKEND_ATTRIBUTES = {
         "isreal",
         "triu",
         "kron",
+        "angle",
     ],
     "autodiff": [
         "custom_gradient",

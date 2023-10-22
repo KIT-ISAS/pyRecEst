@@ -1,4 +1,5 @@
 import unittest
+from pyrecest.backend import array
 
 import numpy.testing as npt
 from pyrecest.distributions import VonMisesDistribution
@@ -28,14 +29,14 @@ class TestVonMisesFilter(unittest.TestCase):
         self.assertLess(self.curr_filter.filter_state.kappa, 1.3)
 
     def test_update(self):
-        meas_noise = VonMisesDistribution(0, 1.3)
-        meas = 1.1
+        meas_noise = VonMisesDistribution(0.0, 1.3)
+        meas = array(1.1)
 
         self.curr_filter.set_state(self.vm_prior)
         self.curr_filter.update_identity(meas_noise, meas)
         self.assertIsInstance(self.curr_filter.filter_state, VonMisesDistribution)
         npt.assert_allclose(
-            self.curr_filter.get_point_estimate(), (self.vm_prior.mu + meas) / 2
+            self.curr_filter.get_point_estimate(), (self.vm_prior.mu + meas) / 2.0
         )
         self.assertGreater(self.curr_filter.filter_state.kappa, 1.3)
 

@@ -59,7 +59,7 @@ class VonMisesFilter(AbstractCircularFilter):
         vmMeas (VMDistribution) : distribution of additive noise
         z : measurement in [0, 2pi)
         """
-        assert np.size(z) == 1, "z must be a scalar"
+        assert z.shape in ((), (1,)), "z must be a scalar"
         if vmMeas.mu != 0.0:
             warning_message = (
                 "The measurement noise is not centered at 0.0. "
@@ -69,6 +69,6 @@ class VonMisesFilter(AbstractCircularFilter):
             )
             warnings.warn(warning_message)
 
-        muWnew = mod(z - vmMeas.mu, 2 * pi)
+        muWnew = mod(z - vmMeas.mu, 2.0 * pi)
         vmMeasShifted = VonMisesDistribution(muWnew, vmMeas.kappa)
         self.filter_state = self.filter_state.multiply(vmMeasShifted)
