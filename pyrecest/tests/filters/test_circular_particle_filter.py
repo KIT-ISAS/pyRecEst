@@ -135,7 +135,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         # test update with single parameter likelihood
         random.seed(0)
         self.filter.filter_state = self.dist
-        wn = WrappedNormalDistribution(1.3, 0.8)
+        wn = WrappedNormalDistribution(array(1.3), array(0.8))
 
         def likelihood2(x):
             return wn.pdf(-x)

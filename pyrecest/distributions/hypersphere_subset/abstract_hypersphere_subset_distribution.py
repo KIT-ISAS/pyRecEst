@@ -13,6 +13,7 @@ from pyrecest.backend import cos
 from pyrecest.backend import abs
 from pyrecest.backend import int64
 from pyrecest.backend import int32
+from pyrecest.backend import float64
 from pyrecest.backend import zeros
 from pyrecest.backend import empty
 from pyrecest.backend import array
@@ -53,12 +54,20 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
                 def f(x, i=i):
                     return x[i] * self.pdf(x)
-
+            
                 fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
+                
+                # Casts the floats to arrays, relevant for operations on torch.tensors
+                # that are not backward compatible
+                def fangles_array(*args):
+                    tensors = [array([arg], dtype=float64) for arg in args]
+                    result = fangles(*tensors)
+                    return result.item()
+
 
                 if self.dim == 1:
                     mu[i], _ = quad(
-                        fangles,
+                        fangles_array,
                         integration_boundaries[0, 0],
                         integration_boundaries[0, 1],
                         epsabs=1e-3,
@@ -66,13 +75,13 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                     )
                 elif self.dim == 2:
                     mu[i], _ = nquad(
-                        fangles,
+                        fangles_array,
                         integration_boundaries,
                         opts={"epsabs": 1e-3, "epsrel": 1e-3},
                     )
                 elif self.dim == 3:
                     mu[i], _ = nquad(
-                        fangles,
+                        fangles_array,
                         integration_boundaries,
                         opts={"epsabs": 1e-3, "epsrel": 1e-3},
                     )
@@ -237,7 +246,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
             def g_3d(phi1, phi2, phi3):
                 return (
-                    f_hypersph_coords(phi1, phi2, phi3)
+                    f_hypersph_coords(array(phi1), array(phi2), array(phi3))
                     * sin(phi2)
                     * (sin(phi3)) ** 2
                 )
