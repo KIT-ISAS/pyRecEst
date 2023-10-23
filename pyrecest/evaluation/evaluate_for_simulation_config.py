@@ -1,6 +1,5 @@
 import random
 from typing import Any, Optional
-from pyrecest.backend import uint32
 
 from .evaluate_for_variables import evaluate_for_variables
 from .generate_simulated_scenarios import generate_simulated_scenarios
