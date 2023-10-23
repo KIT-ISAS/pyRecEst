@@ -92,6 +92,7 @@ from numpy import (
     full_like,
     isinf,
     deg2rad,
+    argsort,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 
