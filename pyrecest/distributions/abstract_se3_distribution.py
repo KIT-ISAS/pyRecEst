@@ -52,8 +52,9 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
 
     @staticmethod
     def plot_point(se3point):  # pylint: disable=too-many-locals
+        import numpy as _np
         """Visualize just a point in the SE(3) domain (no uncertainties are considered)"""
-        q = np.quaternion(*se3point[:4])
+        q = _np.quaternion(*se3point[:4])
         rotMat = quaternion.as_rotation_matrix(q)
 
         pos = se3point[4:]
@@ -71,7 +72,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
         h = [h1, h2, h3]
         relevant_coords = concatenate((pos.reshape(-1, 1), pos + rotMat), axis=1)
         needed_boundaries = column_stack(
-            (np.min(relevant_coords, axis=1), np.max(relevant_coords, axis=1))
+            (_np.min(relevant_coords, axis=1), _np.max(relevant_coords, axis=1))
         )
 
         # Get current axis limits

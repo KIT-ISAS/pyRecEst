@@ -5,8 +5,8 @@ from typing import Union
 
 from pyrecest.backend import (
     all,
+    amax
     apply_along_axis,
-    argmax,
     int32,
     int64,
     isclose,
@@ -117,7 +117,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
     def mode(self, rel_tol=0.001):
-        highest_val, ind = np.max(self.w), argmax(self.w)
+        highest_val, ind = amax(self.w)
         if (highest_val / self.w.size) < (1 + rel_tol):
             warnings.warn(
                 "The samples may be equally weighted, .mode is likely to return a bad result."
