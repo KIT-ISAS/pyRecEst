@@ -4,7 +4,7 @@ description = "Framework for recursive Bayesian estimation in Python."
 readme = "README.md"
 authors = ["Florian Pfaff <pfaff@kit.edu>"]
 version = "0.5.0"
-
+ 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 numpy = "*"
@@ -19,19 +19,11 @@ shapely = "*"
 
 [tool.poetry.extras]
 healpy_support = ["healpy"]
-
-[tool.poetry.group.pytorch_cpu.dependencies]
-torch = "2.1.0+cpu"
-torchvision = "*"
-torchaudio = "2.1.0+cpu"
-
-[tool.poetry.group.pytorch.dependencies]
-torch = "*"
-torchvision = "*"
-torchaudio = "*"
+pytorch_support = ["torch"]
 
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
+torch = "*"
 autopep8 = "^2.0.2"
 pytest = "*"
 parameterized = "*"
