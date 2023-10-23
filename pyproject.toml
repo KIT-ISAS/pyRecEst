@@ -27,4 +27,6 @@ pytorch_support = []
 
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
-autopep8 = "^2.0
+autopep8 = "^2.0.2"
+pytest = "*"
+parameterized = "*"
