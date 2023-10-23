@@ -186,7 +186,7 @@ def convert_to_wider_dtype(tensor_list):
     if len(set(dtype_list)) == 1:
         return tensor_list
 
-    wider_dtype_index = max(dtype_list)
+    wider_dtype_index = amax(dtype_list)
 
     wider_dtype = list(_DTYPES.keys())[wider_dtype_index]
 
