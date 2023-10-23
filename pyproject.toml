@@ -16,17 +16,15 @@ pyshtools = "*"
 beartype = "*"
 numpy-quaternion = "*"
 shapely = "*"
-torch = { version = "*", optional = true, markers = "extra == 'torch-cpu'" }
-torchvision = { version = "*", optional = true, markers = "extra == 'torch-cpu'" }
-torchaudio = { version = "*", optional = true, markers = "extra == 'torch-cpu'" }
+torch = { version = "2.1.0+cpu", optional = true, markers = "extra == 'pytorch_cpu_support'" }
+torchvision = { version = "*", optional = true, markers = "extra == 'pytorch_cpu_support'" }
+torchaudio = { version = "2.1.0+cpu", optional = true, markers = "extra == 'pytorch_cpu_support'" }
 
 [tool.poetry.extras]
 healpy_support = ["healpy"]
 pytorch_support = ["torch", "torchvision", "torchaudio"]
-pytorch_cpu_support = ["torch-cpu"]
+pytorch_cpu_support = []
 
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
-autopep8 = "^2.0.2"
-pytest = "*"
-parameterized = "*"
+autopep8 = "^2.0
