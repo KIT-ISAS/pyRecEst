@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, reshape, sum
+from pyrecest.backend import linalg, reshape, sum, atan2
 
 from ..circle.circular_dirac_distribution import CircularDiracDistribution
 from .abstract_hypersphere_subset_dirac_distribution import (
@@ -16,7 +16,7 @@ class HypersphericalDiracDistribution(
 ):
     def plot(self, *args, **kwargs):
         if self.dim == 2:
-            p = plt.stem(np.atan2(self.d[1, :], self.d[0, :]), self.w, *args, **kwargs)
+            p = plt.stem(atan2(self.d[1, :], self.d[0, :]), self.w, *args, **kwargs)
         elif self.dim == 3:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
@@ -33,7 +33,7 @@ class HypersphericalDiracDistribution(
         assert (
             self.dim == 2
         ), "Conversion to circular dirac distribution only supported for 2D case."
-        return CircularDiracDistribution(np.atan2(self.d[1, :], self.d[0, :]), self.w)
+        return CircularDiracDistribution(atan2(self.d[1, :], self.d[0, :]), self.w)
 
     def mean_direction(self):
         vec_sum = sum(self.d * reshape(self.w, (-1, 1)), axis=0)
