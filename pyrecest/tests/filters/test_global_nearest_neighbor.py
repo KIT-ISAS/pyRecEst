@@ -4,6 +4,7 @@ import numpy.testing as npt
 import pyrecest.backend
 import scipy
 from parameterized import parameterized
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     all,
     allclose,

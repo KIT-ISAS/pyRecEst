@@ -3,6 +3,7 @@ from math import pi
 
 import numpy.testing as npt
 from parameterized import parameterized
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     all,
     allclose,

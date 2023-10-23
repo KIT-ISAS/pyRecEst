@@ -1,3 +1,4 @@
+# pylint: disable=redefined-builtin
 from pyrecest.backend import log, sum
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution

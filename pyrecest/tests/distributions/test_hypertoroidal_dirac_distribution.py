@@ -3,6 +3,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     array,
     exp,

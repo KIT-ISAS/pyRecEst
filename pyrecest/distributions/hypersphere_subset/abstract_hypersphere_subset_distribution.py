@@ -3,6 +3,7 @@ from collections.abc import Callable
 from math import pi
 from typing import Union
 
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     abs,
     array,

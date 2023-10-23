@@ -4,6 +4,7 @@ from typing import Union
 
 import scipy.integrate
 import scipy.optimize
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     allclose,
     any,

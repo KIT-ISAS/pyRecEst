@@ -1,6 +1,7 @@
 import collections
 import warnings
 
+# pylint: disable=redefined-builtin
 from pyrecest.backend import shape, sum
 
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture

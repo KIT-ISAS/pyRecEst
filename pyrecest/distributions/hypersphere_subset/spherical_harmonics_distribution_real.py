@@ -1,3 +1,4 @@
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     all,
     atleast_2d,

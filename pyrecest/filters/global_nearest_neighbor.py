@@ -1,3 +1,4 @@
+# pylint: disable=redefined-builtin
 from pyrecest.backend import empty, full, repeat, squeeze, stack, all
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist

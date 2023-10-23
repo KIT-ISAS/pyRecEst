@@ -3,6 +3,7 @@ from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     arange,
     array,

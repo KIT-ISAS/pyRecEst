@@ -1,5 +1,6 @@
 import warnings
 
+# pylint: disable=redefined-builtin
 from pyrecest.backend import mean, std, sum
 
 from .determine_all_deviations import determine_all_deviations

@@ -3,6 +3,7 @@ import warnings
 from collections.abc import Callable
 from typing import Union
 
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     amax,
     apply_along_axis,

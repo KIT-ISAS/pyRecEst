@@ -2,6 +2,7 @@ import copy
 import warnings
 from abc import abstractmethod
 
+# pylint: disable=redefined-builtin
 from pyrecest.backend import exp, imag, real, all
 
 from .abstract_distribution_type import AbstractDistributionType

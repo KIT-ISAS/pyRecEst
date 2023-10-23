@@ -3,6 +3,7 @@ import copy
 import warnings
 from typing import Union
 
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
     count_nonzero,
     empty,

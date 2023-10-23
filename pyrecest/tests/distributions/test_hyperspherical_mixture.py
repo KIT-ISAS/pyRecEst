@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 from numpy.testing import assert_allclose
+# pylint: disable=redefined-builtin
 from pyrecest.backend import arange, array, linspace, meshgrid, sqrt, stack, sum
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,

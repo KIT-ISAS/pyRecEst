@@ -1,4 +1,5 @@
 
+# pylint: disable=redefined-builtin
 from pyrecest.backend import array, dot, ones, stack, sum
 
 from .abstract_linear_distribution import AbstractLinearDistribution

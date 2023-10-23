@@ -3,6 +3,7 @@ from math import pi
 
 import numpy.testing as npt
 import pyrecest.backend
+# pylint: disable=redefined-builtin
 from pyrecest.backend import array, linalg, mod, ones, random, sqrt, sum
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (

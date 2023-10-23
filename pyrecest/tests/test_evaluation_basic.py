@@ -7,7 +7,9 @@ from pyrecest.backend import ones
 from pyrecest.backend import ndim
 from pyrecest.backend import eye
 from pyrecest.backend import array
+# pylint: disable=redefined-builtin
 from pyrecest.backend import any
+# pylint: disable=redefined-builtin
 from pyrecest.backend import all
 from pyrecest.backend import empty
 from pyrecest.backend import zeros

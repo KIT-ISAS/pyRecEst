@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import pyrecest.backend
+# pylint: disable=redefined-builtin
 from pyrecest.backend import all, allclose, array, ones, tile, zeros
 from pyrecest.distributions.hypertorus.toroidal_uniform_distribution import (
     ToroidalUniformDistribution,
