@@ -1,5 +1,6 @@
 import numpy as np
 from math import pi
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import tile, squeeze, sum, zeros, mod
 from beartype import beartype
 from pyrecest.distributions import (

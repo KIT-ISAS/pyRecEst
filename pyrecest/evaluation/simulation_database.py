@@ -1,10 +1,9 @@
 import warnings
 from typing import Optional
 
-import numpy as np
 from beartype import beartype
 from pyrecest.distributions import GaussianDistribution
-
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import eye, zeros
 
 @beartype

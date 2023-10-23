@@ -20,7 +20,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
 
     def test_linear_mean_numerical(self):
         hwn = PartiallyWrappedNormalDistribution(
-            array([1, 2]), array([[2.0, 0.3], [0.3, 1.0]]), 1
+            array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 1.0]]), 1
         )
         npt.assert_allclose(hwn.linear_mean_numerical(), hwn.mu[-1])
 
@@ -42,7 +42,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             zeros(10),
             atol=1e-10,
         )
-        dist_cond2 = hwn.condition_on_periodic(array(1.5) + 2 * pi)
+        dist_cond2 = hwn.condition_on_periodic(array(1.5) + 2.0 * pi)
         npt.assert_allclose(
             diff(
                 hwn.pdf(column_stack([1.5 * ones(11), arange(-5, 6)]))
