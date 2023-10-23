@@ -1,8 +1,6 @@
 import warnings
 
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mean, std, sum
+import numpy as np
 
 from .determine_all_deviations import determine_all_deviations
 from .get_distance_function import get_distance_function
@@ -42,18 +40,18 @@ def summarize_filter_results(
     errors_all = determine_all_deviations(
         filter_results, extract_mean, distance_function, groundtruths
     )
-    errors_mean = mean(errors_all, axis=1)
-    errors_std = std(errors_all, axis=1)
-    times_mean = mean(runtimes, axis=1)
-    failure_rates = sum(run_failed, axis=1) / run_failed.shape[1]
+    errors_mean = np.mean(errors_all, axis=1)
+    errors_std = np.std(errors_all, axis=1)
+    times_mean = np.mean(runtimes, axis=1)
+    failure_rates = np.sum(run_failed, axis=1) / run_failed.shape[1]
 
     results_summarized = filter_configs
-    for d, curr_err, curr_std, curr_time, curr_fail_rate in zip(
+    for d, err, std, time, fail_rate in zip(
         results_summarized, errors_mean, errors_std, times_mean, failure_rates
     ):
-        d["error_mean"] = curr_err
-        d["error_std"] = curr_std
-        d["time_mean"] = curr_time
-        d["failure_rate"] = curr_fail_rate
+        d["error_mean"] = err
+        d["error_std"] = std
+        d["time_mean"] = time
+        d["failure_rate"] = fail_rate
 
     return results_summarized

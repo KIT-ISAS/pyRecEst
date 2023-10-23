@@ -1,8 +1,7 @@
 import warnings
 from typing import Any, Dict
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import empty, zeros
+import numpy as np
 
 from .perform_predict_update_cycles import perform_predict_update_cycles
 
@@ -21,15 +20,15 @@ def iterate_configs_and_runs(
         )
         raise NotImplementedError("This is not implemented yet.")
 
-    n_configs = sum((f["parameter"]).shape[0] for f in filter_configs)
+    n_configs = sum(np.size(f["parameter"]) for f in filter_configs)
     n_runs = groundtruths.shape[0]
-    run_times = empty((n_configs, n_runs))
-    run_failed = zeros((n_configs, n_runs), dtype=bool)
+    run_times = np.empty((n_configs, n_runs))
+    run_failed = np.zeros((n_configs, n_runs), dtype=bool)
 
     if evaluation_config["convert_to_point_estimate_during_runtime"]:
         raise NotImplementedError("This is not implemented yet.")
 
-    last_filter_states = empty((n_configs, n_runs), dtype=object)
+    last_filter_states = np.empty((n_configs, n_runs), dtype=object)
 
     for run in range(n_runs):
         for config_no, filter_config in enumerate(filter_configs):

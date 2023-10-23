@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import empty, random
 
 from .check_and_fix_config import check_and_fix_config
 from .generate_groundtruth import generate_groundtruth
@@ -22,17 +21,17 @@ def generate_simulated_scenarios(
     """
     simulation_params = check_and_fix_config(simulation_params)
 
-    groundtruths = empty(
+    groundtruths = np.empty(
         (np.size(simulation_params["all_seeds"]), simulation_params["n_timesteps"]),
         dtype=np.ndarray,
     )
-    measurements = empty(
+    measurements = np.empty(
         (np.size(simulation_params["all_seeds"]), simulation_params["n_timesteps"]),
         dtype=np.ndarray,
     )
 
     for run, seed in enumerate(simulation_params["all_seeds"]):
-        random.seed(seed)
+        np.random.seed(seed)
         groundtruths[run, :] = generate_groundtruth(simulation_params)
         measurements[run, :] = generate_measurements(
             groundtruths[run, :], simulation_params

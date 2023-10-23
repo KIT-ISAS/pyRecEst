@@ -1,7 +1,4 @@
-from math import pi
-
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, empty, linspace, random, sin
+import numpy as np
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import unary_union
 
@@ -14,8 +11,8 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
         polygon.__class__ = cls
         return polygon
 
-    def sample_on_boundary(self, num_points: int):
-        points = empty((num_points,), dtype=Point)
+    def sample_on_boundary(self, num_points: int) -> np.ndarray:
+        points = np.empty((num_points,), dtype=Point)
 
         if isinstance(self.boundary, LineString):
             lines = [self.boundary]
@@ -27,7 +24,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
             perimeter = self.length
 
             # Generate a random distance along the perimeter
-            distance = random.uniform(0, perimeter)
+            distance = np.random.uniform(0, perimeter)
 
             # Traverse the edges to place the point
             for line in lines:
@@ -36,27 +33,27 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
                     break
                 distance -= line.length
 
-        return array([(point.x, point.y) for point in points])
+        return np.array([(point.x, point.y) for point in points])
 
-    def sample_within(self, num_points: int):
+    def sample_within(self, num_points: int) -> np.ndarray:
         min_x, min_y, max_x, max_y = self.bounds
-        points = empty((num_points,), dtype=Point)
+        points = np.empty((num_points,), dtype=Point)
 
         for i in range(num_points):
             random_point = Point(
-                [random.uniform(min_x, max_x), random.uniform(min_y, max_y)]
+                [np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y)]
             )
             while not random_point.within(self):
                 random_point = Point(
                     [
-                        random.uniform(min_x, max_x),
-                        random.uniform(min_y, max_y),
+                        np.random.uniform(min_x, max_x),
+                        np.random.uniform(min_y, max_y),
                     ]
                 )
 
             points[i] = random_point
 
-        return array(points)
+        return np.array(points)
 
 
 class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
@@ -106,8 +103,8 @@ class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
                 segments.append(line_of_sight)
 
             # Check for intersections along the direction to the vertex
-            direction = array(vertex) - array(point.coords)
-            far_away_point = Point(array(vertex) + 1000 * direction)
+            direction = np.array(vertex) - np.array(point.coords)
+            far_away_point = Point(np.array(vertex) + 1000 * direction)
             ray = LineString([point, far_away_point])
 
             # Find intersection points with the polygon boundary
@@ -130,7 +127,7 @@ class Star(StarShapedPolygon):  # pylint: disable=abstract-method
     __slots__ = Polygon.__slots__
 
     def __new__(cls, radius=1, arms=5, arm_width=0.3, center=(0, 0)):
-        arm_angle = 2 * pi / arms
+        arm_angle = 2 * np.pi / arms
         points = []
         for i in range(arms):
             base_angle = i * arm_angle
@@ -138,15 +135,15 @@ class Star(StarShapedPolygon):  # pylint: disable=abstract-method
             # External point
             points.append(
                 (
-                    center[0] + radius * cos(base_angle),
-                    center[1] + radius * sin(base_angle),
+                    center[0] + radius * np.cos(base_angle),
+                    center[1] + radius * np.sin(base_angle),
                 )
             )
             # Internal point
             points.append(
                 (
-                    center[0] + arm_width * cos(inner_angle),
-                    center[1] + arm_width * sin(inner_angle),
+                    center[0] + arm_width * np.cos(inner_angle),
+                    center[1] + arm_width * np.sin(inner_angle),
                 )
             )
         # Close the loop
@@ -168,7 +165,7 @@ class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
 
         # Use a default centroid if none is provided
         if centroid is None:
-            centroid = array([0, 0])
+            centroid = [0, 0]
 
         # Calculate half dimensions for clarity
         half_height_1 = height_1 / 2
@@ -177,7 +174,7 @@ class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
         half_width_2 = width_2 / 2
 
         # Define polygon points
-        polygon_points = array(
+        polygon_points = np.array(
             [
                 [half_width_1, half_height_1],
                 [half_height_2, half_height_1],
@@ -209,11 +206,11 @@ class StarFish(StarShapedPolygon):  # pylint: disable=abstract-method
 
     # pylint: disable=signature-differs
     def __new__(cls, scaling_factor=1):
-        theta = linspace(0, 2 * pi, 1000)
-        r = 5 + 1.5 * sin(6 * theta)
+        theta = np.linspace(0, 2 * np.pi, 1000)
+        r = 5 + 1.5 * np.sin(6 * theta)
 
-        x = r * cos(theta) * scaling_factor
-        y = r * sin(theta) * scaling_factor
+        x = r * np.cos(theta) * scaling_factor
+        y = r * np.sin(theta) * scaling_factor
 
         # Create polygon instance
         polygon = super().__new__(cls, shell=zip(x, y), holes=None)  # nosec

@@ -1,10 +1,8 @@
 import warnings
 
 import matplotlib.pyplot as plt
-
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import any, array, isnan, ones, shape
+import numpy as np
+from beartype import beartype
 
 from .get_axis_label import get_axis_label
 from .group_results_by_filter import group_results_by_filter
@@ -20,7 +18,7 @@ def plot_results(
 
     Args:
         filenames (str or list): File names to load results from.
-        plot_log (array of bool): Whether to plot in log scale for each axis.
+        plot_log (np.array of bool): Whether to plot in log scale for each axis.
         plot_stds (bool): Whether to plot standard deviations.
         omit_slow (bool): Whether to omit slow filters from plotting.
 
@@ -33,10 +31,10 @@ def plot_results(
         print("Not all warnings are enabled.")
 
     # Expand plot_log to handle all plots (pad it)
-    if plot_log.shape in ((), (1,)):
-        plot_log = False * ones((2, 3), dtype=bool)
+    if np.size(plot_log) == 1:
+        plot_log = False * np.ones((2, 3), dtype=bool)
     else:
-        assert shape(plot_log) == (2, 3)
+        assert np.shape(plot_log) == (2, 3)
     plot_random_filter = True
 
     if filename is None:
@@ -64,10 +62,10 @@ def plot_results(
         # Iterate over all possible names and plot the lines for those that were evaluated
         color, style_marker, style_line = get_plot_style_for_filter(curr_filter_name)
 
-        params = array(results_grouped[curr_filter_name]["parameter"])
-        errors_mean = array(results_grouped[curr_filter_name]["error_mean"])
-        errors_std = array(results_grouped[curr_filter_name]["error_std"])
-        times_mean = array(results_grouped[curr_filter_name]["time_mean"])
+        params = np.asarray(results_grouped[curr_filter_name]["parameter"])
+        errors_mean = np.asarray(results_grouped[curr_filter_name]["error_mean"])
+        errors_std = np.asarray(results_grouped[curr_filter_name]["error_std"])
+        times_mean = np.asarray(results_grouped[curr_filter_name]["time_mean"])
 
         if curr_filter_name.startswith("ff") or curr_filter_name == "htgf":
             params = params**state_dim
@@ -76,7 +74,11 @@ def plot_results(
 
         # Plot errors
         plt.figure(0)
-        if params[0] is not None and not any(isnan(params)) and params.shape[0] > 1:
+        if (
+            params[0] is not None
+            and not np.any(np.isnan(params))
+            and np.size(params) > 1
+        ):
             if plot_stds:
                 plt.plot(
                     params,
@@ -111,7 +113,11 @@ def plot_results(
 
         # Plot times
         plt.figure(1)
-        if params[0] is not None and not any(isnan(params)) and params.shape[0] > 1:
+        if (
+            params[0] is not None
+            and not np.any(np.isnan(params))
+            and np.size(params) > 1
+        ):
             plt.plot(
                 params,
                 times_factor * times_mean,
@@ -137,7 +143,11 @@ def plot_results(
 
         # Plot errors over time
         plt.figure(2)
-        if params[0] is not None and not any(isnan(params)) and params.shape[0] > 1:
+        if (
+            params[0] is not None
+            and not np.any(np.isnan(params))
+            and np.size(params) > 1
+        ):
             plt.plot(
                 times_factor * times_mean,
                 errors_mean,
@@ -220,6 +230,7 @@ def get_plot_style_for_filter(filter_name):
     return color, style_marker, style_line
 
 
+@beartype
 def long_name_to_short_name(short_name: str) -> str:
     """Get short name from long name."""
 

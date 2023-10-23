@@ -1,7 +1,7 @@
-from math import pi
-
 import numpy as np
-from numpy import dot, empty, mod, random, shape, squeeze, sum, tile, zeros
+from math import pi
+from pyrecest.backend import tile, squeeze, sum, zeros, mod
+from beartype import beartype
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -29,10 +29,8 @@ def generate_measurements(groundtruth, simulation_config):
         Comprises timesteps elements, each of which is a numpy array of shape
         (n_meas_at_individual_time_step[t], n_dim).
     """
-    assert "n_meas_at_individual_time_step" not in simulation_config or shape(
-        simulation_config["n_meas_at_individual_time_step"]
-    ) == (simulation_config["n_timesteps"],)
-    measurements = empty(simulation_config["n_timesteps"], dtype=np.ndarray)
+    assert "n_meas_at_individual_time_step" not in simulation_config or np.shape(simulation_config["n_meas_at_individual_time_step"]) == (simulation_config["n_timesteps"],)
+    measurements = np.empty(simulation_config["n_timesteps"], dtype=object)
 
     if simulation_config.get("mtt", False) and simulation_config.get("eot", False):
         raise NotImplementedError(
@@ -49,23 +47,21 @@ def generate_measurements(groundtruth, simulation_config):
         assert ("intensity_lambda" in simulation_config.keys()) != (
             "n_meas_at_individual_time_step" in simulation_config.keys()
         ), "Must either give intensity_lambda or n_meas_at_individual_time_step for EOT"
-        target_shape = simulation_config["target_shape"]
+        shape = simulation_config["target_shape"]
         eot_sampling_style = simulation_config["eot_sampling_style"]
         assert isinstance(
-            target_shape, Polygon
+            shape, Polygon
         ), "Currently only StarConvexPolygon (based on shapely Polygons) are supported as target shapes."
 
         for t in range(simulation_config["n_timesteps"]):
             if groundtruth[0].shape[-1] == 2:
                 curr_shape = translate(
-                    target_shape, groundtruth[0][..., 0], yoff=groundtruth[0][..., 1]
+                    shape, groundtruth[0][..., 0], yoff=groundtruth[0][..., 1]
                 )
             elif groundtruth[0].shape[-1] == 3:
                 curr_shape = rotate(
                     translate(
-                        target_shape,
-                        groundtruth[0][..., 1],
-                        yoff=groundtruth[0][..., 2],
+                        shape, groundtruth[0][..., 1], yoff=groundtruth[0][..., 2]
                     ),
                     angle=groundtruth[0][..., 0],
                     origin="centroid",
@@ -74,7 +70,7 @@ def generate_measurements(groundtruth, simulation_config):
                 raise ValueError(
                     "Currently only R^2 and SE(2) scenarios are supported."
                 )
-            if not isinstance(target_shape, PolygonWithSampling):
+            if not isinstance(shape, PolygonWithSampling):
                 curr_shape.__class__ = (
                     PolygonWithSampling  # Evil class sugery to add sampling methods
                 )
@@ -112,7 +108,7 @@ def generate_measurements(groundtruth, simulation_config):
             simulation_config["clutter_rate"] == 0
         ), "Clutter currently not supported."
 
-        n_observations = random.binomial(
+        n_observations = np.random.binomial(
             1,
             simulation_config["detection_probability"],
             (simulation_config["n_timesteps"], simulation_config["n_targets"]),
@@ -120,7 +116,7 @@ def generate_measurements(groundtruth, simulation_config):
 
         for t in range(simulation_config["n_timesteps"]):
             n_meas_at_t = sum(n_observations[t, :])
-            measurements[t] = float("NaN") * zeros(
+            measurements[t] = float('NaN') * zeros(
                 (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
             )
 
@@ -128,7 +124,7 @@ def generate_measurements(groundtruth, simulation_config):
             for target_no in range(simulation_config["n_targets"]):
                 if n_observations[t, target_no] == 1:
                     meas_no += 1
-                    measurements[t][meas_no - 1, :] = dot(
+                    measurements[t][meas_no - 1, :] = np.dot(
                         simulation_config["meas_matrix_for_each_target"],
                         groundtruth[t, target_no, :],
                     ) + simulation_config["meas_noise"].sample(1)
@@ -161,7 +157,7 @@ def generate_measurements(groundtruth, simulation_config):
                         )
                         + noise_samples
                     ),
-                    2 * pi,
+                    2.0 * pi,
                 )
 
             elif isinstance(
@@ -187,6 +183,7 @@ def generate_measurements(groundtruth, simulation_config):
     return measurements
 
 
+@beartype
 def generate_n_measurements_PPP(area: float, intensity_lambda: float) -> int:
     # Compute the expected number of points
     expected_num_points = intensity_lambda * area

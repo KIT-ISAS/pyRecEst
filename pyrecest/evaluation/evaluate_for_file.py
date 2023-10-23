@@ -2,7 +2,6 @@ import os
 from typing import Any
 
 import numpy as np
-from numpy import concatenate, ones, zeros
 
 from .evaluate_for_variables import evaluate_for_variables
 
@@ -20,7 +19,15 @@ def evaluate_for_file(
     tolerate_failure: bool = False,
     auto_warning_on_off: bool = False,
     # jscpd:ignore-end
-):
+) -> tuple[
+    dict,
+    list[dict],
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray[np.ndarray],
+]:
     data = np.load(input_file_name, allow_pickle=True).item()
 
     if "name" not in scenario_config:
@@ -32,7 +39,7 @@ def evaluate_for_file(
     else:
         scenario_config["n_timesteps"] = data["groundtruths"].shape[1]
 
-    n_meas_at_individual_time_step = zeros(data["measurements"].shape[1], dtype=int)
+    n_meas_at_individual_time_step = np.zeros(data["measurements"].shape[1], dtype=int)
 
     for idx, inner_array in enumerate(data["measurements"][0]):
         if inner_array.ndim == 2:
@@ -45,7 +52,9 @@ def evaluate_for_file(
     )
     scenario_config.setdefault(
         "apply_sys_noise_times",
-        concatenate([ones(scenario_config["n_timesteps"] - 1, dtype=bool), [False]]),
+        np.concatenate(
+            [np.ones(scenario_config["n_timesteps"] - 1, dtype=bool), [False]]
+        ),
     )
 
     return evaluate_for_variables(

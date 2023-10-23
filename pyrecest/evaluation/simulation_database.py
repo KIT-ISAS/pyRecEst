@@ -1,11 +1,13 @@
 import warnings
 from typing import Optional
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import eye, zeros
+import numpy as np
+from beartype import beartype
 from pyrecest.distributions import GaussianDistribution
 
+from pyrecest.backend import eye, zeros
 
+@beartype
 def simulation_database(
     scenario_name: str = "custom", scenario_customization_params: Optional[dict] = None
 ) -> dict:
@@ -26,9 +28,15 @@ def simulation_database(
     elif scenario_name == "R2randomWalk":
         simulation_param["manifold"] = "Euclidean"
         simulation_param["n_timesteps"] = 10
-        simulation_param["initial_prior"] = GaussianDistribution(zeros(2), 0.5 * eye(2))
-        simulation_param["meas_noise"] = GaussianDistribution(zeros(2), 0.5 * eye(2))
-        simulation_param["sys_noise"] = GaussianDistribution(zeros(2), 0.5 * eye(2))
+        simulation_param["initial_prior"] = GaussianDistribution(
+            zeros(2), 0.5 * eye(2)
+        )
+        simulation_param["meas_noise"] = GaussianDistribution(
+            zeros(2), 0.5 * eye(2)
+        )
+        simulation_param["sys_noise"] = GaussianDistribution(
+            zeros(2), 0.5 * eye(2)
+        )
         simulation_param["gen_next_state_without_noise_is_vectorized"] = True
     else:
         raise ValueError("Scenario not recognized.")

@@ -1,8 +1,7 @@
 import time
 import warnings
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, atleast_2d, squeeze
+import numpy as np
 
 from .configure_for_filter import configure_for_filter
 
@@ -18,7 +17,7 @@ def perform_predict_update_cycles(
     cumulated_updates_preferred=None,
 ):
     if extract_all_estimates:
-        all_estimates = empty_like(groundtruth)
+        all_estimates = np.empty_like(groundtruth)
     else:
         all_estimates = None
 
@@ -29,11 +28,11 @@ def perform_predict_update_cycles(
 
     # Check conditions for cumulative updates
     perform_cumulative_updates = cumulated_updates_preferred and any(
-        array(scenario_config["n_meas_at_individual_time_step"]) > 1
+        np.array(scenario_config["n_meas_at_individual_time_step"]) > 1
     )
     if (
         cumulated_updates_preferred
-        and any(array(scenario_config["n_meas_at_individual_time_step"]) > 1)
+        and any(np.array(scenario_config["n_meas_at_individual_time_step"]) > 1)
         and scenario_config.get("plot", False)
     ):
         warnings.warn("When plotting, measurements are fused sequentially.")
@@ -50,14 +49,14 @@ def perform_predict_update_cycles(
         if perform_cumulative_updates:
             raise NotImplementedError("Cumulative updates not implemented yet.")
 
-        all_meas_curr_time_step = atleast_2d(measurements[t])
+        all_meas_curr_time_step = np.atleast_2d(measurements[t])
         n_updates = all_meas_curr_time_step.shape[0]
         for m in range(n_updates):
             curr_meas = all_meas_curr_time_step[m, :]
 
             if not scenario_config.get("use_likelihood", False):
                 filter_obj.update_identity(
-                    meas_noise=meas_noise_for_filter, measurement=squeeze(curr_meas)
+                    meas_noise=meas_noise_for_filter, measurement=np.squeeze(curr_meas)
                 )
 
             # If plotting is required

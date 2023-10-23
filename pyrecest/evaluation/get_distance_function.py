@@ -1,6 +1,5 @@
+import numpy as np
 from numpy.linalg import norm
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arccos, dot
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 
 
@@ -18,12 +17,12 @@ def get_distance_function(
     elif "hypersphere" in manifold_name:
 
         def distance_function(x1, x2):
-            return arccos(dot(x1, x2))
+            return np.arccos(np.dot(x1, x2))
 
     elif "hypersphereSymmetric" in manifold_name:
 
         def distance_function(x1, x2):
-            return min(arccos(dot(x1, x2)), arccos(dot(x1, -x2)))
+            return min(np.arccos(np.dot(x1, x2)), np.arccos(np.dot(x1, -x2)))
 
     elif "se2" in manifold_name or "se2linear" in manifold_name:
 
@@ -45,7 +44,9 @@ def get_distance_function(
     elif "se3bounded" in manifold_name:
 
         def distance_function(x1, x2):
-            return min(arccos(dot(x1[:4], x2[:4])), arccos(dot(x1[:4], -x2[:4])))
+            return min(
+                np.arccos(np.dot(x1[:4], x2[:4])), np.arccos(np.dot(x1[:4], -x2[:4]))
+            )
 
     elif (
         "euclidean" in manifold_name or "Euclidean" in manifold_name

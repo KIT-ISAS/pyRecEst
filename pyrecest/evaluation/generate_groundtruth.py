@@ -1,6 +1,6 @@
 import numpy as np
-from numpy import atleast_2d, empty, empty_like, ndim, squeeze
 
+from pyrecest.backend import empty, atleast_2d, empty_like, squeeze
 
 # pylint: disable=too-many-branches
 def generate_groundtruth(simulation_param, x0=None):
@@ -12,7 +12,7 @@ def generate_groundtruth(simulation_param, x0=None):
         x0 (ndarray): Starting point (optional).
 
     Returns:
-        groundtruth ([]): Generated ground truth as an
+        groundtruth (np.ndarray[np.ndarray]): Generated ground truth as an
         array of arrays (!) because the size of the ground truth is not
         necessarily the same over time (e.g., if the number of targets changes)
     """
@@ -20,13 +20,13 @@ def generate_groundtruth(simulation_param, x0=None):
         x0 = simulation_param["initial_prior"].sample(simulation_param["n_targets"])
 
     assert (
-        ndim(x0) == 1
+        x0.ndim == 1
         and simulation_param["n_targets"] == 1
         or x0.shape[0] == simulation_param["n_targets"]
     ), "Mismatch in number of targets."
 
     # Initialize ground truth
-    groundtruth = empty(simulation_param["n_timesteps"], dtype=np.ndarray)
+    groundtruth = np.empty(simulation_param["n_timesteps"], dtype=object)
 
     if "inputs" in simulation_param:
         assert (
