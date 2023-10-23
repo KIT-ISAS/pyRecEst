@@ -112,7 +112,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         grid_density_parameter = [12, 4]
         grid, _ = sampler.get_grid(grid_density_parameter)
 
-        expected_points = prod(grid_density_parameter)
+        expected_points = grid_density_parameter[0] * grid_density_parameter[1]
         self.assertEqual(
             grid.shape[0],
             expected_points,
