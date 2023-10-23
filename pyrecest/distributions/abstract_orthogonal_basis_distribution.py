@@ -2,7 +2,8 @@ import copy
 import warnings
 from abc import abstractmethod
 
-from pyrecest.backend import all, exp, imag, real
+from pyrecest.backend import exp, imag, real
+import pyrecest.backend as backend
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -55,7 +56,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         val = self.value(xs)
         if self.transformation == "sqrt":
-            assert all(imag(val) < 0.0001)
+            assert backend.all(imag(val) < 0.0001)
             return real(val) ** 2
 
         if self.transformation == "identity":
