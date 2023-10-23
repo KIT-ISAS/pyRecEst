@@ -3,7 +3,9 @@ import tempfile
 import unittest
 from typing import Optional
 
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, sqrt, eye, zeros, all
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
 import numpy as np
