@@ -24,6 +24,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         self.g_2D = GaussianDistribution(self.mu_2D, self.C_2D)
         self.g_3D = GaussianDistribution(self.mu_3D, self.C_3D)
 
+    def test_integrate(self):
         """Test that the numerical integration of a Gaussian distribution equals 1."""
         dist = GaussianDistribution(array([1.0, 2.0]), diag(array([1.0, 2.0])))
         integration_result = dist.integrate_numerically()

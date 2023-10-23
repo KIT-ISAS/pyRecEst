@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from math import pi
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, log, max, min, mod
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
 from pyrecest.filters.abstract_circular_filter import AbstractCircularFilter
