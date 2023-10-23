@@ -2,9 +2,11 @@ from collections.abc import Callable
 from typing import Union
 
 import matplotlib.pyplot as plt
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     array,
     atleast_1d,

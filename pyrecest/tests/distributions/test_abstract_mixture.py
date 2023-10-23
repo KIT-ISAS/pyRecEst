@@ -1,6 +1,8 @@
 import unittest
 
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, eye, linalg, ones
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperhemispherical_distribution import (

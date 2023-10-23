@@ -3,8 +3,10 @@ from unittest.mock import patch
 
 import matplotlib.pyplot as plt
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 from parameterized import parameterized
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, concatenate, diag, eye, linalg, mean, zeros
 from pyrecest.distributions.nonperiodic.gaussian_distribution import (
     GaussianDistribution,

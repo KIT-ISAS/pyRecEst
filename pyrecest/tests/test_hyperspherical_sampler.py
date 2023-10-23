@@ -1,6 +1,7 @@
 import importlib.util
 import unittest
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, linalg, prod, random
 
 healpy_installed = importlib.util.find_spec("healpy") is not None

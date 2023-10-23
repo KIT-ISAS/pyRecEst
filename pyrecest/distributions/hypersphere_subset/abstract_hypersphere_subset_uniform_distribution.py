@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import ones
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution

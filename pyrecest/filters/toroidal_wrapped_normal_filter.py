@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, eye
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,

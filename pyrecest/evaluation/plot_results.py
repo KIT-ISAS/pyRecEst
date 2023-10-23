@@ -2,7 +2,8 @@ import warnings
 
 import matplotlib.pyplot as plt
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import any, array, isnan, ones, shape
 
 from .get_axis_label import get_axis_label

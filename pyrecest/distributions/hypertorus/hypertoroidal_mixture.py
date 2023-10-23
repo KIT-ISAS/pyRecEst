@@ -2,6 +2,7 @@ import collections
 import copy
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import complex128, int32, int64, zeros
 
 from ..abstract_mixture import AbstractMixture

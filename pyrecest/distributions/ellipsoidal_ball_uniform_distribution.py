@@ -1,5 +1,6 @@
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import dot, int32, int64, linalg, random, zeros
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution

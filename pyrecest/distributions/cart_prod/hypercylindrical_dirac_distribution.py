@@ -1,6 +1,7 @@
 from typing import Union
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import cos, full, int32, int64, sin, sum, tile
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution

@@ -1,5 +1,6 @@
 import unittest
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, column_stack, linspace, meshgrid, ones
 from pyrecest.distributions.custom_hyperrectangular_distribution import (
     CustomHyperrectangularDistribution,

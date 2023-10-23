@@ -2,7 +2,9 @@ import unittest
 
 import matplotlib
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, diag, isclose
 from pyrecest.distributions import (
     AbstractLinearDistribution,

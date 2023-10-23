@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, ndim
 from pyrecest.distributions import VonMisesFisherDistribution
 

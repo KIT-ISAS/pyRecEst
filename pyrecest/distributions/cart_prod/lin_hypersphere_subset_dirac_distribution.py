@@ -1,5 +1,6 @@
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import int32, int64
 
 from .abstract_lin_hyperhemisphere_cart_prod_distribution import (

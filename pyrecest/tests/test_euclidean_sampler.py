@@ -1,5 +1,6 @@
 import unittest
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, mean, ones, random, std, zeros
 from pyrecest.sampling.euclidean_sampler import GaussianSampler
 

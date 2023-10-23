@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, mod
 
 from ..abstract_custom_distribution import AbstractCustomDistribution

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import empty, int32, int64, random, squeeze
 
 

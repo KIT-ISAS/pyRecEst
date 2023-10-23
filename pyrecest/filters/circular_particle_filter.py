@@ -1,6 +1,7 @@
 from typing import Union
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import float64, int32, int64, sum
 
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter

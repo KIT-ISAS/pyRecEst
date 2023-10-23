@@ -2,6 +2,7 @@
 import unittest
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, linalg, ones, random, reshape
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
 

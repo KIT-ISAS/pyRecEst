@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array
 from pyrecest.distributions import VonMisesDistribution
 from pyrecest.filters.von_mises_filter import VonMisesFilter

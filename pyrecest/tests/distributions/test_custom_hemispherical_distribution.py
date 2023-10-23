@@ -1,6 +1,7 @@
 import unittest
 import warnings
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, eye, linalg, ndim, random
 from pyrecest.distributions import (
     BinghamDistribution,

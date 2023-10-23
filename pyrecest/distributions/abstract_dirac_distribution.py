@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Callable
 from typing import Union
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     all,
     apply_along_axis,

@@ -1,5 +1,6 @@
 from abc import ABC
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, full, hstack
 
 

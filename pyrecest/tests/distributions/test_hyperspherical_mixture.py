@@ -3,7 +3,8 @@ from math import pi
 
 from numpy.testing import assert_allclose
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import arange, array, linspace, meshgrid, sqrt, stack, sum
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,

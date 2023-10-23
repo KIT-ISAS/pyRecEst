@@ -1,5 +1,6 @@
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, concatenate, int32, int64, zeros
 
 from .abstract_hyperhemispherical_distribution import (

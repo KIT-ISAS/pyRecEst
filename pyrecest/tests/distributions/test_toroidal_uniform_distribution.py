@@ -1,9 +1,11 @@
 import unittest
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import all, allclose, array, ones, tile, zeros
 from pyrecest.distributions.hypertorus.toroidal_uniform_distribution import (
     ToroidalUniformDistribution,

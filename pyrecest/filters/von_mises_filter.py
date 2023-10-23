@@ -2,6 +2,7 @@ import copy
 import warnings
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import mod
 from pyrecest.distributions import VonMisesDistribution
 

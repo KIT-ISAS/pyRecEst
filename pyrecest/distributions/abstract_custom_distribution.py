@@ -2,6 +2,7 @@ import copy
 import warnings
 from abc import abstractmethod
 
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
 from .abstract_distribution_type import AbstractDistributionType

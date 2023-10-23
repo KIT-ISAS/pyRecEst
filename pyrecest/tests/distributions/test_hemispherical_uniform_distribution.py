@@ -1,6 +1,7 @@
 import unittest
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, ones
 from pyrecest.distributions.hypersphere_subset.hemispherical_uniform_distribution import (
     HemisphericalUniformDistribution,

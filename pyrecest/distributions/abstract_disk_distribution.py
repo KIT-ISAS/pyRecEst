@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, eye
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution

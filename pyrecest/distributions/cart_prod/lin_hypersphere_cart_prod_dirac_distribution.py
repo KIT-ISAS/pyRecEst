@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import abs, linalg, max
 
 from ..abstract_se3_distribution import AbstractSE3Distribution

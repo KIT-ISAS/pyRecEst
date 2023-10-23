@@ -1,6 +1,7 @@
 from math import pi
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import all, array, cos, exp, mod, sin, sum
 from scipy.special import comb, iv
 

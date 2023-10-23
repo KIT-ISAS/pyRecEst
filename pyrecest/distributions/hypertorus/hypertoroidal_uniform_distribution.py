@@ -1,6 +1,7 @@
 from math import pi
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import int32, int64, log, ndim, ones, prod, random, zeros
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution

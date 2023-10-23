@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import concatenate, exp, eye, linalg, mean
 from pyrecest.utils.plotting import plot_ellipsoid
 

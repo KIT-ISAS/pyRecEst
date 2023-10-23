@@ -5,7 +5,8 @@ from typing import Union
 import scipy.integrate
 import scipy.optimize
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     allclose,
     any,

@@ -3,6 +3,7 @@ import unittest
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linspace
 from pyrecest.distributions import VonMisesDistribution
 

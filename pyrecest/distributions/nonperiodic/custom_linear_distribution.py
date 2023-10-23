@@ -1,5 +1,6 @@
 import copy
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import ndim, reshape, zeros
 
 from ..abstract_custom_nonperiodic_distribution import (

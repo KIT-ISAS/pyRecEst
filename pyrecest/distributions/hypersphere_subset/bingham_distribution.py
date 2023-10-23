@@ -1,6 +1,7 @@
 from math import pi
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import abs, all, argsort, diag, exp, eye, linalg, max, sum, zeros
 from scipy.integrate import quad
 from scipy.special import iv

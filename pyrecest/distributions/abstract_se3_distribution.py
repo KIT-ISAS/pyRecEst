@@ -4,6 +4,7 @@ from typing import Union
 
 import matplotlib.pyplot as plt
 import quaternion
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import column_stack, concatenate, int32, int64
 
 from .cart_prod.abstract_lin_bounded_cart_prod_distribution import (

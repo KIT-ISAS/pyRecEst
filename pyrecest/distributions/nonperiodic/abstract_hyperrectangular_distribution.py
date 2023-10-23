@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, diff, prod, reshape
 from scipy.integrate import nquad
 

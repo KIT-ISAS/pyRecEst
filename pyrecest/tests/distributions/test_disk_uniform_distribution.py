@@ -1,5 +1,6 @@
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, concatenate, ones, sqrt, zeros
 
 """ Test cases for DiskUniformDistribution"""

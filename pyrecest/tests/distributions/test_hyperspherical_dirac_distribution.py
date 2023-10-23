@@ -2,9 +2,11 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg, mod, ones, random, sqrt, sum
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (

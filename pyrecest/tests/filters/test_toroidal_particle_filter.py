@@ -1,6 +1,7 @@
 import unittest
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, random
 from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,

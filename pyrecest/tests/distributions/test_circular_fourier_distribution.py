@@ -3,8 +3,10 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 from parameterized import parameterized
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import arange, array, ceil, linspace, sqrt
 from pyrecest.distributions import (
     CircularFourierDistribution,

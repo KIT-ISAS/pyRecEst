@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import int32, int64
 
 from ..abstract_custom_distribution import AbstractCustomDistribution

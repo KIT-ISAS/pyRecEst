@@ -1,5 +1,6 @@
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, cos, empty, linspace, random, sin
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import unary_union

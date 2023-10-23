@@ -1,5 +1,7 @@
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import eye
 from pyrecest.distributions import GaussianDistribution
 

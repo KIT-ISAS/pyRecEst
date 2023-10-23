@@ -1,6 +1,7 @@
 import warnings
 from abc import abstractmethod
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import concatenate
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution

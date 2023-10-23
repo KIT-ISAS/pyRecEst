@@ -2,7 +2,9 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import arange, array
 from pyrecest.distributions.circle.custom_circular_distribution import (
     CustomCircularDistribution,

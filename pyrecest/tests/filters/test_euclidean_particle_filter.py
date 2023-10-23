@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, mean, ones, random, zeros, zeros_like
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.euclidean_particle_filter import EuclideanParticleFilter

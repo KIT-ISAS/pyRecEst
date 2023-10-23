@@ -1,4 +1,5 @@
 from numpy.linalg import norm
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import arccos, dot
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 

@@ -2,6 +2,7 @@ import itertools
 from abc import abstractmethod
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     arange,
     arccos,

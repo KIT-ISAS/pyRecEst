@@ -1,5 +1,6 @@
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import linalg, sqrt
 from scipy.special import gamma
 

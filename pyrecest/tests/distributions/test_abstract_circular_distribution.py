@@ -1,7 +1,9 @@
 import unittest
 from math import pi
 
+# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, arange, array
 from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
 

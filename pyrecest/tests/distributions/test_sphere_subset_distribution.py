@@ -3,6 +3,7 @@ from math import pi
 
 import numpy.testing as npt
 from parameterized import parameterized
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array
 from pyrecest.distributions.hypersphere_subset.abstract_sphere_subset_distribution import (
     AbstractSphereSubsetDistribution,

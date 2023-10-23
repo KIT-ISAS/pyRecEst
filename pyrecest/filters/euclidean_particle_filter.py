@@ -2,6 +2,7 @@ import copy
 from collections.abc import Callable
 from typing import Union
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import int32, int64, zeros
 
 from ..distributions.nonperiodic.abstract_linear_distribution import (

@@ -1,6 +1,7 @@
 import warnings
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import mean, std, sum
 
 from .determine_all_deviations import determine_all_deviations

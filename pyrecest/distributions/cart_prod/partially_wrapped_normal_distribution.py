@@ -2,7 +2,8 @@ import copy
 from math import pi
 from typing import Union
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     allclose,
     array,

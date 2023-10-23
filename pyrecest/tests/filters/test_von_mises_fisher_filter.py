@@ -1,5 +1,6 @@
 import unittest
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, cos, sin
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.filters.von_mises_fisher_filter import VonMisesFisherFilter

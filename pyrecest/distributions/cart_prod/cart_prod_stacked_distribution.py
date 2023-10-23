@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import concatenate, empty, hstack, prod
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution

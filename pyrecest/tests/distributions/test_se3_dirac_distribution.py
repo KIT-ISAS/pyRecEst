@@ -1,6 +1,7 @@
 import unittest
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, concatenate, diag, linalg, sum, tile
 from pyrecest.distributions import (
     GaussianDistribution,

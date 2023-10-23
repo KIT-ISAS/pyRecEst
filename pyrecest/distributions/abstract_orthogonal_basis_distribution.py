@@ -2,7 +2,8 @@ import copy
 import warnings
 from abc import abstractmethod
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import all, exp, imag, real
 
 from .abstract_distribution_type import AbstractDistributionType

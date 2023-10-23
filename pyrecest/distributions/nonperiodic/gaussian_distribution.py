@@ -1,5 +1,6 @@
 import copy
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import dot, linalg, ndim, random
 from scipy.linalg import cholesky
 from scipy.stats import multivariate_normal as mvn

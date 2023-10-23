@@ -1,5 +1,6 @@
 import mpmath
 import numpy.testing as npt
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
     array,

@@ -1,4 +1,5 @@
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, dot, ones, stack, sum
 
 from .abstract_linear_distribution import AbstractLinearDistribution

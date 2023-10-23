@@ -1,4 +1,5 @@
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import column_stack, cos, diag, dot, sin, sqrt, sum, tile
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution

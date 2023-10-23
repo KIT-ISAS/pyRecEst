@@ -1,6 +1,7 @@
 import time
 import warnings
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, atleast_2d, squeeze
 
 from .configure_for_filter import configure_for_filter

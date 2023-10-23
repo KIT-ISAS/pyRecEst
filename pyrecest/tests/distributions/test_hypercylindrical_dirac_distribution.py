@@ -3,7 +3,8 @@ from math import pi
 
 import numpy.testing as npt
 
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     array,
     exp,
