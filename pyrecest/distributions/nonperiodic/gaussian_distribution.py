@@ -1,11 +1,6 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import random
-from pyrecest.backend import ndim
-from pyrecest.backend import dot
 import copy
 
-
-from beartype import beartype
+from pyrecest.backend import dot, linalg, ndim, random
 from scipy.linalg import cholesky
 from scipy.stats import multivariate_normal as mvn
 
@@ -84,7 +79,9 @@ class GaussianDistribution(AbstractLinearDistribution):
         assert all(dim <= self.dim for dim in dimensions)
         remaining_dims = [i for i in range(self.dim) if i not in dimensions]
         new_mu = self.mu[remaining_dims]
-        new_C = self.C[remaining_dims][:, remaining_dims] # Instead of np.ix_ for interface compatibiliy
+        new_C = self.C[remaining_dims][
+            :, remaining_dims
+        ]  # Instead of np.ix_ for interface compatibiliy
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def sample(self, n):

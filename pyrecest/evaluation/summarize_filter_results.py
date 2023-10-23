@@ -1,9 +1,6 @@
-from pyrecest.backend import sum
-from pyrecest.backend import std
-from pyrecest.backend import mean
 import warnings
 
-
+from pyrecest.backend import mean, std, sum
 
 from .determine_all_deviations import determine_all_deviations
 from .get_distance_function import get_distance_function

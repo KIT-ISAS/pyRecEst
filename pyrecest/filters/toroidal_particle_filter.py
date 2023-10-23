@@ -1,8 +1,6 @@
 from typing import Union
-from pyrecest.backend import int64
-from pyrecest.backend import int32
 
-from beartype import beartype
+from pyrecest.backend import int32, int64
 
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 

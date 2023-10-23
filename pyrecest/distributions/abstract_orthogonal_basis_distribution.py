@@ -1,12 +1,8 @@
-from pyrecest.backend import real
-from pyrecest.backend import imag
-from pyrecest.backend import exp
-from pyrecest.backend import all
 import copy
 import warnings
 from abc import abstractmethod
 
-from beartype import beartype
+from pyrecest.backend import all, exp, imag, real
 
 from .abstract_distribution_type import AbstractDistributionType
 

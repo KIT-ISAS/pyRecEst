@@ -1,13 +1,11 @@
 from math import pi
-from pyrecest.backend import sqrt
-from pyrecest.backend import ones
-from pyrecest.backend import concatenate
-from pyrecest.backend import array
-from pyrecest.backend import zeros
+
+from pyrecest.backend import array, concatenate, ones, sqrt, zeros
+
 """ Test cases for DiskUniformDistribution"""
 import unittest
-import numpy.testing as npt
 
+import numpy.testing as npt
 from pyrecest.distributions import DiskUniformDistribution
 
 

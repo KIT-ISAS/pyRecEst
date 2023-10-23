@@ -1,14 +1,7 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import random
-from pyrecest.backend import eye
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import ndim
 import unittest
 import warnings
 
-
+from pyrecest.backend import allclose, array, eye, linalg, ndim, random
 from pyrecest.distributions import (
     BinghamDistribution,
     CustomHemisphericalDistribution,

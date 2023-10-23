@@ -1,10 +1,8 @@
-from math import pi
-from pyrecest.backend import mod
 import copy
 import warnings
+from math import pi
 
-
-from beartype import beartype
+from pyrecest.backend import mod
 from pyrecest.distributions import VonMisesDistribution
 
 from .abstract_circular_filter import AbstractCircularFilter

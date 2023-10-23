@@ -1,13 +1,8 @@
-from pyrecest.backend import sum
-from pyrecest.backend import ndim
-from pyrecest.backend import any
-from pyrecest.backend import empty
 import warnings
 from typing import Callable
-import numpy as np
-from pyrecest.backend import isinf
 
-from beartype import beartype
+import numpy as np
+from pyrecest.backend import any, empty, isinf, ndim, sum
 
 
 def determine_all_deviations(
@@ -49,7 +44,7 @@ def determine_all_deviations(
                 )
             else:
                 warnings.warn("No estimate for this filter, setting error to inf.")
-                all_deviations_last_mat[config_no][run] = float('inf')
+                all_deviations_last_mat[config_no][run] = float("inf")
 
         if any(isinf(all_deviations_last_mat[config_no])):
             print(

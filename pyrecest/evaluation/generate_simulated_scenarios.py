@@ -1,6 +1,5 @@
-from numpy import random, empty
 import numpy as np
-
+from numpy import empty, random
 
 from .check_and_fix_config import check_and_fix_config
 from .generate_groundtruth import generate_groundtruth

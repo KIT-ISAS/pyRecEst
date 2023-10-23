@@ -1,18 +1,18 @@
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import sum
-from pyrecest.backend import ones
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import empty
-from pyrecest.backend import zeros
-from pyrecest.backend import count_nonzero
 import collections
 import copy
 import warnings
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    count_nonzero,
+    empty,
+    int32,
+    int64,
+    ones,
+    random,
+    sum,
+    zeros,
+)
 
 from .abstract_distribution_type import AbstractDistributionType
 from .abstract_manifold_specific_distribution import (
@@ -65,7 +65,6 @@ class AbstractMixture(AbstractDistributionType):
         return self.dists[0].input_dim
 
     def sample(self, n: Union[int, int32, int64]):
-
         occurrences = random.multinomial(n, self.w)
         count = 0
         s = empty((n, self.input_dim))

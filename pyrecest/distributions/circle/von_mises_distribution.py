@@ -1,20 +1,19 @@
 from math import pi
-from pyrecest.backend import where
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import real
-from pyrecest.backend import mod
-from pyrecest.backend import log
-from pyrecest.backend import imag
-from pyrecest.backend import exp
-from pyrecest.backend import cos
-from pyrecest.backend import arctan2
-from pyrecest.backend import abs
-from pyrecest.backend import zeros_like
-import numbers
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    abs,
+    arctan2,
+    cos,
+    exp,
+    imag,
+    log,
+    mod,
+    real,
+    sin,
+    sqrt,
+    where,
+    zeros_like,
+)
 from scipy.optimize import fsolve
 from scipy.special import iv
 from scipy.stats import vonmises
@@ -49,8 +48,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return p
 
     @staticmethod
-    def besselratio(
-        nu, kappa):
+    def besselratio(nu, kappa):
         return iv(nu + 1, kappa) / iv(nu, kappa)
 
     def cdf(self, xs, starting_point=0):

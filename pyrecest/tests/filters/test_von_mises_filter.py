@@ -1,7 +1,7 @@
 import unittest
-from pyrecest.backend import array
 
 import numpy.testing as npt
+from pyrecest.backend import array
 from pyrecest.distributions import VonMisesDistribution
 from pyrecest.filters.von_mises_filter import VonMisesFilter
 

@@ -22,7 +22,7 @@ def iterate_configs_and_runs(
         )
         raise NotImplementedError("This is not implemented yet.")
 
-    n_configs = sum(np.size(f["parameter"]) for f in filter_configs)
+    n_configs = sum((f["parameter"]).shape[0] for f in filter_configs)
     n_runs = groundtruths.shape[0]
     run_times = empty((n_configs, n_runs))
     run_failed = zeros((n_configs, n_runs), dtype=bool)

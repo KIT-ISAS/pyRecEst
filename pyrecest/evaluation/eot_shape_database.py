@@ -1,11 +1,6 @@
 from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import sin
-from pyrecest.backend import linspace
-from pyrecest.backend import cos
-from pyrecest.backend import array
-from pyrecest.backend import empty
 
+from pyrecest.backend import array, cos, empty, linspace, random, sin
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
 from shapely.ops import unary_union
 

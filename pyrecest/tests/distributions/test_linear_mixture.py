@@ -1,12 +1,8 @@
-from pyrecest.backend import column_stack
-from pyrecest.backend import diag
-from pyrecest.backend import meshgrid
-from pyrecest.backend import linspace
-from pyrecest.backend import array
 import unittest
 from warnings import catch_warnings, simplefilter
-import numpy.testing as npt
 
+import numpy.testing as npt
+from pyrecest.backend import array, column_stack, diag, linspace, meshgrid
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_mixture import LinearMixture
 

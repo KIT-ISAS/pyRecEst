@@ -1,29 +1,27 @@
-from pyrecest.backend import atleast_2d
-from pyrecest.backend import linalg
-from math import pi
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import tile
-from pyrecest.backend import sum
-from pyrecest.backend import sin
-from pyrecest.backend import shape
-from pyrecest.backend import repeat
-from pyrecest.backend import ndim
-from pyrecest.backend import mod
-from pyrecest.backend import meshgrid
-from pyrecest.backend import exp
-from pyrecest.backend import cos
-from pyrecest.backend import concatenate
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import empty
 import copy
+from math import pi
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    allclose,
+    array,
+    atleast_2d,
+    concatenate,
+    cos,
+    empty,
+    exp,
+    int32,
+    int64,
+    linalg,
+    meshgrid,
+    mod,
+    ndim,
+    random,
+    repeat,
+    sin,
+    sum,
+    tile,
+)
 from scipy.stats import multivariate_normal
 
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
@@ -34,14 +32,14 @@ from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDist
 
 
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
-    def __init__(
-        self, mu, C, bound_dim: Union[int, int32, int64]
-    ):
+    def __init__(self, mu, C, bound_dim: Union[int, int32, int64]):
         assert bound_dim >= 0, "bound_dim must be non-negative"
         assert ndim(mu) == 1, "mu must be a 1-dimensional array"
         assert C.shape == (mu.shape[-1], mu.shape[-1]), "C must match size of mu"
         assert allclose(C, C.T), "C must be symmetric"
-        assert len(linalg.cholesky(C)) > 0, "C must be positive definite" # Will fail if not positive definite
+        assert (
+            len(linalg.cholesky(C)) > 0
+        ), "C must be positive definite"  # Will fail if not positive definite
         assert bound_dim <= mu.shape[0]
         if bound_dim > 0:  # This decreases the need for many wrappings
             mu[:bound_dim] = mod(mu[:bound_dim], 2 * pi)

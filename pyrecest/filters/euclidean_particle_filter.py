@@ -1,12 +1,8 @@
-from typing import Union
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
 import copy
 from collections.abc import Callable
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import int32, int64, zeros
 
 from ..distributions.nonperiodic.abstract_linear_distribution import (
     AbstractLinearDistribution,

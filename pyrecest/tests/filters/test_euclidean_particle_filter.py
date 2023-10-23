@@ -1,13 +1,8 @@
-from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import ones
-from pyrecest.backend import mean
-from pyrecest.backend import array
-from pyrecest.backend import zeros_like
-from pyrecest.backend import zeros
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+from pyrecest.backend import array, mean, ones, random, zeros, zeros_like
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.euclidean_particle_filter import EuclideanParticleFilter
 
@@ -50,9 +45,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         self.pf.predict_nonlinear_nonadditive(f, samples, weights)
         est = self.pf.get_point_estimate()
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
-        npt.assert_allclose(
-            est, self.prior.mu + mean(samples, axis=0), atol=0.1
-        )
+        npt.assert_allclose(est, self.prior.mu + mean(samples, axis=0), atol=0.1)
 
     def test_predict_update_cycle_3d_forced_particle_pos_no_pred(self):
         self.pf.filter_state = self.prior.set_mean(ones(3) + pi / 2.0)

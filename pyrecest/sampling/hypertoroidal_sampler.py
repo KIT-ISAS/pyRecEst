@@ -16,7 +16,8 @@ class AbstractCircularSampler(AbstractHypertoroidalSampler):
 
 
 class CircularUniformSampler(AbstractCircularSampler):
-    def sample_stochastic(self, n_samples: int):
+    def sample_stochastic(self, n_samples: int, dim: int):
+        assert dim == 1, "CircularUniformSampler is supposed to be used for the circle (which is one-dimensional) only."
         return CircularUniformDistribution().sample(n_samples)
 
     def get_grid(self, grid_density_parameter: int):

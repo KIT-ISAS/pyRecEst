@@ -1,11 +1,8 @@
-from pyrecest.backend import linalg
-from math import pi
-from pyrecest.backend import sqrt
-from pyrecest.backend import array
 import unittest
+from math import pi
 
 import matplotlib
-
+from pyrecest.backend import array, linalg, sqrt
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     VonMisesFisherDistribution,

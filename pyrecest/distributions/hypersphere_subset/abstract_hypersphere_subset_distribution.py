@@ -1,27 +1,27 @@
-from pyrecest.backend import full
-from pyrecest.backend import atleast_2d
-from pyrecest.backend import column_stack
-from pyrecest.backend import linalg
-from math import pi
-from typing import Union
-from pyrecest.backend import sort
-from pyrecest.backend import squeeze
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import log
-from pyrecest.backend import cos
-from pyrecest.backend import abs
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import float64
-from pyrecest.backend import zeros
-from pyrecest.backend import empty
-from pyrecest.backend import array
 from abc import abstractmethod
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    abs,
+    array,
+    atleast_2d,
+    column_stack,
+    cos,
+    empty,
+    float64,
+    full,
+    int32,
+    int64,
+    linalg,
+    log,
+    sin,
+    sort,
+    sqrt,
+    squeeze,
+    zeros,
+)
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
 
@@ -54,16 +54,15 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
                 def f(x, i=i):
                     return x[i] * self.pdf(x)
-            
+
                 fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
-                
+
                 # Casts the floats to arrays, relevant for operations on torch.tensors
                 # that are not backward compatible
                 def fangles_array(*args):
                     tensors = [array([arg], dtype=float64) for arg in args]
                     result = fangles(*tensors)
                     return result.item()
-
 
                 if self.dim == 1:
                     mu[i], _ = quad(
@@ -139,7 +138,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 self.dim + 1,
                 self.dim + 1,
             ),
-            float('NaN'),
+            float("NaN"),
         )
 
         def f_gen(i, j):

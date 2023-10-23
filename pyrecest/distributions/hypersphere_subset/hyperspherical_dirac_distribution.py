@@ -1,8 +1,5 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import sum
-from pyrecest.backend import reshape
 import matplotlib.pyplot as plt
-
+from pyrecest.backend import linalg, reshape, sum
 
 from ..circle.circular_dirac_distribution import CircularDiracDistribution
 from .abstract_hypersphere_subset_dirac_distribution import (

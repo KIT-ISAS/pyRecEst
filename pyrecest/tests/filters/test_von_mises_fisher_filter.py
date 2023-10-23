@@ -1,11 +1,6 @@
-from pyrecest.backend import sin
-from pyrecest.backend import cos
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
 import unittest
 
-
+from pyrecest.backend import allclose, array, cos, sin
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.filters.von_mises_fisher_filter import VonMisesFisherFilter
 

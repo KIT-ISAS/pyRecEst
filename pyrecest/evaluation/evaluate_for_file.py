@@ -1,11 +1,8 @@
-from numpy import ones
-from numpy import concatenate
-from numpy import zeros
-import numpy as np
 import os
 from typing import Any
 
-
+import numpy as np
+from numpy import concatenate, ones, zeros
 
 from .evaluate_for_variables import evaluate_for_variables
 
@@ -23,7 +20,7 @@ def evaluate_for_file(
     tolerate_failure: bool = False,
     auto_warning_on_off: bool = False,
     # jscpd:ignore-end
-    ):
+):
     data = np.load(input_file_name, allow_pickle=True).item()
 
     if "name" not in scenario_config:
@@ -48,9 +45,7 @@ def evaluate_for_file(
     )
     scenario_config.setdefault(
         "apply_sys_noise_times",
-        concatenate(
-            [ones(scenario_config["n_timesteps"] - 1, dtype=bool), [False]]
-        ),
+        concatenate([ones(scenario_config["n_timesteps"] - 1, dtype=bool), [False]]),
     )
 
     return evaluate_for_variables(

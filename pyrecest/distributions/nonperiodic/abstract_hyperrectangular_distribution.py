@@ -1,7 +1,4 @@
-from pyrecest.backend import reshape
-from pyrecest.backend import prod
-from pyrecest.backend import array
-from pyrecest.backend import diff
+from pyrecest.backend import array, diff, prod, reshape
 from scipy.integrate import nquad
 
 from ..abstract_bounded_nonperiodic_distribution import (

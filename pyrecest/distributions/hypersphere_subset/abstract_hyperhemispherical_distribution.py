@@ -1,22 +1,22 @@
-from pyrecest.backend import linalg
-from math import pi
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import vstack
-from pyrecest.backend import ones
-from pyrecest.backend import meshgrid
-from pyrecest.backend import linspace
-from pyrecest.backend import concatenate
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
-from pyrecest.backend import array
 import warnings
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
 import matplotlib.pyplot as plt
-
-from beartype import beartype
+from pyrecest.backend import (
+    array,
+    concatenate,
+    int32,
+    int64,
+    linalg,
+    linspace,
+    meshgrid,
+    ones,
+    random,
+    vstack,
+    zeros,
+)
 from scipy.optimize import minimize
 
 from .abstract_hypersphere_subset_distribution import (
@@ -31,7 +31,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: 
+        :rtype:
         """
         return self.mean_axis()
 
@@ -42,7 +42,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point = None,
+        start_point=None,
     ):
         # jscpd:ignore-end
         if proposal is None:
@@ -106,14 +106,12 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             integration_boundaries = vstack(
                 (
                     zeros(dim),
-                    concatenate(
-                        (array([2 * pi]), pi * ones(dim - 2), array([pi / 2]))
-                    ),
+                    concatenate((array([2 * pi]), pi * ones(dim - 2), array([pi / 2]))),
                 )
             ).T
         return integration_boundaries
 
-    def integrate(self, integration_boundaries = None) -> float:
+    def integrate(self, integration_boundaries=None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -122,9 +120,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             )
         return super().integrate(integration_boundaries)
 
-    def integrate_numerically(
-        self, integration_boundaries=None
-    ) -> float:
+    def integrate_numerically(self, integration_boundaries=None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -146,7 +142,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
     def mode_numerical(self):
         def objective_function_2d(s):
-            return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(array(s)))
+            return -self.pdf(
+                AbstractHypersphereSubsetDistribution.polar_to_cart(array(s))
+            )
 
         assert self.dim == 2, "Currently only implemented for 2D hemispheres."
 

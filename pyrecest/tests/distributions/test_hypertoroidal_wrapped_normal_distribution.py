@@ -1,7 +1,7 @@
-from pyrecest.backend import array
 import unittest
-import numpy.testing as npt
 
+import numpy.testing as npt
+from pyrecest.backend import array
 from pyrecest.distributions import HypertoroidalWNDistribution
 
 

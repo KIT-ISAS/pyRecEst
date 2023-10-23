@@ -1,10 +1,8 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import random
-from pyrecest.backend import prod
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-import unittest
 import importlib.util
+import unittest
+
+from pyrecest.backend import allclose, linalg, prod, random
+
 healpy_installed = importlib.util.find_spec("healpy") is not None
 
 
@@ -22,7 +20,6 @@ from ..sampling.hyperspherical_sampler import (
 
 
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):
-    
     @unittest.skipIf(not healpy_installed, "healpy is not installed")
     @parameterized.expand(
         [

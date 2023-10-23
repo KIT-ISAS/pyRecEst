@@ -1,18 +1,18 @@
-from pyrecest.backend import column_stack
-from pyrecest.backend import linalg
-from pyrecest.backend import diag
 from math import pi
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import reshape
-from pyrecest.backend import outer
-from pyrecest.backend import ones
-from pyrecest.backend import linspace
-from pyrecest.backend import cos
-from pyrecest.backend import array
-from pyrecest.backend import complex64
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+from pyrecest.backend import (
+    array,
+    column_stack,
+    cos,
+    linalg,
+    linspace,
+    ones,
+    outer,
+    reshape,
+    sin,
+    sqrt,
+)
 
 
 def plot_ellipsoid(center, shape_matrix, scaling_factor=1, color="blue"):

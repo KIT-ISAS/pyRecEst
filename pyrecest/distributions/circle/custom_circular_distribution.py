@@ -1,10 +1,7 @@
-from math import pi
-from pyrecest.backend import mod
-from pyrecest.backend import array
 from collections.abc import Callable
+from math import pi
 
-
-from beartype import beartype
+from pyrecest.backend import array, mod
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -40,9 +37,7 @@ class CustomCircularDistribution(
         Returns:
             : The value of the pdf at xs.
         """
-        return AbstractCustomDistribution.pdf(
-            self, mod(xs + self.shift_by, 2 * pi)
-        )
+        return AbstractCustomDistribution.pdf(self, mod(xs + self.shift_by, 2 * pi))
 
     def integrate(self, integration_boundaries=None) -> float:
         """

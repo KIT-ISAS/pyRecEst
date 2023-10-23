@@ -1,6 +1,4 @@
-from pyrecest.backend import eye
-from pyrecest.backend import array
-
+from pyrecest.backend import array, eye
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )

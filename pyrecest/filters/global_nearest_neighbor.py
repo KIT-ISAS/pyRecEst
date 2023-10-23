@@ -1,11 +1,4 @@
-from pyrecest.backend import full
-from pyrecest.backend import stack
-from pyrecest.backend import squeeze
-from pyrecest.backend import repeat
-from pyrecest.backend import any
-from pyrecest.backend import all
-from pyrecest.backend import empty
-
+from pyrecest.backend import all, any, empty, full, repeat, squeeze, stack
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
@@ -50,9 +43,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         assert cov_mats_meas.ndim == 2 or cov_mats_meas.shape[2] == n_meas
         all_gaussians = [filter.filter_state for filter in self.filter_bank]
         all_means_prior = stack([gaussian.mu for gaussian in all_gaussians], axis=1)
-        all_cov_mats_prior = stack(
-            [gaussian.C for gaussian in all_gaussians], axis=2
-        )
+        all_cov_mats_prior = stack([gaussian.C for gaussian in all_gaussians], axis=2)
 
         if self.association_param["distance_metric_pos"].lower() == "euclidean":
             dists = cdist(
@@ -124,9 +115,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                         )
                         dists[i, j] = squeeze(
                             cdist(
-                                (measurement_matrix @ all_means_prior[:, i]).T[
-                                    None
-                                ],
+                                (measurement_matrix @ all_means_prior[:, i]).T[None],
                                 measurements[:, j].T[None],
                                 "mahalanobis",
                                 VI=curr_cov_mahalanobis,

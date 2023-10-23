@@ -2,8 +2,6 @@ import random
 from typing import Any, Optional
 
 
-from beartype import beartype
-
 from .evaluate_for_variables import evaluate_for_variables
 from .generate_simulated_scenarios import generate_simulated_scenarios
 from .simulation_database import simulation_database

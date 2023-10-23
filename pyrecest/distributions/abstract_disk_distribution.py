@@ -1,5 +1,4 @@
-from pyrecest.backend import eye
-from pyrecest.backend import array
+from pyrecest.backend import array, eye
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 

@@ -1,10 +1,9 @@
-from math import pi
-from pyrecest.backend import array
-from pyrecest.backend import arange
 import unittest
+from math import pi
+
 import numpy.testing as npt
 import pyrecest.backend
-
+from pyrecest.backend import arange, array
 from pyrecest.distributions.circle.custom_circular_distribution import (
     CustomCircularDistribution,
 )
@@ -25,9 +24,7 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
         def pdf_wrapped(x, mu, gamma, terms=2000):
             summation = 0
             for k in range(-terms, terms + 1):
-                summation += gamma / (
-                    pi * (gamma**2 + (x - mu + 2.0 * pi * k) ** 2)
-                )
+                summation += gamma / (pi * (gamma**2 + (x - mu + 2.0 * pi * k) ** 2))
             return summation
 
         custom_wrapped = CustomCircularDistribution(
@@ -38,12 +35,13 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
             dist.pdf(xs=self.xs), custom_wrapped.pdf(xs=self.xs), atol=0.0001
         )
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_cdf(self):
         dist = WrappedCauchyDistribution(self.mu, self.gamma)
-        npt.assert_allclose(
-            dist.cdf(array([1.0])), dist.integrate(array([0.0, 1.0]))
-        )
+        npt.assert_allclose(dist.cdf(array([1.0])), dist.integrate(array([0.0, 1.0])))
 
 
 if __name__ == "__main__":

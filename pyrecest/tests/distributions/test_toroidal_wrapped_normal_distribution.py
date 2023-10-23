@@ -1,12 +1,8 @@
-from math import pi
-from pyrecest.backend import mod
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
 import unittest
+from math import pi
+
 import pyrecest.backend
-
-
+from pyrecest.backend import allclose, array, mod
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )
@@ -23,7 +19,10 @@ class TestToroidalWrappedNormalDistribution(unittest.TestCase):
         self.assertTrue(allclose(self.twn.mu, self.mu))
         self.assertTrue(allclose(self.twn.C, self.C))
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_integrate(self):
         self.assertAlmostEqual(self.twn.integrate(), 1, delta=1e-5)
         self.assertTrue(

@@ -1,13 +1,6 @@
-from pyrecest.backend import random
-from pyrecest.backend import sum
-from pyrecest.backend import ones_like
-from pyrecest.backend import ones
-from pyrecest.backend import ndim
 from collections.abc import Callable
-from pyrecest.backend import zeros
 
-
-from beartype import beartype
+from pyrecest.backend import ndim, ones_like, random, sum, zeros
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -65,12 +58,13 @@ class AbstractParticleFilter(AbstractFilterType):
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True
     ):
-        assert measurement is None or measurement.shape == (meas_noise.dim,) or meas_noise.dim == 1 and measurement.shape == ()
         assert (
-            ndim(measurement) == 1
-            or ndim(measurement) == 0
-            and meas_noise.dim == 1
+            measurement is None
+            or measurement.shape == (meas_noise.dim,)
+            or meas_noise.dim == 1
+            and measurement.shape == ()
         )
+        assert ndim(measurement) == 1 or ndim(measurement) == 0 and meas_noise.dim == 1
         if not shift_instead_of_add:
             raise NotImplementedError()
 
@@ -94,7 +88,5 @@ class AbstractParticleFilter(AbstractFilterType):
         )
 
     def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
-        likelihood_val = sum(
-            likelihood.pdf(self.filter_state.d) * self.filter_state.w
-        )
+        likelihood_val = sum(likelihood.pdf(self.filter_state.d) * self.filter_state.w)
         return likelihood_val

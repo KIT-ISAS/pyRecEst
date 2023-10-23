@@ -1,14 +1,14 @@
-from pyrecest.backend import full_like
-from pyrecest.backend import atleast_2d
-from pyrecest.backend import sqrt
-from pyrecest.backend import real
-from pyrecest.backend import imag
-from pyrecest.backend import all
-from pyrecest.backend import zeros
-from pyrecest.backend import isreal
-from pyrecest.backend import complex128
-
-
+from pyrecest.backend import (
+    all,
+    atleast_2d,
+    complex128,
+    full_like,
+    imag,
+    isreal,
+    real,
+    sqrt,
+    zeros,
+)
 
 # pylint: disable=E0611
 from scipy.special import sph_harm
@@ -64,7 +64,7 @@ class SphericalHarmonicsDistributionReal(AbstractSphericalHarmonicsDistribution)
             raise NotImplementedError("Transformation currently not supported")
 
         real_coeff_mat = self.coeff_mat
-        complex_coeff_mat = full_like(real_coeff_mat, float('NaN'), dtype=complex128)
+        complex_coeff_mat = full_like(real_coeff_mat, float("NaN"), dtype=complex128)
 
         for n in range(real_coeff_mat.shape[0]):
             for m in range(-n, n + 1):

@@ -1,10 +1,8 @@
-from math import pi
-from pyrecest.backend import mod
-from pyrecest.backend import array
 import unittest
-import numpy as np
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+from pyrecest.backend import array, mod
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )

@@ -1,13 +1,8 @@
-from math import pi
-from pyrecest.backend import mod
-from pyrecest.backend import log
-from pyrecest.backend import array
 from collections.abc import Callable
 from functools import partial
-from pyrecest.backend import amax
-from pyrecest.backend import amin
+from math import pi
 
-
+from pyrecest.backend import amax, amin, array, log, mod
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
 from pyrecest.filters.abstract_circular_filter import AbstractCircularFilter
 
@@ -48,7 +43,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
         while lambda_ > 0:
             wd = self.filter_state.to_dirac5()
             likelihood_vals = array([likelihood(z, x) for x in wd.d])
-            likelihood_vals_min= amin(likelihood_vals)
+            likelihood_vals_min = amin(likelihood_vals)
             likelihood_vals_max = amax(likelihood_vals)
 
             if likelihood_vals_max == 0:

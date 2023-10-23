@@ -1,14 +1,8 @@
-from math import pi
-from pyrecest.backend import tile
-from pyrecest.backend import ones
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import zeros
-import pyrecest.backend
 import unittest
+from math import pi
 
-
+import pyrecest.backend
+from pyrecest.backend import all, allclose, array, ones, tile, zeros
 from pyrecest.distributions.hypertorus.toroidal_uniform_distribution import (
     ToroidalUniformDistribution,
 )
@@ -21,9 +15,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
 
     def test_pdf(self):
         self.assertTrue(
-            allclose(
-                self.tud.pdf(self.x), (1 / (2 * pi) ** 2) * ones(self.x.shape[1])
-            )
+            allclose(self.tud.pdf(self.x), (1 / (2 * pi) ** 2) * ones(self.x.shape[1]))
         )
 
     def test_shift(self):
@@ -46,15 +38,11 @@ class TestToroidalUniformDistribution(unittest.TestCase):
             )
             if k == 0:
                 self.assertTrue(
-                    allclose(
-                        self.tud.trigonometric_moment(k), ones(2), rtol=1e-10
-                    )
+                    allclose(self.tud.trigonometric_moment(k), ones(2), rtol=1e-10)
                 )
             else:
                 self.assertTrue(
-                    allclose(
-                        self.tud.trigonometric_moment(k), zeros(2), rtol=1e-10
-                    )
+                    allclose(self.tud.trigonometric_moment(k), zeros(2), rtol=1e-10)
                 )
 
     def test_mean_direction(self):
@@ -66,7 +54,10 @@ class TestToroidalUniformDistribution(unittest.TestCase):
             "Hypertoroidal uniform distributions do not have a unique mean",
         )
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_entropy(self):
         self.assertAlmostEqual(
             self.tud.entropy(), self.tud.entropy_numerical(), delta=1e-10

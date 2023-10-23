@@ -1,9 +1,7 @@
-from pyrecest.backend import random
-from pyrecest.backend import repeat
-from pyrecest.backend import array
 import unittest
-import numpy.testing as npt
 
+import numpy.testing as npt
+from pyrecest.backend import array, random, repeat
 from pyrecest.utils.metrics import anees
 
 
@@ -33,9 +31,7 @@ class TestANEES(unittest.TestCase):
         computed_ANEES = anees(samples, repeated_uncertainties, repeated_groundtruths)
 
         # Assert that computed ANEES is close to 1 with a tolerance of 0.05.
-        npt.assert_almost_equal(
-            computed_ANEES, self.groundtruths.shape[-1], decimal=2
-        )
+        npt.assert_almost_equal(computed_ANEES, self.groundtruths.shape[-1], decimal=2)
 
 
 if __name__ == "__main__":

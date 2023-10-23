@@ -1,6 +1,4 @@
-from pyrecest.backend import eye
-from pyrecest.backend import array
-
+from pyrecest.backend import array, eye
 
 from .abstract_disk_distribution import AbstractDiskDistribution
 from .ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution

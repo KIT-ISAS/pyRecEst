@@ -1,25 +1,26 @@
-from pyrecest.backend import full
-from pyrecest.backend import atleast_2d
-from pyrecest.backend import conj
-from pyrecest.backend import column_stack
-from pyrecest.backend import linalg
-from pyrecest.backend import complex128
 from math import pi
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import shape
-from pyrecest.backend import reshape
-from pyrecest.backend import real
-from pyrecest.backend import prod
-from pyrecest.backend import isnan
-from pyrecest.backend import imag
-from pyrecest.backend import array
-from pyrecest.backend import all
-from pyrecest.backend import abs
-from pyrecest.backend import empty
-from pyrecest.backend import zeros
 
 import scipy
+from pyrecest.backend import (
+    abs,
+    all,
+    array,
+    atleast_2d,
+    column_stack,
+    complex128,
+    conj,
+    empty,
+    full,
+    imag,
+    isnan,
+    linalg,
+    real,
+    reshape,
+    shape,
+    sin,
+    sqrt,
+    zeros,
+)
 
 # pylint: disable=E0611
 from scipy.special import sph_harm
@@ -87,9 +88,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
                     )
                 elif m > 0:
                     coeff_mat_real[n, n + m] = (
-                        sqrt(2)
-                        * (-1 if m % 2 else 1)
-                        * real(self.coeff_mat[n, n + m])
+                        sqrt(2) * (-1 if m % 2 else 1) * real(self.coeff_mat[n, n + m])
                     )
                 else:  # m == 0
                     coeff_mat_real[n, n] = real(self.coeff_mat[n, n])
@@ -157,7 +156,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         else:
             raise ValueError("Transformation not supported")
 
-        coeff_mat = full((degree + 1, 2 * degree + 1), float('NaN'), dtype=complex128)
+        coeff_mat = full((degree + 1, 2 * degree + 1), float("NaN"), dtype=complex128)
 
         def real_part(phi, theta, n, m):
             return real(

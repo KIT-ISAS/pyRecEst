@@ -1,9 +1,7 @@
-from typing import Union
-from pyrecest.backend import int64
-from pyrecest.backend import int32
 from abc import abstractmethod
+from typing import Union
 
-from beartype import beartype
+from pyrecest.backend import int32, int64
 
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 
@@ -20,7 +18,7 @@ class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: 
+        :rtype:
         """
         return self.mean_direction()
 
@@ -31,6 +29,6 @@ class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
 
         Returns
         -------
-        mean_direction: 
+        mean_direction:
             The mean direction of the distribution.
         """

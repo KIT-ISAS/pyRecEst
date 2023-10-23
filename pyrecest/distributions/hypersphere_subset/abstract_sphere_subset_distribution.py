@@ -1,12 +1,6 @@
 from math import pi
-from pyrecest.backend import where
-from pyrecest.backend import sin
-from pyrecest.backend import ndim
-from pyrecest.backend import cos
-from pyrecest.backend import arctan2
-from pyrecest.backend import arccos
 
-from beartype import beartype
+from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where
 
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
@@ -52,9 +46,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, z
 
     @staticmethod
-    def cart_to_sph(
-        x, y, z, mode="colatitude"
-    ) -> tuple:
+    def cart_to_sph(x, y, z, mode="colatitude") -> tuple:
         """
         Convert Cartesian coordinates to spherical coordinates.
 
@@ -66,9 +58,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             tuple: Spherical coordinates.
         """
-        assert (
-            ndim(x) == 1 and ndim(y) == 1 and ndim(z)
-        ), "Inputs must be 1-dimensional"
+        assert ndim(x) == 1 and ndim(y) == 1 and ndim(z), "Inputs must be 1-dimensional"
         if mode == "colatitude":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_colatitude(
                 x, y, z
@@ -84,9 +74,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
 
     @staticmethod
     def _sph_to_cart_colatitude(azimuth, colatitude) -> tuple:
-        assert ndim(azimuth) == 1 and ndim(
-            colatitude
-        ), "Inputs must be 1-dimensional"
+        assert ndim(azimuth) == 1 and ndim(colatitude), "Inputs must be 1-dimensional"
         x = sin(colatitude) * cos(azimuth)
         y = sin(colatitude) * sin(azimuth)
         z = cos(colatitude)

@@ -1,14 +1,6 @@
 from math import pi
-from pyrecest.backend import tanh
-from pyrecest.backend import tan
-from pyrecest.backend import sinh
-from pyrecest.backend import sin
-from pyrecest.backend import mod
-from pyrecest.backend import exp
-from pyrecest.backend import cosh
-from pyrecest.backend import cos
-from pyrecest.backend import arctan
 
+from pyrecest.backend import arctan, cos, cosh, exp, mod, sinh, tan, tanh
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -23,12 +15,7 @@ class WrappedCauchyDistribution(AbstractCircularDistribution):
     def pdf(self, xs):
         assert xs.ndim == 1
         xs = mod(xs - self.mu, 2 * pi)
-        return (
-            1
-            / (2 * pi)
-            * sinh(self.gamma)
-            / (cosh(self.gamma) - cos(xs - self.mu))
-        )
+        return 1 / (2 * pi) * sinh(self.gamma) / (cosh(self.gamma) - cos(xs - self.mu))
 
     def cdf(self, xs):
         def coth(x):

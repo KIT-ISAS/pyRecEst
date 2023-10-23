@@ -1,12 +1,7 @@
-from pyrecest.backend import random
-from pyrecest.backend import eye
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
 import unittest
 
 import numpy.testing as npt
-
+from pyrecest.backend import allclose, array, eye, random
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,

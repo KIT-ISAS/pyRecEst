@@ -1,24 +1,23 @@
-import pyrecest.backend
-from pyrecest.backend import linalg
 from math import pi
 from typing import Union
-from pyrecest.backend import sinh
-from pyrecest.backend import sin
-from pyrecest.backend import ndim
-from pyrecest.backend import isnan
-from pyrecest.backend import exp
-from pyrecest.backend import cos
-from pyrecest.backend import arccos
-from pyrecest.backend import all
-from pyrecest.backend import abs
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
-from pyrecest.backend import array
-import numbers
 
-
-from beartype import beartype
+import pyrecest.backend
+from pyrecest.backend import (
+    abs,
+    all,
+    arccos,
+    array,
+    cos,
+    exp,
+    int32,
+    int64,
+    isnan,
+    linalg,
+    ndim,
+    sin,
+    sinh,
+    zeros,
+)
 from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
@@ -62,7 +61,9 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         array: n von Mises-Fisher distributed random vectors.
         # Requires scipy 1.11 or later
         """
-        assert pyrecest.backend.__name__ == "pyrecest.numpy", "Only supported on NumPy backend"
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported on NumPy backend"
         from scipy.stats import vonmises_fisher
 
         # Create a von Mises-Fisher distribution object

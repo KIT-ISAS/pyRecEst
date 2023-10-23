@@ -1,14 +1,8 @@
-from pyrecest.backend import random
-from pyrecest.backend import squeeze
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import empty
-from typing import Union
-import numbers
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import Union
 
-from beartype import beartype
+from pyrecest.backend import empty, int32, int64, random, squeeze
 
 
 class AbstractManifoldSpecificDistribution(ABC):
@@ -52,7 +46,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         Convenient access to a reasonable "mean" for different manifolds.
 
         :return: The mean of the distribution.
-        :rtype: 
+        :rtype:
         """
 
     def set_mode(self, _):
@@ -73,7 +67,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point = None,
+        start_point=None,
     ):
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""

@@ -1,22 +1,21 @@
-from pyrecest.backend import linalg
-from math import pi
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import reshape
-from pyrecest.backend import mod
-from pyrecest.backend import meshgrid
-from pyrecest.backend import exp
-from pyrecest.backend import array
-from pyrecest.backend import arange
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
 import copy
+from math import pi
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    allclose,
+    arange,
+    array,
+    exp,
+    int32,
+    int64,
+    linalg,
+    meshgrid,
+    mod,
+    random,
+    reshape,
+    zeros,
+)
 from scipy.stats import multivariate_normal
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -32,14 +31,16 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :raises AssertionError: If C_ is not square, not symmetric, not positive definite, or its dimension does not match with mu_.
         """
         numel_mu = 1 if mu.ndim == 0 else mu.shape[0]
-        assert C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1], "C must be of shape (dim, dim)"
-        assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
-        assert (C.ndim == 0 and C > 0.0 or
-            len(linalg.cholesky(C)) > 0  # fails if not positiv definite
-        ), "C must be positive definite"
         assert (
-            numel_mu == 1 or mu.shape == (C.shape[1],)
-        ), "mu must be of shape (dim,)"
+            C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1]
+        ), "C must be of shape (dim, dim)"
+        assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        assert (
+            C.ndim == 0
+            and C > 0.0
+            or len(linalg.cholesky(C)) > 0  # fails if not positiv definite
+        ), "C must be positive definite"
+        assert numel_mu == 1 or mu.shape == (C.shape[1],), "mu must be of shape (dim,)"
         AbstractHypertoroidalDistribution.__init__(self, numel_mu)
         self.mu = mod(mu, 2.0 * pi)
         self.C = C

@@ -1,10 +1,8 @@
-from pyrecest.backend import diff
-from math import pi
-from pyrecest.backend import std
-from pyrecest.backend import all
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+from pyrecest.backend import all, diff, std
 from pyrecest.sampling.hypertoroidal_sampler import CircularUniformSampler
 
 

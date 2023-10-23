@@ -1,12 +1,8 @@
-from math import pi
-from pyrecest.backend import meshgrid
-from pyrecest.backend import linspace
-from pyrecest.backend import eye
-from pyrecest.backend import array
-from pyrecest.backend import concatenate
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+from pyrecest.backend import array, concatenate, eye, linspace, meshgrid
 from pyrecest.distributions import CustomLinearDistribution, GaussianDistribution
 from pyrecest.distributions.nonperiodic.gaussian_mixture import GaussianMixture
 

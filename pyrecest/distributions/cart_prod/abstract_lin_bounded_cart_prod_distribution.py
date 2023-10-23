@@ -1,10 +1,7 @@
-from typing import Union
-from pyrecest.backend import int64
-from pyrecest.backend import int32
 from abc import abstractmethod
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import int32, int64
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
 
@@ -42,7 +39,7 @@ class AbstractLinBoundedCartProdDistribution(AbstractCartProdDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: 
+        :rtype:
         """
         return self.hybrid_mean()
 

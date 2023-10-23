@@ -1,16 +1,7 @@
 from math import pi
-from numpy import random
-from numpy import tile
-from numpy import sum
-from numpy import squeeze
-from numpy import shape
-from numpy import mod
-from numpy import dot
-from numpy import empty
-from numpy import zeros
-import numpy as np
 
-from beartype import beartype
+import numpy as np
+from numpy import dot, empty, mod, random, shape, squeeze, sum, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -72,7 +63,9 @@ def generate_measurements(groundtruth, simulation_config):
             elif groundtruth[0].shape[-1] == 3:
                 curr_shape = rotate(
                     translate(
-                        target_shape, groundtruth[0][..., 1], yoff=groundtruth[0][..., 2]
+                        target_shape,
+                        groundtruth[0][..., 1],
+                        yoff=groundtruth[0][..., 2],
                     ),
                     angle=groundtruth[0][..., 0],
                     origin="centroid",
@@ -127,7 +120,7 @@ def generate_measurements(groundtruth, simulation_config):
 
         for t in range(simulation_config["n_timesteps"]):
             n_meas_at_t = sum(n_observations[t, :])
-            measurements[t] = float('NaN') * zeros(
+            measurements[t] = float("NaN") * zeros(
                 (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
             )
 

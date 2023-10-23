@@ -1,16 +1,12 @@
 from math import pi
-from pyrecest.backend import sin
-from pyrecest.backend import mod
-from pyrecest.backend import linspace
-from pyrecest.backend import cos
-from pyrecest.backend import array
-import numbers
 
 import matplotlib.pyplot as plt
+from pyrecest.backend import array, cos, linspace, mod, sin
 
-from beartype import beartype
+from ..hypertorus.abstract_hypertoroidal_distribution import (
+    AbstractHypertoroidalDistribution,
+)
 
-from ..hypertorus.abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
     def __init__(self):

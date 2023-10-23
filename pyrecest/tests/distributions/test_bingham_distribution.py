@@ -1,11 +1,11 @@
-from pyrecest.backend import array
 import unittest
 
-
+import numpy.testing as npt
+from pyrecest.backend import array
 from pyrecest.distributions import BinghamDistribution
 
 from .test_von_mises_fisher_distribution import vectors_to_test_2d
-import numpy.testing as npt
+
 
 class TestBinghamDistribution(unittest.TestCase):
     def setUp(self):

@@ -1,12 +1,6 @@
-from pyrecest.backend import full
 from typing import Union
-from pyrecest.backend import tile
-from pyrecest.backend import sum
-from pyrecest.backend import sin
-from pyrecest.backend import cos
-from pyrecest.backend import int64
-from pyrecest.backend import int32
 
+from pyrecest.backend import cos, full, int32, int64, sin, sum, tile
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
@@ -37,13 +31,11 @@ class HypercylindricalDiracDistribution(
 
     def hybrid_moment(self):
         # Specific for Cartesian products of hypertori and R^lin_dim
-        S = full((self.bound_dim * 2 + self.lin_dim, self.d.shape[0]), float('NaN'))
+        S = full((self.bound_dim * 2 + self.lin_dim, self.d.shape[0]), float("NaN"))
         S[2 * self.bound_dim :, :] = self.d[:, self.bound_dim :].T  # noqa: E203
 
         for i in range(self.bound_dim):
             S[2 * i, :] = cos(self.d[:, i])  # noqa: E203
             S[2 * i + 1, :] = sin(self.d[:, i])  # noqa: E203
 
-        return sum(
-            tile(self.w, (self.lin_dim + 2 * self.bound_dim, 1)) * S, axis=1
-        )
+        return sum(tile(self.w, (self.lin_dim + 2 * self.bound_dim, 1)) * S, axis=1)

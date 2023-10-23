@@ -1,8 +1,4 @@
-from pyrecest.backend import prod
-from pyrecest.backend import hstack
-from pyrecest.backend import concatenate
-from pyrecest.backend import empty
-
+from pyrecest.backend import concatenate, empty, hstack, prod
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
 
@@ -51,7 +47,7 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: 
+        :rtype:
         """
         return self.hybrid_mean()
 

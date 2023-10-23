@@ -1,8 +1,7 @@
-from pyrecest.backend import concatenate
 import warnings
 from abc import abstractmethod
 
-
+from pyrecest.backend import concatenate
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution

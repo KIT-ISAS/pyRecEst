@@ -1,14 +1,10 @@
-from pyrecest.backend import column_stack
-from typing import Union
-from pyrecest.backend import concatenate
-from pyrecest.backend import int64
-from pyrecest.backend import int32
 import time
 from abc import abstractmethod
+from typing import Union
 
 import matplotlib.pyplot as plt
-
 import quaternion
+from pyrecest.backend import column_stack, concatenate, int32, int64
 
 from .cart_prod.abstract_lin_bounded_cart_prod_distribution import (
     AbstractLinBoundedCartProdDistribution,
@@ -111,4 +107,4 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
         return h
 
     def get_manifold_size(self):
-        return float('inf')
+        return float("inf")

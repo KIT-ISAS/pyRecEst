@@ -1,13 +1,7 @@
 from math import pi
 from typing import Union
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import cos
-from pyrecest.backend import array
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
 
+from pyrecest.backend import array, cos, int32, int64, sin, sqrt, zeros
 from scipy.integrate import dblquad
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution

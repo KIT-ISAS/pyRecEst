@@ -1,6 +1,5 @@
-from pyrecest.backend import array
-
 from numpy import cos, exp, sin
+from pyrecest.backend import array
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_wrapped_normal_distribution import (

@@ -1,13 +1,6 @@
-from pyrecest.backend import random
-from pyrecest.backend import std
-from pyrecest.backend import ones
-from pyrecest.backend import mean
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import zeros
 import unittest
 
-
+from pyrecest.backend import allclose, mean, ones, random, std, zeros
 from pyrecest.sampling.euclidean_sampler import GaussianSampler
 
 

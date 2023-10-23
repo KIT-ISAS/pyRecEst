@@ -1,12 +1,12 @@
 import unittest
-from pyrecest.backend import array
 
+import numpy.testing as npt
+from pyrecest.backend import array
 from pyrecest.distributions import WrappedNormalDistribution
 from pyrecest.filters.wrapped_normal_filter import WrappedNormalFilter
-import numpy.testing as npt
+
 
 class WrappedNormalFilterTest(unittest.TestCase):
-
     def setUp(self):
         self.wn_filter = WrappedNormalFilter()
         self.wn = WrappedNormalDistribution(array(1.3), array(0.8))
@@ -20,7 +20,9 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.assertEqual(self.wn.sigma, wn1.sigma)
 
     def test_predict_identity(self):
-        self.wn_filter.predict_identity(WrappedNormalDistribution(array(0.0), self.wn.sigma))
+        self.wn_filter.predict_identity(
+            WrappedNormalDistribution(array(0.0), self.wn.sigma)
+        )
         wn_identity = self.wn_filter.filter_state
         self.assertIsInstance(wn_identity, WrappedNormalDistribution)
         self.assertEqual(self.wn.mu, wn_identity.mu)

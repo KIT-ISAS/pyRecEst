@@ -1,10 +1,7 @@
-from typing import Union
-from pyrecest.backend import int64
-from pyrecest.backend import int32
 from collections.abc import Callable
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import int32, int64
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_hyperhemispherical_distribution import (
@@ -17,9 +14,7 @@ from .bingham_distribution import BinghamDistribution
 class CustomHyperhemisphericalDistribution(
     AbstractCustomDistribution, AbstractHyperhemisphericalDistribution
 ):
-    def __init__(
-        self, f: Callable, dim: Union[int, int32, int64], scale_by: float = 1
-    ):
+    def __init__(self, f: Callable, dim: Union[int, int32, int64], scale_by: float = 1):
         """
         Initialize a CustomHyperhemisphericalDistribution.
 

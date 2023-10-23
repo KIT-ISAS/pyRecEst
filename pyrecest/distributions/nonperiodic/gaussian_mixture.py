@@ -1,12 +1,5 @@
-from pyrecest.backend import sum
-from pyrecest.backend import stack
-from pyrecest.backend import ones
-from pyrecest.backend import dot
-from pyrecest.backend import array
-import numbers
 
-
-from beartype import beartype
+from pyrecest.backend import array, dot, ones, stack, sum
 
 from .abstract_linear_distribution import AbstractLinearDistribution
 from .gaussian_distribution import GaussianDistribution

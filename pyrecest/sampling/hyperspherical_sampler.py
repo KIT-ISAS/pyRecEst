@@ -70,11 +70,12 @@ class AbstractSphericalUniformSampler(AbstractHypersphericalUniformSampler):
 class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
     @abstractmethod
     def get_grid_spherical_coordinates(
-        self, grid_density_parameter: int
+        self, grid_density_parameter: int,
     ):
         raise NotImplementedError()
 
-    def get_grid(self, grid_density_parameter: int):
+    def get_grid(self, grid_density_parameter: int, dim: int = 2):
+        assert dim == 2, "AbstractSphericalCoordinatesBasedSampler is supposed to be used for the circle (which is one-dimensional) only."
         phi, theta, grid_specific_description = self.get_grid_spherical_coordinates(
             grid_density_parameter
         )

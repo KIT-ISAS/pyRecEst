@@ -1,11 +1,6 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import random
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
 import unittest
 
-
+from pyrecest.backend import allclose, array, linalg, random
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import (
     CustomHypersphericalDistribution,

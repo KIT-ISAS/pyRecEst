@@ -1,8 +1,6 @@
 from collections.abc import Callable
 
 
-from beartype import beartype
-
 from .abstract_custom_nonperiodic_distribution import (
     AbstractCustomNonPeriodicDistribution,
 )

@@ -1,10 +1,7 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import sin
-from pyrecest.backend import cos
-from pyrecest.backend import array
 import unittest
-import numpy.testing as npt
 
+import numpy.testing as npt
+from pyrecest.backend import array, cos, linalg, sin
 from pyrecest.distributions import VonMisesFisherDistribution
 
 

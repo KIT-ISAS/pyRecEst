@@ -1,18 +1,11 @@
-from pyrecest.backend import diag
-from pyrecest.backend import linalg
-from pyrecest.backend import mean
-from pyrecest.backend import eye
-from pyrecest.backend import concatenate
-from pyrecest.backend import array
-from pyrecest.backend import zeros
 import unittest
 from unittest.mock import patch
-import pyrecest.backend
-import numpy.testing as npt
 
 import matplotlib.pyplot as plt
-
+import numpy.testing as npt
+import pyrecest.backend
 from parameterized import parameterized
+from pyrecest.backend import array, concatenate, diag, eye, linalg, mean, zeros
 from pyrecest.distributions.nonperiodic.gaussian_distribution import (
     GaussianDistribution,
 )
@@ -73,9 +66,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         npt.assert_array_almost_equal(
             self.tracker.covariance, expected_covariance, decimal=5
         )
-        npt.assert_array_almost_equal(
-            self.tracker.extent, expected_extent, decimal=5
-        )
+        npt.assert_array_almost_equal(self.tracker.extent, expected_extent, decimal=5)
 
     @parameterized.expand(
         [
@@ -91,7 +82,10 @@ class TestRandomMatrixTracker(unittest.TestCase):
             ),
         ]
     )
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_update(self, name, offset, _):
         ys = array([self.initial_state + offset_row for offset_row in offset]).T
         Cv = array([[0.1, 0.0], [0.0, 0.1]])
@@ -104,9 +98,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         kf = KalmanFilter(
             GaussianDistribution(self.initial_state, self.initial_covariance)
         )
-        kf.update_linear(
-            mean(ys, axis=1), H, (self.initial_extent + Cv) / ys.shape[1]
-        )
+        kf.update_linear(mean(ys, axis=1), H, (self.initial_extent + Cv) / ys.shape[1])
 
         npt.assert_array_almost_equal(
             self.tracker.kinematic_state, kf.get_point_estimate(), decimal=5

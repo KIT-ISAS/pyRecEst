@@ -1,10 +1,8 @@
 from math import pi
-from pyrecest.backend import mod
-from pyrecest.backend import zeros
 
+from pyrecest.backend import mod, zeros
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
-
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -29,9 +27,7 @@ class CustomHypertoroidalDistribution(
             self.shift_by = shift_by
 
     def pdf(self, xs):
-        return AbstractCustomDistribution.pdf(
-            self, mod(xs + self.shift_by, 2 * pi)
-        )
+        return AbstractCustomDistribution.pdf(self, mod(xs + self.shift_by, 2 * pi))
 
     def to_custom_circular(self):
         # Convert to a custom circular distribution (only in 1D case)

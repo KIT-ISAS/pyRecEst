@@ -1,13 +1,8 @@
-from typing import Union
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
-from pyrecest.backend import complex128
 import collections
 import copy
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import complex128, int32, int64, zeros
 
 from ..abstract_mixture import AbstractMixture
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -17,7 +12,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractHypertoroidalDistribution],
-        w = None,
+        w=None,
     ):
         """
         Constructor

@@ -2,8 +2,6 @@ import datetime
 import os
 from typing import Any
 
-
-
 from .iterate_configs_and_runs import iterate_configs_and_runs
 
 

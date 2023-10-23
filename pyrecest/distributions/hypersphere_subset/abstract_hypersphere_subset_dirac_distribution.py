@@ -1,6 +1,4 @@
-from pyrecest.backend import sum
-from pyrecest.backend import log
-
+from pyrecest.backend import log, sum
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypersphere_subset_distribution import (

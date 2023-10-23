@@ -1,13 +1,9 @@
-from pyrecest.backend import diag
-from pyrecest.backend import squeeze
-from pyrecest.backend import isclose
-from pyrecest.backend import array
-import pyrecest.backend
 import unittest
-import numpy.testing as npt
 
 import matplotlib
-
+import numpy.testing as npt
+import pyrecest.backend
+from pyrecest.backend import array, diag, isclose
 from pyrecest.distributions import (
     AbstractLinearDistribution,
     CustomLinearDistribution,
@@ -40,8 +36,8 @@ class TestAbstractLinearDistribution(unittest.TestCase):
             return 0.3 * dist.pdf(x)
 
         dim = 2
-        left = [-float('inf'), -float('inf')]
-        right = [float('inf'), float('inf')]
+        left = [-float("inf"), -float("inf")]
+        right = [float("inf"), float("inf")]
 
         integration_result = AbstractLinearDistribution.integrate_fun_over_domain(
             f, dim, left, right
@@ -50,11 +46,15 @@ class TestAbstractLinearDistribution(unittest.TestCase):
             integration_result, 0.3, rtol=1e-5
         ), f"Expected 0.3, but got {integration_result}"
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_mode_numerical_custom_1D(self):
         cd = CustomLinearDistribution(
             lambda x: array(
-                ((x > -1.0) & (x <= 0.0)) * (1.0 + x) + ((x > 0.0) & (x <= 1.0)) * (1.0 - x)
+                ((x > -1.0) & (x <= 0.0)) * (1.0 + x)
+                + ((x > 0.0) & (x <= 1.0)) * (1.0 - x)
             ).squeeze(),
             1,
         )
@@ -64,21 +64,25 @@ class TestAbstractLinearDistribution(unittest.TestCase):
     def test_mean_numerical_gaussian_2D(self):
         npt.assert_allclose(self.g_2D.mean_numerical(), self.mu_2D, atol=1e-6)
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_mode_numerical_gaussian_2D_mean_far_away(self):
         mu = array([5.0, 10.0])
         C = array([[2.0, 1.0], [1.0, 1.0]])
         g = GaussianDistribution(mu, C)
         npt.assert_allclose(g.mode_numerical(), mu, atol=2e-4)
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_mode_numerical_gaussian_3D(self):
         npt.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
 
     def test_covariance_numerical_gaussian_2D(self):
-        npt.assert_allclose(
-            self.g_2D.covariance_numerical(), self.C_2D, atol=1e-6
-        )
+        npt.assert_allclose(self.g_2D.covariance_numerical(), self.C_2D, atol=1e-6)
 
     def test_plot_state_r2(self):
         gd = GaussianDistribution(array([1.0, 2.0]), array([[1.0, 0.5], [0.5, 1.0]]))

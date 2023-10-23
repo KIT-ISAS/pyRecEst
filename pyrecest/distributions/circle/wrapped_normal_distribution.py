@@ -1,23 +1,22 @@
 from math import pi
-from pyrecest.backend import random
 from typing import Union
-from pyrecest.backend import where
-from pyrecest.backend import squeeze
-from pyrecest.backend import sqrt
-from pyrecest.backend import ndim
-from pyrecest.backend import mod
-from pyrecest.backend import log
-from pyrecest.backend import exp
-from pyrecest.backend import array
-from pyrecest.backend import abs
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
-from pyrecest.backend import angle
-import numbers
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    abs,
+    angle,
+    array,
+    exp,
+    int32,
+    int64,
+    log,
+    mod,
+    ndim,
+    random,
+    sqrt,
+    squeeze,
+    where,
+    zeros,
+)
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
@@ -124,9 +123,7 @@ class WrappedNormalDistribution(
         val = where(xs < startingPoint, 1 + val, val)
         return squeeze(val)
 
-    def trigonometric_moment(
-        self, n: Union[int, int32, int64]
-    ):
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         return exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
 
     def multiply(

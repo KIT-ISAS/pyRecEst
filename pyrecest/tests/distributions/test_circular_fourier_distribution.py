@@ -1,18 +1,11 @@
-from math import pi
-from pyrecest.backend import sqrt
-from pyrecest.backend import linspace
-from pyrecest.backend import ceil
-from pyrecest.backend import array
-from pyrecest.backend import arange
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-import pyrecest.backend
 import copy
 import unittest
-import numpy.testing as npt
+from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 from parameterized import parameterized
+from pyrecest.backend import arange, array, ceil, linspace, sqrt
 from pyrecest.distributions import (
     CircularFourierDistribution,
     VonMisesDistribution,
@@ -97,7 +90,10 @@ class TestCircularFourierDistribution(unittest.TestCase):
             (False, "sqrt"),
         ]
     )
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_integrate_numerically(self, mult_by_n, transformation):
         scale_by = 2.0 / 5.0
         dist = VonMisesDistribution(2.9, 1.3)
@@ -116,9 +112,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
             expected_val = scale_by
         else:
             expected_val = (scale_by) ** 2
-        npt.assert_array_almost_equal(
-            fd_unnorm.integrate_numerically(), expected_val
-        )
+        npt.assert_array_almost_equal(fd_unnorm.integrate_numerically(), expected_val)
         fd_unnorm_real = fd_unnorm.to_real_fd()
         npt.assert_array_almost_equal(
             fd_unnorm_real.integrate_numerically(), expected_val
@@ -149,7 +143,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         if transformation == "identity":
             expected_val = scale_by
         else:
-            expected_val = scale_by ** 2
+            expected_val = scale_by**2
         npt.assert_array_almost_equal(fd_unnorm.integrate(), expected_val)
         fd_unnorm_real = fd_unnorm.to_real_fd()
         npt.assert_array_almost_equal(fd_unnorm_real.integrate(), expected_val)
@@ -188,10 +182,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
             store_values_multiplied_by_n=mult_by_n,
         )
         hel_like_distance, _ = integrate.quad(
-            lambda x: (
-                sqrt(dist1.pdf(array(x))) - sqrt(dist2.pdf(array(x)))
-            )
-            ** 2,
+            lambda x: (sqrt(dist1.pdf(array(x))) - sqrt(dist2.pdf(array(x)))) ** 2,
             0.0,
             2.0 * pi,
         )

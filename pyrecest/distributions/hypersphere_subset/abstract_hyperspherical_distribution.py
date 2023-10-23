@@ -1,23 +1,22 @@
-from math import pi
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import vstack
-from pyrecest.backend import sin
-from pyrecest.backend import ones
-from pyrecest.backend import meshgrid
-from pyrecest.backend import linspace
-from pyrecest.backend import cos
-from pyrecest.backend import concatenate
-from pyrecest.backend import array
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
-from pyrecest.backend import meshgrid
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
 import matplotlib.pyplot as plt
-
-from beartype import beartype
+from pyrecest.backend import (
+    array,
+    concatenate,
+    cos,
+    int32,
+    int64,
+    linspace,
+    meshgrid,
+    ones,
+    random,
+    sin,
+    vstack,
+    zeros,
+)
 from scipy.optimize import minimize
 
 from .abstract_hypersphere_subset_distribution import (
@@ -36,7 +35,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: 
+        :rtype:
         """
         return self.mean_direction()
 
@@ -47,7 +46,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point = None,
+        start_point=None,
     ):
         # jscpd:ignore-end
         """
@@ -189,7 +188,9 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
 
     def mode_numerical(self):
         def fun(s):
-            return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(array(s)))
+            return -self.pdf(
+                AbstractHypersphereSubsetDistribution.polar_to_cart(array(s))
+            )
 
         s0 = random.rand(self.dim) * pi
         res = minimize(
@@ -211,7 +212,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def create_sphere(faces):
         phi_linspace = linspace(0.0, pi, faces)
         theta_linspace = linspace(0.0, 2.0 * pi, faces)
-        phi, theta = meshgrid(phi_linspace, theta_linspace, indexing='ij')
+        phi, theta = meshgrid(phi_linspace, theta_linspace, indexing="ij")
         x = sin(phi) * cos(theta)
         y = sin(phi) * sin(theta)
         z = cos(phi)

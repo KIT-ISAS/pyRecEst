@@ -1,21 +1,21 @@
-from math import pi
-from typing import Union
-from pyrecest.backend import tile
-from pyrecest.backend import sum
-from pyrecest.backend import reshape
-from pyrecest.backend import real
-from pyrecest.backend import mod
-from pyrecest.backend import imag
-from pyrecest.backend import exp
-from pyrecest.backend import arctan2
-from pyrecest.backend import int64
-from pyrecest.backend import atleast_1d
-from pyrecest.backend import int32
 import copy
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    arctan2,
+    atleast_1d,
+    exp,
+    imag,
+    int32,
+    int64,
+    mod,
+    real,
+    reshape,
+    sum,
+    tile,
+)
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -24,9 +24,7 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
 ):
-    def __init__(
-        self, d, w=None, dim: int | None = None
-    ):
+    def __init__(self, d, w=None, dim: int | None = None):
         """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
         if dim is None:
             if d.ndim > 1:
@@ -35,9 +33,7 @@ class HypertoroidalDiracDistribution(
                 raise ValueError("Cannot automatically determine dimension.")
 
         AbstractHypertoroidalDistribution.__init__(self, dim)
-        AbstractDiracDistribution.__init__(
-            self, atleast_1d(mod(d, 2.0 * pi)), w=w
-        )
+        AbstractDiracDistribution.__init__(self, atleast_1d(mod(d, 2.0 * pi)), w=w)
 
     def plot(self, *args, **kwargs):
         raise NotImplementedError("Plotting is not implemented")
@@ -61,11 +57,11 @@ class HypertoroidalDiracDistribution(
         :param n: Integer moment order
         :return: Trigonometric moment
         """
-        return sum(
-            exp(1j * n * self.d.T) * tile(self.w, (self.dim, 1)), axis=1
-        )
+        return sum(exp(1j * n * self.d.T) * tile(self.w, (self.dim, 1)), axis=1)
 
-    def apply_function(self, f: Callable, f_supports_multiple: bool = True) -> "HypertoroidalDiracDistribution":
+    def apply_function(
+        self, f: Callable, f_supports_multiple: bool = True
+    ) -> "HypertoroidalDiracDistribution":
         dist = super().apply_function(f, f_supports_multiple)
         dist.d = mod(dist.d, 2.0 * pi)
         return dist

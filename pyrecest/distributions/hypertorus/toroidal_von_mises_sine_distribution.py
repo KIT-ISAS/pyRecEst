@@ -1,12 +1,6 @@
 from math import pi
-from pyrecest.backend import sum
-from pyrecest.backend import sin
-from pyrecest.backend import mod
-from pyrecest.backend import exp
-from pyrecest.backend import cos
-from pyrecest.backend import all
-from pyrecest.backend import array
 
+from pyrecest.backend import all, array, cos, exp, mod, sin, sum
 from scipy.special import comb, iv
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
@@ -44,8 +38,6 @@ class ToroidalVonMisesSineDistribution(AbstractToroidalDistribution):
         p = self.C * exp(
             self.kappa[0] * cos(xs[..., 0] - self.mu[0])
             + self.kappa[1] * cos(xs[..., 1] - self.mu[1])
-            + self.lambda_
-            * sin(xs[..., 0] - self.mu[0])
-            * sin(xs[..., 1] - self.mu[1])
+            + self.lambda_ * sin(xs[..., 0] - self.mu[0]) * sin(xs[..., 1] - self.mu[1])
         )
         return p

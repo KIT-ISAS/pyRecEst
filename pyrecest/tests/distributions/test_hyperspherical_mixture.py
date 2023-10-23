@@ -1,15 +1,8 @@
-from math import pi
-from pyrecest.backend import sum
-from pyrecest.backend import stack
-from pyrecest.backend import sqrt
-from pyrecest.backend import meshgrid
-from pyrecest.backend import arange
-from pyrecest.backend import linspace
-from pyrecest.backend import array
 import unittest
-
+from math import pi
 
 from numpy.testing import assert_allclose
+from pyrecest.backend import arange, array, linspace, meshgrid, sqrt, stack, sum
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
     HypersphericalMixture,
@@ -44,7 +37,9 @@ class HypersphericalMixtureTest(unittest.TestCase):
         w = array([0.3, 0.7])
         smix = HypersphericalMixture([wad, vmf], w)
 
-        a, b, c, d = meshgrid(arange(-1, 4), arange(-1, 4), arange(-1, 4), arange(-1, 4))
+        a, b, c, d = meshgrid(
+            arange(-1, 4), arange(-1, 4), arange(-1, 4), arange(-1, 4)
+        )
         points = array([a.ravel(), b.ravel(), c.ravel(), d.ravel()]).T
         points = points / sqrt(sum(points**2, axis=1, keepdims=True))
 

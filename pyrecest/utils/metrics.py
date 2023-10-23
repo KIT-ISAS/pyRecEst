@@ -1,7 +1,4 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import mean
-from pyrecest.backend import zeros
-
+from pyrecest.backend import linalg, mean, zeros
 
 
 def anees(estimates, uncertainties, groundtruths):

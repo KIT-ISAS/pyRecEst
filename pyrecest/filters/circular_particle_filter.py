@@ -1,9 +1,6 @@
 from typing import Union
-from pyrecest.backend import sum
-from pyrecest.backend import float64
-from pyrecest.backend import int64
-from pyrecest.backend import int32
 
+from pyrecest.backend import float64, int32, int64, sum
 
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 
@@ -25,7 +22,5 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
         :param likelihood: likelihood object with a PDF method
         :return: association likelihood value
         """
-        likelihood_val = sum(
-            likelihood.pdf(self.filter_state.d) * self.filter_state.w
-        )
+        likelihood_val = sum(likelihood.pdf(self.filter_state.d) * self.filter_state.w)
         return likelihood_val

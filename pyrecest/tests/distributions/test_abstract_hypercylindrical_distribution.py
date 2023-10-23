@@ -1,17 +1,17 @@
-from pyrecest.backend import column_stack
-from pyrecest.backend import diff
-from math import pi
-from pyrecest.backend import ones
-from pyrecest.backend import array
-from pyrecest.backend import arange
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import zeros
 import unittest
-import pyrecest.backend
+from math import pi
+
 import numpy.testing as npt
-
-
+import pyrecest.backend
+from pyrecest.backend import (
+    allclose,
+    arange,
+    array,
+    column_stack,
+    diff,
+    ones,
+    zeros,
+)
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
@@ -30,7 +30,10 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         )
         npt.assert_allclose(hwn.linear_mean_numerical(), hwn.mu[-1])
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_condition_on_periodic(self):
         hwn = PartiallyWrappedNormalDistribution(
             array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 1.0]]), 1
@@ -55,7 +58,10 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             atol=1e-10,
         )
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_condition_on_linear(self):
         hwn = PartiallyWrappedNormalDistribution(
             array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 1.0]]), 1

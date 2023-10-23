@@ -1,9 +1,7 @@
-from pyrecest.backend import eye, zeros
 import warnings
 from typing import Optional
 
-
-from beartype import beartype
+from pyrecest.backend import eye, zeros
 from pyrecest.distributions import GaussianDistribution
 
 
@@ -27,15 +25,9 @@ def simulation_database(
     elif scenario_name == "R2randomWalk":
         simulation_param["manifold"] = "Euclidean"
         simulation_param["n_timesteps"] = 10
-        simulation_param["initial_prior"] = GaussianDistribution(
-            zeros(2), 0.5 * eye(2)
-        )
-        simulation_param["meas_noise"] = GaussianDistribution(
-            zeros(2), 0.5 * eye(2)
-        )
-        simulation_param["sys_noise"] = GaussianDistribution(
-            zeros(2), 0.5 * eye(2)
-        )
+        simulation_param["initial_prior"] = GaussianDistribution(zeros(2), 0.5 * eye(2))
+        simulation_param["meas_noise"] = GaussianDistribution(zeros(2), 0.5 * eye(2))
+        simulation_param["sys_noise"] = GaussianDistribution(zeros(2), 0.5 * eye(2))
         simulation_param["gen_next_state_without_noise_is_vectorized"] = True
     else:
         raise ValueError("Scenario not recognized.")

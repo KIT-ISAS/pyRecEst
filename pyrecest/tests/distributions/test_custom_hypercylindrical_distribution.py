@@ -1,14 +1,9 @@
-from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import linspace
-from pyrecest.backend import eye
-from pyrecest.backend import array
-from pyrecest.backend import arange
-from pyrecest.backend import meshgrid
-import pyrecest.backend
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+import pyrecest.backend
+from pyrecest.backend import arange, array, eye, linspace, meshgrid, random
 from pyrecest.distributions import (
     GaussianDistribution,
     PartiallyWrappedNormalDistribution,
@@ -26,7 +21,14 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         self.pwn = PartiallyWrappedNormalDistribution(
             array([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]), mat, 3
         )
-        grid = meshgrid(arange(-3, 4), arange(-3, 4), arange(-2, 3), arange(-2, 3), arange(-2, 3), arange(-2, 3))
+        grid = meshgrid(
+            arange(-3, 4),
+            arange(-3, 4),
+            arange(-2, 3),
+            arange(-2, 3),
+            arange(-2, 3),
+            arange(-2, 3),
+        )
         self.grid_flat = array(grid).reshape(6, -1).T
 
         self.vm = VonMisesDistribution(array(0.0), array(1.0))
@@ -39,24 +41,26 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
 
     def test_constructor(self):
         chd = CustomHypercylindricalDistribution(self.pwn.pdf, 3, 3)
-        npt.assert_allclose(
-            self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat)
-        )
+        npt.assert_allclose(self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat))
 
     def test_from_distribution(self):
         chd = CustomHypercylindricalDistribution.from_distribution(self.pwn)
-        npt.assert_allclose(
-            self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat)
-        )
+        npt.assert_allclose(self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat))
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_condition_on_linear(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_linear(array([2.0, 1.0]))
 
         x = linspace(0.0, 2.0 * pi, 100)
         npt.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_condition_on_periodic(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_periodic(array(1.0))
 

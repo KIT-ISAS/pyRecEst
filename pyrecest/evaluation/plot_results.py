@@ -1,13 +1,7 @@
-from pyrecest.backend import shape
-from pyrecest.backend import ones
-from pyrecest.backend import isnan
-from pyrecest.backend import array
-from pyrecest.backend import any
 import warnings
 
 import matplotlib.pyplot as plt
-
-from beartype import beartype
+from pyrecest.backend import any, array, isnan, ones, shape
 
 from .get_axis_label import get_axis_label
 from .group_results_by_filter import group_results_by_filter
@@ -79,11 +73,7 @@ def plot_results(
 
         # Plot errors
         plt.figure(0)
-        if (
-            params[0] is not None
-            and not any(isnan(params))
-            and params.shape[0] > 1
-        ):
+        if params[0] is not None and not any(isnan(params)) and params.shape[0] > 1:
             if plot_stds:
                 plt.plot(
                     params,
@@ -118,11 +108,7 @@ def plot_results(
 
         # Plot times
         plt.figure(1)
-        if (
-            params[0] is not None
-            and not any(isnan(params))
-            and params.shape[0] > 1
-        ):
+        if params[0] is not None and not any(isnan(params)) and params.shape[0] > 1:
             plt.plot(
                 params,
                 times_factor * times_mean,
@@ -148,11 +134,7 @@ def plot_results(
 
         # Plot errors over time
         plt.figure(2)
-        if (
-            params[0] is not None
-            and not any(isnan(params))
-            and params.shape[0] > 1
-        ):
+        if params[0] is not None and not any(isnan(params)) and params.shape[0] > 1:
             plt.plot(
                 times_factor * times_mean,
                 errors_mean,

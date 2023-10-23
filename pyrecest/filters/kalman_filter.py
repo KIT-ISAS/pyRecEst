@@ -1,12 +1,11 @@
-from pyrecest.backend import eye
-
-from beartype import beartype
+import pyrecest.backend
 from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
+from pyrecest.backend import eye
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter
 
-import pyrecest.backend
+
 class KalmanFilter(AbstractEuclideanFilter):
     def __init__(self, initial_state):
         """
@@ -65,7 +64,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         self,
         system_matrix,
         sys_noise_cov,
-        sys_input = None,
+        sys_input=None,
     ):
         """
         Predicts the next state assuming a linear system model.
@@ -74,7 +73,9 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param sys_noise_cov: System noise covariance.
         :param sys_input: System input.
         """
-        assert pyrecest.backend.__name__ == "pyrecest.numpy", "Only supported on NumPy backend"
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported on NumPy backend"
         if sys_input is not None and system_matrix.shape[0] != sys_input.shape[0]:
             raise ValueError(
                 "The number of rows in system_matrix should match the number of elements in sys_input"
@@ -109,7 +110,9 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param measurement_matrix: Measurement matrix.
         :param meas_noise: Covariance matrix for measurement.
         """
-        assert pyrecest.backend.__name__ == "pyrecest.numpy", "Only supported on NumPy backend"
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported on NumPy backend"
         self._filter_state.dim_z = measurement_matrix.shape[0]
         self._filter_state.update(z=measurement, R=meas_noise, H=measurement_matrix)
 

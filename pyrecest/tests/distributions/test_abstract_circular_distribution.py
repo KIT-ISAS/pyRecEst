@@ -1,12 +1,8 @@
-from math import pi
-from pyrecest.backend import arange
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import array
-import pyrecest.backend
 import unittest
+from math import pi
 
-
+import pyrecest.backend
+from pyrecest.backend import allclose, arange, array
 from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
 
 
@@ -17,7 +13,10 @@ class AbstractCircularDistributionTest(unittest.TestCase):
             VonMisesDistribution(array(6.0), array(1.2)),
         ]
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_cdf_numerical(self):
         """Tests if the numerical computation of cdf matches the actual cdf."""
         x = arange(0, 7)
@@ -50,8 +49,11 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                             rtol=1e-10,
                         )
                     )
-                    
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_integral_numerical(self):
         """Tests if the numerical computation of integral matches the actual integral."""
         intervals = [

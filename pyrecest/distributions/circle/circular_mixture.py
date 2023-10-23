@@ -1,10 +1,7 @@
-from pyrecest.backend import sum
-from pyrecest.backend import shape
 import collections
 import warnings
 
-
-from beartype import beartype
+from pyrecest.backend import shape, sum
 
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from .abstract_circular_distribution import AbstractCircularDistribution

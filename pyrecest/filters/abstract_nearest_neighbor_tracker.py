@@ -1,10 +1,8 @@
-from pyrecest.backend import ndim
-from pyrecest.backend import empty
 import copy
 import warnings
 from abc import abstractmethod
 
-
+from pyrecest.backend import empty, ndim
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter
@@ -143,7 +141,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             point_ests = None
         else:
             point_ests = empty((self.dim, num_targets))
-            point_ests[:] = float('NaN')
+            point_ests[:] = float("NaN")
             for i in range(num_targets):
                 point_ests[:, i] = self.filter_bank[i].get_point_estimate()
             if flatten_vector:

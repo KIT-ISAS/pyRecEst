@@ -1,11 +1,7 @@
-from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
 import unittest
+from math import pi
 
-
+from pyrecest.backend import allclose, array, random
 from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )

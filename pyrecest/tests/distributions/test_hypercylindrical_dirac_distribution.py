@@ -1,17 +1,18 @@
-from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import sum
-from pyrecest.backend import ones_like
-from pyrecest.backend import ones
-from pyrecest.backend import isclose
-from pyrecest.backend import eye
-from pyrecest.backend import exp
-from pyrecest.backend import array
-from pyrecest.backend import zeros_like
-from pyrecest.backend import zeros
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+from pyrecest.backend import (
+    array,
+    exp,
+    eye,
+    isclose,
+    ones,
+    ones_like,
+    random,
+    sum,
+    zeros_like,
+)
 from pyrecest.distributions.cart_prod.hypercylindrical_dirac_distribution import (
     HypercylindricalDiracDistribution,
 )
@@ -24,7 +25,11 @@ from scipy.stats import wishart
 class TestHypercylindricalDiracDistribution(unittest.TestCase):
     def setUp(self):
         self.d = array(
-            [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [2.0, 4.0, 0.0, 0.5, 1.0, 1.0], [0.0, 10.0, 20.0, 30.0, 40.0, 50.0]]
+            [
+                [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                [2.0, 4.0, 0.0, 0.5, 1.0, 1.0],
+                [0.0, 10.0, 20.0, 30.0, 40.0, 50.0],
+            ]
         ).T
         self.w = array([1.0, 2.0, 3.0, 1.0, 2.0, 3.0])
         self.w = self.w / sum(self.w)
@@ -102,6 +107,7 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
 
     def test_from_distribution(self):
         import numpy as _np
+
         random_gen = _np.random.default_rng(0)  # Could fail randomly otherwise
         df = 4
         scale = eye(4)

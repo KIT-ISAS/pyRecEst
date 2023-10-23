@@ -1,13 +1,8 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import sqrt
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-from pyrecest.backend import empty_like
 import unittest
-import numpy.testing as npt
 
+import numpy.testing as npt
 from parameterized import parameterized
+from pyrecest.backend import allclose, array, linalg, sqrt
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,
@@ -31,7 +26,9 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.mu = self.mu / linalg.norm(self.mu)
         self.kappa = 2
         self.vmf = VonMisesFisherDistribution(self.mu, self.kappa)
-        self.other = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), self.kappa / 3.0)
+        self.other = VonMisesFisherDistribution(
+            array([0.0, 0.0, 1.0]), self.kappa / 3.0
+        )
 
     def test_vmf_distribution_3d_sanity_check(self):
         self.assertIsInstance(self.vmf, VonMisesFisherDistribution)
@@ -40,9 +37,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
 
     def test_vmf_distribution_3d_mode(self):
-        self.assertTrue(
-            allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5)
-        )
+        self.assertTrue(allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5))
 
     def test_vmf_distribution_3d_integral(self):
         self.assertAlmostEqual(self.vmf.integrate(), 1, delta=1e-5)
@@ -51,7 +46,8 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         vmf_mul = self.vmf.multiply(self.other)
         vmf_mul2 = self.other.multiply(self.vmf)
         c = vmf_mul.pdf(array([1.0, 0.0, 0.0])) / (
-            self.vmf.pdf(array([1.0, 0.0, 0.0])) * self.other.pdf(array([1.0, 0.0, 0.0]))
+            self.vmf.pdf(array([1.0, 0.0, 0.0]))
+            * self.other.pdf(array([1.0, 0.0, 0.0]))
         )
         x = array([0.0, 1.0, 0.0])
         self.assertAlmostEqual(
@@ -196,7 +192,12 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
     def test_from_distribution_dirac(self):
         dirac_dist = HypersphericalDiracDistribution(
             array(
-                [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], array([0.0, 1.0, 1.0]) / linalg.norm(array([0.0, 1.0, 1.0]))]
+                [
+                    [0.0, 0.0, 1.0],
+                    [0.0, 1.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                    array([0.0, 1.0, 1.0]) / linalg.norm(array([0.0, 1.0, 1.0])),
+                ]
             )
         )
         vmf = VonMisesFisherDistribution.from_distribution(dirac_dist)

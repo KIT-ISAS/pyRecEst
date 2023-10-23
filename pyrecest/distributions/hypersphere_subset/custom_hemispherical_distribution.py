@@ -1,7 +1,6 @@
 import warnings
 from collections.abc import Callable
 
-from beartype import beartype
 
 from .abstract_hemispherical_distribution import AbstractHemisphericalDistribution
 from .abstract_hyperhemispherical_distribution import (

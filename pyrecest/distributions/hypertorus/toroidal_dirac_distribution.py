@@ -1,12 +1,4 @@
-from pyrecest.backend import diag
-from pyrecest.backend import tile
-from pyrecest.backend import sum
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import dot
-from pyrecest.backend import cos
-from pyrecest.backend import column_stack
-
+from pyrecest.backend import column_stack, cos, diag, dot, sin, sqrt, sum, tile
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
@@ -57,7 +49,5 @@ class ToroidalDiracDistribution(
         )
         mu = dot(self.w, dbar)
         n = len(self.d)
-        C = (dbar - tile(mu, (n, 1))).T @ (
-            diag(self.w) @ (dbar - tile(mu, (n, 1)))
-        )
+        C = (dbar - tile(mu, (n, 1))).T @ (diag(self.w) @ (dbar - tile(mu, (n, 1))))
         return C

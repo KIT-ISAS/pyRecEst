@@ -1,9 +1,6 @@
-from pyrecest.backend import linalg
 from math import pi
-from pyrecest.backend import sqrt
-import numbers
 
-from beartype import beartype
+from pyrecest.backend import linalg, sqrt
 from scipy.special import gamma
 
 from .abstract_bounded_nonperiodic_distribution import (

@@ -1,8 +1,6 @@
 import warnings
 
 
-from beartype import beartype
-
 from ..abstract_mixture import AbstractMixture
 from .abstract_linear_distribution import AbstractLinearDistribution
 from .gaussian_distribution import GaussianDistribution

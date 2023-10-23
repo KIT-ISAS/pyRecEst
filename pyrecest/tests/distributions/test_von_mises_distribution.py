@@ -1,12 +1,11 @@
-from pyrecest.backend import linspace
-from pyrecest.backend import array
 import unittest
 
 import matplotlib
 import matplotlib.pyplot as plt
-
-from pyrecest.distributions import VonMisesDistribution
 import numpy.testing as npt
+from pyrecest.backend import array, linspace
+from pyrecest.distributions import VonMisesDistribution
+
 matplotlib.use("Agg")
 
 

@@ -1,9 +1,9 @@
-from math import pi
-from pyrecest.backend import array
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
 from parameterized import parameterized
+from pyrecest.backend import array
 from pyrecest.distributions.hypersphere_subset.abstract_sphere_subset_distribution import (
     AbstractSphereSubsetDistribution,
 )

@@ -1,8 +1,5 @@
-from pyrecest.backend import reshape
-from pyrecest.backend import ones
-from pyrecest.backend import cov
 import matplotlib.pyplot as plt
-
+from pyrecest.backend import cov, ones, reshape
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_linear_distribution import AbstractLinearDistribution

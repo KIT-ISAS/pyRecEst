@@ -1,9 +1,6 @@
-from pyrecest.backend import full
-from pyrecest.backend import hstack
-from pyrecest.backend import array
 from abc import ABC
 
-
+from pyrecest.backend import array, full, hstack
 
 
 class AbstractTrackerWithLogging(ABC):
@@ -25,11 +22,14 @@ class AbstractTrackerWithLogging(ABC):
 
         if n <= m:
             curr_ests = np.pad(
-                curr_ests, ((0, m - n), (0, 0)), mode="constant", constant_values=float('NaN')
+                curr_ests,
+                ((0, m - n), (0, 0)),
+                mode="constant",
+                constant_values=float("NaN"),
             )
             estimates_over_time = hstack((estimates_over_time, curr_ests))
         else:
-            estimates_over_time_new = full((n, t + 1), float('NaN'))
+            estimates_over_time_new = full((n, t + 1), float("NaN"))
             estimates_over_time_new[:m, :t] = estimates_over_time
             estimates_over_time_new[:, -1] = curr_ests.flatten()
             estimates_over_time = estimates_over_time_new

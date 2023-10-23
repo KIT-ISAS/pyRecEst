@@ -1,8 +1,6 @@
-from pyrecest.backend import ones
 from abc import abstractmethod
 
-
-from beartype import beartype
+from pyrecest.backend import ones
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -14,10 +12,10 @@ class AbstractUniformDistribution(AbstractDistributionType):
         """Compute the probability density function at each point in xs.
 
         :param xs: Points at which to compute the pdf.
-        :type xs: 
+        :type xs:
 
         :return: The pdf evaluated at each point in xs.
-        :rtype: 
+        :rtype:
         """
         return 1 / self.get_manifold_size() * ones(xs.shape[0])
 
@@ -27,10 +25,10 @@ class AbstractUniformDistribution(AbstractDistributionType):
         Compute the probability density function at each point in xs.
 
         :param xs: Points at which to compute the pdf.
-        :type xs: 
+        :type xs:
 
         :return: The pdf evaluated at each point in xs.
-        :rtype: 
+        :rtype:
         """
 
     def mode(self):

@@ -1,20 +1,16 @@
-from pyrecest.backend import linalg
 from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import reshape
-from pyrecest.backend import ones
-from pyrecest.backend import allclose
-from pyrecest.backend import all
+
+from pyrecest.backend import allclose, linalg, ones, random, reshape
+
 """ Test for uniform distribution for hyperhemispheres """
 import unittest
-
 
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
 
 
 def get_random_points(n, d):
     random.seed(10)
-    points = random.normal(0.0, 1.0, (n, d+1))
+    points = random.normal(0.0, 1.0, (n, d + 1))
     points = points[points[:, -1] >= 0, :]
     points /= reshape(linalg.norm(points, axis=1), (-1, 1))
     return points
@@ -29,9 +25,7 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
         points = get_random_points(100, 2)
 
         self.assertTrue(
-            allclose(
-                hhud.pdf(points), ones(points.shape[0]) / (2 * pi), atol=1e-6
-            )
+            allclose(hhud.pdf(points), ones(points.shape[0]) / (2 * pi), atol=1e-6)
         )
 
     def test_pdf_3d(self):
@@ -40,9 +34,7 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
         points = get_random_points(100, 3)
         # jscpd:ignore-start
         self.assertTrue(
-            allclose(
-                hhud.pdf(points), ones(points.shape[0]) / (pi**2), atol=1e-6
-            )
+            allclose(hhud.pdf(points), ones(points.shape[0]) / (pi**2), atol=1e-6)
         )
         # jscpd:ignore-end
 

@@ -1,32 +1,31 @@
-from math import pi
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import vstack
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import reshape
-from pyrecest.backend import ones
-from pyrecest.backend import mod
-from pyrecest.backend import meshgrid
-from pyrecest.backend import log
-from pyrecest.backend import linspace
-from pyrecest.backend import isnan
-from pyrecest.backend import angle
-from pyrecest.backend import cos
-from pyrecest.backend import array
-from pyrecest.backend import arange
-from pyrecest.backend import abs
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
-from pyrecest.backend import minimum
-import pyrecest.backend
-import numbers
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
 import matplotlib.pyplot as plt
-
-from beartype import beartype
+import pyrecest.backend
+from pyrecest.backend import (
+    abs,
+    angle,
+    arange,
+    array,
+    cos,
+    int32,
+    int64,
+    isnan,
+    linspace,
+    log,
+    meshgrid,
+    minimum,
+    mod,
+    ones,
+    random,
+    reshape,
+    sin,
+    sqrt,
+    vstack,
+    zeros,
+)
 from scipy.integrate import nquad
 
 from ..abstract_manifold_specific_distribution import (
@@ -87,10 +86,10 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         return nquad(f, integration_boundaries)[0]
 
-    def integrate_numerically(
-        self, integration_boundaries=None
-    ):
-        assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
+    def integrate_numerically(self, integration_boundaries=None):
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported for numpy backend"
         if integration_boundaries is None:
             integration_boundaries = vstack(
                 (zeros(self.dim), 2.0 * pi * ones(self.dim))
@@ -104,9 +103,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             lambda *args: self.pdf(array(args)), self.dim, integration_boundaries
         )
 
-    def trigonometric_moment_numerical(
-        self, n: Union[int, int32, int64]
-    ):
+    def trigonometric_moment_numerical(self, n: Union[int, int32, int64]):
         """Calculates the complex trignometric moments. Since nquad does not support complex functions,
         the calculation is split up (as used in the alternative representation of trigonometric polonymials
         involving the two real numbers alpha and beta"""
@@ -226,7 +223,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: 
+        :rtype:
         """
         return self.mean_direction()
 

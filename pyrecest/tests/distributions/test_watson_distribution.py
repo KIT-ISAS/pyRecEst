@@ -1,15 +1,21 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import array
 import unittest
-import numpy.testing as npt
 
+import numpy.testing as npt
+from pyrecest.backend import array, linalg
 from pyrecest.distributions import BinghamDistribution, WatsonDistribution
 
 
 class TestWatsonDistribution(unittest.TestCase):
     def setUp(self):
         self.xs = array(
-            [[1.0, 0.0, 0.0], [1.0, 2.0, 2.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0], [-1.0, -1.0, -1.0]],
+            [
+                [1.0, 0.0, 0.0],
+                [1.0, 2.0, 2.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [1.0, 1.0, 1.0],
+                [-1.0, -1.0, -1.0],
+            ],
             dtype=float,
         )
         self.xs = self.xs / linalg.norm(self.xs, axis=1).reshape((-1, 1))

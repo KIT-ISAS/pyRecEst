@@ -1,11 +1,7 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import random
-from pyrecest.backend import ones
-from pyrecest.backend import allclose
-from pyrecest.backend import all
+from pyrecest.backend import allclose, linalg, ones, random
+
 """ Test for uniform distribution on the hypersphere """
 import unittest
-
 
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
@@ -43,9 +39,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             n = 10
             samples = hud.sample(n)
             self.assertEqual(samples.shape, (n, hud.dim + 1))
-            self.assertTrue(
-                allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-10)
-            )
+            self.assertTrue(allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-10))
 
 
 if __name__ == "__main__":

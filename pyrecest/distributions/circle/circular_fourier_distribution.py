@@ -1,26 +1,26 @@
+import warnings
 from math import pi
 from typing import Union
-from pyrecest.backend import sum
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import real
-from pyrecest.backend import linspace
-from pyrecest.backend import imag
-from pyrecest.backend import hstack
-from pyrecest.backend import exp
-from pyrecest.backend import cos
-from pyrecest.backend import concatenate
-from pyrecest.backend import arange
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import array
-from pyrecest.backend import conj
-import warnings
 
 import matplotlib.pyplot as plt
-
-from beartype import beartype
-from pyrecest.backend import fft
+from pyrecest.backend import (
+    arange,
+    array,
+    concatenate,
+    conj,
+    cos,
+    exp,
+    fft,
+    hstack,
+    imag,
+    int32,
+    int64,
+    linspace,
+    real,
+    sin,
+    sqrt,
+    sum,
+)
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
@@ -35,9 +35,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     def __init__(
         self,
         transformation: str = "sqrt",
-        c = None,
-        a = None,
-        b = None,
+        c=None,
+        a=None,
+        b=None,
         n: int | None = None,
         multiplied_by_n: bool = True,
     ):
@@ -202,9 +202,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 else:
                     c = self.c
                 from_c0 = (real(c[0])) ** 2
-                from_c1_to_end = sum((real(c[1:])) ** 2) + sum(
-                    (imag(c[1:])) ** 2
-                )
+                from_c1_to_end = sum((real(c[1:])) ** 2) + sum((imag(c[1:])) ** 2)
 
                 a0_non_rooted = 2.0 * from_c0 + 4.0 * from_c1_to_end
                 integral = a0_non_rooted * pi
@@ -281,12 +279,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
 
     def get_full_c(self):
         assert self.c is not None
-        neg_c = conj(
-            self.c[-1:0:-1]
-        )  # Create array for negative-frequency components
-        full_c = concatenate(
-            [neg_c, self.c]
-        )  # Concatenate arrays to get full spectrum
+        neg_c = conj(self.c[-1:0:-1])  # Create array for negative-frequency components
+        full_c = concatenate([neg_c, self.c])  # Concatenate arrays to get full spectrum
         return full_c
 
     @staticmethod
@@ -307,7 +301,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 warnings.warn("Scaling up for WD (this is not recommended).")
                 fd.c = fd.c * fd.n
         else:
-            xs = arange(0.0, 2.0 * pi, 2.0 * pi/n)  # Like linspace without endpoint but with compatbiility for pytroch
+            xs = arange(
+                0.0, 2.0 * pi, 2.0 * pi / n
+            )  # Like linspace without endpoint but with compatbiility for pytroch
             fvals = distribution.pdf(xs)
             if transformation == "identity":
                 pass

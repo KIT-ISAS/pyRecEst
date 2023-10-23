@@ -1,15 +1,9 @@
-from pyrecest.backend import linalg
-from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import sum
-from pyrecest.backend import sqrt
-from pyrecest.backend import ones
-from pyrecest.backend import mod
-from pyrecest.backend import array
-import pyrecest.backend
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+import pyrecest.backend
+from pyrecest.backend import array, linalg, mod, ones, random, sqrt, sum
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,
@@ -19,7 +13,11 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution
 class HypersphericalDiracDistributionTest(unittest.TestCase):
     def setUp(self):
         self.d = array(
-            [[0.5, 3.0, 4.0, 6.0, 6.0], [2.0, 2.0, 5.0, 3.0, 0.0], [0.5, 0.2, 5.8, 4.3, 1.2]]
+            [
+                [0.5, 3.0, 4.0, 6.0, 6.0],
+                [2.0, 2.0, 5.0, 3.0, 0.0],
+                [0.5, 0.2, 5.8, 4.3, 1.2],
+            ]
         ).T
         self.d = self.d / linalg.norm(self.d, axis=1)[:, None]
         self.w = array([0.1, 0.1, 0.1, 0.1, 0.6])
@@ -33,9 +31,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         s = self.hdd.sample(nSamples)
         self.assertEqual(s.shape, (nSamples, self.d.shape[-1]))
         npt.assert_array_almost_equal(s, mod(s, 2 * pi))
-        npt.assert_array_almost_equal(
-            linalg.norm(s, axis=-1), ones(nSamples)
-        )
+        npt.assert_array_almost_equal(linalg.norm(s, axis=-1), ones(nSamples))
 
     def test_apply_function(self):
         same = self.hdd.apply_function(lambda x: x)
@@ -66,7 +62,10 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         wNew = self.hdd.d[:, 1] * self.hdd.w
         npt.assert_array_almost_equal(twdNew.w, wNew / sum(wNew))
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_from_distribution(self):
         random.seed(0)
         vmf = VonMisesFisherDistribution(array([1.0, 1.0, 1.0]) / sqrt(3), array(1.0))

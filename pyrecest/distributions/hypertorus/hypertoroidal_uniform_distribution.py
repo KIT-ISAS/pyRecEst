@@ -1,14 +1,7 @@
 from math import pi
-from pyrecest.backend import random
 from typing import Union
-from pyrecest.backend import prod
-from pyrecest.backend import ones
-from pyrecest.backend import ndim
-from pyrecest.backend import log
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import zeros
 
+from pyrecest.backend import int32, int64, log, ndim, ones, prod, random, zeros
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -25,16 +18,16 @@ class HypertoroidalUniformDistribution(
         :returns: PDF evaluated at xs
         """
         if xs.ndim == 0:
-            assert self.dim==1
+            assert self.dim == 1
             n_inputs = 1
-        elif xs.ndim == 1 and self.dim==1:
+        elif xs.ndim == 1 and self.dim == 1:
             n_inputs = xs.shape[0]
         elif xs.ndim == 1:
-            assert self.dim==xs.shape[0]
+            assert self.dim == xs.shape[0]
             n_inputs = 1
         else:
             n_inputs = xs.shape[0]
-        
+
         return 1.0 / self.get_manifold_size() * ones(n_inputs)
 
     def trigonometric_moment(self, n: Union[int, int32, int64]):
@@ -88,9 +81,7 @@ class HypertoroidalUniformDistribution(
         assert shift_by.shape == (self.dim,)
         return self
 
-    def integrate(
-        self, integration_boundaries=None
-    ) -> float:
+    def integrate(self, integration_boundaries=None) -> float:
         """
         Returns the integral of the distribution over the specified boundaries
 

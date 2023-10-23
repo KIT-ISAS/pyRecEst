@@ -1,5 +1,3 @@
-
-
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_mixture import HypertoroidalMixture
 

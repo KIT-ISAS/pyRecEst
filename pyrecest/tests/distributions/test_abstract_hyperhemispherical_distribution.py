@@ -1,12 +1,8 @@
-from pyrecest.backend import linalg
-from math import pi
-from pyrecest.backend import sum
-from pyrecest.backend import ones
-from pyrecest.backend import array
 import unittest
+from math import pi
+
 import numpy.testing as npt
-
-
+from pyrecest.backend import array, linalg, ones, sum
 from pyrecest.distributions import (
     HyperhemisphericalWatsonDistribution,
     VonMisesFisherDistribution,
@@ -49,9 +45,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         for s in samples:
             with self.subTest(sample=s):
                 self.assertEqual(s.shape, (n, chd.input_dim))
-                npt.assert_allclose(
-                    sum(s**2, axis=1), ones(n), rtol=1e-10
-                )
+                npt.assert_allclose(sum(s**2, axis=1), ones(n), rtol=1e-10)
 
 
 if __name__ == "__main__":

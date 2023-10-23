@@ -1,11 +1,7 @@
-from pyrecest.backend import atleast_2d
-from pyrecest.backend import squeeze
-from pyrecest.backend import array
-from pyrecest.backend import empty
 import time
 import warnings
 
-
+from pyrecest.backend import array, atleast_2d, squeeze
 
 from .configure_for_filter import configure_for_filter
 

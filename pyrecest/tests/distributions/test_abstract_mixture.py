@@ -1,13 +1,7 @@
-from pyrecest.backend import linalg
-from pyrecest.backend import ones
-from pyrecest.backend import eye
-from pyrecest.backend import array
-from pyrecest.backend import allclose
-from pyrecest.backend import all
-import pyrecest.backend
 import unittest
 
-
+import pyrecest.backend
+from pyrecest.backend import allclose, array, eye, linalg, ones
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperhemispherical_distribution import (
     CustomHyperhemisphericalDistribution,
@@ -35,7 +29,10 @@ class AbstractMixtureTest(unittest.TestCase):
         )
         self._test_sample(mix, 10)
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_sample_metropolis_hastings_basics_only_s2(self):
         vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), array(2.0))
         vmf2 = VonMisesFisherDistribution(array([0.0, 1.0, 0.0]), array(2.0))

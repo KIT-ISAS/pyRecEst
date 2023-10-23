@@ -1,22 +1,18 @@
-from pyrecest.backend import full
-from pyrecest.backend import linalg
-from pyrecest.backend import vstack
-from pyrecest.backend import tile
-from pyrecest.backend import hstack
-from pyrecest.backend import eye
-from pyrecest.backend import exp
-from pyrecest.backend import dot
-from pyrecest.backend import array
-from pyrecest.backend import abs
-from pyrecest.backend import float64
-from pyrecest.backend import zeros
-import numbers
-import numpy.testing as npt
 
 import mpmath
-
-from beartype import beartype
-from scipy.linalg import qr
+import numpy.testing as npt
+from pyrecest.backend import (
+    abs,
+    array,
+    exp,
+    eye,
+    full,
+    hstack,
+    linalg,
+    tile,
+    vstack,
+    zeros,
+)
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
@@ -95,5 +91,9 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         return dist
 
     def shift(self, shift_by):
-        npt.assert_almost_equal(self.mu, vstack([zeros((self.dim, 1)), 1]), "There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].")
+        npt.assert_almost_equal(
+            self.mu,
+            vstack([zeros((self.dim, 1)), 1]),
+            "There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].",
+        )
         return self.set_mode(shift_by)

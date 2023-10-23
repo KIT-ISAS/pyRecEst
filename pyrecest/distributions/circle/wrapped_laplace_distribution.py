@@ -1,8 +1,6 @@
 from math import pi
-from pyrecest.backend import ndim
-from pyrecest.backend import mod
-from pyrecest.backend import exp
 
+from pyrecest.backend import exp, mod, ndim
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 

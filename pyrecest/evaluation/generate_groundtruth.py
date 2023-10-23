@@ -1,9 +1,5 @@
-from numpy import squeeze
-from numpy import ndim
-from numpy import empty
-from numpy import empty_like
-from numpy import atleast_2d
 import numpy as np
+from numpy import atleast_2d, empty, empty_like, ndim, squeeze
 
 
 # pylint: disable=too-many-branches

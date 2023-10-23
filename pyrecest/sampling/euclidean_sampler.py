@@ -1,6 +1,4 @@
-from pyrecest.backend import eye
-from pyrecest.backend import zeros
-
+from pyrecest.backend import eye, zeros
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_sampler import AbstractSampler

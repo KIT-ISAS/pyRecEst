@@ -1,23 +1,25 @@
-from pyrecest.backend import full
-from pyrecest.backend import atleast_1d
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import squeeze
-from pyrecest.backend import sqrt
-from pyrecest.backend import reshape
-from pyrecest.backend import ndim
-from pyrecest.backend import meshgrid
-from pyrecest.backend import linspace
-from pyrecest.backend import array
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import column_stack
-import pyrecest.backend
-import numbers
 from collections.abc import Callable
+from typing import Union
 
 import matplotlib.pyplot as plt
-
+import pyrecest.backend
+from pyrecest.backend import (
+    array,
+    atleast_1d,
+    column_stack,
+    empty,
+    full,
+    int32,
+    int64,
+    linspace,
+    meshgrid,
+    ndim,
+    ones,
+    random,
+    reshape,
+    sqrt,
+    squeeze,
+)
 from pyrecest.utils.plotting import plot_ellipsoid
 from scipy.integrate import dblquad, nquad, quad
 from scipy.optimize import minimize
@@ -26,7 +28,6 @@ from scipy.stats import chi2
 from ..abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
-from pyrecest.backend import empty, ones
 
 
 class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
@@ -41,13 +42,15 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         return self.covariance_numerical()
 
     def get_manifold_size(self):
-        return float('inf')
+        return float("inf")
 
     def mode(self, starting_point=None):
         return self.mode_numerical(starting_point)
 
     def mode_numerical(self, starting_point=None):
-        assert pyrecest.backend.__name__ == 'pyrecest.numpy', "Only supported for numpy backend"
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported for numpy backend"
         if starting_point is None:
             # Ensure 1-D for minimize
             starting_point = self.sample(1).squeeze()
@@ -69,7 +72,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         burn_in: Union[int, int32, int64] = 10,
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point = None,
+        start_point=None,
     ):
         if proposal is None:
 
@@ -94,23 +97,26 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def mean_numerical(self):
         mu = empty(self.dim)
         if self.dim == 1:
-            mu = quad(lambda x: x * self.pdf(x), array(-float('inf')), array(float('inf')))[0]
+            mu = quad(
+                lambda x: x * self.pdf(x), array(-float("inf")), array(float("inf"))
+            )[0]
         elif self.dim == 2:
             mu[0] = dblquad(
                 lambda x, y: x * self.pdf(array([x, y])),
-                -float('inf'),
-                float('inf'),
-                lambda _: -float('inf'),
-                lambda _: float('inf'),
+                -float("inf"),
+                float("inf"),
+                lambda _: -float("inf"),
+                lambda _: float("inf"),
             )[0]
             mu[1] = dblquad(
                 lambda x, y: y * self.pdf(array([x, y])),
-                -float('inf'),
-                float('inf'),
-                lambda _: -float('inf'),
-                lambda _: float('inf'),
+                -float("inf"),
+                float("inf"),
+                lambda _: -float("inf"),
+                lambda _: float("inf"),
             )[0]
         elif self.dim == 3:
+
             def integrand1(x, y, z):
                 return x * self.pdf(array([x, y, z]))
 
@@ -121,13 +127,28 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                 return z * self.pdf(array([x, y, z]))
 
             mu[0] = nquad(
-                integrand1, [[-float('inf'), float('inf')], [-float('inf'), float('inf')], [-float('inf'), float('inf')]]
+                integrand1,
+                [
+                    [-float("inf"), float("inf")],
+                    [-float("inf"), float("inf")],
+                    [-float("inf"), float("inf")],
+                ],
             )[0]
             mu[1] = nquad(
-                integrand2, [[-float('inf'), float('inf')], [-float('inf'), float('inf')], [-float('inf'), float('inf')]]
+                integrand2,
+                [
+                    [-float("inf"), float("inf")],
+                    [-float("inf"), float("inf")],
+                    [-float("inf"), float("inf")],
+                ],
             )[0]
             mu[2] = nquad(
-                integrand3, [[-float('inf'), float('inf')], [-float('inf'), float('inf')], [-float('inf'), float('inf')]]
+                integrand3,
+                [
+                    [-float("inf"), float("inf")],
+                    [-float("inf"), float("inf")],
+                    [-float("inf"), float("inf")],
+                ],
             )[0]
         else:
             raise ValueError(
@@ -138,7 +159,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def covariance_numerical(self):
         mu = self.mean()
         if self.dim == 1:
-            C = quad(lambda x: (x - mu) ** 2 * self.pdf(x), -float('inf'), float('inf'))[0]
+            C = quad(
+                lambda x: (x - mu) ** 2 * self.pdf(x), -float("inf"), float("inf")
+            )[0]
         elif self.dim == 2:
             C = empty((2, 2))
 
@@ -151,10 +174,19 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             def integrand3(x, y):
                 return (y - mu[1]) ** 2 * self.pdf(array([x, y]))
 
-            C[0, 0] = nquad(integrand1, [[-float('inf'), float('inf')], [-float('inf'), float('inf')]])[0]
-            C[0, 1] = nquad(integrand2, [[-float('inf'), float('inf')], [-float('inf'), float('inf')]])[0]
+            C[0, 0] = nquad(
+                integrand1,
+                [[-float("inf"), float("inf")], [-float("inf"), float("inf")]],
+            )[0]
+            C[0, 1] = nquad(
+                integrand2,
+                [[-float("inf"), float("inf")], [-float("inf"), float("inf")]],
+            )[0]
             C[1, 0] = C[0, 1]
-            C[1, 1] = nquad(integrand3, [[-float('inf'), float('inf')], [-float('inf'), float('inf')]])[0]
+            C[1, 1] = nquad(
+                integrand3,
+                [[-float("inf"), float("inf")], [-float("inf"), float("inf")]],
+            )[0]
         else:
             raise NotImplementedError(
                 "Covariance numerical not supported for this dimension."
@@ -163,9 +195,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def integrate(self, left=None, right=None):
         if left is None:
-            left = -float('inf') * ones(self.dim)
+            left = -float("inf") * ones(self.dim)
         if right is None:
-            right = float('inf') * ones(self.dim)
+            right = float("inf") * ones(self.dim)
 
         result = self.integrate_numerically(left, right)
         return result
@@ -173,10 +205,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def integrate_numerically(self, left=None, right=None):
         if left is None:
             left = empty(self.dim)
-            left[:] = -float('inf')
+            left[:] = -float("inf")
         if right is None:
             right = empty(self.dim)
-            right[:] = float('inf')
+            right[:] = float("inf")
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right
         )
@@ -217,8 +249,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         """
         C = self.covariance()
         m = self.mode()
-        left = full((self.dim,), float('NaN'))
-        right = full((self.dim,), float('NaN'))
+        left = full((self.dim,), float("NaN"))
+        right = full((self.dim,), float("NaN"))
 
         for i in range(self.dim):  # Change for linear dimensions
             left[i] = m[i] - scaling_factor * sqrt(C[i, i])

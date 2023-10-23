@@ -1,17 +1,16 @@
-from pyrecest.backend import full
-from math import pi
-from pyrecest.backend import sqrt
-from pyrecest.backend import real
-from pyrecest.backend import isnan
-from pyrecest.backend import imag
-from pyrecest.backend import array
-from pyrecest.backend import abs
-from pyrecest.backend import zeros
-from pyrecest.backend import atleast_2d
 import copy
 import warnings
+from math import pi
 
-
+from pyrecest.backend import (
+    abs,
+    atleast_2d,
+    imag,
+    isnan,
+    real,
+    sqrt,
+    zeros,
+)
 from scipy.linalg import norm
 
 from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution
@@ -32,7 +31,7 @@ class AbstractSphericalHarmonicsDistribution(
         n = coeff_mat.shape[0]
         for i in range(n):
             # Set the irrelevant elements to nan
-            coeff_mat[i, 2*i+1:] = float('NaN')
+            coeff_mat[i, 2 * i + 1 :] = float("NaN")
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
 
     def pdf(self, xs):
@@ -93,7 +92,7 @@ class AbstractSphericalHarmonicsDistribution(
                 : 2 * result.coeff_mat.shape[0] - 1,  # noqa: E203
             ] = result.coeff_mat
             for i in range(new_coeff_mat.shape[0] - 1):
-                new_coeff_mat[i, 2 * i + 1 :] = float('NaN')  # noqa: E203
+                new_coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
             result.coeff_mat = new_coeff_mat
 
         return result

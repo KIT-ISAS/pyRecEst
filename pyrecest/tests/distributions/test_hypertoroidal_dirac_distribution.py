@@ -1,17 +1,17 @@
-from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import sum
-from pyrecest.backend import squeeze
-from pyrecest.backend import outer
-from pyrecest.backend import ones_like
-from pyrecest.backend import ones
-from pyrecest.backend import mod
-from pyrecest.backend import exp
-from pyrecest.backend import array
 import copy
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+from pyrecest.backend import (
+    array,
+    exp,
+    mod,
+    ones_like,
+    outer,
+    random,
+    sum,
+)
 from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
     ToroidalDiracDistribution,
@@ -37,12 +37,8 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         m2 = self.twd.marginalize_to_1D(1).trigonometric_moment(1)
         npt.assert_almost_equal(m[0], m1, decimal=10)
         npt.assert_almost_equal(m[1], m2, decimal=10)
-        npt.assert_almost_equal(
-            m[0], sum(self.w * exp(1j * self.d[:, 0])), decimal=10
-        )
-        npt.assert_almost_equal(
-            m[1], sum(self.w * exp(1j * self.d[:, 1])), decimal=10
-        )
+        npt.assert_almost_equal(m[0], sum(self.w * exp(1j * self.d[:, 0])), decimal=10)
+        npt.assert_almost_equal(m[1], sum(self.w * exp(1j * self.d[:, 1])), decimal=10)
 
     def test_sample(self):
         n_samples = 5

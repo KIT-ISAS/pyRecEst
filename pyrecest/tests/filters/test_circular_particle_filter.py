@@ -1,12 +1,8 @@
-from math import pi
-from pyrecest.backend import random
-from pyrecest.backend import array
-from pyrecest.backend import arange
-from pyrecest.backend import allclose
-from pyrecest.backend import all
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+from pyrecest.backend import allclose, arange, array, random
 from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
     WrappedNormalDistribution,
@@ -118,7 +114,8 @@ class CircularParticleFilterTest(unittest.TestCase):
             places=10,
         )
         self.assertGreater(
-            pf.association_likelihood(VonMisesDistribution(array(2), array(1))), 1.0 / (2.0 * pi)
+            pf.association_likelihood(VonMisesDistribution(array(2), array(1))),
+            1.0 / (2.0 * pi),
         )
 
         self.filter.set_state(CircularDiracDistribution(arange(0.0, 1.1, 0.1)))

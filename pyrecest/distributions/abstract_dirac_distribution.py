@@ -1,20 +1,20 @@
-from pyrecest.backend import random
-from typing import Union
-from pyrecest.backend import sum
-from pyrecest.backend import ones
-from pyrecest.backend import log
-from pyrecest.backend import isclose
-from pyrecest.backend import argmax
-from pyrecest.backend import all
-from pyrecest.backend import int64
-from pyrecest.backend import int32
-from pyrecest.backend import apply_along_axis
-from pyrecest.backend import array
 import copy
 import warnings
 from collections.abc import Callable
+from typing import Union
 
-from beartype import beartype
+from pyrecest.backend import (
+    all,
+    apply_along_axis,
+    argmax,
+    int32,
+    int64,
+    isclose,
+    log,
+    ones,
+    random,
+    sum,
+)
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -24,7 +24,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
     This class represents an abstract base for Dirac distributions.
     """
 
-    def __init__(self, d, w = None):
+    def __init__(self, d, w=None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
 

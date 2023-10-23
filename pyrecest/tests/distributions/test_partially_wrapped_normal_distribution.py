@@ -1,9 +1,8 @@
-from pyrecest.backend import ones
-from pyrecest.backend import array
 import unittest
-import numpy.testing as npt
 
+import numpy.testing as npt
 import scipy.linalg
+from pyrecest.backend import array, ones
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
@@ -23,7 +22,9 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
 
     def test_hybrid_mean_4d(self):
         mu = array([5.0, 1.0, 3.0, 4.0])
-        C = array(scipy.linalg.block_diag([[2.0, 1.0], [1.0, 1.0]], [[2.0, 1.0], [1.0, 1.0]]))
+        C = array(
+            scipy.linalg.block_diag([[2.0, 1.0], [1.0, 1.0]], [[2.0, 1.0], [1.0, 1.0]])
+        )
         dist = PartiallyWrappedNormalDistribution(mu, C, 2)
         npt.assert_allclose(dist.hybrid_mean(), mu)
 

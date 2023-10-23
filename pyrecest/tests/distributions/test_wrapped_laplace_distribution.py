@@ -1,12 +1,9 @@
-from math import pi
-from pyrecest.backend import linspace
-from pyrecest.backend import exp
-from pyrecest.backend import arange
-from pyrecest.backend import array
-import pyrecest.backend
 import unittest
-import numpy.testing as npt
+from math import pi
 
+import numpy.testing as npt
+import pyrecest.backend
+from pyrecest.backend import arange, array, exp, linspace
 from pyrecest.distributions.circle.wrapped_laplace_distribution import (
     WrappedLaplaceDistribution,
 )
@@ -38,12 +35,16 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
         for x in [0.0, 1.0, 2.0, 3.0, 4.0]:
             npt.assert_allclose(self.wl.pdf(array(x)), pdftemp(array(x)), rtol=1e-10)
 
-    @unittest.skipIf(pyrecest.backend.__name__ == 'pyrecest.pytorch', reason="Not supported on PyTorch backend")
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_integral(self):
         npt.assert_allclose(self.wl.integrate(), 1.0, rtol=1e-10)
         npt.assert_allclose(self.wl.integrate_numerically(), 1.0, rtol=1e-10)
         npt.assert_allclose(
-            self.wl.integrate(array([0.0, pi])) + self.wl.integrate(array([pi, 2.0 * pi])),
+            self.wl.integrate(array([0.0, pi]))
+            + self.wl.integrate(array([pi, 2.0 * pi])),
             1.0,
             rtol=1e-10,
         )
