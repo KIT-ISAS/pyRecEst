@@ -1,5 +1,4 @@
-from pyrecest.backend import empty, full, repeat, squeeze, stack
-import pyrecest.backend as backend
+from pyrecest.backend import empty, full, repeat, squeeze, stack, all
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
@@ -53,7 +52,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         elif self.association_param["distance_metric_pos"].lower() == "mahalanobis":
             dists = empty((n_targets, n_meas))
 
-            all_cov_mat_state_equal = backend.all(
+            all_cov_mat_state_equal = all(
                 all_cov_mats_prior
                 == repeat(
                     all_cov_mats_prior[:, :, 0][:, :, None],
@@ -61,7 +60,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                     axis=2,
                 )
             )
-            all_cov_mat_meas_equal = cov_mats_meas.ndim == 2 or backend.all(
+            all_cov_mat_meas_equal = cov_mats_meas.ndim == 2 or all(
                 cov_mats_meas
                 == repeat(
                     cov_mats_meas[:, :, 0][:, :, None],

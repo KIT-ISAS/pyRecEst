@@ -1,7 +1,6 @@
 from math import pi
 
-from pyrecest.backend import abs, amax, diag, exp, eye, linalg, sum, zeros
-import pyrecest.backend as backend
+from pyrecest.backend import all, abs, amax, diag, exp, eye, linalg, sum, zeros
 from scipy.integrate import quad
 from scipy.special import iv
 
@@ -16,7 +15,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         assert Z.shape[0] == self.input_dim, "Z has wrong length"
         assert Z.ndim == 1, "Z needs to be a 1-D vector"
         assert Z[-1] == 0, "Last entry of Z needs to be zero"
-        assert backend.all(Z[:-1] <= Z[1:]), "Values in Z have to be ascending"
+        assert all(Z[:-1] <= Z[1:]), "Values in Z have to be ascending"
 
         # Verify that M is orthogonal
         epsilon = 0.001

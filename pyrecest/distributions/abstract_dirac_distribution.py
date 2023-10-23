@@ -13,8 +13,8 @@ from pyrecest.backend import (
     ones,
     random,
     sum,
+    all,
 )
-import pyrecest.backend as backend
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -73,7 +73,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         wNew = f(dist.d)
 
         assert wNew.shape == dist.w.shape, "Function returned wrong output dimensions."
-        assert backend.all(wNew >= 0), "All weights should be greater than or equal to 0."
+        assert all(wNew >= 0), "All weights should be greater than or equal to 0."
         assert sum(wNew) > 0, "The sum of all weights should be greater than 0."
 
         dist.w = wNew * dist.w
