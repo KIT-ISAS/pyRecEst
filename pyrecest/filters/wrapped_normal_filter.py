@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from math import pi
 
-from pyrecest.backend import amax, amin, array, log, mod
+from pyrecest.backend import max, min, array, log, mod
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
 from pyrecest.filters.abstract_circular_filter import AbstractCircularFilter
 
@@ -43,16 +43,16 @@ class WrappedNormalFilter(AbstractCircularFilter):
         while lambda_ > 0:
             wd = self.filter_state.to_dirac5()
             likelihood_vals = array([likelihood(z, x) for x in wd.d])
-            likelihood_vals_min = amin(likelihood_vals)
-            likelihood_vals_max = amax(likelihood_vals)
+            likelihood_vals_min = min(likelihood_vals)
+            likelihood_vals_max = max(likelihood_vals)
 
             if likelihood_vals_max == 0:
                 raise ValueError(
                     "Progressive update failed because likelihood is 0 everywhere"
                 )
 
-            w_min = amin(wd.w)
-            w_max = amax(wd.w)
+            w_min = min(wd.w)
+            w_max = max(wd.w)
 
             if likelihood_vals_min == 0 or w_min == 0:
                 raise ZeroDivisionError("Cannot perform division by zero")

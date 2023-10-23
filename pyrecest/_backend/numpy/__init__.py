@@ -93,6 +93,8 @@ from numpy import (
     isinf,
     deg2rad,
     argsort,
+    max,
+    min,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

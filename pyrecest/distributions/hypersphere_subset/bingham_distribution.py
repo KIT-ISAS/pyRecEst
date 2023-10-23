@@ -1,7 +1,7 @@
 from math import pi
 
 # pylint: disable=redefined-builtin
-from pyrecest.backend import all, abs, amax, diag, exp, eye, linalg, sum, zeros
+from pyrecest.backend import all, abs, max, diag, exp, eye, linalg, sum, zeros
 from scipy.integrate import quad
 from scipy.special import iv
 
@@ -20,7 +20,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
 
         # Verify that M is orthogonal
         epsilon = 0.001
-        assert amax(abs(M @ M.T - eye(self.dim + 1))) < epsilon, "M is not orthogonal"
+        assert max(abs(M @ M.T - eye(self.dim + 1))) < epsilon, "M is not orthogonal"
 
         self.Z = Z
         self.M = M

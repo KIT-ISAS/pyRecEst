@@ -188,6 +188,8 @@ BACKEND_ATTRIBUTES = {
         "isinf",
         "deg2rad",
         "argsort",
+        "max",
+        "min",
     ],
     "autodiff": [
         "custom_gradient",

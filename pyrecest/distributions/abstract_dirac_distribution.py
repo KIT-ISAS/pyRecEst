@@ -118,7 +118,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
     def mode(self, rel_tol=0.001):
-        highest_val, ind = amax(self.w)
+        highest_val, ind = max(self.w)
         if (highest_val / self.w.size) < (1 + rel_tol):
             warnings.warn(
                 "The samples may be equally weighted, .mode is likely to return a bad result."

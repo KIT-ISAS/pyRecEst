@@ -67,6 +67,6 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
     @staticmethod
     def plot_circle(*args, **kwargs):
-        theta = np.append(linspace(0.0, 2.0 * pi, 320), 0)
+        theta = linspace(0.0, 2.0 * pi, 320)
         p = plt.plot(cos(theta), sin(theta), *args, **kwargs)
         return p

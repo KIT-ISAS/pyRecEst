@@ -11,7 +11,6 @@ from pyrecest.backend import array
 from pyrecest.backend import any
 # pylint: disable=redefined-builtin
 from pyrecest.backend import all
-from pyrecest.backend import empty
 from pyrecest.backend import zeros
 import numpy as np
 import os
