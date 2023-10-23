@@ -129,34 +129,18 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 [[0.0, 2.0 * pi], [0.0, 2.0 * pi], [-float("inf"), float("inf")]],
             )
         elif self.bound_dim == 1 and self.lin_dim == 2:
+            range_list = [
+                    [0.0, 2.0 * pi],
+                    [-float("inf"), float("inf")],
+                    [-float("inf"), float("inf")],
+            ]
             C = empty((2, 2))
-            C[0, 0], _ = nquad(
-                lambda x, y, z: (y - approximate_mean[0]) ** 2 * self.pdf([x, y, z]),
-                [
-                    [0.0, 2.0 * pi],
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                ],
-            )
-            C[0, 1], _ = nquad(
-                lambda x, y, z: (y - approximate_mean[0])
-                * (z - approximate_mean[1])
-                * self.pdf([x, y, z]),
-                [
-                    [0, 2 * pi],
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                ],
-            )
+            C[0, 0], _ = nquad(lambda x, y, z: (y - approximate_mean[0]) ** 2 * self.pdf([x, y, z]), range_list)
+            C[0, 1], _ = nquad(lambda x, y, z: (y - approximate_mean[0])
+                               * (z - approximate_mean[1])
+                               * self.pdf([x, y, z]), range_list)
             C[1, 0] = C[0, 1]
-            C[1, 1], _ = nquad(
-                lambda x, y, z: (z - approximate_mean[1]) ** 2 * self.pdf([x, y, z]),
-                [
-                    [0.0, 2.0 * pi],
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                ],
-            )
+            C[1, 1], _ = nquad(lambda x, y, z: (z - approximate_mean[1]) ** 2 * self.pdf([x, y, z]), range_list)
         else:
             raise ValueError("Cannot determine linear covariance for this dimension.")
 
