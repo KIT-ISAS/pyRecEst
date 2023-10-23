@@ -38,9 +38,9 @@ jobs:
       - name: List files and check Python and package versions
         run: |
           poetry env use python
-          poetry run python -c "import torch; print(torch.version.cuda)"
           poetry run python -c 'import sys; print(sys.version_info[:])'
           poetry run python -m pip freeze
+          poetry run python -c "import torch; print(torch.version.cuda)"
 
       - name: Run tests with numpy backend
         run: |
