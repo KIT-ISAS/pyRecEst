@@ -53,9 +53,9 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
 
     @staticmethod
     def plot_point(se3point):  # pylint: disable=too-many-locals
-        import numpy as _np
-
         """Visualize just a point in the SE(3) domain (no uncertainties are considered)"""
+        import numpy as _np
+        
         q = _np.quaternion(*se3point[:4])
         rotMat = quaternion.as_rotation_matrix(q)
 

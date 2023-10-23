@@ -1,6 +1,6 @@
 from math import pi
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
     arctan2,
