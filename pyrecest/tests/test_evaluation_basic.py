@@ -11,6 +11,7 @@ from pyrecest.backend import any
 from pyrecest.backend import all
 from pyrecest.backend import empty
 from pyrecest.backend import zeros
+import numpy as np
 import os
 import tempfile
 import unittest

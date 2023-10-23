@@ -52,6 +52,7 @@ from torch import (
     full_like,
     isinf,
     deg2rad,
+    uint32,
 )
 from torch import repeat_interleave as repeat
 from torch import (
