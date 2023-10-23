@@ -3,10 +3,11 @@ import warnings
 from ..abstract_mixture import AbstractMixture
 from .abstract_linear_distribution import AbstractLinearDistribution
 from .gaussian_distribution import GaussianDistribution
+from typing import Sequence
 
 
 class LinearMixture(AbstractMixture, AbstractLinearDistribution):
-    def __init__(self, dists: list[AbstractLinearDistribution], w):
+    def __init__(self, dists: Sequence[AbstractLinearDistribution], w):
         from .gaussian_mixture import GaussianMixture
 
         assert all(
