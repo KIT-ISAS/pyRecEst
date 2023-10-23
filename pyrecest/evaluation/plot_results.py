@@ -1,6 +1,7 @@
 import warnings
 
 import matplotlib.pyplot as plt
+
 # pylint: disable=redefined-builtin
 from pyrecest.backend import any, array, isnan, ones, shape
 

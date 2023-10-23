@@ -3,6 +3,7 @@ from typing import Union
 
 import matplotlib.pyplot as plt
 import pyrecest.backend
+
 # pylint: disable=redefined-builtin
 from pyrecest.backend import (
     array,

@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from math import pi
 
-from pyrecest.backend import max, min, array, log, mod
+from pyrecest.backend import array, log, max, min, mod
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
 from pyrecest.filters.abstract_circular_filter import AbstractCircularFilter
 

@@ -1,20 +1,20 @@
-from math import pi
-from pyrecest.backend import vstack
-from pyrecest.backend import sqrt
-from pyrecest.backend import sin
-from pyrecest.backend import cos
-from pyrecest.backend import array
-from pyrecest.backend import arctan2
-from pyrecest.backend import arccos
-from pyrecest.backend import arange
-from pyrecest.backend import empty
-from pyrecest.backend import column_stack
-from pyrecest.backend import deg2rad
 import itertools
 from abc import abstractmethod
+from math import pi
 
-
-from beartype import beartype
+from pyrecest.backend import (
+    arange,
+    arccos,
+    arctan2,
+    array,
+    column_stack,
+    cos,
+    deg2rad,
+    empty,
+    sin,
+    sqrt,
+    vstack,
+)
 from pyrecest.distributions import (
     AbstractSphericalDistribution,
     HypersphericalUniformDistribution,
@@ -70,12 +70,15 @@ class AbstractSphericalUniformSampler(AbstractHypersphericalUniformSampler):
 class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
     @abstractmethod
     def get_grid_spherical_coordinates(
-        self, grid_density_parameter: int,
+        self,
+        grid_density_parameter: int,
     ):
         raise NotImplementedError()
 
     def get_grid(self, grid_density_parameter: int, dim: int = 2):
-        assert dim == 2, "AbstractSphericalCoordinatesBasedSampler is supposed to be used for the circle (which is one-dimensional) only."
+        assert (
+            dim == 2
+        ), "AbstractSphericalCoordinatesBasedSampler is supposed to be used for the circle (which is one-dimensional) only."
         phi, theta, grid_specific_description = self.get_grid_spherical_coordinates(
             grid_density_parameter
         )
@@ -103,9 +106,7 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 
 
 class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
-    def get_grid_spherical_coordinates(
-        self, grid_density_parameter: int
-    ):
+    def get_grid_spherical_coordinates(self, grid_density_parameter: int):
         import pyshtools as pysh
 
         grid = pysh.SHGrid.from_zeros(grid_density_parameter)
@@ -133,9 +134,7 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
 
 
 class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
-    def get_grid_spherical_coordinates(
-        self, grid_density_parameter: int
-    ):
+    def get_grid_spherical_coordinates(self, grid_density_parameter: int):
         indices = arange(0, grid_density_parameter, dtype=float) + 0.5
         phi = pi * (1 + 5**0.5) * indices
         theta = arccos(1 - 2 * indices / grid_density_parameter)
@@ -240,9 +239,7 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         phi, theta, _ = spherical_sampler.get_grid_spherical_coordinates(
             grid_density_parameter[0]
         )
-        spherical_points = column_stack(
-            (theta, phi)
-        )  # stack to match expected shape
+        spherical_points = column_stack((theta, phi))  # stack to match expected shape
 
         # Step 2: Discretize the unit circle using the circular grid
         circular_sampler = CircularUniformSampler()

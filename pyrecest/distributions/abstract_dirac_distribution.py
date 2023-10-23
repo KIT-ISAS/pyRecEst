@@ -5,7 +5,7 @@ from typing import Union
 
 # pylint: disable=redefined-builtin
 from pyrecest.backend import (
-    amax,
+    all,
     apply_along_axis,
     int32,
     int64,
@@ -14,7 +14,6 @@ from pyrecest.backend import (
     ones,
     random,
     sum,
-    all,
 )
 
 from .abstract_distribution_type import AbstractDistributionType

@@ -1,4 +1,3 @@
-
 # pylint: disable=redefined-builtin
 from pyrecest.backend import array, dot, ones, stack, sum
 

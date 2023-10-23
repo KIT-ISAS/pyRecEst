@@ -1,25 +1,28 @@
-from pyrecest.backend import atleast_2d
-from pyrecest.backend import linalg
-from pyrecest.backend import random
-from pyrecest.backend import sqrt
-from pyrecest.backend import shape
-from pyrecest.backend import ones
-from pyrecest.backend import ndim
-from pyrecest.backend import eye
-from pyrecest.backend import array
-# pylint: disable=redefined-builtin
-from pyrecest.backend import any
-# pylint: disable=redefined-builtin
-from pyrecest.backend import all
-from pyrecest.backend import zeros
-import numpy as np
 import os
 import tempfile
 import unittest
 from typing import Optional
 
-
+import numpy as np
+import numpy.testing as npt
 from parameterized import parameterized
+
+# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin
+from pyrecest.backend import (
+    all,
+    any,
+    array,
+    atleast_2d,
+    eye,
+    linalg,
+    ndim,
+    ones,
+    random,
+    shape,
+    sqrt,
+    zeros,
+)
 from pyrecest.distributions import (
     GaussianDistribution,
     HypertoroidalWrappedNormalDistribution,
@@ -43,7 +46,6 @@ from pyrecest.evaluation import (
 )
 from pyrecest.filters import HypertoroidalParticleFilter, KalmanFilter
 from shapely.geometry import Polygon
-import numpy.testing as npt
 
 
 class TestEvalationBase(unittest.TestCase):
@@ -175,7 +177,7 @@ class TestEvalationBasics(TestEvalationBase):
 
     def test_determine_all_deviations(self):
         import numpy as _np
-        
+
         def dummy_extract_mean(x):
             return x
 
@@ -277,15 +279,13 @@ class TestEvalationBasics(TestEvalationBase):
             scenario_param,
             {"name": "kf", "parameter": None},
             zeros((self.n_timesteps_default, 2)),
-            generate_measurements(
-                zeros((self.n_timesteps_default, 2)), scenario_param
-            ),
+            generate_measurements(zeros((self.n_timesteps_default, 2)), scenario_param),
         )
 
         self.assertIsInstance(time_elapsed, float)
         self.assertGreater(time_elapsed, 0)
         self.assertIsNotNone(last_filter_state)
-        #self.assertIsInstance(last_estimate, )
+        # self.assertIsInstance(last_estimate, )
         self.assertEqual(last_estimate.shape, (2,))
         self.assertIsNone(all_estimates)
 
@@ -380,11 +380,11 @@ class TestEvalationBasics(TestEvalationBase):
         self.assertTrue(not any(run_failed))
 
         self.assertEqual(ndim(groundtruths), 2)
-        #self.assertIsInstance(groundtruths[0, 0], )
+        # self.assertIsInstance(groundtruths[0, 0], )
         self.assertIn(ndim(groundtruths[0, 0]), (1, 2))
 
         self.assertEqual(ndim(measurements), 2)
-        #self.assertIsInstance(measurements[0, 0], )
+        # self.assertIsInstance(measurements[0, 0], )
         self.assertIn(ndim(measurements[0, 0]), (1, 2))
 
     def test_evaluate_for_simulation_config_R2_random_walk(self):

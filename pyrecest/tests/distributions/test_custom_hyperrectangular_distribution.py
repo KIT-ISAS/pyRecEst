@@ -1,13 +1,6 @@
 import unittest
 
-from pyrecest.backend import (
-    allclose,
-    array,
-    column_stack,
-    linspace,
-    meshgrid,
-    ones,
-)
+from pyrecest.backend import allclose, array, column_stack, linspace, meshgrid, ones
 from pyrecest.distributions.custom_hyperrectangular_distribution import (
     CustomHyperrectangularDistribution,
 )

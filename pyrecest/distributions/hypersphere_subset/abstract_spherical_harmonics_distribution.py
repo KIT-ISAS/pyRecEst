@@ -2,15 +2,7 @@ import copy
 import warnings
 from math import pi
 
-from pyrecest.backend import (
-    abs,
-    atleast_2d,
-    imag,
-    isnan,
-    real,
-    sqrt,
-    zeros,
-)
+from pyrecest.backend import abs, atleast_2d, imag, isnan, real, sqrt, zeros
 from scipy.linalg import norm
 
 from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution

@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 # pylint: disable=redefined-builtin
 from pyrecest.backend import linalg, reshape, sum
 

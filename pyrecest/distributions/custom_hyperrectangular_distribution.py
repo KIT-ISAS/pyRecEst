@@ -1,6 +1,5 @@
 from collections.abc import Callable
 
-
 from .abstract_custom_nonperiodic_distribution import (
     AbstractCustomNonPeriodicDistribution,
 )

@@ -1,6 +1,6 @@
 from typing import Union
 
-from pyrecest.backend import allclose, int32, int64, zeros, concatenate, array
+from pyrecest.backend import allclose, array, concatenate, int32, int64, zeros
 
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,

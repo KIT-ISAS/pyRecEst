@@ -1,4 +1,3 @@
-
 from ..abstract_mixture import AbstractMixture
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 

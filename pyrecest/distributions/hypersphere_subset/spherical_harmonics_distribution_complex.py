@@ -1,6 +1,7 @@
 from math import pi
 
 import scipy
+
 # pylint: disable=redefined-builtin
 from pyrecest.backend import (
     abs,

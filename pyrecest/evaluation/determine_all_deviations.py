@@ -2,6 +2,7 @@ import warnings
 from typing import Callable
 
 import numpy as np
+
 # pylint: disable=redefined-builtin
 from pyrecest.backend import any, empty, isinf, ndim, sum
 

@@ -1,4 +1,4 @@
-from pyrecest.backend import abs, max, linalg
+from pyrecest.backend import abs, linalg, max
 
 from ..abstract_se3_distribution import AbstractSE3Distribution
 from .lin_bounded_cart_prod_dirac_distribution import (

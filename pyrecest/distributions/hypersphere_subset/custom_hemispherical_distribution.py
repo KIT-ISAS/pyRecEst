@@ -1,7 +1,6 @@
 import warnings
 from collections.abc import Callable
 
-
 from .abstract_hemispherical_distribution import AbstractHemisphericalDistribution
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,

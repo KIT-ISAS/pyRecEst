@@ -1,6 +1,5 @@
 import warnings
 
-
 from ..abstract_mixture import AbstractMixture
 from .abstract_linear_distribution import AbstractLinearDistribution
 from .gaussian_distribution import GaussianDistribution

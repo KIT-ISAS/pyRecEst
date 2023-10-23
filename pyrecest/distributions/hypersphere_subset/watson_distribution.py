@@ -1,4 +1,3 @@
-
 import mpmath
 import numpy.testing as npt
 from pyrecest.backend import (
