@@ -5,7 +5,7 @@ from typing import Union
 
 from pyrecest.backend import (
     all,
-    amax
+    amax,
     apply_along_axis,
     int32,
     int64,
