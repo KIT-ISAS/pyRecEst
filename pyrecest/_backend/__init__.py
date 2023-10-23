@@ -30,6 +30,7 @@ BACKEND_ATTRIBUTES = {
         "complex64",
         "complex128",
         "uint8",
+        "uint32",  # For pyrecest
         # Functions
         "abs",
         "all",

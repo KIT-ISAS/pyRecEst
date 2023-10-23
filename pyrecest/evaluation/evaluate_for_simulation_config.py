@@ -1,6 +1,6 @@
 import random
 from typing import Any, Optional
-
+from pyrecest.backend import uint32
 
 from .evaluate_for_variables import evaluate_for_variables
 from .generate_simulated_scenarios import generate_simulated_scenarios
@@ -62,7 +62,7 @@ def evaluate_for_simulation_config(
 
 def get_all_seeds(n_runs: int, seed_input=None, consecutive_seed: bool = True):
     if seed_input is None:
-        seed_input = np.uint32(random.randint(1, 0xFFFFFFFF))  # nosec
+        seed_input = random.randint(1, 0xFFFFFFFF, dtype=uint32)  # nosec
 
     if seed_input.shape[0] == n_runs:
         all_seeds = seed_input
