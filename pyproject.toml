@@ -23,7 +23,7 @@ torchaudio = { version = "2.1.0+cpu", optional = true, markers = "extra == 'pyto
 [tool.poetry.extras]
 healpy_support = ["healpy"]
 pytorch_cpu_support = ["torch", "torchvision", "torchaudio"]
-pytorch_support = []
+pytorch_cpu_support = []
 
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
