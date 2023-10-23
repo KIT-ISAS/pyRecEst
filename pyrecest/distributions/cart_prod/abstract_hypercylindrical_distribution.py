@@ -120,19 +120,19 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         if self.bound_dim == 1 and self.lin_dim == 1:
             C, _ = nquad(
                 lambda x, y: (y - approximate_mean) ** 2 * self.pdf([x, y]),
-                [[0, 2 * pi], [-float("inf"), float("inf")]],
+                [[0.0, 2.0 * pi], [-float("inf"), float("inf")]],
             )
         elif self.bound_dim == 2 and self.lin_dim == 1:
             C, _ = nquad(
                 lambda x, y, z: (z - approximate_mean) ** 2 * self.pdf([x, y, z]),
-                [[0, 2 * pi], [0, 2 * pi], [-float("inf"), float("inf")]],
+                [[0.0, 2.0 * pi], [0.0, 2.0 * pi], [-float("inf"), float("inf")]],
             )
         elif self.bound_dim == 1 and self.lin_dim == 2:
             C = empty((2, 2))
             C[0, 0], _ = nquad(
                 lambda x, y, z: (y - approximate_mean[0]) ** 2 * self.pdf([x, y, z]),
                 [
-                    [0, 2 * pi],
+                    [0.0, 2.0 * pi],
                     [-float("inf"), float("inf")],
                     [-float("inf"), float("inf")],
                 ],
@@ -151,7 +151,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
             C[1, 1], _ = nquad(
                 lambda x, y, z: (z - approximate_mean[1]) ** 2 * self.pdf([x, y, z]),
                 [
-                    [0, 2 * pi],
+                    [0.0, 2.0 * pi],
                     [-float("inf"), float("inf")],
                     [-float("inf"), float("inf")],
                 ],
@@ -183,7 +183,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         ), "Input should be of size (lin_dim,)."
 
         def f_cond_unnorm(x, input_lin=input_lin):
-            n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else x.shape[0]
+            n_inputs = x.shape[0] if x.ndim > 1 else 1
             input_repeated = tile(input_lin, (n_inputs, 1))
             return self.pdf(column_stack((x, input_repeated)))
 
@@ -217,7 +217,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         input_periodic = mod(input_periodic, 2.0 * pi)
 
         def f_cond_unnorm(x, input_periodic=input_periodic):
-            n_inputs = np.size(x) // x.shape[-1] if ndim(x) > 1 else np.size(x)
+            n_inputs = x.shape[0] if x.ndim > 1 else 1
             input_repeated = tile(input_periodic, (n_inputs, 1))
             return self.pdf(column_stack((input_repeated, x)))
 
