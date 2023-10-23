@@ -1,8 +1,8 @@
+""" Test for uniform distribution for hyperhemispheres """
 from math import pi
 
 from pyrecest.backend import allclose, linalg, ones, random, reshape
 
-""" Test for uniform distribution for hyperhemispheres """
 import unittest
 
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
