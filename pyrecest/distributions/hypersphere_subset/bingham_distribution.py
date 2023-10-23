@@ -1,7 +1,7 @@
 from math import pi
 
 # pylint: disable=redefined-builtin
-from pyrecest.backend import all, abs, max, diag, exp, eye, linalg, sum, zeros
+from pyrecest.backend import all, abs, max, diag, exp, eye, linalg, sum, zeros, argsort
 from scipy.integrate import quad
 from scipy.special import iv
 
@@ -81,7 +81,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
 
         C = 0.5 * (C + C.T)  # Symmetrize
         D, V = linalg.eig(C)
-        order = np.argsort(D)  # Sort eigenvalues
+        order = argsort(D)  # Sort eigenvalues
         V = V[:, order]
         Z_ = D[order]
         Z_ = Z_ - Z_[-1]  # Ensure last entry is zero

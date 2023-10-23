@@ -55,6 +55,7 @@ from torch import (
     argsort,
     max,
     min,
+    roll,
 )
 from torch import repeat_interleave as repeat
 from torch import (

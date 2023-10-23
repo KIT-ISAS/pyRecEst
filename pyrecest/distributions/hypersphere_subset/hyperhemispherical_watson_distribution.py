@@ -1,6 +1,6 @@
 from typing import Union
 
-from pyrecest.backend import allclose, int32, int64, zeros
+from pyrecest.backend import allclose, int32, int64, zeros, concatenate, array
 
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -17,7 +17,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         )
 
     def pdf(self, xs):
-        return 2 * self.dist_full_sphere.pdf(xs)
+        return 2.0 * self.dist_full_sphere.pdf(xs)
 
     def set_mode(self, mu) -> "HyperhemisphericalWatsonDistribution":
         w = self
@@ -50,7 +50,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
 
     def shift(self, shift_by) -> "HyperhemisphericalWatsonDistribution":
         assert allclose(
-            self.mu, np.append(zeros(self.dim - 1), 1)
+            self.mu, concatenate((zeros(self.dim - 1), array([1])))
         ), "There is no true shifting for the hyperhemisphere. This is a function for compatibility and only works when mu is [0,0,...,1]."
         dist_shifted = self
         dist_shifted.mu = shift_by

@@ -190,6 +190,7 @@ BACKEND_ATTRIBUTES = {
         "argsort",
         "max",
         "min",
+        "roll",
     ],
     "autodiff": [
         "custom_gradient",

@@ -95,6 +95,7 @@ from numpy import (
     argsort,
     max,
     min,
+    roll,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 

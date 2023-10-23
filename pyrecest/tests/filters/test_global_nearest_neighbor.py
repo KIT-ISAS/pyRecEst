@@ -16,6 +16,7 @@ from pyrecest.backend import (
     real,
     sort,
     zeros,
+    roll,
 )
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import KalmanFilter
@@ -196,18 +197,18 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         npt.assert_array_equal(association, [0, 1, 2])
 
         # Shift them
-        measurements = np.roll(perfect_meas_ordered, 1, axis=1)
+        measurements = roll(perfect_meas_ordered, 1, axis=1)
         association = tracker.find_association(measurements, self.meas_mat, eye(2))
         npt.assert_array_equal(measurements[:, association], perfect_meas_ordered)
 
         # Shift them and add a bit of noise
-        measurements = np.roll(perfect_meas_ordered, 1, axis=1) + 0.1
+        measurements = roll(perfect_meas_ordered, 1, axis=1) + 0.1
         association = tracker.find_association(measurements, self.meas_mat, eye(2))
         npt.assert_array_equal(measurements[:, association], perfect_meas_ordered + 0.1)
 
         # Use different covariances
         association = tracker.find_association(
-            np.roll(perfect_meas_ordered, 1, axis=1) + 0.1,
+            roll(perfect_meas_ordered, 1, axis=1) + 0.1,
             self.meas_mat,
             self.all_different_meas_covs,
         )
