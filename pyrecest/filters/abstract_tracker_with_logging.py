@@ -14,6 +14,7 @@ class AbstractTrackerWithLogging(ABC):
                 setattr(self, f"{clean_key}_over_time", array([[]]))
 
     def _store_estimates(self, curr_ests, estimates_over_time):
+        import numpy as _np
         # Ensure curr_ests is a 2D array
         if curr_ests.ndim == 1:
             curr_ests = curr_ests.reshape(-1, 1)
@@ -22,7 +23,7 @@ class AbstractTrackerWithLogging(ABC):
         n = curr_ests.shape[0]
 
         if n <= m:
-            curr_ests = np.pad(
+            curr_ests = _np.pad(
                 curr_ests,
                 ((0, m - n), (0, 0)),
                 mode="constant",
