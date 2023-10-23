@@ -31,9 +31,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install poetry
           poetry env use python
-          # Install CPU-only version of PyTorch
-          python -m pip install torch torchvision torchaudio -f https://download.pytorch.org/whl/cpu
-          poetry install --extras healpy_support --no-root
+          poetry install --extras healpy_support --no-root  # skip the project root package
+          python -m pip install torch==2.1.0 torchvision torchaudio -f https://download.pytorch.org/whl/cpu
 
       - name: List files and check Python and package versions
         run: |
