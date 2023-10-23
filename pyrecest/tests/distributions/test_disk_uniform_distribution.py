@@ -18,8 +18,8 @@ class TestDiskUniformDistribution(unittest.TestCase):
 
         xs = array(
             [
-                [0.5, 0, 1, 1 / sqrt(2), 0, 3, 1.5],
-                [0.5, 1, 0, 1 / sqrt(2), 3, 0, 1.5],
+                [0.5, 0.0, 1.0, 1.0 / sqrt(2.0), 0.0, 3.0, 1.5],
+                [0.5, 1.0, 0.0, 1.0 / sqrt(2.0), 3.0, 0.0, 1.5],
             ]
         ).T
         pdf_values = dist.pdf(xs)

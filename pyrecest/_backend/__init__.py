@@ -191,7 +191,6 @@ BACKEND_ATTRIBUTES = {
         "max",
         "min",
         "roll",
-        "atan2",
     ],
     "autodiff": [
         "custom_gradient",

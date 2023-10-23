@@ -96,7 +96,6 @@ from numpy import (
     max,
     min,
     roll,
-    atan2,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 
