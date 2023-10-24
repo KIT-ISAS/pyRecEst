@@ -117,5 +117,5 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         # Call array(...) to be compatibel with all backends
         C = array(wishart.rvs(df, scale, random_state=random_gen))
         hwn = PartiallyWrappedNormalDistribution(array([1.0, 2.0, 3.0, 4.0]), C, 2)
-        hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 100000)
+        hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 200000)
         npt.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.2)
