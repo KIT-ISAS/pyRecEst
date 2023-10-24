@@ -196,7 +196,7 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
         s3_points_list = []
 
         for i in range(grid_density_parameter[0] + 1):
-            if grid_density_parameter.shape[0] == 2:
+            if len(grid_density_parameter) == 2:
                 n_sample_circle = grid_density_parameter[1]
             else:
                 n_sample_circle = 2**i * 6
