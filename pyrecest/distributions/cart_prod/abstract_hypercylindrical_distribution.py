@@ -179,7 +179,6 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         ), "Input should be of size (lin_dim,)."
 
         def f_cond_unnorm(xs, input_lin=input_lin):
-            
             if xs.ndim == 0:
                 assert self.bound_dim == 1
                 n_inputs = 1
@@ -190,7 +189,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 n_inputs = 1
             else:
                 n_inputs = xs.shape[0]
-            
+
             input_repeated = tile(input_lin, (n_inputs, 1))
             return self.pdf(column_stack((xs, input_repeated)))
 
@@ -234,7 +233,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 n_inputs = 1
             else:
                 n_inputs = xs.shape[0]
-                
+
             input_repeated = tile(input_periodic, (n_inputs, 1))
             return self.pdf(column_stack((input_repeated, xs)))
 

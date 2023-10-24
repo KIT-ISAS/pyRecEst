@@ -56,7 +56,7 @@ jobs:
           export PYRECEST_BACKEND=pytorch
           poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_pytorch.xml ./pyrecest
         env:
-          PYTHONPATH: ${{ github.workspace }}  
+          PYTHONPATH: ${{ github.workspace }}
 
       #- name: Run tests with jax backend
       #  if: always()

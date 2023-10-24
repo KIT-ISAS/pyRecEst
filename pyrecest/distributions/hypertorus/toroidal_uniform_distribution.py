@@ -1,6 +1,8 @@
+import copy
+
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_uniform_distribution import HypertoroidalUniformDistribution
-import copy
+
 
 class ToroidalUniformDistribution(
     HypertoroidalUniformDistribution, AbstractToroidalDistribution

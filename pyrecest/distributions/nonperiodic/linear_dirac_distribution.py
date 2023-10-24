@@ -51,7 +51,7 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
         if weights is None:
             weights = ones(samples.shape[1]) / samples.shape[1]
 
-        mean = weights@samples
+        mean = weights @ samples
         deviation = samples - mean
         covariance = cov(deviation.T, aweights=weights, bias=True)
 

@@ -92,6 +92,7 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
 class HealpixSampler(AbstractHypersphericalUniformSampler):
     def get_grid(self, grid_density_parameter, dim: int = 2):
         import healpy as hp
+
         assert (
             dim == 2
         ), "HealpixSampler is supposed to be used for the sphere, i.e. dim=2"
@@ -184,6 +185,7 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
         First parameter is the number of points on the sphere, second parameter is the number of points on the circle.
         """
         import healpy as hp
+
         assert (
             dim == 3
         ), "HealpixHopfSampler is supposed to be used for the 3-sphere, i.e. dim=3"

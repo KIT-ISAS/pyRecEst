@@ -1,4 +1,3 @@
-import copy
 from collections.abc import Callable
 from math import pi
 from typing import Union
@@ -34,11 +33,9 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         if dim == 1:
             points = linspace(0.0, 2.0 * pi, num=n_particles, endpoint=False)
         else:
-            points = (
-                tile(
-                    arange(0.0, 2.0 * pi, 2.0 * pi / n_particles), (dim, 1)
-                ).T.squeeze()
-            )
+            points = tile(
+                arange(0.0, 2.0 * pi, 2.0 * pi / n_particles), (dim, 1)
+            ).T.squeeze()
         filter_state = HypertoroidalDiracDistribution(points, dim=1)
         AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)

@@ -47,7 +47,8 @@ class GaussianDistribution(AbstractLinearDistribution):
             pdfvals = mvn.pdf(xs, self.mu, self.C)
         elif pyrecest.backend.__name__ == "pyrecest.pytorch":
             # Disable import errors for megalinter
-            import torch # pylint: disable=import-error
+            import torch  # pylint: disable=import-error
+
             # pylint: disable=import-error
             from torch.distributions import MultivariateNormal
 

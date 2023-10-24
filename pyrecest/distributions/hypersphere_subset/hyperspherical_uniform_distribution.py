@@ -31,7 +31,7 @@ class HypersphericalUniformDistribution(
             )
             phi = 2.0 * pi * random.rand(n)
             sz = random.rand(n) * 2.0 - 1.0
-            r = sqrt(1 - sz ** 2)
+            r = sqrt(1 - sz**2)
             s = stack([r * cos(phi), r * sin(phi), sz], axis=1)
         else:
             samples_unnorm = random.normal(0.0, 1.0, (n, self.dim + 1))

@@ -101,9 +101,13 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def mean_numerical(self):
         if self.dim == 1:
-            mu = array(quad(
-                lambda x: x * self.pdf(array(x)), array(-float("inf")), array(float("inf"))
-            )[0])
+            mu = array(
+                quad(
+                    lambda x: x * self.pdf(array(x)),
+                    array(-float("inf")),
+                    array(float("inf")),
+                )[0]
+            )
         elif self.dim == 2:
             mu = empty(self.dim)
             mu[0] = dblquad(
@@ -122,7 +126,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             )[0]
         elif self.dim == 3:
             mu = empty(self.dim)
-            
+
             def integrand1(x, y, z):
                 return x * self.pdf(array([x, y, z]))
 

@@ -1,1 +1,1 @@
-import pyrecest._backend
+import pyrecest._backend  # noqa
