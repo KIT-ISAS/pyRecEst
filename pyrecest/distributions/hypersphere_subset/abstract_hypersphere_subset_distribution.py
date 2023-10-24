@@ -4,7 +4,6 @@ from math import pi
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
     array,
@@ -57,6 +56,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 def f(x, i=i):
                     return x[i] * self.pdf(x)
 
+                # pylint: disable=cell-var-from-loop
                 fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
 
                 # Casts the floats to arrays, relevant for operations on torch.tensors
