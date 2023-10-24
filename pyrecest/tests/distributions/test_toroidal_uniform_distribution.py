@@ -15,7 +15,7 @@ from pyrecest.distributions.hypertorus.toroidal_uniform_distribution import (
 class TestToroidalUniformDistribution(unittest.TestCase):
     def setUp(self):
         self.tud = ToroidalUniformDistribution()
-        self.x = tile(array([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0]]), (2, 1))
+        self.x = tile(array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]), (2, 1)).T
 
     def test_pdf(self):
         self.assertTrue(
@@ -27,7 +27,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
         self.assertTrue(
             allclose(
                 tud_shifted.pdf(self.x),
-                (1 / (2 * pi) ** 2) * ones(self.x.shape[1]),
+                (1 / (2 * pi) ** 2) * ones(self.x.shape[0]),
             )
         )
 
