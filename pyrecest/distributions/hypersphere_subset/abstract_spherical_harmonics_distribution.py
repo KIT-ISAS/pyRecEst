@@ -24,7 +24,7 @@ class AbstractSphericalHarmonicsDistribution(
         n = coeff_mat.shape[0]
         for i in range(n):
             # Set the irrelevant elements to nan
-            coeff_mat[i, 2 * i + 1 :] = float("NaN")
+            coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
 
     def pdf(self, xs):
