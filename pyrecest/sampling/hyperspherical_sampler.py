@@ -56,7 +56,7 @@ class AbstractHypersphericalUniformSampler(AbstractSampler):
         return HypersphericalUniformDistribution(dim).sample(n_samples)
 
     @abstractmethod
-    def get_grid(self, grid_density_parameter: int | list[int], dim: int):
+    def get_grid(self, grid_density_parameter, dim: int):
         raise NotImplementedError()
 
 
@@ -76,10 +76,10 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
     ):
         raise NotImplementedError()
 
-    def get_grid(self, grid_density_parameter: int, dim: int = 2):
+    def get_grid(self, grid_density_parameter, dim: int = 2):
         assert (
             dim == 2
-        ), "AbstractSphericalCoordinatesBasedSampler is supposed to be used for the circle (which is one-dimensional) only."
+        ), "AbstractSphericalCoordinatesBasedSampler is supposed to be used for the sphere, i.e. dim=2"
         phi, theta, grid_specific_description = self.get_grid_spherical_coordinates(
             grid_density_parameter
         )
@@ -90,8 +90,11 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
 
 
 class HealpixSampler(AbstractHypersphericalUniformSampler):
-    def get_grid(self, grid_density_parameter: int):
+    def get_grid(self, grid_density_parameter, dim: int = 2):
         import healpy as hp
+        assert (
+            dim == 2
+        ), "HealpixSampler is supposed to be used for the sphere, i.e. dim=2"
 
         n_side = grid_density_parameter
         n_areas = hp.nside2npix(n_side)
@@ -175,12 +178,15 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
 
 # pylint: disable=too-many-locals
 class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
-    def get_grid(self, grid_density_parameter: int | list[int]):
+    def get_grid(self, grid_density_parameter, dim: int = 3):
         """
         Hopf coordinates are (θ, ϕ, ψ) where θ and ϕ are the angles for the sphere and ψ is the angle on the circle
         First parameter is the number of points on the sphere, second parameter is the number of points on the circle.
         """
         import healpy as hp
+        assert (
+            dim == 3
+        ), "HealpixHopfSampler is supposed to be used for the 3-sphere, i.e. dim=3"
 
         if isinstance(grid_density_parameter, int):
             grid_density_parameter = [grid_density_parameter]
@@ -225,7 +231,7 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
 
 
 class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
-    def get_grid(self, grid_density_parameter: int | list[int]):
+    def get_grid(self, grid_density_parameter):
         """
         Hopf coordinates are (θ, ϕ, ψ) where θ and ϕ are the angles for the sphere and ψ is the angle on the circle
         First parameter is the number of points on the sphere, second parameter is the number of points on the circle.
