@@ -60,7 +60,7 @@ class GaussianDistributionTest(unittest.TestCase):
         grid = linspace(-10, 10, 30)
         dist_marginalized = g.marginalize_out(1)
 
-        def marginlized_1D_via_integrate(xs):
+        def marginalized_1D_via_integrate(xs):
             def integrand(y, x):
                 return g.pdf(array([x, y]))
 
@@ -75,7 +75,7 @@ class GaussianDistributionTest(unittest.TestCase):
         self.assertTrue(
             allclose(
                 dist_marginalized.pdf(grid),
-                marginlized_1D_via_integrate(grid),
+                marginalized_1D_via_integrate(grid),
                 atol=1e-9,
             )
         )

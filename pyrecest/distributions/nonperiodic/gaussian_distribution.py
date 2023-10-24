@@ -46,12 +46,18 @@ class GaussianDistribution(AbstractLinearDistribution):
 
             pdfvals = mvn.pdf(xs, self.mu, self.C)
         elif pyrecest.backend.__name__ == "pyrecest.pytorch":
+            # Disable import errors for megalinter
+            import torch # pylint: disable=import-error
             # pylint: disable=import-error
             from torch.distributions import MultivariateNormal
 
             distribution = MultivariateNormal(self.mu, self.C)
+            if xs.ndim == 1 and self.dim == 1:
+                # For 1-D distributions, we need to reshape the input to a 2-D tensor
+                # to be able to use distribution.log_prob
+                xs = torch.reshape(xs, (-1, 1))
             log_probs = distribution.log_prob(xs)
-            pdfvals = pyrecest.backend.exp(log_probs)
+            pdfvals = torch.exp(log_probs)
 
         return pdfvals
 
