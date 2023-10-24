@@ -46,6 +46,7 @@ class GaussianDistribution(AbstractLinearDistribution):
 
             pdfvals = mvn.pdf(xs, self.mu, self.C)
         elif pyrecest.backend.__name__ == "pyrecest.pytorch":
+            # pylint: disable=import-error
             from torch.distributions import MultivariateNormal
 
             distribution = MultivariateNormal(self.mu, self.C)
