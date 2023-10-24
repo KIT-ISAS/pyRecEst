@@ -178,10 +178,21 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
             and input_lin.shape[0] == self.lin_dim
         ), "Input should be of size (lin_dim,)."
 
-        def f_cond_unnorm(x, input_lin=input_lin):
-            n_inputs = x.shape[0] if x.ndim > 1 else 1
+        def f_cond_unnorm(xs, input_lin=input_lin):
+            
+            if xs.ndim == 0:
+                assert self.bound_dim == 1
+                n_inputs = 1
+            elif xs.ndim == 1 and self.bound_dim == 1:
+                n_inputs = xs.shape[0]
+            elif xs.ndim == 1:
+                assert self.bound_dim == xs.shape[0]
+                n_inputs = 1
+            else:
+                n_inputs = xs.shape[0]
+            
             input_repeated = tile(input_lin, (n_inputs, 1))
-            return self.pdf(column_stack((x, input_repeated)))
+            return self.pdf(column_stack((xs, input_repeated)))
 
         dist = CustomHypertoroidalDistribution(f_cond_unnorm, self.bound_dim)
 
@@ -212,10 +223,20 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         input_periodic = mod(input_periodic, 2.0 * pi)
 
-        def f_cond_unnorm(x, input_periodic=input_periodic):
-            n_inputs = x.shape[0] if x.ndim > 1 else 1
+        def f_cond_unnorm(xs, input_periodic=input_periodic):
+            if xs.ndim == 0:
+                assert self.lin_dim == 1
+                n_inputs = 1
+            elif xs.ndim == 1 and self.lin_dim == 1:
+                n_inputs = xs.shape[0]
+            elif xs.ndim == 1:
+                assert self.lin_dim == xs.shape[0]
+                n_inputs = 1
+            else:
+                n_inputs = xs.shape[0]
+                
             input_repeated = tile(input_periodic, (n_inputs, 1))
-            return self.pdf(column_stack((input_repeated, x)))
+            return self.pdf(column_stack((input_repeated, xs)))
 
         dist = CustomLinearDistribution(f_cond_unnorm, self.lin_dim)
 

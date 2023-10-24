@@ -45,7 +45,7 @@ class CustomLinearDistribution(
         self.shift_by *= mean_offset
 
     def pdf(self, xs):
-        assert xs.shape[-1] == self.dim
+        assert self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
         p = self.scale_by * self.f(
             # To ensure 2-d for broadcasting
             reshape(xs, (-1, self.dim))
