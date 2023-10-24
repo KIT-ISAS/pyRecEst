@@ -40,6 +40,9 @@ class HypertoroidalDiracDistribution(
     def plot(self, *args, **kwargs):
         raise NotImplementedError("Plotting is not implemented")
 
+    def set_mean(self, mean):
+        self.d = mod(self.d - self.mean_direction() + mean, 2.0 * pi)
+
     def mean_direction(self):
         """
         Calculate the mean direction of the HypertoroidalDiracDistribution.
