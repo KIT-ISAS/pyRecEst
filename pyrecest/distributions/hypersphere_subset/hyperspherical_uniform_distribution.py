@@ -2,7 +2,7 @@ from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import cos, empty, int32, int64, linalg, random, sin, sqrt
+from pyrecest.backend import cos, empty, int32, int64, linalg, random, sin, sqrt, stack
 
 from .abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
@@ -29,11 +29,10 @@ class HypersphericalUniformDistribution(
                     self.dim + 1,
                 )
             )
-            phi = 2 * pi * random.rand(n)
-            s[:, 2] = random.rand(n) * 2.0 - 1.0
-            r = sqrt(1 - s[:, 2] ** 2)
-            s[:, 0] = r * cos(phi)
-            s[:, 1] = r * sin(phi)
+            phi = 2.0 * pi * random.rand(n)
+            sz = random.rand(n) * 2.0 - 1.0
+            r = sqrt(1 - sz ** 2)
+            s = stack([r * cos(phi), r * sin(phi), sz], axis=1)
         else:
             samples_unnorm = random.normal(0.0, 1.0, (n, self.dim + 1))
             s = samples_unnorm / linalg.norm(samples_unnorm, axis=1).reshape(-1, 1)
