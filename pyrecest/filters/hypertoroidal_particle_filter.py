@@ -20,9 +20,6 @@ from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     HypertoroidalDiracDistribution,
 )
-from pyrecest.distributions.circle.circular_dirac_distribution import (
-    CircularDiracDistribution,
-)
 
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_particle_filter import AbstractParticleFilter
@@ -35,28 +32,16 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
         dim: Union[int, int32, int64],
     ):
         if dim == 1:
-            # Prevents ambiguities if a vector is of size (dim,) or (n,) (for dim=1)
-            filter_state = CircularDiracDistribution(
-                linspace(0.0, 2.0 * pi, num=n_particles, endpoint=False)
-            )
+            points = linspace(0.0, 2.0 * pi, num=n_particles, endpoint=False)
         else:
-            filter_state = HypertoroidalDiracDistribution(
+            points = (
                 tile(
                     arange(0.0, 2.0 * pi, 2.0 * pi / n_particles), (dim, 1)
-                ).T.squeeze(),
-                dim=dim,
+                ).T.squeeze()
             )
+        filter_state = HypertoroidalDiracDistribution(points, dim=1)
         AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)
-
-    def set_state(self, new_state: AbstractHypertoroidalDistribution):
-        if not isinstance(new_state, HypertoroidalDiracDistribution):
-            # Convert to DiracDistribution if it is a different type of distribution
-            # Use .__class__ to convert it to CircularDiracDistribution
-            new_state = self.filter_state.__class__(
-                new_state.sample(self.filter_state.w.shape[0])
-            )
-        self.filter_state = copy.deepcopy(new_state)
 
     def predict_nonlinear(
         self,
