@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import matplotlib
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg, sqrt
 from pyrecest.distributions import (

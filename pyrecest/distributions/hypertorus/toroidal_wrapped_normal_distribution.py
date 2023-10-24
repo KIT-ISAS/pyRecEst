@@ -1,4 +1,5 @@
 from numpy import cos, exp, sin
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, zeros
 

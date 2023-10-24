@@ -2,6 +2,7 @@ import unittest
 
 import numpy.testing as npt
 import scipy.linalg
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, ones
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (

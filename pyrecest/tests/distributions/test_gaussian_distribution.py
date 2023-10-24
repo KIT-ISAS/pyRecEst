@@ -1,6 +1,7 @@
 import unittest
 
 import scipy
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, linspace
 from pyrecest.distributions import GaussianDistribution

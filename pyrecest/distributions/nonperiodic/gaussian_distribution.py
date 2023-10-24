@@ -1,10 +1,12 @@
 import copy
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dot, linalg, ndim, random
 # pylint: disable=no-name-in-module
 import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import dot, linalg, ndim, random
 from scipy.linalg import cholesky
+
 from .abstract_linear_distribution import AbstractLinearDistribution
 
 
@@ -41,9 +43,11 @@ class GaussianDistribution(AbstractLinearDistribution):
         ), "Dimension incorrect"
         if pyrecest.backend.__name__ == "pyrecest.numpy":
             from scipy.stats import multivariate_normal as mvn
+
             pdfvals = mvn.pdf(xs, self.mu, self.C)
         elif pyrecest.backend.__name__ == "pyrecest.pytorch":
             from torch.distributions import MultivariateNormal
+
             distribution = MultivariateNormal(self.mu, self.C)
             log_probs = distribution.log_prob(xs)
             pdfvals = pyrecest.backend.exp(log_probs)

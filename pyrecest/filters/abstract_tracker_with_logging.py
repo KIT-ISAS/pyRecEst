@@ -15,6 +15,7 @@ class AbstractTrackerWithLogging(ABC):
 
     def _store_estimates(self, curr_ests, estimates_over_time):
         import numpy as _np
+
         # Ensure curr_ests is a 2D array
         if curr_ests.ndim == 1:
             curr_ests = curr_ests.reshape(-1, 1)

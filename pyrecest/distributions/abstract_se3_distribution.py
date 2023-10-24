@@ -4,6 +4,7 @@ from typing import Union
 
 import matplotlib.pyplot as plt
 import quaternion
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import column_stack, concatenate, int32, int64
 
@@ -55,7 +56,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
     def plot_point(se3point):  # pylint: disable=too-many-locals
         """Visualize just a point in the SE(3) domain (no uncertainties are considered)"""
         import numpy as _np
-        
+
         q = _np.quaternion(*se3point[:4])
         rotMat = quaternion.as_rotation_matrix(q)
 

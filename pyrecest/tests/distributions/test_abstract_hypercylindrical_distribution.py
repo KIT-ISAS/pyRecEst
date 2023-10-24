@@ -2,8 +2,10 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, arange, array, column_stack, diff, ones, zeros
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (

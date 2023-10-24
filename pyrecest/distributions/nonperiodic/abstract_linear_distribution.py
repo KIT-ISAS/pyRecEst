@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Union
 
 import matplotlib.pyplot as plt
+
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 

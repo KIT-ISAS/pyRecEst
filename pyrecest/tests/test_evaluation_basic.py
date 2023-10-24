@@ -3,13 +3,14 @@ import tempfile
 import unittest
 from typing import Optional
 
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, sqrt, eye, zeros, all
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
-
-import numpy as np
 from parameterized import parameterized
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import all, array, eye, sqrt, zeros
 from pyrecest.distributions import (
     GaussianDistribution,
     HypertoroidalWrappedNormalDistribution,

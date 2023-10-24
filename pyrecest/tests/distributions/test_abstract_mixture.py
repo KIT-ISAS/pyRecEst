@@ -2,6 +2,7 @@ import unittest
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, eye, linalg, ones
 from pyrecest.distributions import VonMisesFisherDistribution
@@ -36,14 +37,20 @@ class AbstractMixtureTest(unittest.TestCase):
         reason="Not supported on PyTorch backend",
     )
     def test_sample_metropolis_hastings_basics_only_s2(self):
-        vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 2.0)  # Needs to be float for scipy
-        vmf2 = VonMisesFisherDistribution(array([0.0, 1.0, 0.0]), 2.0)  # Needs to be float for scipy
+        vmf1 = VonMisesFisherDistribution(
+            array([1.0, 0.0, 0.0]), 2.0
+        )  # Needs to be float for scipy
+        vmf2 = VonMisesFisherDistribution(
+            array([0.0, 1.0, 0.0]), 2.0
+        )  # Needs to be float for scipy
         mix = HypersphericalMixture([vmf1, vmf2], array([0.5, 0.5]))
         s = self._test_sample(mix, 10)
         self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=1e-10))
 
     def test_sample_metropolis_hastings_basics_only_h2(self):
-        vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 2.0)  # Needs to be float for scipy
+        vmf = VonMisesFisherDistribution(
+            array([1.0, 0.0, 0.0]), 2.0
+        )  # Needs to be float for scipy
         mix = CustomHyperhemisphericalDistribution(
             lambda x: vmf.pdf(x) + vmf.pdf(-x), 2
         )

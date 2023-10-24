@@ -1,6 +1,7 @@
 from math import pi
 
 import matplotlib.pyplot as plt
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     array,

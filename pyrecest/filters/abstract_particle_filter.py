@@ -51,7 +51,7 @@ class AbstractParticleFilter(AbstractFilterType):
         weights = weights / sum(weights)
         n_particles = self.filter_state.w.shape[0]
         noise_samples = random.choice(samples, n_particles, p=weights)
-        
+
         d = zeros((n_particles, self.filter_state.dim))
         for i in range(n_particles):
             d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])

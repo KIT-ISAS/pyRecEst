@@ -2,6 +2,7 @@ import unittest
 from warnings import catch_warnings, simplefilter
 
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, column_stack, diag, linspace, meshgrid
 from pyrecest.distributions import GaussianDistribution

@@ -1,8 +1,10 @@
-import numpy as np
 from math import pi
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import tile, squeeze, sum, zeros, mod
+
+import numpy as np
 from beartype import beartype
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import mod, squeeze, sum, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -30,7 +32,9 @@ def generate_measurements(groundtruth, simulation_config):
         Comprises timesteps elements, each of which is a numpy array of shape
         (n_meas_at_individual_time_step[t], n_dim).
     """
-    assert "n_meas_at_individual_time_step" not in simulation_config or np.shape(simulation_config["n_meas_at_individual_time_step"]) == (simulation_config["n_timesteps"],)
+    assert "n_meas_at_individual_time_step" not in simulation_config or np.shape(
+        simulation_config["n_meas_at_individual_time_step"]
+    ) == (simulation_config["n_timesteps"],)
     measurements = np.empty(simulation_config["n_timesteps"], dtype=object)
 
     if simulation_config.get("mtt", False) and simulation_config.get("eot", False):
@@ -117,7 +121,7 @@ def generate_measurements(groundtruth, simulation_config):
 
         for t in range(simulation_config["n_timesteps"]):
             n_meas_at_t = sum(n_observations[t, :])
-            measurements[t] = float('NaN') * zeros(
+            measurements[t] = float("NaN") * zeros(
                 (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
             )
 

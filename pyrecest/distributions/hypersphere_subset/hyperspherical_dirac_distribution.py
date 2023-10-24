@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, reshape, sum, arctan2
+from pyrecest.backend import arctan2, linalg, reshape, sum
 
 from ..circle.circular_dirac_distribution import CircularDiracDistribution
 from .abstract_hypersphere_subset_dirac_distribution import (

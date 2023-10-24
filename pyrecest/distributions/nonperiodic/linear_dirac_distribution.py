@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import cov, ones, reshape
 

@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 import scipy

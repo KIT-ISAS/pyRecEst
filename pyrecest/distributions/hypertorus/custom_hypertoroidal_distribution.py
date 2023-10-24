@@ -4,8 +4,8 @@ from math import pi
 from pyrecest.backend import mod, zeros
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
-from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 from ..circle.custom_circular_distribution import CustomCircularDistribution
+from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
 class CustomHypertoroidalDistribution(

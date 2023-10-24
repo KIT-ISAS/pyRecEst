@@ -1,9 +1,12 @@
 import importlib.util
 import unittest
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, linalg, prod, random
+
 from parameterized import parameterized
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, linalg, random
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
+
 from ..sampling.hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,
     DriscollHealySampler,
@@ -126,9 +129,7 @@ class TestHopfConversion(unittest.TestCase):
         # Generate a sample matrix of size (n, 4) containing unit vectors.
         n = 100  # sample size
         random_vectors = random.normal(0.0, 1.0, (n, 4))
-        unit_vectors = (
-            random_vectors / linalg.norm(random_vectors, axis=1)[:, None]
-        )
+        unit_vectors = random_vectors / linalg.norm(random_vectors, axis=1)[:, None]
 
         # Pass the quaternions through the conversion functions
         θ, ϕ, ψ = AbstractHopfBasedS3Sampler.quaternion_to_hopf_yershova(unit_vectors)

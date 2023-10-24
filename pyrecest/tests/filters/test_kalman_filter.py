@@ -2,8 +2,10 @@ import copy
 import unittest
 
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, diag, eye
 from pyrecest.distributions import GaussianDistribution

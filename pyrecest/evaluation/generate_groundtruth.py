@@ -1,7 +1,8 @@
 import numpy as np
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import empty, atleast_2d, empty_like, squeeze
+from pyrecest.backend import atleast_2d, empty_like, squeeze
+
 
 # pylint: disable=too-many-branches
 def generate_groundtruth(simulation_param, x0=None):

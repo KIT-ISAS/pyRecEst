@@ -4,6 +4,7 @@ from math import pi
 
 import numpy.testing as npt
 from parameterized import parameterized
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     allclose,

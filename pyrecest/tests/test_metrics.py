@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, random, repeat
 from pyrecest.utils.metrics import anees

@@ -1,9 +1,9 @@
 import warnings
+from typing import Sequence
 
 from ..abstract_mixture import AbstractMixture
 from .abstract_linear_distribution import AbstractLinearDistribution
 from .gaussian_distribution import GaussianDistribution
-from typing import Sequence
 
 
 class LinearMixture(AbstractMixture, AbstractLinearDistribution):

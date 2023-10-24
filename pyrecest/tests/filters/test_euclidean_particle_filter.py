@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, mean, ones, random, zeros, zeros_like
 from pyrecest.distributions import GaussianDistribution
@@ -31,9 +32,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
             # jscpd:ignore-end
 
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
-        npt.assert_allclose(
-            self.pf.get_point_estimate(), self.forced_mean, atol=0.1
-        )
+        npt.assert_allclose(self.pf.get_point_estimate(), self.forced_mean, atol=0.1)
 
     def test_predict_nonlinear_nonadditive(self):
         n_noise_samples = 10

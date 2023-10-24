@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, eye, random
 from pyrecest.distributions import GaussianDistribution
