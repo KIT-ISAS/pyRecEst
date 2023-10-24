@@ -40,8 +40,8 @@ class AbstractParticleFilter(AbstractFilterType):
                 self.filter_state.d = self.filter_state.d + noise
             else:
                 for i in range(n_particles):
-                    noise_curr = noise_distribution.set_mean(self.filter_state.d[i, :])
-                    self.filter_state.d[i, :] = noise_curr.sample(1)
+                    noise_curr = noise_distribution.set_mean(self.filter_state.d[i])
+                    self.filter_state.d[i] = noise_curr.sample(1)
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (

@@ -41,7 +41,9 @@ class HypertoroidalDiracDistribution(
         raise NotImplementedError("Plotting is not implemented")
 
     def set_mean(self, mean):
-        self.d = mod(self.d - self.mean_direction() + mean, 2.0 * pi)
+        dist = copy.deepcopy(self)
+        dist.d = mod(dist.d - dist.mean_direction() + mean, 2.0 * pi)
+        return dist
 
     def mean_direction(self):
         """
