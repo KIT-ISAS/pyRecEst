@@ -56,7 +56,7 @@ class AbstractHypersphericalUniformSampler(AbstractSampler):
         return HypersphericalUniformDistribution(dim).sample(n_samples)
 
     @abstractmethod
-    def get_grid(self, grid_density_parameter: int, dim: int):
+    def get_grid(self, grid_density_parameter: int | list[int], dim: int):
         raise NotImplementedError()
 
 
