@@ -17,7 +17,7 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         self.sys_noise_default = GaussianDistribution(
             zeros_like(self.mu), 0.5 * self.C_prior
         )
-        self.pf = EuclideanParticleFilter(n_particles=500, dim=3)
+        self.pf = EuclideanParticleFilter(n_particles=1000, dim=3)
         self.forced_mean = array([1.0, 2.0, 3.0])
         self.pf.filter_state = self.prior
 
@@ -31,14 +31,14 @@ class EuclideanParticleFilterTest(unittest.TestCase):
             # jscpd:ignore-end
 
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
-        npt.assert_almost_equal(
-            self.pf.get_point_estimate(), self.forced_mean, decimal=1
+        npt.assert_allclose(
+            self.pf.get_point_estimate(), self.forced_mean, atol=0.1
         )
 
     def test_predict_nonlinear_nonadditive(self):
-        n = 5
-        samples = random.rand(n, 3)
-        weights = ones(n) / n
+        n_noise_samples = 10
+        samples = random.rand(n_noise_samples, 3)
+        weights = ones(n_noise_samples) / n_noise_samples
 
         def f(x, w):
             return x + w
