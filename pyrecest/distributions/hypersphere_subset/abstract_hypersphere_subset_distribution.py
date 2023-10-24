@@ -376,11 +376,11 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     def compute_unit_hypersphere_surface(dim: Union[int, int32, int64]) -> float:
         if dim == 1:
-            surface_area = 2 * pi
+            surface_area = 2.0 * pi
         elif dim == 2:
-            surface_area = 4 * pi
+            surface_area = 4.0 * pi
         elif dim == 3:
-            surface_area = 2 * pi**2
+            surface_area = 2.0 * pi**2
         else:
-            surface_area = 2 * pi ** ((dim + 1) / 2) / gamma((dim + 1) / 2)
+            surface_area = 2.0 * pi ** ((dim + 1) / 2) / gamma((dim + 1) / 2)
         return surface_area
