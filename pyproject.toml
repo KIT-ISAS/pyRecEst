@@ -20,6 +20,7 @@ shapely = "*"
 [tool.poetry.extras]
 healpy_support = ["healpy"]
 pytorch_support = ["torch"]
+jax_support = ["jax"]
 
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
