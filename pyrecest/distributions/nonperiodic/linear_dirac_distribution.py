@@ -14,7 +14,7 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
 
     def mean(self):
         # Like np.average(self.d, weights=self.w, axis=0) but for all backends
-        return (self.d * self.w.reshape(-1, 1)).sum(dim=0)
+        return self.w @ self.d
 
     def set_mean(self, new_mean):
         mean_offset = new_mean - self.mean
