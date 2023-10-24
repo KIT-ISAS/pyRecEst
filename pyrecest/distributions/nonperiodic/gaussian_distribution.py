@@ -2,6 +2,7 @@ import copy
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import dot, linalg, ndim, random
+# pylint: disable=no-name-in-module
 import pyrecest.backend
 from scipy.linalg import cholesky
 from .abstract_linear_distribution import AbstractLinearDistribution
