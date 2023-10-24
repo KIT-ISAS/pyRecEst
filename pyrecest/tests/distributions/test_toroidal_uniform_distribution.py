@@ -19,7 +19,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
 
     def test_pdf(self):
         self.assertTrue(
-            allclose(self.tud.pdf(self.x), (1 / (2 * pi) ** 2) * ones(self.x.shape[1]))
+            allclose(self.tud.pdf(self.x), (1 / (2 * pi) ** 2) * ones(self.x.shape[0]))
         )
 
     def test_shift(self):
