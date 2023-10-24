@@ -56,6 +56,15 @@ jobs:
           export PYRECEST_BACKEND=pytorch
           poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_pytorch.xml ./pyrecest
         env:
+          PYTHONPATH: ${{ github.workspace }}  
+
+      - name: Run tests with pytorch backend
+        if: always()
+        run: |
+          poetry env use python
+          export PYRECEST_BACKEND=jax
+          poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_jax.xml ./pyrecest
+        env:
           PYTHONPATH: ${{ github.workspace }}
 
       - name: Publish test results
@@ -65,3 +74,4 @@ jobs:
           files: |
             junit_test_results_numpy.xml
             junit_test_results_pytorch.xml
+            junit_test_results_jax.xml
