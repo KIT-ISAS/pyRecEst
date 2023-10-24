@@ -191,6 +191,7 @@ BACKEND_ATTRIBUTES = {
         "max",
         "min",
         "roll",
+        "dstack",
     ],
     "autodiff": [
         "custom_gradient",

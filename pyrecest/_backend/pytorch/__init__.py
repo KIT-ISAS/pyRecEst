@@ -56,6 +56,7 @@ from torch import (
     max,
     min,
     roll,
+    dstack,
 )
 from torch import repeat_interleave as repeat
 from torch import (
