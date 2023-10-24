@@ -28,10 +28,3 @@ class AbstractCustomLinBoundedCartProdDistribution(
 
         AbstractCustomDistribution.__init__(self, f_)
         AbstractLinPeriodicCartProdDistribution.__init__(self, bound_dim, lin_dim)
-
-    @staticmethod
-    def from_distribution(distribution: AbstractLinPeriodicCartProdDistribution):
-        chhd = AbstractCustomLinBoundedCartProdDistribution(
-            distribution.pdf, distribution.bound_dim, distribution.lin_dim
-        )
-        return chhd
