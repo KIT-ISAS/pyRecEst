@@ -69,8 +69,8 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         dist = self.chcd_vm_gauss_stacked.condition_on_periodic(array(1.0))
 
         grid = meshgrid(arange(-3, 4), arange(-3, 4))
-        self.grid_flat = array(grid).reshape(2, -1).T
-        npt.assert_allclose(dist.pdf(grid), self.gauss.pdf(grid))
+        grid_flat = array(grid).reshape(2, -1).T
+        npt.assert_allclose(dist.pdf(grid_flat), self.gauss.pdf(grid_flat))
 
 
 if __name__ == "__main__":
