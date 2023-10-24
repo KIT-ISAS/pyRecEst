@@ -67,7 +67,7 @@ class HypertoroidalDiracDistribution(
     def apply_function(
         self, f: Callable, f_supports_multiple: bool = True
     ) -> "HypertoroidalDiracDistribution":
-        dist = super().apply_function(f, f_supports_multiple)
+        dist: HypertoroidalDiracDistribution = super().apply_function(f, f_supports_multiple)
         dist.d = mod(dist.d, 2.0 * pi)
         return dist
 
