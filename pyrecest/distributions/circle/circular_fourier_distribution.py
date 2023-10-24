@@ -295,7 +295,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     ) -> "CircularFourierDistribution":
         if isinstance(distribution, CircularDiracDistribution):
             fd = CircularFourierDistribution(
-                conj(distribution.trigonometric_moment(n, whole_range=True))
+                conj(distribution.trigonometric_moment(n))
                 / (2.0 * pi),
                 transformation,
                 multiplied_by_n=False,
