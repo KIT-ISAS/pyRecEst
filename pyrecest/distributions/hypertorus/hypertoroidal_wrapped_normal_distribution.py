@@ -46,6 +46,20 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         AbstractHypertoroidalDistribution.__init__(self, numel_mu)
         self.mu = mod(mu, 2.0 * pi)
         self.C = C
+        
+    def set_mean(self, mu):
+        """
+        Set the mean of the distribution.
+
+        Parameters:
+        mu (numpy array): The new mean.
+
+        Returns:
+        HypertoroidalWNDistribution: A new instance of the distribution with the updated mean.
+        """
+        dist = copy.deepcopy(self)
+        dist.mu = mod(mu, 2.0 * pi)
+        return dist
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
         """
