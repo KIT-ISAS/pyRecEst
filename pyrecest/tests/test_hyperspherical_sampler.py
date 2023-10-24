@@ -1,15 +1,9 @@
 import importlib.util
 import unittest
-
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, linalg, prod, random
-
-healpy_installed = importlib.util.find_spec("healpy") is not None
-
-
 from parameterized import parameterized
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
-
 from ..sampling.hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,
     DriscollHealySampler,
@@ -18,6 +12,8 @@ from ..sampling.hyperspherical_sampler import (
     HealpixSampler,
     SphericalFibonacciSampler,
 )
+
+healpy_installed = importlib.util.find_spec("healpy") is not None
 
 
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):

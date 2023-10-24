@@ -1,7 +1,6 @@
+""" Test for uniform distribution on the hypersphere """
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, linalg, ones, random
-
-""" Test for uniform distribution on the hypersphere """
 import unittest
 
 from pyrecest.distributions import (

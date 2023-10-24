@@ -1,5 +1,6 @@
 import numpy as np
 
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import empty, atleast_2d, empty_like, squeeze
 
 # pylint: disable=too-many-branches

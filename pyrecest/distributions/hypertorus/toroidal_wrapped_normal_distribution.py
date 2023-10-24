@@ -1,6 +1,6 @@
 from numpy import cos, exp, sin
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, zeros
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_wrapped_normal_distribution import (

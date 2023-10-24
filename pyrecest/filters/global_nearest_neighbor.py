@@ -137,7 +137,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
 
         association = col_ind[:n_targets]
 
-        if warn_on_no_meas_for_track and backend.any(association > n_meas):
+        if warn_on_no_meas_for_track and any(association > n_meas):
             print(
                 "GNN: No measurement was within gating threshold for at least one target."
             )
