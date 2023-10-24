@@ -26,7 +26,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 arange(0.1, 2.1, 0.1),
                 101,
             ),
-            ("sqrt", VonMisesDistribution, 0.5, arange(0.1, 2.1, 0.1), 101, 1e-8),
+            ("sqrt", VonMisesDistribution, array(0.5), arange(0.1, 2.1, 0.1), 101),
             (
                 "identity",
                 WrappedNormalDistribution,
@@ -105,9 +105,9 @@ class TestCircularFourierDistribution(unittest.TestCase):
             transformation=transformation,
             store_values_multiplied_by_n=mult_by_n,
         )
-        npt.assert_array_almost_equal(fd.integrate_numerically(), 1)
+        npt.assert_array_almost_equal(fd.integrate_numerically(), 1.0)
         fd_real = fd.to_real_fd()
-        npt.assert_array_almost_equal(fd_real.integrate_numerically(), 1)
+        npt.assert_array_almost_equal(fd_real.integrate_numerically(), 1.0)
         fd_unnorm = copy.copy(fd)
         fd_unnorm.c = fd.c * (scale_by)
         if transformation == "identity":
