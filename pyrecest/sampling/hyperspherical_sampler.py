@@ -72,7 +72,7 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
     @abstractmethod
     def get_grid_spherical_coordinates(
         self,
-        grid_density_parameter: int | list[int],
+        grid_density_parameter: int,
     ):
         raise NotImplementedError()
 
