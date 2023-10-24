@@ -52,9 +52,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         dist.normalize_in_place()
         return dist
 
-    def apply_function(
-        self, f: Callable, f_supports_multiple: bool = True
-    ) -> "AbstractDiracDistribution":
+    def apply_function(self, f: Callable, f_supports_multiple: bool = True):
         """
         Apply a function to the Dirac locations and return a new distribution.
 
