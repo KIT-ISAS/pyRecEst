@@ -33,13 +33,13 @@ class AbstractParticleFilter(AbstractFilterType):
             self.filter_state.d = f(self.filter_state.d)
         else:
             self.filter_state = self.filter_state.apply_function(f)
-
+        n_particles = self.filter_state.w.shape[0]
         if noise_distribution is not None:
             if not shift_instead_of_add:
                 noise = noise_distribution.sample(self.filter_state.w.shape[0])
                 self.filter_state.d = self.filter_state.d + noise
             else:
-                for i in range(self.filter_state.d.shape[1]):
+                for i in range(n_particles):
                     noise_curr = noise_distribution.set_mean(self.filter_state.d[i, :])
                     self.filter_state.d[i, :] = noise_curr.sample(1)
 
@@ -49,10 +49,10 @@ class AbstractParticleFilter(AbstractFilterType):
         ), "samples and weights must match in size"
 
         weights = weights / sum(weights)
-        n = self.filter_state.w.shape[0]
-        noise_samples = random.choice(self.filter_state.d, n, p=weights)
-        d = zeros((n, self.filter_state.dim))
-        for i in range(n):
+        n_particles = self.filter_state.w.shape[0]
+        noise_samples = random.choice(self.filter_state.d, n_particles, p=weights)
+        d = zeros((n_particles, self.filter_state.dim))
+        for i in range(n_particles):
             d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
 
         self.filter_state.d = d
