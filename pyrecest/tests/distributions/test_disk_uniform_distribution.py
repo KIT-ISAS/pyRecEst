@@ -17,7 +17,7 @@ class TestDiskUniformDistribution(unittest.TestCase):
         dist = DiskUniformDistribution()
 
         xs = array(
-            [ # Without multiplying it by 0.99, machine precision can play a role
+            [  # Without multiplying it by 0.99, machine precision can play a role
                 [0.5, 0.0, 1.0, 1.0 / sqrt(2.0)*0.99, 0.0, 3.0, 1.5],
                 [0.5, 1.0, 0.0, 1.0 / sqrt(2.0)*0.99, 3.0, 0.0, 1.5],
             ]
