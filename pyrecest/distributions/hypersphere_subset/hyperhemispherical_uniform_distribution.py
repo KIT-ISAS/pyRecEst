@@ -47,5 +47,5 @@ class HyperhemisphericalUniformDistribution(
             AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
                 self.dim
             )
-            / 2
+            / 2.0
         )
