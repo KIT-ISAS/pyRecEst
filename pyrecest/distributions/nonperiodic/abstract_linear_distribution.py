@@ -82,7 +82,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         if proposal is None:
 
             def proposal(x):
-                return x + random.randn(self.dim)
+                return x + random.normal(0.0, 1.0, (self.dim))
 
         if start_point is None:
             start_point = (
@@ -100,12 +100,12 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         )
 
     def mean_numerical(self):
-        mu = empty(self.dim)
         if self.dim == 1:
-            mu = quad(
-                lambda x: x * self.pdf(x), array(-float("inf")), array(float("inf"))
-            )[0]
+            mu = array(quad(
+                lambda x: x * self.pdf(array(x)), array(-float("inf")), array(float("inf"))
+            )[0])
         elif self.dim == 2:
+            mu = empty(self.dim)
             mu[0] = dblquad(
                 lambda x, y: x * self.pdf(array([x, y])),
                 -float("inf"),
@@ -121,7 +121,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                 lambda _: float("inf"),
             )[0]
         elif self.dim == 3:
-
+            mu = empty(self.dim)
+            
             def integrand1(x, y, z):
                 return x * self.pdf(array([x, y, z]))
 
