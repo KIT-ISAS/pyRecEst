@@ -13,8 +13,9 @@ import pyrecest._backend._common as common
 
 
 def get_backend_name():
-    return os.environ.get("PYRECEST_BACKEND", "numpy")
+    # return os.environ.get("PYRECEST_BACKEND", "numpy")
     #return os.environ.get("PYRECEST_BACKEND", "pytorch")
+    return os.environ.get("PYRECEST_BACKEND", "jax")
 
 
 BACKEND_NAME = get_backend_name()
@@ -295,7 +296,7 @@ class BackendImporter:
                             f"attribute '{attribute_name}'"
                         )
 
-                    raise RuntimeError(error) from None
+                    # raise RuntimeError(error) from None
                 else:
                     setattr(new_submodule, attribute_name, attribute)
 
