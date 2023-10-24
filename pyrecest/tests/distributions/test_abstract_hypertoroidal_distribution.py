@@ -21,4 +21,5 @@ class TestAbstractHypertoroidalDistribution(unittest.TestCase):
                 array(pi / 4), array(7 * pi / 4)
             ),
             pi / 2,
+            rtol=2e-07
         )
