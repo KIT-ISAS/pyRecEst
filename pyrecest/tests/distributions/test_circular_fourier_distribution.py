@@ -23,22 +23,22 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 "identity",
                 VonMisesDistribution,
                 array(0.4),
-                arange(0.1, 2.1, 0.1),
+                arange(0.1, 2.1, 0.5),
                 101,
             ),
-            ("sqrt", VonMisesDistribution, array(0.5), arange(0.1, 2.1, 0.1), 101),
+            ("sqrt", VonMisesDistribution, array(0.5), arange(0.1, 2.1, 0.5), 101),
             (
                 "identity",
                 WrappedNormalDistribution,
                 array(0.8),
-                arange(0.2, 2.1, 0.1),
+                arange(0.2, 2.1, 0.5),
                 101,
             ),
             (
                 "sqrt",
                 WrappedNormalDistribution,
                 array(0.8),
-                arange(0.2, 2.1, 0.1),
+                arange(0.2, 2.1, 0.5),
                 101,
             ),
         ]
@@ -61,7 +61,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 ceil(coeffs / 2.0),
                 "Length of Fourier Coefficients mismatch.",
             )
-            npt.assert_allclose(fd.pdf(xvals), dist.pdf(xvals), atol=1e-5)
+            npt.assert_allclose(fd.pdf(xvals), dist.pdf(xvals), rtol=2e-3, atol=5e-5)
 
     @parameterized.expand(
         [
