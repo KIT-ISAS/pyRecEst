@@ -4,6 +4,8 @@ from abc import abstractmethod
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import dstack, empty, ndim
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter
@@ -111,8 +113,11 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             self.store_prior_estimates()
 
     def update_linear(self, measurements, measurement_matrix, covMatsMeas):
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported for numpy backend"
         if len(self.filter_bank) == 0:
-            print("Currently, there are zero targets")
+            warnings.warn("Currently, there are zero targets")
             return
         assert (
             measurement_matrix.shape[0] == measurements.shape[0]

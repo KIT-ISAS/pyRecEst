@@ -264,6 +264,10 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             measurements[:, association] + 0.1, perfect_meas_ordered + 0.1
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_update_with_and_without_clutter(self):
         tracker_no_clut = GlobalNearestNeighbor()
         tracker_clut = GlobalNearestNeighbor()
