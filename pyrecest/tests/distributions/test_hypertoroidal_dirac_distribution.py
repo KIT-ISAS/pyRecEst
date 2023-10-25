@@ -6,11 +6,12 @@ import numpy.testing as npt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, exp, mod, ones_like, outer, random, sum
+from pyrecest.backend import array, exp, mod, random, sum, zeros_like
 from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
     ToroidalDiracDistribution,
 )
+from pyrecest.distributions import AbstractHypertoroidalDistribution
 
 
 class TestHypertoroidalDiracDistribution(unittest.TestCase):
@@ -78,13 +79,13 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
 
         w = array([0.3, 0.3, 0.3, 0.05, 0.05])
         twd = HypertoroidalDiracDistribution(d, w)
-        s = array([1, -3, 6])
+        s = array([1.0, -3.0, 6.0])
         twd_shifted = twd.shift(s)
         self.assertIsInstance(twd_shifted, HypertoroidalDiracDistribution)
         npt.assert_array_almost_equal(twd.w, twd_shifted.w)
         npt.assert_array_almost_equal(
-            twd.d,
-            mod(twd_shifted.d - outer(ones_like(w), s), 2 * pi),
+            AbstractHypertoroidalDistribution.angular_error(twd.d, twd_shifted.d - s),
+            zeros_like(twd.d),
             decimal=10,
         )
 
@@ -92,7 +93,7 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
     def get_pseudorandom_hypertoroidal_wd(dim=2):
         random.seed(0)
         n = 20
-        d = 2 * pi * random.rand(n, dim)
+        d = 2.0 * pi * random.rand(n, dim)
         w = random.rand(n)
         w = w / sum(w)
         hwd = HypertoroidalDiracDistribution(d, w)
