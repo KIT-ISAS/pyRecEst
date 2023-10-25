@@ -13,7 +13,7 @@ class TestVonMisesFilter(unittest.TestCase):
         self.curr_filter = VonMisesFilter()
         self.vm_prior = VonMisesDistribution(2.1, 1.3)
 
-    def test_set_state(self):
+    def test_setting_state(self):
         vm = self.vm_prior
         self.curr_filter.filter_state = vm
         vm1 = self.curr_filter.filter_state
@@ -24,7 +24,7 @@ class TestVonMisesFilter(unittest.TestCase):
     def test_prediction(self):
         sysnoise = VonMisesDistribution(0, 0.3)
 
-        self.curr_filter.set_state(self.vm_prior)
+        self.curr_filter.filter_state = self.vm_prior
         self.curr_filter.predict_identity(sysnoise)
         self.assertIsInstance(self.curr_filter.filter_state, VonMisesDistribution)
         self.assertEqual(self.curr_filter.filter_state.mu, 2.1)
@@ -34,7 +34,7 @@ class TestVonMisesFilter(unittest.TestCase):
         meas_noise = VonMisesDistribution(0.0, 1.3)
         meas = array(1.1)
 
-        self.curr_filter.set_state(self.vm_prior)
+        self.curr_filter.filter_state = self.vm_prior
         self.curr_filter.update_identity(meas_noise, meas)
         self.assertIsInstance(self.curr_filter.filter_state, VonMisesDistribution)
         npt.assert_allclose(

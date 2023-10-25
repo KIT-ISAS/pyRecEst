@@ -64,7 +64,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             (self.all_different_meas_covs, array([[2.0, -0.5], [-0.5, 0.5]]))
         )
 
-    def test_set_state_sets_correct_state(self):
+    def test_setting_state_sets_correct_state(self):
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init
         self.assertEqual(

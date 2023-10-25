@@ -21,8 +21,8 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.forced_mean = array([1.0, 2.0, 3.0])
         random.seed(self.seed)
 
-    def test_set_state(self):
-        self.hpf.set_state(self.hwnd)
+    def test_setting_state(self):
+        self.hpf.filter_state = self.hwnd
 
     def test_predict_identity(self):
         self.hpf.predict_identity(
@@ -38,7 +38,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.assertEqual(self.hpf.get_point_estimate().shape, (3,))
 
     def test_predict_update_cycle_3D(self):
-        self.hpf.set_state(self.hwnd)
+        self.hpf.filter_state = self.hwnd
         for _ in range(10):
             self.test_predict_identity()
             for _ in range(3):

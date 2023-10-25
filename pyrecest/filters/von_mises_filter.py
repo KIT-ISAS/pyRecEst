@@ -28,15 +28,6 @@ class VonMisesFilter(AbstractCircularFilter):
         """
         AbstractCircularFilter.__init__(self, VonMisesDistribution(0, 1))
 
-    def set_state(self, new_state: VonMisesDistribution):
-        """
-        Sets the current system state
-
-        Parameters:
-        new_state (VonMisesDistribution) : new state
-        """
-        self.filter_state = copy.deepcopy(new_state)
-
     def predict_identity(self, vmSys: VonMisesDistribution):
         """
         Predicts assuming identity system model, i.e.,

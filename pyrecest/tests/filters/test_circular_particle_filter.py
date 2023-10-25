@@ -29,7 +29,7 @@ class CircularParticleFilterTest(unittest.TestCase):
     def test_estimate(self):
         self.assertTrue(allclose(self.dist.trigonometric_moment(1), 0.0, atol=1e-10))
 
-    def test_set_state(self):
+    def test_setting_state(self):
         # sanity check
         self.filter.filter_state = self.dist
         dist1 = self.filter.filter_state
@@ -60,7 +60,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         self.assertIsInstance(dist2, HypertoroidalDiracDistribution)
         self.assertEqual(dist2.dim, 1)
 
-        self.filter.set_state(self.dist)
+        self.filter.filter_state = self.dist
         self.filter.predict_identity(self.wn)
         dist2_identity = self.filter.filter_state
         self.assertIsInstance(dist2_identity, HypertoroidalDiracDistribution)
@@ -69,7 +69,7 @@ class CircularParticleFilterTest(unittest.TestCase):
 
     def test_nonlinear_prediction_without_noise(self):
         # nonlinear test without noise
-        self.filter.set_state(self.dist)
+        self.filter.filter_state = self.dist
 
         def f(x):
             return x**2
@@ -85,7 +85,7 @@ class CircularParticleFilterTest(unittest.TestCase):
     def test_update(self):
         # test update
         random.seed(0)
-        self.filter.set_state(self.dist)
+        self.filter.filter_state = self.dist
 
         def h(x):
             return x
@@ -98,7 +98,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         self.filter.update_nonlinear_using_likelihood(likelihood, z)
         dist3a = self.filter.filter_state
         self.assertIsInstance(dist3a, CircularDiracDistribution)
-        self.filter.set_state(self.dist)
+        self.filter.filter_state = self.dist
         self.filter.update_identity(self.wn, z)
         dist3b = self.filter.filter_state
         self.assertIsInstance(dist3b, CircularDiracDistribution)
@@ -108,7 +108,7 @@ class CircularParticleFilterTest(unittest.TestCase):
             array([1.0, 2.0, 3.0]), array([1 / 3, 1 / 3, 1 / 3])
         )
         pf = CircularParticleFilter(3)
-        pf.set_state(dist)
+        pf.filter_state = dist
 
         self.assertAlmostEqual(
             pf.association_likelihood(CircularUniformDistribution()),
@@ -120,7 +120,7 @@ class CircularParticleFilterTest(unittest.TestCase):
             1.0 / (2.0 * pi),
         )
 
-        self.filter.set_state(CircularDiracDistribution(arange(0.0, 1.1, 0.1)))
+        self.filter.filter_state = CircularDiracDistribution(arange(0.0, 1.1, 0.1))
 
         def likelihood1(_, x):
             return (x == 0.5) + 0.0  # To convert it to double regardless of the backend

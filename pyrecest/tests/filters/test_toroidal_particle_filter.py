@@ -19,7 +19,7 @@ class ToroidalParticleFilterTest(unittest.TestCase):
         mu = array([1.0, 1.0]) + pi / 2.0
         hwnd = ToroidalWrappedNormalDistribution(mu, C)
         tpf = ToroidalParticleFilter(200)
-        tpf.set_state(hwnd)
+        tpf.filter_state = hwnd
         forced_mean = array([1.0, 1.0])
 
         for _ in range(50):
