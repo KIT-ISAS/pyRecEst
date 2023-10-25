@@ -1,4 +1,6 @@
-import numpy as np
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import column_stack, cos, diag, dot, sin, sqrt, sum, tile
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
@@ -7,7 +9,7 @@ from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 class ToroidalDiracDistribution(
     HypertoroidalDiracDistribution, AbstractToroidalDistribution
 ):
-    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
+    def __init__(self, d, w):
         """
         Initialize ToroidalDiracDistribution.
 
@@ -25,31 +27,29 @@ class ToroidalDiracDistribution(
         """
         m = self.mean_direction()
 
-        x = np.sum(self.w * np.sin(self.d[0, :] - m[0]) * np.sin(self.d[1, :] - m[1]))
-        y = np.sqrt(
-            np.sum(self.w * np.sin(self.d[0, :] - m[0]) ** 2)
-            * np.sum(self.w * np.sin(self.d[1, :] - m[1]) ** 2)
+        x = sum(self.w * sin(self.d[0, :] - m[0]) * sin(self.d[1, :] - m[1]))
+        y = sqrt(
+            sum(self.w * sin(self.d[0, :] - m[0]) ** 2)
+            * sum(self.w * sin(self.d[1, :] - m[1]) ** 2)
         )
         rhoc = x / y
         return rhoc
 
-    def covariance_4D(self) -> np.ndarray:
+    def covariance_4D(self):
         """
         Compute the 4D covariance matrix.
 
         :returns: 4D covariance matrix.
         """
-        dbar = np.column_stack(
+        dbar = column_stack(
             [
-                np.cos(self.d[0, :]),
-                np.sin(self.d[0, :]),
-                np.cos(self.d[1, :]),
-                np.sin(self.d[1, :]),
+                cos(self.d[0, :]),
+                sin(self.d[0, :]),
+                cos(self.d[1, :]),
+                sin(self.d[1, :]),
             ]
         )
-        mu = np.dot(self.w, dbar)
+        mu = dot(self.w, dbar)
         n = len(self.d)
-        C = (dbar - np.tile(mu, (n, 1))).T @ (
-            np.diag(self.w) @ (dbar - np.tile(mu, (n, 1)))
-        )
+        C = (dbar - tile(mu, (n, 1))).T @ (diag(self.w) @ (dbar - tile(mu, (n, 1))))
         return C

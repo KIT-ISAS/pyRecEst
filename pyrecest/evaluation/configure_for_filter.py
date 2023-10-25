@@ -69,7 +69,7 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
             filter_obj = HypertoroidalParticleFilter(
                 no_particles, scenario_config["initial_prior"].dim
             )
-            filter_obj.set_state(scenario_config["initial_prior"])
+            filter_obj.filter_state = scenario_config["initial_prior"]
 
             if "gen_next_state_with_noise" in scenario_config:
 

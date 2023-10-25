@@ -1,7 +1,5 @@
 from typing import Callable
 
-from beartype import beartype
-
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_lin_periodic_cart_prod_distribution import (
     AbstractLinPeriodicCartProdDistribution,
@@ -13,7 +11,6 @@ class AbstractCustomLinBoundedCartProdDistribution(
 ):
     """Is abstract because .input_dim (among others) cannot be properly defined without specifying the specific periodic dimension"""
 
-    @beartype
     def __init__(self, f_: Callable, bound_dim: int, lin_dim: int):
         """
         Parameters:
@@ -31,11 +28,3 @@ class AbstractCustomLinBoundedCartProdDistribution(
 
         AbstractCustomDistribution.__init__(self, f_)
         AbstractLinPeriodicCartProdDistribution.__init__(self, bound_dim, lin_dim)
-
-    @staticmethod
-    @beartype
-    def from_distribution(distribution: AbstractLinPeriodicCartProdDistribution):
-        chhd = AbstractCustomLinBoundedCartProdDistribution(
-            distribution.pdf, distribution.bound_dim, distribution.lin_dim
-        )
-        return chhd

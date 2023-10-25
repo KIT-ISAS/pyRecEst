@@ -1,6 +1,9 @@
 import unittest
 
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array
 from pyrecest.distributions import BinghamDistribution
 
 from .test_von_mises_fisher_distribution import vectors_to_test_2d
@@ -9,15 +12,15 @@ from .test_von_mises_fisher_distribution import vectors_to_test_2d
 class TestBinghamDistribution(unittest.TestCase):
     def setUp(self):
         """Setup BinghamDistribution instance for testing."""
-        M = np.array(
+        M = array(
             [[1 / 3, 2 / 3, -2 / 3], [-2 / 3, 2 / 3, 1 / 3], [2 / 3, 1 / 3, 2 / 3]]
         )
-        Z = np.array([-5, -3, 0])
+        Z = array([-5.0, -3.0, 0.0])
         self.bd = BinghamDistribution(Z, M)
 
     def test_pdf(self):
         """Test pdf method with a fixed set of values."""
-        expected_values = np.array(
+        expected_values = array(
             [
                 0.0767812166360095,
                 0.0145020985787277,
@@ -28,7 +31,7 @@ class TestBinghamDistribution(unittest.TestCase):
             ],
         )
         computed_values = self.bd.pdf(vectors_to_test_2d)
-        np.testing.assert_array_almost_equal(
+        npt.assert_array_almost_equal(
             computed_values,
             expected_values,
             err_msg="Expected and computed pdf values do not match.",

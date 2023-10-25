@@ -1,8 +1,9 @@
-import numbers
+from math import pi
 
 import matplotlib.pyplot as plt
-import numpy as np
-from beartype import beartype
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, cos, linspace, mod, sin
 
 from ..hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
@@ -10,40 +11,37 @@ from ..hypertorus.abstract_hypertoroidal_distribution import (
 
 
 class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
-    @beartype
     def __init__(self):
         AbstractHypertoroidalDistribution.__init__(self, dim=1)
 
-    @beartype
-    def cdf_numerical(self, xs: np.ndarray, starting_point: float = 0.0) -> np.ndarray:
+    def cdf_numerical(self, xs, starting_point: float = 0.0):
         """
         Calculates the cumulative distribution function.
 
         Args:
-            xs (np.ndarray): The 1D array to calculate the CDF on.
+            xs (): The 1D array to calculate the CDF on.
             starting_point (float, optional): Defaults to 0.
 
         Returns:
-            np.ndarray: The computed CDF as a numpy array.
+            : The computed CDF as a numpy array.
         """
         assert xs.ndim == 1, "xs must be a 1D array"
 
-        return np.array([self._cdf_numerical_single(x, starting_point) for x in xs])
+        return array([self._cdf_numerical_single(x, starting_point) for x in xs])
 
-    @beartype
     def _cdf_numerical_single(
         self,
-        x: np.number | numbers.Real,
-        starting_point: np.number | numbers.Real,
-    ) -> np.number | numbers.Real:
+        x,
+        starting_point,
+    ):
         """Helper method for cdf_numerical"""
-        starting_point_mod = np.mod(starting_point, 2 * np.pi)
-        x_mod = np.mod(x, 2 * np.pi)
+        starting_point_mod = mod(starting_point, 2.0 * pi)
+        x_mod = mod(x, 2.0 * pi)
 
         if x_mod < starting_point_mod:
-            return 1 - self.integrate_numerically([x_mod, starting_point_mod])
+            return 1.0 - self.integrate_numerically(array([x_mod, starting_point_mod]))
 
-        return self.integrate_numerically([starting_point_mod, x_mod])
+        return self.integrate_numerically(array([starting_point_mod, x_mod]))
 
     def to_vm(self):
         """
@@ -71,6 +69,6 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
 
     @staticmethod
     def plot_circle(*args, **kwargs):
-        theta = np.append(np.linspace(0, 2 * np.pi, 320), 0)
-        p = plt.plot(np.cos(theta), np.sin(theta), *args, **kwargs)
+        theta = linspace(0.0, 2.0 * pi, 320)
+        p = plt.plot(cos(theta), sin(theta), *args, **kwargs)
         return p

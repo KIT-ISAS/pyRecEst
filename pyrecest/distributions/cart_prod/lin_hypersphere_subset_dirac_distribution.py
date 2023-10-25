@@ -1,4 +1,7 @@
-import numpy as np
+from typing import Union
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import int32, int64
 
 from .abstract_lin_hyperhemisphere_cart_prod_distribution import (
     AbstractLinHypersphereSubsetCartProdDistribution,
@@ -12,7 +15,7 @@ class LinHypersphereSubsetCartProdDiracDistribution(
     LinBoundedCartProdDiracDistribution,
     AbstractLinHypersphereSubsetCartProdDistribution,
 ):
-    def __init__(self, bound_dim: int | np.int32 | np.int64, d, w=None):
+    def __init__(self, bound_dim: Union[int, int32, int64], d, w=None):
         AbstractLinHypersphereSubsetCartProdDistribution.__init__(
             self, bound_dim, d.shape[-1] - bound_dim - 1
         )

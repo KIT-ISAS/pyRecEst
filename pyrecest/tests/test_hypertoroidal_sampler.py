@@ -1,6 +1,11 @@
 import unittest
+from math import pi
 
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import all, diff, std
 from pyrecest.sampling.hypertoroidal_sampler import CircularUniformSampler
 
 
@@ -16,8 +21,8 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertEqual(samples.shape[0], n_samples)
 
         # Check that all samples are within the range [0, 2*pi)
-        self.assertTrue(np.all(samples >= 0))
-        self.assertTrue(np.all(samples < 2 * np.pi))
+        self.assertTrue(all(samples >= 0.0))
+        self.assertTrue(all(samples < 2.0 * pi))
 
     def test_get_grid(self):
         grid_density_parameter = 100
@@ -27,12 +32,11 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertEqual(grid_points.shape[0], grid_density_parameter)
 
         # Check that all grid points are within the range [0, 2*pi)
-        self.assertTrue(np.all(grid_points >= 0))
-        self.assertTrue(np.all(grid_points < 2 * np.pi))
+        self.assertTrue(all(grid_points >= 0.0))
+        self.assertTrue(all(grid_points < 2.0 * pi))
 
         # Check that the grid points are equidistant
-        diff = np.diff(grid_points)
-        self.assertAlmostEqual(np.std(diff), 0, places=5)
+        npt.assert_array_almost_equal(std(diff(grid_points)), 0.0)
 
 
 if __name__ == "__main__":

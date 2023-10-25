@@ -1,4 +1,8 @@
-import numpy as np
+from typing import Union
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import cos, full, int32, int64, sin, sum, tile
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
@@ -10,7 +14,7 @@ from .lin_bounded_cart_prod_dirac_distribution import (
 class HypercylindricalDiracDistribution(
     LinBoundedCartProdDiracDistribution, AbstractHypercylindricalDistribution
 ):
-    def __init__(self, bound_dim: int | np.int32 | np.int64, d, w=None):
+    def __init__(self, bound_dim: Union[int, int32, int64], d, w=None):
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim, d.shape[-1] - bound_dim
         )
@@ -29,13 +33,11 @@ class HypercylindricalDiracDistribution(
 
     def hybrid_moment(self):
         # Specific for Cartesian products of hypertori and R^lin_dim
-        S = np.full((self.bound_dim * 2 + self.lin_dim, self.d.shape[0]), np.nan)
+        S = full((self.bound_dim * 2 + self.lin_dim, self.d.shape[0]), float("NaN"))
         S[2 * self.bound_dim :, :] = self.d[:, self.bound_dim :].T  # noqa: E203
 
         for i in range(self.bound_dim):
-            S[2 * i, :] = np.cos(self.d[:, i])  # noqa: E203
-            S[2 * i + 1, :] = np.sin(self.d[:, i])  # noqa: E203
+            S[2 * i, :] = cos(self.d[:, i])  # noqa: E203
+            S[2 * i + 1, :] = sin(self.d[:, i])  # noqa: E203
 
-        return np.sum(
-            np.tile(self.w, (self.lin_dim + 2 * self.bound_dim, 1)) * S, axis=1
-        )
+        return sum(tile(self.w, (self.lin_dim + 2 * self.bound_dim, 1)) * S, axis=1)

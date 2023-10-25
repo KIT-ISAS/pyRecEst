@@ -1,4 +1,4 @@
-import numpy as np
+from math import pi
 
 from ..hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
@@ -41,7 +41,7 @@ class CircularUniformDistribution(
             cdf evaluated at columns of xa
         """
 
-        val = (xa - starting_point) / (2 * np.pi)
+        val = (xa - starting_point) / (2 * pi)
         val[val < 0] = val[val < 0] + 1
 
         return val

@@ -57,7 +57,6 @@ jobs:
           key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
-
       - name: Set up Alpine Linux
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: jirutka/setup-alpine@v1
@@ -76,7 +75,6 @@ jobs:
             py3-pkgconfig
             curl-dev
             zlib-dev
-
       - name: List workspace
         run: ls -l .
 
@@ -91,6 +89,12 @@ jobs:
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt
+        shell: alpine.sh {0}
+
+      - name: Remove torch entry (unsupported by alpine)
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
+        run: |
+          sed -i '/^torch/d' requirements-dev_no_version.txt
         shell: alpine.sh {0}
 
       - name: Run CMake to find LAPACK
@@ -186,7 +190,6 @@ jobs:
           path: |
             megalinter-reports
             mega-linter.log
-
       # Create Pull Request step
       - name: Create Pull Request with applied fixes
         id: cpr
@@ -206,7 +209,6 @@ jobs:
         run: |
           echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
           echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
-
       # Push new commit if applicable (for now works only on PR from same repository, not from forks)
       - name: Prepare commit
         if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')

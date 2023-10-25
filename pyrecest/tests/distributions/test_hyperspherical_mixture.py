@@ -1,7 +1,11 @@
 import unittest
+from math import pi
 
-import numpy as np
 from numpy.testing import assert_allclose
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import arange, array, linspace, meshgrid, sqrt, stack, sum
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
     HypersphericalMixture,
@@ -12,16 +16,16 @@ from pyrecest.distributions import (
 
 class HypersphericalMixtureTest(unittest.TestCase):
     def test_pdf_3d(self):
-        wad = WatsonDistribution(np.array([0, 0, 1]), -10)
-        vmf = VonMisesFisherDistribution(np.array([0, 0, 1]), 1)
-        w = [0.3, 0.7]
+        wad = WatsonDistribution(array([0.0, 0.0, 1.0]), -10.0)
+        vmf = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 1.0)
+        w = array([0.3, 0.7])
         smix = HypersphericalMixture([wad, vmf], w)
 
-        phi, theta = np.meshgrid(
-            np.linspace(0, 2 * np.pi, 10), np.linspace(-np.pi / 2, np.pi / 2, 10)
+        phi, theta = meshgrid(
+            linspace(0.0, 2.0 * pi, 10), linspace(-pi / 2.0, pi / 2.0, 10)
         )
         points = AbstractHypersphereSubsetDistribution.polar_to_cart(
-            np.stack([phi.ravel(), theta.ravel()], axis=-1)
+            stack([phi.ravel(), theta.ravel()], axis=-1)
         )
 
         assert_allclose(
@@ -31,14 +35,16 @@ class HypersphericalMixtureTest(unittest.TestCase):
         )
 
     def test_pdf_4d(self):
-        wad = WatsonDistribution(np.array([0, 0, 0, 1]), -10)
-        vmf = VonMisesFisherDistribution(np.array([0, 1, 0, 0]), 1)
-        w = [0.3, 0.7]
+        wad = WatsonDistribution(array([0.0, 0.0, 0.0, 1.0]), -10)
+        vmf = VonMisesFisherDistribution(array([0.0, 1.0, 0.0, 0.0]), 1)
+        w = array([0.3, 0.7])
         smix = HypersphericalMixture([wad, vmf], w)
 
-        a, b, c, d = np.mgrid[-1:1:4j, -1:1:4j, -1:1:4j, -1:1:4j]
-        points = np.array([a.ravel(), b.ravel(), c.ravel(), d.ravel()]).T
-        points = points / np.sqrt(np.sum(points**2, axis=1, keepdims=True))
+        a, b, c, d = meshgrid(
+            arange(-1, 4), arange(-1, 4), arange(-1, 4), arange(-1, 4)
+        )
+        points = array([a.ravel(), b.ravel(), c.ravel(), d.ravel()]).T
+        points = points / sqrt(sum(points**2, axis=1, keepdims=True))
 
         assert_allclose(
             smix.pdf(points),

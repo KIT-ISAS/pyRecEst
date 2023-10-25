@@ -1,4 +1,8 @@
-import numpy as np
+from math import pi
+from typing import Union
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import int32, int64, log, ndim, ones, prod, random, zeros
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -7,16 +11,27 @@ from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistributi
 class HypertoroidalUniformDistribution(
     AbstractUniformDistribution, AbstractHypertoroidalDistribution
 ):
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         """
         Returns the Probability Density Function evaluated at xs
 
         :param xs: Values at which to evaluate the PDF
         :returns: PDF evaluated at xs
         """
-        return 1 / self.get_manifold_size() * np.ones(xs.size // self.dim)
+        if xs.ndim == 0:
+            assert self.dim == 1
+            n_inputs = 1
+        elif xs.ndim == 1 and self.dim == 1:
+            n_inputs = xs.shape[0]
+        elif xs.ndim == 1:
+            assert self.dim == xs.shape[0]
+            n_inputs = 1
+        else:
+            n_inputs = xs.shape[0]
 
-    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
+        return 1.0 / self.get_manifold_size() * ones(n_inputs)
+
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         """
         Returns the n-th trigonometric moment
 
@@ -24,9 +39,9 @@ class HypertoroidalUniformDistribution(
         :returns: n-th trigonometric moment
         """
         if n == 0:
-            return np.ones(self.dim)
+            return ones(self.dim)
 
-        return np.zeros(self.dim)
+        return zeros(self.dim)
 
     def entropy(self) -> float:
         """
@@ -34,7 +49,7 @@ class HypertoroidalUniformDistribution(
 
         :returns: Entropy
         """
-        return self.dim * np.log(2 * np.pi)
+        return self.dim * log(2.0 * pi)
 
     def mean_direction(self):
         """
@@ -47,14 +62,14 @@ class HypertoroidalUniformDistribution(
             "Hypertoroidal uniform distributions do not have a unique mean"
         )
 
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         """
         Returns a sample of size n from the distribution
 
         :param n: Sample size
         :returns: Sample of size n
         """
-        return 2 * np.pi * np.random.rand(n, self.dim)
+        return 2.0 * pi * random.rand(n, self.dim)
 
     def shift(self, shift_by) -> "HypertoroidalUniformDistribution":
         """
@@ -67,9 +82,7 @@ class HypertoroidalUniformDistribution(
         assert shift_by.shape == (self.dim,)
         return self
 
-    def integrate(
-        self, integration_boundaries: tuple[np.ndarray, np.ndarray] | None = None
-    ) -> float:
+    def integrate(self, integration_boundaries=None) -> float:
         """
         Returns the integral of the distribution over the specified boundaries
 
@@ -78,12 +91,12 @@ class HypertoroidalUniformDistribution(
         :returns: Integral over the specified boundaries
         """
         if integration_boundaries is None:
-            left = np.zeros((self.dim,))
-            right = 2 * np.pi * np.ones((self.dim,))
+            left = zeros((self.dim,))
+            right = 2.0 * pi * ones((self.dim,))
         else:
             left, right = integration_boundaries
-        assert np.ndim(left) == 0 and self.dim == 1 or left.shape == (self.dim,)
-        assert np.ndim(right) == 0 and self.dim == 1 or right.shape == (self.dim,)
+        assert ndim(left) == 0 and self.dim == 1 or left.shape == (self.dim,)
+        assert ndim(right) == 0 and self.dim == 1 or right.shape == (self.dim,)
 
-        volume = np.prod(right - left)
-        return 1 / (2 * np.pi) ** self.dim * volume
+        volume = prod(right - left)
+        return 1.0 / (2.0 * pi) ** self.dim * volume

@@ -1,5 +1,7 @@
-import numpy as np
-from beartype import beartype
+from typing import Union
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import int32, int64
 
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -16,8 +18,7 @@ from .hyperspherical_uniform_distribution import HypersphericalUniformDistributi
 class HyperhemisphericalUniformDistribution(
     AbstractHyperhemisphericalDistribution, AbstractHypersphereSubsetUniformDistribution
 ):
-    @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         """
         Sample n points from the hyperhemispherical distribution.
 
@@ -46,5 +47,5 @@ class HyperhemisphericalUniformDistribution(
             AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
                 self.dim
             )
-            / 2
+            / 2.0
         )

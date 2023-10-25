@@ -1,10 +1,9 @@
 import copy
 import warnings
 from abc import abstractmethod
-from collections.abc import Callable
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -17,7 +16,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
     and a scaling factor `scale_by` to adjust the PDF.
 
     Methods:
-    - pdf(xs : Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    - pdf(xs : Union[float, ]) -> Union[float, ]:
         Compute the probability density function at given points.
     - integrate(integration_boundaries: Optional[Union[float, Tuple[float, float]]] = None) -> float:
         Calculate the integral of the probability density function.
@@ -25,8 +24,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         Normalize the PDF such that its integral is 1. Returns a copy of the original distribution.
     """
 
-    @beartype
-    def __init__(self, f: Callable[[np.ndarray], np.ndarray], scale_by=1):
+    def __init__(self, f, scale_by=1):
         """
         Initialize AbstractCustomDistribution.
 
@@ -36,8 +34,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         self.f = f
         self.scale_by = scale_by
 
-    @beartype
-    def pdf(self, xs: np.ndarray) -> np.ndarray | np.number:
+    def pdf(self, xs):
         """
         Compute the probability density function at given points.
 
@@ -48,7 +45,6 @@ class AbstractCustomDistribution(AbstractDistributionType):
         return self.scale_by * self.f(xs)
 
     @abstractmethod
-    @beartype
     def integrate(self, integration_boundaries=None):
         """
         Calculate the integral of the probability density function.
@@ -57,7 +53,6 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :returns: The integral of the PDF.
         """
 
-    @beartype
     def normalize(self, verify: bool | None = None) -> "AbstractCustomDistribution":
         """
         Normalize the PDF such that its integral is 1.
@@ -65,6 +60,9 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :param verify: Whether to verify if the density is properly normalized, default is None.
         :returns: A copy of the original distribution, with the PDF normalized.
         """
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported for numpy backend"
         cd = copy.deepcopy(self)
 
         integral = self.integrate()

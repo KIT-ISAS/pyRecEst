@@ -1,4 +1,5 @@
-import numpy as np
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import all, empty, full, repeat, squeeze, stack
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
@@ -42,30 +43,28 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
 
         assert cov_mats_meas.ndim == 2 or cov_mats_meas.shape[2] == n_meas
         all_gaussians = [filter.filter_state for filter in self.filter_bank]
-        all_means_prior = np.stack([gaussian.mu for gaussian in all_gaussians], axis=1)
-        all_cov_mats_prior = np.stack(
-            [gaussian.C for gaussian in all_gaussians], axis=2
-        )
+        all_means_prior = stack([gaussian.mu for gaussian in all_gaussians], axis=1)
+        all_cov_mats_prior = stack([gaussian.C for gaussian in all_gaussians], axis=2)
 
         if self.association_param["distance_metric_pos"].lower() == "euclidean":
             dists = cdist(
                 measurements.T, (measurement_matrix @ all_means_prior).T, "euclidean"
             ).T
         elif self.association_param["distance_metric_pos"].lower() == "mahalanobis":
-            dists = np.empty((n_targets, n_meas))
+            dists = empty((n_targets, n_meas))
 
-            all_cov_mat_state_equal = np.all(
+            all_cov_mat_state_equal = all(
                 all_cov_mats_prior
-                == np.repeat(
-                    all_cov_mats_prior[:, :, 0][:, :, np.newaxis],
+                == repeat(
+                    all_cov_mats_prior[:, :, 0][:, :, None],
                     all_cov_mats_prior.shape[2],
                     axis=2,
                 )
             )
-            all_cov_mat_meas_equal = cov_mats_meas.ndim == 2 or np.all(
+            all_cov_mat_meas_equal = cov_mats_meas.ndim == 2 or all(
                 cov_mats_meas
-                == np.repeat(
-                    cov_mats_meas[:, :, 0][:, :, np.newaxis],
+                == repeat(
+                    cov_mats_meas[:, :, 0][:, :, None],
                     cov_mats_meas.shape[2],
                     axis=2,
                 )
@@ -85,7 +84,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                     VI=curr_cov_mahalanobis,
                 )
             elif all_cov_mat_meas_equal:
-                all_mats_mahalanobis = np.empty(
+                all_mats_mahalanobis = empty(
                     (
                         measurements.shape[0],
                         measurements.shape[0],
@@ -101,7 +100,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                     )
                 for i in range(n_targets):
                     dists[i, :] = cdist(
-                        (measurement_matrix @ all_means_prior[:, i]).T[np.newaxis],
+                        (measurement_matrix @ all_means_prior[:, i]).T[None],
                         measurements.T,
                         "mahalanobis",
                         VI=all_mats_mahalanobis[:, :, i],
@@ -115,12 +114,10 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
                             @ measurement_matrix.T
                             + cov_mats_meas[:, :, j]
                         )
-                        dists[i, j] = np.squeeze(
+                        dists[i, j] = squeeze(
                             cdist(
-                                (measurement_matrix @ all_means_prior[:, i]).T[
-                                    np.newaxis
-                                ],
-                                measurements[:, j].T[np.newaxis],
+                                (measurement_matrix @ all_means_prior[:, i]).T[None],
+                                measurements[:, j].T[None],
                                 "mahalanobis",
                                 VI=curr_cov_mahalanobis,
                             )
@@ -130,7 +127,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
 
         # Pad to square and add max_new_tracks rows and columns
         pad_to = max(n_targets, n_meas) + self.association_param["max_new_tracks"]
-        association_matrix = np.full(
+        association_matrix = full(
             (pad_to, pad_to), self.association_param["gating_distance_threshold"]
         )
         association_matrix[: dists.shape[0], : dists.shape[1]] = dists
@@ -140,7 +137,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
 
         association = col_ind[:n_targets]
 
-        if warn_on_no_meas_for_track and np.any(association > n_meas):
+        if warn_on_no_meas_for_track and any(association > n_meas):
             print(
                 "GNN: No measurement was within gating threshold for at least one target."
             )

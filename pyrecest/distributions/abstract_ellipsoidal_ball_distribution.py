@@ -1,7 +1,7 @@
-import numbers
+from math import pi
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import linalg, sqrt
 from scipy.special import gamma
 
 from .abstract_bounded_nonperiodic_distribution import (
@@ -14,8 +14,7 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
     This class represents distributions on ellipsoidal balls.
     """
 
-    @beartype
-    def __init__(self, center: np.ndarray, shape_matrix: np.ndarray):
+    def __init__(self, center, shape_matrix):
         """
         Initialize the class with a center and shape matrix.
 
@@ -28,8 +27,7 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         assert center.ndim == 1 and shape_matrix.ndim == 2
         assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim
 
-    @beartype
-    def get_manifold_size(self) -> np.number | numbers.Real:
+    def get_manifold_size(self):
         """
         Calculate the size of the manifold.
 
@@ -42,12 +40,12 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         if self.dim == 1:
             c = 2
         elif self.dim == 2:
-            c = np.pi
+            c = pi
         elif self.dim == 3:
-            c = 4 / 3 * np.pi
+            c = 4 / 3 * pi
         elif self.dim == 4:
-            c = 0.5 * np.pi**2
+            c = 0.5 * pi**2
         else:
-            c = (np.pi ** (self.dim / 2)) / gamma((self.dim / 2) + 1)
+            c = (pi ** (self.dim / 2)) / gamma((self.dim / 2) + 1)
 
-        return c * np.sqrt(np.linalg.det(self.shape_matrix))
+        return c * sqrt(linalg.det(self.shape_matrix))

@@ -4,7 +4,13 @@ import unittest
 from typing import Optional
 
 import numpy as np
+
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 from parameterized import parameterized
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import all, array, eye, sqrt, zeros
 from pyrecest.distributions import (
     GaussianDistribution,
     HypertoroidalWrappedNormalDistribution,
@@ -77,6 +83,10 @@ class TestEvalationBasics(TestEvalationBase):
             (None,),
         ]
     )
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_generate_gt_R2(self, x0):
         groundtruth = generate_groundtruth(self.simulation_param, x0)
 
@@ -126,12 +136,12 @@ class TestEvalationBasics(TestEvalationBase):
         )
 
         self.assertEqual(np.size(measurements), self.n_timesteps_default)
-        n_meas_at_individual_time_step = np.array(
+        n_meas_at_individual_time_step = array(
             [meas_at_timestep.shape[0] for meas_at_timestep in measurements]
         )
         # If one measurement at every timestep, then the number is apparently not stochastic
-        self.assertFalse(np.all(n_meas_at_individual_time_step == 1))
-        state_dim_at_individual_time_step = np.array(
+        self.assertFalse(all(n_meas_at_individual_time_step == 1))
+        state_dim_at_individual_time_step = array(
             [meas_at_timestep.shape[-1] for meas_at_timestep in measurements]
         )
         has_state_dim_all = state_dim_at_individual_time_step == state_dim
@@ -170,7 +180,7 @@ class TestEvalationBasics(TestEvalationBase):
         # Populate each entry with (2,) arrays
         for i in range(3):
             for j in range(4):
-                groundtruths[i, j] = np.array([i + j, i - j])
+                groundtruths[i, j] = array([i + j, i - j])
 
         results = np.array([groundtruths[:, -1], groundtruths[:, -1] + 1])
 
@@ -189,21 +199,21 @@ class TestEvalationBasics(TestEvalationBase):
         np.testing.assert_allclose(
             # Should be zeros as the lastEstimates match groundtruths
             all_deviations[0],
-            [0, 0, 0],
+            [0.0, 0.0, 0.0],
         )
         np.testing.assert_allclose(
             # Should be np.sqrt(2) away from groundtruths
             all_deviations[1],
-            [np.sqrt(2), np.sqrt(2), np.sqrt(2)],
+            [sqrt(2), sqrt(2), sqrt(2)],
         )
 
     def test_configure_kf(self):
         filterParam = {"name": "kf", "parameter": None}
         scenarioParam = {
-            "initial_prior": GaussianDistribution(np.array([0, 0]), np.eye(2)),
+            "initial_prior": GaussianDistribution(array([0, 0]), eye(2)),
             "inputs": None,
             "manifold_type": "Euclidean",
-            "meas_noise": GaussianDistribution(np.array([0, 0]), np.eye(2)),
+            "meas_noise": GaussianDistribution(array([0, 0]), eye(2)),
         }
 
         (
@@ -215,13 +225,13 @@ class TestEvalationBasics(TestEvalationBase):
 
         self.assertIsInstance(configured_filter, KalmanFilter)
         self.assertIsNotNone(predictionRoutine)
-        self.assertIsInstance(meas_noise_for_filter, np.ndarray)
+        self.assertTrue(meas_noise_for_filter.shape == (2, 2))
 
     def test_configure_pf(self):
         filter_config = {"name": "pf", "parameter": 100}
         scenario_config = {
             "initial_prior": HypertoroidalWrappedNormalDistribution(
-                np.array([0, 0]), np.eye(2)
+                array([0.0, 0.0]), eye(2)
             ),
             "inputs": None,
             "manifold": "hypertorus",
@@ -246,6 +256,10 @@ class TestEvalationBasics(TestEvalationBase):
         with self.assertRaises(ValueError):
             configure_for_filter(filterParam, scenario_config)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_perform_predict_update_cycles(self):
         scenario_name = "R2randomWalk"
         scenario_param = simulation_database(scenario_name)
@@ -279,7 +293,7 @@ class TestEvalationBasics(TestEvalationBase):
             callable(distance_function),
             f"Expected distanceFunction to be callable, but got {type(distance_function)}",
         )
-        self.assertEqual(distance_function(np.array([0, 0]), np.array([0, 0])), 0)
+        self.assertEqual(distance_function(array([0, 0]), array([0, 0])), 0)
 
     def test_get_mean_calc(self):
         extract_mean = get_extract_mean("hypertorus")
@@ -308,6 +322,10 @@ class TestEvalationBasics(TestEvalationBase):
                 ],
             ),
         ]
+    )
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
     )
     def test_iterate_configs_and_runs(self, filter_configs):
         groundtruths, measurements = self.test_generate_simulated_scenario()
@@ -370,6 +388,10 @@ class TestEvalationBasics(TestEvalationBase):
         self.assertIsInstance(measurements[0, 0], np.ndarray)
         self.assertIn(np.ndim(measurements[0, 0]), (1, 2))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_evaluate_for_simulation_config_R2_random_walk(self):
         filters_configs_input = [
             {"name": "kf", "parameter": None},
@@ -405,6 +427,10 @@ class TestEvalationBasics(TestEvalationBase):
             measurements,
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_evaluate_for_file_R2_random_walk(self):
         self.simulation_param["all_seeds"] = range(self.n_runs_default)
         groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
@@ -419,9 +445,9 @@ class TestEvalationBasics(TestEvalationBase):
 
         scenario_config = {
             "manifold": "Euclidean",
-            "initial_prior": GaussianDistribution(np.zeros(2), 0.5 * np.eye(2)),
-            "meas_noise": GaussianDistribution(np.zeros(2), 0.5 * np.eye(2)),
-            "sys_noise": GaussianDistribution(np.zeros(2), 0.5 * np.eye(2)),
+            "initial_prior": GaussianDistribution(zeros(2), 0.5 * eye(2)),
+            "meas_noise": GaussianDistribution(zeros(2), 0.5 * eye(2)),
+            "sys_noise": GaussianDistribution(zeros(2), 0.5 * eye(2)),
         }
 
         (
@@ -506,6 +532,10 @@ class TestEvalationBasics(TestEvalationBase):
 
         self.assertEqual(repackaged_data1, repackaged_data2)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_summarize_filter_results(self):
         data = self._load_evaluation_data()
         results_summarized = summarize_filter_results(**data)
@@ -516,16 +546,16 @@ class TestEvalationBasics(TestEvalationBase):
             time_mean = result["time_mean"]
             failure_rate = result["failure_rate"]
 
-            self.assertGreaterEqual(error_mean, 0)
-            self.assertLessEqual(error_mean, 2)
+            self.assertGreaterEqual(error_mean, 0.0)
+            self.assertLessEqual(error_mean, 2.0)
 
-            self.assertGreaterEqual(error_std, 0)
-            self.assertLessEqual(error_std, 1)
+            self.assertGreaterEqual(error_std, 0.0)
+            self.assertLessEqual(error_std, 1.0)
 
-            self.assertGreaterEqual(time_mean, 0)
-            self.assertLessEqual(time_mean, 1)
+            self.assertGreaterEqual(time_mean, 0.0)
+            self.assertLessEqual(time_mean, 1.0)
 
-            self.assertEqual(failure_rate, 0)
+            self.assertEqual(failure_rate, 0.0)
 
 
 if __name__ == "__main__":

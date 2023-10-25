@@ -1,7 +1,10 @@
+import importlib.util
 import unittest
 
-import numpy as np
 from parameterized import parameterized
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, linalg, random
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
 
 from ..sampling.hyperspherical_sampler import (
@@ -13,6 +16,8 @@ from ..sampling.hyperspherical_sampler import (
     SphericalFibonacciSampler,
 )
 
+healpy_installed = importlib.util.find_spec("healpy") is not None
+
 
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):
     @parameterized.expand(
@@ -23,6 +28,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
             ("spherical_fibonacci", 12, 12, "n_samples"),
         ]
     )
+    @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_get_grid_sphere(
         self, method, grid_density_parameter, grid_points_expected, desc_key
     ):
@@ -42,6 +48,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         )
         self.assertEqual(grid_specific_description[desc_key], grid_density_parameter)
 
+    @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_get_grid_hypersphere(self):
         samples, _ = get_grid_hypersphere("healpix_hopf", 0)
 
@@ -63,6 +70,7 @@ class TestHypersphericalSampler(unittest.TestCase):
             (SphericalFibonacciSampler(), 12, 12, "n_samples"),
         ]
     )
+    @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_samplers(
         self, sampler, grid_density_parameter, grid_points_expected, desc_key
     ):
@@ -81,6 +89,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         self.assertEqual(grid_description[desc_key], grid_density_parameter)
 
     @parameterized.expand([(0, 72), (1, 648)])
+    @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_healpix_hopf_sampler(self, input_value, expected_grid_points):
         sampler = HealpixHopfSampler()
         dim = 3
@@ -102,7 +111,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         grid_density_parameter = [12, 4]
         grid, _ = sampler.get_grid(grid_density_parameter)
 
-        expected_points = np.prod(grid_density_parameter)
+        expected_points = grid_density_parameter[0] * grid_density_parameter[1]
         self.assertEqual(
             grid.shape[0],
             expected_points,
@@ -119,10 +128,8 @@ class TestHopfConversion(unittest.TestCase):
     def test_conversion(self):
         # Generate a sample matrix of size (n, 4) containing unit vectors.
         n = 100  # sample size
-        random_vectors = np.random.randn(n, 4)
-        unit_vectors = (
-            random_vectors / np.linalg.norm(random_vectors, axis=1)[:, np.newaxis]
-        )
+        random_vectors = random.normal(0.0, 1.0, (n, 4))
+        unit_vectors = random_vectors / linalg.norm(random_vectors, axis=1)[:, None]
 
         # Pass the quaternions through the conversion functions
         θ, ϕ, ψ = AbstractHopfBasedS3Sampler.quaternion_to_hopf_yershova(unit_vectors)
@@ -131,7 +138,7 @@ class TestHopfConversion(unittest.TestCase):
         )
 
         # Check if the original quaternions are close to the recovered quaternions.
-        self.assertTrue(np.allclose(unit_vectors, recovered_quaternions, atol=1e-8))
+        self.assertTrue(allclose(unit_vectors, recovered_quaternions, atol=1e-8))
 
 
 if __name__ == "__main__":

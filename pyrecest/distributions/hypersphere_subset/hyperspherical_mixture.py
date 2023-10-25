@@ -1,6 +1,3 @@
-import numpy as np
-from beartype import beartype
-
 from ..abstract_mixture import AbstractMixture
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
@@ -10,12 +7,7 @@ class HypersphericalMixture(AbstractMixture, AbstractHypersphericalDistribution)
     A class used to represent a mixture of hyperspherical distributions.
     """
 
-    @beartype
-    def __init__(
-        self,
-        dists: list[AbstractHypersphericalDistribution],
-        w: list[float] | np.ndarray,
-    ):
+    def __init__(self, dists: list[AbstractHypersphericalDistribution], w):
         """
         Initializes the HypersphericalMixture with a list of distributions and weights.
 

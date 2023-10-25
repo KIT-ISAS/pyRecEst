@@ -1,7 +1,20 @@
-import numbers
+from math import pi
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import (
+    abs,
+    arctan2,
+    cos,
+    exp,
+    imag,
+    log,
+    mod,
+    real,
+    sin,
+    sqrt,
+    where,
+    zeros_like,
+)
 from scipy.optimize import fsolve
 from scipy.special import iv
 from scipy.stats import vonmises
@@ -12,7 +25,7 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class VonMisesDistribution(AbstractCircularDistribution):
     def __init__(
         self,
-        mu: np.number | numbers.Real,
+        mu,
         kappa,
         norm_const: float | None = None,
     ):
@@ -26,21 +39,17 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return self.mu, self.kappa
 
     @property
-    @beartype
-    def norm_const(self) -> np.number:
+    def norm_const(self):
         if self._norm_const is None:
-            self._norm_const = 2 * np.pi * iv(0, self.kappa)
+            self._norm_const = 2.0 * pi * iv(0, self.kappa)
         return self._norm_const
 
-    @beartype
-    def pdf(self, xs: np.ndarray) -> np.ndarray | np.number:
-        p = np.exp(self.kappa * np.cos(xs - self.mu)) / self.norm_const
+    def pdf(self, xs):
+        p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
 
     @staticmethod
-    def besselratio(
-        nu: np.number | numbers.Real, kappa: np.number | numbers.Real
-    ) -> np.number | numbers.Real:
+    def besselratio(nu, kappa):
         return iv(nu + 1, kappa) / iv(nu, kappa)
 
     def cdf(self, xs, starting_point=0):
@@ -60,12 +69,10 @@ class VonMisesDistribution(AbstractCircularDistribution):
         """
         assert xs.ndim <= 1
 
-        r = np.zeros_like(xs)
+        r = zeros_like(xs)
 
-        def to_minus_pi_to_pi_range(
-            angle: np.number | numbers.Real | np.ndarray,
-        ) -> np.number | numbers.Real | np.ndarray:
-            return np.mod(angle + np.pi, 2 * np.pi) - np.pi
+        def to_minus_pi_to_pi_range(angle):
+            return mod(angle + pi, 2 * pi) - pi
 
         r = vonmises.cdf(
             to_minus_pi_to_pi_range(xs),
@@ -77,7 +84,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
             loc=to_minus_pi_to_pi_range(self.mu),
         )
 
-        r = np.where(
+        r = where(
             to_minus_pi_to_pi_range(xs) < to_minus_pi_to_pi_range(starting_point),
             1 + r,
             r,
@@ -85,10 +92,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return r
 
     @staticmethod
-    @beartype
-    def besselratio_inverse(
-        v: np.number | numbers.Real, x: np.number | numbers.Real
-    ) -> np.number | numbers.Real:
+    def besselratio_inverse(v, x):
         def f(t: float) -> float:
             return VonMisesDistribution.besselratio(v, t) - x
 
@@ -96,17 +100,15 @@ class VonMisesDistribution(AbstractCircularDistribution):
         (kappa,) = fsolve(f, start)
         return kappa
 
-    @beartype
     def multiply(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
-        C = self.kappa * np.cos(self.mu) + vm2.kappa * np.cos(vm2.mu)
-        S = self.kappa * np.sin(self.mu) + vm2.kappa * np.sin(vm2.mu)
-        mu_ = np.mod(np.arctan2(S, C), 2 * np.pi)
-        kappa_ = np.sqrt(C**2 + S**2)
+        C = self.kappa * cos(self.mu) + vm2.kappa * cos(vm2.mu)
+        S = self.kappa * sin(self.mu) + vm2.kappa * sin(vm2.mu)
+        mu_ = mod(arctan2(S, C), 2 * pi)
+        kappa_ = sqrt(C**2 + S**2)
         return VonMisesDistribution(mu_, kappa_)
 
-    @beartype
     def convolve(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
-        mu_ = np.mod(self.mu + vm2.mu, 2 * np.pi)
+        mu_ = mod(self.mu + vm2.mu, 2.0 * pi)
         t = VonMisesDistribution.besselratio(
             0, self.kappa
         ) * VonMisesDistribution.besselratio(0, vm2.kappa)
@@ -114,8 +116,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return VonMisesDistribution(mu_, kappa_)
 
     def entropy(self):
-        result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + np.log(
-            2 * np.pi * iv(0, self.kappa)
+        result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + log(
+            2.0 * pi * iv(0, self.kappa)
         )
         return result
 
@@ -130,8 +132,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
         Returns:
             vm (VMDistribution): VM distribution obtained by moment matching.
         """
-        mu_ = np.mod(np.arctan2(np.imag(m), np.real(m)), 2 * np.pi)
-        kappa_ = VonMisesDistribution.besselratio_inverse(0, np.abs(m))
+        mu_ = mod(arctan2(imag(m), real(m)), 2.0 * pi)
+        kappa_ = VonMisesDistribution.besselratio_inverse(0, abs(m))
         vm = VonMisesDistribution(mu_, kappa_)
         return vm
 

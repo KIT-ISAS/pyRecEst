@@ -2,7 +2,10 @@ import unittest
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, linspace
 from pyrecest.distributions import VonMisesDistribution
 
 matplotlib.use("Agg")
@@ -17,10 +20,10 @@ class TestVonMisesDistribution(unittest.TestCase):
 
     def test_pdf(self):
         dist = VonMisesDistribution(2, 1)
-        xs = np.linspace(1, 7, 7)
-        np.testing.assert_array_almost_equal(
+        xs = linspace(1, 7, 7)
+        npt.assert_array_almost_equal(
             dist.pdf(xs),
-            np.array(
+            array(
                 [
                     0.215781465110296,
                     0.341710488623463,
@@ -30,26 +33,6 @@ class TestVonMisesDistribution(unittest.TestCase):
                     0.0653867888824553,
                     0.166938593220285,
                 ],
-            ),
-        )
-
-    def test_logpdf(self):
-        dist = VonMisesDistribution(2, 1)
-        xs = np.linspace(1, 7, 7)
-        np.testing.assert_array_almost_equal(
-            dist.logpdf(xs),
-            np.log(
-                np.array(
-                    [
-                        0.215781465110296,
-                        0.341710488623463,
-                        0.215781465110296,
-                        0.0829150854731715,
-                        0.0467106111086458,
-                        0.0653867888824553,
-                        0.166938593220285,
-                    ],
-                )
             ),
         )
 

@@ -1,7 +1,8 @@
 from collections.abc import Callable
+from math import pi
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, mod
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -10,7 +11,6 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class CustomCircularDistribution(
     AbstractCustomDistribution, AbstractCircularDistribution
 ):
-    @beartype
     def __init__(self, f_: Callable, scale_by: float = 1, shift_by: float = 0):
         """
         Initializes a new instance of the CustomCircularDistribution class.
@@ -28,33 +28,29 @@ class CustomCircularDistribution(
         AbstractCustomDistribution.__init__(self, f_, scale_by)
         self.shift_by = shift_by
 
-    @beartype
-    def pdf(self, xs: np.ndarray):
+    def pdf(self, xs):
         """
         Computes the probability density function at xs.
 
         Args:
-            xs (np.ndarray): The values at which to evaluate the pdf.
+            xs (): The values at which to evaluate the pdf.
 
         Returns:
-            np.ndarray: The value of the pdf at xs.
+            : The value of the pdf at xs.
         """
-        return AbstractCustomDistribution.pdf(
-            self, np.mod(xs + self.shift_by, 2 * np.pi)
-        )
+        return AbstractCustomDistribution.pdf(self, mod(xs + self.shift_by, 2 * pi))
 
-    @beartype
-    def integrate(self, integration_boundaries: np.ndarray | None = None) -> float:
+    def integrate(self, integration_boundaries=None) -> float:
         """
         Computes the integral of the pdf over the given boundaries.
 
         Args:
-            integration_boundaries (np.ndarray, optional): The boundaries of the integral.
-                Defaults to [0, 2 * np.pi].
+            integration_boundaries (, optional): The boundaries of the integral.
+                Defaults to [0, 2 * pi].
 
         Returns:
             float: The value of the integral.
         """
         if integration_boundaries is None:
-            integration_boundaries = np.array([0, 2 * np.pi])
+            integration_boundaries = array([0.0, 2.0 * pi])
         return AbstractCircularDistribution.integrate(self, integration_boundaries)

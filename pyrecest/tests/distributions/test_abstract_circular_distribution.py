@@ -1,28 +1,37 @@
 import unittest
+from math import pi
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, arange, array
 from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
 
 
 class AbstractCircularDistributionTest(unittest.TestCase):
     def setUp(self):
         self.distributions = [
-            WrappedNormalDistribution(2.0, 0.7),
-            VonMisesDistribution(6.0, 1.2),
+            WrappedNormalDistribution(array(2.0), array(0.7)),
+            VonMisesDistribution(array(6.0), array(1.2)),
         ]
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_cdf_numerical(self):
         """Tests if the numerical computation of cdf matches the actual cdf."""
-        x = np.arange(0, 7)
+        x = arange(0, 7)
         starting_point = 2.1
 
         for dist in self.distributions:
             with self.subTest(distribution=dist):
                 self.assertTrue(
-                    np.allclose(dist.cdf_numerical(x), dist.cdf(x), rtol=1e-10)
+                    allclose(dist.cdf_numerical(x), dist.cdf(x), rtol=1e-10)
                 )
                 self.assertTrue(
-                    np.allclose(
+                    allclose(
                         dist.cdf_numerical(x, starting_point),
                         dist.cdf(x, starting_point),
                         rtol=1e-10,
@@ -31,40 +40,44 @@ class AbstractCircularDistributionTest(unittest.TestCase):
 
     def test_angular_moment_numerical(self):
         """Tests if the numerical computation of angular moment matches the actual moment."""
-        moments = np.arange(4)
+        moments = arange(4)
 
         for dist in self.distributions:
             for moment in moments:
                 with self.subTest(distribution=dist, moment=moment):
                     self.assertTrue(
-                        np.allclose(
+                        allclose(
                             dist.trigonometric_moment(moment),
                             dist.trigonometric_moment_numerical(moment),
                             rtol=1e-10,
                         )
                     )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_integral_numerical(self):
         """Tests if the numerical computation of integral matches the actual integral."""
         intervals = [
-            (2, 2),
-            (2, 3),
-            (5, 4),
-            (0, 4 * np.pi),
-            (-np.pi, np.pi),
-            (0, 4 * np.pi),
-            (-3 * np.pi, 3 * np.pi),
-            (-1, 20),
-            (12, -3),
+            (2.0, 2.0),
+            (2.0, 3.0),
+            (5.0, 4.0),
+            (0.0, 4.0 * pi),
+            (-pi, pi),
+            (0.0, 4.0 * pi),
+            (-3.0 * pi, 3.0 * pi),
+            (-1.0, 20.0),
+            (12.0, -3.0),
         ]
 
         for dist in self.distributions:
             for interval in intervals:
                 with self.subTest(distribution=dist, interval=interval):
                     self.assertTrue(
-                        np.allclose(
-                            dist.integrate_numerically(interval),
-                            dist.integrate(interval),
+                        allclose(
+                            dist.integrate_numerically(array(interval)),
+                            dist.integrate(array(interval)),
                             rtol=1e-10,
                         )
                     )
