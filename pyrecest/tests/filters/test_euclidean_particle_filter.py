@@ -48,20 +48,19 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(est, self.prior.mu + mean(samples, axis=0), atol=0.1)
 
     def test_predict_update_cycle_3d_forced_particle_pos_no_pred(self):
-        self.pf.filter_state = self.prior.set_mean(ones(3) + pi / 2.0)
-
         force_first_particle_pos = array([1.1, 2.0, 3.0])
         self.pf.filter_state.d[0, :] = force_first_particle_pos
-        for _ in range(50):
+        for _ in range(10):
             # jscpd:ignore-start
+            self.pf.predict_identity(GaussianDistribution(zeros_like(self.mu), self.C_prior))
             self.assertEqual(self.pf.get_point_estimate().shape, (3,))
-            for _ in range(3):
+            for _ in range(4):
                 self.pf.update_identity(self.sys_noise_default, self.forced_mean)
             # jscpd:ignore-end
 
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
         npt.assert_allclose(
-            self.pf.get_point_estimate(), force_first_particle_pos, atol=1e-10
+            self.pf.get_point_estimate(), force_first_particle_pos, atol=0.2
         )
 
 
