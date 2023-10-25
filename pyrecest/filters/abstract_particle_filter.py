@@ -56,7 +56,19 @@ class AbstractParticleFilter(AbstractFilterType):
         for i in range(n_particles):
             d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
 
-        self.filter_state.d = d
+        self._filter_state.d = d
+            
+    @property
+    def filter_state(self):
+        return self._filter_state
+    
+    @filter_state.setter
+    def filter_state(self, new_state):
+        if self._filter_state is not None and not isinstance(new_state, type(self.filter_state)):
+            # Sample if it does not inherit from the previous distribution
+            samples = new_state.sample(self.filter_state.w.shape[0])
+            assert samples.shape == self.filter_state.d.shape
+            self._filter_state.d = samples
 
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True
