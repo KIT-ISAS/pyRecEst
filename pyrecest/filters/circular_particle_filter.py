@@ -9,6 +9,7 @@ from .abstract_particle_filter import AbstractParticleFilter
 from pyrecest.distributions import CircularDiracDistribution
 
 class CircularParticleFilter(HypertoroidalParticleFilter):
+    # pylint: disable=non-parent-init-called,super-init-not-called
     def __init__(self, n_particles: Union[int, int32, int64]) -> None:
         """
         Initialize the CircularParticleFilter.
