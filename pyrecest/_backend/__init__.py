@@ -294,7 +294,7 @@ class BackendImporter:
                             f"attribute '{attribute_name}'"
                         )
 
-                    # raise RuntimeError(error) from None
+                    raise RuntimeError(error) from None
                 else:
                     setattr(new_submodule, attribute_name, attribute)
 
