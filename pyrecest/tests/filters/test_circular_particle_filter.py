@@ -27,7 +27,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         self.wn = WrappedNormalDistribution(array(1.3), array(0.8))
 
     def test_estimate(self):
-        self.assertTrue(allclose(self.dist.trigonometric_moment(1), 0.0, atol=1e-10))
+        npt.assert_array_almost_equal(self.dist.trigonometric_moment(1), 0.0)
 
     def test_setting_state(self):
         # sanity check

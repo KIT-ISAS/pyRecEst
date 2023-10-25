@@ -16,7 +16,7 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
 
         :param n_particles: number of particles
         """
-        filter_state = CircularDiracDistribution(linspace(0.0, 2.0 * pi, n_particles))
+        filter_state = CircularDiracDistribution(linspace(0.0, 2.0 * pi, n_particles, endpoint=False))
         AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)
         
