@@ -97,14 +97,14 @@ class AbstractParticleFilter(AbstractFilterType):
             likelihood = likelihood.pdf
 
         if measurement is None:
-            self.filter_state = self.filter_state.reweigh(likelihood)
+            self._filter_state = self.filter_state.reweigh(likelihood)
         else:
-            self.filter_state = self.filter_state.reweigh(
+            self._filter_state = self.filter_state.reweigh(
                 lambda x: likelihood(measurement, x)
             )
 
-        self.filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
-        self.filter_state.w = (
+        self._filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
+        self._filter_state.w = (
             1 / self.filter_state.w.shape[0] * ones_like(self.filter_state.w)
         )
 

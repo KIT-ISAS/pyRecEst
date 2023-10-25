@@ -123,13 +123,13 @@ class CircularParticleFilterTest(unittest.TestCase):
         self.filter.filter_state = CircularDiracDistribution(linspace(0.0, 1.1, 30))
 
         def likelihood1(_, x):
-            return (x == 0.5) + 0.0  # To convert it to double regardless of the backend
+            return (x == 1.1) + 0.0  # To convert it to double regardless of the backend
 
         self.filter.update_nonlinear_using_likelihood(likelihood1, 42)
         estimation = self.filter.filter_state
         self.assertIsInstance(estimation, CircularDiracDistribution)
         for i in range(len(estimation.d)):
-            self.assertEqual(estimation.d[i], 0.5)
+            self.assertEqual(estimation.d[i], 1.1)
 
         # test update with single parameter likelihood
         random.seed(0)
