@@ -1,5 +1,5 @@
 from collections.abc import Callable
-
+import copy
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import ndim, ones_like, random, sum, zeros
@@ -65,10 +65,10 @@ class AbstractParticleFilter(AbstractFilterType):
     @filter_state.setter
     def filter_state(self, new_state):
         if self._filter_state is None:
-            self._filter_state = new_state
+            self._filter_state = copy.deepcopy(new_state)
         elif isinstance(new_state, type(self.filter_state)):
             assert self.filter_state.d.shape == new_state.d.shape  # This also ensures the dimension and type stays the same
-            self._filter_state = new_state
+            self._filter_state = copy.deepcopy(new_state)
         else:
             # Sample if it does not inherit from the previous distribution
             samples = new_state.sample(self.filter_state.w.shape[0])

@@ -74,7 +74,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         def f(x):
             return x**2
 
-        no_noise = CircularDiracDistribution(array([0]))
+        no_noise = CircularDiracDistribution(array([0.0]))
         self.filter.predict_nonlinear(f, no_noise)
         predicted = self.filter.filter_state
         self.assertIsInstance(predicted, HypertoroidalDiracDistribution)
