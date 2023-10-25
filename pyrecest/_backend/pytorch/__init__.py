@@ -432,10 +432,8 @@ def linspace(start, stop, num=50, endpoint=True, dtype=None):
 
     if not (start_is_array or stop_is_array) and endpoint:
         return _torch.linspace(start=start, end=stop, steps=num, dtype=dtype)
-    elif not (start_is_array or stop_is_array):  # Added for pyrecest
+    elif not endpoint:  # Added for pyrecest
         return _torch.arange(start=start, end=stop, step=(stop-start)/num, dtype=dtype)
-    elif endpoint:
-        raise ValueError("endpoint=False not supported for vectors")
 
     if not start_is_array:
         start = _torch.tensor(start)
