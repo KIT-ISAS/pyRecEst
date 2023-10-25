@@ -20,7 +20,6 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
         AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)
         
-
     def compute_association_likelihood(self, likelihood) -> float64:
         """
         Compute the likelihood of association based on the PDF of the likelihood
