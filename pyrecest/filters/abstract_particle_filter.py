@@ -64,11 +64,17 @@ class AbstractParticleFilter(AbstractFilterType):
     
     @filter_state.setter
     def filter_state(self, new_state):
-        if self._filter_state is not None and not isinstance(new_state, type(self.filter_state)):
+        if self._filter_state is None:
+            self._filter_state = new_state
+        elif isinstance(new_state, type(self.filter_state)):
+            assert self.filter_state.d.shape == new_state.d.shape  # This also ensures the dimension and type stays the same
+            self.filter_state = new_state
+        else:
             # Sample if it does not inherit from the previous distribution
             samples = new_state.sample(self.filter_state.w.shape[0])
-            assert samples.shape == self.filter_state.d.shape
+            assert samples.shape == self.filter_state.d.shape  # This also ensures the dimension and type stays the same
             self._filter_state.d = samples
+            self._filter_state.w = ones_like(self.filter_state.w) / self.filter_state.w.shape[0]            
 
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True

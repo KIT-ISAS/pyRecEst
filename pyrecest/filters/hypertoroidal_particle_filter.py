@@ -36,7 +36,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
             points = tile(
                 arange(0.0, 2.0 * pi, 2.0 * pi / n_particles), (dim, 1)
             ).T.squeeze()
-        filter_state = HypertoroidalDiracDistribution(points, dim=1)
+        filter_state = HypertoroidalDiracDistribution(points, dim=dim)
         AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)
 
