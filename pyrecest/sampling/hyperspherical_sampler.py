@@ -211,7 +211,7 @@ class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
             healpix_points = empty((numpixels, 2))
             for j in range(numpixels):
                 theta, phi = hp.pix2ang(nside, j, nest=True)
-                healpix_points[j] = [theta, phi]
+                healpix_points[j] = array([theta, phi])
 
             for j in range(len(healpix_points)):
                 for k in range(len(psi_points)):
