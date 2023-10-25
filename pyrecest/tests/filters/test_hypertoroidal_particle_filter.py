@@ -40,7 +40,9 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
     def test_predict_update_cycle_3D(self):
         self.hpf.filter_state = self.hwnd
         for _ in range(10):
-            self.hpf.predict_identity(HypertoroidalWNDistribution(zeros_like(self.mu), self.covariance_matrix))
+            self.hpf.predict_identity(
+                HypertoroidalWNDistribution(zeros_like(self.mu), self.covariance_matrix)
+            )
             for _ in range(3):
                 self.test_update_identity()
         npt.assert_allclose(self.hpf.get_point_estimate(), self.forced_mean, atol=0.1)

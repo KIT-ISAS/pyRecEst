@@ -1,5 +1,6 @@
-from collections.abc import Callable
 import copy
+from collections.abc import Callable
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import ndim, ones_like, random, sum, zeros
@@ -57,24 +58,30 @@ class AbstractParticleFilter(AbstractFilterType):
             d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
 
         self._filter_state.d = d
-            
+
     @property
     def filter_state(self):
         return self._filter_state
-    
+
     @filter_state.setter
     def filter_state(self, new_state):
         if self._filter_state is None:
             self._filter_state = copy.deepcopy(new_state)
         elif isinstance(new_state, type(self.filter_state)):
-            assert self.filter_state.d.shape == new_state.d.shape  # This also ensures the dimension and type stays the same
+            assert (
+                self.filter_state.d.shape == new_state.d.shape
+            )  # This also ensures the dimension and type stays the same
             self._filter_state = copy.deepcopy(new_state)
         else:
             # Sample if it does not inherit from the previous distribution
             samples = new_state.sample(self.filter_state.w.shape[0])
-            assert samples.shape == self.filter_state.d.shape  # This also ensures the dimension and type stays the same
+            assert (
+                samples.shape == self.filter_state.d.shape
+            )  # This also ensures the dimension and type stays the same
             self._filter_state.d = samples
-            self._filter_state.w = ones_like(self.filter_state.w) / self.filter_state.w.shape[0]            
+            self._filter_state.w = (
+                ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
+            )
 
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True

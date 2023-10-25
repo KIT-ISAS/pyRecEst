@@ -8,10 +8,10 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, exp, mod, random, sum, zeros_like
 from pyrecest.distributions import (
+    AbstractHypertoroidalDistribution,
     HypertoroidalDiracDistribution,
     ToroidalDiracDistribution,
 )
-from pyrecest.distributions import AbstractHypertoroidalDistribution
 
 
 class TestHypertoroidalDiracDistribution(unittest.TestCase):

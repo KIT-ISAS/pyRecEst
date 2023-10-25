@@ -3,9 +3,10 @@ import warnings
 from abc import abstractmethod
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dstack, empty, ndim
-# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import dstack, empty, ndim
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter

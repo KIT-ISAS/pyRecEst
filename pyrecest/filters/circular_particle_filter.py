@@ -1,12 +1,14 @@
-from typing import Union
 from math import pi
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import float64, int32, int64, sum, linspace
+from typing import Union
 
-from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import float64, int32, int64, linspace, sum
+from pyrecest.distributions import CircularDiracDistribution
+
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_particle_filter import AbstractParticleFilter
-from pyrecest.distributions import CircularDiracDistribution
+from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
+
 
 class CircularParticleFilter(HypertoroidalParticleFilter):
     # pylint: disable=non-parent-init-called,super-init-not-called
@@ -16,10 +18,12 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
 
         :param n_particles: number of particles
         """
-        filter_state = CircularDiracDistribution(linspace(0.0, 2.0 * pi, n_particles, endpoint=False))
+        filter_state = CircularDiracDistribution(
+            linspace(0.0, 2.0 * pi, n_particles, endpoint=False)
+        )
         AbstractHypertoroidalFilter.__init__(self, filter_state)
         AbstractParticleFilter.__init__(self, filter_state)
-        
+
     def compute_association_likelihood(self, likelihood) -> float64:
         """
         Compute the likelihood of association based on the PDF of the likelihood

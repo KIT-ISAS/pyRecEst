@@ -1,5 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import abs, linalg, amax
+from pyrecest.backend import abs, amax, linalg
 
 from ..abstract_se3_distribution import AbstractSE3Distribution
 from .lin_bounded_cart_prod_dirac_distribution import (

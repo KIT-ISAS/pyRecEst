@@ -1,5 +1,4 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 
@@ -52,7 +51,9 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         self.pf.filter_state.d[0, :] = force_first_particle_pos
         for _ in range(10):
             # jscpd:ignore-start
-            self.pf.predict_identity(GaussianDistribution(zeros_like(self.mu), self.C_prior))
+            self.pf.predict_identity(
+                GaussianDistribution(zeros_like(self.mu), self.C_prior)
+            )
             self.assertEqual(self.pf.get_point_estimate().shape, (3,))
             for _ in range(4):
                 self.pf.update_identity(self.sys_noise_default, self.forced_mean)

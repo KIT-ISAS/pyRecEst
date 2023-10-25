@@ -4,7 +4,7 @@ from math import pi
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, arange, array, random, linspace
+from pyrecest.backend import arange, array, linspace, random
 from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
     WrappedNormalDistribution,
