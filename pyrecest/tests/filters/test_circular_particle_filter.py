@@ -4,7 +4,7 @@ from math import pi
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, arange, array, random
+from pyrecest.backend import allclose, arange, array, random, linspace
 from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
     WrappedNormalDistribution,
@@ -120,7 +120,7 @@ class CircularParticleFilterTest(unittest.TestCase):
             1.0 / (2.0 * pi),
         )
 
-        self.filter.filter_state = CircularDiracDistribution(arange(0.0, 1.1, 0.1))
+        self.filter.filter_state = CircularDiracDistribution(linspace(0.0, 1.1, 30))
 
         def likelihood1(_, x):
             return (x == 0.5) + 0.0  # To convert it to double regardless of the backend
