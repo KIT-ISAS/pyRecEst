@@ -10,20 +10,15 @@ def determine_all_deviations(
     results,
     extract_mean,
     distance_function: Callable,
-    groundtruths: np.ndarray,
+    groundtruths,
     mean_calculation_symm: str = "",
-) -> np.ndarray:
+):
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
-    assert (
-        np.ndim(groundtruths) == 2
-        and isinstance(groundtruths[0, 0], np.ndarray)
-        and np.ndim(groundtruths[0, 0])
-        in (
-            1,
-            2,
-        )
+    assert groundtruths.ndim == 2 and groundtruths[0, 0].ndim in (
+        1,
+        2,
     ), "Assuming groundtruths to be a 2-D array of shape (n_runs, n_timesteps) composed arrays of shape (n_dim,) or (n_targets,n_dim)."
 
     all_deviations_last_mat = np.empty((len(results), groundtruths.shape[0]))

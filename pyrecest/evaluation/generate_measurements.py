@@ -1,5 +1,10 @@
+from math import pi
+
 import numpy as np
 from beartype import beartype
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import mod, squeeze, sum, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -30,7 +35,7 @@ def generate_measurements(groundtruth, simulation_config):
     assert "n_meas_at_individual_time_step" not in simulation_config or np.shape(
         simulation_config["n_meas_at_individual_time_step"]
     ) == (simulation_config["n_timesteps"],)
-    measurements = np.empty(simulation_config["n_timesteps"], dtype=np.ndarray)
+    measurements = np.empty(simulation_config["n_timesteps"], dtype=object)
 
     if simulation_config.get("mtt", False) and simulation_config.get("eot", False):
         raise NotImplementedError(
@@ -115,8 +120,8 @@ def generate_measurements(groundtruth, simulation_config):
         )
 
         for t in range(simulation_config["n_timesteps"]):
-            n_meas_at_t = np.sum(n_observations[t, :])
-            measurements[t] = np.nan * np.zeros(
+            n_meas_at_t = sum(n_observations[t, :])
+            measurements[t] = float("NaN") * zeros(
                 (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
             )
 
@@ -146,9 +151,9 @@ def generate_measurements(groundtruth, simulation_config):
 
             if isinstance(meas_noise, AbstractHypertoroidalDistribution):
                 noise_samples = meas_noise.sample(n_meas)
-                measurements[t] = np.mod(
-                    np.squeeze(
-                        np.tile(
+                measurements[t] = mod(
+                    squeeze(
+                        tile(
                             groundtruth[t - 1],
                             (
                                 n_meas,
@@ -157,7 +162,7 @@ def generate_measurements(groundtruth, simulation_config):
                         )
                         + noise_samples
                     ),
-                    2 * np.pi,
+                    2.0 * pi,
                 )
 
             elif isinstance(
@@ -169,8 +174,8 @@ def generate_measurements(groundtruth, simulation_config):
 
             elif isinstance(meas_noise, GaussianDistribution):
                 noise_samples = meas_noise.sample(n_meas)
-                measurements[t] = np.squeeze(
-                    np.tile(
+                measurements[t] = squeeze(
+                    tile(
                         groundtruth[t - 1],
                         (
                             n_meas,

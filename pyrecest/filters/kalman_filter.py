@@ -1,16 +1,16 @@
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import eye
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter
 
 
 class KalmanFilter(AbstractEuclideanFilter):
-    @beartype
-    def __init__(
-        self, initial_state: GaussianDistribution | tuple[np.ndarray, np.ndarray]
-    ):
+    def __init__(self, initial_state):
         """
         Initialize the Kalman filter with the initial state.
 
@@ -35,10 +35,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
 
     @filter_state.setter
-    @beartype
-    def filter_state(
-        self, new_state: GaussianDistribution | tuple[np.ndarray, np.ndarray]
-    ):
+    def filter_state(self, new_state):
         """
         Set the filter state.
 
@@ -55,24 +52,22 @@ class KalmanFilter(AbstractEuclideanFilter):
                 "new_state must be a GaussianDistribution or a tuple of (mean, covariance)"
             )
 
-    @beartype
-    def predict_identity(self, sys_noise_cov: np.ndarray, sys_input: np.ndarray = None):
+    def predict_identity(self, sys_noise_cov, sys_input=None):
         """
         Predicts the next state assuming identity transition matrix.
 
         :param sys_noise_mean: System noise mean.
         :param sys_input: System noise covariance.
         """
-        system_matrix = np.eye(self._filter_state.x.shape[0])
-        B = np.eye(system_matrix.shape[0]) if sys_input is not None else None
+        system_matrix = eye(self._filter_state.x.shape[0])
+        B = eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
-    @beartype
     def predict_linear(
         self,
-        system_matrix: np.ndarray,
-        sys_noise_cov: np.ndarray,
-        sys_input: np.ndarray | None = None,
+        system_matrix,
+        sys_noise_cov,
+        sys_input=None,
     ):
         """
         Predicts the next state assuming a linear system model.
@@ -81,16 +76,18 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param sys_noise_cov: System noise covariance.
         :param sys_input: System input.
         """
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported on NumPy backend"
         if sys_input is not None and system_matrix.shape[0] != sys_input.shape[0]:
             raise ValueError(
                 "The number of rows in system_matrix should match the number of elements in sys_input"
             )
 
-        B = np.eye(system_matrix.shape[0]) if sys_input is not None else None
+        B = eye(system_matrix.shape[0]) if sys_input is not None else None
         self._filter_state.predict(F=system_matrix, Q=sys_noise_cov, B=B, u=sys_input)
 
-    @beartype
-    def update_identity(self, meas_noise: np.ndarray, measurement: np.ndarray):
+    def update_identity(self, meas_noise, measurement):
         """
         Update the filter state with measurement, assuming identity measurement matrix.
 
@@ -99,16 +96,15 @@ class KalmanFilter(AbstractEuclideanFilter):
         """
         self.update_linear(
             measurement=measurement,
-            measurement_matrix=np.eye(self.dim),
+            measurement_matrix=eye(self.dim),
             meas_noise=meas_noise,
         )
 
-    @beartype
     def update_linear(
         self,
-        measurement: np.ndarray,
-        measurement_matrix: np.ndarray,
-        meas_noise: np.ndarray,
+        measurement,
+        measurement_matrix,
+        meas_noise,
     ):
         """
         Update the filter state with measurement, assuming a linear measurement model.
@@ -117,10 +113,12 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param measurement_matrix: Measurement matrix.
         :param meas_noise: Covariance matrix for measurement.
         """
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported on NumPy backend"
         self._filter_state.dim_z = measurement_matrix.shape[0]
         self._filter_state.update(z=measurement, R=meas_noise, H=measurement_matrix)
 
-    @beartype
-    def get_point_estimate(self) -> np.ndarray:
+    def get_point_estimate(self):
         """Returns the mean of the current filter state."""
         return self._filter_state.x

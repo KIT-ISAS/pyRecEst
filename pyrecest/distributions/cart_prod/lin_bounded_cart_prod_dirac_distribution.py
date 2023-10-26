@@ -1,7 +1,8 @@
 import warnings
 from abc import abstractmethod
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import concatenate
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
@@ -38,7 +39,7 @@ class LinBoundedCartProdDiracDistribution(
         periodic = self.marginalize_linear()
         linear = self.marginalize_periodic()
 
-        return np.concatenate((periodic.mean_direction(), linear.mean()))
+        return concatenate((periodic.mean_direction(), linear.mean()))
 
     @classmethod
     def from_distribution(cls, distribution, n_particles):

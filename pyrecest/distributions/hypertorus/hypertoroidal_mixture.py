@@ -1,19 +1,19 @@
 import collections
 import copy
+from typing import Union
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import complex128, int32, int64, zeros
 
 from ..abstract_mixture import AbstractMixture
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
 class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
-    @beartype
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractHypertoroidalDistribution],
-        w: np.ndarray | None = None,
+        w=None,
     ):
         """
         Constructor
@@ -28,14 +28,14 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
             AbstractHypertoroidalDistribution
         ] = self.dists
 
-    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         """
         Calculate n-th trigonometric moment
 
         :param n: number of moment
         :returns: n-th trigonometric moment (complex number)
         """
-        m = np.zeros(self.dim, dtype=complex)
+        m = zeros(self.dim, dtype=complex128)
         for i in range(len(self.dists)):
             # Calculate moments using moments of each component
             m += self.w[i] * self.dists[i].trigonometric_moment(n)
@@ -48,7 +48,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param shift_angles: angles to shift by
         :returns: shifted distribution
         """
-        assert np.size(shift_by) == self.dim
+        assert shift_by.shape == (self.dim,)
         hd_shifted = copy.deepcopy(self)
         hd_shifted.dists = [dist.shift(shift_by) for dist in hd_shifted.dists]
         return hd_shifted

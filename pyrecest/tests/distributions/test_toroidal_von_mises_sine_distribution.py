@@ -1,7 +1,14 @@
 import unittest
+from math import pi
 
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 from parameterized import parameterized
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import arange, array, column_stack, cos, exp, sin
 from pyrecest.distributions.hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,
 )
@@ -9,9 +16,9 @@ from pyrecest.distributions.hypertorus.toroidal_von_mises_sine_distribution impo
 
 class ToroidalVMSineDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.mu = np.array([1, 2])
-        self.kappa = np.array([0.7, 1.4])
-        self.lambda_ = 0.5
+        self.mu = array([1.0, 2.0])
+        self.kappa = array([0.7, 1.4])
+        self.lambda_ = array(0.5)
         self.tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, self.lambda_)
 
     def test_instance(self):
@@ -19,42 +26,44 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         self.assertIsInstance(self.tvm, ToroidalVonMisesSineDistribution)
 
     def test_mu_kappa_lambda(self):
-        np.testing.assert_almost_equal(self.tvm.mu, self.mu, decimal=6)
-        np.testing.assert_almost_equal(self.tvm.kappa, self.kappa, decimal=6)
+        npt.assert_allclose(self.tvm.mu, self.mu)
+        npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_integral(self):
         # test integral
-        self.assertAlmostEqual(self.tvm.integrate(), 1, delta=1e-5)
+        self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-5)
 
     def test_trigonometric_moment_numerical(self):
-        np.testing.assert_almost_equal(
-            self.tvm.trigonometric_moment_numerical(0), np.array([1, 1]), decimal=5
+        npt.assert_allclose(
+            self.tvm.trigonometric_moment_numerical(0), array([1.0, 1.0])
         )
 
     # jscpd:ignore-start
     # pylint: disable=R0801
     def _unnormalized_pdf(self, xs):
-        return np.exp(
-            self.kappa[0] * np.cos(xs[..., 0] - self.mu[0])
-            + self.kappa[1] * np.cos(xs[..., 1] - self.mu[1])
-            + self.lambda_
-            * np.sin(xs[..., 0] - self.mu[0])
-            * np.sin(xs[..., 1] - self.mu[1])
+        return exp(
+            self.kappa[0] * cos(xs[..., 0] - self.mu[0])
+            + self.kappa[1] * cos(xs[..., 1] - self.mu[1])
+            + self.lambda_ * sin(xs[..., 0] - self.mu[0]) * sin(xs[..., 1] - self.mu[1])
         )
 
     # jscpd:ignore-end
 
     @parameterized.expand(
         [
-            (np.array([3, 2]),),
-            (np.array([1, 4]),),
-            (np.array([5, 6]),),
-            (np.array([-3, 11]),),
-            (np.array([[5, 1], [6, 3]]),),
+            (array([3.0, 2.0]),),
+            (array([1.0, 4.0]),),
+            (array([5.0, 6.0]),),
+            (array([-3.0, 11.0]),),
+            (array([[5.0, 1.0], [6.0, 3.0]]),),
             (
-                np.column_stack(
-                    (np.arange(0, 2 * np.pi, 0.1), np.arange(1 * np.pi, 3 * np.pi, 0.1))
+                column_stack(
+                    (arange(0.0, 2.0 * pi, 0.1), arange(1.0 * pi, 3.0 * pi, 0.1))
                 ),
             ),
         ]
@@ -67,7 +76,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
 
         expected = pdf(x)
 
-        np.testing.assert_almost_equal(self.tvm.pdf(x), expected, decimal=10)
+        npt.assert_allclose(self.tvm.pdf(x), expected)
 
 
 if __name__ == "__main__":

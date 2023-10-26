@@ -1,6 +1,7 @@
 import copy
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import ndim, reshape, zeros
 
 from ..abstract_custom_nonperiodic_distribution import (
     AbstractCustomNonPeriodicDistribution,
@@ -31,10 +32,10 @@ class CustomLinearDistribution(
         if shift_by is not None:
             self.shift_by = shift_by
         else:
-            self.shift_by = np.zeros(dim)
+            self.shift_by = zeros(dim)
 
     def shift(self, shift_by):
-        assert self.dim == np.size(shift_by) and shift_by.ndim <= 1
+        assert self.dim == 1 or self.dim == shift_by.shape[0] and shift_by.ndim == 1
         cd = copy.deepcopy(self)
         cd.shift_by = self.shift_by + shift_by
         return cd
@@ -44,12 +45,13 @@ class CustomLinearDistribution(
         self.shift_by *= mean_offset
 
     def pdf(self, xs):
-        assert np.size(xs) % self.input_dim == 0
-        n_inputs = np.size(xs) // self.input_dim
+        assert self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
         p = self.scale_by * self.f(
-            np.reshape(xs, (-1, self.input_dim)) - np.atleast_2d(self.shift_by)
+            # To ensure 2-d for broadcasting
+            reshape(xs, (-1, self.dim))
+            - reshape(self.shift_by, (1, -1))
         )
-        assert np.ndim(p) <= 1 and np.size(p) == n_inputs
+        assert ndim(p) <= 1
         return p
 
     @staticmethod

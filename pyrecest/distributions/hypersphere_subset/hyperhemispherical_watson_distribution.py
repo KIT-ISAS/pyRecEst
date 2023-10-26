@@ -1,7 +1,7 @@
-import numbers
+from typing import Union
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, array, concatenate, int32, int64, zeros
 
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -10,8 +10,7 @@ from .watson_distribution import WatsonDistribution
 
 
 class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistribution):
-    @beartype
-    def __init__(self, mu: np.ndarray, kappa: np.number | numbers.Real):
+    def __init__(self, mu, kappa):
         assert mu[-1] >= 0
         self.dist_full_sphere = WatsonDistribution(mu, kappa)
         AbstractHyperhemisphericalDistribution.__init__(
@@ -19,27 +18,24 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         )
 
     def pdf(self, xs):
-        return 2 * self.dist_full_sphere.pdf(xs)
+        return 2.0 * self.dist_full_sphere.pdf(xs)
 
-    @beartype
-    def set_mode(self, mu: np.ndarray) -> "HyperhemisphericalWatsonDistribution":
+    def set_mode(self, mu) -> "HyperhemisphericalWatsonDistribution":
         w = self
         w.mu = mu
         return w
 
-    @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         s_full = self.dist_full_sphere.sample(n)
         s = s_full * (-1) ** (s_full[-1] < 0)  # Mirror to upper hemisphere
         return s
 
     @property
-    def mu(self) -> np.ndarray:
+    def mu(self):
         return self.dist_full_sphere.mu
 
     @mu.setter
-    @beartype
-    def mu(self, mu: np.ndarray):
+    def mu(self, mu):
         self.dist_full_sphere.mu = mu
 
     @property
@@ -47,17 +43,15 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return self.dist_full_sphere.kappa
 
     @kappa.setter
-    @beartype
     def kappa(self, kappa: float):
         self.dist_full_sphere.kappa = kappa
 
-    def mode(self) -> np.ndarray:
+    def mode(self):
         return self.mu
 
-    @beartype
     def shift(self, shift_by) -> "HyperhemisphericalWatsonDistribution":
-        assert np.allclose(
-            self.mu, np.append(np.zeros(self.dim - 1), 1)
+        assert allclose(
+            self.mu, concatenate((zeros(self.dim - 1), array([1])))
         ), "There is no true shifting for the hyperhemisphere. This is a function for compatibility and only works when mu is [0,0,...,1]."
         dist_shifted = self
         dist_shifted.mu = shift_by

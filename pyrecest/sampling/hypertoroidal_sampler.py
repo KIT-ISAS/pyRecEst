@@ -1,5 +1,7 @@
-import numpy as np
-from beartype import beartype
+from math import pi
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import linspace
 from pyrecest.distributions import CircularUniformDistribution
 
 from .abstract_sampler import AbstractSampler
@@ -14,16 +16,17 @@ class AbstractCircularSampler(AbstractHypertoroidalSampler):
 
 
 class CircularUniformSampler(AbstractCircularSampler):
-    @beartype
-    def sample_stochastic(self, n_samples: int):
+    def sample_stochastic(self, n_samples: int, dim: int = 1):
+        assert (
+            dim == 1
+        ), "CircularUniformSampler is supposed to be used for the circle (which is one-dimensional) only."
         return CircularUniformDistribution().sample(n_samples)
 
-    @beartype
-    def get_grid(self, grid_density_parameter: int) -> np.ndarray:
+    def get_grid(self, grid_density_parameter: int):
         """
         Returns an equidistant grid of points on the circle [0,2*pi).
         """
-        points = np.linspace(0, 2 * np.pi, grid_density_parameter, endpoint=False)
+        points = linspace(0.0, 2.0 * pi, grid_density_parameter, endpoint=False)
         # Set it to the middle of the interval instead of the start
-        points += (2 * np.pi / grid_density_parameter) / 2
+        points += (2.0 * pi / grid_density_parameter) / 2.0
         return points

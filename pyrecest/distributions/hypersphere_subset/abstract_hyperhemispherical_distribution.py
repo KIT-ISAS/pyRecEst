@@ -1,9 +1,24 @@
 import warnings
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
 import matplotlib.pyplot as plt
-import numpy as np
-from beartype import beartype
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    array,
+    concatenate,
+    int32,
+    int64,
+    linalg,
+    linspace,
+    meshgrid,
+    ones,
+    random,
+    vstack,
+    zeros,
+)
 from scipy.optimize import minimize
 
 from .abstract_hypersphere_subset_distribution import (
@@ -12,27 +27,25 @@ from .abstract_hypersphere_subset_distribution import (
 
 
 class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
-    @beartype
-    def mean(self) -> np.ndarray:
+    def mean(self):
         """
         Convenient access to axis to have a consistent interface
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype:
         """
         return self.mean_axis()
 
     # jscpd:ignore-start
-    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point=None,
+    ):
         # jscpd:ignore-end
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
@@ -50,8 +63,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             n, burn_in, skipping, proposal=proposal, start_point=start_point
         )
 
-    @beartype
-    def mean_direction_numerical(self) -> np.ndarray:
+    def mean_direction_numerical(self):
         warning_msg = (
             "The result is the mean direction on the upper hemisphere along the last dimension. "
             "It is not a mean of a symmetric distribution, which would not have a proper mean. "
@@ -61,12 +73,12 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         warnings.warn(warning_msg)
 
         if self.dim == 1:
-            mu = super().mean_direction_numerical([0, np.pi])
+            mu = super().mean_direction_numerical([0, pi])
         elif self.dim <= 3:
             mu = super().mean_direction_numerical(
                 [
-                    np.zeros(self.dim),
-                    [2 * np.pi, *np.pi * np.ones(self.dim - 2), np.pi / 2],
+                    zeros(self.dim),
+                    [2 * pi, *pi * ones(self.dim - 2), pi / 2],
                 ]
             )
         else:
@@ -80,32 +92,28 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             p = self.pdf(r)
             mu = r @ p / n * Sd
 
-        if np.linalg.norm(mu) < 1e-9:
+        if linalg.norm(mu) < 1e-9:
             warnings.warn(
                 "Density may not have actually have a mean direction because integral yields a point very close to the origin."
             )
 
-        mu = mu / np.linalg.norm(mu)
+        mu = mu / linalg.norm(mu)
         return mu
 
-    @beartype
     @staticmethod
-    def get_full_integration_boundaries(dim: int | np.int32 | np.int64) -> np.ndarray:
+    def get_full_integration_boundaries(dim: Union[int, int32, int64]):
         if dim == 1:
-            integration_boundaries = [0, np.pi]
+            integration_boundaries = [0, pi]
         else:
-            integration_boundaries = np.vstack(
+            integration_boundaries = vstack(
                 (
-                    np.zeros(dim),
-                    np.concatenate(
-                        ([2 * np.pi], np.pi * np.ones(dim - 2), [np.pi / 2])
-                    ),
+                    zeros(dim),
+                    concatenate((array([2 * pi]), pi * ones(dim - 2), array([pi / 2]))),
                 )
             ).T
         return integration_boundaries
 
-    @beartype
-    def integrate(self, integration_boundaries: np.ndarray | None = None) -> float:
+    def integrate(self, integration_boundaries=None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -114,10 +122,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             )
         return super().integrate(integration_boundaries)
 
-    @beartype
-    def integrate_numerically(
-        self, integration_boundaries: np.ndarray | None = None
-    ) -> float:
+    def integrate_numerically(self, integration_boundaries=None) -> float:
         if integration_boundaries is None:
             integration_boundaries = (
                 AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(
@@ -126,10 +131,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             )
         return super().integrate_numerically(integration_boundaries)
 
-    @beartype
     @staticmethod
     def integrate_fun_over_domain(
-        f_hypersph_coords: Callable, dim: int | np.int32 | np.int64
+        f_hypersph_coords: Callable, dim: Union[int, int32, int64]
     ) -> float:
         integration_boundaries = (
             AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(dim)
@@ -138,14 +142,15 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             f_hypersph_coords, dim, integration_boundaries
         )
 
-    @beartype
-    def mode_numerical(self) -> np.ndarray:
+    def mode_numerical(self):
         def objective_function_2d(s):
-            return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
+            return -self.pdf(
+                AbstractHypersphereSubsetDistribution.polar_to_cart(array(s))
+            )
 
         assert self.dim == 2, "Currently only implemented for 2D hemispheres."
 
-        s0 = np.random.rand(self.dim) * np.pi
+        s0 = random.rand(self.dim) * pi
         result = minimize(
             objective_function_2d,
             s0,
@@ -155,16 +160,15 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                 "maxiter": 2000,
             },
         )
-        m = AbstractHypersphereSubsetDistribution.polar_to_cart(result.x)
+        m = AbstractHypersphereSubsetDistribution.polar_to_cart(array(result.x))
         return (1 - 2 * (m[-1] < 0)) * m
 
-    @beartype
     @staticmethod
-    def plot_hemisphere(resolution: int | np.int32 | np.int64 = 150):
-        x, y, z = np.meshgrid(
-            np.linspace(-1, 1, resolution),
-            np.linspace(-1, 1, resolution),
-            np.linspace(0, 1, resolution // 2),
+    def plot_hemisphere(resolution: Union[int, int32, int64] = 150):
+        x, y, z = meshgrid(
+            linspace(-1, 1, resolution),
+            linspace(-1, 1, resolution),
+            linspace(0, 1, resolution // 2),
         )
         mask = (x**2 + y**2 + z**2 <= 1) & (z >= 0)
         x, y, z = x[mask].reshape(-1, 1), y[mask].reshape(-1, 1), z[mask].reshape(-1, 1)

@@ -1,5 +1,7 @@
-import numpy as np
-from beartype import beartype
+from typing import Union
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import dot, int32, int64, linalg, random, zeros
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -28,8 +30,7 @@ class EllipsoidalBallUniformDistribution(
     def mean(self):
         raise NotImplementedError()
 
-    @beartype
-    def pdf(self, xs: np.ndarray):
+    def pdf(self, xs):
         """
         Compute the probability density function at given points.
 
@@ -38,19 +39,19 @@ class EllipsoidalBallUniformDistribution(
         """
         assert xs.shape[-1] == self.dim
         # Calculate the reciprocal of the volume of the ellipsoid
-        # reciprocal_volume = 1 / (np.power(np.pi, self.dim / 2) * np.sqrt(np.linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
+        # reciprocal_volume = 1 / (power(pi, self.dim / 2) * sqrt(linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
         reciprocal_volume = 1 / self.get_manifold_size()
         if xs.ndim == 1:
             return reciprocal_volume
 
         n = xs.shape[0]
-        results = np.zeros(n)
+        results = zeros(n)
 
         # Check if points are inside the ellipsoid
         for i in range(n):
             point = xs[i, :]
             diff = point - self.center
-            result = np.dot(diff.T, np.linalg.solve(self.shape_matrix, diff))
+            result = dot(diff.T, linalg.solve(self.shape_matrix, diff))
 
             # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
             if result <= 1:
@@ -58,18 +59,17 @@ class EllipsoidalBallUniformDistribution(
 
         return results
 
-    @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def sample(self, n: Union[int, int32, int64]):
         """
         Generate samples from the distribution.
 
         :param n: Number of samples to generate.
         :returns: Generated samples.
         """
-        random_points = np.random.randn(n, self.dim)
-        random_points /= np.linalg.norm(random_points, axis=1, keepdims=True)
+        random_points = random.normal(0.0, 1.0, (n, self.dim))
+        random_points /= linalg.norm(random_points, axis=1).reshape(-1, 1)
 
-        random_radii = np.random.rand(n, 1)
+        random_radii = random.rand(n, 1)
         random_radii = random_radii ** (
             1 / self.dim
         )  # Consider that the ellipsoid surfaces with higher radii are larger
@@ -78,7 +78,7 @@ class EllipsoidalBallUniformDistribution(
         random_points *= random_radii
 
         # Rotate the points according to the shape matrix
-        L = np.linalg.cholesky(self.shape_matrix)
+        L = linalg.cholesky(self.shape_matrix)
         # For points (d, n), this would be L @ random_points
         transformed_points = random_points @ L.T + self.center.reshape(1, -1)
 

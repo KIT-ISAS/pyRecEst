@@ -1,9 +1,20 @@
 import copy
 import warnings
 from collections.abc import Callable
+from typing import Union
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import (
+    all,
+    apply_along_axis,
+    int32,
+    int64,
+    isclose,
+    log,
+    ones,
+    random,
+    sum,
+)
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -13,8 +24,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
     This class represents an abstract base for Dirac distributions.
     """
 
-    @beartype
-    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
+    def __init__(self, d, w=None):
         """
         Initialize a Dirac distribution with given Dirac locations and weights.
 
@@ -22,32 +32,27 @@ class AbstractDiracDistribution(AbstractDistributionType):
         :param w: Weights of Dirac locations as a numpy array. If not provided, defaults to uniform weights.
         """
         if w is None:
-            w = np.ones(d.shape[0]) / d.shape[0]
+            w = ones(d.shape[0]) / d.shape[0]
 
-        assert d.shape[0] == np.size(w), "Number of Diracs and weights must match."
+        assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
         self.d = copy.copy(d)
         self.w = copy.copy(w)
         self.normalize_in_place()
 
-    @beartype
     def normalize_in_place(self):
         """
         Normalize the weights in-place to ensure they sum to 1.
         """
-        if not np.isclose(np.sum(self.w), 1, atol=1e-10):
+        if not isclose(sum(self.w), 1.0, atol=1e-10):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
-            self.w = self.w / np.sum(self.w)
+            self.w = self.w / sum(self.w)
 
-    @beartype
     def normalize(self) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
         dist.normalize_in_place()
         return dist
 
-    @beartype
-    def apply_function(
-        self, f: Callable, f_supports_multiple: bool = True
-    ) -> "AbstractDiracDistribution":
+    def apply_function(self, f: Callable, f_supports_multiple: bool = True):
         """
         Apply a function to the Dirac locations and return a new distribution.
 
@@ -58,37 +63,35 @@ class AbstractDiracDistribution(AbstractDistributionType):
         if f_supports_multiple:
             dist.d = f(dist.d)
         else:
-            dist.d = np.apply_along_axis(f, 1, dist.d)
+            dist.d = apply_along_axis(f, 1, dist.d)
         return dist
 
-    @beartype
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
         wNew = f(dist.d)
 
         assert wNew.shape == dist.w.shape, "Function returned wrong output dimensions."
-        assert np.all(wNew >= 0), "All weights should be greater than or equal to 0."
-        assert np.sum(wNew) > 0, "The sum of all weights should be greater than 0."
+        assert all(wNew >= 0), "All weights should be greater than or equal to 0."
+        assert sum(wNew) > 0, "The sum of all weights should be greater than 0."
 
         dist.w = wNew * dist.w
-        dist.w = dist.w / np.sum(dist.w)
+        dist.w = dist.w / sum(dist.w)
 
         return dist
 
-    @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
-        ids = np.random.choice(np.size(self.w), size=n, p=self.w)
-        return self.d[ids]
+    def sample(self, n: Union[int, int32, int64]):
+        samples = random.choice(self.d, size=n, p=self.w)
+        return samples
 
     def entropy(self) -> float:
         warnings.warn("Entropy is not defined in a continuous sense")
-        return -np.sum(self.w * np.log(self.w))
+        return -sum(self.w * log(self.w))
 
-    def integrate(self, left=None, right=None) -> np.ndarray:
+    def integrate(self, left=None, right=None):
         assert (
             left is None and right is None
         ), "Must overwrite in child class to use integral limits"
-        return np.sum(self.w)
+        return sum(self.w)
 
     def log_likelihood(self, *args):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
@@ -112,7 +115,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
     def mode(self, rel_tol=0.001):
-        highest_val, ind = np.max(self.w), np.argmax(self.w)
+        highest_val, ind = max(self.w)
         if (highest_val / self.w.size) < (1 + rel_tol):
             warnings.warn(
                 "The samples may be equally weighted, .mode is likely to return a bad result."

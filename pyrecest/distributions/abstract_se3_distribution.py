@@ -1,9 +1,12 @@
 import time
 from abc import abstractmethod
+from typing import Union
 
 import matplotlib.pyplot as plt
-import numpy as np
 import quaternion
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import column_stack, concatenate, int32, int64
 
 from .cart_prod.abstract_lin_bounded_cart_prod_distribution import (
     AbstractLinBoundedCartProdDistribution,
@@ -29,7 +32,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
 
     def plot_state(
         self,
-        orientationSamples: int | np.int32 | np.int64 = 10,
+        orientationSamples: Union[int, int32, int64] = 10,
         showMarginalized: bool = True,
     ):
         samples = self.sample(orientationSamples)
@@ -44,7 +47,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
                 linearPart = samples[4:, i]
             h.append(
                 AbstractSE3Distribution.plot_point(
-                    np.concatenate((samples[:4, i], linearPart), axis=0)
+                    concatenate((samples[:4, i], linearPart), axis=0)
                 )
             )
         return h
@@ -52,7 +55,9 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
     @staticmethod
     def plot_point(se3point):  # pylint: disable=too-many-locals
         """Visualize just a point in the SE(3) domain (no uncertainties are considered)"""
-        q = np.quaternion(*se3point[:4])
+        import numpy as _np
+
+        q = _np.quaternion(*se3point[:4])
         rotMat = quaternion.as_rotation_matrix(q)
 
         pos = se3point[4:]
@@ -68,9 +73,9 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
             pos[0], pos[1], pos[2], rotMat[2, 0], rotMat[2, 1], rotMat[2, 2], color="b"
         )
         h = [h1, h2, h3]
-        relevant_coords = np.concatenate((pos.reshape(-1, 1), pos + rotMat), axis=1)
-        needed_boundaries = np.column_stack(
-            (np.min(relevant_coords, axis=1), np.max(relevant_coords, axis=1))
+        relevant_coords = concatenate((pos.reshape(-1, 1), pos + rotMat), axis=1)
+        needed_boundaries = column_stack(
+            (_np.min(relevant_coords, axis=1), _np.max(relevant_coords, axis=1))
         )
 
         # Get current axis limits
@@ -98,7 +103,7 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
         for i in range(periodicStates.shape[1]):
             h.append(
                 AbstractSE3Distribution.plot_point(
-                    np.concatenate((periodicStates[:, i], linStates[:, i]), axis=0)
+                    concatenate((periodicStates[:, i], linStates[:, i]), axis=0)
                 )
             )
             if animate:
@@ -106,4 +111,4 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
         return h
 
     def get_manifold_size(self):
-        return np.inf
+        return float("inf")

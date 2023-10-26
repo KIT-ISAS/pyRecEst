@@ -2,7 +2,11 @@ import copy
 import warnings
 from abc import abstractmethod
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import dstack, empty, ndim
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter
@@ -85,8 +89,8 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         ), "system_matrices may be a single (dimSingleState, dimSingleState) matrix or a (dimSingleState, dimSingleState, noTargets) tensor."
 
         if isinstance(sys_noises, GaussianDistribution):
-            assert np.all(sys_noises.mu == 0)
-            sys_noises = np.dstack(sys_noises.C)
+            assert all(sys_noises.mu == 0)
+            sys_noises = dstack(sys_noises.C)
 
         curr_sys_matrix = system_matrices
         curr_sys_noise = sys_noises
@@ -94,11 +98,11 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
 
         for i in range(self.get_number_of_targets()):
             # Overwrite if different for each track
-            if np.ndim(system_matrices) == 3:
+            if system_matrices is not None and ndim(system_matrices) == 3:
                 curr_sys_matrix = system_matrices[:, :, i]
-            if np.ndim(sys_noises) == 3:
+            if sys_noises is not None and ndim(sys_noises) == 3:
                 curr_sys_noise = sys_noises[:, :, i]
-            if np.ndim(inputs) == 2:
+            if inputs is not None and ndim(inputs) == 2:
                 curr_input = inputs[:, i]
 
             self.filter_bank[i].predict_linear(
@@ -110,8 +114,11 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             self.store_prior_estimates()
 
     def update_linear(self, measurements, measurement_matrix, covMatsMeas):
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported for numpy backend"
         if len(self.filter_bank) == 0:
-            print("Currently, there are zero targets")
+            warnings.warn("Currently, there are zero targets")
             return
         assert (
             measurement_matrix.shape[0] == measurements.shape[0]
@@ -140,8 +147,8 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             warnings.warn("Currently, there are zero targets.")
             point_ests = None
         else:
-            point_ests = np.empty((self.dim, num_targets))
-            point_ests[:] = np.nan
+            point_ests = empty((self.dim, num_targets))
+            point_ests[:] = float("NaN")
             for i in range(num_targets):
                 point_ests[:, i] = self.filter_bank[i].get_point_estimate()
             if flatten_vector:

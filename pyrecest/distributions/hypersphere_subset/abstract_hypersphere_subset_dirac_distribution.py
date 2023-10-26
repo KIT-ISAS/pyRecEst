@@ -1,4 +1,6 @@
-import numpy as np
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import log, sum
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypersphere_subset_distribution import (
@@ -18,7 +20,7 @@ class AbstractHypersphereSubsetDiracDistribution(
         return m
 
     def entropy(self):
-        result = -np.sum(self.w * np.log(self.w))
+        result = -sum(self.w * log(self.w))
         return result
 
     def integrate(self, integration_boundaries=None):

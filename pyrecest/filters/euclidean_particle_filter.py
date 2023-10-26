@@ -1,8 +1,9 @@
 import copy
 from collections.abc import Callable
+from typing import Union
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import int32, int64, zeros
 
 from ..distributions.nonperiodic.abstract_linear_distribution import (
     AbstractLinearDistribution,
@@ -19,15 +20,15 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
     def __init__(
         self,
-        n_particles: int | np.int32 | np.int64,
-        dim: int | np.int32 | np.int64,
+        n_particles: Union[int, int32, int64],
+        dim: Union[int, int32, int64],
     ):
         if not (isinstance(n_particles, int) and n_particles > 0):
             raise ValueError("n_particles must be a positive integer")
         if not (isinstance(dim, int) and dim > 0):
             raise ValueError("dim must be a positive integer")
 
-        initial_distribution = LinearDiracDistribution(np.zeros((n_particles, dim)))
+        initial_distribution = LinearDiracDistribution(zeros((n_particles, dim)))
         AbstractParticleFilter.__init__(self, initial_distribution)
         AbstractEuclideanFilter.__init__(self, initial_distribution)
 
@@ -55,7 +56,6 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
 
         self._filter_state = dist_dirac
 
-    @beartype
     def predict_nonlinear(
         self,
         f: Callable,

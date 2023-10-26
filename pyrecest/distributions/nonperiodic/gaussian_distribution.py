@@ -1,21 +1,23 @@
 import copy
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module
+import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import dot, linalg, ndim, random
 from scipy.linalg import cholesky
-from scipy.stats import multivariate_normal as mvn
 
 from .abstract_linear_distribution import AbstractLinearDistribution
 
 
 class GaussianDistribution(AbstractLinearDistribution):
-    @beartype
-    def __init__(self, mu: np.ndarray, C: np.ndarray, check_validity=True):
-        AbstractLinearDistribution.__init__(self, dim=np.size(mu))
+    def __init__(self, mu, C, check_validity=True):
+        assert ndim(mu) == 1, "mu must be 1-dimensional"
+        assert ndim(C) == 2, "C must be 2-dimensional"
+        AbstractLinearDistribution.__init__(self, dim=mu.shape[0])
         assert (
-            1 == np.size(mu) == np.size(C) or np.size(mu) == C.shape[0] == C.shape[1]
+            1 == mu.shape[0] == C.shape[0] or mu.shape[0] == C.shape[0] == C.shape[1]
         ), "Size of C invalid"
-        assert np.ndim(mu) <= 1
         self.mu = mu
 
         if check_validity:
@@ -23,7 +25,7 @@ class GaussianDistribution(AbstractLinearDistribution):
                 assert C > 0, "C must be positive definite"
             elif self.dim == 2:
                 assert (
-                    C[0, 0] > 0 and np.linalg.det(C) > 0
+                    C[0, 0] > 0.0 and linalg.det(C) > 0.0
                 ), "C must be positive definite"
             else:
                 cholesky(C)  # Will fail if C is not positive definite
@@ -39,10 +41,29 @@ class GaussianDistribution(AbstractLinearDistribution):
         assert (
             self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
         ), "Dimension incorrect"
-        return mvn.pdf(xs, self.mu, self.C)
+        if pyrecest.backend.__name__ == "pyrecest.numpy":
+            from scipy.stats import multivariate_normal as mvn
+
+            pdfvals = mvn.pdf(xs, self.mu, self.C)
+        elif pyrecest.backend.__name__ == "pyrecest.pytorch":
+            # Disable import errors for megalinter
+            import torch  # pylint: disable=import-error
+
+            # pylint: disable=import-error
+            from torch.distributions import MultivariateNormal
+
+            distribution = MultivariateNormal(self.mu, self.C)
+            if xs.ndim == 1 and self.dim == 1:
+                # For 1-D distributions, we need to reshape the input to a 2-D tensor
+                # to be able to use distribution.log_prob
+                xs = torch.reshape(xs, (-1, 1))
+            log_probs = distribution.log_prob(xs)
+            pdfvals = torch.exp(log_probs)
+
+        return pdfvals
 
     def shift(self, shift_by):
-        assert shift_by.size == self.dim
+        assert shift_by.ndim == 0 and self.dim == 1 or shift_by.shape[0] == self.dim
         new_gaussian = copy.deepcopy(self)
         new_gaussian.mu = self.mu + shift_by
         return new_gaussian
@@ -63,9 +84,9 @@ class GaussianDistribution(AbstractLinearDistribution):
 
     def multiply(self, other):
         assert self.dim == other.dim
-        K = np.linalg.solve(self.C + other.C, self.C)
-        new_mu = self.mu + np.dot(K, (other.mu - self.mu))
-        new_C = self.C - np.dot(K, self.C)
+        K = linalg.solve(self.C + other.C, self.C)
+        new_mu = self.mu + dot(K, (other.mu - self.mu))
+        new_C = self.C - dot(K, self.C)
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def convolve(self, other):
@@ -80,11 +101,13 @@ class GaussianDistribution(AbstractLinearDistribution):
         assert all(dim <= self.dim for dim in dimensions)
         remaining_dims = [i for i in range(self.dim) if i not in dimensions]
         new_mu = self.mu[remaining_dims]
-        new_C = self.C[np.ix_(remaining_dims, remaining_dims)]
+        new_C = self.C[remaining_dims][
+            :, remaining_dims
+        ]  # Instead of np.ix_ for interface compatibiliy
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def sample(self, n):
-        return np.random.multivariate_normal(self.mu, self.C, n)
+        return random.multivariate_normal(self.mu, self.C, n)
 
     @staticmethod
     def from_distribution(distribution):

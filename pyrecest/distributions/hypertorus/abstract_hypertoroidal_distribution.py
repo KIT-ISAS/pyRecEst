@@ -1,9 +1,36 @@
-import numbers
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
 import matplotlib.pyplot as plt
-import numpy as np
-from beartype import beartype
+
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    abs,
+    angle,
+    arange,
+    array,
+    cos,
+    int32,
+    int64,
+    isnan,
+    linspace,
+    log,
+    meshgrid,
+    minimum,
+    mod,
+    ones,
+    random,
+    reshape,
+    sin,
+    sqrt,
+    vstack,
+    zeros,
+)
 from scipy.integrate import nquad
 
 from ..abstract_manifold_specific_distribution import (
@@ -20,9 +47,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return self.dim
 
     @staticmethod
-    @beartype
-    def integrate_fun_over_domain(f: Callable, dim: int | np.int32 | np.int64) -> float:
-        integration_boundaries = [(0, 2 * np.pi)] * dim
+    def integrate_fun_over_domain(f: Callable, dim: Union[int, int32, int64]) -> float:
+        integration_boundaries = [(0.0, 2 * pi)] * dim
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
             f, dim, integration_boundaries
         )
@@ -47,7 +73,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         # Define the shifted PDF
         def shifted_pdf(xs):
-            return self.pdf(np.mod(xs + shift_by, 2 * np.pi))
+            return self.pdf(mod(xs + shift_by, 2 * pi))
 
         # Create the shifted distribution
         shifted_distribution = CustomHypertoroidalDistribution(shifted_pdf, self.dim)
@@ -55,9 +81,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return shifted_distribution
 
     @staticmethod
-    @beartype
     def integrate_fun_over_domain_part(
-        f: Callable, dim: int | np.int32 | np.int64, integration_boundaries
+        f: Callable, dim: Union[int, int32, int64], integration_boundaries
     ) -> float:
         if len(integration_boundaries) != dim:
             raise ValueError(
@@ -66,40 +91,38 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         return nquad(f, integration_boundaries)[0]
 
-    def integrate_numerically(
-        self, integration_boundaries=None
-    ) -> np.number | numbers.Real:
+    def integrate_numerically(self, integration_boundaries=None):
+        assert (
+            pyrecest.backend.__name__ == "pyrecest.numpy"
+        ), "Only supported for numpy backend"
         if integration_boundaries is None:
-            integration_boundaries = np.vstack(
-                (np.zeros(self.dim), 2 * np.pi * np.ones(self.dim))
+            integration_boundaries = vstack(
+                (zeros(self.dim), 2.0 * pi * ones(self.dim))
             )
 
-        integration_boundaries = np.reshape(integration_boundaries, (2, -1))
+        integration_boundaries = reshape(integration_boundaries, (2, -1))
         left, right = integration_boundaries
 
         integration_boundaries = list(zip(left, right))
         return self.integrate_fun_over_domain_part(
-            lambda *args: self.pdf(np.array(args)), self.dim, integration_boundaries
+            lambda *args: self.pdf(array(args)), self.dim, integration_boundaries
         )
 
-    @beartype
-    def trigonometric_moment_numerical(
-        self, n: int | np.int32 | np.int64
-    ) -> np.ndarray:
+    def trigonometric_moment_numerical(self, n: Union[int, int32, int64]):
         """Calculates the complex trignometric moments. Since nquad does not support complex functions,
         the calculation is split up (as used in the alternative representation of trigonometric polonymials
         involving the two real numbers alpha and beta"""
 
         def moment_fun_real(*args):
-            x = np.array(args)
-            return np.array([self.pdf(x) * np.cos(n * xi) for xi in x])
+            x = array(args)
+            return array([self.pdf(x) * cos(n * xi) for xi in x])
 
         def moment_fun_imag(*args):
-            x = np.array(args)
-            return np.array([self.pdf(x) * np.sin(n * xi) for xi in x])
+            x = array(args)
+            return array([self.pdf(x) * sin(n * xi) for xi in x])
 
-        alpha = np.zeros(self.dim, dtype=float)
-        beta = np.zeros(self.dim, dtype=float)
+        alpha = zeros(self.dim, dtype=float)
+        beta = zeros(self.dim, dtype=float)
 
         for i in range(self.dim):
             # i=i to avoid pylint warning (though it does not matter here)
@@ -114,14 +137,14 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def entropy_numerical(self):
         def entropy_fun(*args):
-            x = np.array(args)
+            x = array(args)
             pdf_val = self.pdf(x)
-            return pdf_val * np.log(pdf_val)
+            return pdf_val * log(pdf_val)
 
         return -self.integrate_fun_over_domain(entropy_fun, self.dim)
 
     def get_manifold_size(self):
-        return (2 * np.pi) ** self.dim
+        return (2.0 * pi) ** self.dim
 
     @staticmethod
     def angular_error(alpha, beta):
@@ -135,16 +158,16 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         Returns:
             float or numpy array: The angular error(s) in radians.
         """
-        assert not np.isnan(alpha).any() and not np.isnan(beta).any()
+        assert not isnan(alpha).any() and not isnan(beta).any()
         # Ensure the angles are between 0 and 2*pi
-        alpha = np.mod(alpha, 2 * np.pi)
-        beta = np.mod(beta, 2 * np.pi)
+        alpha = mod(alpha, 2.0 * pi)
+        beta = mod(beta, 2.0 * pi)
 
         # Calculate the absolute difference
-        diff = np.abs(alpha - beta)
+        diff = abs(alpha - beta)
 
         # Calculate the angular error
-        e = np.minimum(diff, 2 * np.pi - diff)
+        e = minimum(diff, 2.0 * pi - diff)
 
         return e
 
@@ -155,8 +178,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         ), "Cannot compare distributions with different number of dimensions."
 
         def hellinger_dist_fun(*args):
-            x = np.array(args)
-            return (np.sqrt(self.pdf(x)) - np.sqrt(other.pdf(x))) ** 2
+            x = array(args)
+            return (sqrt(self.pdf(x)) - sqrt(other.pdf(x))) ** 2
 
         dist = 0.5 * self.integrate_fun_over_domain(hellinger_dist_fun, self.dim)
         return dist
@@ -168,7 +191,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         ), "Cannot compare distributions with different number of dimensions"
 
         def total_variation_dist_fun(*args):
-            x = np.array(args)
+            x = array(args)
             return abs(self.pdf(x) - other.pdf(x))
 
         dist = 0.5 * self.integrate_fun_over_domain(total_variation_dist_fun, self.dim)
@@ -176,16 +199,16 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def plot(self, resolution=128, **kwargs):
         if self.dim == 1:
-            theta = np.linspace(0, 2 * np.pi, resolution)
+            theta = linspace(0.0, 2 * pi, resolution)
             f_theta = self.pdf(theta)
             p = plt.plot(theta, f_theta, **kwargs)
             AbstractHypertoroidalDistribution.setup_axis_circular("x")
         elif self.dim == 2:
-            step = 2 * np.pi / resolution
-            alpha, beta = np.meshgrid(
-                np.arange(0, 2 * np.pi, step), np.arange(0, 2 * np.pi, step)
+            step = 2 * pi / resolution
+            alpha, beta = meshgrid(
+                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step)
             )
-            f = self.pdf(np.vstack((alpha.ravel(), beta.ravel())))
+            f = self.pdf(vstack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
             p = plt.contourf(alpha, beta, f, **kwargs)
             AbstractHypertoroidalDistribution.setup_axis_circular("x")
@@ -199,54 +222,53 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         plt.show()
         return p
 
-    def mean(self) -> np.ndarray:
+    def mean(self):
         """
         Convenient access to mean_direction to have a consistent interface
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype:
         """
         return self.mean_direction()
 
-    def mean_direction(self) -> np.ndarray:
+    def mean_direction(self):
         a = self.trigonometric_moment(1)
-        m = np.mod(np.angle(a), 2 * np.pi)
+        m = mod(angle(a), 2.0 * pi)
         return m
 
-    def mode(self) -> np.ndarray:
+    def mode(self):
         return self.mode_numerical()
 
-    def mode_numerical(self) -> np.ndarray:
+    def mode_numerical(self):
         # Implement the optimization function fminunc equivalent in Python (e.g., using scipy.optimize.minimize)
         raise NotImplementedError("Mode calculation is not implemented")
 
-    @beartype
-    def trigonometric_moment(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    def trigonometric_moment(self, n: Union[int, int32, int64]):
         return self.trigonometric_moment_numerical(n)
 
     def integrate(self, integration_boundaries=None):
         return self.integrate_numerically(integration_boundaries)
 
-    def mean_2dimD(self) -> np.ndarray:
+    def mean_2dimD(self):
         m = self.trigonometric_moment_numerical(1)
-        mu = np.vstack((m.real, m.imag))
+        mu = vstack((m.real, m.imag))
         return mu
 
     # jscpd:ignore-start
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.number | numbers.Real | np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point=None,
+    ):
         # jscpd:ignore-end
         if proposal is None:
 
             def proposal(x):
-                return np.mod(x + np.random.randn(self.dim), 2 * np.pi)
+                return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
 
         if start_point is None:
             start_point = self.mean_direction()
@@ -258,20 +280,19 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return s
 
     @staticmethod
-    @beartype
     def setup_axis_circular(axis_name: str = "x", ax=plt.gca()) -> None:
-        ticks = [0, np.pi, 2 * np.pi]
+        ticks = [0.0, pi, 2.0 * pi]
         tick_labels = ["0", r"$\pi$", r"$2\pi$"]
         if axis_name == "x":
-            ax.set_xlim(left=0, right=2 * np.pi)
+            ax.set_xlim(left=0.0, right=2.0 * pi)
             ax.set_xticks(ticks)
             ax.set_xticklabels(tick_labels)
         elif axis_name == "y":
-            ax.set_ylim(left=0, right=2 * np.pi)
+            ax.set_ylim(left=0.0, right=2.0 * pi)
             ax.set_yticks(ticks)
             ax.set_yticklabels(tick_labels)
         elif axis_name == "z":
-            ax.set_zlim(left=0, right=2 * np.pi)
+            ax.set_zlim(left=0.0, right=2.0 * pi)
             ax.set_zticks(ticks)
             ax.set_zticklabels(tick_labels)
         else:

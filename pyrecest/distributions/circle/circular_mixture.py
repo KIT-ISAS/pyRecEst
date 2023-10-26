@@ -1,8 +1,9 @@
 import collections
 import warnings
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import shape, sum
 
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -11,11 +12,10 @@ from .circular_fourier_distribution import CircularFourierDistribution
 
 
 class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
-    @beartype
     def __init__(
         self,
         dists: collections.abc.Sequence[AbstractCircularDistribution],
-        w: np.ndarray,
+        w,
     ):
         """
         Creates a new circular mixture.
@@ -32,7 +32,7 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
                 "All elements of 'dists' must be of type AbstractCircularDistribution."
             )
 
-        if np.shape(dists) != np.shape(w):
+        if shape(dists) != shape(w):
             raise ValueError("'dists' and 'w' must have the same shape.")
 
         if all(isinstance(cd, CircularFourierDistribution) for cd in dists):
@@ -45,4 +45,4 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
             )
 
         self.dists = dists
-        self.w = w / np.sum(w)
+        self.w = w / sum(w)

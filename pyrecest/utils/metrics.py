@@ -1,4 +1,5 @@
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import linalg, mean, zeros
 
 
 def anees(estimates, uncertainties, groundtruths):
@@ -8,10 +9,10 @@ def anees(estimates, uncertainties, groundtruths):
     assert uncertainties.shape == (n, dim, dim)
     assert groundtruths.shape == (n, dim)
 
-    NEES = np.zeros(n)
+    NEES = zeros(n)
 
     for i in range(n):
         error = estimates[i] - groundtruths[i]
-        NEES[i] = error.T @ np.linalg.solve(uncertainties[i], error)
+        NEES[i] = error.T @ linalg.solve(uncertainties[i], error)
 
-    return np.mean(NEES)
+    return mean(NEES)

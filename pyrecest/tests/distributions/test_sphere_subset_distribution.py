@@ -1,7 +1,11 @@
 import unittest
+from math import pi
 
-import numpy as np
+import numpy.testing as npt
 from parameterized import parameterized
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array
 from pyrecest.distributions.hypersphere_subset.abstract_sphere_subset_distribution import (
     AbstractSphereSubsetDistribution,
 )
@@ -16,9 +20,9 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
     )
     def test_cart_to_sph_to_cart(self, mode):
         # Create some Cartesian coordinates
-        x = np.array([1.0, 0.0, 0.0])
-        y = np.array([0.0, 1.0, 0.0])
-        z = np.array([0.0, 0.0, 1.0])
+        x = array([1.0, 0.0, 0.0])
+        y = array([0.0, 1.0, 0.0])
+        z = array([0.0, 0.0, 1.0])
 
         # Convert to spherical coordinates and back
         azimuth, theta = AbstractSphereSubsetDistribution.cart_to_sph(
@@ -29,9 +33,9 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         )
 
         # The new Cartesian coordinates should be close to the original ones
-        np.testing.assert_allclose(x_new, x, atol=1e-15)
-        np.testing.assert_allclose(y_new, y, atol=1e-15)
-        np.testing.assert_allclose(z_new, z, atol=1e-15)
+        npt.assert_allclose(x_new, x, atol=1e-15)
+        npt.assert_allclose(y_new, y, atol=1e-15)
+        npt.assert_allclose(z_new, z, atol=1e-15)
 
     @parameterized.expand(
         [
@@ -43,8 +47,8 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         # Create some spherical coordinates. Do *not* use 0 as theta because
         # the transformation from spherical to Cartesian coordinates is not
         # uniquely invertible in this case.
-        azimuth = np.array([0.0, np.pi / 4, np.pi / 2])
-        theta = np.array([np.pi / 2, np.pi / 4, 0.1])
+        azimuth = array([0.0, pi / 4, pi / 2])
+        theta = array([pi / 2, pi / 4, 0.1])
 
         # Convert to Cartesian coordinates and back
         x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(
@@ -55,5 +59,5 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         )
 
         # The new spherical coordinates should be close to the original ones
-        np.testing.assert_allclose(azimuth_new, azimuth, atol=1e-15)
-        np.testing.assert_allclose(theta_new, theta, atol=1e-15)
+        npt.assert_allclose(azimuth_new, azimuth, atol=1e-15)
+        npt.assert_allclose(theta_new, theta, atol=1e-15)

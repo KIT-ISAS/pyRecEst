@@ -1,7 +1,8 @@
 from abc import abstractmethod
+from typing import Union
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import int32, int64
 
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 
@@ -9,28 +10,26 @@ from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribut
 class AbstractPeriodicDistribution(AbstractBoundedDomainDistribution):
     """Abstract class for a distributions on periodic manifolds."""
 
-    @beartype
-    def __init__(self, dim: int | np.int32 | np.int64):
+    def __init__(self, dim: Union[int, int32, int64]):
         super().__init__(dim=dim)
 
-    @beartype
-    def mean(self) -> np.ndarray:
+    def mean(self):
         """
         Convenient access to mean_direction to have a consistent interface
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype:
         """
         return self.mean_direction()
 
     @abstractmethod
-    def mean_direction(self) -> np.ndarray:
+    def mean_direction(self):
         """
         Abstract method to compute the mean direction of the distribution.
 
         Returns
         -------
-        mean_direction: np.ndarray
+        mean_direction:
             The mean direction of the distribution.
         """

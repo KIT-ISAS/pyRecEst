@@ -1,7 +1,10 @@
 import unittest
 from warnings import catch_warnings, simplefilter
 
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, column_stack, diag, linspace, meshgrid
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_mixture import LinearMixture
 
@@ -12,10 +15,10 @@ class LinearMixtureTest(unittest.TestCase):
             simplefilter("always")
             LinearMixture(
                 [
-                    GaussianDistribution(np.array(1), np.array(1)),
-                    GaussianDistribution(np.array(50), np.array(1)),
+                    GaussianDistribution(array([1.0]), array([[1.0]])),
+                    GaussianDistribution(array([50.0]), array([[1.0]])),
                 ],
-                np.array([0.3, 0.7]),
+                array([0.3, 0.7]),
             )
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, UserWarning))
@@ -25,17 +28,17 @@ class LinearMixtureTest(unittest.TestCase):
             )
 
     def test_pdf(self):
-        gm1 = GaussianDistribution(np.array([1, 1]), np.diag([2, 3]))
-        gm2 = GaussianDistribution(-np.array([3, 1]), np.diag([2, 3]))
+        gm1 = GaussianDistribution(array([1.0, 1.0]), diag(array([2.0, 3.0])))
+        gm2 = GaussianDistribution(-array([3.0, 1.0]), diag(array([2.0, 3.0])))
 
         with catch_warnings():
             simplefilter("ignore", category=UserWarning)
-            lm = LinearMixture([gm1, gm2], np.array([0.3, 0.7]))
+            lm = LinearMixture([gm1, gm2], array([0.3, 0.7]))
 
-        x, y = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-2, 2, 100))
-        points = np.column_stack((x.ravel(), y.ravel()))
+        x, y = meshgrid(linspace(-2, 2, 100), linspace(-2, 2, 100))
+        points = column_stack((x.ravel(), y.ravel()))
 
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             lm.pdf(points), 0.3 * gm1.pdf(points) + 0.7 * gm2.pdf(points), atol=1e-20
         )
 

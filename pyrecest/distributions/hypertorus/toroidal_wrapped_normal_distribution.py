@@ -1,5 +1,7 @@
-import numpy as np
 from numpy import cos, exp, sin
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, zeros
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_wrapped_normal_distribution import (
@@ -14,15 +16,15 @@ class ToroidalWrappedNormalDistribution(
     Toroidal Wrapped Normal Distribution.
     """
 
-    def mean_4D(self) -> np.ndarray:
+    def mean_4D(self):
         """
         Compute the 4D mean of the distribution.
 
         Returns:
-            np.array: The 4D mean.
+            array: The 4D mean.
         """
         s = self.mu
-        mu = np.array(
+        mu = array(
             [
                 cos(s[0, :]) * exp(-self.C[0, 0] / 2),
                 sin(s[0, :]) * exp(-self.C[0, 0] / 2),
@@ -32,14 +34,14 @@ class ToroidalWrappedNormalDistribution(
         )
         return mu
 
-    def covariance_4D(self) -> np.ndarray:
+    def covariance_4D(self):
         """
         Compute the 4D covariance of the distribution.
 
         Returns:
-            np.array: The 4D covariance.
+            array: The 4D covariance.
         """
-        C = np.zeros((4, 4))
+        C = zeros((4, 4))
         # jscpd:ignore-start
         C[0, 0] = (
             1

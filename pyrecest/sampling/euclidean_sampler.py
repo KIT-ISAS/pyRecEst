@@ -1,4 +1,5 @@
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import eye, zeros
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_sampler import AbstractSampler
@@ -9,5 +10,5 @@ class AbstractEuclideanSampler(AbstractSampler):
 
 
 class GaussianSampler(AbstractEuclideanSampler):
-    def sample_stochastic(self, n_samples: int, dim: int) -> np.ndarray:
-        return GaussianDistribution(np.zeros(dim), np.eye(dim)).sample(n_samples)
+    def sample_stochastic(self, n_samples: int, dim: int):
+        return GaussianDistribution(zeros(dim), eye(dim)).sample(n_samples)
