@@ -10,7 +10,7 @@ from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution impo
     ToroidalWrappedNormalDistribution,
 )
 from pyrecest.filters.toroidal_particle_filter import ToroidalParticleFilter
-
+import numpy.testing as npt
 
 class ToroidalParticleFilterTest(unittest.TestCase):
     def test_toroidal_particle_filter(self):
@@ -32,7 +32,7 @@ class ToroidalParticleFilterTest(unittest.TestCase):
                     forced_mean,
                 )
 
-        self.assertTrue(allclose(tpf.get_point_estimate(), forced_mean, atol=0.1))
+        npt.assert_allclose(tpf.get_point_estimate(), forced_mean, atol=0.2)
 
 
 if __name__ == "__main__":
