@@ -1,7 +1,5 @@
 import warnings
-
-import numpy as np
-from beartype import beartype
+from typing import Sequence
 
 from ..abstract_mixture import AbstractMixture
 from .abstract_linear_distribution import AbstractLinearDistribution
@@ -9,8 +7,7 @@ from .gaussian_distribution import GaussianDistribution
 
 
 class LinearMixture(AbstractMixture, AbstractLinearDistribution):
-    @beartype
-    def __init__(self, dists: list[AbstractLinearDistribution], w: np.ndarray):
+    def __init__(self, dists: Sequence[AbstractLinearDistribution], w):
         from .gaussian_mixture import GaussianMixture
 
         assert all(

@@ -1,13 +1,30 @@
 import copy
+from math import pi
+from typing import Union
 
-import numpy as np
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    allclose,
+    arange,
+    array,
+    exp,
+    int32,
+    int64,
+    linalg,
+    meshgrid,
+    mod,
+    random,
+    reshape,
+    zeros,
+)
 from scipy.stats import multivariate_normal
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
-    def __init__(self, mu: np.ndarray, C: np.ndarray):
+    def __init__(self, mu, C):
         """
         Initialize HypertoroidalWrappedNormalDistribution.
 
@@ -15,21 +32,36 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param C: Covariance matrix.
         :raises AssertionError: If C_ is not square, not symmetric, not positive definite, or its dimension does not match with mu_.
         """
-        AbstractHypertoroidalDistribution.__init__(self, np.size(mu))
-        # First check is for 1-D case
-        assert np.size(C) == 1 or C.shape[0] == C.shape[1], "C must be dim x dim"
-        assert np.size(C) == 1 or np.allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        numel_mu = 1 if mu.ndim == 0 else mu.shape[0]
         assert (
-            np.size(C) == 1 and C > 0 or np.all(np.linalg.eigvals(C) > 0)
+            C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1]
+        ), "C must be of shape (dim, dim)"
+        assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        assert (
+            C.ndim == 0
+            and C > 0.0
+            or len(linalg.cholesky(C)) > 0  # fails if not positiv definite
         ), "C must be positive definite"
-        assert (
-            np.size(C) == np.size(mu) or np.size(mu) == C.shape[1]
-        ), "mu must be dim x 1"
-
-        self.mu = np.mod(mu, 2 * np.pi)
+        assert numel_mu == 1 or mu.shape == (C.shape[1],), "mu must be of shape (dim,)"
+        AbstractHypertoroidalDistribution.__init__(self, numel_mu)
+        self.mu = mod(mu, 2.0 * pi)
         self.C = C
 
-    def pdf(self, xs: np.ndarray, m: int | np.int32 | np.int64 = 3) -> np.ndarray:
+    def set_mean(self, mu):
+        """
+        Set the mean of the distribution.
+
+        Parameters:
+        mu (numpy array): The new mean.
+
+        Returns:
+        HypertoroidalWNDistribution: A new instance of the distribution with the updated mean.
+        """
+        dist = copy.deepcopy(self)
+        dist.mu = mod(mu, 2.0 * pi)
+        return dist
+
+    def pdf(self, xs, m: Union[int, int32, int64] = 3):
         """
         Compute the PDF at given points.
 
@@ -37,16 +69,16 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        xs = np.reshape(xs, (-1, self.dim))
+        xs = reshape(xs, (-1, self.dim))
 
         # Generate all combinations of offsets for each dimension
-        offsets = [np.arange(-m, m + 1) * 2 * np.pi for _ in range(self.dim)]
-        offset_combinations = np.array(np.meshgrid(*offsets)).T.reshape(-1, self.dim)
+        offsets = [arange(-m, m + 1) * 2.0 * pi for _ in range(self.dim)]
+        offset_combinations = array(meshgrid(*offsets)).T.reshape(-1, self.dim)
 
         # Calculate the PDF values by considering all combinations of offsets
-        pdf_values = np.zeros(xs.shape[0])
+        pdf_values = zeros(xs.shape[0])
         for offset in offset_combinations:
-            shifted_xa = xs + offset[np.newaxis, :]
+            shifted_xa = xs + offset[None, :]
             pdf_values += multivariate_normal.pdf(
                 shifted_xa, mean=self.mu.flatten(), cov=self.C
             )
@@ -64,23 +96,20 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         assert shift_by.shape == (self.dim,)
 
         hd = self
-        hd.mu = np.mod(self.mu + shift_by, 2 * np.pi)
+        hd.mu = mod(self.mu + shift_by, 2 * pi)
         return hd
 
-    def sample(self, n):
-        if n <= 0 or not (
-            isinstance(n, int)
-            or (np.isscalar(n) and np.issubdtype(type(n), np.integer))
-        ):
+    def sample(self, n: Union[int, int32, int64]):
+        if n <= 0:
             raise ValueError("n must be a positive integer")
 
-        s = np.random.multivariate_normal(self.mu, self.C, n)
-        s = np.mod(s, 2 * np.pi)  # wrap the samples
+        s = random.multivariate_normal(self.mu, self.C, (n,))
+        s = mod(s, 2.0 * pi)  # wrap the samples
         return s
 
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
         assert self.dim == other.dim, "Dimensions of the two distributions must match"
-        mu_ = (self.mu + other.mu) % (2 * np.pi)
+        mu_ = (self.mu + other.mu) % (2.0 * pi)
         C_ = self.C + other.C
         dist_result = self.__class__(mu_, C_)
         return dist_result
@@ -109,7 +138,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         """
         assert isinstance(n, int), "n must be an integer"
 
-        m = np.exp(
+        m = exp(
             [1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)]
         )
 

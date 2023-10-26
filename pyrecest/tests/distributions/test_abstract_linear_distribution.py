@@ -1,7 +1,13 @@
 import unittest
 
 import matplotlib
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, diag, isclose
 from pyrecest.distributions import (
     AbstractLinearDistribution,
     CustomLinearDistribution,
@@ -13,67 +19,78 @@ matplotlib.use("Agg")
 
 class TestAbstractLinearDistribution(unittest.TestCase):
     def setUp(self):
-        self.mu_2D = np.array([5, 1])
-        self.C_2D = np.array([[2, 1], [1, 1]])
-        self.mu_3D = np.array([1, 2, 3])
-        self.C_3D = np.array([[1.1, 0.4, 0], [0.4, 0.9, 0], [0, 0, 1]])
+        self.mu_2D = array([5.0, 1.0])
+        self.C_2D = array([[2.0, 1.0], [1.0, 1.0]])
+        self.mu_3D = array([1.0, 2.0, 3.0])
+        self.C_3D = array([[1.1, 0.4, 0.0], [0.4, 0.9, 0.0], [0.0, 0.0, 1.0]])
         self.g_2D = GaussianDistribution(self.mu_2D, self.C_2D)
         self.g_3D = GaussianDistribution(self.mu_3D, self.C_3D)
 
-    def test_integrate_numerically(self):
+    def test_integrate(self):
         """Test that the numerical integration of a Gaussian distribution equals 1."""
-        dist = GaussianDistribution(np.array([1, 2]), np.diag([1, 2]))
+        dist = GaussianDistribution(array([1.0, 2.0]), diag(array([1.0, 2.0])))
         integration_result = dist.integrate_numerically()
-        assert np.isclose(
-            integration_result, 1, rtol=1e-5
-        ), f"Expected 1, but got {integration_result}"
+        assert isclose(
+            integration_result, 1.0, rtol=1e-5
+        ), f"Expected 1.0, but got {integration_result}"
 
     def test_integrate_fun_over_domain(self):
-        dist = GaussianDistribution(np.array([1, 2]), np.diag([1, 2]))
+        dist = GaussianDistribution(array([1.0, 2.0]), diag(array([1.0, 2.0])))
 
         def f(x):
             return 0.3 * dist.pdf(x)
 
         dim = 2
-        left = [-np.inf, -np.inf]
-        right = [np.inf, np.inf]
+        left = [-float("inf"), -float("inf")]
+        right = [float("inf"), float("inf")]
 
         integration_result = AbstractLinearDistribution.integrate_fun_over_domain(
             f, dim, left, right
         )
-        assert np.isclose(
+        assert isclose(
             integration_result, 0.3, rtol=1e-5
         ), f"Expected 0.3, but got {integration_result}"
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_mode_numerical_custom_1D(self):
         cd = CustomLinearDistribution(
-            lambda x: np.squeeze(
-                ((x > -1) & (x <= 0)) * (1 + x) + ((x > 0) & (x <= 1)) * (1 - x)
-            ),
+            lambda x: array(
+                ((x > -1.0) & (x <= 0.0)) * (1.0 + x)
+                + ((x > 0.0) & (x <= 1.0)) * (1.0 - x)
+            ).squeeze(),
             1,
         )
-        cd = cd.shift(np.array(0.5))
+        cd = cd.shift(array(0.5))
         self.assertAlmostEqual(cd.mode_numerical(), 0.5, delta=1e-4)
 
     def test_mean_numerical_gaussian_2D(self):
-        np.testing.assert_allclose(self.g_2D.mean_numerical(), self.mu_2D, atol=1e-6)
+        npt.assert_allclose(self.g_2D.mean_numerical(), self.mu_2D, atol=1e-6)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_mode_numerical_gaussian_2D_mean_far_away(self):
-        mu = np.array([5, 10])
-        C = np.array([[2, 1], [1, 1]])
+        mu = array([5.0, 10.0])
+        C = array([[2.0, 1.0], [1.0, 1.0]])
         g = GaussianDistribution(mu, C)
-        np.testing.assert_allclose(g.mode_numerical(), mu, atol=2e-4)
+        npt.assert_allclose(g.mode_numerical(), mu, atol=2e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_mode_numerical_gaussian_3D(self):
-        np.testing.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
+        npt.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
 
     def test_covariance_numerical_gaussian_2D(self):
-        np.testing.assert_allclose(
-            self.g_2D.covariance_numerical(), self.C_2D, atol=1e-6
-        )
+        npt.assert_allclose(self.g_2D.covariance_numerical(), self.C_2D, atol=1e-6)
 
     def test_plot_state_r2(self):
-        gd = GaussianDistribution(np.array([1, 2]), np.array([[1, 0.5], [0.5, 1]]))
+        gd = GaussianDistribution(array([1.0, 2.0]), array([[1.0, 0.5], [0.5, 1.0]]))
         gd.plot()
 
 

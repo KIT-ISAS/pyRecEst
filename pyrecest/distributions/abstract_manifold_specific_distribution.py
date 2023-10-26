@@ -1,9 +1,9 @@
-import numbers
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import Union
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import empty, int32, int64, random, squeeze
 
 
 class AbstractManifoldSpecificDistribution(ABC):
@@ -12,7 +12,6 @@ class AbstractManifoldSpecificDistribution(ABC):
     Should be inerhited by (abstract) classes limited to specific manifolds.
     """
 
-    @beartype
     def __init__(self, dim: int):
         self._dim = dim
 
@@ -26,7 +25,6 @@ class AbstractManifoldSpecificDistribution(ABC):
         return self._dim
 
     @dim.setter
-    @beartype
     def dim(self, value: int):
         """Set dimension of the manifold. Must be a positive integer or None."""
         if value <= 0:
@@ -40,21 +38,16 @@ class AbstractManifoldSpecificDistribution(ABC):
         pass
 
     @abstractmethod
-    @beartype
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         pass
 
-    @beartype
-    def logpdf(self, xs: np.ndarray) -> np.ndarray:
-        return np.log(self.pdf(xs))
-
     @abstractmethod
-    def mean(self) -> np.ndarray:
+    def mean(self):
         """
         Convenient access to a reasonable "mean" for different manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype:
         """
 
     def set_mode(self, _):
@@ -63,21 +56,20 @@ class AbstractManifoldSpecificDistribution(ABC):
         """
         raise NotImplementedError("set_mode is not implemented for this distribution")
 
-    @beartype
-    def sample(self, n: int | np.int32 | np.int64) -> np.ndarray:
+    # Need to use Union instead of | to support torch.dtype
+    def sample(self, n: Union[int, int32, int64]):
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
 
     # jscpd:ignore-start
-    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.number | numbers.Real | np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point=None,
+    ):
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""
 
@@ -87,13 +79,12 @@ class AbstractManifoldSpecificDistribution(ABC):
             )
 
         total_samples = burn_in + n * skipping
-        s = np.empty(
+        s = empty(
             (
                 total_samples,
                 self.input_dim,
             ),
         )
-        s.fill(np.nan)
         x = start_point
         i = 0
         pdfx = self.pdf(x)
@@ -102,11 +93,11 @@ class AbstractManifoldSpecificDistribution(ABC):
             x_new = proposal(x)
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
-            if a.item() > 1 or a.item() > np.random.rand():
+            if a.item() > 1 or a.item() > random.rand(1):
                 s[i, :] = x_new.squeeze()
                 x = x_new
                 pdfx = pdfx_new
                 i += 1
 
         relevant_samples = s[burn_in::skipping, :]
-        return np.squeeze(relevant_samples)
+        return squeeze(relevant_samples)

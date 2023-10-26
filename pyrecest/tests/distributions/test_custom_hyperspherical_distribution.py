@@ -1,6 +1,7 @@
 import unittest
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, array, linalg, random
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import (
     CustomHypersphericalDistribution,
@@ -9,22 +10,23 @@ from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distributio
 
 class CustomHypersphericalDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.vmf = VonMisesFisherDistribution(np.array([0, 0, 1]), 10)
+        self.vmf = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 10)
         self.custom_hyperspherical_distribution = (
             CustomHypersphericalDistribution.from_distribution(self.vmf)
         )
 
     def test_simple_distribution(self):
         """Test that pdf function returns the correct size and values for given points."""
-        p = self.custom_hyperspherical_distribution.pdf(np.asarray([1, 0, 0]))
-        self.assertEqual(p.size, 1, "PDF size mismatch.")
+        p = self.custom_hyperspherical_distribution.pdf(array([1.0, 0.0, 0.0]))
+        numel_p = 1 if p.ndim == 0 else p.shape[0]
+        self.assertEqual(numel_p, 1, "PDF size mismatch.")
 
-        np.random.seed(10)
-        points = np.random.randn(100, 3)
-        points /= np.linalg.norm(points, axis=1, keepdims=True)
+        random.seed(10)
+        points = random.normal(0.0, 1.0, (100, 3))
+        points /= linalg.norm(points, axis=1).reshape(-1, 1)
 
         self.assertTrue(
-            np.allclose(
+            allclose(
                 self.custom_hyperspherical_distribution.pdf(points),
                 self.vmf.pdf(points),
                 atol=1e-5,

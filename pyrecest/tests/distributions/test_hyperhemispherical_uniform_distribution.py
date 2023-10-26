@@ -1,15 +1,17 @@
 """ Test for uniform distribution for hyperhemispheres """
 import unittest
+from math import pi
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, linalg, ones, random, reshape
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
 
 
 def get_random_points(n, d):
-    np.random.seed(10)
-    points = np.random.randn(n, d + 1)
+    random.seed(10)
+    points = random.normal(0.0, 1.0, (n, d + 1))
     points = points[points[:, -1] >= 0, :]
-    points /= np.reshape(np.linalg.norm(points, axis=1), (-1, 1))
+    points /= reshape(linalg.norm(points, axis=1), (-1, 1))
     return points
 
 
@@ -22,9 +24,7 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
         points = get_random_points(100, 2)
 
         self.assertTrue(
-            np.allclose(
-                hhud.pdf(points), np.ones(points.shape[0]) / (2 * np.pi), atol=1e-6
-            )
+            allclose(hhud.pdf(points), ones(points.shape[0]) / (2 * pi), atol=1e-6)
         )
 
     def test_pdf_3d(self):
@@ -33,15 +33,13 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
         points = get_random_points(100, 3)
         # jscpd:ignore-start
         self.assertTrue(
-            np.allclose(
-                hhud.pdf(points), np.ones(points.shape[0]) / (np.pi**2), atol=1e-6
-            )
+            allclose(hhud.pdf(points), ones(points.shape[0]) / (pi**2), atol=1e-6)
         )
         # jscpd:ignore-end
 
     def test_integrate_S2(self):
         hhud = HyperhemisphericalUniformDistribution(2)
-        self.assertAlmostEqual(hhud.integrate(), 1, delta=1e-6)
+        self.assertAlmostEqual(hhud.integrate(), 1.0, delta=1e-6)
 
     def test_integrate_S3(self):
         hhud = HyperhemisphericalUniformDistribution(3)

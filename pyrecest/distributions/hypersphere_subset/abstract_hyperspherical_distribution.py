@@ -1,8 +1,24 @@
 from collections.abc import Callable
+from math import pi
+from typing import Union
 
 import matplotlib.pyplot as plt
-import numpy as np
-from beartype import beartype
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    array,
+    concatenate,
+    cos,
+    int32,
+    int64,
+    linspace,
+    meshgrid,
+    ones,
+    random,
+    sin,
+    vstack,
+    zeros,
+)
 from scipy.optimize import minimize
 
 from .abstract_hypersphere_subset_distribution import (
@@ -21,20 +37,19 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype:
         """
         return self.mean_direction()
 
     # jscpd:ignore-start
-    @beartype
     def sample_metropolis_hastings(
         self,
-        n: int | np.int32 | np.int64,
-        burn_in: int | np.int32 | np.int64 = 10,
-        skipping: int | np.int32 | np.int64 = 5,
+        n: Union[int, int32, int64],
+        burn_in: Union[int, int32, int64] = 10,
+        skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
-        start_point: np.ndarray | None = None,
-    ) -> np.ndarray:
+        start_point=None,
+    ):
         # jscpd:ignore-end
         """
         Sample from the distribution using Metropolis-Hastings algorithm.
@@ -44,10 +59,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             burn_in (int, optional): Number of samples to discard at the start. Defaults to 10.
             skipping (int, optional): Number of samples to skip between each kept sample. Defaults to 5.
             proposal (function, optional): Proposal distribution for the Metropolis-Hastings algorithm. Defaults to None.
-            start_point (np.ndarray, optional): Starting point for the Metropolis-Hastings algorithm. Defaults to None.
+            start_point (, optional): Starting point for the Metropolis-Hastings algorithm. Defaults to None.
 
         Returns:
-            np.ndarray: Sampled points.
+            : Sampled points.
         """
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
@@ -70,15 +85,14 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             start_point=start_point,
         )
 
-    @beartype
     def plot(
         self,
-        faces: int | np.int32 | np.int64 = 100,
-        grid_faces: int | np.int32 | np.int64 = 20,
+        faces: Union[int, int32, int64] = 100,
+        grid_faces: Union[int, int32, int64] = 20,
     ) -> None:
         if self.dim == 1:
-            phi = np.linspace(0, 2 * np.pi, 320)
-            x = np.array([np.sin(phi), np.cos(phi)])
+            phi = linspace(0, 2 * pi, 320)
+            x = array([sin(phi), cos(phi)])
             p = self.pdf(x)
             plt.plot(phi, p)
             plt.show()
@@ -90,7 +104,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             x_sphere_inner, y_sphere_inner, z_sphere_inner = self.create_sphere(faces)
 
             c_sphere = self.pdf(
-                np.array(
+                array(
                     [
                         x_sphere_inner.flatten(),
                         y_sphere_inner.flatten(),
@@ -140,19 +154,18 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 "Cannot plot hyperspherical distribution with this number of dimensions."
             )
 
-    @beartype
-    def moment(self) -> np.ndarray:
+    def moment(self):
         return self.moment_numerical()
 
     @staticmethod
     def get_full_integration_boundaries(dim):
         if dim == 1:
-            return [0, 2 * np.pi]
+            return [0, 2 * pi]
 
-        return np.vstack(
+        return vstack(
             (
-                np.zeros(dim),
-                np.concatenate(([2 * np.pi], np.pi * np.ones(dim - 1))),
+                zeros(dim),
+                concatenate((array([2 * pi]), pi * ones(dim - 1))),
             )
         ).T
 
@@ -175,37 +188,36 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def entropy(self):
         return super().entropy_numerical()
 
-    @beartype
-    def mode_numerical(self) -> np.ndarray:
+    def mode_numerical(self):
         def fun(s):
-            return -self.pdf(AbstractHypersphereSubsetDistribution.polar_to_cart(s))
+            return -self.pdf(
+                AbstractHypersphereSubsetDistribution.polar_to_cart(array(s))
+            )
 
-        s0 = np.random.rand(self.dim) * np.pi
+        s0 = random.rand(self.dim) * pi
         res = minimize(
             fun,
             s0,
             method="BFGS",
             options={"disp": False, "gtol": 1e-12, "maxiter": 2000},
         )
-        m = AbstractHypersphereSubsetDistribution.polar_to_cart(res.x)
+        m = AbstractHypersphereSubsetDistribution.polar_to_cart(array(res.x))
         return m
 
     def hellinger_distance(self, other):
         return super().hellinger_distance_numerical(other)
 
-    @beartype
     def total_variation_distance(self, other: "AbstractHypersphericalDistribution"):
         return super().total_variation_distance_numerical(other)
 
     @staticmethod
     def create_sphere(faces):
-        phi, theta = np.mgrid[
-            0.0 : np.pi : complex(0, faces),  # noqa: E203
-            0.0 : 2.0 * np.pi : complex(0, faces),  # noqa: E203
-        ]
-        x = np.sin(phi) * np.cos(theta)
-        y = np.sin(phi) * np.sin(theta)
-        z = np.cos(phi)
+        phi_linspace = linspace(0.0, pi, faces)
+        theta_linspace = linspace(0.0, 2.0 * pi, faces)
+        phi, theta = meshgrid(phi_linspace, theta_linspace, indexing="ij")
+        x = sin(phi) * cos(theta)
+        y = sin(phi) * sin(theta)
+        z = cos(phi)
         return x, y, z
 
     @staticmethod
@@ -223,16 +235,16 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         num_points = 1000
 
         # Generate theta and phi angles (in radians)
-        theta = np.linspace(0, 2 * np.pi, num_points)
-        phi = np.linspace(0, np.pi, num_points)
+        theta = linspace(0, 2 * pi, num_points)
+        phi = linspace(0, pi, num_points)
 
         # Create a meshgrid for theta and phi angles
-        theta, phi = np.meshgrid(theta, phi)
+        theta, phi = meshgrid(theta, phi)
 
         # Calculate the x, y, and z coordinates
-        x = np.sin(phi) * np.cos(theta)
-        y = np.sin(phi) * np.sin(theta)
-        z = np.cos(phi)
+        x = sin(phi) * cos(theta)
+        y = sin(phi) * sin(theta)
+        z = cos(phi)
 
         # Plot the unit circle in 3D space
         fig = plt.figure()

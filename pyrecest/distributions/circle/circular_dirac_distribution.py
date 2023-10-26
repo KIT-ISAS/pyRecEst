@@ -1,6 +1,3 @@
-import numpy as np
-from beartype import beartype
-
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -8,22 +5,19 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 class CircularDiracDistribution(
     HypertoroidalDiracDistribution, AbstractCircularDistribution
 ):
-    @beartype
-    def __init__(self, d: np.ndarray, w: np.ndarray | None = None):
+    def __init__(self, d, w=None):
         """
         Initializes a CircularDiracDistribution instance.
 
         Args:
-            d (np.ndarray): The Dirac locations.
-            w (Optional[np.ndarray]): The weights for each Dirac location.
+            d (): The Dirac locations.
+            w (Optional[]): The weights for each Dirac location.
         """
         super().__init__(
             d, w, dim=1
         )  # Necessary so it is clear that the dimension is 1.
-        d = np.squeeze(d)
-        assert w is None or np.shape(d) == np.shape(
-            w
-        ), "The shapes of d and w should match."
+        d = d.squeeze()
+        assert w is None or d.shape == w.shape, "The shapes of d and w should match."
 
     def plot_interpolated(self, _):
         """

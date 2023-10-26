@@ -1,4 +1,5 @@
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, diff, prod, reshape
 from scipy.integrate import nquad
 
 from ..abstract_bounded_nonperiodic_distribution import (
@@ -8,11 +9,11 @@ from ..abstract_bounded_nonperiodic_distribution import (
 
 class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistribution):
     def __init__(self, bounds):
-        AbstractBoundedNonPeriodicDistribution.__init__(self, np.size(bounds[0]))
+        AbstractBoundedNonPeriodicDistribution.__init__(self, bounds.shape[1])
         self.bounds = bounds
 
     def get_manifold_size(self):
-        s = np.prod(np.diff(self.bounds, axis=1))
+        s = prod(diff(self.bounds, axis=1))
         return s
 
     @property
@@ -35,8 +36,8 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
         if integration_boundaries is None:
             integration_boundaries = self.bounds
 
-        integration_boundaries = np.reshape(integration_boundaries, (2, -1))
+        integration_boundaries = reshape(integration_boundaries, (2, -1))
         left, right = integration_boundaries
 
         integration_boundaries = zip(left, right)
-        return nquad(lambda *args: self.pdf(np.array(args)), integration_boundaries)[0]
+        return nquad(lambda *args: self.pdf(array(args)), integration_boundaries)[0]

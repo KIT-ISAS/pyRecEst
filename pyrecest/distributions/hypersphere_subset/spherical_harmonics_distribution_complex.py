@@ -1,5 +1,29 @@
-import numpy as np
+from math import pi
+
 import scipy
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    abs,
+    all,
+    array,
+    atleast_2d,
+    column_stack,
+    complex128,
+    conj,
+    empty,
+    full,
+    imag,
+    isnan,
+    linalg,
+    real,
+    reshape,
+    shape,
+    sin,
+    sqrt,
+    zeros,
+)
 
 # pylint: disable=E0611
 from scipy.special import sph_harm
@@ -18,14 +42,14 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         self.assert_real = assert_real
 
     def value(self, xs):
-        xs = np.atleast_2d(xs)
+        xs = atleast_2d(xs)
         phi, theta = AbstractSphereSubsetDistribution.cart_to_sph(
             xs[:, 0], xs[:, 1], xs[:, 2]
         )
         return self.value_sph(phi, theta)
 
     def value_sph(self, phi, theta):
-        vals = np.zeros(theta.shape[0], dtype=complex)
+        vals = zeros((theta.shape[0],), dtype=complex128)
         for n_curr in range(self.coeff_mat.shape[0]):
             for m_curr in range(-n_curr, n_curr + 1):
                 # Evaluate it for all query points at once
@@ -35,10 +59,10 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
                 vals += self.coeff_mat[n_curr, n_curr + m_curr] * y_lm
 
         if self.assert_real:
-            assert np.all(
-                np.abs(np.imag(vals)) < 1e-10
+            assert all(
+                abs(imag(vals)) < 1e-10
             ), "Coefficients apparently do not represent a real function."
-            return np.real(vals)
+            return real(vals)
 
         return vals
 
@@ -50,9 +74,9 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         if self.transformation != "identity":
             raise ValueError("Transformation currently not supported")
 
-        coeff_mat_real = np.empty(self.coeff_mat.shape, dtype=float)
+        coeff_mat_real = empty(self.coeff_mat.shape, dtype=float)
 
-        coeff_mat_real[0, 0] = np.real(self.coeff_mat[0, 0])
+        coeff_mat_real[0, 0] = real(self.coeff_mat[0, 0])
 
         for n in range(
             1, self.coeff_mat.shape[0]
@@ -61,39 +85,37 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
                 if m < 0:
                     coeff_mat_real[n, n + m] = (
                         (-1) ** m
-                        * np.sqrt(2)
+                        * sqrt(2)
                         * (-1 if (-m) % 2 else 1)
-                        * np.imag(self.coeff_mat[n, n + m])
+                        * imag(self.coeff_mat[n, n + m])
                     )
                 elif m > 0:
                     coeff_mat_real[n, n + m] = (
-                        np.sqrt(2)
-                        * (-1 if m % 2 else 1)
-                        * np.real(self.coeff_mat[n, n + m])
+                        sqrt(2) * (-1 if m % 2 else 1) * real(self.coeff_mat[n, n + m])
                     )
                 else:  # m == 0
-                    coeff_mat_real[n, n] = np.real(self.coeff_mat[n, n])
+                    coeff_mat_real[n, n] = real(self.coeff_mat[n, n])
 
         shd = SphericalHarmonicsDistributionReal(
-            np.real(coeff_mat_real), self.transformation
+            real(coeff_mat_real), self.transformation
         )
 
         return shd
 
     def mean_direction(self):
-        if np.prod(self.coeff_mat.shape) <= 1:
+        if self.coeff_mat.shape[0] <= 1:
             raise ValueError("Too few coefficients available to calculate the mean")
 
-        y = np.imag(self.coeff_mat[1, 0] + self.coeff_mat[1, 2]) / np.sqrt(2)
-        x = np.real(self.coeff_mat[1, 0] - self.coeff_mat[1, 2]) / np.sqrt(2)
-        z = np.real(self.coeff_mat[1, 1])
+        y = imag(self.coeff_mat[1, 0] + self.coeff_mat[1, 2]) / sqrt(2.0)
+        x = real(self.coeff_mat[1, 0] - self.coeff_mat[1, 2]) / sqrt(2.0)
+        z = real(self.coeff_mat[1, 1])
 
-        if np.linalg.norm(np.array([x, y, z])) < 1e-9:
+        if linalg.norm(array([x, y, z])) < 1e-9:
             raise ValueError(
                 "Coefficients of degree 1 are almost zero. Therefore, no meaningful mean is available"
             )
 
-        mu = np.array([x, y, z]) / np.linalg.norm(np.array([x, y, z]))
+        mu = array([x, y, z]) / linalg.norm(array([x, y, z]))
 
         return mu
 
@@ -113,10 +135,10 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
         def fun_sph(phi, theta):
             x, y, z = AbstractSphericalDistribution.sph_to_cart(
-                np.ravel(phi), np.ravel(theta)
+                phi.ravel(), theta.ravel()
             )
-            vals = fun_cart(np.column_stack((x, y, z)))
-            return np.reshape(vals, np.shape(theta))
+            vals = fun_cart(column_stack((x, y, z)))
+            return reshape(vals, shape(theta))
 
         return fun_sph
 
@@ -137,32 +159,33 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         else:
             raise ValueError("Transformation not supported")
 
-        coeff_mat = np.full((degree + 1, 2 * degree + 1), np.nan, dtype=complex)
+        coeff_mat = full((degree + 1, 2 * degree + 1), float("NaN"), dtype=complex128)
 
         def real_part(phi, theta, n, m):
-            return np.real(
-                fun_with_trans(np.array(phi), np.array(theta))
-                * np.conj(sph_harm(m, n, phi, theta))
-                * np.sin(theta)
+            return real(
+                fun_with_trans(array(phi), array(theta))
+                * conj(array(sph_harm(m, n, phi, theta)))
+                * sin(theta)
             )
 
         def imag_part(phi, theta, n, m):
-            return np.imag(
-                fun_with_trans(np.array(phi), np.array(theta))
-                * np.conj(sph_harm(m, n, phi, theta))
-                * np.sin(theta)
+            return imag(
+                fun_with_trans(array(phi), array(theta))
+                * conj(array(sph_harm(m, n, phi, theta)))
+                * sin(theta)
             )
 
         for n in range(degree + 1):  # Use n instead of l to comply with PEP 8
             for m in range(-n, n + 1):
                 real_integral, _ = scipy.integrate.nquad(
-                    real_part, [[0, 2 * np.pi], [0, np.pi]], args=(n, m)
+                    real_part, [[0.0, 2.0 * pi], [0.0, pi]], args=(n, m)
                 )
                 imag_integral, _ = scipy.integrate.nquad(
-                    imag_part, [[0, 2 * np.pi], [0, np.pi]], args=(n, m)
+                    imag_part, [[0.0, 2.0 * pi], [0.0, pi]], args=(n, m)
                 )
-
-                if np.isnan(real_integral) or np.isnan(imag_integral):
+                real_integral = array(real_integral)
+                imag_integral = array(imag_integral)
+                if isnan(real_integral) or isnan(imag_integral):
                     print(f"Integration failed for l={n}, m={m}")
 
                 coeff_mat[n, m + n] = real_integral + 1j * imag_integral

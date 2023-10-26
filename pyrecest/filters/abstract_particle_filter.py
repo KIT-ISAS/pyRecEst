@@ -1,7 +1,9 @@
+import copy
 from collections.abc import Callable
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import ndim, ones_like, random, sum, zeros
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -16,7 +18,6 @@ class AbstractParticleFilter(AbstractFilterType):
     def predict_identity(self, noise_distribution):
         self.predict_nonlinear(f=lambda x: x, noise_distribution=noise_distribution)
 
-    @beartype
     def predict_nonlinear(
         self,
         f: Callable,
@@ -33,40 +34,65 @@ class AbstractParticleFilter(AbstractFilterType):
             self.filter_state.d = f(self.filter_state.d)
         else:
             self.filter_state = self.filter_state.apply_function(f)
-
+        n_particles = self.filter_state.w.shape[0]
         if noise_distribution is not None:
             if not shift_instead_of_add:
-                noise = noise_distribution.sample(self.filter_state.w.size)
+                noise = noise_distribution.sample(self.filter_state.w.shape[0])
                 self.filter_state.d = self.filter_state.d + noise
             else:
-                for i in range(self.filter_state.d.shape[1]):
-                    noise_curr = noise_distribution.set_mean(self.filter_state.d[i, :])
-                    self.filter_state.d[i, :] = noise_curr.sample(1)
+                for i in range(n_particles):
+                    noise_curr = noise_distribution.set_mean(self.filter_state.d[i])
+                    self.filter_state.d[i] = noise_curr.sample(1)
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
-            samples.shape[0] == weights.size
+            samples.shape[0] == weights.shape[0]
         ), "samples and weights must match in size"
 
-        weights = weights / np.sum(weights)
-        n = self.filter_state.w.size
-        noise_ids = np.random.choice(weights.size, n, p=weights)
-        d = np.zeros((n, self.filter_state.dim))
-        for i in range(n):
-            d[i, :] = f(self.filter_state.d[i, :], samples[noise_ids[i]])
+        weights = weights / sum(weights)
+        n_particles = self.filter_state.w.shape[0]
+        noise_samples = random.choice(samples, n_particles, p=weights)
 
-        self.filter_state.d = d
+        d = zeros((n_particles, self.filter_state.dim))
+        for i in range(n_particles):
+            d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
 
-    @beartype
+        self._filter_state.d = d
+
+    @property
+    def filter_state(self):
+        return self._filter_state
+
+    @filter_state.setter
+    def filter_state(self, new_state):
+        if self._filter_state is None:
+            self._filter_state = copy.deepcopy(new_state)
+        elif isinstance(new_state, type(self.filter_state)):
+            assert (
+                self.filter_state.d.shape == new_state.d.shape
+            )  # This also ensures the dimension and type stays the same
+            self._filter_state = copy.deepcopy(new_state)
+        else:
+            # Sample if it does not inherit from the previous distribution
+            samples = new_state.sample(self.filter_state.w.shape[0])
+            assert (
+                samples.shape == self.filter_state.d.shape
+            )  # This also ensures the dimension and type stays the same
+            self._filter_state.d = samples
+            self._filter_state.w = (
+                ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
+            )
+
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True
     ):
-        assert measurement is None or np.size(measurement) == meas_noise.dim
         assert (
-            np.ndim(measurement) == 1
-            or np.ndim(measurement) == 0
-            and meas_noise.dim == 1
+            measurement is None
+            or measurement.shape == (meas_noise.dim,)
+            or meas_noise.dim == 1
+            and measurement.shape == ()
         )
+        assert ndim(measurement) == 1 or ndim(measurement) == 0 and meas_noise.dim == 1
         if not shift_instead_of_add:
             raise NotImplementedError()
 
@@ -78,20 +104,17 @@ class AbstractParticleFilter(AbstractFilterType):
             likelihood = likelihood.pdf
 
         if measurement is None:
-            self.filter_state = self.filter_state.reweigh(likelihood)
+            self._filter_state = self.filter_state.reweigh(likelihood)
         else:
-            self.filter_state = self.filter_state.reweigh(
+            self._filter_state = self.filter_state.reweigh(
                 lambda x: likelihood(measurement, x)
             )
 
-        self.filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
-        self.filter_state.w = (
-            1 / self.filter_state.w.shape[0] * np.ones_like(self.filter_state.w)
+        self._filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
+        self._filter_state.w = (
+            1 / self.filter_state.w.shape[0] * ones_like(self.filter_state.w)
         )
 
-    @beartype
     def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
-        likelihood_val = np.sum(
-            likelihood.pdf(self.filter_state.d) * self.filter_state.w
-        )
+        likelihood_val = sum(likelihood.pdf(self.filter_state.d) * self.filter_state.w)
         return likelihood_val

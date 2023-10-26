@@ -1,6 +1,14 @@
 import unittest
+from math import pi
 
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, linalg, mod, ones, random, sqrt, sum
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,
@@ -9,11 +17,15 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution
 
 class HypersphericalDiracDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.d = np.array(
-            [[0.5, 3, 4, 6, 6], [2, 2, 5, 3, 0], [0.5, 0.2, 5.8, 4.3, 1.2]]
+        self.d = array(
+            [
+                [0.5, 3.0, 4.0, 6.0, 6.0],
+                [2.0, 2.0, 5.0, 3.0, 0.0],
+                [0.5, 0.2, 5.8, 4.3, 1.2],
+            ]
         ).T
-        self.d = self.d / np.linalg.norm(self.d, axis=1)[:, None]
-        self.w = np.array([0.1, 0.1, 0.1, 0.1, 0.6])
+        self.d = self.d / linalg.norm(self.d, axis=1)[:, None]
+        self.w = array([0.1, 0.1, 0.1, 0.1, 0.6])
         self.hdd = HypersphericalDiracDistribution(self.d, self.w)
 
     def test_instance_creation(self):
@@ -23,28 +35,26 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         nSamples = 5
         s = self.hdd.sample(nSamples)
         self.assertEqual(s.shape, (nSamples, self.d.shape[-1]))
-        np.testing.assert_array_almost_equal(s, np.mod(s, 2 * np.pi))
-        np.testing.assert_array_almost_equal(
-            np.linalg.norm(s, axis=-1), np.ones(nSamples)
-        )
+        npt.assert_array_almost_equal(s, mod(s, 2 * pi))
+        npt.assert_array_almost_equal(linalg.norm(s, axis=-1), ones(nSamples))
 
     def test_apply_function(self):
         same = self.hdd.apply_function(lambda x: x)
-        np.testing.assert_array_almost_equal(same.d, self.hdd.d, decimal=10)
-        np.testing.assert_array_almost_equal(same.w, self.hdd.w, decimal=10)
+        npt.assert_array_almost_equal(same.d, self.hdd.d, decimal=10)
+        npt.assert_array_almost_equal(same.w, self.hdd.w, decimal=10)
 
         mirrored = self.hdd.apply_function(lambda x: -x)
-        np.testing.assert_array_almost_equal(mirrored.d, -self.hdd.d, decimal=10)
-        np.testing.assert_array_almost_equal(mirrored.w, self.hdd.w, decimal=10)
+        npt.assert_array_almost_equal(mirrored.d, -self.hdd.d, decimal=10)
+        npt.assert_array_almost_equal(mirrored.w, self.hdd.w, decimal=10)
 
     def test_reweigh_identity(self):
         def f(x):
-            return 2 * np.ones(x.shape[0])
+            return 2 * ones(x.shape[0])
 
         twdNew = self.hdd.reweigh(f)
         self.assertIsInstance(twdNew, HypersphericalDiracDistribution)
-        np.testing.assert_array_almost_equal(twdNew.d, self.hdd.d)
-        np.testing.assert_array_almost_equal(twdNew.w, self.hdd.w)
+        npt.assert_array_almost_equal(twdNew.d, self.hdd.d)
+        npt.assert_array_almost_equal(twdNew.w, self.hdd.w)
 
     def test_reweigh_coord_based(self):
         def f(x):
@@ -52,16 +62,20 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
 
         twdNew = self.hdd.reweigh(f)
         self.assertIsInstance(twdNew, HypersphericalDiracDistribution)
-        np.testing.assert_array_almost_equal(twdNew.d, self.hdd.d)
-        self.assertAlmostEqual(np.sum(twdNew.w), 1, places=10)
+        npt.assert_array_almost_equal(twdNew.d, self.hdd.d)
+        self.assertAlmostEqual(sum(twdNew.w), 1, places=10)
         wNew = self.hdd.d[:, 1] * self.hdd.w
-        np.testing.assert_array_almost_equal(twdNew.w, wNew / np.sum(wNew))
+        npt.assert_array_almost_equal(twdNew.w, wNew / sum(wNew))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        reason="Not supported on PyTorch backend",
+    )
     def test_from_distribution(self):
-        np.random.seed(0)
-        vmf = VonMisesFisherDistribution(np.array([1, 1, 1]) / np.sqrt(3), 1)
+        random.seed(0)
+        vmf = VonMisesFisherDistribution(array([1.0, 1.0, 1.0]) / sqrt(3), 1.0)
         dirac_dist = HypersphericalDiracDistribution.from_distribution(vmf, 100000)
-        np.testing.assert_almost_equal(
+        npt.assert_almost_equal(
             dirac_dist.mean_direction(), vmf.mean_direction(), decimal=2
         )
 

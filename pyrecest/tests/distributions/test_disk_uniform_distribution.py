@@ -1,7 +1,11 @@
 """ Test cases for DiskUniformDistribution"""
 import unittest
+from math import pi
 
-import numpy as np
+import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, concatenate, ones, sqrt, zeros
 from pyrecest.distributions import DiskUniformDistribution
 
 
@@ -11,22 +15,22 @@ class TestDiskUniformDistribution(unittest.TestCase):
     def test_pdf(self):
         dist = DiskUniformDistribution()
 
-        xs = np.array(
-            [
-                [0.5, 0, 1, 1 / np.sqrt(2), 0, 3, 1.5],
-                [0.5, 1, 0, 1 / np.sqrt(2), 3, 0, 1.5],
+        xs = array(
+            [  # Without multiplying it by 0.99, machine precision can play a role
+                [0.5, 0.0, 1.0, 1.0 / sqrt(2.0) * 0.99, 0.0, 3.0, 1.5],
+                [0.5, 1.0, 0.0, 1.0 / sqrt(2.0) * 0.99, 3.0, 0.0, 1.5],
             ]
         ).T
         pdf_values = dist.pdf(xs)
 
-        np.testing.assert_allclose(
+        npt.assert_allclose(
             pdf_values,
             1
-            / np.pi
-            * np.concatenate(
+            / pi
+            * concatenate(
                 (
-                    np.ones(4),
-                    np.zeros(3),
+                    ones(4),
+                    zeros(3),
                 )
             ),
             rtol=1e-12,

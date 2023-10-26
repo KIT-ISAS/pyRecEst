@@ -1,4 +1,5 @@
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, ndim
 from pyrecest.distributions import VonMisesFisherDistribution
 
 from .abstract_hyperspherical_filter import AbstractHypersphericalFilter
@@ -7,7 +8,7 @@ from .abstract_hyperspherical_filter import AbstractHypersphericalFilter
 class VonMisesFisherFilter(AbstractHypersphericalFilter):
     def __init__(self):
         AbstractHypersphericalFilter.__init__(
-            self, VonMisesFisherDistribution(np.array([1, 0]), 1)
+            self, VonMisesFisherDistribution(array([1.0, 0.0]), 1.0)
         )
 
     @property
@@ -45,6 +46,6 @@ class VonMisesFisherFilter(AbstractHypersphericalFilter):
         assert (
             z.shape[0] == self.filter_state.input_dim
         ), "Dimension mismatch between measurement and state."
-        assert np.ndim(z) == 1, "z should be a vector."
+        assert ndim(z) == 1, "z should be a vector."
         meas_noise.mu = z
         self.filter_state = self.filter_state.multiply(meas_noise)

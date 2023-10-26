@@ -1,7 +1,8 @@
 from abc import abstractmethod
+from typing import Union
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import int32, int64
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
 
@@ -13,9 +14,8 @@ class AbstractLinBoundedCartProdDistribution(AbstractCartProdDistribution):
     are ordered as follows: bounded dimensions first, then linear dimensions.
     """
 
-    @beartype
     def __init__(
-        self, bound_dim: int | np.int32 | np.int64, lin_dim: int | np.int32 | np.int64
+        self, bound_dim: Union[int, int32, int64], lin_dim: Union[int, int32, int64]
     ):
         """
         Parameters:
@@ -40,7 +40,7 @@ class AbstractLinBoundedCartProdDistribution(AbstractCartProdDistribution):
         throughout manifolds.
 
         :return: The mean of the distribution.
-        :rtype: np.ndarray
+        :rtype:
         """
         return self.hybrid_mean()
 

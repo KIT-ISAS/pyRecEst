@@ -1,8 +1,8 @@
-import copy
 import warnings
+from math import pi
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import mod
 from pyrecest.distributions import VonMisesDistribution
 
 from .abstract_circular_filter import AbstractCircularFilter
@@ -27,17 +27,6 @@ class VonMisesFilter(AbstractCircularFilter):
         """
         AbstractCircularFilter.__init__(self, VonMisesDistribution(0, 1))
 
-    @beartype
-    def set_state(self, new_state: VonMisesDistribution):
-        """
-        Sets the current system state
-
-        Parameters:
-        new_state (VonMisesDistribution) : new state
-        """
-        self.filter_state = copy.deepcopy(new_state)
-
-    @beartype
     def predict_identity(self, vmSys: VonMisesDistribution):
         """
         Predicts assuming identity system model, i.e.,
@@ -49,7 +38,6 @@ class VonMisesFilter(AbstractCircularFilter):
         """
         self.filter_state = self.filter_state.convolve(vmSys)
 
-    @beartype
     def update_identity(self, vmMeas: VonMisesDistribution, z=0.0):
         """
         Updates assuming identity measurement model, i.e.,
@@ -60,7 +48,7 @@ class VonMisesFilter(AbstractCircularFilter):
         vmMeas (VMDistribution) : distribution of additive noise
         z : measurement in [0, 2pi)
         """
-        assert np.size(z) == 1, "z must be a scalar"
+        assert z.shape in ((), (1,)), "z must be a scalar"
         if vmMeas.mu != 0.0:
             warning_message = (
                 "The measurement noise is not centered at 0.0. "
@@ -70,6 +58,6 @@ class VonMisesFilter(AbstractCircularFilter):
             )
             warnings.warn(warning_message)
 
-        muWnew = np.mod(z - vmMeas.mu, 2 * np.pi)
+        muWnew = mod(z - vmMeas.mu, 2.0 * pi)
         vmMeasShifted = VonMisesDistribution(muWnew, vmMeas.kappa)
         self.filter_state = self.filter_state.multiply(vmMeasShifted)

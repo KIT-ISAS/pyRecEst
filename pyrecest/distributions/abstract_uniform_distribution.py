@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import ones
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -9,28 +9,27 @@ from .abstract_distribution_type import AbstractDistributionType
 class AbstractUniformDistribution(AbstractDistributionType):
     """Abstract class for a uniform distribution on a manifold."""
 
-    @beartype
-    def pdf(self, xs: np.ndarray) -> np.ndarray:
+    def pdf(self, xs):
         """Compute the probability density function at each point in xs.
 
         :param xs: Points at which to compute the pdf.
-        :type xs: np.ndarray
+        :type xs:
 
         :return: The pdf evaluated at each point in xs.
-        :rtype: np.ndarray
+        :rtype:
         """
-        return 1 / self.get_manifold_size() * np.ones(xs.shape[0])
+        return 1 / self.get_manifold_size() * ones(xs.shape[0])
 
     @abstractmethod
-    def get_manifold_size(self) -> np.ndarray:
+    def get_manifold_size(self):
         """
         Compute the probability density function at each point in xs.
 
         :param xs: Points at which to compute the pdf.
-        :type xs: np.ndarray
+        :type xs:
 
         :return: The pdf evaluated at each point in xs.
-        :rtype: np.ndarray
+        :rtype:
         """
 
     def mode(self):

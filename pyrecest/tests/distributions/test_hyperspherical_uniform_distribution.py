@@ -1,7 +1,8 @@
 """ Test for uniform distribution on the hypersphere """
+# pylint: disable=no-name-in-module,no-member
 import unittest
 
-import numpy as np
+from pyrecest.backend import allclose, linalg, ones, random
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
@@ -18,11 +19,11 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(hud.integrate(), 1, delta=1e-6)
 
     def test_pdf(self):
-        np.random.seed(0)
+        random.seed(0)
         for dim in range(2, 5):
             hud = HypersphericalUniformDistribution(dim)
-            x = np.random.rand(dim + 1)
-            x = x / np.linalg.norm(x)
+            x = random.rand(dim + 1)
+            x = x / linalg.norm(x)
             self.assertAlmostEqual(
                 hud.pdf(x),
                 1
@@ -38,9 +39,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             n = 10
             samples = hud.sample(n)
             self.assertEqual(samples.shape, (n, hud.dim + 1))
-            self.assertTrue(
-                np.allclose(np.linalg.norm(samples, axis=1), np.ones(n), rtol=1e-10)
-            )
+            self.assertTrue(allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-10))
 
 
 if __name__ == "__main__":

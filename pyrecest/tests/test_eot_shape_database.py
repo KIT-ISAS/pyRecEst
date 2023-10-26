@@ -40,7 +40,7 @@ class TestStar(unittest.TestCase):
 
 class TestCross(unittest.TestCase):
     def setUp(self) -> None:
-        self.cross_full = Cross(2, 1, 2, 3)
+        self.cross_full = Cross(2.0, 1.0, 2.0, 3.0)
         self.cross_kernel = self.cross_full.compute_kernel()
 
     def test_area(self):

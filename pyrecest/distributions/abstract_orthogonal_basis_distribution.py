@@ -2,8 +2,9 @@ import copy
 import warnings
 from abc import abstractmethod
 
-import numpy as np
-from beartype import beartype
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import all, exp, imag, real
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -31,7 +32,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
 
     @abstractmethod
-    def value(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
+    def value(self, xs):
         """
         Abstract method to get value of the distribution for given input. Implementation required in subclasses.
 
@@ -47,8 +48,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         result = copy.deepcopy(self)
         return result.normalize_in_place()
 
-    @beartype
-    def pdf(self, xs: np.ndarray | np.number) -> np.ndarray | np.number:
+    def pdf(self, xs):
         """
         Calculates probability density function for the given input.
 
@@ -57,14 +57,14 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         val = self.value(xs)
         if self.transformation == "sqrt":
-            assert np.all(np.imag(val) < 0.0001)
-            return np.real(val) ** 2
+            assert all(imag(val) < 0.0001)
+            return real(val) ** 2
 
         if self.transformation == "identity":
             return val
 
         if self.transformation == "log":
             warnings.warn("Density may not be normalized")
-            return np.exp(val)
+            return exp(val)
 
         raise ValueError("Transformation not recognized or unsupported")

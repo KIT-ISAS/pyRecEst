@@ -1,7 +1,9 @@
 from collections.abc import Callable
 from functools import partial
+from math import pi
 
-import numpy as np
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import array, log, max, min, mod
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
 from pyrecest.filters.abstract_circular_filter import AbstractCircularFilter
 
@@ -10,7 +12,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
     def __init__(self, wn=None):
         """Initialize the filter."""
         if wn is None:
-            wn = WrappedNormalDistribution(0, 1)
+            wn = WrappedNormalDistribution(array(0.0), array(1.0))
         AbstractCircularFilter.__init__(self, wn)
 
     def predict_identity(self, wn_sys):
@@ -18,7 +20,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
         self.filter_state = self.filter_state.convolve(wn_sys)
 
     def update_identity(self, wn_meas, z):
-        mu_w_new = np.mod(z - wn_meas.mu, 2 * np.pi)
+        mu_w_new = mod(z - wn_meas.mu, 2.0 * pi)
         wn_meas_shifted = WrappedNormalDistribution(mu_w_new, wn_meas.sigma)
         self.filter_state = self.filter_state.multiply_vm(wn_meas_shifted)
 
@@ -41,24 +43,24 @@ class WrappedNormalFilter(AbstractCircularFilter):
 
         while lambda_ > 0:
             wd = self.filter_state.to_dirac5()
-            likelihood_vals = np.array([likelihood(z, x) for x in wd.d])
-            likelihood_vals_min: np.number = np.min(likelihood_vals)
-            likelihood_vals_max: np.number = np.max(likelihood_vals)
+            likelihood_vals = array([likelihood(z, x) for x in wd.d])
+            likelihood_vals_min = min(likelihood_vals)
+            likelihood_vals_max = max(likelihood_vals)
 
             if likelihood_vals_max == 0:
                 raise ValueError(
                     "Progressive update failed because likelihood is 0 everywhere"
                 )
 
-            w_min: np.number = np.min(wd.w)
-            w_max: np.number = np.max(wd.w)
+            w_min = min(wd.w)
+            w_max = max(wd.w)
 
             if likelihood_vals_min == 0 or w_min == 0:
                 raise ZeroDivisionError("Cannot perform division by zero")
 
             current_lambda = min(
-                np.log(tau * w_max / w_min)
-                / np.log(likelihood_vals_min / likelihood_vals_max),
+                log(tau * w_max / w_min)
+                / log(likelihood_vals_min / likelihood_vals_max),
                 lambda_,
             )
 

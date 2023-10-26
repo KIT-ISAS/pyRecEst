@@ -1,4 +1,5 @@
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import concatenate, exp, eye, linalg, mean
 from pyrecest.utils.plotting import plot_ellipsoid
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
@@ -22,7 +23,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
 
     def get_point_estimate(self):
         # Combines the kinematic state and flattened extent matrix into one vector
-        return np.concatenate([self.kinematic_state, self.extent.flatten()])
+        return concatenate([self.kinematic_state, self.extent.flatten()])
 
     def get_point_estimate_kinematics(self):
         # Returns just the kinematic state
@@ -39,13 +40,13 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         x_rows = self.kinematic_state.shape[0]
         y_rows = x_rows // 2
 
-        if np.isscalar(Cw):
-            Cw = Cw * np.eye(x_rows)
+        if Cw.shape in ((), (1,)):
+            Cw = Cw * eye(x_rows)
 
         self.kinematic_state = F @ self.kinematic_state
         self.covariance = F @ self.covariance @ F.T + Cw
 
-        self.alpha = y_rows + np.exp(-dt / tau) * (self.alpha - y_rows)
+        self.alpha = y_rows + exp(-dt / tau) * (self.alpha - y_rows)
 
     # pylint: disable=too-many-locals
     def update(self, measurements, meas_mat, meas_noise_cov):
@@ -61,7 +62,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         if y_cols < y_rows + 1:
             raise ValueError("Too few measurements.")
 
-        y_ = np.mean(ys, axis=1, keepdims=True)
+        y_ = mean(ys, axis=1, keepdims=True)
         ys_demean = ys - y_
         Y_ = ys_demean @ ys_demean.T
 
@@ -69,17 +70,17 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
 
         Y = self.extent + Cv
         S = H @ self.covariance @ H.T + Y / y_cols
-        K = self.covariance @ np.linalg.solve(S, H).T
+        K = self.covariance @ linalg.solve(S, H).T
         self.kinematic_state = self.kinematic_state + K @ (y_.flatten() - Hx)
         self.covariance = self.covariance - K @ S @ K.T
 
-        Xsqrt = np.linalg.cholesky(self.extent)
-        Ssqrt = np.linalg.cholesky(S)
-        Ysqrt = np.linalg.cholesky(Y)
+        Xsqrt = linalg.cholesky(self.extent)
+        Ssqrt = linalg.cholesky(S)
+        Ysqrt = linalg.cholesky(Y)
 
-        Nsqrt = Xsqrt * np.linalg.inv(Ssqrt) @ (y_ - Hx)
+        Nsqrt = Xsqrt * linalg.inv(Ssqrt) @ (y_ - Hx)
         N = Nsqrt @ Nsqrt.T
-        XYsqrt = Xsqrt * np.linalg.inv(Ysqrt)
+        XYsqrt = Xsqrt * linalg.inv(Ysqrt)
 
         self.extent = (self.alpha * self.extent + N + XYsqrt @ Y_ @ XYsqrt.T) / (
             self.alpha + y_cols
