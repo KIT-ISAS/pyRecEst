@@ -432,8 +432,6 @@ def linspace(start, stop, num=50, endpoint=True, dtype=None):
 
     if not (start_is_array or stop_is_array) and endpoint:
         return _torch.linspace(start=start, end=stop, steps=num, dtype=dtype)
-    elif not endpoint:  # Added for pyrecest
-        return _torch.arange(start=start, end=stop, step=(stop-start)/num, dtype=dtype)
 
     if not start_is_array:
         start = _torch.tensor(start)
@@ -444,15 +442,22 @@ def linspace(start, stop, num=50, endpoint=True, dtype=None):
     start = _torch.flatten(start)
     stop = _torch.flatten(stop)
 
-    return _torch.reshape(
-        _torch.vstack(
+    if endpoint:
+        result = _torch.vstack(
             [
                 _torch.linspace(start=start[i], end=stop[i], steps=num, dtype=dtype)
                 for i in range(start.shape[0])
             ]
-        ).T,
-        result_shape,
-    )
+        ).T
+    else:
+        result = _torch.vstack(
+            [
+                _torch.arange(start=start[i], end=stop[i], step=(stop[i]-start[i])/num, dtype=dtype)
+                for i in range(start.shape[0])
+            ]
+        ).T
+
+    return _torch.reshape(result, result_shape)
 
 
 def equal(a, b, **kwargs):
