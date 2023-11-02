@@ -30,7 +30,7 @@ class KalmanFilterTest(unittest.TestCase):
     def test_update_with_likelihood_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.update_identity(array(1), array(3))
-        npt.assert_equal(kf.get_point_estimate(), 1.5)
+        npt.assert_equal(kf.get_point_estimate(), array(1.5))
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
@@ -47,9 +47,9 @@ class KalmanFilterTest(unittest.TestCase):
         reason="Not supported on PyTorch backend",
     )
     def test_update_linear_2d(self):
-        filter_add = KalmanFilter((array([0, 1]), diag([1, 2])))
+        filter_add = KalmanFilter((array([0.0, 1.0]), diag(array([1.0, 2.0]))))
         filter_id = copy.deepcopy(filter_add)
-        gauss = GaussianDistribution(array([1, 0]), diag([2, 1]))
+        gauss = GaussianDistribution(array([1, 0]), diag(array([2, 1])))
         filter_add.update_linear(gauss.mu, eye(2), gauss.C)
         filter_id.update_identity(gauss.C, gauss.mu)
         self.assertTrue(

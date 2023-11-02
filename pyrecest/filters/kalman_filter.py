@@ -77,8 +77,8 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param sys_input: System input.
         """
         assert (
-            pyrecest.backend.__name__ == "pyrecest.numpy"
-        ), "Only supported on NumPy backend"
+            pyrecest.backend.__name__ != "pyrecest.pytorch"
+        ), "Not supported on pytorch backend"
         if sys_input is not None and system_matrix.shape[0] != sys_input.shape[0]:
             raise ValueError(
                 "The number of rows in system_matrix should match the number of elements in sys_input"
@@ -114,8 +114,8 @@ class KalmanFilter(AbstractEuclideanFilter):
         :param meas_noise: Covariance matrix for measurement.
         """
         assert (
-            pyrecest.backend.__name__ == "pyrecest.numpy"
-        ), "Only supported on NumPy backend"
+            pyrecest.backend.__name__ != "pyrecest.pytorch"
+        ), "Not supported on pytorch backend"
         self._filter_state.dim_z = measurement_matrix.shape[0]
         self._filter_state.update(z=measurement, R=meas_noise, H=measurement_matrix)
 
