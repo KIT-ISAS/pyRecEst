@@ -1,7 +1,7 @@
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dot, int32, int64, linalg, random, zeros
+from pyrecest.backend import dot, int32, int64, linalg, random, zeros, where
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -54,8 +54,7 @@ class EllipsoidalBallUniformDistribution(
             result = dot(diff.T, linalg.solve(self.shape_matrix, diff))
 
             # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
-            if result <= 1:
-                results[i] = reciprocal_volume
+            where(result <= 1, reciprocal_volume, results)
 
         return results
 

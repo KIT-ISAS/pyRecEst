@@ -70,8 +70,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
         # Enforce unnormalized coefficients and compare ratio
         phi, theta = (
-            random.rand(1, 10) * 2.0 * pi,
-            random.rand(1, 10) * pi - pi / 2.0,
+            random.rand((1, 10)) * 2.0 * pi,
+            random.rand((1, 10)) * pi - pi / 2.0,
         )
         x, y, z = array([cos(theta) * cos(phi), cos(theta) * sin(phi), sin(theta)])
         vals_normalized = shd.pdf(column_stack([x, y, z]))

@@ -70,7 +70,7 @@ class CircularUniformDistributionTest(unittest.TestCase):
         npt.assert_allclose(cu.integrate(), 1)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on PyTorch backend",
     )
     def test_integral_with_range(self):

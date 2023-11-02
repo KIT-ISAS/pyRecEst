@@ -65,8 +65,12 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
         xs = atleast_2d(xs)
-        if self.bound_dim > 0:
-            xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2.0 * pi)
+        condition = arange(xs.shape[1]) < self.bound_dim  # Create a condition based on column indices
+        xs = where(
+            condition[None, :],  # Broadcast the condition to match the shape of xs
+            mod(xs, 2.0 * pi),  # Compute the modulus where the condition is True
+            xs  # Keep the original values where the condition is False
+        )
 
         assert xs.shape[-1] == self.input_dim
 

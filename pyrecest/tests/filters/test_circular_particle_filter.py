@@ -106,6 +106,7 @@ class CircularParticleFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        reason="Not supported on current backend",
     )
     def test_association_likelihood(self):
         dist = CircularDiracDistribution(

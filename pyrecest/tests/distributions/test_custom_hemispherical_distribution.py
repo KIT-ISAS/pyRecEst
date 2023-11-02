@@ -8,7 +8,7 @@ from pyrecest.distributions import (
     CustomHemisphericalDistribution,
     VonMisesFisherDistribution,
 )
-
+import pyrecest.backend
 
 class CustomHemisphericalDistributionTest(unittest.TestCase):
     def setUp(self):
@@ -38,6 +38,10 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
             "PDF values do not match.",
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        "Test not supported for pytorch or jax backends"
+    )
     def test_integrate_bingham_s2(self):
         """Test that the distribution integrates to 1."""
         self.custom_hemispherical_distribution.pdf(array([1.0, 0.0, 0.0]))

@@ -59,6 +59,14 @@ class GaussianDistribution(AbstractLinearDistribution):
                 xs = torch.reshape(xs, (-1, 1))
             log_probs = distribution.log_prob(xs)
             pdfvals = torch.exp(log_probs)
+        elif pyrecest.backend.__name__ == "pyrecest.jax":
+            from jax.scipy.stats import multivariate_normal as mvn
+
+            pdfvals = mvn.pdf(xs, self.mu, self.C)
+        else:
+            raise NotImplementedError(
+                f"Backend {pyrecest.backend.__name__} not supported."
+            )
 
         return pdfvals
 
