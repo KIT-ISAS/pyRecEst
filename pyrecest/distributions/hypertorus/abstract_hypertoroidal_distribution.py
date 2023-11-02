@@ -113,6 +113,10 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         the calculation is split up (as used in the alternative representation of trigonometric polonymials
         involving the two real numbers alpha and beta"""
 
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "Not supported for jax backend"
+
         def moment_fun_real(*args):
             x = array(args)
             return array([self.pdf(x) * cos(n * xi) for xi in x])

@@ -67,7 +67,7 @@ class WrappedNormalDistribution(
             return result
 
         x = mod(xs, 2.0 * pi)
-        x[x < 0] += 2.0 * pi
+        x = where(x < 0, x + 2.0 * pi, x)
         x -= self.mu
 
         max_iterations = 1000

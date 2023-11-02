@@ -17,7 +17,7 @@ class AbstractCircularDistributionTest(unittest.TestCase):
         ]
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on PyTorch backend",
     )
     def test_cdf_numerical(self):
@@ -38,6 +38,10 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                     )
                 )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on jax backend",
+    )
     def test_angular_moment_numerical(self):
         """Tests if the numerical computation of angular moment matches the actual moment."""
         moments = arange(4)
