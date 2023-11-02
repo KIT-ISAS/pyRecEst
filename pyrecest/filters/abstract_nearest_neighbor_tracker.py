@@ -148,7 +148,6 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             point_ests = None
         else:
             point_ests = empty((self.dim, num_targets))
-            point_ests[:] = float("NaN")
             for i in range(num_targets):
                 point_ests[:, i] = self.filter_bank[i].get_point_estimate()
             if flatten_vector:
