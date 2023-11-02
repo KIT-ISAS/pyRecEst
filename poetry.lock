@@ -538,6 +538,47 @@ minimum-jaxlib = ["jaxlib (==0.4.14)"]
 tpu = ["jaxlib (==0.4.19)", "libtpu-nightly (==0.1.dev20231018)", "requests"]
 
 [[package]]
+name = "jaxlib"
+version = "0.4.19"
+description = "XLA library for JAX"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "jaxlib-0.4.19-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:82a28c519497aedf2c42d4c0a106f301f0b33bc80cf58d7fb59a6e2555b23746"},
+    {file = "jaxlib-0.4.19-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:3bb747bdd28b29f3442c67c5e132b2ecde445fa09aed9bbc3ad2d75af172911f"},
+    {file = "jaxlib-0.4.19-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:05272c33ea6a2b83c8c6842b7f944fc0a7be82f85666ddbf76391fee308e60b3"},
+    {file = "jaxlib-0.4.19-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:92c9d8f823c4b2d69cb7994a8db4a0f9948f26d4add18d0d156105b9f0420729"},
+    {file = "jaxlib-0.4.19-cp310-cp310-win_amd64.whl", hash = "sha256:a0f02c69b8406cccedec8b77ab27f492bbee92dfb2eb817a3a124b86e5a7f43d"},
+    {file = "jaxlib-0.4.19-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:80e2c8c6493eda17b0d86a96bb55a0315131d5812eb71ed9a1ded06f0b2e5154"},
+    {file = "jaxlib-0.4.19-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:cc23808da5960904fd2679b58e3735461e607a6ab2ec00ad4ca2ccd0ca922733"},
+    {file = "jaxlib-0.4.19-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:64a2fffc69e66863cda0f2bf5443d92abb4d37f2613273d8d05229635be539a3"},
+    {file = "jaxlib-0.4.19-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:9be343cf05cc35ba0d8c39769cb63ebea0283767502595566f55100e9aaa0cfc"},
+    {file = "jaxlib-0.4.19-cp311-cp311-win_amd64.whl", hash = "sha256:675362fa803e7f64b2cf3c371852136be72a6223622c0f6aa254351bf18f1152"},
+    {file = "jaxlib-0.4.19-cp312-cp312-macosx_10_14_x86_64.whl", hash = "sha256:287ce521f6bd2ad61c1d7fa2fc5fd229a613a43e3f5e31d5bb98f705d4535267"},
+    {file = "jaxlib-0.4.19-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:680313acb5d4f446303effa475ec88f3cfc3edbe0d00d077f459fcbee5d4a850"},
+    {file = "jaxlib-0.4.19-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:f664f293465cf009147ff102ae877e24ea4b6513454d53d4633b8ac1f5130e6f"},
+    {file = "jaxlib-0.4.19-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:0594e692036e5789d6b5f6d8e2dff5f5a3f8deccd9404760a455e1e6ac064579"},
+    {file = "jaxlib-0.4.19-cp312-cp312-win_amd64.whl", hash = "sha256:9c724eb7f35d5e9de0d1b992048c7ca134ff6b63fc59f2c0fddb096da225c49c"},
+    {file = "jaxlib-0.4.19-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:9834f520d2ea3dd0a4c6d30c151d2a1cb38865d584cbc22ecf0d7fbcea040ac0"},
+    {file = "jaxlib-0.4.19-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:4e6bf688eaa535b66ac3fad88de7fa1a6334375f04039253b7a4f79507bee11b"},
+    {file = "jaxlib-0.4.19-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:96510b738c73a6dee2361bb58298400f1633d544c5941ef61a54932a7c63f288"},
+    {file = "jaxlib-0.4.19-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:f1b4eb5aeb6e2b4a959db91cc0c7e005fe35e1875a2dcdc62b922c0a6fc934f1"},
+    {file = "jaxlib-0.4.19-cp39-cp39-win_amd64.whl", hash = "sha256:3750000f5859464e9cce0d51b79832528cd1cf4117847bb248b514ad00a58a75"},
+]
+
+[package.dependencies]
+ml-dtypes = ">=0.2.0"
+numpy = ">=1.22"
+scipy = [
+    {version = ">=1.11.1", markers = "python_version >= \"3.12\""},
+    {version = ">=1.9", markers = "python_version < \"3.12\""},
+]
+
+[package.extras]
+cuda11-pip = ["nvidia-cublas-cu11 (>=11.11)", "nvidia-cuda-cupti-cu11 (>=11.8)", "nvidia-cuda-nvcc-cu11 (>=11.8)", "nvidia-cuda-runtime-cu11 (>=11.8)", "nvidia-cudnn-cu11 (>=8.8)", "nvidia-cufft-cu11 (>=10.9)", "nvidia-cusolver-cu11 (>=11.4)", "nvidia-cusparse-cu11 (>=11.7)"]
+cuda12-pip = ["nvidia-cublas-cu12", "nvidia-cuda-cupti-cu12", "nvidia-cuda-nvcc-cu12", "nvidia-cuda-runtime-cu12", "nvidia-cudnn-cu12 (>=8.9)", "nvidia-cufft-cu12", "nvidia-cusolver-cu12", "nvidia-cusparse-cu12"]
+
+[[package]]
 name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
@@ -1829,4 +1870,4 @@ pytorch-support = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "3abb638dd848886181e66a2a4dc2155af68d2c59ee263969070a66e1133e02f8"
+content-hash = "b0a7da738af81aa0ce104860f42a284458c17f7f6ce3e013539e1374785a38a3"
