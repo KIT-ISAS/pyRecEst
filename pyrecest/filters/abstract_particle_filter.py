@@ -9,7 +9,7 @@ from pyrecest.distributions.abstract_manifold_specific_distribution import (
 )
 
 from .abstract_filter_type import AbstractFilterType
-
+from jax import vmap
 
 class AbstractParticleFilter(AbstractFilterType):
     def __init__(self, initial_filter_state=None):
@@ -34,15 +34,17 @@ class AbstractParticleFilter(AbstractFilterType):
             self.filter_state.d = f(self.filter_state.d)
         else:
             self.filter_state = self.filter_state.apply_function(f)
-        n_particles = self.filter_state.w.shape[0]
+        
+        def add_noise_to_sample(d):
+            noise_curr = noise_distribution.set_mean(d)
+            return noise_curr.sample(1)  # Assuming sample(1) returns a single row of values
+        
         if noise_distribution is not None:
             if not shift_instead_of_add:
                 noise = noise_distribution.sample(self.filter_state.w.shape[0])
                 self.filter_state.d = self.filter_state.d + noise
             else:
-                for i in range(n_particles):
-                    noise_curr = noise_distribution.set_mean(self.filter_state.d[i])
-                    self.filter_state.d[i] = noise_curr.sample(1)
+                self.filter_state.d = vmap(add_noise_to_sample)(self.filter_state.d)
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (

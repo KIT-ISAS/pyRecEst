@@ -27,7 +27,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         npt.assert_allclose(hwn.linear_mean_numerical(), hwn.mu[-1])
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on PyTorch backend",
     )
     def test_condition_on_periodic(self):
