@@ -98,7 +98,7 @@ def choice(a, n, *args, **kwargs):
 
 def _multivariate_normal(state, size, *args, **kwargs):
     state, key = jax.random.split(state)
-    return state, jax.random.multivariate_normal(key, *args, **kwargs)
+    return state, jax.random.multivariate_normal(key, shape=size, *args, **kwargs)
 
 
 def multivariate_normal(size, *args, **kwargs):
