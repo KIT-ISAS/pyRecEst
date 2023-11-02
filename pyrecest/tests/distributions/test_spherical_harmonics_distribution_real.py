@@ -435,15 +435,15 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     ]
                 ),
             ),
-            ("random", random.uniform(0.0, 1.0, (4, 7))),
+            ("random", random.uniform(size=(4, 7))),
         ]  # jscpd:ignore-end
     )
     def test_conversion(self, _, coeff_mat):
         rshd = SphericalHarmonicsDistributionReal(coeff_mat)
         cshd = rshd.to_spherical_harmonics_distribution_complex()
         phi_to_test, theta_to_test = (
-            random.uniform(0.0, 1.0, 10) * 2 * pi,
-            random.uniform(0.0, 1.0, 10) * pi - pi / 2,
+            random.uniform(size=10) * 2 * pi,
+            random.uniform(size=10) * pi - pi / 2,
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi_to_test, theta_to_test)
         npt.assert_allclose(
@@ -456,7 +456,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         # Suppress warnings related to normalization
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            rshd = SphericalHarmonicsDistributionReal(random.uniform(0.0, 1.0, (4, 7)))
+            rshd = SphericalHarmonicsDistributionReal(random.uniform(size=(4, 7)))
 
         cshd = rshd.to_spherical_harmonics_distribution_complex()
         rshd2 = cshd.to_spherical_harmonics_distribution_real()
@@ -464,7 +464,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
     def test_integral_analytical(self):
         # Suppress warnings related to normalization
-        unnormalized_coeffs = random.uniform(0.0, 1.0, (3, 5))
+        unnormalized_coeffs = random.uniform(size=(3, 5))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)
