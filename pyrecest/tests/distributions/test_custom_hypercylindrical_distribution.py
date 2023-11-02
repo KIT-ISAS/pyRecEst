@@ -20,7 +20,7 @@ from pyrecest.distributions.cart_prod.custom_hypercylindrical_distribution impor
 
 class CustomHypercylindricalDistributionTest(unittest.TestCase):
     def setUp(self) -> None:
-        mat = random.rand((6, 6))
+        mat = random.uniform(0.0, 1.0, (6, 6))
         mat = mat @ mat.T
         self.pwn = PartiallyWrappedNormalDistribution(
             array([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]), mat, 3

@@ -1,7 +1,7 @@
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dot, int32, int64, linalg, random, zeros, where, squeeze
+from pyrecest.backend import int32, int64, linalg, random, zeros, where, squeeze
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -67,7 +67,7 @@ class EllipsoidalBallUniformDistribution(
         random_points = random.normal(0.0, 1.0, (n, self.dim))
         random_points /= linalg.norm(random_points, axis=1).reshape(-1, 1)
 
-        random_radii = random.rand(n, 1)
+        random_radii = random.uniform(0.0, 1.0, n)
         random_radii = random_radii ** (
             1 / self.dim
         )  # Consider that the ellipsoid surfaces with higher radii are larger
