@@ -40,7 +40,7 @@ class KalmanFilterTest(unittest.TestCase):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.update_identity(array(1), array(4))
         npt.assert_equal(kf.filter_state.C, 0.5)
-        npt.assert_equal(kf.get_point_estimate(), 2)
+        npt.assert_equal(kf.get_point_estimate(), array(2))
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
