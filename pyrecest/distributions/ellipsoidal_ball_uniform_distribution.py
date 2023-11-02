@@ -50,12 +50,12 @@ class EllipsoidalBallUniformDistribution(
         # Check if points are inside the ellipsoid
         diff = xs - self.center[None, :]  # Broadcasting self.center to match the shape of xs
         solved = linalg.solve(self.shape_matrix[None, :, :], diff[:, :, None])  # Solving the system for each vector in diff
-        results = squeeze(diff[:, :, None].swapaxes(-2, -1) @ solved, axis=(-1, -2))  # Computing the dot product for each pair of vectors
+        results = squeeze(diff[:, :, None].swapaxes(-2, -1) @ solved)  # Computing the dot product for each pair of vectors
 
         # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
-        pdf_values = where(results <= 1, reciprocal_volume, jnp.zeros(n))
+        pdf_values = where(results <= 1, reciprocal_volume, zeros(n))
 
-        return results
+        return pdf_values
 
     def sample(self, n: Union[int, int32, int64]):
         """
