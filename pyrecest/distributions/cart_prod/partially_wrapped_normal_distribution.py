@@ -56,7 +56,11 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         )
 
         self.mu = mu
-        self.mu[:bound_dim] = mod(self.mu[:bound_dim], 2 * pi)
+        self.mu = where(
+            arange(self.mu.shape[0]) < bound_dim,
+            mod(self.mu, 2.0 * pi),
+            self.mu
+        )
         self.C = C
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):

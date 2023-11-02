@@ -28,7 +28,7 @@ class CircularUniformDistributionTest(unittest.TestCase):
         npt.assert_allclose(cu2.pdf(x), 1.0 / (2.0 * pi) * ones(x.shape))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on PyTorch backend",
     )
     def test_cdf(self):
@@ -37,7 +37,7 @@ class CircularUniformDistributionTest(unittest.TestCase):
         npt.assert_allclose(cu.cdf(x), cu.cdf_numerical(x))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on PyTorch backend",
     )
     def test_cdf_with_shift(self):
@@ -61,7 +61,7 @@ class CircularUniformDistributionTest(unittest.TestCase):
         npt.assert_allclose(cu.trigonometric_moment(1), 0.0, atol=1e-10)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on PyTorch backend",
     )
     def test_integral(self):

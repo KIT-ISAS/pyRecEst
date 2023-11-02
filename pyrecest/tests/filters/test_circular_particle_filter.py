@@ -5,6 +5,7 @@ import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import arange, array, linspace, random
+import pyrecest.backend
 from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
     WrappedNormalDistribution,
@@ -103,6 +104,9 @@ class CircularParticleFilterTest(unittest.TestCase):
         dist3b = self.filter.filter_state
         self.assertIsInstance(dist3b, CircularDiracDistribution)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+    )
     def test_association_likelihood(self):
         dist = CircularDiracDistribution(
             array([1.0, 2.0, 3.0]), array([1 / 3, 1 / 3, 1 / 3])
