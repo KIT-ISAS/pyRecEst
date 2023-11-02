@@ -51,10 +51,11 @@ class EllipsoidalBallUniformDistribution(
         for i in range(n):
             point = xs[i, :]
             diff = point - self.center
-            result = dot(diff.T, linalg.solve(self.shape_matrix, diff))
+            results[i] = dot(diff.T, linalg.solve(self.shape_matrix, diff))
 
             # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
-            where(result <= 1, reciprocal_volume, results)
+        
+        where(results <= 1, reciprocal_volume, zeros(n))
 
         return results
 
