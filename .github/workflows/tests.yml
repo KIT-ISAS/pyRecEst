@@ -74,3 +74,4 @@ jobs:
           files: |
             junit_test_results_numpy.xml
             junit_test_results_pytorch.xml
+            junit_test_results_jax.xml
