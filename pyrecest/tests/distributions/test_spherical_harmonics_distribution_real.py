@@ -150,8 +150,8 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
     @staticmethod
     def _gen_naive_grid(n_per_dim):
-        phi = random.uniform(0.0, 1.0, n_per_dim) * 2 * pi
-        theta = random.uniform(0.0, 1.0, n_per_dim) * pi - pi / 2
+        phi = random.uniform(size=n_per_dim) * 2.0 * pi
+        theta = random.uniform(size=n_per_dim) * pi - pi / 2.0
         return AbstractSphericalDistribution.sph_to_cart(phi, theta)
 
     @parameterized.expand(
