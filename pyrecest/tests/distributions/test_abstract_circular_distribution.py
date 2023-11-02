@@ -58,7 +58,7 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                     )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on PyTorch backend",
     )
     def test_integral_numerical(self):

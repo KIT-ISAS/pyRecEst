@@ -23,6 +23,8 @@ from pyrecest.backend import (
     sin,
     sum,
     tile,
+    where,
+    arange,
 )
 from scipy.stats import multivariate_normal
 
@@ -43,8 +45,11 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             len(linalg.cholesky(C)) > 0
         ), "C must be positive definite"  # Will fail if not positive definite
         assert bound_dim <= mu.shape[0]
-        if bound_dim > 0:  # This decreases the need for many wrappings
-            mu[:bound_dim] = mod(mu[:bound_dim], 2 * pi)
+        mu = where(
+            arange(mu.shape[0]) < bound_dim,
+            mod(mu, 2 * pi),
+            mu
+        )
 
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim=bound_dim, lin_dim=mu.shape[0] - bound_dim

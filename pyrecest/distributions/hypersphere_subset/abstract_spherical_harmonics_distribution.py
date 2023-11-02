@@ -28,7 +28,7 @@ class AbstractSphericalHarmonicsDistribution(
             if pyrecest.backend.__name__ in ("pyrecest.numpy", "pyrecest.pytorch"):  # Set the irrelevant elements to nan
                 coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
             else:    
-                assert coeff_mat[i, 2 * i + 1 :].shape[0] == 0 or isnan(coeff_mat[i, 2 * i + 1 :])
+                assert coeff_mat[i, 2 * i + 1 :].shape[0] == 0 or all(isnan(coeff_mat[i, 2 * i + 1 :]))
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
 
     def pdf(self, xs):
