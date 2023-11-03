@@ -1,4 +1,5 @@
 from math import pi
+from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
@@ -120,6 +121,19 @@ class VonMisesDistribution(AbstractCircularDistribution):
             2.0 * pi * iv(0, self.kappa)
         )
         return result
+    
+    def trigonometric_moment(self, n: int):
+        if self.kappa == 0.0:
+            raise ValueError("Does not have mean direction")
+        
+        if n==1:
+            m = VonMisesDistribution.besselratio(0, self.kappa)*exp(1j * n * self.mu)
+        elif n==2:
+            m = VonMisesDistribution.besselratio(0, self.kappa)*VonMisesDistribution.besselratio(1, self.kappa)*exp(1j * n * self.mu)
+        else:
+            raise NotImplementedError("Not implemented")
+        
+        return m
 
     @staticmethod
     def from_moment(m):

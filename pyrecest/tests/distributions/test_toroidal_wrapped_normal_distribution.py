@@ -23,7 +23,7 @@ class TestToroidalWrappedNormalDistribution(unittest.TestCase):
         self.assertTrue(allclose(self.twn.C, self.C))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_integrate(self):

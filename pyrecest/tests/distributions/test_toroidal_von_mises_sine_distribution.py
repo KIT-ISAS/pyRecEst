@@ -31,7 +31,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_integral(self):
