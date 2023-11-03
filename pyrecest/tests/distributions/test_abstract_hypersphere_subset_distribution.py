@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, linalg, sin
+from pyrecest.backend import array, cos, linalg, sin, column_stack
 from pyrecest.distributions import VonMisesFisherDistribution
 
 
@@ -33,15 +33,11 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
 
         def fangles_2d(phi1, phi2):
             r = 1
-            return vmf.pdf(
-                array(
-                    [
-                        r * sin(phi1) * sin(phi2),
-                        r * cos(phi1) * sin(phi2),
-                        r * cos(phi2),
-                    ]
-                ).T
-            )
+            column_stack((
+                    r * sin(phi1) * sin(phi2),
+                    r * cos(phi1) * sin(phi2),
+                    r * cos(phi2),
+            ))
 
         phi1_test = array([1.0, 2.0, 0.0, 0.3, 1.1])
         phi2_test = array([2.0, 3.0, 0.1, 3.0, 1.1])

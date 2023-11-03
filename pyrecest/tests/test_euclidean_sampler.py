@@ -24,7 +24,7 @@ class TestGaussianSampler(unittest.TestCase):
 
         # Check that the standard deviation is close to 1 for each dimension
         std_devs = std(self.samples, axis=0)
-        self.assertTrue(allclose(std_devs, ones(self.dim), atol=0.1))
+        npt.assert_allclose(std_devs, ones(self.dim), atol=0.1)
 
 
 if __name__ == "__main__":

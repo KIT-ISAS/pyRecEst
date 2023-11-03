@@ -111,23 +111,11 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, int32, int64]):
         def generate_input(angles):
-            dim_eucl = dim + 1
             angles = column_stack(angles)
-            raise NotImplementedError("Method is not implemented yet.")
-
-            input_arr = zeros((angles.shape[0], dim_eucl))
-            # Start at last, which is just cos
-            input_arr[:, -1] = cos(angles[:, -1])
-            sin_product = sin(angles[:, -1])
-            # Now, iterate over all from end to back and accumulate the sines
-            for i in range(2, dim_eucl):
-                # All except the final one have a cos factor as their last one
-                input_arr[:, -i] = sin_product * cos(angles[:, -i])
-                sin_product *= sin(angles[:, -i])
-            # The last one is all sines
-            input_arr[:, 0] = sin_product
-            return squeeze(input_arr)
-            raise NotImplementedError("Method is not implemented yet.")
+            input_array = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(
+                angles, mode="colatitude"
+            )
+            return input_array
 
         def fangles(*angles):
             input_arr = generate_input(angles)
@@ -373,13 +361,15 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Mode must be either 'colatitude' or 'elevation'")
         
-        return cart_coords
+        return cart_coords.squeeze()
     
     @staticmethod
     def _hypersph_coord_to_cart_colatitude(hypersph_coords):
-        assert hypersph_coords.shape[1] >= 2
         hypersph_coords = atleast_2d(hypersph_coords)
-
+        
+        if hypersph_coords.shape[1] == 1:
+            return column_stack((sin(hypersph_coords), cos(hypersph_coords)))
+        
         coords_3d = stack((sin(hypersph_coords[:, 0]) * cos(hypersph_coords[:, 1]),
                           sin(hypersph_coords[:, 0]) * sin(hypersph_coords[:, 1]),
                           cos(hypersph_coords[:, 0])), axis=1)

@@ -11,14 +11,14 @@ from pyrecest.backend import allclose, arange, array, column_stack, diff, ones, 
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
-
+import numpy.testing as npt
 
 class AbstractHypercylindricalDistributionTest(unittest.TestCase):
     def test_mode_numerical_gaussian_2D(self):
         mu = array([5.0, 1.0])
         C = array([[2.0, 1.0], [1.0, 1.0]])
         g = PartiallyWrappedNormalDistribution(mu, C, 1)
-        self.assertTrue(allclose(g.mode_numerical(), mu, atol=1e-5))
+        npt.assert_allclose(g.mode_numerical(), mu, atol=1e-5)
 
     def test_linear_mean_numerical(self):
         hwn = PartiallyWrappedNormalDistribution(

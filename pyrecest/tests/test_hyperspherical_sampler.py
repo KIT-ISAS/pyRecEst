@@ -4,7 +4,7 @@ import unittest
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, linalg, random
+from pyrecest.backend import linalg, random
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
 
 from ..sampling.hyperspherical_sampler import (
@@ -18,6 +18,7 @@ from ..sampling.hyperspherical_sampler import (
 
 healpy_installed = importlib.util.find_spec("healpy") is not None
 
+import numpy.testing as npt
 
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):
     @parameterized.expand(
@@ -138,7 +139,7 @@ class TestHopfConversion(unittest.TestCase):
         )
 
         # Check if the original quaternions are close to the recovered quaternions.
-        self.assertTrue(allclose(unit_vectors, recovered_quaternions, atol=1e-8))
+        npt.assert_allclose(unit_vectors, recovered_quaternions, atol=1e-8)
 
 
 if __name__ == "__main__":
