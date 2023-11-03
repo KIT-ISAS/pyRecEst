@@ -556,6 +556,14 @@ files = [
     {file = "jaxlib-0.4.20-cp311-cp311-win_amd64.whl", hash = "sha256:019ff27da77f071e198c86703421a7365b57d2a7348b74f29d026fb5a1dd8707"},
     {file = "jaxlib-0.4.20-cp312-cp312-macosx_10_14_x86_64.whl", hash = "sha256:d45f7c25edab30924aae4b08fc4540b17f67f9d3a99837a151e01a32afc163ba"},
     {file = "jaxlib-0.4.20-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:56a4c2e5e8031da0c8bf055adec01cf5276d7740b01057178c353f8b9e21f38e"},
+    {file = "jaxlib-0.4.20-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:67701a1fa4cb65a170c312e1a9149d78bb383870d1a77cc537154611689db012"},
+    {file = "jaxlib-0.4.20-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:a8f3286bb72ca3b0d1056b82250a22384ccb3cbde6efa30f659318999523e34d"},
+    {file = "jaxlib-0.4.20-cp312-cp312-win_amd64.whl", hash = "sha256:1816b0e5710558e354a6458dfb9cfe032025a6ccb50ed3d6c29b5e84e5f21ad2"},
+    {file = "jaxlib-0.4.20-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:c2f6ba2e44a89041cdf9640b09a9dc542ed8048c5f2263ec4290752f315ccaa3"},
+    {file = "jaxlib-0.4.20-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:771227bfcfda4221ec37b0e949cb996a8d99c870e317401a4ea503034aaa83f3"},
+    {file = "jaxlib-0.4.20-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:4d732a2d44e35684eba4ad0507f6e4ab68a81ed56e90b3948a303fd355e2587f"},
+    {file = "jaxlib-0.4.20-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:78813eaf3e71e411243bce739dc21613ca7fc033f157c6e75497478a49d2f7df"},
+    {file = "jaxlib-0.4.20-cp39-cp39-win_amd64.whl", hash = "sha256:5153aa83bc737d008df66d0378140f3c82548fefc474bd084384745cd3f54cab"},
 ]
 
 [package.dependencies]
