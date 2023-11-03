@@ -24,6 +24,7 @@ from pyrecest.backend import (
     reshape,
     sqrt,
     squeeze,
+    full,
 )
 from pyrecest.utils.plotting import plot_ellipsoid
 from scipy.integrate import dblquad, nquad, quad
@@ -214,11 +215,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def integrate_numerically(self, left=None, right=None):
         if left is None:
-            left = empty(self.dim)
-            left[:] = -float("inf")
+            left = full((self.dim,), -float('inf'))
         if right is None:
-            right = empty(self.dim)
-            right[:] = float("inf")
+            right = full((self.dim,), float('inf'))
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right
         )
