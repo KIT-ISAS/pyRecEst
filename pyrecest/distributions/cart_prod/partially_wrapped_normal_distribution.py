@@ -25,6 +25,9 @@ from pyrecest.backend import (
     tile,
     where,
     arange,
+    diag,
+    stack,
+    hstack,
 )
 from scipy.stats import multivariate_normal
 
@@ -122,12 +125,14 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         Returns:
             mu (linD+2): expectation value of [x1, x2, .., x_lin_dim, cos(x_(lin_dim+1), sin(x_(lin_dim+1)), ..., cos(x_(lin_dim+bound_dim), sin(x_(lin_dim+bound_dim))]
         """
-        mu = empty(2 * self.bound_dim + self.lin_dim)
-        mu[2 * self.bound_dim :] = self.mu[self.bound_dim :]  # noqa: E203
-        for i in range(self.bound_dim):
-            mu[2 * i] = cos(self.mu[i]) * exp(-self.C[i, i] / 2)  # noqa: E203
-            mu[2 * i + 1] = sin(self.mu[i]) * exp(-self.C[i, i] / 2)  # noqa: E203
-        return mu
+        mu_lin = self.mu[self.bound_dim :]  # noqa: E203
+
+        mu_bound_odd = sin(self.mu[:self.bound_dim]) * exp(-diag(self.C)[:self.bound_dim] / 2) 
+        mu_bound_even = cos(self.mu[:self.bound_dim]) * exp(-diag(self.C)[:self.bound_dim] / 2) 
+        
+        mu_bound = stack([mu_bound_even, mu_bound_odd], axis=1).reshape(-1)
+    
+        return hstack((mu_bound, mu_lin))
 
     def hybrid_mean(self):
         return self.mu

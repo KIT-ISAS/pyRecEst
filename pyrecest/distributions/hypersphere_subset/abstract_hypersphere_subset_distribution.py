@@ -20,6 +20,7 @@ from pyrecest.backend import (
     sin,
     sort,
     sqrt,
+    stack,
     squeeze,
     zeros,
 )
@@ -359,15 +360,18 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def polar_to_cart(polar_coords):
         polar_coords = atleast_2d(polar_coords)
 
-        coords = zeros(
+        coords3d = stack((sin(polar_coords[:, 0]) * cos(polar_coords[:, 1]),
+                          sin(polar_coords[:, 0]) * sin(polar_coords[:, 1]),
+                          cos(polar_coords[:, 0])), axis=1)
+        if polar_coords.shape[1] == 2:
+            return squeeze(coords3d)
+            
+        coords = stack((coords3d, zeros(
             (
                 polar_coords.shape[0],
-                polar_coords.shape[1] + 1,
-            )
+                polar_coords.shape[1] - 2,
+            ))), axis=1
         )
-        coords[:, 0] = sin(polar_coords[:, 0]) * cos(polar_coords[:, 1])
-        coords[:, 1] = sin(polar_coords[:, 0]) * sin(polar_coords[:, 1])
-        coords[:, 2] = cos(polar_coords[:, 0])
         for i in range(2, polar_coords.shape[1]):
             coords[:, :-i] *= sin(polar_coords[:, i])  # noqa: E203
             coords[:, -i] = cos(polar_coords[:, i])

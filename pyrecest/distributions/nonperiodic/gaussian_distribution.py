@@ -115,7 +115,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def sample(self, n):
-        return random.multivariate_normal(self.mu, self.C, n)
+        return random.multivariate_normal(mean=self.mu, cov=self.C, size=n)
 
     @staticmethod
     def from_distribution(distribution):

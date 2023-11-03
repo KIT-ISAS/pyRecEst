@@ -3,13 +3,12 @@ from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, ones_like, random, sum, zeros
+from pyrecest.backend import ndim, ones_like, random, sum, zeros, vmap, arange
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
 
 from .abstract_filter_type import AbstractFilterType
-from pyrecest.backend import vmap
 
 class AbstractParticleFilter(AbstractFilterType):
     def __init__(self, initial_filter_state=None):
@@ -55,10 +54,12 @@ class AbstractParticleFilter(AbstractFilterType):
         n_particles = self.filter_state.w.shape[0]
         noise_samples = random.choice(samples, n_particles, p=weights)
 
-        d = zeros((n_particles, self.filter_state.dim))
-        for i in range(n_particles):
-            d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
+        batched_apply_f = vmap(
+            lambda i: f(self.filter_state.d[i], noise_samples[i])
+        )
 
+        d = batched_apply_f(arange(n_particles))
+        
         self._filter_state.d = d
 
     @property

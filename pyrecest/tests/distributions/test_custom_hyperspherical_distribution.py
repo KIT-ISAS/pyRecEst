@@ -22,7 +22,7 @@ class CustomHypersphericalDistributionTest(unittest.TestCase):
         self.assertEqual(numel_p, 1, "PDF size mismatch.")
 
         random.seed(10)
-        points = random.normal(0.0, 1.0, (100, 3))
+        points = random.normal(size=(100, 3))
         points /= linalg.norm(points, axis=1).reshape(-1, 1)
 
         self.assertTrue(
