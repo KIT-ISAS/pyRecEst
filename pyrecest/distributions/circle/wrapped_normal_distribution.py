@@ -17,6 +17,7 @@ from pyrecest.backend import (
     squeeze,
     where,
     zeros,
+    ones,
 )
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
@@ -59,12 +60,12 @@ class WrappedNormalDistribution(
         if ndim(xs) == 0:
             xs = array([xs])
         n_inputs = xs.shape[0]
-        result = zeros(n_inputs)
 
         # check if sigma is large and return uniform distribution in this case
         if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
-            result[:] = 1.0 / (2 * pi)
-            return result
+            return 1.0 / (2.0 * pi) * ones(n_inputs)
+        
+        result = zeros(n_inputs)
 
         x = mod(xs, 2.0 * pi)
         x = where(x < 0, x + 2.0 * pi, x)

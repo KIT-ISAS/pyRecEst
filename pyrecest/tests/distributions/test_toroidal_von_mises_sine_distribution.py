@@ -38,6 +38,10 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         # test integral
         self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_trigonometric_moment_numerical(self):
         npt.assert_allclose(
             self.tvm.trigonometric_moment_numerical(0), array([1.0, 1.0])

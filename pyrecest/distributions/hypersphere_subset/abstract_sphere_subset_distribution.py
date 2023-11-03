@@ -1,7 +1,7 @@
 from math import pi
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where
+from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, stack
 
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
@@ -34,9 +34,10 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         """
         assert ndim(phi) == 1 and ndim(theta) == 1, "Inputs must be 1-dimensional"
         if mode == "colatitude":
-            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_colatitude(
-                phi, theta
+            coords = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(
+                stack((phi, theta), axis=1), mode=mode
             )
+            x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         elif mode == "elevation":
             x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(
                 phi, theta
@@ -72,14 +73,6 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             raise ValueError("Mode must be either 'colatitude' or 'elevation'")
 
         return phi, theta
-
-    @staticmethod
-    def _sph_to_cart_colatitude(azimuth, colatitude) -> tuple:
-        assert ndim(azimuth) == 1 and ndim(colatitude), "Inputs must be 1-dimensional"
-        x = sin(colatitude) * cos(azimuth)
-        y = sin(colatitude) * sin(azimuth)
-        z = cos(colatitude)
-        return x, y, z
 
     @staticmethod
     def _sph_to_cart_elevation(azimuth, elevation) -> tuple:

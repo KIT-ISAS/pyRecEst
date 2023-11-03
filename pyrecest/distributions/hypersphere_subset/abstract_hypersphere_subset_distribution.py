@@ -113,6 +113,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         def generate_input(angles):
             dim_eucl = dim + 1
             angles = column_stack(angles)
+            raise NotImplementedError("Method is not implemented yet.")
+
             input_arr = zeros((angles.shape[0], dim_eucl))
             # Start at last, which is just cos
             input_arr[:, -1] = cos(angles[:, -1])
@@ -125,6 +127,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             # The last one is all sines
             input_arr[:, 0] = sin_product
             return squeeze(input_arr)
+            raise NotImplementedError("Method is not implemented yet.")
 
         def fangles(*angles):
             input_arr = generate_input(angles)
@@ -357,26 +360,43 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return 0.5 * distance_integral
 
     @staticmethod
-    def polar_to_cart(polar_coords):
-        polar_coords = atleast_2d(polar_coords)
+    def hypersph_coord_to_cart(hypersph_coords, mode: str = "colatitude"):
+        from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
+        if mode == "colatitude":
+            cart_coords = AbstractHypersphereSubsetDistribution._hypersph_coord_to_cart_colatitude(
+                hypersph_coords
+            )
+        elif mode == "elevation":
+            assert hypersph_coords.shape[1] == 2, "Elevation mode only supports 2 dimensions"
+            x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode)
+            cart_coords = column_stack((x, y, z))
+        else:
+            raise ValueError("Mode must be either 'colatitude' or 'elevation'")
+        
+        return cart_coords
+    
+    @staticmethod
+    def _hypersph_coord_to_cart_colatitude(hypersph_coords):
+        assert hypersph_coords.shape[1] >= 2
+        hypersph_coords = atleast_2d(hypersph_coords)
 
-        coords3d = stack((sin(polar_coords[:, 0]) * cos(polar_coords[:, 1]),
-                          sin(polar_coords[:, 0]) * sin(polar_coords[:, 1]),
-                          cos(polar_coords[:, 0])), axis=1)
-        if polar_coords.shape[1] == 2:
-            return squeeze(coords3d)
+        coords_3d = stack((sin(hypersph_coords[:, 0]) * cos(hypersph_coords[:, 1]),
+                          sin(hypersph_coords[:, 0]) * sin(hypersph_coords[:, 1]),
+                          cos(hypersph_coords[:, 0])), axis=1)
+        if hypersph_coords.shape[1] == 2:
+            return coords_3d
             
-        coords = stack((coords3d, zeros(
+        coords = stack((coords_3d, zeros(
             (
-                polar_coords.shape[0],
-                polar_coords.shape[1] - 2,
+                hypersph_coords.shape[0],
+                hypersph_coords.shape[1] - 2,
             ))), axis=1
         )
-        for i in range(2, polar_coords.shape[1]):
-            coords[:, :-i] *= sin(polar_coords[:, i])  # noqa: E203
-            coords[:, -i] = cos(polar_coords[:, i])
-        return squeeze(coords)
-
+        for i in range(2, hypersph_coords.shape[1]):
+            coords[:, :-i] *= sin(hypersph_coords[:, i])  # noqa: E203
+            coords[:, -i] = cos(hypersph_coords[:, i])
+        return coords
+    
     @staticmethod
     def compute_unit_hypersphere_surface(dim: Union[int, int32, int64]) -> float:
         if dim == 1:

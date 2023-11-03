@@ -161,7 +161,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             },
         )
         m = AbstractHypersphereSubsetDistribution.polar_to_cart(array(result.x))
-        return (1 - 2 * (m[-1] < 0)) * m
+        return (1.0 - 2.0 * (m[-1] < 0)) * m
 
     @staticmethod
     def plot_hemisphere(resolution: Union[int, int32, int64] = 150):
