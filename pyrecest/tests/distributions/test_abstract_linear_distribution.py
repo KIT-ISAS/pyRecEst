@@ -52,7 +52,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         ), f"Expected 0.3, but got {integration_result}"
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ["pyrecest.pytorch", "pyrecest.tensorflow"],
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_mode_numerical_custom_1D(self):
@@ -70,7 +70,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         npt.assert_allclose(self.g_2D.mean_numerical(), self.mu_2D, atol=1e-6)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ["pyrecest.pytorch", "pyrecest.tensorflow"],
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_mode_numerical_gaussian_2D_mean_far_away(self):
@@ -80,7 +80,7 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         npt.assert_allclose(g.mode_numerical(), mu, atol=2e-4)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ["pyrecest.pytorch", "pyrecest.tensorflow"],
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_mode_numerical_gaussian_3D(self):

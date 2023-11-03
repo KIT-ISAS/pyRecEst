@@ -83,7 +83,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         if proposal is None:
 
             def proposal(x):
-                return x + random.normal(0.0, 1.0, (self.dim))
+                return x + random.normal(mean=0.0, cov=1.0, size=self.dim)
 
         if start_point is None:
             start_point = (
