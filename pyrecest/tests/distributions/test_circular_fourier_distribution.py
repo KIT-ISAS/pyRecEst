@@ -96,7 +96,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
     )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_integrate_numerically(self, mult_by_n, transformation):
         scale_by = 2.0 / 5.0

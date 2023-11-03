@@ -34,7 +34,7 @@ class AbstractMixtureTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_sample_metropolis_hastings_basics_only_s2(self):
         vmf1 = VonMisesFisherDistribution(

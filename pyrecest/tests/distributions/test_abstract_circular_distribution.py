@@ -18,7 +18,7 @@ class AbstractCircularDistributionTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_cdf_numerical(self):
         """Tests if the numerical computation of cdf matches the actual cdf."""
@@ -59,7 +59,7 @@ class AbstractCircularDistributionTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_integral_numerical(self):
         """Tests if the numerical computation of integral matches the actual integral."""

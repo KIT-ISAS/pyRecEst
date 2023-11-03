@@ -24,7 +24,7 @@ class TestToroidalWrappedNormalDistribution(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_integrate(self):
         self.assertAlmostEqual(self.twn.integrate(), 1, delta=1e-5)

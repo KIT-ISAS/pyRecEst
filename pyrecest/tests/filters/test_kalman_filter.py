@@ -25,7 +25,7 @@ class KalmanFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_update_with_likelihood_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
@@ -34,7 +34,7 @@ class KalmanFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_update_with_meas_noise_and_meas_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
@@ -44,7 +44,7 @@ class KalmanFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_update_linear_2d(self):
         filter_add = KalmanFilter((array([0.0, 1.0]), diag(array([1.0, 2.0]))))
@@ -59,7 +59,7 @@ class KalmanFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_predict_identity_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
@@ -69,7 +69,7 @@ class KalmanFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_predict_linear_2d(self):
         kf = KalmanFilter((array([0, 1]), diag(array([1, 2]))))

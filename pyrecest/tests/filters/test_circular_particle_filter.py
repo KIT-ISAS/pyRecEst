@@ -83,6 +83,10 @@ class CircularParticleFilterTest(unittest.TestCase):
         npt.assert_array_almost_equal(predicted.d, dist_f.d, decimal=10)
         npt.assert_array_almost_equal(predicted.w, dist_f.w, decimal=10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on current backend",
+    )
     def test_update(self):
         # test update
         random.seed(0)

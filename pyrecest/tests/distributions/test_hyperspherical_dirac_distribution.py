@@ -69,7 +69,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_from_distribution(self):
         random.seed(0)

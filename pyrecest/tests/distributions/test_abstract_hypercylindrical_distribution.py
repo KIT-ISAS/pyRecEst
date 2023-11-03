@@ -28,7 +28,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_condition_on_periodic(self):
         hwn = PartiallyWrappedNormalDistribution(
@@ -56,7 +56,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_condition_on_linear(self):
         hwn = PartiallyWrappedNormalDistribution(

@@ -85,7 +85,7 @@ class TestEvalationBasics(TestEvalationBase):
     )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_generate_gt_R2(self, x0):
         groundtruth = generate_groundtruth(self.simulation_param, x0)
@@ -258,7 +258,7 @@ class TestEvalationBasics(TestEvalationBase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_perform_predict_update_cycles(self):
         scenario_name = "R2randomWalk"
@@ -325,7 +325,7 @@ class TestEvalationBasics(TestEvalationBase):
     )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_iterate_configs_and_runs(self, filter_configs):
         groundtruths, measurements = self.test_generate_simulated_scenario()
@@ -390,7 +390,7 @@ class TestEvalationBasics(TestEvalationBase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_evaluate_for_simulation_config_R2_random_walk(self):
         filters_configs_input = [
@@ -429,7 +429,7 @@ class TestEvalationBasics(TestEvalationBase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_evaluate_for_file_R2_random_walk(self):
         self.simulation_param["all_seeds"] = range(self.n_runs_default)
@@ -534,7 +534,7 @@ class TestEvalationBasics(TestEvalationBase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_summarize_filter_results(self):
         data = self._load_evaluation_data()

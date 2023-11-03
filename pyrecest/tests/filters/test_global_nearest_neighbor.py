@@ -84,7 +84,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
     )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_predict_linear(self, name, sys_input):
         import numpy as _np
@@ -127,7 +127,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_predict_linear_different_mats_and_inputs(self):
         tracker = GlobalNearestNeighbor()
@@ -183,7 +183,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_association_no_clutter(self):
         tracker = GlobalNearestNeighbor()
@@ -220,7 +220,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_association_with_clutter(self):
         tracker = GlobalNearestNeighbor()
@@ -266,7 +266,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_update_with_and_without_clutter(self):
         tracker_no_clut = GlobalNearestNeighbor()

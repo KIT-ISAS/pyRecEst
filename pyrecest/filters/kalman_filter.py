@@ -78,7 +78,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         """
         assert (
             pyrecest.backend.__name__ != "pyrecest.pytorch"
-        ), "Not supported on pytorch backend"
+        ), "Not supported on this backend"
         if sys_input is not None and system_matrix.shape[0] != sys_input.shape[0]:
             raise ValueError(
                 "The number of rows in system_matrix should match the number of elements in sys_input"
@@ -115,7 +115,7 @@ class KalmanFilter(AbstractEuclideanFilter):
         """
         assert (
             pyrecest.backend.__name__ != "pyrecest.pytorch"
-        ), "Not supported on pytorch backend"
+        ), "Not supported on this backend"
         self._filter_state.dim_z = measurement_matrix.shape[0]
         self._filter_state.update(z=measurement, R=meas_noise, H=measurement_matrix)
 
