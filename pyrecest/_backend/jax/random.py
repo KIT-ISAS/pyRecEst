@@ -79,6 +79,17 @@ def _normal(state, size, *args, **kwargs):
 def normal(size, *args, **kwargs):
     size = size if hasattr(size, "__iter__") else (size,)
     state, has_state, kwargs = get_state(**kwargs)
+    
+    # Check and remove 'mean' and 'cov' from kwargs
+    mean = kwargs.pop('mean', None)
+    cov = kwargs.pop('cov', None)
+
+    # Verify that 'mean' and 'cov' have the expected values
+    if mean is not None and mean != 0.0:
+        raise ValueError(f"Expected mean to be 0.0, but got {mean}")
+    if cov is not None and cov != 1.0:
+        raise ValueError(f"Expected cov to be 1.0, but got {cov}")
+
     state, res = _normal(state, size, *args, **kwargs)
     return set_state_return(has_state, state, res)
    

@@ -57,6 +57,10 @@ class CircularUniformDistributionTest(unittest.TestCase):
         )
         npt.assert_allclose(cu.trigonometric_moment(0), 1.0)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_trigonometric_moment_with_shift(self):
         cu = CircularUniformDistribution()
         npt.assert_allclose(
