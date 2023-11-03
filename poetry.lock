@@ -275,10 +275,7 @@ files = [
 ]
 
 [package.dependencies]
-numpy = [
-    {version = ">=1.26.0rc1,<2.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1.16,<2.0", markers = "python_version <= \"3.11\""},
-]
+numpy = ">=1.20,<2.0"
 
 [package.extras]
 bokeh = ["bokeh", "selenium"]
