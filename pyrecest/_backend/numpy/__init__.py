@@ -99,7 +99,7 @@ from numpy import (
     dstack,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
-
+from numpy import vectorize as vmap
 from .._shared_numpy import (
     abs,
     angle,

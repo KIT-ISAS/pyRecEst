@@ -9,7 +9,7 @@ from pyrecest.distributions.abstract_manifold_specific_distribution import (
 )
 
 from .abstract_filter_type import AbstractFilterType
-from jax import vmap
+from pyrecest.backend import vmap
 
 class AbstractParticleFilter(AbstractFilterType):
     def __init__(self, initial_filter_state=None):

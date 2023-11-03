@@ -1,4 +1,7 @@
-"""Jax-based computation backend."""
+"""Jax-based computation backend.
+based on implementation by Emile Mathieu
+for Riemannian Score-based SDE
+"""
 import jax.numpy as _jnp
 from jax.numpy import (
     all,
@@ -136,6 +139,7 @@ from jax.numpy import (
     linspace,
     ones,
 )
+from jax import vmap
 
 from jax import device_get as to_numpy
 

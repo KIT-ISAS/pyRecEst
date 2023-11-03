@@ -191,6 +191,7 @@ BACKEND_ATTRIBUTES = {
         "min",
         "roll",
         "dstack",
+        "vmap",
     ],
     "autodiff": [
         "custom_gradient",

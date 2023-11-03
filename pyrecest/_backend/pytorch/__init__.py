@@ -57,6 +57,7 @@ from torch import (
     min,
     roll,
     dstack,
+    vmap,
 )
 from torch import repeat_interleave as repeat
 from torch import (

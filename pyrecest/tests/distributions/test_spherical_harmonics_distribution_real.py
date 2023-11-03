@@ -35,7 +35,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             self.assertTrue(issubclass(w[-1].category, UserWarning))
 
     def testNormalization(self):
-        unnormalized_coeffs = random.uniform(0.0, 1.0, (3, 5))
+        unnormalized_coeffs = random.uniform(size=(3, 5))
         shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)
         self.assertAlmostEqual(shd.integrate(), 1.0, delta=1e-6)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)
