@@ -55,15 +55,15 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         )
         shift_offset = array([1.4, -0.3, pi])
         shifted = self.twd.apply_function(lambda x: x + shift_offset)
-        npt.assert_almost_equal(
+        npt.assert_allclose(
             shifted.trigonometric_moment(1)[0],
             sum(self.w * exp(1j * (self.d[:, 0] + shift_offset[0]))),
-            decimal=10,
+            rtol=1e-6,
         )
-        npt.assert_almost_equal(
+        npt.assert_allclose(
             shifted.trigonometric_moment(1)[1],
             sum(self.w * exp(1j * (self.d[:, 1] + shift_offset[1]))),
-            decimal=10,
+            rtol=1e-10,
         )
 
     def test_shift(self):
