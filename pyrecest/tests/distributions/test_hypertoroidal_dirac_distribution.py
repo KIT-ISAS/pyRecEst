@@ -93,8 +93,8 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
     def get_pseudorandom_hypertoroidal_wd(dim=2):
         random.seed(0)
         n = 20
-        d = 2.0 * pi * random.uniform(0.0, 1.0, (n, dim))
-        w = random.uniform(0.0, 1.0, n)
+        d = 2.0 * pi * random.uniform(size=(n, dim))
+        w = random.uniform(size=n)
         w = w / sum(w)
         hwd = HypertoroidalDiracDistribution(d, w)
         return hwd

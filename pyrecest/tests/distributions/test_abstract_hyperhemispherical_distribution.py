@@ -36,7 +36,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         """Tests mode_numerical."""
         watson_dist = HyperhemisphericalWatsonDistribution(self.mu_, self.kappa_)
         mode_numerical = watson_dist.mode_numerical()
-        npt.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
+        npt.assert_allclose(self.mu_, mode_numerical, atol=1e-6)
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",

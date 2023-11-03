@@ -1,7 +1,7 @@
 from math import pi
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, stack
+from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, stack, atleast_2d
 
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
@@ -37,6 +37,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             coords = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(
                 stack((phi, theta), axis=1), mode=mode
             )
+            coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         elif mode == "elevation":
             x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(
