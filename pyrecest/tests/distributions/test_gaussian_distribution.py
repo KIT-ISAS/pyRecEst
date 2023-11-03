@@ -7,6 +7,7 @@ from pyrecest.backend import allclose, array, linspace
 from pyrecest.distributions import GaussianDistribution
 from scipy.stats import multivariate_normal
 import numpy.testing as npt
+import pyrecest.backend
 
 class GaussianDistributionTest(unittest.TestCase):
     def test_gaussian_distribution_3d(self):
@@ -50,8 +51,12 @@ class GaussianDistributionTest(unittest.TestCase):
 
         self.assertTrue(allclose(g_shifted.mode(), mu + shift_by, atol=1e-6))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_marginalization(self):
-        mu = array([1, 2])
+        mu = array([1.0, 2.0])
         C = array([[1.1, 0.4], [0.4, 0.9]])
         g = GaussianDistribution(mu, C)
 
