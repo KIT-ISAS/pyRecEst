@@ -4,6 +4,7 @@ from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import empty, int32, int64, random, squeeze
+import pyrecest.backend
 
 
 class AbstractManifoldSpecificDistribution(ABC):
@@ -72,7 +73,7 @@ class AbstractManifoldSpecificDistribution(ABC):
     ):
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""
-
+        assert pyrecest.backend.__name__ != "pyrecest.jax", "Not supported on this backend"
         if proposal is None or start_point is None:
             raise NotImplementedError(
                 "Default proposals and starting points should be set in inheriting classes."

@@ -13,6 +13,9 @@ from pyrecest.backend import (
     tile,
     vstack,
     zeros,
+    diag,
+    ones,
+    concatenate,
 )
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
@@ -65,8 +68,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             )
 
         M = tile(self.mu.reshape(-1, 1), (1, self.input_dim))
-        E = eye(self.input_dim)
-        E[0, 0] = 0
+        E = diag(array(concatenate((array([0]), ones(self.input_dim - 1)))))
         M = M + E
         Q, _ = linalg.qr(M)
         M = hstack([Q[:, 1:], Q[:, 0].reshape(-1, 1)])

@@ -95,7 +95,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_integrate_numerically(self, mult_by_n, transformation):

@@ -20,7 +20,7 @@ from pyrecest.backend import (
     ones,
 )
 from scipy.special import erf  # pylint: disable=no-name-in-module
-
+import pyrecest.backend
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
@@ -53,6 +53,7 @@ class WrappedNormalDistribution(
         return sqrt(self.C)
 
     def pdf(self, xs):
+        assert pyrecest.backend.__name__ != "pyrecest.jax", "Not supported on this backend"
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
@@ -71,7 +72,7 @@ class WrappedNormalDistribution(
         x = where(x < 0, x + 2.0 * pi, x)
         x -= self.mu
 
-        max_iterations = 1000
+        max_iterations: int = 1000
 
         tmp = -1.0 / (2.0 * self.sigma**2)
         nc = 1.0 / sqrt(2.0 * pi) / self.sigma

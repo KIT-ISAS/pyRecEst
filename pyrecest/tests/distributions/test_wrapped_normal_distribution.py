@@ -7,7 +7,7 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, arange, array, exp, ones_like, sqrt, sum
 from pyrecest.distributions import WrappedNormalDistribution
-
+import pyrecest.backend
 
 class WrappedNormalDistributionTest(unittest.TestCase):
     def setUp(self):
@@ -15,6 +15,10 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.sigma = array(1.5)
         self.wn = WrappedNormalDistribution(self.mu, self.sigma)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf_values_are_as_expected(self):
         """
         Test that the probability density function (pdf) returns expected values.

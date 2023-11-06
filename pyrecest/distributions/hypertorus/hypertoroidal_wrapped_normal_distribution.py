@@ -1,7 +1,7 @@
 import copy
 from math import pi
 from typing import Union
-
+from beartype import beartype
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -128,7 +128,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         dist.mu = m
         return dist
 
-    def trigonometric_moment(self, n):
+    @beartype
+    def trigonometric_moment(self, n:int):
         """
         Calculate the trigonometric moment of the HypertoroidalWNDistribution.
 
@@ -136,10 +137,9 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param n: Integer moment order
         :return: Trigonometric moment
         """
-        assert isinstance(n, int), "n must be an integer"
 
         m = exp(
-            [1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)]
+            array([1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)])
         )
 
         return m

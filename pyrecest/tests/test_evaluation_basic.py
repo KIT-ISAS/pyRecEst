@@ -57,6 +57,10 @@ class TestEvalationBase(unittest.TestCase):
 class TestEvalationBasics(TestEvalationBase):
     scenario_name: Optional[str] = "R2randomWalk"
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ in == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_plot_results(self):
         import matplotlib
         from pyrecest.evaluation.plot_results import plot_results
@@ -84,7 +88,7 @@ class TestEvalationBasics(TestEvalationBase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_generate_gt_R2(self, x0):
@@ -155,6 +159,10 @@ class TestEvalationBasics(TestEvalationBase):
             )
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_generate_simulated_scenario(self):
         self.simulation_param["all_seeds"] = range(self.n_runs_default)
         groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
@@ -324,7 +332,7 @@ class TestEvalationBasics(TestEvalationBase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_iterate_configs_and_runs(self, filter_configs):
@@ -389,7 +397,7 @@ class TestEvalationBasics(TestEvalationBase):
         self.assertIn(np.ndim(measurements[0, 0]), (1, 2))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_evaluate_for_simulation_config_R2_random_walk(self):
@@ -428,7 +436,7 @@ class TestEvalationBasics(TestEvalationBase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_evaluate_for_file_R2_random_walk(self):
@@ -483,10 +491,18 @@ class TestEvalationBasics(TestEvalationBase):
         filename = os.path.join(self.tmpdirname.name, files[0])
         return np.load(filename, allow_pickle=True).item()
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_file_content(self):
         data = self._load_evaluation_data()
         self._validate_eval_data(**data)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_group_results_by_filter(self):
         from pyrecest.evaluation.group_results_by_filter import group_results_by_filter
 
