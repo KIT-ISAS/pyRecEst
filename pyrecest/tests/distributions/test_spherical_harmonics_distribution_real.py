@@ -31,7 +31,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
     def testNormalizationWarning(self):
         with warnings.catch_warnings(record=True) as w:
-            SphericalHarmonicsDistributionReal(random.uniform(0.0, 1.0, (3, 5)))
+            SphericalHarmonicsDistributionReal(random.uniform(size=(3, 5)))
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, UserWarning))
 
