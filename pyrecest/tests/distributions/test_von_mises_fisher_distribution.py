@@ -20,7 +20,7 @@ vectors_to_test_2d = array(
         -array([1.0, 1.0, 2.0]) / linalg.norm(array([1.0, 1.0, 2.0])),
     ]
 )
-
+import numpy.testing as npt
 
 class TestVonMisesFisherDistribution(unittest.TestCase):
     def setUp(self):
@@ -39,7 +39,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
 
     def test_vmf_distribution_3d_mode(self):
-        self.assertTrue(allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5))
+        npt.assert_allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5)
 
     def test_vmf_distribution_3d_integral(self):
         self.assertAlmostEqual(self.vmf.integrate(), 1, delta=1e-5)

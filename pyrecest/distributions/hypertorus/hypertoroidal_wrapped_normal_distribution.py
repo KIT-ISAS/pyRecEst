@@ -19,7 +19,7 @@ from pyrecest.backend import (
     zeros,
 )
 from scipy.stats import multivariate_normal
-
+import pyrecest.backend
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -103,6 +103,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         if n <= 0:
             raise ValueError("n must be a positive integer")
 
+        assert pyrecest.backend.__name__ != 'jax', "jax backend not supported for sampling"
         s = random.normal(mean=self.mu, cov=self.C, size=(n,))
         s = mod(s, 2.0 * pi)  # wrap the samples
         return s

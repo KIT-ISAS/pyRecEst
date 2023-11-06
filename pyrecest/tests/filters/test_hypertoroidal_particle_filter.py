@@ -5,6 +5,7 @@ import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, random, zeros, zeros_like
+import pyrecest.backend
 from pyrecest.distributions import HypertoroidalWNDistribution
 from pyrecest.filters import HypertoroidalParticleFilter
 
@@ -24,6 +25,8 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
     def test_setting_state(self):
         self.hpf.filter_state = self.hwnd
 
+    @unittest.skipIf(pyrecest.backend.__name__ == "pyrecest.jax",
+                     reason="Backend not supported'")
     def test_predict_identity(self):
         self.hpf.predict_identity(
             HypertoroidalWNDistribution(zeros(3), 0.5 * self.covariance_matrix)

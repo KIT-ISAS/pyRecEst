@@ -35,7 +35,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_inclination(
                 angles1, angles2
             )
-        if mode == "elevation":
+        elif mode == "elevation":
             coords = AbstractSphereSubsetDistribution._sph_to_cart_elevation(angles1, angles2)
             coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]

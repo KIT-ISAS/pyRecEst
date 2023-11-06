@@ -12,9 +12,14 @@ from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution impo
     ToroidalWrappedNormalDistribution,
 )
 from pyrecest.filters.toroidal_particle_filter import ToroidalParticleFilter
+import pyrecest.backend
 
 
 class ToroidalParticleFilterTest(unittest.TestCase):
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_toroidal_particle_filter(self):
         random.seed(0)
         C = array([[0.7, 0.4], [0.4, 0.6]])
