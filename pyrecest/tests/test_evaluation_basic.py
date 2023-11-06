@@ -58,7 +58,7 @@ class TestEvalationBasics(TestEvalationBase):
     scenario_name: Optional[str] = "R2randomWalk"
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in == "pyrecest.jax",
+        pyrecest.backend.__name__ == "pyrecest.jax",
         reason="Not supported on this backend",
     )
     def test_plot_results(self):

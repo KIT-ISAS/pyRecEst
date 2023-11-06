@@ -73,6 +73,10 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             "State was not set correctly.",
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_get_state_returns_correct_shape(self):
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init
@@ -83,7 +87,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         [("no_inputs", zeros(4)), ("with_inputs", array([1.0, -1.0, 1.0, -1.0]))]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_predict_linear(self, name, sys_input):
@@ -182,7 +186,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_association_no_clutter(self):
@@ -219,7 +223,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         npt.assert_array_equal(measurements[:, association], perfect_meas_ordered + 0.1)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_association_with_clutter(self):
