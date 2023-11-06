@@ -1862,9 +1862,10 @@ viz = ["matplotlib", "nc-time-axis", "seaborn"]
 
 [extras]
 healpy-support = []
+jax-support = []
 pytorch-support = []
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "b0a7da738af81aa0ce104860f42a284458c17f7f6ce3e013539e1374785a38a3"
+content-hash = "86fe0afd755931a31f540f76a627e4fed87cc248d10377fb9dfe2ebc8cf0eee4"
