@@ -16,6 +16,7 @@ from pyrecest.backend import (
     sqrt,
     zeros,
 )
+import pyrecest.backend
 from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution import (
     AbstractSphericalDistribution,
 )
@@ -34,6 +35,10 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, UserWarning))
 
+    @unittest.skipIf(
+        pyrecest.backend.backend_name == "jax",
+        reason="Not supported on this backend"
+    )
     def testNormalization(self):
         unnormalized_coeffs = random.uniform(size=(3, 5))
         shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)

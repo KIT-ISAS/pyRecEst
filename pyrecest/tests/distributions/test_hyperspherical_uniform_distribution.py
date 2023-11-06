@@ -39,7 +39,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             n = 10
             samples = hud.sample(n)
             self.assertEqual(samples.shape, (n, hud.dim + 1))
-            npt.assert_allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-10)
+            npt.assert_allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-7)
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         """
         assert ndim(angles1) == 1 and ndim(angles2) == 1, "Inputs must be 1-dimensional"
         if mode == "inclination":
-            # This follows the (r, θ_inc, φ_az,right) convention
+            # This follows the (θ_inc, φ_az,right) convention
             x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_inclination(
                 angles1, angles2
             )
@@ -49,7 +49,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         return x, y, z
 
     @staticmethod
-    def cart_to_sph(x, y, z, mode="colatitude") -> tuple:
+    def cart_to_sph(x, y, z, mode="inclineation") -> tuple:
         """
         Convert Cartesian coordinates to spherical coordinates.
 
@@ -118,17 +118,15 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     @staticmethod
     def _cart_to_sph_inclination(x, y, z) -> tuple:
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z)
-        radius = 1
         azimuth = arctan2(y, x)
         azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
-        colatitude = arccos(z / radius)
+        colatitude = arccos(z)
         return azimuth, colatitude
 
     @staticmethod
     def _cart_to_sph_elevation(x, y, z) -> tuple:
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
-        radius = 1
         azimuth = arctan2(y, x)
         azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
-        elevation = pi / 2 - arccos(z / radius)  # elevation is π/2 - colatitude
+        elevation = pi / 2 - arccos(z)  # elevation is π/2 - colatitude
         return azimuth, elevation
