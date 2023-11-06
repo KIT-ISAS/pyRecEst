@@ -40,7 +40,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         elif mode == "colatitude":
-            x, y, z = AbstractSphereSubsetDistribution.hypersph_coord_to_cart_colatitude(angles1, angles2)
+            coords = AbstractSphereSubsetDistribution.hypersph_to_cart(column_stack((angles1, angles2)))
             coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         else:
@@ -71,7 +71,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
                 x, y, z
             )
         elif mode == "colatitude":
-            phi, theta = AbstractHypersphereSubsetDistribution.cartesian_to_hyperspherical(
+            phi, theta = AbstractHypersphereSubsetDistribution.cart_to_hypersph_coords(
                 column_stack((x, y, z)), mode=mode
             )
         else:

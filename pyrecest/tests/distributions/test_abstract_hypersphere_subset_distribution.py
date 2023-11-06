@@ -60,7 +60,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         
         angles = 2.0 * pi * random.uniform(size=dimensions)    
         cartesian_specific = specific_function(atleast_2d(angles)).squeeze()
-        cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(angles)
+        cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
         npt.assert_allclose(cartesian_specific, cartesian_given)
         
     def test_pdf_hyperspherical_coords_1d(self):

@@ -145,7 +145,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     def mode_numerical(self):
         def objective_function_2d(s):
             return -self.pdf(
-                AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(array(s))
+                AbstractHypersphereSubsetDistribution.hypersph_to_cart(array(s))
             )
 
         assert self.dim == 2, "Currently only implemented for 2D hemispheres."
@@ -160,7 +160,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                 "maxiter": 2000,
             },
         )
-        m = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(array(result.x))
+        m = AbstractHypersphereSubsetDistribution.hypersph_to_cart(array(result.x))
         return (1.0 - 2.0 * (m[-1] < 0)) * m
 
     @staticmethod

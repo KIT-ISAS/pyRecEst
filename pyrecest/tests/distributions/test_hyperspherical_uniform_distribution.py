@@ -7,7 +7,7 @@ from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
 )
-
+import numpy.testing as npt
 
 class HypersphericalUniformDistributionTest(unittest.TestCase):
     def test_integrate_2d(self):
@@ -39,7 +39,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             n = 10
             samples = hud.sample(n)
             self.assertEqual(samples.shape, (n, hud.dim + 1))
-            self.assertTrue(allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-10))
+            npt.assert_allclose(linalg.norm(samples, axis=1), ones(n), rtol=1e-10)
 
 
 if __name__ == "__main__":

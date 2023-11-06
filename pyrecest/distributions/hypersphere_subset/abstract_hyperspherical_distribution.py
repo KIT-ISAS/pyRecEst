@@ -191,7 +191,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     def mode_numerical(self):
         def fun(s):
             return -self.pdf(
-                AbstractHypersphereSubsetDistribution.polar_to_cart(array(s))
+                AbstractHypersphereSubsetDistribution.hypersph_to_cart(array(s))
             )
 
         s0 = random.uniform(size=self.dim) * pi

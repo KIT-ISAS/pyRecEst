@@ -121,7 +121,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         """
         def generate_input(angles):
             angles = column_stack(angles)
-            input_array = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(
+            input_array = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
                 angles, mode="colatitude"
             )
             return input_array
@@ -364,43 +364,41 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         # Initialize an array to hold the angles
         angles = []
         
-        # Calculate the angles using an iterative process
+        # Compute the angles for n-1 dimensions
         for idx in range(len(x) - 1, 0, -1):
-            # The angle is computed with respect to the positive axis of the last dimension
-            angle = arccos(x[idx] / linalg.norm(x[:idx+1]))
+            # For the last coordinate (x, y), use atan2 to find the azimuth
+            if idx == 1:
+                angle = arctan2(x[1], x[0])
+            else:
+                # For other coordinates, use arccos, but avoid division by zero
+                angle = arccos(x[idx] / linalg.norm(x[:idx+1])) if linalg.norm(x[:idx]) != 0 else 0
             angles.append(angle)
-            
-            # Remove the last dimension by projecting onto the subspace orthogonal to it
-            x = x[:idx] * sin(angle)
-            
-        # The last angle, azimuth, is simply the atan2 of y/x
-        angles.append(arctan2(x[1], x[0]))
         
-        # Reverse the list of angles to start from theta_1 to theta_(n-1)
+        # We reverse the list of angles to have them in the correct order
         angles = angles[::-1]
         
-        # Return the radial distance and the angles
-        return angles
+        # Return the radial distance and the angles as a tuple
+        return array(angles)
 
     @staticmethod
-    def hypersph_coord_to_cart(hypersph_coords, mode: str = "colatitude"):
+    def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
         hypersph_coords = atleast_2d(hypersph_coords)
         if mode == "colatitude":
-            cart_coords = AbstractHypersphereSubsetDistribution._hypersph_coord_to_cart_colatitude(
+            cart_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
                 hypersph_coords
             )
-        elif mode == "elevation" or mode == "inclination":
+        elif mode in ("elevation", "inclination"):
             from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
             assert hypersph_coords.shape[1] == 2, "Elevation mode only supports 2 dimensions"
             x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode)
             cart_coords = column_stack((x, y, z))
         else:
-            raise ValueError("Mode must be either 'colatitude' or 'elevation'")
+            raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
         
         return cart_coords.squeeze()
     
     @staticmethod
-    def _hypersph_coord_to_cart_colatitude(hypersph_coords):
+    def _hypersph_to_cart_colatitude(hypersph_coords):
         n_coord_tuples = hypersph_coords.shape[0]
         cartesian_coords = empty((n_coord_tuples, 0))
         output_dim = hypersph_coords.shape[1] + 1  # Number of dimensions
