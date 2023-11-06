@@ -25,6 +25,8 @@ jax_support = ["jax", "jaxlib"]
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
 torch = "*"
+jax = "*"
+jaxlib = "*"
 autopep8 = "^2.0.2"
 pytest = "*"
 parameterized = "*"
