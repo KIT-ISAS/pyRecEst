@@ -150,8 +150,8 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             n (int): number of points to sample
         """
         assert n > 0, "n must be positive"
-        s = random.multivariate_normal(self.mu, self.C, n)
-        s[:, : self.bound_dim] = mod(s[:, : self.bound_dim], 2 * pi)  # noqa: E203
+        s = random.multivariate_normal(self.mu, self.C, size=(n,))
+        s[:, : self.bound_dim] = mod(s[:, : self.bound_dim], 2.0 * pi)  # noqa: E203
         return s
 
     def to_gaussian(self):

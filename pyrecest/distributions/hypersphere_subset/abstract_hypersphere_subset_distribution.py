@@ -6,6 +6,8 @@ from typing import Union
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    arccos,
+    arctan2,
     array,
     atleast_2d,
     concatenate,
@@ -354,6 +356,31 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         )
 
         return 0.5 * distance_integral
+
+    @staticmethod
+    def cart_to_hypersph_coords(x, mode='colatitude'):
+        assert mode == 'colatitude', "Only colatitude mode is supported"
+    
+        # Initialize an array to hold the angles
+        angles = []
+        
+        # Calculate the angles using an iterative process
+        for idx in range(len(x) - 1, 0, -1):
+            # The angle is computed with respect to the positive axis of the last dimension
+            angle = arccos(x[idx] / linalg.norm(x[:idx+1]))
+            angles.append(angle)
+            
+            # Remove the last dimension by projecting onto the subspace orthogonal to it
+            x = x[:idx] * sin(angle)
+            
+        # The last angle, azimuth, is simply the atan2 of y/x
+        angles.append(arctan2(x[1], x[0]))
+        
+        # Reverse the list of angles to start from theta_1 to theta_(n-1)
+        angles = angles[::-1]
+        
+        # Return the radial distance and the angles
+        return angles
 
     @staticmethod
     def hypersph_coord_to_cart(hypersph_coords, mode: str = "colatitude"):

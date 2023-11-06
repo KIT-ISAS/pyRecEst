@@ -1,7 +1,7 @@
 from math import pi
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, stack, atleast_2d
+from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, stack, atleast_2d, column_stack
 
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
@@ -69,6 +69,10 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         elif mode == "elevation":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_elevation(
                 x, y, z
+            )
+        elif mode == "colatitude":
+            phi, theta = AbstractHypersphereSubsetDistribution.cartesian_to_hyperspherical(
+                column_stack((x, y, z)), mode=mode
             )
         else:
             raise ValueError("Mode must be either 'inclination', 'colatitude', or 'elevation'")
