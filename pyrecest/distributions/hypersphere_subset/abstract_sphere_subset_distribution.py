@@ -20,29 +20,29 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         super().__init__(2)
 
     @staticmethod
-    def sph_to_cart(phi, theta, mode="colatitude") -> tuple:
+    def sph_to_cart(angles1, angles2, mode="inclination") -> tuple:
         """
         Convert spherical coordinates to Cartesian coordinates.
-
-        Args:
-            phi (): Azimuth angles.
-            theta (): Colatitude angles or elevation angles based on the mode.
-            mode (str): Either 'colatitude' or 'elevation'.
-
-        Returns:
-            tuple: Cartesian coordinates.
+        For different convetions, see https://en.wikipedia.org/wiki/Spherical_coordinate_system
+        Supported convetions:
+        inclination and azimuth (θ_inc, φ_az,right)
+        azimuth, and colatitude
+        Refer to the respective functions for more information.
         """
-        assert ndim(phi) == 1 and ndim(theta) == 1, "Inputs must be 1-dimensional"
-        if mode == "colatitude":
-            coords = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(
-                stack((phi, theta), axis=1), mode=mode
+        assert ndim(angles1) == 1 and ndim(angles2) == 1, "Inputs must be 1-dimensional"
+        if mode == "inclination":
+            # This follows the (r, θ_inc, φ_az,right) convention
+            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_inclination(
+                angles1, angles2
             )
+        if mode == "elevation":
+            coords = AbstractSphereSubsetDistribution._sph_to_cart_elevation(angles1, angles2)
             coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
-        elif mode == "elevation":
-            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(
-                phi, theta
-            )
+        elif mode == "colatitude":
+            x, y, z = AbstractSphereSubsetDistribution.hypersph_coord_to_cart_colatitude(angles1, angles2)
+            coords = atleast_2d(coords)
+            x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         else:
             raise ValueError("Mode must be either 'colatitude' or 'elevation'")
 
@@ -62,8 +62,8 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             tuple: Spherical coordinates.
         """
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z), "Inputs must be 1-dimensional"
-        if mode == "colatitude":
-            phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_colatitude(
+        if mode == "inclineation":
+            phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_inclination(
                 x, y, z
             )
         elif mode == "elevation":
@@ -71,12 +71,22 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
                 x, y, z
             )
         else:
-            raise ValueError("Mode must be either 'colatitude' or 'elevation'")
+            raise ValueError("Mode must be either 'inclination', 'colatitude', or 'elevation'")
 
         return phi, theta
 
     @staticmethod
-    def _sph_to_cart_elevation(azimuth, elevation) -> tuple:
+    def _sph_to_cart_inclination(theta_inc, phi_az_right) -> tuple:
+        # Conversion for the (r, θ_inc, φ_az,right) convention. Used by many textbooks.
+        # Downside is that it does not generalize well to higher dimensions.
+        assert ndim(theta_inc) == 1 and ndim(phi_az_right), "Inputs must be 1-dimensional"
+        x = sin(phi_az_right) * cos(theta_inc)
+        y = sin(phi_az_right) * sin(theta_inc)
+        z = cos(phi_az_right)
+        return x, y, z
+
+    @staticmethod
+    def _sph_to_cart_elevation(azimuth, elevation, map_to_inclination=False) -> tuple:
         """
         Convert spherical coordinates (using elevation) to Cartesian coordinates.
         Assumes a radius of 1.
@@ -92,14 +102,17 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             ndim(azimuth) == 1 and ndim(elevation) == 1
         ), "Inputs must be 1-dimensional"
         # elevation is π/2 - colatitude, so we calculate colatitude from elevation
-        colatitude = pi / 2 - elevation
-        x = sin(colatitude) * cos(azimuth)
-        y = sin(colatitude) * sin(azimuth)
-        z = cos(colatitude)
+        if map_to_inclination:
+            inclination = pi / 2 - elevation
+            return AbstractSphereSubsetDistribution._sph_to_cart_inclination(inclination, elevation)
+        
+        x = cos(elevation) * cos(azimuth)
+        y = cos(elevation) * sin(azimuth)
+        z = sin(elevation)
         return x, y, z
 
     @staticmethod
-    def _cart_to_sph_colatitude(x, y, z) -> tuple:
+    def _cart_to_sph_inclination(x, y, z) -> tuple:
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z)
         radius = 1
         azimuth = arctan2(y, x)
