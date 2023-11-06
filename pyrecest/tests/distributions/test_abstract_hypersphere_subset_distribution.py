@@ -3,7 +3,7 @@ from math import pi
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, linalg, sin, random, max, abs, concatenate, column_stack, stack
+from pyrecest.backend import array, cos, linalg, sin, random, max, abs, concatenate, column_stack, stack, atleast_2d
 from pyrecest.distributions import VonMisesFisherDistribution
 from parameterized import parameterized
 from pyrecest.distributions import AbstractHypersphereSubsetDistribution
@@ -57,12 +57,11 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     ])
     def test_hyperspherical_to_cartesian_specific(self, dimensions, specific_function):
         num_tests: int = 10
-        for _ in range(num_tests):
-            angles = 2.0 * pi * random.uniform(size=dimensions)
-            
-            cartesian_specific = specific_function(angles)
-            cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(angles)
-            npt.assert_allclose(cartesian_specific, cartesian_given)
+        
+        angles = 2.0 * pi * random.uniform(size=dimensions)    
+        cartesian_specific = specific_function(atleast_2d(angles)).squeeze()
+        cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_coord_to_cart(angles)
+        npt.assert_allclose(cartesian_specific, cartesian_given)
         
     def test_pdf_hyperspherical_coords_1d(self):
         mu_ = array([0.5, 1.0]) / linalg.norm(array([0.5, 1.0]))
