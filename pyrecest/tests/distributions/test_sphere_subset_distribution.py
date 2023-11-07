@@ -16,6 +16,7 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         [
             ("colatitude",),
             ("elevation",),
+            ("inclination",),
         ]
     )
     def test_cart_to_sph_to_cart(self, mode):
@@ -41,6 +42,7 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         [
             ("colatitude",),
             ("elevation",),
+            ("inclination",),
         ]
     )
     def test_sph_to_cart_to_sph(self, mode):
