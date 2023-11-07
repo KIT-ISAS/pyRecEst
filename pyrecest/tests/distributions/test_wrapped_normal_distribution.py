@@ -9,6 +9,7 @@ from pyrecest.backend import allclose, arange, array, exp, ones_like, sqrt, sum
 from pyrecest.distributions import WrappedNormalDistribution
 import pyrecest.backend
 
+
 class WrappedNormalDistributionTest(unittest.TestCase):
     def setUp(self):
         self.mu = array(3.0)
@@ -45,6 +46,10 @@ class WrappedNormalDistributionTest(unittest.TestCase):
             )
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf_with_large_sigma_is_uniform(self):
         """
         Test that the pdf with large sigma is approximately a uniform distribution.
