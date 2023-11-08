@@ -103,7 +103,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         
         if proposal is None:
             def proposal(x, supposed_mean=start_point):
-                return x + random.multivariate_normal(supposed_mean, diag(ones(self.dim)), (self.dim))
+                return x + random.multivariate_normal(supposed_mean, diag(ones(self.dim)), (self.dim,))
 
         # pylint: disable=duplicate-code
         return AbstractManifoldSpecificDistribution.sample_metropolis_hastings(
