@@ -33,11 +33,11 @@ class HypercylindricalDiracDistribution(
 
     def hybrid_moment(self):
         # Compute the cosine and sine components
-        cos_vals = cos(self.d[:, :self.bound_dim])
-        sin_vals = sin(self.d[:, :self.bound_dim])
+        cos_vals = cos(self.d[:, :self.bound_dim])  # noqa: E203
+        sin_vals = sin(self.d[:, :self.bound_dim])  # noqa: E203
         
         # Stack the cos, sin, and linear components along a new last dimension
-        S = column_stack((cos_vals, sin_vals, self.d[:, self.bound_dim:]))
+        S = column_stack((cos_vals, sin_vals, self.d[:, self.bound_dim:]))  # noqa: E203
         
         # Perform the weighted sum using matrix multiplication
         return self.w @ S
