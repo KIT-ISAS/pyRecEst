@@ -99,7 +99,6 @@ from numpy import (
     dstack,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
-from numpy import vectorize as vmap
 from .._shared_numpy import (
     abs,
     angle,
@@ -181,3 +180,13 @@ from ._common import (
 ones = _modify_func_default_dtype(target=_np.ones)
 linspace = _dyn_update_dtype(target=_np.linspace, dtype_pos=5)
 empty = _dyn_update_dtype(target=_np.empty, dtype_pos=1)
+
+
+def vmap(pyfunc):
+    def vmapped_fun(x):
+        output = _np.empty(x.shape)
+        for i in range(x.shape[0]):
+            output[i, ...] = pyfunc(x[i, ...])
+        return output
+            
+    return vmapped_fun

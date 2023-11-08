@@ -131,7 +131,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         return dist
 
     @beartype
-    def trigonometric_moment(self, n:int):
+    def trigonometric_moment(self, n: int):
         """
         Calculate the trigonometric moment of the HypertoroidalWNDistribution.
 
