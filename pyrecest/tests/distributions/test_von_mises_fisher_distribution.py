@@ -20,7 +20,6 @@ vectors_to_test_2d = array(
         -array([1.0, 1.0, 2.0]) / linalg.norm(array([1.0, 1.0, 2.0])),
     ]
 )
-import numpy.testing as npt
 
 class TestVonMisesFisherDistribution(unittest.TestCase):
     def setUp(self):

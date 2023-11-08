@@ -10,6 +10,7 @@ from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_particle_filter import AbstractParticleFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 
+
 class CircularParticleFilter(HypertoroidalParticleFilter):
     # pylint: disable=non-parent-init-called,super-init-not-called
     def __init__(self, n_particles: Union[int, int32, int64]) -> None:
@@ -35,6 +36,7 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
         likelihood_val = sum(likelihood.pdf(self.filter_state.d) * self.filter_state.w)
         return likelihood_val
 
+    # jscpd:ignore-start
     def predict_nonlinear(
         self,
         f: Callable,
@@ -49,3 +51,4 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
             shift_instead_of_add,
         )
         self.filter_state.d = squeeze(mod(self.filter_state.d, 2.0 * pi))
+    # jscpd:ignore-end
