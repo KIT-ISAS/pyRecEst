@@ -37,6 +37,12 @@ class CustomLinearDistributionTest(unittest.TestCase):
             atol=tol,
         )
 
+    def test_sampling(self):
+        cld = CustomLinearDistribution.from_distribution(self.gm)
+        n_samples = 1000
+        samples = cld.sample(n_samples)
+        self.assertEqual(samples.shape, (n_samples, 2))
+        npt.assert_allclose(samples.mean(axis=0), self.gm.mean(), atol=0.1)
 
 if __name__ == "__main__":
     unittest.main()

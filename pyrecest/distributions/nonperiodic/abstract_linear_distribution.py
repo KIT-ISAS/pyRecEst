@@ -36,18 +36,28 @@ from scipy.stats import chi2
 from ..abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
+import warnings
 
 
 class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
+    def __init__(self, dim: int):
+        AbstractManifoldSpecificDistribution.__init__(self, dim)
+        self._mean_numerical = None
+        self._covariance_numerical = None
+        
     @property
     def input_dim(self):
         return self.dim
 
     def mean(self):
-        return self.mean_numerical()
+        if self._mean_numerical is None:
+            self._mean_numerical = self.mean_numerical()
+        return self._mean_numerical
 
     def covariance(self):
-        return self.covariance_numerical()
+        if self._covariance_numerical is None:
+            self._covariance_numerical = self.covariance_numerical()
+        return self._covariance_numerical
 
     def get_manifold_size(self):
         return float("inf")
@@ -82,15 +92,18 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         proposal: Callable | None = None,
         start_point=None,
     ):
-        if proposal is None:
-
-            def proposal(x):
-                return x + random.normal(mean=0.0, cov=1.0, size=self.dim)
-
+        
         if start_point is None:
-            start_point = (
-                self.mean()
-            )  # We assume it is cheaply available. Done so for a lack of a better choice.
+            if 'mean' not in vars(self.__class__) and self._mean_numerical is None:
+                # Warn if we need to determine the mean numerically
+                warnings.warn("Starting point for sampling not specified, need to determine the mean numerically.")
+            start_point = self.mean()
+            
+        assert start_point.shape == (self.input_dim,), "Starting point must be a 1D array of correct dimension"
+        
+        if proposal is None:
+            def proposal(x, supposed_mean=start_point):
+                return x + random.multivariate_normal(supposed_mean, diag(ones(self.dim)), (self.dim))
 
         # pylint: disable=duplicate-code
         return AbstractManifoldSpecificDistribution.sample_metropolis_hastings(
