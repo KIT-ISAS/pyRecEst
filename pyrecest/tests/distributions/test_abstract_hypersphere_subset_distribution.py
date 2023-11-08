@@ -56,9 +56,15 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         (4, hyperspherical_to_cartesian_4_sphere),
     ])
     def test_hyperspherical_to_cartesian_specific(self, dimensions, specific_function):
-        num_tests: int = 10
+        # Test for single elements
+        for _ in range(10):
+            angles = 2.0 * pi * random.uniform(size=dimensions)    
+            cartesian_specific = specific_function(atleast_2d(angles)).squeeze()
+            cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
+            npt.assert_allclose(cartesian_specific, cartesian_given)
         
-        angles = 2.0 * pi * random.uniform(size=dimensions)    
+        # Test batch
+        angles = 2.0 * pi * random.uniform(size=(10, dimensions))
         cartesian_specific = specific_function(atleast_2d(angles)).squeeze()
         cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
         npt.assert_allclose(cartesian_specific, cartesian_given)

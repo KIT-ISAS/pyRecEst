@@ -78,7 +78,7 @@ class WrappedNormalDistribution(
         nc = 1.0 / sqrt(2.0 * pi) / self.sigma
 
         for i in range(n_inputs):
-            old_result = 0
+            old_result = 0.0
             result[i] = exp(x[i] * x[i] * tmp)
 
             for k in range(1, max_iterations + 1):
