@@ -2,12 +2,13 @@
 # pylint: disable=no-name-in-module,no-member
 import unittest
 
-from pyrecest.backend import allclose, linalg, ones, random
+from pyrecest.backend import linalg, ones, random
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
 )
 import numpy.testing as npt
+
 
 class HypersphericalUniformDistributionTest(unittest.TestCase):
     def test_integrate_2d(self):
