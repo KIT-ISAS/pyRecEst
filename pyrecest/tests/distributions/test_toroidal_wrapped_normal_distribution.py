@@ -32,6 +32,10 @@ class TestToroidalWrappedNormalDistribution(unittest.TestCase):
             allclose(self.twn.trigonometric_moment(0), array([1.0, 1.0]), rtol=1e-5)
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__== "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_sampling(self):
         n_samples = 5
         s = self.twn.sample(n_samples)
