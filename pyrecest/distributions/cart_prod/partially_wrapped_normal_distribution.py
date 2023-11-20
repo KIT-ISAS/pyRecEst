@@ -58,11 +58,10 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             self, bound_dim=bound_dim, lin_dim=mu.shape[0] - bound_dim
         )
 
-        self.mu = mu
         self.mu = where(
-            arange(self.mu.shape[0]) < bound_dim,
-            mod(self.mu, 2.0 * pi),
-            self.mu
+            arange(mu.shape[0]) < bound_dim,
+            mod(mu, 2.0 * pi),
+            mu
         )
         self.C = C
 

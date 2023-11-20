@@ -13,6 +13,7 @@ from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution impo
 )
 import numpy.testing as npt
 
+
 class AbstractHypercylindricalDistributionTest(unittest.TestCase):
     def test_mode_numerical_gaussian_2D(self):
         mu = array([5.0, 1.0])
