@@ -250,8 +250,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             def g_3d(phi1, phi2, phi3):
                 return (
                     f_hypersph_coords(array(phi1), array(phi2), array(phi3))
-                    * sin(phi1)**2
                     * sin(phi2)
+                    * sin(phi1)**2
                 )
 
             i, _ = nquad(
@@ -402,7 +402,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         n_coord_tuples = hypersph_coords.shape[0]
         cartesian_coords = empty((n_coord_tuples, 0))
         output_dim = hypersph_coords.shape[1] + 1  # Number of dimensions
-        sin_product = ones((n_coord_tuples))  # Initialize with the radius=1
+        sin_product = ones((n_coord_tuples,))  # Initialize with the radius=1
         for i in range(output_dim - 1):
             # For each dimension, compute the coordinate
             coord = sin_product * cos(hypersph_coords[:, i])

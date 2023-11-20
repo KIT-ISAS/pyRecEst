@@ -146,7 +146,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 facecolors=plt.cm.viridis(c_sphere),  # pylint: disable=no-member
                 shade=False,
             )
-            ax.set_box_aspect([1, 1, 1])
+            ax.set_box_aspect(1.0)
             plt.colorbar(plt.cm.ScalarMappable(cmap="viridis"), ax=ax)
             plt.show()
         else:
@@ -162,7 +162,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
 #        if dim == 1:
 #            return [0, 2 * pi]
         lower_bounds = zeros((dim,))
-        upper_bounds = concatenate((array([pi]), 2*pi*ones(dim-1)))
+        upper_bounds = concatenate((array([2*pi]), pi*ones(dim-1)))
 
         return vstack(
             (   lower_bounds, upper_bounds,)

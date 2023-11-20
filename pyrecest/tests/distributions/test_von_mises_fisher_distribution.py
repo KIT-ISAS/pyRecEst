@@ -21,6 +21,7 @@ vectors_to_test_2d = array(
     ]
 )
 
+
 class TestVonMisesFisherDistribution(unittest.TestCase):
     def setUp(self):
         self.mu = array([1.0, 2.0, 3.0])
@@ -30,6 +31,13 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.other = VonMisesFisherDistribution(
             array([0.0, 0.0, 1.0]), self.kappa / 3.0
         )
+
+    def test_integrate_2d(self):
+        self.assertAlmostEqual(self.vmf.integrate(), 1.0, delta=1e-6)
+
+    def test_integrate_3d(self):
+        mu_s3 = array([1.0, 2.0, 3.0, 4.0])/linalg.norm(array([1.0, 2.0, 3.0, 4.0]))
+        self.assertAlmostEqual(VonMisesFisherDistribution(mu_s3, self.kappa).integrate(), 1.0, delta=1e-6)
 
     def test_vmf_distribution_3d_sanity_check(self):
         self.assertIsInstance(self.vmf, VonMisesFisherDistribution)
