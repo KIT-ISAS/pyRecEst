@@ -12,6 +12,9 @@ from pyrecest.backend import (
     reshape,
     tril,
     where,
+    cumprod,
+    hstack,
+    ones,
     prod,
     atleast_1d,
     atleast_2d,
@@ -372,10 +375,9 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
         hypersph_coords = atleast_2d(hypersph_coords)
         if mode == "colatitude":
-            cart_coords_tuple = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
+            cart_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
                 1, *hypersph_coords.T
             )
-            cart_coords = column_stack(cart_coords_tuple)
         elif mode in ("elevation", "inclination"):
             from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
             assert hypersph_coords.shape[1] == 2, "Elevation mode only supports 2 dimensions"
@@ -414,7 +416,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         """
         n = len(angles) + 1  # Dimension of the sphere
         cartesian_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(1, *angles[::-1])  # Convert to Cartesian coordinates
-        probability_density = self.pdf(column_stack(cartesian_coords))
+        probability_density = self.pdf(atleast_2d(cartesian_coords))
 
         # Calculate the Jacobian determinant for the change of variables
         jacobian = prod([sin(angles[::-1][i]) ** (n - 2 - i) for i in range(n - 2)])
@@ -434,60 +436,23 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         Returns:
         - tuple: Cartesian coordinates (x1, x2, ..., xn).
         """
-        
-        
-        """
-        coordinates = []
-        for i in range(len(angles)):
-            coord = r * prod(sin_values[:i]) * cos_values[i]
-            coordinates.append(coord)
-        """
+        # Assuming ang_mat is defined and r is defined
+        ang_mat = column_stack(angles)
+        sin_mat = sin(ang_mat)
+        cos_mat = cos(ang_mat)
 
-        if len(angles) == 0:
-            return (r,)
-        
-        sin_values = [sin(angle) for angle in angles]
-        cos_values = [cos(angle) for angle in angles]
+        # Compute the cumulative product of sine values along the columns
+        cumprod_sin = cumprod(sin_mat, axis=1)
 
+        # To match the requirement of the original function, shift the cumprod array to the right
+        cumprod_sin_shifted = hstack([ones((cumprod_sin.shape[0], 1)), cumprod_sin[:, :-1]])
 
-        def compute_coord(i):
-            coord = r * prod(sin_values[:i]) * cos_values[i]
-            return coord
-        
-        compute_coords_vectorized = vmap(compute_coord)
-        coordinates = concatenate((compute_coords_vectorized(arange(len(angles))), atleast_1d(prod(sin_values))))
-        
-        coordinates_tuple = tuple(coordinates)
-        # Iterate over all elements and check if their shapes are the same as the first
-        for output_array in coordinates_tuple:
-            if output_array.ndim > 1 or output_array.ndim == 1 and output_array.shape != (angles[0].shape[0] + 1,):
-                raise AssertionError("Not all outputs have the correct shape")
+        # Multiply each cumprod value with the corresponding cosine value
+        sin_cos_terms = r * cumprod_sin_shifted * cos_mat
 
-        return tuple(coordinates)
-    """
-        if len(angles) == 0:
-            return atleast_2d(r).T
-
-        r = atleast_1d(r)
-        if r.ndim == 1:
-            r = reshape(r, (r.shape[0], 1))
-
-        # Create a matrix of sine values
-        sin_matrix = array([sin(angle) for angle in angles])
-        sin_matrix = tril(sin_matrix.T).T
-        sin_matrix = where(sin_matrix == 0, 1, sin_matrix)
-
-        # Compute the product over rows for sine values
-        sin_product = prod(sin_matrix, axis=0)
-
-        # Cosine values for Cartesian coordinates
-        cos_values = array([cos(angle) for angle in angles] + [ones_like(angles[0])])
-
-        # Compute Cartesian coordinates
-        coords = r * sin_product * cos_values
-
-        return coords.T
-        """
+        # Now, append the terms with all sine values (the last column of cumprod_sin)
+        all_sine_term = r * cumprod_sin[:, -1].reshape(-1, 1)  # Reshape for column-wise appending
+        return hstack([sin_cos_terms, all_sine_term])
 
     @staticmethod
     def compute_unit_hypersphere_surface(dim: Union[int, int32, int64]) -> float:
