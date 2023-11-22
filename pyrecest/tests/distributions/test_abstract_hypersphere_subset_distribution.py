@@ -1,5 +1,5 @@
 import unittest
-from math import pi
+
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -8,6 +8,7 @@ from math import gamma
 from pyrecest.distributions import VonMisesFisherDistribution, HypersphericalUniformDistribution, AbstractHypersphereSubsetDistribution
 from parameterized import parameterized
 from scipy.integrate import nquad
+from math import pi
 
 
 class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
@@ -84,10 +85,10 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     
     @staticmethod
     def _hyperspherical_to_cartesian_s2(r, theta, phi):
-        #x = r * sin(theta) * sin(phi)
+        """ x = r * sin(theta) * sin(phi)
         #y = r * sin(theta) * cos(phi)
         #z = r * cos(theta)
-        #return x, y, z
+        #return x, y, z """
         z = r * sin(theta) * sin(phi)
         y = r * sin(theta) * cos(phi)
         x = r * cos(theta)
@@ -95,11 +96,11 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
 
     @staticmethod
     def _hyperspherical_to_cartesian_s3(r, chi, theta, phi):
-        #x = r * sin(chi) * sin(theta) * sin(phi)
+        """ #x = r * sin(chi) * sin(theta) * sin(phi)
         #y = r * sin(chi) * sin(theta) * cos(phi)
         #z = r * sin(chi) * cos(theta)
         #w = r * cos(chi)
-        #return x, y, z, w
+        #return x, y, z, w """
         w = r * sin(chi) * sin(theta) * sin(phi)
         z = r * sin(chi) * sin(theta) * cos(phi)
         y = r * sin(chi) * cos(theta)
@@ -201,7 +202,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         for _ in range(10):
             angles = 2.0 * pi * random.uniform(size=dimensions)    
             cartesian_specific = squeeze(column_stack(specific_function(1, *angles)))
-            cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
+            cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles, mode='colatitude')
             npt.assert_allclose(cartesian_specific, cartesian_given)
         
     @parameterized.expand([
@@ -210,7 +211,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     ])
     def test_hyperspherical_to_cartesian_specific_batch(self, dimensions, specific_function):
         angles = 2.0 * pi * random.uniform(size=(10, dimensions))
-        cartesian_specific = column_stack(specific_function(1, *angles))
+        cartesian_specific = column_stack(specific_function(1, *angles.T))
         cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
         npt.assert_allclose(cartesian_specific, cartesian_given)
         
@@ -238,14 +239,22 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         pdf_hyperspherical = vmf.gen_pdf_hyperspherical_coords()
 
         def fangles_2d(phi1, phi2):
-            return vmf.pdf(TestAbstractHypersphereSubsetDistribution.hyperspherical_to_cartesian_2_sphere(array([phi1, phi2]).T))
+            r = 1
+            return vmf.pdf(
+                array(
+                    [
+                        r * sin(phi1) * sin(phi2),
+                        r * cos(phi1) * sin(phi2),
+                        r * cos(phi2),
+                    ]
+                ).T
+            )
 
         phi1_test = array([1.0, 2.0, 0.0, 0.3, 1.1])
         phi2_test = array([2.0, 3.0, 0.1, 3.0, 1.1])
 
         npt.assert_array_almost_equal(
-            pdf_hyperspherical(array([phi1_test, phi2_test]).T),
-            fangles_2d(phi1_test, phi2_test)
+            pdf_hyperspherical(phi1_test, phi2_test), fangles_2d(phi1_test, phi2_test)
         )
 
     def test_pdf_hyperspherical_coords_3d(self):
@@ -256,15 +265,25 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         pdf_hyperspherical = vmf.gen_pdf_hyperspherical_coords()
 
         def fangles_3d(phi1, phi2, phi3):
-            return vmf.pdf(TestAbstractHypersphereSubsetDistribution.hyperspherical_to_cartesian_3_sphere(array([phi1, phi2, phi3]).T))
+            r = 1
+            return vmf.pdf(
+                array(
+                    [
+                        r * sin(phi1) * sin(phi2) * sin(phi3),
+                        r * cos(phi1) * sin(phi2) * sin(phi3),
+                        r * cos(phi2) * sin(phi3),
+                        r * cos(phi3),
+                    ]
+                ).T
+            )
 
         phi1_test = array([1.0, 2.0, 0.0, 0.3, 1.1])
         phi2_test = array([2.0, 3.0, 0.1, 3.0, 1.1])
         phi3_test = phi2_test + 0.2
 
         npt.assert_array_almost_equal(
-            pdf_hyperspherical(stack((phi1_test, phi2_test, phi3_test), axis=1)),
-            fangles_3d(phi1_test, phi2_test, phi3_test)
+            pdf_hyperspherical(phi1_test, phi2_test, phi3_test),
+            fangles_3d(phi1_test, phi2_test, phi3_test),
         )
 
 

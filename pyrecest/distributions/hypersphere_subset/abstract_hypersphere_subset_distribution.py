@@ -6,18 +6,19 @@ from typing import Union
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    arccos,
-    arctan2,
     array,
+    ones_like,
     arange,
+    reshape,
+    tril,
+    where,
     prod,
     atleast_1d,
     atleast_2d,
-    concatenate,
     column_stack,
+    concatenate,
     cos,
     empty,
-    ones,
     float64,
     full,
     int32,
@@ -27,14 +28,12 @@ from pyrecest.backend import (
     sin,
     sort,
     sqrt,
-    stack,
     squeeze,
     zeros,
     vmap,
 )
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
-import pyrecest.backend
 
 from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 
@@ -67,7 +66,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                     return x[i] * self.pdf(x)
 
                 # pylint: disable=cell-var-from-loop
-                fangles = self.gen_fun_hyperspherical_coords(f)
+                fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
 
                 # Casts the floats to arrays, relevant for operations on torch.tensors
                 # that are not backward compatible
@@ -114,24 +113,28 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         :return: A function that computes the PDF value at given angles.
         """
         return AbstractHypersphereSubsetDistribution.gen_fun_hyperspherical_coords(
-            self.pdf
+            self.pdf, self.dim
         )
 
     @staticmethod
-    def gen_fun_hyperspherical_coords(f: Callable):
-        """
-        Must be a function that takes the angles as input and returns the value of the function at the angles.
-        The function takes (n, dim) and (dim,) inputs then. No 1-D inputs are supported.
-        """
+    def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, int32, int64]):
         def generate_input(angles):
+            dim_eucl = dim + 1
             angles = column_stack(angles)
-            input_array = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
-                angles, mode="colatitude"
-            )
-            return input_array
+            input_arr = zeros((angles.shape[0], dim_eucl))
+            # Start at last, which is just cos
+            input_arr[:, -1] = cos(angles[:, -1])
+            sin_product = sin(angles[:, -1])
+            # Now, iterate over all from end to back and accumulate the sines
+            for i in range(2, dim_eucl):
+                # All except the final one have a cos factor as their last one
+                input_arr[:, -i] = sin_product * cos(angles[:, -i])
+                sin_product *= sin(angles[:, -i])
+            # The last one is all sines
+            input_arr[:, 0] = sin_product
+            return squeeze(input_arr)
 
         def fangles(*angles):
-            assert len(angles) >= 1
             input_arr = generate_input(angles)
             return f(input_arr)
 
@@ -184,7 +187,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         for i in range(self.dim + 1):
             for j in range(self.dim + 1):
                 f_curr = f_gen(i, j)
-                fangles = self.__class__.gen_fun_hyperspherical_coords(f_curr)
+                fangles = self.__class__.gen_fun_hyperspherical_coords(f_curr, self.dim)
                 g_curr = g_gen(fangles, self.dim)
                 m[i, j] = self.__class__.integrate_fun_over_domain(g_curr, self.dim)
 
@@ -242,7 +245,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         elif dim == 2:
 
             def g_2d(phi1, phi2):
-                return f_hypersph_coords(array(phi1), array(phi2)) * sin(phi1)
+                return f_hypersph_coords(array(phi1), array(phi2)) * sin(phi2)
 
             i, _ = nquad(
                 g_2d,
@@ -255,7 +258,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 return (
                     f_hypersph_coords(array(phi1), array(phi2), array(phi3))
                     * sin(phi2)
-                    * sin(phi1)**2
+                    * (sin(phi3)) ** 2
                 )
 
             i, _ = nquad(
@@ -295,12 +298,12 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         f_entropy = entropy_f_gen()
         fangles_entropy = (
             AbstractHypersphereSubsetDistribution.gen_fun_hyperspherical_coords(
-                f_entropy
+                f_entropy, self.dim
             )
         )
 
         entropy_integral = self.__class__.integrate_fun_over_domain(
-            fangles_entropy
+            fangles_entropy, self.dim
         )
 
         return -entropy_integral
@@ -326,7 +329,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         f_hellinger = self._distance_f_gen(other, hellinger_distance)
         fangles_hellinger = (
             AbstractHypersphereSubsetDistribution.gen_fun_hyperspherical_coords(
-                f_hellinger
+                f_hellinger, self.dim
             )
         )
 
@@ -351,7 +354,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         f_total_variation = self._distance_f_gen(other, total_variation_distance)
         fangles_total_variation = (
             AbstractHypersphereSubsetDistribution.gen_fun_hyperspherical_coords(
-                f_total_variation
+                f_total_variation, self.dim
             )
         )
 
@@ -365,19 +368,126 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def polar_to_cart(polar_coords):
         polar_coords = atleast_2d(polar_coords)
 
-        coords = zeros(
-            (
-                polar_coords.shape[0],
-                polar_coords.shape[1] + 1,
+    @staticmethod
+    def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
+        hypersph_coords = atleast_2d(hypersph_coords)
+        if mode == "colatitude":
+            cart_coords_tuple = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
+                1, *hypersph_coords.T
             )
-        )
-        coords[:, 0] = sin(polar_coords[:, 0]) * cos(polar_coords[:, 1])
-        coords[:, 1] = sin(polar_coords[:, 0]) * sin(polar_coords[:, 1])
-        coords[:, 2] = cos(polar_coords[:, 0])
-        for i in range(2, polar_coords.shape[1]):
-            coords[:, :-i] *= sin(polar_coords[:, i])  # noqa: E203
-            coords[:, -i] = cos(polar_coords[:, i])
-        return squeeze(coords)
+            cart_coords = column_stack(cart_coords_tuple)
+        elif mode in ("elevation", "inclination"):
+            from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
+            assert hypersph_coords.shape[1] == 2, "Elevation mode only supports 2 dimensions"
+            x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode)
+            cart_coords = column_stack((x, y, z))
+        else:
+            raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
+        
+        return cart_coords.squeeze()
+    
+    """
+    @staticmethod
+    def _hypersph_to_cart_colatitude(hypersph_coords):
+        n_coord_tuples = hypersph_coords.shape[0]
+        cartesian_coords = empty((n_coord_tuples, 0))
+        output_dim = hypersph_coords.shape[1] + 1  # Number of dimensions
+        sin_product = ones((n_coord_tuples,))  # Initialize with the radius=1
+        for i in range(output_dim - 1):
+            # For each dimension, compute the coordinate
+            coord = sin_product * cos(hypersph_coords[:, i])
+            cartesian_coords = column_stack((coord, cartesian_coords))
+            # Update sin_product for next iteration
+            sin_product *= sin(hypersph_coords[:, i])
+        # First coordinate has no cosine term
+        cartesian_coords = column_stack((sin_product, cartesian_coords))
+        assert cartesian_coords.shape == (
+            n_coord_tuples,
+            output_dim,
+        ), "Cartesian coordinates have wrong shape"
+        return cartesian_coords
+    """
+    
+    def _integrand_sn(self, *angles):
+        """
+        Generalized integrand function for n-spheres.
+        """
+        n = len(angles) + 1  # Dimension of the sphere
+        cartesian_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(1, *angles[::-1])  # Convert to Cartesian coordinates
+        probability_density = self.pdf(column_stack(cartesian_coords))
+
+        # Calculate the Jacobian determinant for the change of variables
+        jacobian = prod([sin(angles[::-1][i]) ** (n - 2 - i) for i in range(n - 2)])
+
+        return probability_density * jacobian
+    
+    @staticmethod
+    def _hypersph_to_cart_colatitude(r, *angles):
+        """
+        Convert hyperspherical coordinates to Cartesian coordinates in n-dimensions. See
+        https://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates for the conventions used.
+
+        Parameters:
+        - r (float): The radial distance.
+        - angles (float): The n-1 angles, where the last angle ranges from 0 to 2pi and others from 0 to pi.
+
+        Returns:
+        - tuple: Cartesian coordinates (x1, x2, ..., xn).
+        """
+        
+        
+        """
+        coordinates = []
+        for i in range(len(angles)):
+            coord = r * prod(sin_values[:i]) * cos_values[i]
+            coordinates.append(coord)
+        """
+
+        if len(angles) == 0:
+            return (r,)
+        
+        sin_values = [sin(angle) for angle in angles]
+        cos_values = [cos(angle) for angle in angles]
+
+
+        def compute_coord(i):
+            coord = r * prod(sin_values[:i]) * cos_values[i]
+            return coord
+        
+        compute_coords_vectorized = vmap(compute_coord)
+        coordinates = concatenate((compute_coords_vectorized(arange(len(angles))), atleast_1d(prod(sin_values))))
+        
+        coordinates_tuple = tuple(coordinates)
+        # Iterate over all elements and check if their shapes are the same as the first
+        for output_array in coordinates_tuple:
+            if output_array.ndim > 1 or output_array.ndim == 1 and output_array.shape != (angles[0].shape[0] + 1,):
+                raise AssertionError("Not all outputs have the correct shape")
+
+        return tuple(coordinates)
+    """
+        if len(angles) == 0:
+            return atleast_2d(r).T
+
+        r = atleast_1d(r)
+        if r.ndim == 1:
+            r = reshape(r, (r.shape[0], 1))
+
+        # Create a matrix of sine values
+        sin_matrix = array([sin(angle) for angle in angles])
+        sin_matrix = tril(sin_matrix.T).T
+        sin_matrix = where(sin_matrix == 0, 1, sin_matrix)
+
+        # Compute the product over rows for sine values
+        sin_product = prod(sin_matrix, axis=0)
+
+        # Cosine values for Cartesian coordinates
+        cos_values = array([cos(angle) for angle in angles] + [ones_like(angles[0])])
+
+        # Compute Cartesian coordinates
+        coords = r * sin_product * cos_values
+
+        return coords.T
+        """
 
     @staticmethod
     def compute_unit_hypersphere_surface(dim: Union[int, int32, int64]) -> float:
