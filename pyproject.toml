@@ -27,3 +27,8 @@ torch = "*"
 autopep8 = "^2.0.2"
 pytest = "*"
 parameterized = "*"
+
+[[tool.poetry.source]]
+name = "nvidia"
+url = "https://pypi.ngc.nvidia.com"
+secondary = true
