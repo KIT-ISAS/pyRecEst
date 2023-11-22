@@ -9,6 +9,9 @@ from pyrecest.backend import (
     arccos,
     arctan2,
     array,
+    arange,
+    prod,
+    atleast_1d,
     atleast_2d,
     concatenate,
     column_stack,
@@ -27,6 +30,7 @@ from pyrecest.backend import (
     stack,
     squeeze,
     zeros,
+    vmap,
 )
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
@@ -358,64 +362,22 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return 0.5 * distance_integral
 
     @staticmethod
-    def cart_to_hypersph_coords(x, mode='colatitude'):
-        assert mode == 'colatitude', "Only colatitude mode is supported"
-    
-        # Initialize an array to hold the angles
-        angles = []
-        
-        # Compute the angles for n-1 dimensions
-        for idx in range(len(x) - 1, 0, -1):
-            # For the last coordinate (x, y), use atan2 to find the azimuth
-            if idx == 1:
-                angle = arctan2(x[1], x[0])
-            else:
-                # For other coordinates, use arccos, but avoid division by zero
-                angle = arccos(x[idx] / linalg.norm(x[:idx+1])) if linalg.norm(x[:idx]) != 0 else 0
-            angles.append(angle)
-        
-        # We reverse the list of angles to have them in the correct order
-        angles = angles[::-1]
-        
-        # Return the radial distance and the angles as a tuple
-        return array(angles)
+    def polar_to_cart(polar_coords):
+        polar_coords = atleast_2d(polar_coords)
 
-    @staticmethod
-    def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
-        hypersph_coords = atleast_2d(hypersph_coords)
-        if mode == "colatitude":
-            cart_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
-                hypersph_coords
+        coords = zeros(
+            (
+                polar_coords.shape[0],
+                polar_coords.shape[1] + 1,
             )
-        elif mode in ("elevation", "inclination"):
-            from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
-            assert hypersph_coords.shape[1] == 2, "Elevation mode only supports 2 dimensions"
-            x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode)
-            cart_coords = column_stack((x, y, z))
-        else:
-            raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
-        
-        return cart_coords.squeeze()
-    
-    @staticmethod
-    def _hypersph_to_cart_colatitude(hypersph_coords):
-        n_coord_tuples = hypersph_coords.shape[0]
-        cartesian_coords = empty((n_coord_tuples, 0))
-        output_dim = hypersph_coords.shape[1] + 1  # Number of dimensions
-        sin_product = ones((n_coord_tuples,))  # Initialize with the radius=1
-        for i in range(output_dim - 1):
-            # For each dimension, compute the coordinate
-            coord = sin_product * cos(hypersph_coords[:, i])
-            cartesian_coords = column_stack((coord, cartesian_coords))
-            # Update sin_product for next iteration
-            sin_product *= sin(hypersph_coords[:, i])
-        # First coordinate has no cosine term
-        cartesian_coords = column_stack((sin_product, cartesian_coords))
-        assert cartesian_coords.shape == (
-            n_coord_tuples,
-            output_dim,
-        ), "Cartesian coordinates have wrong shape"
-        return cartesian_coords
+        )
+        coords[:, 0] = sin(polar_coords[:, 0]) * cos(polar_coords[:, 1])
+        coords[:, 1] = sin(polar_coords[:, 0]) * sin(polar_coords[:, 1])
+        coords[:, 2] = cos(polar_coords[:, 0])
+        for i in range(2, polar_coords.shape[1]):
+            coords[:, :-i] *= sin(polar_coords[:, i])  # noqa: E203
+            coords[:, -i] = cos(polar_coords[:, i])
+        return squeeze(coords)
 
     @staticmethod
     def compute_unit_hypersphere_surface(dim: Union[int, int32, int64]) -> float:

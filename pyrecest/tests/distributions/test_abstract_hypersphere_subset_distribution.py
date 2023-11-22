@@ -3,15 +3,16 @@ from math import pi
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, linalg, sin, random, max, abs, concatenate, column_stack, stack, atleast_2d
-from pyrecest.distributions import VonMisesFisherDistribution
+from pyrecest.backend import array, cos, linalg, sin, random, column_stack, stack, atleast_2d, sqrt, isclose, prod, squeeze
+from math import gamma
+from pyrecest.distributions import VonMisesFisherDistribution, HypersphericalUniformDistribution, AbstractHypersphereSubsetDistribution
 from parameterized import parameterized
-from pyrecest.distributions import AbstractHypersphereSubsetDistribution
+from scipy.integrate import nquad
 
 
 class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     @staticmethod
-    def hyperspherical_to_cartesian_2_sphere(angles):
+    def _hyperspherical_to_cartesian_2_sphere(angles):
         """
         Converts hyperspherical angles to Cartesian coordinates for a 2-sphere (embedded in R^3).
         """
@@ -23,7 +24,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         return column_stack([x, y, z])
 
     @staticmethod
-    def hyperspherical_to_cartesian_3_sphere(angles):
+    def _hyperspherical_to_cartesian_3_sphere(angles):
         """
         Converts hyperspherical angles to Cartesian coordinates for a 3-sphere (embedded in R^4).
         """
@@ -34,9 +35,9 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         y = sin(theta1) * cos(theta2)
         z = cos(theta1)
         return column_stack([w, x, y, z])
-
+    
     @staticmethod
-    def hyperspherical_to_cartesian_4_sphere(angles):
+    def _hyperspherical_to_cartesian_4_sphere(angles):
         """
         Converts hyperspherical angles to Cartesian coordinates for a 4-sphere (embedded in R^5).
         """
@@ -48,24 +49,168 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         y = sin(theta1) * cos(theta2)
         z = cos(theta1)
         return column_stack([v, w, x, y, z])
+    
+    @staticmethod
+    def hyperspherical_to_cartesian(r, *angles):
+        """
+        Convert hyperspherical coordinates to Cartesian coordinates in n-dimensions.
+        """
+        sin_values = [sin(angle) for angle in angles]
+        cos_values = [cos(angle) for angle in angles]
 
+        coordinates = []
+        for i in range(len(angles)):
+            coord = r * prod(sin_values[:i]) * cos_values[i]
+            coordinates.append(coord)
+
+        last_coord = r * prod(sin_values)
+        coordinates.append(last_coord)
+
+        return tuple(coordinates)
+
+    @staticmethod
+    def uniform_on_sn(*coordinates):
+        """
+        Calculate the probability density for a point to be on the surface of an n-dimensional sphere (S^(n-1)).
+        """
+        n = len(coordinates)
+        norm = sqrt(sum(coord ** 2 for coord in coordinates))
+
+        if isclose(norm, 1):
+            surface_area = 2 * pi ** (n / 2) / gamma(n / 2)
+            return 1 / surface_area
+        else:
+            return 0
+    
+    @staticmethod
+    def _hyperspherical_to_cartesian_s2(r, theta, phi):
+        #x = r * sin(theta) * sin(phi)
+        #y = r * sin(theta) * cos(phi)
+        #z = r * cos(theta)
+        #return x, y, z
+        z = r * sin(theta) * sin(phi)
+        y = r * sin(theta) * cos(phi)
+        x = r * cos(theta)
+        return x, y, z
+
+    @staticmethod
+    def _hyperspherical_to_cartesian_s3(r, chi, theta, phi):
+        #x = r * sin(chi) * sin(theta) * sin(phi)
+        #y = r * sin(chi) * sin(theta) * cos(phi)
+        #z = r * sin(chi) * cos(theta)
+        #w = r * cos(chi)
+        #return x, y, z, w
+        w = r * sin(chi) * sin(theta) * sin(phi)
+        z = r * sin(chi) * sin(theta) * cos(phi)
+        y = r * sin(chi) * cos(theta)
+        x = r * cos(chi)
+        return x, y, z, w
+    
+    @staticmethod
+    def _uniform_on_s2(x, y, z):
+        norm = sqrt(x**2 + y**2 + z**2)
+        return 1 / (4 * pi) if isclose(norm, 1) else 0
+    
+    @staticmethod
+    def _uniform_on_s3(x, y, z, w):
+        norm = sqrt(x**2 + y**2 + z**2 + w**2)
+        return 1 / (2 * pi**2) if isclose(norm, 1) else 0
+    
+    @staticmethod
+    def _uniform_on_sn(*coordinates):
+        """
+        Calculate the probability density for a point to be on the surface of an n-dimensional sphere (S^(n-1)).
+
+        Parameters:
+        - coordinates (float): Cartesian coordinates of the point (x1, x2, ..., xn).
+
+        Returns:
+        - float: Probability density if the point is on the surface of the unit n-sphere, otherwise 0.
+        """
+        n = len(coordinates)  # Dimension of the sphere
+        norm = sqrt(sum(coord ** 2 for coord in coordinates))
+
+        # Check if the point is on the surface of the unit n-sphere
+        if isclose(norm, 1):
+            # Calculate the surface area of the unit n-sphere
+            surface_area = 2 * pi ** (n / 2) / gamma(n / 2)
+            # Return the reciprocal of the surface area
+            return 1 / surface_area
+        else:
+            return 0
+    
+    # Adjusted integrand function for spherical coordinates
+    @staticmethod
+    def _integrand_s2(phi, theta):
+        x, y, z = TestAbstractHypersphereSubsetDistribution._hyperspherical_to_cartesian_s2(1, theta, phi)  # radius = 1 for the unit sphere
+        return TestAbstractHypersphereSubsetDistribution._uniform_on_s2(x, y, z) * sin(theta)  # Jacobian factor for spherical coordinates
+
+    # Adjusted integrand function for hyperspherical coordinates
+    @staticmethod
+    def _integrand_s3(phi, theta, chi):
+        x, y, z, w = TestAbstractHypersphereSubsetDistribution._hyperspherical_to_cartesian_s3(1, chi, theta, phi)  # radius = 1 for the unit 3-sphere
+        return TestAbstractHypersphereSubsetDistribution._uniform_on_s3(x, y, z, w) * sin(chi)**2 * sin(theta)  # Jacobian factor for hyperspherical coordinates
+    
+    @parameterized.expand([
+        # 2D case
+        (2, (pi/6, pi/4), _integrand_s2),
+        # 3D case
+        (3, (pi/6, pi/4, pi/3), _integrand_s3),
+    ])
+    def test_integrand_sn(self, dimension, angles, integrand_function):
+        # Calculating values for given dimension
+        value_s = integrand_function(*angles)
+        uniform_s = HypersphericalUniformDistribution(dimension)
+        value_sn = uniform_s._integrand_sn(*angles)
+
+        # Testing with assert_almost_equal
+        npt.assert_allclose(value_s, value_sn, atol=1e-6)
+
+    @parameterized.expand([
+        # 2D case
+        (_integrand_s2, [[0, 2 * pi], [0, pi]]),
+        # 3D case
+        (_integrand_s3, [[0, 2 * pi], [0, pi], [0, pi]]),
+    ])
+    def test_integrate(self, integrand_method, bounds):
+        """ Test the locally defined integrands (testing the test class, not the actual distribution)"""
+        # Perform the integration
+        integral_result, _ = nquad(integrand_method, bounds)
+        npt.assert_allclose(integral_result, 1, atol=0.001)
+        
+    @parameterized.expand([
+        # 2D case
+        (2, [[0, 2 * pi], [0, pi]]),
+        # 3D case
+        (3, [[0, 2 * pi], [0, pi], [0, pi]]),
+    ])
+    def test_integrate_general_formula(self, dim, bounds):
+        """ Now test the integration with the actual distribution """
+        uniform_dist = HypersphericalUniformDistribution(dim)
+        # Perform the integration
+        integral_result, _ = nquad(uniform_dist._integrand_sn, bounds)
+        npt.assert_allclose(integral_result, 1, atol=0.001)
+        
     # Now we test these explicit implementations against the provided generic function
     @parameterized.expand([
-        (2, hyperspherical_to_cartesian_2_sphere),
-        (3, hyperspherical_to_cartesian_3_sphere),
-        (4, hyperspherical_to_cartesian_4_sphere),
+        (2, _hyperspherical_to_cartesian_s2),
+        (3, _hyperspherical_to_cartesian_s3),
     ])
     def test_hyperspherical_to_cartesian_specific(self, dimensions, specific_function):
         # Test for single elements
         for _ in range(10):
             angles = 2.0 * pi * random.uniform(size=dimensions)    
-            cartesian_specific = specific_function(atleast_2d(angles)).squeeze()
+            cartesian_specific = squeeze(column_stack(specific_function(1, *angles)))
             cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
             npt.assert_allclose(cartesian_specific, cartesian_given)
         
-        # Test batch
+    @parameterized.expand([
+        (2, _hyperspherical_to_cartesian_s2),
+        (3, _hyperspherical_to_cartesian_s3),
+    ])
+    def test_hyperspherical_to_cartesian_specific_batch(self, dimensions, specific_function):
         angles = 2.0 * pi * random.uniform(size=(10, dimensions))
-        cartesian_specific = specific_function(atleast_2d(angles)).squeeze()
+        cartesian_specific = column_stack(specific_function(1, *angles))
         cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
         npt.assert_allclose(cartesian_specific, cartesian_given)
         
