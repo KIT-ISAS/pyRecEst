@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, linalg, sin, random, column_stack, stack, atleast_2d, sqrt, isclose, prod, squeeze
+from pyrecest.backend import array, cos, linalg, sin, random, column_stack, stack, atleast_2d, sqrt, isclose, prod, squeeze, ones
 from math import gamma
 from pyrecest.distributions import VonMisesFisherDistribution, HypersphericalUniformDistribution, AbstractHypersphereSubsetDistribution
 from parameterized import parameterized
@@ -178,18 +178,21 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         # Perform the integration
         integral_result, _ = nquad(integrand_method, bounds)
         npt.assert_allclose(integral_result, 1, atol=0.001)
-        
+    
     @parameterized.expand([
-        # 2D case
-        (2, [[0, 2 * pi], [0, pi]]),
-        # 3D case
-        (3, [[0, 2 * pi], [0, pi], [0, pi]]),
+        # 2D case for HypersphericalUniformDistribution
+        (HypersphericalUniformDistribution(2), [[0, 2 * pi], [0, pi]]),
+        # 3D case for HypersphericalUniformDistribution
+        (HypersphericalUniformDistribution(3), [[0, 2 * pi], [0, pi], [0, pi]]),
+        # 2D case for VonMisesFisherDistribution
+        (VonMisesFisherDistribution(ones(3)/sqrt(3), 1.0), [[0, 2 * pi], [0, pi]]),
+        # 3D case for VonMisesFisherDistribution
+        (VonMisesFisherDistribution(ones(4)/sqrt(4), 1.0), [[0, 2 * pi], [0, pi], [0, pi]]),
     ])
-    def test_integrate_general_formula(self, dim, bounds):
-        """ Now test the integration with the actual distribution """
-        uniform_dist = HypersphericalUniformDistribution(dim)
+    def test_integrate_general_formula(self, dist, bounds):
+        """ Test the integration with the actual distribution """
         # Perform the integration
-        integral_result, _ = nquad(uniform_dist._get_integrand_hypersph_fun(uniform_dist.pdf), bounds)
+        integral_result, _ = nquad(dist._get_integrand_hypersph_fun(dist.pdf), bounds)
         npt.assert_allclose(integral_result, 1, atol=0.001)
         
     # Now we test these explicit implementations against the provided generic function

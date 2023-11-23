@@ -63,17 +63,17 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             tuple: Spherical coordinates.
         """
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z), "Inputs must be 1-dimensional"
-        if mode == "inclineation":
+        if mode == 'colatitude':
+            phi, theta = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+                column_stack((x, y, z)), mode=mode
+            )
+        elif mode == "inclineation":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_inclination(
                 x, y, z
             )
         elif mode == "elevation":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_elevation(
                 x, y, z
-            )
-        elif mode == "colatitude":
-            phi, theta = AbstractHypersphereSubsetDistribution.cart_to_hypersph_coords(
-                column_stack((x, y, z)), mode=mode
             )
         else:
             raise ValueError("Mode must be either 'inclination', 'colatitude', or 'elevation'")

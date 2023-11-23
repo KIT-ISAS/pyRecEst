@@ -348,7 +348,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             )
         elif mode in ("elevation", "inclination"):
             from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
-            assert hypersph_coords.shape[1] == 2, "Elevation mode only supports 2 dimensions"
+            assert hypersph_coords.shape[1] == 2, "Mode only supports 2 dimensions"
             x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode)
             cart_coords = column_stack((x, y, z))
         else:
