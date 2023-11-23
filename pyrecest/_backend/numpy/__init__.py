@@ -183,10 +183,24 @@ empty = _dyn_update_dtype(target=_np.empty, dtype_pos=1)
 
 
 def vmap(pyfunc):
-    def vmapped_fun(x):
-        output = _np.empty(x.shape)
-        for i in range(x.shape[0]):
-            output[i, ...] = pyfunc(x[i, ...])
+    def vmapped_fun(*args):
+        # Check if all arguments have the same first dimension
+        if not all(arg.shape[0] == args[0].shape[0] for arg in args):
+            raise ValueError("All arguments must have the same size in the first dimension")
+
+        # Prepare the output array (assuming the output of pyfunc is a scalar or numpy array)
+        first_output = pyfunc(*(arg[0, ...] for arg in args))
+        if _np.isscalar(first_output):
+            output_shape = (args[0].shape[0],)
+        else:
+            output_shape = (args[0].shape[0],) + first_output.shape
+
+        output = _np.empty(output_shape)
+
+        # Apply the function to each slice
+        for i in range(args[0].shape[0]):
+            output[i, ...] = pyfunc(*(arg[i, ...] for arg in args))
+
         return output
-            
+
     return vmapped_fun

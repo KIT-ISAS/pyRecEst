@@ -38,7 +38,7 @@ class CustomHypersphericalDistributionTest(unittest.TestCase):
         """Test that the distribution integrates to 1."""
         self.assertAlmostEqual(
             self.custom_hyperspherical_distribution.integrate_numerically(),
-            1,
+            1.0,
             delta=1e-4,
             msg="Integration value mismatch.",
         )

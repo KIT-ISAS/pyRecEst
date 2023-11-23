@@ -55,10 +55,10 @@ class AbstractParticleFilter(AbstractFilterType):
         noise_samples = random.choice(samples, n_particles, p=weights)
 
         batched_apply_f = vmap(
-            lambda i: f(self.filter_state.d[i], noise_samples[i])
+            lambda d_elem, noise_sample: f(d_elem, noise_sample)
         )
 
-        d = batched_apply_f(arange(n_particles))
+        d = batched_apply_f(self.filter_state.d, noise_samples)
         
         self._filter_state.d = d
 
