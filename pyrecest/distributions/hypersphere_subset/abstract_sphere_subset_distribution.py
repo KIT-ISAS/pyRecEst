@@ -37,9 +37,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
                 angles1, angles2
             )
         elif mode == "elevation":
-            coords = AbstractSphereSubsetDistribution._sph_to_cart_elevation(angles1, angles2)
-            coords = atleast_2d(coords)
-            x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
+            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(angles1, angles2)
         elif mode == "colatitude":
             coords = AbstractSphereSubsetDistribution.hypersph_to_cart(column_stack((angles1, angles2)))
             coords = atleast_2d(coords)
@@ -64,9 +62,10 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         """
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z), "Inputs must be 1-dimensional"
         if mode == 'colatitude':
-            phi, theta = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+            angles = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
                 column_stack((x, y, z)), mode=mode
             )
+            phi, theta = angles[:, 0], angles[:, 1]
         elif mode == "inclineation":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_inclination(
                 x, y, z

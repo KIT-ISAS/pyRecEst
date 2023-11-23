@@ -92,6 +92,7 @@ class AbstractManifoldSpecificDistribution(ABC):
 
         while i < total_samples:
             x_new = proposal(x)
+            assert x_new.shape == x.shape, "Proposal must return a vector of same shape as input"
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
             if a.item() > 1 or a.item() > random.rand(1):
