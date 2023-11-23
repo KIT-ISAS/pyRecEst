@@ -238,40 +238,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         dim: Union[int, int32, int64],
         integration_boundaries,
     ):
-        if dim == 1:
-            i, _ = quad(
-                lambda phi: f_hypersph_coords(array(phi)),
-                integration_boundaries[0],
-                integration_boundaries[1],
-                epsabs=0.01,
-            )
-        elif dim == 2:
-
-            def g_2d(phi1, phi2):
-                return f_hypersph_coords(array(phi1), array(phi2)) * sin(phi2)
-
-            i, _ = nquad(
-                g_2d,
-                integration_boundaries,
-                opts={"epsabs": 1e-3, "epsrel": 1e-3},
-            )
-        elif dim == 3:
-
-            def g_3d(phi1, phi2, phi3):
-                return (
-                    f_hypersph_coords(array(phi1), array(phi2), array(phi3))
-                    * sin(phi2)
-                    * (sin(phi3)) ** 2
-                )
-
-            i, _ = nquad(
-                g_3d,
-                integration_boundaries,
-                opts={"epsabs": 1e-3, "epsrel": 1e-3},
-            )
-        else:
-            raise ValueError("Dimension not supported.")
-
+        i, _ = nquad(AbstractHypersphereSubsetDistribution._get_integrand_hypersph_fun(f_hypersph_coords), integration_boundaries)
+        
         return i
 
     def integrate_numerically(self, integration_boundaries=None):
@@ -388,40 +356,21 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         
         return cart_coords.squeeze()
     
-    """
     @staticmethod
-    def _hypersph_to_cart_colatitude(hypersph_coords):
-        n_coord_tuples = hypersph_coords.shape[0]
-        cartesian_coords = empty((n_coord_tuples, 0))
-        output_dim = hypersph_coords.shape[1] + 1  # Number of dimensions
-        sin_product = ones((n_coord_tuples,))  # Initialize with the radius=1
-        for i in range(output_dim - 1):
-            # For each dimension, compute the coordinate
-            coord = sin_product * cos(hypersph_coords[:, i])
-            cartesian_coords = column_stack((coord, cartesian_coords))
-            # Update sin_product for next iteration
-            sin_product *= sin(hypersph_coords[:, i])
-        # First coordinate has no cosine term
-        cartesian_coords = column_stack((sin_product, cartesian_coords))
-        assert cartesian_coords.shape == (
-            n_coord_tuples,
-            output_dim,
-        ), "Cartesian coordinates have wrong shape"
-        return cartesian_coords
-    """
-    
-    def _integrand_sn(self, *angles):
+    def _get_integrand_hypersph_fun(fun: Callable):
         """
         Generalized integrand function for n-spheres.
         """
-        n = len(angles) + 1  # Dimension of the sphere
-        cartesian_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(1, *angles[::-1])  # Convert to Cartesian coordinates
-        probability_density = self.pdf(atleast_2d(cartesian_coords))
+        def integrand(*angle_args):
+            n = len(angle_args) + 1  # Dimension of the sphere
+            cartesian_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(1, *angle_args[::-1])  # Convert to Cartesian coordinates
+            probability_density = fun(atleast_2d(cartesian_coords))
 
-        # Calculate the Jacobian determinant for the change of variables
-        jacobian = prod([sin(angles[::-1][i]) ** (n - 2 - i) for i in range(n - 2)])
+            # Calculate the Jacobian determinant for the change of variables
+            jacobian = prod([sin(angle_args[::-1][i]) ** (n - 2 - i) for i in range(n - 2)])
 
-        return probability_density * jacobian
+            return probability_density * jacobian
+        return integrand
     
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):

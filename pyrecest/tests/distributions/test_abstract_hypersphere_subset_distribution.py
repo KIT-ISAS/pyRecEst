@@ -162,7 +162,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         # Calculating values for given dimension
         value_s = integrand_function(*angles)
         uniform_s = HypersphericalUniformDistribution(dimension)
-        value_sn = uniform_s._integrand_sn(*angles)
+        value_sn = uniform_s._get_integrand_hypersph_fun(uniform_s.pdf)(*angles)
 
         # Testing with assert_almost_equal
         npt.assert_allclose(value_s, value_sn, atol=1e-6)
@@ -189,7 +189,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         """ Now test the integration with the actual distribution """
         uniform_dist = HypersphericalUniformDistribution(dim)
         # Perform the integration
-        integral_result, _ = nquad(uniform_dist._integrand_sn, bounds)
+        integral_result, _ = nquad(uniform_dist._get_integrand_hypersph_fun(uniform_dist.pdf), bounds)
         npt.assert_allclose(integral_result, 1, atol=0.001)
         
     # Now we test these explicit implementations against the provided generic function
