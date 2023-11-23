@@ -4,6 +4,7 @@ from typing import Union
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    array,
     arctan2,
     cos,
     exp,
@@ -126,9 +127,11 @@ class VonMisesDistribution(AbstractCircularDistribution):
         if self.kappa == 0.0:
             raise ValueError("Does not have mean direction")
         
-        if n==1:
+        if n == 0:
+            m = array(1.0)
+        elif n == 1:
             m = VonMisesDistribution.besselratio(0, self.kappa)*exp(1j * n * self.mu)
-        elif n==2:
+        elif n == 2:
             m = VonMisesDistribution.besselratio(0, self.kappa)*VonMisesDistribution.besselratio(1, self.kappa)*exp(1j * n * self.mu)
         else:
             raise NotImplementedError("Not implemented")

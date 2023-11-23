@@ -98,7 +98,8 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                 # Warn if we need to determine the mean numerically
                 warnings.warn("Starting point for sampling not specified, need to determine the mean numerically.")
             start_point = self.mean()
-            
+        
+        start_point = atleast_1d(start_point)
         assert start_point.shape == (self.input_dim,), "Starting point must be a 1D array of correct dimension"
         
         if proposal is None:

@@ -146,7 +146,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 facecolors=plt.cm.viridis(c_sphere),  # pylint: disable=no-member
                 shade=False,
             )
-            ax.set_box_aspect(1.0)
+            ax.set_box_aspect((1.0, 1.0, 1.0))
             plt.colorbar(plt.cm.ScalarMappable(cmap="viridis"), ax=ax)
             plt.show()
         else:
