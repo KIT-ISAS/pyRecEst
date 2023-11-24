@@ -197,27 +197,20 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         
     # Now we test these explicit implementations against the provided generic function
     @parameterized.expand([
-        (2, _hyperspherical_to_cartesian_s2),
-        (3, _hyperspherical_to_cartesian_s3),
+        (2, _hyperspherical_to_cartesian_s2, 1),
+        (3, _hyperspherical_to_cartesian_s3, 1),
+        (2, _hyperspherical_to_cartesian_s2, 10),
+        (3, _hyperspherical_to_cartesian_s3, 10),
     ])
-    def test_hyperspherical_to_cartesian_specific(self, dimensions, specific_function):
+    def test_hyperspherical_to_cartesian_specific(self, dimensions, specific_function, n_samples: int):
         # Test for single elements
         for _ in range(10):
-            angles = 2.0 * pi * random.uniform(size=dimensions)    
-            cartesian_specific = squeeze(column_stack(specific_function(1, *angles)))
+            size_samples = (n_samples, dimensions) if n_samples > 1 else dimensions
+            angles = 2.0 * pi * random.uniform(size=size_samples)    
+            cartesian_specific = squeeze(column_stack(specific_function(1, *angles.T)))
             cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles, mode='colatitude')
             npt.assert_allclose(cartesian_specific, cartesian_given)
-        
-    @parameterized.expand([
-        (2, _hyperspherical_to_cartesian_s2),
-        (3, _hyperspherical_to_cartesian_s3),
-    ])
-    def test_hyperspherical_to_cartesian_specific_batch(self, dimensions, specific_function):
-        angles = 2.0 * pi * random.uniform(size=(10, dimensions))
-        cartesian_specific = column_stack(specific_function(1, *angles.T))
-        cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles)
-        npt.assert_allclose(cartesian_specific, cartesian_given)
-        
+          
     def test_pdf_hyperspherical_coords_1d(self):
         mu_ = array([0.5, 1.0]) / linalg.norm(array([0.5, 1.0]))
         kappa_ = 2.0
