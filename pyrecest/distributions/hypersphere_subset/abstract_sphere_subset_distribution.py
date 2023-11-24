@@ -66,7 +66,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
                 column_stack((x, y, z)), mode=mode
             )
             phi, theta = angles[:, 0], angles[:, 1]
-        elif mode == "inclineation":
+        elif mode == "inclination":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_inclination(
                 x, y, z
             )

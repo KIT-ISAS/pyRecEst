@@ -172,13 +172,13 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
             delta=delta,
         )
 
-    def test_hellinger_distance_2d(self):
+    def test_hellinger_distance_s2(self):
         # 2D
         vmf1 = VonMisesFisherDistribution(array([1.0, 0.0]), array(0.9))
         vmf2 = VonMisesFisherDistribution(array([0.0, 1.0]), array(1.7))
         self._test_hellinger_distance_helper(vmf1, vmf2)
 
-    def test_hellinger_distance_3d(self):
+    def test_hellinger_distance_s3(self):
         # 3D
         vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), array(0.6))
         mu2 = array([1.0, 2.0, 3.0])
