@@ -331,10 +331,6 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return 0.5 * distance_integral
 
     @staticmethod
-    def polar_to_cart(polar_coords):
-        polar_coords = atleast_2d(polar_coords)
-
-    @staticmethod
     def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
         hypersph_coords = atleast_2d(hypersph_coords)
         if mode == "colatitude":
