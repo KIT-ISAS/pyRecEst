@@ -7,11 +7,6 @@ from typing import Union
 from pyrecest.backend import (
     abs,
     array,
-    ones_like,
-    arange,
-    reshape,
-    tril,
-    where,
     cumprod,
     hstack,
     ones,

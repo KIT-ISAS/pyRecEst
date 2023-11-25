@@ -1,7 +1,7 @@
 from math import pi
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, stack, atleast_2d, column_stack, linspace, meshgrid
+from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, atleast_2d, column_stack, linspace, meshgrid
 import matplotlib.pyplot as plt
 
 from .abstract_hypersphere_subset_distribution import (
@@ -39,7 +39,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         elif mode == "elevation":
             x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(angles1, angles2)
         elif mode == "colatitude":
-            coords = AbstractSphereSubsetDistribution.hypersph_to_cart(column_stack((angles1, angles2)))
+            coords = AbstractHypersphereSubsetDistribution.hypersph_to_cart(column_stack((angles1, angles2)), mode=mode)
             coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         else:
@@ -61,12 +61,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             tuple: Spherical coordinates.
         """
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z), "Inputs must be 1-dimensional"
-        if mode == 'colatitude':
-            angles = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
-                column_stack((x, y, z)), mode=mode
-            )
-            phi, theta = angles[:, 0], angles[:, 1]
-        elif mode == "inclination":
+        if mode == "inclination":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_inclination(
                 x, y, z
             )
@@ -74,6 +69,11 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_elevation(
                 x, y, z
             )
+        elif mode == 'colatitude':
+            angles = AbstractHypersphereSubsetDistribution.cart_to_hypersph(
+                column_stack((x, y, z)), mode=mode
+            )
+            phi, theta = angles[:, 0], angles[:, 1]
         else:
             raise ValueError("Mode must be either 'inclination', 'colatitude', or 'elevation'")
 
@@ -114,7 +114,6 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         y = cos(elevation) * sin(azimuth)
         z = sin(elevation)
         return x, y, z
-    
     
     @staticmethod
     def plot_unit_sphere():

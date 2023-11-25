@@ -211,6 +211,33 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
             cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(angles, mode='colatitude')
             npt.assert_allclose(cartesian_specific, cartesian_given)
           
+          
+   @parameterized.expand(
+        [
+            ("colatitude",),
+            ("elevation",),
+            ("inclination",),
+        ]
+    )
+    def test_cart_to_sph_to_cart(self, mode):
+        # Create some Cartesian coordinates
+        x = array([1.0, 0.0, 0.0])
+        y = array([0.0, 1.0, 0.0])
+        z = array([0.0, 0.0, 1.0])
+
+        # Convert to spherical coordinates and back
+        azimuth, theta = AbstractHypersphereSubsetDistribution.cart_to_hypersph(
+            x, y, z, mode=mode
+        )
+        x_new, y_new, z_new = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+            azimuth, theta, mode=mode
+        )
+
+        # The new Cartesian coordinates should be close to the original ones
+        npt.assert_allclose(x_new, x, atol=1e-7)
+        npt.assert_allclose(y_new, y, atol=1e-7)
+        npt.assert_allclose(z_new, z, atol=1e-7)
+        
     def test_pdf_hyperspherical_coords_1d(self):
         mu_ = array([0.5, 1.0]) / linalg.norm(array([0.5, 1.0]))
         kappa_ = 2.0
