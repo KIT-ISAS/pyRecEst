@@ -85,9 +85,12 @@ jobs:
           pip install --upgrade meson-python meson ninja wheel build
           pip --version
           pip list
+          mkdir -p ~/.pip
+          echo "[global]" > ~/.pip/pip.conf
+          echo "extra-index-url = https://pypi.ngc.nvidia.com" >> ~/.pip/pip.conf
           #pip install nvidia-pyindex
           #pip install nvidia-cublas
-          #python -m pip install nvidia-cublas-cu12
+          pip install nvidia-cublas-cu12
         shell: alpine.sh {0}
 
       - name: Remove version settings
