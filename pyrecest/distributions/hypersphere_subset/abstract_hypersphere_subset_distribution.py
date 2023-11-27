@@ -339,13 +339,32 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             )
         elif mode in ("elevation", "inclination"):
             from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
-            assert hypersph_coords.shape[1] == 2, "Mode only supports 2 dimensions"
+            assert hypersph_coords.shape[1] == 2, "Mode only S2 dimensions"
             x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode)
             cart_coords = column_stack((x, y, z))
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
         
         return cart_coords.squeeze()
+    
+    @staticmethod
+    def cart_to_hypersph(cart_coords, mode: str = "colatitude"):
+        cart_coords = atleast_2d(cart_coords)
+        if mode == "colatitude":
+            cart_coords = AbstractHypersphereSubsetDistribution._cart_to_hyersph_colatitude(cart_coords)
+        elif mode in ("elevation", "inclination"):
+            from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
+            assert cart_coords.shape[1] == 3, "Mode only supports S2"
+            theta, phi = AbstractSphereSubsetDistribution.cart_to_sph(cart_coords[:, 0], cart_coords[:, 1], cart_coords[:, 2], mode=mode)
+            cart_coords = column_stack((theta, phi))
+        else:
+            raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
+        
+        return cart_coords.squeeze()
+    
+    @staticmethod
+    def _cart_to_hyersph_colatitude(cart_coords):
+        raise NotImplementedError('Not yet implemented')
     
     @staticmethod
     def _get_integrand_hypersph_fun(fun: Callable):
