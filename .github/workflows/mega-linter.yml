@@ -82,7 +82,7 @@ jobs:
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade pip
-          pip install meson-python meson ninja wheel build
+          pip install --upgrade meson-python meson ninja wheel build
           pip --version
           pip list
           pip install nvidia-pyindex
