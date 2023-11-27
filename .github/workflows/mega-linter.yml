@@ -91,7 +91,7 @@ jobs:
           echo "extra-index-url = https://pypi.org/simple" >> ~/.pip/pip.conf
           #pip install nvidia-pyindex
           #pip install nvidia-cublas
-          pip install nvidia-cublas-cu12
+          pip install nvidia-cublas
         shell: alpine.sh {0}
 
       - name: Remove version settings
