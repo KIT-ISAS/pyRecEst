@@ -85,8 +85,8 @@ jobs:
           pip install --upgrade meson-python meson ninja wheel build
           pip --version
           pip list
-          pip install nvidia-pyindex
-          pip install nvidia-cublas
+          #pip install nvidia-pyindex
+          #pip install nvidia-cublas
           #python -m pip install nvidia-cublas-cu12
         shell: alpine.sh {0}
 
