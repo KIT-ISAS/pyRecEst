@@ -81,10 +81,10 @@ jobs:
       - name: Upgrade pip and install requirements for building
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install meson-python meson ninja wheel build nvidia-pyindex
-          python -m pip install nvidia-pyindex
-          python -m pip install nvidia-cublas
+          pip install --upgrade pip
+          pip install meson-python meson ninja wheel build nvidia-pyindex
+          pip install nvidia-pyindex
+          pip install nvidia-cublas
           #python -m pip install nvidia-cublas-cu12
         shell: alpine.sh {0}
 
