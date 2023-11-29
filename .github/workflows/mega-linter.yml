@@ -138,7 +138,7 @@
   
             while read requirement; do
               echo "Installing $requirement..."
-              pip install "$requirement" --find-links=./alpine-wheels
+              python -m pip install "$requirement" --find-links=./alpine-wheels
             done < requirements-dev_no_version.txt
   
           shell: alpine.sh {0}
