@@ -23,6 +23,8 @@ from pyrecest.backend import (
     sin,
     sum,
     tile,
+    where,
+    arange,
 )
 from scipy.stats import multivariate_normal
 
@@ -43,21 +45,31 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             len(linalg.cholesky(C)) > 0
         ), "C must be positive definite"  # Will fail if not positive definite
         assert bound_dim <= mu.shape[0]
-        if bound_dim > 0:  # This decreases the need for many wrappings
-            mu[:bound_dim] = mod(mu[:bound_dim], 2 * pi)
+        mu = where(
+            arange(mu.shape[0]) < bound_dim,
+            mod(mu, 2 * pi),
+            mu
+        )
 
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim=bound_dim, lin_dim=mu.shape[0] - bound_dim
         )
 
-        self.mu = mu
-        self.mu[:bound_dim] = mod(self.mu[:bound_dim], 2 * pi)
+        self.mu = where(
+            arange(mu.shape[0]) < bound_dim,
+            mod(mu, 2.0 * pi),
+            mu
+        )
         self.C = C
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
         xs = atleast_2d(xs)
-        if self.bound_dim > 0:
-            xs[:, : self.bound_dim] = mod(xs[:, : self.bound_dim], 2.0 * pi)
+        condition = arange(xs.shape[1]) < self.bound_dim  # Create a condition based on column indices
+        xs = where(
+            condition[None, :],  # Broadcast the condition to match the shape of xs
+            mod(xs, 2.0 * pi),  # Compute the modulus where the condition is True
+            xs  # Keep the original values where the condition is False
+        )
 
         assert xs.shape[-1] == self.input_dim
 
