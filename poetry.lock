@@ -1138,6 +1138,24 @@ files = [
 ]
 
 [[package]]
+name = "opt-einsum"
+version = "3.3.0"
+description = "Optimizing numpys einsum function"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "opt_einsum-3.3.0-py3-none-any.whl", hash = "sha256:2455e59e3947d3c275477df7f5205b30635e266fe6dc300e3d9f9646bfcea147"},
+    {file = "opt_einsum-3.3.0.tar.gz", hash = "sha256:59f6475f77bbc37dcf7cd748519c0ec60722e91e63ca114e68821c0c54a46549"},
+]
+
+[package.dependencies]
+numpy = ">=1.7"
+
+[package.extras]
+docs = ["numpydoc", "sphinx (==1.2.3)", "sphinx-rtd-theme", "sphinxcontrib-napoleon"]
+tests = ["pytest", "pytest-cov", "pytest-pep8"]
+
+[[package]]
 name = "packaging"
 version = "23.2"
 description = "Core utilities for Python packages"
@@ -1868,4 +1886,4 @@ pytorch-support = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "86fe0afd755931a31f540f76a627e4fed87cc248d10377fb9dfe2ebc8cf0eee4"
+content-hash = "1d47cb2b46b4e714340ca8ac07d3d9f497fe6503cc0a9abd51fe4a3a532e8141"
