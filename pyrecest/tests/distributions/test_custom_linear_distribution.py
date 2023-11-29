@@ -44,5 +44,6 @@ class CustomLinearDistributionTest(unittest.TestCase):
         self.assertEqual(samples.shape, (n_samples, 2))
         npt.assert_allclose(samples.mean(axis=0), self.gm.mean(), atol=0.1)
 
+
 if __name__ == "__main__":
     unittest.main()
