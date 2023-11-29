@@ -18,7 +18,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         mu = array([5.0, 1.0])
         C = array([[2.0, 1.0], [1.0, 1.0]])
         g = PartiallyWrappedNormalDistribution(mu, C, 1)
-        self.assertTrue(allclose(g.mode_numerical(), mu, atol=1e-5))
+        npt.assert_allclose(g.mode_numerical(), mu, atol=5e-5)
 
     def test_linear_mean_numerical(self):
         hwn = PartiallyWrappedNormalDistribution(

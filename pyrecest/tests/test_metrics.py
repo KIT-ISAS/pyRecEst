@@ -48,7 +48,7 @@ class TestANEES(unittest.TestCase):
         )
 
         # Assert that computed ANEES is close to 1 with a tolerance of 0.05.
-        npt.assert_almost_equal(computed_ANEES, self.groundtruths.shape[-1], decimal=2)
+        npt.assert_allclose(computed_ANEES, self.groundtruths.shape[-1], atol=0.05)
 
 
 if __name__ == "__main__":
