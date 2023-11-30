@@ -64,10 +64,10 @@ class EllipsoidalBallUniformDistribution(
         :param n: Number of samples to generate.
         :returns: Generated samples.
         """
-        random_points = random.normal(0.0, 1.0, (n, self.dim))
+        random_points = random.normal(size=(n, self.dim))
         random_points /= linalg.norm(random_points, axis=1).reshape(-1, 1)
 
-        random_radii = random.rand(n, 1)
+        random_radii = random.uniform(size=(n, 1))  # So that broadcasting works below
         random_radii = random_radii ** (
             1 / self.dim
         )  # Consider that the ellipsoid surfaces with higher radii are larger

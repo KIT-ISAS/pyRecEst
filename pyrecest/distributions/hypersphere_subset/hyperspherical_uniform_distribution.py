@@ -29,12 +29,12 @@ class HypersphericalUniformDistribution(
                     self.dim + 1,
                 )
             )
-            phi = 2.0 * pi * random.rand(n)
-            sz = random.rand(n) * 2.0 - 1.0
+            phi = 2.0 * pi * random.uniform(size=n)
+            sz = random.uniform(size=n) * 2.0 - 1.0
             r = sqrt(1 - sz**2)
             s = stack([r * cos(phi), r * sin(phi), sz], axis=1)
         else:
-            samples_unnorm = random.normal(0.0, 1.0, (n, self.dim + 1))
+            samples_unnorm = random.normal(0.0, 1.0, size=(n, self.dim + 1))
             s = samples_unnorm / linalg.norm(samples_unnorm, axis=1).reshape(-1, 1)
         return s
 
