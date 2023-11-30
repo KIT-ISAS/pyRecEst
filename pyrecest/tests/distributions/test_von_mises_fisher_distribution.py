@@ -39,7 +39,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
 
     def test_vmf_distribution_3d_mode(self):
-        self.assertTrue(allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5))
+        npt.assert_allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5)
 
     def test_vmf_distribution_3d_integral(self):
         self.assertAlmostEqual(self.vmf.integrate(), 1, delta=1e-5)
