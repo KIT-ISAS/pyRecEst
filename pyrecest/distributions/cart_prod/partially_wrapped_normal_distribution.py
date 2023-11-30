@@ -25,6 +25,9 @@ from pyrecest.backend import (
     tile,
     where,
     arange,
+    diag,
+    stack,
+    hstack,
 )
 from scipy.stats import multivariate_normal
 
@@ -66,7 +69,8 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         xs = atleast_2d(xs)
         condition = arange(xs.shape[1]) < self.bound_dim  # Create a condition based on column indices
         xs = where(
-            condition[None, :],  # Broadcast the condition to match the shape of xs
+            # Broadcast the condition to match the shape of xs
+            condition[None, :],  # noqa: E203
             mod(xs, 2.0 * pi),  # Compute the modulus where the condition is True
             xs  # Keep the original values where the condition is False
         )
@@ -121,12 +125,14 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         Returns:
             mu (linD+2): expectation value of [x1, x2, .., x_lin_dim, cos(x_(lin_dim+1), sin(x_(lin_dim+1)), ..., cos(x_(lin_dim+bound_dim), sin(x_(lin_dim+bound_dim))]
         """
-        mu = empty(2 * self.bound_dim + self.lin_dim)
-        mu[2 * self.bound_dim :] = self.mu[self.bound_dim :]  # noqa: E203
-        for i in range(self.bound_dim):
-            mu[2 * i] = cos(self.mu[i]) * exp(-self.C[i, i] / 2)  # noqa: E203
-            mu[2 * i + 1] = sin(self.mu[i]) * exp(-self.C[i, i] / 2)  # noqa: E203
-        return mu
+        mu_lin = self.mu[self.bound_dim :]  # noqa: E203
+
+        mu_bound_odd = sin(self.mu[:self.bound_dim]) * exp(-diag(self.C)[:self.bound_dim] / 2) 
+        mu_bound_even = cos(self.mu[:self.bound_dim]) * exp(-diag(self.C)[:self.bound_dim] / 2) 
+        
+        mu_bound = stack([mu_bound_even, mu_bound_odd], axis=1).reshape(-1)
+    
+        return hstack((mu_bound, mu_lin))
 
     def hybrid_mean(self):
         return self.mu
@@ -144,8 +150,12 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             n (int): number of points to sample
         """
         assert n > 0, "n must be positive"
-        s = random.multivariate_normal(self.mu, self.C, n)
-        s[:, : self.bound_dim] = mod(s[:, : self.bound_dim], 2 * pi)  # noqa: E203
+        s = random.multivariate_normal(mean=self.mu, cov=self.C, size=(n,))
+        wrapped_values = mod(s[:, :self.bound_dim], 2.0 * pi)
+        unbounded_values = s[:, self.bound_dim:]  # noqa: E203
+
+        # Concatenate the modified section with the unmodified section
+        s = concatenate([wrapped_values, unbounded_values], axis=1)
         return s
 
     def to_gaussian(self):

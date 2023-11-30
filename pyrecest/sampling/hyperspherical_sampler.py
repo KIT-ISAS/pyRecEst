@@ -15,6 +15,7 @@ from pyrecest.backend import (
     sin,
     sqrt,
     vstack,
+    stack,
 )
 from pyrecest.distributions import (
     AbstractSphericalDistribution,
@@ -161,13 +162,15 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
         Anna Yershova, Swati Jain, Steven M. LaValle, Julie C. Mitchell
         As in appendix (or in Eq 4 if one reorders it).
         """
-        quaterions = empty((θ.shape[0], 4))
 
-        quaterions[:, 0] = cos(θ / 2) * cos(ψ / 2)
-        quaterions[:, 1] = cos(θ / 2) * sin(ψ / 2)
-        quaterions[:, 2] = sin(θ / 2) * cos(ϕ + ψ / 2)
-        quaterions[:, 3] = sin(θ / 2) * sin(ϕ + ψ / 2)
-        return quaterions
+        quaternions = stack([
+            cos(θ / 2) * cos(ψ / 2),
+            cos(θ / 2) * sin(ψ / 2),
+            sin(θ / 2) * cos(ϕ + ψ / 2),
+            sin(θ / 2) * sin(ϕ + ψ / 2)
+        ], axis=1)
+
+        return quaternions
 
     @staticmethod
     def quaternion_to_hopf_yershova(q):
