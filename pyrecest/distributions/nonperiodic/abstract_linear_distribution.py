@@ -24,6 +24,9 @@ from pyrecest.backend import (
     reshape,
     sqrt,
     squeeze,
+    full,
+    diag,
+    stack,
 )
 from pyrecest.utils.plotting import plot_ellipsoid
 from scipy.integrate import dblquad, nquad, quad
@@ -214,11 +217,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def integrate_numerically(self, left=None, right=None):
         if left is None:
-            left = empty(self.dim)
-            left[:] = -float("inf")
+            left = full((self.dim,), -float('inf'))
         if right is None:
-            right = empty(self.dim)
-            right[:] = float("inf")
+            right = full((self.dim,), float('inf'))
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right
         )
@@ -274,14 +275,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
         if plot_range is None:
             scaling = sqrt(chi2.ppf(0.99, self.dim))
-            plot_range = empty(2 * self.dim)
-            for i in range(0, 2 * self.dim, 2):
-                plot_range[i] = mu[int(i / 2)] - scaling * sqrt(
-                    C[int(i / 2), int(i / 2)]
-                )
-                plot_range[i + 1] = mu[int(i / 2)] + scaling * sqrt(
-                    C[int(i / 2), int(i / 2)]
-                )
+            lower_bound = mu - scaling * sqrt(diag(C))
+            upper_bound = mu + scaling * sqrt(diag(C))
+            plot_range = stack((lower_bound, upper_bound), axis=-1).flatten()
 
         if self.dim == 1:
             x = linspace(plot_range[0], plot_range[1], 1000)
