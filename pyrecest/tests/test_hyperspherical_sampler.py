@@ -1,12 +1,12 @@
 import importlib.util
 import unittest
 
+import numpy.testing as npt
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import linalg, random
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
-import numpy.testing as npt
 
 from ..sampling.hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,

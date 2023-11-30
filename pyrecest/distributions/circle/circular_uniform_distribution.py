@@ -1,10 +1,12 @@
 from math import pi
 
+from pyrecest.backend import where
+
 from ..hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
 )
 from .abstract_circular_distribution import AbstractCircularDistribution
-from pyrecest.backend import where
+
 
 class CircularUniformDistribution(
     HypertoroidalUniformDistribution, AbstractCircularDistribution

@@ -1,12 +1,12 @@
 import unittest
 
+import numpy.testing as npt
 import scipy
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, linspace
 from pyrecest.distributions import GaussianDistribution
 from scipy.stats import multivariate_normal
-import numpy.testing as npt
 
 
 class GaussianDistributionTest(unittest.TestCase):

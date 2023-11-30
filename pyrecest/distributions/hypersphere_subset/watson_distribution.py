@@ -5,17 +5,16 @@ import numpy.testing as npt
 from pyrecest.backend import (
     abs,
     array,
+    concatenate,
+    diag,
     exp,
-    eye,
     full,
     hstack,
     linalg,
+    ones,
     tile,
     vstack,
     zeros,
-    diag,
-    ones,
-    concatenate,
 )
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution

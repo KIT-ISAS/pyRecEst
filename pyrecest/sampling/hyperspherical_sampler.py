@@ -14,8 +14,8 @@ from pyrecest.backend import (
     empty,
     sin,
     sqrt,
-    vstack,
     stack,
+    vstack,
 )
 from pyrecest.distributions import (
     AbstractSphericalDistribution,
@@ -163,12 +163,15 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
         As in appendix (or in Eq 4 if one reorders it).
         """
 
-        quaternions = stack([
-            cos(θ / 2) * cos(ψ / 2),
-            cos(θ / 2) * sin(ψ / 2),
-            sin(θ / 2) * cos(ϕ + ψ / 2),
-            sin(θ / 2) * sin(ϕ + ψ / 2)
-        ], axis=1)
+        quaternions = stack(
+            [
+                cos(θ / 2) * cos(ψ / 2),
+                cos(θ / 2) * sin(ψ / 2),
+                sin(θ / 2) * cos(ϕ + ψ / 2),
+                sin(θ / 2) * sin(ϕ + ψ / 2),
+            ],
+            axis=1,
+        )
 
         return quaternions
 
