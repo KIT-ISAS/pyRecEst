@@ -1,7 +1,7 @@
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dot, int32, int64, linalg, random, zeros
+from pyrecest.backend import int32, int64, linalg, random, zeros, where, squeeze
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -48,16 +48,14 @@ class EllipsoidalBallUniformDistribution(
         results = zeros(n)
 
         # Check if points are inside the ellipsoid
-        for i in range(n):
-            point = xs[i, :]
-            diff = point - self.center
-            result = dot(diff.T, linalg.solve(self.shape_matrix, diff))
+        diff = xs - self.center[None, :]  # Broadcasting self.center to match the shape of xs
+        solved = linalg.solve(self.shape_matrix[None, :, :], diff[:, :, None])  # Solving the system for each vector in diff
+        results = squeeze(diff[:, :, None].swapaxes(-2, -1) @ solved)  # Computing the dot product for each pair of vectors
 
-            # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
-            if result <= 1:
-                results[i] = reciprocal_volume
+        # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
+        pdf_values = where(results <= 1, reciprocal_volume, zeros(n))
 
-        return results
+        return pdf_values
 
     def sample(self, n: Union[int, int32, int64]):
         """

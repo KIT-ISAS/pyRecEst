@@ -4,7 +4,7 @@ from ..hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
 )
 from .abstract_circular_distribution import AbstractCircularDistribution
-
+from pyrecest.backend import where
 
 class CircularUniformDistribution(
     HypertoroidalUniformDistribution, AbstractCircularDistribution
@@ -42,6 +42,6 @@ class CircularUniformDistribution(
         """
 
         val = (xa - starting_point) / (2 * pi)
-        val[val < 0] = val[val < 0] + 1
+        val = where(val < 0, val + 1, val)
 
         return val
