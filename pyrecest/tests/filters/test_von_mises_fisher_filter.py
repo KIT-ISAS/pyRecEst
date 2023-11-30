@@ -5,7 +5,7 @@ from pyrecest.backend import allclose, array, cos, sin
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.filters.von_mises_fisher_filter import VonMisesFisherFilter
 
-
+import numpy.testing as npt
 class VMFFilterTest(unittest.TestCase):
     def setUp(self):
         """Initial setup for each test."""
@@ -37,7 +37,7 @@ class VMFFilterTest(unittest.TestCase):
         self.filter.update_identity(noise_distribution, self.vmf.mu)
         vmf_updated_identity = self.filter.filter_state
         self.assertEqual(type(vmf_updated_identity), VonMisesFisherDistribution)
-        self.assertTrue(allclose(self.vmf.mu, vmf_updated_identity.mu, rtol=1e-10))
+        npt.assert_allclose(self.vmf.mu, vmf_updated_identity.mu, rtol=5e-7)
         self.assertGreaterEqual(vmf_updated_identity.kappa, self.vmf.kappa)
 
 

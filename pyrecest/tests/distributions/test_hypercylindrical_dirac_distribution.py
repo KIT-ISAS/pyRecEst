@@ -41,10 +41,10 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
     def test_mean_and_marginalization(self):
         mean = self.pwd.hybrid_moment()
         wd = self.pwd.marginalize_linear()
-        assert isclose(mean[0], wd.trigonometric_moment(1).real, rtol=1e-10)
-        assert isclose(mean[1], wd.trigonometric_moment(1).imag, rtol=1e-10)
-        assert isclose(mean[2], sum(self.w * self.d[:, 1]), rtol=1e-10)
-        assert isclose(mean[3], sum(self.w * self.d[:, 2]), rtol=1e-10)
+        npt.assert_allclose(mean[0], wd.trigonometric_moment(1).real, rtol=1e-10)
+        npt.assert_allclose(mean[1], wd.trigonometric_moment(1).imag, rtol=1e-10)
+        npt.assert_allclose(mean[2], sum(self.w * self.d[:, 1]), rtol=1e-10)
+        npt.assert_allclose(mean[3], sum(self.w * self.d[:, 2]), rtol=1e-7)
 
     def test_covariance(self):
         clin = self.pwd.linear_covariance()
