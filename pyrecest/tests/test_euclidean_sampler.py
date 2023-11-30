@@ -1,9 +1,11 @@
 import unittest
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, mean, ones, random, std, zeros
-from pyrecest.sampling.euclidean_sampler import GaussianSampler
 import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import mean, ones, random, std, zeros
+from pyrecest.sampling.euclidean_sampler import GaussianSampler
+
 
 class TestGaussianSampler(unittest.TestCase):
     def setUp(self):
