@@ -2,9 +2,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Union
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import empty, int32, int64, random, squeeze
-import pyrecest.backend
 
 
 class AbstractManifoldSpecificDistribution(ABC):
@@ -73,7 +74,9 @@ class AbstractManifoldSpecificDistribution(ABC):
     ):
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""
-        assert pyrecest.backend.__name__ != "pyrecest.jax", "Not supported on this backend"
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "Not supported on this backend"
         if proposal is None or start_point is None:
             raise NotImplementedError(
                 "Default proposals and starting points should be set in inheriting classes."
@@ -92,7 +95,9 @@ class AbstractManifoldSpecificDistribution(ABC):
 
         while i < total_samples:
             x_new = proposal(x)
-            assert x_new.shape == x.shape, "Proposal must return a vector of same shape as input"
+            assert (
+                x_new.shape == x.shape
+            ), "Proposal must return a vector of same shape as input"
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
             if a.item() > 1 or a.item() > random.rand(1):

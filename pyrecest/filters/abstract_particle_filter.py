@@ -3,12 +3,13 @@ from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, ones_like, random, sum, zeros, vmap, arange
+from pyrecest.backend import ndim, ones_like, random, sum, vmap
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
 
 from .abstract_filter_type import AbstractFilterType
+
 
 class AbstractParticleFilter(AbstractFilterType):
     def __init__(self, initial_filter_state=None):
@@ -33,11 +34,13 @@ class AbstractParticleFilter(AbstractFilterType):
             self.filter_state.d = f(self.filter_state.d)
         else:
             self.filter_state = self.filter_state.apply_function(f)
-        
+
         def add_noise_to_sample(d):
             noise_curr = noise_distribution.set_mean(d)
-            return noise_curr.sample(1)  # Assuming sample(1) returns a single row of values
-        
+            return noise_curr.sample(
+                1
+            )  # Assuming sample(1) returns a single row of values
+
         if noise_distribution is not None:
             if not shift_instead_of_add:
                 noise = noise_distribution.sample(self.filter_state.w.shape[0])
@@ -54,12 +57,10 @@ class AbstractParticleFilter(AbstractFilterType):
         n_particles = self.filter_state.w.shape[0]
         noise_samples = random.choice(samples, n_particles, p=weights)
 
-        batched_apply_f = vmap(
-            lambda d_elem, noise_sample: f(d_elem, noise_sample)
-        )
+        batched_apply_f = vmap(lambda d_elem, noise_sample: f(d_elem, noise_sample))
 
         d = batched_apply_f(self.filter_state.d, noise_samples)
-        
+
         self._filter_state.d = d
 
     @property

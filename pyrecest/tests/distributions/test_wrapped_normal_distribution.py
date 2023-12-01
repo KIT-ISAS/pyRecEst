@@ -2,12 +2,12 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, arange, array, exp, ones_like, sqrt, sum
 from pyrecest.distributions import WrappedNormalDistribution
-import pyrecest.backend
 
 
 class WrappedNormalDistributionTest(unittest.TestCase):

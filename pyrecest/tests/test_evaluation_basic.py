@@ -234,7 +234,7 @@ class TestEvalationBasics(TestEvalationBase):
         self.assertIsInstance(configured_filter, KalmanFilter)
         self.assertIsNotNone(predictionRoutine)
         self.assertTrue(meas_noise_for_filter.shape == (2, 2))
-    
+
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",
         reason="Not supported on this backend",

@@ -7,28 +7,25 @@ from typing import Union
 from pyrecest.backend import (
     abs,
     array,
-    cumprod,
-    hstack,
-    ones,
-    prod,
-    atleast_1d,
     atleast_2d,
     column_stack,
-    concatenate,
     cos,
+    cumprod,
     empty,
     float64,
     full,
+    hstack,
     int32,
     int64,
     linalg,
     log,
+    ones,
+    prod,
     sin,
     sort,
     sqrt,
     squeeze,
     zeros,
-    vmap,
 )
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
@@ -233,8 +230,13 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         dim: Union[int, int32, int64],
         integration_boundaries,
     ):
-        i, _ = nquad(AbstractHypersphereSubsetDistribution._get_integrand_hypersph_fun(f_hypersph_coords), integration_boundaries)
-        
+        i, _ = nquad(
+            AbstractHypersphereSubsetDistribution._get_integrand_hypersph_fun(
+                f_hypersph_coords
+            ),
+            integration_boundaries,
+        )
+
         return i
 
     def integrate_numerically(self, integration_boundaries=None):
@@ -334,54 +336,78 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
         hypersph_coords = atleast_2d(hypersph_coords)
         if mode == "colatitude":
-            cart_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
-                1, *hypersph_coords.T
+            cart_coords = (
+                AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
+                    1, *hypersph_coords.T
+                )
             )
         elif mode in ("elevation", "inclination"):
-            from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
+            from .abstract_sphere_subset_distribution import (
+                AbstractSphereSubsetDistribution,
+            )
+
             assert hypersph_coords.shape[1] == 2, "Mode only S2 dimensions"
-            x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode)
+            x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(
+                hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode
+            )
             cart_coords = column_stack((x, y, z))
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
-        
+
         return cart_coords.squeeze()
-    
+
     @staticmethod
     def cart_to_hypersph(cart_coords, mode: str = "colatitude"):
         cart_coords = atleast_2d(cart_coords)
         if mode == "colatitude":
-            cart_coords = AbstractHypersphereSubsetDistribution._cart_to_hyersph_colatitude(cart_coords)
+            cart_coords = (
+                AbstractHypersphereSubsetDistribution._cart_to_hyersph_colatitude(
+                    cart_coords
+                )
+            )
         elif mode in ("elevation", "inclination"):
-            from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
+            from .abstract_sphere_subset_distribution import (
+                AbstractSphereSubsetDistribution,
+            )
+
             assert cart_coords.shape[1] == 3, "Mode only supports S2"
-            theta, phi = AbstractSphereSubsetDistribution.cart_to_sph(cart_coords[:, 0], cart_coords[:, 1], cart_coords[:, 2], mode=mode)
+            theta, phi = AbstractSphereSubsetDistribution.cart_to_sph(
+                cart_coords[:, 0], cart_coords[:, 1], cart_coords[:, 2], mode=mode
+            )
             cart_coords = column_stack((theta, phi))
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
-        
+
         return cart_coords.squeeze()
-    
+
     @staticmethod
     def _cart_to_hyersph_colatitude(cart_coords):
-        raise NotImplementedError('Not yet implemented')
-    
+        raise NotImplementedError("Not yet implemented")
+
     @staticmethod
     def _get_integrand_hypersph_fun(fun: Callable):
         """
         Generalized integrand function for n-spheres.
         """
+
         def integrand(*angle_args):
             n = len(angle_args) + 1  # Dimension of the sphere
-            cartesian_coords = AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(1, *angle_args[::-1])  # Convert to Cartesian coordinates
+            cartesian_coords = (
+                AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
+                    1, *angle_args[::-1]
+                )
+            )  # Convert to Cartesian coordinates
             probability_density = fun(atleast_2d(cartesian_coords))
 
             # Calculate the Jacobian determinant for the change of variables
-            jacobian = prod([sin(angle_args[::-1][i]) ** (n - 2 - i) for i in range(n - 2)])
+            jacobian = prod(
+                [sin(angle_args[::-1][i]) ** (n - 2 - i) for i in range(n - 2)]
+            )
 
             return probability_density * jacobian
+
         return integrand
-    
+
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):
         """
@@ -404,13 +430,17 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         cumprod_sin = cumprod(sin_mat, axis=1)
 
         # To match the requirement of the original function, shift the cumprod array to the right
-        cumprod_sin_shifted = hstack([ones((cumprod_sin.shape[0], 1)), cumprod_sin[:, :-1]])
+        cumprod_sin_shifted = hstack(
+            [ones((cumprod_sin.shape[0], 1)), cumprod_sin[:, :-1]]
+        )
 
         # Multiply each cumprod value with the corresponding cosine value
         sin_cos_terms = r * cumprod_sin_shifted * cos_mat
 
         # Now, append the terms with all sine values (the last column of cumprod_sin)
-        all_sine_term = r * cumprod_sin[:, -1].reshape(-1, 1)  # Reshape for column-wise appending
+        all_sine_term = r * cumprod_sin[:, -1].reshape(
+            -1, 1
+        )  # Reshape for column-wise appending
         return hstack([sin_cos_terms, all_sine_term])
 
     @staticmethod

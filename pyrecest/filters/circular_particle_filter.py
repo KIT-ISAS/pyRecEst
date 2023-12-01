@@ -1,10 +1,12 @@
 from math import pi
-from typing import Union
+from typing import Callable, Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import float64, int32, int64, linspace, sum, mod, squeeze
-from pyrecest.distributions import CircularDiracDistribution, AbstractHypertoroidalDistribution
-from typing import Callable
+from pyrecest.backend import float64, int32, int64, linspace, mod, squeeze, sum
+from pyrecest.distributions import (
+    AbstractHypertoroidalDistribution,
+    CircularDiracDistribution,
+)
 
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_particle_filter import AbstractParticleFilter
@@ -51,4 +53,5 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
             shift_instead_of_add,
         )
         self.filter_state.d = squeeze(mod(self.filter_state.d, 2.0 * pi))
+
     # jscpd:ignore-end

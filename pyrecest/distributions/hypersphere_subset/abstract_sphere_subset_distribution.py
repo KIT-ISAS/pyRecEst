@@ -1,8 +1,20 @@
 from math import pi
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arccos, arctan2, cos, ndim, sin, where, atleast_2d, column_stack, linspace, meshgrid
 import matplotlib.pyplot as plt
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    arccos,
+    arctan2,
+    atleast_2d,
+    column_stack,
+    cos,
+    linspace,
+    meshgrid,
+    ndim,
+    sin,
+    where,
+)
 
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
@@ -37,9 +49,13 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
                 angles1, angles2
             )
         elif mode == "elevation":
-            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(angles1, angles2)
+            x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_elevation(
+                angles1, angles2
+            )
         elif mode == "colatitude":
-            coords = AbstractHypersphereSubsetDistribution.hypersph_to_cart(column_stack((angles1, angles2)), mode=mode)
+            coords = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+                column_stack((angles1, angles2)), mode=mode
+            )
             coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         else:
@@ -69,13 +85,15 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_elevation(
                 x, y, z
             )
-        elif mode == 'colatitude':
+        elif mode == "colatitude":
             angles = AbstractHypersphereSubsetDistribution.cart_to_hypersph(
                 column_stack((x, y, z)), mode=mode
             )
             phi, theta = angles[:, 0], angles[:, 1]
         else:
-            raise ValueError("Mode must be either 'inclination', 'colatitude', or 'elevation'")
+            raise ValueError(
+                "Mode must be either 'inclination', 'colatitude', or 'elevation'"
+            )
 
         return phi, theta
 
@@ -83,7 +101,9 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     def _sph_to_cart_inclination(theta_inc, phi_az_right) -> tuple:
         # Conversion for the (r, θ_inc, φ_az,right) convention. Used by many textbooks.
         # Downside is that it does not generalize well to higher dimensions.
-        assert ndim(theta_inc) == 1 and ndim(phi_az_right), "Inputs must be 1-dimensional"
+        assert ndim(theta_inc) == 1 and ndim(
+            phi_az_right
+        ), "Inputs must be 1-dimensional"
         x = sin(phi_az_right) * cos(theta_inc)
         y = sin(phi_az_right) * sin(theta_inc)
         z = cos(phi_az_right)
@@ -108,13 +128,15 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         # elevation is π/2 - colatitude, so we calculate colatitude from elevation
         if map_to_inclination:
             inclination = pi / 2 - elevation
-            return AbstractSphereSubsetDistribution._sph_to_cart_inclination(inclination, elevation)
-        
+            return AbstractSphereSubsetDistribution._sph_to_cart_inclination(
+                inclination, elevation
+            )
+
         x = cos(elevation) * cos(azimuth)
         y = cos(elevation) * sin(azimuth)
         z = sin(elevation)
         return x, y, z
-    
+
     @staticmethod
     def plot_unit_sphere():
         # Define the number of points to generate around the circle

@@ -2,12 +2,12 @@
 # pylint: disable=no-name-in-module,no-member
 import unittest
 
+import numpy.testing as npt
 from pyrecest.backend import linalg, ones, random
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
 )
-import numpy.testing as npt
 
 
 class HypersphericalUniformDistributionTest(unittest.TestCase):

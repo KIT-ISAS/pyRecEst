@@ -11,7 +11,6 @@ from pyrecest.backend import allclose, arange, array, column_stack, diff, ones, 
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
-import numpy.testing as npt
 
 
 class AbstractHypercylindricalDistributionTest(unittest.TestCase):

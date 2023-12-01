@@ -9,7 +9,6 @@ from pyrecest.backend import (
     array,
     exp,
     eye,
-    isclose,
     ones,
     ones_like,
     random,

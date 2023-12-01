@@ -33,7 +33,7 @@ class TestToroidalWrappedNormalDistribution(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__== "pyrecest.jax",
+        pyrecest.backend.__name__ == "pyrecest.jax",
         reason="Not supported on this backend",
     )
     def test_sampling(self):

@@ -3,6 +3,7 @@ import warnings
 from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
@@ -16,7 +17,6 @@ from pyrecest.backend import (
     sqrt,
     zeros,
 )
-import pyrecest.backend
 from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution import (
     AbstractSphericalDistribution,
 )
@@ -36,15 +36,17 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             self.assertTrue(issubclass(w[-1].category, UserWarning))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "jax",
-        reason="Not supported on this backend"
+        pyrecest.backend.__name__ == "jax", reason="Not supported on this backend"
     )
     def testNormalization(self):
         unnormalized_coeffs = random.uniform(size=(3, 5))
-        nan_matrix = array([
-            [0, float('nan'), float('nan'), float('nan'), float('nan')],
-            [0, 0, 0, float('nan'), float('nan')],
-            [0, 0, 0, 0, 0]])
+        nan_matrix = array(
+            [
+                [0, float("nan"), float("nan"), float("nan"), float("nan")],
+                [0, 0, 0, float("nan"), float("nan")],
+                [0, 0, 0, 0, 0],
+            ]
+        )
         shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs + nan_matrix)
         self.assertAlmostEqual(shd.integrate(), 1.0, delta=1e-6)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)

@@ -160,9 +160,14 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     @staticmethod
     def get_full_integration_boundaries(dim):
         lower_bounds = zeros((dim,))
-        upper_bounds = concatenate((array([2*pi]), pi*ones(dim-1)))
+        upper_bounds = concatenate((array([2 * pi]), pi * ones(dim - 1)))
 
-        return vstack((lower_bounds, upper_bounds,)).T
+        return vstack(
+            (
+                lower_bounds,
+                upper_bounds,
+            )
+        ).T
 
     def integrate(self, integration_boundaries=None):
         if integration_boundaries is None:

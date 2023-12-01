@@ -6,12 +6,14 @@ from typing import Union
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     allclose,
+    arange,
     array,
     atleast_2d,
     concatenate,
     cos,
-    empty,
+    diag,
     exp,
+    hstack,
     int32,
     int64,
     linalg,
@@ -21,13 +23,10 @@ from pyrecest.backend import (
     random,
     repeat,
     sin,
+    stack,
     sum,
     tile,
     where,
-    arange,
-    diag,
-    stack,
-    hstack,
 )
 from scipy.stats import multivariate_normal
 
@@ -48,30 +47,24 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             len(linalg.cholesky(C)) > 0
         ), "C must be positive definite"  # Will fail if not positive definite
         assert bound_dim <= mu.shape[0]
-        mu = where(
-            arange(mu.shape[0]) < bound_dim,
-            mod(mu, 2 * pi),
-            mu
-        )
+        mu = where(arange(mu.shape[0]) < bound_dim, mod(mu, 2 * pi), mu)
 
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim=bound_dim, lin_dim=mu.shape[0] - bound_dim
         )
 
-        self.mu = where(
-            arange(mu.shape[0]) < bound_dim,
-            mod(mu, 2.0 * pi),
-            mu
-        )
+        self.mu = where(arange(mu.shape[0]) < bound_dim, mod(mu, 2.0 * pi), mu)
         self.C = C
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
         xs = atleast_2d(xs)
-        condition = arange(xs.shape[1]) < self.bound_dim  # Create a condition based on column indices
+        condition = (
+            arange(xs.shape[1]) < self.bound_dim
+        )  # Create a condition based on column indices
         xs = where(
             condition[None, :],  # Broadcast the condition to match the shape of xs
             mod(xs, 2.0 * pi),  # Compute the modulus where the condition is True
-            xs  # Keep the original values where the condition is False
+            xs,  # Keep the original values where the condition is False
         )
 
         assert xs.shape[-1] == self.input_dim
@@ -126,11 +119,15 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         """
         mu_lin = self.mu[self.bound_dim :]  # noqa: E203
 
-        mu_bound_odd = sin(self.mu[:self.bound_dim]) * exp(-diag(self.C)[:self.bound_dim] / 2) 
-        mu_bound_even = cos(self.mu[:self.bound_dim]) * exp(-diag(self.C)[:self.bound_dim] / 2) 
-        
+        mu_bound_odd = sin(self.mu[: self.bound_dim]) * exp(
+            -diag(self.C)[: self.bound_dim] / 2
+        )
+        mu_bound_even = cos(self.mu[: self.bound_dim]) * exp(
+            -diag(self.C)[: self.bound_dim] / 2
+        )
+
         mu_bound = stack([mu_bound_even, mu_bound_odd], axis=1).reshape(-1)
-    
+
         return hstack((mu_bound, mu_lin))
 
     def hybrid_mean(self):
@@ -150,8 +147,8 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         """
         assert n > 0, "n must be positive"
         s = random.multivariate_normal(mean=self.mu, cov=self.C, size=(n,))
-        wrapped_values = mod(s[:, :self.bound_dim], 2.0 * pi)
-        unbounded_values = s[:, self.bound_dim:]
+        wrapped_values = mod(s[:, : self.bound_dim], 2.0 * pi)
+        unbounded_values = s[:, self.bound_dim :]
 
         # Concatenate the modified section with the unmodified section
         s = concatenate([wrapped_values, unbounded_values], axis=1)

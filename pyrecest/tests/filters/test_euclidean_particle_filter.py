@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, mean, ones, random, zeros, zeros_like, vstack
+from pyrecest.backend import array, mean, ones, random, vstack, zeros, zeros_like
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.euclidean_particle_filter import EuclideanParticleFilter
 
@@ -48,7 +48,9 @@ class EuclideanParticleFilterTest(unittest.TestCase):
 
     def test_predict_update_cycle_3d_forced_particle_pos_no_pred(self):
         force_first_particle_pos = array([1.1, 2.0, 3.0])
-        self.pf.filter_state.d = vstack((force_first_particle_pos, self.pf.filter_state.d[1:]))
+        self.pf.filter_state.d = vstack(
+            (force_first_particle_pos, self.pf.filter_state.d[1:])
+        )
         for _ in range(10):
             # jscpd:ignore-start
             self.pf.predict_identity(

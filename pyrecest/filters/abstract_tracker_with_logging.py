@@ -1,8 +1,10 @@
 from abc import ABC
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, full, hstack
-import pyrecest.backend
+
 
 class AbstractTrackerWithLogging(ABC):
     def __init__(self, **kwargs):
@@ -14,7 +16,9 @@ class AbstractTrackerWithLogging(ABC):
                 setattr(self, f"{clean_key}_over_time", array([[]]))
 
     def _store_estimates(self, curr_ests, estimates_over_time):
-        assert pyrecest.backend.__name__ != "pyrecest.jax", "Not supported on this backend"
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "Not supported on this backend"
         import numpy as _np
 
         # Ensure curr_ests is a 2D array

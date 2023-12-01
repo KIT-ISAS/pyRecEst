@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Callable
 from typing import Union
 
@@ -12,6 +13,7 @@ from pyrecest.backend import (
     array,
     atleast_1d,
     column_stack,
+    diag,
     empty,
     full,
     int32,
@@ -24,8 +26,6 @@ from pyrecest.backend import (
     reshape,
     sqrt,
     squeeze,
-    full,
-    diag,
     stack,
 )
 from pyrecest.utils.plotting import plot_ellipsoid
@@ -36,7 +36,6 @@ from scipy.stats import chi2
 from ..abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
-import warnings
 
 
 class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
@@ -44,7 +43,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         AbstractManifoldSpecificDistribution.__init__(self, dim)
         self._mean_numerical = None
         self._covariance_numerical = None
-        
+
     @property
     def input_dim(self):
         return self.dim
@@ -92,19 +91,25 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         proposal: Callable | None = None,
         start_point=None,
     ):
-        
         if start_point is None:
-            if 'mean' not in vars(self.__class__) and self._mean_numerical is None:
+            if "mean" not in vars(self.__class__) and self._mean_numerical is None:
                 # Warn if we need to determine the mean numerically
-                warnings.warn("Starting point for sampling not specified, need to determine the mean numerically.")
+                warnings.warn(
+                    "Starting point for sampling not specified, need to determine the mean numerically."
+                )
             start_point = self.mean()
-        
+
         start_point = atleast_1d(start_point)
-        assert start_point.shape == (self.input_dim,), "Starting point must be a 1D array of correct dimension"
-        
+        assert start_point.shape == (
+            self.input_dim,
+        ), "Starting point must be a 1D array of correct dimension"
+
         if proposal is None:
+
             def proposal(x, supposed_mean=start_point):
-                return x + random.multivariate_normal(supposed_mean, diag(ones(self.dim)), (self.dim,))
+                return x + random.multivariate_normal(
+                    supposed_mean, diag(ones(self.dim)), (self.dim,)
+                )
 
         # pylint: disable=duplicate-code
         return AbstractManifoldSpecificDistribution.sample_metropolis_hastings(
@@ -231,9 +236,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def integrate_numerically(self, left=None, right=None):
         if left is None:
-            left = full((self.dim,), -float('inf'))
+            left = full((self.dim,), -float("inf"))
         if right is None:
-            right = full((self.dim,), float('inf'))
+            right = full((self.dim,), float("inf"))
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right
         )

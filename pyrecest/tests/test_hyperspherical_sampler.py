@@ -20,6 +20,7 @@ healpy_installed = importlib.util.find_spec("healpy") is not None
 
 import numpy.testing as npt
 
+
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):
     @parameterized.expand(
         [

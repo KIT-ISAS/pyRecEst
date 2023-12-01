@@ -1,7 +1,10 @@
 import copy
 from math import pi
 from typing import Union
+
+import pyrecest.backend
 from beartype import beartype
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -17,10 +20,9 @@ from pyrecest.backend import (
     random,
     reshape,
     zeros,
-    atleast_1d,
 )
 from scipy.stats import multivariate_normal
-import pyrecest.backend
+
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -104,7 +106,9 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         if n <= 0:
             raise ValueError("n must be a positive integer")
 
-        assert pyrecest.backend.__name__ != 'pyrecest.jax', "jax backend not supported for sampling"
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "jax backend not supported for sampling"
         s = random.multivariate_normal(self.mu, self.C, (n,))
         s = mod(s, 2.0 * pi)  # wrap the samples
         return s
@@ -141,7 +145,12 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         """
 
         m = exp(
-            array([1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)])
+            array(
+                [
+                    1j * n * self.mu[i] - n**2 * self.C[i, i] / 2
+                    for i in range(self.dim)
+                ]
+            )
         )
 
         return m

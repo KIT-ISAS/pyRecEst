@@ -1,6 +1,8 @@
 from math import pi
 from typing import Union
 
+import pyrecest.backend
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
@@ -12,15 +14,15 @@ from pyrecest.backend import (
     log,
     mod,
     ndim,
+    ones,
     random,
     sqrt,
     squeeze,
     where,
     zeros,
-    ones,
 )
 from scipy.special import erf  # pylint: disable=no-name-in-module
-import pyrecest.backend
+
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
@@ -53,7 +55,9 @@ class WrappedNormalDistribution(
         return sqrt(self.C)
 
     def pdf(self, xs):
-        assert pyrecest.backend.__name__ != "pyrecest.jax", "Not supported on this backend"
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "Not supported on this backend"
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 
@@ -65,7 +69,7 @@ class WrappedNormalDistribution(
         # check if sigma is large and return uniform distribution in this case
         if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
             return 1.0 / (2.0 * pi) * ones(n_inputs)
-        
+
         result = zeros(n_inputs)
 
         x = mod(xs, 2.0 * pi)

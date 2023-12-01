@@ -1,11 +1,13 @@
 import unittest
 
+import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, cos, sin
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.filters.von_mises_fisher_filter import VonMisesFisherFilter
 
-import numpy.testing as npt
+
 class VMFFilterTest(unittest.TestCase):
     def setUp(self):
         """Initial setup for each test."""
