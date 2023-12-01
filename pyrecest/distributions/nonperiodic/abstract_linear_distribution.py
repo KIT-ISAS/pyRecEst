@@ -12,6 +12,7 @@ from pyrecest.backend import (
     array,
     atleast_1d,
     column_stack,
+    diag,
     empty,
     full,
     int32,
@@ -24,8 +25,6 @@ from pyrecest.backend import (
     reshape,
     sqrt,
     squeeze,
-    full,
-    diag,
     stack,
 )
 from pyrecest.utils.plotting import plot_ellipsoid
@@ -217,9 +216,9 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
 
     def integrate_numerically(self, left=None, right=None):
         if left is None:
-            left = full((self.dim,), -float('inf'))
+            left = full((self.dim,), -float("inf"))
         if right is None:
-            right = full((self.dim,), float('inf'))
+            right = full((self.dim,), float("inf"))
         return AbstractLinearDistribution.integrate_fun_over_domain(
             self.pdf, self.dim, left, right
         )

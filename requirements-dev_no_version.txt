@@ -39,8 +39,6 @@ pytz
 pyyaml
 requests
 scipy
-setuptools-scm
-setuptools
 shapely
 six
 sympy

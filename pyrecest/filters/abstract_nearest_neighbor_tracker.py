@@ -6,7 +6,7 @@ from abc import abstractmethod
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dstack, empty, ndim, stack
+from pyrecest.backend import dstack, ndim, stack
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_euclidean_filter import AbstractEuclideanFilter
@@ -147,7 +147,10 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             warnings.warn("Currently, there are zero targets.")
             point_ests = None
         else:
-            point_ests = stack([filter_obj.get_point_estimate() for filter_obj in self.filter_bank], axis=1)
+            point_ests = stack(
+                [filter_obj.get_point_estimate() for filter_obj in self.filter_bank],
+                axis=1,
+            )
             if flatten_vector:
                 point_ests = point_ests.flatten()
         return point_ests
