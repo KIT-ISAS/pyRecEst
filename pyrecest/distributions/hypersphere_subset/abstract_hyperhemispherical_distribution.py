@@ -139,7 +139,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             AbstractHyperhemisphericalDistribution.get_full_integration_boundaries(dim)
         )
         return AbstractHypersphereSubsetDistribution.integrate_fun_over_domain_part(
-            f_hypersph_coords, dim, integration_boundaries
+            f_hypersph_coords, integration_boundaries
         )
 
     def mode_numerical(self):
@@ -161,7 +161,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             },
         )
         m = AbstractHypersphereSubsetDistribution.hypersph_to_cart(array(result.x))
-        return (1 - 2 * (m[-1] < 0)) * m
+        return (1.0 - 2.0 * (m[-1] < 0)) * m
 
     @staticmethod
     def plot_hemisphere(resolution: Union[int, int32, int64] = 150):
