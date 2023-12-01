@@ -85,13 +85,15 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
                 if m < 0:
                     coeff_mat_real[n, n + m] = (
                         (-1) ** m
-                        * sqrt(2)
+                        * sqrt(2.0)
                         * (-1 if (-m) % 2 else 1)
                         * imag(self.coeff_mat[n, n + m])
                     )
                 elif m > 0:
                     coeff_mat_real[n, n + m] = (
-                        sqrt(2) * (-1 if m % 2 else 1) * real(self.coeff_mat[n, n + m])
+                        sqrt(2.0)
+                        * (-1 if m % 2 else 1)
+                        * real(self.coeff_mat[n, n + m])
                     )
                 else:  # m == 0
                     coeff_mat_real[n, n] = real(self.coeff_mat[n, n])
