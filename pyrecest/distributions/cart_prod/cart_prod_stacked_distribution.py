@@ -2,6 +2,7 @@
 from pyrecest.backend import concatenate, empty, hstack, prod
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
+from beartype import beartype
 
 
 class CartProdStackedDistribution(AbstractCartProdDistribution):
@@ -9,8 +10,9 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         self.dists = dists
         AbstractCartProdDistribution.__init__(self, sum(dist.dim for dist in dists))
 
-    def sample(self, n):
-        assert n > 0 and isinstance(n, int), "n must be a positive integer"
+    @beartype
+    def sample(self, n: int):
+        assert n > 0, "n must be positive"
         return hstack([dist.sample(n) for dist in self.dists])
 
     def pdf(self, xs):
