@@ -1,8 +1,8 @@
 # pylint: disable=no-name-in-module,no-member
+from beartype import beartype
 from pyrecest.backend import concatenate, empty, hstack, prod
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
-from beartype import beartype
 
 
 class CartProdStackedDistribution(AbstractCartProdDistribution):
