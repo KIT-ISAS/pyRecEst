@@ -67,7 +67,7 @@ class WrappedNormalDistribution(
             return result
 
         x = mod(xs, 2.0 * pi)
-        x[x < 0] += 2.0 * pi
+        x = where(x < 0, x + 2.0 * pi, x)
         x -= self.mu
 
         max_iterations = 1000
@@ -120,7 +120,7 @@ class WrappedNormalDistribution(
                 + ncdf(startingPoint + 2 * pi * i, xs + 2 * pi * i)
                 + ncdf(startingPoint - 2 * pi * i, xs - 2 * pi * i)
             )
-        # Val should be negative when x < startingPoint
+        # Val should be negative when x < starting_point
         val = where(xs < startingPoint, 1 + val, val)
         return squeeze(val)
 
