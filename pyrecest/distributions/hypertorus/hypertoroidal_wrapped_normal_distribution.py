@@ -139,7 +139,12 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         assert isinstance(n, int), "n must be an integer"
 
         m = exp(
-            [1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)]
+            array(
+                [
+                    1j * n * self.mu[i] - n**2 * self.C[i, i] / 2
+                    for i in range(self.dim)
+                ]
+            )
         )
 
         return m
