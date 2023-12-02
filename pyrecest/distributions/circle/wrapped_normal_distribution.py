@@ -12,6 +12,7 @@ from pyrecest.backend import (
     log,
     mod,
     ndim,
+    ones,
     random,
     sqrt,
     squeeze,
@@ -59,24 +60,24 @@ class WrappedNormalDistribution(
         if ndim(xs) == 0:
             xs = array([xs])
         n_inputs = xs.shape[0]
-        result = zeros(n_inputs)
 
         # check if sigma is large and return uniform distribution in this case
         if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
-            result[:] = 1.0 / (2 * pi)
-            return result
+            return 1.0 / (2.0 * pi) * ones(n_inputs)
+
+        result = zeros(n_inputs)
 
         x = mod(xs, 2.0 * pi)
         x = where(x < 0, x + 2.0 * pi, x)
         x -= self.mu
 
-        max_iterations = 1000
+        max_iterations: int = 1000
 
         tmp = -1.0 / (2.0 * self.sigma**2)
         nc = 1.0 / sqrt(2.0 * pi) / self.sigma
 
         for i in range(n_inputs):
-            old_result = 0
+            old_result = 0.0
             result[i] = exp(x[i] * x[i] * tmp)
 
             for k in range(1, max_iterations + 1):
