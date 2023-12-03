@@ -7,6 +7,7 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linspace
 from pyrecest.distributions import VonMisesDistribution
+from parameterized import parameterized
 
 matplotlib.use("Agg")
 
@@ -17,6 +18,19 @@ class TestVonMisesDistribution(unittest.TestCase):
         dist2 = VonMisesDistribution(2, 1)
         self.assertEqual(dist1.kappa, dist2.kappa)
         self.assertNotEqual(dist1.mu, dist2.mu)
+        
+    @parameterized.expand([
+        (0, 1.0),
+        (1, 0.44639)
+    ])
+    def test_trigonometric_moment_analytical(self, moment, expected_value):
+        dist = VonMisesDistribution(2, 1)
+        npt.assert_allclose(
+            dist.trigonometric_moment(moment), expected_value
+        )
+        npt.assert_allclose(
+            dist.trigonometric_moment_numerical(moment), expected_value
+        )
 
     def test_pdf(self):
         dist = VonMisesDistribution(2, 1)

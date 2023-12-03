@@ -4,6 +4,7 @@ from math import pi
 from pyrecest.backend import (
     abs,
     arctan2,
+    array,
     cos,
     exp,
     imag,
@@ -120,6 +121,25 @@ class VonMisesDistribution(AbstractCircularDistribution):
             2.0 * pi * iv(0, self.kappa)
         )
         return result
+
+    def trigonometric_moment(self, n: int):
+        if self.kappa == 0.0:
+            raise ValueError("Does not have mean direction")
+
+        if n == 0:
+            m = array(1.0)
+        elif n == 1:
+            m = VonMisesDistribution.besselratio(0, self.kappa) * exp(1j * n * self.mu)
+        elif n == 2:
+            m = (
+                VonMisesDistribution.besselratio(0, self.kappa)
+                * VonMisesDistribution.besselratio(1, self.kappa)
+                * exp(1j * n * self.mu)
+            )
+        else:
+            m = self.trigonometric_moment_numerical(n)
+
+        return m
 
     @staticmethod
     def from_moment(m):
