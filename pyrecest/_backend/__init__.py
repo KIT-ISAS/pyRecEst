@@ -13,7 +13,7 @@ import pyrecest._backend._common as common
 
 
 def get_backend_name():
-    return os.environ.get("PYRECEST_BACKEND", "numpy")
+    return os.environ.get("PYRECEST_BACKEND", "pytorch")
 
 
 BACKEND_NAME = get_backend_name()
@@ -191,6 +191,7 @@ BACKEND_ATTRIBUTES = {
         "min",
         "roll",
         "dstack",
+        "vmap",
     ],
     "autodiff": [
         "custom_gradient",
