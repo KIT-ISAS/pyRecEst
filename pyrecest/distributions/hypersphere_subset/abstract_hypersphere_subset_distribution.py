@@ -227,10 +227,9 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         integration_boundaries,
     ):
         if dim == 1:
-            i, _ = quad(
+            i, _ = nquad(
                 lambda phi: f_hypersph_coords(array(phi)),
-                integration_boundaries[0],
-                integration_boundaries[1],
+                integration_boundaries,
                 epsabs=0.01,
             )
         elif dim == 2:
