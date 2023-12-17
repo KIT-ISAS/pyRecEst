@@ -38,7 +38,7 @@ from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_
 class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def setUp(self):
         random.seed(1)
-        coeff_rand = random.rand(9)
+        coeff_rand = random.uniform(size=9)
         self.unnormalized_coeffs = array(
             [
                 [coeff_rand[0], float("NaN"), float("NaN"), float("NaN"), float("NaN")],
@@ -70,8 +70,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
         # Enforce unnormalized coefficients and compare ratio
         phi, theta = (
-            random.rand(1, 10) * 2.0 * pi,
-            random.rand(1, 10) * pi - pi / 2.0,
+            random.uniform(size=10) * 2.0 * pi,
+            random.uniform(size=10) * pi - pi / 2.0,
         )
         x, y, z = array([cos(theta) * cos(phi), cos(theta) * sin(phi), sin(theta)])
         vals_normalized = shd.pdf(column_stack([x, y, z]))
@@ -89,7 +89,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def test_integral_analytical(self, transformation):
         """Test if the analytical integral is equal to the numerical integral"""
         random.seed(10)
-        coeff_rand = random.rand(1, 9)
+        coeff_rand = random.uniform(size=9)
         unnormalized_coeffs = array(
             [
                 [
@@ -145,7 +145,10 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd5 = shd3.truncate(3)
         self.assertEqual(shd5.coeff_mat.shape, (4, 7))
 
-        phi, theta = random.rand(10) * 2 * pi, random.rand(10) * pi
+        phi, theta = (
+            random.uniform(0.0, 1.0, 10) * 2 * pi,
+            random.uniform(0.0, 1.0, 10) * pi,
+        )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
         self.assertTrue(
             allclose(

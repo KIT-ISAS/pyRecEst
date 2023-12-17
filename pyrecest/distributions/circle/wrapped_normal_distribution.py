@@ -1,6 +1,8 @@
 from math import pi
 from typing import Union
 
+import pyrecest.backend
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
@@ -53,6 +55,9 @@ class WrappedNormalDistribution(
         return sqrt(self.C)
 
     def pdf(self, xs):
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "Not supported on this backend"
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
 

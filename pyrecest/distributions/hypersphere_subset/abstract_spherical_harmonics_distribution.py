@@ -2,6 +2,8 @@ import copy
 import warnings
 from math import pi
 
+import pyrecest.backend
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import abs, atleast_2d, imag, isnan, real, sqrt, zeros
 from scipy.linalg import norm
@@ -22,9 +24,17 @@ class AbstractSphericalHarmonicsDistribution(
 
         # Ignore irrelevant entries of coeff_mat and set to NaN
         n = coeff_mat.shape[0]
+
         for i in range(n):
-            # Set the irrelevant elements to nan
-            coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
+            if pyrecest.backend.__name__ in (
+                "pyrecest.numpy",
+                "pyrecest.pytorch",
+            ):  # Set the irrelevant elements to nan
+                coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
+            else:
+                assert coeff_mat[i, 2 * i + 1 :].shape[0] == 0 or all(
+                    isnan(coeff_mat[i, 2 * i + 1 :])
+                )
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
 
     def pdf(self, xs):

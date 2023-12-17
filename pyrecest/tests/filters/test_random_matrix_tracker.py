@@ -88,7 +88,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
     )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_update(self, name, offset, _):
         ys = array([self.initial_state + offset_row for offset_row in offset]).T

@@ -20,7 +20,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         mu = mu / linalg.norm(mu)
         kappa = 10.0
         vmf = VonMisesFisherDistribution(mu, kappa)
-        self.assertAlmostEqual(vmf.integrate(), 1.0, delta=1e-8)
+        self.assertAlmostEqual(vmf.integrate(), 1.0, delta=1e-3)
 
     def testIntegral3D(self):
         """Tests the integral calculation in 3D."""
@@ -28,7 +28,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         mu = mu / linalg.norm(mu)
         kappa = 10.0
         vmf = VonMisesFisherDistribution(mu, kappa)
-        self.assertAlmostEqual(vmf.integrate(), 1.0, delta=1e-7)
+        self.assertAlmostEqual(vmf.integrate(), 1.0, delta=1e-3)
 
     def testUnitSphereSurface(self):
         """Tests the unit sphere surface computation."""

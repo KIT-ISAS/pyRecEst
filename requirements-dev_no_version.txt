@@ -1,3 +1,4 @@
+astropy-iers-data
 astropy
 autopep8
 beartype
@@ -18,10 +19,12 @@ jinja2
 kiwisolver
 markupsafe
 matplotlib
+ml-dtypes
 mpmath
 networkx
 numpy-quaternion
 numpy
+opt-einsum
 packaging
 pandas
 parameterized

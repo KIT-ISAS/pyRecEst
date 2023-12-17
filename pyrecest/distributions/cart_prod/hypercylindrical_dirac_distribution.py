@@ -2,7 +2,13 @@ from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import column_stack, cos, int32, int64, sin
+from pyrecest.backend import (
+    column_stack,
+    cos,
+    int32,
+    int64,
+    sin,
+)
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
@@ -38,8 +44,8 @@ class HypercylindricalDiracDistribution(
 
         # Stack the cos, sin, and linear components along a new last dimension
         S = column_stack(
-            (cos_vals, sin_vals, self.d[:, self.bound_dim :])  # noqa: E203
-        )
+            (cos_vals, sin_vals, self.d[:, self.bound_dim :])
+        )  # noqa: E203
 
         # Perform the weighted sum using matrix multiplication
         return self.w @ S

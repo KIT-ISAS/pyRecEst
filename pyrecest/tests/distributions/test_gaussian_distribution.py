@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+import pyrecest.backend
 import scipy
 
 # pylint: disable=no-name-in-module,no-member
@@ -51,8 +52,12 @@ class GaussianDistributionTest(unittest.TestCase):
 
         self.assertTrue(allclose(g_shifted.mode(), mu + shift_by, atol=1e-6))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_marginalization(self):
-        mu = array([1, 2])
+        mu = array([1.0, 2.0])
         C = array([[1.1, 0.4], [0.4, 0.9]])
         g = GaussianDistribution(mu, C)
 

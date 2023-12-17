@@ -61,6 +61,9 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
 
     @filter_state.setter
     def filter_state(self, new_state):
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "Not supported for JAX backend"
         if isinstance(new_state, list) and all(
             isinstance(item, AbstractEuclideanFilter) for item in new_state
         ):

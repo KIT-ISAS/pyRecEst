@@ -20,7 +20,7 @@ from pyrecest.distributions.cart_prod.custom_hypercylindrical_distribution impor
 
 class CustomHypercylindricalDistributionTest(unittest.TestCase):
     def setUp(self) -> None:
-        mat = random.rand(6, 6)
+        mat = random.uniform(size=(6, 6))
         mat = mat @ mat.T
         self.pwn = PartiallyWrappedNormalDistribution(
             array([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]), mat, 3
@@ -52,8 +52,8 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         npt.assert_allclose(self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        reason="Not supported on this backend",
     )
     def test_condition_on_linear(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_linear(array([2.0, 1.0]))
@@ -62,8 +62,8 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        reason="Not supported on this backend",
     )
     def test_condition_on_periodic(self):
         dist = self.chcd_vm_gauss_stacked.condition_on_periodic(array(1.0))

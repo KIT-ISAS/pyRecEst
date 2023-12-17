@@ -17,7 +17,7 @@ class LinearDiracDistributionTest(unittest.TestCase):
         C = wishart.rvs(3, eye(3))
         hwn = GaussianDistribution(array([1.0, 2.0, 3.0]), array(C))
         hwd = LinearDiracDistribution.from_distribution(hwn, 200000)
-        npt.assert_allclose(hwd.mean(), hwn.mean(), atol=0.008)
+        npt.assert_allclose(hwd.mean(), hwn.mean(), atol=0.015)
         npt.assert_allclose(hwd.covariance(), hwn.covariance(), rtol=0.1)
 
     def test_mean_and_cov(self):

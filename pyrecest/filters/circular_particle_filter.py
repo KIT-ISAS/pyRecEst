@@ -1,9 +1,12 @@
 from math import pi
-from typing import Union
+from typing import Callable, Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import float64, int32, int64, linspace, sum
-from pyrecest.distributions import CircularDiracDistribution
+from pyrecest.backend import float64, int32, int64, linspace, mod, squeeze, sum
+from pyrecest.distributions import (
+    AbstractHypertoroidalDistribution,
+    CircularDiracDistribution,
+)
 
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_particle_filter import AbstractParticleFilter
@@ -34,3 +37,21 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
         """
         likelihood_val = sum(likelihood.pdf(self.filter_state.d) * self.filter_state.w)
         return likelihood_val
+
+    # jscpd:ignore-start
+    def predict_nonlinear(
+        self,
+        f: Callable,
+        noise_distribution: AbstractHypertoroidalDistribution | None = None,
+        function_is_vectorized: bool = True,
+        shift_instead_of_add: bool = True,
+    ):
+        super().predict_nonlinear(
+            f,
+            noise_distribution,
+            function_is_vectorized,
+            shift_instead_of_add,
+        )
+        self.filter_state.d = squeeze(mod(self.filter_state.d, 2.0 * pi))
+
+    # jscpd:ignore-end

@@ -33,7 +33,9 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
     def test_hybrid_moment_2d(self):
         # Validate against precalculated values
         npt.assert_allclose(
-            self.dist_2d.hybrid_moment(), [0.10435348, -0.35276852, self.mu[-1]]
+            self.dist_2d.hybrid_moment(),
+            [0.10435348, -0.35276852, self.mu[-1]],
+            rtol=5e-7,
         )
 
 

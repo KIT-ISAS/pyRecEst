@@ -1,6 +1,8 @@
 import unittest
 import warnings
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, eye, linalg, ndim, random
 from pyrecest.distributions import (
@@ -25,7 +27,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         self.assertEqual(ndim(p), 0, "PDF size mismatch.")
 
         random.seed(10)
-        points = random.normal(0.0, 1.0, (100, 3))
+        points = random.normal(size=(100, 3))
         points = points[points[:, 2] >= 0.0, :]
         points /= linalg.norm(points, axis=1).reshape(-1, 1)
 
@@ -38,6 +40,10 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
             "PDF values do not match.",
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        "Test not supported for pytorch or jax backends",
+    )
     def test_integrate_bingham_s2(self):
         """Test that the distribution integrates to 1."""
         self.custom_hemispherical_distribution.pdf(array([1.0, 0.0, 0.0]))

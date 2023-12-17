@@ -62,8 +62,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             arange(xs.shape[1]) < self.bound_dim
         )  # Create a condition based on column indices
         xs = where(
-            # Broadcast the condition to match the shape of xs
-            condition[None, :],  # noqa: E203
+            condition[None, :],  # Broadcast the condition to match the shape of xs
             mod(xs, 2.0 * pi),  # Compute the modulus where the condition is True
             xs,  # Keep the original values where the condition is False
         )
@@ -149,7 +148,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         assert n > 0, "n must be positive"
         s = random.multivariate_normal(mean=self.mu, cov=self.C, size=(n,))
         wrapped_values = mod(s[:, : self.bound_dim], 2.0 * pi)
-        unbounded_values = s[:, self.bound_dim :]  # noqa: E203
+        unbounded_values = s[:, self.bound_dim :]
 
         # Concatenate the modified section with the unmodified section
         s = concatenate([wrapped_values, unbounded_values], axis=1)

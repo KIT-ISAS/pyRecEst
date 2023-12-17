@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from typing import Callable
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from .abstract_lin_periodic_cart_prod_distribution import (

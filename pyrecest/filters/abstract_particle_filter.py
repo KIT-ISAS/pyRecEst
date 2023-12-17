@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, ones_like, random, sum, vmap, reshape
+from pyrecest.backend import ndim, ones_like, random, sum, zeros
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -41,12 +41,21 @@ class AbstractParticleFilter(AbstractFilterType):
                 1
             )  # Assuming sample(1) returns a single row of values
 
+
+        def add_noise_to_sample(d):
+            noise_curr = noise_distribution.set_mean(d)
+            return noise_curr.sample(
+                1
+            )  # Assuming sample(1) returns a single row of values
+
         if noise_distribution is not None:
             if not shift_instead_of_add:
                 noise = noise_distribution.sample(self.filter_state.w.shape[0])
                 self.filter_state.d = self.filter_state.d + noise
             else:
-                self.filter_state.d = reshape(vmap(add_noise_to_sample, randomness='different')(self.filter_state.d), self.filter_state.d.shape)
+                for i in range(n_particles):
+                    noise_curr = noise_distribution.set_mean(self.filter_state.d[i])
+                    self.filter_state.d[i] = noise_curr.sample(1)
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
@@ -57,9 +66,9 @@ class AbstractParticleFilter(AbstractFilterType):
         n_particles = self.filter_state.w.shape[0]
         noise_samples = random.choice(samples, n_particles, p=weights)
 
-        batched_apply_f = vmap(f)
-
-        d = batched_apply_f(self.filter_state.d, noise_samples)
+        d = zeros((n_particles, self.filter_state.dim))
+        for i in range(n_particles):
+            d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
 
         self._filter_state.d = d
 

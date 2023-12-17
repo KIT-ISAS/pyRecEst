@@ -13,25 +13,25 @@ from pyrecest.distributions import (
 class HypersphericalUniformDistributionTest(unittest.TestCase):
     def test_integrate_2d(self):
         hud = HypersphericalUniformDistribution(2)
-        npt.assert_allclose(hud.integrate(), 1, atol=1e-6)
+        self.assertAlmostEqual(hud.integrate(), 1.0, delta=1e-6)
 
     def test_integrate_3d(self):
         hud = HypersphericalUniformDistribution(3)
-        npt.assert_allclose(hud.integrate(), 1, atol=1e-6)
+        self.assertAlmostEqual(hud.integrate(), 1.0, delta=1e-6)
 
     def test_pdf(self):
         random.seed(0)
         for dim in range(2, 5):
             hud = HypersphericalUniformDistribution(dim)
-            x = random.rand(dim + 1)
+            x = random.uniform(size=(dim + 1,))
             x = x / linalg.norm(x)
-            npt.assert_allclose(
+            self.assertAlmostEqual(
                 hud.pdf(x),
                 1
                 / AbstractHypersphericalDistribution.compute_unit_hypersphere_surface(
                     dim
                 ),
-                atol=1e-10,
+                delta=1e-10,
             )
 
     def test_sample(self):

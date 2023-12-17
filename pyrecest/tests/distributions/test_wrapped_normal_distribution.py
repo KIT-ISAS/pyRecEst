@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
@@ -15,6 +16,10 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.sigma = array(1.5)
         self.wn = WrappedNormalDistribution(self.mu, self.sigma)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf_values_are_as_expected(self):
         """
         Test that the probability density function (pdf) returns expected values.
@@ -41,6 +46,10 @@ class WrappedNormalDistributionTest(unittest.TestCase):
             )
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf_with_large_sigma_is_uniform(self):
         """
         Test that the pdf with large sigma is approximately a uniform distribution.

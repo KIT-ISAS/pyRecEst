@@ -2,6 +2,9 @@ import copy
 from math import pi
 from typing import Union
 
+import pyrecest.backend
+from beartype import beartype
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -103,6 +106,9 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         if n <= 0:
             raise ValueError("n must be a positive integer")
 
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "jax backend not supported for sampling"
         s = random.multivariate_normal(self.mu, self.C, (n,))
         s = mod(s, 2.0 * pi)  # wrap the samples
         return s
@@ -128,7 +134,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         dist.mu = m
         return dist
 
-    def trigonometric_moment(self, n):
+    @beartype
+    def trigonometric_moment(self, n: int):
         """
         Calculate the trigonometric moment of the HypertoroidalWNDistribution.
 
@@ -136,7 +143,6 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param n: Integer moment order
         :return: Trigonometric moment
         """
-        assert isinstance(n, int), "n must be an integer"
 
         m = exp(
             array(

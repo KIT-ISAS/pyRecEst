@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable
+from beartype.typing import Callable
 
 import numpy as np
 from beartype import beartype

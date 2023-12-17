@@ -31,6 +31,10 @@ class TestToroidalUniformDistribution(unittest.TestCase):
             )
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_trigonometric_moments(self):
         for k in range(4):
             self.assertTrue(
@@ -60,7 +64,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_entropy(self):
         self.assertAlmostEqual(

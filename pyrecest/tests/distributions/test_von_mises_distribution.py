@@ -8,6 +8,8 @@ import numpy.testing as npt
 from pyrecest.backend import array, linspace
 from pyrecest.distributions import VonMisesDistribution
 
+matplotlib.use("Agg")
+
 
 class TestVonMisesDistribution(unittest.TestCase):
     def test_vm_init(self):
@@ -35,8 +37,6 @@ class TestVonMisesDistribution(unittest.TestCase):
         )
 
     def test_plot(self):
-        matplotlib.pyplot.close("all")
-        matplotlib.use("Agg")
         vm = VonMisesDistribution(0, 1)
         vm.plot()
         plt.close()

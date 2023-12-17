@@ -18,7 +18,7 @@ class AbstractHypertoroidalFilter(AbstractManifoldSpecificFilter):
         """
         Get the point estimate.
 
-        This method is responsible for [add more detailed information here].
+        This method is responsible for getting the point estimate..
 
         :return: The mean direction of the filter state.
         """

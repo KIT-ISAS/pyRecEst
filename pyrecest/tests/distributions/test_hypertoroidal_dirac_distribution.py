@@ -83,18 +83,18 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         twd_shifted = twd.shift(s)
         self.assertIsInstance(twd_shifted, HypertoroidalDiracDistribution)
         npt.assert_array_almost_equal(twd.w, twd_shifted.w)
-        npt.assert_array_almost_equal(
+        npt.assert_allclose(
             AbstractHypertoroidalDistribution.angular_error(twd.d, twd_shifted.d - s),
             zeros_like(twd.d),
-            decimal=10,
+            atol=1e-6,
         )
 
     @staticmethod
     def get_pseudorandom_hypertoroidal_wd(dim=2):
         random.seed(0)
         n = 20
-        d = 2.0 * pi * random.rand(n, dim)
-        w = random.rand(n)
+        d = 2.0 * pi * random.uniform(size=(n, dim))
+        w = random.uniform(size=n)
         w = w / sum(w)
         hwd = HypertoroidalDiracDistribution(d, w)
         return hwd

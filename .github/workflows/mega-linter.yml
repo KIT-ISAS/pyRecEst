@@ -99,7 +99,7 @@ jobs:
         run: |
           sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt
 
-      - name: Remove torch, tirton, and nvidia entries (unsupported by alpine)
+      - name: Remove torch, triton, jax, and nvidia entries (unsupported by alpine)
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           sed -i '/^torch/d' requirements-dev_no_version.txt
@@ -147,7 +147,7 @@ jobs:
 
           while read requirement; do
             echo "Installing $requirement..."
-            pip install "$requirement" --find-links=./alpine-wheels
+            python -m pip install "$requirement" --find-links=./alpine-wheels
           done < requirements-dev_no_version.txt
 
         shell: alpine.sh {0}
@@ -206,7 +206,7 @@ jobs:
         id: ml
         # You can override MegaLinter flavor used to have faster performances
         # More info at https://megalinter.io/latest/configuration/#shared-variables
-        uses: oxsecurity/megalinter/flavors/python@v7.7.0
+        uses: oxsecurity/megalinter/flavors/python@v7.6.0
         env:
           # All available variables are described in documentation
           # https://megalinter.io/latest/configuration/#shared-variables

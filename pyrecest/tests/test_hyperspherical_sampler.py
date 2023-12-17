@@ -1,7 +1,6 @@
 import importlib.util
 import unittest
 
-import numpy.testing as npt
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
@@ -18,6 +17,8 @@ from ..sampling.hyperspherical_sampler import (
 )
 
 healpy_installed = importlib.util.find_spec("healpy") is not None
+
+import numpy.testing as npt
 
 
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):
@@ -129,7 +130,7 @@ class TestHopfConversion(unittest.TestCase):
     def test_conversion(self):
         # Generate a sample matrix of size (n, 4) containing unit vectors.
         n = 100  # sample size
-        random_vectors = random.normal(0.0, 1.0, (n, 4))
+        random_vectors = random.normal(size=(n, 4))
         unit_vectors = random_vectors / linalg.norm(random_vectors, axis=1)[:, None]
 
         # Pass the quaternions through the conversion functions
