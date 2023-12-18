@@ -27,3 +27,6 @@ torch = "*"
 autopep8 = "^2.0.2"
 pytest = "*"
 parameterized = "*"
+
+[tool.mypy]
+check_untyped_defs = true
