@@ -78,9 +78,16 @@ jobs:
       - name: List workspace
         run: ls -l .
 
+      - name: Create Python virtual environment
+        run: |
+          python -m venv "${{ github.workspace }}/venv"
+          echo "VENV_PATH=${{ github.workspace }}/venv" >> $GITHUB_ENV      
+
       - name: Upgrade pip and install requirements for building
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
+          source $VENV_PATH/bin/activate
+          python -m ensurepip
           python -m pip install --upgrade pip
           python -m pip install --upgrade meson-python meson ninja wheel build
         shell: alpine.sh {0}
@@ -89,7 +96,6 @@ jobs:
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt
-        shell: alpine.sh {0}
 
       - name: Remove torch, tirton, and nvidia entries (unsupported by alpine)
         if: steps.cache-wheels.outputs.cache-hit != 'true'
@@ -97,7 +103,6 @@ jobs:
           sed -i '/^torch/d' requirements-dev_no_version.txt
           sed -i '/^nvidia/d' requirements-dev_no_version.txt
           sed -i '/^triton/d' requirements-dev_no_version.txt
-        shell: alpine.sh {0}
 
       - name: Run CMake to find LAPACK
         if: steps.cache-wheels.outputs.cache-hit != 'true'
@@ -125,6 +130,7 @@ jobs:
           git clone https://github.com/FlorianPfaff/SHTOOLS.git
           cd SHTOOLS
           git checkout meson
+          source $VENV_PATH/bin/activate
           python -m build
           cd ..
           mv SHTOOLS/dist/*.whl ./alpine-wheels/
@@ -134,6 +140,7 @@ jobs:
       - name: Install Packages Sequentially
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
+          source $VENV_PATH/bin/activate
           cat requirements-dev_no_version.txt
 
           while read requirement; do
@@ -145,18 +152,22 @@ jobs:
 
       - name: Freeze requirements
         if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: python -m pip freeze > requirements-tmp.txt
+        run: |
+          source $VENV_PATH/bin/activate
+          python -m pip freeze > requirements-tmp.txt
         shell: alpine.sh {0}
 
       - name: Download compatible packages
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
+          source $VENV_PATH/bin/activate
           python -m pip download --find-links=./alpine-wheels -r requirements-tmp.txt -d ./alpine-wheels
         shell: alpine.sh {0}
 
       - name: Build wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
+          source $VENV_PATH/bin/activate
           cd ./alpine-wheels
 
           # Set a flag to indicate if any .tar.gz files are found
@@ -181,11 +192,12 @@ jobs:
           cd ..
         shell: alpine.sh {0}
 
+      - name: Clean up temporary files (in case they are generated)
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
+        run: rm -r venv CMakeFiles CMakeCache.txt cmake_install.cmake Makefile
+
       - name: List available wheels
         run: ls -l ./alpine-wheels
-
-      - name: Clean up temporary files (in case they are generated)
-        run: rm -rf myenv CMakeFiles CMakeCache.txt cmake_install.cmake Makefile
 
       # MegaLinter
       - name: MegaLinter
