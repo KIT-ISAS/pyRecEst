@@ -83,7 +83,7 @@ jobs:
           python -m venv "${{ github.workspace }}/venv"
           echo "VENV_PATH=${{ github.workspace }}/venv" >> "$GITHUB_ENV"
         shell: alpine.sh {0}
-      
+
       - name: Upgrade pip and install requirements for building
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
