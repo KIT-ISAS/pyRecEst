@@ -33,3 +33,6 @@ check_untyped_defs = true
 
 [tool.ruff]
 line-length = 180
+
+[tool.bandit]
+skips = ["assert_used"]
