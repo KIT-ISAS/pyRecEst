@@ -79,6 +79,7 @@ jobs:
         run: ls -l .
 
       - name: Create Python virtual environment
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           python -m venv "${{ github.workspace }}/venv"
           echo "VENV_PATH=${{ github.workspace }}/venv" >> "$GITHUB_ENV"
