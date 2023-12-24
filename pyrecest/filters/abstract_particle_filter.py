@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, ones_like, random, sum, vstack, zeros, reshape
+from pyrecest.backend import ndim, ones_like, random, sum, vstack, vmap, reshape
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -34,7 +34,7 @@ class AbstractParticleFilter(AbstractFilterType):
             self.filter_state.d = f(self.filter_state.d)
         else:
             self.filter_state = self.filter_state.apply_function(f)
-
+            
         n_particles = self.filter_state.w.shape[0]
         if noise_distribution is not None:
             # Cannot easily use vmap because control flow depends on data for some lower level function
@@ -58,9 +58,9 @@ class AbstractParticleFilter(AbstractFilterType):
         n_particles = self.filter_state.w.shape[0]
         noise_samples = random.choice(samples, n_particles, p=weights)
 
-        d = zeros((n_particles, self.filter_state.dim))
-        for i in range(n_particles):
-            d[i, :] = f(self.filter_state.d[i, :], noise_samples[i])
+        batched_apply_f = vmap(f)
+
+        d = batched_apply_f(self.filter_state.d, noise_samples)
 
         self._filter_state.d = d
 
