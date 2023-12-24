@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, ones_like, random, sum, vstack, vmap, reshape
+from pyrecest.backend import ndim, ones_like, random, reshape, sum, vmap, vstack
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -34,21 +34,25 @@ class AbstractParticleFilter(AbstractFilterType):
             self.filter_state.d = f(self.filter_state.d)
         else:
             self.filter_state = self.filter_state.apply_function(f)
-            
+
         n_particles = self.filter_state.w.shape[0]
         if noise_distribution is not None:
             # Cannot easily use vmap because control flow depends on data for some lower level function
             updated_particles = []
             for i in range(n_particles):
                 if not shift_instead_of_add:
-                    noise = noise_distribution.sample(1)  # Assuming sample(1) returns a single row of values
+                    noise = noise_distribution.sample(
+                        1
+                    )  # Assuming sample(1) returns a single row of values
                     updated_particles.append(self.filter_state.d[i] + noise)
                 else:
                     noise_curr = noise_distribution.set_mean(self.filter_state.d[i])
                     updated_particles.append(noise_curr.sample(1))
 
-            self.filter_state.d = reshape(vstack(updated_particles), self.filter_state.d.shape)
-            
+            self.filter_state.d = reshape(
+                vstack(updated_particles), self.filter_state.d.shape
+            )
+
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
             samples.shape[0] == weights.shape[0]
