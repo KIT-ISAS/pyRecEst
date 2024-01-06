@@ -223,41 +223,31 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     def integrate_fun_over_domain_part(
         f_hypersph_coords: Callable,
-        dim: Union[int, int32, int64],
         integration_boundaries,
     ):
+        dim = integration_boundaries.shape[1]
         if dim == 1:
-            i, _ = nquad(
-                lambda phi: f_hypersph_coords(array(phi)),
-                integration_boundaries,
-                opts={"epsabs": 1e-3, "epsrel": 1e-3},
-            )
+            
+            def g(phi):  # type: ignore
+                return f_hypersph_coords(array(phi))
         elif dim == 2:
 
-            def g_2d(phi1, phi2):
+            def g(phi1, phi2):  # type: ignore
                 return f_hypersph_coords(array(phi1), array(phi2)) * sin(phi2)
 
-            i, _ = nquad(
-                g_2d,
-                integration_boundaries,
-                opts={"epsabs": 1e-3, "epsrel": 1e-3},
-            )
         elif dim == 3:
 
-            def g_3d(phi1, phi2, phi3):
+            def g(phi1, phi2, phi3):  # type: ignore
                 return (
                     f_hypersph_coords(array(phi1), array(phi2), array(phi3))
                     * sin(phi2)
                     * (sin(phi3)) ** 2
                 )
 
-            i, _ = nquad(
-                g_3d,
-                integration_boundaries,
-                opts={"epsabs": 1e-3, "epsrel": 1e-3},
-            )
         else:
             raise ValueError("Dimension not supported.")
+        
+        i, _ = nquad(g, integration_boundaries)
 
         return i
 
