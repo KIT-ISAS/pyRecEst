@@ -355,21 +355,21 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return 0.5 * distance_integral
 
     @staticmethod
-    def polar_to_cart(polar_coords):
-        polar_coords = atleast_2d(polar_coords)
+    def hypersph_to_cart(hypersph_coords):
+        hypersph_coords = atleast_2d(hypersph_coords)
 
         coords = zeros(
             (
-                polar_coords.shape[0],
-                polar_coords.shape[1] + 1,
+                hypersph_coords.shape[0],
+                hypersph_coords.shape[1] + 1,
             )
         )
-        coords[:, 0] = sin(polar_coords[:, 0]) * cos(polar_coords[:, 1])
-        coords[:, 1] = sin(polar_coords[:, 0]) * sin(polar_coords[:, 1])
-        coords[:, 2] = cos(polar_coords[:, 0])
-        for i in range(2, polar_coords.shape[1]):
-            coords[:, :-i] *= sin(polar_coords[:, i])  # noqa: E203
-            coords[:, -i] = cos(polar_coords[:, i])
+        coords[:, 0] = sin(hypersph_coords[:, 0]) * cos(hypersph_coords[:, 1])
+        coords[:, 1] = sin(hypersph_coords[:, 0]) * sin(hypersph_coords[:, 1])
+        coords[:, 2] = cos(hypersph_coords[:, 0])
+        for i in range(2, hypersph_coords.shape[1]):
+            coords[:, :-i] *= sin(hypersph_coords[:, i])  # noqa: E203
+            coords[:, -i] = cos(hypersph_coords[:, i])
         return squeeze(coords)
 
     @staticmethod
