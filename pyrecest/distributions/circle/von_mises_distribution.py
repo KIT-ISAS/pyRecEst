@@ -3,8 +3,8 @@ from math import pi
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    array,
     arctan2,
+    array,
     cos,
     exp,
     imag,
@@ -121,12 +121,12 @@ class VonMisesDistribution(AbstractCircularDistribution):
             2.0 * pi * iv(0, self.kappa)
         )
         return result
-    
+
     def trigonometric_moment(self, n: int):
         if n in (0, 1, 2):
             return self.trigonometric_moment_analytic(n)
         return self.trigonometric_moment_numerical(n)
-    
+
     def trigonometric_moment_analytic(self, n: int):
         if self.kappa == 0.0:
             raise ValueError("Does not have mean direction")
@@ -144,7 +144,6 @@ class VonMisesDistribution(AbstractCircularDistribution):
             raise NotImplementedError("Not implemented")
 
         return m
-
 
     @staticmethod
     def from_moment(m):
