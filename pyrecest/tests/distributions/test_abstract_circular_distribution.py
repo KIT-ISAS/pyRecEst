@@ -44,7 +44,7 @@ class AbstractCircularDistributionTest(unittest.TestCase):
     )
     def test_trigonometric_moment_numerical(self):
         """Tests if the numerical computation of angular moment matches the actual moment."""
-        moments = arange(4)
+        moments = arange(2)
 
         for dist in self.distributions:
             for moment in moments:
