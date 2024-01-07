@@ -10,11 +10,11 @@ import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
-    atleast_2d,
     abs,
     angle,
     arange,
     array,
+    atleast_2d,
     column_stack,
     cos,
     int32,
@@ -29,8 +29,8 @@ from pyrecest.backend import (
     random,
     sin,
     sqrt,
-    zeros,
     vstack,
+    zeros,
 )
 from scipy.integrate import nquad
 
@@ -49,7 +49,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def integrate_fun_over_domain(f: Callable, dim: Union[int, int32, int64]) -> float:
-        integration_boundaries = column_stack((zeros(dim), 2*pi*ones(dim)))
+        integration_boundaries = column_stack((zeros(dim), 2 * pi * ones(dim)))
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
             f, integration_boundaries
         )
@@ -82,9 +82,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return shifted_distribution
 
     @staticmethod
-    def integrate_fun_over_domain_part(
-        f: Callable, integration_boundaries
-    ) -> float:
+    def integrate_fun_over_domain_part(f: Callable, integration_boundaries) -> float:
         integration_boundaries = atleast_2d(integration_boundaries)
         assert integration_boundaries.shape[-1] == 2
 
