@@ -62,7 +62,8 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             arange(xs.shape[1]) < self.bound_dim
         )  # Create a condition based on column indices
         xs = where(
-            condition[None, :],  # Broadcast the condition to match the shape of xs
+            # Broadcast the condition to match the shape of xs
+            condition[None, :],  # noqa: E203
             mod(xs, 2.0 * pi),  # Compute the modulus where the condition is True
             xs,  # Keep the original values where the condition is False
         )
