@@ -227,9 +227,10 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         integration_boundaries,
     ):
         if dim == 1:
-            
+
             def g(phi):  # type: ignore
                 return f_hypersph_coords(array(phi))
+
         elif dim == 2:
 
             def g(phi1, phi2):  # type: ignore
@@ -246,7 +247,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
         else:
             raise ValueError("Dimension not supported.")
-        
+
         i, _ = nquad(g, integration_boundaries)
 
         return i
