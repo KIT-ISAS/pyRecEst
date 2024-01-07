@@ -1,7 +1,9 @@
 import warnings
+
 import numpy as np
 from beartype import beartype
 from beartype.typing import Callable
+
 
 @beartype
 def determine_all_deviations(
