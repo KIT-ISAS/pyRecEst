@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, mean, zeros
+from pyrecest.backend import linalg, mean, vmap
 
 
 def anees(estimates, uncertainties, groundtruths):
@@ -9,10 +9,13 @@ def anees(estimates, uncertainties, groundtruths):
     assert uncertainties.shape == (n, dim, dim)
     assert groundtruths.shape == (n, dim)
 
-    NEES = zeros(n)
+    # Define a function to compute NEES for a single estimate
+    def single_nees(estimate, uncertainty, groundtruth):
+        error = estimate - groundtruth
+        return error.T @ linalg.solve(uncertainty, error)
 
-    for i in range(n):
-        error = estimates[i] - groundtruths[i]
-        NEES[i] = error.T @ linalg.solve(uncertainties[i], error)
+    # Vectorize the single_nees function over the batch dimension
+    batch_nees = vmap(single_nees)
 
+    NEES = batch_nees(estimates, uncertainties, groundtruths)
     return mean(NEES)
