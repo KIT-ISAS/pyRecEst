@@ -2,13 +2,7 @@ from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import (
-    column_stack,
-    cos,
-    int32,
-    int64,
-    sin,
-)
+from pyrecest.backend import column_stack, cos, int32, int64, sin
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
