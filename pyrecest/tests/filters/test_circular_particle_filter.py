@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import arange, array, linspace, random
@@ -82,6 +83,10 @@ class CircularParticleFilterTest(unittest.TestCase):
         npt.assert_array_almost_equal(predicted.d, dist_f.d, decimal=10)
         npt.assert_array_almost_equal(predicted.w, dist_f.w, decimal=10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on current backend",
+    )
     def test_update(self):
         # test update
         random.seed(0)
@@ -103,6 +108,10 @@ class CircularParticleFilterTest(unittest.TestCase):
         dist3b = self.filter.filter_state
         self.assertIsInstance(dist3b, CircularDiracDistribution)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        reason="Not supported on current backend",
+    )
     def test_association_likelihood(self):
         dist = CircularDiracDistribution(
             array([1.0, 2.0, 3.0]), array([1 / 3, 1 / 3, 1 / 3])

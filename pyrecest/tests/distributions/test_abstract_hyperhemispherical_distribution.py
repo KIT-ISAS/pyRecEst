@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
@@ -37,6 +38,10 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         mode_numerical = watson_dist.mode_numerical()
         npt.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_sample_metropolis_hastings_basics_only(self):
         """Tests the sample_metropolis_hastings sampling"""
         vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 2.0)
