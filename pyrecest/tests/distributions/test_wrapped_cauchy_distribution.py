@@ -40,8 +40,8 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        reason="Not supported on this backend",
     )
     def test_cdf(self):
         dist = WrappedCauchyDistribution(self.mu, self.gamma)

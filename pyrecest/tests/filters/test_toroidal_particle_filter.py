@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+import pyrecest
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, random
@@ -15,6 +16,10 @@ from pyrecest.filters.toroidal_particle_filter import ToroidalParticleFilter
 
 
 class ToroidalParticleFilterTest(unittest.TestCase):
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_toroidal_particle_filter(self):
         random.seed(0)
         C = array([[0.7, 0.4], [0.4, 0.6]])

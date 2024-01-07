@@ -40,8 +40,8 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
             npt.assert_allclose(self.wl.pdf(array(x)), pdftemp(array(x)), rtol=1e-6)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        reason="Not supported on this backend",
     )
     def test_integral(self):
         npt.assert_allclose(self.wl.integrate(), 1.0, rtol=1e-10)
@@ -53,6 +53,10 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
             rtol=1e-10,
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_angular_moments(self):
         for i in range(1, 4):
             npt.assert_allclose(

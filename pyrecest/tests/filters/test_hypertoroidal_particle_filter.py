@@ -2,6 +2,7 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, random, zeros, zeros_like
@@ -21,9 +22,15 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.forced_mean = array([1.0, 2.0, 3.0])
         random.seed(self.seed)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax", reason="Backend not supported'"
+    )
     def test_setting_state(self):
         self.hpf.filter_state = self.hwnd
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax", reason="Backend not supported'"
+    )
     def test_predict_identity(self):
         self.hpf.predict_identity(
             HypertoroidalWNDistribution(zeros(3), 0.5 * self.covariance_matrix)
@@ -37,6 +44,9 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         )
         self.assertEqual(self.hpf.get_point_estimate().shape, (3,))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax", reason="Backend not supported'"
+    )
     def test_predict_update_cycle_3D(self):
         self.hpf.filter_state = self.hwnd
         for _ in range(5):
