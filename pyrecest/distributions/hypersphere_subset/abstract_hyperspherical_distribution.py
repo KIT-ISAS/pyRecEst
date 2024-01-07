@@ -226,7 +226,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             AbstractHypersphericalDistribution.get_full_integration_boundaries(dim)
         )
         return AbstractHypersphereSubsetDistribution.integrate_fun_over_domain_part(
-            f_hypersph_coords, dim, integration_boundaries
+            f_hypersph_coords, integration_boundaries
         )
 
     @staticmethod

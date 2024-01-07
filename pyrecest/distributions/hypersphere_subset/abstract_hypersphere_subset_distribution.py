@@ -223,9 +223,9 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     def integrate_fun_over_domain_part(
         f_hypersph_coords: Callable,
-        dim: Union[int, int32, int64],
         integration_boundaries,
     ):
+        dim = integration_boundaries.shape[0]
         if dim == 1:
 
             def g(phi):  # type: ignore
@@ -260,7 +260,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             )
         f = self.gen_pdf_hyperspherical_coords()
         return AbstractHypersphereSubsetDistribution.integrate_fun_over_domain_part(
-            f, self.dim, integration_boundaries
+            f, integration_boundaries
         )
 
     def mode(self):
