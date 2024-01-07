@@ -38,7 +38,7 @@ from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_
 class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def setUp(self):
         random.seed(1)
-        coeff_rand = random.rand(9)
+        coeff_rand = random.uniform(size=9)
         self.unnormalized_coeffs = array(
             [
                 [coeff_rand[0], float("NaN"), float("NaN"), float("NaN"), float("NaN")],

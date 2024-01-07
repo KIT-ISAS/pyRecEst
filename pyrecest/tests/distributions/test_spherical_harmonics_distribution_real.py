@@ -435,15 +435,15 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
                     ]
                 ),
             ),
-            ("random", random.rand(4, 7)),
+            ("random", random.uniform(size=(4, 7))),
         ]  # jscpd:ignore-end
     )
     def test_conversion(self, _, coeff_mat):
         rshd = SphericalHarmonicsDistributionReal(coeff_mat)
         cshd = rshd.to_spherical_harmonics_distribution_complex()
         phi_to_test, theta_to_test = (
-            random.rand(10) * 2 * pi,
-            random.rand(10) * pi - pi / 2,
+            random.uniform(size=10) * 2 * pi,
+            random.uniform(size=10) * pi - pi / 2,
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi_to_test, theta_to_test)
         npt.assert_allclose(

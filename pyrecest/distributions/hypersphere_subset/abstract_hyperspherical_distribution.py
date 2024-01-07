@@ -194,7 +194,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 AbstractHypersphereSubsetDistribution.hypersph_to_cart(array(s))
             )
 
-        s0 = random.rand(self.dim) * pi
+        s0 = random.uniform(size=self.dim) * pi
         res = minimize(
             fun,
             s0,
