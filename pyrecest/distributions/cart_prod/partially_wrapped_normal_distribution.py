@@ -149,7 +149,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         assert n > 0, "n must be positive"
         s = random.multivariate_normal(mean=self.mu, cov=self.C, size=(n,))
         wrapped_values = mod(s[:, : self.bound_dim], 2.0 * pi)
-        unbounded_values = s[:, self.bound_dim :]
+        unbounded_values = s[:, self.bound_dim :]  # noqa: E203
 
         # Concatenate the modified section with the unmodified section
         s = concatenate([wrapped_values, unbounded_values], axis=1)
