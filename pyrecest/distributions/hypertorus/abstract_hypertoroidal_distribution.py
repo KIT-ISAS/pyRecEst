@@ -10,10 +10,12 @@ import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
+    atleast_2d,
     abs,
     angle,
     arange,
     array,
+    column_stack,
     cos,
     int32,
     int64,
@@ -25,11 +27,10 @@ from pyrecest.backend import (
     mod,
     ones,
     random,
-    reshape,
     sin,
     sqrt,
-    vstack,
     zeros,
+    vstack,
 )
 from scipy.integrate import nquad
 
@@ -48,9 +49,9 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def integrate_fun_over_domain(f: Callable, dim: Union[int, int32, int64]) -> float:
-        integration_boundaries = [(0.0, 2 * pi)] * dim
+        integration_boundaries = column_stack((zeros(dim), 2*pi*ones(dim)))
         return AbstractHypertoroidalDistribution.integrate_fun_over_domain_part(
-            f, dim, integration_boundaries
+            f, integration_boundaries
         )
 
     def shift(self, shift_by):
@@ -82,12 +83,10 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     @staticmethod
     def integrate_fun_over_domain_part(
-        f: Callable, dim: Union[int, int32, int64], integration_boundaries
+        f: Callable, integration_boundaries
     ) -> float:
-        if len(integration_boundaries) != dim:
-            raise ValueError(
-                "The length of integration_boundaries must match the specified dimension."
-            )
+        integration_boundaries = atleast_2d(integration_boundaries)
+        assert integration_boundaries.shape[-1] == 2
 
         return nquad(f, integration_boundaries)[0]
 
@@ -96,26 +95,20 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             pyrecest.backend.__name__ == "pyrecest.numpy"
         ), "Only supported for numpy backend"
         if integration_boundaries is None:
-            integration_boundaries = vstack(
+            integration_boundaries = column_stack(
                 (zeros(self.dim), 2.0 * pi * ones(self.dim))
             )
+        integration_boundaries = atleast_2d(integration_boundaries)
+        assert integration_boundaries.shape[1] == 2
 
-        integration_boundaries = reshape(integration_boundaries, (2, -1))
-        left, right = integration_boundaries
-
-        integration_boundaries = list(zip(left, right))
         return self.integrate_fun_over_domain_part(
-            lambda *args: self.pdf(array(args)), self.dim, integration_boundaries
+            lambda *args: self.pdf(array(args)), integration_boundaries
         )
 
     def trigonometric_moment_numerical(self, n: Union[int, int32, int64]):
         """Calculates the complex trignometric moments. Since nquad does not support complex functions,
         the calculation is split up (as used in the alternative representation of trigonometric polonymials
         involving the two real numbers alpha and beta"""
-
-        assert (
-            pyrecest.backend.__name__ != "pyrecest.jax"
-        ), "Not supported for jax backend"
 
         def moment_fun_real(*args):
             x = array(args)
