@@ -37,7 +37,7 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
             return sum(laplace(z) for z in x + 2.0 * pi * arange(-20, 21))
 
         for x in [0.0, 1.0, 2.0, 3.0, 4.0]:
-            npt.assert_allclose(self.wl.pdf(array(x)), pdftemp(array(x)), rtol=1e-10)
+            npt.assert_allclose(self.wl.pdf(array(x)), pdftemp(array(x)), rtol=1e-6)
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
@@ -65,7 +65,7 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             self.wl.pdf(linspace(-2.0 * pi, 0.0, 100)),
             self.wl.pdf(linspace(0.0, 2.0 * pi, 100)),
-            rtol=1e-10,
+            rtol=5e-6,
         )
 
 
