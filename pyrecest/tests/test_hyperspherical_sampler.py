@@ -1,6 +1,7 @@
 import importlib.util
 import unittest
 
+import numpy.testing as npt
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
@@ -17,8 +18,6 @@ from ..sampling.hyperspherical_sampler import (
 )
 
 healpy_installed = importlib.util.find_spec("healpy") is not None
-
-import numpy.testing as npt
 
 
 class TestHypersphericalGridGenerationFunction(unittest.TestCase):
