@@ -68,6 +68,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def mode_numerical(self, starting_point=None):
         from .gaussian_distribution import GaussianDistribution
         from .gaussian_mixture import GaussianMixture
+
         assert (
             pyrecest.backend.__name__ == "pyrecest.numpy"
         ), "Only supported for numpy backend"
