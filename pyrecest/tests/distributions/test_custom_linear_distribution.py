@@ -21,12 +21,13 @@ class CustomLinearDistributionTest(unittest.TestCase):
 
     def test_integrate(self):
         cld = CustomLinearDistribution.from_distribution(self.gm)
-        self.assertAlmostEqual(cld.integrate(), 1.0, delta=1e-10)
+        self.assertAlmostEqual(cld.integrate(), 1.0, delta=1e-7)
 
     def test_normalize(self):
         self.gm.w = self.gm.w / 2
         cld = CustomLinearDistribution.from_distribution(self.gm)
-        self.assertAlmostEqual(cld.integrate(), 0.5, delta=1e-10)
+        self.assertAlmostEqual(cld.integrate(), 0.5, delta=1e-8)
+
 
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):

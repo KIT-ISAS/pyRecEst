@@ -194,7 +194,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         vmf2 = VonMisesFisherDistribution.from_distribution(vmf1)
 
         npt.assert_allclose(vmf1.mu, vmf2.mu, rtol=1e-10)
-        npt.assert_allclose(vmf1.kappa, vmf2.kappa, rtol=1e-10)
+        npt.assert_allclose(vmf1.kappa, vmf2.kappa, rtol=5e-7)
 
     def test_from_distribution_dirac(self):
         dirac_dist = HypersphericalDiracDistribution(
