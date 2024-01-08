@@ -93,8 +93,10 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             pyrecest.backend.__name__ == "pyrecest.numpy"
         ), "Only supported for numpy backend"
         if integration_boundaries is None:
-            return self.integrate_fun_over_domain(lambda *args: self.pdf(array(args)), self.dim)
-        
+            return self.integrate_fun_over_domain(
+                lambda *args: self.pdf(array(args)), self.dim
+            )
+
         assert self.dim in (1, integration_boundaries.shape[0])
         return self.integrate_fun_over_domain_part(
             lambda *args: self.pdf(array(args)), integration_boundaries
