@@ -27,6 +27,7 @@ from pyrecest.backend import (
     sqrt,
     squeeze,
     stack,
+    zeros,
 )
 from pyrecest.utils.plotting import plot_ellipsoid
 from scipy.integrate import dblquad, nquad, quad
@@ -65,12 +66,18 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         return self.mode_numerical(starting_point)
 
     def mode_numerical(self, starting_point=None):
+        from .gaussian_distribution import GaussianDistribution
+        from .gaussian_mixture import GaussianMixture
         assert (
             pyrecest.backend.__name__ == "pyrecest.numpy"
         ), "Only supported for numpy backend"
         if starting_point is None:
-            # Ensure 1-D for minimize
-            starting_point = self.sample(1).squeeze()
+            # Take sample if distribution is easy to sample from
+            if isinstance(self, (GaussianDistribution, GaussianMixture)):
+                # Ensure 1-D for minimize
+                starting_point = self.sample(1).squeeze()
+            else:
+                starting_point = zeros(self.dim)
 
         def neg_pdf(x):
             return -self.pdf(x)
