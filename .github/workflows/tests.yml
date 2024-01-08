@@ -40,7 +40,7 @@ jobs:
           poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_numpy.xml ./pyrecest
         env:
           PYTHONPATH: ${{ github.workspace }}
-      
+
       - name: Upload numpy test result artifact
         uses: actions/upload-artifact@v3
         with:
@@ -76,7 +76,7 @@ jobs:
           poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_pytorch.xml ./pyrecest
         env:
           PYTHONPATH: ${{ github.workspace }}
-      
+
       - name: Upload pytorch test result artifact
         uses: actions/upload-artifact@v3
         with:
