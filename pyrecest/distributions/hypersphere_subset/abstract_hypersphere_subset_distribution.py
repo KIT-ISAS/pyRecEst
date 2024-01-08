@@ -230,30 +230,12 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         f_hypersph_coords: Callable,
         integration_boundaries,
     ):
-        dim = integration_boundaries.shape[0]
-        if dim == 1:
-
-            def g(phi):  # type: ignore
-                return f_hypersph_coords(array(phi))
-
-        elif dim == 2:
-
-            def g(phi1, phi2):  # type: ignore
-                return f_hypersph_coords(array(phi1), array(phi2)) * sin(phi2)
-
-        elif dim == 3:
-
-            def g(phi1, phi2, phi3):  # type: ignore
-                return (
-                    f_hypersph_coords(array(phi1), array(phi2), array(phi3))
-                    * sin(phi2)
-                    * (sin(phi3)) ** 2
-                )
-
-        else:
-            raise ValueError("Dimension not supported.")
-
-        i, _ = nquad(g, integration_boundaries)
+        i, _ = nquad(
+            AbstractHypersphereSubsetDistribution._get_integrand_hypersph_fun(
+                f_hypersph_coords
+            ),
+            integration_boundaries,
+        )
 
         return i
 
@@ -414,6 +396,30 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         for x in coords:
             results.append(_cart_to_hypersph_colatitude_single(x))
         return array(results)
+
+    @staticmethod
+    def _get_integrand_hypersph_fun(fun: Callable):
+        """
+        Generalized integrand function for n-spheres.
+        """
+
+        def integrand(*angle_args):
+            n = len(angle_args) + 1  # Dimension of the sphere
+            cartesian_coords = (
+                AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
+                    1, *array(angle_args[::-1])
+                )
+            )  # Convert to Cartesian coordinates
+            probability_density = fun(atleast_2d(cartesian_coords))
+
+            # Calculate the Jacobian determinant for the change of variables
+            jacobian = prod(
+                array([sin(angle_args[::-1][i]) ** (n - 2 - i) for i in range(n - 2)])
+            )
+
+            return probability_density * jacobian
+
+        return integrand
 
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):
