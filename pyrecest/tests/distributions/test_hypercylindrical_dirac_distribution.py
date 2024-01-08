@@ -5,16 +5,7 @@ import numpy.testing as npt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import (
-    array,
-    exp,
-    eye,
-    ones,
-    ones_like,
-    random,
-    sum,
-    zeros_like,
-)
+from pyrecest.backend import array, exp, eye, ones, ones_like, random, sum, zeros_like
 from pyrecest.distributions.cart_prod.hypercylindrical_dirac_distribution import (
     HypercylindricalDiracDistribution,
 )
