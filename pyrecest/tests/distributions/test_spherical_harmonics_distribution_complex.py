@@ -672,7 +672,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 * exp(2j * phi),
             ),
             (
-                "testl1mneg1_sphconv_colatitude",
+                "testl1mneg1_sphconv_inclination",
                 array(
                     [
                         [0.0, float("NaN"), float("NaN"), float("NaN"), float("NaN")],
@@ -686,7 +686,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 * exp(-1j * phi),
             ),
             (
-                "testl1m1_sphconv_colatitude",
+                "testl1m1_sphconv_inclination",
                 array(
                     [
                         [0.0, float("NaN"), float("NaN"), float("NaN"), float("NaN")],
@@ -700,7 +700,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 * exp(1j * phi),
             ),
             (
-                "testl2mneg2_sphconv_colatitude",
+                "testl2mneg2_sphconv_inclination",
                 array(
                     [
                         [0.0, float("NaN"), float("NaN"), float("NaN"), float("NaN")],
@@ -714,7 +714,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 * exp(-2j * phi),
             ),
             (
-                "testl2mneg1_sphconv_colatitude",
+                "testl2mneg1_sphconv_inclination",
                 array(
                     [
                         [0.0, float("NaN"), float("NaN"), float("NaN"), float("NaN")],
@@ -729,7 +729,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 * exp(-1j * phi),
             ),
             (
-                "testl2m1_sphconv_colatitude",
+                "testl2m1_sphconv_inclination",
                 array(
                     [
                         [0.0, float("NaN"), float("NaN"), float("NaN"), float("NaN")],
@@ -744,7 +744,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 * exp(1j * phi),
             ),
             (
-                "testl2m2_sphconv_colatitude",
+                "testl2m2_sphconv_inclination",
                 array(
                     [
                         [0.0, float("NaN"), float("NaN"), float("NaN"), float("NaN")],
@@ -770,9 +770,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             expected_func_vals = expected_func(x, y, z)
         elif name.endswith("sph"):
             expected_func_vals = expected_func(phi.ravel(), theta.ravel())
-        elif name.endswith("colatitude"):
+        elif name.endswith("inclination"):
             phi, theta = AbstractSphericalDistribution.cart_to_sph(
-                x, y, z, mode="colatitude"
+                x, y, z, mode="inclination"
             )
             expected_func_vals = expected_func(phi, theta)
 
