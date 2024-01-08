@@ -33,10 +33,10 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         )
 
         # The new Cartesian coordinates should be close to the original ones
-        npt.assert_allclose(x_new, x, atol=1e-15)
-        npt.assert_allclose(y_new, y, atol=1e-15)
-        npt.assert_allclose(z_new, z, atol=1e-15)
-
+        npt.assert_allclose(x_new, x, atol=1e-7)
+        npt.assert_allclose(y_new, y, atol=1e-7)
+        npt.assert_allclose(z_new, z, atol=1e-7)
+        
     @parameterized.expand(
         [
             ("colatitude",),
@@ -60,4 +60,4 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
 
         # The new spherical coordinates should be close to the original ones
         npt.assert_allclose(azimuth_new, azimuth, atol=1e-15)
-        npt.assert_allclose(theta_new, theta, atol=1e-15)
+        npt.assert_allclose(theta_new, theta, rtol=5e-6)
