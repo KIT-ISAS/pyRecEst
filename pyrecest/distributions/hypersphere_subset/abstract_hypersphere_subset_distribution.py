@@ -6,6 +6,7 @@ from typing import Union
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    arccos,
     array,
     atleast_2d,
     column_stack,
@@ -20,13 +21,11 @@ from pyrecest.backend import (
     linalg,
     log,
     ones,
-    prod,
     sin,
     sort,
     sqrt,
     squeeze,
     zeros,
-    arccos,
 )
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
@@ -403,13 +402,15 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         """
         Convert multiple sets of Cartesian coordinates to hyperspherical coordinates.
         """
+
         def _cart_to_hypersph_colatitude_single(x):
             angles = zeros(len(x) - 1)
             for i in range(len(x) - 1):
-                div = sqrt(sum(x[i:]**2))
+                div = sqrt(sum(x[i:] ** 2))
                 if div != 0:
                     angles[i] = arccos(x[i] / div)
             return angles
+
         results = []
         for x in coords:
             results.append(_cart_to_hypersph_colatitude_single(x))
