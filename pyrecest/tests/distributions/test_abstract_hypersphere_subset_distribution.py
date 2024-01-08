@@ -11,7 +11,6 @@ from pyrecest.backend import (
     cos,
     isclose,
     linalg,
-    ones,
     prod,
     random,
     sin,
@@ -20,7 +19,6 @@ from pyrecest.backend import (
 )
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
-    HypersphericalUniformDistribution,
     VonMisesFisherDistribution,
 )
 from scipy.integrate import nquad
@@ -88,7 +86,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         coordinates.append(last_coord)
 
         return tuple(coordinates)
-        
+
     @staticmethod
     def _hyperspherical_to_cartesian_s2(r, theta, phi):
         z = r * sin(theta) * sin(phi)
@@ -121,12 +119,12 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         # Check if the point is on the surface of the unit n-sphere
         if not isclose(norm, 1.0):
             return 0
-        
+
         # Calculate the surface area of the unit n-sphere
         surface_area = 2 * pi ** (n / 2) / gamma(n / 2)
         # Return the reciprocal of the surface area
         return 1 / surface_area
-    
+
     # Adjusted integrand function for spherical coordinates
     @staticmethod
     def _integrand_s2(phi, theta):

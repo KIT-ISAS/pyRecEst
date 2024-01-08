@@ -1,6 +1,5 @@
 from math import pi
 
-import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -9,8 +8,6 @@ from pyrecest.backend import (
     atleast_2d,
     column_stack,
     cos,
-    linspace,
-    meshgrid,
     ndim,
     sin,
     where,
