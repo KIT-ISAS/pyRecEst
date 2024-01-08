@@ -129,7 +129,7 @@ class TestHopfConversion(unittest.TestCase):
     def test_conversion(self):
         # Generate a sample matrix of size (n, 4) containing unit vectors.
         n = 100  # sample size
-        random_vectors = random.normal(0.0, 1.0, (n, 4))
+        random_vectors = random.normal(size=(n, 4))
         unit_vectors = random_vectors / linalg.norm(random_vectors, axis=1)[:, None]
 
         # Pass the quaternions through the conversion functions

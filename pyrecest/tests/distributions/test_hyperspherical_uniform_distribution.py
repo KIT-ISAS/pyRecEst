@@ -23,7 +23,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         random.seed(0)
         for dim in range(2, 5):
             hud = HypersphericalUniformDistribution(dim)
-            x = random.rand(dim + 1)
+            x = random.uniform(size=(dim + 1,))
             x = x / linalg.norm(x)
             npt.assert_allclose(
                 hud.pdf(x),

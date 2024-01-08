@@ -30,7 +30,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
     def testNormalizationWarning(self):
         with warnings.catch_warnings(record=True) as w:
-            SphericalHarmonicsDistributionReal(random.rand(3, 5))
+            SphericalHarmonicsDistributionReal(random.uniform(size=(3, 5)))
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, UserWarning))
 
@@ -150,8 +150,8 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
     @staticmethod
     def _gen_naive_grid(n_per_dim):
-        phi = random.rand(n_per_dim) * 2 * pi
-        theta = random.rand(n_per_dim) * pi - pi / 2
+        phi = random.uniform(size=n_per_dim) * 2.0 * pi
+        theta = random.uniform(size=n_per_dim) * pi - pi / 2.0
         return AbstractSphericalDistribution.sph_to_cart(phi, theta)
 
     @parameterized.expand(
@@ -456,7 +456,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         # Suppress warnings related to normalization
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            rshd = SphericalHarmonicsDistributionReal(random.rand(4, 7))
+            rshd = SphericalHarmonicsDistributionReal(random.uniform(size=(4, 7)))
 
         cshd = rshd.to_spherical_harmonics_distribution_complex()
         rshd2 = cshd.to_spherical_harmonics_distribution_real()
@@ -464,7 +464,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
 
     def test_integral_analytical(self):
         # Suppress warnings related to normalization
-        unnormalized_coeffs = random.rand(3, 5)
+        unnormalized_coeffs = random.uniform(size=(3, 5))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)
