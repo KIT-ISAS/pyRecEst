@@ -36,7 +36,7 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         npt.assert_allclose(x_new, x, atol=1e-7)
         npt.assert_allclose(y_new, y, atol=1e-7)
         npt.assert_allclose(z_new, z, atol=1e-7)
-        
+
     @parameterized.expand(
         [
             ("colatitude",),

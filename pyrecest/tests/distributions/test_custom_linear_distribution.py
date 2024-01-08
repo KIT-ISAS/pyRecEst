@@ -28,7 +28,6 @@ class CustomLinearDistributionTest(unittest.TestCase):
         cld = CustomLinearDistribution.from_distribution(self.gm)
         self.assertAlmostEqual(cld.integrate(), 0.5, delta=1e-8)
 
-
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):
         x, y = meshgrid(linspace(0.0, 2.0 * pi, 10), linspace(0.0, 2.0 * pi, 10))
