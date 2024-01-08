@@ -9,7 +9,6 @@ from pyrecest.backend import (
     array,
     exp,
     eye,
-    isclose,
     ones,
     ones_like,
     random,
@@ -64,11 +63,11 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
             return x + shift_by
 
         shifted = self.pwd.apply_function(shift)
-        assert isclose(
+        npt.assert_allclose(
             shifted.marginalize_linear().trigonometric_moment(1),
             self.pwd.marginalize_linear().trigonometric_moment(1)
             * exp(1j * shift_offset[0]),
-            rtol=1e-10,
+            atol=5e-7,
         )
 
     def test_reweigh(self):

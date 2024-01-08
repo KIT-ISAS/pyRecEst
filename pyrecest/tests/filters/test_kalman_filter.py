@@ -59,7 +59,7 @@ class KalmanFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_predict_identity_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
@@ -69,7 +69,7 @@ class KalmanFilterTest(unittest.TestCase):
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.pytorch",
-        reason="Not supported on PyTorch backend",
+        reason="Not supported on this backend",
     )
     def test_predict_linear_2d(self):
         kf = KalmanFilter((array([0, 1]), diag(array([1, 2]))))
