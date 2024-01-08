@@ -58,7 +58,7 @@ class TestWatsonDistribution(unittest.TestCase):
         mu = mu / linalg.norm(mu)
         kappa = 2.0
         w = WatsonDistribution(mu, kappa)
-        self.assertAlmostEqual(w.integrate(), 1.0, delta=1e-5)
+        self.assertAlmostEqual(w.integrate(), 1, delta=1e-5)
 
     def test_to_bingham(self):
         mu = array([1.0, 0.0, 0.0])
