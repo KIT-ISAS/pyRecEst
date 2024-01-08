@@ -10,18 +10,23 @@ from pyrecest.backend import (
     atleast_2d,
     column_stack,
     cos,
+    cumprod,
     empty,
     float64,
     full,
+    hstack,
     int32,
     int64,
     linalg,
     log,
+    ones,
+    prod,
     sin,
     sort,
     sqrt,
     squeeze,
     zeros,
+    arccos,
 )
 from scipy.integrate import nquad, quad
 from scipy.special import gamma
@@ -346,22 +351,104 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return 0.5 * distance_integral
 
     @staticmethod
-    def hypersph_to_cart(hypersph_coords):
+    def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
         hypersph_coords = atleast_2d(hypersph_coords)
-
-        coords = zeros(
-            (
-                hypersph_coords.shape[0],
-                hypersph_coords.shape[1] + 1,
+        if mode == "colatitude":
+            cart_coords = (
+                AbstractHypersphereSubsetDistribution._hypersph_to_cart_colatitude(
+                    1, *hypersph_coords.T
+                )
             )
+        elif mode in ("elevation", "inclination"):
+            from .abstract_sphere_subset_distribution import (
+                AbstractSphereSubsetDistribution,
+            )
+
+            assert hypersph_coords.shape[1] == 2, "Mode only S2 dimensions"
+            x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(
+                hypersph_coords[:, 0], hypersph_coords[:, 1], mode=mode
+            )
+            cart_coords = column_stack((x, y, z))
+        else:
+            raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
+
+        return cart_coords.squeeze()
+
+    @staticmethod
+    def cart_to_hypersph(cart_coords, mode: str = "colatitude"):
+        cart_coords = atleast_2d(cart_coords)
+        if mode == "colatitude":
+            cart_coords = (
+                AbstractHypersphereSubsetDistribution._cart_to_hypersph_colatitude(
+                    cart_coords
+                )
+            )
+        elif mode in ("elevation", "inclination"):
+            from .abstract_sphere_subset_distribution import (
+                AbstractSphereSubsetDistribution,
+            )
+
+            assert cart_coords.shape[1] == 3, "Mode only supports S2"
+            theta, phi = AbstractSphereSubsetDistribution.cart_to_sph(
+                cart_coords[:, 0], cart_coords[:, 1], cart_coords[:, 2], mode=mode
+            )
+            cart_coords = column_stack((theta, phi))
+        else:
+            raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
+
+        return cart_coords.squeeze()
+
+    @staticmethod
+    def _cart_to_hypersph_colatitude(coords):
+        """
+        Convert multiple sets of Cartesian coordinates to hyperspherical coordinates.
+        """
+        def _cart_to_hypersph_colatitude_single(x):
+            angles = zeros(len(x) - 1)
+            for i in range(len(x) - 1):
+                div = sqrt(sum(x[i:]**2))
+                if div != 0:
+                    angles[i] = arccos(x[i] / div)
+            return angles
+        results = []
+        for x in coords:
+            results.append(_cart_to_hypersph_colatitude_single(x))
+        return array(results)
+
+    @staticmethod
+    def _hypersph_to_cart_colatitude(r, *angles):
+        """
+        Convert hyperspherical coordinates to Cartesian coordinates in n-dimensions. See
+        https://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates for the conventions used.
+
+        Parameters:
+        - r (float): The radial distance.
+        - angles (float): The n-1 angles, where the last angle ranges from 0 to 2pi and others from 0 to pi.
+
+        Returns:
+        - tuple: Cartesian coordinates (x1, x2, ..., xn).
+        """
+        # Assuming ang_mat is defined and r is defined
+        ang_mat = column_stack(angles)
+        sin_mat = sin(ang_mat)
+        cos_mat = cos(ang_mat)
+
+        # Compute the cumulative product of sine values along the columns
+        cumprod_sin = cumprod(sin_mat, axis=1)
+
+        # To match the requirement of the original function, shift the cumprod array to the right
+        cumprod_sin_shifted = hstack(
+            [ones((cumprod_sin.shape[0], 1)), cumprod_sin[:, :-1]]
         )
-        coords[:, 0] = sin(hypersph_coords[:, 0]) * cos(hypersph_coords[:, 1])
-        coords[:, 1] = sin(hypersph_coords[:, 0]) * sin(hypersph_coords[:, 1])
-        coords[:, 2] = cos(hypersph_coords[:, 0])
-        for i in range(2, hypersph_coords.shape[1]):
-            coords[:, :-i] *= sin(hypersph_coords[:, i])  # noqa: E203
-            coords[:, -i] = cos(hypersph_coords[:, i])
-        return squeeze(coords)
+
+        # Multiply each cumprod value with the corresponding cosine value
+        sin_cos_terms = r * cumprod_sin_shifted * cos_mat
+
+        # Now, append the terms with all sine values (the last column of cumprod_sin)
+        all_sine_term = r * cumprod_sin[:, -1].reshape(
+            -1, 1
+        )  # Reshape for column-wise appending
+        return hstack([sin_cos_terms, all_sine_term])
 
     @staticmethod
     def compute_unit_hypersphere_surface(dim: Union[int, int32, int64]) -> float:
