@@ -2,6 +2,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from math import pi
 from typing import Union
+import warnings
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
@@ -94,7 +95,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             raise ValueError("Unsupported")
 
         if linalg.norm(mu) < 1e-9:
-            print(
+            warnings.warn(
                 "Warning: Density may not actually have a mean direction because integral yields a point very close to the origin."
             )
 
