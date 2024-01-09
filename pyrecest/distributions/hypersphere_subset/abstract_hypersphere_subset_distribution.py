@@ -230,32 +230,19 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         f_hypersph_coords: Callable,
         integration_boundaries,
     ):
-        dim = integration_boundaries.shape[0]
-        if dim == 1:
+        def integrand(*phis):
+            dim = len(phis)
+            result = f_hypersph_coords(*array(phis))
+            
+            if dim > 1:
+                # Applying the multiplicative factors for each additional dimension
+                for i in range(2, dim + 1):
+                    result *= sin(phis[i-1]) ** (i - 1)
+            return result
 
-            def g(phi):  # type: ignore
-                return f_hypersph_coords(array(phi))
+        int_result, _ = nquad(integrand, integration_boundaries)
 
-        elif dim == 2:
-
-            def g(phi1, phi2):  # type: ignore
-                return f_hypersph_coords(array(phi1), array(phi2)) * sin(phi2)
-
-        elif dim == 3:
-
-            def g(phi1, phi2, phi3):  # type: ignore
-                return (
-                    f_hypersph_coords(array(phi1), array(phi2), array(phi3))
-                    * sin(phi2)
-                    * (sin(phi3)) ** 2
-                )
-
-        else:
-            raise ValueError("Dimension not supported.")
-
-        i, _ = nquad(g, integration_boundaries)
-
-        return i
+        return int_result
 
     def integrate_numerically(self, integration_boundaries=None):
         """integration_boundaries have to be given in (hyper)spherical coordinates"""
