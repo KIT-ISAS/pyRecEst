@@ -233,11 +233,11 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         def integrand(*phis):
             dim = len(phis)
             result = f_hypersph_coords(*array(phis))
-            
+
             if dim > 1:
                 # Applying the multiplicative factors for each additional dimension
                 for i in range(2, dim + 1):
-                    result *= sin(phis[i-1]) ** (i - 1)
+                    result *= sin(phis[i - 1]) ** (i - 1)
             return result
 
         int_result, _ = nquad(integrand, integration_boundaries)
