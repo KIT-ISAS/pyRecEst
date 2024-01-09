@@ -1,8 +1,8 @@
+import warnings
 from abc import abstractmethod
 from collections.abc import Callable
 from math import pi
 from typing import Union
-import warnings
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
