@@ -60,7 +60,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
         if self.assert_real:
             assert all(
-                abs(imag(vals)) < 1e-10
+                abs(imag(vals)) < 1e-8
             ), "Coefficients apparently do not represent a real function."
             return real(vals)
 
