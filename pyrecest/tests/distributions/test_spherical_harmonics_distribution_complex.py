@@ -146,8 +146,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         self.assertEqual(shd5.coeff_mat.shape, (4, 7))
 
         phi, theta = (
-            random.uniform(0.0, 1.0, 10) * 2 * pi,
-            random.uniform(0.0, 1.0, 10) * pi,
+            random.uniform(size=10) * 2 * pi,
+            random.uniform(size=10) * pi,
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi, theta)
         self.assertTrue(
