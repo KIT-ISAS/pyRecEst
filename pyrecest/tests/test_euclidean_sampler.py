@@ -1,8 +1,10 @@
 import unittest
+
 import numpy.testing as npt
-from scipy.stats import shapiro
 from pyrecest.backend import mean, ones, random, std, zeros
 from pyrecest.sampling.euclidean_sampler import GaussianSampler
+from scipy.stats import shapiro
+
 
 class TestGaussianSampler(unittest.TestCase):
     def setUp(self):
@@ -31,6 +33,7 @@ class TestGaussianSampler(unittest.TestCase):
         for i in range(self.dim):
             _, p_value = shapiro(self.samples[:, i])
             self.assertGreater(p_value, 0.05)
+
 
 if __name__ == "__main__":
     unittest.main()
