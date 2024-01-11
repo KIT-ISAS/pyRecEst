@@ -5,7 +5,18 @@ from math import pi
 import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import abs, atleast_2d, imag, isnan, real, sqrt, zeros
+from pyrecest.backend import (
+    abs,
+    atleast_2d,
+    full,
+    hstack,
+    imag,
+    isnan,
+    real,
+    sqrt,
+    vstack,
+    zeros,
+)
 from scipy.linalg import norm
 
 from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution
@@ -34,6 +45,7 @@ class AbstractSphericalHarmonicsDistribution(
             else:
                 assert coeff_mat[i, 2 * i + 1 :].shape[0] == 0 or all(  # noqa: E203
                     isnan(coeff_mat[i, 2 * i + 1 :])  # noqa: E203
+                    | (coeff_mat[i, 2 * i + 1 :] == 0)  # noqa: E203
                 )
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
 
@@ -80,22 +92,33 @@ class AbstractSphericalHarmonicsDistribution(
         return real(int_val)
 
     def truncate(self, degree):
-        result = copy.deepcopy(self)
-        if result.coeff_mat.shape[0] - 1 > degree:
-            result.coeff_mat = result.coeff_mat[
-                : degree + 1, : 2 * degree + 1
-            ]  # noqa: E203
-        elif result.coeff_mat.shape[0] - 1 < degree:
-            warnings.warn("Less coefficients than desired, filling up with zeros")
-            new_coeff_mat = zeros(
-                (degree + 1, 2 * degree + 1), dtype=self.coeff_mat.dtype
-            )
-            new_coeff_mat[
-                : result.coeff_mat.shape[0],
-                : 2 * result.coeff_mat.shape[0] - 1,  # noqa: E203
-            ] = result.coeff_mat
-            for i in range(new_coeff_mat.shape[0] - 1):
-                new_coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
-            result.coeff_mat = new_coeff_mat
+        trun_result = copy.deepcopy(self)
 
-        return result
+        current_max_degree = self.coeff_mat.shape[0] - 1
+
+        if current_max_degree > degree:
+            # Truncate the matrix for a lower max_degree
+            new_coeff_mat = self.coeff_mat[: degree + 1, : 2 * degree + 1]
+        elif current_max_degree < degree:
+            # Pad the matrix for a higher max_degree
+            warnings.warn("Less coefficients than desired, filling up with zeros")
+
+            # Create the blocks
+            upper_left_block = self.coeff_mat
+            upper_right_block = full(
+                (self.coeff_mat.shape[0], 2 * degree + 1 - self.coeff_mat.shape[1]),
+                float("nan"),
+            )
+            lower_block_shape = (degree + 1 - self.coeff_mat.shape[0], 2 * degree + 1)
+            lower_block = zeros(lower_block_shape, dtype=self.coeff_mat.dtype)
+
+            # Compose the new matrix using block matrices
+            new_coeff_mat = vstack(
+                [hstack([upper_left_block, upper_right_block]), lower_block]
+            )
+        else:
+            new_coeff_mat = self.coeff_mat
+
+        trun_result.coeff_mat = new_coeff_mat
+
+        return trun_result
