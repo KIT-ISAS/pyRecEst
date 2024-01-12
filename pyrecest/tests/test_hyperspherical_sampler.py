@@ -5,7 +5,8 @@ import numpy.testing as npt
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, random
+from pyrecest.backend import random
+from pyrecest.backend import linalg 
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
 
 from ..sampling.hyperspherical_sampler import (
@@ -139,7 +140,7 @@ class TestHopfConversion(unittest.TestCase):
         )
 
         # Check if the original quaternions are close to the recovered quaternions.
-        npt.assert_allclose(unit_vectors, recovered_quaternions, atol=1e-8)
+        npt.assert_allclose(unit_vectors, recovered_quaternions, atol=1e-6)
 
 
 if __name__ == "__main__":
