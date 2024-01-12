@@ -5,8 +5,7 @@ import numpy.testing as npt
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import random
-from pyrecest.backend import linalg 
+from pyrecest.backend import linalg, random
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
 
 from ..sampling.hyperspherical_sampler import (
