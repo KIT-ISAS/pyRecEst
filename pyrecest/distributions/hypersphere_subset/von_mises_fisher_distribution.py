@@ -34,6 +34,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         assert (
             mu.shape[0] >= 2
         ), "mu must be at least two-dimensional for the circular case"
+        assert kappa > 0, "kappa must be a positive scalar"
         assert abs(linalg.norm(mu) - 1.0) < epsilon, "mu must be a normalized"
 
         self.mu = mu
