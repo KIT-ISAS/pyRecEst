@@ -43,5 +43,6 @@ class VMFFilterTest(unittest.TestCase):
         npt.assert_allclose(self.vmf.mu, vmf_updated_identity.mu, rtol=5e-7)
         self.assertGreaterEqual(vmf_updated_identity.kappa, self.vmf.kappa)
 
+
 if __name__ == "__main__":
     unittest.main()

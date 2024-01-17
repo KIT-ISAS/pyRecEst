@@ -396,11 +396,10 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         divisors = linalg.norm(coords, axis=-1, keepdims=True)
         divisors = flip(sqrt(cumsum(flip(coords, axis=-1) ** 2, axis=-1)), axis=-1)
         divisors = divisors + (divisors == 0)
-        
+
         angles = arccos(coords[:, :-1] / divisors[:, :-1])
         return angles
 
-        
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):
         """
