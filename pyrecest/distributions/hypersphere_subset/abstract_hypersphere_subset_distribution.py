@@ -9,7 +9,9 @@ from pyrecest.backend import (
     abs,
     arccos,
     array,
+    cumsum,
     atleast_2d,
+    flip,
     column_stack,
     cos,
     cumprod,
@@ -392,11 +394,14 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         """
 
         def _cart_to_hypersph_colatitude_single(x):
-            angles = zeros(len(x) - 1)
-            for i in range(len(x) - 1):
-                div = sqrt(sum(x[i:] ** 2))
-                if div != 0:
-                    angles[i] = arccos(x[i] / div)
+            x = array(x)
+            divisors = linalg.norm(x, axis=0, keepdims=True)
+            # divisors = sqrt(cumsum(x[::-1] ** 2, axis=0))[::-1]
+            divisors = flip(sqrt(cumsum(flip(x, axis=0) ** 2, axis=0)), axis=0)
+            
+            divisors = divisors + (divisors == 0)
+            
+            angles = arccos(x[:-1] / divisors[:-1])
             return angles
 
         results = []
