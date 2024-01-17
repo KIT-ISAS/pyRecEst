@@ -13,6 +13,7 @@ from pyrecest.backend import (
     column_stack,
     cos,
     cumprod,
+    cumsum,
     empty,
     float64,
     full,
@@ -391,18 +392,13 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         Convert multiple sets of Cartesian coordinates to hyperspherical coordinates.
         """
 
-        def _cart_to_hypersph_colatitude_single(x):
-            angles = zeros(len(x) - 1)
-            for i in range(len(x) - 1):
-                div = sqrt(sum(x[i:] ** 2))
-                if div != 0:
-                    angles[i] = arccos(x[i] / div)
-            return angles
-
-        results = []
-        for x in coords:
-            results.append(_cart_to_hypersph_colatitude_single(x))
-        return array(results)
+        divisors = linalg.norm(coords, axis=0, keepdims=True)
+        divisors = sqrt(cumsum(coords[::-1] ** 2, axis=0))[::-1]
+        
+        # To avoid division by zero, we can use stop_gradient to tell JAX not to differentiate through this replacement
+        divisors = (divisors) + (divisors == 0)
+        
+        return arccos(coords[:-1] / divisors[:-1])
 
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):
