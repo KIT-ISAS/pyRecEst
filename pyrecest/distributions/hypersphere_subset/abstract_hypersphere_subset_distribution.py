@@ -9,13 +9,13 @@ from pyrecest.backend import (
     abs,
     arccos,
     array,
-    cumsum,
     atleast_2d,
-    flip,
     column_stack,
     cos,
     cumprod,
+    cumsum,
     empty,
+    flip,
     float64,
     full,
     hstack,
@@ -398,9 +398,9 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             divisors = linalg.norm(x, axis=0, keepdims=True)
             # divisors = sqrt(cumsum(x[::-1] ** 2, axis=0))[::-1]
             divisors = flip(sqrt(cumsum(flip(x, axis=0) ** 2, axis=0)), axis=0)
-            
+
             divisors = divisors + (divisors == 0)
-            
+
             angles = arccos(x[:-1] / divisors[:-1])
             return angles
 
