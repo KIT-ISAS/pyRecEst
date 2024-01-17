@@ -393,22 +393,14 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         Convert multiple sets of Cartesian coordinates to hyperspherical coordinates.
         """
 
-        def _cart_to_hypersph_colatitude_single(x):
-            x = array(x)
-            divisors = linalg.norm(x, axis=0, keepdims=True)
-            # divisors = sqrt(cumsum(x[::-1] ** 2, axis=0))[::-1]
-            divisors = flip(sqrt(cumsum(flip(x, axis=0) ** 2, axis=0)), axis=0)
+        divisors = linalg.norm(coords, axis=-1, keepdims=True)
+        divisors = flip(sqrt(cumsum(flip(coords, axis=-1) ** 2, axis=-1)), axis=-1)
+        divisors = divisors + (divisors == 0)
+        
+        angles = arccos(coords[:, :-1] / divisors[:, :-1])
+        return angles
 
-            divisors = divisors + (divisors == 0)
-
-            angles = arccos(x[:-1] / divisors[:-1])
-            return angles
-
-        results = []
-        for x in coords:
-            results.append(_cart_to_hypersph_colatitude_single(x))
-        return array(results)
-
+        
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):
         """
