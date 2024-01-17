@@ -49,10 +49,10 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         # Create some spherical coordinates. Warning! For angles of, 0,
         # the transformation from spherical to Cartesian coordinates may not be
         # uniquely invertible.
-        azimuth = array([0.0, 0.1, pi / 4, pi / 2, 1])
-        theta = array([0.0, pi / 2 - 0.1, pi / 4, 0.1, 1])
-        assert all(
-            (azimuth == 0.0) == (theta == 0.0)
+        azimuth = array([0.5, 0.1, pi / 4, pi / 2, 1])
+        theta = array([0.2, pi / 2 - 0.1, pi / 4, 0.1, 1])
+        assert not any(
+            (azimuth == 0.0) | (theta == 0.0)
         ), "Do not include tests with one of the two angles 0 because the conversion may not be uniquely invertible"
 
         # Convert to Cartesian coordinates and back
@@ -72,8 +72,8 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         # Create some spherical coordinates. Warning! For angles of, 0,
         # the transformation from spherical to Cartesian coordinates may not be
         # uniquely invertible.
-        azimuth = array([0.0, 0.0])
-        theta = array([0.0, pi / 2 - 0.1])
+        azimuth = array([0.0, 0.0, 0.0])
+        theta = array([0.0, pi / 2 - 0.1, pi / 2])
 
         # Convert to Cartesian coordinates and back
         x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(
@@ -85,5 +85,5 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         )
 
         # The new spherical coordinates should be close to the original ones
-        npt.assert_allclose(azimuth_new, array([0, 0]), atol=1e-15)
-        npt.assert_allclose(theta_new, array([0, 0]), atol=1e-15)
+        npt.assert_allclose(azimuth_new, array([0, 0, 0]), atol=1e-15)
+        npt.assert_allclose(theta_new, array([pi / 2, pi / 2, pi / 2]), atol=1e-15)
