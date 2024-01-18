@@ -4,6 +4,8 @@ import unittest
 import numpy.testing as npt
 from parameterized import parameterized
 
+# pylint: disable=no-name-in-module
+import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import linalg, random
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
@@ -49,6 +51,10 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         )
         self.assertEqual(grid_specific_description[desc_key], grid_density_parameter)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_get_grid_hypersphere(self):
         samples, _ = get_grid_hypersphere("healpix_hopf", 0)
