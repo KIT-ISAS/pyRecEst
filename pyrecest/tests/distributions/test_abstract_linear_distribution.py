@@ -86,6 +86,10 @@ class TestAbstractLinearDistribution(unittest.TestCase):
     def test_mode_numerical_gaussian_3D(self):
         npt.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_covariance_numerical_gaussian_2D(self):
         npt.assert_allclose(self.g_2D.covariance_numerical(), self.C_2D, atol=1e-6)
 

@@ -59,6 +59,10 @@ class GaussianDistribution(AbstractLinearDistribution):
                 xs = torch.reshape(xs, (-1, 1))
             log_probs = distribution.log_prob(xs)
             pdfvals = torch.exp(log_probs)
+        else:
+            raise NotImplementedError(
+                "Backend {} not supported".format(pyrecest.backend.__name__)
+            )
 
         return pdfvals
 
