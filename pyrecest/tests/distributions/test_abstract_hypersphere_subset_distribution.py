@@ -2,6 +2,7 @@ import unittest
 from math import gamma, pi
 
 import numpy.testing as npt
+import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
@@ -21,7 +22,6 @@ from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
     VonMisesFisherDistribution,
 )
-import pyrecest.backend
 from scipy.integrate import nquad
 
 
