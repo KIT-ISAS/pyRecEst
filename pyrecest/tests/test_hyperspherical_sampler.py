@@ -97,6 +97,10 @@ class TestHypersphericalSampler(unittest.TestCase):
         self.assertEqual(grid_description[desc_key], grid_density_parameter)
 
     @parameterized.expand([(0, 72), (1, 648)])
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_healpix_hopf_sampler(self, input_value, expected_grid_points):
         sampler = HealpixHopfSampler()
