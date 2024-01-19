@@ -11,7 +11,7 @@ from pyrecest.tests.distributions.test_hyperhemispherical_uniform_distribution i
 )
 
 
-class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
+class TestHemisphericalUniformDistribution(unittest.TestCase):
     """Test for uniform distribution for hyperhemispheres"""
 
     def test_pdf_2d(self):
