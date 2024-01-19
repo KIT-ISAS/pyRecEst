@@ -21,6 +21,7 @@ from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
     VonMisesFisherDistribution,
 )
+import pyrecest.backend
 from scipy.integrate import nquad
 
 
@@ -220,6 +221,10 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         npt.assert_allclose(cart_res[:, 1], y, atol=1e-7)
         npt.assert_allclose(cart_res[:, 2], z, atol=1e-7)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf_hyperspherical_coords_1d(self):
         mu_ = array([0.5, 1.0]) / linalg.norm(array([0.5, 1.0]))
         kappa_ = 2.0
@@ -236,6 +241,10 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
             pdf_hyperspherical(phi_test), fangles_1d(phi_test)
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf_hyperspherical_coords_2d(self):
         mu_ = array([0.5, 1.0, 1.0]) / linalg.norm(array([0.5, 1.0, 1.0]))
         kappa_ = 2.0
@@ -262,6 +271,10 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
             pdf_hyperspherical(phi1_test, phi2_test), fangles_2d(phi1_test, phi2_test)
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf_hyperspherical_coords_3d(self):
         mu_ = array([0.5, 1.0, 1.0, -0.5]) / linalg.norm(array([0.5, 1.0, 1.0, -0.5]))
         kappa_ = 2.0

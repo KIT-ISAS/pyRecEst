@@ -14,6 +14,10 @@ from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution impo
 
 
 class AbstractHypercylindricalDistributionTest(unittest.TestCase):
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on jax backend",
+    )
     def test_mode_numerical_gaussian_2D(self):
         mu = array([5.0, 1.0])
         C = array([[2.0, 1.0], [1.0, 1.0]])

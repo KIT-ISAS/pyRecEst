@@ -9,11 +9,15 @@ from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     VonMisesFisherDistribution,
 )
-
+import pyrecest.backend
 matplotlib.use("Agg")
 
 
 class AbstractHypersphericalDistributionTest(unittest.TestCase):
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def testIntegral2D(self):
         """Tests the integral calculation in 2D."""
         mu = array([1.0, 1.0, 2.0])
@@ -22,6 +26,10 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         vmf = VonMisesFisherDistribution(mu, kappa)
         self.assertAlmostEqual(vmf.integrate(), 1.0, delta=1e-3)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def testIntegral3D(self):
         """Tests the integral calculation in 3D."""
         mu = array([1.0, 1.0, 2.0, 2.0])
