@@ -30,6 +30,7 @@ from pyrecest.backend import (
     sort,
     sqrt,
     squeeze,
+    where,
     zeros,
 )
 from scipy.integrate import nquad, quad
