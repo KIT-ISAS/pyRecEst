@@ -48,6 +48,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         elif pyrecest.backend.__name__ == "pyrecest.pytorch":
             # Disable import errors for megalinter
             import torch as _torch  # pylint: disable=import-error
+
             distribution = _torch.distributions.MultivariateNormal(self.mu, self.C)
             if xs.ndim == 1 and self.dim == 1:
                 # For 1-D distributions, we need to reshape the input to a 2-D tensor
@@ -57,7 +58,9 @@ class GaussianDistribution(AbstractLinearDistribution):
             pdfvals = _torch.exp(log_probs)
         elif pyrecest.backend.__name__ == "pyrecest.jax":
             from jax import numpy as jnp  # pylint: disable=import-error
-            from jax.scipy.stats import multivariate_normal  # pylint: disable=import-error
+            from jax.scipy.stats import (  # pylint: disable=import-error
+                multivariate_normal,
+            )
 
             if xs.ndim == 1 and self.dim == 1:
                 # For 1-D distributions, we need to reshape the input to a 2-D tensor
