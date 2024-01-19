@@ -2,10 +2,10 @@ from abc import abstractmethod
 from math import pi
 from typing import Union
 
+import pyrecest.backend
 import scipy.integrate
 import scipy.optimize
 
-import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -293,8 +293,9 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         m : ndarray
           The mode of the distribution.
         """
-        assert (
-            pyrecest.backend.__name__ in ("pyrecest.numpy", "pyrecest.pytorch")
+        assert pyrecest.backend.__name__ in (
+            "pyrecest.numpy",
+            "pyrecest.pytorch",
         ), "Not supported for this backend."
         if starting_point is None:
             starting_point = concatenate(

@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from math import pi
 from typing import Union
+
 import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -117,9 +118,11 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, int32, int64]):
-        assert (
-            pyrecest.backend.__name__ in ("pyrecest.numpy", "pyrecest.pytorch")
+        assert pyrecest.backend.__name__ in (
+            "pyrecest.numpy",
+            "pyrecest.pytorch",
         ), "Not supported for this backend."
+
         def generate_input(angles):
             dim_eucl = dim + 1
             angles = column_stack(angles)
