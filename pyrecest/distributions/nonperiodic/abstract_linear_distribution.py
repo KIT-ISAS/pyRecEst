@@ -159,10 +159,10 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             )
         elif self.dim == 3:
             int_lim = [
-                            [-float("inf"), float("inf")],
-                            [-float("inf"), float("inf")],
-                            [-float("inf"), float("inf")],
-                        ]
+                [-float("inf"), float("inf")],
+                [-float("inf"), float("inf")],
+                [-float("inf"), float("inf")],
+            ]
 
             def integrand1(x, y, z):
                 return x * self.pdf(array([x, y, z]))
