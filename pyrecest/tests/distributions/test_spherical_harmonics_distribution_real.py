@@ -29,14 +29,23 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
     def testNormalizationError(self):
         self.assertRaises(ValueError, SphericalHarmonicsDistributionReal, array(0.0))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
+
     def testNormalizationWarning(self):
         with warnings.catch_warnings(record=True) as w:
             SphericalHarmonicsDistributionReal(random.uniform(size=(3, 5)))
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, UserWarning))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def testNormalization(self):
-        unnormalized_coeffs = random.rand(3, 5)
+        unnormalized_coeffs = random.uniform(size=(3, 5))
         shd = SphericalHarmonicsDistributionReal(unnormalized_coeffs)
         self.assertAlmostEqual(shd.integrate(), 1.0, delta=1e-6)
         x, y, z = SphericalHarmonicsDistributionRealTest._gen_naive_grid(10)

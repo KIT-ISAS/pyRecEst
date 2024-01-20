@@ -57,6 +57,10 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
             delta=1e-10,
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_mean_direction_numerical(self):
         """Tests the numerical mean direction calculation."""
         mu = 1.0 / sqrt(2.0) * array([1.0, 1.0, 0.0])

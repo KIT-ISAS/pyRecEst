@@ -52,6 +52,10 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         pass
 
     def mean_direction_numerical(self, integration_boundaries=None):
+        assert pyrecest.backend.__name__ in (
+            "pyrecest.numpy",
+            "pyrecest.pytorch",
+        ), "Not supported for this backend."
         if integration_boundaries is None:
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim

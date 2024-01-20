@@ -32,6 +32,10 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
                 hud = HyperhemisphericalUniformDistribution(dim)
                 self.assertAlmostEqual(hud.get_manifold_size(), expected, delta=1e-16)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_mode_numerical(self):
         """Tests mode_numerical."""
         watson_dist = HyperhemisphericalWatsonDistribution(self.mu_, self.kappa_)
