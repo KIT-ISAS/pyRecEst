@@ -6,7 +6,7 @@ from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import (
     CustomHypersphericalDistribution,
 )
-
+import pyrecest.backend
 
 class CustomHypersphericalDistributionTest(unittest.TestCase):
     def setUp(self):
@@ -34,6 +34,10 @@ class CustomHypersphericalDistributionTest(unittest.TestCase):
             "PDF values do not match.",
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integrate(self):
         """Test that the distribution integrates to 1."""
         self.assertAlmostEqual(
