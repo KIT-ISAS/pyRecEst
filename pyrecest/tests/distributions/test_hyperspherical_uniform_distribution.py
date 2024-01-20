@@ -3,12 +3,12 @@
 import unittest
 
 import numpy.testing as npt
+import pyrecest.backend
 from pyrecest.backend import linalg, ones, random
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
 )
-import pyrecest.backend
 
 
 class HypersphericalUniformDistributionTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
     def test_integrate_2d(self):
         hud = HypersphericalUniformDistribution(2)
         npt.assert_allclose(hud.integrate(), 1, atol=1e-6)
-        
+
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",
         "Test not supported for this backend",
