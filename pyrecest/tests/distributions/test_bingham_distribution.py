@@ -1,13 +1,13 @@
 import unittest
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array
 from pyrecest.distributions import BinghamDistribution
 
 from .test_von_mises_fisher_distribution import vectors_to_test_2d
-import pyrecest.backend
 
 
 class TestBinghamDistribution(unittest.TestCase):
