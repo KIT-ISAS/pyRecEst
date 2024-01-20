@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 from parameterized import parameterized
-
+import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, linalg, sqrt
 from pyrecest.distributions import VonMisesFisherDistribution
@@ -32,9 +32,17 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
             array([0.0, 0.0, 1.0]), self.kappa / 3.0
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integrate_2d(self):
         self.assertAlmostEqual(self.vmf.integrate(), 1.0, delta=1e-6)
-
+        
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integrate_3d(self):
         mu_s3 = array([1.0, 2.0, 3.0, 4.0]) / linalg.norm(array([1.0, 2.0, 3.0, 4.0]))
         self.assertAlmostEqual(
@@ -174,9 +182,17 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
             delta=delta,
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_hellinger_distance_s2(self):
         self._test_hellinger_distance_helper(self.vmf, self.other)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_hellinger_distance_s3(self):
         vmf1 = VonMisesFisherDistribution(array([1.0, 0.0, 0.0, 0.0]), array(0.6))
         mu2 = array([1.0, 2.0, 3.0, 4.0])

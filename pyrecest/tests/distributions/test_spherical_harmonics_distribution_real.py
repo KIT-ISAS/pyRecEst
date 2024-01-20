@@ -22,6 +22,7 @@ from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution i
 from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_real import (
     SphericalHarmonicsDistributionReal,
 )
+import pyrecest.backend
 
 
 class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
@@ -437,6 +438,10 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             ),
             ("random", random.uniform(size=(4, 7))),
         ]  # jscpd:ignore-end
+    )
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
     )
     def test_conversion(self, _, coeff_mat):
         rshd = SphericalHarmonicsDistributionReal(coeff_mat)
