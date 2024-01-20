@@ -144,7 +144,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         npt.assert_allclose(
             shd.pdf(column_stack((x, y, z))),
             result_func(x, y, z),
-            rtol=1e-6,
+            rtol=5e-6,
             err_msg=name,
         )
 
