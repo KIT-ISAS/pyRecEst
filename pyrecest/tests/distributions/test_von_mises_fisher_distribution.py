@@ -1,8 +1,9 @@
 import unittest
 
 import numpy.testing as npt
-from parameterized import parameterized
 import pyrecest.backend
+from parameterized import parameterized
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, linalg, sqrt
 from pyrecest.distributions import VonMisesFisherDistribution
@@ -38,7 +39,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
     )
     def test_integrate_2d(self):
         self.assertAlmostEqual(self.vmf.integrate(), 1.0, delta=1e-6)
-        
+
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",
         "Test not supported for this backend",

@@ -3,6 +3,7 @@ import warnings
 from math import pi
 
 import numpy.testing as npt
+import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
@@ -22,7 +23,6 @@ from pyrecest.distributions.hypersphere_subset.abstract_spherical_distribution i
 from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_real import (
     SphericalHarmonicsDistributionReal,
 )
-import pyrecest.backend
 
 
 class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
