@@ -33,7 +33,6 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         pyrecest.backend.__name__ == "pyrecest.jax",
         "Test not supported for this backend",
     )
-
     def testNormalizationWarning(self):
         with warnings.catch_warnings(record=True) as w:
             SphericalHarmonicsDistributionReal(random.uniform(size=(3, 5)))
