@@ -7,6 +7,7 @@ from pyrecest.backend import array
 from pyrecest.distributions import BinghamDistribution
 
 from .test_von_mises_fisher_distribution import vectors_to_test_2d
+import pyrecest.backend
 
 
 class TestBinghamDistribution(unittest.TestCase):
@@ -18,6 +19,10 @@ class TestBinghamDistribution(unittest.TestCase):
         Z = array([-5.0, -3.0, 0.0])
         self.bd = BinghamDistribution(Z, M)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf(self):
         """Test pdf method with a fixed set of values."""
         expected_values = array(

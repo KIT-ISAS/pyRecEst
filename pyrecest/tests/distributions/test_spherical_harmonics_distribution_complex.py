@@ -87,6 +87,10 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
 
     @parameterized.expand([("identity",), ("sqrt",)])
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integral_analytical(self, transformation):
         """Test if the analytical integral is equal to the numerical integral"""
         random.seed(10)
@@ -1174,6 +1178,10 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         shd = SphericalHarmonicsDistributionComplex(array(input_array))
         npt.assert_allclose(fun_to_test(shd), expected_output, atol=1e-10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_from_distribution_via_integral_vmf(self):
         # Test approximating a VMF
         dist = VonMisesFisherDistribution(
@@ -1199,12 +1207,20 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             atol=0.001,
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_from_distribution_via_integral_uniform(self):
         shd = SphericalHarmonicsDistributionComplex.from_distribution_via_integral(
             HypersphericalUniformDistribution(2), degree=0
         )
         npt.assert_allclose(shd.coeff_mat, array([[1 / sqrt(4 * pi)]]))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_transformation_via_integral_shd(self):
         # Test approximating a spherical harmonic distribution
         dist = SphericalHarmonicsDistributionComplex(
@@ -1216,6 +1232,10 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
         npt.assert_allclose(shd.coeff_mat, dist.coeff_mat, atol=1e-6)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
     def test_convergence(self):
         no_diffs = 3
         dist = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), 1.0)
