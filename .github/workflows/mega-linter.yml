@@ -102,12 +102,13 @@ jobs:
         run: |
           sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt
 
-      - name: Remove torch, tirton, and nvidia entries (unsupported by alpine)
+      - name: Remove torch, triton, jax, and nvidia entries (unsupported by alpine)
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
           sed -i '/^torch/d' requirements-dev_no_version.txt
           sed -i '/^nvidia/d' requirements-dev_no_version.txt
           sed -i '/^triton/d' requirements-dev_no_version.txt
+          sed -i '/^jax/d' requirements-dev_no_version.txt
 
       - name: Run CMake to find LAPACK
         if: steps.cache-wheels.outputs.cache-hit != 'true'
