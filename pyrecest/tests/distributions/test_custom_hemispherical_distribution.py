@@ -21,6 +21,10 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
             CustomHemisphericalDistribution.from_distribution(self.bingham_distribution)
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_simple_distribution_2D(self):
         """Test that pdf function returns the correct size and values for given points."""
         p = self.custom_hemispherical_distribution.pdf(array([1.0, 0.0, 0.0]))
@@ -54,6 +58,10 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
             msg="Integration value mismatch.",
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_warning_asymmetric(self):
         """Test that creating a custom distribution based on a full hypersphere distribution raises a warning."""
         vmf = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 10.0)

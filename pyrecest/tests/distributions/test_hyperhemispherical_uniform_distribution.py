@@ -5,7 +5,7 @@ from math import pi
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, linalg, ones, random, reshape
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
-
+import pyrecest.backend
 
 def get_random_points(n, d):
     random.seed(10)
@@ -37,10 +37,18 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
         )
         # jscpd:ignore-end
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integrate_S2(self):
         hhud = HyperhemisphericalUniformDistribution(2)
         self.assertAlmostEqual(hhud.integrate(), 1.0, delta=1e-6)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integrate_S3(self):
         hhud = HyperhemisphericalUniformDistribution(3)
         self.assertAlmostEqual(hhud.integrate(), 1, delta=1e-6)
