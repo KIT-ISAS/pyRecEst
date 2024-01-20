@@ -79,14 +79,43 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
 
-      - name: Upload pytorch test result artifact
+  test-jax:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+          poetry env use python
+          poetry install --extras "healpy_support" --extras "jax_support"
+
+      - name: Run tests with jax backend
+        run: |
+          export PYRECEST_BACKEND=jax
+          poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_jax.xml ./pyrecest
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      - name: Upload jax test result artifact
         uses: actions/upload-artifact@v3
         with:
-          name: pytorch-test-results
-          path: junit_test_results_pytorch.xml
+          name: jax-test-results
+          path: junit_test_results_jax.xml
 
   publish-results:
-    needs: [test-numpy, test-pytorch]
+    needs: [test-numpy, test-pytorch, test-jax]
     runs-on: ubuntu-latest
     if: always()
     permissions:
@@ -104,3 +133,4 @@ jobs:
           files: |
             test-results/numpy-test-results/junit_test_results_numpy.xml
             test-results/pytorch-test-results/junit_test_results_pytorch.xml
+            test-results/pytorch-test-results/junit_test_results_jax.xml
