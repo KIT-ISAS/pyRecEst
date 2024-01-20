@@ -1,12 +1,14 @@
 import unittest
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, linalg, random
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import (
     CustomHypersphericalDistribution,
 )
-import pyrecest.backend
+
 
 class CustomHypersphericalDistributionTest(unittest.TestCase):
     def setUp(self):

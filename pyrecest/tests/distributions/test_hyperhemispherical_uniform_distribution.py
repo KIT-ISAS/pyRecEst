@@ -2,10 +2,12 @@
 import unittest
 from math import pi
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, linalg, ones, random, reshape
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
-import pyrecest.backend
+
 
 def get_random_points(n, d):
     random.seed(10)
