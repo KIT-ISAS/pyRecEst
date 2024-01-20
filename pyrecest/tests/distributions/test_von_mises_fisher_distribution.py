@@ -56,9 +56,17 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.assertEqual(self.vmf.kappa, self.kappa)
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_vmf_distribution_3d_mode(self):
         npt.assert_allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_vmf_distribution_3d_integral(self):
         self.assertAlmostEqual(self.vmf.integrate(), 1, delta=1e-5)
 
