@@ -100,6 +100,10 @@ class CircularUniformDistributionTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             cu.mean_direction()
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_entropy(self):
         cu = CircularUniformDistribution()
         npt.assert_allclose(cu.entropy(), cu.entropy_numerical())

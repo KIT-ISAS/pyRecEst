@@ -466,6 +466,10 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             atol=1e-6,
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_conversion_to_complex_and_back(self):
         # Suppress warnings related to normalization
         with warnings.catch_warnings():
@@ -476,6 +480,10 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         rshd2 = cshd.to_spherical_harmonics_distribution_real()
         npt.assert_allclose(rshd2.coeff_mat, rshd.coeff_mat, atol=1e-6, equal_nan=True)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integral_analytical(self):
         # Suppress warnings related to normalization
         unnormalized_coeffs = random.uniform(size=(3, 5))

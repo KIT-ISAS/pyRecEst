@@ -24,7 +24,7 @@ from scipy.optimize import minimize
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
-
+import pyrecest.backend
 
 class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     """
@@ -189,6 +189,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return super().entropy_numerical()
 
     def mode_numerical(self):
+        assert (
+            pyrecest.backend.__name__ != "pyrecest.jax"
+        ), "Not supported on this backend"
+        
         def fun(s):
             return -self.pdf(
                 AbstractHypersphereSubsetDistribution.hypersph_to_cart(array(s))
