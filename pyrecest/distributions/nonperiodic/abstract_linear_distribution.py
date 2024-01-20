@@ -139,23 +139,30 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                 )[0]
             )
         elif self.dim == 2:
-            mu = empty(self.dim)
-            mu[0] = dblquad(
-                lambda x, y: x * self.pdf(array([x, y])),
-                -float("inf"),
-                float("inf"),
-                lambda _: -float("inf"),
-                lambda _: float("inf"),
-            )[0]
-            mu[1] = dblquad(
-                lambda x, y: y * self.pdf(array([x, y])),
-                -float("inf"),
-                float("inf"),
-                lambda _: -float("inf"),
-                lambda _: float("inf"),
-            )[0]
+            mu = array(
+                [
+                    dblquad(
+                        lambda x, y: x * self.pdf(array([x, y])),
+                        -float("inf"),
+                        float("inf"),
+                        lambda _: -float("inf"),
+                        lambda _: float("inf"),
+                    )[0],
+                    dblquad(
+                        lambda x, y: y * self.pdf(array([x, y])),
+                        -float("inf"),
+                        float("inf"),
+                        lambda _: -float("inf"),
+                        lambda _: float("inf"),
+                    )[0],
+                ]
+            )
         elif self.dim == 3:
-            mu = empty(self.dim)
+            int_lim = [
+                            [-float("inf"), float("inf")],
+                            [-float("inf"), float("inf")],
+                            [-float("inf"), float("inf")],
+                        ]
 
             def integrand1(x, y, z):
                 return x * self.pdf(array([x, y, z]))
@@ -166,30 +173,22 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             def integrand3(x, y, z):
                 return z * self.pdf(array([x, y, z]))
 
-            mu[0] = nquad(
-                integrand1,
+            mu = array(
                 [
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                ],
-            )[0]
-            mu[1] = nquad(
-                integrand2,
-                [
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                ],
-            )[0]
-            mu[2] = nquad(
-                integrand3,
-                [
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                    [-float("inf"), float("inf")],
-                ],
-            )[0]
+                    nquad(
+                        integrand1,
+                        int_lim,
+                    )[0],
+                    nquad(
+                        integrand2,
+                        int_lim,
+                    )[0],
+                    nquad(
+                        integrand3,
+                        int_lim,
+                    )[0],
+                ]
+            )
         else:
             raise ValueError(
                 "Dimension currently not supported for all types of densities."
