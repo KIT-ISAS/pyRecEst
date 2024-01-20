@@ -4,6 +4,7 @@ from math import pi
 import numpy.testing as npt
 from parameterized import parameterized
 
+import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -1164,6 +1165,10 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 SphericalHarmonicsDistributionComplex.mean_direction_numerical,
             ),
         ]
+    )
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
     )
     def test_mean_direction(self, _, input_array, expected_output, fun_to_test):
         shd = SphericalHarmonicsDistributionComplex(array(input_array))
