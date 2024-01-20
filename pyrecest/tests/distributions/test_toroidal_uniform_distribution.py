@@ -63,7 +63,7 @@ class TestToroidalUniformDistribution(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.pytorch",
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
         reason="Not supported on this backend",
     )
     def test_entropy(self):

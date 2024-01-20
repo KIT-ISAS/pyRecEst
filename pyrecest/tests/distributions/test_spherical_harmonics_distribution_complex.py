@@ -1072,6 +1072,10 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             ),
         ]
     )
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_conversion(self, _, coeff_mat):
         shd = SphericalHarmonicsDistributionComplex(coeff_mat)
         rshd = shd.to_spherical_harmonics_distribution_real()
