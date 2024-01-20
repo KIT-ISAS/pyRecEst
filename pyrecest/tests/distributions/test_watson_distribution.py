@@ -1,7 +1,7 @@
 import unittest
 
 import numpy.testing as npt
-
+import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg
 from pyrecest.distributions import BinghamDistribution, WatsonDistribution
@@ -53,6 +53,10 @@ class TestWatsonDistribution(unittest.TestCase):
         pdf_values = w.pdf(self.xs)
         npt.assert_array_almost_equal(pdf_values, expected_pdf_values, decimal=5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_integrate(self):
         mu = array([1.0, 2.0, 3.0])
         mu = mu / linalg.norm(mu)
@@ -60,6 +64,10 @@ class TestWatsonDistribution(unittest.TestCase):
         w = WatsonDistribution(mu, kappa)
         self.assertAlmostEqual(w.integrate(), 1, delta=1e-5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        "Test not supported for this backend",
+    )
     def test_to_bingham(self):
         mu = array([1.0, 0.0, 0.0])
         kappa = 2.0
