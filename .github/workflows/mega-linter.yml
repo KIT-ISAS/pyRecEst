@@ -54,7 +54,7 @@ jobs:
 
       - name: Cache wheel directory
         id: cache-wheels
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/alpine-wheels
           key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
@@ -190,7 +190,7 @@ jobs:
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MegaLinter reports
           path: |
