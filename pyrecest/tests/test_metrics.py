@@ -5,7 +5,13 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, random, repeat, vstack
 from pyrecest.utils.metrics import anees
-
+from pyrecest.evaluation.eot_shape_database import (
+    Cross,
+    Star,
+)
+from pyrecest.utils.metrics import iou_polygon
+import matplotlib
+import matplotlib.pyplot as plt
 
 class TestANEES(unittest.TestCase):
     def setUp(self):
@@ -49,6 +55,14 @@ class TestANEES(unittest.TestCase):
 
         # Assert that computed ANEES is close to 1 with a tolerance of 0.05.
         npt.assert_allclose(computed_ANEES, self.groundtruths.shape[-1], atol=0.05)
+
+
+class TestIoU(unittest.TestCase):
+    def test_iou_plolygon(self):
+        cross = Cross(2.0, 1.0, 2.0, 3.0)
+        self.assertGreater(iou_polygon(cross, Star(0.5)), 0.05)
+        self.assertGreater(iou_polygon(cross, Star(1.0)), iou_polygon(cross, Star(0.5)))
+        self.assertEqual(iou_polygon(cross, cross), 1.0)
 
 
 if __name__ == "__main__":
