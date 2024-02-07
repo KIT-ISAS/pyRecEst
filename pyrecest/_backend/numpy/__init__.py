@@ -61,7 +61,6 @@ from numpy import (
     take,
     tile,
     transpose,
-    trapz,
     tril,
     tril_indices,
     triu,
@@ -99,6 +98,7 @@ from numpy import (
     dstack,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
+from scipy.integrate import trapezoid  # NOQA
 from .._shared_numpy import (
     abs,
     angle,

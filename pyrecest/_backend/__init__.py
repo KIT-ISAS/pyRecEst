@@ -164,7 +164,7 @@ BACKEND_ATTRIBUTES = {
         "where",
         "zeros",
         "zeros_like",
-        "trapz",
+        "trapezoid",  # Changed from trapz to trapezoid from scipy.integrate
         # The ones below are for pyrecest
         "diag",
         "diff",

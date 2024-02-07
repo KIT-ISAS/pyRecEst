@@ -64,7 +64,7 @@ from torch import (
     reshape,
     scatter_add,
     stack,
-    trapz,
+    trapezoid,
     uint8,
     unique,
     vstack,
