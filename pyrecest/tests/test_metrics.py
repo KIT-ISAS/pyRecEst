@@ -4,14 +4,9 @@ import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, random, repeat, vstack
-from pyrecest.utils.metrics import anees
-from pyrecest.evaluation.eot_shape_database import (
-    Cross,
-    Star,
-)
-from pyrecest.utils.metrics import iou_polygon
-import matplotlib
-import matplotlib.pyplot as plt
+from pyrecest.evaluation.eot_shape_database import Cross, Star
+from pyrecest.utils.metrics import anees, iou_polygon
+
 
 class TestANEES(unittest.TestCase):
     def setUp(self):

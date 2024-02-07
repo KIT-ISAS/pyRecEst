@@ -31,7 +31,7 @@ def iou_polygon(polygon1, polygon2):
     # Compute the intersection and union
     intersection = polygon1.intersection(polygon2)
     union = polygon1.union(polygon2)
-    
+
     iou = intersection.area / union.area if union.area > 0 else 0
-    
+
     return iou
