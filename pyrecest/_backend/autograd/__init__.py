@@ -72,6 +72,7 @@ from autograd.numpy import (
     where,
     zeros_like,
 )
+from autograd.numpy import trapz as trapezoid
 from autograd.scipy.special import erf, gamma, polygamma  # NOQA
 
 from .._shared_numpy import (
