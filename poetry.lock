@@ -1479,12 +1479,12 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pyshtools"
-version = "4.11.10"
+version = "4.12.1"
 description = "SHTOOLS - Spherical Harmonic Tools"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.9"
 files = [
-    {file = "pyshtools-4.11.10.tar.gz", hash = "sha256:d544586f03d508282198bee5221bffa2dddd481b59ff156336ded16f70f72677"},
+    {file = "pyshtools-4.12.1.tar.gz", hash = "sha256:3c7f063cf13354a85fb5a03c0f96abdfa9f2320100a13d5a42087e81473abde0"},
 ]
 
 [package.dependencies]
@@ -1498,10 +1498,10 @@ tqdm = "*"
 xarray = "*"
 
 [package.extras]
-cartopy = ["cartopy (>=0.18.0)", "cython", "pyshp", "shapely", "six"]
+cartopy = ["cartopy (>=0.18.0)"]
 ducc = ["ducc0 (>=0.15)"]
 palettable = ["palettable (>=3.3)"]
-pygmt = ["pygmt (>=0.3)"]
+pygmt = ["pygmt (>=0.7)"]
 
 [[package]]
 name = "pytest"
