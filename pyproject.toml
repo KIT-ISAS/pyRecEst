@@ -8,7 +8,7 @@ version = "0.7.0"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 numpy = "*"
-scipy = "^1.12.0"
+scipy = "^1.13.0"
 matplotlib = "*"
 mpmath = "*"
 filterpy = "*"
