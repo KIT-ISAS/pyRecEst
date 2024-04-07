@@ -57,7 +57,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
 
       - name: Upload test result artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.backend }}-test-results
           path: junit_test_results_${{ matrix.backend }}.xml
@@ -71,7 +71,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Download all test result artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: test-results
 
