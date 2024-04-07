@@ -1,9 +1,7 @@
 import unittest
 from math import pi
-
-# pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.distributions.circle.sine_skewed_distributions import GeneralizedKSineSkewedVonMisesDistribution, SineSkewedWrappedCauchyDistribution, SineSkewedWrappedNormalDistribution
 from pyrecest.backend import array
-from pyrecest.distributions import GeneralizedKSineSkewedVonMisesDistribution
 
 
 class TestGeneralizedKSineSkewedVonMisesDistribution(unittest.TestCase):
@@ -50,5 +48,62 @@ class TestGeneralizedKSineSkewedVonMisesDistribution(unittest.TestCase):
         )
 
 
-if __name__ == "__main__":
+def test_sine_skewed_wrapped_normal_initialization():
+    mu = array(0.0)
+    sigma = array(1.0)
+    lambda_ = array(0.5)
+    dist = SineSkewedWrappedNormalDistribution(mu, sigma, lambda_)
+    assert dist.mu == mu
+    assert dist.sigma == sigma
+    assert dist.lambda_ == lambda_
+
+
+def test_sine_skewed_wrapped_cauchy_initialization():
+    mu = array(pi / 4)
+    gamma = array(0.1)
+    lambda_ = array(-0.5)
+    dist = SineSkewedWrappedCauchyDistribution(mu, gamma, lambda_)
+    assert dist.mu == mu
+    assert dist.gamma == gamma
+    assert dist.lambda_ == lambda_
+
+
+def test_sine_skewed_wrapped_normal_pdf():
+    mu = array(0.0)
+    sigma = array(1.0)
+    lambda_ = array(0.0)
+    xs = array([0.0, pi / 2, pi, 3 * pi / 2])
+    dist = SineSkewedWrappedNormalDistribution(mu, sigma, lambda_)
+    pdf_values = dist.pdf(xs)
+    assert len(pdf_values) == len(xs)
+    assert all(pdf_values >= 0)  # PDF values should be non-negative
+
+
+def test_sine_skewed_wrapped_cauchy_pdf():
+    mu = array(pi / 4)
+    gamma = array(0.1)
+    lambda_ = array(0.0)
+    xs = array([0.0, pi / 2, pi, 3 * pi / 2])
+    dist = SineSkewedWrappedCauchyDistribution(mu, gamma, lambda_)
+    pdf_values = dist.pdf(xs)
+    assert len(pdf_values) == len(xs)
+    assert all(pdf_values >= 0)  # PDF values should be non-negative
+
+
+def test_sine_skewed_effect():
+    mu = array(0.0)
+    sigma = array(1.0)
+    lambda_ = array(1.0)  # Max skew
+    normal_dist = SineSkewedWrappedNormalDistribution(mu, sigma, 0)  # No skew
+    skewed_dist = SineSkewedWrappedNormalDistribution(mu, sigma, lambda_)  # Max skew
+    assert skewed_dist.pdf(mu + 0.1) > normal_dist.pdf(mu)
+    assert skewed_dist.pdf(mu - 0.1) < normal_dist.pdf(mu)
+
+    lambda_ = -1  # Negative skew
+    skewed_dist = SineSkewedWrappedNormalDistribution(mu, sigma, lambda_)
+    assert skewed_dist.pdf(mu + 0.1) < normal_dist.pdf(mu)
+    assert skewed_dist.pdf(mu - 0.1) > normal_dist.pdf(mu)
+
+
+if __name__ == '__main__':
     unittest.main()
