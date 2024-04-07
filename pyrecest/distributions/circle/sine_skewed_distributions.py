@@ -1,8 +1,9 @@
 from math import pi
+
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, sin, ndim
-from scipy.stats import vonmises
+from pyrecest.backend import mod, ndim, sin
 from scipy.special import ive  # pylint: disable=no-name-in-module
+from scipy.stats import vonmises
 
 
 class GeneralizedKSineSkewedVonMisesDistribution:
@@ -25,24 +26,36 @@ class GeneralizedKSineSkewedVonMisesDistribution:
         # Evaluate the von Mises distribution and multiply by (1 + lambda_ * sin(xa - mu))
         assert self.k == 1, "Currently, only k=1 is supported"
         vm_pdf = vonmises.pdf(xa, self.kappa, loc=self.mu)
-        skew_factor = (1 + self.lambda_ * sin(self.k*(xa - self.mu)))**self.m
+        skew_factor = (1 + self.lambda_ * sin(self.k * (xa - self.mu))) ** self.m
         if self.m == 1:
             norm_const = 1
         elif self.m == 2:
-            norm_const = 1/(1+self.lambda_**2 / 2 * (1-bessel_ratio(2, self.kappa)))
+            norm_const = 1 / (
+                1 + self.lambda_**2 / 2 * (1 - bessel_ratio(2, self.kappa))
+            )
         elif self.m == 3:
-            norm_const = 1/(1 + 3*self.lambda_**2 / 2 * (1-bessel_ratio(2, self.kappa)))
+            norm_const = 1 / (
+                1 + 3 * self.lambda_**2 / 2 * (1 - bessel_ratio(2, self.kappa))
+            )
         elif self.m == 4:
-            norm_const = 1/(1 + self.lambda_**4 / 8 * (3 - 2*bessel_ratio(2, self.kappa) + bessel_ratio(4, self.kappa)) + 3*self.lambda_**2 * (1-bessel_ratio(2, self.kappa)))
+            norm_const = 1 / (
+                1
+                + self.lambda_**4
+                / 8
+                * (3 - 2 * bessel_ratio(2, self.kappa) + bessel_ratio(4, self.kappa))
+                + 3 * self.lambda_**2 * (1 - bessel_ratio(2, self.kappa))
+            )
         else:
             raise NotImplementedError("m > 4 not implemented")
 
         return norm_const * vm_pdf * skew_factor
-            
+
     def shift(self, angle):
         if ndim(angle) != 0:
             raise ValueError("angle must be a scalar")
-        new_dist = GeneralizedKSineSkewedVonMisesDistribution(self.mu + angle, self.kappa, self.lambda_, self.k, self.m)
+        new_dist = GeneralizedKSineSkewedVonMisesDistribution(
+            self.mu + angle, self.kappa, self.lambda_, self.k, self.m
+        )
         return new_dist
 
 
@@ -66,9 +79,8 @@ def bessel_ratio(p, z):
     # Compute the scaled Bessel function values for both the numerator and denominator.
     scaled_numerator = ive(p, z)
     scaled_denominator = ive(p, 0)
-    
+
     # Since ive(p, z) = iv(p, z) * exp(-|z|), and ive(p, 0) = iv(p, 0),
     # when we take the ratio, the exp(-|z|) terms cancel out for the ratio calculation.
     # Therefore, the ratio of the scaled values directly gives us the ratio of the original Bessel functions.
     return scaled_numerator / scaled_denominator
-
