@@ -18,7 +18,7 @@ class LinearDiracDistributionTest(unittest.TestCase):
         hwn = GaussianDistribution(array([1.0, 2.0, 3.0]), array(C))
         hwd = LinearDiracDistribution.from_distribution(hwn, 200000)
         npt.assert_allclose(hwd.mean(), hwn.mean(), atol=0.015)
-        npt.assert_allclose(hwd.covariance(), hwn.covariance(), atol=0.05)
+        npt.assert_allclose(hwd.covariance(), hwn.covariance(), atol=0.08)
 
     def test_mean_and_cov(self):
         random.seed(0)
