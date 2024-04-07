@@ -9,7 +9,7 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 
 
 class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
-    # See [2] Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
+    # See Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
     # Toroidal Distributions, Florence Nightingale Directional Statistics volume, Springer.
     def __init__(self, mu, kappa, lambda_, k, m):
         AbstractCircularDistribution.__init__(self)
