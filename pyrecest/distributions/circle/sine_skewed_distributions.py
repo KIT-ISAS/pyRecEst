@@ -3,8 +3,10 @@ from math import pi
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import mod, ndim, sin
 from scipy.special import ive  # pylint: disable=no-name-in-module
-from .abstract_circular_distribution import AbstractCircularDistribution
 from scipy.stats import vonmises
+
+from .abstract_circular_distribution import AbstractCircularDistribution
+
 
 class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
     # See [2] Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
@@ -27,7 +29,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
         # Evaluate the von Mises distribution and multiply by (1 + lambda_ * sin(xa - mu))
         assert self.k == 1, "Currently, only k=1 is supported"
         vm_pdf = vonmises.pdf(xs, self.kappa, loc=self.mu)
-        skew_factor = (1 + self.lambda_ * sin(self.k*(xs - self.mu)))**self.m
+        skew_factor = (1 + self.lambda_ * sin(self.k * (xs - self.mu))) ** self.m
         if self.m == 1:
             norm_const = 1
         elif self.m == 2:
@@ -50,11 +52,13 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
             raise NotImplementedError("m > 4 not implemented")
 
         return norm_const * vm_pdf * skew_factor
-            
+
     def shift(self, shift_by):
         if ndim(shift_by) != 0:
             raise ValueError("angle must be a scalar")
-        new_dist = GeneralizedKSineSkewedVonMisesDistribution(self.mu + shift_by, self.kappa, self.lambda_, self.k, self.m)
+        new_dist = GeneralizedKSineSkewedVonMisesDistribution(
+            self.mu + shift_by, self.kappa, self.lambda_, self.k, self.m
+        )
         return new_dist
 
 
