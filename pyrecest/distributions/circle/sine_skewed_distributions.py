@@ -4,6 +4,10 @@ from math import pi
 from pyrecest.backend import mod, ndim, sin
 from scipy.special import ive  # pylint: disable=no-name-in-module
 from scipy.stats import vonmises
+from abc import abstractmethod
+from .wrapped_normal_distribution import WrappedNormalDistribution
+from .wrapped_cauchy_distribution import WrappedCauchyDistribution
+from .abstract_circular_distribution import AbstractCircularDistribution
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -87,3 +91,63 @@ def bessel_ratio(p, z):
     # when we take the ratio, the exp(-|z|) terms cancel out for the ratio calculation.
     # Therefore, the ratio of the scaled values directly gives us the ratio of the original Bessel functions.
     return scaled_numerator / scaled_denominator
+
+
+class AbstractSineSkewedDistribution(AbstractCircularDistribution):
+    """
+    Abstract superclass for sine-skewed distributions.
+    """
+
+    def __init__(self, mu, lambda_):
+        """
+        Initialize the sine-skewed distribution with a central location parameter mu
+        and a skewness parameter lambda_.
+        """
+        AbstractCircularDistribution.__init__(self)
+        self.mu = mu
+        self.lambda_ = lambda_
+        
+    @abstractmethod
+    def base_pdf(self, xs):
+        """
+        Compute the base probability density function (PDF) for the wrapped distribution
+        without skewness. This method must be implemented by subclasses.
+        """
+    
+    def pdf(self, xs):
+        """
+        Compute the skewed probability density function (PDF) for the distribution.
+        """
+        # Calculate the base pdf from the wrapped distribution
+        base_pdf = self.base_pdf(xs)
+        
+        # Apply the skewing factor
+        skewed_pdf = base_pdf * (1 + self.lambda_ * sin(xs - self.mu))
+        
+        return skewed_pdf
+
+
+class SineSkewedWrappedNormalDistribution(AbstractSineSkewedDistribution):
+    def __init__(self, mu, sigma, lambda_):
+        super().__init__(mu, lambda_)
+        self.wrapped_normal = WrappedNormalDistribution(mu, sigma)
+        
+    @property
+    def sigma(self):
+        return self.wrapped_normal.sigma
+    
+    def base_pdf(self, xs):
+        return self.wrapped_normal.pdf(xs)
+
+
+class SineSkewedWrappedCauchyDistribution(AbstractSineSkewedDistribution):
+    def __init__(self, mu, gamma, lambda_):
+        super().__init__(mu, lambda_)
+        self.wrapped_cauchy = WrappedCauchyDistribution(mu, gamma)
+        
+    @property
+    def gamma(self):
+        return self.wrapped_cauchy.gamma
+    
+    def base_pdf(self, xs):
+        return self.wrapped_cauchy.pdf(xs)
