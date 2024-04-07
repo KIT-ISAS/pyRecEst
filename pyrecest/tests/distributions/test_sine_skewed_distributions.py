@@ -1,7 +1,12 @@
 import unittest
 from math import pi
-from pyrecest.distributions.circle.sine_skewed_distributions import GeneralizedKSineSkewedVonMisesDistribution, SineSkewedWrappedCauchyDistribution, SineSkewedWrappedNormalDistribution
+
 from pyrecest.backend import array
+from pyrecest.distributions.circle.sine_skewed_distributions import (
+    GeneralizedKSineSkewedVonMisesDistribution,
+    SineSkewedWrappedCauchyDistribution,
+    SineSkewedWrappedNormalDistribution,
+)
 
 
 class TestGeneralizedKSineSkewedVonMisesDistribution(unittest.TestCase):
@@ -105,5 +110,5 @@ def test_sine_skewed_effect():
     assert skewed_dist.pdf(mu - 0.1) > normal_dist.pdf(mu)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
