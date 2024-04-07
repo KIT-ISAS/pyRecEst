@@ -20,6 +20,7 @@ from pyrecest.backend import (
     squeeze,
     where,
     zeros,
+    any
 )
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
@@ -54,49 +55,69 @@ class WrappedNormalDistribution(
     def sigma(self):
         return sqrt(self.C)
 
+    # pylint: disable=too-many-locals
     def pdf(self, xs):
-        assert (
-            pyrecest.backend.__name__ != "pyrecest.jax"
-        ), "Not supported on this backend"
         if self.sigma <= 0:
             raise ValueError(f"sigma must be >0, but received {self.sigma}.")
-
         xs = array(xs)
         if ndim(xs) == 0:
             xs = array([xs])
-        n_inputs = xs.shape[0]
-
         # check if sigma is large and return uniform distribution in this case
         if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
-            return 1.0 / (2.0 * pi) * ones(n_inputs)
-
-        result = zeros(n_inputs)
-
+            return 1.0 / (2.0 * pi) * ones(xs.shape[0])
         x = mod(xs, 2.0 * pi)
         x = where(x < 0, x + 2.0 * pi, x)
         x -= self.mu
-
         max_iterations: int = 1000
+        if pyrecest.backend.__name__ != "pyrecest.jax":
 
-        tmp = -1.0 / (2.0 * self.sigma**2)
-        nc = 1.0 / sqrt(2.0 * pi) / self.sigma
+            n_inputs = xs.shape[0]
+            result = zeros(n_inputs)
 
-        for i in range(n_inputs):
-            old_result = 0.0
-            result[i] = exp(x[i] * x[i] * tmp)
+            tmp = -1.0 / (2.0 * self.sigma**2)
+            nc = 1.0 / sqrt(2.0 * pi) / self.sigma
 
-            for k in range(1, max_iterations + 1):
-                xp = x[i] + 2 * pi * k
-                xm = x[i] - 2 * pi * k
+            for i in range(n_inputs):
+                old_result = 0.0
+                result[i] = exp(x[i] * x[i] * tmp)
+
+                for k in range(1, max_iterations + 1):
+                    xp = x[i] + 2 * pi * k
+                    xm = x[i] - 2 * pi * k
+                    tp = xp * xp * tmp
+                    tm = xm * xm * tmp
+                    old_result = result[i]
+                    result[i] += exp(tp) + exp(tm)
+
+                    if result[i] == old_result:
+                        break
+
+                result[i] *= nc
+        else:
+            from jax.numpy import logical_and  # pylint: disable=import-error
+            from jax import lax  # pylint: disable=import-error
+            tmp = -1.0 / (2.0 * self.sigma**2)
+            nc = 1.0 / (sqrt(2.0 * pi) * self.sigma)
+
+            def body_fun(val):
+                i, result = val
+                xp = x + 2 * pi * i
+                xm = x - 2 * pi * i
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
-                old_result = result[i]
-                result[i] += exp(tp) + exp(tm)
+                addendum = exp(tp) + exp(tm)
+                new_result = result + addendum
+                return (i + 1, new_result)
 
-                if result[i] == old_result:
-                    break
+            def cond_fun(val):
+                i, result = val
+                # Check both convergence and max_iterations
+                return logical_and(any(result - result.at[...].set(0) > 1e-10), i < max_iterations)
 
-            result[i] *= nc
+            initial_val = (1, exp(x * x * tmp))  # Initial iteration index set to 1, and initial result based on x
+            _, result = lax.while_loop(cond_fun, body_fun, initial_val)
+            
+            result *= nc
 
         return result.squeeze()
 
