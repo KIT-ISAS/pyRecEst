@@ -91,7 +91,9 @@ from pyrecest.distributions.circle.circular_uniform_distribution import (
 from pyrecest.distributions.circle.custom_circular_distribution import (
     CustomCircularDistribution,
 )
-from pyrecest.distributions.circle.sine_skewed_distributions import GeneralizedKSineSkewedVonMisesDistribution
+from pyrecest.distributions.circle.sine_skewed_distributions import (
+    GeneralizedKSineSkewedVonMisesDistribution,
+)
 from pyrecest.distributions.circle.von_mises_distribution import VonMisesDistribution
 from pyrecest.distributions.circle.wrapped_cauchy_distribution import (
     WrappedCauchyDistribution,
