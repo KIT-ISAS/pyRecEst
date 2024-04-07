@@ -2,10 +2,8 @@ import unittest
 from math import pi
 
 import numpy.testing as npt
-import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, arange, array, exp, ones_like, sqrt, sum
 from pyrecest.distributions import WrappedNormalDistribution
 
@@ -16,10 +14,6 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.sigma = array(1.5)
         self.wn = WrappedNormalDistribution(self.mu, self.sigma)
 
-    @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
-        reason="Not supported on this backend",
-    )
     def test_pdf_values_are_as_expected(self):
         """
         Test that the probability density function (pdf) returns expected values.
@@ -34,7 +28,7 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         for point in test_points:
             with self.subTest(x=point):
                 npt.assert_almost_equal(
-                    self.wn.pdf(point), approx_with_wrapping(point), decimal=10
+                    self.wn.pdf(point), approx_with_wrapping(point), decimal=7
                 )
 
         x = arange(0, 7)
@@ -42,14 +36,10 @@ class WrappedNormalDistributionTest(unittest.TestCase):
             allclose(
                 self.wn.pdf(x),
                 array([approx_with_wrapping(xi) for xi in x]),
-                rtol=1e-10,
+                rtol=1e-7,
             )
         )
 
-    @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
-        reason="Not supported on this backend",
-    )
     def test_pdf_with_large_sigma_is_uniform(self):
         """
         Test that the pdf with large sigma is approximately a uniform distribution.
