@@ -7,6 +7,7 @@ import pyrecest.backend
 from pyrecest.backend import (
     abs,
     angle,
+    any,
     array,
     exp,
     int32,
@@ -20,7 +21,6 @@ from pyrecest.backend import (
     squeeze,
     where,
     zeros,
-    any
 )
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
@@ -70,7 +70,6 @@ class WrappedNormalDistribution(
         x -= self.mu
         max_iterations: int = 1000
         if pyrecest.backend.__name__ != "pyrecest.jax":
-
             n_inputs = xs.shape[0]
             result = zeros(n_inputs)
 
@@ -94,8 +93,9 @@ class WrappedNormalDistribution(
 
                 result[i] *= nc
         else:
-            from jax.numpy import logical_and  # pylint: disable=import-error
             from jax import lax  # pylint: disable=import-error
+            from jax.numpy import logical_and  # pylint: disable=import-error
+
             tmp = -1.0 / (2.0 * self.sigma**2)
             nc = 1.0 / (sqrt(2.0 * pi) * self.sigma)
 
@@ -112,11 +112,16 @@ class WrappedNormalDistribution(
             def cond_fun(val):
                 i, result = val
                 # Check both convergence and max_iterations
-                return logical_and(any(result - result.at[...].set(0) > 1e-10), i < max_iterations)
+                return logical_and(
+                    any(result - result.at[...].set(0) > 1e-10), i < max_iterations
+                )
 
-            initial_val = (1, exp(x * x * tmp))  # Initial iteration index set to 1, and initial result based on x
+            initial_val = (
+                1,
+                exp(x * x * tmp),
+            )  # Initial iteration index set to 1, and initial result based on x
             _, result = lax.while_loop(cond_fun, body_fun, initial_val)
-            
+
             result *= nc
 
         return result.squeeze()
