@@ -64,6 +64,7 @@ jobs:
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: jirutka/setup-alpine@v1
         with: # cfitsio, py3-pkgconfig, curl-dev, and zlib for healpy
+          branch: edge
           packages: >
             build-base
             python3-dev
@@ -178,7 +179,7 @@ jobs:
         id: ml
         # You can override MegaLinter flavor used to have faster performances
         # More info at https://megalinter.io/latest/configuration/#shared-variables
-        uses: oxsecurity/megalinter/flavors/python@v7.7.0
+        uses: oxsecurity/megalinter/flavors/python@v7.11.1
         env:
           # All available variables are described in documentation
           # https://megalinter.io/latest/configuration/#shared-variables
