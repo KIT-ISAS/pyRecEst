@@ -140,10 +140,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
 
         m = exp(
             array(
-                [
-                    1j * n * self.mu[i] - n**2 * self.C[i, i] / 2
-                    for i in range(self.dim)
-                ]
+                [1j * n * self.mu[i] - n**2 * self.C[i, i] / 2 for i in range(self.dim)]
             )
         )
 

@@ -1,4 +1,6 @@
+astropy-iers-data
 astropy
+autograd
 autopep8
 beartype
 certifi
@@ -11,6 +13,7 @@ filelock
 filterpy
 fonttools
 fsspec
+future
 healpy
 idna
 iniconfig
@@ -18,10 +21,12 @@ jinja2
 kiwisolver
 markupsafe
 matplotlib
+ml-dtypes
 mpmath
 networkx
 numpy-quaternion
 numpy
+opt-einsum
 packaging
 pandas
 parameterized
