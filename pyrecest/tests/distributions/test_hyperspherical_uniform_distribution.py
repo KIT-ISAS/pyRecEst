@@ -1,4 +1,5 @@
 """ Test for uniform distribution on the hypersphere """
+
 # pylint: disable=no-name-in-module,no-member
 import unittest
 

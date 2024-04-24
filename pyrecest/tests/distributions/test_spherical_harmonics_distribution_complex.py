@@ -218,10 +218,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                         [0.0, 0.0, 1.0, 0.0, 0.0],
                     ]
                 ),
-                lambda x, y, z: 1.0
-                / 4.0
-                * sqrt(5 / pi)
-                * (2.0 * z**2 - x**2 - y**2),
+                lambda x, y, z: 1.0 / 4.0 * sqrt(5 / pi) * (2.0 * z**2 - x**2 - y**2),
             ),
             (
                 "testl3m0",

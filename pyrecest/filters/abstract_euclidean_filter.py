@@ -1,4 +1,5 @@
 """ Abstract base class for all filters for Euclidean domains """
+
 from .abstract_manifold_specific_filter import AbstractManifoldSpecificFilter
 
 

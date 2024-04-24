@@ -24,9 +24,9 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         AbstractHypertoroidalDistribution.__init__(self, dim=dists[0].dim)
         AbstractMixture.__init__(self, dists, w)
         # To tell mypy the type of the variable explicitly
-        self.dists: collections.abc.Sequence[
-            AbstractHypertoroidalDistribution
-        ] = self.dists
+        self.dists: collections.abc.Sequence[AbstractHypertoroidalDistribution] = (
+            self.dists
+        )
 
     def trigonometric_moment(self, n: Union[int, int32, int64]):
         """
