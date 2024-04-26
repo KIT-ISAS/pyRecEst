@@ -58,6 +58,8 @@ from torch import (
     roll,
     dstack,
     vmap,
+    # For Riemannian score-based SDE
+    log1p,
 )
 from torch import repeat_interleave as repeat
 from torch import (
