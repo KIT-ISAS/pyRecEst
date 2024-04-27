@@ -96,6 +96,8 @@ from numpy import (
     min,
     roll,
     dstack,
+    # For Riemannian score-based SDE
+    log1p,
 )
 from scipy.special import erf, gamma, polygamma  # NOQA
 from scipy.integrate import trapezoid  # NOQA

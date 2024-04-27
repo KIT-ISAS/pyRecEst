@@ -192,6 +192,8 @@ BACKEND_ATTRIBUTES = {
         "roll",
         "dstack",
         "vmap",
+        # For Riemannian score-based SDE
+        "log1p"
     ],
     "autodiff": [
         "custom_gradient",
