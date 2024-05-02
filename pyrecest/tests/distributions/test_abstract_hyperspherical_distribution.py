@@ -5,7 +5,7 @@ import matplotlib
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, linalg, sqrt
+from pyrecest.backend import array, linalg, sqrt, log
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     VonMisesFisherDistribution,
@@ -76,6 +76,21 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         kappa = 10.0
         vmf = VonMisesFisherDistribution(mu, kappa)
         vmf.plot()
+
+    def test_get_ln_manifold_size(self):
+        """Test if the natural logarithm of the manifold size is calculated correctly for dimension 4."""
+        mu = array([1.0, 1.0, 2.0, 2.0])
+        mu = mu / linalg.norm(mu)
+        kappa = 10.0
+        vmf = VonMisesFisherDistribution(mu, kappa)
+        # Compute log of the manifold size using the method get_manifold_size
+        expected_ln_size = log(vmf.get_manifold_size())
+        
+        # Compute the log of the manifold size using the method get_ln_manifold_size
+        computed_ln_size = vmf.get_ln_manifold_size()
+        
+        # Assert that the computed value is close to the expected value within a reasonable tolerance
+        self.assertAlmostEqual(expected_ln_size, computed_ln_size, places=10, msg="The computed log of the manifold size does not match the expected value.")
 
 
 if __name__ == "__main__":

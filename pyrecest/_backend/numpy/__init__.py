@@ -99,7 +99,7 @@ from numpy import (
     # For Riemannian score-based SDE
     log1p,
 )
-from scipy.special import erf, gamma, polygamma  # NOQA
+from scipy.special import erf, gamma, polygamma, gammaln  # NOQA
 from scipy.integrate import trapezoid  # NOQA
 from .._shared_numpy import (
     abs,

@@ -74,6 +74,7 @@ from torch import (
     zeros_like,
 )
 from torch.special import gammaln as _gammaln
+from torch.special import gammaln
 
 from .._backend_config import pytorch_atol as atol
 from .._backend_config import pytorch_rtol as rtol

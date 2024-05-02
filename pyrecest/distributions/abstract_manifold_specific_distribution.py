@@ -5,7 +5,7 @@ from typing import Union
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import empty, int32, int64, random, squeeze
+from pyrecest.backend import empty, int32, int64, random, squeeze, log
 
 
 class AbstractManifoldSpecificDistribution(ABC):
@@ -20,6 +20,9 @@ class AbstractManifoldSpecificDistribution(ABC):
     @abstractmethod
     def get_manifold_size(self) -> float:
         pass
+
+    def get_ln_manifold_size(self):
+        return log(self.get_manifold_size())
 
     @property
     def dim(self) -> int:
@@ -42,6 +45,9 @@ class AbstractManifoldSpecificDistribution(ABC):
     @abstractmethod
     def pdf(self, xs):
         pass
+
+    def ln_pdf(self, xs):
+        return log(self.pdf(xs))
 
     @abstractmethod
     def mean(self):

@@ -19,6 +19,8 @@ from pyrecest.backend import (
     sin,
     vstack,
     zeros,
+    log,
+    gammaln,
 )
 from scipy.optimize import minimize
 
@@ -238,3 +240,11 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
             self.dim
         )
+    
+    def get_ln_manifold_size(self):
+        if self.dim <= 3:
+            log_surface_area = log(self.get_manifold_size())
+        else:
+            # Compute the log of the surface area directly using properties of log
+            log_surface_area = log(2.0) + ((self.dim + 1) / 2) * log(pi) - gammaln((self.dim + 1) / 2)
+        return log_surface_area
