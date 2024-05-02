@@ -5,7 +5,7 @@ from typing import Union
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import empty, int32, int64, random, squeeze, log
+from pyrecest.backend import empty, int32, int64, log, random, squeeze
 
 
 class AbstractManifoldSpecificDistribution(ABC):
