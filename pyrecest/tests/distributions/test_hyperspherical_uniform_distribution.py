@@ -5,7 +5,7 @@ import unittest
 
 import numpy.testing as npt
 import pyrecest.backend
-from pyrecest.backend import linalg, ones, random
+from pyrecest.backend import linalg, ones, random, log
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
@@ -51,6 +51,15 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             samples = hud.sample(n)
             self.assertEqual(samples.shape, (n, hud.dim + 1))
             npt.assert_allclose(linalg.norm(samples, axis=1), ones(n), rtol=5e-7)
+
+    def test_ln_pdf(self):
+        """Test if ln_pdf returns the correct logarithm of the probability density."""
+        hud = HypersphericalUniformDistribution(3)
+        n = 10
+        samples = hud.sample(n)
+        # Assert that the computed values are close to the expected values
+        npt.assert_array_almost_equal(hud.ln_pdf(samples), log(hud.pdf(samples)), decimal=10,
+                                             err_msg="ln_pdf does not return correct log probabilities.")
 
 
 if __name__ == "__main__":
