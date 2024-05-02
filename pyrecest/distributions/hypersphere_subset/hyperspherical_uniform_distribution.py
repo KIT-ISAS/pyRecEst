@@ -2,7 +2,7 @@ from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import cos, empty, int32, int64, linalg, random, sin, sqrt, stack
+from pyrecest.backend import cos, empty, int32, int64, linalg, random, sin, sqrt, stack, ones
 
 from .abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
@@ -18,6 +18,9 @@ class HypersphericalUniformDistribution(
 
     def pdf(self, xs):
         return AbstractHypersphereSubsetUniformDistribution.pdf(self, xs)
+
+    def ln_pdf(self, xs):
+        return -self.get_ln_manifold_size() * ones(xs.shape[0])
 
     def sample(self, n: Union[int, int32, int64]):
         assert isinstance(n, int) and n > 0, "n must be a positive integer"
