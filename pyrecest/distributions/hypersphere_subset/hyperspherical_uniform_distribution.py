@@ -2,7 +2,18 @@ from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import cos, empty, int32, int64, linalg, random, sin, sqrt, stack, ones
+from pyrecest.backend import (
+    cos,
+    empty,
+    int32,
+    int64,
+    linalg,
+    ones,
+    random,
+    sin,
+    sqrt,
+    stack,
+)
 
 from .abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
