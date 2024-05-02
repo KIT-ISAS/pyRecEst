@@ -5,7 +5,7 @@ import unittest
 
 import numpy.testing as npt
 import pyrecest.backend
-from pyrecest.backend import linalg, ones, random, log
+from pyrecest.backend import linalg, log, ones, random
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
@@ -58,8 +58,12 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         n = 10
         samples = hud.sample(n)
         # Assert that the computed values are close to the expected values
-        npt.assert_array_almost_equal(hud.ln_pdf(samples), log(hud.pdf(samples)), decimal=10,
-                                             err_msg="ln_pdf does not return correct log probabilities.")
+        npt.assert_array_almost_equal(
+            hud.ln_pdf(samples),
+            log(hud.pdf(samples)),
+            decimal=10,
+            err_msg="ln_pdf does not return correct log probabilities.",
+        )
 
 
 if __name__ == "__main__":
