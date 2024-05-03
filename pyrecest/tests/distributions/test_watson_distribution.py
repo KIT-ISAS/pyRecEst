@@ -4,9 +4,9 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, linalg
+from pyrecest.backend import array, linalg, log
 from pyrecest.distributions import BinghamDistribution, WatsonDistribution
-
+import numpy.testing as npt
 
 class TestWatsonDistribution(unittest.TestCase):
     def setUp(self):
@@ -79,6 +79,26 @@ class TestWatsonDistribution(unittest.TestCase):
             watson_dist.pdf(self.xs), bingham_dist.pdf(self.xs), decimal=5
         )
 
+    def test_ln_norm_const(self):
+        # Create an instance of WatsonDistribution
+        # Here mu is a normalized vector, let's use [1, 0, 0] for simplicity in 3D
+        mu = array([1.0, 0.0, 0.0])
+        kappa = 3.0  # Arbitrary concentration parameter
 
-if __name__ == "__main__":
+        # Instantiate WatsonDistribution
+        watson_dist = WatsonDistribution(mu, kappa)
+
+        # Calculate norm_const and ln_norm_const
+        norm_const = watson_dist.norm_const
+        ln_norm_const = watson_dist.ln_norm_const
+
+        # Check if ln_norm_const is the ln of norm_const
+        expected_ln_norm_const = log(norm_const)
+        
+        # Use allclose to compare the floating-point results within some tolerance
+        npt.assert_allclose(ln_norm_const, expected_ln_norm_const)
+
+# Running the tests
+if __name__ == '__main__':
     unittest.main()
+

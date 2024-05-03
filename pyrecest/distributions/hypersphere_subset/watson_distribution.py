@@ -14,9 +14,11 @@ from pyrecest.backend import (
     ones,
     tile,
     vstack,
+    log,
     zeros,
+    gammaln,
 )
-
+from math import pi
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
 
@@ -39,6 +41,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         self.mu = mu
         self.kappa = kappa
         self._norm_const = norm_const
+        self._ln_norm_const = log(norm_const) if norm_const is not None else None
 
     @property
     def norm_const(self):
@@ -51,6 +54,16 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
                 )
             )
         return self._norm_const
+    
+    @property
+    def ln_norm_const(self):
+        if self._ln_norm_const is None:
+            self._ln_norm_const = array(float(
+                (gammaln((self.dim + 1) / 2))
+                - log(2 * pi ** ((self.dim + 1) / 2))
+                - mpmath.log(mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa))
+                ))
+        return self._ln_norm_const
 
     def pdf(self, xs):
         """
