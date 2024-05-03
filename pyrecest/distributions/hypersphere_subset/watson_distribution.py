@@ -57,7 +57,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             np.generic: The value of the pdf at xs.
         """
         assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
-        p = self.C * exp(self.kappa * (self.mu.T @ xs.T) ** 2)
+        p = self.C * exp(self.kappa * (self.mu @ xs.T) ** 2)
         return p
 
     def to_bingham(self) -> BinghamDistribution:
