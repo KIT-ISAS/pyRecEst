@@ -43,11 +43,13 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
     @property
     def norm_const(self):
         if self._norm_const is None:
-            self._norm_const = array(float(
-                mpmath.gamma((self.dim + 1) / 2)
-                / (2 * mpmath.pi ** ((self.dim + 1) / 2))
-                / mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
-                ))
+            self._norm_const = array(
+                float(
+                    mpmath.gamma((self.dim + 1) / 2)
+                    / (2 * mpmath.pi ** ((self.dim + 1) / 2))
+                    / mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
+                )
+            )
         return self._norm_const
 
     def pdf(self, xs):
