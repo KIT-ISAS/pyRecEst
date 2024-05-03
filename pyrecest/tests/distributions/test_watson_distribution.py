@@ -5,7 +5,11 @@ import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg, log
-from pyrecest.distributions import BinghamDistribution, WatsonDistribution, HypersphericalUniformDistribution
+from pyrecest.distributions import (
+    BinghamDistribution,
+    HypersphericalUniformDistribution,
+    WatsonDistribution,
+)
 
 
 class TestWatsonDistribution(unittest.TestCase):

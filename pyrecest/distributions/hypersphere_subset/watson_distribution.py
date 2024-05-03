@@ -82,7 +82,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
         p = self.norm_const * exp(self.kappa * (self.mu @ xs.T) ** 2)
         return p
-    
+
     def ln_pdf(self, xs):
         return self.ln_norm_const + self.kappa * (self.mu @ xs.T) ** 2
 
