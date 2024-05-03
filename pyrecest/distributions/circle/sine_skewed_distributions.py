@@ -12,8 +12,16 @@ from .wrapped_normal_distribution import WrappedNormalDistribution
 
 
 class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
-    # See Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
-    # Toroidal Distributions, Florence Nightingale Directional Statistics volume, Springer.
+    """
+    See Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
+    Toroidal Distributions, Florence Nightingale Directional Statistics volume, Springer.
+    Parameters:
+    - mu (float): Mean direction of the distribution.
+    - kappa (float): Concentration parameter (non-negative).
+    - lambda_ (float): Skewness parameter, must be between -1 and 1 inclusive.
+    - k (int): Sine multiplier, currently supports only k=1.
+    - m (int): Power of the sine term, must be a positive integer.
+    """
     def __init__(self, mu, kappa, lambda_, k, m):
         AbstractCircularDistribution.__init__(self)
         self.mu = mod(mu, 2 * pi)
