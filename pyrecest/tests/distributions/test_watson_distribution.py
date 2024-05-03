@@ -6,7 +6,7 @@ import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg, log
 from pyrecest.distributions import BinghamDistribution, WatsonDistribution
-import numpy.testing as npt
+
 
 class TestWatsonDistribution(unittest.TestCase):
     def setUp(self):
@@ -94,11 +94,11 @@ class TestWatsonDistribution(unittest.TestCase):
 
         # Check if ln_norm_const is the ln of norm_const
         expected_ln_norm_const = log(norm_const)
-        
+
         # Use allclose to compare the floating-point results within some tolerance
         npt.assert_allclose(ln_norm_const, expected_ln_norm_const, rtol=1e-6)
 
-# Running the tests
-if __name__ == '__main__':
-    unittest.main()
 
+# Running the tests
+if __name__ == "__main__":
+    unittest.main()
