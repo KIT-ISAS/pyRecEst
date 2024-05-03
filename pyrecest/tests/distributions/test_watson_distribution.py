@@ -98,6 +98,22 @@ class TestWatsonDistribution(unittest.TestCase):
         # Use allclose to compare the floating-point results within some tolerance
         npt.assert_allclose(ln_norm_const, expected_ln_norm_const)
 
+    def test_ln_pdf(self):
+        """Test if ln_pdf returns the correct logarithm of the probability density."""
+        mu = array([1.0, 0.0, 0.0])
+        kappa = 2.0
+        dist = WatsonDistribution(mu, kappa)
+
+        n = 10
+        samples = dist.sample(n)
+        # Assert that the computed values are close to the expected values
+        npt.assert_array_almost_equal(
+            dist.ln_pdf(samples),
+            log(dist.pdf(samples)),
+            decimal=10,
+            err_msg="ln_pdf does not return correct log probabilities.",
+        )
+
 # Running the tests
 if __name__ == '__main__':
     unittest.main()
