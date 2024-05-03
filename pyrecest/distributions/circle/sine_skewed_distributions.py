@@ -22,6 +22,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
     - k (int): Sine multiplier, currently supports only k=1.
     - m (int): Power of the sine term, must be a positive integer.
     """
+
     def __init__(self, mu, kappa, lambda_, k, m):
         AbstractCircularDistribution.__init__(self)
         self.mu = mod(mu, 2 * pi)
