@@ -24,7 +24,7 @@ from .bingham_distribution import BinghamDistribution
 class WatsonDistribution(AbstractHypersphericalDistribution):
     EPSILON = 1e-6
 
-    def __init__(self, mu, kappa):
+    def __init__(self, mu, kappa, norm_const: float | None = None):
         """
         Initializes a new instance of the WatsonDistribution class.
 
@@ -38,13 +38,17 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
 
         self.mu = mu
         self.kappa = kappa
+        self._norm_const = norm_const
 
-        C_mpf = (
-            mpmath.gamma((self.dim + 1) / 2)
-            / (2 * mpmath.pi ** ((self.dim + 1) / 2))
-            / mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
-        )
-        self.C = array(float(C_mpf))
+    @property
+    def norm_const(self):
+        if self._norm_const is None:
+            self._norm_const = array(float(
+                mpmath.gamma((self.dim + 1) / 2)
+                / (2 * mpmath.pi ** ((self.dim + 1) / 2))
+                / mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
+                ))
+        return self._norm_const
 
     def pdf(self, xs):
         """
@@ -57,7 +61,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             np.generic: The value of the pdf at xs.
         """
         assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
-        p = self.C * exp(self.kappa * (self.mu @ xs.T) ** 2)
+        p = self.norm_const * exp(self.kappa * (self.mu @ xs.T) ** 2)
         return p
 
     def to_bingham(self) -> BinghamDistribution:
