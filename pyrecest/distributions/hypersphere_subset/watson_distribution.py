@@ -1,3 +1,5 @@
+from math import pi
+
 import mpmath
 import numpy.testing as npt
 
@@ -9,16 +11,16 @@ from pyrecest.backend import (
     diag,
     exp,
     full,
+    gammaln,
     hstack,
     linalg,
+    log,
     ones,
     tile,
     vstack,
-    log,
     zeros,
-    gammaln,
 )
-from math import pi
+
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
 
@@ -54,15 +56,17 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
                 )
             )
         return self._norm_const
-    
+
     @property
     def ln_norm_const(self):
         if self._ln_norm_const is None:
             self._ln_norm_const = array(
                 (gammaln(array((self.dim + 1) / 2)))
                 - log(2 * pi ** ((self.dim + 1) / 2))
-                - float(mpmath.log(mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
-                )))
+                - float(
+                    mpmath.log(mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa))
+                )
+            )
         return self._ln_norm_const
 
     def pdf(self, xs):
