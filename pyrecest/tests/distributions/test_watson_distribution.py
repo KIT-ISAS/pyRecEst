@@ -5,7 +5,7 @@ import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg, log
-from pyrecest.distributions import BinghamDistribution, WatsonDistribution
+from pyrecest.distributions import BinghamDistribution, WatsonDistribution, HypersphericalUniformDistribution
 
 
 class TestWatsonDistribution(unittest.TestCase):
@@ -97,6 +97,22 @@ class TestWatsonDistribution(unittest.TestCase):
 
         # Use allclose to compare the floating-point results within some tolerance
         npt.assert_allclose(ln_norm_const, expected_ln_norm_const, rtol=1e-6)
+
+    def test_ln_pdf(self):
+        """Test if ln_pdf returns the correct logarithm of the probability density."""
+        mu = array([1.0, 0.0, 0.0])
+        kappa = 2.0
+        dist = WatsonDistribution(mu, kappa)
+
+        n = 10
+        samples = HypersphericalUniformDistribution(2).sample(n)
+        # Assert that the computed values are close to the expected values
+        npt.assert_allclose(
+            dist.ln_pdf(samples),
+            log(dist.pdf(samples)),
+            rtol=1e-6,
+            err_msg="ln_pdf does not return correct log probabilities.",
+        )
 
 
 # Running the tests
