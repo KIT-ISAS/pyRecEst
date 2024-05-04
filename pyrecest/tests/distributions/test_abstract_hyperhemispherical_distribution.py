@@ -6,7 +6,7 @@ import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, linalg, ones, sum
+from pyrecest.backend import array, linalg, ones, sum, zeros
 from pyrecest.distributions import (
     HyperhemisphericalWatsonDistribution,
     VonMisesFisherDistribution,
@@ -41,6 +41,16 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         watson_dist = HyperhemisphericalWatsonDistribution(self.mu_, self.kappa_)
         mode_numerical = watson_dist.mode_numerical()
         npt.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
+
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
+    def test_sampling_hemisphere(self):
+        """ Test if all samples are on the correct hemisphere."""
+        watson_dist = HyperhemisphericalWatsonDistribution(self.mu_, self.kappa_)
+        samples = watson_dist.sample(20)
+        npt.assert_array_less(-samples[:,-1], zeros(samples.shape[0]))
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",
