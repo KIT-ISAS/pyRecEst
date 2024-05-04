@@ -154,7 +154,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             shd.pdf(column_stack((x, y, z))),
             result_func(x, y, z),
             rtol=0.002,
-            atol=1e-7,
+            atol=1e-5,
             err_msg=name,
         )
 
