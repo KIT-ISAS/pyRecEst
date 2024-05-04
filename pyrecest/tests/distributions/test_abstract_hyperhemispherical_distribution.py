@@ -47,10 +47,10 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_sampling_hemisphere(self):
-        """ Test if all samples are on the correct hemisphere."""
+        """Test if all samples are on the correct hemisphere."""
         watson_dist = HyperhemisphericalWatsonDistribution(self.mu_, self.kappa_)
         samples = watson_dist.sample(20)
-        npt.assert_array_less(-samples[:,-1], zeros(samples.shape[0]))
+        npt.assert_array_less(-samples[:, -1], zeros(samples.shape[0]))
 
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",

@@ -1,7 +1,7 @@
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, concatenate, int32, int64, zeros, where
+from pyrecest.backend import allclose, array, concatenate, int32, int64, where, zeros
 
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -30,7 +30,7 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         invert_mask = s_full[:, -1] < 0
         s = where(invert_mask[:, None], -s_full, s_full)
         return s
-    
+
     @property
     def mu(self):
         return self.dist_full_sphere.mu
