@@ -18,15 +18,19 @@ from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
 
 
 class RandomMatrixTracker(AbstractExtendedObjectTracker):
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         kinematic_state,
         covariance,
         extent,
         kinematic_state_to_pos_matrix=None,
-        **kwargs
+        log_prior_estimates=False,
+        log_posterior_estimates=False,
+        log_prior_extent=False,
+        log_posterior_extent=False,
     ):
-        super().__init__(**kwargs)
+        super().__init__(log_prior_estimates, log_posterior_estimates, log_prior_extent, log_posterior_extent)
         self.kinematic_state = kinematic_state  # Initial kinematic state
         self.covariance = covariance  # Initial state covariance matrix
         self.extent = extent  # Initial extent matrix

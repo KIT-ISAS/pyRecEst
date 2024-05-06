@@ -7,13 +7,15 @@ from pyrecest.backend import array, full, hstack
 
 
 class AbstractTrackerWithLogging(ABC):
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-            if value:
-                # Remove the 'log_' prefix from the key
-                clean_key = key[4:] if key.startswith("log_") else key
-                setattr(self, f"{clean_key}_over_time", array([[]]))
+    def __init__(self, log_prior_estimates=False, log_posterior_estimates=False):
+        self.log_prior_estimates=log_prior_estimates
+        self.log_posterior_estimates=log_posterior_estimates
+        
+        if log_prior_estimates:
+            self.prior_estimates_over_time = array([[]])
+        
+        if log_posterior_estimates:
+            self.posterior_estimates_over_time = array([[]])
 
     def _store_estimates(self, curr_ests, estimates_over_time):
         assert (
