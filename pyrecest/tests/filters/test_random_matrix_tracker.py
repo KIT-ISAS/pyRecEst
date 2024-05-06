@@ -139,6 +139,27 @@ class TestRandomMatrixTracker(unittest.TestCase):
         # Check that the plot is shown
         mock_show.assert_called_once()
 
+    def test_get_contour_points(self):
+        # Create a kinematic state (e.g., position and velocity in 2D)
+        kinematic_state = array([10.0, 5.0])
+        # Create a covariance matrix (not directly used in this test)
+        covariance = eye(2)
+        # Create an extent matrix that defines the size and orientation of the ellipse
+        extent = array([[3.0, 0.0], [0.0, 1.0]])
+
+        # Initialize the RandomMatrixTracker
+        tracker = RandomMatrixTracker(kinematic_state, covariance, extent)
+
+        # Number of points to generate
+        n_points = 100
+
+        # Get the contour points
+        contour_points = tracker.get_contour_points(n_points)
+
+        # Check the number of points returned
+        self.assertEqual(contour_points.shape[0], n_points)  # Expecting n_points
+        self.assertEqual(contour_points.shape[1], 2)  # Expecting x and y coordinates
+
 
 if __name__ == "__main__":
     unittest.main()

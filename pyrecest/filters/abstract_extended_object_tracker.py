@@ -1,5 +1,9 @@
 from abc import abstractmethod
 
+import matplotlib.pyplot as plt
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import vstack
+
 from .abstract_tracker_with_logging import AbstractTrackerWithLogging
 
 
@@ -77,3 +81,12 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
         Returns:
         - A matrix or vector representing the estimated extent.
         """
+
+    @abstractmethod
+    def get_contour_points(self, n):
+        pass
+
+    def plot_point_estimate(self):
+        contour = self.get_contour_points(100)
+        closed_contour = vstack((contour, contour[-1]))
+        plt.plot(closed_contour[:, 0], closed_contour[:, 1])
