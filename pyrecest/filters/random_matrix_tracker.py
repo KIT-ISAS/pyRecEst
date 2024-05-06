@@ -11,7 +11,6 @@ from pyrecest.backend import (
     linspace,
     mean,
     sin,
-    vstack,
 )
 from pyrecest.utils.plotting import plot_ellipsoid
 
@@ -117,5 +116,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
     def get_contour_points(self, n):
         assert self.kinematic_state.shape == (2,)
         xs = linspace(0, 2 * pi, n)
-        contour_points = self.kinematic_state[:, None] + self.extent @ array([cos(xs), sin(xs)])
+        contour_points = self.kinematic_state[:, None] + self.extent @ array(
+            [cos(xs), sin(xs)]
+        )
         return contour_points.T
