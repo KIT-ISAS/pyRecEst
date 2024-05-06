@@ -3,8 +3,8 @@ from abc import ABC
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, full, hstack
-
+from pyrecest.backend import array, full, hstack, pad
+from math import nan
 
 class AbstractTrackerWithLogging(ABC):
     def __init__(self, log_prior_estimates=False, log_posterior_estimates=False):
@@ -18,11 +18,6 @@ class AbstractTrackerWithLogging(ABC):
             self.posterior_estimates_over_time = array([[]])
 
     def _store_estimates(self, curr_ests, estimates_over_time):
-        assert (
-            pyrecest.backend.__name__ != "pyrecest.jax"
-        ), "Not supported on this backend"
-        import numpy as _np
-
         # Ensure curr_ests is a 2D array
         if curr_ests.ndim == 1:
             curr_ests = curr_ests.reshape(-1, 1)
@@ -31,17 +26,22 @@ class AbstractTrackerWithLogging(ABC):
         n = curr_ests.shape[0]
 
         if n <= m:
-            curr_ests = _np.pad(
+            # Use jnp.pad to pad the current estimates
+            curr_ests = pad(
                 curr_ests,
                 ((0, m - n), (0, 0)),
                 mode="constant",
-                constant_values=float("NaN"),
+                constant_values=nan
             )
-            estimates_over_time = hstack((estimates_over_time, curr_ests))
+            # Concatenate along the second dimension (time)
+            estimates_over_time_new = hstack((estimates_over_time, curr_ests))
         else:
-            estimates_over_time_new = full((n, t + 1), float("NaN"))
-            estimates_over_time_new[:m, :t] = estimates_over_time
-            estimates_over_time_new[:, -1] = curr_ests.flatten()
-            estimates_over_time = estimates_over_time_new
+            estimates_over_time_new = full((n, t + 1), nan)
+            if pyrecest.backend.__name__ != "pyrecest.jax":
+                estimates_over_time_new[:m, :t] = estimates_over_time
+                estimates_over_time_new[:, -1] = curr_ests.flatten()
+            else:
+                estimates_over_time_new = estimates_over_time_new.at[:m, :t].set(estimates_over_time)
+                estimates_over_time_new = estimates_over_time_new.at[:, -1].set(curr_ests.flatten())
 
-        return estimates_over_time
+        return estimates_over_time_new
