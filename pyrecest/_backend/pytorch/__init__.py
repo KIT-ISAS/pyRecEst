@@ -825,9 +825,9 @@ def _unnest_iterable(ls):
     return out
 
 
-def pad(a, pad_width, constant_value=0.0):
+def pad(a, pad_width, constant_values=0.0, mode='constant'):
     return _torch.nn.functional.pad(
-        a, _unnest_iterable(reversed(pad_width)), value=constant_value
+        a, _unnest_iterable(reversed(pad_width)), mode=mode, value=constant_values
     )
 
 
@@ -873,7 +873,14 @@ def dot(a, b):
 def cross(a, b):
     if a.shape != b.shape:
         a, b = broadcast_arrays(a, b)
-    return _torch.cross(*convert_to_wider_dtype([a, b]), dim=-1)
+    if a.shape[0] == 3 and b.shape[0] == 3:
+        result = _torch.cross(*convert_to_wider_dtype([a, b]), dim=-1)
+    elif a.shape[0] == 2 and b.shape[0] == 2:
+        result = a[0] * b[1] - a[1] * b[0]
+    else:
+        raise NotImplementedError('Not implemented for this dimension.')
+    
+    return result
 
 
 def gamma(a):
