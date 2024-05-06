@@ -30,7 +30,12 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         log_prior_extent=False,
         log_posterior_extent=False,
     ):
-        super().__init__(log_prior_estimates, log_posterior_estimates, log_prior_extent, log_posterior_extent)
+        super().__init__(
+            log_prior_estimates,
+            log_posterior_estimates,
+            log_prior_extent,
+            log_posterior_extent,
+        )
         self.kinematic_state = kinematic_state  # Initial kinematic state
         self.covariance = covariance  # Initial state covariance matrix
         self.extent = extent  # Initial extent matrix

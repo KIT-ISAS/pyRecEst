@@ -8,12 +8,12 @@ from pyrecest.backend import array, full, hstack
 
 class AbstractTrackerWithLogging(ABC):
     def __init__(self, log_prior_estimates=False, log_posterior_estimates=False):
-        self.log_prior_estimates=log_prior_estimates
-        self.log_posterior_estimates=log_posterior_estimates
-        
+        self.log_prior_estimates = log_prior_estimates
+        self.log_posterior_estimates = log_posterior_estimates
+
         if log_prior_estimates:
             self.prior_estimates_over_time = array([[]])
-        
+
         if log_posterior_estimates:
             self.posterior_estimates_over_time = array([[]])
 
