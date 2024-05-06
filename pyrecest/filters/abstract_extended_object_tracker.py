@@ -3,7 +3,7 @@ from abc import abstractmethod
 import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import vstack, array
+from pyrecest.backend import array, vstack
 
 from .abstract_tracker_with_logging import AbstractTrackerWithLogging
 
@@ -25,7 +25,6 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
             self.prior_extents_over_time = array([[]])
         if log_posterior_extents:
             self.posterior_extents_over_time = array([[]])
-
 
     def store_prior_estimates(self):
         curr_ests = self.get_point_estimate()
