@@ -1,5 +1,18 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import concatenate, exp, eye, linalg, mean
+from math import pi
+
+from pyrecest.backend import (
+    array,
+    concatenate,
+    cos,
+    exp,
+    eye,
+    linalg,
+    linspace,
+    mean,
+    sin,
+    vstack,
+)
 from pyrecest.utils.plotting import plot_ellipsoid
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
@@ -100,3 +113,9 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
             )
         position_estimate = self.kinematic_state_to_pos_matrix @ self.kinematic_state
         plot_ellipsoid(position_estimate, self.extent, scaling_factor, color)
+
+    def get_contour_points(self, n):
+        assert self.kinematic_state.shape == (2,)
+        xs = linspace(0, 2 * pi, n)
+        contour_points = self.kinematic_state[:, None] + self.extent @ array([cos(xs), sin(xs)])
+        return contour_points.T
