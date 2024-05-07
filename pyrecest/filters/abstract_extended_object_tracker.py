@@ -21,6 +21,8 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
             log_prior_estimates=log_prior_estimates,
             log_posterior_estimates=log_posterior_estimates,
         )
+        self.log_prior_extents = log_prior_extents
+        self.log_posterior_extents = log_posterior_extents
         if log_prior_extents:
             self.prior_extents_over_time = array([[]])
         if log_posterior_extents:
@@ -47,7 +49,7 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
             curr_ext, self.prior_extents_over_time
         )
 
-    def store_posterior_extent(self):
+    def store_posterior_extents(self):
         curr_ext = self.get_point_estimate_extent()
         # pylint: disable=W0201
         self.posterior_extents_over_time = self._store_estimates(
