@@ -1,12 +1,13 @@
 import unittest
 
 import numpy as np
+from pyrecest.backend import array, empty, eye, vstack
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.evaluation.eot_shape_database import StarFish
 from pyrecest.filters.gprhm_tracker import GPRHMTracker
 from pyrecest.utils.metrics import iou_polygon
 from shapely.geometry import Polygon
-from pyrecest.backend import array, empty, vstack, eye
+
 
 def random_points_on_contour(shape, n_points):
     points = np.empty((0,), dtype=object)
