@@ -1,10 +1,11 @@
 from abc import ABC
+from math import nan
 
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, full, hstack, pad
-from math import nan
+
 
 class AbstractTrackerWithLogging(ABC):
     def __init__(self, log_prior_estimates=False, log_posterior_estimates=False):
@@ -28,10 +29,7 @@ class AbstractTrackerWithLogging(ABC):
         if n <= m:
             # Use jnp.pad to pad the current estimates
             curr_ests = pad(
-                curr_ests,
-                ((0, m - n), (0, 0)),
-                mode="constant",
-                constant_values=nan
+                curr_ests, ((0, m - n), (0, 0)), mode="constant", constant_values=nan
             )
             # Concatenate along the second dimension (time)
             estimates_over_time_new = hstack((estimates_over_time, curr_ests))
@@ -41,7 +39,11 @@ class AbstractTrackerWithLogging(ABC):
                 estimates_over_time_new[:m, :t] = estimates_over_time
                 estimates_over_time_new[:, -1] = curr_ests.flatten()
             else:
-                estimates_over_time_new = estimates_over_time_new.at[:m, :t].set(estimates_over_time)
-                estimates_over_time_new = estimates_over_time_new.at[:, -1].set(curr_ests.flatten())
+                estimates_over_time_new = estimates_over_time_new.at[:m, :t].set(
+                    estimates_over_time
+                )
+                estimates_over_time_new = estimates_over_time_new.at[:, -1].set(
+                    curr_ests.flatten()
+                )
 
         return estimates_over_time_new
