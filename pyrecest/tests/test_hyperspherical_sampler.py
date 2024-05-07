@@ -8,7 +8,7 @@ import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, random
+from pyrecest.backend import linalg, random, pi, linspace, array
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
 
 from ..sampling.hyperspherical_sampler import (
@@ -18,6 +18,7 @@ from ..sampling.hyperspherical_sampler import (
     HealpixHopfSampler,
     HealpixSampler,
     SphericalFibonacciSampler,
+    SphericalCoordinatesBasedFixedResolutionSampler,
 )
 
 healpy_installed = importlib.util.find_spec("healpy") is not None
@@ -134,6 +135,27 @@ class TestHypersphericalSampler(unittest.TestCase):
             4,
             f"Expected 4-dimensional-output but got {grid.shape[1]}-dimensional output",
         )
+
+
+class TestSphericalCoordinatesBasedFixedResolutionSampler(unittest.TestCase):
+    def test_get_grid_spherical_coordinates(self):
+        # Create an instance of the sampler
+        sampler = SphericalCoordinatesBasedFixedResolutionSampler()
+
+        # Define the resolution parameters for latitude and longitude
+        grid_density_parameter = array([10, 20])  # 10 latitude lines, 20 longitude lines
+
+        # Call the method
+        phi, theta, _ = sampler.get_grid_spherical_coordinates(grid_density_parameter)
+
+        expected_phi = linspace(0.0, 2 * pi, num=grid_density_parameter[0], endpoint=False)
+        expected_theta = linspace(pi / (grid_density_parameter[1] + 1), pi, 
+                                     num=grid_density_parameter[1], endpoint=False)
+
+        # Check if the first and last values of the generated phi and theta are as expected
+        # This assumes that you have access to phi and theta which might not be the case here
+        npt.assert_allclose(phi, expected_phi)
+        npt.assert_allclose(theta, expected_theta)
 
 
 class TestHopfConversion(unittest.TestCase):
