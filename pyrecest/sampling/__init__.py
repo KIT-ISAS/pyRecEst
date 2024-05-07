@@ -1,13 +1,13 @@
 from .abstract_sampler import AbstractSampler
 from .euclidean_sampler import AbstractEuclideanSampler, GaussianSampler
 from .hyperspherical_sampler import (
-    get_grid_hypersphere,
+    AbstractHopfBasedS3Sampler,
     AbstractHypersphericalUniformSampler,
     AbstractSphericalUniformSampler,
-    SphericalFibonacciSampler,
-    AbstractHopfBasedS3Sampler,
-    HealpixHopfSampler,
     FibonacciHopfSampler,
+    HealpixHopfSampler,
+    SphericalFibonacciSampler,
+    get_grid_hypersphere,
 )
 from .hypertoroidal_sampler import CircularUniformSampler
 
