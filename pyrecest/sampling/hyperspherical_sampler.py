@@ -1,6 +1,5 @@
 import itertools
 from abc import abstractmethod
-from math import pi
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -16,6 +15,8 @@ from pyrecest.backend import (
     sqrt,
     stack,
     vstack,
+    linspace,
+    pi,
 )
 from pyrecest.distributions import (
     AbstractSphericalDistribution,
@@ -88,6 +89,15 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
         grid = column_stack((x, y, z))
 
         return grid, grid_specific_description
+
+
+class SphericalCoordinatesBasedFixedResolutionSampler(AbstractSphericalCoordinatesBasedSampler):
+    def get_grid_spherical_coordinates(self, grid_density_parameter):
+        res_lon, res_lat = grid_density_parameter
+        assert grid_density_parameter.shape[0] == 2
+        phi = linspace(0.0, 2 * pi, num=res_lon, endpoint=False)
+        theta = linspace(pi / (res_lat + 1), pi, num=res_lat, endpoint=False)
+        return phi, theta, {"res_lat": res_lat, "res_lon": res_lon}
 
 
 class HealpixSampler(AbstractHypersphericalUniformSampler):
