@@ -11,12 +11,12 @@ from pyrecest.backend import (
     cos,
     deg2rad,
     empty,
+    linspace,
+    pi,
     sin,
     sqrt,
     stack,
     vstack,
-    linspace,
-    pi,
 )
 from pyrecest.distributions import (
     AbstractSphericalDistribution,
@@ -91,7 +91,9 @@ class AbstractSphericalCoordinatesBasedSampler(AbstractSphericalUniformSampler):
         return grid, grid_specific_description
 
 
-class SphericalCoordinatesBasedFixedResolutionSampler(AbstractSphericalCoordinatesBasedSampler):
+class SphericalCoordinatesBasedFixedResolutionSampler(
+    AbstractSphericalCoordinatesBasedSampler
+):
     def get_grid_spherical_coordinates(self, grid_density_parameter):
         res_lon, res_lat = grid_density_parameter
         assert grid_density_parameter.shape[0] == 2
