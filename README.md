@@ -8,7 +8,7 @@ Features of pyRecEst include:
 
 * Distribution and Densities: Provides tools for handling distributions and densities across Euclidean spaces and manifolds.
 * Filters and Trackers: Offers a suite of recursive Bayesian estimators (filters or trackers) for both Euclidean spaces and manifolds. This includes capabilities for:
-  * Multi-Target Tracking (MTT)
+  * Multi-Target Tracking (MTT)  tmp
   * Extended Object Tracking (EOT)
 * Evaluation Framework: Contains an evaluation framework to facilitate comparison between different filters.
 * Sampling Methods: Includes methods for sampling of the distributions and generating grids.
