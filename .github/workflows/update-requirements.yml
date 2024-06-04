@@ -1,10 +1,10 @@
----
 name: Update requirements.txt
 
 permissions:
   contents: write
+  pull-requests: write
 
-on: # yamllint disable-line rule:truthy
+on:
   pull_request:
     branches:
       - main
@@ -15,8 +15,7 @@ on: # yamllint disable-line rule:truthy
 jobs:
   update_requirements:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -47,6 +46,9 @@ jobs:
       - name: Prepare commit
         run: sudo chown -Rc $UID .git/
 
+      - name: Print git status
+        run: git status
+
       # Create Pull Request step
       - name: Create Pull Request with applied fixes
         id: cpr
@@ -68,6 +70,7 @@ jobs:
       # Push new commit if applicable (for now works only on PR from same repository, not from forks)
       - name: Prepare commit
         run: sudo chown -Rc $UID .git/
+
       - name: Commit and push applied linter fixes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
