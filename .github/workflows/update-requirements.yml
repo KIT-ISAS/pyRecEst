@@ -1,21 +1,45 @@
----
 name: Update requirements.txt
 
 permissions:
   contents: write
+  pull-requests: write
 
 on: # yamllint disable-line rule:truthy
+  # Trigger at every push. Action will also be visible from Pull Requests to main
+  push:
+    branches:
+      - main
+    paths:
+      - "pyproject.toml"
+      - "poetry.lock"
   pull_request:
     branches:
       - main
     paths:
       - "pyproject.toml"
+      - "poetry.lock"
+
+env: # Comment env block if you do not want to apply fixes
+  # Apply linter fixes configuration
+  APPLY_FIXES: all # When active, APPLY_FIXES must also be defined as environment variable (in github/workflows/mega-linter.yml or other CI tool)
+  APPLY_FIXES_EVENT: push # Decide which event triggers application of fixes in a commit or a PR (pull_request, push, all)
+  # I tried around a lot to make the test workflow run on pull_request events,
+  # but it it only worked when creating a new PR. By default, this would target the branch of the PR
+  # and not the main branch. Instead of trying around to cherry-pick the commits from the PR
+  # etc. I decided to just run the workflow on push events to the main branch and then create
+  # a PR targeting the main branch.
+  APPLY_FIXES_MODE: pull_request # If APPLY_FIXES is used, defines if the fixes are directly committed (commit) or posted in a PR (pull_request)
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
   update_requirements:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -41,16 +65,62 @@ jobs:
         run: python -m poetry export --format requirements.txt --output requirements.txt --extras healpy_support --extras pytorch_support --without-hashes
 
       - name: Update requirements-dev.txt
+        id: upreq
         run: python -m poetry export --with dev --format requirements.txt --output requirements-dev.txt --without-hashes
 
       - name: Prepare commit
-        run: sudo chown -Rc $UID .git/
+        run: sudo chown -Rc "$UID" .git/
 
-      - name: Commit changes
+      - name: Print git status
+        run: git status
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "megalinter-bot@florianpfaff.de"
+          git config --global user.name "megalinter-bot"
+
+      - name: Git commit all changes
+        id: commit_changes
+        run: |
+          git add .
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit."
+            echo "changes_made=false" >> "$GITHUB_ENV"
+          else
+            git commit -a -m "Committing all changes"
+            echo "changes_made=true" >> "$GITHUB_ENV"
+          fi
+
+      # Create Pull Request step
+      - name: Create Pull Request with applied fixes
+        id: cpr
+        if: github.ref == 'refs/heads/main' && env.changes_made == 'true' && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          commit-message: "Update requirements"
+          title: "Update requirements"
+          branch: update-requirements
+          labels: bot
+          base: main
+
+      # Output PR details
+      - name: Create PR output
+        if: github.ref == 'refs/heads/main' && env.changes_made == 'true' && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
+
+      # Push new commit if applicable (for now works only on PR from same repository, not from forks)
+      - name: Prepare commit
+        if: env.changes_made == 'true' && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
+        run: sudo chown -Rc "$UID" .git/
+
+      - name: Commit and push new requirements.txt and requirements-dev.txt
+        if: env.changes_made == 'true' && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'commit' && github.ref != 'refs/heads/main' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Update requirements.txt"
-          commit_user_name: "github-actions"
-          commit_user_email: "github-actions@github.com"
-          commit_author: "github-actions <github-actions@github.com>"
-          branch: ${{ github.head_ref }}
+          branch: ${{ github.event.pull_request.head.ref || github.head_ref || github.ref }}
+          commit_message: "Update requirements"
+          commit_user_name: update-requirements-bot
+          commit_user_email: update-requirements-bot@florianpfaff.de
