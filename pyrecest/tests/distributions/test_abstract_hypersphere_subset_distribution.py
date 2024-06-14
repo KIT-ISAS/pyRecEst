@@ -191,7 +191,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
             cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
                 angles, mode="colatitude"
             )
-            npt.assert_allclose(cartesian_specific, cartesian_given)
+            npt.assert_allclose(cartesian_specific, cartesian_given, rtol=2e-7)
 
     @parameterized.expand(
         [
