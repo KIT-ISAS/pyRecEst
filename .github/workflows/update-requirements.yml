@@ -76,8 +76,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.email "megalinter-bot@florianpfaff.de"
-          git config --global user.name "megalinter-bot"
+          git config --global user.email "requimrents-bot@florianpfaff.de"
+          git config --global user.name "requirements-bot"
 
       - name: Git commit all changes
         id: commit_changes
