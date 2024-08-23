@@ -63,18 +63,20 @@ test = ["hypothesis", "pytest", "pytest-remotedata"]
 
 [[package]]
 name = "autograd"
-version = "1.6.2"
-description = "Efficiently computes derivatives of numpy code."
+version = "1.7.0"
+description = "Efficiently computes derivatives of NumPy code."
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = [
-    {file = "autograd-1.6.2-py3-none-any.whl", hash = "sha256:208dde2a938e63b4f8f5049b1985505139e529068b0d26f8cd7771fd3eb145d5"},
-    {file = "autograd-1.6.2.tar.gz", hash = "sha256:8731e08a0c4e389d8695a40072ada4512641c113b6cace8f4cfbe8eb7e9aedeb"},
+    {file = "autograd-1.7.0-py3-none-any.whl", hash = "sha256:49680300f842f3a8722b060ac0d3ed7aca071d1ad4d3d38c9fdadafdcc73c30b"},
+    {file = "autograd-1.7.0.tar.gz", hash = "sha256:de743fd368d6df523cd37305dcd171861a9752a144493677d2c9f5a56983ff2f"},
 ]
 
 [package.dependencies]
-future = ">=0.15.2"
-numpy = ">=1.12"
+numpy = "*"
+
+[package.extras]
+scipy = ["scipy"]
 
 [[package]]
 name = "autopep8"
@@ -456,17 +458,6 @@ test = ["aiohttp (!=4.0.0a0,!=4.0.0a1)", "numpy", "pytest", "pytest-asyncio (!=0
 test-downstream = ["aiobotocore (>=2.5.4,<3.0.0)", "dask-expr", "dask[dataframe,test]", "moto[server] (>4,<5)", "pytest-timeout", "xarray"]
 test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "cloudpickle", "dask", "distributed", "dropbox", "dropboxdrivefs", "fastparquet", "fusepy", "gcsfs", "jinja2", "kerchunk", "libarchive-c", "lz4", "notebook", "numpy", "ocifs", "pandas", "panel", "paramiko", "pyarrow", "pyarrow (>=1)", "pyftpdlib", "pygit2", "pytest", "pytest-asyncio (!=0.22.0)", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-recording", "pytest-rerunfailures", "python-snappy", "requests", "smbprotocol", "tqdm", "urllib3", "zarr", "zstandard"]
 tqdm = ["tqdm"]
-
-[[package]]
-name = "future"
-version = "1.0.0"
-description = "Clean single-source support for Python 3 and 2"
-optional = false
-python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
-files = [
-    {file = "future-1.0.0-py3-none-any.whl", hash = "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216"},
-    {file = "future-1.0.0.tar.gz", hash = "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05"},
-]
 
 [[package]]
 name = "healpy"
@@ -1694,6 +1685,7 @@ files = [
     {file = "scipy-1.14.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fef8c87f8abfb884dac04e97824b61299880c43f4ce675dd2cbeadd3c9b466d2"},
     {file = "scipy-1.14.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:b05d43735bb2f07d689f56f7b474788a13ed8adc484a85aa65c0fd931cf9ccd2"},
     {file = "scipy-1.14.1-cp311-cp311-win_amd64.whl", hash = "sha256:716e389b694c4bb564b4fc0c51bc84d381735e0d39d3f26ec1af2556ec6aad94"},
+    {file = "scipy-1.14.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:631f07b3734d34aced009aaf6fedfd0eb3498a97e581c3b1e5f14a04164a456d"},
     {file = "scipy-1.14.1-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:af29a935803cc707ab2ed7791c44288a682f9c8107bc00f0eccc4f92c08d6e07"},
     {file = "scipy-1.14.1-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:2843f2d527d9eebec9a43e6b406fb7266f3af25a751aa91d62ff416f54170bc5"},
     {file = "scipy-1.14.1-cp312-cp312-macosx_14_0_x86_64.whl", hash = "sha256:eb58ca0abd96911932f688528977858681a59d61a7ce908ffd355957f7025cfc"},
