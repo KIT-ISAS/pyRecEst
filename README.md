@@ -19,7 +19,7 @@ Please refer to the test cases for usage examples.
 
 ## Credits
 
-- Florian Pfaff (<pfaff@kit.edu>)
+- Florian Pfaff (<pfaff@ias.uni-stuttgart.de>)
 
 pyRecEst borrows its structure from libDirectional and follows its code closely for many classes. libDirectional, a project to which I contributed extensively, is [available on GitHub](https://github.com/libDirectional). The backend implementations are based on those of [geomstats](https://github.com/geomstats/geomstats).
 
