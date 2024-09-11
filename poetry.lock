@@ -55,13 +55,13 @@ typing = ["typing-extensions (>=4.0.0)"]
 
 [[package]]
 name = "astropy-iers-data"
-version = "0.2024.9.2.0.33.23"
+version = "0.2024.9.11.18.16.39"
 description = "IERS Earth Rotation and Leap Second tables for the astropy core package"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "astropy_iers_data-0.2024.9.2.0.33.23-py3-none-any.whl", hash = "sha256:d5f0fc1e2020e9baf638ec80001c6a495851b1dc5f4e7446b9d4118a2034c5d2"},
-    {file = "astropy_iers_data-0.2024.9.2.0.33.23.tar.gz", hash = "sha256:50a5dade609ed6b9791a04f9da98184846b363e2fd0e36d62690c28c0a2c5114"},
+    {file = "astropy_iers_data-0.2024.9.11.18.16.39-py3-none-any.whl", hash = "sha256:8c10fc90e6c1ec4b9c72a02642fdaf187357e502d7a5f52f816c22779e5125c0"},
+    {file = "astropy_iers_data-0.2024.9.11.18.16.39.tar.gz", hash = "sha256:4beba23dfd5b6b0bbe3b50c3e4061f9836c9804c81d6b46036e79a4bdc0f3c3f"},
 ]
 
 [package.extras]
@@ -545,17 +545,17 @@ files = [
 
 [[package]]
 name = "jax"
-version = "0.4.31"
+version = "0.4.32"
 description = "Differentiate, compile, and transform Numpy code."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "jax-0.4.31-py3-none-any.whl", hash = "sha256:5688703735133d0dc537e99a1d646198a49c9d472d4715fde4bd437c44151bd7"},
-    {file = "jax-0.4.31.tar.gz", hash = "sha256:fd2d470643a0073d822737f0788f71391656af7e62cc5b2e7995ee390ceac287"},
+    {file = "jax-0.4.32-py3-none-any.whl", hash = "sha256:3aef0e95db727f07aabdd589159a97a6714ded1ea4a93c53e5fcb79f6b560f80"},
+    {file = "jax-0.4.32.tar.gz", hash = "sha256:eb703909968da161894fb6135a931c5f3d2aab64fff7cba5fcb803ce6d968e08"},
 ]
 
 [package.dependencies]
-jaxlib = ">=0.4.30,<=0.4.31"
+jaxlib = "0.4.32"
 ml-dtypes = ">=0.2.0"
 numpy = [
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
@@ -568,36 +568,36 @@ scipy = [
 ]
 
 [package.extras]
-ci = ["jaxlib (==0.4.30)"]
-cuda = ["jax-cuda12-plugin[with-cuda] (==0.4.31)", "jaxlib (==0.4.31)"]
-cuda12 = ["jax-cuda12-plugin[with-cuda] (==0.4.31)", "jaxlib (==0.4.31)"]
-cuda12-local = ["jax-cuda12-plugin (==0.4.31)", "jaxlib (==0.4.31)"]
-cuda12-pip = ["jax-cuda12-plugin[with-cuda] (==0.4.31)", "jaxlib (==0.4.31)"]
-minimum-jaxlib = ["jaxlib (==0.4.30)"]
-tpu = ["jaxlib (==0.4.31)", "libtpu-nightly (==0.1.dev20240729)", "requests"]
+ci = ["jaxlib (==0.4.31)"]
+cuda = ["jax-cuda12-plugin[with-cuda] (==0.4.32)", "jaxlib (==0.4.32)"]
+cuda12 = ["jax-cuda12-plugin[with-cuda] (==0.4.32)", "jaxlib (==0.4.32)"]
+cuda12-local = ["jax-cuda12-plugin (==0.4.32)", "jaxlib (==0.4.32)"]
+cuda12-pip = ["jax-cuda12-plugin[with-cuda] (==0.4.32)", "jaxlib (==0.4.32)"]
+minimum-jaxlib = ["jaxlib (==0.4.32)"]
+tpu = ["jaxlib (==0.4.32)", "libtpu-nightly (==0.1.dev20240911)", "requests"]
 
 [[package]]
 name = "jaxlib"
-version = "0.4.31"
+version = "0.4.32"
 description = "XLA library for JAX"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "jaxlib-0.4.31-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:48ea73cb78341bd4aabbb15e1a076ed61505ec80ab8eb4810e2d34758c400f80"},
-    {file = "jaxlib-0.4.31-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:bacb86012f9104dd71706266420fd1e5d179d826d0635c95fe31506d605b4537"},
-    {file = "jaxlib-0.4.31-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:d019023f71dba65127a3016ddc755de4b30f5bc9bd5b632a716a5fb3b00c5e53"},
-    {file = "jaxlib-0.4.31-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:1b8e9e6970ecc08bd8b4d80c03d882f4dcd4ac119cb2959811ebc58fce1c263d"},
-    {file = "jaxlib-0.4.31-cp310-cp310-win_amd64.whl", hash = "sha256:d3540a557c188d23ef93760da482b158ca910124a0445263c3b17c09c114538a"},
-    {file = "jaxlib-0.4.31-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:1fd838ff91ea58ec2bdc7b4ecbb921ad501a318fafdeae120e6e7f88f5c20b17"},
-    {file = "jaxlib-0.4.31-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:86340df8b37729f6fc5742f17761857bb9e59c418c9453e9b090f49f6194cdf9"},
-    {file = "jaxlib-0.4.31-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:2d2639d210b0b1918dfaabbcc504fc668326e1a6fd1f0eb427c40b039188bbce"},
-    {file = "jaxlib-0.4.31-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:1db6f8ea35b884f9e7761b006ee9c60ed05be6c75d2e527551f74579cbe11677"},
-    {file = "jaxlib-0.4.31-cp311-cp311-win_amd64.whl", hash = "sha256:ceec494df08aaf65b8bbcbd40dd21a6579fa76ca5b851cce46fd7ce0388c0449"},
-    {file = "jaxlib-0.4.31-cp312-cp312-macosx_10_14_x86_64.whl", hash = "sha256:185fb615ab6bd95315fbcbd951d84e71f9835d603db8c03c91faee98ce95ff4d"},
-    {file = "jaxlib-0.4.31-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:c9f89c185287e40ee8173a7142d6495311e772cd139a93dca93f0d99c1872832"},
-    {file = "jaxlib-0.4.31-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:4d867a1a0565b31cfdaabbec81e0302c6461bb2ac4b92c04670328d795819803"},
-    {file = "jaxlib-0.4.31-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:1f1afa5fd58a60f67f0ca586e26714aece62eaa2c8334c24d0e8285afc4a7ccd"},
-    {file = "jaxlib-0.4.31-cp312-cp312-win_amd64.whl", hash = "sha256:c4bfd15315e30525514b7262d555bea00745b09ac9818bb14c20ef8afbbab072"},
+    {file = "jaxlib-0.4.32-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:a8ca9e2f9dac3a0472acd7dc762681b2b04fb7711db072642efddb9fa5356632"},
+    {file = "jaxlib-0.4.32-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:03227d57c43c528f1d3cf8cbd638dfb3a6b5644feaee0bbd8b41f37525756b5c"},
+    {file = "jaxlib-0.4.32-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:dc3b0725b2994689c70bedbc0f59357d0e0b7f6a07c562f07dc7a09630d3b47b"},
+    {file = "jaxlib-0.4.32-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:6e5bd6b5e25ef13275a9241db02fcba5685aca8fce9fbf7807c0600f5e780d2c"},
+    {file = "jaxlib-0.4.32-cp310-cp310-win_amd64.whl", hash = "sha256:e39fb68fdfd5feacdebe2abc20069868dddd952dee8158ccb8a0b4451c5e562e"},
+    {file = "jaxlib-0.4.32-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:2743953b4a4df436a986dc08e48ab082a7b4dd6b9e036a0bcdabd64adb803994"},
+    {file = "jaxlib-0.4.32-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:3f9bc636cb258853cd67b1790e90aea18abb163c85bbc690b4488f6938dfbc90"},
+    {file = "jaxlib-0.4.32-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:ccefdbd69a9e6588447ac7e6a74eb6b3fd52fa519604d2fa4bbc28993c4f6ea5"},
+    {file = "jaxlib-0.4.32-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:3118b335a48648887973303e9de23890b2c0c94c8367a50efe772f5bd1039dce"},
+    {file = "jaxlib-0.4.32-cp311-cp311-win_amd64.whl", hash = "sha256:40b77fa96176dbdf9357002bb03fe8034c32f337188c2524d5d7109d5f6b44e0"},
+    {file = "jaxlib-0.4.32-cp312-cp312-macosx_10_14_x86_64.whl", hash = "sha256:e10d2c27030470fc44125c663a303db4a58434a5e2077adadf10715bf3ba5b8f"},
+    {file = "jaxlib-0.4.32-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8137b2c8a1d1969a8643f75a81922df238eefc62d1d2c3aed987c82b5b170236"},
+    {file = "jaxlib-0.4.32-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:18cfe1d868b3584f491e1c20b4b5536f4705e35f2e3621dce65c873dd323138f"},
+    {file = "jaxlib-0.4.32-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:fb9db5fd497f3be56fa32a3a42c19f16ff6403b5c25884122020627e25fac36f"},
+    {file = "jaxlib-0.4.32-cp312-cp312-win_amd64.whl", hash = "sha256:f8b17d63f077a35939ce7ab71cc900537ea5b4839c3c6a06a75861666e4ea348"},
 ]
 
 [package.dependencies]
@@ -909,8 +909,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1.23.3", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
     {version = ">=1.21.2", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
+    {version = ">=1.23.3", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
 ]
 
 [package.extras]
@@ -1186,14 +1186,14 @@ files = [
 
 [[package]]
 name = "nvidia-nvjitlink-cu12"
-version = "12.5.82"
+version = "12.6.68"
 description = "Nvidia JIT LTO Library"
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "nvidia_nvjitlink_cu12-12.5.82-py3-none-manylinux2014_aarch64.whl", hash = "sha256:98103729cc5226e13ca319a10bbf9433bbbd44ef64fe72f45f067cacc14b8d27"},
-    {file = "nvidia_nvjitlink_cu12-12.5.82-py3-none-manylinux2014_x86_64.whl", hash = "sha256:f9b37bc5c8cf7509665cb6ada5aaa0ce65618f2332b7d3e78e9790511f111212"},
-    {file = "nvidia_nvjitlink_cu12-12.5.82-py3-none-win_amd64.whl", hash = "sha256:e782564d705ff0bf61ac3e1bf730166da66dd2fe9012f111ede5fc49b64ae697"},
+    {file = "nvidia_nvjitlink_cu12-12.6.68-py3-none-manylinux2014_aarch64.whl", hash = "sha256:b3fd0779845f68b92063ab1393abab1ed0a23412fc520df79a8190d098b5cd6b"},
+    {file = "nvidia_nvjitlink_cu12-12.6.68-py3-none-manylinux2014_x86_64.whl", hash = "sha256:125a6c2a44e96386dda634e13d944e60b07a0402d391a070e8fb4104b34ea1ab"},
+    {file = "nvidia_nvjitlink_cu12-12.6.68-py3-none-win_amd64.whl", hash = "sha256:a55744c98d70317c5e23db14866a8cc2b733f7324509e941fc96276f9f37801d"},
 ]
 
 [[package]]
@@ -1277,8 +1277,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
+    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -1752,13 +1752,13 @@ test = ["Cython", "array-api-strict (>=2.0)", "asv", "gmpy2", "hypothesis (>=6.3
 
 [[package]]
 name = "setuptools"
-version = "74.1.1"
+version = "74.1.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-74.1.1-py3-none-any.whl", hash = "sha256:fc91b5f89e392ef5b77fe143b17e32f65d3024744fba66dc3afe07201684d766"},
-    {file = "setuptools-74.1.1.tar.gz", hash = "sha256:2353af060c06388be1cecbf5953dcdb1f38362f87a2356c480b6b4d5fcfc8847"},
+    {file = "setuptools-74.1.2-py3-none-any.whl", hash = "sha256:5f4c08aa4d3ebcb57a50c33b1b07e94315d7fc7230f7115e47fc99776c8ce308"},
+    {file = "setuptools-74.1.2.tar.gz", hash = "sha256:95b40ed940a1c67eb70fc099094bd6e99c6ee7c23aa2306f4d2697ba7916f9c6"},
 ]
 
 [package.extras]
@@ -2004,19 +2004,19 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "xarray"
-version = "2024.7.0"
+version = "2024.9.0"
 description = "N-D labeled arrays and datasets in Python"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 files = [
-    {file = "xarray-2024.7.0-py3-none-any.whl", hash = "sha256:1b0fd51ec408474aa1f4a355d75c00cc1c02bd425d97b2c2e551fd21810e7f64"},
-    {file = "xarray-2024.7.0.tar.gz", hash = "sha256:4cae512d121a8522d41e66d942fb06c526bc1fd32c2c181d5fe62fe65b671638"},
+    {file = "xarray-2024.9.0-py3-none-any.whl", hash = "sha256:4fd534abdf12d5fa75dd566c56483d5081f77864462cf3d6ad53e13f9db48222"},
+    {file = "xarray-2024.9.0.tar.gz", hash = "sha256:e796a6b3eaec11da24f33e4bb14af41897011660a0516fa4037d3ae4bbd1d378"},
 ]
 
 [package.dependencies]
-numpy = ">=1.23"
+numpy = ">=1.24"
 packaging = ">=23.1"
-pandas = ">=2.0"
+pandas = ">=2.1"
 
 [package.extras]
 accel = ["bottleneck", "flox", "numbagg", "opt-einsum", "scipy"]
