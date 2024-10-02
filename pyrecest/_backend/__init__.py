@@ -250,7 +250,8 @@ class BackendImporter:
     """Importer class to create the backend module."""
 
     def __init__(self, path):
-        self._path = path
+        self._path = self.name = path
+        self.loader = self
 
     @staticmethod
     def _import_backend(backend_name):
@@ -324,6 +325,10 @@ class BackendImporter:
 
         logging.info(f"Using {BACKEND_NAME} backend")
         return module
+
+    def find_spec(self, fullname, path=None, target=None):
+        """Find module."""
+        return self.find_module(fullname, path=path)
 
 
 sys.meta_path.append(BackendImporter("pyrecest.backend"))

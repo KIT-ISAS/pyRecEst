@@ -4,9 +4,10 @@ from collections.abc import Iterable as _Iterable
 
 import numpy as _np
 import torch as _torch
-from torch import arange, argmin
 from torch import broadcast_tensors as broadcast_arrays
 from torch import (
+    arange,
+    argmin,
     clip,
     complex64,
     complex128,
@@ -78,10 +79,13 @@ from torch.special import gammaln
 
 from .._backend_config import pytorch_atol as atol
 from .._backend_config import pytorch_rtol as rtol
-from . import autodiff  # NOQA
-from . import linalg  # NOQA
-from . import random  # NOQA
-from . import fft  # NOQA
+from . import (
+    autodiff,  # NOQA
+    linalg,  # NOQA
+    random,  # NOQA
+    # for pyrecest
+    fft,  # NOQA
+)
 from ._common import array, cast, from_numpy
 from ._dtype import (
     _add_default_dtype_by_casting,
@@ -753,7 +757,7 @@ def triu_to_vec(x, k=0):
     return x[..., rows, cols]
 
 
-def mat_from_diag_triu_tril(diag_entries, tri_upp, tri_low):
+def mat_from_diag_triu_tril(diag, tri_upp, tri_low):
     """Build matrix from given components.
 
     Forms a matrix from diagonal, strictly upper triangular and
@@ -769,13 +773,13 @@ def mat_from_diag_triu_tril(diag_entries, tri_upp, tri_low):
     -------
     mat : array_like, shape=[..., n, n]
     """
-    diag_entries, tri_upp, tri_low = convert_to_wider_dtype([diag_entries, tri_upp, tri_low])
+    diag, tri_upp, tri_low = convert_to_wider_dtype([diag, tri_upp, tri_low])
 
-    n = diag_entries.shape[-1]
+    n = diag.shape[-1]
     (i,) = diag_indices(n, ndim=1)
     j, k = triu_indices(n, k=1)
-    mat = _torch.zeros((diag_entries.shape + (n,)), dtype=diag_entries.dtype)
-    mat[..., i, i] = diag_entries
+    mat = _torch.zeros((diag.shape + (n,)), dtype=diag.dtype)
+    mat[..., i, i] = diag
     mat[..., j, k] = tri_upp
     mat[..., k, j] = tri_low
     return mat
@@ -825,7 +829,7 @@ def _unnest_iterable(ls):
     return out
 
 
-def pad(a, pad_width, constant_values=0.0, mode='constant'):
+def pad(a, pad_width, mode="constant", constant_values=0.0):
     return _torch.nn.functional.pad(
         a, _unnest_iterable(reversed(pad_width)), mode=mode, value=constant_values
     )
