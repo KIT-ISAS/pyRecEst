@@ -137,6 +137,7 @@ from jax.numpy import (
     zeros,
     linspace,
     ones,
+    round,
     # For Riemannian score-based SDE
     log1p,
 )

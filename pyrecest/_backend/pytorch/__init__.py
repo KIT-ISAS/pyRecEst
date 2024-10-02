@@ -59,6 +59,7 @@ from torch import (
     roll,
     dstack,
     vmap,
+    round,
     # For Riemannian score-based SDE
     log1p,
 )

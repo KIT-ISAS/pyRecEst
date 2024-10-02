@@ -2,6 +2,7 @@ import itertools
 from abc import abstractmethod
 
 # pylint: disable=no-name-in-module,no-member
+from pyrecest import backend
 from pyrecest.backend import (
     arange,
     arccos,
@@ -11,6 +12,7 @@ from pyrecest.backend import (
     cos,
     deg2rad,
     empty,
+    flip,
     linspace,
     pi,
     sin,
@@ -19,12 +21,14 @@ from pyrecest.backend import (
     vstack,
 )
 from pyrecest.distributions import (
+    AbstractHypersphericalDistribution,
     AbstractSphericalDistribution,
     HypersphericalUniformDistribution,
 )
 
 from .abstract_sampler import AbstractSampler
 from .hypertoroidal_sampler import CircularUniformSampler
+from .leopardi_sampler import get_partition_points_polar
 
 
 def get_grid_hypersphere(method: str, grid_density_parameter: int):
@@ -121,6 +125,30 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
         }
 
         return grid, grid_specific_description
+
+
+class LeopardiSampler(AbstractHypersphericalUniformSampler):
+    def __init__(self, original_code_column_order=False):
+        self.original_code_column_order = original_code_column_order
+        assert backend.__name__ != "pyrecest.jax", "Backend unsupported"
+
+    def get_grid(self, grid_density_parameter, dim: int):
+        # Use [::-1] due to different convention
+        grid_hypersph_coord = flip(
+            get_partition_points_polar(dim, grid_density_parameter), axis=0
+        ).T
+        grid_eucl = AbstractHypersphericalDistribution.hypersph_to_cart(
+            grid_hypersph_coord, mode="colatitude"
+        )
+        if self.original_code_column_order:
+            grid_eucl = flip(grid_eucl, axis=1)
+            grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
+
+        grid_specific_description = {
+            "scheme": "leopardi",
+            "n_side": grid_density_parameter,
+        }
+        return grid_eucl, grid_specific_description
 
 
 class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):

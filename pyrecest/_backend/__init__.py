@@ -193,6 +193,7 @@ BACKEND_ATTRIBUTES = {
         "dstack",
         "vmap",
         "gammaln",
+        "round",
         # For Riemannian score-based SDE
         "log1p"
     ],

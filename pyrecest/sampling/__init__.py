@@ -6,6 +6,7 @@ from .hyperspherical_sampler import (
     AbstractSphericalUniformSampler,
     FibonacciHopfSampler,
     HealpixHopfSampler,
+    LeopardiSampler,
     SphericalFibonacciSampler,
     get_grid_hypersphere,
 )
@@ -23,4 +24,5 @@ __all__ = [
     "AbstractHopfBasedS3Sampler",
     "HealpixHopfSampler",
     "FibonacciHopfSampler",
+    "LeopardiSampler",
 ]
