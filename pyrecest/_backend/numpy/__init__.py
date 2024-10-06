@@ -96,6 +96,7 @@ from numpy import (
     min,
     roll,
     dstack,
+    round,
     # For Riemannian score-based SDE
     log1p,
 )

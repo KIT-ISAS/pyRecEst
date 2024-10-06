@@ -17,6 +17,7 @@ from ..sampling.hyperspherical_sampler import (
     FibonacciHopfSampler,
     HealpixHopfSampler,
     HealpixSampler,
+    LeopardiSampler,
     SphericalCoordinatesBasedFixedResolutionSampler,
     SphericalFibonacciSampler,
 )
@@ -135,6 +136,115 @@ class TestHypersphericalSampler(unittest.TestCase):
             4,
             f"Expected 4-dimensional-output but got {grid.shape[1]}-dimensional output",
         )
+
+    @parameterized.expand(
+        [
+            ("test_2d_12_n_only", 12, 2, (12, 3)),
+            ("test_3d_15_n_only", 15, 3, (15, 4)),
+        ]
+    )
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
+    def test_leopardi_sampler(self, _, points, dim, expected_shape):
+        sampler = LeopardiSampler(False)
+        grid, _ = sampler.get_grid(points, dim=dim)
+        npt.assert_equal(grid.shape, expected_shape)
+
+    # jscpd:ignore-start
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
+    def test_leopardi_sampler_s2_12(self):
+        import numpy as np
+
+        sampler = LeopardiSampler(True)
+        grid, _ = sampler.get_grid(12, dim=2)
+        npt.assert_equal(grid.shape, (12, 3))
+
+        # Define the first six point as obtained by the Matlab implementation
+        matlab_result_array = np.array(
+            [
+                [0.0000, 0.7128, -0.2723, -0.8811, -0.2723, 0.7128],
+                [0.0000, 0.5179, 0.8380, 0.0000, -0.8380, -0.5179],
+                [1.0000, 0.4729, 0.4729, 0.4729, 0.4729, 0.4729],
+            ]
+        ).T
+
+        # First six should be approximately equal to the ones by the Matlab implementation by Leopardi
+        npt.assert_allclose(grid[:6], matlab_result_array, atol=1e-4)
+        # Next 5 are mirrored from above
+        npt.assert_allclose(
+            grid[6:11],
+            np.column_stack(
+                ((matlab_result_array[1:, [0, 1]]), (-matlab_result_array[1:, 2]))
+            ),
+            atol=1e-4,
+        )
+        # Last is just [0, 0, -1]
+        npt.assert_allclose(grid[-1], np.array([0, 0, -1]), atol=1e-4)
+
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
+    def test_leopardi_sampler_s2_20(self):
+        import numpy as np
+
+        sampler = LeopardiSampler(True)
+        grid, _ = sampler.get_grid(20, dim=2)
+        npt.assert_equal(grid.shape, (20, 3))
+
+        # Define the first six point as obtained by the Matlab implementation
+        matlab_result_array = np.array(
+            [
+                [0, 0.5833, -0.2228, -0.7209, -0.2228, 0.5833],
+                [0, 0.4238, 0.6857, 0.0000, -0.6857, -0.4238],
+                [1.0000, 0.6930, 0.6930, 0.6930, 0.6930, 0.6930],
+            ]
+        ).T
+
+        # Check if they are approximately equal
+        npt.assert_allclose(grid[:6], matlab_result_array, atol=1e-4)
+        # The other ones like in the plane with z = 0
+        npt.assert_allclose(grid[7:14, 2], np.zeros(7), atol=1e-4)
+        # Next 5 are mirrored from above
+        npt.assert_allclose(
+            grid[14:-1],
+            np.column_stack(
+                ((matlab_result_array[1:, [0, 1]]), (-matlab_result_array[1:, 2]))
+            ),
+            atol=1e-4,
+        )
+        # Last is just [0, 0, -1]
+        npt.assert_allclose(grid[-1], np.array([0, 0, -1]), atol=1e-4)
+
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
+    def test_leopardi_sampler_s3_10_first5(self):
+        import numpy as np
+
+        sampler = LeopardiSampler(True)
+        grid, _ = sampler.get_grid(10, dim=3)
+        npt.assert_equal(grid.shape, (10, 4))
+
+        matlab_result_array = np.array(
+            [
+                [0, 0, 0.8660, 0.0000, -0.8660],
+                [0, 0, 0.5000, 1.0000, 0.5000],
+                [0, 1.0000, 0.0000, 0.0000, 0.0000],
+                [1.0000, 0.0000, 0.0000, 0.0000, 0.0000],
+            ]
+        ).T
+
+        # First five should be approximately equal to the ones by the Matlab implementation by Leopardi
+        npt.assert_allclose(grid[:5], matlab_result_array, atol=1e-4)
+
+    # jscpd:ignore-end
 
 
 class TestSphericalCoordinatesBasedFixedResolutionSampler(unittest.TestCase):
