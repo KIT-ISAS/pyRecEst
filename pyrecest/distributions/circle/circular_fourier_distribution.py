@@ -34,7 +34,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
     Circular Fourier Distribution. This is based on my implementation for pytorch in pyDirectional
     """
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def __init__(
         self,
         transformation: str = "sqrt",
@@ -254,6 +254,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         elif self.c is not None:
             a = 2.0 * real(self.c)
             b = -2.0 * imag(self.c[1:])
+        else:
+            raise ValueError("Need either a and b or c.")
         assert (
             self.n is None or (a.shape[0] + b.shape[0]) == self.n
         )  # Other case not implemented yet!
@@ -264,6 +266,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             c = (self.a[0] + 1j * hstack((0, self.b))) * 0.5
         elif self.c is not None:
             c = self.c
+        else:
+            raise ValueError("Need either a and b or c.")
+
         return c
 
     def to_real_fd(self):
@@ -278,6 +283,9 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 n=self.n,
                 multiplied_by_n=self.multiplied_by_n,
             )
+        else:
+            raise ValueError("Need either a and b or c.")
+
         return fd
 
     def get_full_c(self):

@@ -49,7 +49,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         pyrecest.backend.__name__ == "pyrecest.jax",
         reason="Not supported on this backend",
     )
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def test_fourier_conversion(
         self, transformation, dist_class, mu, param_range, coeffs
     ):

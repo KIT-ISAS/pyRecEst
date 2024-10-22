@@ -6,7 +6,6 @@ import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     all,
     allclose,
@@ -777,6 +776,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
                 x, y, z, mode="inclination"
             )
             expected_func_vals = expected_func(phi, theta)
+        else:
+            raise ValueError("Unknown test case")
 
         npt.assert_allclose(vals_to_test, expected_func_vals, atol=1e-6)
 

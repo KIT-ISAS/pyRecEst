@@ -39,6 +39,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         return self.mean_axis()
 
     # jscpd:ignore-start
+    # pylint: disable=too-many-positional-arguments
     def sample_metropolis_hastings(
         self,
         n: Union[int, int32, int64],

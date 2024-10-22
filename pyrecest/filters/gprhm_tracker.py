@@ -39,7 +39,7 @@ def angle_between_two_vectors(x, y):
 
 # pylint: disable=too-many-instance-attributes
 class GPRHMTracker(AbstractExtendedObjectTracker):
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def __init__(
         self,
         n_base_points,

@@ -20,7 +20,7 @@ class HypersphericalDiracDistribution(
         elif self.dim == 3:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
-            ax.scatter(
+            p = ax.scatter(
                 self.d[:, 0], self.d[:, 1], self.d[:, 2], c="b", marker="o", s=self.w
             )
         else:

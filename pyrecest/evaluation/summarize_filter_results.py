@@ -7,7 +7,7 @@ from .get_distance_function import get_distance_function
 from .get_extract_mean import get_extract_mean
 
 
-# pylint: disable=too-many-arguments,too-many-locals
+# pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
 def summarize_filter_results(
     scenario_config,
     filter_configs,

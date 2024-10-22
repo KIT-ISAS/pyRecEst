@@ -357,7 +357,7 @@ class TestEvalationBasics(TestEvalationBase):
             evaluation_config,
         )
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def _validate_eval_data(
         self,
         scenario_config,
