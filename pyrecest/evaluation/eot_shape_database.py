@@ -18,6 +18,8 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
             lines = [self.boundary]
         elif isinstance(self.boundary, MultiLineString):
             lines = list(self.boundary)
+        else:
+            raise ValueError("Unsupported boundary type")
 
         for i in range(num_points):
             # Compute total perimeter
@@ -157,7 +159,7 @@ class Star(StarShapedPolygon):  # pylint: disable=abstract-method
 class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
     __slots__ = Polygon.__slots__
 
-    # pylint: disable=signature-differs
+    # pylint: disable=signature-differs,too-many-positional-arguments
     def __new__(cls, height_1, height_2, width_1, width_2, centroid=None):
         # Assertions to check conditions
         assert width_1 > height_2, "width_1 has to be larger than height_2"

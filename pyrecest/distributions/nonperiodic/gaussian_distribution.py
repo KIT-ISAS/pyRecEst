@@ -67,6 +67,8 @@ class GaussianDistribution(AbstractLinearDistribution):
                 xs = jnp.reshape(xs, (-1, 1))
 
             pdfvals = multivariate_normal.pdf(xs, self.mu, self.C)
+        else:
+            raise NotImplementedError("Backend not supported")
 
         return pdfvals
 

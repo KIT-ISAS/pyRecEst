@@ -7,7 +7,7 @@ from .evaluate_for_variables import evaluate_for_variables
 
 
 # jscpd:ignore-start
-# pylint: disable=R0913,R0914
+# pylint: disable=R0913,R0914,too-many-positional-arguments
 def evaluate_for_file(
     input_file_name: str,
     filter_configs: list[dict[str, Any]],

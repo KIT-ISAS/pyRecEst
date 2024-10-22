@@ -9,6 +9,7 @@ from .abstract_distribution_type import AbstractDistributionType
 
 
 class AbstractGridDistribution(AbstractDistributionType):
+    # pylint: disable=too-many-positional-arguments
     @beartype
     def __init__(
         self,

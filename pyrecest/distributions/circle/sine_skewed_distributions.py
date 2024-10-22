@@ -23,6 +23,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
     - m (int): Power of the sine term, must be a positive integer.
     """
 
+    # pylint: disable=too-many-positional-arguments
     def __init__(self, mu, kappa, lambda_, k, m):
         AbstractCircularDistribution.__init__(self)
         self.mu = mod(mu, 2 * pi)

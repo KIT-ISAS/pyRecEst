@@ -91,6 +91,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         result = minimize(neg_pdf, starting_point, method="L-BFGS-B")
         return result.x
 
+    # pylint: disable=too-many-positional-arguments
     def sample_metropolis_hastings(
         self,
         n: Union[int, int32, int64],

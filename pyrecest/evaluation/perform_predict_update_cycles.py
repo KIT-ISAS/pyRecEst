@@ -6,7 +6,7 @@ import numpy as np
 from .configure_for_filter import configure_for_filter
 
 
-# pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-positional-arguments
 def perform_predict_update_cycles(
     scenario_config,
     filter_config,

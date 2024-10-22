@@ -10,7 +10,7 @@ from .simulation_database import simulation_database
 
 
 # jscpd:ignore-start
-# pylint: disable=R0913,R0914
+# pylint: disable=R0913,R0914,too-many-positional-arguments
 def evaluate_for_simulation_config(
     simulation_config: str | dict[str, Any],
     filter_configs: list[dict[str, Any]],
