@@ -15,7 +15,7 @@ filterpy = "*"
 pyshtools = "*"
 beartype = "*"
 numpy-quaternion = "*"
-shapely = "*"
+shapely = ">=2.0"
 
 [tool.poetry.extras]
 healpy_support = ["healpy"]
