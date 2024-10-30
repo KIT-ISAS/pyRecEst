@@ -20,13 +20,13 @@ shapely = ">=2.0"
 [tool.poetry.extras]
 healpy_support = ["healpy"]
 pytorch_support = ["torch"]
-jax_support = ["jax", "jaxlib", "autograd"]
+jax_support = ["jax>=0.4.33", "jaxlib>=0.4.33", "autograd"]
 
 [tool.poetry.group.dev.dependencies]
 healpy = "*"
 torch = "*"
-jax = "*"
-jaxlib = "*"
+jax = ">=0.4.33"
+jaxlib = ">=0.4.33"
 autograd = "*"
 autopep8 = "^2.3.1"
 pytest = "*"
