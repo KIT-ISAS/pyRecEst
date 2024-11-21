@@ -102,30 +102,27 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             Q = -Q
         return Q
 
-    def moment(self):
-        """
-        Returns the mean resultant vector.
-        """
+    def mean_resultant_vector(self):
         r = self.a_d(self.input_dim, self.kappa) * self.mu
         return r
 
     @staticmethod
-    def from_distribution(d: AbstractHypersphericalDistribution):
+    def from_distribution(d):
         assert d.input_dim >= 2, "mu must be at least 2-D for the circular case"
 
-        m = d.moment()
-        return VonMisesFisherDistribution.from_moment(m)
+        m = d.mean_resultant_vector()
+        return VonMisesFisherDistribution.from_mean_resultant_vector(m)
 
     @staticmethod
-    def from_moment(m):
+    def from_mean_resultant_vector(m):
         assert ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
-        mu_ = m / linalg.norm(m)
-        Rbar = linalg.norm(m)
-        kappa_ = VonMisesFisherDistribution.a_d_inverse(m.shape[0], Rbar)
+        mean_res_vector = m / linalg.norm(m)
+        mean_res_length = linalg.norm(m)
+        kappa_ = VonMisesFisherDistribution.a_d_inverse(m.shape[0], mean_res_length)
 
-        V = VonMisesFisherDistribution(mu_, kappa_)
+        V = VonMisesFisherDistribution(mean_res_vector, kappa_)
         return V
 
     def mode(self):

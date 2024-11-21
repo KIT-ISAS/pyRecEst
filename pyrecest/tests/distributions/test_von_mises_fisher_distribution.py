@@ -230,7 +230,7 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
                     [1.0, 0.0, 0.0],
                     array([0.0, 1.0, 1.0]) / linalg.norm(array([0.0, 1.0, 1.0])),
                 ]
-            )
+            ).T
         )
         vmf = VonMisesFisherDistribution.from_distribution(dirac_dist)
 
