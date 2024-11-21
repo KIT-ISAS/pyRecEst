@@ -9,6 +9,7 @@ import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    all,
     arccos,
     array,
     atleast_2d,
@@ -205,6 +206,10 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     def _compute_mean_axis_from_moment(moment_matrix):
         D, V = linalg.eig(moment_matrix)
+        if pyrecest.backend.__name__ == "pyrecest.pytorch":
+            assert all(D.imag.abs() < 1e-6)
+            D = D.real
+            V = V.real
         Dsorted = sort(D)
         Vsorted = V[:, D.argsort()]
         if abs(Dsorted[-1] / Dsorted[-2]) < 1.01:
