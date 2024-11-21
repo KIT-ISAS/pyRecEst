@@ -40,6 +40,8 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
             )
         else:
             raise ValueError("Plotting not supported for this dimension")
+        
+        plt.show()
 
     @staticmethod
     def from_distribution(distribution, n_particles):
