@@ -1,10 +1,12 @@
+from .abstract_hyperhemispherical_distribution import (
+    AbstractHyperhemisphericalDistribution,
+)
 from .bingham_distribution import BinghamDistribution
-from .abstract_hyperhemispherical_distribution import AbstractHyperhemisphericalDistribution
 
 
 class HyperhemisphericalBinghamDistribution(AbstractHyperhemisphericalDistribution):
     def __init__(self, Z_, M_):
-        AbstractHyperhemisphericalDistribution.__init__(self, Z_.shape[0]-1)
+        AbstractHyperhemisphericalDistribution.__init__(self, Z_.shape[0] - 1)
         self.distFullSphere = BinghamDistribution(Z_, M_)
         self.dim = self.distFullSphere.dim
 
