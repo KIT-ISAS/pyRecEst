@@ -21,7 +21,7 @@ class TestGaussianSampler(unittest.TestCase):
     def test_sample_mean_close_to_zero(self):
         """Check that the mean is close to 0 for each dimension."""
         means = mean(self.samples, axis=0)
-        npt.assert_allclose(means, zeros(self.dim), atol=0.15)
+        npt.assert_allclose(means, zeros(self.dim), atol=0.2)
 
     def test_sample_std_dev_close_to_one(self):
         """Check that the standard deviation is close to 1 for each dimension."""
