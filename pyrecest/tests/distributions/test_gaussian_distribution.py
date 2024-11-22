@@ -8,13 +8,16 @@ import scipy
 from pyrecest.backend import allclose, array, linspace
 from pyrecest.distributions import GaussianDistribution
 from scipy.stats import multivariate_normal
-import numpy.testing as npt
+
 
 class GaussianDistributionTest(unittest.TestCase):
     def test_gaussian_distribution_1d(self):
         g = GaussianDistribution(array(1.0), array(2.0))
-        npt.assert_allclose(g.pdf(array([1.0, 2.0, 3.0])),
-                            multivariate_normal.pdf(array([1.0, 2.0, 3.0]), 1.0, 2.0), atol=1e-6)
+        npt.assert_allclose(
+            g.pdf(array([1.0, 2.0, 3.0])),
+            multivariate_normal.pdf(array([1.0, 2.0, 3.0]), 1.0, 2.0),
+            atol=1e-6,
+        )
 
     def test_gaussian_distribution_3d(self):
         mu = array([2.0, 3.0, 4.0])
