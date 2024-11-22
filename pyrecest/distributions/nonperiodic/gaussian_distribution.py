@@ -12,7 +12,10 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 
 class GaussianDistribution(AbstractLinearDistribution):
     def __init__(self, mu, C, check_validity=True):
-        assert ndim(mu) == 1, "mu must be 1-dimensional"
+        assert ndim(mu) <= 1, "mu must be 1-dimensional"
+        if ndim(mu) == 0:
+            mu = mu.reshape((1,))
+            C = C.reshape((1, 1))
         assert ndim(C) == 2, "C must be 2-dimensional"
         AbstractLinearDistribution.__init__(self, dim=mu.shape[0])
         assert (
