@@ -3,7 +3,6 @@ from .abstract_hyperhemispherical_distribution import (
 )
 from .bingham_distribution import BinghamDistribution
 
-
 class HyperhemisphericalBinghamDistribution(AbstractHyperhemisphericalDistribution):
     def __init__(self, Z_, M_):
         AbstractHyperhemisphericalDistribution.__init__(self, Z_.shape[0] - 1)
@@ -28,7 +27,7 @@ class HyperhemisphericalBinghamDistribution(AbstractHyperhemisphericalDistributi
 
     def sample(self, n):
         sFull = self.distFullSphere.sample(n)
-        s = sFull * (-1) ** (sFull[-1, :] < 0)  # Mirror to upper hemisphere
+        s = sFull * (-1) ** (sFull[:, -1] < 0).reshape((-1, 1))  # Mirror to upper hemisphere
         return s
 
     def multiply(self, B2):
@@ -45,4 +44,8 @@ class HyperhemisphericalBinghamDistribution(AbstractHyperhemisphericalDistributi
         return self.distFullSphere.mode()
 
     def mean_axis(self):
-        return self.distFullSphere.mean_axis()
+        ax = self.distFullSphere.mean_axis()
+        if ax[-1] < 0:
+            ax = -ax
+        return ax
+

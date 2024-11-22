@@ -36,6 +36,9 @@ class HypersphericalDiracDistribution(
         return CircularDiracDistribution(arctan2(self.d[1, :], self.d[0, :]), self.w)
 
     def mean_direction(self):
-        vec_sum = sum(self.d * reshape(self.w, (-1, 1)), axis=0)
-        mu = vec_sum / linalg.norm(vec_sum)
+        mean_res_vec = self.mean_resultant_vector()
+        mu = mean_res_vec / linalg.norm(mean_res_vec)
         return mu
+
+    def mean_resultant_vector(self):
+        return sum(self.d * reshape(self.w, (-1, 1)), axis=0)
