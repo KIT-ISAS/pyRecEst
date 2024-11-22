@@ -1,12 +1,12 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import log, sum
+from pyrecest.backend import log, outer, sum, zeros
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
-from pyrecest.backend import zeros, outer
+
 
 class AbstractHypersphereSubsetDiracDistribution(
     AbstractDiracDistribution, AbstractHypersphereSubsetDistribution
@@ -17,7 +17,9 @@ class AbstractHypersphereSubsetDiracDistribution(
 
     def moment(self):
         # Compute the weighted moment matrix
-        moment_matrix = zeros((self.d.shape[1], self.d.shape[1]))  # Initialize (dim, dim) matrix
+        moment_matrix = zeros(
+            (self.d.shape[1], self.d.shape[1])
+        )  # Initialize (dim, dim) matrix
         for i in range(self.d.shape[0]):  # Iterate over samples
             moment_matrix += self.w[i] * outer(self.d[i, :], self.d[i, :])
 

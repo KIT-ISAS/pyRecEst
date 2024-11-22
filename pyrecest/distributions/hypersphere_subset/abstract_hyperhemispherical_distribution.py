@@ -37,7 +37,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         :rtype:
         """
         return self.mean_axis()
-    
+
     def mean_axis(self):
         ax = super().mean_axis()
         if ax[-1] < 0:
