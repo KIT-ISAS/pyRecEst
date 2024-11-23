@@ -19,9 +19,11 @@ from pyrecest.backend import (
     tile,
 )
 
+from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
+import matplotlib.pyplot as plt
 
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution
@@ -37,8 +39,18 @@ class HypertoroidalDiracDistribution(
         AbstractHypertoroidalDistribution.__init__(self, dim)
         AbstractDiracDistribution.__init__(self, atleast_1d(mod(d, 2.0 * pi)), w=w)
 
-    def plot(self, *args, **kwargs):
-        raise NotImplementedError("Plotting is not implemented")
+    def plot(self):
+        assert self.dim <= 3, "Plotting not supported for this dimension"
+        LinearDiracDistribution.plot(self)
+        if self.dim >= 1:
+            plt.xlim(0, 2 * pi)
+        if self.dim >= 2:
+            plt.ylim(0, 2 * pi)
+        if self.dim >= 3:
+            ax = plt.gca()
+            ax.set_zlim(0, 2 * pi)
+        if self.dim >= 4:
+            raise ValueError("Plotting not supported for this dimension")
 
     def set_mean(self, mean):
         dist = copy.deepcopy(self)

@@ -5,16 +5,20 @@ from math import pi
 import numpy.testing as npt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import array, exp, mod, random, sum, zeros_like, diag
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, exp, mod, random, sum, zeros_like
+import pyrecest.backend
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     HypertoroidalDiracDistribution,
     ToroidalDiracDistribution,
+    HypertoroidalWrappedNormalDistribution,
 )
+from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 
+from parameterized import parameterized
 
-class TestHypertoroidalDiracDistribution(unittest.TestCase):
+class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
     def setUp(self):
         self.d = array(
             [[0.5, 2, 0.5], [3, 2, 0.2], [4, 5, 5.8], [6, 3, 4.3], [6, 0, 1.2]]
@@ -113,6 +117,35 @@ class TestHypertoroidalDiracDistribution(unittest.TestCase):
         wd2 = hwd.marginalize_out(1)
         npt.assert_array_almost_equal(wd1.d, wd2.d)
         npt.assert_array_almost_equal(wd1.w, wd2.w)
+
+    # jscpd:ignore-start
+    @parameterized.expand([
+        (
+            "1D Plot",
+            HypertoroidalWrappedNormalDistribution(array([1.0]),  # 1D mean
+            array([[1.0]])),  # 1D covariance
+            1  # Dimension
+        ),
+        (
+            "2D Plot",
+            HypertoroidalWrappedNormalDistribution(array([1.0, 2.0]),  # 2D mean
+            array([[2.0, -0.3], [-0.3, 1.0]])),  # 2D covariance
+            2  # Dimension
+        ),
+        (
+            "3D Plot",
+            HypertoroidalWrappedNormalDistribution(array([1.0, 2.0, 3.0]),  # 3D mean
+            diag(array([2.0, 1.0, 0.5]))),  # 3D covariance (diagonal matrix)
+            3  # Dimension
+        ),
+    ])
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
+    def test_plot(self, name, dist, dim):
+        self._test_plot_helper(name, dist, dim, HypertoroidalDiracDistribution)        
+    # jscpd:ignore-end
 
 
 if __name__ == "__main__":
