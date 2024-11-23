@@ -3,6 +3,8 @@ from collections.abc import Callable
 from math import pi
 from typing import Union
 
+import matplotlib.pyplot as plt
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -19,11 +21,10 @@ from pyrecest.backend import (
     tile,
 )
 
-from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
 from ..abstract_dirac_distribution import AbstractDiracDistribution
+from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
-import matplotlib.pyplot as plt
 
 class HypertoroidalDiracDistribution(
     AbstractDiracDistribution, AbstractHypertoroidalDistribution

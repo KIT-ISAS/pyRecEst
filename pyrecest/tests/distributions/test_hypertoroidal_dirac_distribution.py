@@ -4,19 +4,21 @@ from math import pi
 
 import numpy.testing as npt
 
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, exp, mod, random, sum, zeros_like, diag
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+from parameterized import parameterized
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import array, diag, exp, mod, random, sum, zeros_like
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     HypertoroidalDiracDistribution,
-    ToroidalDiracDistribution,
     HypertoroidalWrappedNormalDistribution,
+    ToroidalDiracDistribution,
 )
+
 from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 
-from parameterized import parameterized
 
 class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
     def setUp(self):
@@ -119,32 +121,38 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         npt.assert_array_almost_equal(wd1.w, wd2.w)
 
     # jscpd:ignore-start
-    @parameterized.expand([
-        (
-            "1D Plot",
-            HypertoroidalWrappedNormalDistribution(array([1.0]),  # 1D mean
-            array([[1.0]])),  # 1D covariance
-            1  # Dimension
-        ),
-        (
-            "2D Plot",
-            HypertoroidalWrappedNormalDistribution(array([1.0, 2.0]),  # 2D mean
-            array([[2.0, -0.3], [-0.3, 1.0]])),  # 2D covariance
-            2  # Dimension
-        ),
-        (
-            "3D Plot",
-            HypertoroidalWrappedNormalDistribution(array([1.0, 2.0, 3.0]),  # 3D mean
-            diag(array([2.0, 1.0, 0.5]))),  # 3D covariance (diagonal matrix)
-            3  # Dimension
-        ),
-    ])
+    @parameterized.expand(
+        [
+            (
+                "1D Plot",
+                HypertoroidalWrappedNormalDistribution(
+                    array([1.0]), array([[1.0]])  # 1D mean
+                ),  # 1D covariance
+                1,  # Dimension
+            ),
+            (
+                "2D Plot",
+                HypertoroidalWrappedNormalDistribution(
+                    array([1.0, 2.0]), array([[2.0, -0.3], [-0.3, 1.0]])  # 2D mean
+                ),  # 2D covariance
+                2,  # Dimension
+            ),
+            (
+                "3D Plot",
+                HypertoroidalWrappedNormalDistribution(
+                    array([1.0, 2.0, 3.0]), diag(array([2.0, 1.0, 0.5]))  # 3D mean
+                ),  # 3D covariance (diagonal matrix)
+                3,  # Dimension
+            ),
+        ]
+    )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",
         reason="Not supported on this backend",
     )
     def test_plot(self, name, dist, dim):
-        self._test_plot_helper(name, dist, dim, HypertoroidalDiracDistribution)        
+        self._test_plot_helper(name, dist, dim, HypertoroidalDiracDistribution)
+
     # jscpd:ignore-end
 
 
