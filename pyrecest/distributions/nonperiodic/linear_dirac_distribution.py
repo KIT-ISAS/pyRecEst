@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import cov, ones, reshape
-
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_linear_distribution import AbstractLinearDistribution
 
@@ -26,17 +27,29 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
         return C
 
     def plot(self, *args, **kwargs):
+        if pyrecest.backend.__name__ == "pyrecest.numpy":
+            sample_locs = self.d
+            sample_weights = self.w
+        elif pyrecest.backend.__name__ == "pyrecest.pytorch":
+            sample_locs = self.d.numpy()
+            sample_weights = self.w.numpy()
+        else:
+            raise ValueError("Plotting not supported for this backend")
+
         if self.dim == 1:
-            plt.stem(self.d, self.w, *args, **kwargs)
+            plt.stem(sample_locs.squeeze(), sample_weights, *args, **kwargs)
         elif self.dim == 2:
             plt.scatter(
-                self.d[0, :], self.d[1, :], self.w / max(self.w) * 100, *args, **kwargs
+                sample_locs[:, 0], sample_locs[:, 1], sample_weights / max(sample_weights) * 100, *args, **kwargs
             )
         elif self.dim == 3:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection="3d")
+            ax = fig.add_subplot(111, projection='3d')
+            # You can adjust 's' for marker size as needed
             ax.scatter(
-                self.d[0, :], self.d[1, :], self.w / max(self.w) * 100, *args, **kwargs
+                sample_locs[:, 0], sample_locs[:, 1], sample_locs[:, 2],
+                s=(sample_weights / max(sample_weights) * 100),
+                *args, **kwargs
             )
         else:
             raise ValueError("Plotting not supported for this dimension")
