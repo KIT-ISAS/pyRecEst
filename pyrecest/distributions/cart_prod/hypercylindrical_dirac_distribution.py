@@ -53,7 +53,7 @@ class HypercylindricalDiracDistribution(
         if self.bound_dim >= 2:
             plt.ylim(0, 2 * pi)
         if self.bound_dim >= 3:
-            ax = plt.gca(projection="3d")
+            ax = plt.gca()
             ax.set_zlim(0, 2 * pi)
         if self.bound_dim >= 4:
             raise ValueError("Plotting not supported for this dimension")

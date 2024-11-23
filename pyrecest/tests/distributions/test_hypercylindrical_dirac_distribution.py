@@ -112,6 +112,7 @@ class TestHypercylindricalDiracDistribution(TestAbstractDiracDistribution):
         hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 200000)
         npt.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.2)
 
+    # jscpd:ignore-start
     @parameterized.expand([
         (
             "1D Plot",
@@ -137,4 +138,5 @@ class TestHypercylindricalDiracDistribution(TestAbstractDiracDistribution):
         reason="Not supported on this backend",
     )
     def test_plot(self, name, dist, dim):
-        self._test_plot_helper(name, dist, dim, HypercylindricalDiracDistribution, bound_dim=1)        
+        self._test_plot_helper(name, dist, dim, HypercylindricalDiracDistribution, bound_dim=1)     
+    # jscpd:ignore-end
