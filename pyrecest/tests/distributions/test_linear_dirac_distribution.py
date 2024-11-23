@@ -1,6 +1,5 @@
 import unittest
 
-import matplotlib
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -13,8 +12,9 @@ from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,
 )
-from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 from scipy.stats import wishart
+
+from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 
 
 class LinearDiracDistributionTest(TestAbstractDiracDistribution):
@@ -33,26 +33,31 @@ class LinearDiracDistributionTest(TestAbstractDiracDistribution):
         self.assertTrue(allclose(ddist.mean(), gd.mean(), atol=0.05))
         self.assertTrue(allclose(ddist.covariance(), gd.covariance(), atol=0.05))
 
-    @parameterized.expand([
-        (
-            "1D Plot",
-            GaussianDistribution(array([1.0]),  # 1D mean
-            array([[1.0]])),  # 1D covariance
-            1  # Dimension
-        ),
-        (
-            "2D Plot",
-            GaussianDistribution(array([1.0, 2.0]),  # 2D mean
-            array([[2.0, -0.3], [-0.3, 1.0]])),  # 2D covariance
-            2  # Dimension
-        ),
-        (
-            "3D Plot",
-            GaussianDistribution(array([1.0, 2.0, 3.0]),  # 3D mean
-            diag(array([2.0, 1.0, 0.5]))),  # 3D covariance (diagonal matrix)
-            3  # Dimension
-        ),
-    ])
+    @parameterized.expand(
+        [
+            (
+                "1D Plot",
+                GaussianDistribution(
+                    array([1.0]), array([[1.0]])  # 1D mean
+                ),  # 1D covariance
+                1,  # Dimension
+            ),
+            (
+                "2D Plot",
+                GaussianDistribution(
+                    array([1.0, 2.0]), array([[2.0, -0.3], [-0.3, 1.0]])  # 2D mean
+                ),  # 2D covariance
+                2,  # Dimension
+            ),
+            (
+                "3D Plot",
+                GaussianDistribution(
+                    array([1.0, 2.0, 3.0]), diag(array([2.0, 1.0, 0.5]))  # 3D mean
+                ),  # 3D covariance (diagonal matrix)
+                3,  # Dimension
+            ),
+        ]
+    )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",
         reason="Not supported on this backend",

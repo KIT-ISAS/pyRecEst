@@ -1,23 +1,25 @@
 import unittest
+
+import matplotlib
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import random
-import matplotlib
-from pyrecest.distributions import AbstractDiracDistribution
+
 
 class TestAbstractDiracDistribution(unittest.TestCase):
     def _test_plot_helper(self, name, dist, dim, dirac_cls, **kwargs):
         if dirac_cls is None:
-             return # Prevent failure if no classes are set 
-        
+            return  # Prevent failure if no classes are set
+
         matplotlib.use("Agg")
         matplotlib.pyplot.close("all")
-        
+
         # Seed the random number generator for reproducibility
-        random.seed(0)      
+        random.seed(0)
         # Sample data and create LinearDiracDistribution instance
         # pylint: disable=not-callable
         ddist = dirac_cls(d=dist.sample(10), w=None, **kwargs)
-        
+
         try:
             # Attempt to plot
             ddist.plot()
