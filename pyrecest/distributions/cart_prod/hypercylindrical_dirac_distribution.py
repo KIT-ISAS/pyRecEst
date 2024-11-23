@@ -3,13 +3,14 @@ from typing import Union
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import column_stack, cos, int32, int64, sin
-
+from math import pi
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
 from .lin_bounded_cart_prod_dirac_distribution import (
     LinBoundedCartProdDiracDistribution,
 )
-
+from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
+import matplotlib.pyplot as plt
 
 class HypercylindricalDiracDistribution(
     LinBoundedCartProdDiracDistribution, AbstractHypercylindricalDistribution
@@ -43,3 +44,16 @@ class HypercylindricalDiracDistribution(
 
         # Perform the weighted sum using matrix multiplication
         return self.w @ S
+    
+    def plot(self):
+        assert self.dim <= 3, "Plotting not supported for this dimension"
+        LinearDiracDistribution.plot(self)
+        if self.bound_dim >= 1:
+            plt.xlim(0, 2 * pi)
+        if self.bound_dim >= 2:
+            plt.ylim(0, 2 * pi)
+        if self.bound_dim >= 3:
+            ax = plt.gca(projection="3d")
+            ax.set_zlim(0, 2 * pi)
+        if self.bound_dim >= 4:
+            raise ValueError("Plotting not supported for this dimension")

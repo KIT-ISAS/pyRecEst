@@ -4,8 +4,9 @@ from math import pi
 import numpy.testing as npt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import array, exp, eye, ones, ones_like, random, sum, zeros_like, diag
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, exp, eye, ones, ones_like, random, sum, zeros_like
+import pyrecest.backend
 from pyrecest.distributions.cart_prod.hypercylindrical_dirac_distribution import (
     HypercylindricalDiracDistribution,
 )
@@ -13,9 +14,10 @@ from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution impo
     PartiallyWrappedNormalDistribution,
 )
 from scipy.stats import wishart
+from parameterized import parameterized
+from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 
-
-class TestHypercylindricalDiracDistribution(unittest.TestCase):
+class TestHypercylindricalDiracDistribution(TestAbstractDiracDistribution):
     def setUp(self):
         self.d = array(
             [
@@ -109,3 +111,30 @@ class TestHypercylindricalDiracDistribution(unittest.TestCase):
         hwn = PartiallyWrappedNormalDistribution(array([1.0, 2.0, 3.0, 4.0]), C, 2)
         hddist = HypercylindricalDiracDistribution.from_distribution(hwn, 200000)
         npt.assert_allclose(hddist.hybrid_mean(), hwn.hybrid_mean(), atol=0.2)
+
+    @parameterized.expand([
+        (
+            "1D Plot",
+            PartiallyWrappedNormalDistribution(array([1.0]),  # 1D mean
+            array([[1.0]]), bound_dim=1),  # 1D covariance
+            1  # Dimension
+        ),
+        (
+            "2D Plot",
+            PartiallyWrappedNormalDistribution(array([1.0, 2.0]),  # 2D mean
+            array([[2.0, -0.3], [-0.3, 1.0]]), bound_dim=1),  # 2D covariance
+            2  # Dimension
+        ),
+        (
+            "3D Plot",
+            PartiallyWrappedNormalDistribution(array([1.0, 2.0, 3.0]),  # 3D mean
+            diag(array([2.0, 1.0, 0.5])), bound_dim=1),  # 3D covariance (diagonal matrix)
+            3  # Dimension
+        ),
+    ])
+    @unittest.skipIf(
+        pyrecest.backend.__name__ == "pyrecest.jax",
+        reason="Not supported on this backend",
+    )
+    def test_plot(self, name, dist, dim):
+        self._test_plot_helper(name, dist, dim, HypercylindricalDiracDistribution, bound_dim=1)        
