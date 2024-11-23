@@ -1,18 +1,20 @@
 import unittest
 
+import matplotlib
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, eye, random, diag
-# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+from parameterized import parameterized
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, array, diag, eye, random
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,
 )
 from scipy.stats import wishart
-import matplotlib
-from parameterized import parameterized
+
 
 class LinearDiracDistributionTest(unittest.TestCase):
     def test_from_distribution(self):
@@ -30,26 +32,28 @@ class LinearDiracDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(ddist.mean(), gd.mean(), atol=0.05))
         self.assertTrue(allclose(ddist.covariance(), gd.covariance(), atol=0.05))
 
-    @parameterized.expand([
-        (
-            "1D Plot",
-            array([1.0]),  # 1D mean
-            array([[1.0]]),  # 1D covariance
-            1  # Dimension
-        ),
-        (
-            "2D Plot",
-            array([1.0, 2.0]),  # 2D mean
-            array([[2.0, -0.3], [-0.3, 1.0]]),  # 2D covariance
-            2  # Dimension
-        ),
-        (
-            "3D Plot",
-            array([1.0, 2.0, 3.0]),  # 3D mean
-            diag(array([2.0, 1.0, 0.5])),  # 3D covariance (diagonal matrix)
-            3  # Dimension
-        ),
-    ])
+    @parameterized.expand(
+        [
+            (
+                "1D Plot",
+                array([1.0]),  # 1D mean
+                array([[1.0]]),  # 1D covariance
+                1,  # Dimension
+            ),
+            (
+                "2D Plot",
+                array([1.0, 2.0]),  # 2D mean
+                array([[2.0, -0.3], [-0.3, 1.0]]),  # 2D covariance
+                2,  # Dimension
+            ),
+            (
+                "3D Plot",
+                array([1.0, 2.0, 3.0]),  # 3D mean
+                diag(array([2.0, 1.0, 0.5])),  # 3D covariance (diagonal matrix)
+                3,  # Dimension
+            ),
+        ]
+    )
     @unittest.skipIf(
         pyrecest.backend.__name__ == "pyrecest.jax",
         reason="Not supported on this backend",
@@ -57,21 +61,22 @@ class LinearDiracDistributionTest(unittest.TestCase):
     def test_plot(self, name, mean, cov, dim):
         matplotlib.use("Agg")
         matplotlib.pyplot.close("all")
-        
+
         # Seed the random number generator for reproducibility
         random.seed(0)
-        
+
         # Create GaussianDistribution instance
         gd = GaussianDistribution(mean, cov)
-        
+
         # Sample data and create LinearDiracDistribution instance
         ddist = LinearDiracDistribution(gd.sample(10))
-        
+
         try:
             # Attempt to plot
             ddist.plot()
         except (ValueError, RuntimeError) as e:
             self.fail(f"{name}: Plotting failed for dimension {dim} with error: {e}")
+
 
 if __name__ == "__main__":
     unittest.main()

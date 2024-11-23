@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import cov, ones, reshape
-# pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import cov, ones, reshape
+
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_linear_distribution import AbstractLinearDistribution
 
@@ -40,16 +42,23 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
             plt.stem(sample_locs.squeeze(), sample_weights, *args, **kwargs)
         elif self.dim == 2:
             plt.scatter(
-                sample_locs[:, 0], sample_locs[:, 1], sample_weights / max(sample_weights) * 100, *args, **kwargs
+                sample_locs[:, 0],
+                sample_locs[:, 1],
+                sample_weights / max(sample_weights) * 100,
+                *args,
+                **kwargs
             )
         elif self.dim == 3:
             fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
             # You can adjust 's' for marker size as needed
             ax.scatter(
-                sample_locs[:, 0], sample_locs[:, 1], sample_locs[:, 2],
+                sample_locs[:, 0],
+                sample_locs[:, 1],
+                sample_locs[:, 2],
                 s=(sample_weights / max(sample_weights) * 100),
-                *args, **kwargs
+                *args,
+                **kwargs
             )
         else:
             raise ValueError("Plotting not supported for this dimension")
