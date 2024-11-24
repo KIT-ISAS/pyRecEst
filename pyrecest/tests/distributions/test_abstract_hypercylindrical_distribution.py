@@ -1,6 +1,7 @@
 import unittest
 from math import pi
 
+import matplotlib
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -57,6 +58,19 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             zeros(10),
             atol=1e-10,
         )
+
+    @unittest.skipIf(
+        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        reason="Not supported on this backend",
+    )
+    def test_plot(self):
+        matplotlib.use("Agg")
+        matplotlib.pyplot.close("all")
+        hwn = PartiallyWrappedNormalDistribution(
+            array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 1.0]]), 1
+        )
+        hwn.plot()
+        hwn.plot_cylinder()
 
     @unittest.skipIf(
         pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),

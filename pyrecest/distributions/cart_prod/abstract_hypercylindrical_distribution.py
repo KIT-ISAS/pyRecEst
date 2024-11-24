@@ -2,26 +2,33 @@ from abc import abstractmethod
 from math import pi
 from typing import Union
 
+import matplotlib.pyplot as plt
 import pyrecest.backend
 import scipy.integrate
 import scipy.optimize
+from matplotlib import cm
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     allclose,
     any,
+    arange,
     array,
     column_stack,
     concatenate,
+    cos,
     empty,
     full,
     int32,
     int64,
     isnan,
+    linspace,
+    meshgrid,
     mod,
     ndim,
     ones,
+    sin,
     sqrt,
     tile,
     vstack,
@@ -324,3 +331,96 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
     @property
     def input_dim(self):
         return self.dim
+
+    def plot(self, *args, **kwargs):
+        if self.bound_dim != 1:
+            raise NotImplementedError("Plotting is only supported for bound_dim == 1.")
+
+        lin_size = 3
+        if self.lin_dim == 1:
+            # Creates a three-dimensional surface plot
+            step = 2 * pi / 100
+            # sigma is the standard deviation of the linear variable
+            sigma = sqrt(self.linear_covariance())[0, 0]
+            m = self.mode()
+            # Create grid over periodic variable (0 to 2*pi)
+            x_vals = arange(0, 2 * pi + step, step)
+            # Create grid over linear variable (mean +/- lin_size * sigma)
+            theta_vals = linspace(
+                m[self.bound_dim] - lin_size * sigma,
+                m[self.bound_dim] + lin_size * sigma,
+                100,
+            )
+            x, theta = meshgrid(x_vals, theta_vals)
+
+            # Evaluate pdf at the grid points
+            points = vstack((x.ravel(), theta.ravel())).T
+            f = self.pdf(points)
+            f = f.reshape(x.shape)
+
+            # Now plot
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection="3d")
+            ax.plot_surface(x, theta, f, *args, **kwargs)
+            ax.set_xlim([0, 2 * pi])
+            ax.set_xlabel("Periodic Variable (Radians)")
+            ax.set_ylabel("Linear Variable")
+            ax.set_zlabel("PDF Value")
+            plt.show()
+        elif self.lin_dim == 2:
+            raise NotImplementedError("Plotting not supported for lin_dim == 2.")
+        else:
+            raise NotImplementedError("Plotting not supported for this lin_dim.")
+
+    # pylint: disable=too-many-locals
+    def plot_cylinder(self, limits_linear=None):
+        assert (
+            self.bound_dim == 1 and self.lin_dim == 1
+        ), "plot_cylinder is only implemented for bound_dim == 1 and lin_dim == 1."
+
+        if limits_linear is None:
+            scale_lin = 3
+            m = self.linear_mean()
+            P = self.linear_covariance()
+            if not isnan(m).any() and not isnan(P).any():
+                limits_linear = [
+                    m[0] - scale_lin * sqrt(P[0, 0]),
+                    m[0] + scale_lin * sqrt(P[0, 0]),
+                ]
+            else:
+                # Sample to find a suitable range
+                s = self.sample(100)
+                # s is an array of shape (dim, N)
+                limits_linear = [
+                    s[self.bound_dim :, :].min(),  # noqa: E203
+                    s[self.bound_dim :, :].max(),  # noqa: E203
+                ]
+
+        phi = linspace(0.0, 2 * pi, 100)
+        lin = linspace(limits_linear[0], limits_linear[1], 100)
+        Phi, L = meshgrid(phi, lin)
+        points = vstack([Phi.ravel(), L.ravel()]).T
+        C = self.pdf(points)
+        C = C.reshape(Phi.shape)
+
+        X = cos(Phi)
+        Y = sin(Phi)
+        Z = L
+
+        # Now plot using surf
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+        # Normalize C to 0-1
+        norm = plt.Normalize(C.min(), C.max())
+        # Map normalized values to colors
+        colors = cm.viridis(norm(C))
+
+        surf = ax.plot_surface(
+            X, Y, Z, facecolors=colors, linewidth=0, antialiased=False, shade=False
+        )
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Linear Variable")
+        plt.show()
+
+        return surf
