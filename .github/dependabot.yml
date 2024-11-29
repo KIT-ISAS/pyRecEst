@@ -4,3 +4,6 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "sympy"
+        versions: ["1.13.3"]
