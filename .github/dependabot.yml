@@ -6,4 +6,4 @@ updates:
       interval: "daily"
     ignore:
       - dependency-name: "sympy"
-        versions: ["1.13.3"]
+        versions: [">1.13.1", "<1.13.4"]
