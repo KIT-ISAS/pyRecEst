@@ -47,7 +47,7 @@ jobs:
     if: ${{ github.event.pull_request.merged == true && needs.check_if_tag_exists.outputs.tag_exists != '1' }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create new tag
         run: git tag ${{ needs.check_if_tag_exists.outputs.tag_version }}
@@ -66,12 +66,12 @@ jobs:
       contents: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
