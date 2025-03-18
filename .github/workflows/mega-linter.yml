@@ -147,6 +147,7 @@ jobs:
       - name: Build wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
+          export "LLVM_CONFIG=/usr/lib/llvm15/bin/llvm-config"
           source "$VENV_PATH/bin/activate"
           cd ./alpine-wheels
 
