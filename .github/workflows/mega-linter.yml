@@ -80,6 +80,8 @@ jobs:
             py3-pkgconfig
             curl-dev
             zlib-dev
+            llvm15-dev
+            clang15
       - name: List workspace
         run: ls -l .
 
@@ -120,7 +122,7 @@ jobs:
         run: |
           source "$VENV_PATH/bin/activate"
           cat requirements-dev_no_version.txt
-
+          export "LLVM_CONFIG=/usr/lib/llvm15/bin/llvm-config"
           while read requirement; do
             echo "Installing $requirement..."
             pip install "$requirement" --find-links=./alpine-wheels
@@ -145,6 +147,7 @@ jobs:
       - name: Build wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         run: |
+          export "LLVM_CONFIG=/usr/lib/llvm15/bin/llvm-config"
           source "$VENV_PATH/bin/activate"
           cd ./alpine-wheels
 
