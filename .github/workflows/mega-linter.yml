@@ -80,6 +80,8 @@ jobs:
             py3-pkgconfig
             curl-dev
             zlib-dev
+            llvm-dev
+            clang
       - name: List workspace
         run: ls -l .
 
