@@ -1,4 +1,4 @@
-""" Abstract base class for all filters """
+"""Abstract base class for all filters"""
 
 import copy
 from abc import ABC, abstractmethod

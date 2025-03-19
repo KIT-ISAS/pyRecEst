@@ -1,4 +1,4 @@
-""" Test cases for DiskUniformDistribution"""
+"""Test cases for DiskUniformDistribution"""
 
 import unittest
 from math import pi

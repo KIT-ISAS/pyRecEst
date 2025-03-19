@@ -1,4 +1,4 @@
-""" Implementation of the equal area partition of the sphere S^dim into N regions by Paul Leopardi. See
+"""Implementation of the equal area partition of the sphere S^dim into N regions by Paul Leopardi. See
 "A partition of the unit sphere into regions of equal area and small diameter", Paul Leopardi, 2006.
 The code follows Leopardi's Matlab implementation of the algorithm. The coverage of the "lower" halves of
 the sphere is different than in his original code. Note that the order of hyperspherical coordinates
