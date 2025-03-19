@@ -1,4 +1,4 @@
-""" Test for uniform distribution for hyperhemispheres """
+"""Test for uniform distribution for hyperhemispheres"""
 
 import unittest
 from math import pi

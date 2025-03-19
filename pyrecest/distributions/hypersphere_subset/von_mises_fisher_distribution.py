@@ -1,3 +1,4 @@
+import copy
 from math import pi
 from typing import Union
 
@@ -23,7 +24,7 @@ from pyrecest.backend import (
     zeros,
 )
 from scipy.special import iv
-import copy
+
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
 
@@ -127,7 +128,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     def mode(self):
         return self.mu
-    
+
     def set_mean(self, new_mean):
         self.set_mode(new_mean)
 
