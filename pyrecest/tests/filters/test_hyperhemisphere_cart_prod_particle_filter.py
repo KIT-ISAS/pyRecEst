@@ -26,11 +26,11 @@ class HyperHemisphereCartProdParticleFilterTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__
+        pyrecest.backend.__name__  # pylint: disable=no-name-in-module,no-member
         in (
             "pyrecest.jax",
             "pyrecest.pytorch",
-        ),  # pylint: disable=no-name-in-module,no-member
+        ),
         reason="Backend not supported'",
     )
     def test_set_state(self):
@@ -47,11 +47,11 @@ class HyperHemisphereCartProdParticleFilterTest(unittest.TestCase):
         pf.filter_state = VonMisesFisherDistribution(array([0.0, 0.0, 0.0, 1.0]), 1.0)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__
+        pyrecest.backend.__name__  # pylint: disable=no-name-in-module,no-member
         in (
             "pyrecest.jax",
             "pyrecest.pytorch",
-        ),  # pylint: disable=no-name-in-module,no-member
+        ),
         reason="Backend not supported'",
     )
     def test_predict(self):
@@ -73,11 +73,11 @@ class HyperHemisphereCartProdParticleFilterTest(unittest.TestCase):
         pf.predict_nonlinear_each_part(identity_function, noise_distribution)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__
+        pyrecest.backend.__name__  # pylint: disable=no-name-in-module,no-member
         in (
             "pyrecest.jax",
             "pyrecest.pytorch",
-        ),  # pylint: disable=no-name-in-module,no-member
+        ),
         reason="Backend not supported'",
     )
     def test_update(self):
