@@ -178,7 +178,7 @@ def plot_results(
     # Add legend and show plots
     for fig in figs:
         plt.figure(fig.number)
-        axes_list[fig.number] = plt.axes
+        axes_list[fig.number] = plt.gca()
         plt.legend()
     plt.show()
     # Apply log scales (if chosen to do so)
