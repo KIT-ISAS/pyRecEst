@@ -64,7 +64,7 @@ jobs:
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: jirutka/setup-alpine@v1
         with: # cfitsio, py3-pkgconfig, curl-dev, and zlib for healpy
-          branch: 3.21
+          branch: v3.21
           packages: >
             build-base
             python3-dev
