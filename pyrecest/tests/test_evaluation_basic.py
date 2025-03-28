@@ -64,7 +64,8 @@ class TestEvalationBasics(TestEvalationBase):
     )
     def test_plot_results(self):
         from pyrecest.evaluation.plot_results import plot_results
-        matplotlib.pyplot.close('all')  # Ensure all previous plots are closed
+
+        matplotlib.pyplot.close("all")  # Ensure all previous plots are closed
 
         matplotlib.use("SVG")  # Set the backend to SVG for better compatibility
         # To generate some results
