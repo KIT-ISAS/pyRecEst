@@ -204,9 +204,13 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             )
             f = self.pdf(vstack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
-            p = plt.contourf(alpha, beta, f, **kwargs)
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            surf = ax.plot_surface(alpha, beta, f, cmap='viridis', edgecolor='none')
+            fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5)
             AbstractHypertoroidalDistribution.setup_axis_circular("x")
             AbstractHypertoroidalDistribution.setup_axis_circular("y")
+            p = ax
         elif self.dim == 3:
             raise NotImplementedError(
                 "Plotting for this dimension is currently not supported"
@@ -279,16 +283,17 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         ticks = [0.0, pi, 2.0 * pi]
         tick_labels = ["0", r"$\pi$", r"$2\pi$"]
         if axis_name == "x":
-            ax.set_xlim(left=0.0, right=2.0 * pi)
+            ax.set_xlim(0.0, 2.0 * pi)
             ax.set_xticks(ticks)
             ax.set_xticklabels(tick_labels)
         elif axis_name == "y":
-            ax.set_ylim(left=0.0, right=2.0 * pi)
+            ax.set_ylim(0.0, 2.0 * pi)
             ax.set_yticks(ticks)
             ax.set_yticklabels(tick_labels)
         elif axis_name == "z":
-            ax.set_zlim(left=0.0, right=2.0 * pi)
+            ax.set_zlim(0.0, 2.0 * pi)
             ax.set_zticks(ticks)
             ax.set_zticklabels(tick_labels)
         else:
             raise ValueError("invalid axis")
+

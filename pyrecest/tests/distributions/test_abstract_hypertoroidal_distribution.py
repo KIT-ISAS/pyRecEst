@@ -6,7 +6,9 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array
 from pyrecest.distributions import AbstractHypertoroidalDistribution
-
+from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import ToroidalWrappedNormalDistribution
+import matplotlib
+matplotlib.use("Agg")
 
 class TestAbstractHypertoroidalDistribution(unittest.TestCase):
     def test_angular_error(self):
@@ -23,3 +25,11 @@ class TestAbstractHypertoroidalDistribution(unittest.TestCase):
             pi / 2,
             rtol=2e-07,
         )
+
+    def test_plot_2d(self):
+        mu = array([0.0, 1.0])
+        sigma1 = 0.5
+        sigma2 = 0.5
+        rho = 0.5
+        dist = ToroidalWrappedNormalDistribution(mu, array([[sigma1, sigma1*sigma2*rho], [sigma1*sigma2*rho, sigma2]]))
+        dist.plot()
