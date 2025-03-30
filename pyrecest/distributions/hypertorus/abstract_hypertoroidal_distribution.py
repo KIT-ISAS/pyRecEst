@@ -202,7 +202,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
             alpha, beta = meshgrid(
                 arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step)
             )
-            f = self.pdf(vstack((alpha.ravel(), beta.ravel())))
+            f = self.pdf(column_stack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
