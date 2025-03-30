@@ -7,6 +7,7 @@ from typing import Union
 from pyrecest.backend import (
     allclose,
     arange,
+    atleast_2d,
     array,
     exp,
     int32,
@@ -15,7 +16,6 @@ from pyrecest.backend import (
     meshgrid,
     mod,
     random,
-    reshape,
     stack,
     zeros,
 )
@@ -70,7 +70,9 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        xs = reshape(xs, (-1, self.dim))
+        assert xs.shape[-1] == self.dim, "Last dimension of xs must match the distribution dimension"
+        xs = atleast_2d(xs)  # Ensure xs is at least 2-D for approach below
+        xs = (xs + pi) % (2 * pi) - pi
 
         # Generate all combinations of offsets for each dimension
         offsets = [arange(-m, m + 1) * 2.0 * pi for _ in range(self.dim)]
