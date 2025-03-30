@@ -12,7 +12,8 @@ from pyrecest.backend import arange, array, column_stack, cos, exp, sin
 from pyrecest.distributions.hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,
 )
-
+import matplotlib
+matplotlib.use("Agg")
 
 class ToroidalVMSineDistributionTest(unittest.TestCase):
     def setUp(self):
@@ -46,6 +47,9 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             self.tvm.trigonometric_moment_numerical(0), array([1.0, 1.0])
         )
+
+    def test_plot_2d(self):
+        self.tvm.plot()
 
     # jscpd:ignore-start
     # pylint: disable=R0801
