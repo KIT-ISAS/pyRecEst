@@ -16,6 +16,7 @@ from pyrecest.backend import (
     mod,
     random,
     reshape,
+    stack,
     zeros,
 )
 from scipy.stats import multivariate_normal
@@ -73,7 +74,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
 
         # Generate all combinations of offsets for each dimension
         offsets = [arange(-m, m + 1) * 2.0 * pi for _ in range(self.dim)]
-        offset_combinations = array(meshgrid(*offsets)).T.reshape(-1, self.dim)
+        offset_combinations = stack(meshgrid(*offsets, indexing='ij'), -1).reshape(-1, self.dim)
 
         # Calculate the PDF values by considering all combinations of offsets
         pdf_values = zeros(xs.shape[0])
