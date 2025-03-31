@@ -7,8 +7,8 @@ from typing import Union
 from pyrecest.backend import (
     allclose,
     arange,
-    atleast_2d,
     array,
+    atleast_2d,
     exp,
     int32,
     int64,
@@ -70,7 +70,9 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        assert xs.shape[-1] == self.dim, "Last dimension of xs must match the distribution dimension"
+        assert (
+            xs.shape[-1] == self.dim
+        ), "Last dimension of xs must match the distribution dimension"
         xs = atleast_2d(xs)  # Ensure xs is at least 2-D for approach below
         xs = (xs + pi) % (2 * pi) - pi
 
