@@ -34,7 +34,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_integral(self):
@@ -42,7 +42,7 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-5)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_trigonometric_moment_numerical(self):

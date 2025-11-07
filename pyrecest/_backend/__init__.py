@@ -280,6 +280,11 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         new_module = types.ModuleType(self._path)
         new_module.__file__ = getattr(backend, "__file__", None)
 
+        # expose chosen backend
+        new_module.__backend_name__ = backend_name
+        new_module.BACKEND_NAME = backend_name
+        new_module.get_backend_name = staticmethod(lambda: backend_name)
+
         for module_name, attributes in BACKEND_ATTRIBUTES.items():
             if module_name:
                 try:
@@ -336,5 +341,8 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
             module.set_default_dtype("float64")
         logging.info(f"Using {BACKEND_NAME} backend")
 
-# Insert at the *front* of sys.meta_path to ensure it takes precedence
-sys.meta_path.insert(0, BackendImporter("pyrecest.backend"))
+TARGET = "pyrecest.backend"
+if not any(isinstance(f, BackendImporter) and getattr(f, "_path", None) == TARGET
+           for f in sys.meta_path):
+    # put it in front so it intercepts 'pyrecest.backend'
+    sys.meta_path.insert(0, BackendImporter(TARGET))

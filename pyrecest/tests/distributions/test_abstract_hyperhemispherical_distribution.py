@@ -33,7 +33,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
                 self.assertAlmostEqual(hud.get_manifold_size(), expected, delta=1e-16)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_mode_numerical(self):
@@ -43,7 +43,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         npt.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_sampling_hemisphere(self):
@@ -53,7 +53,7 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         npt.assert_array_less(-samples[:, -1], zeros(samples.shape[0]))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_sample_metropolis_hastings_basics_only(self):

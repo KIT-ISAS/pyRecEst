@@ -26,7 +26,7 @@ class AbstractMixtureTest(unittest.TestCase):
         return s
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_sample_metropolis_hastings_basics_only_t2(self):
@@ -37,7 +37,7 @@ class AbstractMixtureTest(unittest.TestCase):
         self._test_sample(mix, 10)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_sample_metropolis_hastings_basics_only_s2(self):
@@ -52,7 +52,7 @@ class AbstractMixtureTest(unittest.TestCase):
         self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=1e-10))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_sample_metropolis_hastings_basics_only_h2(self):

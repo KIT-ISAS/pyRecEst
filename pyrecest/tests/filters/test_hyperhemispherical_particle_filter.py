@@ -36,7 +36,7 @@ class HyperhemisphericalParticleFilterTest(unittest.TestCase):
         self.assertEqual(np.shape(hpf.filter_state.d), (self.n_particles, 4))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_set_state(self):

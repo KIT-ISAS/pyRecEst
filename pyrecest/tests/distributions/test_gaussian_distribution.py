@@ -61,7 +61,7 @@ class GaussianDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(g_shifted.mode(), mu + shift_by, atol=1e-6))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_marginalization(self):

@@ -69,7 +69,7 @@ class WrappedNormalDistribution(
         x = where(x < 0, x + 2.0 * pi, x)
         x -= self.mu
         max_iterations: int = 1000
-        if pyrecest.backend.__name__ != "pyrecest.jax":
+        if pyrecest.backend.__backend_name__ != "jax":
             n_inputs = xs.shape[0]
             result = zeros(n_inputs)
 

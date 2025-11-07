@@ -53,9 +53,9 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         pass
 
     def mean_direction_numerical(self, integration_boundaries=None):
-        assert pyrecest.backend.__name__ in (
-            "pyrecest.numpy",
-            "pyrecest.pytorch",
+        assert pyrecest.backend.__backend_name__ in (
+            "numpy",
+            "pytorch",
         ), "Not supported for this backend."
         if integration_boundaries is None:
             integration_boundaries = self.__class__.get_full_integration_boundaries(
@@ -123,9 +123,9 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, int32, int64]):
-        assert pyrecest.backend.__name__ in (
-            "pyrecest.numpy",
-            "pyrecest.pytorch",
+        assert pyrecest.backend.__backend_name__ in (
+            "numpy",
+            "pytorch",
         ), "Not supported for this backend."
 
         def generate_input(angles):
@@ -206,7 +206,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     def _compute_mean_axis_from_moment(moment_matrix):
         D, V = linalg.eig(moment_matrix)
-        if pyrecest.backend.__name__ == "pyrecest.pytorch":
+        if pyrecest.backend.__backend_name__ == "pytorch":
             assert all(D.imag.abs() < 1e-6)
             D = D.real
             V = V.real

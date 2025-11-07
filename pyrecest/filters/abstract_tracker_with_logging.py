@@ -35,7 +35,7 @@ class AbstractTrackerWithLogging(ABC):
             estimates_over_time_new = hstack((estimates_over_time, curr_ests))
         else:
             estimates_over_time_new = full((n, t + 1), nan)
-            if pyrecest.backend.__name__ != "pyrecest.jax":
+            if pyrecest.backend.__backend_name__ != "jax":
                 estimates_over_time_new[:m, :t] = estimates_over_time
                 estimates_over_time_new[:, -1] = curr_ests.flatten()
             else:

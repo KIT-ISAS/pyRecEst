@@ -194,7 +194,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
 
     def mode_numerical(self):
         assert (
-            pyrecest.backend.__name__ != "pyrecest.jax"
+            pyrecest.backend.__backend_name__ != "jax"
         ), "Not supported on this backend"
 
         def fun(s):

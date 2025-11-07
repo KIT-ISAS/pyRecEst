@@ -90,7 +90,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def integrate_numerically(self, integration_boundaries=None):
         assert (
-            pyrecest.backend.__name__ == "pyrecest.numpy"
+            pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
         if integration_boundaries is None:
             return self.integrate_fun_over_domain(

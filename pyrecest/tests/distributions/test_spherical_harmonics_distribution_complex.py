@@ -87,7 +87,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
 
     @parameterized.expand([("identity",), ("sqrt",)])
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integral_analytical(self, transformation):
@@ -1071,7 +1071,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_conversion(self, _, coeff_mat):
@@ -1173,7 +1173,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_mean_direction(self, _, input_array, expected_output, fun_to_test):
@@ -1181,7 +1181,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         npt.assert_allclose(fun_to_test(shd), expected_output, atol=1e-10)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_from_distribution_via_integral_vmf(self):
@@ -1210,7 +1210,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_from_distribution_via_integral_uniform(self):
@@ -1220,7 +1220,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         npt.assert_allclose(shd.coeff_mat, array([[1 / sqrt(4 * pi)]]))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_transformation_via_integral_shd(self):
@@ -1235,7 +1235,7 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         npt.assert_allclose(shd.coeff_mat, dist.coeff_mat, atol=1e-6)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_convergence(self):

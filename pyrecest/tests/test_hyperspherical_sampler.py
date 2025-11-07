@@ -55,7 +55,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         self.assertEqual(grid_specific_description[desc_key], grid_density_parameter)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     @unittest.skipIf(not healpy_installed, "healpy is not installed")
@@ -100,7 +100,7 @@ class TestHypersphericalSampler(unittest.TestCase):
 
     @parameterized.expand([(0, 72), (1, 648)])
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     @unittest.skipIf(not healpy_installed, "healpy is not installed")
@@ -144,7 +144,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler(self, _, points, dim, expected_shape):
@@ -154,7 +154,7 @@ class TestHypersphericalSampler(unittest.TestCase):
 
     # jscpd:ignore-start
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s2_12(self):
@@ -187,7 +187,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         npt.assert_allclose(grid[-1], np.array([0, 0, -1]), atol=1e-4)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s2_20(self):
@@ -222,7 +222,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         npt.assert_allclose(grid[-1], np.array([0, 0, -1]), atol=1e-4)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s3_10_first5(self):

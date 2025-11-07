@@ -14,7 +14,7 @@ from pyrecest.distributions import (
 
 class HypersphericalUniformDistributionTest(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integrate_2d(self):
@@ -22,7 +22,7 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
         npt.assert_allclose(hud.integrate(), 1, atol=1e-6)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integrate_3d(self):

@@ -59,7 +59,7 @@ class TestWatsonDistribution(unittest.TestCase):
         npt.assert_array_almost_equal(pdf_values, expected_pdf_values, decimal=5)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integrate(self):
@@ -70,7 +70,7 @@ class TestWatsonDistribution(unittest.TestCase):
         self.assertAlmostEqual(w.integrate(), 1, delta=1e-5)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_to_bingham(self):

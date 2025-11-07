@@ -37,9 +37,9 @@ class AbstractSphericalHarmonicsDistribution(
         n = coeff_mat.shape[0]
 
         for i in range(n):
-            if pyrecest.backend.__name__ in (
-                "pyrecest.numpy",
-                "pyrecest.pytorch",
+            if pyrecest.backend.__backend_name__ in (
+                "numpy",
+                "pytorch",
             ):  # Set the irrelevant elements to nan
                 coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
             else:

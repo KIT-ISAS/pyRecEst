@@ -30,7 +30,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         self.assertRaises(ValueError, SphericalHarmonicsDistributionReal, array(0.0))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def testNormalizationWarning(self):
@@ -40,7 +40,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
             self.assertTrue(issubclass(w[-1].category, UserWarning))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def testNormalization(self):
@@ -449,7 +449,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         ]  # jscpd:ignore-end
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_conversion(self, _, coeff_mat):
@@ -467,7 +467,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_conversion_to_complex_and_back(self):
@@ -481,7 +481,7 @@ class SphericalHarmonicsDistributionRealTest(unittest.TestCase):
         npt.assert_allclose(rshd2.coeff_mat, rshd.coeff_mat, atol=1e-6, equal_nan=True)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integral_analytical(self):

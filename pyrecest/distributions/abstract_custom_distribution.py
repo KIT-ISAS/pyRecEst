@@ -64,7 +64,7 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :returns: A copy of the original distribution, with the PDF normalized.
         """
         assert (
-            pyrecest.backend.__name__ == "pyrecest.numpy"
+            pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
         cd = copy.deepcopy(self)
 
