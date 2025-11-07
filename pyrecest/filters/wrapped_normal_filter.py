@@ -38,7 +38,7 @@ class WrappedNormalFilter(AbstractCircularFilter):
         DEFAULT_TAU = 0.02
         MINIMUM_LAMBDA: float = 0.001
         tau = tau if tau else DEFAULT_TAU
-        lambda_ = 1
+        lambda_ = 1.0
         steps = 0
 
         while lambda_ > 0:
