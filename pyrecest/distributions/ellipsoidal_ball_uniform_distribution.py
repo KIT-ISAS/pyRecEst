@@ -1,7 +1,7 @@
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import int32, int64, linalg, random, squeeze, where, zeros
+from pyrecest.backend import int32, int64, linalg, random, where, zeros
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -38,30 +38,30 @@ class EllipsoidalBallUniformDistribution(
         :returns: PDF values at given points.
         """
         assert xs.shape[-1] == self.dim
-        # Calculate the reciprocal of the volume of the ellipsoid
-        # reciprocal_volume = 1 / (power(pi, self.dim / 2) * sqrt(linalg.det(self.shape_matrix)) / gamma(self.dim / 2 + 1))
+
         reciprocal_volume = 1 / self.get_manifold_size()
-        if xs.ndim == 1:
-            return reciprocal_volume
 
-        n = xs.shape[0]
-        results = zeros(n)
+        # Make xs always 2D for uniform handling
+        single = (xs.ndim == 1)
+        if single:
+            xs = xs[None, :]
 
-        # Check if points are inside the ellipsoid
-        diff = (
-            xs - self.center[None, :]
-        )  # Broadcasting self.center to match the shape of xs
-        solved = linalg.solve(
-            self.shape_matrix[None, :, :], diff[:, :, None]
-        )  # Solving the system for each vector in diff
-        results = squeeze(
-            diff[:, :, None].swapaxes(-2, -1) @ solved
-        )  # Computing the dot product for each pair of vectors
+        # (n, dim)
+        diff = xs - self.center[None, :]
 
-        # If the point is inside the ellipsoid, store the reciprocal of the volume as the pdf value
-        pdf_values = where(results <= 1, reciprocal_volume, zeros(n))
+        # Solve S * y = diff^T  -> y^T = diff^T * S^{-1}
+        # S: (dim, dim), diff.T: (dim, n)  => solved.T: (n, dim)
+        solved = linalg.solve(self.shape_matrix, diff.T).T
 
-        return pdf_values
+        # Quadratic form per row: sum_i diff_i * solved_i
+        quad = (diff * solved).sum(axis=1)
+
+        # Optional tiny tolerance near the boundary:
+        inside = quad <= 1.0
+
+        pdf_values = where(inside, reciprocal_volume, zeros(quad.shape[0]))
+
+        return pdf_values[0] if single else pdf_values
 
     def sample(self, n: Union[int, int32, int64]):
         """

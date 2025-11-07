@@ -9,6 +9,7 @@ from numpy import (
     any,
     argmax,
     argmin,
+    asarray,
     broadcast_arrays,
     broadcast_to,
     clip,
@@ -100,8 +101,14 @@ from numpy import (
     # For Riemannian score-based SDE
     log1p,
 )
+
+try:
+    from numpy import trapezoid
+except ImportError:
+    from numpy import trapz as trapezoid
+
 from scipy.special import erf, gamma, polygamma, gammaln  # NOQA
-from scipy.integrate import trapezoid  # NOQA
+
 from .._shared_numpy import (
     abs,
     angle,
@@ -186,6 +193,16 @@ from ._common import (
 ones = _modify_func_default_dtype(target=_np.ones)
 linspace = _dyn_update_dtype(target=_np.linspace, dtype_pos=5)
 empty = _dyn_update_dtype(target=_np.empty, dtype_pos=1)
+
+
+def has_autodiff():
+    """If allows for automatic differentiation.
+
+    Returns
+    -------
+    has_autodiff : bool
+    """
+    return False
 
 
 def vmap(pyfunc, randomness='error'):

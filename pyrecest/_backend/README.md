@@ -1,4 +1,4 @@
-# _Backend Folder
+# Backend Interface
 
 This folder contains code from the Geomstats project, adjusted for pyRecEst by Florian Pfaff. The original version of Geomstats is authored by Nina Miolane et al., and is a Python package geared towards Riemannian Geometry in Machine Learning.
 

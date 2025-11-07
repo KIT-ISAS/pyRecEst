@@ -122,6 +122,7 @@ unsupported_functions = [
     'jacobian_vec',
     'jacobian_and_hessian',
     'value_jacobian_and_hessian',
+    'value_and_jacobian',
 ]
 for func_name in unsupported_functions:
     exec(f"{func_name} = lambda *args, **kwargs: NotImplementedError('This function is not supported in this JAX backend.')")
