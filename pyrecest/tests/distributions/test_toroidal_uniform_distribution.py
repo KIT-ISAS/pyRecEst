@@ -46,11 +46,11 @@ class TestToroidalUniformDistribution(unittest.TestCase):
             )
             if k == 0:
                 self.assertTrue(
-                    allclose(self.tud.trigonometric_moment(k), ones(2), rtol=1e-10)
+                    allclose(self.tud.trigonometric_moment(k), ones(2) + 0j, rtol=1e-10)
                 )
             else:
                 self.assertTrue(
-                    allclose(self.tud.trigonometric_moment(k), zeros(2), rtol=1e-10)
+                    allclose(self.tud.trigonometric_moment(k), zeros(2) + 0j, rtol=1e-10)
                 )
 
     def test_mean_direction(self):

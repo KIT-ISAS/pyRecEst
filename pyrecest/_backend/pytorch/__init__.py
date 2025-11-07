@@ -4,10 +4,10 @@ from collections.abc import Iterable as _Iterable
 
 import numpy as _np
 import torch as _torch
-from torch import broadcast_tensors as broadcast_arrays
 from torch import (
     arange,
     argmin,
+    asarray,
     clip,
     complex64,
     complex128,
@@ -34,6 +34,15 @@ from torch import (
     ones_like,
     polygamma,
     quantile,
+    reshape,
+    scatter_add,
+    searchsorted,
+    stack,
+    trapezoid,
+    uint8,
+    vstack,
+    zeros,
+    zeros_like,
     # The ones below are for pyrecest
     diag,
     diff,
@@ -63,18 +72,8 @@ from torch import (
     # For Riemannian score-based SDE
     log1p,
 )
+from torch import broadcast_tensors as broadcast_arrays
 from torch import repeat_interleave as repeat
-from torch import (
-    reshape,
-    scatter_add,
-    stack,
-    trapezoid,
-    uint8,
-    unique,
-    vstack,
-    zeros,
-    zeros_like,
-)
 from torch.special import gammaln as _gammaln
 from torch.special import gammaln
 
@@ -166,6 +165,15 @@ def cov(input, correction=1, fweights=None, aweights=None, bias=False):
 
         return cov_matrix
         
+def has_autodiff():
+    """If allows for automatic differentiation.
+
+    Returns
+    -------
+    has_autodiff : bool
+    """
+    return True
+
 
 def matmul(x, y, out=None):
     for array_ in [x, y]:
@@ -217,7 +225,7 @@ def split(x, indices_or_sections, axis=0):
     if isinstance(indices_or_sections, int):
         indices_or_sections = x.shape[axis] // indices_or_sections
         return _torch.split(x, indices_or_sections, dim=axis)
-    indices_or_sections = _np.array(indices_or_sections)
+    indices_or_sections = _np.asarray(indices_or_sections)
     intervals_length = indices_or_sections[1:] - indices_or_sections[:-1]
     last_interval_length = x.shape[axis] - indices_or_sections[-1]
     if last_interval_length > 0:
@@ -312,17 +320,7 @@ def allclose(a, b, atol=atol, rtol=rtol):
         a = _torch.tensor(a)
     if not isinstance(b, _torch.Tensor):
         b = _torch.tensor(b)
-    a = to_ndarray(a.float(), to_ndim=1)
-    b = to_ndarray(b.float(), to_ndim=1)
-    n_a = a.shape[0]
-    n_b = b.shape[0]
-    nb_dim = a.dim()
-    if n_a > n_b:
-        reps = (int(n_a / n_b),) + (nb_dim - 1) * (1,)
-        b = tile(b, reps)
-    elif n_a < n_b:
-        reps = (int(n_b / n_a),) + (nb_dim - 1) * (1,)
-        a = tile(a, reps)
+    a, b = _torch.broadcast_tensors(a, b)
     return _torch.allclose(a, b, atol=atol, rtol=rtol)
 
 
@@ -370,12 +368,15 @@ def minimum(a, b):
     return _torch.min(array(a), array(b))
 
 
-def to_ndarray(x, to_ndim, axis=0):
-    if not _torch.is_tensor(x):
-        x = array(x)
+def to_ndarray(x, to_ndim, axis=0, dtype=None):
+    x = _torch.as_tensor(x, dtype=dtype)
 
-    if x.dim() == to_ndim - 1:
+    if x.dim() > to_ndim:
+        raise ValueError("The ndim cannot be adapted properly.")
+
+    while x.dim() < to_ndim:
         x = _torch.unsqueeze(x, dim=axis)
+
     return x
 
 
@@ -729,7 +730,7 @@ def array_from_sparse(indices, data, target_shape):
     a : array, shape=target_shape
         Array of zeros with specified values assigned to specified indices.
     """
-    return _torch.sparse.FloatTensor(
+    return _torch.sparse_coo_tensor(
         _torch.LongTensor(indices).t(),
         array(data),
         _torch.Size(target_shape),
@@ -898,3 +899,7 @@ def imag(a):
     if is_complex(a):
         return _torch.imag(a)
     return _torch.zeros(a.shape, dtype=a.dtype)
+
+
+def unique(ar, axis=None):
+    return _torch.unique(ar, dim=axis)

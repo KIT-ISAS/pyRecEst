@@ -11,6 +11,7 @@ from jax.numpy import (
     any,
     argmax,
     argmin,
+    asarray,
     broadcast_arrays,
     broadcast_to,
     clip,
@@ -142,6 +143,15 @@ from jax.numpy import (
     log1p,
 )
 from jax import vmap
+
+def has_autodiff():
+    """If allows for automatic differentiation.
+
+    Returns
+    -------
+    has_autodiff : bool
+    """
+    return True
 
 from ._dtype import (
     set_default_dtype, as_dtype

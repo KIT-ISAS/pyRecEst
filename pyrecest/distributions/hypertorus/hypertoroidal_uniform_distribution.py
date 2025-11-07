@@ -39,9 +39,9 @@ class HypertoroidalUniformDistribution(
         :returns: n-th trigonometric moment
         """
         if n == 0:
-            return ones(self.dim)
+            return ones(self.dim) + 0j
 
-        return zeros(self.dim)
+        return zeros(self.dim) + 0j
 
     def entropy(self) -> float:
         """
