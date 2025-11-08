@@ -17,6 +17,38 @@ Features of pyRecEst include:
 
 Please refer to the test cases for usage examples.
 
+## Citation
+
+If you use **pyRecEst** in your research, please cite:
+
+<table>
+  <tr>
+    <th>BibTeX</th>
+    <th>BibLaTeX</th>
+  </tr>
+  <tr>
+    <td>
+      <pre><code class="language-bibtex">@misc{pfaff_pyRecEst_2023,
+  author       = {Florian Pfaff},
+  title        = {pyRecEst: Recursive Bayesian Estimation for Python},
+  year         = {2023},
+  howpublished = {\url{https://github.com/FlorianPfaff/pyRecEst}},
+  note         = {MIT License}
+}</code></pre>
+    </td>
+    <td>
+      <pre><code class="language-biblatex">@software{pfaff_pyRecEst_2023_software,
+  author    = {Florian Pfaff},
+  title     = {pyRecEst: Recursive Bayesian Estimation for Python},
+  year      = {2023},
+  url       = {https://github.com/FlorianPfaff/pyRecEst},
+  license   = {MIT},
+  keywords  = {Bayesian filtering; manifolds; tracking; Python; NumPy; PyTorch; JAX}
+}</code></pre>
+    </td>
+  </tr>
+</table>
+
 ## Credits
 
 - Florian Pfaff (<pfaff@ias.uni-stuttgart.de>)
