@@ -22,7 +22,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_simple_distribution_2D(self):
@@ -45,7 +45,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         "Test not supported for pytorch or jax backends",
     )
     def test_integrate_bingham_s2(self):
@@ -59,7 +59,7 @@ class CustomHemisphericalDistributionTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_warning_asymmetric(self):

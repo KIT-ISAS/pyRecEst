@@ -300,9 +300,9 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         m : ndarray
           The mode of the distribution.
         """
-        assert pyrecest.backend.__name__ in (
-            "pyrecest.numpy",
-            "pyrecest.pytorch",
+        assert pyrecest.backend.__backend_name__ in (
+            "numpy",
+            "pytorch",
         ), "Not supported for this backend."
         if starting_point is None:
             starting_point = concatenate(

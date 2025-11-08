@@ -46,7 +46,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -99,7 +99,7 @@ class TestCircularFourierDistribution(unittest.TestCase):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_integrate_numerically(self, mult_by_n, transformation):

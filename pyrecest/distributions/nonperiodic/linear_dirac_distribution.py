@@ -29,10 +29,10 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
         return C
 
     def plot(self, *args, **kwargs):
-        if pyrecest.backend.__name__ == "pyrecest.numpy":
+        if pyrecest.backend.__backend_name__ == "numpy":
             sample_locs = self.d
             sample_weights = self.w
-        elif pyrecest.backend.__name__ == "pyrecest.pytorch":
+        elif pyrecest.backend.__backend_name__ == "pytorch":
             sample_locs = self.d.numpy()
             sample_weights = self.w.numpy()
         else:

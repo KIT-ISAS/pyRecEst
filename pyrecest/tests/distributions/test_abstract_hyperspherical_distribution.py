@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 
 class AbstractHypersphericalDistributionTest(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def testIntegral2D(self):
@@ -28,7 +28,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(vmf.integrate(), 1.0, delta=1e-3)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def testIntegral3D(self):
@@ -58,7 +58,7 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_mean_direction_numerical(self):

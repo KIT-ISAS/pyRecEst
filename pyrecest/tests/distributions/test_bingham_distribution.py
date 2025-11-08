@@ -20,7 +20,7 @@ class TestBinghamDistribution(unittest.TestCase):
         self.bd = BinghamDistribution(Z, M)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_pdf(self):

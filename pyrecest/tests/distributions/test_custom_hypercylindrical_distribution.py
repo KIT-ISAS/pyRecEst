@@ -52,7 +52,7 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         npt.assert_allclose(self.pwn.pdf(self.grid_flat), chd.pdf(self.grid_flat))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_condition_on_linear(self):
@@ -62,7 +62,7 @@ class CustomHypercylindricalDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.pdf(x), self.vm.pdf(x))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_condition_on_periodic(self):

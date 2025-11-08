@@ -44,11 +44,11 @@ class GaussianDistribution(AbstractLinearDistribution):
         assert (
             self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
         ), "Dimension incorrect"
-        if pyrecest.backend.__name__ == "pyrecest.numpy":
+        if pyrecest.backend.__backend_name__ == "numpy":
             from scipy.stats import multivariate_normal as mvn
 
             pdfvals = mvn.pdf(xs, self.mu, self.C)
-        elif pyrecest.backend.__name__ == "pyrecest.pytorch":
+        elif pyrecest.backend.__backend_name__ == "pytorch":
             # Disable import errors for megalinter
             import torch as _torch  # pylint: disable=import-error
 
@@ -59,7 +59,7 @@ class GaussianDistribution(AbstractLinearDistribution):
                 xs = _torch.reshape(xs, (-1, 1))
             log_probs = distribution.log_prob(xs)
             pdfvals = _torch.exp(log_probs)
-        elif pyrecest.backend.__name__ == "pyrecest.jax":
+        elif pyrecest.backend.__backend_name__ == "jax":
             from jax import numpy as jnp  # pylint: disable=import-error
             from jax.scipy.stats import (  # pylint: disable=import-error
                 multivariate_normal,

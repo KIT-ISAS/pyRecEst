@@ -151,9 +151,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         )
 
     def mode_numerical(self):
-        assert pyrecest.backend.__name__ in (
-            "pyrecest.numpy",
-            "pyrecest.pytorch",
+        assert pyrecest.backend.__backend_name__ in (
+            "numpy",
+            "pytorch",
         ), "Not supported for this backend."
 
         def objective_function_2d(s):

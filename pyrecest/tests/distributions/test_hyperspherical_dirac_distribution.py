@@ -68,7 +68,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         npt.assert_array_almost_equal(twdNew.w, wNew / sum(wNew))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.jax", "pyrecest.pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
         reason="Not supported on this backend",
     )
     def test_from_distribution(self):

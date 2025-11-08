@@ -17,7 +17,7 @@ from pyrecest.filters.toroidal_particle_filter import ToroidalParticleFilter
 
 class ToroidalParticleFilterTest(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_toroidal_particle_filter(self):

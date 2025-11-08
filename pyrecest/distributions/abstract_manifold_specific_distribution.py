@@ -82,7 +82,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         # jscpd:ignore-end
         """Metropolis Hastings sampling algorithm."""
         assert (
-            pyrecest.backend.__name__ != "pyrecest.jax"
+            pyrecest.backend.__backend_name__ != "jax"
         ), "Not supported on this backend"
         if proposal is None or start_point is None:
             raise NotImplementedError(

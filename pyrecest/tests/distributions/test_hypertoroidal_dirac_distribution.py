@@ -147,7 +147,7 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         ]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_plot(self, name, dist, dim):

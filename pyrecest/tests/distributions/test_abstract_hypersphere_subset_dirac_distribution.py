@@ -18,7 +18,7 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution
 
 class AbstractHypersphereSubsetDiracDistributionTest(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_mean_axis(self):

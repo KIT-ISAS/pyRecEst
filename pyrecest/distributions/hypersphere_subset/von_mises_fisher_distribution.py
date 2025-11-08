@@ -68,7 +68,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         # Requires scipy 1.11 or later
         """
         assert (
-            pyrecest.backend.__name__ == "pyrecest.numpy"
+            pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported on NumPy backend"
         from scipy.stats import vonmises_fisher
 

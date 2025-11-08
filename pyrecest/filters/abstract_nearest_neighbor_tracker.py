@@ -115,7 +115,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
 
     def update_linear(self, measurements, measurement_matrix, covMatsMeas):
         assert (
-            pyrecest.backend.__name__ == "pyrecest.numpy"
+            pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
         if len(self.filter_bank) == 0:
             warnings.warn("Currently, there are zero targets")

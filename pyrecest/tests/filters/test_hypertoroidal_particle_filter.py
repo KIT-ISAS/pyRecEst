@@ -23,13 +23,13 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         random.seed(self.seed)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax", reason="Backend not supported'"
+        pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported'"
     )
     def test_setting_state(self):
         self.hpf.filter_state = self.hwnd
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax", reason="Backend not supported'"
+        pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported'"
     )
     def test_predict_identity(self):
         self.hpf.predict_identity(
@@ -45,7 +45,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.assertEqual(self.hpf.get_point_estimate().shape, (3,))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax", reason="Backend not supported'"
+        pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported'"
     )
     def test_predict_update_cycle_3D(self):
         self.hpf.filter_state = self.hwnd
