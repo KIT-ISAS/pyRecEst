@@ -84,7 +84,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         npt.assert_array_almost_equal(predicted.w, dist_f.w, decimal=10)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on current backend",
     )
     def test_update(self):
@@ -109,7 +109,7 @@ class CircularParticleFilterTest(unittest.TestCase):
         self.assertIsInstance(dist3b, CircularDiracDistribution)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on current backend",
     )
     def test_association_likelihood(self):

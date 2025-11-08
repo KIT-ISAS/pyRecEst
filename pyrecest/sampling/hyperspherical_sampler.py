@@ -130,7 +130,7 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 class LeopardiSampler(AbstractHypersphericalUniformSampler):
     def __init__(self, original_code_column_order=False):
         self.original_code_column_order = original_code_column_order
-        assert backend.__name__ != "pyrecest.jax", "Backend unsupported"
+        assert backend.__backend_name__ != "jax", "Backend unsupported"
 
     def get_grid(self, grid_density_parameter, dim: int):
         # Use [::-1] due to different convention

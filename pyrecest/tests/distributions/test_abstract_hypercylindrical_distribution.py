@@ -16,7 +16,7 @@ from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution impo
 
 class AbstractHypercylindricalDistributionTest(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on jax backend",
     )
     def test_mode_numerical_gaussian_2D(self):
@@ -32,7 +32,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         npt.assert_allclose(hwn.linear_mean_numerical(), hwn.mu[-1])
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_condition_on_periodic(self):
@@ -60,7 +60,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_plot(self):
@@ -73,7 +73,7 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         hwn.plot_cylinder()
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_condition_on_linear(self):

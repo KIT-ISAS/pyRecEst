@@ -222,7 +222,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         npt.assert_allclose(cart_res[:, 2], z, atol=1e-7)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_pdf_hyperspherical_coords_1d(self):
@@ -242,7 +242,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_pdf_hyperspherical_coords_2d(self):
@@ -272,7 +272,7 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_pdf_hyperspherical_coords_3d(self):

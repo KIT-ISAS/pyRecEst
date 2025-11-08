@@ -70,7 +70,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         from .gaussian_mixture import GaussianMixture
 
         assert (
-            pyrecest.backend.__name__ == "pyrecest.numpy"
+            pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
         if starting_point is None:
             # Take sample if distribution is easy to sample from

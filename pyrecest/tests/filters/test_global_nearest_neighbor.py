@@ -65,7 +65,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_setting_state_sets_correct_state(self):
@@ -78,7 +78,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_get_state_returns_correct_shape(self):
@@ -91,7 +91,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         [("no_inputs", zeros(4)), ("with_inputs", array([1.0, -1.0, 1.0, -1.0]))]
     )
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_predict_linear(self, name, sys_input):
@@ -134,7 +134,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
                 )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_predict_linear_different_mats_and_inputs(self):
@@ -190,7 +190,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_association_no_clutter(self):
@@ -227,7 +227,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         npt.assert_array_equal(measurements[:, association], perfect_meas_ordered + 0.1)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_association_with_clutter(self):
@@ -273,7 +273,7 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ in ("pyrecest.pytorch", "pyrecest.jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_update_with_and_without_clutter(self):

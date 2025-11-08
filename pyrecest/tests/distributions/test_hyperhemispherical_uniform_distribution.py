@@ -41,7 +41,7 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
         # jscpd:ignore-end
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integrate_S2(self):
@@ -49,7 +49,7 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
         self.assertAlmostEqual(hhud.integrate(), 1.0, delta=1e-6)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integrate_S3(self):

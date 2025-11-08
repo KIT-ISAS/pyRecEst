@@ -34,14 +34,14 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integrate_2d(self):
         self.assertAlmostEqual(self.vmf.integrate(), 1.0, delta=1e-6)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_integrate_3d(self):
@@ -57,14 +57,14 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_vmf_distribution_3d_mode(self):
         npt.assert_allclose(self.vmf.mode_numerical(), self.vmf.mode(), atol=1e-5)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_vmf_distribution_3d_integral(self):
@@ -192,14 +192,14 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_hellinger_distance_s2(self):
         self._test_hellinger_distance_helper(self.vmf, self.other)
 
     @unittest.skipIf(
-        pyrecest.backend.__name__ == "pyrecest.jax",
+        pyrecest.backend.__backend_name__ == "jax",
         "Test not supported for this backend",
     )
     def test_hellinger_distance_s3(self):
