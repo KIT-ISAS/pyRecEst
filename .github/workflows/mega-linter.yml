@@ -60,122 +60,23 @@ jobs:
           key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
-      - name: Set up Alpine Linux
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        uses: jirutka/setup-alpine@v1
-        with: # cfitsio, py3-pkgconfig, curl-dev, and zlib for healpy
-          branch: v3.21
-          packages: >
-            build-base
-            python3-dev
-            py3-pip
-            jupyter-notebook
-            gfortran
-            fftw-dev
-            git
-            openblas-dev
-            cmake
-            geos-dev
-            cfitsio
-            py3-pkgconfig
-            curl-dev
-            zlib-dev
-            llvm15-dev
-            clang15
-      - name: List workspace
-        run: ls -l .
 
-      - name: Create Python virtual environment
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          python -m venv "${{ github.workspace }}/venv"
-          echo "VENV_PATH=${{ github.workspace }}/venv" >> "$GITHUB_ENV"
-        shell: alpine.sh {0}
-
-      - name: Upgrade pip and install requirements for building
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          source "$VENV_PATH/bin/activate"
-          python -m ensurepip
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade meson-python meson ninja wheel build
-        shell: alpine.sh {0}
-
-      - name: Remove version settings
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt
-
-      - name: Remove torch, triton, jax, intel-openmp, nvidia, tbb, and mkl entries (unsupported by alpine)
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          sed -i '/^torch/d' requirements-dev_no_version.txt
-          sed -i '/^nvidia/d' requirements-dev_no_version.txt
-          sed -i '/^triton/d' requirements-dev_no_version.txt
-          sed -i '/^jax/d' requirements-dev_no_version.txt
-          sed -i '/^intel-openmp/d' requirements-dev_no_version.txt
-          sed -i '/^tbb/d' requirements-dev_no_version.txt
-          sed -i '/^mkl/d' requirements-dev_no_version.txt
-
-      - name: Install Packages Sequentially
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          source "$VENV_PATH/bin/activate"
-          cat requirements-dev_no_version.txt
-          export "LLVM_CONFIG=/usr/lib/llvm15/bin/llvm-config"
-          while read requirement; do
-            echo "Installing $requirement..."
-            pip install "$requirement" --find-links=./alpine-wheels
-          done < requirements-dev_no_version.txt
-
-        shell: alpine.sh {0}
-
-      - name: Freeze requirements
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          source "$VENV_PATH/bin/activate"
-          python -m pip freeze > requirements-tmp.txt
-        shell: alpine.sh {0}
-
-      - name: Download compatible packages
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          source "$VENV_PATH/bin/activate"
-          python -m pip download --find-links=./alpine-wheels -r requirements-tmp.txt -d ./alpine-wheels
-        shell: alpine.sh {0}
-
-      - name: Build wheels
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: |
-          export "LLVM_CONFIG=/usr/lib/llvm15/bin/llvm-config"
-          source "$VENV_PATH/bin/activate"
-          cd ./alpine-wheels
-
-          # Set a flag to indicate if any .tar.gz files are found
-          found=0
-
-          # Loop through all .tar.gz files
-          for src in *.tar.gz; do
-            # Check if the glob gets expanded to existing files.
-            # If not, src will be exactly '*.tar.gz'.
-            [ -e "$src" ] || continue
-            # If we reach this point, at least one file exists
-            found=1
-            python -m pip wheel "$src" --no-deps --wheel-dir=./
-            rm "$src"
-          done
-
-          # Check if no files were found
-          if [ "$found" -eq 0 ]; then
-            echo "No .tar.gz files found."
-          fi
-
-          cd ..
-        shell: alpine.sh {0}
-
-      - name: Clean up temporary files (in case they are generated)
-        if: steps.cache-wheels.outputs.cache-hit != 'true'
-        run: rm -r venv
+      - name: Build cp313 musllinux wheels
+        uses: docker://python:3.13-alpine3.21
+        with:
+          args: >
+            /bin/sh -lc "set -eux;
+            apk add --no-cache
+            build-base musl-dev gcc g++ make
+            openblas-dev fftw-dev geos-dev cfitsio-dev
+            curl-dev zlib-dev llvm15-dev clang15
+            git cmake;
+            python -m pip install --upgrade pip wheel;
+            mkdir -p /github/workspace/alpine-wheels;
+            cd /github/workspace;
+            sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt;
+            sed -i '/^\(torch\|triton\|jax\|nvidia\|intel-openmp\|tbb\|mkl\)/d' requirements-dev_no_version.txt;
+            python -m pip wheel --no-deps -r requirements-dev_no_version.txt -w alpine-wheels"
 
       - name: List available wheels
         run: ls -l ./alpine-wheels
@@ -185,7 +86,7 @@ jobs:
         id: ml
         # You can override MegaLinter flavor used to have faster performances
         # More info at https://megalinter.io/latest/configuration/#shared-variables
-        uses: oxsecurity/megalinter/flavors/python@v8.5.0
+        uses: oxsecurity/megalinter/flavors/python@v9.1.0
         env:
           # All available variables are described in documentation
           # https://megalinter.io/latest/configuration/#shared-variables
