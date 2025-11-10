@@ -131,7 +131,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         if self.kappa == 0.0:
             raise ValueError("Does not have mean direction")
         if n == 0:
-            m = array(1.0+0.0j)
+            m = array(1.0 + 0.0j)
         elif n == 1:
             m = VonMisesDistribution.besselratio(0, self.kappa) * exp(1j * n * self.mu)
         elif n == 2:

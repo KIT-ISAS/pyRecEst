@@ -42,7 +42,7 @@ class EllipsoidalBallUniformDistribution(
         reciprocal_volume = 1 / self.get_manifold_size()
 
         # Make xs always 2D for uniform handling
-        single = (xs.ndim == 1)
+        single = xs.ndim == 1
         if single:
             xs = xs[None, :]
 
