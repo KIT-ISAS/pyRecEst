@@ -50,7 +50,9 @@ class TestToroidalUniformDistribution(unittest.TestCase):
                 )
             else:
                 self.assertTrue(
-                    allclose(self.tud.trigonometric_moment(k), zeros(2) + 0j, rtol=1e-10)
+                    allclose(
+                        self.tud.trigonometric_moment(k), zeros(2) + 0j, rtol=1e-10
+                    )
                 )
 
     def test_mean_direction(self):
