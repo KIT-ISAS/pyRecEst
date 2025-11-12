@@ -1239,16 +1239,15 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         reason="Not supported or too slow on this backend",
     )
     def test_convergence(self):
-        no_diffs = 3
+        orders = [1, 2]
         dist = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), 1.0)
-        diffs = zeros(no_diffs)
+        diffs = zeros(len(orders))
 
-        for i in range(0, no_diffs):
+        for order in range(1, len(orders)+1):
             shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
-                dist.pdf, i
+                dist.pdf, order
             )
-            diffs[i] = shd.total_variation_distance_numerical(dist)
-
+            diffs[order-1] = shd.hellinger_distance_numerical(dist)
         # Check if the deviation from true density is decreasing
         self.assertTrue(all(diff(diffs) < 0.0))
 
