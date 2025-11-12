@@ -731,7 +731,7 @@ description = "lightweight wrapper around basic LLVM functionality"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.13\" and implementation_name == \"cpython\""
+markers = "implementation_name == \"cpython\""
 files = [
     {file = "llvmlite-0.45.1-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:1b1af0c910af0978aa55fa4f60bbb3e9f39b41e97c2a6d94d199897be62ba07a"},
     {file = "llvmlite-0.45.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:02a164db2d79088bbd6e0d9633b4fe4021d6379d7e4ac7cc85ed5f44b06a30c5"},
@@ -1006,7 +1006,7 @@ description = "compiling Python code using LLVM"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.13\" and implementation_name == \"cpython\""
+markers = "implementation_name == \"cpython\""
 files = [
     {file = "numba-0.62.1-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:a323df9d36a0da1ca9c592a6baaddd0176d9f417ef49a65bb81951dce69d941a"},
     {file = "numba-0.62.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e1e1f4781d3f9f7c23f16eb04e76ca10b5a3516e959634bd226fc48d5d8e7a0a"},
@@ -1107,7 +1107,6 @@ description = "Add a quaternion dtype to NumPy"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.13\""
 files = [
     {file = "numpy_quaternion-2024.0.3-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:5a050861be60f09d9587423de6ae7a43d74ab20e25a83c7bb95dc85bc803744d"},
     {file = "numpy_quaternion-2024.0.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:6843c718fc99f89ba5cbc177fde731a03f8769561a9e4390f748cb86bd84a00d"},
@@ -1132,49 +1131,6 @@ files = [
 
 [package.dependencies]
 numba = {version = ">=0.55", markers = "implementation_name == \"cpython\""}
-numpy = ">=1.25,<3"
-scipy = ">=1.5,<2"
-
-[package.extras]
-docs = ["mkdocs-material", "mkdocstrings-python", "pymdown-extensions"]
-
-[[package]]
-name = "numpy-quaternion"
-version = "2024.0.12"
-description = "Add a quaternion dtype to NumPy"
-optional = false
-python-versions = "<3.14,>=3.10"
-groups = ["main"]
-markers = "python_version < \"3.13\""
-files = [
-    {file = "numpy_quaternion-2024.0.12-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:606b0fb2d58a0b15419432a3714020b8c60fc6a829d9d1e962ae21c769e95dad"},
-    {file = "numpy_quaternion-2024.0.12-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:27d8ffaa871ba67ca599008692926bb45b964f1eedd83021699a137a0d510a7f"},
-    {file = "numpy_quaternion-2024.0.12-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c48c61c0feb952347486816a0fe5d2712a1f57a427ed28cf845c570135d592c3"},
-    {file = "numpy_quaternion-2024.0.12-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:536f8448c26d9af2747fc10f7ed8f9b308c840afbae14c617a1af9e02e5eb3ed"},
-    {file = "numpy_quaternion-2024.0.12-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:76de6b14aaf5a2578bc03d7d2118235b8c668cc3aeab4fdc48fda1f189f31f1c"},
-    {file = "numpy_quaternion-2024.0.12-cp310-cp310-win_amd64.whl", hash = "sha256:f862f0a1a9ad60966fdc37ee61c233da105e6776da70da81c010adc082743798"},
-    {file = "numpy_quaternion-2024.0.12-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:19e6ba157bc15d48f8d6f8be25f200d3a0858ae655e54a30bd423ca0d3aa5659"},
-    {file = "numpy_quaternion-2024.0.12-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:fb8087c737422ff893163782dd99188e159aac5dcddec83538ad53a172755d3d"},
-    {file = "numpy_quaternion-2024.0.12-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:fa37c4102f47dc5e675dd6714f390edcc6a9c3151a427d34bd5778e71f26d489"},
-    {file = "numpy_quaternion-2024.0.12-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:16f797e1733d04b48f3ad86b4e38398d49415f28a9d7d55b5e541533c3badddf"},
-    {file = "numpy_quaternion-2024.0.12-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:989e6edf66b8b083354b24e7303d405ed9cd76d29b37852474794c8b2cab5b38"},
-    {file = "numpy_quaternion-2024.0.12-cp311-cp311-win_amd64.whl", hash = "sha256:63b959ed309dbd0e8da2e41f2574b4b8f3d8f972bf3c49fdc54de56cdf28687f"},
-    {file = "numpy_quaternion-2024.0.12-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:f7c96c1faac4d6c6ab2505beb26a82f2e8b3d3470d72c92af1837bc8f883378e"},
-    {file = "numpy_quaternion-2024.0.12-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:947a5afbf1f42f6a86c5ea288165631bde3eb243fcb50e50af611149863bb541"},
-    {file = "numpy_quaternion-2024.0.12-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:28cbece557ab04b393b1864f8790d1b4482e49cbc98566549ec3490e5af4d8db"},
-    {file = "numpy_quaternion-2024.0.12-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:c8257cad3b9586d04e4c8f9a2d182b72a35e068d0e787dd5560838275be87537"},
-    {file = "numpy_quaternion-2024.0.12-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:33a993241d7f885654c5496db2f581ff86f4cb6a298671419956223cab3535c2"},
-    {file = "numpy_quaternion-2024.0.12-cp312-cp312-win_amd64.whl", hash = "sha256:aea04cc3d01676fca03ca23b7c723a191d31af3cff853ddc47a2422647a03939"},
-    {file = "numpy_quaternion-2024.0.12-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:66d3072b9f01b853b32ea99670bb739631aef36ac2317fd845e90b2c887ebd6c"},
-    {file = "numpy_quaternion-2024.0.12-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:2c7c302a828b80d2553be50bbde978ed0b6c1dfc7be310afaa083acc75a2e6b3"},
-    {file = "numpy_quaternion-2024.0.12-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e54e41ca9991832aa0303c8956151f1933fc15b5645ef5b8fb6b93356ee30b8b"},
-    {file = "numpy_quaternion-2024.0.12-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:f947b8fdccb1cfe6d1157578477741e0c51ba1bb4d43358c5fbb7b26183942fc"},
-    {file = "numpy_quaternion-2024.0.12-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a02503230d3e5678e955ad1a64cd1738ff2739b9a1cd3fe58d5bc98fd491908f"},
-    {file = "numpy_quaternion-2024.0.12-cp313-cp313-win_amd64.whl", hash = "sha256:9ce0fa7af5075b0b0c39bb1ac80fb3fb8b9c5ae3c2140672933391b295f84210"},
-    {file = "numpy_quaternion-2024.0.12.tar.gz", hash = "sha256:5ecb4e310e732bc21687474c1bc6cd6187d5c22da78d342379fe81f12f46037f"},
-]
-
-[package.dependencies]
 numpy = ">=1.25,<3"
 scipy = ">=1.5,<2"
 
@@ -1826,20 +1782,20 @@ pygmt = ["pygmt (>=0.7)"]
 
 [[package]]
 name = "pytest"
-version = "8.4.2"
+version = "9.0.0"
 description = "pytest: simple powerful testing with Python"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "pytest-8.4.2-py3-none-any.whl", hash = "sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79"},
-    {file = "pytest-8.4.2.tar.gz", hash = "sha256:86c0d0b93306b961d58d62a4db4879f27fe25513d4b969df351abdddb3c30e01"},
+    {file = "pytest-9.0.0-py3-none-any.whl", hash = "sha256:e5ccdf10b0bac554970ee88fc1a4ad0ee5d221f8ef22321f9b7e4584e19d7f96"},
+    {file = "pytest-9.0.0.tar.gz", hash = "sha256:8f44522eafe4137b0f35c9ce3072931a788a21ee40a2ed279e817d3cc16ed21e"},
 ]
 
 [package.dependencies]
 colorama = {version = ">=0.4", markers = "sys_platform == \"win32\""}
-iniconfig = ">=1"
-packaging = ">=20"
+iniconfig = ">=1.0.1"
+packaging = ">=22"
 pluggy = ">=1.5,<2"
 pygments = ">=2.7.2"
 
