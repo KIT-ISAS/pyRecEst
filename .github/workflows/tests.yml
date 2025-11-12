@@ -82,6 +82,4 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: |
-            test-results/numpy-test-results/junit_test_results_numpy.xml
-            test-results/pytorch-test-results/junit_test_results_pytorch.xml
-            test-results/jax-test-results/junit_test_results_jax.xml
+            test-results/*/junit_test_results_*.xml
