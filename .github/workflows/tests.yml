@@ -82,12 +82,4 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: |
-            test-results/numpy-3.11-test-results/junit_test_results_numpy.xml
-            test-results/numpy-3.12-test-results/junit_test_results_numpy.xml
-            test-results/numpy-3.13-test-results/junit_test_results_numpy.xml
-            test-results/pytorch-3.11-test-results/junit_test_results_pytorch.xml
-            test-results/pytorch-3.12-test-results/junit_test_results_pytorch.xml
-            test-results/pytorch-3.13-test-results/junit_test_results_pytorch.xml
-            test-results/jax-3.11-test-results/junit_test_results_jax.xml
-            test-results/jax-3.12-test-results/junit_test_results_jax.xml
-            test-results/jax-3.13-test-results/junit_test_results_jax.xml
+            test-results/*/junit_test_results_*.xml
