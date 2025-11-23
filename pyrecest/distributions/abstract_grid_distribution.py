@@ -78,9 +78,9 @@ class AbstractGridDistribution(AbstractDistributionType):
                 warnings.warn(
                     "Warning: Grid values apparently do not belong to a normalized density. Normalizing..."
                 )
-        else:
-            return
+
         self.grid_values = self.grid_values / int_val
+        return self
 
     def normalize(self, tol=1e-4, warn_unnorm=True):
         result = copy.deepcopy(self)
