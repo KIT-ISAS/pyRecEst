@@ -1,10 +1,11 @@
----
 APPLY_FIXES: all
 
 PRE_COMMANDS:
   - command: cat /etc/os-release
   - command: pip install $GITHUB_WORKSPACE/alpine-wheels/*
     venv: pylint
+
+PYTHON_PYLINT_CONFIG_FILE: LINTER_DEFAULT
 
 DISABLE_LINTERS:
   - SPELL_CSPELL
