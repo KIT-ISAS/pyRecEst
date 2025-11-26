@@ -44,7 +44,7 @@ class AbstractHypersphereSubsetDiracDistributionTest(unittest.TestCase):
 
         self.assertTrue(
             np.allclose(wdFull.mean_axis(), bd.mean_axis(), atol=0.2)
-            or np.allclose(wdFull.mean_axis(), bd.mean_axis(), atol=0.2)
+            or np.allclose(wdFull.mean_axis(), -bd.mean_axis(), atol=0.2)
         )
         self.assertTrue(np.allclose(wdHemi.mean_axis(), bdHemi.mean_axis(), atol=0.2))
 

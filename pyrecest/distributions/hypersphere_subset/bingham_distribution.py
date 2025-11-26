@@ -69,6 +69,27 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         raise NotImplementedError(
             "Due to its symmetry, the mean direction is undefined for Bingham distributions."
         )
+    
+    def mean_axis(self):
+        """
+        Returns the principal axis of the Bingham distribution as a unit vector
+        in R^{dim+1}. Because of antipodal symmetry, v and -v represent the
+        same axis; this method returns one of them.
+        """
+        # Second-moment / scatter matrix
+        S = self.moment()
+
+        # Eigen-decomposition of S (symmetric by construction)
+        D, V = linalg.eig(S)
+
+        # Index of largest eigenvalue
+        order = argsort(D)
+        axis = V[:, order[-1]]
+
+        # Optionally enforce unit norm (usually already true)
+        # axis = axis / linalg.norm(axis)
+
+        return axis
 
     def multiply(self, B2):
         assert isinstance(B2, BinghamDistribution)
