@@ -1,12 +1,10 @@
 import unittest
 
-import numpy as np
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, linalg
+from pyrecest.backend import array, linalg, random
 from pyrecest.distributions import HyperhemisphericalWatsonDistribution
 from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
@@ -15,10 +13,9 @@ from pyrecest.filters.hyperhemispherical_particle_filter import (
     HyperhemisphericalParticleFilter,
 )
 
-
 class HyperhemisphericalParticleFilterTest(unittest.TestCase):
     def setUp(self):
-        np.random.seed(1)
+        random.seed(1)
         self.n_particles = 2000
         self.watson_hemi_init = HyperhemisphericalWatsonDistribution(
             array([1.0, 0.0, 0.0]), 10.0
@@ -32,8 +29,8 @@ class HyperhemisphericalParticleFilterTest(unittest.TestCase):
 
     def test_initialization(self):
         hpf = HyperhemisphericalParticleFilter(self.n_particles, 3)
-        self.assertEqual(np.shape(hpf.filter_state.w), (self.n_particles,))
-        self.assertEqual(np.shape(hpf.filter_state.d), (self.n_particles, 4))
+        self.assertEqual(hpf.filter_state.w.shape, (self.n_particles,))
+        self.assertEqual(hpf.filter_state.d.shape, (self.n_particles, 4))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
