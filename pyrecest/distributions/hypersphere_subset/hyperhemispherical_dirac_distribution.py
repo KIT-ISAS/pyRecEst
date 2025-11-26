@@ -9,4 +9,8 @@ from .abstract_hypersphere_subset_dirac_distribution import (
 class HyperhemisphericalDiracDistribution(
     AbstractHypersphereSubsetDiracDistribution, AbstractHyperhemisphericalDistribution
 ):
-    pass
+    def mean_axis(self):
+        axis = super().mean_axis()
+        if axis[-1] < 0:
+            axis = -axis
+        return axis
