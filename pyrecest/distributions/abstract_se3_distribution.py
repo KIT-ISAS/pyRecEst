@@ -3,10 +3,9 @@ from abc import abstractmethod
 from typing import Union
 
 import matplotlib.pyplot as plt
-import quaternion
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import column_stack, concatenate, int32, int64, array
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import array, concatenate, int32, int64, spatial, min, max, column_stack
 
 from .cart_prod.abstract_lin_bounded_cart_prod_distribution import (
     AbstractLinBoundedCartProdDistribution,
@@ -55,12 +54,16 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
     @staticmethod
     def plot_point(se3point):  # pylint: disable=too-many-locals
         """Visualize just a point in the SE(3) domain (no uncertainties are considered)"""
-        import numpy as _np
+        # se3point[:4] is (w, x, y, z)
+        w, x, y, z = se3point[:4]
 
-        q = _np.quaternion(*se3point[:4])
-        rotMat = quaternion.as_rotation_matrix(q)
+        # Rotation.from_quat expects (x, y, z, w)
+        q_xyzw = array([x, y, z, w])
+        rot = spatial.Rotation.from_quat(q_xyzw)
+        rotMat = rot.as_matrix()  # 3x3 rotation matrix
 
         pos = se3point[4:]
+
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         h1 = ax.quiver(
@@ -73,9 +76,10 @@ class AbstractSE3Distribution(AbstractLinBoundedCartProdDistribution):
             pos[0], pos[1], pos[2], rotMat[2, 0], rotMat[2, 1], rotMat[2, 2], color="b"
         )
         h = [h1, h2, h3]
+
         relevant_coords = concatenate((pos.reshape(-1, 1), pos + rotMat), axis=1)
         needed_boundaries = column_stack(
-            (_np.min(relevant_coords, axis=1), _np.max(relevant_coords, axis=1))
+            (min(relevant_coords, axis=1), max(relevant_coords, axis=1))
         )
 
         # Get current axis limits
