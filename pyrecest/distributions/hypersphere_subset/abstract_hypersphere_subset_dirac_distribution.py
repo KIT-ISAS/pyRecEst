@@ -1,6 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import log, outer, sum, zeros
+from pyrecest.backend import log, outer, sum, zeros, reshape, linalg
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypersphere_subset_distribution import (
@@ -31,3 +31,36 @@ class AbstractHypersphereSubsetDiracDistribution(
 
     def integrate(self, integration_boundaries=None):
         raise NotImplementedError()
+    
+    def mean_axis(self):
+        """
+        Returns the principal axis of the Dirac mixture on the hypersphere.
+        Because ±v represent the same axis, the sign of the returned vector
+        is arbitrary.
+        """
+        # Column vector of weights, shape (n, 1)
+        w_col = reshape(self.w, (-1, 1))  # or self.w[:, None]
+
+        # Weighted second-moment matrix: S = Σ w_i d_i d_i^T
+        # d has shape (n, D), so (d * w_col) is (n, D), then transpose @ d -> (D, D)
+        S = (self.d * w_col).T @ self.d
+
+        # Normalize in case weights don't sum to 1
+        S = S / sum(self.w)
+
+        # Enforce symmetry (numerical safety)
+        S = 0.5 * (S + S.T)
+
+        # Eigen-decomposition of symmetric S
+        D, V = linalg.eigh(S)
+
+        # Index of largest eigenvalue
+        # If you don't have argmax in the backend, use argsort instead
+        idx = D.argmax()  # or idx = argsort(D)[-1]
+
+        axis = V[:, idx]
+
+        # Normalize to unit length (should already be, but just in case)
+        axis = axis / linalg.norm(axis)
+
+        return axis
