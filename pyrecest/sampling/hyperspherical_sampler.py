@@ -56,6 +56,21 @@ def get_grid_hypersphere(method: str, grid_density_parameter: int):
 
 get_grid_sphere = get_grid_hypersphere
 
+def get_grid_hyperhemisphere(method: str, grid_density_parameter: int, dim: int):
+    if method == "leopardi":
+        ls = LeopardiSampler()
+        samples_full, _ = ls.get_grid(grid_density_parameter * 2, dim)
+        samples = samples_full[:samples_full.shape[0]//2]
+        # To have upper half along last dim instead of first
+        samples[:, [0, -1]] = samples[:, [-1, 0]]
+        grid_specific_description = {
+            "scheme": "leopardi_hemisphere",
+            "n_side": grid_density_parameter,
+        }
+    else:
+        raise ValueError(f"Unknown method {method}")
+
+    return samples, grid_specific_description
 
 class AbstractHypersphericalUniformSampler(AbstractSampler):
     def sample_stochastic(self, n_samples: int, dim: int):
