@@ -50,10 +50,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
-
-      - name: Install FFTW
-        run: sudo apt-get update && sudo apt-get install -y libfftw3-dev
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -61,7 +58,7 @@ jobs:
           poetry self add poetry-plugin-export
 
       - name: Install project dependencies
-        run: python -m poetry update
+        run: python -m poetry lock
 
       - name: Update requirements.txt
         run: python -m poetry export --format requirements.txt --output requirements.txt --extras healpy_support --extras pytorch_support --without-hashes
