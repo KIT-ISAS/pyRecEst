@@ -1,6 +1,5 @@
 import unittest
 import warnings
-from math import pi
 
 import numpy.testing as npt
 import pyrecest.backend
@@ -11,6 +10,7 @@ from pyrecest.backend import (
     allclose,
     array,
     column_stack,
+    pi,
     diff,
     ones_like,
     random,

@@ -1,7 +1,5 @@
-from math import pi
-
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arctan, cos, cosh, exp, mod, sinh, tan, tanh
+from pyrecest.backend import arctan, cos, cosh, exp, mod, sinh, tan, tanh, pi
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 

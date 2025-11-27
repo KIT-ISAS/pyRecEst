@@ -1,7 +1,5 @@
-from math import pi
-
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linspace
+from pyrecest.backend import linspace, pi
 from pyrecest.distributions import CircularUniformDistribution
 
 from .abstract_sampler import AbstractSampler

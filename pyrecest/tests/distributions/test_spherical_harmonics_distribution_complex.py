@@ -1,5 +1,4 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 import pyrecest.backend
@@ -8,6 +7,7 @@ from parameterized import parameterized
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     all,
+    pi,
     allclose,
     array,
     column_stack,

@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -23,6 +22,7 @@ from pyrecest.backend import (
     int32,
     int64,
     isnan,
+    pi,
     linspace,
     meshgrid,
     mod,

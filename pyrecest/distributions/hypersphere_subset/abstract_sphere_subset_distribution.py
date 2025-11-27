@@ -1,5 +1,3 @@
-from math import pi
-
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     arccos,
@@ -10,6 +8,7 @@ from pyrecest.backend import (
     ndim,
     sin,
     where,
+    pi,
 )
 
 from .abstract_hypersphere_subset_distribution import (

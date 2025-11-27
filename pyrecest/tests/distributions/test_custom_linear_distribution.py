@@ -1,10 +1,9 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, concatenate, eye, linspace, meshgrid
+from pyrecest.backend import array, concatenate, eye, linspace, meshgrid, pi
 from pyrecest.distributions import CustomLinearDistribution, GaussianDistribution
 from pyrecest.distributions.nonperiodic.gaussian_mixture import GaussianMixture
 

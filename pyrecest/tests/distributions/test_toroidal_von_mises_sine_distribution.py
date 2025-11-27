@@ -1,5 +1,4 @@
 import unittest
-from math import pi
 
 import matplotlib
 import numpy.testing as npt
@@ -9,7 +8,7 @@ import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arange, array, column_stack, cos, exp, sin
+from pyrecest.backend import arange, array, column_stack, cos, exp, sin, pi
 from pyrecest.distributions.hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,
 )

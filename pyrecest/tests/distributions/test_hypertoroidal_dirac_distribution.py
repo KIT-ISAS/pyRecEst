@@ -1,6 +1,5 @@
 import copy
 import unittest
-from math import pi
 
 import numpy.testing as npt
 
@@ -9,7 +8,7 @@ import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, diag, exp, mod, random, sum, zeros_like
+from pyrecest.backend import array, diag, exp, mod, random, sum, zeros_like, pi
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     HypertoroidalDiracDistribution,

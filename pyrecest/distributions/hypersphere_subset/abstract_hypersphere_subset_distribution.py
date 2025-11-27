@@ -1,7 +1,6 @@
 import warnings
 from abc import abstractmethod
 from collections.abc import Callable
-from math import pi
 from typing import Union
 
 import pyrecest.backend
@@ -32,6 +31,7 @@ from pyrecest.backend import (
     sqrt,
     squeeze,
     zeros,
+    pi,
 )
 from scipy.integrate import nquad, quad
 from scipy.special import gamma

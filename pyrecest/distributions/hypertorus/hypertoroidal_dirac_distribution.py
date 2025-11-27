@@ -1,6 +1,5 @@
 import copy
 from collections.abc import Callable
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -19,6 +18,7 @@ from pyrecest.backend import (
     reshape,
     sum,
     tile,
+    pi,
 )
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution

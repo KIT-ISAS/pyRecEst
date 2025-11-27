@@ -1,5 +1,3 @@
-from math import pi
-
 import scipy
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -14,6 +12,7 @@ from pyrecest.backend import (
     conj,
     empty,
     full,
+    pi,
     imag,
     isnan,
     linalg,

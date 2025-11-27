@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -16,6 +15,7 @@ from pyrecest.backend import (
     linspace,
     log,
     meshgrid,
+    pi,
     ones,
     random,
     sin,

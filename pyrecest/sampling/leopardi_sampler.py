@@ -6,11 +6,10 @@ output by get_partition_points_polar follow Leopardi's convention and not that u
 For obtaning Cartesian coordinates, see LeopardiSampler in hyperspherical_sampler.py.
 """
 
-from math import pi
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    pi,
     arange,
     array,
     int32,

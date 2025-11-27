@@ -1,8 +1,7 @@
-from math import pi
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import float64, int32, int64, linspace, sum
+from pyrecest.backend import float64, int32, int64, linspace, sum, pi
 from pyrecest.distributions import CircularDiracDistribution
 
 from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
