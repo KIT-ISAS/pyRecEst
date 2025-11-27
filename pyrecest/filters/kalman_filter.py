@@ -1,6 +1,6 @@
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
-from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
+from bayesian_filters.kalman import KalmanFilter as BayesianFiltersKalmanFilter
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import eye
@@ -25,7 +25,7 @@ class KalmanFilter(AbstractEuclideanFilter):
                 "initial_state must be a GaussianDistribution or a tuple of (mean, covariance)"
             )
 
-        self._filter_state = FilterPyKalmanFilter(dim_x=dim_x, dim_z=dim_x)
+        self._filter_state = BayesianFiltersKalmanFilter(dim_x=dim_x, dim_z=dim_x)
         self.filter_state = initial_state
 
     @property
