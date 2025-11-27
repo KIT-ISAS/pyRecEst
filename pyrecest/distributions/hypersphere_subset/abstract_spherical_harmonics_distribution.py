@@ -1,6 +1,5 @@
 import copy
 import warnings
-from math import pi
 
 import pyrecest.backend
 
@@ -13,6 +12,7 @@ from pyrecest.backend import (
     imag,
     isnan,
     real,
+    pi,
     sqrt,
     vstack,
     zeros,

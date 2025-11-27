@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from math import pi
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -14,6 +13,7 @@ from pyrecest.backend import (
     sum,
     tile,
     zeros_like,
+    pi,
 )
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,

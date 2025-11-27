@@ -1,8 +1,7 @@
-from math import pi
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    pi,
     arctan2,
     array,
     cos,

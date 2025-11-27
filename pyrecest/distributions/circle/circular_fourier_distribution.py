@@ -1,5 +1,4 @@
 import warnings
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -16,6 +15,7 @@ from pyrecest.backend import (
     fft,
     hstack,
     imag,
+    pi,
     int32,
     int64,
     linspace,

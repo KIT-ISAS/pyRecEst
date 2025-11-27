@@ -1,5 +1,3 @@
-from math import pi
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
@@ -10,6 +8,7 @@ from pyrecest.backend import (
     imag,
     log,
     mod,
+    pi,
     real,
     sin,
     sqrt,

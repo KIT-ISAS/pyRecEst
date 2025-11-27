@@ -1,4 +1,3 @@
-from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -13,6 +12,7 @@ from pyrecest.backend import (
     sin,
     sqrt,
     stack,
+    pi,
 )
 
 from .abstract_hypersphere_subset_uniform_distribution import (

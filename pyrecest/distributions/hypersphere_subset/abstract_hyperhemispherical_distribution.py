@@ -1,6 +1,5 @@
 import warnings
 from collections.abc import Callable
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -12,6 +11,7 @@ from pyrecest.backend import (
     concatenate,
     int32,
     int64,
+    pi,
     linalg,
     linspace,
     meshgrid,

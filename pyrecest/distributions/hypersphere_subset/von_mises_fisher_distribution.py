@@ -1,5 +1,4 @@
 import copy
-from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -11,6 +10,7 @@ from pyrecest.backend import (
     abs,
     all,
     arccos,
+    pi,
     array,
     cos,
     exp,

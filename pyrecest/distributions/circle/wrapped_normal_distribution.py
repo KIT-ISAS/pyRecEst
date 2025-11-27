@@ -1,4 +1,3 @@
-from math import pi
 from typing import Union
 
 import pyrecest.backend
@@ -7,6 +6,7 @@ import pyrecest.backend
 from pyrecest.backend import (
     abs,
     angle,
+    pi,
     any,
     array,
     exp,

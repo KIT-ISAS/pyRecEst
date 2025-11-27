@@ -1,5 +1,4 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 
@@ -11,6 +10,7 @@ from parameterized import parameterized
 from pyrecest.backend import (
     array,
     diag,
+    pi,
     exp,
     eye,
     ones,

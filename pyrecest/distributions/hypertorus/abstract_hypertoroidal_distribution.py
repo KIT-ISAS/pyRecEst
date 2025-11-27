@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -21,6 +20,7 @@ from pyrecest.backend import (
     int64,
     isnan,
     linspace,
+    pi,
     log,
     meshgrid,
     minimum,

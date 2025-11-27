@@ -1,11 +1,10 @@
 # pylint: disable=no-name-in-module,no-member
-from math import pi
-
 from pyrecest.backend import (
     array,
     concatenate,
     cos,
     exp,
+    pi,
     eye,
     linalg,
     linspace,

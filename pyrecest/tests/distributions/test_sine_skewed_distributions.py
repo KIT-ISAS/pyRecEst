@@ -1,7 +1,6 @@
 import unittest
-from math import pi
 
-from pyrecest.backend import array
+from pyrecest.backend import array, pi
 from pyrecest.distributions.circle.sine_skewed_distributions import (
     GeneralizedKSineSkewedVonMisesDistribution,
     SineSkewedWrappedCauchyDistribution,

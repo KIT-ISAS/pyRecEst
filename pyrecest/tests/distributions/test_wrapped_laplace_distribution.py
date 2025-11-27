@@ -1,5 +1,4 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 
@@ -7,7 +6,7 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arange, array, exp, linspace
+from pyrecest.backend import arange, array, exp, linspace, pi
 from pyrecest.distributions.circle.wrapped_laplace_distribution import (
     WrappedLaplaceDistribution,
 )

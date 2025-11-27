@@ -1,5 +1,4 @@
 import copy
-from math import pi
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -13,6 +12,7 @@ from pyrecest.backend import (
     cos,
     diag,
     exp,
+    pi,
     hstack,
     int32,
     int64,

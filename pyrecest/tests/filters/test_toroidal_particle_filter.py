@@ -1,11 +1,10 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, random
+from pyrecest.backend import array, random, pi
 from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )

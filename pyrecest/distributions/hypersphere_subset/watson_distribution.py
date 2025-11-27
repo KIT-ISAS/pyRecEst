@@ -1,5 +1,3 @@
-from math import pi
-
 import mpmath
 import numpy.testing as npt
 
@@ -12,6 +10,7 @@ from pyrecest.backend import (
     exp,
     full,
     gammaln,
+    pi,
     hstack,
     linalg,
     log,

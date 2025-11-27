@@ -1,8 +1,7 @@
 import warnings
-from math import pi
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod
+from pyrecest.backend import mod, pi
 from pyrecest.distributions import VonMisesDistribution
 
 from .abstract_circular_filter import AbstractCircularFilter

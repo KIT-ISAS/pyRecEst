@@ -1,8 +1,7 @@
 from abc import abstractmethod
-from math import pi
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, ndim, sin
+from pyrecest.backend import mod, ndim, sin, pi
 from scipy.special import ive  # pylint: disable=no-name-in-module
 from scipy.stats import vonmises
 
