@@ -9,7 +9,7 @@ from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg, linspace, pi, random
-from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
+from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere, get_grid_hyperhemisphere
 
 from ..sampling.hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,
@@ -70,7 +70,43 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
             4,
             f"Expected 4-dimensional-output but got {samples.shape[1]}-dimensional output",
         )
+        
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_get_grid_hyperhemisphere_leopardi(self):
+        grid_density_parameter = 12
+        samples, grid_specific_description = get_grid_hyperhemisphere(
+            "leopardi", grid_density_parameter, dim=2
+        )
 
+        # Shape: N points on S^2 → N x 3
+        self.assertEqual(
+            samples.shape,
+            (grid_density_parameter, 3),
+            f"Expected shape {(grid_density_parameter, 3)} but got {samples.shape}",
+        )
+
+        # Description fields
+        self.assertEqual(grid_specific_description["scheme"], "leopardi_hemisphere")
+        self.assertEqual(
+            grid_specific_description["n_side"], grid_density_parameter
+        )
+
+        # Points should lie on the unit sphere
+        norms = linalg.norm(samples, axis=1)
+        npt.assert_allclose(norms, 1.0, atol=1e-10)
+
+        # Should be a hemisphere: last coordinate non‑negative (allow tiny numerical noise)
+        self.assertTrue(
+            (samples[:, -1] >= -1e-12).all(),
+            "Expected all points to lie in the upper hyperhemisphere (last coord >= 0)",
+        )
+
+    def test_get_grid_hyperhemisphere_invalid_method(self):
+        with self.assertRaises(ValueError):
+            get_grid_hyperhemisphere("unknown_method", 10, dim=10)
 
 class TestHypersphericalSampler(unittest.TestCase):
     @parameterized.expand(
