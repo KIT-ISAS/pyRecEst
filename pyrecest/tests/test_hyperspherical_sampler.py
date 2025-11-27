@@ -39,7 +39,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         self, method, grid_density_parameter, grid_points_expected, desc_key
     ):
         samples, grid_specific_description = get_grid_hypersphere(
-            method, grid_density_parameter
+            method, grid_density_parameter, dim=2
         )
 
         self.assertEqual(
@@ -60,7 +60,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
     )
     @unittest.skipIf(not healpy_installed, "healpy is not installed")
     def test_get_grid_hypersphere(self):
-        samples, _ = get_grid_hypersphere("healpix_hopf", 0)
+        samples, _ = get_grid_hypersphere("healpix_hopf", 0, dim=3)
 
         self.assertEqual(
             samples.shape[0], 72, f"Expected {72} points but got {samples.shape[0]}"

@@ -31,30 +31,30 @@ from .hypertoroidal_sampler import CircularUniformSampler
 from .leopardi_sampler import get_partition_points_polar
 
 
-def get_grid_hypersphere(method: str, grid_density_parameter: int):
+def get_grid_hypersphere(method: str, grid_density_parameter: int, dim: int):
     if method == "healpix":
         samples, grid_specific_description = HealpixSampler().get_grid(
-            grid_density_parameter
+            grid_density_parameter, dim=dim
         )
     elif method == "driscoll_healy":
         samples, grid_specific_description = DriscollHealySampler().get_grid(
-            grid_density_parameter
+            grid_density_parameter, dim=dim
         )
     elif method in ("fibonacci", "spherical_fibonacci"):
         samples, grid_specific_description = SphericalFibonacciSampler().get_grid(
-            grid_density_parameter
+            grid_density_parameter, dim=dim
         )
     elif method == "healpix_hopf":
         samples, grid_specific_description = HealpixHopfSampler().get_grid(
-            grid_density_parameter
+            grid_density_parameter, dim=dim
         )
     else:
         raise ValueError(f"Unknown method {method}")
 
     return samples, grid_specific_description
 
-
-get_grid_sphere = get_grid_hypersphere
+def get_grid_sphere(method: str, grid_density_parameter: int):
+    return get_grid_hypersphere(method, grid_density_parameter, dim=2)
 
 def get_grid_hyperhemisphere(method: str, grid_density_parameter: int, dim: int):
     if method == "leopardi":
