@@ -105,6 +105,27 @@ files = [
 pycodestyle = ">=2.12.0"
 
 [[package]]
+name = "bayesian-filters"
+version = "1.4.5"
+description = "Kalman filtering and optimal estimation library"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "bayesian_filters-1.4.5-py3-none-any.whl", hash = "sha256:6d9a6e019ad5166a4a12e95220a6dad1a9bd96b1a97ca4b7d363e061a7d8d1fb"},
+    {file = "bayesian_filters-1.4.5.tar.gz", hash = "sha256:93266955ed7ab08fb1180976d39861c5585bebce0cc6e32ed1eebf1c9f19cb0a"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+numpy = "*"
+scipy = "*"
+
+[package.extras]
+dev = ["pytest (>=8.0.0)", "pytest-cov (>=4.0.0)"]
+docs = ["mkdocs (>=1.5.0)", "mkdocs-material (>=9.0.0)", "mkdocstrings[python] (>=0.24.0)"]
+
+[[package]]
 name = "beartype"
 version = "0.22.6"
 description = "Unbearably fast near-real-time pure-Python runtime-static type-checker."
@@ -347,22 +368,6 @@ files = [
 docs = ["furo (>=2024.8.6)", "sphinx (>=8.1.3)", "sphinx-autodoc-typehints (>=3)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)", "pytest (>=8.3.4)", "pytest-asyncio (>=0.25.2)", "pytest-cov (>=6)", "pytest-mock (>=3.14)", "pytest-timeout (>=2.3.1)", "virtualenv (>=20.28.1)"]
 typing = ["typing-extensions (>=4.12.2) ; python_version < \"3.11\""]
-
-[[package]]
-name = "filterpy"
-version = "1.4.5"
-description = "Kalman filtering and optimal estimation library"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "filterpy-1.4.5.zip", hash = "sha256:4f2a4d39e4ea601b9ab42b2db08b5918a9538c168cff1c6895ae26646f3d73b1"},
-]
-
-[package.dependencies]
-matplotlib = "*"
-numpy = "*"
-scipy = "*"
 
 [[package]]
 name = "fonttools"
@@ -2235,4 +2240,4 @@ pytorch-support = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.15"
-content-hash = "8b83ebc59865dc9452260a82f3e3f0ac455104d409fbc9872e64f42596babcb8"
+content-hash = "63f586ed95b0af68b775b1ac7a203f0ce8bca58ce10b6ca01117e7ae21787594"
