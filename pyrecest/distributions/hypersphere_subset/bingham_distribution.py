@@ -1,6 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import abs, all, argsort, diag, exp, eye, linalg, max, sum, zeros, pi
+from pyrecest.backend import abs, all, argsort, diag, exp, eye, linalg, max, sum, zeros, pi, array
 from scipy.integrate import quad
 from scipy.special import iv
 
@@ -18,7 +18,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         assert all(Z[:-1] <= Z[1:]), "Values in Z have to be ascending"
 
         # Verify that M is orthogonal
-        epsilon = 0.001
+        epsilon = array(0.001)
         assert max(abs(M @ M.T - eye(self.dim + 1))) < epsilon, "M is not orthogonal"
 
         self.Z = Z
