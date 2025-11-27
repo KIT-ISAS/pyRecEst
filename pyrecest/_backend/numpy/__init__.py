@@ -166,6 +166,7 @@ from . import (
     random,  # NOQA
     # For pyrecest
     fft,  # NOQA
+    spatial,  # NOQA
 )
 from ._common import (
     _box_binary_scalar,

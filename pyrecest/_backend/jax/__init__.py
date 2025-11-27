@@ -173,7 +173,8 @@ from .._backend_config import jax_rtol as rtol
 from . import autodiff
 from . import linalg
 from . import random
-from . import fft
+from . import fft   # For PyRecEst
+from . import spatial  # For PyRecEst
 
 from jax.numpy import array
 

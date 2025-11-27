@@ -17,4 +17,3 @@ dependencies:
       - pyshtools
       - parameterized
       - beartype
-      - numpy-quaternion

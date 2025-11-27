@@ -247,10 +247,13 @@ BACKEND_ATTRIBUTES = {
         "seed",
         "uniform",
     ],
-    "fft": [  # For pyrecest
+    "fft": [  # For PyRecEst
         "rfft",
         "irfft",
-     ],
+    ],
+     "spatial": [  # For PyRecEst
+        "Rotation",
+    ],
 }
 
 
