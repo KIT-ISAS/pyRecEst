@@ -1243,11 +1243,11 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         dist = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), 1.0)
         diffs = zeros(len(orders))
 
-        for order in range(1, len(orders)+1):
+        for order in range(1, len(orders) + 1):
             shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
                 dist.pdf, order
             )
-            diffs[order-1] = shd.hellinger_distance_numerical(dist)
+            diffs[order - 1] = shd.hellinger_distance_numerical(dist)
         # Check if the deviation from true density is decreasing
         self.assertTrue(all(diff(diffs) < 0.0))
 
