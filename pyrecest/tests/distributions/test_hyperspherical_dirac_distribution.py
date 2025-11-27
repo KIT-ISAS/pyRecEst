@@ -79,7 +79,7 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         )
 
     def test_mean_axis_symmetric_two_point_distribution(self):
-        # Two antipodal points on S^2: ±e_x
+        # Two antipodal points on S²: ±e_x
         d = array([
             [1.0, 0.0, 0.0],
             [-1.0, 0.0, 0.0],
