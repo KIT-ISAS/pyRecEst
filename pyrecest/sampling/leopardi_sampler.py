@@ -9,13 +9,14 @@ For obtaning Cartesian coordinates, see LeopardiSampler in hyperspherical_sample
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    pi,
     arange,
     array,
+    column_stack,
     int32,
     linspace,
     max,
     ones,
+    pi,
     reshape,
     round,
     sin,
@@ -25,7 +26,10 @@ from pyrecest.backend import (
 from scipy.optimize import root_scalar
 from scipy.special import betainc  # pylint: disable=E0611
 
-from ..distributions import AbstractHypersphereSubsetDistribution
+from ..distributions import (
+    AbstractHypersphereSubsetDistribution,
+    AbstractSphericalDistribution,
+)
 
 
 def get_cap_area(dim, colatitude):
@@ -272,6 +276,52 @@ def get_equal_area_caps(dim, N):
     return cap_colatitudes, n_regions
 
 
+def get_equal_area_caps_symm(dim: int, N: int):
+    """
+    Symmetric variant of get_equal_area_caps.
+
+    Enforces an approximately even number of collars so that the
+    partition is symmetric w.r.t. the equatorial hyperplane.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the sphere S^dim.
+    N : int
+        Total number of regions on the full sphere.
+
+    Returns
+    -------
+    cap_colatitudes : ndarray, shape (n_collars+2,)
+        Increasing list of cap colatitudes.
+    n_regions : ndarray, shape (n_collars+2,)
+        Number of regions per zone; sum(n_regions) == N.
+    """
+    if dim == 1:
+        # On S^1 the standard partition is already symmetric.
+        return get_equal_area_caps(dim, N)
+
+    if N == 1:
+        return array([pi]), array([1], dtype=int)
+
+    c_polar = get_polar_cap_colatitude(dim, N)
+    ideal_angle = get_ideal_collar_angle(dim, N)
+
+    if (N > 2) and (ideal_angle > 0):
+        #   n_collars(enough) = 2 * max(1/2,
+        #       round(0.5*(pi-2*c_polar(enough))./a_ideal(enough)));
+        ratio_half = 0.5 * (pi - 2 * c_polar) / ideal_angle
+        n_half = max((0.5, round(ratio_half)))
+        n_collars = int(2 * n_half)
+    else:
+        n_collars = 0
+
+    region_counts = get_ideal_region_counts(dim, N, c_polar, n_collars)
+    n_regions = round_region_counts(region_counts)
+    cap_colatitudes = get_cap_colatitudes(dim, N, c_polar, n_regions)
+    return cap_colatitudes, n_regions
+
+
 # pylint: disable=R0914
 def get_partition_points_polar(dim, N, extra_offset=False):
     """
@@ -320,3 +370,168 @@ def get_partition_points_polar(dim, N, extra_offset=False):
     points_s[-1, point_n] = pi
     point_n += 1
     return points_s
+
+
+def get_partition_points_polar_plane_symm(
+    dim: int,
+    N: int,
+    delete_half: bool = False,
+    extra_offset: bool = False,
+):
+    """
+    Plane-symmetric variant of the Leopardi equal-area partition
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the sphere S^dim.
+    N : int
+        Total number of regions on the full sphere. Must be even.
+    delete_half : bool, optional
+        If True, return only the 'northern' half (including north pole),
+        i.e. N/2 points. If False, return all N plane-symmetric points.
+    extra_offset : bool, optional
+        Kept for API compatibility; currently unused.
+
+    Returns
+    -------
+    points_s : ndarray
+        If delete_half is False: shape (dim, N).
+        If delete_half is True:  shape (dim, N/2).
+        Columns are hyperspherical coordinates of region centres.
+    """
+    assert dim == 2, "Only dim=2 is currently supported for plane-symmetric partitions."
+    if N % 2 != 0:
+        raise ValueError("Number of points N must be even for the symmetric partition.")
+    if N < 2:
+        raise ValueError("N must be at least 2.")
+
+    if dim == 1:
+        # On S^1: just fall back to the standard partition.
+        pts = get_partition_points_polar(dim, N, extra_offset=extra_offset)
+        return pts if not delete_half else pts[:, : N // 2]
+
+    cap_colatitudes, n_regions = get_equal_area_caps_symm(dim, N)
+    n_collars = len(n_regions) - 2  # excluding the two polar caps
+
+    N_half = N // 2
+    points_half = zeros((dim, N_half), dtype=float)
+
+    # North pole
+    points_half[:, 0] = 0.0
+    point_idx = 1
+
+    # Only collars in the northern half
+    n_collars_half = n_collars // 2
+    for collar_n in range(n_collars_half):
+        a_top = cap_colatitudes[collar_n]
+        a_bot = cap_colatitudes[collar_n + 1]
+        n_in_collar = int(n_regions[collar_n + 1])  # skip the north cap entry
+
+        if n_in_collar == 0:
+            continue
+
+        sub_points = get_partition_points_polar(
+            dim - 1, n_in_collar, extra_offset=extra_offset
+        )
+        colat = 0.5 * (a_top + a_bot)
+
+        for i in range(sub_points.shape[1]):
+            if point_idx >= N_half:
+                break  # safety
+            points_half[:-1, point_idx] = sub_points[:, i]
+            points_half[-1, point_idx] = colat
+            point_idx += 1
+
+    if delete_half:
+        return points_half
+
+    # Build full plane-symmetric set
+    points_full = zeros((dim, N), dtype=float)
+    points_full[:, :N_half] = points_half
+
+    # Mirror all interior northern points (exclude the north pole) across θ = π/2:
+    # θ' = π - θ, other angles unchanged.
+    if N_half > 1:
+        mirrored = points_half[:, 1:].copy()
+        mirrored[-1, :] = pi - mirrored[-1, :]  # noqa: E203
+        points_full[:, N_half : N - 1] = mirrored
+
+    # South pole
+    points_full[:, -1] = 0.0
+    points_full[-1, -1] = pi
+
+    return points_full
+
+
+def get_partition_points_cartesian_symm(
+    dim: int,
+    N: int,
+    delete_half: bool = False,
+    symmetry_type: str = "mirror",
+    extra_offset: bool = False,
+):
+    """
+    Cartesian EQ point set with optional symmetry.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the sphere S^dim (embedded in R^{dim+1}).
+    N : int
+        Number of points on the *full* sphere.
+        Must be even for symmetry_type != 'asymm'.
+    delete_half : bool, optional
+        For symmetric types: if True, only return the 'northern' half
+        (N/2 points). For asymm, this is not allowed (same as MATLAB).
+    symmetry_type : {'asymm', 'plane', 'mirror'}
+        - 'asymm': standard Leopardi EQ partition (no enforced symmetry).
+        - 'plane' : plane-symmetric w.r.t. the equatorial hyperplane.
+        - 'mirror': point-symmetric (antipodal): points come in ± pairs.
+    extra_offset : bool, optional
+        Passed through to the polar partitioners (currently unused).
+
+    Returns
+    -------
+    points_x : ndarray, shape (dim+1, N) or (dim+1, N/2)
+        Cartesian coordinates of the centre points.
+    """
+    symmetry_type = symmetry_type.lower()
+    if symmetry_type not in ("asymm", "plane", "mirror"):
+        raise ValueError("symmetry_type must be 'asymm', 'plane', or 'mirror'.")
+
+    if symmetry_type == "asymm":
+        if delete_half:
+            raise ValueError(
+                "delete_half=True is not supported for symmetry_type='asymm'."
+            )
+        pts_s = get_partition_points_polar(dim, N, extra_offset=extra_offset).T
+        x, y, z = AbstractSphericalDistribution.sph_to_cart(pts_s[:, 0], pts_s[:, 1])
+        grid = column_stack((x, y, z))
+        return grid
+
+    # From here on we require N to be even
+    if N % 2 != 0:
+        raise ValueError("For symmetric partitions, N must be even.")
+
+    if symmetry_type == "plane":
+        pts_s = get_partition_points_polar_plane_symm(
+            dim,
+            N,
+            delete_half=delete_half,
+            extra_offset=extra_offset,
+        ).T
+    elif symmetry_type == 'mirror':
+        pts_s = get_partition_points_polar_plane_symm(
+            dim,
+            N,
+            delete_half=delete_half,
+            extra_offset=extra_offset,
+        ).T
+    else:
+        raise ValueError("Invalid symmetry_type encountered.")
+    
+    assert pts_s.shape[-1] == dim, "Unexpected number of spherical coordiantes points."
+    x, y, z = AbstractSphericalDistribution.sph_to_cart(pts_s[:, 0], pts_s[:, 1])
+    grid = column_stack((x, y, z))
+    return grid
