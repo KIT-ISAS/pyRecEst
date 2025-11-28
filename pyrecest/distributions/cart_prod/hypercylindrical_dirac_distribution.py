@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import column_stack, cos, int32, int64, sin, pi
+from pyrecest.backend import column_stack, cos, int32, int64, pi, sin
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution

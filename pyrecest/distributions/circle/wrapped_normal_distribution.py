@@ -6,7 +6,6 @@ import pyrecest.backend
 from pyrecest.backend import (
     abs,
     angle,
-    pi,
     any,
     array,
     exp,
@@ -16,6 +15,7 @@ from pyrecest.backend import (
     mod,
     ndim,
     ones,
+    pi,
     random,
     sqrt,
     squeeze,

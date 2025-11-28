@@ -26,12 +26,12 @@ from pyrecest.backend import (
     linalg,
     log,
     ones,
+    pi,
     sin,
     sort,
     sqrt,
     squeeze,
     zeros,
-    pi,
 )
 from scipy.integrate import nquad, quad
 from scipy.special import gamma

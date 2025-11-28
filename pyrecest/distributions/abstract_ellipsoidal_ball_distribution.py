@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, sqrt, pi
+from pyrecest.backend import linalg, pi, sqrt
 from scipy.special import gamma
 
 from .abstract_bounded_nonperiodic_distribution import (

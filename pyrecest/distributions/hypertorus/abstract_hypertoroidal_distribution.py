@@ -20,12 +20,12 @@ from pyrecest.backend import (
     int64,
     isnan,
     linspace,
-    pi,
     log,
     meshgrid,
     minimum,
     mod,
     ones,
+    pi,
     random,
     sin,
     sqrt,
@@ -85,6 +85,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     def integrate_fun_over_domain_part(f: Callable, integration_boundaries) -> float:
         integration_boundaries = atleast_2d(integration_boundaries)
         assert integration_boundaries.shape[-1] == 2
+
         def scalar_f(*args):
             return f(*args).item()  # ensures 0-dim scalar
 

@@ -1,6 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import log, outer, sum, zeros, reshape, linalg
+from pyrecest.backend import linalg, log, outer, reshape, sum, zeros
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_hypersphere_subset_distribution import (
@@ -31,7 +31,7 @@ class AbstractHypersphereSubsetDiracDistribution(
 
     def integrate(self, integration_boundaries=None):
         raise NotImplementedError()
-    
+
     def mean_axis(self):
         """
         Returns the principal axis of the Dirac mixture on the hypersphere.

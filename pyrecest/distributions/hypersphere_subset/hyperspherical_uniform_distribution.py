@@ -8,11 +8,11 @@ from pyrecest.backend import (
     int64,
     linalg,
     ones,
+    pi,
     random,
     sin,
     sqrt,
     stack,
-    pi,
 )
 
 from .abstract_hypersphere_subset_uniform_distribution import (

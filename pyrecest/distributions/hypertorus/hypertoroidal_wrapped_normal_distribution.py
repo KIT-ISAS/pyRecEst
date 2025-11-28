@@ -14,10 +14,10 @@ from pyrecest.backend import (
     linalg,
     meshgrid,
     mod,
+    pi,
     random,
     stack,
     zeros,
-    pi,
 )
 from scipy.stats import multivariate_normal
 

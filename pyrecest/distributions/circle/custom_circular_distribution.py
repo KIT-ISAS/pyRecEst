@@ -1,4 +1,5 @@
 from collections.abc import Callable
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, mod, pi
 

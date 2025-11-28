@@ -14,11 +14,11 @@ from pyrecest.backend import (
     int32,
     int64,
     mod,
+    pi,
     real,
     reshape,
     sum,
     tile,
-    pi,
 )
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution

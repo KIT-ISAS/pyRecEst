@@ -5,7 +5,16 @@ from typing import Union
 import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, concatenate, int32, int64, spatial, min, max, column_stack
+from pyrecest.backend import (
+    array,
+    column_stack,
+    concatenate,
+    int32,
+    int64,
+    max,
+    min,
+    spatial,
+)
 
 from .cart_prod.abstract_lin_bounded_cart_prod_distribution import (
     AbstractLinBoundedCartProdDistribution,
