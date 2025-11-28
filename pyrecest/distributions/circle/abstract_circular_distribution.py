@@ -1,8 +1,7 @@
-
 import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, linspace, mod, sin, pi
+from pyrecest.backend import array, cos, linspace, mod, pi, sin
 
 from ..hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,

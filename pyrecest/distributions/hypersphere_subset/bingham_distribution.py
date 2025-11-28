@@ -1,6 +1,19 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import abs, all, argsort, diag, exp, eye, linalg, max, sum, zeros, pi, array
+from pyrecest.backend import (
+    abs,
+    all,
+    argsort,
+    array,
+    diag,
+    exp,
+    eye,
+    linalg,
+    max,
+    pi,
+    sum,
+    zeros,
+)
 from scipy.integrate import quad
 from scipy.special import iv
 
@@ -67,7 +80,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         raise NotImplementedError(
             "Due to its symmetry, the mean direction is undefined for Bingham distributions."
         )
-    
+
     def mean_axis(self):
         """
         Returns the principal axis of the Bingham distribution as a unit vector

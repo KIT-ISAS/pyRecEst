@@ -6,9 +6,9 @@ from pyrecest.backend import (
     column_stack,
     cos,
     ndim,
+    pi,
     sin,
     where,
-    pi,
 )
 
 from .abstract_hypersphere_subset_distribution import (

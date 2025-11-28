@@ -1,7 +1,7 @@
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, int32, int64, sin, sqrt, zeros, pi
+from pyrecest.backend import array, cos, int32, int64, pi, sin, sqrt, zeros
 from scipy.integrate import dblquad
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution

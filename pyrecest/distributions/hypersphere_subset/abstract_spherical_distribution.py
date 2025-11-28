@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from pyrecest.backend import cos, linspace, meshgrid, sin, pi
+from pyrecest.backend import cos, linspace, meshgrid, pi, sin
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .abstract_sphere_subset_distribution import AbstractSphereSubsetDistribution
