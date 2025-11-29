@@ -101,6 +101,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         npt.assert_allclose(norms, 1.0, atol=1e-10)
 
         # Should be a hemisphere: last coordinate non‑negative (allow tiny numerical noise)
+        npt.assert_array_less(-1e-12, samples[:, -1])
         self.assertTrue(
             (samples[:, -1] >= -1e-12).all(),
             "Expected all points to lie in the upper hyperhemisphere (last coord >= 0)",

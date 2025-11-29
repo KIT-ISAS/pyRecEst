@@ -59,11 +59,9 @@ def get_grid_sphere(method: str, grid_density_parameter: int):
 
 def get_grid_hyperhemisphere(method: str, grid_density_parameter: int, dim: int):
     if method == "leopardi":
-        ls = LeopardiSampler()
-        samples_full, _ = ls.get_grid(grid_density_parameter * 2, dim)
-        samples = samples_full[:samples_full.shape[0]//2]
+        ls = SymmetricLeopardiSampler(original_code_column_order=True, delete_half=True, symmetry_type="plane")
+        samples, _ = ls.get_grid(grid_density_parameter * 2, dim)
         # To have upper half along last dim instead of first
-        samples[:, [0, -1]] = samples[:, [-1, 0]]
         grid_specific_description = {
             "scheme": "leopardi_hemisphere",
             "n_side": grid_density_parameter,
