@@ -9,7 +9,7 @@ from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import array, linalg, linspace, pi, random, isclose, all, round, column_stack, zeros, any
-from pyrecest.sampling.leopardi_sampler import get_partition_points_cartesian_symm
+from pyrecest.sampling.leopardi_sampler import get_partition_points_cartesian
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere, get_grid_hyperhemisphere
 
 from ..sampling.hyperspherical_sampler import (

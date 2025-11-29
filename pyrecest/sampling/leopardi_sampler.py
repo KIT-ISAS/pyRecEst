@@ -29,7 +29,7 @@ from scipy.special import betainc  # pylint: disable=E0611
 
 from ..distributions import (
     AbstractHypersphereSubsetDistribution,
-    AbstractSphericalDistribution,
+    AbstractSphericalDistribution, AbstractHypersphericalDistribution,
 )
 
 
@@ -462,7 +462,7 @@ def get_partition_points_polar_symm(
     return points_full
 
 
-def get_partition_points_cartesian_symm(
+def get_partition_points_cartesian(
     dim: int,
     N: int,
     delete_half: bool = False,
@@ -504,12 +504,16 @@ def get_partition_points_cartesian_symm(
                 "delete_half=True is not supported for symmetry_type='asymm'."
             )
         
-        #pts_s = flip(get_partition_points_polar(dim, N, extra_offset=extra_offset), axis=0).T
-        #grid = AbstractSphericalDistribution.sph_to_cart(pts_s, mode="colatitude")
-        
-        # grid = column_stack((x, y, z))
-        pass
-        return grid
+        pts_s = flip(get_partition_points_polar(
+            dim,
+            N,
+            extra_offset=extra_offset,
+        ), axis=0).T
+
+        grid_eucl = AbstractHypersphericalDistribution.hypersph_to_cart(
+            pts_s, mode="colatitude"
+        )
+        return grid_eucl
 
     # From here on we require N to be even
     if N % 2 != 0:
@@ -525,6 +529,4 @@ def get_partition_points_cartesian_symm(
     
     assert pts_s.shape[-1] == dim, "Unexpected dimension."
     x, y, z = AbstractSphericalDistribution.sph_to_cart(pts_s[:, 0], pts_s[:, 1])
-    # grid = column_stack((x, y, z))
-    #return grid
     return array((x,y,z)).T

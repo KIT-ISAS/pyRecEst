@@ -29,7 +29,7 @@ from pyrecest.distributions import (
 
 from .abstract_sampler import AbstractSampler
 from .hypertoroidal_sampler import CircularUniformSampler
-from .leopardi_sampler import get_partition_points_polar, get_partition_points_cartesian_symm
+from .leopardi_sampler import get_partition_points_polar, get_partition_points_cartesian
 
 
 def get_grid_hypersphere(method: str, grid_density_parameter: int, dim: int):
@@ -158,12 +158,8 @@ class LeopardiSampler(AbstractHypersphericalUniformSampler):
 
     def get_grid(self, grid_density_parameter, dim: int):
         # Use [::-1] due to different convention
-        grid_hypersph_coord = flip(
-            get_partition_points_polar(dim, grid_density_parameter), axis=0
-        ).T
-        grid_eucl = AbstractHypersphericalDistribution.hypersph_to_cart(
-            grid_hypersph_coord, mode="colatitude"
-        )
+        grid_eucl = get_partition_points_cartesian(dim, grid_density_parameter, delete_half=False, symmetry_type="asymm")
+
         if self.original_code_column_order:
             grid_eucl = flip(grid_eucl, axis=1)
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
@@ -183,7 +179,8 @@ class SymmetricLeopardiSampler(AbstractHypersphericalUniformSampler):
 
     def get_grid(self, grid_density_parameter, dim: int):
         # Use [::-1] due to different convention
-        grid_eucl = get_partition_points_cartesian_symm(dim, grid_density_parameter, delete_half=self.delete_half, symmetry_type=self.symmetry_type)
+        grid_eucl = get_partition_points_cartesian(dim, grid_density_parameter, delete_half=self.delete_half, symmetry_type=self.symmetry_type)
+        
         if self.original_code_column_order:
             grid_eucl = flip(grid_eucl, axis=1)
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
