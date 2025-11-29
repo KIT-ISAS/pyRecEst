@@ -24,6 +24,7 @@ from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     AbstractSphericalDistribution,
     HypersphericalUniformDistribution,
+    HyperhemisphericalUniformDistribution,
 )
 
 from .abstract_sampler import AbstractSampler
@@ -75,6 +76,14 @@ def get_grid_hyperhemisphere(method: str, grid_density_parameter: int, dim: int)
 class AbstractHypersphericalUniformSampler(AbstractSampler):
     def sample_stochastic(self, n_samples: int, dim: int):
         return HypersphericalUniformDistribution(dim).sample(n_samples)
+
+    @abstractmethod
+    def get_grid(self, grid_density_parameter, dim: int):
+        raise NotImplementedError()
+    
+class AbstractHyperhemisphericalUniformSampler(AbstractSampler):
+    def sample_stochastic(self, n_samples: int, dim: int):
+        return HyperhemisphericalUniformDistribution(dim).sample(n_samples)
 
     @abstractmethod
     def get_grid(self, grid_density_parameter, dim: int):
@@ -143,6 +152,29 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 
 
 class LeopardiSampler(AbstractHypersphericalUniformSampler):
+    def __init__(self, original_code_column_order=False):
+        self.original_code_column_order = original_code_column_order
+        assert backend.__backend_name__ != "jax", "Backend unsupported"
+
+    def get_grid(self, grid_density_parameter, dim: int):
+        # Use [::-1] due to different convention
+        grid_hypersph_coord = flip(
+            get_partition_points_polar(dim, grid_density_parameter), axis=0
+        ).T
+        grid_eucl = AbstractHypersphericalDistribution.hypersph_to_cart(
+            grid_hypersph_coord, mode="colatitude"
+        )
+        if self.original_code_column_order:
+            grid_eucl = flip(grid_eucl, axis=1)
+            grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
+
+        grid_specific_description = {
+            "scheme": "leopardi",
+            "n_side": grid_density_parameter,
+        }
+        return grid_eucl, grid_specific_description
+    
+class SymmetricLeopardiSampler(AbstractHyperhemisphericalUniformSampler):
     def __init__(self, original_code_column_order=False):
         self.original_code_column_order = original_code_column_order
         assert backend.__backend_name__ != "jax", "Backend unsupported"
