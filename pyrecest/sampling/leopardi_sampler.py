@@ -462,7 +462,7 @@ def get_partition_points_polar_symm(
     return points_full
 
 
-def get_partition_points_cartesian(
+def get_partition_points_cartesian_old(
     dim: int,
     N: int,
     delete_half: bool = False,
@@ -530,3 +530,77 @@ def get_partition_points_cartesian(
     assert pts_s.shape[-1] == dim, "Unexpected dimension."
     x, y, z = AbstractSphericalDistribution.sph_to_cart(pts_s[:, 0], pts_s[:, 1])
     return array((x,y,z)).T
+
+def get_partition_points_cartesian(
+    dim: int,
+    N: int,
+    delete_half: bool = False,
+    symmetry_type: str = "asymm",
+    extra_offset: bool = False,
+):
+    """
+    Cartesian EQ point set with optional symmetry.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the sphere S^dim (embedded in R^{dim+1}).
+    N : int
+        Number of points on the *full* sphere.
+        Must be even for symmetry_type != 'asymm'.
+    delete_half : bool, optional
+        For symmetric types: if True, only return the 'northern' half
+        (N/2 points). For asymm, this is not allowed.
+    symmetry_type : {'asymm', 'plane', 'antipodal'}
+        - 'asymm': standard Leopardi EQ partition (no enforced symmetry).
+        - 'plane' : plane-symmetric w.r.t. the equatorial hyperplane.
+        - 'antipodal': point-symmetric with respect to [0, 0, 0] (± pairs).
+    extra_offset : bool, optional
+        Passed through to the polar partitioners (currently unused).
+
+    Returns
+    -------
+    points_x : ndarray, shape (N_eff, dim+1)
+        Cartesian coordinates of the centre points, where
+        N_eff = N for delete_half=False, and N/2 for delete_half=True.
+    """
+    symmetry_type = symmetry_type.lower()
+    if symmetry_type not in ("asymm", "plane", "antipodal"):
+        raise ValueError("symmetry_type must be 'asymm', 'plane', or 'antipodal'.")
+
+    if symmetry_type == "asymm":
+        if delete_half:
+            raise ValueError(
+                "delete_half=True is not supported for symmetry_type='asymm'."
+            )
+        # Leopardi polar coordinates: (azimuth, colatitude, ...)
+        pts_s = get_partition_points_polar(
+            dim,
+            N,
+            extra_offset=extra_offset,
+        )
+    else:
+        # symmetric variants (currently dim must be 2 inside get_partition_points_polar_symm)
+        if N % 2 != 0:
+            raise ValueError("For symmetric partitions, N must be even.")
+
+        pts_s = get_partition_points_polar_symm(
+            dim,
+            N,
+            symmetry_type=symmetry_type,
+            delete_half=delete_half,
+            extra_offset=extra_offset,
+        )
+
+    # pts_s is shape (dim, N_eff) in Leopardi order: (azimuth, colatitude, ...)
+    # Convert to pyrecest order expected by hypersph_to_cart(mode='colatitude'):
+    # (colatitude, azimuth, ...) by flipping the angular axes.
+    pts_s_py = flip(pts_s, axis=0).T  # shape (N_eff, dim)
+
+    # Dimension-agnostic conversion using the 'colatitude' hyperspherical convention.
+    grid_eucl = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+        pts_s_py,
+        mode="colatitude",
+    )
+
+    return grid_eucl
