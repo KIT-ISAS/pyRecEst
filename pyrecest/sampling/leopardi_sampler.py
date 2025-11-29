@@ -284,7 +284,7 @@ def get_equal_area_caps(dim, N, symmetric: bool = False):
     if symmetric and (N > 2) and (ideal_angle > 0):
         # Symmetric choice: even number of collars so equator is a cap boundary
         ratio_half = 0.5 * (pi - 2 * c_polar) / ideal_angle
-        n_half = max((0.5, round(ratio_half)))
+        n_half = max(array((0.5, round(ratio_half))))
         n_collars = int(2 * n_half)
     else:
         # Standard Leopardi choice
