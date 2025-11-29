@@ -152,7 +152,7 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 
 
 class LeopardiSampler(AbstractHypersphericalUniformSampler):
-    def __init__(self, original_code_column_order=False):
+    def __init__(self, original_code_column_order=True):
         self.original_code_column_order = original_code_column_order
         assert backend.__backend_name__ != "jax", "Backend unsupported"
 
@@ -171,7 +171,7 @@ class LeopardiSampler(AbstractHypersphericalUniformSampler):
         return grid_eucl, grid_specific_description
     
 class SymmetricLeopardiSampler(AbstractHypersphericalUniformSampler):
-    def __init__(self, original_code_column_order=False, delete_half=False, symmetry_type='plane'):
+    def __init__(self, original_code_column_order=True, delete_half=False, symmetry_type='plane'):
         self.original_code_column_order = original_code_column_order
         self.delete_half = delete_half
         self.symmetry_type = symmetry_type

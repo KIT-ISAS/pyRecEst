@@ -185,7 +185,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler(self, _, points, dim, expected_shape):
-        sampler = LeopardiSampler(False)
+        sampler = LeopardiSampler(original_code_column_order=False)
         grid, _ = sampler.get_grid(points, dim=dim)
         npt.assert_equal(grid.shape, expected_shape)
 
@@ -195,7 +195,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s2_12(self):
-        sampler = LeopardiSampler(True)
+        sampler = LeopardiSampler(original_code_column_order=True)
         grid, _ = sampler.get_grid(12, dim=2)
         npt.assert_equal(grid.shape, (12, 3))
 
@@ -226,7 +226,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s2_20(self):
-        sampler = LeopardiSampler(True)
+        sampler = LeopardiSampler(original_code_column_order=True)
         grid, _ = sampler.get_grid(20, dim=2)
         npt.assert_equal(grid.shape, (20, 3))
 
@@ -333,11 +333,11 @@ class TestSymmetricLeopardiSampler(unittest.TestCase):
         tol = 1e-10
 
         # Half set: one representative from each ± pair
-        ls_full = SymmetricLeopardiSampler(delete_half=True, symmetry_type="antipodal")
+        ls_full = SymmetricLeopardiSampler(delete_half=True, original_code_column_order=True, symmetry_type="antipodal")
         pts_half, _ = ls_full.get_grid(N, dim=dim)
 
         # Full set: all ± pairs
-        ls_half = SymmetricLeopardiSampler(delete_half=False, symmetry_type="antipodal")
+        ls_half = SymmetricLeopardiSampler(delete_half=False, original_code_column_order=True, symmetry_type="antipodal")
         pts_full, _ = ls_half.get_grid(N, dim=dim)
 
         # Shape checks
@@ -373,7 +373,7 @@ class TestSymmetricLeopardiSampler(unittest.TestCase):
         dim, N = 2, 40  # N must be even
         tol = 1e-10
 
-        ls = SymmetricLeopardiSampler(delete_half=False, symmetry_type="plane")
+        ls = SymmetricLeopardiSampler(delete_half=False, original_code_column_order=True, symmetry_type="plane")
         pts , _ = ls.get_grid(N, dim=dim)
 
         self.assertEqual(pts.shape, (N, dim + 1))
