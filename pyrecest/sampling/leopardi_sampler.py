@@ -481,7 +481,7 @@ def get_partition_points_cartesian_symm(
         Must be even for symmetry_type != 'asymm'.
     delete_half : bool, optional
         For symmetric types: if True, only return the 'northern' half
-        (N/2 points). For asymm, this is not allowed (same as MATLAB).
+        (N/2 points). For asymm, this is not allowed.
     symmetry_type : {'asymm', 'plane', 'antipodal'}
         - 'asymm': standard Leopardi EQ partition (no enforced symmetry).
         - 'plane' : plane-symmetric w.r.t. the equatorial hyperplane.
@@ -504,9 +504,11 @@ def get_partition_points_cartesian_symm(
                 "delete_half=True is not supported for symmetry_type='asymm'."
             )
         
-        pts_s = flip(get_partition_points_polar(dim, N, extra_offset=extra_offset), axis=0).T
-        grid = AbstractSphericalDistribution.hypersph_to_cart(pts_s, mode="colatitude")
+        #pts_s = flip(get_partition_points_polar(dim, N, extra_offset=extra_offset), axis=0).T
+        #grid = AbstractSphericalDistribution.sph_to_cart(pts_s, mode="colatitude")
+        
         # grid = column_stack((x, y, z))
+        pass
         return grid
 
     # From here on we require N to be even
@@ -522,6 +524,7 @@ def get_partition_points_cartesian_symm(
     ).T
     
     assert pts_s.shape[-1] == dim, "Unexpected dimension."
-    x, y, z = AbstractSphericalDistribution.sph_to_cart(pts_s[:, 1], pts_s[:, 0], mode="inclination")
+    x, y, z = AbstractSphericalDistribution.sph_to_cart(pts_s[:, 0], pts_s[:, 1])
     # grid = column_stack((x, y, z))
-    return grid
+    #return grid
+    return array((x,y,z)).T

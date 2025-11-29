@@ -29,7 +29,7 @@ from pyrecest.distributions import (
 
 from .abstract_sampler import AbstractSampler
 from .hypertoroidal_sampler import CircularUniformSampler
-from .leopardi_sampler import get_partition_points_polar
+from .leopardi_sampler import get_partition_points_polar, get_partition_points_cartesian_symm
 
 
 def get_grid_hypersphere(method: str, grid_density_parameter: int, dim: int):
@@ -174,26 +174,25 @@ class LeopardiSampler(AbstractHypersphericalUniformSampler):
         }
         return grid_eucl, grid_specific_description
     
-class SymmetricLeopardiSampler(AbstractHyperhemisphericalUniformSampler):
-    def __init__(self, original_code_column_order=False):
+class SymmetricLeopardiSampler(AbstractHypersphericalUniformSampler):
+    def __init__(self, original_code_column_order=False, delete_half=False, symmetry_type='plane'):
         self.original_code_column_order = original_code_column_order
+        self.delete_half = delete_half
+        self.symmetry_type = symmetry_type
         assert backend.__backend_name__ != "jax", "Backend unsupported"
 
     def get_grid(self, grid_density_parameter, dim: int):
         # Use [::-1] due to different convention
-        grid_hypersph_coord = flip(
-            get_partition_points_polar(dim, grid_density_parameter), axis=0
-        ).T
-        grid_eucl = AbstractHypersphericalDistribution.hypersph_to_cart(
-            grid_hypersph_coord, mode="colatitude"
-        )
+        grid_eucl = get_partition_points_cartesian_symm(dim, grid_density_parameter, delete_half=self.delete_half, symmetry_type=self.symmetry_type)
         if self.original_code_column_order:
             grid_eucl = flip(grid_eucl, axis=1)
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
 
         grid_specific_description = {
-            "scheme": "leopardi",
+            "scheme": "leopardi_symm",
             "n_side": grid_density_parameter,
+            "delete_half": self.delete_half,
+            "symmetry_type": self.symmetry_type,
         }
         return grid_eucl, grid_specific_description
 

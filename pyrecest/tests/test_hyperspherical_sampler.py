@@ -21,6 +21,7 @@ from ..sampling.hyperspherical_sampler import (
     LeopardiSampler,
     SphericalCoordinatesBasedFixedResolutionSampler,
     SphericalFibonacciSampler,
+    SymmetricLeopardiSampler,
 )
 
 healpy_installed = importlib.util.find_spec("healpy") is not None
@@ -332,20 +333,12 @@ class TestSymmetricLeopardiSampler(unittest.TestCase):
         tol = 1e-10
 
         # Half set: one representative from each ± pair
-        pts_half = get_partition_points_cartesian_symm(
-            dim,
-            N,
-            delete_half=True,
-            symmetry_type="antipodal",
-        )
+        ls_full = SymmetricLeopardiSampler(delete_half=True, symmetry_type="antipodal")
+        pts_half, _ = ls_full.get_grid(N, dim=dim)
 
         # Full set: all ± pairs
-        pts_full = get_partition_points_cartesian_symm(
-            dim,
-            N,
-            delete_half=False,
-            symmetry_type="antipodal",
-        )
+        ls_half = SymmetricLeopardiSampler(delete_half=False, symmetry_type="antipodal")
+        pts_full, _ = ls_half.get_grid(N, dim=dim)
 
         # Shape checks
         self.assertEqual(pts_half.shape, (N // 2, dim + 1))
@@ -380,12 +373,8 @@ class TestSymmetricLeopardiSampler(unittest.TestCase):
         dim, N = 2, 40  # N must be even
         tol = 1e-10
 
-        pts = get_partition_points_cartesian_symm(
-            dim,
-            N,
-            delete_half=False,
-            symmetry_type="plane",
-        )
+        ls = SymmetricLeopardiSampler(delete_half=False, symmetry_type="plane")
+        pts , _ = ls.get_grid(N, dim=dim)
 
         self.assertEqual(pts.shape, (N, dim + 1))
 
