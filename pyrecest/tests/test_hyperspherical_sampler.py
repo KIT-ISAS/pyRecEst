@@ -7,8 +7,8 @@ import numpy.testing as npt
 import pyrecest.backend
 from parameterized import parameterized
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, linalg, linspace, pi, random
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.backend import array, linalg, linspace, pi, random, isclose, all, column_stack, zeros, any
 from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere, get_grid_hyperhemisphere
 
 from ..sampling.hyperspherical_sampler import (
@@ -20,6 +20,7 @@ from ..sampling.hyperspherical_sampler import (
     LeopardiSampler,
     SphericalCoordinatesBasedFixedResolutionSampler,
     SphericalFibonacciSampler,
+    SymmetricLeopardiSampler,
 )
 
 healpy_installed = importlib.util.find_spec("healpy") is not None
@@ -99,6 +100,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         npt.assert_allclose(norms, 1.0, atol=1e-10)
 
         # Should be a hemisphere: last coordinate non‑negative (allow tiny numerical noise)
+        npt.assert_array_less(-1e-12, samples[:, -1])
         self.assertTrue(
             (samples[:, -1] >= -1e-12).all(),
             "Expected all points to lie in the upper hyperhemisphere (last coord >= 0)",
@@ -107,7 +109,6 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
     def test_get_grid_hyperhemisphere_invalid_method(self):
         with self.assertRaises(ValueError):
             get_grid_hyperhemisphere("unknown_method", 10, dim=10)
-
 class TestHypersphericalSampler(unittest.TestCase):
     @parameterized.expand(
         [
@@ -184,7 +185,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler(self, _, points, dim, expected_shape):
-        sampler = LeopardiSampler(False)
+        sampler = LeopardiSampler(original_code_column_order=False)
         grid, _ = sampler.get_grid(points, dim=dim)
         npt.assert_equal(grid.shape, expected_shape)
 
@@ -194,14 +195,12 @@ class TestHypersphericalSampler(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s2_12(self):
-        import numpy as np
-
-        sampler = LeopardiSampler(True)
+        sampler = LeopardiSampler(original_code_column_order=True)
         grid, _ = sampler.get_grid(12, dim=2)
         npt.assert_equal(grid.shape, (12, 3))
 
         # Define the first six point as obtained by the Matlab implementation
-        matlab_result_array = np.array(
+        matlab_result_array = array(
             [
                 [0.0000, 0.7128, -0.2723, -0.8811, -0.2723, 0.7128],
                 [0.0000, 0.5179, 0.8380, 0.0000, -0.8380, -0.5179],
@@ -214,27 +213,25 @@ class TestHypersphericalSampler(unittest.TestCase):
         # Next 5 are mirrored from above
         npt.assert_allclose(
             grid[6:11],
-            np.column_stack(
+            column_stack(
                 ((matlab_result_array[1:, [0, 1]]), (-matlab_result_array[1:, 2]))
             ),
             atol=1e-4,
         )
         # Last is just [0, 0, -1]
-        npt.assert_allclose(grid[-1], np.array([0, 0, -1]), atol=1e-4)
+        npt.assert_allclose(grid[-1], array([0.0, 0.0, -1.0]), atol=1e-4)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s2_20(self):
-        import numpy as np
-
-        sampler = LeopardiSampler(True)
+        sampler = LeopardiSampler(original_code_column_order=True)
         grid, _ = sampler.get_grid(20, dim=2)
         npt.assert_equal(grid.shape, (20, 3))
 
         # Define the first six point as obtained by the Matlab implementation
-        matlab_result_array = np.array(
+        matlab_result_array = array(
             [
                 [0, 0.5833, -0.2228, -0.7209, -0.2228, 0.5833],
                 [0, 0.4238, 0.6857, 0.0000, -0.6857, -0.4238],
@@ -245,30 +242,28 @@ class TestHypersphericalSampler(unittest.TestCase):
         # Check if they are approximately equal
         npt.assert_allclose(grid[:6], matlab_result_array, atol=1e-4)
         # The other ones like in the plane with z = 0
-        npt.assert_allclose(grid[7:14, 2], np.zeros(7), atol=1e-4)
+        npt.assert_allclose(grid[7:14, 2], zeros(7), atol=1e-4)
         # Next 5 are mirrored from above
         npt.assert_allclose(
             grid[14:-1],
-            np.column_stack(
+            column_stack(
                 ((matlab_result_array[1:, [0, 1]]), (-matlab_result_array[1:, 2]))
             ),
             atol=1e-4,
         )
         # Last is just [0, 0, -1]
-        npt.assert_allclose(grid[-1], np.array([0, 0, -1]), atol=1e-4)
+        npt.assert_allclose(grid[-1], array([0.0, 0.0, -1.0]), atol=1e-4)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler_s3_10_first5(self):
-        import numpy as np
-
         sampler = LeopardiSampler(True)
         grid, _ = sampler.get_grid(10, dim=3)
         npt.assert_equal(grid.shape, (10, 4))
 
-        matlab_result_array = np.array(
+        matlab_result_array = array(
             [
                 [0, 0, 0.8660, 0.0000, -0.8660],
                 [0, 0, 0.5000, 1.0000, 0.5000],
@@ -281,7 +276,6 @@ class TestHypersphericalSampler(unittest.TestCase):
         npt.assert_allclose(grid[:5], matlab_result_array, atol=1e-4)
 
     # jscpd:ignore-end
-
 
 class TestSphericalCoordinatesBasedFixedResolutionSampler(unittest.TestCase):
     def test_get_grid_spherical_coordinates(self):
@@ -327,6 +321,97 @@ class TestHopfConversion(unittest.TestCase):
 
         # Check if the original quaternions are close to the recovered quaternions.
         npt.assert_allclose(unit_vectors, recovered_quaternions, atol=3e-6)
+
+
+class TestSymmetricLeopardiSampler(unittest.TestCase):
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_antipodally_symmetric_sampling(self):
+        """
+        Check that antipodally-symmetric sampling really produces antipodal pairs
+        and that delete_half behaves as expected.
+        """
+        dim, N = 2, 40  # N must be even
+        tol = 1e-10
+
+        # Half set: one representative from each ± pair
+        ls_full = SymmetricLeopardiSampler(delete_half=True, original_code_column_order=True, symmetry_type="antipodal")
+        pts_half, _ = ls_full.get_grid(N, dim=dim)
+
+        # Full set: all ± pairs
+        ls_half = SymmetricLeopardiSampler(delete_half=False, original_code_column_order=True, symmetry_type="antipodal")
+        pts_full, _ = ls_half.get_grid(N, dim=dim)
+
+        # Shape checks
+        self.assertEqual(pts_half.shape, (N // 2, dim + 1))
+        self.assertEqual(pts_full.shape, (N, dim + 1))
+
+        # All points lie on the unit sphere
+        norms_half = linalg.norm(pts_half, axis=1)
+        norms_full = linalg.norm(pts_full, axis=1)
+        npt.assert_allclose(norms_half, 1.0, atol=tol)
+        npt.assert_allclose(norms_full, 1.0, atol=tol)
+
+        # As sets (up to numerical noise), full set = half ∪ (-half)
+        def as_value_tuple(tup, ndigits=4):
+            # Convert to tuple of floats with fixed precision
+            # because hashing uses id for pytorch.
+            # Note: Using builtin round and not the backend's.
+            return tuple(round(x.item(), ndigits) for x in tup)
+
+        half_set = {as_value_tuple(row) for row in pts_half}
+        neg_half_set = {as_value_tuple(-row) for row in pts_half}
+        self.assertEqual(len(half_set), N // 2)
+        self.assertEqual(len(neg_half_set), N // 2)
+
+        full_set = {as_value_tuple(row) for row in pts_full}
+        self.assertEqual(len(full_set), N)  # no duplicates beyond the ± pairing
+        self.assertTrue(half_set.isdisjoint(neg_half_set))
+        self.assertEqual(full_set, half_set | neg_half_set)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_plane_reflection_sampling(self):
+        """
+        Check that plane-refelection sampling is symmetric w.r.t. the
+        equatorial hyperplane (last coordinate flips sign, others stay).
+        """
+        dim, N = 2, 40  # N must be even
+        tol = 1e-10
+
+        ls = SymmetricLeopardiSampler(delete_half=False, original_code_column_order=True, symmetry_type="plane")
+        pts , _ = ls.get_grid(N, dim=dim)
+
+        self.assertEqual(pts.shape, (N, dim + 1))
+
+        # Still on the unit sphere
+        norms = linalg.norm(pts, axis=1)
+        npt.assert_allclose(norms, 1.0, atol=tol)
+
+        # There should be a clear north and south pole
+        z = pts[:, -1]
+        npt.assert_allclose(z.max(), 1.0, atol=tol)
+        npt.assert_allclose(z.min(), -1.0, atol=tol)
+
+        # For every non-polar point v, there exists a point w with:
+        #   w[:-1] ≈ v[:-1]  and  w[-1] ≈ -v[-1]
+        for i in range(N):
+            v = pts[i, :]
+
+            # Skip poles (z ≈ ±1)
+            if isclose(v[-1], 1.0, atol=tol) or isclose(v[-1], -1.0, atol=tol):
+                continue
+
+            # Find candidates whose first dim coordinates match v's (within tol)
+            same_xy = all(abs(pts[:, :-1] - v[None, :-1]) < 5 * tol, axis=1)
+            candidates = pts[same_xy, :]
+
+            # Among those, at least one must have opposite z
+            self.assertTrue(any(isclose(candidates[:, -1], -v[-1], atol=5 * tol)))
 
 
 if __name__ == "__main__":

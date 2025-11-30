@@ -9,23 +9,28 @@ For obtaning Cartesian coordinates, see LeopardiSampler in hyperspherical_sample
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    pi,
     arange,
     array,
     int32,
     linspace,
     max,
     ones,
+    pi,
     reshape,
     round,
     sin,
     zeros,
     zeros_like,
+    flip,
+    vstack,
 )
 from scipy.optimize import root_scalar
 from scipy.special import betainc  # pylint: disable=E0611
+import copy
 
-from ..distributions import AbstractHypersphereSubsetDistribution
+from ..distributions import (
+    AbstractHypersphereSubsetDistribution,
+)
 
 
 def get_cap_area(dim, colatitude):
@@ -240,17 +245,28 @@ def get_cap_colatitudes(dim, N, c_polar, n_regions):
     return c_caps
 
 
-def get_equal_area_caps(dim, N):
+def get_equal_area_caps(dim, N, symmetric: bool = False):
     """
-    Partition the sphere into nested spherical caps and get the number of regions in each zone.
+    Partition the sphere into nested spherical caps and get the number
+    of regions in each zone.
 
-    Parameters:
-    - dim (int): Dimension of the sphere.
-    - N (int): Total number of regions.
+    Parameters
+    ----------
+    dim : int
+        Dimension of the sphere.
+    N : int
+        Total number of regions.
+    symmetric : bool, optional
+        If True, enforce an approximately even number of collars so that
+        the partition is symmetric w.r.t. the equatorial hyperplane.
+        If False, use the standard Leopardi choice of collars.
 
-    Returns:
-    - cap_colatitudes (ndarray): Colatitudes of caps (in increasing order).
-    - n_regions (ndarray): Number of regions in each zone.
+    Returns
+    -------
+    cap_colatitudes : ndarray
+        Colatitudes of caps (in increasing order).
+    n_regions : ndarray
+        Number of regions in each zone.
     """
     if dim == 1:
         sector = arange(1, N + 1)
@@ -265,11 +281,21 @@ def get_equal_area_caps(dim, N):
 
     c_polar = get_polar_cap_colatitude(dim, N)
     ideal_angle = get_ideal_collar_angle(dim, N)
-    n_collars = get_number_of_collars(N, c_polar, ideal_angle)
+
+    if symmetric and (N > 2) and (ideal_angle > 0):
+        # Symmetric choice: even number of collars so equator is a cap boundary
+        ratio_half = 0.5 * (pi - 2 * c_polar) / ideal_angle
+        n_half = max(array((0.5, round(ratio_half))))
+        n_collars = int(2 * n_half)
+    else:
+        # Standard Leopardi choice
+        n_collars = get_number_of_collars(N, c_polar, ideal_angle)
+
     region_counts = get_ideal_region_counts(dim, N, c_polar, n_collars)
     n_regions = round_region_counts(region_counts)
     cap_colatitudes = get_cap_colatitudes(dim, N, c_polar, n_regions)
     return cap_colatitudes, n_regions
+
 
 
 # pylint: disable=R0914
@@ -293,7 +319,7 @@ def get_partition_points_polar(dim, N, extra_offset=False):
         points_s = reshape(points_s, (1, N))
         return points_s
 
-    cap_colatitudes, n_regions = get_equal_area_caps(dim, N)
+    cap_colatitudes, n_regions = get_equal_area_caps(dim, N, symmetric=False)
     n_collars = len(n_regions) - 2  # Excluding the two polar caps
     points_s = zeros((dim, N))
     point_n = 0
@@ -320,3 +346,188 @@ def get_partition_points_polar(dim, N, extra_offset=False):
     points_s[-1, point_n] = pi
     point_n += 1
     return points_s
+
+
+def get_partition_points_polar_north(
+    dim: int,
+    N: int,
+    extra_offset: bool = False,
+):
+    """
+    Symmetric variant of the Leopardi equal-area partition on S^2.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the sphere S^dim. Currently only dim=2 is supported.
+    N : int
+        Total number of regions on the full sphere. Must be even.
+        
+    Returns
+    -------
+    points_s : ndarray
+        If delete_half is False: shape (dim, N).
+        If delete_half is True:  shape (dim, N/2).
+        Columns are hyperspherical coordinates of region centres.
+        For dim=2 these are (azimuth, colatitude).
+    """
+
+    if dim != 2:
+        raise ValueError("Only dim=2 is currently supported for symmetric partitions.")
+
+    if N % 2 != 0:
+        raise ValueError("Number of points N must be even for symmetric partitions.")
+    if N < 2:
+        raise ValueError("N must be at least 2.")
+
+    # Build a symmetric equal-area partition in terms of caps/collars,
+    # then only take the northern half as the "fundamental domain".
+    cap_colatitudes, n_regions = get_equal_area_caps(dim, N, symmetric=True)
+    n_collars = len(n_regions) - 2  # excluding the two polar caps
+
+    N_half = N // 2
+    points_half = zeros((dim, N_half), dtype=float)
+
+    # North pole
+    points_half[:, 0] = 0.0
+    point_idx = 1
+
+    # Only collars fully contained in the northern half
+    n_collars_half = n_collars // 2
+    for collar_n in range(n_collars_half):
+        a_top = cap_colatitudes[collar_n]
+        a_bot = cap_colatitudes[collar_n + 1]
+        n_in_collar = int(n_regions[collar_n + 1])  # skip the north cap entry
+
+        if n_in_collar == 0:
+            continue
+
+        # Partition the S^1 factor in this collar
+        sub_points = get_partition_points_polar(
+            dim - 1, n_in_collar, extra_offset=extra_offset
+        )
+        colat = 0.5 * (a_top + a_bot)
+
+        for i in range(sub_points.shape[1]):
+            if point_idx >= N_half:
+                break  # safety
+            points_half[:-1, point_idx] = sub_points[:, i]
+            points_half[-1, point_idx] = colat
+            point_idx += 1
+
+    return points_half
+
+def get_partition_points_cartesian(
+    dim: int,
+    N: int,
+    delete_half: bool = False,
+    symmetry_type: str = "asymm",
+    extra_offset: bool = False,
+):
+    """
+    Cartesian EQ point set with optional symmetry.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the sphere S^dim (embedded in R^{dim+1}).
+    N : int
+        Number of points on the *full* sphere.
+        Must be even for symmetry_type != 'asymm'.
+    delete_half : bool, optional
+        For symmetric types: if True, only return the 'northern' half
+        (N/2 points). For asymm, this is not allowed.
+    symmetry_type : {'asymm', 'plane', 'antipodal'}
+        - 'asymm'   : standard Leopardi EQ partition (no enforced symmetry).
+        - 'plane'   : plane-symmetric w.r.t. the equatorial hyperplane
+                      (last Cartesian coordinate flips sign).
+        - 'antipodal': point-symmetric w.r.t. the origin (± pairs).
+    extra_offset : bool, optional
+        Passed through to the polar partitioners (currently unused).
+
+    Returns
+    -------
+    points_x : ndarray, shape (N_eff, dim+1)
+        Cartesian coordinates of the centre points, where
+        N_eff = N      if delete_half is False,
+        N_eff = N / 2  if delete_half is True and symmetry_type != 'asymm'.
+    """
+    symmetry_type = symmetry_type.lower()
+    if symmetry_type not in ("asymm", "plane", "antipodal"):
+        raise ValueError("symmetry_type must be 'asymm', 'plane', or 'antipodal'.")
+
+    # --- Asymmetric case: standard Leopardi mapping via 'colatitude' ---
+    if symmetry_type == "asymm":
+        if delete_half:
+            raise ValueError(
+                "delete_half=True is not supported for symmetry_type='asymm'."
+            )
+
+        # get_partition_points_polar returns angles in Leopardi order:
+        #   for dim=2: (azimuth, colatitude)
+        pts_s_leop = get_partition_points_polar(
+            dim,
+            N,
+            extra_offset=extra_offset,
+        )
+
+        # Convert to hyperspherical 'colatitude' order expected by hypersph_to_cart:
+        #   for dim=2: (colatitude, azimuth)
+        pts_s_hyp = flip(pts_s_leop, axis=0).T  # shape (N, dim)
+
+        grid_eucl = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+            pts_s_hyp,
+            mode="colatitude",
+        )
+        return grid_eucl
+
+    # --- Symmetric cases: 'plane' and 'antipodal' ---
+    if N % 2 != 0:
+        raise ValueError("For symmetric partitions, N must be even.")
+
+    # 1) Build the *northern* half of a symmetric Leopardi partition in polar coords.
+    #    delete_half=True means we only get the north half (including north pole),
+    #    with no collars crossing the equator (handled by the symmetric caps).
+    pts_s_half_leop = get_partition_points_polar_north(
+        dim,
+        N,
+        extra_offset=extra_offset,
+    )
+
+    # 2) Convert that half to Cartesian using the same 'colatitude' path
+    #    as in the asymmetric case (Leopardi → hyperspherical colatitude).
+    pts_s_half_hyp = flip(pts_s_half_leop, axis=0).T  # (N/2, dim)
+
+    north = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+        pts_s_half_hyp,
+        mode="colatitude",
+    )
+
+    N_half = north.shape[0]
+
+    if delete_half:
+        # For symmetric modes, delete_half=True means: only return the northern half.
+        return north
+
+    # 3) Enforce symmetry *in Cartesian space*.
+    if symmetry_type == "plane":
+        # Plane reflection w.r.t. equatorial hyperplane: last coord flips sign
+        south = copy.deepcopy(north)
+        # First dim becomes last time when using SymmetricLeopardiSampler
+        south[:, 0] *= -1.0
+    elif symmetry_type == "antipodal":
+        # Antipodal symmetry: ± pairs
+        south = -north
+    else:
+        # Should not happen due to check at top
+        raise ValueError("Invalid symmetry_type encountered.")
+
+    # 4) Stack north and south to get N points on S^dim
+    if 2 * N_half != N:
+        raise RuntimeError(
+            f"Inconsistent hemisphere size: N={N}, N_half={N_half} (expected N_half={N//2})."
+        )
+
+    points_x = vstack((north, south))
+
+    return points_x
