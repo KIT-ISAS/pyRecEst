@@ -19,6 +19,11 @@ from pyrecest.backend import (
     random,
     vstack,
     zeros,
+    sqrt,
+    cos,
+    sin,
+    linalg,
+    stack,
 )
 from scipy.optimize import minimize
 
@@ -60,9 +65,33 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             from .hyperhemispherical_uniform_distribution import (
                 HyperhemisphericalUniformDistribution,
             )
+            if pyrecest.backend.__backend_name__ in ("numpy", "pytorch"):
+                def proposal(_):
+                    return HyperhemisphericalUniformDistribution(self.dim).sample(1)
+            else:
+                import jax as _jax
+                import jax.numpy as _jnp
+                def proposal(key: _jax.Array, _) -> tuple[_jax.Array, _jnp.ndarray]:
+                    # Sample on full sphere
+                    if self.dim == 2:
+                        key, key_phi = _jnp.random.split(key)
+                        key, key_sz = _jnp.random.split(key)
 
-            def proposal(_):
-                return HyperhemisphericalUniformDistribution(self.dim).sample(1)
+                        phi = 2.0 * pi * _jnp.random.uniform(key_phi, shape=(1,))
+                        sz = 2.0 * _jnp.random.uniform(key_sz, shape=(1,)) - 1.0
+                        r = sqrt(1.0 - sz**2)
+
+                        s = stack([r * cos(phi), r * sin(phi), sz], axis=1)
+                    else:
+                        key, subkey = random.split(key)
+                        samples_unnorm = random.normal(subkey, shape=(1, self.dim + 1))
+                        norms = linalg.norm(samples_unnorm, axis=1, keepdims=True)
+                        s = samples_unnorm / norms
+
+                    # To upper hemisphere
+                    s = (1 - 2 * (s[-1, :] < 0)) * s
+                    return key, s
+
 
         if start_point is None:
             start_point = HyperhemisphericalUniformDistribution(self.dim).sample(1)
