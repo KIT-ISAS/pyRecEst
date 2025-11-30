@@ -156,7 +156,8 @@ def sample_metropolis_hastings_jax(
     n:          number of samples to return (after burn-in and thinning)
     """
     import jax.numpy as _jnp
-    from jax import _random, _lax
+    from jax import lax as _lax
+    from jax import random as _random
 
 
     start_point = _jnp.asarray(start_point)
