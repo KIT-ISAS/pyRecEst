@@ -87,10 +87,10 @@ class AbstractManifoldSpecificDistribution(ABC):
             # Get a key from your global JAX random state *outside* of lax.scan
             import jax as _jax
 
-            key = random.global_random_state()
+            key = random.get_state()
             key, key_for_mh = _jax.random.split(key)
             # Optionally update global state for future calls
-            random.set_global_random_state(key)
+            random.set_state(key)
 
             if proposal is None or start_point is None:
                 raise NotImplementedError(
