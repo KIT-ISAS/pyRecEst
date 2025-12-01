@@ -2,18 +2,17 @@ from collections.abc import Callable
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     arange,
     int32,
     int64,
     linspace,
     mod,
+    pi,
     random,
     sum,
     tile,
     zeros_like,
-    pi,
 )
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
