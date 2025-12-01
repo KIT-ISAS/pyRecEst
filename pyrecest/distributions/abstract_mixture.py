@@ -4,7 +4,6 @@ import warnings
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     count_nonzero,
     empty,
