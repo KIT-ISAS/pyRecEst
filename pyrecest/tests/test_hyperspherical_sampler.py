@@ -79,7 +79,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
     def test_get_grid_hyperhemisphere_leopardi(self):
         grid_density_parameter = 12
         samples, grid_specific_description = get_grid_hyperhemisphere(
-            "leopardi", grid_density_parameter, dim=2
+            "leopardi_symm", grid_density_parameter, dim=2
         )
 
         # Shape: N points on S^2 → N x 3
@@ -90,7 +90,7 @@ class TestHypersphericalGridGenerationFunction(unittest.TestCase):
         )
 
         # Description fields
-        self.assertEqual(grid_specific_description["scheme"], "leopardi_hemisphere")
+        self.assertEqual(grid_specific_description["scheme"], "leopardi_symm")
         self.assertEqual(
             grid_specific_description["n_side"], grid_density_parameter
         )
