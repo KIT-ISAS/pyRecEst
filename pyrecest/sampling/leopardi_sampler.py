@@ -450,8 +450,8 @@ def get_partition_points_cartesian(
         N_eff = N / 2  if delete_half is True and symmetry_type != 'asymm'.
     """
     symmetry_type = symmetry_type.lower()
-    if symmetry_type not in ("asymm", "plane", "antipodal"):
-        raise ValueError("symmetry_type must be 'asymm', 'plane', or 'antipodal'.")
+    if symmetry_type not in ("asymm", "plane", "antipodal", ""):
+        raise ValueError("symmetry_type must be 'asymm', 'plane', 'antipodal', or '' (when delete_half is true).")
 
     # --- Asymmetric case: standard Leopardi mapping via 'colatitude' ---
     if symmetry_type == "asymm":
