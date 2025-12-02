@@ -47,7 +47,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
     def pdf(self, xs):
         p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
-    
+
     def set_mean(self, mu):
         """
         Set the mean direction of the distribution.
