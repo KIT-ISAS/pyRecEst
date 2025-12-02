@@ -31,12 +31,12 @@ class AbstractDiracDistribution(AbstractDistributionType):
         :param d: Dirac locations as a numpy array.
         :param w: Weights of Dirac locations as a numpy array. If not provided, defaults to uniform weights.
         """
-        if w is None:
-            w = ones(d.shape[0]) / d.shape[0]
-
-        assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
         self.d = copy.copy(d)
-        self.w = copy.copy(w)
+        if w is None:
+            self.w = ones(d.shape[0]) / d.shape[0]
+        else:
+            assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
+            self.w = copy.copy(w)
         self.normalize_in_place()
 
     def normalize_in_place(self):
