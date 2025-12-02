@@ -192,13 +192,13 @@ class LeopardiSampler(AbstractHypersphericalUniformSampler):
         assert backend.__backend_name__ != "jax", "Backend unsupported"
 
     def get_grid(self, grid_density_parameter, dim: int):
-        # Use [::-1] due to different convention
+        # Use flip due to different convention
         grid_eucl = get_partition_points_cartesian(
             dim, grid_density_parameter, delete_half=False, symmetry_type="asymm"
         )
 
+        grid_eucl = flip(grid_eucl, axis=1)
         if self.original_code_column_order:
-            grid_eucl = flip(grid_eucl, axis=1)
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
 
         grid_specific_description = {
@@ -226,8 +226,8 @@ class SymmetricLeopardiSampler(AbstractHypersphericalUniformSampler):
             symmetry_type=self.symmetry_type,
         )
 
+        grid_eucl = flip(grid_eucl, axis=1)
         if self.original_code_column_order:
-            grid_eucl = flip(grid_eucl, axis=1)
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
 
         grid_specific_description = {
