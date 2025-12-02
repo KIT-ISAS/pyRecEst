@@ -1,21 +1,5 @@
-from ..hypersphere_subset.abstract_hyperhemispherical_distribution import (
-    AbstractHyperhemisphericalDistribution,
-)
-from ..hypersphere_subset.abstract_hypersphere_subset_dirac_distribution import (
-    AbstractHypersphereSubsetDiracDistribution,
-)
-from ..hypersphere_subset.abstract_hyperspherical_distribution import (
-    AbstractHypersphericalDistribution,
-)
+from .abstract_cart_prod_distribution import AbstractCartProdDistribution
+from ..abstract_dirac_distribution import AbstractDiracDistribution
 
-
-class HyperhemisphericalDiracDistribution(
-    AbstractHypersphereSubsetDiracDistribution, AbstractHyperhemisphericalDistribution
-):
-    pass
-
-
-class HypersphericalDiracDistribution(
-    AbstractHypersphereSubsetDiracDistribution, AbstractHypersphericalDistribution
-):
+class CartProdDiracDistribution(AbstractDiracDistribution, AbstractCartProdDistribution):
     pass
