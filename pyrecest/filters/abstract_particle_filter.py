@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, ones_like, random, sum, vmap, vstack, hstack
+from pyrecest.backend import hstack, ndim, ones_like, random, sum, vmap, vstack
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
@@ -16,7 +16,11 @@ class AbstractParticleFilter(AbstractFilterType):
         AbstractFilterType.__init__(self, initial_filter_state)
 
     def predict_identity(self, noise_distribution):
-        self.predict_nonlinear(f=lambda x: x, noise_distribution=noise_distribution, function_is_vectorized=True)
+        self.predict_nonlinear(
+            f=lambda x: x,
+            noise_distribution=noise_distribution,
+            function_is_vectorized=True,
+        )
 
     def predict_nonlinear(
         self,
@@ -54,8 +58,10 @@ class AbstractParticleFilter(AbstractFilterType):
             updated_particles = hstack(updated_particles)
         else:
             updated_particles = vstack(updated_particles)
-        
-        self.filter_state = self.filter_state.__class__(updated_particles, self.filter_state.w)
+
+        self.filter_state = self.filter_state.__class__(
+            updated_particles, self.filter_state.w
+        )
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
