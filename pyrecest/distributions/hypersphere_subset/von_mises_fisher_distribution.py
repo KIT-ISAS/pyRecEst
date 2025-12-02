@@ -131,7 +131,10 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return self.mu
 
     def set_mean(self, new_mean):
-        return self.set_mode(new_mean)
+        assert new_mean.shape == self.mu.shape
+        dist = self
+        dist.mu = copy.deepcopy(new_mean)
+        return dist
 
     def set_mode(self, new_mode):
         assert new_mode.shape == self.mu.shape
