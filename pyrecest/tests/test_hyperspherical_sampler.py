@@ -199,7 +199,7 @@ class TestHypersphericalSampler(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_leopardi_sampler(self, _, points, dim, expected_shape):
-        sampler = LeopardiSampler(original_code_column_order=False)
+        sampler = LeopardiSampler(original_code_column_order=True)
         grid, _ = sampler.get_grid(points, dim=dim)
         npt.assert_equal(grid.shape, expected_shape)
 
