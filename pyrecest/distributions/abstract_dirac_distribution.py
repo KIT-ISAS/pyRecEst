@@ -68,13 +68,13 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
-        wNew = f(dist.d)
+        w_new = f(dist.d)
 
-        assert wNew.shape == dist.w.shape, "Function returned wrong output dimensions."
-        assert all(wNew >= 0), "All weights should be greater than or equal to 0."
-        assert sum(wNew) > 0, "The sum of all weights should be greater than 0."
+        assert w_new.shape == dist.w.shape, "Function returned wrong output dimensions."
+        assert all(w_new >= 0), "All weights should be greater than or equal to 0."
+        assert sum(w_new) > 0, "The sum of all weights should be greater than 0."
 
-        dist.w = wNew * dist.w
+        dist.w = w_new * dist.w
         dist.w = dist.w / sum(dist.w)
 
         return dist
