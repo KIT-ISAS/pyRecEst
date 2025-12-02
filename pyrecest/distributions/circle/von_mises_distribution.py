@@ -47,6 +47,16 @@ class VonMisesDistribution(AbstractCircularDistribution):
     def pdf(self, xs):
         p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
+    
+    def set_mean(self, mu):
+        """
+        Set the mean direction of the distribution.
+
+        Parameters:
+        mu : scalar
+            New mean direction to set.
+        """
+        self.mu = mu
 
     @staticmethod
     def besselratio(nu, kappa):
