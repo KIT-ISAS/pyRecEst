@@ -15,4 +15,4 @@ DISABLE_LINTERS:
   - SPELL_LYCHEE # Takes pretty long
   - REPOSITORY_GRYPE # Throws false positives
 
-FILTER_REGEX_EXCLUDE: '(^\.github/workflows/|^pyrecest/_backend/)'
+FILTER_REGEX_EXCLUDE: '(\.github/workflows/|.*pyrecest/_backend/)'
