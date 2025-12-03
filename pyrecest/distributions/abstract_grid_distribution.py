@@ -2,10 +2,10 @@ import copy
 import warnings
 from abc import abstractmethod
 
-import numpy as np
 from beartype import beartype
 
 from .abstract_distribution_type import AbstractDistributionType
+from pyrecest.backend import size, any, abs, mean
 
 
 class AbstractGridDistribution(AbstractDistributionType):
@@ -23,10 +23,10 @@ class AbstractGridDistribution(AbstractDistributionType):
             not grid_type == "custom" or grid is not None
         )  # if grid_type is custom, grid needs to be given
         assert (
-            grid is None or np.size(grid) == 0 or grid.shape[0] == grid_values.shape[0]
+            grid is None or size(grid) == 0 or grid.shape[0] == grid_values.shape[0]
         )
         assert (
-            grid is None or np.size(grid) == 0 or grid.ndim == 1 or grid.shape[1] == dim
+            grid is None or size(grid) == 0 or grid.ndim == 1 or grid.shape[1] == dim
         )
         if grid is None or grid.ndim > 1 and grid.shape[0] < grid.shape[1]:
             warnings.warn(
@@ -37,7 +37,7 @@ class AbstractGridDistribution(AbstractDistributionType):
         self.grid = grid
         self.enforce_pdf_nonnegative = enforce_pdf_nonnegative
         # Overwrite with more descriptive parameterization
-        self.grid_density_description = {"n_grid_values": np.size(grid_values)}
+        self.grid_density_description = {"n_grid_values": size(grid_values)}
 
     def pdf(self, xs):
         # Use nearest neighbor interpolation by default
@@ -47,7 +47,7 @@ class AbstractGridDistribution(AbstractDistributionType):
     @property
     def n_grid_points(self):
         # Overwrite if grid_values contains values that are not used as grid values
-        return np.size(self.grid_values)
+        return size(self.grid_values)
 
     @abstractmethod
     def get_closest_point(self, xs):
@@ -61,19 +61,19 @@ class AbstractGridDistribution(AbstractDistributionType):
         assert (
             integration_boundaries is None
         ), "Custom integration boundaries are currently not supported"
-        return self.get_manifold_size() * np.mean(self.grid_values)
+        return self.get_manifold_size() * mean(self.grid_values)
 
     def normalize_in_place(self, tol=1e-4, warn_unnorm=True):
         int_val = self.integrate()
-        if np.any(self.grid_values < 0):
+        if any(self.grid_values < 0):
             warnings.warn(
                 "Warning: There are negative values. This usually points to a user error."
             )
-        elif np.abs(int_val) < 1e-200:
+        elif abs(int_val) < 1e-200:
             raise ValueError(
                 "Sum of grid values is too close to zero, this usually points to a user error."
             )
-        elif np.abs(int_val - 1) > tol:
+        elif abs(int_val - 1) > tol:
             if warn_unnorm:
                 warnings.warn(
                     "Warning: Grid values apparently do not belong to a normalized density. Normalizing..."
