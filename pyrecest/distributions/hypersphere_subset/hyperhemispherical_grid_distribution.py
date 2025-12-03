@@ -1,18 +1,30 @@
-from .abstract_hypersphere_subset_grid_distribution import (
-    AbstractHypersphereSubsetGridDistribution,
+import warnings
+
+from beartype import beartype
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import (
+    abs,
+    all,
+    allclose,
+    argmax,
+    argmin,
+    concatenate,
+    linalg,
+    minimum,
+    vstack,
 )
+
+from ...sampling.hyperspherical_sampler import get_grid_hyperhemisphere
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )
+from .abstract_hypersphere_subset_grid_distribution import (
+    AbstractHypersphereSubsetGridDistribution,
+)
 from .custom_hyperhemispherical_distribution import CustomHyperhemisphericalDistribution
 from .hyperspherical_dirac_distribution import HypersphericalDiracDistribution
-from ...sampling.hyperspherical_sampler import get_grid_hyperhemisphere
 
-import warnings
-
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import all, abs, argmax, concatenate, vstack, linalg, allclose, minimum, argmin
-from beartype import beartype
 
 class HyperhemisphericalGridDistribution(
     AbstractHypersphereSubsetGridDistribution, AbstractHyperhemisphericalDistribution
@@ -20,9 +32,9 @@ class HyperhemisphericalGridDistribution(
 
     def __init__(self, grid, grid_values, enforce_pdf_nonnegative=True):
         # Do not test norm precisely, only quick test if any coordinate exceeds 1.
-        assert all(abs(grid) <= 1 + 1e-12), (
-            "Grid points must not lie outside the unit cube."
-        )
+        assert all(
+            abs(grid) <= 1 + 1e-12
+        ), "Grid points must not lie outside the unit cube."
         assert all(
             grid[:, -1] >= -1e-12
         ), "Always using upper hemisphere (along last dimension)."
@@ -62,6 +74,7 @@ class HyperhemisphericalGridDistribution(
             "full-sphere grid distributions."
         )
         from .hyperspherical_grid_distribution import HypersphericalGridDistribution
+
         grid_full = vstack((self.grid, -self.grid))
         grid_values_ = 0.5 * concatenate((self.grid_values, self.grid_values))
         hgd = HypersphericalGridDistribution(grid_full, grid_values_)
@@ -74,13 +87,14 @@ class HyperhemisphericalGridDistribution(
 
     def plot_interpolated(self):
         hdgd = self.to_full_sphere()
+
         def pdf_doubled(x):
             return 2 * hdgd.pdf(x)
-        hhgd_interp = CustomHyperhemisphericalDistribution(
-            pdf_doubled, 3
-        )
+
+        hhgd_interp = CustomHyperhemisphericalDistribution(pdf_doubled, 3)
         h = hhgd_interp.plot()
         return h
+
     # ------------------------------------------------------------------
     # Grid geometry utilities
     # ------------------------------------------------------------------
@@ -105,9 +119,7 @@ class HyperhemisphericalGridDistribution(
 
         if xs.ndim == 1:
             if xs.shape[0] != self.dim:
-                raise ValueError(
-                    f"xs must have length {self.dim}, got {xs.shape[0]}."
-                )
+                raise ValueError(f"xs must have length {self.dim}, got {xs.shape[0]}.")
             xs = xs[None, :]  # (1, dim)
         elif xs.ndim == 2:
             if xs.shape[1] == self.dim:
@@ -115,9 +127,7 @@ class HyperhemisphericalGridDistribution(
             elif xs.shape[0] == self.dim:
                 xs = xs.T  # (batch, dim)
             else:
-                raise ValueError(
-                    f"xs must have shape (n, dim) with dim={self.dim}."
-                )
+                raise ValueError(f"xs must have shape (n, dim) with dim={self.dim}.")
         else:
             raise ValueError("xs must be a 1D or 2D array.")
 
@@ -139,7 +149,7 @@ class HyperhemisphericalGridDistribution(
             indices = indices[0]
 
         return points, indices
-    
+
     def get_manifold_size(self):
         return AbstractHyperhemisphericalDistribution.get_manifold_size(self)
 
@@ -147,7 +157,10 @@ class HyperhemisphericalGridDistribution(
     # Multiplication on the hemisphere
     # ------------------------------------------------------------------
     @beartype
-    def multiply(self: "HyperhemisphericalGridDistribution", other: "HyperhemisphericalGridDistribution") -> "HyperhemisphericalGridDistribution":
+    def multiply(
+        self: "HyperhemisphericalGridDistribution",
+        other: "HyperhemisphericalGridDistribution",
+    ) -> "HyperhemisphericalGridDistribution":
         """
         Multiply two hyperhemispherical grid distributions that share the same grid.
 
@@ -194,7 +207,13 @@ class HyperhemisphericalGridDistribution(
     # ------------------------------------------------------------------
     # pylint: disable=too-many-locals
     @staticmethod
-    def from_function(fun, no_of_grid_points, dim=2, grid_type="leopardi_symm", enforce_pdf_nonnegative=True):
+    def from_function(
+        fun,
+        no_of_grid_points,
+        dim=2,
+        grid_type="leopardi_symm",
+        enforce_pdf_nonnegative=True,
+    ):
         """
         Construct a hyperhemispherical grid distribution from a callable.
 
@@ -216,13 +235,16 @@ class HyperhemisphericalGridDistribution(
         depends on (dim, no_of_grid_points, grid_type). For 'healpix',
         only dim == 3 is supported and `healpy` must be installed.
         """
-        assert grid_type in ("leopardi_symm", "healpix"), (
-            "For hyperhemispheres, use one of the symmetric grid types 'leopardi_symm' or 'healpix'."
-        )
+        assert grid_type in (
+            "leopardi_symm",
+            "healpix",
+        ), "For hyperhemispheres, use one of the symmetric grid types 'leopardi_symm' or 'healpix'."
         grid, _ = get_grid_hyperhemisphere(grid_type, no_of_grid_points, dim=dim)
 
         grid_values = fun(grid)
 
-        sgd = HyperhemisphericalGridDistribution(grid, grid_values, enforce_pdf_nonnegative=enforce_pdf_nonnegative)
+        sgd = HyperhemisphericalGridDistribution(
+            grid, grid_values, enforce_pdf_nonnegative=enforce_pdf_nonnegative
+        )
         sgd.grid_type = grid_type
         return sgd

@@ -11,8 +11,8 @@ from ..distributions.nonperiodic.abstract_linear_distribution import (
 from ..distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,
 )
-from .manifold_mixins import EuclideanFilterMixin
 from .abstract_particle_filter import AbstractParticleFilter
+from .manifold_mixins import EuclideanFilterMixin
 
 
 class EuclideanParticleFilter(AbstractParticleFilter, EuclideanFilterMixin):

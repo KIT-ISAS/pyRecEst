@@ -1,16 +1,17 @@
 import warnings
 
-from .hyperspherical_grid_distribution import HypersphericalGridDistribution
-from .abstract_spherical_distribution import AbstractSphericalDistribution
-from .custom_hyperspherical_distribution import CustomHypersphericalDistribution
-from ..abstract_grid_distribution import AbstractGridDistribution
+from pyrecest.backend import argmax, sqrt
 
 from ...sampling.hyperspherical_sampler import LeopardiSampler, get_grid_hypersphere
-from pyrecest.backend import (
-    argmax, sqrt
-)
+from ..abstract_grid_distribution import AbstractGridDistribution
+from .abstract_spherical_distribution import AbstractSphericalDistribution
+from .custom_hyperspherical_distribution import CustomHypersphericalDistribution
+from .hyperspherical_grid_distribution import HypersphericalGridDistribution
 
-class SphericalGridDistribution(HypersphericalGridDistribution, AbstractSphericalDistribution):
+
+class SphericalGridDistribution(
+    HypersphericalGridDistribution, AbstractSphericalDistribution
+):
     """
     Grid-based approximation of a spherical (S²) distribution.
 
@@ -19,9 +20,21 @@ class SphericalGridDistribution(HypersphericalGridDistribution, AbstractSpherica
     - grid_values: shape (n_points,)
     - pdf(x): x has shape (batch_dim, space_dim) = (N, 3)
     """
-    def __init__(self, grid, grid_values, enforce_pdf_nonnegative: bool = True, grid_type: str = "unknown"):
+
+    def __init__(
+        self,
+        grid,
+        grid_values,
+        enforce_pdf_nonnegative: bool = True,
+        grid_type: str = "unknown",
+    ):
         AbstractSphericalDistribution.__init__(self)
-        super().__init__(grid, grid_values, enforce_pdf_nonnegative=enforce_pdf_nonnegative, grid_type=grid_type)
+        super().__init__(
+            grid,
+            grid_values,
+            enforce_pdf_nonnegative=enforce_pdf_nonnegative,
+            grid_type=grid_type,
+        )
         if self.dim != 3:
             raise AssertionError("SphericalGridDistribution must have dimension 3")
 
@@ -41,7 +54,9 @@ class SphericalGridDistribution(HypersphericalGridDistribution, AbstractSpherica
                 "SphericalGridDistribution:CannotNormalizeShGrid: "
                 "Cannot properly normalize for sh_grid; using generic normalization anyway."
             )
-        return AbstractGridDistribution.normalize(self, tol=tol, warn_unnorm=warn_unnorm)
+        return AbstractGridDistribution.normalize(
+            self, tol=tol, warn_unnorm=warn_unnorm
+        )
 
     # ------------------------------------------------------------------
     # Plotting
@@ -87,8 +102,12 @@ class SphericalGridDistribution(HypersphericalGridDistribution, AbstractSpherica
     # Factory methods
     # ------------------------------------------------------------------
     @staticmethod
-    def from_distribution(distribution, no_of_grid_points: int, grid_type: str = "leopardi",
-                          enforce_pdf_nonnegative: bool = True):
+    def from_distribution(
+        distribution,
+        no_of_grid_points: int,
+        grid_type: str = "leopardi",
+        enforce_pdf_nonnegative: bool = True,
+    ):
         """
         Construct a SphericalGridDistribution from an AbstractHypersphericalDistribution.
         """
@@ -102,8 +121,13 @@ class SphericalGridDistribution(HypersphericalGridDistribution, AbstractSpherica
 
     # pylint: disable=too-many-locals
     @staticmethod
-    def from_function(fun, no_of_grid_points: int, dim = 2, grid_type: str = "leopardi",
-                      enforce_pdf_nonnegative: bool = True):
+    def from_function(
+        fun,
+        no_of_grid_points: int,
+        dim=2,
+        grid_type: str = "leopardi",
+        enforce_pdf_nonnegative: bool = True,
+    ):
         """
         Construct from a function fun(x) where x has shape (batch_dim, 3).
 
@@ -111,7 +135,9 @@ class SphericalGridDistribution(HypersphericalGridDistribution, AbstractSpherica
             - 'leopardi' : Leopardi equal point set on S²
             - 'sh_grid'      : spherical harmonics grid (lat/lon mesh).
         """
-        assert dim == 2, 'Use HypersphericalGridDistribution for dimensions other than 2.'
+        assert (
+            dim == 2
+        ), "Use HypersphericalGridDistribution for dimensions other than 2."
         if grid_type == "leopardi":
             # Reuse HypersphericalGridDistribution's generator in 3D
             ls = LeopardiSampler()
@@ -127,7 +153,9 @@ class SphericalGridDistribution(HypersphericalGridDistribution, AbstractSpherica
             a = -6.0
             b = 36.0 - 8.0 * (4.0 - no_of_grid_points)
             degree = (-a + sqrt(b)) / 4.0
-            grid = get_grid_hypersphere('driscoll_healy', grid_density_parameter=degree, dim=2)
+            grid = get_grid_hypersphere(
+                "driscoll_healy", grid_density_parameter=degree, dim=2
+            )
         else:
             raise ValueError("Grid scheme not recognized")
 

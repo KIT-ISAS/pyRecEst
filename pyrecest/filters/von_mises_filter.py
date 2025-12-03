@@ -4,8 +4,9 @@ import warnings
 from pyrecest.backend import mod, pi
 from pyrecest.distributions import VonMisesDistribution
 
-from .manifold_mixins import CircularFilterMixin
 from .abstract_filter import AbstractFilter
+from .manifold_mixins import CircularFilterMixin
+
 
 class VonMisesFilter(AbstractFilter, CircularFilterMixin):
     """

@@ -9,9 +9,9 @@ import pyrecest.backend
 from pyrecest.backend import dstack, ndim, stack
 from pyrecest.distributions import GaussianDistribution
 
-from .manifold_mixins import EuclideanFilterMixin
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .kalman_filter import KalmanFilter
+from .manifold_mixins import EuclideanFilterMixin
 
 
 class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
