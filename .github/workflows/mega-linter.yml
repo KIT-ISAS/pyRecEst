@@ -75,7 +75,7 @@ jobs:
             mkdir -p /github/workspace/alpine-wheels;
             cd /github/workspace;
             sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt;
-            sed -i '/^\(torch\|triton\|jax\|nvidia\|intel-openmp\|tbb\|mkl\)/d' requirements-dev_no_version.txt;
+            sed -i '/^\(torch\|triton\|jax\|nvidia\|intel-openmp\|tbb\|mkl\|healpy\)/d' requirements-dev_no_version.txt;
             python -m pip wheel --no-deps -r requirements-dev_no_version.txt -w alpine-wheels"
 
       - name: List available wheels
