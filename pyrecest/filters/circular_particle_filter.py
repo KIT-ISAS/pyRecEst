@@ -8,6 +8,7 @@ from .abstract_particle_filter import AbstractParticleFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .manifold_mixins import CircularFilterMixin
 
+
 class CircularParticleFilter(HypertoroidalParticleFilter, CircularFilterMixin):
     # pylint: disable=non-parent-init-called,super-init-not-called
     def __init__(self, n_particles: Union[int, int32, int64]) -> None:

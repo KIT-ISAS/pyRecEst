@@ -6,8 +6,8 @@ from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribu
     HyperhemisphericalDiracDistribution,
 )
 
-from .manifold_mixins import HyperhemisphericalFilterMixin
 from .abstract_particle_filter import AbstractParticleFilter
+from .manifold_mixins import HyperhemisphericalFilterMixin
 
 
 class HyperhemisphericalParticleFilter(

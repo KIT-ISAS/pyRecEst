@@ -1,12 +1,11 @@
+import copy
 import unittest
 import warnings
-import copy
 
 import numpy.testing as npt
-
-from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution import (
-    VonMisesFisherDistribution,
-)
+import pyrecest
+from pyrecest.backend import array, eye, sqrt
+from pyrecest.distributions import HypersphericalMixture
 from pyrecest.distributions.hypersphere_subset.bingham_distribution import (
     BinghamDistribution,
 )
@@ -16,10 +15,11 @@ from pyrecest.distributions.hypersphere_subset.hyperhemispherical_grid_distribut
 from pyrecest.distributions.hypersphere_subset.hyperspherical_grid_distribution import (
     HypersphericalGridDistribution,
 )
-from pyrecest.distributions import HypersphericalMixture
+from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution import (
+    VonMisesFisherDistribution,
+)
 
-from pyrecest.backend import array, sqrt, eye
-import pyrecest
+
 class HyperhemisphericalGridDistributionTest(unittest.TestCase):
     # ------------------------------------------------------------------ #
     # Warning tests (testWarningAsymm)
@@ -40,15 +40,15 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         vmf = VonMisesFisherDistribution(mu_vmf, 2.0)
 
         comp1 = VonMisesFisherDistribution(mu_vmf, 2.0)
-        comp2 = VonMisesFisherDistribution(
-            1 / sqrt(2) * array([1.0, 0.0, -1.0]), 2.0
-        )
+        comp2 = VonMisesFisherDistribution(1 / sqrt(2) * array([1.0, 0.0, -1.0]), 2.0)
         mixture = HypersphericalMixture([comp1, comp2], array([0.5, 0.5]))
 
         # VMF
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            HyperhemisphericalGridDistribution.from_distribution(vmf, 1012, 'leopardi_symm')
+            HyperhemisphericalGridDistribution.from_distribution(
+                vmf, 1012, "leopardi_symm"
+            )
         self.assertTrue(
             any(
                 "Approximating a hyperspherical distribution on a hemisphere"
@@ -61,7 +61,9 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         # Mixture
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            HyperhemisphericalGridDistribution.from_distribution(mixture, 1012, 'leopardi_symm')
+            HyperhemisphericalGridDistribution.from_distribution(
+                mixture, 1012, "leopardi_symm"
+            )
         self.assertTrue(
             any(
                 "Approximating a hyperspherical distribution on a hemisphere"
@@ -89,7 +91,9 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         dist2 = VonMisesFisherDistribution(mu2, 2.0)
         dist = HypersphericalMixture([dist1, dist2], array([0.5, 0.5]))
 
-        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012, 'leopardi_symm')
+        hhgd = HyperhemisphericalGridDistribution.from_distribution(
+            dist, 1012, "leopardi_symm"
+        )
         grid = hhgd.get_grid()
 
         npt.assert_allclose(
@@ -114,7 +118,9 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         # Improve normalization constant.
         dist.F = dist.F * dist.integrate_numerically()
 
-        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012, 'leopardi_symm')
+        hhgd = HyperhemisphericalGridDistribution.from_distribution(
+            dist, 1012, "leopardi_symm"
+        )
         grid = hhgd.get_grid()
 
         npt.assert_allclose(
@@ -139,7 +145,9 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         # Improve normalization constant.
         dist.F = dist.F * dist.integrate_numerically()
 
-        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012, 'leopardi_symm')
+        hhgd = HyperhemisphericalGridDistribution.from_distribution(
+            dist, 1012, "leopardi_symm"
+        )
         grid = hhgd.get_grid()
 
         npt.assert_allclose(

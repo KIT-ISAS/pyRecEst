@@ -1,12 +1,12 @@
 import copy
 import warnings
 from abc import abstractmethod
+from math import prod
 
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import abs, any, mean
-from math import prod
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -27,7 +27,9 @@ class AbstractGridDistribution(AbstractDistributionType):
         )  # if grid_type is custom, grid needs to be given
         assert (
             # Use builtin prod because .shape is a tuple of ints
-            grid is None or grid.shape == () or grid.shape[0] == prod(grid_values.shape)
+            grid is None
+            or grid.shape == ()
+            or grid.shape[0] == prod(grid_values.shape)
         )
         assert (
             grid is None or grid.shape == () or grid.ndim == 1 or grid.shape[1] == dim

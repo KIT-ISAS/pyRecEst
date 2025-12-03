@@ -2,8 +2,9 @@
 from pyrecest.backend import array, ndim
 from pyrecest.distributions import VonMisesFisherDistribution
 
-from .manifold_mixins import HypersphericalFilterMixin
 from .abstract_filter import AbstractFilter
+from .manifold_mixins import HypersphericalFilterMixin
+
 
 class VonMisesFisherFilter(AbstractFilter, HypersphericalFilterMixin):
     def __init__(self):

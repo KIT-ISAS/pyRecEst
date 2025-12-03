@@ -1,17 +1,26 @@
+import copy
 import warnings
 
-from ...sampling.hyperspherical_sampler import get_grid_hypersphere
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import (
+    abs,
+    all,
+    allclose,
+    any,
+    argmax,
+    argmin,
+    concatenate,
+    isclose,
+    linalg,
+)
 
+from ...sampling.hyperspherical_sampler import get_grid_hypersphere
 from .abstract_hypersphere_subset_grid_distribution import (
     AbstractHypersphereSubsetGridDistribution,
 )
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .hyperhemispherical_grid_distribution import HyperhemisphericalGridDistribution
 
-import copy
-
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import abs, all, linalg, concatenate, allclose, argmax, argmin, any, isclose
 
 class HypersphericalGridDistribution(
     AbstractHypersphereSubsetGridDistribution, AbstractHypersphericalDistribution
@@ -46,7 +55,9 @@ class HypersphericalGridDistribution(
                 "(-1 <= coordinates <= 1)."
             )
 
-        AbstractHypersphereSubsetGridDistribution.__init__(self, grid, grid_values_, enforce_pdf_nonnegative)
+        AbstractHypersphereSubsetGridDistribution.__init__(
+            self, grid, grid_values_, enforce_pdf_nonnegative
+        )
         AbstractHypersphericalDistribution.__init__(self, grid.shape[1])
         self.grid_type = grid_type
 
@@ -131,13 +142,14 @@ class HypersphericalGridDistribution(
                 "or from_function."
             )
 
-        grid_values_half = 0.5 * (
-            self.grid_values[:half] + self.grid_values[half:]
-        )
+        grid_values_half = 0.5 * (self.grid_values[:half] + self.grid_values[half:])
         new_values = concatenate([grid_values_half, grid_values_half])
 
         return HypersphericalGridDistribution(
-            copy.deepcopy(self.grid), new_values, enforce_pdf_nonnegative=True, grid_type=self.grid_type
+            copy.deepcopy(self.grid),
+            new_values,
+            enforce_pdf_nonnegative=True,
+            grid_type=self.grid_type,
         )
 
     def to_hemisphere(self, tol=1e-10):
@@ -190,7 +202,9 @@ class HypersphericalGridDistribution(
                 "Using sum of symmetric pairs instead of 2*first_half.",
                 UserWarning,
             )
-            grid_values_hemisphere = self.grid_values[:n_half] + self.grid_values[n_half:]
+            grid_values_hemisphere = (
+                self.grid_values[:n_half] + self.grid_values[n_half:]
+            )
 
         hemi_grid = self.grid[:n_half]
         return HyperhemisphericalGridDistribution(hemi_grid, grid_values_hemisphere)
@@ -282,10 +296,13 @@ class HypersphericalGridDistribution(
             raise ValueError("dim must be >= 2")
 
         grid, _ = get_grid_hypersphere(grid_type, no_of_grid_points, dim)
-        
+
         # Call user pdf with X of shape (batch_dim, space_dim) = (n_points, dim)
         grid_values = fun(grid)
 
         return HypersphericalGridDistribution(
-            grid, grid_values, enforce_pdf_nonnegative=enforce_pdf_nonnegative, grid_type=grid_type
+            grid,
+            grid_values,
+            enforce_pdf_nonnegative=enforce_pdf_nonnegative,
+            grid_type=grid_type,
         )

@@ -285,7 +285,7 @@ class TestEvalationBasics(TestEvalationBase):
         meas = generate_measurements(
             np.zeros((self.n_timesteps_default, 2)), scenario_param
         )
-        
+
         (
             last_filter_state,
             time_elapsed,

@@ -11,4 +11,3 @@ class ToroidalParticleFilter(HypertoroidalParticleFilter, ToroidalFilterMixin):
     def __init__(self, n_particles: Union[int, int32, int64]):
         ToroidalFilterMixin.__init__(self)
         HypertoroidalParticleFilter.__init__(self, n_particles, 2)
-

@@ -1,16 +1,25 @@
+import copy
 import unittest
 import warnings
-import copy
-import pyrecest
+from math import pi
 
-from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution import (
-    VonMisesFisherDistribution,
+import numpy.testing as npt
+import pyrecest
+from pyrecest.backend import (
+    allclose,
+    array,
+    cos,
+    eye,
+    linspace,
+    meshgrid,
+    random,
+    sin,
+    sqrt,
+    vstack,
 )
+from pyrecest.distributions import HypersphericalMixture
 from pyrecest.distributions.hypersphere_subset.bingham_distribution import (
     BinghamDistribution,
-)
-from pyrecest.distributions.hypersphere_subset.watson_distribution import (
-    WatsonDistribution,
 )
 from pyrecest.distributions.hypersphere_subset.hyperspherical_grid_distribution import (
     HypersphericalGridDistribution,
@@ -18,15 +27,16 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_grid_distribution 
 from pyrecest.distributions.hypersphere_subset.hyperspherical_uniform_distribution import (
     HypersphericalUniformDistribution,
 )
-from pyrecest.distributions import HypersphericalMixture
-
-
 from pyrecest.distributions.hypersphere_subset.spherical_grid_distribution import (
     SphericalGridDistribution,
 )
-from pyrecest.backend import meshgrid, linspace, cos, sin, vstack, sqrt, array, random, allclose, eye
-from math import pi
-import numpy.testing as npt
+from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution import (
+    VonMisesFisherDistribution,
+)
+from pyrecest.distributions.hypersphere_subset.watson_distribution import (
+    WatsonDistribution,
+)
+
 
 class HypersphericalGridDistributionTest(unittest.TestCase):
     # --------------------------------------------------------------
@@ -76,16 +86,14 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         dist2 = VonMisesFisherDistribution(mu2, array(2.0))
         dist = HypersphericalMixture([dist1, dist2], array([0.5, 0.5]))
 
-        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
-        sgd = SphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
+        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, "leopardi")
+        sgd = SphericalGridDistribution.from_distribution(dist, 1012, "leopardi")
 
         grid_hgd = hgd.get_grid()
         grid_sgd = sgd.get_grid()
 
         npt.assert_allclose(grid_hgd, grid_sgd, atol=1e-12, rtol=0)
-        npt.assert_allclose(
-            hgd.grid_values, sgd.grid_values, atol=1e-12, rtol=0
-        )
+        npt.assert_allclose(hgd.grid_values, sgd.grid_values, atol=1e-12, rtol=0)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
@@ -110,7 +118,9 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
             vmf_mult = vmf1.multiply(vmf2)
 
             dist = HypersphericalMixture([vmf1, vmf2], array([0.5, 0.5]))
-            hgd = HypersphericalGridDistribution.from_distribution(dist, 1000, 'leopardi')
+            hgd = HypersphericalGridDistribution.from_distribution(
+                dist, 1000, "leopardi"
+            )
 
             # For VMF, mean direction is mu
             expected_mu = vmf_mult.mu
@@ -136,8 +146,8 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         # Optional: improve normalization constant if present
         dist.F = dist.F * dist.integrate_numerically()
 
-        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
-        sgd = SphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
+        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, "leopardi")
+        sgd = SphericalGridDistribution.from_distribution(dist, 1012, "leopardi")
 
         # First verify that SphericalGridDistribution approximates Bingham
         self.verify_pdf_equal(sgd, dist, tol=1e-6)
@@ -146,9 +156,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         grid_sgd = sgd.get_grid()
 
         npt.assert_allclose(grid_hgd, grid_sgd, atol=1e-12, rtol=0)
-        npt.assert_allclose(
-            hgd.grid_values, sgd.grid_values, atol=1e-12, rtol=0
-        )
+        npt.assert_allclose(hgd.grid_values, sgd.grid_values, atol=1e-12, rtol=0)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
@@ -164,7 +172,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
 
         dist.F = dist.F * dist.integrate_numerically()
 
-        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
+        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, "leopardi")
         # We just check that the grid is consistent with its own pdf:  pdf(grid) ~ grid_values.
         grid = hgd.get_grid()
         npt.assert_allclose(
@@ -187,7 +195,9 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
             mu = HypersphericalUniformDistribution(dim).sample(1).reshape((-1,))
 
             vmf = VonMisesFisherDistribution(mu, 2.0)
-            hgd = HypersphericalGridDistribution.from_distribution(vmf, 1012, 'leopardi')
+            hgd = HypersphericalGridDistribution.from_distribution(
+                vmf, 1012, "leopardi"
+            )
 
             npt.assert_allclose(
                 hgd.mean_direction(),
@@ -214,9 +224,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
                 dist1 = VonMisesFisherDistribution(
                     1 / sqrt(2) * array([-1.0, 0.0, 1.0]), kappa1
                 )
-                dist2 = VonMisesFisherDistribution(
-                    array([0.0, -1.0, 0.0]), kappa2
-                )
+                dist2 = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), kappa2)
 
                 hgd1 = HypersphericalGridDistribution.from_distribution(
                     dist1, 1000, "leopardi"
@@ -286,12 +294,8 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         Two grid distributions with incompatible grids must trigger
         a 'Multiply:IncompatibleGrid' error.
         """
-        dist1 = VonMisesFisherDistribution(
-            1 / sqrt(2) * array([-1.0, 0.0, 1.0]), 1.0
-        )
-        f1 = HypersphericalGridDistribution.from_distribution(
-            dist1, 84, "leopardi"
-        )
+        dist1 = VonMisesFisherDistribution(1 / sqrt(2) * array([-1.0, 0.0, 1.0]), 1.0)
+        f1 = HypersphericalGridDistribution.from_distribution(dist1, 84, "leopardi")
 
         # Make an independent copy and truncate its grid
         f2 = HypersphericalGridDistribution(
@@ -353,9 +357,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         )
 
         self.assertFalse(
-            allclose(
-                f_asymm.grid_values[half:], f_asymm.grid_values[:half]
-            )
+            allclose(f_asymm.grid_values[half:], f_asymm.grid_values[:half])
         )
 
         f_symm = f_asymm.symmetrize()
@@ -363,21 +365,15 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             f_symm.grid_values[half:], f_symm.grid_values[:half], atol=1e-10, rtol=0
         )
-        self.assertFalse(
-            allclose(f_symm.grid_values, f_asymm.grid_values)
-        )
-        self.assertFalse(
-            allclose(f_symm.grid_values, f.grid_values)
-        )
+        self.assertFalse(allclose(f_symm.grid_values, f_asymm.grid_values))
+        self.assertFalse(allclose(f_symm.grid_values, f.grid_values))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on this backend",
     )
     def test_symmetrize_watson_s3(self):
-        dist = WatsonDistribution(
-            1 / sqrt(2) * array([1.0, 1.0, 0.0]), 1.0
-        )
+        dist = WatsonDistribution(1 / sqrt(2) * array([1.0, 1.0, 0.0]), 1.0)
         f = HypersphericalGridDistribution.from_distribution(
             dist, 50, "leopardi_symm_antipodal"
         )
@@ -399,33 +395,23 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
             f_asymm.grid_values[idx1],
         )
         self.assertFalse(
-            allclose(
-                f_asymm.grid_values[half:], f_asymm.grid_values[:half]
-            )
+            allclose(f_asymm.grid_values[half:], f_asymm.grid_values[:half])
         )
 
         f_symm = f_asymm.symmetrize()
         npt.assert_allclose(
             f_symm.grid_values[half:], f_symm.grid_values[:half], atol=1e-10, rtol=0
         )
-        self.assertFalse(
-            allclose(f_symm.grid_values, f_asymm.grid_values)
-        )
-        self.assertFalse(
-            allclose(f_symm.grid_values, f.grid_values)
-        )
+        self.assertFalse(allclose(f_symm.grid_values, f_asymm.grid_values))
+        self.assertFalse(allclose(f_symm.grid_values, f.grid_values))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on this backend",
     )
     def test_symmetrize_error(self):
-        dist = VonMisesFisherDistribution(
-            1 / sqrt(2) * array([-1.0, 0.0, 1.0]), 1.0
-        )
-        f = HypersphericalGridDistribution.from_distribution(
-            dist, 84, "leopardi"
-        )
+        dist = VonMisesFisherDistribution(1 / sqrt(2) * array([-1.0, 0.0, 1.0]), 1.0)
+        f = HypersphericalGridDistribution.from_distribution(dist, 84, "leopardi")
         with self.assertRaises(ValueError) as cm:
             f.symmetrize()
         self.assertIn("Symmetrize:AsymmetricGrid", str(cm.exception))
@@ -462,9 +448,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         grid_back = hgd_back.get_grid()
 
         npt.assert_allclose(grid_back, grid_hgd, atol=1e-12, rtol=0)
-        npt.assert_allclose(
-            hgd_back.grid_values, hgd.grid_values, atol=1e-12, rtol=0
-        )
+        npt.assert_allclose(hgd_back.grid_values, hgd.grid_values, atol=1e-12, rtol=0)
 
 
 if __name__ == "__main__":

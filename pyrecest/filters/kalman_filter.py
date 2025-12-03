@@ -6,8 +6,9 @@ from bayesian_filters.kalman import KalmanFilter as BayesianFiltersKalmanFilter
 from pyrecest.backend import eye
 from pyrecest.distributions import GaussianDistribution
 
-from .manifold_mixins import EuclideanFilterMixin
 from .abstract_filter import AbstractFilter
+from .manifold_mixins import EuclideanFilterMixin
+
 
 class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
     def __init__(self, initial_state):
@@ -41,7 +42,7 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
         self,
     ) -> GaussianDistribution:
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
-    
+
     @filter_state.setter
     def filter_state(self, new_state):
         """

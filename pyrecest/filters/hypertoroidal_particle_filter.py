@@ -20,8 +20,8 @@ from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
 )
 
-from .manifold_mixins import HypertoroidalFilterMixin
 from .abstract_particle_filter import AbstractParticleFilter
+from .manifold_mixins import HypertoroidalFilterMixin
 
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, HypertoroidalFilterMixin):

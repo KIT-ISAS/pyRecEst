@@ -4,8 +4,10 @@ from functools import partial
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, log, max, min, mod, pi
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
-from .manifold_mixins import CircularFilterMixin
+
 from .abstract_filter import AbstractFilter
+from .manifold_mixins import CircularFilterMixin
+
 
 class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
     def __init__(self, wn=None):
