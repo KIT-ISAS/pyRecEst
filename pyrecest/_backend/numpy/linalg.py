@@ -14,7 +14,10 @@ from numpy.linalg import (
     norm,
     svd,
 )
-from scipy.linalg import expm
+from scipy.linalg import (
+    expm,
+    block_diag,  # For PyRecEst
+)
 
 from .._shared_numpy.linalg import (
     fractional_matrix_power,

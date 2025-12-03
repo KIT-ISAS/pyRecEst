@@ -18,6 +18,7 @@ from jax.scipy.linalg import (
     expm,
     sqrtm,
     polar,
+    block_diag,  # For PyRecEst
 )
 
 unsupported_functions = [
