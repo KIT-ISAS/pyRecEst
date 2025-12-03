@@ -50,18 +50,17 @@ jobs:
           fetch-depth: 0
 
       - name: Create alpine-wheels folder
-        run: mkdir alpine-wheels
+        run: mkdir -p alpine-wheels
 
       - name: Cache wheel directory
         id: cache-wheels
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/alpine-wheels
-          key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-alpine-wheels-${{ hashFiles('requirements-dev.txt') }}
+          key: ${{ runner.os }}-alpine-wheels-${{ hashFiles('poetry.lock') }}
 
       - name: Build cp313 musllinux wheels
+        if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: docker://python:3.13-alpine3.21
         with:
           args: >
@@ -72,12 +71,13 @@ jobs:
             curl-dev zlib-dev llvm15-dev clang15
             git cmake;
             python -m pip install --upgrade pip wheel;
-            mkdir -p /github/workspace/alpine-wheels;
             cd /github/workspace;
+            rm -rf alpine-wheels;
+            mkdir -p alpine-wheels;
             sed 's/==.*//' requirements-dev.txt > requirements-dev_no_version.txt;
             sed -i '/^\(torch\|triton\|jax\|nvidia\|intel-openmp\|tbb\|mkl\|healpy\)/d' requirements-dev_no_version.txt;
             python -m pip wheel --no-deps -r requirements-dev_no_version.txt -w alpine-wheels"
-
+      
       - name: List available wheels
         run: ls -l ./alpine-wheels
 
