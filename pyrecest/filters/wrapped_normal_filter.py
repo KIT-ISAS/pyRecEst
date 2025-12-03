@@ -4,15 +4,16 @@ from functools import partial
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, log, max, min, mod, pi
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
-from pyrecest.filters.abstract_circular_filter import AbstractCircularFilter
+from .manifold_mixins import CircularFilterMixin
+from .abstract_filter import AbstractFilter
 
-
-class WrappedNormalFilter(AbstractCircularFilter):
+class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
     def __init__(self, wn=None):
         """Initialize the filter."""
         if wn is None:
             wn = WrappedNormalDistribution(array(0.0), array(1.0))
-        AbstractCircularFilter.__init__(self, wn)
+        CircularFilterMixin.__init__(self)
+        AbstractFilter.__init__(self, wn)
 
     def predict_identity(self, wn_sys):
         """Predicts using an identity system model."""

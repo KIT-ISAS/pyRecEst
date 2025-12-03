@@ -20,11 +20,11 @@ from pyrecest.distributions import (
     HypertoroidalDiracDistribution,
 )
 
-from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
+from .manifold_mixins import HypertoroidalFilterMixin
 from .abstract_particle_filter import AbstractParticleFilter
 
 
-class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalFilter):
+class HypertoroidalParticleFilter(AbstractParticleFilter, HypertoroidalFilterMixin):
     def __init__(
         self,
         n_particles: Union[int, int32, int64],
@@ -37,7 +37,7 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, AbstractHypertoroidalF
                 arange(0.0, 2.0 * pi, 2.0 * pi / n_particles), (dim, 1)
             ).T.squeeze()
         filter_state = HypertoroidalDiracDistribution(points, dim=dim)
-        AbstractHypertoroidalFilter.__init__(self, filter_state)
+        HypertoroidalFilterMixin.__init__(self)
         AbstractParticleFilter.__init__(self, filter_state)
 
     def predict_nonlinear(

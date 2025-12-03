@@ -8,12 +8,12 @@ from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
 
-from .abstract_filter_type import AbstractFilterType
+from .abstract_filter import AbstractFilter
 
 
-class AbstractParticleFilter(AbstractFilterType):
+class AbstractParticleFilter(AbstractFilter):
     def __init__(self, initial_filter_state=None):
-        AbstractFilterType.__init__(self, initial_filter_state)
+        AbstractFilter.__init__(self, initial_filter_state)
 
     def predict_identity(self, noise_distribution):
         self.predict_nonlinear(

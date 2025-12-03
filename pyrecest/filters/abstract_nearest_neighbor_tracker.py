@@ -9,7 +9,7 @@ import pyrecest.backend
 from pyrecest.backend import dstack, ndim, stack
 from pyrecest.distributions import GaussianDistribution
 
-from .abstract_euclidean_filter import AbstractEuclideanFilter
+from .manifold_mixins import EuclideanFilterMixin
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .kalman_filter import KalmanFilter
 
@@ -62,7 +62,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
     @filter_state.setter
     def filter_state(self, new_state):
         if isinstance(new_state, list) and all(
-            isinstance(item, AbstractEuclideanFilter) for item in new_state
+            isinstance(item, EuclideanFilterMixin) for item in new_state
         ):
             assert all(
                 id(new_state[i]) != id(new_state[j])
