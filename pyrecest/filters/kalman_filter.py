@@ -32,11 +32,16 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
         self.filter_state = initial_state
 
     @property
+    def dim(self):
+        """Returns the dimension of the state."""
+        return self._filter_state.x.shape[0]
+
+    @property
     def filter_state(
         self,
     ) -> GaussianDistribution:
         return GaussianDistribution(self._filter_state.x, self._filter_state.P)
-
+    
     @filter_state.setter
     def filter_state(self, new_state):
         """
