@@ -15,6 +15,7 @@ from torch.linalg import (
     solve,
 )
 from torch.linalg import matrix_exp as expm
+from torch import block_diag  # For PyRecEst
 
 from .._backend_config import np_atol as atol
 from ..numpy import linalg as _gsnplinalg

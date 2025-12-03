@@ -1,0 +1,42 @@
+from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import HypertoroidalGridDistribution
+import unittest
+from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import ToroidalWrappedNormalDistribution
+from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution import HypertoroidalWrappedNormalDistribution
+from pyrecest.distributions.hypertorus.hypertoroidal_mixture import HypertoroidalMixture
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import array, pi, random, min, max
+import numpy.testing as npt
+class HypertoroidalGridDistributionTest(unittest.TestCase):
+
+    def test_get_grid(self):
+        grid = array([[1.0, 2.0, 3.0, 4.0], [1.0, 2.0, 3.0, 4.0]]).T
+        hgd = HypertoroidalGridDistribution(array([[1.0, 1.0], [1.0, 1.09]]) / ((2.0 * pi) ** 2), grid=grid)
+        npt.assert_allclose(hgd.get_grid(), grid)
+        npt.assert_allclose(hgd.get_grid().shape, (4, 2))
+
+    def test_approx_vmmixture_t2(self):
+        dist = HypertoroidalMixture([
+            ToroidalWrappedNormalDistribution(array([1.0,1.0]), array([[1.0,0.5],[0.5,1.0]])),
+            ToroidalWrappedNormalDistribution(array([3.0,3.0]), array([[1.0,-0.5],[-0.5,1.0]]))], 
+            array([0.5,0.5]))
+
+        hgd = HypertoroidalGridDistribution.from_distribution(dist, (31,31))
+        npt.assert_allclose(hgd.grid_values.reshape((-1,)), dist.pdf(hgd.get_grid()), atol=6)
+        npt.assert_allclose(min(hgd.get_grid(), 0), array([0, 0]))
+        npt.assert_allclose(max(hgd.get_grid(), 0), array([30/31*2*pi, 30/31*2*pi]))
+        self.assertEqual(hgd.grid_type, 'cartesian_prod')
+
+    def test_from_function_3D(self):
+        random.seed(0)
+        test_points = 2*pi*random.uniform(size=(30,3))
+        C = array([[2, 0.4, 0.2], [0.4, 2, 0.1], [0.2, 0.1, 3]])
+        mu = 2.0 * pi * random.uniform(size=(3,))
+        hwnd = HypertoroidalWrappedNormalDistribution(mu, C)
+        n_grid_points = [21, 21, 21]
+        hfd_id = HypertoroidalGridDistribution.from_function(hwnd.pdf, n_grid_points, 'cartesian_prod')
+        self.assertIsInstance(hfd_id, HypertoroidalGridDistribution)
+        npt.assert_allclose(hfd_id.pdf(test_points), hwnd.pdf(test_points), rtol=0.3)
+
+
+if __name__ == '__main__':
+    unittest.main()

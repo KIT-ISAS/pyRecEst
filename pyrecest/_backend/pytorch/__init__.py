@@ -63,8 +63,6 @@ from torch import (
     isinf,
     deg2rad,
     argsort,
-    max,
-    min,
     roll,
     dstack,
     vmap,
@@ -357,11 +355,12 @@ def shape(val):
     return val.shape
 
 
-def amax(a, axis=None):
+def max(a, axis=None):
     if axis is None:
         return _torch.max(array(a))
     return _torch.max(array(a), dim=axis).values
 
+amax=max
 
 def maximum(a, b):
     return _torch.max(array(a), array(b))
@@ -811,10 +810,11 @@ def sort(a, axis=-1):
     return sorted_a
 
 
-def amin(a, axis=-1):
+def min(a, axis=-1):
     (values, _) = _torch.min(a, dim=axis)
     return values
 
+amin = min
 
 def take(a, indices, axis=0):
     if not _torch.is_tensor(indices):
