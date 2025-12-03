@@ -360,7 +360,7 @@ def max(a, axis=None):
         return _torch.max(array(a))
     return _torch.max(array(a), dim=axis).values
 
-amax=max
+amax = max
 
 def maximum(a, b):
     return _torch.max(array(a), array(b))
