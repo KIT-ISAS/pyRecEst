@@ -94,9 +94,13 @@ def get_grid_hyperhemisphere(method: str, grid_density_parameter: int, dim: int)
         samples, _ = ls_symm.get_grid(grid_density_parameter * 2, dim)
         # To have upper half along last dim instead of first
         grid_specific_description = {
-            "scheme": "leopardi_symm",
+            "scheme": method,
             "n_side": grid_density_parameter,
         }
+    elif method in ('leopardi_symm_plane', 'leopardi_symm_antipodal'):
+        raise ValueError('In grids for the hyperhemisphere, there is no southern hemisphere (those points are discarded). ' 
+                         'Hence, specifying the symmetry type (plane/antipodal) does not make sense.' \
+                         'Use "leopardi_symm" for hyperhemispheres instead of "leopardi_symm_plane" or "leopardi_symm_antipodal".')
     elif method == "leopardi":
         raise ValueError(
             "Leopardi sampler does not support sampling on hyperhemispheres. Use 'leopardi_symm' instead."
