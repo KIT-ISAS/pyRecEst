@@ -1,11 +1,19 @@
 import unittest
-from pyrecest.distributions import VonMisesFisherDistribution, HypersphericalDiracDistribution
-from pyrecest.filters.hyperspherical_particle_filter import HypersphericalParticleFilter
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, allclose, ones, linalg, random, exp
+
 import numpy.testing as npt
+
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import allclose, array, exp, linalg, ones, random
+from pyrecest.distributions import (
+    HypersphericalDiracDistribution,
+    VonMisesFisherDistribution,
+)
+from pyrecest.filters.hyperspherical_particle_filter import HypersphericalParticleFilter
+
+
 class HypersphericalParticleFilterTest(unittest.TestCase):
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
@@ -58,9 +66,10 @@ class HypersphericalParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(est, hpf.get_point_estimate(), atol=1e-2)
 
         z = array([0.0, 1.0, 0.0])
+
         def f2(z, x):
             return exp(z @ x.T)
-        
+
         hpf.update_nonlinear(f2, z)
         est = hpf.get_point_estimate()
         npt.assert_allclose(linalg.norm(est), 1, atol=1e-10)
