@@ -254,28 +254,8 @@ class HypersphericalGridDistribution(
         return super().multiply(other)
 
     # ------------------------------------------------------------------
-    # Construction from other distributions
+    # Construction from function handle
     # ------------------------------------------------------------------
-    @staticmethod
-    def from_distribution(
-        distribution,
-        no_of_grid_points,
-        grid_type="leopardi",
-        enforce_pdf_nonnegative=True,
-    ):
-        """
-        Approximate an AbstractHypersphericalDistribution on a grid.
-        """
-        if not isinstance(distribution, AbstractHypersphericalDistribution):
-            raise TypeError(
-                "distribution must be an instance of AbstractHypersphericalDistribution."
-            )
-
-        fun = distribution.pdf
-        return HypersphericalGridDistribution.from_function(
-            fun, no_of_grid_points, distribution.dim, grid_type, enforce_pdf_nonnegative
-        )
-
     @staticmethod
     def from_function(
         fun, no_of_grid_points, dim, grid_type="leopardi", enforce_pdf_nonnegative=True

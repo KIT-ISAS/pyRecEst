@@ -48,7 +48,7 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         # VMF
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            HyperhemisphericalGridDistribution.from_distribution(vmf, 1012)
+            HyperhemisphericalGridDistribution.from_distribution(vmf, 1012, 'leopardi_symm')
         self.assertTrue(
             any(
                 "Approximating a hyperspherical distribution on a hemisphere"
@@ -61,7 +61,7 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         # Mixture
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            HyperhemisphericalGridDistribution.from_distribution(mixture, 1012)
+            HyperhemisphericalGridDistribution.from_distribution(mixture, 1012, 'leopardi_symm')
         self.assertTrue(
             any(
                 "Approximating a hyperspherical distribution on a hemisphere"
@@ -89,7 +89,7 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         dist2 = VonMisesFisherDistribution(mu2, 2.0)
         dist = HypersphericalMixture([dist1, dist2], array([0.5, 0.5]))
 
-        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012)
+        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012, 'leopardi_symm')
         grid = hhgd.get_grid()
 
         npt.assert_allclose(
@@ -114,7 +114,7 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         # Improve normalization constant.
         dist.F = dist.F * dist.integrate_numerically()
 
-        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012)
+        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012, 'leopardi_symm')
         grid = hhgd.get_grid()
 
         npt.assert_allclose(
@@ -139,7 +139,7 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         # Improve normalization constant.
         dist.F = dist.F * dist.integrate_numerically()
 
-        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012)
+        hhgd = HyperhemisphericalGridDistribution.from_distribution(dist, 1012, 'leopardi_symm')
         grid = hhgd.get_grid()
 
         npt.assert_allclose(
