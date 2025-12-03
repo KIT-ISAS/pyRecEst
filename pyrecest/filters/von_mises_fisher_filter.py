@@ -2,12 +2,13 @@
 from pyrecest.backend import array, ndim
 from pyrecest.distributions import VonMisesFisherDistribution
 
-from .abstract_hyperspherical_filter import AbstractHypersphericalFilter
+from .manifold_mixins import HypersphericalFilterMixin
+from .abstract_filter import AbstractFilter
 
-
-class VonMisesFisherFilter(AbstractHypersphericalFilter):
+class VonMisesFisherFilter(AbstractFilter, HypersphericalFilterMixin):
     def __init__(self):
-        AbstractHypersphericalFilter.__init__(
+        HypersphericalFilterMixin.__init__(self)
+        AbstractFilter.__init__(
             self, VonMisesFisherDistribution(array([1.0, 0.0]), 1.0)
         )
 

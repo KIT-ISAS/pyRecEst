@@ -282,6 +282,10 @@ class TestEvalationBasics(TestEvalationBase):
         scenario_param = simulation_database(scenario_name)
         scenario_param = check_and_fix_config(scenario_param)
 
+        meas = generate_measurements(
+            np.zeros((self.n_timesteps_default, 2)), scenario_param
+        )
+        
         (
             last_filter_state,
             time_elapsed,
@@ -291,9 +295,7 @@ class TestEvalationBasics(TestEvalationBase):
             scenario_param,
             {"name": "kf", "parameter": None},
             np.zeros((self.n_timesteps_default, 2)),
-            generate_measurements(
-                np.zeros((self.n_timesteps_default, 2)), scenario_param
-            ),
+            measurements=meas,
         )
 
         self.assertIsInstance(time_elapsed, float)

@@ -6,12 +6,12 @@ from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribu
     HyperhemisphericalDiracDistribution,
 )
 
-from .abstract_hyperhemispherical_filter import AbstractHyperhemisphericalFilter
+from .manifold_mixins import HyperhemisphericalFilterMixin
 from .abstract_particle_filter import AbstractParticleFilter
 
 
 class HyperhemisphericalParticleFilter(
-    AbstractHyperhemisphericalFilter, AbstractParticleFilter
+    AbstractParticleFilter, HyperhemisphericalFilterMixin
 ):
     def __init__(
         self, n_particles: int | np.int32 | np.int64, dim: int | np.int32 | np.int64
@@ -26,9 +26,7 @@ class HyperhemisphericalParticleFilter(
         initial_filter_state = HyperhemisphericalDiracDistribution(
             np.empty((n_particles, dim + 1))
         )
-        AbstractHyperhemisphericalFilter.__init__(
-            self, initial_filter_state=initial_filter_state
-        )
+        HyperhemisphericalFilterMixin.__init__(self)
         AbstractParticleFilter.__init__(self, initial_filter_state=initial_filter_state)
 
     def set_state(self, new_state):

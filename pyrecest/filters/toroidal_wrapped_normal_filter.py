@@ -4,12 +4,14 @@ from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution impo
     ToroidalWrappedNormalDistribution,
 )
 
-from .abstract_toroidal_filter import AbstractToroidalFilter
+from .abstract_filter import AbstractFilter
+from .manifold_mixins import ToroidalFilterMixin
 
 
-class ToroidalWrappedNormalFilter(AbstractToroidalFilter):
+class ToroidalWrappedNormalFilter(AbstractFilter, ToroidalFilterMixin):
     def __init__(self):
-        AbstractToroidalFilter.__init__(
+        ToroidalFilterMixin.__init__(self)
+        AbstractFilter.__init__(
             self, ToroidalWrappedNormalDistribution(array([0, 0]), eye(2))
         )
 

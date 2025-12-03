@@ -11,11 +11,11 @@ from ..distributions.nonperiodic.abstract_linear_distribution import (
 from ..distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,
 )
-from .abstract_euclidean_filter import AbstractEuclideanFilter
+from .manifold_mixins import EuclideanFilterMixin
 from .abstract_particle_filter import AbstractParticleFilter
 
 
-class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
+class EuclideanParticleFilter(AbstractParticleFilter, EuclideanFilterMixin):
     """Euclidean Particle Filter Class."""
 
     def __init__(
@@ -29,8 +29,8 @@ class EuclideanParticleFilter(AbstractParticleFilter, AbstractEuclideanFilter):
             raise ValueError("dim must be a positive integer")
 
         initial_distribution = LinearDiracDistribution(zeros((n_particles, dim)))
+        EuclideanFilterMixin.__init__(self)
         AbstractParticleFilter.__init__(self, initial_distribution)
-        AbstractEuclideanFilter.__init__(self, initial_distribution)
 
     @property
     def filter_state(self):

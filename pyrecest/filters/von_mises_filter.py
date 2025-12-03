@@ -4,10 +4,10 @@ import warnings
 from pyrecest.backend import mod, pi
 from pyrecest.distributions import VonMisesDistribution
 
-from .abstract_circular_filter import AbstractCircularFilter
+from .manifold_mixins import CircularFilterMixin
+from .abstract_filter import AbstractFilter
 
-
-class VonMisesFilter(AbstractCircularFilter):
+class VonMisesFilter(AbstractFilter, CircularFilterMixin):
     """
     A filter based on the Von Mises distribution.
 
@@ -24,7 +24,8 @@ class VonMisesFilter(AbstractCircularFilter):
         """
         Constructor
         """
-        AbstractCircularFilter.__init__(self, VonMisesDistribution(0, 1))
+        CircularFilterMixin.__init__(self)
+        AbstractFilter.__init__(self, VonMisesDistribution(0, 1))
 
     def predict_identity(self, vmSys: VonMisesDistribution):
         """

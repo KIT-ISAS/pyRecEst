@@ -6,13 +6,13 @@ from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
 
-from .abstract_filter_type import AbstractFilterType
+from .abstract_filter import AbstractFilter
 
 
-class AbstractGridFilter(AbstractFilterType):
+class AbstractGridFilter(AbstractFilter):
     @beartype
     def __init__(self, state_init: AbstractGridDistribution):
-        AbstractFilterType.__init__(self, state_init)
+        AbstractFilter.__init__(self, state_init)
 
     @property
     def filter_state(self):
