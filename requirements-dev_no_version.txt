@@ -12,7 +12,6 @@ cycler
 filelock
 fonttools
 fsspec
-healpy
 idna
 iniconfig
 jinja2
