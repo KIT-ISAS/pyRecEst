@@ -4,20 +4,14 @@ from .abstract_hypersphere_subset_grid_distribution import (
 from .abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )
-from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .custom_hyperhemispherical_distribution import CustomHyperhemisphericalDistribution
 from .hyperspherical_dirac_distribution import HypersphericalDiracDistribution
 from ...sampling.hyperspherical_sampler import get_grid_hyperhemisphere
 
-from .von_mises_fisher_distribution import VonMisesFisherDistribution
-from .bingham_distribution import BinghamDistribution
-from .hyperspherical_mixture import HypersphericalMixture
-from .watson_distribution import WatsonDistribution
-
 import warnings
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import ones, all, abs, argmax, concatenate, vstack, linalg, allclose, minimum, argmin, array_equal
+from pyrecest.backend import all, abs, argmax, concatenate, vstack, linalg, allclose, minimum, argmin
 from beartype import beartype
 
 class HyperhemisphericalGridDistribution(
@@ -196,63 +190,11 @@ class HyperhemisphericalGridDistribution(
         )
 
     # ------------------------------------------------------------------
-    # Construction from other distributions
-    # ------------------------------------------------------------------
-    @staticmethod
-    def from_distribution(
-        distribution, no_of_grid_points, grid_type="leopardi_symm"
-    ):
-        from .hyperspherical_grid_distribution import HypersphericalGridDistribution
-        # pylint: disable=too-many-boolean-expressions
-        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
-            fun = distribution.pdf
-        elif (
-            isinstance(distribution, (WatsonDistribution, BinghamDistribution))
-            or (
-                isinstance(distribution, VonMisesFisherDistribution)
-                and distribution.mu[-1] == 0
-            )
-            or (
-                isinstance(distribution, HypersphericalMixture)
-                and len(distribution.dists) == 2
-                and array_equal(distribution.w, 0.5*ones(distribution.w.shape))
-                and array_equal(
-                    distribution.dists[1].mu, -distribution.dists[0].mu
-                )
-            )
-        ):
-            # Symmetric on the full sphere -> pdf on hemisphere is 2*pdf_full.
-            def fun(x):
-                return 2 * distribution.pdf(x)
-        elif isinstance(distribution, HypersphericalGridDistribution):
-            raise ValueError(
-                "Converting a HypersphericalGridDistribution to a "
-                "HyperhemisphericalGridDistribution is not supported."
-            )
-        elif isinstance(distribution, AbstractHypersphericalDistribution):
-            warnings.warn(
-                "fromDistribution:asymmetricOnHypersphere: "
-                "Approximating a hyperspherical distribution on a hemisphere. "
-                "The density may not be symmetric. Double check if this is "
-                "intentional.",
-                UserWarning,
-            )
-            def fun(x):
-                return 2 * distribution.pdf(x)
-        else:
-            raise ValueError("Distribution currently not supported.")
-
-        sgd = HyperhemisphericalGridDistribution.from_function(
-            fun, no_of_grid_points, distribution.dim, grid_type
-        )
-        return sgd
-
-    # ------------------------------------------------------------------
     # Construction from a function handle
     # ------------------------------------------------------------------
     # pylint: disable=too-many-locals
     @staticmethod
-    def from_function(fun, no_of_grid_points, dim=2, grid_type="leopardi_symm"):
+    def from_function(fun, no_of_grid_points, dim=2, grid_type="leopardi_symm", enforce_pdf_nonnegative=True):
         """
         Construct a hyperhemispherical grid distribution from a callable.
 
@@ -281,6 +223,6 @@ class HyperhemisphericalGridDistribution(
 
         grid_values = fun(grid)
 
-        sgd = HyperhemisphericalGridDistribution(grid, grid_values)
+        sgd = HyperhemisphericalGridDistribution(grid, grid_values, enforce_pdf_nonnegative=enforce_pdf_nonnegative)
         sgd.grid_type = grid_type
         return sgd

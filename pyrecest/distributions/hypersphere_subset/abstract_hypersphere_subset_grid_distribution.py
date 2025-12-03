@@ -49,24 +49,28 @@ class AbstractHypersphereSubsetGridDistribution(AbstractGridDistribution, Abstra
         # Delegates multiplication logic to AbstractGridDistribution
         return super().multiply(other)
 
-    @staticmethod
-    def from_distribution(distribution, no_of_grid_points, grid_type='healpix'):
-        # Import here to avoid circular imports
-        from .hyperhemispherical_grid_distribution import HyperhemisphericalGridDistribution
+    @classmethod
+    def from_distribution(cls, distribution, no_of_grid_points, grid_type, enforce_pdf_nonnegative=True):
         from .hyperspherical_grid_distribution import HypersphericalGridDistribution
+        from .hyperhemispherical_grid_distribution import HyperhemisphericalGridDistribution
         # pylint: disable=too-many-boolean-expressions
-        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
+        if isinstance(distribution, AbstractHypersphereSubsetGridDistribution):
+            raise ValueError('Already a grid distribution. Use directly instead of converting.')
+        
+        if isinstance(distribution, AbstractHypersphericalDistribution) and issubclass(cls, HypersphericalGridDistribution)\
+            or isinstance(distribution, AbstractHyperhemisphericalDistribution) and issubclass(cls, HyperhemisphericalGridDistribution):
+            # sphere -> sphere or hemisphere -> hemisphere
             fun = distribution.pdf
-        elif (isinstance(distribution, (WatsonDistribution, BinghamDistribution)) or 
+        elif issubclass(cls, HyperhemisphericalGridDistribution) and (isinstance(distribution, (WatsonDistribution, BinghamDistribution)) or 
               (isinstance(distribution, VonMisesFisherDistribution) and distribution.mu[-1] == 0) or 
               (isinstance(distribution, HypersphericalMixture) and
                 len(distribution.dists) == 2 and all(w == 0.5 for w in distribution.w) and
                 array_equal(distribution.dists[1].mu, -distribution.dists[0].mu))):
+            # sphere -> hemisphere for symmetric distributions
             def fun(x):
                 return 2 * distribution.pdf(x)
-        elif isinstance(distribution, HypersphericalGridDistribution):
-            raise ValueError('Converting a HypersphericalGridDistribution to a HyperhemisphericalGridDistribution is not supported')
-        elif isinstance(distribution, AbstractHypersphericalDistribution):
+        elif isinstance(distribution, AbstractHypersphericalDistribution) and issubclass(cls, HyperhemisphericalGridDistribution):
+            # sphere -> hemisphere for general distributions, which we do not know to be symmetric
             warnings.warn('Approximating a hyperspherical distribution on a hemisphere. The density may not be symmetric. Double check if this is intentional.',
                           UserWarning)
             def fun(x):
@@ -74,6 +78,6 @@ class AbstractHypersphereSubsetGridDistribution(AbstractGridDistribution, Abstra
         else:
             raise ValueError('Distribution currently not supported.')
             
-        sgd = HyperhemisphericalGridDistribution.from_function(fun, no_of_grid_points, distribution.dim, grid_type)
+        sgd = cls.from_function(fun, no_of_grid_points, distribution.dim, grid_type, enforce_pdf_nonnegative=enforce_pdf_nonnegative)
         return sgd
 

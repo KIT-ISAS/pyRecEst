@@ -76,8 +76,8 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         dist2 = VonMisesFisherDistribution(mu2, array(2.0))
         dist = HypersphericalMixture([dist1, dist2], array([0.5, 0.5]))
 
-        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012)
-        sgd = SphericalGridDistribution.from_distribution(dist, 1012)
+        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
+        sgd = SphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
 
         grid_hgd = hgd.get_grid()
         grid_sgd = sgd.get_grid()
@@ -110,7 +110,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
             vmf_mult = vmf1.multiply(vmf2)
 
             dist = HypersphericalMixture([vmf1, vmf2], array([0.5, 0.5]))
-            hgd = HypersphericalGridDistribution.from_distribution(dist, 1000)
+            hgd = HypersphericalGridDistribution.from_distribution(dist, 1000, 'leopardi')
 
             # For VMF, mean direction is mu
             expected_mu = vmf_mult.mu
@@ -136,8 +136,8 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         # Optional: improve normalization constant if present
         dist.F = dist.F * dist.integrate_numerically()
 
-        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012)
-        sgd = SphericalGridDistribution.from_distribution(dist, 1012)
+        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
+        sgd = SphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
 
         # First verify that SphericalGridDistribution approximates Bingham
         self.verify_pdf_equal(sgd, dist, tol=1e-6)
@@ -164,7 +164,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
 
         dist.F = dist.F * dist.integrate_numerically()
 
-        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012)
+        hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, 'leopardi')
         # We just check that the grid is consistent with its own pdf:  pdf(grid) ~ grid_values.
         grid = hgd.get_grid()
         npt.assert_allclose(
@@ -187,7 +187,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
             mu = HypersphericalUniformDistribution(dim).sample(1).reshape((-1,))
 
             vmf = VonMisesFisherDistribution(mu, 2.0)
-            hgd = HypersphericalGridDistribution.from_distribution(vmf, 1012)
+            hgd = HypersphericalGridDistribution.from_distribution(vmf, 1012, 'leopardi')
 
             npt.assert_allclose(
                 hgd.mean_direction(),
