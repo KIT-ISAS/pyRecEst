@@ -1,4 +1,10 @@
+import warnings
+
 import bayesian_filters
+
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     any,
@@ -23,12 +29,10 @@ from pyrecest.backend import (
     zeros,
     zeros_like,
 )
-# pylint: disable=no-name-in-module,no-member
-import pyrecest.backend
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
-import warnings
+
 
 class KernelSMEFilter(AbstractMultitargetTracker):
     """
@@ -36,6 +40,7 @@ class KernelSMEFilter(AbstractMultitargetTracker):
     Measurements are assumed to be (meas_dim, n_meas) arrays because this simplifies algebraic
     operations in the implementation.
     """
+
     def __init__(
         self,
         initial_priors: list[GaussianDistribution] | None = None,
@@ -96,7 +101,9 @@ class KernelSMEFilter(AbstractMultitargetTracker):
             sys_noise_cov = sys_noise
         # Reshape into matrix, multiply with system matrix, reshape into vector
         # Pytorch does not support "order=F" in reshape, so we do it manually
-        self.x = (system_matrix @ self.get_point_estimate(flatten_vector=False)).T.reshape((-1,))
+        self.x = (
+            system_matrix @ self.get_point_estimate(flatten_vector=False)
+        ).T.reshape((-1,))
 
         sys_mat_list = [system_matrix] * self.n_targets
         sys_noise_cov_list = [sys_noise_cov] * self.n_targets
@@ -210,7 +217,7 @@ class KernelSMEFilter(AbstractMultitargetTracker):
         )
 
         # Add jitter to sigma_s for numerical stability
-        jitter = 1e-6 * eye(sigma_s.shape[0]) 
+        jitter = 1e-6 * eye(sigma_s.shape[0])
         sigma_s = sigma_s + jitter
 
         x_posterior = self.x + sigma_xs @ linalg.solve(sigma_s, pseudo_meas - mu_s)
@@ -250,7 +257,9 @@ class KernelSMEFilter(AbstractMultitargetTracker):
         for i in range(n_test_points):
             a_i = testPoints[:, i]
             for j in range(n_meas):
-                gaussian_curr = GaussianDistribution(measurements[:, j], kernel_width * eye(meas_dim))
+                gaussian_curr = GaussianDistribution(
+                    measurements[:, j], kernel_width * eye(meas_dim)
+                )
                 pseudo_meas[i] += gaussian_curr.pdf(a_i)
         return pseudo_meas
 
@@ -327,7 +336,7 @@ class KernelSMEFilter(AbstractMultitargetTracker):
             z = testPoints[:, i]
             for k in range(n_targets):
                 gd_curr = GaussianDistribution(meas_means[k], meas_cov_kernel[k])
-                P_target[i, k] = gd_curr.pdf(z) 
+                P_target[i, k] = gd_curr.pdf(z)
 
         # Clutter pdf at testpoints: N(a_i; 0, clutterCov + Gamma I)
         clutter_cov_kernel = clutterCov + kernel_width * I_meas
@@ -379,9 +388,7 @@ class KernelSMEFilter(AbstractMultitargetTracker):
                 clutter_i = clutter_pdf[i]
                 clutter_j = clutter_pdf[j]
                 midpoint = 0.5 * (testPoints[:, i] + testPoints[:, j])
-                gd_clutter = GaussianDistribution(
-                    zeros(meas_dim), clutter_cov_kernel
-                )
+                gd_clutter = GaussianDistribution(zeros(meas_dim), clutter_cov_kernel)
                 clutter_mid_pdf = gd_clutter.pdf(midpoint)
 
                 term3 = (lam_c**2) * clutter_i * clutter_j

@@ -1,16 +1,26 @@
 import copy
+import math
 import unittest
 
-from parameterized import parameterized
-from pyrecest.distributions import GaussianDistribution
-from pyrecest.filters.kernel_sme_filter import KernelSMEFilter
-
-from pyrecest.backend import array, zeros, arange, eye, column_stack, diag, hstack, linalg
 import numpy.testing as npt
-import math
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+from parameterized import parameterized
+from pyrecest.backend import (
+    arange,
+    array,
+    column_stack,
+    diag,
+    eye,
+    hstack,
+    linalg,
+    zeros,
+)
+from pyrecest.distributions import GaussianDistribution
+from pyrecest.filters.kernel_sme_filter import KernelSMEFilter
+
+
 class TestKernelSMEFilter(unittest.TestCase):
     measurement_matrix_2DCV = array([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
     gaussians_2DCV = [
@@ -20,7 +30,11 @@ class TestKernelSMEFilter(unittest.TestCase):
     ]
 
     measurement_matrix_3DCV = array(
-        [[1.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0]]
+        [
+            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        ]
     )
     gaussians_3DCV = [
         GaussianDistribution(zeros(6), diag(arange(1, 7))),
@@ -100,12 +114,14 @@ class TestKernelSMEFilter(unittest.TestCase):
             ),
         )
         tracker.predict_linear(
-            array([
-                [1.0, 1.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 1.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]),
+            array(
+                [
+                    [1.0, 1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 1.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ]
+            ),
             eye(4),
         )
         npt.assert_allclose(
@@ -231,8 +247,7 @@ class TestKernelSMEFilter(unittest.TestCase):
         priorMeans = column_stack([g.mu for g in self.gaussians_2DCV])
         posteriorMeansFirstUpdate = tracker.get_point_estimate()
         self.assertTrue(
-            sum(linalg.norm(priorMeans[[0, 2], :] - array([[2], [2]]), axis=0))
-            >= 10
+            sum(linalg.norm(priorMeans[[0, 2], :] - array([[2], [2]]), axis=0)) >= 10
         )
         self.assertTrue(
             sum(
@@ -276,12 +291,11 @@ class TestKernelSMEFilter(unittest.TestCase):
             >= 10
         )
         self.assertTrue(
-            sum(linalg.norm(priorMeans[[0, 2], :] - array([[2], [2]]), axis=0))
-            >= 10
+            sum(linalg.norm(priorMeans[[0, 2], :] - array([[2], [2]]), axis=0)) >= 10
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ( "pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_gating(self):
@@ -377,7 +391,9 @@ class TestKernelSMEFilter(unittest.TestCase):
         self.assertEqual(tracker.posterior_estimates_over_time.shape, (12, 1))
 
         tracker.predict_linear(
-            linalg.block_diag(array([[1.0, 1.0], [0.0, 1.0]]), array([[1.0, 1.0], [0.0, 1.0]])),
+            linalg.block_diag(
+                array([[1.0, 1.0], [0.0, 1.0]]), array([[1.0, 1.0], [0.0, 1.0]])
+            ),
             eye(4),
             None,
         )
@@ -387,7 +403,9 @@ class TestKernelSMEFilter(unittest.TestCase):
 
         allGaussians = self.gaussians_2DCV
         # measurement matrix is meas_dim x state_dim. Hence, we need to stack the state dimension first (unlike our normal convention)
-        perfectMeasOrdered = (self.measurement_matrix_2DCV @ column_stack([g.mu for g in allGaussians]))
+        perfectMeasOrdered = self.measurement_matrix_2DCV @ column_stack(
+            [g.mu for g in allGaussians]
+        )
         measurements = perfectMeasOrdered
         tracker.update_linear(measurements, self.measurement_matrix_2DCV, eye(2))
 
