@@ -177,6 +177,7 @@ from . import linalg
 from . import random
 from . import fft   # For PyRecEst
 from . import spatial  # For PyRecEst
+from . import signal  # For PyRecEst
 
 from jax.numpy import array
 
