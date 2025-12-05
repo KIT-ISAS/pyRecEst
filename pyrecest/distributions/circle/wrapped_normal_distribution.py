@@ -86,7 +86,7 @@ class WrappedNormalDistribution(
                     tp = xp * xp * tmp
                     tm = xm * xm * tmp
                     old_result = result[i]
-                    result[i] += exp(tp) + exp(tm)
+                    result[i] += (exp(tp) + exp(tm)).squeeze()
 
                     if result[i] == old_result:
                         break

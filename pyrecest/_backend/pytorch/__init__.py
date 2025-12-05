@@ -86,6 +86,7 @@ from . import (
     # for pyrecest
     fft,  # NOQA
     spatial,  # NOQA
+    signal,  # NOQA
 )
 from ._common import array, cast, from_numpy
 from ._dtype import (

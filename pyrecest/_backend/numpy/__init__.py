@@ -168,6 +168,7 @@ from . import (
     # For pyrecest
     fft,  # NOQA
     spatial,  # NOQA
+    signal,  # NOQA
 )
 from ._common import (
     _box_binary_scalar,
