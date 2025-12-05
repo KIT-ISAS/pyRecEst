@@ -1,11 +1,8 @@
 import copy
+import math
 import warnings
 
-
-
-from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
-from .hypertoroidal_uniform_distribution import HypertoroidalUniformDistribution
-from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution
+from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
@@ -17,11 +14,10 @@ from pyrecest.backend import (
     column_stack,
     conj,
     exp,
-    signal,
     fft,
     imag,
-    linspace,
     linalg,
+    linspace,
     log,
     meshgrid,
     mod,
@@ -33,12 +29,15 @@ from pyrecest.backend import (
     real,
     reshape,
     shape,
+    signal,
     sqrt,
     sum,
     zeros,
 )
-import math
-from beartype import beartype
+
+from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution
+from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+from .hypertoroidal_uniform_distribution import HypertoroidalUniformDistribution
 
 
 class HypertoroidalFourierDistribution(
@@ -112,7 +111,7 @@ class HypertoroidalFourierDistribution(
 
         if self.dim > 1 and ndim(xs) == 1:
             # Must be single point in multi-dim case
-            assert (xs.shape[0] == self.dim)
+            assert xs.shape[0] == self.dim
 
         if self.dim not in (1, xs.shape[-1]):
             raise ValueError(
@@ -186,7 +185,6 @@ class HypertoroidalFourierDistribution(
             )
             return self
 
-    
         if c00 < 0:
             warnings.warn(
                 "Normalization:negative: C00 is negative. "
@@ -214,7 +212,9 @@ class HypertoroidalFourierDistribution(
         return self
 
     @beartype
-    def truncate(self, n_coefficients: tuple[int, ...], force_normalization: bool = False):
+    def truncate(
+        self, n_coefficients: tuple[int, ...], force_normalization: bool = False
+    ):
         """
         Truncate or pad the coefficient tensor to a desired size, centered.
 
@@ -226,7 +226,7 @@ class HypertoroidalFourierDistribution(
             If True, ensures the resulting distribution is normalized
             even if the transformation is 'identity'.
         """
-        assert all((array(n_coefficients)- 1) % 2 == 0)
+        assert all((array(n_coefficients) - 1) % 2 == 0)
 
         if not all(array(n_coefficients) > 0):
             raise ValueError("truncate: n_coefficients must be positive.")
@@ -273,7 +273,9 @@ class HypertoroidalFourierDistribution(
 
         return result
 
-    def transform_via_coefficients(self, desired_transformation: str, n_coefficients=None):
+    def transform_via_coefficients(
+        self, desired_transformation: str, n_coefficients=None
+    ):
         """
         Transform the representation (e.g., square the underlying function)
         directly in coefficient space, where supported.
@@ -427,9 +429,7 @@ class HypertoroidalFourierDistribution(
             Fourier coefficients. One of 'sqrt', 'log', 'identity'.
         """
         # Check that number of arguments matches dimensionality, where possible
-        axes = [
-            linspace(0.0, 2.0 * pi, int(n), endpoint=False) for n in n_coefficients
-        ]
+        axes = [linspace(0.0, 2.0 * pi, int(n), endpoint=False) for n in n_coefficients]
         grid = meshgrid(*axes, indexing="ij")
         fvals = fun(*grid)  # expect vectorized function
 
@@ -474,13 +474,10 @@ class HypertoroidalFourierDistribution(
             "from_function_values: n_coefficients length must match "
             "number of dimensions of fvals."
         )
-        
 
         # Ensure no dimension has only one entry, except [N,1] 1‑D case
         sizes = array(shape(fvals), dtype=int)
-        if not (
-            (ndim(fvals) == 2 and sizes[1] == 1) or all(sizes > 1)
-        ):
+        if not ((ndim(fvals) == 2 and sizes[1] == 1) or all(sizes > 1)):
             raise ValueError(
                 "from_function_values: Some dimension has only one entry. "
                 "Fix the shape of fvals."
@@ -512,9 +509,7 @@ class HypertoroidalFourierDistribution(
                     pad_width.append((0, 1))  # pad one element at the end
                 else:
                     pad_width.append((0, 0))
-            fourier_coefficients = pad(
-                fourier_coefficients, pad_width, mode="constant"
-            )
+            fourier_coefficients = pad(fourier_coefficients, pad_width, mode="constant")
 
             rev_slices = tuple(
                 slice(None, None, -1) for _ in range(ndim(fourier_coefficients))
@@ -580,7 +575,9 @@ class HypertoroidalFourierDistribution(
         raise NotImplementedError("integrate is not implemented yet in Python.")
 
     @beartype
-    def transform_via_fft(self, desired_transformation: str, n_coefficients: tuple[int, ...] | None = None):
+    def transform_via_fft(
+        self, desired_transformation: str, n_coefficients: tuple[int, ...] | None = None
+    ):
         """
         Transform the distribution by:
         1) Going to state space via IFFT (using current 'identity' coeffs),
@@ -588,14 +585,17 @@ class HypertoroidalFourierDistribution(
         3) Recomputing Fourier coeffs via FFT and truncating.
         """
         if self.transformation != "identity":
-            raise ValueError("Cannot transform via FFT if transformation is not 'identity'.")
+            raise ValueError(
+                "Cannot transform via FFT if transformation is not 'identity'."
+            )
 
         if n_coefficients is None:
             n_coefficients = self.coeff_mat.shape
 
-
         # 1) Get function values on the implicit grid from the current coeffs
-        fvals_complex = fft.ifftn(fft.ifftshift(self.coeff_mat)) * prod(shape(self.coeff_mat))
+        fvals_complex = fft.ifftn(fft.ifftshift(self.coeff_mat)) * prod(
+            shape(self.coeff_mat)
+        )
         fvals = real(fvals_complex)
 
         # 2) Use from_function_values to apply desired_transformation and compute new coeffs
@@ -641,7 +641,9 @@ class HypertoroidalFourierDistribution(
 
         # --- Main cases depending on transformation ---
         if self.transformation == "sqrt":
-            conv1 = signal.fftconvolve(hfd_tmp.coeff_mat, hfd_tmp.coeff_mat, mode="full")
+            conv1 = signal.fftconvolve(
+                hfd_tmp.coeff_mat, hfd_tmp.coeff_mat, mode="full"
+            )
             conv2 = signal.fftconvolve(f2_tmp.coeff_mat, f2_tmp.coeff_mat, mode="full")
             c_conv = (2 * pi) ** hfd_tmp.dim * conv1 * conv2
 
