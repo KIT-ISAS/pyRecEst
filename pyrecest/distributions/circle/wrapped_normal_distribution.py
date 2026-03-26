@@ -62,6 +62,11 @@ class WrappedNormalDistribution(
         xs = array(xs)
         if ndim(xs) == 0:
             xs = array([xs])
+        elif ndim(xs) > 1:
+            raise ValueError(
+                "WrappedNormalDistribution.pdf expects scalar angles, "
+                f"got input shape {xs.shape}."
+            )
         # check if sigma is large and return uniform distribution in this case
         if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
             return 1.0 / (2.0 * pi) * ones(xs.shape[0])
