@@ -136,7 +136,8 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             shd2 = shd.truncate(4)
         self.assertEqual(shd2.coeff_mat.shape, (5, 9))
         self.assertTrue(all(isnan(shd2.coeff_mat[4, :]) | (shd2.coeff_mat[4, :] == 0)))
-        shd3 = shd.truncate(5)
+        with self.assertWarns(UserWarning):
+            shd3 = shd.truncate(5)
         self.assertEqual(shd3.coeff_mat.shape, (6, 11))
         self.assertTrue(
             all(
