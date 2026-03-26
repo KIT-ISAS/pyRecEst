@@ -78,7 +78,7 @@ class WrappedNormalDistribution(
 
             for i in range(n_inputs):
                 old_result = 0.0
-                result[i] = exp(x[i] * x[i] * tmp)
+                result[i] = squeeze(exp(x[i] * x[i] * tmp))
 
                 for k in range(1, max_iterations + 1):
                     xp = x[i] + 2 * pi * k
