@@ -1,1 +1,1 @@
-from jax.scipy.signal import fftconvolve  # For PyRecEst
+from scipy.signal import fftconvolve  # For PyRecEst
