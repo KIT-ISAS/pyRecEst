@@ -61,11 +61,11 @@ jobs:
 
       - name: Build cp313 musllinux wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
-        uses: docker://python:3.13-alpine3.21
+        uses: docker://python:3.13-alpine3.23
         with:
           args: >
             /bin/sh -lc "set -eux;
-            apk add --no-cache build-base musl-dev gcc g++ make openblas-dev fftw-dev geos-dev cfitsio-dev curl-dev zlib-dev llvm15-dev clang15 git cmake;
+            apk add --no-cache build-base musl-dev gcc g++ make openblas-dev fftw-dev geos-dev cfitsio-dev curl-dev zlib-dev clang21 git cmake;
             python -m pip install --upgrade pip wheel 'poetry>=2.0,<3.0' 'poetry-plugin-export>=1.8,<2.0';
             cd /github/workspace;
             rm -rf alpine-wheels requirements-alpine.txt;
