@@ -1,7 +1,7 @@
 import copy
 import warnings
 
-import numpy as np
+from pyrecest.backend import zeros, sqrt, pi, linalg, abs, stack, arccos, arctan2, clip, array, ones
 
 from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_complex import (
     SphericalHarmonicsDistributionComplex,
@@ -29,9 +29,9 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
 
     def __init__(self, degree, transformation="identity"):
         HypersphericalFilterMixin.__init__(self)
-        coeff_mat = np.zeros((degree + 1, 2 * degree + 1), dtype=complex)
+        coeff_mat = zeros((degree + 1, 2 * degree + 1), dtype=complex)
         if transformation == "identity":
-            coeff_mat[0, 0] = 1.0 / np.sqrt(4.0 * np.pi)
+            coeff_mat[0, 0] = 1.0 / sqrt(4.0 * pi)
         elif transformation == "sqrt":
             coeff_mat[0, 0] = 1.0
         else:
@@ -140,10 +140,10 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
         assert isinstance(
             meas_noise, SphericalHarmonicsDistributionComplex
         ), "meas_noise must be a SphericalHarmonicsDistributionComplex"
-        z = np.asarray(z, dtype=float).ravel()
-        z_norm = np.linalg.norm(z)
+        z = array(z, dtype=float).ravel()
+        z_norm = linalg.norm(z)
         not_near_north_pole = (
-            np.abs(z[0]) > 1e-6 or np.abs(z[1]) > 1e-6 or np.abs(z[2] - 1.0) > 1e-6
+            abs(z[0]) > 1e-6 or abs(z[1]) > 1e-6 or abs(z[2] - 1.0) > 1e-6
         )
         if z_norm > 1e-6 and not_near_north_pole:
             warnings.warn(
@@ -152,9 +152,9 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
                 "Using update_nonlinear may yield faster results.",
                 stacklevel=2,
             )
-            phi = np.arctan2(z[1], z[0])  # azimuth
-            theta = np.arccos(
-                np.clip(z[2] / z_norm, -1.0, 1.0)
+            phi = arctan2(z[1], z[0])  # azimuth
+            theta = arccos(
+                clip(z[2] / z_norm, -1.0, 1.0)
             )  # colatitude
             meas_noise = meas_noise.rotate(0.0, theta, phi)
         self._filter_state = self._filter_state.multiply(meas_noise)
@@ -204,15 +204,15 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
             SphericalHarmonicsDistributionComplex._get_dh_grid_cartesian(degree)
         )
         # (3, N) matrix for likelihood calls
-        grid_pts = np.stack([x_c, y_c, z_c], axis=0)
+        grid_pts = stack([x_c, y_c, z_c], axis=0)
 
         # Evaluate current state on the DH grid
         fval_curr = self._filter_state._eval_on_grid()  # pylint: disable=protected-access
 
         # Accumulate likelihood values over all (likelihood, measurement) pairs
-        likelihood_vals = np.ones(grid_shape, dtype=float)
+        likelihood_vals = ones(grid_shape, dtype=float)
         for lk, zk in zip(likelihoods, measurements):
-            lv = np.asarray(lk(zk, grid_pts), dtype=float).reshape(grid_shape)
+            lv = array(lk(zk, grid_pts), dtype=float).reshape(grid_shape)
             likelihood_vals *= lv
 
         # Scale factor: multiplying by 2^n keeps values away from zero so that
@@ -224,7 +224,7 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
         if self._filter_state.transformation == "identity":
             fval_new = scale * fval_curr * likelihood_vals
         elif self._filter_state.transformation == "sqrt":
-            fval_new = scale * fval_curr * np.sqrt(np.maximum(likelihood_vals, 0.0))
+            fval_new = scale * fval_curr * sqrt(maximum(likelihood_vals, 0.0))
         else:
             raise ValueError(
                 f"Unsupported transformation: '{self._filter_state.transformation}'"
