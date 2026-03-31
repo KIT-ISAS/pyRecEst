@@ -100,6 +100,7 @@ from .circle.sine_skewed_distributions import (
 from .circle.piecewise_constant_distribution import PiecewiseConstantDistribution
 from .circle.von_mises_distribution import VonMisesDistribution
 from .circle.wrapped_cauchy_distribution import WrappedCauchyDistribution
+from .circle.wrapped_exponential_distribution import WrappedExponentialDistribution
 from .circle.wrapped_laplace_distribution import WrappedLaplaceDistribution
 from .circle.wrapped_normal_distribution import WrappedNormalDistribution
 from .conditional.abstract_conditional_distribution import (
@@ -249,6 +250,7 @@ ToroidalWDDistribution = ToroidalDiracDistribution
 VMDistribution = VonMisesDistribution
 WDDistribution = CircularDiracDistribution
 VMFDistribution = VonMisesFisherDistribution
+WEDistribution = WrappedExponentialDistribution
 
 aliases = [
     "HypertoroidalWNDistribution",
@@ -258,6 +260,7 @@ aliases = [
     "VMDistribution",
     "WDDistribution",
     "VMFDistribution",
+    "WEDistribution",
 ]
 
 __all__ = aliases + [
@@ -321,6 +324,7 @@ __all__ = aliases + [
     "PiecewiseConstantDistribution",
     "VonMisesDistribution",
     "WrappedCauchyDistribution",
+    "WrappedExponentialDistribution",
     "WrappedLaplaceDistribution",
     "WrappedNormalDistribution",
     "AbstractConditionalDistribution",
