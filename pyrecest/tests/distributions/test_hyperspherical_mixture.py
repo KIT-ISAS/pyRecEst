@@ -43,7 +43,8 @@ class HypersphericalMixtureTest(unittest.TestCase):
             arange(-1, 4), arange(-1, 4), arange(-1, 4), arange(-1, 4)
         )
         points = array([a.ravel(), b.ravel(), c.ravel(), d.ravel()]).T
-        points = points / sqrt(sum(points**2, axis=1, keepdims=True))
+        norms = sqrt(sum(points**2, axis=1, keepdims=True))
+        points = points[norms.ravel() > 0] / norms[norms.ravel() > 0]
 
         assert_allclose(
             smix.pdf(points),
