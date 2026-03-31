@@ -84,7 +84,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         """Metropolis Hastings sampling algorithm."""
         if pyrecest.backend.__backend_name__ == "jax":
             # Get a key from your global JAX random state *outside* of lax.scan
-            import jax as _jax
+            import jax as _jax  # pylint: disable=import-error
 
             key = random.get_state()
             key, key_for_mh = _jax.random.split(key)
@@ -157,8 +157,8 @@ def sample_metropolis_hastings_jax(
     start_point: initial state (array)
     n:          number of samples to return (after burn-in and thinning)
     """
-    import jax.numpy as _jnp
-    from jax import random as _random
+    import jax.numpy as _jnp  # pylint: disable=import-error
+    from jax import random as _random  # pylint: disable=import-error
 
     start_point = _jnp.asarray(start_point)
     total_steps = burn_in + n * skipping

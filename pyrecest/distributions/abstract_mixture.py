@@ -89,7 +89,8 @@ class AbstractMixture(AbstractDistributionType):
         for i, occ in enumerate(occurrences):
             occ_val = occ.item() if hasattr(occ, "item") else int(occ)
             if occ_val != 0:
-                s[count : count + occ_val, :] = self.dists[i].sample(occ_val)  # noqa: E203
+                count_next = count + occ_val
+                s[count:count_next, :] = self.dists[i].sample(occ_val)
                 count += occ_val
 
         return s
