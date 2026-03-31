@@ -181,6 +181,9 @@ from .hypertorus.hypertoroidal_wrapped_normal_distribution import (
 from .hypertorus.toroidal_dirac_distribution import ToroidalDiracDistribution
 from .hypertorus.toroidal_mixture import ToroidalMixture
 from .hypertorus.toroidal_uniform_distribution import ToroidalUniformDistribution
+from .hypertorus.toroidal_von_mises_cosine_distribution import (
+    ToroidalVonMisesCosineDistribution,
+)
 from .hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,
 )
@@ -316,6 +319,7 @@ __all__ = aliases + [
     "ToroidalDiracDistribution",
     "ToroidalMixture",
     "ToroidalUniformDistribution",
+    "ToroidalVonMisesCosineDistribution",
     "ToroidalVonMisesSineDistribution",
     "ToroidalWrappedNormalDistribution",
     "AbstractHyperrectangularDistribution",
