@@ -103,9 +103,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 transformation=self.transformation,
                 multiplied_by_n=self.multiplied_by_n,
             )
-        fdNew.n = (
-            self.n
-        )  # The number should not change! We store it if we use a complex one now and set it to None if we falsely believe we know the number (it is not clear for complex ones)
+        fdNew.n = self.n  # Preserve the original n value (should remain unchanged)
         return fdNew
 
     def pdf(self, xs):

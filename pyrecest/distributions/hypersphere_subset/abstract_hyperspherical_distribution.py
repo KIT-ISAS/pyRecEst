@@ -106,6 +106,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                         norms = _jnp.linalg.norm(samples_unnorm, axis=1, keepdims=True)
                         s = samples_unnorm / norms
 
+                    # Ensure exact unit norm (avoids float32 rounding errors)
+                    s = s / _jnp.linalg.norm(s, axis=-1, keepdims=True)
                     return s
 
         if start_point is None:

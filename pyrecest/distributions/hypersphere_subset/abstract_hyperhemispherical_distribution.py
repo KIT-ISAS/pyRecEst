@@ -101,6 +101,8 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                     sign = _jnp.where(s[..., -1:] < 0.0, -1.0, 1.0)
                     s = sign * s
 
+                    # Ensure exact unit norm (avoids float32 rounding errors)
+                    s = s / _jnp.linalg.norm(s, axis=-1, keepdims=True)
                     return s
 
 

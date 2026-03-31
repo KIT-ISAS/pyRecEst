@@ -66,7 +66,6 @@ class AbstractManifoldSpecificDistribution(ABC):
         raise NotImplementedError("set_mode is not implemented for this distribution")
 
     # Need to use Union instead of | to support torch.dtype
-    # Need to use Union instead of | to support torch.dtype
     def sample(self, n: Union[int, int32, int64]):
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)

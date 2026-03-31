@@ -125,13 +125,9 @@ def multinomial(n, pvals):
     import jax.numpy as _jnp
     state, has_state, _ = _get_state()
     state, key = jax.random.split(state)
-    set_state_return(has_state, state, None)
     backend.jax_global_random_state = state
     pvals = _jnp.asarray(pvals, dtype=_jnp.float32)
     pvals = pvals / pvals.sum()
     samples = jax.random.categorical(key, _jnp.log(pvals), shape=(n,))
-    counts = _jnp.zeros(len(pvals), dtype=_jnp.int32)
-    for i in range(n):
-        counts = counts.at[samples[i]].add(1)
-    return counts
+    return _jnp.bincount(samples, minlength=len(pvals))
 
