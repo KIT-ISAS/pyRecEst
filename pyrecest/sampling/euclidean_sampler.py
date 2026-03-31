@@ -28,7 +28,7 @@ def _is_prime(n):
     return True
 
 
-def _fibonacci_eigen(d):
+def _fibonacci_eigen(d):  # pylint: disable=too-many-locals
     """Compute the eigenvector basis V and eigenvalues R of the Fibonacci matrix.
 
     Based on Purser, "Generalized Fibonacci Grids".
@@ -157,14 +157,14 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         return xy_equal.T  # (n_samples, dim)
 
     @staticmethod
-    def _fibonacci_grid(d, l, covariance=None, mean=None, rescale=True):
+    def _fibonacci_grid(d, n_points, covariance=None, mean=None, rescale=True):  # pylint: disable=too-many-locals,too-many-statements
         """Generate a multi-dimensional Fibonacci grid.
 
         Parameters
         ----------
         d : int
             Dimension.
-        l : int
+        n_points : int
             Number of grid points.
         covariance : np.ndarray of shape (d, d), optional
             Covariance matrix for the Gaussian output.  Defaults to identity.
@@ -175,11 +175,11 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
 
         Returns
         -------
-        xy_equal : np.ndarray of shape (d, l)
+        xy_equal : np.ndarray of shape (d, n_points)
             Uniform grid on [0, 1]^d.
-        xy_stdMM : np.ndarray of shape (d, l)
+        xy_stdMM : np.ndarray of shape (d, n_points)
             Moment-matched standard normal grid on R^d.
-        xy_gauss : np.ndarray of shape (d, l)
+        xy_gauss : np.ndarray of shape (d, n_points)
             Gaussian grid on R^d with the given covariance and mean.
         """
         if covariance is None:
@@ -188,7 +188,7 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
             mean = np.zeros(d)
         mean = np.asarray(mean, dtype=float).ravel()
 
-        if l == 0:
+        if n_points == 0:
             empty_arr = np.empty((d, 0))
             return empty_arr.copy(), empty_arr.copy(), empty_arr.copy()
 
@@ -198,11 +198,11 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         outer = np.max(np.sum(np.abs(V), axis=0))
 
         # Number of points per side of the auxiliary hypercube
-        L0 = int(np.ceil(l ** (1.0 / d)))
+        L0 = int(np.ceil(n_points ** (1.0 / d)))
         spc = 1.0 / L0
         extra = 2
         L1 = int(np.ceil(outer / spc)) + extra
-        if l % 2 != L1 % 2:
+        if n_points % 2 != L1 % 2:
             L1 += 1
 
         # Centered sampling vector with spacing spc
@@ -218,7 +218,7 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
 
         # Identify points fully inside [-1/2, 1/2]^d
         ind = np.all((xy <= 0.5) & (xy >= -0.5), axis=0)
-        assert ind.sum() % 2 == l % 2, "Parity of in-box points does not match l"
+        assert ind.sum() % 2 == n_points % 2, "Parity of in-box points does not match n_points"
 
         # Keep only points whose non-first coordinates are in [-1/2, 1/2]
         ind0 = np.all((xy[1:, :] <= 0.5) & (xy[1:, :] >= -0.5), axis=0)
@@ -227,7 +227,7 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
 
         # Fine-tune the number of samples by adjusting the x_1 boundary
         n_current = int(ind.sum())
-        diff = l - n_current
+        diff = n_points - n_current
         assert diff % 2 == 0, (
             f"Sample count parity mismatch after slicing: expected difference to be even but got {diff}"
         )
@@ -244,15 +244,15 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         border_x = 0.5
         if n_add > 0:
             # Add n_add samples just outside the right boundary
-            ind[sort_idx[ibp + 1 : ibp + 1 + n_add]] = True
+            ind[sort_idx[ibp + 1:ibp + 1 + n_add]] = True
             # Add n_add samples just outside the left boundary
-            ind[sort_idx[ibm - n_add : ibm]] = True
+            ind[sort_idx[ibm - n_add:ibm]] = True
             border_x = float(srt[ibp + n_add])
         elif n_add < 0:
             # Remove |n_add| samples just inside the right boundary
-            ind[sort_idx[ibp + n_add + 1 : ibp + 1]] = False
+            ind[sort_idx[ibp + n_add + 1:ibp + 1]] = False
             # Remove |n_add| samples just inside the left boundary
-            ind[sort_idx[ibm : ibm - n_add]] = False
+            ind[sort_idx[ibm:ibm - n_add]] = False
             border_x = float(srt[ibp + n_add])
 
         # Sanity check: border_x must lie within the grid extent
@@ -262,15 +262,15 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         assert np.all(
             np.abs(border_vec_rot) <= np.max(vec)
         ), "Increase 'extra' variable"
-        assert int(ind.sum()) == l
+        assert int(ind.sum()) == n_points
 
         # Extract the selected points and center them
         xy = xy[:, ind]
         xy = xy - xy.mean(axis=1, keepdims=True)
 
-        # Rescale so that the outermost point hits ±(1/2 - 1/(2L))
-        if l > 1 and rescale:
-            border_wanted = 0.5 - 1.0 / (2 * l)
+        # Rescale so that the outermost point hits ±(1/2 - 1/(2·n_points))
+        if n_points > 1 and rescale:
+            border_wanted = 0.5 - 1.0 / (2 * n_points)
             fac = np.max(xy, axis=1, keepdims=True) / border_wanted
             xy = xy / fac
 
