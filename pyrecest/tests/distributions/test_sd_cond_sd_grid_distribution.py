@@ -58,8 +58,8 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
 
         grid, _ = get_grid_hypersphere("leopardi", 10, 2)
         n = grid.shape[0]
-        surface = AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
-            2
+        surface = (
+            AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(2)
         )
         gv = ones((n, n)) / surface
         with self.assertRaises(ValueError):
@@ -86,8 +86,8 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
 
         grid, _ = get_grid_hypersphere("leopardi", 10, 2)
         n = grid.shape[0]
-        surface = AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
-            2
+        surface = (
+            AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(2)
         )
         gv = ones((n, n)) / surface
         gv[0, 0] = -1.0
@@ -282,8 +282,10 @@ class TestSdCondSdGridDistributionFromFunction(unittest.TestCase):
     def test_from_function_uniform(self):
         """Build a uniform conditional from a constant function."""
         d = 3  # S2 embedding dim; manifold dim = 2
-        surface = AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
-            d - 1
+        surface = (
+            AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
+                d - 1
+            )
         )
 
         def uniform_fun(a, _b):
@@ -291,7 +293,11 @@ class TestSdCondSdGridDistributionFromFunction(unittest.TestCase):
 
         n = 50
         sc = SdCondSdGridDistribution.from_function(
-            uniform_fun, n, fun_does_cartesian_product=False, grid_type="leopardi", dim=6
+            uniform_fun,
+            n,
+            fun_does_cartesian_product=False,
+            grid_type="leopardi",
+            dim=6,
         )
         self.assertEqual(sc.dim, 6)
         self.assertEqual(sc.grid_values.shape, (n, n))
@@ -305,8 +311,10 @@ class TestSdCondSdGridDistributionFromFunction(unittest.TestCase):
     def test_from_function_cartesian_product(self):
         """from_function with fun_does_cartesian_product=True."""
         d = 3
-        surface = AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
-            d - 1
+        surface = (
+            AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
+                d - 1
+            )
         )
         n = 30
 
