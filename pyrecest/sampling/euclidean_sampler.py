@@ -2,10 +2,9 @@
 import warnings
 
 import numpy as np
-from scipy.special import erfinv as scipy_erfinv
-
 from pyrecest.backend import eye, zeros
 from pyrecest.distributions import GaussianDistribution
+from scipy.special import erfinv as scipy_erfinv
 
 from .abstract_sampler import AbstractSampler
 
@@ -78,9 +77,7 @@ def _fibonacci_eigen(d):  # pylint: disable=too-many-locals
         a = np.linalg.norm(V, axis=0)
         V = V / a
         j_flat = np.arange(1, d + 1)
-        R = (-1) ** (j_flat - 1) / (
-            2 * np.sin((2 * j_flat - 1) * np.pi / (4 * d + 2))
-        )
+        R = (-1) ** (j_flat - 1) / (2 * np.sin((2 * j_flat - 1) * np.pi / (4 * d + 2)))
         if not _is_prime(2 * d + 1):
             warnings.warn("2*D+1 should be prime", UserWarning, stacklevel=2)
     return V, R
@@ -157,7 +154,9 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         return xy_equal.T  # (n_samples, dim)
 
     @staticmethod
-    def _fibonacci_grid(d, n_points, covariance=None, mean=None, rescale=True):  # pylint: disable=too-many-locals,too-many-statements
+    def _fibonacci_grid(
+        d, n_points, covariance=None, mean=None, rescale=True
+    ):  # pylint: disable=too-many-locals,too-many-statements
         """Generate a multi-dimensional Fibonacci grid.
 
         Parameters
@@ -218,22 +217,24 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
 
         # Identify points fully inside [-1/2, 1/2]^d
         ind = np.all((xy <= 0.5) & (xy >= -0.5), axis=0)
-        assert ind.sum() % 2 == n_points % 2, "Parity of in-box points does not match n_points"
+        assert (
+            ind.sum() % 2 == n_points % 2
+        ), "Parity of in-box points does not match n_points"
 
         # Keep only points whose non-first coordinates are in [-1/2, 1/2]
-        ind0 = np.all((xy[1:, :] <= 0.5) & (xy[1:, :] >= -0.5), axis=0)
+        ind0 = np.all((xy[1:, :] <= 0.5) & (xy[1:, :] >= -0.5), axis=0)  # noqa: E203
         xy = xy[:, ind0]
         ind = ind[ind0]
 
         # Fine-tune the number of samples by adjusting the x_1 boundary
         n_current = int(ind.sum())
         diff = n_points - n_current
-        assert diff % 2 == 0, (
-            f"Sample count parity mismatch after slicing: expected difference to be even but got {diff}"
-        )
+        assert (
+            diff % 2 == 0
+        ), f"Sample count parity mismatch after slicing: expected difference to be even but got {diff}"
         n_add = diff // 2
 
-        sort_idx = np.argsort(xy[0, :], kind="stable")  # ascending sort
+        sort_idx = np.argsort(xy[0, :], kind="stable")  # noqa: E203
         srt = xy[0, sort_idx]
 
         where_le = np.where(srt <= 0.5)[0]
@@ -244,15 +245,15 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         border_x = 0.5
         if n_add > 0:
             # Add n_add samples just outside the right boundary
-            ind[sort_idx[ibp + 1:ibp + 1 + n_add]] = True
+            ind[sort_idx[ibp + 1 : ibp + 1 + n_add]] = True  # noqa: E203
             # Add n_add samples just outside the left boundary
-            ind[sort_idx[ibm - n_add:ibm]] = True
+            ind[sort_idx[ibm - n_add : ibm]] = True  # noqa: E203
             border_x = float(srt[ibp + n_add])
         elif n_add < 0:
             # Remove |n_add| samples just inside the right boundary
-            ind[sort_idx[ibp + n_add + 1:ibp + 1]] = False
+            ind[sort_idx[ibp + n_add + 1 : ibp + 1]] = False  # noqa: E203
             # Remove |n_add| samples just inside the left boundary
-            ind[sort_idx[ibm:ibm - n_add]] = False
+            ind[sort_idx[ibm : ibm - n_add]] = False  # noqa: E203
             border_x = float(srt[ibp + n_add])
 
         # Sanity check: border_x must lie within the grid extent
