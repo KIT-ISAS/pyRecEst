@@ -15,7 +15,7 @@ class GaussianMixture(LinearMixture, AbstractLinearDistribution):
 
     def mean(self):
         gauss_array = self.dists
-        return dot(array([g.mu for g in gauss_array]), self.w)
+        return dot(self.w, array([g.mu for g in gauss_array]))
 
     def set_mean(self, new_mean):
         mean_offset = new_mean - self.mean()
