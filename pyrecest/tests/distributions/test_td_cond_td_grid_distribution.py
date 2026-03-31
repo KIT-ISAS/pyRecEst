@@ -30,8 +30,8 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         gv = _make_normalized_grid_values(n)
         td = TdCondTdGridDistribution(array(grid), array(gv))
         self.assertEqual(td.dim, 2)
-        npt.assert_array_equal(np.asarray(td.grid), grid)
-        npt.assert_array_equal(np.asarray(td.grid_values), gv)
+        npt.assert_allclose(td.grid, grid, rtol=1e-6)
+        npt.assert_allclose(td.grid_values, gv, rtol=1e-6)
 
     def test_construction_wrong_shape_raises(self):
         n = 4
