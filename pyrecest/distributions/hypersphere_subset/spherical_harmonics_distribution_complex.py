@@ -336,16 +336,14 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
         if self.transformation == "identity" and other.transformation == "identity":
             # Direct frequency-domain formula: h_{l,m} = sqrt(4π/(2l+1)) * f_{l,m} * g_{l,0}
-            h_lm = np.zeros_like(np.asarray(self.coeff_mat))
+            h_lm = np.zeros_like(self.coeff_mat)
             for l in range(degree + 1):
                 factor = (
                     np.sqrt(4.0 * np.pi / (2 * l + 1))
-                    * np.asarray(other.coeff_mat[l, l])
+                    * other.coeff_mat[l, l]
                 )
                 for m in range(-l, l + 1):
-                    h_lm[l, l + m] = (
-                        factor * np.asarray(self.coeff_mat[l, l + m])
-                    )
+                    h_lm[l, l + m] = factor * self.coeff_mat[l, l + m]
             result = SphericalHarmonicsDistributionComplex(h_lm, "identity")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -360,7 +358,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             f_grid = self._eval_on_grid(target_degree=degree_fine)
             p_grid = f_grid**2
 
-            g_grid = other._eval_on_grid(target_degree=degree_fine)  # pylint: disable=protected-access
+            g_grid = other._eval_on_grid(target_degree=degree_fine)
             q_grid = g_grid**2
 
             import pyshtools as pysh  # pylint: disable=import-error
