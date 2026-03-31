@@ -3,7 +3,6 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_uniform_distributi
 )
 
 from .abstract_dummy_filter import AbstractDummyFilter
-from .abstract_filter import AbstractFilter
 from .manifold_mixins import HypersphericalFilterMixin
 
 
@@ -22,7 +21,7 @@ class HypersphericalDummyFilter(AbstractDummyFilter, HypersphericalFilterMixin):
         """
         assert dim >= 2, "dim must be at least 2"
         HypersphericalFilterMixin.__init__(self)
-        AbstractFilter.__init__(self, HypersphericalUniformDistribution(dim))
+        AbstractDummyFilter.__init__(self, HypersphericalUniformDistribution(dim))
 
     def get_point_estimate(self):
         return AbstractDummyFilter.get_point_estimate(self)

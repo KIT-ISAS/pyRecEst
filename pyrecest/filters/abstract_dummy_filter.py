@@ -4,9 +4,11 @@ from .abstract_filter import AbstractFilter
 class AbstractDummyFilter(AbstractFilter):
     """Abstract dummy filter that does nothing on predictions and updates.
 
-    Subclasses must implement __init__ and call AbstractFilter.__init__ with the
-    initial distribution to store as the fixed filter state.
+    Subclasses should call super().__init__ with the initial distribution.
     """
+
+    def __init__(self, initial_filter_state):
+        AbstractFilter.__init__(self, initial_filter_state)
 
     @property
     def dist(self):
@@ -28,7 +30,7 @@ class AbstractDummyFilter(AbstractFilter):
     def predict_identity(self, noise_distribution):
         pass
 
-    def predict_nonlinear(self, f, noise_distribution=None, *args):
+    def predict_nonlinear(self, f, *args, **kwargs):
         pass
 
     def predict_nonlinear_via_transition_density(self, transition_density, *args):
