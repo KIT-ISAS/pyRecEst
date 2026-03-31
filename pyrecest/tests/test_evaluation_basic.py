@@ -455,15 +455,18 @@ class TestEvalationBasics(TestEvalationBase):
     )
     def test_evaluate_for_file_R2_random_walk(self):
         self.simulation_param["all_seeds"] = range(self.n_runs_default)
-        groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
+        groundtruths, measurements = generate_simulated_scenarios(
+            self.simulation_param
+        )
 
         filters_configs_input = [
             {"name": "kf", "parameter": None},
             {"name": "pf", "parameter": [51, 81]},
         ]
 
-        filename = "tmp.npy"
-        np.save(filename, {"groundtruths": groundtruths, "measurements": measurements})
+        filename = self._make_temp_npy_file(
+            {"groundtruths": groundtruths, "measurements": measurements}
+        )
 
         scenario_config = {
             "manifold": "Euclidean",
@@ -499,11 +502,34 @@ class TestEvalationBasics(TestEvalationBase):
             measurements,
         )
 
+    def _make_temp_npy_file(self, data):
+        fd, filename = tempfile.mkstemp(suffix=".npy")
+        os.close(fd)
+        self.addCleanup(
+            lambda path=filename: os.path.exists(path) and os.remove(path)
+        )
+        np.save(filename, data)
+        return filename
+
     def _load_evaluation_data(self):
         self.test_evaluate_for_simulation_config_R2_random_walk()
-        files = os.listdir(self.tmpdirname.name)
-        filename = os.path.join(self.tmpdirname.name, files[0])
-        return np.load(filename, allow_pickle=True).item()
+
+        files = sorted(
+            os.path.join(self.tmpdirname.name, file)
+            for file in os.listdir(self.tmpdirname.name)
+            if os.path.isfile(os.path.join(self.tmpdirname.name, file))
+        )
+
+        self.assertEqual(
+            len(files),
+            1,
+            msg=(
+                f"Expected exactly one evaluation file in "
+                f"{self.tmpdirname.name}, got: {files}"
+            ),
+        )
+
+        return np.load(files[0], allow_pickle=True).item()
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
