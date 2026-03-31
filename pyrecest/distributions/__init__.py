@@ -91,6 +91,7 @@ from .circle.wrapped_normal_distribution import WrappedNormalDistribution
 from .conditional.abstract_conditional_distribution import (
     AbstractConditionalDistribution,
 )
+from .conditional.sd_cond_sd_grid_distribution import SdCondSdGridDistribution
 from .custom_hyperrectangular_distribution import CustomHyperrectangularDistribution
 from .disk_uniform_distribution import DiskUniformDistribution
 from .ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution
@@ -275,6 +276,7 @@ __all__ = aliases + [
     "WrappedLaplaceDistribution",
     "WrappedNormalDistribution",
     "AbstractConditionalDistribution",
+    "SdCondSdGridDistribution",
     "CustomHyperrectangularDistribution",
     "DiskUniformDistribution",
     "EllipsoidalBallUniformDistribution",

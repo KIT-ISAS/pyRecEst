@@ -1,4 +1,5 @@
 from .abstract_dummy_filter import AbstractDummyFilter
+from .abstract_axial_filter import AbstractAxialFilter
 from .abstract_filter import AbstractFilter
 from .abstract_particle_filter import AbstractParticleFilter
 from .euclidean_particle_filter import EuclideanParticleFilter
@@ -9,6 +10,7 @@ from .manifold_mixins import EuclideanFilterMixin, HypertoroidalFilterMixin
 
 __all__ = [
     "AbstractDummyFilter",
+    "AbstractAxialFilter",
     "AbstractFilter",
     "EuclideanFilterMixin",
     "HypertoroidalFilterMixin",
