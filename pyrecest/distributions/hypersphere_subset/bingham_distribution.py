@@ -1,10 +1,16 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
+import numpy as np
+from scipy.integrate import quad
+from scipy.optimize import fsolve
+from scipy.special import iv
+
 from pyrecest.backend import (
     abs,
     all,
     argsort,
     array,
+    concatenate,
     diag,
     exp,
     eye,
@@ -14,8 +20,6 @@ from pyrecest.backend import (
     sum,
     zeros,
 )
-from scipy.integrate import quad
-from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
@@ -54,7 +58,10 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def calculate_F(Z):
-        """Uses method by wood. Only supports 4-D distributions."""
+        """Uses analytical method. Supports 2-D and 4-D distributions."""
+        if Z.shape[0] == 2:
+            # F = exp((Z[0]+Z[1])/2) * 2*pi * I_0(|Z[0]-Z[1]|/2)
+            return float(exp((Z[0] + Z[1]) / 2) * 2 * pi * iv(0, abs(float(Z[0] - Z[1])) / 2))
         assert Z.shape[0] == 4
 
         def J(Z, u):
@@ -157,3 +164,138 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         S = self.M @ D @ self.M.T
         S = (S + S.T) / 2  # Enforce symmetry
         return S
+
+    def mode(self):
+        """Returns the mode of the Bingham distribution.
+
+        The mode is the eigenvector corresponding to Z=0 (the maximum), i.e.,
+        the last column of M.
+
+        Returns:
+            mode (numpy.ndarray): mode as a unit vector in R^{dim+1}
+        """
+        return self.M[:, -1]
+
+    def sample_deterministic(self, spread=0.5):
+        """Returns deterministic sigma-point samples and weights.
+
+        Generates 2*(dim+1) sigma points as ±columns of M with weights
+        derived from the normalized moments, so that the weighted scatter
+        matrix equals the distribution's moment matrix.
+
+        Parameters:
+            spread (float): spread parameter (currently not used)
+
+        Returns:
+            samples (numpy.ndarray): shape (dim+1, 2*(dim+1)), columns are samples
+            weights (numpy.ndarray): shape (2*(dim+1),), non-negative weights summing to 1
+        """
+        d = self.dF / self.F
+        d = d / sum(d)  # normalize
+        # ±columns of M with equal weight d_i/2 for both signs
+        samples = concatenate([self.M, -self.M], axis=1)
+        weights = concatenate([d / 2, d / 2])
+        return samples, weights
+
+    @staticmethod
+    def _right_mult_matrix(q):
+        """Right multiplication matrix for complex (2D) or quaternion (4D).
+
+        For 2D complex q = [a, b]: z * q corresponds to [[a, -b], [b, a]] * z
+        For 4D quaternion q = [w, x, y, z]: p * q = R(q) * p where R is returned.
+        """
+        if q.shape[0] == 2:
+            return array([[q[0], -q[1]], [q[1], q[0]]])
+        if q.shape[0] == 4:
+            w, x, y, z = q[0], q[1], q[2], q[3]
+            return array(
+                [
+                    [w, -x, -y, -z],
+                    [x, w, z, -y],
+                    [y, -z, w, x],
+                    [z, y, -x, w],
+                ]
+            )
+        raise ValueError("Only 2D and 4D are supported")
+
+    def compose(self, B2):
+        """Compose two Bingham distributions via complex or quaternion multiplication.
+
+        Computes the Bingham distribution approximating the scatter matrix of
+        the product x*y, where x ~ self and y ~ B2 are independent.
+
+        Parameters:
+            B2 (BinghamDistribution): second distribution
+
+        Returns:
+            BinghamDistribution: composed distribution
+        """
+        assert isinstance(B2, BinghamDistribution)
+        assert self.dim == B2.dim, "Dimensions must match"
+        assert self.dim in (1, 3), "Compose only supported for 2D and 4D distributions"
+
+        d2 = B2.dF / B2.F
+        d2 = d2 / sum(d2)
+        S1 = self.moment()
+
+        n = self.input_dim
+        S = zeros((n, n))
+        for j in range(n):
+            R_j = BinghamDistribution._right_mult_matrix(B2.M[:, j])
+            S = S + d2[j] * R_j @ S1 @ R_j.T
+
+        S = (S + S.T) / 2
+        return BinghamDistribution.fit_to_moment(S)
+
+    @staticmethod
+    def fit_to_moment(S):
+        """Fit a Bingham distribution to a given scatter/moment matrix.
+
+        Finds Z and M such that the moment of B(Z, M) matches S.
+
+        Parameters:
+            S (numpy.ndarray): symmetric positive semi-definite matrix with trace 1
+                (or will be normalized)
+
+        Returns:
+            BinghamDistribution: fitted distribution
+        """
+        n = S.shape[0]
+        S_np = np.array(S, dtype=float)
+        S_np = (S_np + S_np.T) / 2
+
+        # Eigendecompose S: eigenvectors sorted by ascending eigenvalue
+        eigenvalues, M_np = np.linalg.eigh(S_np)
+        eigenvalues = eigenvalues.real
+        M_np = M_np.real
+
+        # Normalize eigenvalues to get target moments (they should sum to 1)
+        eigenvalues = np.maximum(eigenvalues, 0)
+        ev_sum = eigenvalues.sum()
+        if ev_sum == 0:
+            target_d = np.ones(n) / n
+        else:
+            target_d = eigenvalues / ev_sum
+
+        def moment_residual(z_free):
+            Z_cand = np.append(z_free, 0.0)
+            Z_sorted = np.sort(Z_cand)
+            M_sorted = M_np[:, np.argsort(Z_cand)]
+            try:
+                B_temp = BinghamDistribution(array(Z_sorted), array(M_sorted))
+                d = np.array(B_temp.dF / B_temp.F, dtype=float)
+                d = d / d.sum()
+                return d[:-1] - target_d[:-1]
+            except Exception:  # pylint: disable=broad-except
+                return np.ones(n - 1) * 1e6
+
+        # Initial guess: scale based on target moments relative to last
+        z0 = -(target_d[-1] - target_d[:-1]) * 10.0
+        z_sol = fsolve(moment_residual, z0, full_output=False)
+
+        Z_out = np.append(z_sol, 0.0)
+        idx = np.argsort(Z_out)
+        Z_final = Z_out[idx]
+        M_final = M_np[:, idx]
+
+        return BinghamDistribution(array(Z_final), array(M_final))
