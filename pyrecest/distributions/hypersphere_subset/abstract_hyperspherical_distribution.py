@@ -21,9 +21,6 @@ from pyrecest.backend import (
     sin,
     vstack,
     zeros,
-    sqrt,
-    stack,
-    linalg,
 )
 from scipy.optimize import minimize
 

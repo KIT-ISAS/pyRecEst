@@ -19,10 +19,6 @@ from pyrecest.backend import (
     random,
     vstack,
     zeros,
-    sqrt,
-    cos,
-    sin,
-    stack,
 )
 from scipy.optimize import minimize
 
