@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 import numpy.testing as npt
 import pyrecest.backend
