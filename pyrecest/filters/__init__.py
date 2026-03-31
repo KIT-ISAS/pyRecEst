@@ -4,6 +4,7 @@ from .euclidean_particle_filter import EuclideanParticleFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .kalman_filter import KalmanFilter
 from .manifold_mixins import EuclideanFilterMixin, HypertoroidalFilterMixin
+from .von_mises_fisher_filter import VonMisesFisherFilter
 
 __all__ = [
     "AbstractFilter",
@@ -13,4 +14,5 @@ __all__ = [
     "HypertoroidalParticleFilter",
     "KalmanFilter",
     "EuclideanParticleFilter",
+    "VonMisesFisherFilter",
 ]
