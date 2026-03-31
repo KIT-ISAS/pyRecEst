@@ -14,9 +14,7 @@ class TestBinghamFilter2D(unittest.TestCase):
     def setUp(self):
         Z = array([-5.0, 0.0])
         phi = 0.4
-        M = array(
-            [[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]]
-        )
+        M = array([[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]])
         self.B = BinghamDistribution(Z, M)
         self.filter = BinghamFilter()
         self.Bnoise = BinghamDistribution(

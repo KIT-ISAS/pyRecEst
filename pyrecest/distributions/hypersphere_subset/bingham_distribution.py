@@ -61,7 +61,9 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         """Uses analytical method. Supports 2-D and 4-D distributions."""
         if Z.shape[0] == 2:
             # F = exp((Z[0]+Z[1])/2) * 2*pi * I_0(|Z[0]-Z[1]|/2)
-            return float(exp((Z[0] + Z[1]) / 2) * 2 * pi * iv(0, abs(float(Z[0] - Z[1])) / 2))
+            return float(
+                exp((Z[0] + Z[1]) / 2) * 2 * pi * iv(0, abs(float(Z[0] - Z[1])) / 2)
+            )
         assert Z.shape[0] == 4
 
         def J(Z, u):
@@ -176,7 +178,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         """
         return self.M[:, -1]
 
-    def sample_deterministic(self, spread=0.5):
+    def sample_deterministic(self, _spread=0.5):
         """Returns deterministic sigma-point samples and weights.
 
         Generates 2*(dim+1) sigma points as ±columns of M with weights
@@ -184,7 +186,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         matrix equals the distribution's moment matrix.
 
         Parameters:
-            spread (float): spread parameter reserved for future use (e.g., tuning
+            _spread (float): spread parameter reserved for future use (e.g., tuning
                 the sigma-point placement); currently the samples are always ±M columns
 
         Returns:
@@ -287,7 +289,11 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
                 d = np.array(B_temp.dF / B_temp.F, dtype=float)
                 d = d / d.sum()
                 return d[:-1] - target_d[:-1]
-            except (AssertionError, ValueError, np.linalg.LinAlgError):  # pylint: disable=broad-except
+            except (
+                AssertionError,
+                ValueError,
+                np.linalg.LinAlgError,
+            ):  # pylint: disable=broad-except
                 return np.ones(n - 1) * 1e6
 
         # Initial guess: scale based on target moments relative to last
