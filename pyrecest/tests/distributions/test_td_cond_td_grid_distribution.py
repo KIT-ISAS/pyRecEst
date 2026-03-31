@@ -1,10 +1,9 @@
 import unittest
-import warnings
 
 import numpy as np
 import numpy.testing as npt
 
-from pyrecest.backend import array, pi
+from pyrecest.backend import array
 from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (
     HypertoroidalGridDistribution,
 )

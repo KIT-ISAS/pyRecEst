@@ -8,7 +8,7 @@ import numpy as np
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import abs, all, any, array, mean, meshgrid, pi, reshape
+from pyrecest.backend import abs, all, any, array, mean, pi, reshape
 
 from ..conditional.abstract_conditional_distribution import (
     AbstractConditionalDistribution,
@@ -48,6 +48,7 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
         grid,
         grid_values,
         enforce_pdf_nonnegative: bool = True,
+        n_grid_points_per_dim: tuple | None = None,
     ):
         super().__init__()
 
@@ -65,9 +66,9 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
         self.enforce_pdf_nonnegative = enforce_pdf_nonnegative
         # dim is the combined dimension of the two-hypertorus Cartesian product
         self.dim = 2 * grid.shape[1]
-        # Populated by from_function; used to reshape slices back to the
-        # correct multi-dimensional layout when creating HypertoroidalGridDistribution
-        self._n_grid_points_per_dim: tuple[int, ...] | None = None
+        # Used to reshape slices back to the correct multi-dimensional layout
+        # when creating HypertoroidalGridDistribution instances.
+        self._n_grid_points_per_dim: tuple[int, ...] | None = n_grid_points_per_dim
 
         self._check_normalization()
 
@@ -252,22 +253,21 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
         n_total = grid.shape[0]
 
         if fun_does_cartesian_product:
-            fvals = fun(grid, grid)
-            fvals = reshape(array(fvals), (n_total, n_total))
+            fvals = reshape(array(fun(grid, grid)), (n_total, n_total))
         else:
             # Build index arrays so that fvals[i, j] = f(grid[i], grid[j]).
             # Using plain numpy for index generation (pure control flow).
-            r = np.arange(n_total)
-            idx_i_np, idx_j_np = np.meshgrid(r, r, indexing="ij")
-            idx_i = idx_i_np.ravel()
-            idx_j = idx_j_np.ravel()
+            idx_i, idx_j = (
+                m.ravel()
+                for m in np.meshgrid(
+                    np.arange(n_total), np.arange(n_total), indexing="ij"
+                )
+            )
+            fvals = reshape(array(fun(grid[idx_i], grid[idx_j])), (n_total, n_total))
 
-            fvals_flat = fun(grid[idx_i], grid[idx_j])
-            fvals = reshape(array(fvals_flat), (n_total, n_total))
-
-        td = TdCondTdGridDistribution(grid, fvals)
-        td._n_grid_points_per_dim = tuple(n_grid_points_seq)
-        return td
+        return TdCondTdGridDistribution(
+            grid, fvals, n_grid_points_per_dim=tuple(n_grid_points_seq)
+        )
 
     # --------------------------------------------------------------- helpers
 
