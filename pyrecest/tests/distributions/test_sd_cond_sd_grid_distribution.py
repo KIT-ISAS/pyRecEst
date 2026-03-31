@@ -6,7 +6,6 @@ import pyrecest
 from pyrecest.backend import (
     array,
     ones,
-    zeros,
 )
 from pyrecest.distributions.conditional.sd_cond_sd_grid_distribution import (
     SdCondSdGridDistribution,
@@ -39,7 +38,7 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
     """Tests for __init__ validation."""
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_basic_construction_s2(self):
@@ -50,7 +49,7 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
         self.assertEqual(sc.grid_values.shape, (50, 50))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_wrong_grid_shape_raises(self):
@@ -67,7 +66,7 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
             SdCondSdGridDistribution(grid.ravel(), gv)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_non_square_grid_values_raises(self):
@@ -79,7 +78,7 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
             SdCondSdGridDistribution(grid, ones((n, n + 1)))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_negative_grid_values_raises(self):
@@ -96,7 +95,7 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
             SdCondSdGridDistribution(grid, gv)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_unnormalized_warns(self):
@@ -114,7 +113,7 @@ class TestSdCondSdGridDistributionNormalize(unittest.TestCase):
     """normalize() is a no-op and returns self."""
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_normalize_returns_self(self):
@@ -127,7 +126,7 @@ class TestSdCondSdGridDistributionMultiply(unittest.TestCase):
     """Tests for multiply()."""
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_multiply_same_grid(self):
@@ -143,7 +142,7 @@ class TestSdCondSdGridDistributionMultiply(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_multiply_incompatible_grid_raises(self):
@@ -158,7 +157,7 @@ class TestSdCondSdGridDistributionMarginalizeOut(unittest.TestCase):
     """Tests for marginalize_out()."""
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_marginalize_out_returns_hgd(self):
@@ -169,7 +168,7 @@ class TestSdCondSdGridDistributionMarginalizeOut(unittest.TestCase):
         self.assertIsInstance(sgd2, HypersphericalGridDistribution)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_marginalize_out_shape(self):
@@ -181,7 +180,7 @@ class TestSdCondSdGridDistributionMarginalizeOut(unittest.TestCase):
         self.assertEqual(sgd2.grid_values.shape, (n,))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_marginalize_out_uniform_is_uniform(self):
@@ -203,7 +202,7 @@ class TestSdCondSdGridDistributionMarginalizeOut(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_marginalize_out_invalid_raises(self):
@@ -218,7 +217,7 @@ class TestSdCondSdGridDistributionFixDim(unittest.TestCase):
     """Tests for fix_dim()."""
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_fix_dim_returns_hgd(self):
@@ -231,7 +230,7 @@ class TestSdCondSdGridDistributionFixDim(unittest.TestCase):
         self.assertIsInstance(sgd2, HypersphericalGridDistribution)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_fix_dim_values_correct(self):
@@ -246,7 +245,7 @@ class TestSdCondSdGridDistributionFixDim(unittest.TestCase):
         )
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_fix_dim_off_grid_raises(self):
@@ -261,7 +260,7 @@ class TestSdCondSdGridDistributionFixDim(unittest.TestCase):
             sc.fix_dim(1, off_grid)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_fix_dim_invalid_raises(self):
@@ -277,20 +276,18 @@ class TestSdCondSdGridDistributionFromFunction(unittest.TestCase):
     """Tests for from_function()."""
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_from_function_uniform(self):
         """Build a uniform conditional from a constant function."""
-        from pyrecest.backend import ones as be_ones
-
         d = 3  # S2 embedding dim; manifold dim = 2
         surface = AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
             d - 1
         )
 
         def uniform_fun(a, _b):
-            return be_ones(a.shape[0]) / surface
+            return ones(a.shape[0]) / surface
 
         n = 50
         sc = SdCondSdGridDistribution.from_function(
@@ -302,13 +299,11 @@ class TestSdCondSdGridDistributionFromFunction(unittest.TestCase):
         npt.assert_allclose(sc.grid_values, ones((n, n)) / surface, rtol=1e-10)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_from_function_cartesian_product(self):
         """from_function with fun_does_cartesian_product=True."""
-        from pyrecest.backend import ones as be_ones
-
         d = 3
         surface = AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
             d - 1
@@ -317,7 +312,7 @@ class TestSdCondSdGridDistributionFromFunction(unittest.TestCase):
 
         def uniform_fun_cp(grid_a, grid_b):
             # grid_a and grid_b are both (n, d); return (n, n)
-            return be_ones((grid_a.shape[0], grid_b.shape[0])) / surface
+            return ones((grid_a.shape[0], grid_b.shape[0])) / surface
 
         sc = SdCondSdGridDistribution.from_function(
             uniform_fun_cp,
@@ -330,18 +325,16 @@ class TestSdCondSdGridDistributionFromFunction(unittest.TestCase):
         npt.assert_allclose(sc.grid_values, ones((n, n)) / surface, rtol=1e-10)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
     def test_from_function_wrong_shape_raises(self):
         """Function that returns wrong shape should raise ValueError."""
-        from pyrecest.backend import ones as be_ones
-
         n = 10
 
         def bad_fun(a, b):
             # Return (n*n, n*n) – as if doing Cartesian product
-            return be_ones((a.shape[0], b.shape[0]))
+            return ones((a.shape[0], b.shape[0]))
 
         with self.assertRaises(ValueError):
             SdCondSdGridDistribution.from_function(
