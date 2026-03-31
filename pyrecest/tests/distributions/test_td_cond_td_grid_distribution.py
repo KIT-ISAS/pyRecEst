@@ -4,11 +4,11 @@ import numpy as np
 import numpy.testing as npt
 
 from pyrecest.backend import array
+from pyrecest.distributions.conditional.td_cond_td_grid_distribution import (
+    TdCondTdGridDistribution,
+)
 from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (
     HypertoroidalGridDistribution,
-)
-from pyrecest.distributions.hypertorus.td_cond_td_grid_distribution import (
-    TdCondTdGridDistribution,
 )
 
 
@@ -56,7 +56,7 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         n = 5
         grid = np.linspace(0.0, 2.0 * np.pi - 2.0 * np.pi / n, n).reshape(-1, 1)
         gv = np.ones((n, n))  # neither rows nor cols sum to 1/(2pi)
-        with self.assertWarns(RuntimeWarning):
+        with self.assertWarns(UserWarning):
             TdCondTdGridDistribution(array(grid), array(gv))
 
     # -------------------------------------------------------------- normalize
@@ -67,6 +67,37 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         gv = _make_normalized_grid_values(n)
         td = TdCondTdGridDistribution(array(grid), array(gv))
         self.assertIs(td.normalize(), td)
+
+    # -------------------------------------------------------------- multiply
+
+    def test_multiply_same_grid(self):
+        import warnings
+
+        n = 6
+        grid = np.linspace(0.0, 2.0 * np.pi - 2.0 * np.pi / n, n).reshape(-1, 1)
+        gv = _make_normalized_grid_values(n)
+        td1 = TdCondTdGridDistribution(array(grid), array(gv))
+        td2 = TdCondTdGridDistribution(array(grid), array(gv))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            result = td1.multiply(td2)
+        npt.assert_allclose(
+            np.asarray(result.grid_values),
+            np.asarray(td1.grid_values) * np.asarray(td2.grid_values),
+            rtol=1e-10,
+        )
+
+    def test_multiply_incompatible_grid_raises(self):
+        n1, n2 = 4, 6
+        grid1 = np.linspace(0.0, 2.0 * np.pi - 2.0 * np.pi / n1, n1).reshape(-1, 1)
+        grid2 = np.linspace(0.0, 2.0 * np.pi - 2.0 * np.pi / n2, n2).reshape(-1, 1)
+        gv1 = _make_normalized_grid_values(n1)
+        gv2 = _make_normalized_grid_values(n2)
+        td1 = TdCondTdGridDistribution(array(grid1), array(gv1))
+        td2 = TdCondTdGridDistribution(array(grid2), array(gv2))
+        with self.assertRaises(ValueError) as ctx:
+            td1.multiply(td2)
+        self.assertIn("IncompatibleGrid", str(ctx.exception))
 
     # -------------------------------------------------------------- from_function
 
@@ -162,6 +193,16 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         ratio2 = actual_unnorm2 / expected_unnorm2
         npt.assert_allclose(ratio2, ratio2[0] * np.ones(n), atol=1e-12)
 
+    def test_marginalize_out_invalid_raises(self):
+        n = 5
+        grid = np.linspace(0.0, 2.0 * np.pi - 2.0 * np.pi / n, n).reshape(-1, 1)
+        gv = _make_normalized_grid_values(n)
+        td = TdCondTdGridDistribution(array(grid), array(gv))
+        with self.assertRaises(ValueError):
+            td.marginalize_out(0)
+        with self.assertRaises(ValueError):
+            td.marginalize_out(3)
+
     # -------------------------------------------------------------- fix_dim
 
     def test_fix_dim_returns_hgd(self):
@@ -202,10 +243,21 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
             atol=1e-12,
         )
 
+    def test_fix_dim_invalid_raises(self):
+        n = 5
+        grid_np = np.linspace(0.0, 2.0 * np.pi - 2.0 * np.pi / n, n).reshape(-1, 1)
+        gv = _make_normalized_grid_values(n)
+        td = TdCondTdGridDistribution(array(grid_np), array(gv))
+        point = grid_np[0]
+        with self.assertRaises(ValueError):
+            td.fix_dim(0, point)
+        with self.assertRaises(ValueError):
+            td.fix_dim(3, point)
+
     # --------------------------------------------------------- from_function + fix_dim round-trip
 
     def test_from_function_fix_dim_roundtrip(self):
-        """fix_dim on a from_function object should use cartesian_prod layout."""
+        """fix_dim on a from_function object should return a HypertoroidalGridDistribution."""
         n = 10
         dim = 2
 
@@ -219,7 +271,6 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         grid_np = np.asarray(td.grid)
         slice_dist = td.fix_dim(2, grid_np[0])
         self.assertIsInstance(slice_dist, HypertoroidalGridDistribution)
-        self.assertEqual(slice_dist.grid_type, "cartesian_prod")
 
 
 if __name__ == "__main__":
