@@ -4,10 +4,10 @@ import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg
+from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_uniform_distribution import (
     HypersphericalUniformDistribution,
 )
-from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.filters.hyperspherical_dummy_filter import HypersphericalDummyFilter
 
 
