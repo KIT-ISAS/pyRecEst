@@ -45,6 +45,8 @@ from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .von_mises_filter import VonMisesFilter
 from .von_mises_fisher_filter import VonMisesFisherFilter
 from .wrapped_normal_filter import WrappedNormalFilter
+from .manifold_mixins import EuclideanFilterMixin, HypertoroidalFilterMixin
+from .von_mises_fisher_filter import VonMisesFisherFilter
 
 __all__ = [
     "AbstractDummyFilter",
@@ -80,7 +82,6 @@ __all__ = [
     "KalmanFilter",
     "KernelSMEFilter",
     "LinBoundedFilterMixin",
-    "LinBoundedParticleFilter",
     "LinPeriodicFilterMixin",
     "LinPeriodicParticleFilter",
     "RandomMatrixTracker",
@@ -91,4 +92,6 @@ __all__ = [
     "VonMisesFilter",
     "VonMisesFisherFilter",
     "WrappedNormalFilter",
+    "EuclideanParticleFilter",
+    "VonMisesFisherFilter",
 ]
