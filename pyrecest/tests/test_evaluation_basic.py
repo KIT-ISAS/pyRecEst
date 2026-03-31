@@ -1,5 +1,5 @@
-import os
 import io
+import os
 import tempfile
 import unittest
 import warnings
@@ -478,9 +478,7 @@ class TestEvalationBasics(TestEvalationBase):
     )
     def test_evaluate_for_file_R2_random_walk(self):
         self.simulation_param["all_seeds"] = range(self.n_runs_default)
-        groundtruths, measurements = generate_simulated_scenarios(
-            self.simulation_param
-        )
+        groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
 
         filters_configs_input = [
             {"name": "kf", "parameter": None},
@@ -528,9 +526,7 @@ class TestEvalationBasics(TestEvalationBase):
     def _make_temp_npy_file(self, data):
         fd, filename = tempfile.mkstemp(suffix=".npy")
         os.close(fd)
-        self.addCleanup(
-            lambda path=filename: os.path.exists(path) and os.remove(path)
-        )
+        self.addCleanup(lambda path=filename: os.path.exists(path) and os.remove(path))
         np.save(filename, data)
         return filename
 

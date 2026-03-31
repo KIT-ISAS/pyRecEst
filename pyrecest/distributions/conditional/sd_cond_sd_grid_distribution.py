@@ -14,7 +14,6 @@ from pyrecest.backend import (
     meshgrid,
     sum,
 )
-
 from pyrecest.distributions.hypersphere_subset.abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
 )
