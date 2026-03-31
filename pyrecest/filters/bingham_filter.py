@@ -25,6 +25,7 @@ class BinghamFilter(AbstractFilter):
     """
 
     def __init__(self):
+        # Default 4-D identity initial state (uniform on S^3, suitable for quaternion orientation)
         initial_state = BinghamDistribution(
             array([-1.0, -1.0, -1.0, 0.0]), array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], dtype=float)
         )

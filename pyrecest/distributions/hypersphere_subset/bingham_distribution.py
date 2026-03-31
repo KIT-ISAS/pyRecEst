@@ -184,7 +184,8 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         matrix equals the distribution's moment matrix.
 
         Parameters:
-            spread (float): spread parameter (currently not used)
+            spread (float): spread parameter reserved for future use (e.g., tuning
+                the sigma-point placement); currently the samples are always ±M columns
 
         Returns:
             samples (numpy.ndarray): shape (dim+1, 2*(dim+1)), columns are samples
@@ -286,7 +287,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
                 d = np.array(B_temp.dF / B_temp.F, dtype=float)
                 d = d / d.sum()
                 return d[:-1] - target_d[:-1]
-            except Exception:  # pylint: disable=broad-except
+            except (AssertionError, ValueError, np.linalg.LinAlgError):  # pylint: disable=broad-except
                 return np.ones(n - 1) * 1e6
 
         # Initial guess: scale based on target moments relative to last
