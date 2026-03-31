@@ -50,10 +50,6 @@ class WrappedNormalDistribution(
         """
         AbstractCircularDistribution.__init__(self)
         HypertoroidalWrappedNormalDistribution.__init__(self, mu, sigma**2)
-        if ndim(mu) != 0:
-            raise ValueError(f"mu must be a scalar, but got shape {mu.shape}.")
-        if ndim(sigma) != 0:
-            raise ValueError(f"sigma must be a scalar, but got shape {sigma.shape}.")
 
     @property
     def sigma(self):
@@ -82,7 +78,7 @@ class WrappedNormalDistribution(
 
             for i in range(n_inputs):
                 old_result = 0.0
-                result[i] = squeeze(exp(x[i] * x[i] * tmp))
+                result[i] = exp(x[i] * x[i] * tmp)
 
                 for k in range(1, max_iterations + 1):
                     xp = x[i] + 2 * pi * k

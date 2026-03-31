@@ -268,9 +268,18 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     ):
         # jscpd:ignore-end
         if proposal is None:
+            import pyrecest.backend as _backend
+            if _backend.__backend_name__ == "jax":
+                import jax as _jax
+                import jax.numpy as _jnp
 
-            def proposal(x):
-                return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
+                def proposal(key, x):
+                    key, subkey = _jax.random.split(key)
+                    noise = _jax.random.normal(subkey, shape=(self.dim,))
+                    return _jnp.mod(x + noise, 2.0 * _jnp.pi)
+            else:
+                def proposal(x):
+                    return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
 
         if start_point is None:
             start_point = self.mean_direction()

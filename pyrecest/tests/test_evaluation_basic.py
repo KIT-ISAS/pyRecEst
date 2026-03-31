@@ -1,4 +1,3 @@
-import warnings
 import os
 import tempfile
 import unittest
@@ -74,13 +73,11 @@ class TestEvalationBasics(TestEvalationBase):
         files = os.listdir(self.tmpdirname.name)
         filename = os.path.join(self.tmpdirname.name, files[0])
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            figs, _ = plot_results(
-                filename=filename,
-                plot_log=False,
-                plot_stds=False,
-            )
+        figs, _ = plot_results(
+            filename=filename,
+            plot_log=False,
+            plot_stds=False,
+        )
 
         for fig in figs:
             fig.savefig(f"test_plot_{fig.number}.png")
@@ -568,9 +565,7 @@ class TestEvalationBasics(TestEvalationBase):
     )
     def test_summarize_filter_results(self):
         data = self._load_evaluation_data()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            results_summarized = summarize_filter_results(**data)
+        results_summarized = summarize_filter_results(**data)
 
         for result in results_summarized:
             error_mean = result["error_mean"]
