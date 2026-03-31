@@ -1,4 +1,5 @@
 import os
+import io
 import tempfile
 import unittest
 import warnings
@@ -66,13 +67,11 @@ class TestEvalationBasics(TestEvalationBase):
     def test_plot_results(self):
         from pyrecest.evaluation.plot_results import plot_results
 
-        matplotlib.pyplot.close("all")  # Ensure all previous plots are closed
+        matplotlib.pyplot.close("all")
+        matplotlib.use("SVG")
 
-        matplotlib.use("SVG")  # Set the backend to SVG for better compatibility
-        # To generate some results
         self.test_evaluate_for_simulation_config_R2_random_walk()
-        files = os.listdir(self.tmpdirname.name)
-        filename = os.path.join(self.tmpdirname.name, files[0])
+        filename = self._get_single_evaluation_file()
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
@@ -82,8 +81,32 @@ class TestEvalationBasics(TestEvalationBase):
                 plot_stds=False,
             )
 
-        for fig in figs:
-            fig.savefig(f"test_plot_{fig.number}.png")
+        try:
+            for fig in figs:
+                with io.BytesIO() as buffer:
+                    fig.savefig(buffer, format="png")
+                    self.assertGreater(buffer.tell(), 0)
+        finally:
+            for fig in figs:
+                fig.clf()
+                matplotlib.pyplot.close(fig)
+
+    def _get_single_evaluation_file(self):
+        files = sorted(
+            os.path.join(self.tmpdirname.name, file)
+            for file in os.listdir(self.tmpdirname.name)
+            if os.path.isfile(os.path.join(self.tmpdirname.name, file))
+        )
+
+        self.assertEqual(
+            len(files),
+            1,
+            msg=(
+                f"Expected exactly one evaluation file in "
+                f"{self.tmpdirname.name}, got: {files}"
+            ),
+        )
+        return files[0]
 
     @parameterized.expand(
         [
