@@ -26,7 +26,7 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
         for i in range(xs.shape[0]):
             npt.assert_allclose(
                 result[i],
-                self.dist_2d.pdf(xs[i : i + 1])[0],
+                self.dist_2d.pdf(xs[i : i + 1])[0],  # noqa: E203
                 rtol=1e-10,
             )
 
