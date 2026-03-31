@@ -62,7 +62,9 @@ class TestS2CondS2GridDistributionInit(unittest.TestCase):
         # Build a 2-sphere grid and misshape it to 4D
         grid, _ = get_grid_hypersphere("leopardi", 10, 2)
         n = grid.shape[0]
-        surface = 4 * 3.141592653589793
+        import numpy as np
+
+        surface = 4 * np.pi
         gv = ones((n, n)) / surface
         # Simulate a non-S2 grid (embed in 4D instead of 3D) - should raise
         import numpy as np
