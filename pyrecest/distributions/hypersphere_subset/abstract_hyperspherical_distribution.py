@@ -86,9 +86,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 def proposal_jax(key, _):
                     """JAX independence proposal: uniform on hypersphere."""
                     key, subkey = _jax.random.split(key)
-                    samples_unnorm = _jax.random.normal(subkey, shape=(1, self.dim + 1))
-                    norms = _jnp.linalg.norm(samples_unnorm, axis=1, keepdims=True)
-                    s = samples_unnorm / norms
+                    s = _jax.random.normal(subkey, shape=(1, self.dim + 1))
                     # Ensure exact unit norm (avoids float32 rounding errors)
                     s = s / _jnp.linalg.norm(s, axis=-1, keepdims=True)
                     return s

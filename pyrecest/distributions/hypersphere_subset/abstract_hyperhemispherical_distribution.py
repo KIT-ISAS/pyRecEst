@@ -74,9 +74,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                 def proposal_jax(key, _):
                     """JAX independence proposal: uniform on upper hemisphere."""
                     key, subkey = _jax.random.split(key)
-                    samples_unnorm = _jax.random.normal(subkey, shape=(1, self.dim + 1))
-                    norms = _jnp.linalg.norm(samples_unnorm, axis=1, keepdims=True)
-                    s = samples_unnorm / norms
+                    s = _jax.random.normal(subkey, shape=(1, self.dim + 1))
                     # Project to upper hemisphere: last coordinate >= 0
                     sign = _jnp.where(s[..., -1:] < 0.0, -1.0, 1.0)
                     s = sign * s
@@ -86,7 +84,6 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
                     return s
 
                 proposal = proposal_jax
-
 
         if start_point is None:
             start_point = HyperhemisphericalUniformDistribution(self.dim).sample(1)
