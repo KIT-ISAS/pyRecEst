@@ -142,7 +142,10 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
         ), "meas_noise must be a SphericalHarmonicsDistributionComplex"
         z = np.asarray(z, dtype=float).ravel()
         z_norm = np.linalg.norm(z)
-        if z_norm > 1e-6 and np.linalg.norm(z - np.array([0.0, 0.0, 1.0])) > 1e-6:
+        not_near_north_pole = (
+            np.abs(z[0]) > 1e-6 or np.abs(z[1]) > 1e-6 or np.abs(z[2] - 1.0) > 1e-6
+        )
+        if z_norm > 1e-6 and not_near_north_pole:
             warnings.warn(
                 "SphericalHarmonicsFilter:rotationRequired: "
                 "Performance may be low for z != [0, 0, 1]. "
@@ -212,7 +215,10 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
             lv = np.asarray(lk(zk, grid_pts), dtype=float).reshape(grid_shape)
             likelihood_vals *= lv
 
-        # Scale factor (improves numerical conditioning near zero)
+        # Scale factor: multiplying by 2^n keeps values away from zero so that
+        # the SHT fit and subsequent normalisation remain numerically stable
+        # when the product likelihood is very small (e.g. many weak likelihoods).
+        # This factor is divided out implicitly by the normalisation step.
         scale = float(2 ** len(likelihoods))
 
         if self._filter_state.transformation == "identity":
