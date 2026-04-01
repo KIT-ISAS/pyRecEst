@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, pi
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.circular_ukf import CircularUKF
 
@@ -65,15 +65,13 @@ class CircularUKFTest(unittest.TestCase):
         npt.assert_almost_equal(g_identity2.C, self.g.C / 2.0)
 
     def test_update_identity_different_measurement(self):
-        import numpy as np
-
         self.filter.filter_state = self.g
-        z = 2.0 * np.pi - 1.0
+        z = 2.0 * pi - 1.0
         self.filter.update_identity(GaussianDistribution(array([0.0]), self.g.C), z)
         g_identity3 = self.filter.filter_state
         self.assertIsInstance(g_identity3, GaussianDistribution)
         self.assertGreater(float(g_identity3.mu[0]), z)
-        self.assertLess(float(g_identity3.mu[0]), 2.0 * np.pi)
+        self.assertLess(float(g_identity3.mu[0]), 2.0 * pi)
         self.assertGreater(float(self.g.C[0, 0]), float(g_identity3.C[0, 0]))
 
     def test_update_nonlinear_identity_function(self):
@@ -87,16 +85,14 @@ class CircularUKFTest(unittest.TestCase):
         self.assertGreater(float(g7.C[0, 0]), float(g8.C[0, 0]))
 
     def test_update_nonlinear_periodic_measurement(self):
-        import numpy as np
-
         g9 = GaussianDistribution(array([0.1]), array([[0.7]]))
         self.filter.filter_state = g9
-        z = array([2.0 * np.pi - 0.4])
+        z = array([2.0 * pi - 0.4])
         g7 = GaussianDistribution(array([0.0]), array([[0.7]]))
         self.filter.update_nonlinear(lambda x: x, g7, z, measurement_periodic=True)
         g10 = self.filter.filter_state
         self.assertGreater(float(g10.mu[0]), float(z[0]))
-        self.assertLess(float(g10.mu[0]), 2.0 * np.pi)
+        self.assertLess(float(g10.mu[0]), 2.0 * pi)
         self.assertGreater(float(g7.C[0, 0]), float(g10.C[0, 0]))
 
     def test_get_point_estimate(self):
