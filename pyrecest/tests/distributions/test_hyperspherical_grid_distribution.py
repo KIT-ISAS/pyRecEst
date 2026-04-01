@@ -1,7 +1,6 @@
 import copy
 import unittest
 import warnings
-from math import pi
 
 import numpy.testing as npt
 import pyrecest
@@ -9,6 +8,7 @@ from pyrecest.backend import (
     allclose,
     array,
     cos,
+    pi,
     eye,
     linspace,
     meshgrid,
