@@ -1,10 +1,9 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.backend import linspace, sum, exp, log, mean, pi, array
 from pyrecest.distributions.circle.piecewise_constant_distribution import (
     PiecewiseConstantDistribution,
 )
@@ -15,46 +14,46 @@ from pyrecest.distributions.circle.wrapped_normal_distribution import (
 
 class PiecewiseConstantDistributionTest(unittest.TestCase):
     def setUp(self):
-        self.w = np.array([1, 2, 3, 4, 5, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], dtype=float)
-        self.normal = 1.0 / (2.0 * np.pi * np.mean(self.w))
+        self.w = array([1, 2, 3, 4, 5, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], dtype=float)
+        self.normal = 1.0 / (2.0 * pi * mean(self.w))
         self.dist = PiecewiseConstantDistribution(self.w)
 
     def test_pdf(self):
         npt.assert_allclose(
-            self.dist.pdf(np.array([0.0])), np.array([1 * self.normal]), rtol=1e-10
+            self.dist.pdf(array([0.0])), array([1 * self.normal]), rtol=1e-10
         )
         npt.assert_allclose(
-            self.dist.pdf(np.array([4.2])), np.array([5 * self.normal]), rtol=1e-10
+            self.dist.pdf(array([4.2])), array([5 * self.normal]), rtol=1e-10
         )
         npt.assert_allclose(
-            self.dist.pdf(np.array([10.9])), np.array([4 * self.normal]), rtol=1e-10
+            self.dist.pdf(array([10.9])), array([4 * self.normal]), rtol=1e-10
         )
 
     def test_integral_normalized(self):
         """Verify the distribution integrates to 1 via the exact sum."""
         n = len(self.dist.w)
         npt.assert_allclose(
-            np.sum(self.dist.w) * (2.0 * np.pi / n), 1.0, rtol=1e-10
+            sum(self.dist.w) * (2.0 * pi / n), 1.0, rtol=1e-10
         )
 
     def test_integral_partial(self):
         """Verify partial integrals sum to 1 using a fine grid."""
         M = 1_000_000
-        xs = np.linspace(0, 2.0 * np.pi, M, endpoint=False)
-        dx = 2.0 * np.pi / M
+        xs = linspace(0, 2.0 * pi, M, endpoint=False)
+        dx = 2.0 * pi / M
         pdf_vals = self.dist.pdf(xs)
-        first_half = np.sum(pdf_vals[xs < np.pi]) * dx
-        second_half = np.sum(pdf_vals[xs >= np.pi]) * dx
+        first_half = sum(pdf_vals[xs < pi]) * dx
+        second_half = sum(pdf_vals[xs >= pi]) * dx
         npt.assert_allclose(first_half + second_half, 1.0, rtol=1e-4)
 
     def test_trigonometric_moment(self):
         """Verify analytical trigonometric moments using a fine-grid reference."""
         M = 1_000_000
-        xs = np.linspace(0, 2.0 * np.pi, M, endpoint=False)
+        xs = linspace(0, 2.0 * pi, M, endpoint=False)
         pdf_vals = self.dist.pdf(xs)
-        dx = 2.0 * np.pi / M
+        dx = 2.0 * pi / M
         for n_moment in [1, 2, 3]:
-            expected = np.sum(pdf_vals * np.exp(1j * n_moment * xs)) * dx
+            expected = sum(pdf_vals * exp(1j * n_moment * xs)) * dx
             with self.subTest(n=n_moment):
                 npt.assert_allclose(
                     self.dist.trigonometric_moment(n_moment), expected, rtol=1e-4
@@ -62,26 +61,26 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
 
     def test_interval_borders(self):
         self.assertAlmostEqual(
-            PiecewiseConstantDistribution.left_border(1, 2), 0.0 * 2.0 * np.pi
+            PiecewiseConstantDistribution.left_border(1, 2), 0.0 * 2.0 * pi
         )
         self.assertAlmostEqual(
             PiecewiseConstantDistribution.interval_center(1, 2),
-            1.0 / 4.0 * 2.0 * np.pi,
+            1.0 / 4.0 * 2.0 * pi,
         )
         self.assertAlmostEqual(
             PiecewiseConstantDistribution.right_border(1, 2),
-            1.0 / 2.0 * 2.0 * np.pi,
+            1.0 / 2.0 * 2.0 * pi,
         )
         self.assertAlmostEqual(
             PiecewiseConstantDistribution.left_border(2, 2),
-            1.0 / 2.0 * 2.0 * np.pi,
+            1.0 / 2.0 * 2.0 * pi,
         )
         self.assertAlmostEqual(
             PiecewiseConstantDistribution.interval_center(2, 2),
-            3.0 / 4.0 * 2.0 * np.pi,
+            3.0 / 4.0 * 2.0 * pi,
         )
         self.assertAlmostEqual(
-            PiecewiseConstantDistribution.right_border(2, 2), 1.0 * 2.0 * np.pi
+            PiecewiseConstantDistribution.right_border(2, 2), 1.0 * 2.0 * pi
         )
 
     def test_calculate_parameters_numerically(self):
@@ -103,14 +102,14 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         """Verify analytical entropy against the direct formula."""
         w = self.dist.w
         n = len(w)
-        expected = -2.0 * np.pi / n * np.sum(w * np.log(w))
+        expected = -2.0 * pi / n * sum(w * log(w))
         npt.assert_allclose(self.dist.entropy(), expected, rtol=1e-10)
 
     def test_sample(self):
         samples = self.dist.sample(100)
         self.assertEqual(len(samples), 100)
-        self.assertTrue(np.all(samples >= 0.0))
-        self.assertTrue(np.all(samples < 2.0 * np.pi))
+        self.assertTrue(all(samples >= 0.0))
+        self.assertTrue(all(samples < 2.0 * pi))
 
 
 if __name__ == "__main__":

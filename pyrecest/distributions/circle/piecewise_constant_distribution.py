@@ -1,7 +1,5 @@
-import numpy as np
-
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, pi
+from pyrecest.backend import mod, pi, array, mean, floor, zeros, exp, sum, log, random
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -28,9 +26,9 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Weight for each interval (will be normalized to form a valid pdf).
         """
         AbstractCircularDistribution.__init__(self)
-        w = np.asarray(w, dtype=float).ravel()
+        w = array(w, dtype=float).ravel()
         assert w.ndim == 1 and w.size > 0
-        self.w = w / (np.mean(w) * 2.0 * np.pi)
+        self.w = w / (mean(w) * 2.0 * pi)
 
     def pdf(self, xs):
         """Evaluate the pdf at each point in xs.
@@ -46,10 +44,10 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Pdf values at each point.
         """
         assert xs.ndim == 1
-        xs_mod = np.asarray(mod(xs, 2.0 * pi), dtype=float)
+        xs_mod = array(mod(xs, 2.0 * pi), dtype=float)
         n = len(self.w)
-        idx = np.minimum(
-            np.floor(xs_mod / (2.0 * np.pi) * n).astype(int), n - 1
+        idx = array(
+            [min(int(floor(xs_mod[i] / (2.0 * pi) * n)), n - 1) for i in range(n)]
         )
         return self.w[idx]
 
@@ -69,14 +67,14 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         if n == 0:
             return 1.0 + 0j
         num = len(self.w)
-        interv = np.zeros(num, dtype=complex)
+        interv = zeros(num, dtype=complex)
         for j in range(1, num + 1):
             l = PiecewiseConstantDistribution.left_border(j, num)
             r = PiecewiseConstantDistribution.right_border(j, num)
             c = PiecewiseConstantDistribution.interval_center(j, num)
-            w_j = float(self.pdf(np.array([c]))[0])
-            interv[j - 1] = w_j * (np.exp(1j * n * r) - np.exp(1j * n * l))
-        return complex(-1j / n * np.sum(interv))
+            w_j = float(self.pdf(array([c]))[0])
+            interv[j - 1] = w_j * (exp(1j * n * r) - exp(1j * n * l))
+        return complex(-1j / n * sum(interv))
 
     def entropy(self):
         """Calculate the entropy analytically.
@@ -87,7 +85,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Entropy of the distribution.
         """
         n = len(self.w)
-        return float(-2.0 * np.pi / n * np.sum(self.w * np.log(self.w)))
+        return float(-2.0 * pi / n * sum(self.w * log(self.w)))
 
     def sample(self, n):
         """Draw n random samples from the distribution.
@@ -103,13 +101,13 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Samples in [0, 2*pi).
         """
         num_intervals = len(self.w)
-        interval_width = 2.0 * np.pi / num_intervals
+        interval_width = 2.0 * pi / num_intervals
         # Each interval has probability w[j] * interval_width, which sums to 1 by
         # construction. Divide by sum anyway to guard against floating-point drift.
         interval_probs = self.w * interval_width
         interval_probs /= interval_probs.sum()
-        interval_indices = np.random.choice(num_intervals, size=n, p=interval_probs)
-        return interval_indices * interval_width + np.random.uniform(
+        interval_indices = random.choice(num_intervals, size=n, p=interval_probs)
+        return interval_indices * interval_width + random.uniform(
             0.0, interval_width, size=n
         )
 
@@ -130,7 +128,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Left border of the m-th interval.
         """
         assert 1 <= m <= n
-        return 2.0 * np.pi / n * (m - 1)
+        return 2.0 * pi / n * (m - 1)
 
     @staticmethod
     def right_border(m, n):
@@ -149,7 +147,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Right border of the m-th interval.
         """
         assert 1 <= m <= n
-        return 2.0 * np.pi / n * m
+        return 2.0 * pi / n * m
 
     @staticmethod
     def interval_center(m, n):
@@ -168,7 +166,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Center of the m-th interval.
         """
         assert 1 <= m <= n
-        return 2.0 * np.pi / n * (m - 0.5)
+        return 2.0 * pi / n * (m - 0.5)
 
     @staticmethod
     def calculate_parameters_numerically(pdf_func, n):
@@ -189,11 +187,11 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         from scipy.integrate import quad  # pylint: disable=import-outside-toplevel
 
         assert n >= 1
-        w = np.zeros(n)
+        w = zeros(n)
         for j in range(1, n + 1):
             l = PiecewiseConstantDistribution.left_border(j, n)
             r = PiecewiseConstantDistribution.right_border(j, n)
             w[j - 1] = quad(
-                lambda x: float(pdf_func(np.array([x]))), l, r
+                lambda x: float(pdf_func(array([x]))), l, r
             )[0]
         return w
