@@ -57,19 +57,17 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
         self.assertTrue(float(p[0]) > 0)
 
     def test_pdf_normalization(self):
+        import math
+
         from scipy.special import iv  # pylint: disable=no-name-in-module
         from scipy.stats import norm
-
-        import math
 
         # At (mu0, mu), vm_part = exp(kappa) / (2*pi*I0(kappa))
         # and gaussian_part = 1 / (sqrt(2*pi) * sigmac)
         # muc = mu (since cos(mu0)-cos(mu0)=0 and sin(mu0)-sin(mu0)=0)
         rho = math.sqrt(self.rho1**2 + self.rho2**2)
         sigmac = self.sigma * math.sqrt(1.0 - rho**2)
-        expected_vm = math.exp(self.kappa) / (
-            2.0 * math.pi * iv(0, float(self.kappa))
-        )
+        expected_vm = math.exp(self.kappa) / (2.0 * math.pi * iv(0, float(self.kappa)))
         expected_gauss = norm.pdf(self.mu, loc=self.mu, scale=sigmac)
         expected = expected_vm * expected_gauss
 
@@ -110,11 +108,15 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
 
     def test_invalid_kappa(self):
         with self.assertRaises(AssertionError):
-            MardiaSuttonDistribution(self.mu, self.mu0, 0.0, self.rho1, self.rho2, self.sigma)
+            MardiaSuttonDistribution(
+                self.mu, self.mu0, 0.0, self.rho1, self.rho2, self.sigma
+            )
 
     def test_invalid_rho(self):
         with self.assertRaises(AssertionError):
-            MardiaSuttonDistribution(self.mu, self.mu0, self.kappa, 0.8, 0.8, self.sigma)
+            MardiaSuttonDistribution(
+                self.mu, self.mu0, self.kappa, 0.8, 0.8, self.sigma
+            )
 
 
 if __name__ == "__main__":
