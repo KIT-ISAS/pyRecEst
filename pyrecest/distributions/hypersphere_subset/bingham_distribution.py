@@ -1,6 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-import numpy as np
 from scipy.integrate import quad
 from scipy.optimize import fsolve
 from scipy.special import iv
@@ -17,8 +16,10 @@ from pyrecest.backend import (
     linalg,
     max,
     pi,
+    ones,
     sum,
     zeros,
+    sort,
 )
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
@@ -264,44 +265,44 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
             BinghamDistribution: fitted distribution
         """
         n = S.shape[0]
-        S_np = np.array(S, dtype=float)
+        S_np = array(S, dtype=float)
         S_np = (S_np + S_np.T) / 2
 
         # Eigendecompose S: eigenvectors sorted by ascending eigenvalue
-        eigenvalues, M_np = np.linalg.eigh(S_np)
+        eigenvalues, M_np = linalg.eigh(S_np)
         eigenvalues = eigenvalues.real
         M_np = M_np.real
 
         # Normalize eigenvalues to get target moments (they should sum to 1)
-        eigenvalues = np.maximum(eigenvalues, 0)
+        eigenvalues = max(eigenvalues, 0)
         ev_sum = eigenvalues.sum()
         if ev_sum == 0:
-            target_d = np.ones(n) / n
+            target_d = ones(n) / n
         else:
             target_d = eigenvalues / ev_sum
 
         def moment_residual(z_free):
-            Z_cand = np.append(z_free, 0.0)
-            Z_sorted = np.sort(Z_cand)
-            M_sorted = M_np[:, np.argsort(Z_cand)]
+            Z_cand = concatenate((z_free, array([0.0])))
+            Z_sorted = sort(Z_cand)
+            M_sorted = M_np[:, argsort(Z_cand)]
             try:
                 B_temp = BinghamDistribution(array(Z_sorted), array(M_sorted))
-                d = np.array(B_temp.dF / B_temp.F, dtype=float)
+                d = array(B_temp.dF / B_temp.F, dtype=float)
                 d = d / d.sum()
                 return d[:-1] - target_d[:-1]
             except (
                 AssertionError,
                 ValueError,
-                np.linalg.LinAlgError,
+                RuntimeError,
             ):  # pylint: disable=broad-except
-                return np.ones(n - 1) * 1e6
+                return ones(n - 1) * 1e6
 
         # Initial guess: scale based on target moments relative to last
         z0 = -(target_d[-1] - target_d[:-1]) * 10.0
         z_sol = fsolve(moment_residual, z0, full_output=False)
 
-        Z_out = np.append(z_sol, 0.0)
-        idx = np.argsort(Z_out)
+        Z_out = concatenate((z_sol, array([0.0])))
+        idx = argsort(Z_out)
         Z_final = Z_out[idx]
         M_final = M_np[:, idx]
 
