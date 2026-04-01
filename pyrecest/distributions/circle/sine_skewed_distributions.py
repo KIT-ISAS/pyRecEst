@@ -79,6 +79,33 @@ class SineSkewedVonMisesDistribution(GeneralizedKSineSkewedVonMisesDistribution)
         super().__init__(mu, kappa, lambda_, k=1, m=1)
 
 
+class GSSVMDistribution(GeneralizedKSineSkewedVonMisesDistribution):
+    """
+    Generalized Skew-Symmetric Von Mises (GSSVM) distribution.
+
+    Special case of GeneralizedKSineSkewedVonMisesDistribution with k=1 fixed.
+    Corresponds to GSSVMDistribution in libDirectional.
+
+    Parameters:
+    - mu (float): Mean direction of the distribution.
+    - kappa (float): Concentration parameter (non-negative).
+    - lambda_ (float): Skewness parameter, must be between -1 and 1 inclusive.
+    - n (int): Order/power of the sine skewing term, must be a positive integer.
+    """
+
+    def __init__(self, mu, kappa, lambda_, n):
+        super().__init__(mu, kappa, lambda_, k=1, m=n)
+
+    @property
+    def n(self):
+        return self.m
+
+    def shift(self, shift_by):
+        if ndim(shift_by) != 0:
+            raise ValueError("angle must be a scalar")
+        return GSSVMDistribution(self.mu + shift_by, self.kappa, self.lambda_, self.n)
+
+
 def bessel_ratio(p, z):
     """
     Computes the ratio I_p(z) / I_p(0) in a numerically stable manner using
