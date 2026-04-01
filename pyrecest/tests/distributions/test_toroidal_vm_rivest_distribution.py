@@ -59,12 +59,8 @@ class ToroidalVMRivestDistributionTest(unittest.TestCase):
     def test_trigonometric_moment_n1_vs_numerical(self):
         m_analytical = self.dist.trigonometric_moment(1)
         m_numerical = self.dist.trigonometric_moment_numerical(1)
-        npt.assert_allclose(
-            m_analytical.real, m_numerical.real, atol=1e-4
-        )
-        npt.assert_allclose(
-            m_analytical.imag, m_numerical.imag, atol=1e-4
-        )
+        npt.assert_allclose(m_analytical.real, m_numerical.real, atol=1e-4)
+        npt.assert_allclose(m_analytical.imag, m_numerical.imag, atol=1e-4)
 
     def test_plot_2d(self):
         self.dist.plot()
