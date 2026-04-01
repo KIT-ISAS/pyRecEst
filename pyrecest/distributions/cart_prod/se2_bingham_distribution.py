@@ -7,8 +7,16 @@ from pyrecest.backend import (
     array,
     column_stack,
     exp,
-    pi,
     sum,
+    linalg,
+    pi,
+    diag,
+    sqrt,
+    sort,
+    argmax,
+    random,
+    zeros,
+    concatenate,
 )
 
 from ..abstract_se2_distribution import AbstractSE2Distribution
@@ -109,15 +117,15 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         and F_bingham is the 2D Bingham normalization constant
         F = 2*pi * exp((z1+z2)/2) * I_0((z2-z1)/2).
         """
-        C1 = np.array(self.C1, dtype=float)
-        C2 = np.array(self.C2, dtype=float)
-        C3 = np.array(self.C3, dtype=float)
-        C3_inv = np.linalg.inv(C3)
+        C1 = array(self.C1, dtype=float)
+        C2 = array(self.C2, dtype=float)
+        C3 = array(self.C3, dtype=float)
+        C3_inv = linalg.inv(C3)
         bm = C1 - C2.T @ C3_inv @ C2
-        z = np.sort(np.linalg.eigvalsh(bm))  # ascending
+        z = sort(linalg.eigvalsh(bm))  # ascending
         # 2D Bingham normalization on S^1
-        b_nc = 2.0 * np.pi * np.exp((z[0] + z[1]) / 2.0) * iv(0, (z[1] - z[0]) / 2.0)
-        nc = 2.0 * np.pi * np.sqrt(np.linalg.det(-0.5 * C3_inv)) * b_nc
+        b_nc = 2.0 * pi * exp((z[0] + z[1]) / 2.0) * iv(0, (z[1] - z[0]) / 2.0)
+        nc = 2.0 * pi * sqrt(linalg.det(-0.5 * C3_inv)) * b_nc
         return float(nc)
 
     def pdf(self, xa):
@@ -154,16 +162,16 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         m : array, shape (4,)
             Mode in dual quaternion representation.
         """
-        C1 = np.array(self.C1, dtype=float)
-        C2 = np.array(self.C2, dtype=float)
-        C3 = np.array(self.C3, dtype=float)
-        C3_inv = np.linalg.inv(C3)
+        C1 = array(self.C1, dtype=float)
+        C2 = array(self.C2, dtype=float)
+        C3 = array(self.C3, dtype=float)
+        C3_inv = linalg.inv(C3)
         bingham_c = C1 - C2.T @ C3_inv @ C2
         eigenvalues, eigenvectors = np.linalg.eigh(bingham_c)
-        idx = int(np.argmax(eigenvalues))
+        idx = int(argmax(eigenvalues))
         m_rot = eigenvectors[:, idx]
         m_lin = -C3_inv @ C2 @ m_rot
-        return array(np.concatenate([m_rot, m_lin]))
+        return array(concatenate([m_rot, m_lin]))
 
     def sample(self, n):
         """
@@ -184,15 +192,15 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
             Samples in dual quaternion representation.
         """
         assert n > 0, "n must be positive."
-        C1 = np.array(self.C1, dtype=float)
-        C2 = np.array(self.C2, dtype=float)
-        C3 = np.array(self.C3, dtype=float)
-        C3_inv = np.linalg.inv(C3)
+        C1 = array(self.C1, dtype=float)
+        C2 = array(self.C2, dtype=float)
+        C3 = array(self.C3, dtype=float)
+        C3_inv = linalg.inv(C3)
 
         # Step 1: sample Bingham marginal via Schur complement eigendecomp
         bingham_c = C1 - C2.T @ C3_inv @ C2
-        eigenvalues, eigenvectors = np.linalg.eigh(bingham_c)
-        order = np.argsort(eigenvalues)  # ascending
+        eigenvalues, eigenvectors = linalg.eigh(bingham_c)
+        order = argsort(eigenvalues)  # ascending
         eigenvalues = eigenvalues[order]
         eigenvectors = eigenvectors[:, order]
         # Shift so last entry is 0 (BinghamDistribution convention)
@@ -203,7 +211,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
 
         # Step 2: sample Gaussian conditional
         # mean_i = -C3^{-1} * C2 * x_rot_i
-        means = (-C3_inv @ C2 @ np.array(bingham_samples).T).T  # (n, 2)
+        means = (-C3_inv @ C2 @ array(bingham_samples).T).T  # (n, 2)
         # covariance = -0.5 * C3^{-1} (positive definite)
         cov = -0.5 * C3_inv
         lin_samples = array(
@@ -249,7 +257,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         dist : CustomLinearDistribution
             Marginal distribution over R^2.
         """
-        C_np = np.array(self.C, dtype=float)
+        C_np = array(self.C, dtype=float)
         nc = self.nc
 
         def _marginal_pdf(xs):
@@ -296,7 +304,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         if weights is None:
             weights = np.ones(n) / n
         else:
-            weights = np.array(weights, dtype=float)
+            weights = array(weights, dtype=float)
             weights = weights / weights.sum()
 
         s_rot = samples[:, :2]  # (N, 2)
@@ -312,7 +320,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         # Bingham parameters from scatter: Z_i = log(eigenvalues_i) up to constant;
         # use the standard moment-based approach: C1 - C2'C3^{-1}C2 = M diag(Z) M'
         z_bingham = eigenvalues - eigenvalues[-1]
-        tmp = eigenvectors @ np.diag(z_bingham) @ eigenvectors.T  # approx C1 - C2'C3^{-1}C2
+        tmp = eigenvectors @ diag(z_bingham) @ eigenvectors.T  # approx C1 - C2'C3^{-1}C2
 
         # Weighted regression for Gaussian part (Anderson 2003, Th. 8.2.1)
         reg_c = (s_lin * w).T @ s_rot  # (2, 2)
