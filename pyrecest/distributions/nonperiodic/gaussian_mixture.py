@@ -1,6 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, dot, ones, stack, sum
+from pyrecest.backend import array, dot, ones, reshape, stack, sum
 
 from .abstract_linear_distribution import AbstractLinearDistribution
 from .gaussian_distribution import GaussianDistribution
@@ -15,7 +15,8 @@ class GaussianMixture(LinearMixture, AbstractLinearDistribution):
 
     def mean(self):
         gauss_array = self.dists
-        return dot(self.w, array([g.mu for g in gauss_array]))
+        means = array([g.mu for g in gauss_array])  # shape (n, dim)
+        return sum(means * reshape(self.w, (-1, 1)), axis=0)
 
     def set_mean(self, new_mean):
         mean_offset = new_mean - self.mean()
