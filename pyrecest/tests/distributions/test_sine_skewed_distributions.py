@@ -145,10 +145,6 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
 
     def test_pdf_m2_normalizes(self):
         """Test that m=2 PDF integrates to approximately 1."""
-        from pyrecest.distributions.circle.custom_circular_distribution import (
-            CustomCircularDistribution,
-        )
-
         dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
             mu=pi / 4, gamma=0.3, lambda_=0.5, k=1, m=2
         )
