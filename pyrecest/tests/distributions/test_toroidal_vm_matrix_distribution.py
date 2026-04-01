@@ -3,9 +3,9 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-import pyrecets.backend
-from pyrecets.backend import array, mod, pi
-from pyrecets.distributions.hypertorus.toroidal_vm_matrix_distribution import (
+import pyrecest.backend
+from pyrecest.backend import array, mod, pi
+from pyrecest.distributions.hypertorus.toroidal_vm_matrix_distribution import (
     ToroidalVMMatrixDistribution,
 )
 
@@ -37,14 +37,14 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         npt.assert_allclose(tvm2.mu, self.tvm.mu, atol=1e-10)
 
     @unittest.skipIf(
-        pyrecets.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_integral(self):
         self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-4)
 
     @unittest.skipIf(
-        pyrecets.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_integral_numerical_normalization(self):
@@ -55,7 +55,7 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         self.assertAlmostEqual(tvm_high.integrate(), 1.0, delta=1e-4)
 
     @unittest.skipIf(
-        pyrecets.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_multiply_integrates_to_1(self):
@@ -67,7 +67,7 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         self.assertAlmostEqual(product.integrate(), 1.0, delta=2e-3)
 
     @unittest.skipIf(
-        pyrecets.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_marginalize_to_1d_dim0(self):
@@ -75,7 +75,7 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         self.assertAlmostEqual(marginal.integrate(), 1.0, delta=1e-4)
 
     @unittest.skipIf(
-        pyrecets.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_marginalize_to_1d_dim1(self):

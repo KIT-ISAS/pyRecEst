@@ -1,8 +1,9 @@
 import copy
+import math
 from math import factorial
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecets.backend import (
+from pyrecest.backend import (
     abs,
     arctan2,
     array,
@@ -304,7 +305,6 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         if dimension == 0:
             # Integrate over x2; x = x1
             def f(x):
-                import math
                 dx = x - mu_d
                 alpha = k_o + math.cos(dx) * a11 + math.sin(dx) * a21
                 beta = math.cos(dx) * a12 + math.sin(dx) * a22
@@ -312,7 +312,6 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         else:
             # Integrate over x1; x = x2
             def f(x):
-                import math
                 dx = x - mu_d
                 alpha = k_o + math.cos(dx) * a11 + math.sin(dx) * a12
                 beta = math.cos(dx) * a21 + math.sin(dx) * a22
