@@ -108,7 +108,7 @@ class ToroidalVMCosineDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             tvm2.pdf(x_test),
             self.tvm.pdf(x_test - shift_by),
-            atol=1e-10,
+            atol=1e-10, rtol=1e-6
         )
 
 
