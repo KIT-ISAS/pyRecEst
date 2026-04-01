@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, ndim, pi, sin
+from pyrecest.backend import cos, cosh, exp, mod, ndim, pi, sin, sinh
 from scipy.special import ive  # pylint: disable=no-name-in-module
 from scipy.stats import vonmises
 
@@ -159,3 +159,67 @@ class SineSkewedWrappedCauchyDistribution(AbstractSineSkewedDistribution):
 
     def base_pdf(self, xs):
         return self.wrapped_cauchy.pdf(xs)
+
+
+class GeneralizedKSineSkewedWrappedCauchyDistribution(AbstractCircularDistribution):
+    """
+    Generalized K Sine-Skewed Wrapped Cauchy (GSSC) distribution.
+    See Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
+    Toroidal Distributions, Florence Nightingale Directional Statistics volume, Springer.
+    Parameters:
+    - mu (float): Mean direction of the distribution.
+    - gamma (float): Concentration parameter of the wrapped Cauchy distribution (positive).
+    - lambda_ (float): Skewness parameter, must be between -1 and 1 inclusive.
+    - k (int): Sine multiplier, currently supports only k=1.
+    - m (int): Power of the sine term, must be a positive integer.
+    """
+
+    # pylint: disable=too-many-positional-arguments
+    def __init__(self, mu, gamma, lambda_, k, m):
+        AbstractCircularDistribution.__init__(self)
+        self.mu = mod(mu, 2 * pi)
+        self.gamma = gamma
+        self.lambda_ = lambda_
+        self.k = k
+        self.m = m
+
+        self.validate_parameters()
+
+    def validate_parameters(self):
+        assert self.gamma > 0
+        assert -1.0 <= self.lambda_ and self.lambda_ <= 1.0
+        assert isinstance(self.m, int) and self.m >= 1
+
+    def pdf(self, xs):
+        assert self.k == 1, "Currently, only k=1 is supported"
+        # Use the WC pdf formula directly to ensure correct centering at mu
+        wc_pdf_vals = (
+            1 / (2 * pi) * sinh(self.gamma) / (cosh(self.gamma) - cos(xs - self.mu))
+        )
+        skew_factor = (1 + self.lambda_ * sin(self.k * (xs - self.mu))) ** self.m
+        # For the wrapped Cauchy: E[cos(n*(x-mu))] = exp(-n*k*gamma)
+        r2 = exp(-2 * self.k * self.gamma)
+        r4 = exp(-4 * self.k * self.gamma)
+        if self.m == 1:
+            norm_const = 1
+        elif self.m == 2:
+            norm_const = 1 / (1 + self.lambda_**2 / 2 * (1 - r2))
+        elif self.m == 3:
+            norm_const = 1 / (1 + 3 * self.lambda_**2 / 2 * (1 - r2))
+        elif self.m == 4:
+            norm_const = 1 / (
+                1
+                + self.lambda_**4 / 8 * (3 - 4 * r2 + r4)
+                + 3 * self.lambda_**2 * (1 - r2)
+            )
+        else:
+            raise NotImplementedError("m > 4 not implemented")
+
+        return norm_const * wc_pdf_vals * skew_factor
+
+    def shift(self, shift_by):
+        if ndim(shift_by) != 0:
+            raise ValueError("angle must be a scalar")
+        return GeneralizedKSineSkewedWrappedCauchyDistribution(
+            self.mu + shift_by, self.gamma, self.lambda_, self.k, self.m
+        )
