@@ -108,7 +108,7 @@ class GSSVMDistribution(GeneralizedKSineSkewedVonMisesDistribution):
 
 def bessel_ratio(p, z):
     """
-    Computes the ratio I_p(z) / I_p(0) in a numerically stable manner using
+    Computes the ratio I_p(z) / I_0(z) in a numerically stable manner using
     exponentially scaled modified Bessel functions.
 
     Parameters:
@@ -116,16 +116,10 @@ def bessel_ratio(p, z):
     - z: Argument for the Bessel function.
 
     Returns:
-    - The ratio of I_p(z) to I_p(0), calculated in a numerically stable way.
+    - The ratio I_p(z) / I_0(z), calculated in a numerically stable way.
     """
-    # Compute the scaled Bessel function values for both the numerator and denominator.
-    scaled_numerator = ive(p, z)
-    scaled_denominator = ive(p, 0)
-
-    # Since ive(p, z) = iv(p, z) * exp(-|z|), and ive(p, 0) = iv(p, 0),
-    # when we take the ratio, the exp(-|z|) terms cancel out for the ratio calculation.
-    # Therefore, the ratio of the scaled values directly gives us the ratio of the original Bessel functions.
-    return scaled_numerator / scaled_denominator
+    # ive(p, z) = iv(p, z) * exp(-|z|), so ive(p, z) / ive(0, z) = iv(p, z) / iv(0, z).
+    return ive(p, z) / ive(0, z)
 
 
 class AbstractSineSkewedDistribution(AbstractCircularDistribution):
