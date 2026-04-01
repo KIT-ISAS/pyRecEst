@@ -68,6 +68,7 @@ from .cart_prod.lin_hypersphere_subset_dirac_distribution import (
 from .cart_prod.lin_periodic_cart_prod_dirac_distribution import (
     LinPeriodicCartProdDiracDistribution,
 )
+from .cart_prod.mardia_sutton_distribution import MardiaSuttonDistribution
 from .cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
@@ -260,6 +261,7 @@ __all__ = aliases + [
     "LinHypersphereSubsetCartProdDiracDistribution",
     "LinPeriodicCartProdDiracDistribution",
     "PartiallyWrappedNormalDistribution",
+    "MardiaSuttonDistribution",
     "AbstractCircularDistribution",
     "CircularDiracDistribution",
     "CircularFourierDistribution",
