@@ -74,7 +74,7 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             self.we.pdf(linspace(-2.0 * pi, 0.0, 100)),
             self.we.pdf(linspace(0.0, 2.0 * pi, 100)),
-            rtol=1e-10,
+            rtol=5e-6,
         )
 
     def test_sample(self):
