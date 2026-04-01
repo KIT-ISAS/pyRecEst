@@ -1,8 +1,8 @@
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
 import copy
 from math import factorial
 
 import numpy as np
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, cos, exp, mod, pi, sin
 from scipy.integrate import dblquad
 from scipy.special import iv
@@ -303,9 +303,9 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
 
         return CustomCircularDistribution(f)
 
-    def shift(self, shift_angles):
-        """Return a copy of this distribution shifted by shift_angles."""
-        assert shift_angles.shape == (2,)
+    def shift(self, shift_by):
+        """Return a copy of this distribution shifted by shift_by."""
+        assert shift_by.shape == (2,)
         result = copy.copy(self)
-        result.mu = mod(self.mu + shift_angles, 2.0 * pi)
+        result.mu = mod(self.mu + shift_by, 2.0 * pi)
         return result
