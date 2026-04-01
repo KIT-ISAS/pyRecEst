@@ -1,14 +1,27 @@
 import copy
 from math import factorial
 
-import numpy as np
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, cos, exp, mod, pi, sin
+from pyrecets.backend import (
+    abs,
+    arctan2,
+    array,
+    cos,
+    exp,
+    linalg,
+    max,
+    mod,
+    pi,
+    sin,
+    sqrt,
+)
 from scipy.integrate import dblquad
 from scipy.special import iv
 
 from ..circle.custom_circular_distribution import CustomCircularDistribution
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
+
+_2pi = 2.0 * float(pi)
 
 
 class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
@@ -29,15 +42,14 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         assert kappa[0] > 0
         assert kappa[1] > 0
 
-        self.mu = mod(mu, 2.0 * pi)
+        self.mu = mod(mu, _2pi)
         self.kappa = kappa
         self.A = A
 
-        A_np = np.array(A, dtype=float) if not isinstance(A, np.ndarray) else A.astype(float)
         use_numerical = (
             float(kappa[0]) > 1.5
             or float(kappa[1]) > 1.5
-            or np.max(np.abs(A_np)) > 1.0
+            or float(max(abs(A))) > 1.0
         )
 
         if use_numerical:
@@ -45,9 +57,9 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
             Cinv, _ = dblquad(
                 lambda y, x: float(self.pdf(array([x, y]))),
                 0.0,
-                float(2 * pi),
+                _2pi,
                 0.0,
-                float(2 * pi),
+                _2pi,
             )
             self.C = 1.0 / Cinv
         else:
@@ -75,17 +87,18 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         a22 = float(self.A[1, 1])
         k1 = float(self.kappa[0])
         k2 = float(self.kappa[1])
+        pi_f = float(pi)
 
-        total = 4 * np.pi**2  # n=0 term
+        total = 4 * pi_f**2  # n=0 term
         # n=1 term is zero
         if n >= 2:
             total += (
                 (a11**2 + a12**2 + a21**2 + a22**2 + 2 * k1**2 + 2 * k2**2)
-                * np.pi**2
+                * pi_f**2
                 / factorial(2)
             )
         if n >= 3:
-            total += 6 * a11 * k1 * k2 * np.pi**2 / factorial(3)
+            total += 6 * a11 * k1 * k2 * pi_f**2 / factorial(3)
         if n >= 4:
             total += (
                 3
@@ -105,14 +118,14 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
                     + 2 * a11**2 * (3 * a12**2 + 3 * a21**2 + a22**2 + 12 * (k1**2 + k2**2))
                     + 2 * a12**2 * (a21**2 + 3 * a22**2 + 4 * (3 * k1**2 + k2**2))
                 )
-                * np.pi**2
+                * pi_f**2
                 / factorial(4)
             )
         if n >= 5:
             total += (
                 15
                 / 4
-                * np.pi**2
+                * pi_f**2
                 * k1
                 * k2
                 * (
@@ -130,7 +143,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
             total += (
                 5
                 / 64
-                * np.pi**2
+                * pi_f**2
                 * (
                     5 * a11**6
                     + 15 * a11**4 * a12**2
@@ -203,7 +216,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
                 / 32
                 * k1
                 * k2
-                * np.pi**2
+                * pi_f**2
                 * (
                     5 * a11**5
                     + 10 * a11**3 * a12**2
@@ -241,30 +254,31 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         """Multiply two ToroidalVMMatrixDistributions (exact product)."""
         assert isinstance(other, ToroidalVMMatrixDistribution)
 
-        C1 = float(self.kappa[0]) * np.cos(float(self.mu[0])) + float(other.kappa[0]) * np.cos(float(other.mu[0]))
-        S1 = float(self.kappa[0]) * np.sin(float(self.mu[0])) + float(other.kappa[0]) * np.sin(float(other.mu[0]))
-        C2 = float(self.kappa[1]) * np.cos(float(self.mu[1])) + float(other.kappa[1]) * np.cos(float(other.mu[1]))
-        S2 = float(self.kappa[1]) * np.sin(float(self.mu[1])) + float(other.kappa[1]) * np.sin(float(other.mu[1]))
+        C1 = float(self.kappa[0]) * float(cos(self.mu[0])) + float(other.kappa[0]) * float(cos(other.mu[0]))
+        S1 = float(self.kappa[0]) * float(sin(self.mu[0])) + float(other.kappa[0]) * float(sin(other.mu[0]))
+        C2 = float(self.kappa[1]) * float(cos(self.mu[1])) + float(other.kappa[1]) * float(cos(other.mu[1]))
+        S2 = float(self.kappa[1]) * float(sin(self.mu[1])) + float(other.kappa[1]) * float(sin(other.mu[1]))
 
-        mu_new = array([np.arctan2(S1, C1) % (2 * np.pi), np.arctan2(S2, C2) % (2 * np.pi)])
-        kappa_new = array([np.sqrt(C1**2 + S1**2), np.sqrt(C2**2 + S2**2)])
+        mu_new = array([float(arctan2(S1, C1)) % _2pi, float(arctan2(S2, C2)) % _2pi])
+        kappa_new = array([float(sqrt(C1**2 + S1**2)), float(sqrt(C2**2 + S2**2))])
 
-        def _M(mu):
-            c1, s1 = np.cos(float(mu[0])), np.sin(float(mu[0]))
-            c2, s2 = np.cos(float(mu[1])), np.sin(float(mu[1]))
-            return np.array([
+        def _M(mu_vec):
+            c1 = float(cos(mu_vec[0]))
+            s1 = float(sin(mu_vec[0]))
+            c2 = float(cos(mu_vec[1]))
+            s2 = float(sin(mu_vec[1]))
+            return array([
                 [ c1 * c2, -s1 * c2, -c1 * s2,  s1 * s2],
                 [ s1 * c2,  c1 * c2, -s1 * s2, -c1 * s2],
                 [ c1 * s2, -s1 * s2,  c1 * c2, -s1 * c2],
                 [ s1 * s2,  c1 * s2,  s1 * c2,  c1 * c2],
             ])
 
-        # Pack A columns as [A11; A21; A12; A22]
-        A1 = np.array([[float(self.A[0, 0])], [float(self.A[1, 0])], [float(self.A[0, 1])], [float(self.A[1, 1])]])
-        A2 = np.array([[float(other.A[0, 0])], [float(other.A[1, 0])], [float(other.A[0, 1])], [float(other.A[1, 1])]])
+        A1 = array([[float(self.A[0, 0])], [float(self.A[1, 0])], [float(self.A[0, 1])], [float(self.A[1, 1])]])
+        A2 = array([[float(other.A[0, 0])], [float(other.A[1, 0])], [float(other.A[0, 1])], [float(other.A[1, 1])]])
         b = _M(self.mu) @ A1 + _M(other.mu) @ A2
-        a = np.linalg.solve(_M(mu_new), b).ravel()
-        A_new = array([[a[0], a[2]], [a[1], a[3]]])
+        a_vec = linalg.solve(_M(mu_new), b).ravel()
+        A_new = array([[float(a_vec[0]), float(a_vec[2])], [float(a_vec[1]), float(a_vec[3])]])
 
         return ToroidalVMMatrixDistribution(mu_new, kappa_new, A_new)
 
@@ -284,22 +298,25 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         a12 = float(self.A[0, 1])
         a21 = float(self.A[1, 0])
         a22 = float(self.A[1, 1])
-        C = float(self.C)
+        C_val = float(self.C)
+        pi_f = float(pi)
 
         if dimension == 0:
             # Integrate over x2; x = x1
             def f(x):
+                import math
                 dx = x - mu_d
-                alpha = k_o + np.cos(dx) * a11 + np.sin(dx) * a21
-                beta = np.cos(dx) * a12 + np.sin(dx) * a22
-                return 2 * np.pi * C * iv(0, np.sqrt(alpha**2 + beta**2)) * np.exp(k_d * np.cos(dx))
+                alpha = k_o + math.cos(dx) * a11 + math.sin(dx) * a21
+                beta = math.cos(dx) * a12 + math.sin(dx) * a22
+                return 2 * pi_f * C_val * iv(0, math.sqrt(alpha**2 + beta**2)) * math.exp(k_d * math.cos(dx))
         else:
             # Integrate over x1; x = x2
             def f(x):
+                import math
                 dx = x - mu_d
-                alpha = k_o + np.cos(dx) * a11 + np.sin(dx) * a12
-                beta = np.cos(dx) * a21 + np.sin(dx) * a22
-                return 2 * np.pi * C * iv(0, np.sqrt(alpha**2 + beta**2)) * np.exp(k_d * np.cos(dx))
+                alpha = k_o + math.cos(dx) * a11 + math.sin(dx) * a12
+                beta = math.cos(dx) * a21 + math.sin(dx) * a22
+                return 2 * pi_f * C_val * iv(0, math.sqrt(alpha**2 + beta**2)) * math.exp(k_d * math.cos(dx))
 
         return CustomCircularDistribution(f)
 
@@ -307,5 +324,5 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         """Return a copy of this distribution shifted by shift_by."""
         assert shift_by.shape == (2,)
         result = copy.copy(self)
-        result.mu = mod(self.mu + shift_by, 2.0 * pi)
+        result.mu = mod(self.mu + shift_by, _2pi)
         return result
