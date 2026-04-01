@@ -36,13 +36,13 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
         n = 10
         total = 0.0
         for j in range(-n, n + 1):
-            for l in range(-n, n + 1):
-                if (j + l) % 2 == 0:
+            for ell in range(-n, n + 1):
+                if (j + ell) % 2 == 0:
                     total += (
                         iv(j, float(self.kappa[0]))
-                        * iv(l, float(self.kappa[1]))
-                        * iv((j + l) // 2, float((self.alpha + self.beta) / 2))
-                        * iv((j - l) // 2, float((self.alpha - self.beta) / 2))
+                        * iv(ell, float(self.kappa[1]))
+                        * iv((j + ell) // 2, float((self.alpha + self.beta) / 2))
+                        * iv((j - ell) // 2, float((self.alpha - self.beta) / 2))
                     )
         return 4.0 * pi**2 * total
 
@@ -62,69 +62,65 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
             total1 = 0.0
             total2 = 0.0
             for j in range(-m, m + 1):
-                for l in range(-m, m + 1):
-                    if (j + l) % 2 == 0:
+                for ell in range(-m, m + 1):
+                    if (j + ell) % 2 == 0:
                         bessel_jl = iv(
-                            (j + l) // 2, float((self.alpha + self.beta) / 2)
-                        ) * iv((j - l) // 2, float((self.alpha - self.beta) / 2))
+                            (j + ell) // 2, float((self.alpha + self.beta) / 2)
+                        ) * iv((j - ell) // 2, float((self.alpha - self.beta) / 2))
                         total1 += (
                             iv(j + 1, float(self.kappa[0]))
                             + iv(j - 1, float(self.kappa[0]))
-                        ) * iv(l, float(self.kappa[1])) * bessel_jl
+                        ) * iv(ell, float(self.kappa[1])) * bessel_jl
                         total2 += iv(j, float(self.kappa[0])) * (
-                            iv(l + 1, float(self.kappa[1]))
-                            + iv(l - 1, float(self.kappa[1]))
+                            iv(ell + 1, float(self.kappa[1]))
+                            + iv(ell - 1, float(self.kappa[1]))
                         ) * bessel_jl
             m1 = self.C * 2.0 * pi**2 * total1 * exp(1j * float(self.mu[0]))
             m2 = self.C * 2.0 * pi**2 * total2 * exp(1j * float(self.mu[1]))
             return array([m1, m2])
         return self.trigonometric_moment_numerical(n)
 
-    def circular_correlation_jammalamadaka(self):
+    def _correlation_series_sums(self):
+        """Compute three double-series sums needed for circular_correlation_jammalamadaka."""
         m = 10
-        total0 = 0.0
-        total1 = 0.0
-        total2 = 0.0
         a = float(self.alpha)
         b = float(self.beta)
         k0 = float(self.kappa[0])
         k1 = float(self.kappa[1])
+        total0 = total1 = total2 = 0.0
         for j in range(-m, m + 1):
-            for l in range(-m, m + 1):
-                if (j + l) % 2 == 0:
-                    jl_half = (j + l) // 2
-                    jl_diff_half = (j - l) // 2
-                    iv_jl = iv(jl_half, (a + b) / 2) * iv(jl_diff_half, (a - b) / 2)
-                    total0 += iv(j, k0) * iv(l, k1) * (
-                        (
-                            iv(jl_half + 1, (a + b) / 2)
-                            + iv(jl_half - 1, (a + b) / 2)
-                        )
-                        * iv(jl_diff_half, (a - b) / 2)
+            for ell in range(-m, m + 1):
+                if (j + ell) % 2 == 0:
+                    jl_half = (j + ell) // 2
+                    jl_diff = (j - ell) // 2
+                    iv_ab = iv(jl_half, (a + b) / 2) * iv(jl_diff, (a - b) / 2)
+                    total0 += iv(j, k0) * iv(ell, k1) * (
+                        (iv(jl_half + 1, (a + b) / 2) + iv(jl_half - 1, (a + b) / 2))
+                        * iv(jl_diff, (a - b) / 2)
                         - iv(jl_half, (a + b) / 2)
-                        * (
-                            iv(jl_diff_half + 1, (a - b) / 2)
-                            + iv(jl_diff_half - 1, (a - b) / 2)
-                        )
+                        * (iv(jl_diff + 1, (a - b) / 2) + iv(jl_diff - 1, (a - b) / 2))
                     )
                     total1 += (
                         iv(j + 2, k0) / 2 + iv(j, k0) + iv(j - 2, k0) / 2
-                    ) * iv(l, k1) * iv_jl
+                    ) * iv(ell, k1) * iv_ab
                     total2 += iv(j, k0) * (
-                        iv(l + 2, k1) / 2 + iv(l, k1) + iv(l - 2, k1) / 2
-                    ) * iv_jl
+                        iv(ell + 2, k1) / 2 + iv(ell, k1) + iv(ell - 2, k1) / 2
+                    ) * iv_ab
+        return total0, total1, total2
 
+    def circular_correlation_jammalamadaka(self):
+        total0, total1, total2 = self._correlation_series_sums()
         e_sin_a_sin_b = self.C * pi**2 * total0
-        e_sin_a_squared = 1 - self.C * 2.0 * pi**2 * total1
-        e_sin_b_squared = 1 - self.C * 2.0 * pi**2 * total2
+        e_sin_a_sq = 1 - self.C * 2.0 * pi**2 * total1
+        e_sin_b_sq = 1 - self.C * 2.0 * pi**2 * total2
+        return e_sin_a_sin_b / sqrt(e_sin_a_sq * e_sin_b_sq)
 
-        return e_sin_a_sin_b / sqrt(e_sin_a_squared * e_sin_b_squared)
-
-    def shift(self, shift_angles):
-        assert shift_angles.shape == (self.dim,)
+    def shift(self, shift_by):
+        assert shift_by.shape == (self.dim,)
         return ToroidalVMRivestDistribution(
-            mod(self.mu + shift_angles, 2.0 * pi),
+            mod(self.mu + shift_by, 2.0 * pi),
             self.kappa,
             self.alpha,
             self.beta,
         )
+
