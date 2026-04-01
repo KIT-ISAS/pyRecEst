@@ -71,6 +71,7 @@ from .cart_prod.lin_periodic_cart_prod_dirac_distribution import (
 from .cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
+from .cart_prod.se2_bingham_distribution import SE2BinghamDistribution
 from .circle.abstract_circular_distribution import AbstractCircularDistribution
 from .circle.circular_dirac_distribution import CircularDiracDistribution
 from .circle.circular_fourier_distribution import CircularFourierDistribution
@@ -328,4 +329,5 @@ __all__ = aliases + [
     "LinearMixture",
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
+    "SE2BinghamDistribution",
 ]
