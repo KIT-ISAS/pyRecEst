@@ -278,7 +278,6 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         other = 1 - dimension
 
         mu_d = float(self.mu[dimension])
-        mu_o = float(self.mu[other])  # noqa: F841 – retained for clarity
         k_d = float(self.kappa[dimension])
         k_o = float(self.kappa[other])
         a11 = float(self.A[0, 0])
