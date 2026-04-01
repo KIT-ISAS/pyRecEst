@@ -1,6 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import all, array, cos, exp, mod, pi, sin, sqrt
-
 from scipy.special import iv
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
@@ -68,13 +67,21 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
                             (j + ell) // 2, float((self.alpha + self.beta) / 2)
                         ) * iv((j - ell) // 2, float((self.alpha - self.beta) / 2))
                         total1 += (
-                            iv(j + 1, float(self.kappa[0]))
-                            + iv(j - 1, float(self.kappa[0]))
-                        ) * iv(ell, float(self.kappa[1])) * bessel_jl
-                        total2 += iv(j, float(self.kappa[0])) * (
-                            iv(ell + 1, float(self.kappa[1]))
-                            + iv(ell - 1, float(self.kappa[1]))
-                        ) * bessel_jl
+                            (
+                                iv(j + 1, float(self.kappa[0]))
+                                + iv(j - 1, float(self.kappa[0]))
+                            )
+                            * iv(ell, float(self.kappa[1]))
+                            * bessel_jl
+                        )
+                        total2 += (
+                            iv(j, float(self.kappa[0]))
+                            * (
+                                iv(ell + 1, float(self.kappa[1]))
+                                + iv(ell - 1, float(self.kappa[1]))
+                            )
+                            * bessel_jl
+                        )
             m1 = self.C * 2.0 * pi**2 * total1 * exp(1j * float(self.mu[0]))
             m2 = self.C * 2.0 * pi**2 * total2 * exp(1j * float(self.mu[1]))
             return array([m1, m2])
@@ -94,18 +101,32 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
                     jl_half = (j + ell) // 2
                     jl_diff = (j - ell) // 2
                     iv_ab = iv(jl_half, (a + b) / 2) * iv(jl_diff, (a - b) / 2)
-                    total0 += iv(j, k0) * iv(ell, k1) * (
-                        (iv(jl_half + 1, (a + b) / 2) + iv(jl_half - 1, (a + b) / 2))
-                        * iv(jl_diff, (a - b) / 2)
-                        - iv(jl_half, (a + b) / 2)
-                        * (iv(jl_diff + 1, (a - b) / 2) + iv(jl_diff - 1, (a - b) / 2))
+                    total0 += (
+                        iv(j, k0)
+                        * iv(ell, k1)
+                        * (
+                            (
+                                iv(jl_half + 1, (a + b) / 2)
+                                + iv(jl_half - 1, (a + b) / 2)
+                            )
+                            * iv(jl_diff, (a - b) / 2)
+                            - iv(jl_half, (a + b) / 2)
+                            * (
+                                iv(jl_diff + 1, (a - b) / 2)
+                                + iv(jl_diff - 1, (a - b) / 2)
+                            )
+                        )
                     )
                     total1 += (
-                        iv(j + 2, k0) / 2 + iv(j, k0) + iv(j - 2, k0) / 2
-                    ) * iv(ell, k1) * iv_ab
-                    total2 += iv(j, k0) * (
-                        iv(ell + 2, k1) / 2 + iv(ell, k1) + iv(ell - 2, k1) / 2
-                    ) * iv_ab
+                        (iv(j + 2, k0) / 2 + iv(j, k0) + iv(j - 2, k0) / 2)
+                        * iv(ell, k1)
+                        * iv_ab
+                    )
+                    total2 += (
+                        iv(j, k0)
+                        * (iv(ell + 2, k1) / 2 + iv(ell, k1) + iv(ell - 2, k1) / 2)
+                        * iv_ab
+                    )
         return total0, total1, total2
 
     def circular_correlation_jammalamadaka(self):
@@ -123,4 +144,3 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
             self.alpha,
             self.beta,
         )
-
