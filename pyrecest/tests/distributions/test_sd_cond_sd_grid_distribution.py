@@ -3,10 +3,8 @@ import warnings
 
 import numpy.testing as npt
 import pyrecest
-from pyrecest.backend import (
-    array,
-    ones,
-)
+from pyrecest.backend import array, ones
+
 from pyrecest.distributions.conditional.sd_cond_sd_grid_distribution import (
     SdCondSdGridDistribution,
 )

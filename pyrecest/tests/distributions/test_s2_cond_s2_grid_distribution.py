@@ -1,15 +1,10 @@
-"""
-Tests for S2CondS2GridDistribution.
-
-These tests mirror the MATLAB test class S2CondS2GridDistributionTest.
-"""
 import unittest
 import warnings
 
+from matplotlib.pylab import column_stack
 import numpy.testing as npt
-import pyrecest
+import pyrecest.backend import array, zeros, pi, ones, sum
 
-from pyrecest.backend import array, ones
 from pyrecest.distributions.conditional.s2_cond_s2_grid_distribution import (
     S2CondS2GridDistribution,
 )
@@ -62,14 +57,12 @@ class TestS2CondS2GridDistributionInit(unittest.TestCase):
         # Build a 2-sphere grid and misshape it to 4D
         grid, _ = get_grid_hypersphere("leopardi", 10, 2)
         n = grid.shape[0]
-        import numpy as np
 
-        surface = 4 * np.pi
+        surface = 4 * pi
         gv = ones((n, n)) / surface
         # Simulate a non-S2 grid (embed in 4D instead of 3D) - should raise
-        import numpy as np
 
-        grid_4d = np.column_stack([grid, np.zeros(n)])
+        grid_4d = column_stack([grid, zeros(n)])
         with self.assertRaises(ValueError):
             S2CondS2GridDistribution(grid_4d, gv)
 
@@ -84,9 +77,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
 
         def trans(xkk, xk):
             # xkk: (n1, 3), xk: (n2, 3) -> (n1, n2)
-            import numpy as np
-
-            result = np.zeros((xkk.shape[0], xk.shape[0]))
+            result = zeros((xkk.shape[0], xk.shape[0]))
             for i in range(xk.shape[0]):
                 vmf = VonMisesFisherDistribution(xk[i], 1.0)
                 result[:, i] = vmf.pdf(xkk)
@@ -109,7 +100,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
             # xkk, xk both (n_pairs, 3) when fun_does_cartesian_product=False
             D = array([0.1, 0.15, 1.0])
             diff = (xkk - xk) * D[None, :]
-            return 1.0 / (np.sum(diff**2, axis=1) + 0.01)
+            return 1.0 / (sum(diff**2, axis=1) + 0.01)
 
         with self.assertWarns(UserWarning):
             S2CondS2GridDistribution.from_function(
@@ -134,7 +125,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
                 diff = (pts - fixed[None, :]) * D[None, :]
                 return 1.0 / (np.sum(diff**2, axis=1) + 0.01)
 
-            p = np.zeros((xkk.shape[0], xk.shape[0]))
+            p = zeros((xkk.shape[0], xk.shape[0]))
             for i in range(xk.shape[0]):
                 chd = CustomHypersphericalDistribution(
                     lambda pts, fi=xk[i]: trans_unnorm(pts, fi), 2
@@ -156,8 +147,6 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
         dist = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), 100.0)
 
         def f_trans1(xkk, xk):
-            import numpy as np
-
             vals = dist.pdf(xkk)  # (n1,)
             return np.tile(vals[:, None], (1, xk.shape[0]))  # (n1, n2)
 
@@ -178,9 +167,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
         no_grid_points = 50
 
         def trans(xkk, xk):
-            import numpy as np
-
-            result = np.zeros((xkk.shape[0], xk.shape[0]))
+            result = zeros((xkk.shape[0], xk.shape[0]))
             for i in range(xk.shape[0]):
                 vmf = VonMisesFisherDistribution(xk[i], 1.0)
                 result[:, i] = vmf.pdf(xkk)
@@ -205,9 +192,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
         no_grid_points = 112
 
         def trans(xkk, xk):
-            import numpy as np
-
-            result = np.zeros((xkk.shape[0], xk.shape[0]))
+            result = zeros((xkk.shape[0], xk.shape[0]))
             for i in range(xk.shape[0]):
                 vmf = VonMisesFisherDistribution(xk[i], 1.0)
                 result[:, i] = vmf.pdf(xkk)
@@ -227,9 +212,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
         no_grid_points = 50
 
         def trans(xkk, xk):
-            import numpy as np
-
-            result = np.zeros((xkk.shape[0], xk.shape[0]))
+            result = zeros((xkk.shape[0], xk.shape[0]))
             for i in range(xk.shape[0]):
                 vmf = VonMisesFisherDistribution(xk[i], 1.0)
                 result[:, i] = vmf.pdf(xkk)
