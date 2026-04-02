@@ -1,10 +1,19 @@
 import copy
 import warnings
 
-import numpy as np
-
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, concatenate, stack, sum as backend_sum
+from pyrecest.backend import (
+    allclose,
+    any as backend_any,
+    argmax,
+    array,
+    asarray,
+    concatenate,
+    empty,
+    stack,
+    sum as backend_sum,
+    zeros,
+)
 
 from ..nonperiodic.gaussian_distribution import GaussianDistribution
 from ..nonperiodic.gaussian_mixture import GaussianMixture
@@ -122,15 +131,15 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
             "Can only multiply distributions defined on grids with the same "
             "number of grid points."
         )
-        self_grid = np.asarray(self.gd.get_grid())
-        other_grid = np.asarray(other.gd.get_grid())
-        assert np.allclose(self_grid, other_grid), (
+        self_grid = asarray(self.gd.get_grid())
+        other_grid = asarray(other.gd.get_grid())
+        assert allclose(self_grid, other_grid), (
             "Can only multiply for equal grids."
         )
 
         n = len(self.linear_distributions)
         new_linear_distributions = []
-        factors_linear = np.empty(n)
+        factors_linear = empty(n)
 
         for i in range(n):
             ld_self = self.linear_distributions[i]
@@ -179,16 +188,13 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
             If the density appears multimodal (i.e. another grid point has a
             joint value within a factor of 1.001 of the maximum).
         """
-        # pylint: disable=no-name-in-module,no-member
-        from pyrecest.backend import zeros as backend_zeros
-
         lin_dim = self.linear_distributions[0].dim
-        zeros_d = backend_zeros(lin_dim)
+        zeros_d = zeros(lin_dim)
 
         # Peak value of N(mu_i, C_i) depends only on C_i; it equals
         # N(0 | 0, C_i).  We evaluate each conditional Gaussian at its own
         # mean to obtain the maximum pdf value.
-        peak_vals = np.array(
+        peak_vals = array(
             [
                 float(
                     GaussianDistribution(zeros_d, ld.C, check_validity=False).pdf(
@@ -199,17 +205,17 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
             ]
         )
 
-        fun_vals_joint = peak_vals * np.asarray(self.gd.grid_values)
-        index = int(np.argmax(fun_vals_joint))
+        fun_vals_joint = peak_vals * asarray(self.gd.grid_values)
+        index = int(argmax(fun_vals_joint))
         max_val = float(fun_vals_joint[index])
 
         # Remove the maximum entry to check for multimodality
-        remaining = np.concatenate(
-            [fun_vals_joint[:index], fun_vals_joint[index + 1 :]]
+        remaining = concatenate(
+            [fun_vals_joint[:index], fun_vals_joint[index + 1:]]
         )
         if len(remaining) > 0 and (
-            np.any((max_val - remaining) < 1e-15)
-            or np.any((max_val / remaining) < 1.001)
+            backend_any((max_val - remaining) < 1e-15)
+            or backend_any((max_val / remaining) < 1.001)
         ):
             warnings.warn(
                 "Density may not be unimodal. However, this can also be caused "
