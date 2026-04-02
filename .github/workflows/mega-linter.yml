@@ -63,19 +63,17 @@ jobs:
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: docker://python:3.13-alpine3.23
         with:
-          args: >
-            /bin/sh -lc '
-            set -eux;
+          args: >-
+            /bin/sh -lc "set -eux;
             apk add --no-cache build-base musl-dev gcc g++ make openblas-dev fftw-dev geos-dev cfitsio-dev curl-dev zlib-dev clang21 git cmake;
-            python -m pip install --upgrade pip wheel "poetry>=2.0,<3.0" "poetry-plugin-export>=1.8,<2.0";
+            python -m pip install --upgrade pip wheel 'poetry>=2.0,<3.0' 'poetry-plugin-export>=1.8,<2.0';
             cd /github/workspace;
             rm -rf alpine-wheels requirements-alpine.txt;
             mkdir -p alpine-wheels;
             poetry export --with dev --format requirements.txt --without-hashes --output requirements-alpine.txt;
-            sed -i "/^\\(torch\\|triton\\|jax\\|jaxlib\\|nvidia.*\\|intel-openmp\\|cuda-bindings\\|tbb\\|mkl\\|healpy\\)\\([<>=!~ ;].*\\)\\?$/d" requirements-alpine.txt;
+            sed -i '/^\(torch\|triton\|jax\|jaxlib\|nvidia.*\|intel-openmp\|cuda-bindings\|tbb\|mkl\|healpy\)\([<>=!~ ;].*\)\?$/d' requirements-alpine.txt;
             python -m pip wheel --no-deps -r requirements-alpine.txt -w alpine-wheels;
-            rm -f requirements-alpine.txt
-            '
+            rm -f requirements-alpine.txt"
 
       - name: List available wheels
         run: ls -l ./alpine-wheels

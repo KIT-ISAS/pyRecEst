@@ -68,6 +68,7 @@ from .cart_prod.lin_hypersphere_subset_dirac_distribution import (
 from .cart_prod.lin_periodic_cart_prod_dirac_distribution import (
     LinPeriodicCartProdDiracDistribution,
 )
+from .cart_prod.mardia_sutton_distribution import MardiaSuttonDistribution
 from .cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
@@ -183,6 +184,8 @@ from .hypertorus.toroidal_mixture import ToroidalMixture
 from .hypertorus.toroidal_uniform_distribution import ToroidalUniformDistribution
 from .hypertorus.toroidal_von_mises_cosine_distribution import (
     ToroidalVonMisesCosineDistribution,
+from .hypertorus.toroidal_vm_rivest_distribution import (
+    ToroidalVMRivestDistribution,
 )
 from .hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,
@@ -263,6 +266,7 @@ __all__ = aliases + [
     "LinHypersphereSubsetCartProdDiracDistribution",
     "LinPeriodicCartProdDiracDistribution",
     "PartiallyWrappedNormalDistribution",
+    "MardiaSuttonDistribution",
     "AbstractCircularDistribution",
     "CircularDiracDistribution",
     "CircularFourierDistribution",
@@ -320,6 +324,7 @@ __all__ = aliases + [
     "ToroidalMixture",
     "ToroidalUniformDistribution",
     "ToroidalVonMisesCosineDistribution",
+    "ToroidalVMRivestDistribution",
     "ToroidalVonMisesSineDistribution",
     "ToroidalWrappedNormalDistribution",
     "AbstractHyperrectangularDistribution",
