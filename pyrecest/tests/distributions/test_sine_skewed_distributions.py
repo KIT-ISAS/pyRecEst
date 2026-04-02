@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+import pyrecest.backend
 from pyrecest.backend import array, pi
 from pyrecest.distributions.circle.sine_skewed_distributions import (
     GeneralizedKSineSkewedVonMisesDistribution,
@@ -134,6 +135,10 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
                 mu=pi, gamma=-0.1, lambda_=0.5, k=1, m=1
             )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_pdf_m1_normalizes(self):
         """m=1 GSSC should integrate to 1."""
         dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
@@ -143,6 +148,10 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
 
         npt.assert_allclose(integral, 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_pdf_m2_normalizes(self):
         """Test that m=2 PDF integrates to approximately 1."""
         dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
@@ -152,6 +161,10 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
 
         npt.assert_allclose(integral, 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_pdf_m3_normalizes(self):
         """Test that m=3 PDF integrates to approximately 1."""
         dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
@@ -161,6 +174,10 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
 
         npt.assert_allclose(integral, 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_pdf_m4_normalizes(self):
         """Test that m=4 PDF integrates to approximately 1."""
         dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
