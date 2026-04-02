@@ -11,7 +11,7 @@ References:
 from bayesian_filters.kalman import MerweScaledSigmaPoints, UnscentedKalmanFilter
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, pi, array, atleast_1d, sign
+from pyrecest.backend import mod, pi, array, atleast_1d, sign, prod
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
@@ -134,7 +134,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         noise_mean = float(gauss_sys.mu[0])
 
         def fx(x, dt):  # pylint: disable=unused-argument
-            return array([f(x[0]) + noise_mean])
+            return array([f(x.flatten()[0]) + noise_mean])
 
         def hx(x):
             return x
@@ -145,7 +145,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         )
         ukf.predict()
 
-        new_mu = mod(array([ukf.x[0]]), 2.0 * pi)
+        new_mu = mod(array([ukf.x.flatten()[0]]), 2.0 * pi)
         new_C = array([[ukf.P[0, 0]]])
         self._filter_state = GaussianDistribution(new_mu, new_C)
 
@@ -169,7 +169,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         if not isinstance(gauss_meas, GaussianDistribution):
             gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
 
-        z_val = float(array(z).flat[0])
+        z_val = float(array(z).flatten()[0])
         # Shift measurement by noise mean
         z_val = float(mod(array([z_val - float(gauss_meas.mu[0])]), 2.0 * pi)[0])
 
@@ -215,7 +215,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
 
         z = atleast_1d(array(z, dtype=float))
-        dim_z = z.shape[0]
+        dim_z = int(prod(z.shape))
 
         mu0 = float(self._filter_state.mu[0])
         C0 = float(self._filter_state.C[0, 0])
@@ -226,7 +226,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
                     z[i] = z[i] + 2.0 * float(pi) * sign(mu0 - z[i])
 
         if dim_z == 1:
-            R_mat = array([[float(gauss_meas.C.flat[0])]])
+            R_mat = array([[float(gauss_meas.C.flatten()[0])]])
         else:
             R_mat = array(gauss_meas.C, dtype=float).reshape(dim_z, dim_z)
 
@@ -234,7 +234,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             return x
 
         def hx(x):
-            return atleast_1d(array([f(x[0])], dtype=float)).flatten()
+            return atleast_1d(array([f(x.flatten()[0])], dtype=float)).flatten()
 
         ukf = _make_ukf(
             fx, hx, dim_z=dim_z, x0=mu0, P0=C0, Q=0.0, R=R_mat,
@@ -245,7 +245,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         ukf.predict()
         ukf.update(z)
 
-        new_mu = float(mod(array([ukf.x[0]]), 2.0 * pi)[0])
+        new_mu = float(mod(array([ukf.x.flatten()[0]]), 2.0 * pi)[0])
         self._filter_state = GaussianDistribution(
             array([new_mu]), array([[ukf.P[0, 0]]])
         )
