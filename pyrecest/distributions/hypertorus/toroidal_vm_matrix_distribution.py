@@ -46,11 +46,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         self.kappa = kappa
         self.A = A
 
-        use_numerical = (
-            kappa[0] > 1.5
-            or kappa[1] > 1.5
-            or max(abs(A)) > 1.0
-        )
+        use_numerical = kappa[0] > 1.5 or kappa[1] > 1.5 or max(abs(A)) > 1.0
 
         if use_numerical:
             self.C = 1.0
@@ -115,7 +111,9 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
                     + 8 * k1**4
                     + 8 * (3 * a21**2 + a22**2 + 4 * k1**2) * k2**2
                     + 8 * k2**4
-                    + 2 * a11**2 * (3 * a12**2 + 3 * a21**2 + a22**2 + 12 * (k1**2 + k2**2))
+                    + 2
+                    * a11**2
+                    * (3 * a12**2 + 3 * a21**2 + a22**2 + 12 * (k1**2 + k2**2))
                     + 2 * a12**2 * (a21**2 + 3 * a22**2 + 4 * (3 * k1**2 + k2**2))
                 )
                 * pi_f**2
@@ -267,12 +265,14 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
             s1 = sin(mu_vec[0])
             c2 = cos(mu_vec[1])
             s2 = sin(mu_vec[1])
-            return array([
-                [ c1 * c2, -s1 * c2, -c1 * s2,  s1 * s2],
-                [ s1 * c2,  c1 * c2, -s1 * s2, -c1 * s2],
-                [ c1 * s2, -s1 * s2,  c1 * c2, -s1 * c2],
-                [ s1 * s2,  c1 * s2,  s1 * c2,  c1 * c2],
-            ])
+            return array(
+                [
+                    [c1 * c2, -s1 * c2, -c1 * s2, s1 * s2],
+                    [s1 * c2, c1 * c2, -s1 * s2, -c1 * s2],
+                    [c1 * s2, -s1 * s2, c1 * c2, -s1 * c2],
+                    [s1 * s2, c1 * s2, s1 * c2, c1 * c2],
+                ]
+            )
 
         A1 = array([[self.A[0, 0]], [self.A[1, 0]], [self.A[0, 1]], [self.A[1, 1]]])
         A2 = array([[other.A[0, 0]], [other.A[1, 0]], [other.A[0, 1]], [other.A[1, 1]]])
@@ -308,6 +308,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
                 alpha = k_o + c * a11 + s * a21
                 beta = c * a12 + s * a22
                 return 2.0 * pi * C_val * iv(0, sqrt(alpha**2 + beta**2)) * exp(k_d * c)
+
         else:
             # Integrate over x1; x = x2
             def f(x):
