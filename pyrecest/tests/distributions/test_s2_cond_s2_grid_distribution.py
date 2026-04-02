@@ -3,7 +3,8 @@ import warnings
 
 from matplotlib.pylab import column_stack
 import numpy.testing as npt
-import pyrecest.backend import array, zeros, pi, ones, sum
+import pyrecest
+from pyrecest.backend import array, zeros, pi, ones, sum
 
 from pyrecest.distributions.conditional.s2_cond_s2_grid_distribution import (
     S2CondS2GridDistribution,
