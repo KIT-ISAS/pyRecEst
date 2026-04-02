@@ -3,9 +3,9 @@ from abc import abstractmethod
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import mod, ndim, pi, sin
 from scipy.special import ive  # pylint: disable=no-name-in-module
-from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+from .von_mises_distribution import VonMisesDistribution
 from .wrapped_cauchy_distribution import WrappedCauchyDistribution
 from .wrapped_normal_distribution import WrappedNormalDistribution
 
@@ -40,7 +40,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
     def pdf(self, xs):
         # Evaluate the von Mises distribution and multiply by (1 + lambda_ * sin(xa - mu))
         assert self.k == 1, "Currently, only k=1 is supported"
-        vm_pdf = vonmises.pdf(xs, self.kappa, loc=self.mu)
+        vm_pdf = VonMisesDistribution(self.mu, self.kappa).pdf(xs)
         skew_factor = (1 + self.lambda_ * sin(self.k * (xs - self.mu))) ** self.m
         if self.m == 1:
             norm_const = 1
