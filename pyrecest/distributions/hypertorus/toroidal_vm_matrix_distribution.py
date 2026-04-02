@@ -1,5 +1,4 @@
 import copy
-import math
 from math import factorial
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -306,16 +305,18 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
             # Integrate over x2; x = x1
             def f(x):
                 dx = x - mu_d
-                alpha = k_o + math.cos(dx) * a11 + math.sin(dx) * a21
-                beta = math.cos(dx) * a12 + math.sin(dx) * a22
-                return 2 * pi_f * C_val * iv(0, math.sqrt(alpha**2 + beta**2)) * math.exp(k_d * math.cos(dx))
+                c, s = cos(dx), sin(dx)
+                alpha = k_o + c * a11 + s * a21
+                beta = c * a12 + s * a22
+                return 2.0 * pi_f * C_val * iv(0, sqrt(alpha**2 + beta**2)) * exp(k_d * c)
         else:
             # Integrate over x1; x = x2
             def f(x):
                 dx = x - mu_d
-                alpha = k_o + math.cos(dx) * a11 + math.sin(dx) * a12
-                beta = math.cos(dx) * a21 + math.sin(dx) * a22
-                return 2 * pi_f * C_val * iv(0, math.sqrt(alpha**2 + beta**2)) * math.exp(k_d * math.cos(dx))
+                c, s = cos(dx), sin(dx)
+                alpha = k_o + c * a11 + s * a12
+                beta = c * a21 + s * a22
+                return 2.0 * pi_f * C_val * iv(0, sqrt(alpha**2 + beta**2)) * exp(k_d * c)
 
         return CustomCircularDistribution(f)
 
