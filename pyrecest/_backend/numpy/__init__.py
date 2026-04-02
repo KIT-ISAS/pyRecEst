@@ -2,7 +2,6 @@
 
 import numpy as _np
 from numpy import (
-    all,
     allclose,
     amax,
     amin,
@@ -196,6 +195,12 @@ from ._common import (
 ones = _modify_func_default_dtype(target=_np.ones)
 linspace = _dyn_update_dtype(target=_np.linspace, dtype_pos=5)
 empty = _dyn_update_dtype(target=_np.empty, dtype_pos=1)
+
+
+def all(a, axis=None, out=None, keepdims=False):
+    if isinstance(axis, bool):
+        axis = int(axis)
+    return _np.all(a, axis=axis, out=out, keepdims=keepdims)
 
 
 def has_autodiff():

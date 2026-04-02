@@ -4,7 +4,6 @@ for Riemannian Score-based SDE
 """
 import jax.numpy as _jnp
 from jax.numpy import (
-    all,
     allclose,
     amax,
     amin,
@@ -180,6 +179,14 @@ from . import spatial  # For PyRecEst
 from . import signal  # For PyRecEst
 
 from jax.numpy import array
+
+
+def all(a, axis=None, out=None, keepdims=False):
+    if isinstance(axis, bool):
+        axis = int(axis)
+    if out is not None:
+        raise ValueError("The 'out' parameter is not supported by the JAX backend.")
+    return _jnp.all(a, axis=axis, keepdims=keepdims)
 
 
 def convert_to_wider_dtype(*args, **kwargs):
