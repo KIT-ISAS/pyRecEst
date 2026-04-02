@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import mod, pi, array, mean, floor, zeros, exp, sum, log, random
 
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -44,10 +44,10 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Pdf values at each point.
         """
         assert xs.ndim == 1
+        n_intervals = len(self.w)
         xs_mod = array(mod(xs, 2.0 * pi), dtype=float)
-        n = len(self.w)
         idx = array(
-            [min(int(floor(xs_mod[i] / (2.0 * pi) * n)), n - 1) for i in range(n)]
+            [min(int(floor(x / (2.0 * pi) * n_intervals)), n_intervals - 1) for x in xs_mod]
         )
         return self.w[idx]
 
@@ -69,11 +69,11 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         num = len(self.w)
         interv = zeros(num, dtype=complex)
         for j in range(1, num + 1):
-            l = PiecewiseConstantDistribution.left_border(j, num)
+            left = PiecewiseConstantDistribution.left_border(j, num)
             r = PiecewiseConstantDistribution.right_border(j, num)
             c = PiecewiseConstantDistribution.interval_center(j, num)
             w_j = float(self.pdf(array([c]))[0])
-            interv[j - 1] = w_j * (exp(1j * n * r) - exp(1j * n * l))
+            interv[j - 1] = w_j * (exp(1j * n * r) - exp(1j * n * left))
         return complex(-1j / n * sum(interv))
 
     def entropy(self):
@@ -189,9 +189,9 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         assert n >= 1
         w = zeros(n)
         for j in range(1, n + 1):
-            l = PiecewiseConstantDistribution.left_border(j, n)
+            left = PiecewiseConstantDistribution.left_border(j, n)
             r = PiecewiseConstantDistribution.right_border(j, n)
             w[j - 1] = quad(
-                lambda x: float(pdf_func(array([x]))), l, r
+                lambda x: float(pdf_func(array([x]))), left, r
             )[0]
         return w
