@@ -1,6 +1,5 @@
 import warnings
 
-import numpy as np
 import scipy
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -17,6 +16,7 @@ from pyrecest.backend import (
     full,
     imag,
     isnan,
+    zeros_like,
     linalg,
     pi,
     real,
@@ -25,6 +25,10 @@ from pyrecest.backend import (
     sin,
     sqrt,
     zeros,
+    cos,
+    sin,
+    meshgrid,
+    deg2rad,
 )
 
 # pylint: disable=E0611
@@ -235,12 +239,12 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         )
         grid = dummy.expand(grid="DH", extend=False)
         lats, lons = grid.lats(), grid.lons()
-        lon_mesh, lat_mesh = np.meshgrid(lons, lats)
-        theta = np.radians(90.0 - lat_mesh)  # colatitude in radians
-        phi = np.radians(lon_mesh)  # azimuth in radians
-        x_c = np.sin(theta) * np.cos(phi)
-        y_c = np.sin(theta) * np.sin(phi)
-        z_c = np.cos(theta)
+        lon_mesh, lat_mesh = meshgrid(lons, lats)
+        theta = deg2rad(90.0 - lat_mesh)  # colatitude in radians
+        phi = deg2rad(lon_mesh)  # azimuth in radians
+        x_c = sin(theta) * cos(phi)
+        y_c = sin(theta) * sin(phi)
+        z_c = cos(theta)
         return x_c.ravel(), y_c.ravel(), z_c.ravel(), theta.shape
 
     def _eval_on_grid(self, target_degree=None):
@@ -310,11 +314,11 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         x_c, y_c, z_c, grid_shape = (
             SphericalHarmonicsDistributionComplex._get_dh_grid_cartesian(degree)
         )
-        xs = np.column_stack([x_c, y_c, z_c])
-        fvals = np.asarray(dist.pdf(xs), dtype=float).reshape(grid_shape)
+        xs = column_stack([x_c, y_c, z_c])
+        fvals = array(dist.pdf(xs), dtype=float).reshape(grid_shape)
 
         if transformation == "sqrt":
-            fvals = np.sqrt(np.maximum(fvals, 0.0))
+            fvals = sqrt(max(fvals, 0.0))
 
         return SphericalHarmonicsDistributionComplex._fit_from_grid(
             fvals, degree, transformation
@@ -336,10 +340,10 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
         if self.transformation == "identity" and other.transformation == "identity":
             # Direct frequency-domain formula: h_{l,m} = sqrt(4π/(2l+1)) * f_{l,m} * g_{l,0}
-            h_lm = np.zeros_like(self.coeff_mat)
+            h_lm = zeros_like(self.coeff_mat)
             for l in range(degree + 1):
                 factor = (
-                    np.sqrt(4.0 * np.pi / (2 * l + 1))
+                    sqrt(4.0 * pi / (2 * l + 1))
                     * other.coeff_mat[l, l]
                 )
                 for m in range(-l, l + 1):
@@ -376,16 +380,16 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             q_lm = _grid_to_coeff(q_grid)
 
             # Convolution formula on the identity coefficients
-            r_lm = np.zeros_like(p_lm)
+            r_lm = zeros_like(p_lm)
             for l in range(degree + 1):
-                factor = np.sqrt(4.0 * np.pi / (2 * l + 1)) * q_lm[l, l]
+                factor = sqrt(4.0 * pi / (2 * l + 1)) * q_lm[l, l]
                 for m in range(-l, l + 1):
                     r_lm[l, l + m] = factor * p_lm[l, l + m]
 
             # Evaluate r on the standard DH grid, take sqrt, refit
             r_shd_id = SphericalHarmonicsDistributionComplex(r_lm, "identity")
             r_grid = r_shd_id._eval_on_grid()
-            sqrt_r_grid = np.sqrt(np.maximum(r_grid, 0.0))
+            sqrt_r_grid = sqrt(max(r_grid, 0.0))
 
             return SphericalHarmonicsDistributionComplex._fit_from_grid(
                 sqrt_r_grid, degree, "sqrt"
