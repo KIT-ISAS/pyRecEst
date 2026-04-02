@@ -4,19 +4,17 @@ from scipy.integrate import quad
 from scipy.special import iv
 
 from pyrecest.backend import (
+    argmax,
+    argsort,
     array,
     column_stack,
+    concatenate,
     exp,
-    sum,
     linalg,
     pi,
-    diag,
-    sqrt,
     sort,
-    argmax,
-    random,
-    zeros,
-    concatenate,
+    sqrt,
+    sum,
 )
 
 from ..abstract_se2_distribution import AbstractSE2Distribution
@@ -128,13 +126,13 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         nc = 2.0 * pi * sqrt(linalg.det(-0.5 * C3_inv)) * b_nc
         return float(nc)
 
-    def pdf(self, xa):
+    def pdf(self, xs):
         """
         Evaluate the probability density at the given points.
 
         Parameters
         ----------
-        xa : array_like, shape (N, 4) or (N, 3)
+        xs : array_like, shape (N, 4) or (N, 3)
             Evaluation points in dual quaternion (N x 4) or angle-pos
             (N x 3) representation.
 
@@ -143,13 +141,13 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         p : array, shape (N,)
             Density values.
         """
-        xa = array(xa)
-        if xa.ndim == 1:
-            xa = xa.reshape(1, -1)
-        if xa.shape[1] == 3:
-            xa = AbstractSE2Distribution.angle_pos_to_dual_quaternion(xa)
-        assert xa.shape[1] == 4, "Input must have 4 columns (dual quaternion)."
-        return (1.0 / self.nc) * exp(sum(xa * (xa @ self.C.T), axis=1))
+        xs = array(xs)
+        if xs.ndim == 1:
+            xs = xs.reshape(1, -1)
+        if xs.shape[1] == 3:
+            xs = AbstractSE2Distribution.angle_pos_to_dual_quaternion(xs)
+        assert xs.shape[1] == 4, "Input must have 4 columns (dual quaternion)."
+        return (1.0 / self.nc) * exp(sum(xs * (xs @ self.C.T), axis=1))
 
     def mode(self):
         """
@@ -192,30 +190,27 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
             Samples in dual quaternion representation.
         """
         assert n > 0, "n must be positive."
-        C1 = array(self.C1, dtype=float)
-        C2 = array(self.C2, dtype=float)
-        C3 = array(self.C3, dtype=float)
-        C3_inv = linalg.inv(C3)
+        C3_inv = linalg.inv(array(self.C3, dtype=float))
 
         # Step 1: sample Bingham marginal via Schur complement eigendecomp
-        bingham_c = C1 - C2.T @ C3_inv @ C2
+        bingham_c = (
+            array(self.C1, dtype=float)
+            - array(self.C2, dtype=float).T @ C3_inv @ array(self.C2, dtype=float)
+        )
         eigenvalues, eigenvectors = linalg.eigh(bingham_c)
         order = argsort(eigenvalues)  # ascending
         eigenvalues = eigenvalues[order]
-        eigenvectors = eigenvectors[:, order]
-        # Shift so last entry is 0 (BinghamDistribution convention)
-        z_shifted = array(eigenvalues - eigenvalues[-1])
-        m_mat = array(eigenvectors)
-        b = BinghamDistribution(z_shifted, m_mat)
+        b = BinghamDistribution(
+            array(eigenvalues - eigenvalues[-1]), array(eigenvectors[:, order])
+        )
         bingham_samples = b.sample(n)  # (n, 2)
 
         # Step 2: sample Gaussian conditional
         # mean_i = -C3^{-1} * C2 * x_rot_i
-        means = (-C3_inv @ C2 @ array(bingham_samples).T).T  # (n, 2)
-        # covariance = -0.5 * C3^{-1} (positive definite)
-        cov = -0.5 * C3_inv
+        cov = np.array(-0.5 * C3_inv)
+        means = np.array((-C3_inv @ array(self.C2, dtype=float) @ array(bingham_samples).T).T)
         lin_samples = array(
-            np.array(means) + np.random.multivariate_normal(np.zeros(2), cov, size=n)
+            means + np.random.multivariate_normal(np.zeros(2), cov, size=n)
         )
 
         return column_stack([bingham_samples, lin_samples])
@@ -304,40 +299,43 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         if weights is None:
             weights = np.ones(n) / n
         else:
-            weights = array(weights, dtype=float)
+            weights = np.asarray(weights, dtype=float)
             weights = weights / weights.sum()
 
-        s_rot = samples[:, :2]  # (N, 2)
-        s_lin = samples[:, 2:]  # (N, 2)
-
-        # Weighted scatter matrix for rotational part
         w = weights[:, np.newaxis]
-        scatter_rot = (s_rot * w).T @ s_rot  # (2, 2)
-        eigenvalues, eigenvectors = np.linalg.eigh(scatter_rot)
-        order = np.argsort(eigenvalues)
-        eigenvalues = eigenvalues[order]
-        eigenvectors = eigenvectors[:, order]
-        # Bingham parameters from scatter: Z_i = log(eigenvalues_i) up to constant;
-        # use the standard moment-based approach: C1 - C2'C3^{-1}C2 = M diag(Z) M'
-        z_bingham = eigenvalues - eigenvalues[-1]
-        tmp = eigenvectors @ diag(z_bingham) @ eigenvectors.T  # approx C1 - C2'C3^{-1}C2
+        s_rot, s_lin = samples[:, :2], samples[:, 2:]
 
-        # Weighted regression for Gaussian part (Anderson 2003, Th. 8.2.1)
-        reg_c = (s_lin * w).T @ s_rot  # (2, 2)
-        reg_a = (s_rot * w).T @ s_rot  # (2, 2)
-        # Use pinv for numerical stability in case reg_a is nearly singular (e.g. few samples)
-        reg_beta = reg_c @ np.linalg.pinv(reg_a)  # (2, 2) = -C3^{-1} C2
+        # Bingham block: estimate Schur complement from weighted scatter
+        schur_c = SE2BinghamDistribution._schur_from_scatter(s_rot, w)
 
-        residuals = s_lin - s_rot @ reg_beta.T  # (N, 2)
-        reg_cov = (residuals * w).T @ residuals  # (2, 2)
+        # Gaussian block: estimate C2 and C3 via weighted regression
+        c2_est, c3_est = SE2BinghamDistribution._fit_gaussian_block(s_rot, s_lin, w)
 
-        # Use pinv here: reg_cov may be ill-conditioned when samples cluster on a subspace
-        c3_est = np.linalg.pinv(-2.0 * reg_cov)
-        c3_est = 0.5 * (c3_est + c3_est.T)
-        c2_est = -c3_est @ reg_beta
-
-        # c3_est is the estimated C3 (negative-definite); its inverse is well-conditioned
-        c1_est = tmp + c2_est.T @ np.linalg.inv(c3_est) @ c2_est
+        # Recover C1 from Schur complement definition
+        c1_est = schur_c + c2_est.T @ np.linalg.inv(c3_est) @ c2_est
         c1_est = 0.5 * (c1_est + c1_est.T)
 
         return SE2BinghamDistribution(array(c1_est), array(c2_est), array(c3_est))
+
+    @staticmethod
+    def _schur_from_scatter(s_rot, w):
+        """Return the estimated Schur complement C1 - C2' C3^{-1} C2 from samples."""
+        scatter = (s_rot * w).T @ s_rot
+        eigenvalues, eigenvectors = np.linalg.eigh(scatter)
+        order = np.argsort(eigenvalues)
+        eigenvalues, eigenvectors = eigenvalues[order], eigenvectors[:, order]
+        z = eigenvalues - eigenvalues[-1]
+        return eigenvectors @ np.diag(z) @ eigenvectors.T
+
+    @staticmethod
+    def _fit_gaussian_block(s_rot, s_lin, w):
+        """Return estimated (C2, C3) via weighted linear regression."""
+        reg_a = (s_rot * w).T @ s_rot
+        # Use pinv for numerical stability when reg_a is nearly singular
+        reg_beta = (s_lin * w).T @ s_rot @ np.linalg.pinv(reg_a)
+        residuals = s_lin - s_rot @ reg_beta.T
+        reg_cov = (residuals * w).T @ residuals
+        # Use pinv: reg_cov may be ill-conditioned when samples cluster on a subspace
+        c3_est = np.linalg.pinv(-2.0 * reg_cov)
+        c3_est = 0.5 * (c3_est + c3_est.T)
+        return -c3_est @ reg_beta, c3_est
