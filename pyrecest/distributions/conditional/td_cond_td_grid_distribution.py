@@ -79,10 +79,10 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
         manifold_size = float((2.0 * pi) ** d)
         # For each fixed second argument j, the mean over i times the torus
         # volume should equal 1.
-        ints = mean(self.grid_values, axis=0) * manifold_size
+        ints = mean(self.grid_values, 0) * manifold_size
         if any(abs(ints - 1) > tol):
             # Check whether swapping the two arguments would yield normalisation.
-            ints_swapped = mean(self.grid_values, axis=1) * manifold_size
+            ints_swapped = mean(self.grid_values, 1) * manifold_size
             if all(abs(ints_swapped - 1) <= tol):
                 raise ValueError(
                     "Normalization:maybeWrongOrder: Not normalized but would be if "
@@ -157,9 +157,9 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
         )
 
         if first_or_second == 1:
-            grid_values_sgd = sum(self.grid_values, axis=0)
+            grid_values_sgd = sum(self.grid_values, 0)
         elif first_or_second == 2:
-            grid_values_sgd = sum(self.grid_values, axis=1)
+            grid_values_sgd = sum(self.grid_values, 1)
         else:
             raise ValueError("first_or_second must be 1 or 2.")
 
@@ -196,7 +196,7 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
                 f"point must have length {d} (dimension of the torus)."
             )
 
-        diffs = linalg.norm(self.grid - point[None, :], axis=1)
+        diffs = linalg.norm(self.grid - point[None, :], 1)
         locb = argmin(diffs)
         if diffs[locb] > 1e-10:
             raise ValueError(
