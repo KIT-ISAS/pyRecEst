@@ -195,7 +195,6 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
 
     def _update_nonlinear_impl(self, likelihoods, measurements):
         """Shared implementation for single and multiple nonlinear updates."""
-        import pyshtools as pysh  # pylint: disable=import-error
 
         degree = self._filter_state.coeff_mat.shape[0] - 1
 
@@ -224,7 +223,7 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
         if self._filter_state.transformation == "identity":
             fval_new = scale * fval_curr * likelihood_vals
         elif self._filter_state.transformation == "sqrt":
-            fval_new = scale * fval_curr * sqrt(maximum(likelihood_vals, 0.0))
+            fval_new = scale * fval_curr * sqrt(max(likelihood_vals, 0.0))
         else:
             raise ValueError(
                 f"Unsupported transformation: '{self._filter_state.transformation}'"
