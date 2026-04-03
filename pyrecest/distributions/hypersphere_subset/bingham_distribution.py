@@ -1,5 +1,4 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from scipy.integrate import quad
 from scipy.optimize import fsolve
 from scipy.special import iv
@@ -15,6 +14,7 @@ from pyrecest.backend import (
     eye,
     linalg,
     max,
+    maximum,
     pi,
     ones,
     sum,
@@ -274,7 +274,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         M_np = M_np.real
 
         # Normalize eigenvalues to get target moments (they should sum to 1)
-        eigenvalues = max(eigenvalues, 0)
+        eigenvalues = maximum(eigenvalues, 0)
         ev_sum = eigenvalues.sum()
         if ev_sum == 0:
             target_d = ones(n) / n
