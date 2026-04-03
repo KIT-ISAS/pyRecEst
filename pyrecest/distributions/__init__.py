@@ -81,6 +81,7 @@ from .circle.custom_circular_distribution import CustomCircularDistribution
 from .circle.sine_skewed_distributions import (
     AbstractSineSkewedDistribution,
     GeneralizedKSineSkewedVonMisesDistribution,
+    GSSVMDistribution,
     SineSkewedVonMisesDistribution,
     SineSkewedWrappedCauchyDistribution,
     SineSkewedWrappedNormalDistribution,
@@ -273,6 +274,7 @@ __all__ = aliases + [
     "CustomCircularDistribution",
     "AbstractSineSkewedDistribution",
     "GeneralizedKSineSkewedVonMisesDistribution",
+    "GSSVMDistribution",
     "SineSkewedVonMisesDistribution",
     "SineSkewedWrappedCauchyDistribution",
     "SineSkewedWrappedNormalDistribution",

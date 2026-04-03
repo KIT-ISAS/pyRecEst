@@ -3,9 +3,9 @@ from abc import abstractmethod
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import mod, ndim, pi, sin
 from scipy.special import ive  # pylint: disable=no-name-in-module
-from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+from .von_mises_distribution import VonMisesDistribution
 from .wrapped_cauchy_distribution import WrappedCauchyDistribution
 from .wrapped_normal_distribution import WrappedNormalDistribution
 
@@ -40,7 +40,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
     def pdf(self, xs):
         # Evaluate the von Mises distribution and multiply by (1 + lambda_ * sin(xa - mu))
         assert self.k == 1, "Currently, only k=1 is supported"
-        vm_pdf = vonmises.pdf(xs, self.kappa, loc=self.mu)
+        vm_pdf = VonMisesDistribution(self.mu, self.kappa).pdf(xs)
         skew_factor = (1 + self.lambda_ * sin(self.k * (xs - self.mu))) ** self.m
         if self.m == 1:
             norm_const = 1
@@ -79,9 +79,36 @@ class SineSkewedVonMisesDistribution(GeneralizedKSineSkewedVonMisesDistribution)
         super().__init__(mu, kappa, lambda_, k=1, m=1)
 
 
+class GSSVMDistribution(GeneralizedKSineSkewedVonMisesDistribution):
+    """
+    Generalized Skew-Symmetric Von Mises (GSSVM) distribution.
+
+    Special case of GeneralizedKSineSkewedVonMisesDistribution with k=1 fixed.
+    Corresponds to GSSVMDistribution in libDirectional.
+
+    Parameters:
+    - mu (float): Mean direction of the distribution.
+    - kappa (float): Concentration parameter (non-negative).
+    - lambda_ (float): Skewness parameter, must be between -1 and 1 inclusive.
+    - n (int): Order/power of the sine skewing term, must be a positive integer.
+    """
+
+    def __init__(self, mu, kappa, lambda_, n):
+        super().__init__(mu, kappa, lambda_, k=1, m=n)
+
+    @property
+    def n(self):
+        return self.m
+
+    def shift(self, shift_by):
+        if ndim(shift_by) != 0:
+            raise ValueError("angle must be a scalar")
+        return GSSVMDistribution(self.mu + shift_by, self.kappa, self.lambda_, self.n)
+
+
 def bessel_ratio(p, z):
     """
-    Computes the ratio I_p(z) / I_p(0) in a numerically stable manner using
+    Computes the ratio I_p(z) / I_0(z) in a numerically stable manner using
     exponentially scaled modified Bessel functions.
 
     Parameters:
@@ -89,16 +116,10 @@ def bessel_ratio(p, z):
     - z: Argument for the Bessel function.
 
     Returns:
-    - The ratio of I_p(z) to I_p(0), calculated in a numerically stable way.
+    - The ratio I_p(z) / I_0(z), calculated in a numerically stable way.
     """
-    # Compute the scaled Bessel function values for both the numerator and denominator.
-    scaled_numerator = ive(p, z)
-    scaled_denominator = ive(p, 0)
-
-    # Since ive(p, z) = iv(p, z) * exp(-|z|), and ive(p, 0) = iv(p, 0),
-    # when we take the ratio, the exp(-|z|) terms cancel out for the ratio calculation.
-    # Therefore, the ratio of the scaled values directly gives us the ratio of the original Bessel functions.
-    return scaled_numerator / scaled_denominator
+    # ive(p, z) = iv(p, z) * exp(-|z|), so ive(p, z) / ive(0, z) = iv(p, z) / iv(0, z).
+    return ive(p, z) / ive(0, z)
 
 
 class AbstractSineSkewedDistribution(AbstractCircularDistribution):
