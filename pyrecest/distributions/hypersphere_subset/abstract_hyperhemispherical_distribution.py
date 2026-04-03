@@ -5,7 +5,7 @@ from typing import Union
 import matplotlib.pyplot as plt
 import pyrecest.backend
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 from pyrecest.backend import (
     array,
     concatenate,
