@@ -9,7 +9,6 @@ from pyrecest.backend import (
     array,
     asarray,
     concatenate,
-    empty,
     stack,
     sum as backend_sum,
     zeros,
@@ -139,7 +138,7 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
 
         n = len(self.linear_distributions)
         new_linear_distributions = []
-        factors_linear = empty(n)
+        pdf_values = []
 
         for i in range(n):
             ld_self = self.linear_distributions[i]
@@ -150,9 +149,14 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
             # This is equivalent to N(0, C_self_i + C_other_i) at 0.
             combined_cov = ld_self.C + ld_other.C
             temp_g = GaussianDistribution(ld_other.mu, combined_cov, check_validity=False)
-            factors_linear[i] = float(temp_g.pdf(ld_self.mu))
+            pdf_values.append(temp_g.pdf(ld_self.mu))
 
             new_linear_distributions.append(ld_self.multiply(ld_other))
+
+        # Build a 1-D factors array.  pdf() may return shape () or (1,) depending
+        # on backend and Gaussian dimension; reshape each value to (1,) before
+        # concatenating so the result is always shape (n,).
+        factors_linear = concatenate([asarray(v).reshape((1,)) for v in pdf_values])
 
         # Build result
         result = copy.deepcopy(self)
