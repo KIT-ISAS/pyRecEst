@@ -1,10 +1,9 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, eye, linalg, pi
 from pyrecest.distributions.cart_prod.state_space_subdivision_gaussian_distribution import (
     StateSpaceSubdivisionGaussianDistribution,
 )
@@ -45,8 +44,8 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
 
         for i in range(n):
             self.assertLess(
-                float(np.linalg.det(rbd_up.linear_distributions[i].C)),
-                float(np.linalg.det(rbd1.linear_distributions[i].C)),
+                float(linalg.det(rbd_up.linear_distributions[i].C)),
+                float(linalg.det(rbd1.linear_distributions[i].C)),
             )
             npt.assert_allclose(
                 rbd_up.linear_distributions[i].mu, array([1.0]), atol=1e-14
@@ -59,13 +58,13 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
             HyperhemisphericalUniformDistribution(2), n, "leopardi_symm"
         )
         gaussians = [
-            GaussianDistribution(array([0.0, 0.0, 0.0]), 1000.0 * np.eye(3))
+            GaussianDistribution(array([0.0, 0.0, 0.0]), 1000.0 * eye(3))
             for _ in range(n)
         ]
         rbd1 = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
 
         gaussians2 = [
-            GaussianDistribution(array([2.0, 2.0, 2.0]), 1000.0 * np.eye(3))
+            GaussianDistribution(array([2.0, 2.0, 2.0]), 1000.0 * eye(3))
             for _ in range(n)
         ]
         rbd2 = StateSpaceSubdivisionGaussianDistribution(gd, gaussians2)
@@ -74,8 +73,8 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
 
         for i in range(n):
             self.assertLess(
-                float(np.linalg.det(rbd_up.linear_distributions[i].C)),
-                float(np.linalg.det(rbd1.linear_distributions[i].C)),
+                float(linalg.det(rbd_up.linear_distributions[i].C)),
+                float(linalg.det(rbd1.linear_distributions[i].C)),
             )
             npt.assert_allclose(
                 rbd_up.linear_distributions[i].mu,
@@ -92,7 +91,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
             VonMisesDistribution(mu_periodic, 1.0), (n,)
         )
         gaussians = [
-            GaussianDistribution(mu_linear, 1000.0 * np.eye(3)) for _ in range(n)
+            GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)
         ]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
         npt.assert_allclose(
@@ -109,7 +108,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
             VonMisesDistribution(4.0, 1.0), (n,)
         )
         gaussians = [
-            GaussianDistribution(mu_linear, 1000.0 * np.eye(3)) for _ in range(n)
+            GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)
         ]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
         npt.assert_allclose(rbd.linear_mean(), mu_linear, atol=1e-14)
@@ -122,7 +121,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
             CircularUniformDistribution(), (n,)
         )
         gaussians = [
-            GaussianDistribution(mu_linear, 1000.0 * np.eye(3)) for _ in range(n)
+            GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)
         ]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
         with self.assertWarns(UserWarning):
@@ -137,7 +136,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
             VonMisesDistribution(mu_periodic, 10.0), (n,)
         )
         gaussians = [
-            GaussianDistribution(mu_linear, np.eye(3)) for _ in range(n)
+            GaussianDistribution(mu_linear, eye(3)) for _ in range(n)
         ]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
 
@@ -152,7 +151,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         npt.assert_allclose(
             m,
             array([mu_periodic, 1.0, 2.0, 3.0]),
-            atol=np.pi / n,
+            atol=pi / n,
         )
 
 
