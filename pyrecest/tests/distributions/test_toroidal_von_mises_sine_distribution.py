@@ -17,28 +17,18 @@ matplotlib.pyplot.close("all")
 matplotlib.use("Agg")
 
 
-class ToroidalVMSineDistributionTest(unittest.TestCase):
-    def setUp(self):
-        self.mu = array([1.0, 2.0])
-        self.kappa = array([0.7, 1.4])
-        self.lambda_ = array(0.5)
-        self.tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, self.lambda_)
+class ToroidalBivarVMTestMixin:
+    """Shared tests for bivariate toroidal von Mises distribution test classes.
 
-    def test_instance(self):
-        # sanity check
-        self.assertIsInstance(self.tvm, ToroidalVonMisesSineDistribution)
-
-    def test_mu_kappa_lambda(self):
-        npt.assert_allclose(self.tvm.mu, self.mu)
-        npt.assert_allclose(self.tvm.kappa, self.kappa)
-        self.assertEqual(self.tvm.lambda_, self.lambda_)
+    Subclasses must implement ``setUp`` (setting ``self.mu``, ``self.kappa``,
+    and ``self.tvm``) and ``_unnormalized_pdf``.
+    """
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_integral(self):
-        # test integral
         self.assertAlmostEqual(self.tvm.integrate(), 1.0, delta=1e-5)
 
     @unittest.skipIf(
@@ -52,17 +42,6 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
 
     def test_plot_2d(self):
         self.tvm.plot()
-
-    # jscpd:ignore-start
-    # pylint: disable=R0801
-    def _unnormalized_pdf(self, xs):
-        return exp(
-            self.kappa[0] * cos(xs[..., 0] - self.mu[0])
-            + self.kappa[1] * cos(xs[..., 1] - self.mu[1])
-            + self.lambda_ * sin(xs[..., 0] - self.mu[0]) * sin(xs[..., 1] - self.mu[1])
-        )
-
-    # jscpd:ignore-end
 
     @parameterized.expand(
         [
@@ -87,6 +66,30 @@ class ToroidalVMSineDistributionTest(unittest.TestCase):
         expected = pdf(x)
 
         npt.assert_allclose(self.tvm.pdf(x), expected)
+
+
+class ToroidalVMSineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCase):
+    def setUp(self):
+        self.mu = array([1.0, 2.0])
+        self.kappa = array([0.7, 1.4])
+        self.lambda_ = array(0.5)
+        self.tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, self.lambda_)
+
+    def test_instance(self):
+        # sanity check
+        self.assertIsInstance(self.tvm, ToroidalVonMisesSineDistribution)
+
+    def test_mu_kappa_lambda(self):
+        npt.assert_allclose(self.tvm.mu, self.mu)
+        npt.assert_allclose(self.tvm.kappa, self.kappa)
+        self.assertEqual(self.tvm.lambda_, self.lambda_)
+
+    def _unnormalized_pdf(self, xs):
+        return exp(
+            self.kappa[0] * cos(xs[..., 0] - self.mu[0])
+            + self.kappa[1] * cos(xs[..., 1] - self.mu[1])
+            + self.lambda_ * sin(xs[..., 0] - self.mu[0]) * sin(xs[..., 1] - self.mu[1])
+        )
 
 
 if __name__ == "__main__":
