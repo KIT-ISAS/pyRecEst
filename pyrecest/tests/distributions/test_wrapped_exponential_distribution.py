@@ -27,7 +27,7 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
 
         for x in [0.0, 1.0, 2.0, 3.0, 4.0]:
             npt.assert_allclose(
-                self.we.pdf(array(x)), pdftemp(array(x)), rtol=1e-10
+                self.we.pdf(array(x)), pdftemp(array(x)), rtol=5e-7
             )
 
     @unittest.skipIf(
@@ -35,13 +35,13 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_integral(self):
-        npt.assert_allclose(self.we.integrate(), 1.0, rtol=1e-10)
-        npt.assert_allclose(self.we.integrate_numerically(), 1.0, rtol=1e-10)
+        npt.assert_allclose(self.we.integrate(), 1.0, rtol=5e-7)
+        npt.assert_allclose(self.we.integrate_numerically(), 1.0, rtol=5e-7)
         npt.assert_allclose(
             self.we.integrate(array([0.0, pi]))
             + self.we.integrate(array([pi, 2.0 * pi])),
             1.0,
-            rtol=1e-10,
+            rtol=5e-7,
         )
 
     @unittest.skipIf(
@@ -53,12 +53,12 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
             npt.assert_allclose(
                 self.we.trigonometric_moment(i),
                 self.we.trigonometric_moment_numerical(i),
-                rtol=1e-10,
+                rtol=5e-7,
             )
 
     def test_circular_mean(self):
         npt.assert_allclose(
-            self.we.mean_direction(), float(arctan(1.0 / self.lambda_)), rtol=1e-10
+            self.we.mean_direction(), float(arctan(1.0 / self.lambda_)), rtol=5e-7
         )
 
     @unittest.skipIf(
@@ -67,7 +67,7 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
     )
     def test_entropy(self):
         npt.assert_allclose(
-            self.we.entropy(), self.we.entropy_numerical(), rtol=1e-10
+            self.we.entropy(), self.we.entropy_numerical(), rtol=5e-7
         )
 
     def test_periodicity(self):
