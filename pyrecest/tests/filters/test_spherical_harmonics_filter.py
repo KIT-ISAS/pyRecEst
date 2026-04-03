@@ -54,14 +54,13 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
             self.assertTrue(np.allclose(sh_filter.get_estimate_mean(), pos_true, atol=0.3))
 
     def test_update_using_likelihood_multiple(self):
+        sigma_x = 0.3
+        sigma_y = 0.3
+        sigma_z = 0.3
         for transformation in ['identity', 'sqrt']:
             sh_filter1 = SphericalHarmonicsFilter(10, transformation)
             sh_filter2 = SphericalHarmonicsFilter(10, transformation)
 
-            sigma_x = 0.3
-            sigma_y = 0.3
-            sigma_z = 0.3
-            
             sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[0], x[0], sigma_x), np.array([-1 / np.sqrt(3), 0, 0]))
             sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[1], x[1], sigma_y), np.array([0, -1 / np.sqrt(3), 0]))
             sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[2], x[2], sigma_z), np.array([0, 0, -1 / np.sqrt(3)]))

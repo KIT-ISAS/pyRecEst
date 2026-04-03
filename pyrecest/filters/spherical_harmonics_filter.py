@@ -1,7 +1,7 @@
 import copy
 import warnings
 
-from pyrecest.backend import zeros, sqrt, pi, linalg, abs, stack, arccos, arctan2, clip, array, ones
+from pyrecest.backend import zeros, sqrt, pi, linalg, abs, stack, arccos, arctan2, clip, array, ones, maximum  # pylint: disable=redefined-builtin
 
 from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_complex import (
     SphericalHarmonicsDistributionComplex,
@@ -193,14 +193,14 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _update_nonlinear_impl(self, likelihoods, measurements):
+    def _update_nonlinear_impl(self, likelihoods, measurements):  # pylint: disable=too-many-locals
         """Shared implementation for single and multiple nonlinear updates."""
 
         degree = self._filter_state.coeff_mat.shape[0] - 1
 
         # DH grid coordinates
         x_c, y_c, z_c, grid_shape = (
-            SphericalHarmonicsDistributionComplex._get_dh_grid_cartesian(degree)
+            SphericalHarmonicsDistributionComplex._get_dh_grid_cartesian(degree)  # pylint: disable=protected-access
         )
         # (3, N) matrix for likelihood calls
         grid_pts = stack([x_c, y_c, z_c], axis=0)
@@ -223,12 +223,12 @@ class SphericalHarmonicsFilter(AbstractFilter, HypersphericalFilterMixin):
         if self._filter_state.transformation == "identity":
             fval_new = scale * fval_curr * likelihood_vals
         elif self._filter_state.transformation == "sqrt":
-            fval_new = scale * fval_curr * sqrt(max(likelihood_vals, 0.0))
+            fval_new = scale * fval_curr * sqrt(maximum(likelihood_vals, 0.0))
         else:
             raise ValueError(
                 f"Unsupported transformation: '{self._filter_state.transformation}'"
             )
 
-        self._filter_state = SphericalHarmonicsDistributionComplex._fit_from_grid(
+        self._filter_state = SphericalHarmonicsDistributionComplex._fit_from_grid(  # pylint: disable=protected-access
             fval_new, degree, self._filter_state.transformation
         )

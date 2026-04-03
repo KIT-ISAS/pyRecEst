@@ -3,7 +3,6 @@ import warnings
 import scipy
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
     all,
@@ -18,6 +17,7 @@ from pyrecest.backend import (
     isnan,
     zeros_like,
     linalg,
+    maximum,
     pi,
     real,
     reshape,
@@ -26,7 +26,6 @@ from pyrecest.backend import (
     sqrt,
     zeros,
     cos,
-    sin,
     meshgrid,
     deg2rad,
 )
@@ -220,7 +219,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
     @staticmethod
     def _pysh_to_coeff_mat(clm, degree):
         """Convert a pyshtools SHComplexCoeffs object to our coeff_mat."""
-        coeff_mat = np.zeros((degree + 1, 2 * degree + 1), dtype=complex)
+        coeff_mat = zeros((degree + 1, 2 * degree + 1), dtype=complex128)
         max_n = min(clm.lmax, degree)
         for n in range(max_n + 1):
             for m in range(0, n + 1):
@@ -318,13 +317,13 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         fvals = array(dist.pdf(xs), dtype=float).reshape(grid_shape)
 
         if transformation == "sqrt":
-            fvals = sqrt(max(fvals, 0.0))
+            fvals = sqrt(maximum(fvals, 0.0))
 
         return SphericalHarmonicsDistributionComplex._fit_from_grid(
             fvals, degree, transformation
         )
 
-    def convolve(self, other):
+    def convolve(self, other):  # pylint: disable=too-many-locals
         """Spherical convolution with a *zonal* distribution *other*.
 
         For the ``'identity'`` transformation the standard frequency-domain
@@ -362,7 +361,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             f_grid = self._eval_on_grid(target_degree=degree_fine)
             p_grid = f_grid**2
 
-            g_grid = other._eval_on_grid(target_degree=degree_fine)
+            g_grid = other._eval_on_grid(target_degree=degree_fine)  # pylint: disable=protected-access
             q_grid = g_grid**2
 
             import pyshtools as pysh  # pylint: disable=import-error
@@ -388,8 +387,8 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
             # Evaluate r on the standard DH grid, take sqrt, refit
             r_shd_id = SphericalHarmonicsDistributionComplex(r_lm, "identity")
-            r_grid = r_shd_id._eval_on_grid()
-            sqrt_r_grid = sqrt(max(r_grid, 0.0))
+            r_grid = r_shd_id._eval_on_grid()  # pylint: disable=protected-access
+            sqrt_r_grid = sqrt(maximum(r_grid, 0.0))
 
             return SphericalHarmonicsDistributionComplex._fit_from_grid(
                 sqrt_r_grid, degree, "sqrt"
@@ -417,7 +416,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         degree = self.coeff_mat.shape[0] - 1
 
         f_grid = self._eval_on_grid()
-        g_grid = other._eval_on_grid()
+        g_grid = other._eval_on_grid()  # pylint: disable=protected-access
 
         h_grid = f_grid * g_grid
 
@@ -437,14 +436,12 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         gamma : float
             Third rotation angle around Z (radians).
         """
-        import pyshtools as pysh  # pylint: disable=import-error
-
         degree = self.coeff_mat.shape[0] - 1
         clm = self._coeff_mat_to_pysh(self.coeff_mat, degree)
         clm_rot = clm.rotate(
-            np.degrees(alpha),
-            np.degrees(beta),
-            np.degrees(gamma),
+            alpha * 180.0 / pi,
+            beta * 180.0 / pi,
+            gamma * 180.0 / pi,
             degrees=True,
             body=True,
         )
