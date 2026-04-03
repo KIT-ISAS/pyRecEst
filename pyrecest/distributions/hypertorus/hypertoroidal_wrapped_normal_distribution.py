@@ -1,6 +1,15 @@
 import copy
 from typing import Union
 
+import numpy as np
+
+
+def _to_numpy(x):
+    """Convert to a plain numpy array, handling torch tensors."""
+    if hasattr(x, "detach"):
+        return x.detach().numpy()
+    return np.asarray(x)
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -17,7 +26,6 @@ from pyrecest.backend import (
     pi,
     random,
     stack,
-    zeros,
 )
 from scipy.stats import multivariate_normal
 
@@ -82,15 +90,21 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
             -1, self.dim
         )
 
-        # Calculate the PDF values by considering all combinations of offsets
-        pdf_values = zeros(xs.shape[0])
+        # Calculate the PDF values by considering all combinations of offsets.
+        # Accumulate into a plain numpy array to avoid __array_wrap__ warnings
+        # when mixing torch tensors with scipy return values.
+        pdf_values = np.zeros(xs.shape[0])
+        mean_np = _to_numpy(self.mu.flatten())
+        cov_np = _to_numpy(self.C)
         for offset in offset_combinations:
             shifted_xa = xs + offset[None, :]
             pdf_values += multivariate_normal.pdf(
-                shifted_xa, mean=self.mu.flatten(), cov=self.C
+                _to_numpy(shifted_xa),
+                mean=mean_np,
+                cov=cov_np,
             )
 
-        return pdf_values
+        return array(pdf_values)
 
     def shift(self, shift_by) -> "HypertoroidalWrappedNormalDistribution":
         """

@@ -9,6 +9,14 @@ from pyrecest.backend import array
 from pyrecest.distributions import SE2BinghamDistribution
 
 
+def _to_np(x, dtype=None):
+    """Convert to a plain numpy array, handling torch tensors."""
+    if hasattr(x, "detach"):
+        arr = x.detach().numpy()
+        return arr.astype(dtype) if dtype is not None else arr
+    return np.asarray(x, dtype=dtype)
+
+
 class TestSE2BinghamDistribution(unittest.TestCase):
     def setUp(self):
         """Set up a test SE2BinghamDistribution instance."""
@@ -28,9 +36,9 @@ class TestSE2BinghamDistribution(unittest.TestCase):
         C_full = self.dist.C
         dist2 = SE2BinghamDistribution(C_full)
         self.assertIsInstance(dist2, SE2BinghamDistribution)
-        npt.assert_array_almost_equal(np.array(dist2.C1), np.array(self.dist.C1))
-        npt.assert_array_almost_equal(np.array(dist2.C2), np.array(self.dist.C2))
-        npt.assert_array_almost_equal(np.array(dist2.C3), np.array(self.dist.C3))
+        npt.assert_array_almost_equal(_to_np(dist2.C1), _to_np(self.dist.C1))
+        npt.assert_array_almost_equal(_to_np(dist2.C2), _to_np(self.dist.C2))
+        npt.assert_array_almost_equal(_to_np(dist2.C3), _to_np(self.dist.C3))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -56,7 +64,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
             ]
         )
         vals = self.dist.pdf(points)
-        self.assertTrue(np.all(np.array(vals) > 0))
+        self.assertTrue(np.all(_to_np(vals) > 0))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -73,7 +81,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
 
         dq = AbstractSE2Distribution.angle_pos_to_dual_quaternion(angle_pos)
         p_dq = self.dist.pdf(dq)
-        npt.assert_array_almost_equal(np.array(p_ap), np.array(p_dq))
+        npt.assert_array_almost_equal(_to_np(p_ap), _to_np(p_dq))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -82,7 +90,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
     def test_mode_shape(self):
         """Mode should be a 4-element array."""
         m = self.dist.mode()
-        self.assertEqual(np.array(m).shape, (4,))
+        self.assertEqual(_to_np(m).shape, (4,))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -93,14 +101,14 @@ class TestSE2BinghamDistribution(unittest.TestCase):
         from pyrecest.distributions import AbstractSE2Distribution
 
         # Mode is in dual-quaternion (DQ) representation
-        m_dq = array(np.array(self.dist.mode()).reshape(1, -1))
+        m_dq = array(_to_np(self.dist.mode()).reshape(1, -1))
 
         # Convert mode DQ → angle-pos
         angle_arr, pos_arr = AbstractSE2Distribution.dual_quaternion_to_angle_pos(m_dq)
-        angle0 = float(np.array(angle_arr).ravel()[0])
-        pos0 = np.array(pos_arr).ravel()
+        angle0 = float(_to_np(angle_arr).ravel()[0])
+        pos0 = _to_np(pos_arr).ravel()
 
-        p_mode = float(np.array(self.dist.pdf(m_dq)).ravel()[0])
+        p_mode = float(_to_np(self.dist.pdf(m_dq)).ravel()[0])
 
         rng = np.random.default_rng(42)
         for _ in range(20):
@@ -109,7 +117,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
             pos_p = pos0 + rng.normal(0, 0.15, size=2)
             ap = array(np.array([[angle_p, pos_p[0], pos_p[1]]]))
             dq_p = AbstractSE2Distribution.angle_pos_to_dual_quaternion(ap)
-            p_perturbed = float(np.array(self.dist.pdf(dq_p)).ravel()[0])
+            p_perturbed = float(_to_np(self.dist.pdf(dq_p)).ravel()[0])
             self.assertGreaterEqual(p_mode, p_perturbed - 1e-6)
 
     @unittest.skipIf(
@@ -120,7 +128,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
         """sample() must return an (n, 4) array."""
         n = 50
         s = self.dist.sample(n)
-        self.assertEqual(np.array(s).shape, (n, 4))
+        self.assertEqual(_to_np(s).shape, (n, 4))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
