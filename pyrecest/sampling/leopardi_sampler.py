@@ -34,6 +34,13 @@ from ..distributions import (
 )
 
 
+def _to_numpy(x):
+    """Convert to numpy, handling torch tensors to avoid scipy compatibility warnings."""
+    if hasattr(x, "detach"):
+        return x.detach().numpy()
+    return x
+
+
 def get_cap_area(dim, colatitude):
     """
     Compute the surface area of a spherical cap on S^dim, given its colatitude.
@@ -56,7 +63,7 @@ def get_cap_area(dim, colatitude):
     x = sin(colatitude / 2) ** 2
     a = dim / 2
     b = dim / 2
-    area = area_sphere * betainc(a, b, x)
+    area = area_sphere * betainc(float(a), float(b), float(_to_numpy(x)))
     return area
 
 

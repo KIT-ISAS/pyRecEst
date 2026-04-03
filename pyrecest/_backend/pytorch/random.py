@@ -16,7 +16,7 @@ def choice(a, size=None, replace=True, p=None):
         if not replace:
             raise ValueError("Sampling without replacement is not supported with PyTorch when probabilities are given.")
         
-        p = _torch.tensor(p, dtype=_torch.float32)
+        p = p.detach().clone().to(dtype=_torch.float32) if _torch.is_tensor(p) else _torch.tensor(p, dtype=_torch.float32)
         p = p / p.sum()  # Normalize probabilities
         indices = _torch.multinomial(p, num_samples=_torch.prod(_torch.tensor(size)), replacement=True)
     else:

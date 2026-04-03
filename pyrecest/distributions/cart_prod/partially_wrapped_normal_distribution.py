@@ -74,7 +74,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         multiples = array(range(-m, m + 1)) * 2.0 * pi
 
         # create meshgrid for all combinations of multiples
-        mesh = array(meshgrid(*[multiples] * self.bound_dim)).reshape(
+        mesh = array(meshgrid(*[multiples] * self.bound_dim, indexing="ij")).reshape(
             -1, self.bound_dim
         )
 

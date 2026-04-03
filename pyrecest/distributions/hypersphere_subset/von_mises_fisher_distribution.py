@@ -28,6 +28,13 @@ from scipy.special import iv
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
 
+def _to_numpy(x):
+    """Convert to numpy, handling torch tensors to avoid scipy compatibility warnings."""
+    if hasattr(x, "detach"):
+        return x.detach().numpy()
+    return x
+
+
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu, kappa):
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
@@ -45,14 +52,14 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         if self.dim == 2:
             self.C = kappa / (4 * pi * sinh(kappa))
         else:
-            self.C = kappa ** ((self.dim + 1) / 2.0 - 1) / (
-                (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, kappa)
+            self.C = _to_numpy(kappa) ** ((self.dim + 1) / 2.0 - 1) / (
+                (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, _to_numpy(kappa))
             )
 
     def pdf(self, xs):
         assert xs.shape[-1] == self.input_dim
 
-        return self.C * exp(self.kappa * self.mu.T @ xs.T)
+        return self.C * exp(self.kappa * xs @ self.mu)
 
     def mean_direction(self):
         return self.mu
@@ -165,8 +172,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def a_d(d: Union[int, int32, int64], kappa):
-        bessel1 = array(iv(d / 2, kappa))
-        bessel2 = array(iv(d / 2 - 1, kappa))
+        bessel1 = array(iv(d / 2, _to_numpy(kappa)))
+        bessel2 = array(iv(d / 2 - 1, _to_numpy(kappa)))
         if isnan(bessel1) or isnan(bessel2):
             print(f"Bessel functions returned NaN for d={d}, kappa={kappa}")
         return bessel1 / bessel2

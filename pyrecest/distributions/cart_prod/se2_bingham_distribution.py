@@ -21,6 +21,14 @@ from ..hypersphere_subset.bingham_distribution import BinghamDistribution
 from ..nonperiodic.custom_linear_distribution import CustomLinearDistribution
 
 
+def _to_np(x, dtype=None):
+    """Convert to a plain numpy array, handling torch tensors."""
+    if hasattr(x, "detach"):
+        arr = x.detach().numpy()
+        return arr.astype(dtype) if dtype is not None else arr
+    return np.asarray(x, dtype=dtype)
+
+
 class SE2BinghamDistribution(AbstractSE2Distribution):
     """
     Distribution on SE(2) = S^1 x R^2.
@@ -70,7 +78,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         if C2 is None:
             assert C.shape == (4, 4), "C must be 4x4 when C2 and C3 are not provided."
             assert np.allclose(
-                np.array(C), np.array(C).T
+                _to_np(C), _to_np(C).T
             ), "Full C matrix must be symmetric."
             self.C = C
             self.C1 = C[:2, :2]
@@ -80,8 +88,8 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
             assert C.shape == (2, 2), "C1 must be 2x2."
             assert C2.shape == (2, 2), "C2 must be 2x2."
             assert C3.shape == (2, 2), "C3 must be 2x2."
-            assert np.allclose(np.array(C), np.array(C).T), "C1 must be symmetric."
-            assert np.allclose(np.array(C3), np.array(C3).T), "C3 must be symmetric."
+            assert np.allclose(_to_np(C), _to_np(C).T), "C1 must be symmetric."
+            assert np.allclose(_to_np(C3), _to_np(C3).T), "C3 must be symmetric."
             self.C1 = C
             self.C2 = C2
             self.C3 = C3
@@ -93,7 +101,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
             ).T
 
         assert np.all(
-            np.linalg.eigvalsh(np.array(self.C3)) <= 0
+            np.linalg.eigvalsh(_to_np(self.C3)) <= 0
         ), "C3 must be negative semi-definite."
 
         self._nc = None  # lazily computed
@@ -123,7 +131,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         bm = C1 - C2.T @ C3_inv @ C2
         z = sort(linalg.eigvalsh(bm))  # ascending
         # 2D Bingham normalization on S^1
-        b_nc = 2.0 * pi * exp((z[0] + z[1]) / 2.0) * iv(0, (z[1] - z[0]) / 2.0)
+        b_nc = 2.0 * pi * exp((z[0] + z[1]) / 2.0) * iv(0, float((z[1] - z[0]) / 2.0))
         nc = 2.0 * pi * sqrt(linalg.det(-0.5 * C3_inv)) * b_nc
         return float(nc)
 
@@ -207,8 +215,8 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
 
         # Step 2: sample Gaussian conditional
         # mean_i = -C3^{-1} * C2 * x_rot_i
-        cov = np.array(-0.5 * C3_inv)
-        means = np.array(
+        cov = _to_np(-0.5 * C3_inv)
+        means = _to_np(
             (-C3_inv @ array(self.C2, dtype=float) @ array(bingham_samples).T).T
         )
         lin_samples = array(
@@ -229,9 +237,9 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         b : BinghamDistribution
             Marginal Bingham distribution on S^1.
         """
-        C1 = np.array(self.C1, dtype=float)
-        C2 = np.array(self.C2, dtype=float)
-        C3 = np.array(self.C3, dtype=float)
+        C1 = _to_np(self.C1, dtype=float)
+        C2 = _to_np(self.C2, dtype=float)
+        C3 = _to_np(self.C3, dtype=float)
         C3_inv = np.linalg.inv(C3)
         bm = C1 - C2.T @ C3_inv @ C2
         eigenvalues, eigenvectors = np.linalg.eigh(bm)
@@ -290,7 +298,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         dist : SE2BinghamDistribution
             Fitted distribution.
         """
-        samples = np.array(samples, dtype=float)
+        samples = _to_np(samples, dtype=float)
         if samples.shape[1] == 3:
             samples = np.array(
                 AbstractSE2Distribution.angle_pos_to_dual_quaternion(array(samples))

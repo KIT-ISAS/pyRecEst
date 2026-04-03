@@ -1,4 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+import numpy as np
+
 from pyrecest.backend import (
     abs,
     arctan2,
@@ -22,6 +24,13 @@ from scipy.stats import vonmises
 from .abstract_circular_distribution import AbstractCircularDistribution
 
 
+def _to_numpy(x):
+    """Convert to numpy, handling torch tensors to avoid scipy compatibility warnings."""
+    if hasattr(x, "detach"):
+        return x.detach().numpy()
+    return x
+
+
 class VonMisesDistribution(AbstractCircularDistribution):
     def __init__(
         self,
@@ -41,7 +50,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
     @property
     def norm_const(self):
         if self._norm_const is None:
-            self._norm_const = 2.0 * pi * iv(0, self.kappa)
+            self._norm_const = 2.0 * pi * iv(0, _to_numpy(self.kappa))
         return self._norm_const
 
     def pdf(self, xs):
@@ -60,7 +69,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def besselratio(nu, kappa):
-        return iv(nu + 1, kappa) / iv(nu, kappa)
+        return iv(nu + 1, _to_numpy(kappa)) / iv(nu, _to_numpy(kappa))
 
     def cdf(self, xs, starting_point=0):
         """
