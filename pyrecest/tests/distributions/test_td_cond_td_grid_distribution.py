@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 
-from pyrecest.backend import (
+from pyrecest.backend import (  # pylint: disable=redefined-builtin
     abs,
     array,
     asarray,
