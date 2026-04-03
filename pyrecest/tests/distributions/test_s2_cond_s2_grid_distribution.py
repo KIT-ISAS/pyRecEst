@@ -1,10 +1,9 @@
 import unittest
 import warnings
 
-from matplotlib.pylab import column_stack
 import numpy.testing as npt
 import pyrecest
-from pyrecest.backend import array, zeros, pi, ones, sum
+from pyrecest.backend import array, column_stack, ones, pi, sum, tile, zeros
 
 from pyrecest.distributions.conditional.s2_cond_s2_grid_distribution import (
     S2CondS2GridDistribution,
@@ -96,8 +95,6 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
         no_grid_points = 112
 
         def trans(xkk, xk):
-            import numpy as np
-
             # xkk, xk both (n_pairs, 3) when fun_does_cartesian_product=False
             D = array([0.1, 0.15, 1.0])
             diff = (xkk - xk) * D[None, :]
@@ -115,7 +112,6 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
 
         def trans(xkk, xk):
             # xkk: (n1, 3), xk: (n2, 3) -> (n1, n2)  (cartesian product mode)
-            import numpy as np
             from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import (
                 CustomHypersphericalDistribution,
             )
@@ -124,7 +120,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
 
             def trans_unnorm(pts, fixed):
                 diff = (pts - fixed[None, :]) * D[None, :]
-                return 1.0 / (np.sum(diff**2, axis=1) + 0.01)
+                return 1.0 / (sum(diff**2, axis=1) + 0.01)
 
             p = zeros((xkk.shape[0], xk.shape[0]))
             for i in range(xk.shape[0]):
@@ -149,7 +145,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
 
         def f_trans1(xkk, xk):
             vals = dist.pdf(xkk)  # (n1,)
-            return np.tile(vals[:, None], (1, xk.shape[0]))  # (n1, n2)
+            return tile(vals[:, None], (1, xk.shape[0]))  # (n1, n2)
 
         def f_trans2(xkk, xk):
             return dist.pdf(xkk)  # (n_pairs,) in non-Cartesian mode
