@@ -238,7 +238,7 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         )
         grid = dummy.expand(grid="DH", extend=False)
         lats, lons = grid.lats(), grid.lons()
-        lon_mesh, lat_mesh = meshgrid(lons, lats)
+        lon_mesh, lat_mesh = meshgrid(array(lons), array(lats))
         theta = deg2rad(90.0 - lat_mesh)  # colatitude in radians
         phi = deg2rad(lon_mesh)  # azimuth in radians
         x_c = sin(theta) * cos(phi)
@@ -273,19 +273,22 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             1, : min_deg + 1, : min_deg + 1
         ]
         grid = clm_full.expand(grid="DH", extend=False)
-        return grid.data.real
+        return array(grid.data.real)
 
     @staticmethod
     def _fit_from_grid(grid_vals_real, degree, transformation):
         """Fit SH coefficients to real-valued grid values on a DH grid.
 
-        *grid_vals_real* is a 2D numpy array with shape matching the DH grid for
-        *degree*.  Returns a new :class:`SphericalHarmonicsDistributionComplex`.
+        *grid_vals_real* is a 2D array (numpy or backend tensor) with shape
+        matching the DH grid for *degree*.  Returns a new
+        :class:`SphericalHarmonicsDistributionComplex`.
         """
+        import numpy as _np  # noqa: PLC0415
         import pyshtools as pysh  # pylint: disable=import-error
 
+        grid_vals_np = _np.asarray(grid_vals_real)
         grid_obj = pysh.SHGrid.from_array(
-            grid_vals_real.astype(complex), grid="DH"
+            grid_vals_np.astype(complex), grid="DH"
         )
         clm = grid_obj.expand(lmax_calc=degree, normalization="ortho", csphase=-1)
         coeff_mat = SphericalHarmonicsDistributionComplex._pysh_to_coeff_mat(clm, degree)
@@ -364,11 +367,13 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             g_grid = other._eval_on_grid(target_degree=degree_fine)  # pylint: disable=protected-access
             q_grid = g_grid**2
 
+            import numpy as _np  # noqa: PLC0415
             import pyshtools as pysh  # pylint: disable=import-error
 
             def _grid_to_coeff(grid_vals):
+                grid_vals_np = _np.asarray(grid_vals)
                 grid_obj = pysh.SHGrid.from_array(
-                    grid_vals.astype(complex), grid="DH"
+                    grid_vals_np.astype(complex), grid="DH"
                 )
                 clm = grid_obj.expand(
                     lmax_calc=degree, normalization="ortho", csphase=-1
