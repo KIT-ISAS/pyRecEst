@@ -32,7 +32,7 @@ class CircularUKFTest(unittest.TestCase):
         npt.assert_almost_equal(g_identity.C, self.g.C + self.g.C)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "pytorch",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_predict_nonlinear_identity_function(self):
@@ -44,7 +44,7 @@ class CircularUKFTest(unittest.TestCase):
         npt.assert_almost_equal(g_nonlin.C, self.g.C + self.g.C, decimal=10)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "pytorch",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_predict_nonlinear_true_nonlinear(self):
@@ -90,7 +90,7 @@ class CircularUKFTest(unittest.TestCase):
         self.assertGreater(float(self.g.C[0, 0]), float(g_identity3.C[0, 0]))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "pytorch",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_update_nonlinear_identity_function(self):
@@ -104,7 +104,7 @@ class CircularUKFTest(unittest.TestCase):
         self.assertGreater(float(g7.C[0, 0]), float(g8.C[0, 0]))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "pytorch",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_update_nonlinear_periodic_measurement(self):

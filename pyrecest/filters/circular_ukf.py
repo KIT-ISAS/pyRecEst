@@ -130,8 +130,9 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         if not isinstance(gauss_sys, GaussianDistribution):
             gauss_sys = GaussianDistribution.from_distribution(gauss_sys)
 
-        assert (
-            pyrecest.backend.__backend_name__ != "pytorch"
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
         ), "Not supported on this backend"
 
         mu0 = float(self._filter_state.mu[0])
@@ -220,8 +221,9 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         if not isinstance(gauss_meas, GaussianDistribution):
             gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
 
-        assert (
-            pyrecest.backend.__backend_name__ != "pytorch"
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
         ), "Not supported on this backend"
 
         z = atleast_1d(array(z, dtype=float))
