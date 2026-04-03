@@ -165,7 +165,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         C3 = array(self.C3, dtype=float)
         C3_inv = linalg.inv(C3)
         bingham_c = C1 - C2.T @ C3_inv @ C2
-        eigenvalues, eigenvectors = np.linalg.eigh(bingham_c)
+        eigenvalues, eigenvectors = linalg.eigh(bingham_c)
         idx = int(argmax(eigenvalues))
         m_rot = eigenvectors[:, idx]
         m_lin = -C3_inv @ C2 @ m_rot
