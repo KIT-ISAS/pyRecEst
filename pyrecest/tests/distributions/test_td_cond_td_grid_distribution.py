@@ -25,7 +25,7 @@ from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (
 def _make_normalized_grid_values(n: int):
     """Return an (n x n) matrix whose columns are normalized (integrate to 1)."""
     random.seed(0)
-    gv = random.uniform(0.5, 1.5, (n, n))
+    gv = 0.5 + random.uniform(size=(n, n))
     # Normalize each column so that mean(col) * (2*pi)^1 == 1
     gv = gv / (gv.mean(axis=0) * 2.0 * pi)
     return gv
