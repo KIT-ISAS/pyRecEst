@@ -136,7 +136,7 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
             )
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
         reason="Not supported on this backend",
     )
     def test_pdf_m1_normalizes(self):
@@ -149,7 +149,7 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
         npt.assert_allclose(integral, 1.0, atol=1e-4)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
         reason="Not supported on this backend",
     )
     def test_pdf_m2_normalizes(self):
@@ -162,7 +162,7 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
         npt.assert_allclose(integral, 1.0, atol=1e-4)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
         reason="Not supported on this backend",
     )
     def test_pdf_m3_normalizes(self):
@@ -175,7 +175,7 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
         npt.assert_allclose(integral, 1.0, atol=1e-4)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
         reason="Not supported on this backend",
     )
     def test_pdf_m4_normalizes(self):
