@@ -3,7 +3,7 @@ import warnings
 
 import numpy.testing as npt
 import pyrecest
-from pyrecest.backend import array, column_stack, ones, pi, sum, tile, zeros
+from pyrecest.backend import array, column_stack, ones, pi, sum, tile, zeros  # pylint: disable=redefined-builtin
 
 from pyrecest.distributions.conditional.s2_cond_s2_grid_distribution import (
     S2CondS2GridDistribution,
@@ -147,7 +147,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
             vals = dist.pdf(xkk)  # (n1,)
             return tile(vals[:, None], (1, xk.shape[0]))  # (n1, n2)
 
-        def f_trans2(xkk, xk):
+        def f_trans2(xkk, _xk):
             return dist.pdf(xkk)  # (n_pairs,) in non-Cartesian mode
 
         s2s2_1 = S2CondS2GridDistribution.from_function(f_trans1, no_grid_points, True)
