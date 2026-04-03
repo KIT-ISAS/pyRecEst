@@ -1,6 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, mod, pi, sin, sum
+from pyrecest.backend import array, pi, sin, sum
 from scipy.special import comb, iv
 
 from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDistribution
