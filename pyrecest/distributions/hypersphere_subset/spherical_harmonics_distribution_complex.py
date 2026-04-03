@@ -1,5 +1,6 @@
 import warnings
 
+import pyrecest
 import scipy
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -43,6 +44,9 @@ from .abstract_spherical_harmonics_distribution import (
 
 class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistribution):
     def __init__(self, coeff_mat, transformation="identity", assert_real=True):
+        assert (
+            pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
+        ), "SphericalHarmonicsDistributionComplex is not supported on the JAX backend"
         AbstractSphericalHarmonicsDistribution.__init__(self, coeff_mat, transformation)
         self.assert_real = assert_real
 

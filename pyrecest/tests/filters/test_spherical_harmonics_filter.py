@@ -3,13 +3,22 @@ import numpy as np
 import numpy.testing as npt
 from scipy.stats import norm
 
+import pyrecest
+import pyrecest.backend
 from pyrecest.backend import array
 from pyrecest.distributions import VonMisesFisherDistribution, SphericalHarmonicsDistributionComplex
 from pyrecest.filters import VonMisesFisherFilter
 from pyrecest.filters.spherical_harmonics_filter import SphericalHarmonicsFilter
 
+_skip_jax = unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on the JAX backend",
+)
+
+
 class SphericalHarmonicsFilterTest(unittest.TestCase):
 
+    @_skip_jax
     def test_update_identity(self):
         for transformation in ['identity', 'sqrt']:
             shd_filter = SphericalHarmonicsFilter(30, transformation)
@@ -29,6 +38,7 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
 
             npt.assert_allclose(vmf_filter.get_estimate_mean(), shd_filter.get_estimate_mean(), atol=1e-10)
 
+    @_skip_jax
     def test_update_using_likelihood(self):
         np.random.seed(1)
 
@@ -55,6 +65,7 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
             
             npt.assert_allclose(sh_filter.get_estimate_mean(), pos_true, atol=0.3)
 
+    @_skip_jax
     def test_update_using_likelihood_multiple(self):
         sigma_x = 0.3
         sigma_y = 0.3
@@ -82,6 +93,7 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
 
             npt.assert_allclose(sh_filter2.get_estimate_mean(), sh_filter1.get_estimate_mean(), atol=1e-5)
 
+    @_skip_jax
     def test_prediction_sqrt_vs_id(self):
         degree = 21
         density_init = VonMisesFisherDistribution(array([1.0, 1.0, 0.0]) / np.sqrt(2), 2)
