@@ -233,8 +233,9 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
 
         if measurement_periodic:
             for i in range(dim_z):
-                if abs(mu0 - float(z[i])) > pi_val:
-                    z[i] = float(z[i]) + 2.0 * pi_val * float(sign(mu0 - float(z[i])))
+                z_i = float(z[i])
+                if abs(mu0 - z_i) > pi_val:
+                    z[i] = z_i + 2.0 * pi_val * float(sign(mu0 - z_i))
 
         if dim_z == 1:
             R_mat = array([[float(gauss_meas.C.flatten()[0])]])
@@ -245,7 +246,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             return x
 
         def hx(x):
-            return atleast_1d(array([f(x.flatten()[0])], dtype=float)).flatten()
+            return atleast_1d(array([f(x.flatten()[0])], dtype=float))
 
         ukf = _make_ukf(
             fx, hx, dim_z=dim_z, x0=mu0, P0=C0, Q=0.0, R=R_mat,
