@@ -106,7 +106,7 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         npt.assert_allclose(self.dist.entropy(), expected, rtol=1e-10)
 
     def test_sample(self):
-        samples = self.dist.sample(100)
+        samples = self.dist.sample(array(100))
         self.assertEqual(len(samples), 100)
         self.assertTrue(all(samples >= 0.0))
         self.assertTrue(all(samples < 2.0 * pi))
