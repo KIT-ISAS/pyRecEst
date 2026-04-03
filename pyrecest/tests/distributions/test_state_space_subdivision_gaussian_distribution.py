@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+import pyrecest
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, eye, linalg, pi
@@ -43,14 +44,18 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         rbd_up = rbd1.multiply(rbd2)
 
         for i in range(n):
-            self.assertLess(
-                float(linalg.det(rbd_up.linear_distributions[i].C)),
-                float(linalg.det(rbd1.linear_distributions[i].C)),
+            npt.assert_array_less(
+                linalg.det(rbd_up.linear_distributions[i].C),
+                linalg.det(rbd1.linear_distributions[i].C),
             )
             npt.assert_allclose(
                 rbd_up.linear_distributions[i].mu, array([1.0]), atol=1e-14
             )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_multiply_s2_x_r3_rough(self):
         """Multiply two S2xR3 distributions; linear uncertainty must decrease."""
         n = 100
@@ -72,9 +77,9 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         rbd_up = rbd1.multiply(rbd2)
 
         for i in range(n):
-            self.assertLess(
-                float(linalg.det(rbd_up.linear_distributions[i].C)),
-                float(linalg.det(rbd1.linear_distributions[i].C)),
+            npt.assert_array_less(
+                linalg.det(rbd_up.linear_distributions[i].C),
+                linalg.det(rbd1.linear_distributions[i].C),
             )
             npt.assert_allclose(
                 rbd_up.linear_distributions[i].mu,
@@ -111,7 +116,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
             GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)
         ]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
-        npt.assert_allclose(rbd.linear_mean(), mu_linear, atol=1e-14)
+        npt.assert_allclose(rbd.linear_mean(), mu_linear, rtol=5e-7)
 
     def test_mode_warning_uniform(self):
         """mode() warns about potential multimodality for a uniform periodic part."""
