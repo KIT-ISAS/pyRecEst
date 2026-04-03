@@ -338,15 +338,15 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         degree = self.coeff_mat.shape[0] - 1
 
         if self.transformation == "identity" and other.transformation == "identity":
-            # Direct frequency-domain formula: h_{l,m} = sqrt(4π/(2l+1)) * f_{l,m} * g_{l,0}
+            # Direct frequency-domain formula: h_{n,m} = sqrt(4π/(2n+1)) * f_{n,m} * g_{n,0}
             h_lm = zeros_like(self.coeff_mat)
-            for l in range(degree + 1):
+            for n in range(degree + 1):
                 factor = (
-                    sqrt(4.0 * pi / (2 * l + 1))
-                    * other.coeff_mat[l, l]
+                    sqrt(4.0 * pi / (2 * n + 1))
+                    * other.coeff_mat[n, n]
                 )
-                for m in range(-l, l + 1):
-                    h_lm[l, l + m] = factor * self.coeff_mat[l, l + m]
+                for m in range(-n, n + 1):
+                    h_lm[n, n + m] = factor * self.coeff_mat[n, n + m]
             result = SphericalHarmonicsDistributionComplex(h_lm, "identity")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -380,10 +380,10 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
             # Convolution formula on the identity coefficients
             r_lm = zeros_like(p_lm)
-            for l in range(degree + 1):
-                factor = sqrt(4.0 * pi / (2 * l + 1)) * q_lm[l, l]
-                for m in range(-l, l + 1):
-                    r_lm[l, l + m] = factor * p_lm[l, l + m]
+            for n in range(degree + 1):
+                factor = sqrt(4.0 * pi / (2 * n + 1)) * q_lm[n, n]
+                for m in range(-n, n + 1):
+                    r_lm[n, n + m] = factor * p_lm[n, n + m]
 
             # Evaluate r on the standard DH grid, take sqrt, refit
             r_shd_id = SphericalHarmonicsDistributionComplex(r_lm, "identity")
