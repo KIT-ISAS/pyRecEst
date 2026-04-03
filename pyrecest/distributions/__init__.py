@@ -74,6 +74,7 @@ from .cart_prod.partially_wrapped_normal_distribution import (
 )
 from .cart_prod.se2_bingham_distribution import SE2BinghamDistribution
 from .circle.abstract_circular_distribution import AbstractCircularDistribution
+from .circle.generalized_von_mises_distribution import GvMDistribution
 from .circle.circular_dirac_distribution import CircularDiracDistribution
 from .circle.circular_fourier_distribution import CircularFourierDistribution
 from .circle.circular_mixture import CircularMixture
@@ -228,6 +229,7 @@ aliases = [
 ]
 
 __all__ = aliases + [
+    "GvMDistribution",
     "GeneralizedKSineSkewedVonMisesDistribution",
     "AbstractBoundedDomainDistribution",
     "AbstractBoundedNonPeriodicDistribution",
