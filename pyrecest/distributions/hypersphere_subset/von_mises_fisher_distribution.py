@@ -52,7 +52,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def pdf(self, xs):
         assert xs.shape[-1] == self.input_dim
 
-        return self.C * exp(self.kappa * self.mu.T @ xs.T)
+        return self.C * exp(self.kappa * xs @ self.mu)
 
     def mean_direction(self):
         return self.mu
