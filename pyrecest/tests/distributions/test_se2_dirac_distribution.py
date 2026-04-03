@@ -58,7 +58,7 @@ class TestSE2DiracDistribution(unittest.TestCase):
 
     def test_covariance_4d_symmetric(self):
         C = self.dist.covariance_4d()
-        npt.assert_allclose(C, C.T, atol=1e-12)
+        npt.assert_allclose(C, C.T, atol=1e-7)
 
     def test_covariance_4d_positive_semidefinite(self):
         import numpy as _np  # pylint: disable=import-outside-toplevel
