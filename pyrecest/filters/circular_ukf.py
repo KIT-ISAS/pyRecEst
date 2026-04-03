@@ -8,10 +8,11 @@ References:
     arXiv preprint: Systems and Control (cs.SY), January 2015.
 """
 
+import numpy as np
 from bayesian_filters.kalman import MerweScaledSigmaPoints, UnscentedKalmanFilter
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, pi, array, atleast_1d, sign, prod
+from pyrecest.backend import mod, pi, array, atleast_1d, sign
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
@@ -39,9 +40,9 @@ def _make_ukf(  # pylint: disable=too-many-arguments,too-many-positional-argumen
         fx=fx,
         points=points,
     )
-    ukf.x = array([x0])
-    ukf.P = array([[P0]])
-    ukf.Q = array([[Q]])
+    ukf.x = np.array([x0])
+    ukf.P = np.array([[P0]])
+    ukf.Q = np.array([[Q]])
     ukf.R = R  # R must already be a plain numpy (dim_z, dim_z) array
     return ukf
 
@@ -134,13 +135,13 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         noise_mean = float(gauss_sys.mu[0])
 
         def fx(x, dt):  # pylint: disable=unused-argument
-            return array([f(x.flatten()[0]) + noise_mean])
+            return np.array([f(x.flatten()[0]) + noise_mean])
 
         def hx(x):
             return x
 
         ukf = _make_ukf(
-            fx, hx, dim_z=1, x0=mu0, P0=C0, Q=Q_val, R=array([[C0]]),
+            fx, hx, dim_z=1, x0=mu0, P0=C0, Q=Q_val, R=np.array([[C0]]),
             alpha=self._alpha, beta=self._beta, kappa=self._kappa,
         )
         ukf.predict()
@@ -214,27 +215,31 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         if not isinstance(gauss_meas, GaussianDistribution):
             gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
 
-        z = atleast_1d(array(z, dtype=float))
-        dim_z = int(prod(z.shape))
+        # Convert z to a flat numpy array (bayesian_filters is NumPy-only)
+        z_np = np.atleast_1d(np.array(
+            [float(v) for v in atleast_1d(array(z, dtype=float)).flatten()]
+        ))
+        dim_z = len(z_np)
 
         mu0 = float(self._filter_state.mu[0])
         C0 = float(self._filter_state.C[0, 0])
+        pi_val = float(pi)
 
         if measurement_periodic:
             for i in range(dim_z):
-                if abs(mu0 - z[i]) > float(pi):
-                    z[i] = z[i] + 2.0 * float(pi) * sign(mu0 - z[i])
+                if abs(mu0 - z_np[i]) > pi_val:
+                    z_np[i] = z_np[i] + 2.0 * pi_val * float(sign(mu0 - z_np[i]))
 
         if dim_z == 1:
-            R_mat = array([[float(gauss_meas.C.flatten()[0])]])
+            R_mat = np.array([[float(gauss_meas.C.flatten()[0])]])
         else:
-            R_mat = array(gauss_meas.C, dtype=float).reshape(dim_z, dim_z)
+            R_mat = np.array([float(v) for v in gauss_meas.C.flatten()]).reshape(dim_z, dim_z)
 
         def fx(x, dt):  # pylint: disable=unused-argument
             return x
 
         def hx(x):
-            return atleast_1d(array([f(x.flatten()[0])], dtype=float)).flatten()
+            return np.atleast_1d(np.array([float(f(x.flatten()[0]))]))
 
         ukf = _make_ukf(
             fx, hx, dim_z=dim_z, x0=mu0, P0=C0, Q=0.0, R=R_mat,
@@ -243,7 +248,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         # predict() with identity fx and Q=0 populates sigmas_f without
         # altering the mean or covariance, which is required before update().
         ukf.predict()
-        ukf.update(z)
+        ukf.update(z_np)
 
         new_mu = float(mod(array([ukf.x.flatten()[0]]), 2.0 * pi)[0])
         self._filter_state = GaussianDistribution(
