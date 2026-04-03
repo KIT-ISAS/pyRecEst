@@ -4,7 +4,6 @@ from abc import ABC
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
-    abs,
     any,
     arange,
     argmin,
