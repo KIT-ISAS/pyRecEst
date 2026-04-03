@@ -28,7 +28,7 @@ class BinghamFilter(AbstractFilter):
     def __init__(self):
         assert (
             pyrecest.backend.__backend_name__ != "jax"
-        ), "Not supported on this backend"
+        ), "BinghamFilter is not supported on the JAX backend"
         # Default 4-D identity initial state (uniform on S^3, suitable for quaternion orientation)
         initial_state = BinghamDistribution(
             array([-1.0, -1.0, -1.0, 0.0]),
