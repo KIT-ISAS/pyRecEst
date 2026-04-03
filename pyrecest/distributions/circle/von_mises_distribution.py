@@ -1,6 +1,4 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-import numpy as np
-
 from pyrecest.backend import (
     abs,
     arctan2,
@@ -22,13 +20,7 @@ from scipy.special import iv
 from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
-
-
-def _to_numpy(x):
-    """Convert to numpy, handling torch tensors to avoid scipy compatibility warnings."""
-    if hasattr(x, "detach"):
-        return x.detach().numpy()
-    return x
+from pyrecest.utils.numpy_conversion import to_numpy as _to_numpy
 
 
 class VonMisesDistribution(AbstractCircularDistribution):

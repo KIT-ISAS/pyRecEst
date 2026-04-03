@@ -32,13 +32,7 @@ from scipy.special import betainc  # pylint: disable=E0611
 from ..distributions import (
     AbstractHypersphereSubsetDistribution,
 )
-
-
-def _to_numpy(x):
-    """Convert to numpy, handling torch tensors to avoid scipy compatibility warnings."""
-    if hasattr(x, "detach"):
-        return x.detach().numpy()
-    return x
+from pyrecest.utils.numpy_conversion import to_numpy as _to_numpy
 
 
 def get_cap_area(dim, colatitude):

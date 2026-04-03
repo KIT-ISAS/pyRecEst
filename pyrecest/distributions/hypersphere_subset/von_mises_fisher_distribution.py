@@ -26,13 +26,7 @@ from pyrecest.backend import (
 from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
-
-
-def _to_numpy(x):
-    """Convert to numpy, handling torch tensors to avoid scipy compatibility warnings."""
-    if hasattr(x, "detach"):
-        return x.detach().numpy()
-    return x
+from pyrecest.utils.numpy_conversion import to_numpy as _to_numpy
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):

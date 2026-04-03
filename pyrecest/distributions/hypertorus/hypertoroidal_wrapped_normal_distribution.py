@@ -3,13 +3,6 @@ from typing import Union
 
 import numpy as np
 
-
-def _to_numpy(x):
-    """Convert to a plain numpy array, handling torch tensors."""
-    if hasattr(x, "detach"):
-        return x.detach().numpy()
-    return np.asarray(x)
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -27,6 +20,7 @@ from pyrecest.backend import (
     random,
     stack,
 )
+from pyrecest.utils.numpy_conversion import to_numpy as _to_numpy
 from scipy.stats import multivariate_normal
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution

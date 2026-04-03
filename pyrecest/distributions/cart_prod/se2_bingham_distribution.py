@@ -19,14 +19,7 @@ from scipy.special import iv
 from ..abstract_se2_distribution import AbstractSE2Distribution
 from ..hypersphere_subset.bingham_distribution import BinghamDistribution
 from ..nonperiodic.custom_linear_distribution import CustomLinearDistribution
-
-
-def _to_np(x, dtype=None):
-    """Convert to a plain numpy array, handling torch tensors."""
-    if hasattr(x, "detach"):
-        arr = x.detach().numpy()
-        return arr.astype(dtype) if dtype is not None else arr
-    return np.asarray(x, dtype=dtype)
+from pyrecest.utils.numpy_conversion import to_numpy as _to_np
 
 
 class SE2BinghamDistribution(AbstractSE2Distribution):
