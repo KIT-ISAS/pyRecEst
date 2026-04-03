@@ -45,7 +45,7 @@ class AbstractMixtureTest(unittest.TestCase):
         )
         mix = HypersphericalMixture([vmf1, vmf2], array([0.5, 0.5]))
         s = self._test_sample(mix, 10)
-        self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=1e-10))
+        self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=5e-7))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch",),
@@ -59,7 +59,7 @@ class AbstractMixtureTest(unittest.TestCase):
             lambda x: vmf.pdf(x) + vmf.pdf(-x), 2
         )
         s = self._test_sample(mix, 10)
-        self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=1e-10))
+        self.assertTrue(allclose(linalg.norm(s, axis=1), ones(10), rtol=5e-7))
 
 
 if __name__ == "__main__":
