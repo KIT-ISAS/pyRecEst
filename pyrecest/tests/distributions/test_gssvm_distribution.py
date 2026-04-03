@@ -3,9 +3,10 @@ import unittest
 import numpy.testing as npt
 from pyrecest.backend import array, pi
 from pyrecest.distributions.circle.sine_skewed_distributions import (
-    GSSVMDistribution,
     GeneralizedKSineSkewedVonMisesDistribution,
+    GSSVMDistribution,
 )
+
 
 class TestGSSVMDistribution(unittest.TestCase):
     def test_initialization(self):
