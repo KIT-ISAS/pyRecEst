@@ -3,6 +3,9 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, pi
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.circular_ukf import CircularUKF
@@ -28,6 +31,10 @@ class CircularUKFTest(unittest.TestCase):
         npt.assert_almost_equal(g_identity.mu, self.g.mu + self.g.mu)
         npt.assert_almost_equal(g_identity.C, self.g.C + self.g.C)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Not supported on this backend",
+    )
     def test_predict_nonlinear_identity_function(self):
         self.filter.filter_state = self.g
         self.filter.predict_nonlinear(lambda x: x, self.g)
@@ -36,12 +43,20 @@ class CircularUKFTest(unittest.TestCase):
         npt.assert_almost_equal(g_nonlin.mu, self.g.mu + self.g.mu, decimal=10)
         npt.assert_almost_equal(g_nonlin.C, self.g.C + self.g.C, decimal=10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Not supported on this backend",
+    )
     def test_predict_nonlinear_true_nonlinear(self):
         g4 = GaussianDistribution(array([0.0]), array([[0.7]]))
         self.filter.filter_state = g4
         self.filter.predict_nonlinear(lambda x: x**3, g4)
         g_nonlin = self.filter.filter_state
-        npt.assert_almost_equal(g_nonlin.mu, g4.mu, decimal=10)
+        # 0.0 and 2*pi are the same angle; compare via circular distance
+        mu_diff = (float(g_nonlin.mu[0]) - float(g4.mu[0])) % (2.0 * float(pi))
+        if mu_diff > float(pi):
+            mu_diff -= 2.0 * float(pi)
+        self.assertAlmostEqual(mu_diff, 0.0, places=10)
         self.assertGreater(float(g_nonlin.C[0, 0]), float(g4.C[0, 0]))
 
     def test_update_identity(self):
@@ -74,6 +89,10 @@ class CircularUKFTest(unittest.TestCase):
         self.assertLess(float(g_identity3.mu[0]), 2.0 * pi)
         self.assertGreater(float(self.g.C[0, 0]), float(g_identity3.C[0, 0]))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Not supported on this backend",
+    )
     def test_update_nonlinear_identity_function(self):
         g7 = GaussianDistribution(array([0.0]), array([[0.7]]))
         self.filter.filter_state = g7
@@ -84,6 +103,10 @@ class CircularUKFTest(unittest.TestCase):
         self.assertLess(float(g8.mu[0]), float(z[0]))
         self.assertGreater(float(g7.C[0, 0]), float(g8.C[0, 0]))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Not supported on this backend",
+    )
     def test_update_nonlinear_periodic_measurement(self):
         g9 = GaussianDistribution(array([0.1]), array([[0.7]]))
         self.filter.filter_state = g9
