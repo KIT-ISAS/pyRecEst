@@ -1,7 +1,6 @@
 import copy
 import unittest
 import warnings
-from math import pi
 
 import numpy.testing as npt
 import pyrecest
@@ -12,6 +11,7 @@ from pyrecest.backend import (
     eye,
     linspace,
     meshgrid,
+    pi,
     random,
     sin,
     sqrt,

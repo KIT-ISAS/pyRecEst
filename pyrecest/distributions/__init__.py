@@ -68,9 +68,11 @@ from .cart_prod.lin_hypersphere_subset_dirac_distribution import (
 from .cart_prod.lin_periodic_cart_prod_dirac_distribution import (
     LinPeriodicCartProdDiracDistribution,
 )
+from .cart_prod.mardia_sutton_distribution import MardiaSuttonDistribution
 from .cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
+from .cart_prod.se2_bingham_distribution import SE2BinghamDistribution
 from .circle.abstract_circular_distribution import AbstractCircularDistribution
 from .circle.circular_dirac_distribution import CircularDiracDistribution
 from .circle.circular_fourier_distribution import CircularFourierDistribution
@@ -81,6 +83,7 @@ from .circle.sine_skewed_distributions import (
     AbstractSineSkewedDistribution,
     GeneralizedKSineSkewedVonMisesDistribution,
     GeneralizedKSineSkewedWrappedCauchyDistribution,
+    GSSVMDistribution,
     SineSkewedVonMisesDistribution,
     SineSkewedWrappedCauchyDistribution,
     SineSkewedWrappedNormalDistribution,
@@ -182,6 +185,9 @@ from .hypertorus.hypertoroidal_wrapped_normal_distribution import (
 from .hypertorus.toroidal_dirac_distribution import ToroidalDiracDistribution
 from .hypertorus.toroidal_mixture import ToroidalMixture
 from .hypertorus.toroidal_uniform_distribution import ToroidalUniformDistribution
+from .hypertorus.toroidal_vm_rivest_distribution import (
+    ToroidalVMRivestDistribution,
+)
 from .hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,
 )
@@ -261,6 +267,7 @@ __all__ = aliases + [
     "LinHypersphereSubsetCartProdDiracDistribution",
     "LinPeriodicCartProdDiracDistribution",
     "PartiallyWrappedNormalDistribution",
+    "MardiaSuttonDistribution",
     "AbstractCircularDistribution",
     "CircularDiracDistribution",
     "CircularFourierDistribution",
@@ -270,6 +277,7 @@ __all__ = aliases + [
     "AbstractSineSkewedDistribution",
     "GeneralizedKSineSkewedVonMisesDistribution",
     "GeneralizedKSineSkewedWrappedCauchyDistribution",
+    "GSSVMDistribution",
     "SineSkewedVonMisesDistribution",
     "SineSkewedWrappedCauchyDistribution",
     "SineSkewedWrappedNormalDistribution",
@@ -318,6 +326,7 @@ __all__ = aliases + [
     "ToroidalDiracDistribution",
     "ToroidalMixture",
     "ToroidalUniformDistribution",
+    "ToroidalVMRivestDistribution",
     "ToroidalVonMisesSineDistribution",
     "ToroidalWrappedNormalDistribution",
     "AbstractHyperrectangularDistribution",
@@ -330,4 +339,5 @@ __all__ = aliases + [
     "LinearMixture",
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
+    "SE2BinghamDistribution",
 ]
