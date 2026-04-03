@@ -84,7 +84,7 @@ from .circle.sine_skewed_distributions import (
     SineSkewedWrappedCauchyDistribution,
     SineSkewedWrappedNormalDistribution,
 )
-from .circle.piecewise_constant_distribution import PiecewiseConstantDistribution  # noqa: F401
+from .circle.piecewise_constant_distribution import PiecewiseConstantDistribution
 from .circle.von_mises_distribution import VonMisesDistribution
 from .circle.wrapped_cauchy_distribution import WrappedCauchyDistribution
 from .circle.wrapped_laplace_distribution import WrappedLaplaceDistribution
@@ -272,6 +272,7 @@ __all__ = aliases + [
     "SineSkewedVonMisesDistribution",
     "SineSkewedWrappedCauchyDistribution",
     "SineSkewedWrappedNormalDistribution",
+    "PiecewiseConstantDistribution",
     "VonMisesDistribution",
     "WrappedCauchyDistribution",
     "WrappedLaplaceDistribution",
