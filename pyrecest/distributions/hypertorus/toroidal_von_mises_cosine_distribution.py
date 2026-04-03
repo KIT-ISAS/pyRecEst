@@ -1,14 +1,14 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 import numpy as np
-from pyrecest.backend import all, array, cos, exp, mod, pi, sum
+from pyrecest.backend import array, cos, mod, pi, sum
 from scipy.special import iv
 
-from .abstract_toroidal_distribution import AbstractToroidalDistribution
+from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDistribution
 
 _SERIES_TERMS = 10
 
 
-class ToroidalVonMisesCosineDistribution(AbstractToroidalDistribution):
+class ToroidalVonMisesCosineDistribution(AbstractToroidalBivarVMDistribution):
     """Bivariate von Mises distribution, cosine model.
 
     Corresponds to A = [-kappa3, 0; 0, -kappa3].
@@ -26,16 +26,9 @@ class ToroidalVonMisesCosineDistribution(AbstractToroidalDistribution):
     """
 
     def __init__(self, mu, kappa, kappa3):
-        AbstractToroidalDistribution.__init__(self)
-        assert mu.shape == (2,)
-        assert kappa.shape == (2,)
+        AbstractToroidalBivarVMDistribution.__init__(self, mu, kappa)
         assert kappa3.shape == ()
-        assert all(kappa >= 0.0)
-
-        self.mu = mod(mu, 2.0 * pi)
-        self.kappa = kappa
         self.kappa3 = kappa3
-
         self.C = 1.0 / self.norm_const
 
     @property
@@ -48,14 +41,8 @@ class ToroidalVonMisesCosineDistribution(AbstractToroidalDistribution):
         )
         return Cinv
 
-    def pdf(self, xs):
-        assert xs.shape[-1] == 2
-        p = self.C * exp(
-            self.kappa[0] * cos(xs[..., 0] - self.mu[0])
-            + self.kappa[1] * cos(xs[..., 1] - self.mu[1])
-            - self.kappa3 * cos(xs[..., 0] - self.mu[0] - xs[..., 1] + self.mu[1])
-        )
-        return p
+    def _coupling_term(self, xs):
+        return -self.kappa3 * cos(xs[..., 0] - self.mu[0] - xs[..., 1] + self.mu[1])
 
     def trigonometric_moment(self, n):
         if n == 1:
