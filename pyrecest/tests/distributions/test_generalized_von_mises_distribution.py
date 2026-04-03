@@ -1,10 +1,9 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, linspace, pi
+from pyrecest.backend import all, array, isinf, isnan, linspace, pi
 from pyrecest.distributions import GvMDistribution, VonMisesDistribution
 
 
@@ -42,7 +41,7 @@ class TestGvMDistribution(unittest.TestCase):
         from scipy.integrate import quad
 
         gvm = GvMDistribution(array([1.0, 0.5]), array([2.0, 1.0]))
-        result, _ = quad(lambda x: float(gvm.pdf(array([x]))[0]), 0.0, 2.0 * np.pi)
+        result, _ = quad(lambda x: float(gvm.pdf(array([x]))[0]), 0.0, 2.0 * float(pi))
         npt.assert_almost_equal(result, 1.0, decimal=5)
 
     def test_pdf_order2_specific_values(self):
@@ -54,8 +53,8 @@ class TestGvMDistribution(unittest.TestCase):
         xs = linspace(0.0, 2.0 * pi, 5)
         pdf_vals = gvm.pdf(xs)
         # All values must be positive and finite
-        self.assertTrue(np.all(np.isfinite(pdf_vals)))
-        self.assertTrue(np.all(pdf_vals >= 0))
+        self.assertTrue(all(~isnan(pdf_vals) & ~isinf(pdf_vals)))
+        self.assertTrue(all(pdf_vals >= 0))
 
     def test_norm_const_cached(self):
         """Norm constant should be computed once and cached."""

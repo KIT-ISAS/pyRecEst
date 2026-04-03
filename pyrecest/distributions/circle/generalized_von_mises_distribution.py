@@ -1,6 +1,5 @@
-# pylint: disable=no-name-in-module,no-member, redefined-builtin
-from pyrecest.backend import arange, array, cos, exp, sum, pi
-from scipy.integrate import quad
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.backend import arange, array, cos, exp, sum
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -35,21 +34,10 @@ class GvMDistribution(AbstractCircularDistribution):
     @property
     def norm_const(self):
         if self._norm_const is None:
-            # Use scipy quad for numerical integration; convert to plain Python float
-            mu_np = array(self.mu)
-            kappa_np = array(self.kappa)
-            self._norm_const, _ = quad(
-                lambda x: float(self._pdf_unnormalized_scalar(x, mu_np, kappa_np)),
-                0.0,
-                2.0 * pi,
+            self._norm_const = self.integrate_fun_over_domain(
+                lambda *args: self.pdf_unnormalized(array(args)), self.dim
             )
         return self._norm_const
-
-    @staticmethod
-    def _pdf_unnormalized_scalar(x, mu_np, kappa_np):
-        """Compute unnormalized PDF at a single scalar x (using numpy)."""
-        j = arange(1, len(mu_np) + 1)
-        return exp(sum(kappa_np * cos(j * (x - mu_np))))
 
     def pdf_unnormalized(self, xs):
         """
