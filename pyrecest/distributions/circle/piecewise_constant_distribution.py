@@ -27,7 +27,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         """
         AbstractCircularDistribution.__init__(self)
         w = array(w, dtype=float).ravel()
-        assert w.ndim == 1 and w.size > 0
+        assert w.ndim == 1 and w.shape[0] > 0
         self.w = w / (mean(w) * 2.0 * pi)
 
     def pdf(self, xs):
