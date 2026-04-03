@@ -6,29 +6,27 @@ from pyrecest.backend import (
     all,
     any,
     mean,
+    pi,
     sum,
-)
-from pyrecest.distributions.hypersphere_subset.abstract_hypersphere_subset_distribution import (
-    AbstractHypersphereSubsetDistribution,
 )
 
 from .abstract_conditional_distribution import AbstractConditionalDistribution
 
 
-class SdCondSdGridDistribution(AbstractConditionalDistribution):
+class TdCondTdGridDistribution(AbstractConditionalDistribution):
     """
-    Conditional distribution on Sd x Sd represented by a grid of values.
+    Conditional distribution on Td x Td represented by a grid of values.
 
     For a conditional distribution f(a|b), ``grid_values[i, j]`` stores
     the value f(grid[i] | grid[j]).
 
     Convention
     ----------
-    - ``grid`` has shape ``(n_points, d)`` where ``d`` is the embedding
-      dimension of the individual sphere (e.g. d=3 for S2).
+    - ``grid`` has shape ``(n_points, d)`` where ``d`` is the number of
+      dimensions of the individual torus (e.g. d=1 for T1).
     - ``grid_values`` has shape ``(n_points, n_points)``.
-    - ``dim = 2 * d`` is the embedding dimension of the Cartesian product
-      space (convention inherited from libDirectional).
+    - ``dim = 2 * d`` is the dimension of the Cartesian product space
+      (convention inherited from libDirectional).
     """
 
     def __init__(self, grid, grid_values, enforce_pdf_nonnegative=True):
@@ -36,19 +34,14 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
         Parameters
         ----------
         grid : array of shape (n_points, d)
-            Grid points on the sphere.  All coordinate values must lie in
-            [-1, 1] (unit sphere).
+            Grid points on the torus.
         grid_values : array of shape (n_points, n_points)
             Conditional pdf values: ``grid_values[i, j] = f(grid[i] | grid[j])``.
-            Must be non-negative.
+            Must be non-negative when ``enforce_pdf_nonnegative=True``.
         enforce_pdf_nonnegative : bool
             Whether non-negativity of ``grid_values`` is required.
         """
         super().__init__(grid, grid_values, enforce_pdf_nonnegative)
-        if any(abs(self.grid) > 1 + 1e-12):
-            raise ValueError(
-                "Grid points must have coordinates in [-1, 1] (unit sphere)."
-            )
         self._check_normalization()
 
     # ------------------------------------------------------------------
@@ -56,26 +49,23 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
     # ------------------------------------------------------------------
 
     def _check_normalization(self, tol=0.01):
-        """Warn if any column is not normalized to 1 over the sphere."""
-        sphere_surface = (
-            AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
-                self.grid.shape[1] - 1
-            )
-        )
-        # For each fixed second argument j, the mean over i times the sphere
-        # surface area should equal 1.
-        ints = mean(self.grid_values, axis=0) * sphere_surface
+        """Warn if any column is not normalized to 1 over the torus."""
+        d = self.dim // 2
+        manifold_size = float((2.0 * pi) ** d)
+        # For each fixed second argument j, the mean over i times the torus
+        # volume should equal 1.
+        ints = mean(self.grid_values, 0) * manifold_size
         if any(abs(ints - 1) > tol):
             # Check whether swapping the two arguments would yield normalisation.
-            ints_swapped = mean(self.grid_values, axis=1) * sphere_surface
+            ints_swapped = mean(self.grid_values, 1) * manifold_size
             if all(abs(ints_swapped - 1) <= tol):
                 raise ValueError(
                     "Normalization:maybeWrongOrder: Not normalized but would be if "
-                    "the order of the two spheres were swapped. Check input."
+                    "the order of the two tori were swapped. Check input."
                 )
             warnings.warn(
                 "Normalization:notNormalized: When conditioning values for the first "
-                "sphere on the second, normalisation is not ensured. "
+                "torus on the second, normalisation is not ensured. "
                 "Check input or increase tolerance. "
                 "No normalisation is performed; you may want to do this manually.",
                 UserWarning,
@@ -87,7 +77,7 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
 
     def marginalize_out(self, first_or_second):
         """
-        Marginalize out one of the two spheres.
+        Marginalize out one of the two tori.
 
         Parameters
         ----------
@@ -97,21 +87,21 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
 
         Returns
         -------
-        HypersphericalGridDistribution
+        HypertoroidalGridDistribution
         """
         # Import here to avoid circular imports
-        from pyrecest.distributions.hypersphere_subset.hyperspherical_grid_distribution import (  # pylint: disable=import-outside-toplevel
-            HypersphericalGridDistribution,
+        from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (  # pylint: disable=import-outside-toplevel
+            HypertoroidalGridDistribution,
         )
 
         if first_or_second == 1:
-            grid_values_sgd = sum(self.grid_values, axis=0)
+            grid_values_sgd = sum(self.grid_values, 0)
         elif first_or_second == 2:
-            grid_values_sgd = sum(self.grid_values, axis=1)
+            grid_values_sgd = sum(self.grid_values, 1)
         else:
             raise ValueError("first_or_second must be 1 or 2.")
 
-        return HypersphericalGridDistribution(self.grid, grid_values_sgd)
+        return HypertoroidalGridDistribution(grid_values_sgd, "custom", self.grid)
 
     def fix_dim(self, first_or_second, point):
         """
@@ -123,23 +113,23 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
         ----------
         first_or_second : int  (1 or 2)
             ``1`` fixes the *first* argument at ``point`` and returns values
-            over the second sphere;
+            over the second torus;
             ``2`` fixes the *second* argument and returns values over the
-            first sphere.
+            first torus.
         point : array of shape (d,)
             Grid point at which to evaluate.
 
         Returns
         -------
-        HypersphericalGridDistribution
+        HypertoroidalGridDistribution
         """
         # Import here to avoid circular imports
-        from pyrecest.distributions.hypersphere_subset.hyperspherical_grid_distribution import (  # pylint: disable=import-outside-toplevel
-            HypersphericalGridDistribution,
+        from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (  # pylint: disable=import-outside-toplevel
+            HypertoroidalGridDistribution,
         )
 
         grid_values_slice = self._get_grid_slice(first_or_second, point)
-        return HypersphericalGridDistribution(self.grid, grid_values_slice)
+        return HypertoroidalGridDistribution(grid_values_slice, "custom", self.grid)
 
     # ------------------------------------------------------------------
     # Factory
@@ -150,11 +140,11 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
         fun,
         no_of_grid_points,
         fun_does_cartesian_product=False,
-        grid_type="leopardi",
-        dim=6,
+        grid_type="CartesianProd",
+        dim=2,
     ):
         """
-        Construct a :class:`SdCondSdGridDistribution` from a callable.
+        Construct a :class:`TdCondTdGridDistribution` from a callable.
 
         Parameters
         ----------
@@ -169,33 +159,44 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
                 with both full grids of shape ``(n_points, d)`` and must
                 return an array of shape ``(n_points, n_points)``.
         no_of_grid_points : int
-            Number of grid points for each sphere.
+            Number of grid points for each torus.
         fun_does_cartesian_product : bool
             See ``fun`` description above.
         grid_type : str
-            Grid type passed to :func:`~pyrecest.sampling.hyperspherical_sampler.get_grid_hypersphere`.
-            Defaults to ``'leopardi'``.
+            Grid type passed to
+            :meth:`~pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution.HypertoroidalGridDistribution.generate_cartesian_product_grid`.
+            Defaults to ``'CartesianProd'``.
         dim : int
-            Embedding dimension of the Cartesian product space
-            (``2 * embedding_dim_of_individual_sphere``).
-            Defaults to 6 (S2 × S2).
+            Dimension of the Cartesian product space
+            (``2 * dim_of_individual_torus``).
+            Defaults to 2 (T1 × T1).
 
         Returns
         -------
-        SdCondSdGridDistribution
+        TdCondTdGridDistribution
         """
         # Import inside the function to avoid circular imports at module level.
-        from pyrecest.sampling.hyperspherical_sampler import (  # pylint: disable=import-outside-toplevel
-            get_grid_hypersphere,
+        from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (  # pylint: disable=import-outside-toplevel
+            HypertoroidalGridDistribution,
         )
 
-        n = no_of_grid_points
-        # Convert from Cartesian-product embedding dim to individual sphere
-        # manifold dim: embedding_dim = dim // 2, manifold_dim = embedding_dim - 1.
-        manifold_dim = dim // 2 - 1
-        grid, _ = get_grid_hypersphere(grid_type, n, manifold_dim)
+        if dim % 2 != 0:
+            raise ValueError(
+                "dim must be even (it represents two copies of a hypertorus)."
+            )
+        if grid_type not in ("CartesianProd", "CartesianProduct"):
+            raise ValueError(
+                "Grid scheme not recognized; only 'CartesianProd' / "
+                "'CartesianProduct' is currently supported."
+            )
 
-        grid_values = SdCondSdGridDistribution._evaluate_on_grid(
+        dim_half = dim // 2
+        n = no_of_grid_points
+        grid = HypertoroidalGridDistribution.generate_cartesian_product_grid(
+            [n] * dim_half
+        )
+
+        grid_values = TdCondTdGridDistribution._evaluate_on_grid(
             fun, grid, n, fun_does_cartesian_product
         )
-        return SdCondSdGridDistribution(grid, grid_values)
+        return TdCondTdGridDistribution(grid, grid_values)
