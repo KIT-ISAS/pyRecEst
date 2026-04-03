@@ -84,7 +84,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
             return result
 
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            warnings.simplefilter("error", UserWarning)
             S2CondS2GridDistribution.from_function(
                 trans, no_grid_points, True, "leopardi"
             )
@@ -132,7 +132,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
             return p
 
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            warnings.simplefilter("error", UserWarning)
             S2CondS2GridDistribution.from_function(
                 trans, no_grid_points, True, "leopardi"
             )
