@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import all, array, isinf, isnan, linspace, pi
 from pyrecest.distributions import GvMDistribution, VonMisesDistribution
 
