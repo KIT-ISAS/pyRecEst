@@ -1,4 +1,3 @@
-import copy
 import warnings
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -6,12 +5,7 @@ from pyrecest.backend import (
     abs,
     all,
     any,
-    arange,
-    argmin,
-    array_equal,
-    linalg,
     mean,
-    meshgrid,
     sum,
 )
 from pyrecest.distributions.hypersphere_subset.abstract_hypersphere_subset_distribution import (
@@ -50,31 +44,11 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
         enforce_pdf_nonnegative : bool
             Whether non-negativity of ``grid_values`` is required.
         """
-        if grid.ndim != 2:
-            raise ValueError("grid must be a 2D array of shape (n_points, d).")
-
-        n_points, d = grid.shape
-
-        if grid_values.ndim != 2 or grid_values.shape != (n_points, n_points):
-            raise ValueError(
-                f"grid_values must be a square 2D array of shape ({n_points}, {n_points})."
-            )
-
-        if any(abs(grid) > 1 + 1e-12):
+        super().__init__(grid, grid_values, enforce_pdf_nonnegative)
+        if any(abs(self.grid) > 1 + 1e-12):
             raise ValueError(
                 "Grid points must have coordinates in [-1, 1] (unit sphere)."
             )
-
-        if enforce_pdf_nonnegative and any(grid_values < 0):
-            raise ValueError("grid_values must be non-negative.")
-
-        self.grid = grid
-        self.grid_values = grid_values
-        self.enforce_pdf_nonnegative = enforce_pdf_nonnegative
-        # Embedding dimension of the Cartesian product space (convention from
-        # libDirectional: dim = 2 * embedding_dim_of_individual_sphere).
-        self.dim = 2 * d
-
         self._check_normalization()
 
     # ------------------------------------------------------------------
@@ -106,43 +80,6 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
                 "No normalisation is performed; you may want to do this manually.",
                 UserWarning,
             )
-
-    def normalize(self):
-        """No-op – returns ``self`` for compatibility."""
-        return self
-
-    # ------------------------------------------------------------------
-    # Arithmetic
-    # ------------------------------------------------------------------
-
-    def multiply(self, other):
-        """
-        Element-wise multiply two conditional grid distributions.
-
-        The resulting distribution is *not* normalized.
-
-        Parameters
-        ----------
-        other : SdCondSdGridDistribution
-            Must be defined on the same grid.
-
-        Returns
-        -------
-        SdCondSdGridDistribution
-        """
-        if not array_equal(self.grid, other.grid):
-            raise ValueError(
-                "Multiply:IncompatibleGrid: Can only multiply distributions "
-                "defined on identical grids."
-            )
-        warnings.warn(
-            "Multiply:UnnormalizedResult: Multiplication does not yield a "
-            "normalized result.",
-            UserWarning,
-        )
-        result = copy.deepcopy(self)
-        result.grid_values = result.grid_values * other.grid_values
-        return result
 
     # ------------------------------------------------------------------
     # Marginalisation and conditioning
@@ -201,26 +138,7 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
             HypersphericalGridDistribution,
         )
 
-        d = self.grid.shape[1]
-        if point.shape[0] != d:
-            raise ValueError(
-                f"point must have length {d} (embedding dimension of the sphere)."
-            )
-
-        diffs = linalg.norm(self.grid - point[None, :], axis=1)
-        locb = argmin(diffs)
-        if diffs[locb] > 1e-10:
-            raise ValueError(
-                "Cannot fix value at this point because it is not on the grid."
-            )
-
-        if first_or_second == 1:
-            grid_values_slice = self.grid_values[locb, :]
-        elif first_or_second == 2:
-            grid_values_slice = self.grid_values[:, locb]
-        else:
-            raise ValueError("first_or_second must be 1 or 2.")
-
+        grid_values_slice = self._get_grid_slice(first_or_second, point)
         return HypersphericalGridDistribution(self.grid, grid_values_slice)
 
     # ------------------------------------------------------------------
@@ -276,24 +194,8 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
         # manifold dim: embedding_dim = dim // 2, manifold_dim = embedding_dim - 1.
         manifold_dim = dim // 2 - 1
         grid, _ = get_grid_hypersphere(grid_type, n, manifold_dim)
-        # grid is (n, dim//2)
 
-        if fun_does_cartesian_product:
-            fvals = fun(grid, grid)
-            grid_values = fvals.reshape(n, n)
-        else:
-            # Build index pairs: idx_a[i, j] = i, idx_b[i, j] = j
-            idx_a, idx_b = meshgrid(arange(n), arange(n), indexing="ij")
-            grid_a = grid[idx_a.ravel()]  # (n*n, d)
-            grid_b = grid[idx_b.ravel()]  # (n*n, d)
-            fvals = fun(grid_a, grid_b)  # (n*n,)
-
-            if fvals.shape == (n**2, n**2):
-                raise ValueError(
-                    "Function apparently performs the Cartesian product itself. "
-                    "Set fun_does_cartesian_product=True."
-                )
-
-            grid_values = fvals.reshape(n, n)
-
+        grid_values = SdCondSdGridDistribution._evaluate_on_grid(
+            fun, grid, n, fun_does_cartesian_product
+        )
         return SdCondSdGridDistribution(grid, grid_values)
