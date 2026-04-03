@@ -1,7 +1,9 @@
 import unittest
 import numpy as np
+import numpy.testing as npt
 from scipy.stats import norm
 
+from pyrecest.backend import array
 from pyrecest.distributions import VonMisesFisherDistribution, SphericalHarmonicsDistributionComplex
 from pyrecest.filters import VonMisesFisherFilter
 from pyrecest.filters.spherical_harmonics_filter import SphericalHarmonicsFilter
@@ -13,19 +15,19 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
             shd_filter = SphericalHarmonicsFilter(30, transformation)
             vmf_filter = VonMisesFisherFilter()
 
-            vmf1 = VonMisesFisherDistribution(np.array([0, 1, 0]), 1)
-            vmf2 = VonMisesFisherDistribution(np.array([0, 0, 1]), 0.1)
+            vmf1 = VonMisesFisherDistribution(array([0.0, 1.0, 0.0]), 1)
+            vmf2 = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 0.1)
             
             shd1 = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(vmf1, 30, transformation)
             shd2 = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(vmf2, 30, transformation)
 
             vmf_filter.set_state(vmf1)
-            vmf_filter.update_identity(vmf2, np.array([1, 0, 0]))
+            vmf_filter.update_identity(vmf2, array([1.0, 0.0, 0.0]))
 
             shd_filter.set_state(shd1)
-            shd_filter.update_identity(shd2, np.array([1, 0, 0]))
+            shd_filter.update_identity(shd2, array([1.0, 0.0, 0.0]))
 
-            self.assertTrue(np.allclose(vmf_filter.get_estimate_mean(), shd_filter.get_estimate_mean(), atol=1e-10))
+            npt.assert_allclose(vmf_filter.get_estimate_mean(), shd_filter.get_estimate_mean(), atol=1e-10)
 
     def test_update_using_likelihood(self):
         np.random.seed(1)
@@ -45,13 +47,13 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
             sh_filter = SphericalHarmonicsFilter(11, transformation)
 
             for x in meas_x:
-                sh_filter.update_nonlinear(lambda z, x: norm.pdf(z[0], x[0], sigma_x), np.array([x, 0, 0]))
+                sh_filter.update_nonlinear(lambda z, x: norm.pdf(z[0], x[0], sigma_x), array([x, 0.0, 0.0]))
             for y in meas_y:
-                sh_filter.update_nonlinear(lambda z, x: norm.pdf(z[1], x[1], sigma_y), np.array([0, y, 0]))
+                sh_filter.update_nonlinear(lambda z, x: norm.pdf(z[1], x[1], sigma_y), array([0.0, y, 0.0]))
             for z in meas_z:
-                sh_filter.update_nonlinear(lambda z, x: norm.pdf(z[2], x[2], sigma_z), np.array([0, 0, z]))
+                sh_filter.update_nonlinear(lambda z, x: norm.pdf(z[2], x[2], sigma_z), array([0.0, 0.0, z]))
             
-            self.assertTrue(np.allclose(sh_filter.get_estimate_mean(), pos_true, atol=0.3))
+            npt.assert_allclose(sh_filter.get_estimate_mean(), pos_true, atol=0.3)
 
     def test_update_using_likelihood_multiple(self):
         sigma_x = 0.3
@@ -61,9 +63,9 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
             sh_filter1 = SphericalHarmonicsFilter(10, transformation)
             sh_filter2 = SphericalHarmonicsFilter(10, transformation)
 
-            sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[0], x[0], sigma_x), np.array([-1 / np.sqrt(3), 0, 0]))
-            sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[1], x[1], sigma_y), np.array([0, -1 / np.sqrt(3), 0]))
-            sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[2], x[2], sigma_z), np.array([0, 0, -1 / np.sqrt(3)]))
+            sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[0], x[0], sigma_x), array([-1.0 / np.sqrt(3), 0.0, 0.0]))
+            sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[1], x[1], sigma_y), array([0.0, -1.0 / np.sqrt(3), 0.0]))
+            sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[2], x[2], sigma_z), array([0.0, 0.0, -1.0 / np.sqrt(3)]))
 
             sh_filter2.update_nonlinear_multiple(
                 [
@@ -72,18 +74,18 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
                     lambda z, x: norm.pdf(z[2], x[2], sigma_z)
                 ],
                 [
-                    np.array([-1 / np.sqrt(3), 0, 0]),
-                    np.array([0, -1 / np.sqrt(3), 0]),
-                    np.array([0, 0, -1 / np.sqrt(3)])
+                    array([-1.0 / np.sqrt(3), 0.0, 0.0]),
+                    array([0.0, -1.0 / np.sqrt(3), 0.0]),
+                    array([0.0, 0.0, -1.0 / np.sqrt(3)])
                 ]
             )
 
-            self.assertTrue(np.allclose(sh_filter2.get_estimate_mean(), sh_filter1.get_estimate_mean(), atol=1e-5))
+            npt.assert_allclose(sh_filter2.get_estimate_mean(), sh_filter1.get_estimate_mean(), atol=1e-5)
 
     def test_prediction_sqrt_vs_id(self):
         degree = 21
-        density_init = VonMisesFisherDistribution(np.array([1, 1, 0]) / np.sqrt(2), 2)
-        sys_noise = VonMisesFisherDistribution(np.array([0, 0, 1]), 1)
+        density_init = VonMisesFisherDistribution(array([1.0, 1.0, 0.0]) / np.sqrt(2), 2)
+        sys_noise = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 1)
 
         shd_init_id = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(density_init, degree, 'identity')
         shd_init_sqrt = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(density_init, degree, 'sqrt')
