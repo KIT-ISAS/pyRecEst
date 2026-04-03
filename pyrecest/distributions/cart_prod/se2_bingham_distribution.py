@@ -1,8 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 import numpy as np
-from scipy.integrate import quad
-from scipy.special import iv
-
 from pyrecest.backend import (
     argmax,
     argsort,
@@ -16,6 +13,8 @@ from pyrecest.backend import (
     sqrt,
     sum,
 )
+from scipy.integrate import quad
+from scipy.special import iv
 
 from ..abstract_se2_distribution import AbstractSE2Distribution
 from ..hypersphere_subset.bingham_distribution import BinghamDistribution
@@ -64,13 +63,15 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         """
         AbstractSE2Distribution.__init__(self)
 
-        assert (C2 is None) == (C3 is None), (
-            "Either both C2 and C3 must be provided, or neither."
-        )
+        assert (C2 is None) == (
+            C3 is None
+        ), "Either both C2 and C3 must be provided, or neither."
 
         if C2 is None:
             assert C.shape == (4, 4), "C must be 4x4 when C2 and C3 are not provided."
-            assert np.allclose(np.array(C), np.array(C).T), "Full C matrix must be symmetric."
+            assert np.allclose(
+                np.array(C), np.array(C).T
+            ), "Full C matrix must be symmetric."
             self.C = C
             self.C1 = C[:2, :2]
             self.C2 = C[2:, :2]
@@ -91,9 +92,9 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
                 ]
             ).T
 
-        assert np.all(np.linalg.eigvalsh(np.array(self.C3)) <= 0), (
-            "C3 must be negative semi-definite."
-        )
+        assert np.all(
+            np.linalg.eigvalsh(np.array(self.C3)) <= 0
+        ), "C3 must be negative semi-definite."
 
         self._nc = None  # lazily computed
 
@@ -193,10 +194,9 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         C3_inv = linalg.inv(array(self.C3, dtype=float))
 
         # Step 1: sample Bingham marginal via Schur complement eigendecomp
-        bingham_c = (
-            array(self.C1, dtype=float)
-            - array(self.C2, dtype=float).T @ C3_inv @ array(self.C2, dtype=float)
-        )
+        bingham_c = array(self.C1, dtype=float) - array(
+            self.C2, dtype=float
+        ).T @ C3_inv @ array(self.C2, dtype=float)
         eigenvalues, eigenvectors = linalg.eigh(bingham_c)
         order = argsort(eigenvalues)  # ascending
         eigenvalues = eigenvalues[order]
@@ -208,7 +208,9 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         # Step 2: sample Gaussian conditional
         # mean_i = -C3^{-1} * C2 * x_rot_i
         cov = np.array(-0.5 * C3_inv)
-        means = np.array((-C3_inv @ array(self.C2, dtype=float) @ array(bingham_samples).T).T)
+        means = np.array(
+            (-C3_inv @ array(self.C2, dtype=float) @ array(bingham_samples).T).T
+        )
         lin_samples = array(
             means + np.random.multivariate_normal(np.zeros(2), cov, size=n)
         )
