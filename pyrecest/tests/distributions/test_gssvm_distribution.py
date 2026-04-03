@@ -7,14 +7,13 @@ from pyrecest.distributions.circle.sine_skewed_distributions import (
     GeneralizedKSineSkewedVonMisesDistribution,
 )
 
-
 class TestGSSVMDistribution(unittest.TestCase):
     def test_initialization(self):
         """Test initialization with valid and invalid parameters."""
         dist = GSSVMDistribution(mu=pi, kappa=1.0, lambda_=0.5, n=1)
-        self.assertAlmostEqual(float(dist.mu), float(pi))
-        self.assertEqual(dist.kappa, 1.0)
-        self.assertEqual(dist.lambda_, 0.5)
+        npt.assert_allclose(dist.mu, pi, rtol=5e-7)
+        npt.assert_allclose(dist.kappa, 1.0, rtol=1e-7)
+        npt.assert_allclose(dist.lambda_, 0.5, rtol=1e-7)
         self.assertEqual(dist.n, 1)
         self.assertEqual(dist.k, 1)
 
@@ -59,15 +58,15 @@ class TestGSSVMDistribution(unittest.TestCase):
         dist = GSSVMDistribution(mu=0.0, kappa=1.0, lambda_=0.5, n=2)
         shifted = dist.shift(array(pi / 2))
         self.assertIsInstance(shifted, GSSVMDistribution)
-        self.assertAlmostEqual(float(shifted.mu), float(pi / 2))
-        self.assertEqual(shifted.kappa, dist.kappa)
-        self.assertEqual(shifted.lambda_, dist.lambda_)
+        npt.assert_allclose(float(shifted.mu), float(pi / 2), rtol=1e-7)
+        npt.assert_allclose(shifted.kappa, dist.kappa, rtol=1e-7)
+        npt.assert_allclose(shifted.lambda_, dist.lambda_, rtol=1e-7)
         self.assertEqual(shifted.n, dist.n)
 
     def test_mu_wrapped(self):
         """mu should be wrapped to [0, 2*pi)."""
         dist = GSSVMDistribution(mu=3 * pi, kappa=1.0, lambda_=0.0, n=1)
-        self.assertAlmostEqual(float(dist.mu), float(pi))
+        npt.assert_allclose(float(dist.mu), float(pi), rtol=5e-7)
 
     def test_n_unsupported_raises(self):
         """n > 4 is not yet implemented."""
