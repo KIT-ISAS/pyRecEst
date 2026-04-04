@@ -2,16 +2,10 @@ import numpy as _np
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
-    arctan2,
     array,
-    column_stack,
     cos,
     exp,
-    log,
-    mod,
-    pi,
     sin,
-    sqrt,
 )
 
 from ..abstract_se2_distribution import AbstractSE2Distribution
@@ -32,6 +26,7 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
 
     def __init__(self, mu, C):
         PartiallyWrappedNormalDistribution.__init__(self, mu, C, 1)
+        AbstractSE2Distribution.__init__(self)
 
     def mean4D(self):
         """Return the 4-D moment E[cos(x1), sin(x1), x2, x3].
@@ -42,7 +37,7 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
         """
         return self.hybrid_moment()
 
-    def covariance4D(self):
+    def covariance4D(self):  # pylint: disable=too-many-locals
         """Return the analytical 4-D covariance of [cos(x1), sin(x1), x2, x3].
 
         Returns
