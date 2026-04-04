@@ -215,7 +215,7 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
 
         # Remove the maximum entry to check for multimodality
         remaining = concatenate(
-            [fun_vals_joint[:index], fun_vals_joint[index + 1:]]
+            [fun_vals_joint[:index], fun_vals_joint[index + 1:]]  # noqa: E203
         )
         if len(remaining) > 0 and (
             backend_any((max_val - remaining) < 1e-15)
