@@ -97,6 +97,7 @@ from .circle.sine_skewed_distributions import (
     SineSkewedWrappedCauchyDistribution,
     SineSkewedWrappedNormalDistribution,
 )
+from .circle.piecewise_constant_distribution import PiecewiseConstantDistribution
 from .circle.von_mises_distribution import VonMisesDistribution
 from .circle.wrapped_cauchy_distribution import WrappedCauchyDistribution
 from .circle.wrapped_laplace_distribution import WrappedLaplaceDistribution
@@ -236,6 +237,7 @@ from .hypertorus.toroidal_von_mises_sine_distribution import (
 from .hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )
+from .se2_dirac_distribution import SE2DiracDistribution
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
 
@@ -316,6 +318,7 @@ __all__ = aliases + [
     "SineSkewedVonMisesDistribution",
     "SineSkewedWrappedCauchyDistribution",
     "SineSkewedWrappedNormalDistribution",
+    "PiecewiseConstantDistribution",
     "VonMisesDistribution",
     "WrappedCauchyDistribution",
     "WrappedLaplaceDistribution",
@@ -383,6 +386,7 @@ __all__ = aliases + [
     "HyperrectangularUniformDistribution",
     "LinearDiracDistribution",
     "LinearMixture",
+    "SE2DiracDistribution",
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
     "SE2BinghamDistribution",
