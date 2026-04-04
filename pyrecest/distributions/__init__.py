@@ -237,6 +237,7 @@ from .hypertorus.toroidal_von_mises_sine_distribution import (
 from .hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )
+from .se2_dirac_distribution import SE2DiracDistribution
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
 
@@ -385,6 +386,7 @@ __all__ = aliases + [
     "HyperrectangularUniformDistribution",
     "LinearDiracDistribution",
     "LinearMixture",
+    "SE2DiracDistribution",
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
     "SE2BinghamDistribution",
