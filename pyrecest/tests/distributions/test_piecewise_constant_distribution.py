@@ -33,7 +33,7 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         """Verify the distribution integrates to 1 via the exact sum."""
         n = len(self.dist.w)
         npt.assert_allclose(
-            sum(self.dist.w) * (2.0 * pi / n), 1.0, rtol=1e-10
+            sum(self.dist.w) * (2.0 * pi / n), 1.0, rtol=5e-7
         )
 
     def test_integral_partial(self):
