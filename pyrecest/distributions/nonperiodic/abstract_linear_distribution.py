@@ -314,7 +314,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         elif self.dim == 2:
             x = linspace(plot_range[0], plot_range[1], 100)
             y = linspace(plot_range[2], plot_range[3], 100)
-            x_grid, y_grid = meshgrid(x, y)
+            x_grid, y_grid = meshgrid(x, y, indexing="ij")
             z_grid = self.pdf(column_stack((x_grid.ravel(), y_grid.ravel())))
 
             ax = plt.axes(projection="3d")
