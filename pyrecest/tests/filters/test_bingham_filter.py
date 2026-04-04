@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 import pyrecest.backend
 from pyrecest.backend import abs, all, array, cos, linalg, sin
 from pyrecest.distributions.hypersphere_subset.bingham_distribution import (
