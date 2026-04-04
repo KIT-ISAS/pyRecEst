@@ -101,7 +101,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         S = self.moment()
 
         # Eigen-decomposition of S (symmetric by construction)
-        D, V = linalg.eig(S)
+        D, V = linalg.eigh(S)
 
         # Index of largest eigenvalue
         order = argsort(D)
@@ -123,7 +123,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         )  # New exponent
 
         C = 0.5 * (C + C.T)  # Symmetrize
-        D, V = linalg.eig(C)
+        D, V = linalg.eigh(C)
         order = argsort(D)  # Sort eigenvalues
         V = V[:, order]
         Z_ = D[order]
