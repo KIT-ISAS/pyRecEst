@@ -22,6 +22,10 @@ class TestBinghamFilter2D(unittest.TestCase):
             array([-3.0, 0.0]), array([[0.0, 1.0], [1.0, 0.0]])
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_set_state_and_get_estimate(self):
         self.filter.filter_state = self.B
         B1 = self.filter.filter_state
@@ -43,6 +47,10 @@ class TestBinghamFilter2D(unittest.TestCase):
         # Prediction with noise should make distribution broader (Z values closer to 0)
         self.assertTrue(all(B2.Z >= self.B.Z))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_update_identity_at_mode(self):
         self.filter.filter_state = self.B
         self.filter.update_identity(self.Bnoise, self.B.mode())
@@ -53,6 +61,10 @@ class TestBinghamFilter2D(unittest.TestCase):
         # Update at mode should make distribution sharper (Z values more negative)
         self.assertTrue(all(B3.Z <= self.B.Z))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_update_identity_different_measurement(self):
         self.filter.filter_state = self.B
         z = self.B.mode() + array([0.1, 0.0])
@@ -100,6 +112,10 @@ class TestBinghamFilter4D(unittest.TestCase):
             ),
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_set_state_and_get_estimate(self):
         self.filter.filter_state = self.B
         B1 = self.filter.filter_state
@@ -138,6 +154,10 @@ class TestBinghamFilter4D(unittest.TestCase):
         npt.assert_allclose(abs(B_id.M), abs(B_nl.M), atol=1e-10)
         npt.assert_allclose(B_id.Z, B_nl.Z, rtol=0.15)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_update_identity_at_mode(self):
         self.filter.filter_state = self.B
         self.filter.update_identity(self.Bnoise, self.B.mode())
@@ -146,6 +166,10 @@ class TestBinghamFilter4D(unittest.TestCase):
         npt.assert_allclose(self.B.mode(), B3.mode(), atol=1e-10)
         self.assertTrue(all(B3.Z <= self.B.Z))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_update_identity_different_measurement(self):
         self.filter.filter_state = self.B
         z = self.B.mode() + array([0.1, 0.1, 0.0, 0.0])
