@@ -10,6 +10,7 @@ from .circular_ukf import CircularUKF
 from .abstract_tracker_with_logging import AbstractTrackerWithLogging
 from .circular_particle_filter import CircularParticleFilter
 from .euclidean_particle_filter import EuclideanParticleFilter
+from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .global_nearest_neighbor import GlobalNearestNeighbor
 from .gprhm_tracker import GPRHMTracker
 from .hyperhemisphere_cart_prod_particle_filter import (
@@ -71,6 +72,8 @@ __all__ = [
     "HypersphericalFilterMixin",
     "HypersphericalParticleFilter",
     "HypertoroidalFilterMixin",
+    "AbstractParticleFilter",
+    "HypercylindricalParticleFilter",
     "HypertoroidalParticleFilter",
     "KalmanFilter",
     "KernelSMEFilter",
