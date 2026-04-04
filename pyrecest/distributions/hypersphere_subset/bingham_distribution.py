@@ -73,7 +73,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         assert xs.shape[-1] == self.dim + 1
 
         C = self.M @ diag(self.Z) @ self.M.T
-        p = 1 / self.F * exp(sum(xs.T * (C @ xs.T), axis=0))
+        p = 1 / self.F * exp(sum(xs * (xs @ C), axis=-1))
         return p
 
     def mean_direction(self):
