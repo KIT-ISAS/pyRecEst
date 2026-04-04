@@ -198,8 +198,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             array([new_mu]), array([[new_C]])
         )
 
-    # pyline disable=too-many-locals
-    def update_nonlinear(
+    def update_nonlinear(  # pylint: disable=too-many-locals
         self, f, gauss_meas: GaussianDistribution, z, measurement_periodic: bool = False
     ):
         """
