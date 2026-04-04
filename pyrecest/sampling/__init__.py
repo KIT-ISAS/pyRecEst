@@ -1,5 +1,9 @@
 from .abstract_sampler import AbstractSampler
-from .euclidean_sampler import AbstractEuclideanSampler, GaussianSampler
+from .euclidean_sampler import (
+    AbstractEuclideanSampler,
+    FibonacciGridSampler,
+    GaussianSampler,
+)
 from .hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,
     AbstractHypersphericalUniformSampler,
@@ -16,6 +20,7 @@ __all__ = [
     "AbstractSampler",
     "AbstractEuclideanSampler",
     "GaussianSampler",
+    "FibonacciGridSampler",
     "get_grid_hypersphere",
     "CircularUniformSampler",
     "AbstractHypersphericalUniformSampler",
