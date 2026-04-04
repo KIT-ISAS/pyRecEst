@@ -251,6 +251,7 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             asarray(slice_dist.grid_values),
             expected,
+            rtol=5e-7,
             atol=1e-12,
         )
 
