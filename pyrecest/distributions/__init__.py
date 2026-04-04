@@ -80,6 +80,7 @@ from .cart_prod.state_space_subdivision_distribution import (
 from .cart_prod.state_space_subdivision_gaussian_distribution import (
     StateSpaceSubdivisionGaussianDistribution,
 )
+from .cart_prod.se2_pwn_distribution import SE2PWNDistribution
 from .circle.abstract_circular_distribution import AbstractCircularDistribution
 from .circle.circular_dirac_distribution import CircularDiracDistribution
 from .circle.circular_fourier_distribution import CircularFourierDistribution
@@ -298,6 +299,7 @@ __all__ = aliases + [
     "LinHypersphereSubsetCartProdDiracDistribution",
     "LinPeriodicCartProdDiracDistribution",
     "PartiallyWrappedNormalDistribution",
+    "SE2PWNDistribution",
     "MardiaSuttonDistribution",
     "StateSpaceSubdivisionDistribution",
     "StateSpaceSubdivisionGaussianDistribution",
