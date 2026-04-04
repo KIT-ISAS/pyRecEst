@@ -182,6 +182,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             linspace(-1, 1, resolution),
             linspace(-1, 1, resolution),
             linspace(0, 1, resolution // 2),
+            indexing="ij",
         )
         mask = (x**2 + y**2 + z**2 <= 1) & (z >= 0)
         x, y, z = x[mask].reshape(-1, 1), y[mask].reshape(-1, 1), z[mask].reshape(-1, 1)
