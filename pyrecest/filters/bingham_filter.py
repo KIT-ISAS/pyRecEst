@@ -121,7 +121,7 @@ class BinghamFilter(AbstractFilter):
         For q = [w, x, y, z], conjugate = [w, -x, -y, -z].
         For q = [a, b], conjugate = [a, -b].
         """
-        result = q.copy()
+        result = copy.copy(q)
         result[1:] = -result[1:]
         return result
 
