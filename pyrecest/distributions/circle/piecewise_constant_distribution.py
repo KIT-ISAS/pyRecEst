@@ -1,4 +1,5 @@
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
+import pyrecest.backend
 from pyrecest.backend import mod, pi, array, arange, mean, floor, zeros, exp, sum, log, random
 
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -64,6 +65,8 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         m : complex
             n-th trigonometric moment.
         """
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError("trigonometric_moment is not supported on the JAX backend.")
         if n == 0:
             return 1.0 + 0j
         num = len(self.w)
@@ -100,6 +103,8 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         samples : ndarray, shape (n,)
             Samples in [0, 2*pi).
         """
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError("sample is not supported on the JAX backend.")
         num_intervals = len(self.w)
         interval_width = 2.0 * pi / num_intervals
         # Each interval has probability w[j] * interval_width, which sums to 1 by
@@ -183,6 +188,9 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Weights of the corresponding PiecewiseConstantDistribution.
         """
         from scipy.integrate import quad  # pylint: disable=import-outside-toplevel
+
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError("calculate_parameters_numerically is not supported on the JAX backend.")
 
         assert n >= 1
         w = zeros(n)

@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import linspace, sum, exp, log, mean, pi, array
@@ -46,6 +47,10 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         second_half = sum(pdf_vals[xs >= pi]) * dx
         npt.assert_allclose(first_half + second_half, 1.0, rtol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_trigonometric_moment(self):
         """Verify analytical trigonometric moments using a fine-grid reference."""
         M = 1_000_000
@@ -83,6 +88,10 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
             PiecewiseConstantDistribution.right_border(2, 2), 1.0 * 2.0 * pi
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_calculate_parameters_numerically(self):
         """More samples should yield better moment matching."""
         wn = WrappedNormalDistribution(array(2.0), array(1.3))
@@ -105,6 +114,10 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         expected = -2.0 * pi / n * sum(w * log(w))
         npt.assert_allclose(self.dist.entropy(), expected, rtol=1e-10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_sample(self):
         samples = self.dist.sample(array(100))
         self.assertEqual(len(samples), 100)
