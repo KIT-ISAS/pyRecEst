@@ -26,9 +26,9 @@ class StateSpaceSubdivisionDistribution:
             One distribution per grid point representing the conditional
             distribution of the linear state given that grid point.
         """
-        assert gd.n_grid_points == len(linear_distributions), (
-            "Number of grid points in gd must match length of linear_distributions."
-        )
+        assert gd.n_grid_points == len(
+            linear_distributions
+        ), "Number of grid points in gd must match length of linear_distributions."
         self.gd = copy.deepcopy(gd)
         self.linear_distributions = list(copy.deepcopy(linear_distributions))
 

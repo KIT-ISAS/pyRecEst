@@ -33,7 +33,9 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         gd = HypertoroidalGridDistribution.from_distribution(
             CircularUniformDistribution(), (n,)
         )
-        gaussians = [GaussianDistribution(array([0.0]), array([[1.0]])) for _ in range(n)]
+        gaussians = [
+            GaussianDistribution(array([0.0]), array([[1.0]])) for _ in range(n)
+        ]
         rbd1 = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
 
         gaussians2 = [
@@ -95,9 +97,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         gd = HypertoroidalGridDistribution.from_distribution(
             VonMisesDistribution(mu_periodic, 1.0), (n,)
         )
-        gaussians = [
-            GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)
-        ]
+        gaussians = [GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
         npt.assert_allclose(
             rbd.hybrid_mean(),
@@ -112,9 +112,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         gd = HypertoroidalGridDistribution.from_distribution(
             VonMisesDistribution(4.0, 1.0), (n,)
         )
-        gaussians = [
-            GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)
-        ]
+        gaussians = [GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
         npt.assert_allclose(rbd.linear_mean(), mu_linear, rtol=5e-7)
 
@@ -125,9 +123,7 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         gd = HypertoroidalGridDistribution.from_distribution(
             CircularUniformDistribution(), (n,)
         )
-        gaussians = [
-            GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)
-        ]
+        gaussians = [GaussianDistribution(mu_linear, 1000.0 * eye(3)) for _ in range(n)]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
         with self.assertWarns(UserWarning):
             rbd.mode()
@@ -140,14 +136,13 @@ class TestStateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         gd = HypertoroidalGridDistribution.from_distribution(
             VonMisesDistribution(mu_periodic, 10.0), (n,)
         )
-        gaussians = [
-            GaussianDistribution(mu_linear, eye(3)) for _ in range(n)
-        ]
+        gaussians = [GaussianDistribution(mu_linear, eye(3)) for _ in range(n)]
         rbd = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
 
         # Should not warn
         with self.assertNoLogs(level="WARNING"):
             import warnings as _warnings
+
             with _warnings.catch_warnings():
                 _warnings.simplefilter("error", UserWarning)
                 m = rbd.mode()

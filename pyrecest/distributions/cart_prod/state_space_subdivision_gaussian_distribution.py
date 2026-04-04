@@ -4,13 +4,17 @@ import warnings
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     allclose,
-    any as backend_any,
+)
+from pyrecest.backend import any as backend_any
+from pyrecest.backend import (
     argmax,
     array,
     asarray,
     concatenate,
     stack,
-    sum as backend_sum,
+)
+from pyrecest.backend import sum as backend_sum
+from pyrecest.backend import (
     zeros,
 )
 
@@ -39,9 +43,9 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
         gaussians : list of GaussianDistribution
             One Gaussian per grid point of *gd*.
         """
-        assert all(isinstance(g, GaussianDistribution) for g in gaussians), (
-            "All elements of gaussians must be GaussianDistribution instances."
-        )
+        assert all(
+            isinstance(g, GaussianDistribution) for g in gaussians
+        ), "All elements of gaussians must be GaussianDistribution instances."
         super().__init__(gd, gaussians)
 
     # ------------------------------------------------------------------
@@ -132,9 +136,7 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
         )
         self_grid = asarray(self.gd.get_grid())
         other_grid = asarray(other.gd.get_grid())
-        assert allclose(self_grid, other_grid), (
-            "Can only multiply for equal grids."
-        )
+        assert allclose(self_grid, other_grid), "Can only multiply for equal grids."
 
         n = len(self.linear_distributions)
         new_linear_distributions = []
@@ -148,7 +150,9 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
             # N(mu_self_i, C_self_i + C_other_i) evaluated at mu_other_i.
             # This is equivalent to N(0, C_self_i + C_other_i) at 0.
             combined_cov = ld_self.C + ld_other.C
-            temp_g = GaussianDistribution(ld_other.mu, combined_cov, check_validity=False)
+            temp_g = GaussianDistribution(
+                ld_other.mu, combined_cov, check_validity=False
+            )
             pdf_values.append(temp_g.pdf(ld_self.mu))
 
             new_linear_distributions.append(ld_self.multiply(ld_other))
@@ -215,7 +219,7 @@ class StateSpaceSubdivisionGaussianDistribution(StateSpaceSubdivisionDistributio
 
         # Remove the maximum entry to check for multimodality
         remaining = concatenate(
-            [fun_vals_joint[:index], fun_vals_joint[index + 1:]]  # noqa: E203
+            [fun_vals_joint[:index], fun_vals_joint[index + 1 :]]  # noqa: E203
         )
         if len(remaining) > 0 and (
             backend_any((max_val - remaining) < 1e-15)
