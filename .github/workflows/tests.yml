@@ -60,7 +60,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
 
       - name: Upload test result artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.backend }}-${{ matrix.python-version }}-test-results
           path: junit_test_results_${{ matrix.backend }}.xml

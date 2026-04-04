@@ -41,7 +41,9 @@ class AbstractParticleFilter(AbstractFilter):
             d_f_applied = self.filter_state.d
 
         n_particles = self.filter_state.w.shape[0]
-        if noise_distribution is not None:
+        if noise_distribution is None:
+            updated_particles = d_f_applied
+        else:
             # Cannot easily use vmap because control flow depends on data for some lower level function
             updated_particles = []
             for i in range(n_particles):
