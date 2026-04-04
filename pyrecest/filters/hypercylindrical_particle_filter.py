@@ -2,17 +2,7 @@ from collections.abc import Callable
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import (
-    concatenate,
-    hstack,
-    int32,
-    int64,
-    mod,
-    ones,
-    pi,
-    vstack,
-    zeros,
-)
+from pyrecest.backend import concatenate, int32, int64, mod, ones, pi, zeros
 from pyrecest.distributions.cart_prod.hypercylindrical_dirac_distribution import (
     HypercylindricalDiracDistribution,
 )
@@ -41,38 +31,9 @@ class HypercylindricalParticleFilter(AbstractParticleFilter, HypercylindricalFil
         function_is_vectorized: bool = True,
         shift_instead_of_add: bool = True,
     ):
-        assert (
-            noise_distribution is None
-            or self.filter_state.dim == noise_distribution.dim
+        super().predict_nonlinear(
+            f, noise_distribution, function_is_vectorized, shift_instead_of_add
         )
-
-        if function_is_vectorized:
-            d_f_applied = f(self.filter_state.d)
-        else:
-            self.filter_state.d = self.filter_state.apply_function(f).d
-            d_f_applied = self.filter_state.d
-
-        n_particles = self.filter_state.w.shape[0]
-        if noise_distribution is None:
-            updated_particles = d_f_applied
-        else:
-            updated_particles = []
-            for i in range(n_particles):
-                if not shift_instead_of_add:
-                    noise = noise_distribution.sample(1)
-                    updated_particles.append(d_f_applied[i] + noise)
-                else:
-                    noise_curr = noise_distribution.set_mean(d_f_applied[i])
-                    updated_particles.append(noise_curr.sample(1))
-
-            if self.filter_state.dim == 1:
-                updated_particles = hstack(updated_particles)
-            else:
-                updated_particles = vstack(updated_particles)
-
-        # Directly update particles to preserve bound_dim in the existing distribution
-        self.filter_state.d = updated_particles
-
         # Wrap periodic dimensions to [0, 2*pi)
         bound_dim = self.filter_state.bound_dim
         wrapped_periodic = mod(self.filter_state.d[:, :bound_dim], 2.0 * pi)

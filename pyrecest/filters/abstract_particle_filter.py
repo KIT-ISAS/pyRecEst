@@ -61,9 +61,7 @@ class AbstractParticleFilter(AbstractFilter):
         else:
             updated_particles = vstack(updated_particles)
 
-        self.filter_state = self.filter_state.__class__(
-            updated_particles, self.filter_state.w
-        )
+        self._filter_state.d = updated_particles
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (
