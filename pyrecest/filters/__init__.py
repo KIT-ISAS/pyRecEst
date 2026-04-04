@@ -6,6 +6,7 @@ from .abstract_grid_filter import AbstractGridFilter
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .abstract_nearest_neighbor_tracker import AbstractNearestNeighborTracker
 from .abstract_particle_filter import AbstractParticleFilter
+from .circular_ukf import CircularUKF
 from .abstract_tracker_with_logging import AbstractTrackerWithLogging
 from .circular_particle_filter import CircularParticleFilter
 from .euclidean_particle_filter import EuclideanParticleFilter
@@ -48,6 +49,7 @@ __all__ = [
     "AbstractAxialFilter",
     "AbstractExtendedObjectTracker",
     "AbstractFilter",
+    "CircularUKF",
     "AbstractFilterManifoldMixin",
     "AbstractGridFilter",
     "AbstractHypersphereSubsetFilter",
