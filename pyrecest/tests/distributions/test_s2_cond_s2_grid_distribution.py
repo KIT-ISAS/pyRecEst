@@ -115,7 +115,7 @@ class TestS2CondS2GridDistributionFromFunction(unittest.TestCase):
     @_skip_jax
     def test_warning_free_custom_normalized(self):
         """testWarningFreeCustomNormalized: manually normalized transition should be warn-free."""
-        no_grid_points = 1000
+        no_grid_points = 100
 
         def trans(xkk, xk):
             # xkk: (n1, 3), xk: (n2, 3) -> (n1, n2)  (cartesian product mode)

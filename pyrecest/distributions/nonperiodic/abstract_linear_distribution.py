@@ -131,12 +131,14 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         )
 
     def mean_numerical(self):
+        _quad_opts = {"epsabs": 1.49e-7, "epsrel": 1.49e-7}
         if self.dim == 1:
             mu = array(
                 quad(
                     lambda x: x * self.pdf(array(x)),
                     array(-float("inf")),
                     array(float("inf")),
+                    **_quad_opts,
                 )[0]
             )
         elif self.dim == 2:
@@ -148,6 +150,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                         float("inf"),
                         lambda _: -float("inf"),
                         lambda _: float("inf"),
+                        **_quad_opts,
                     )[0],
                     dblquad(
                         lambda x, y: y * self.pdf(array([x, y])),
@@ -155,6 +158,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                         float("inf"),
                         lambda _: -float("inf"),
                         lambda _: float("inf"),
+                        **_quad_opts,
                     )[0],
                 ]
             )
@@ -179,14 +183,17 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
                     nquad(
                         integrand1,
                         int_lim,
+                        opts=_quad_opts,
                     )[0],
                     nquad(
                         integrand2,
                         int_lim,
+                        opts=_quad_opts,
                     )[0],
                     nquad(
                         integrand3,
                         int_lim,
+                        opts=_quad_opts,
                     )[0],
                 ]
             )
@@ -197,10 +204,11 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         return mu
 
     def covariance_numerical(self):
+        _quad_opts = {"epsabs": 1.49e-7, "epsrel": 1.49e-7}
         mu = self.mean()
         if self.dim == 1:
             C = quad(
-                lambda x: (x - mu) ** 2 * self.pdf(x), -float("inf"), float("inf")
+                lambda x: (x - mu) ** 2 * self.pdf(x), -float("inf"), float("inf"), **_quad_opts
             )[0]
         elif self.dim == 2:
             C = empty((2, 2))
@@ -217,15 +225,18 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             C[0, 0] = nquad(
                 integrand1,
                 [[-float("inf"), float("inf")], [-float("inf"), float("inf")]],
+                opts=_quad_opts,
             )[0]
             C[0, 1] = nquad(
                 integrand2,
                 [[-float("inf"), float("inf")], [-float("inf"), float("inf")]],
+                opts=_quad_opts,
             )[0]
             C[1, 0] = C[0, 1]
             C[1, 1] = nquad(
                 integrand3,
                 [[-float("inf"), float("inf")], [-float("inf"), float("inf")]],
+                opts=_quad_opts,
             )[0]
         else:
             raise NotImplementedError(

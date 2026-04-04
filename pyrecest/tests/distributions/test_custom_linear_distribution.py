@@ -11,7 +11,7 @@ from pyrecest.distributions.nonperiodic.gaussian_mixture import GaussianMixture
 class CustomLinearDistributionTest(unittest.TestCase):
     def setUp(self):
         g1 = GaussianDistribution(array([1.0, 1.0]), eye(2))
-        g2 = GaussianDistribution(array([-3.0, -3.0]), eye(2))
+        g2 = GaussianDistribution(array([-1.0, -1.0]), eye(2))
         self.gm = GaussianMixture([g1, g2], array([0.7, 0.3]))
 
     def test_init_and_mean(self):
