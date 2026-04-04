@@ -236,18 +236,6 @@ from .hypertorus.toroidal_von_mises_sine_distribution import (
 from .hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )
-from .nonperiodic.abstract_hyperrectangular_distribution import (
-    AbstractHyperrectangularDistribution,
-)
-from .nonperiodic.abstract_linear_distribution import AbstractLinearDistribution
-from .nonperiodic.custom_linear_distribution import CustomLinearDistribution
-from .nonperiodic.gaussian_distribution import GaussianDistribution
-from .nonperiodic.gaussian_mixture import GaussianMixture
-from .nonperiodic.hyperrectangular_uniform_distribution import (
-    HyperrectangularUniformDistribution,
-)
-from .nonperiodic.linear_dirac_distribution import LinearDiracDistribution
-from .nonperiodic.linear_mixture import LinearMixture
 from .se2_dirac_distribution import SE2DiracDistribution
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
