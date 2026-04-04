@@ -88,9 +88,7 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
         array of shape (4, 4)
         """
         s = _np.asarray(self.sample(n_samples))
-        big_s = _np.column_stack(
-            [_np.cos(s[:, 0]), _np.sin(s[:, 0]), s[:, 1], s[:, 2]]
-        )
+        big_s = _np.column_stack([_np.cos(s[:, 0]), _np.sin(s[:, 0]), s[:, 1], s[:, 2]])
         return array(_np.cov(big_s.T))
 
     @staticmethod

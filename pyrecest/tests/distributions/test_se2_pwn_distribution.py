@@ -29,9 +29,7 @@ class TestSE2PWNDistribution(unittest.TestCase):
         import scipy.integrate
 
         def integrand(x3, x2, x1):
-            return float(
-                self.dist.pdf(array([[x1, x2, x3]]))[0]
-            )
+            return float(self.dist.pdf(array([[x1, x2, x3]]))[0])
 
         mu = np.asarray(self.mu)
         C = np.asarray(self.C)
