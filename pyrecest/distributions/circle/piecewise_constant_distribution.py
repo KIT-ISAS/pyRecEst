@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
-from pyrecest.backend import mod, pi, array, mean, floor, zeros, exp, sum, log, random
+from pyrecest.backend import mod, pi, array, arange, mean, floor, zeros, exp, sum, log, random
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -106,10 +106,8 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         # construction. Divide by sum anyway to guard against floating-point drift.
         interval_probs = self.w * interval_width
         interval_probs /= interval_probs.sum()
-        interval_indices = random.choice(num_intervals, size=n, p=interval_probs)
-        return interval_indices * interval_width + random.uniform(
-            0.0, interval_width, size=n
-        )
+        interval_indices = random.choice(arange(num_intervals), size=(n,), p=interval_probs)
+        return interval_indices * interval_width + random.uniform(size=(n,)) * interval_width
 
     @staticmethod
     def left_border(m, n):
