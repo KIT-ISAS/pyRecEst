@@ -41,9 +41,9 @@ def plot_ellipsoid_3d(center, shape_matrix, scaling_factor=1, color="blue"):
     y = outer(sin(u), sin(v))
     z = outer(ones(u.shape[0]), cos(v))
 
-    V, D = linalg.eig(shape_matrix)
-    all_coords = V @ sqrt(D) @ array(
-        [x.ravel(), y.ravel(), z.ravel()], dtype=V.dtype
+    D, V = linalg.eigh(shape_matrix)
+    all_coords = (V * sqrt(D)) @ array(
+        [x.ravel(), y.ravel(), z.ravel()]
     ) + center.reshape(-1, 1)
     x = reshape(all_coords[0], x.shape)
     y = reshape(all_coords[1], y.shape)

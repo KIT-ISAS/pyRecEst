@@ -203,7 +203,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         elif self.dim == 2:
             step = 2 * pi / resolution
             alpha, beta = meshgrid(
-                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step)
+                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step), indexing="ij"
             )
             f = self.pdf(column_stack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
