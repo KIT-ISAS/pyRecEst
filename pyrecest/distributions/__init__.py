@@ -198,6 +198,7 @@ from .hypersphere_subset.spherical_harmonics_distribution_complex import (
 from .hypersphere_subset.spherical_harmonics_distribution_real import (
     SphericalHarmonicsDistributionReal,
 )
+from .hypersphere_subset.complex_watson_distribution import ComplexWatsonDistribution
 from .hypersphere_subset.von_mises_fisher_distribution import VonMisesFisherDistribution
 from .hypersphere_subset.watson_distribution import WatsonDistribution
 from .hypertorus.abstract_hypertoroidal_distribution import (
@@ -341,6 +342,7 @@ __all__ = aliases + [
     "AbstractSphericalDistribution",
     "AbstractSphericalHarmonicsDistribution",
     "BinghamDistribution",
+    "ComplexWatsonDistribution",
     "CustomHemisphericalDistribution",
     "CustomHyperhemisphericalDistribution",
     "CustomHypersphericalDistribution",
