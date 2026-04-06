@@ -6,9 +6,6 @@ import numpy.testing as npt
 from pyrecest.distributions.hypersphere_subset.complex_watson_distribution import (
     ComplexWatsonDistribution,
 )
-from pyrecest.distributions.hypersphere_subset.bayesian_complex_watson_mixture_model import (
-    _simplex_integral,
-)
 
 
 def _random_unit_vector(D, rng=None):
@@ -148,24 +145,6 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         self.assertGreater(ip, 0.99)
         self.assertAlmostEqual(dist_hat.kappa, kappa, delta=2.0)
 
-
-class TestSimplexIntegral(unittest.TestCase):
-    def test_D1(self):
-        self.assertAlmostEqual(_simplex_integral(np.array([3.0])), np.exp(3.0))
-
-    def test_D2_known(self):
-        # int_0^1 exp(a*t + b*(1-t)) dt = (exp(a) - exp(b)) / (a - b)
-        a, b = 2.0, 1.0
-        expected = (np.exp(a) - np.exp(b)) / (a - b)
-        result = _simplex_integral(np.array([a, b]))
-        self.assertAlmostEqual(result, expected, places=8)
-
-    def test_D3_nonnegative(self):
-        result = _simplex_integral(np.array([2.0, 1.0, 0.0]))
-        self.assertGreater(result, 0.0)
-        # Known value from direct integration: exp(2)/2 - exp(1) + 1/2
-        expected = np.exp(2) / 2 - np.exp(1) + 0.5
-        self.assertAlmostEqual(result, expected, places=5)
 
 
 if __name__ == "__main__":

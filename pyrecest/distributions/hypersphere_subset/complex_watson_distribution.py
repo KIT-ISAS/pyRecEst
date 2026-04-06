@@ -72,8 +72,10 @@ class ComplexWatsonDistribution:
 
         # Asymptotic formula for high kappa
         # log C ~ log(2) + D*log(pi) + (1-D)*log(kappa) + kappa
+        # log_c_high is evaluated for all kappa before masking; clip to avoid log(0) warning
         log_c_high = (
-            math.log(2) + D * math.log(math.pi) + (1 - D) * np.log(kappa + 1e-300) + kappa
+            math.log(2) + D * math.log(math.pi)
+            + (1 - D) * np.log(np.maximum(kappa, 1e-300)) + kappa
         )
 
         # Intermediate formula (Mardia1999 Eq. 3):
@@ -322,13 +324,14 @@ def _sample_diagonal_complex_bingham_magnitudes(Lambda, D):
     Lambda_pos = Lambda[: D - 1]  # first D-1 (positive) eigenvalues
 
     # Precompute for the truncated exponential inverse CDF
-    temp1 = np.where(Lambda_pos >= 0.03, -1.0 / np.where(Lambda_pos >= 0.03, Lambda_pos, 1.0), 0.0)
-    temp2 = np.where(Lambda_pos >= 0.03, 1.0 - np.exp(-Lambda_pos), 0.0)
+    large = Lambda_pos >= 0.03
+    safe_lambda = np.where(large, Lambda_pos, 1.0)
+    temp1 = np.where(large, -1.0 / safe_lambda, 0.0)
+    temp2 = np.where(large, 1.0 - np.exp(-Lambda_pos), 0.0)
 
     s = np.zeros(D)
     while True:
         U = np.random.rand(D - 1)
-        large = Lambda_pos >= 0.03
         if np.any(large):
             s[: D - 1][large] = temp1[large] * np.log(1.0 - U[large] * temp2[large])
         if np.any(~large):
