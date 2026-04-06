@@ -179,7 +179,7 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
         # For d=3, C=I: pdf should be gamma(3)/(2*pi^3) = 2/(2*pi^3) = 1/pi^3
         z_test = array(np.array([[1.0, 0.0, 0.0]], dtype=complex))
         p = dist.pdf(z_test)
-        expected = 1.0 / np.pi**3  # gamma(3)=2!, 2/(2*pi^3)=1/pi^3
+        expected = 1.0 / np.pi**3  # gamma(3)=2, so 2/(2*pi^3)=1/pi^3
         npt.assert_allclose(float(np.real(np.array(p[0]))), expected, rtol=1e-6)
 
 
