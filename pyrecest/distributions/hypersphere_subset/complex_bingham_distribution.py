@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import least_squares
 from scipy.special import factorial
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
@@ -34,7 +35,7 @@ class ComplexBinghamDistribution(AbstractHypersphericalDistribution):
         self.B = B
         self.d = d  # complex dimension
         self.log_norm_const = ComplexBinghamDistribution.log_norm(B)
-        self.norm_const = np.exp(-self.log_norm_const)  # = integral = normalisation denominator
+        self.norm_const = np.exp(-self.log_norm_const)  # = integral = normalization denominator
 
     # ------------------------------------------------------------------
     # Core density
@@ -239,7 +240,7 @@ class ComplexBinghamDistribution(AbstractHypersphericalDistribution):
         return 2.0 * float(np.pi**d) / float(factorial(d - 1))
 
     def integral(self, n_samples=100_000):
-        """Estimate the normalisation integral via Monte Carlo (should be 1).
+        """Estimate the normalization integral via Monte Carlo (should be 1).
 
         Parameters
         ----------
@@ -329,8 +330,6 @@ class ComplexBinghamDistribution(AbstractHypersphericalDistribution):
         -------
         B : ndarray, shape (d, d), dtype complex
         """
-        from scipy.optimize import least_squares  # pylint: disable=import-error
-
         S = np.asarray(S, dtype=complex)
         D = S.shape[0]
 
@@ -341,7 +340,7 @@ class ComplexBinghamDistribution(AbstractHypersphericalDistribution):
             lam = np.append(x, 0.0)
             try:
                 val = ComplexBinghamDistribution._log_norm_gradient(lam)
-            except Exception:  # pylint: disable=broad-except
+            except (ValueError, np.linalg.LinAlgError):
                 return np.ones(D - 1) * 1e6
             return val[:-1] - target[:-1]
 
