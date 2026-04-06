@@ -1,0 +1,341 @@
+"""
+Complex Watson distribution on the complex unit sphere in C^D.
+
+Reference:
+    Mardia, K. V. & Dryden, I. L.
+    The Complex Watson Distribution and Shape Analysis
+    Journal of the Royal Statistical Society: Series B
+    (Statistical Methodology), Blackwell Publishers Ltd., 1999, 61, 913-926.
+"""
+
+import math
+
+import numpy as np
+from scipy.optimize import brentq
+from scipy.special import gammaln, hyp1f1
+
+
+class ComplexWatsonDistribution:
+    """
+    Complex Watson distribution on the complex unit sphere in C^D.
+
+    The PDF is: f(z; mu, kappa) = C(D, kappa)^{-1} * exp(kappa * |mu^H z|^2)
+
+    where z in C^D is a unit vector (|z|=1), mu in C^D is the mode (unit vector),
+    kappa >= 0 is the concentration parameter, and C(D, kappa) is the normalization.
+    """
+
+    EPSILON = 1e-6
+
+    def __init__(self, mu, kappa):
+        """
+        Initializes the ComplexWatsonDistribution.
+
+        Args:
+            mu: D-dimensional complex unit vector (the mode direction).
+            kappa (float): Concentration parameter (>= 0).
+        """
+        mu = np.asarray(mu, dtype=complex)
+        assert mu.ndim == 1, "mu must be a 1-D vector"
+        assert (
+            abs(np.linalg.norm(mu) - 1.0) < self.EPSILON
+        ), "mu must be normalized (|mu|=1)"
+
+        self.mu = mu
+        self.kappa = float(kappa)
+        self.dim = len(mu)  # D: dimension of the complex space C^D
+        self._log_c = ComplexWatsonDistribution.log_norm(self.dim, self.kappa)
+
+    @staticmethod
+    def log_norm(D, kappa):
+        """
+        Compute the log normalization constant for the complex Watson distribution.
+
+        Returns -log(C(D, kappa)) where
+            log C(D, kappa) = log(2) + D*log(pi) - log(Gamma(D)) + log(1F1(1; D; kappa))
+
+        Three regimes are used for numerical stability:
+            - Low kappa  (kappa < 1/D): Taylor series
+            - Medium kappa (1/D <= kappa < 100): intermediate correction
+            - High kappa (kappa >= 100): asymptotic approximation
+
+        Args:
+            D (int): Dimension of the complex space.
+            kappa: Concentration parameter(s) — scalar or array.
+
+        Returns:
+            float or ndarray: -log(C(D, kappa)), same shape as kappa.
+        """
+        scalar_input = np.ndim(kappa) == 0
+        kappa = np.atleast_1d(np.asarray(kappa, dtype=float)).ravel()
+        log_c = np.zeros_like(kappa)
+
+        # Asymptotic formula for high kappa
+        # log C ~ log(2) + D*log(pi) + (1-D)*log(kappa) + kappa
+        log_c_high = (
+            math.log(2) + D * math.log(math.pi) + (1 - D) * np.log(kappa + 1e-300) + kappa
+        )
+
+        # Intermediate formula (Mardia1999 Eq. 3):
+        # log C = log_c_high + log(1 - sum_{j=0}^{D-2} kappa^j * exp(-kappa) / j!)
+        running = np.exp(-kappa)
+        correction_sum = running.copy()
+        for j in range(1, D - 1):
+            running = running * kappa / j
+            correction_sum = correction_sum + running
+        if D >= 2:
+            log_c_medium = log_c_high + np.log(
+                np.maximum(1.0 - correction_sum, 1e-300)
+            )
+        else:
+            log_c_medium = log_c_high
+
+        # Taylor series for low kappa (Mardia1999 Eq. 4):
+        # 1F1(1; D; kappa) = 1 + kappa/D + kappa^2/(D*(D+1)) + ...
+        running_prod = np.ones_like(kappa)
+        series_sum = np.ones_like(kappa)
+        for j in range(10):
+            running_prod = running_prod * kappa / (D + j)
+            series_sum = series_sum + running_prod
+        log_c_low = (
+            math.log(2) + D * math.log(math.pi) - gammaln(D) + np.log(series_sum)
+        )
+
+        mask_low = kappa < 1.0 / D
+        mask_high = kappa >= 100.0
+        mask_medium = ~mask_low & ~mask_high
+
+        log_c[mask_low] = log_c_low[mask_low]
+        log_c[mask_medium] = log_c_medium[mask_medium]
+        log_c[mask_high] = log_c_high[mask_high]
+
+        result = -log_c
+        if scalar_input:
+            return float(result[0])
+        return result
+
+    def pdf(self, Z):
+        """
+        Evaluate the PDF at the columns of Z.
+
+        Args:
+            Z: D x N complex matrix where each column is a unit vector in C^D.
+               May also be a 1-D array (single vector).
+
+        Returns:
+            ndarray: N-dimensional real array of PDF values.
+        """
+        Z = np.asarray(Z, dtype=complex)
+        if Z.ndim == 1:
+            Z = Z.reshape(-1, 1)
+        # |mu^H z|^2 for each column
+        inner = np.abs(self.mu.conj() @ Z) ** 2
+        return np.real(np.exp(self._log_c + self.kappa * inner))
+
+    def sample(self, n):
+        """
+        Draw n unit vectors from the complex Watson distribution.
+
+        Uses the complex Bingham representation:
+            B = -kappa * (I - mu mu^H)
+
+        Args:
+            n (int): Number of samples.
+
+        Returns:
+            ndarray: D x n complex matrix of samples.
+        """
+        B = -self.kappa * (
+            np.eye(self.dim, dtype=complex) - np.outer(self.mu, self.mu.conj())
+        )
+        B = 0.5 * (B + B.conj().T)
+        return _sample_complex_bingham(B, n)
+
+    @staticmethod
+    def fit(Z, weights=None):
+        """
+        Fit a ComplexWatsonDistribution to data using MLE.
+
+        Args:
+            Z: D x N complex matrix of observations (unit vectors).
+            weights: Optional 1 x N or (N,) real weight array.
+
+        Returns:
+            ComplexWatsonDistribution: Fitted distribution.
+        """
+        mu_hat, kappa_hat = ComplexWatsonDistribution.estimate_parameters(Z, weights)
+        return ComplexWatsonDistribution(mu_hat, kappa_hat)
+
+    @staticmethod
+    def estimate_parameters(Z, weights=None):
+        """
+        MLE estimation of complex Watson parameters.
+
+        Method: Mardia & Dryden (1999), Section 4.
+
+        Args:
+            Z: D x N complex matrix of observations (unit vectors).
+            weights: Optional 1 x N or (N,) real weight array.
+
+        Returns:
+            tuple: (mu_hat, kappa_hat) — complex unit mode vector and concentration.
+        """
+        Z = np.asarray(Z, dtype=complex)
+        D, N = Z.shape
+
+        if weights is None:
+            S = Z @ Z.conj().T
+        else:
+            weights = np.asarray(weights, dtype=float).ravel()
+            assert len(weights) == N, "weights length must match number of samples"
+            S = (Z * weights) @ Z.conj().T * N / np.sum(weights)
+
+        S = 0.5 * (S + S.conj().T)  # enforce Hermitian
+
+        eigenvalues, eigenvectors = np.linalg.eigh(S)
+        idx = np.argmax(eigenvalues)
+        mu_hat = eigenvectors[:, idx]
+        lambda_max = float(np.real(eigenvalues[idx]))
+
+        normed_lambda = lambda_max / N
+
+        # High-concentration approximation (Mardia & Dryden 1999)
+        kappa_approx = N * (D - 1) / max(N - lambda_max, 1e-300)
+        if kappa_approx < 200:
+            kappa_hat = ComplexWatsonDistribution._hypergeometric_ratio_inverse(
+                normed_lambda, D, concentration_max=1000
+            )
+        else:
+            kappa_hat = kappa_approx
+
+        return mu_hat, kappa_hat
+
+    @staticmethod
+    def _hypergeometric_ratio(kappa, D):
+        """
+        Compute E[|mu^H z|^2] = d(log C)/d(kappa) for the complex Watson distribution.
+
+        This equals (1/D) * 1F1(2; D+1; kappa) / 1F1(1; D; kappa).
+
+        Args:
+            kappa (float): Concentration.
+            D (int): Dimension of the complex space.
+
+        Returns:
+            float: Expected value of |mu^H z|^2, in [1/D, 1).
+        """
+        kappa = float(kappa)
+        if kappa < 1e-10:
+            return 1.0 / D
+        # For large kappa use asymptotic: ratio ~ 1 - (D-1)/kappa
+        # (from d/dkappa [kappa + (1-D)*log(kappa) + ...] = 1 + (1-D)/kappa)
+        if kappa >= 100.0:
+            return 1.0 - float(D - 1) / kappa
+        # Differentiate log_norm numerically to avoid hyp1f1 overflow
+        eps = max(kappa * 1e-4, 1e-7)
+        log_c_plus = ComplexWatsonDistribution.log_norm(D, kappa + eps)
+        log_c_minus = ComplexWatsonDistribution.log_norm(D, max(kappa - eps, 0.0))
+        # ratio = d(log C)/d(kappa) = -d(log_norm)/d(kappa)  [log_norm = -log C]
+        return -(log_c_plus - log_c_minus) / (2.0 * eps)
+
+    @staticmethod
+    def _hypergeometric_ratio_inverse(r, D, concentration_max=500):
+        """
+        Find kappa such that _hypergeometric_ratio(kappa, D) == r.
+
+        Args:
+            r (float): Target ratio, should be in (1/D, 1).
+            D (int): Dimension of the complex space.
+            concentration_max (float): Upper bound for bracket search.
+
+        Returns:
+            float: kappa value.
+        """
+        r = float(r)
+        lower = 1.0 / D
+        if r <= lower + 1e-10:
+            return 0.0
+        if r >= 1.0 - 1e-10:
+            return float(concentration_max)
+
+        def objective(k):
+            return ComplexWatsonDistribution._hypergeometric_ratio(k, D) - r
+
+        return brentq(objective, 0.0, float(concentration_max), xtol=1e-8)
+
+
+# ---------------------------------------------------------------------------
+# Sampling helpers
+# ---------------------------------------------------------------------------
+
+
+def _sample_complex_bingham(B, n):
+    """
+    Sample n unit vectors from a complex Bingham distribution with parameter B.
+
+    Implements the algorithm from:
+        Mardia, K. V. & Jupp, P. E. Directional Statistics, Wiley, 2009, p. 336.
+
+    Args:
+        B: D x D complex Hermitian matrix (concentration matrix).
+        n (int): Number of samples.
+
+    Returns:
+        ndarray: D x n complex matrix of samples (each column is a unit vector).
+    """
+    B = np.asarray(B, dtype=complex)
+    D = B.shape[0]
+    B = 0.5 * (B + B.conj().T)
+
+    # Eigendecompose -B (so eigenvalues are non-negative in descending order)
+    eigenvalues, V = np.linalg.eigh(-B)
+    idx = np.argsort(eigenvalues)[::-1]
+    Lambda = np.real(eigenvalues[idx])
+    V = V[:, idx]
+
+    # Shift so smallest eigenvalue is 0 (doesn't change the distribution)
+    Lambda = Lambda - Lambda[-1]
+
+    Z = np.zeros((D, n), dtype=complex)
+    for i in range(n):
+        s = _sample_diagonal_complex_bingham_magnitudes(Lambda, D)
+        theta = 2.0 * np.pi * np.random.rand(D)
+        w = np.sqrt(s) * np.exp(1j * theta)
+        Z[:, i] = V @ w
+
+    return Z
+
+
+def _sample_diagonal_complex_bingham_magnitudes(Lambda, D):
+    """
+    Sample squared magnitudes |z_i|^2 from a diagonal complex Bingham distribution.
+
+    The resulting vector s satisfies s_i >= 0 and sum(s) = 1.
+
+    Args:
+        Lambda: D-dimensional non-negative eigenvalue vector (largest first, last=0).
+        D (int): Dimension.
+
+    Returns:
+        ndarray: D-dimensional vector of squared magnitudes.
+    """
+    Lambda_pos = Lambda[: D - 1]  # first D-1 (positive) eigenvalues
+
+    # Precompute for the truncated exponential inverse CDF
+    temp1 = np.where(Lambda_pos >= 0.03, -1.0 / np.where(Lambda_pos >= 0.03, Lambda_pos, 1.0), 0.0)
+    temp2 = np.where(Lambda_pos >= 0.03, 1.0 - np.exp(-Lambda_pos), 0.0)
+
+    s = np.zeros(D)
+    while True:
+        U = np.random.rand(D - 1)
+        large = Lambda_pos >= 0.03
+        if np.any(large):
+            s[: D - 1][large] = temp1[large] * np.log(1.0 - U[large] * temp2[large])
+        if np.any(~large):
+            s[: D - 1][~large] = U[~large]
+
+        if np.sum(s[: D - 1]) < 1.0:
+            break
+
+    s[D - 1] = 1.0 - np.sum(s[: D - 1])
+    return s
