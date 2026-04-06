@@ -12,6 +12,7 @@ from pyrecest.backend import (
     log,
     mean,
     pi,
+    ones,
     random,
     real,
     sort,
@@ -115,7 +116,7 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         random.seed(42)
         S = self.cB2.sample(100)
         norms = linalg.norm(S, axis=0)
-        npt.assert_allclose(norms, [1.0] * 100, atol=1e-12)
+        npt.assert_allclose(norms, ones(100), atol=1e-12)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
@@ -126,7 +127,7 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         random.seed(7)
         S = self.cB3.sample(50)
         norms = linalg.norm(S, axis=0)
-        npt.assert_allclose(norms, [1.0] * 50, atol=1e-12)
+        npt.assert_allclose(norms, ones(50), atol=1e-12)
 
     def test_log_norm_2d_analytic(self):
         a = 3.0

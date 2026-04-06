@@ -257,7 +257,7 @@ class ComplexBinghamDistribution:
 
         Mirrors MATLAB's makeSureEigenvaluesAreNotTooClose.
         """
-        lam = sort(eigenvalues)[::-1]
+        lam = sort(eigenvalues)[::-1].copy()
         diffs = diff(lam)  # non-positive for sorted-descending
         diffs = minimum(diffs, -0.01)  # enforce gap >= 0.01
         lam[1:] = lam[0] + cumsum(diffs)
@@ -314,7 +314,7 @@ class ComplexBinghamDistribution:
             log_c0 = ComplexBinghamDistribution.log_norm(B_diag)
             grad = empty(d)
             for i in range(d):
-                lam_p = array(lam)
+                lam_p = lam.copy()
                 lam_p[i] += eps
                 log_cp = ComplexBinghamDistribution.log_norm(
                     diag(array(lam_p, dtype=complex128))
