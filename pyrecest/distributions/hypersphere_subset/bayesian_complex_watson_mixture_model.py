@@ -1,0 +1,398 @@
+"""
+Bayesian Complex Watson Mixture Model.
+
+Extends the complex Watson mixture model by adding:
+- A complex Bingham prior for the mode vectors.
+- A Dirichlet prior for the mixture weights.
+
+Fitting is performed via a variational EM algorithm.
+
+Reference:
+    Derived from libDirectional (MATLAB):
+    https://github.com/libDirectional/libDirectional
+"""
+
+import numpy as np
+from scipy.special import digamma
+
+from .complex_watson_distribution import ComplexWatsonDistribution
+
+
+class BayesianComplexWatsonMixtureModel:
+    """
+    Bayesian complex Watson mixture model.
+
+    Stores the posterior parameters (complex Bingham matrices B, concentration
+    parameters, and Dirichlet parameter alpha) resulting from fitting the model
+    to observations.
+
+    Attributes
+    ----------
+    B : ndarray of shape (D, D, K), complex
+        Complex Bingham parameter matrices for each component.
+    concentrations : ndarray of shape (K,)
+        Concentration parameters (kappa) for each Watson component.
+    alpha : ndarray of shape (K,)
+        Dirichlet parameter vector (proportional to mixture weights).
+    K : int
+        Number of mixture components.
+    dim : int
+        Dimension D of the complex space C^D.
+    """
+
+    def __init__(self, B, concentrations, alpha):
+        """
+        Construct a BayesianComplexWatsonMixtureModel from posterior parameters.
+
+        Args:
+            B: (D, D, K) complex array of Hermitian Bingham parameter matrices.
+            concentrations: (K,) array of concentration parameters.
+            alpha: (K,) Dirichlet parameter vector.
+        """
+        B = np.asarray(B, dtype=complex)
+        concentrations = np.asarray(concentrations, dtype=float).ravel()
+        alpha = np.asarray(alpha, dtype=float).ravel()
+
+        K = alpha.shape[0]
+        assert B.shape[2] == K, "B.shape[2] must equal len(alpha)"
+        assert concentrations.shape[0] == K, "len(concentrations) must equal len(alpha)"
+
+        for k in range(K):
+            assert np.allclose(
+                B[:, :, k], B[:, :, k].conj().T, atol=1e-6
+            ), f"B[:,:,{k}] must be Hermitian"
+
+        self.B = B
+        self.concentrations = concentrations
+        self.alpha = alpha
+        self.K = K
+        self.dim = B.shape[0]
+
+    @staticmethod
+    def fit(Z, parameters):
+        """
+        Fit the model to observations Z using the given hyperparameters.
+
+        Args:
+            Z: (D, N) complex matrix of unit-vector observations.
+            parameters (dict): Hyperparameter dict. Must contain:
+                - ``initial``: dict with keys ``B`` (D,D,K complex), ``alpha`` (K,),
+                  and ``kappa`` (scalar or (K,)).
+                - ``prior``: dict with keys ``B`` (D,D,K complex) and ``alpha`` (K,).
+                - ``I`` (int): number of EM iterations.
+                Optionally:
+                - ``uniformComponent`` (bool): if True, last component is uniform.
+                - ``prior['saliencies']`` (float or (N,)): observation saliencies.
+
+        Returns:
+            tuple: (BayesianComplexWatsonMixtureModel, posterior dict)
+        """
+        posterior = BayesianComplexWatsonMixtureModel.estimate_posterior(Z, parameters)
+        model = BayesianComplexWatsonMixtureModel(
+            posterior["B"], posterior["kappa"], posterior["alpha"]
+        )
+        return model, posterior
+
+    @staticmethod
+    def fit_default(Z, K):
+        """
+        Fit the model with default hyperparameters.
+
+        Args:
+            Z: (D, N) complex matrix of unit-vector observations.
+                The feature dimension D must be less than 100.
+            K (int): Number of mixture components.
+
+        Returns:
+            tuple: (BayesianComplexWatsonMixtureModel, posterior dict)
+        """
+        assert Z.shape[0] < 100, (
+            "fit_default assumes D < 100 (feature dimension, not sample count)"
+        )
+        D = Z.shape[0]
+        parameters = BayesianComplexWatsonMixtureModel.parameters_default(D, K)
+        return BayesianComplexWatsonMixtureModel.fit(Z, parameters)
+
+    @staticmethod
+    def parameters_default(D, K):
+        """
+        Build the default hyperparameter dict for dimension D and K components.
+
+        Args:
+            D (int): Dimension of the complex space.
+            K (int): Number of mixture components.
+
+        Returns:
+            dict: Default parameter dict compatible with ``fit`` and
+                ``estimate_posterior``.
+        """
+        parameters = {}
+        parameters["initial"] = {
+            "B": np.zeros((D, D, K), dtype=complex),
+            "kappa": 20.0,
+            "alpha": 1.0 / K + np.linspace(-0.14 / K, 0.14 / K, K),
+        }
+        parameters["prior"] = {
+            "B": np.zeros((D, D, K), dtype=complex),
+            "alpha": np.ones(K) / K,
+            "saliencies": 1.0,
+        }
+        parameters["I"] = 40
+        parameters["uniformComponent"] = False
+        return parameters
+
+    @staticmethod
+    def estimate_posterior(Z, parameters):
+        """
+        Run the variational EM algorithm to estimate posterior parameters.
+
+        E-step: update soft assignments gamma[n, k] using the current parameters.
+        M-step: update B, alpha, and kappa from the weighted sufficient statistics.
+
+        Args:
+            Z: (D, N) complex matrix of unit-vector observations.
+            parameters (dict): Hyperparameter dict as returned by
+                ``parameters_default``.
+
+        Returns:
+            dict: Posterior with keys ``B``, ``kappa``, ``alpha``, ``gamma``.
+        """
+        uniform_component = parameters.get("uniformComponent", False)
+
+        assert "initial" in parameters
+        assert "B" in parameters["initial"]
+        assert "alpha" in parameters["initial"]
+        assert "kappa" in parameters["initial"]
+        assert "prior" in parameters
+        assert "B" in parameters["prior"]
+        assert "alpha" in parameters["prior"]
+        assert "I" in parameters
+
+        Z = np.asarray(Z, dtype=complex)
+        D, N = Z.shape
+        K = len(np.asarray(parameters["initial"]["alpha"]).ravel())
+
+        B_init = np.asarray(parameters["initial"]["B"], dtype=complex)
+        for k in range(K):
+            assert np.allclose(
+                B_init[:, :, k], B_init[:, :, k].conj().T, atol=1e-6
+            ), "initial B must be Hermitian"
+
+        kappa_init = parameters["initial"]["kappa"]
+        if np.ndim(kappa_init) == 0:
+            kappa_init_arr = np.full(K, float(kappa_init))
+        else:
+            kappa_init_arr = np.asarray(kappa_init, dtype=float).ravel().copy()
+
+        posterior = {
+            "B": B_init.copy(),
+            "alpha": np.asarray(
+                parameters["initial"]["alpha"], dtype=float
+            ).ravel().copy(),
+            "kappa": kappa_init_arr,
+            "gamma": np.zeros((N, K)),
+        }
+
+        # Precompute outer products Z[:, n] * conj(Z)[:, n] reshaped to (D*D, N)
+        ZZ = (
+            Z[:, np.newaxis, :] * Z.conj()[np.newaxis, :, :]
+        ).reshape(D * D, N)
+
+        # Log saliencies shape (N, K)
+        saliencies = parameters["prior"].get("saliencies", 1.0)
+        saliencies_arr = np.asarray(saliencies)
+        if saliencies_arr.ndim == 0:
+            ln_saliencies = np.full((N, K), np.log(max(float(saliencies_arr), 1e-7)))
+        else:
+            saliencies_vec = saliencies_arr.ravel()
+            assert len(saliencies_vec) == N
+            ln_saliencies = (
+                np.log(np.maximum(saliencies_vec, 1e-7))[:, np.newaxis]
+                * np.ones((N, K))
+            )
+
+        prior_B = np.asarray(parameters["prior"]["B"], dtype=complex)
+        prior_alpha = np.asarray(parameters["prior"]["alpha"], dtype=float).ravel()
+        concentration_max = 500.0
+
+        for _ in range(parameters["I"]):
+            # E-step
+            log_gamma = ln_saliencies.copy()
+
+            quad = BayesianComplexWatsonMixtureModel.quadratic_expectation(
+                ZZ.reshape(D, D, N), posterior["B"]
+            )
+            log_gamma += posterior["kappa"][np.newaxis, :] * quad
+            log_gamma += ComplexWatsonDistribution.log_norm(D, posterior["kappa"])[
+                np.newaxis, :
+            ]
+            log_gamma += digamma(posterior["alpha"])[np.newaxis, :]
+
+            log_gamma -= log_gamma.max(axis=1, keepdims=True)
+            gamma = np.exp(log_gamma)
+            gamma /= gamma.sum(axis=1, keepdims=True)
+
+            assert not np.any(np.isnan(gamma)), "NaN in gamma during E-step"
+            posterior["gamma"] = gamma
+
+            # M-step
+            N_k = gamma.sum(axis=0)
+
+            posterior["alpha"] = prior_alpha + N_k
+
+            cov_matrix = (ZZ @ gamma) / np.maximum(N_k[np.newaxis, :], 1e-300)
+            cov_matrix = cov_matrix.reshape(D, D, K)
+
+            for k in range(K):
+                posterior["B"][:, :, k] = (
+                    posterior["kappa"][k] * N_k[k] * cov_matrix[:, :, k]
+                    + prior_B[:, :, k]
+                )
+                posterior["B"][:, :, k] = 0.5 * (
+                    posterior["B"][:, :, k] + posterior["B"][:, :, k].conj().T
+                )
+
+            for k in range(K):
+                if uniform_component and k == K - 1:
+                    posterior["kappa"][k] = 0.0
+                    continue
+
+                cov_k = cov_matrix[:, :, k].reshape(D, D, 1)
+                Bk = posterior["B"][:, :, k].reshape(D, D, 1)
+                quad_k = float(
+                    np.real(
+                        BayesianComplexWatsonMixtureModel.quadratic_expectation(
+                            cov_k, Bk
+                        )[0, 0]
+                    )
+                )
+                posterior["kappa"][k] = (
+                    ComplexWatsonDistribution._hypergeometric_ratio_inverse(
+                        quad_k, D, concentration_max=concentration_max
+                    )
+                )
+
+        return posterior
+
+    @staticmethod
+    def quadratic_expectation(dyadic_products, B):
+        """
+        Compute E_{z ~ cBingham(B_k)}[z^H * A * z] for each A in dyadic_products.
+
+        Approximation:
+        - Large eigenvalue regime (any eigenvalue > 1): use first-order moments of
+          the complex Bingham, computed by numerical differentiation.
+        - Otherwise: assume uniform (E[zz^H] = I/D).
+
+        Args:
+            dyadic_products: (D, D, N) complex array of D x D matrices A_n.
+            B: (D, D, K) complex Hermitian Bingham parameters, or (D, D) for K=1.
+
+        Returns:
+            ndarray of shape (N, K): real values E[z^H A_n z].
+        """
+        dyadic_products = np.asarray(dyadic_products, dtype=complex)
+        B = np.asarray(B, dtype=complex)
+
+        if B.ndim == 2:
+            B = B[:, :, np.newaxis]
+
+        D = B.shape[0]
+        N = dyadic_products.shape[2] if dyadic_products.ndim == 3 else 1
+        K = B.shape[2]
+
+        if dyadic_products.ndim == 2:
+            dyadic_products = dyadic_products[:, :, np.newaxis]
+
+        dp_reshaped = dyadic_products.reshape(D * D, N)
+        E = np.zeros((N, K))
+
+        for k in range(K):
+            Bk = 0.5 * (B[:, :, k] + B[:, :, k].conj().T)
+            eigenvalues, U = np.linalg.eigh(Bk)
+
+            idx = np.argsort(eigenvalues)[::-1]
+            Lambda = np.real(eigenvalues[idx])
+            U = U[:, idx]
+
+            if np.any(Lambda > 1.0):
+                Lambda_perturbed = Lambda + np.arange(1, D + 1) * 1e-2
+                Lambda_shifted = Lambda_perturbed - Lambda_perturbed.max()
+                c_diag = _complex_bingham_first_order_moments(Lambda_shifted, D)
+                cov_k = U @ np.diag(c_diag) @ U.conj().T
+            else:
+                cov_k = np.eye(D, dtype=complex) / D
+
+            cov_vec = cov_k.ravel(order="C")
+            E[:, k] = np.real(dp_reshaped.T @ cov_vec.conj())
+
+        return E
+
+
+# ---------------------------------------------------------------------------
+# Helpers: first-order moments and simplex integral
+# ---------------------------------------------------------------------------
+
+
+def _complex_bingham_first_order_moments(Lambda_shifted, D):
+    """
+    Compute E[|z_i|^2] for a diagonal complex Bingham with shifted eigenvalues.
+
+    Uses numerical differentiation of log(int_simplex exp(Lambda.s) ds).
+
+    Args:
+        Lambda_shifted: D-dim real array, shifted so max = 0.
+        D (int): Dimension.
+
+    Returns:
+        ndarray: D-dim non-negative real array normalised to sum 1.
+    """
+    Lambda = np.asarray(Lambda_shifted, dtype=float)
+    eps = 1e-5
+    log_F0 = np.log(max(_simplex_integral(Lambda), 1e-300))
+    moments = np.zeros(D)
+    for i in range(D):
+        L_plus = Lambda.copy()
+        L_plus[i] += eps
+        log_F_plus = np.log(max(_simplex_integral(L_plus), 1e-300))
+        moments[i] = (log_F_plus - log_F0) / eps
+
+    total = moments.sum()
+    if total > 1e-10:
+        moments /= total
+    else:
+        moments = np.ones(D) / D
+    return moments
+
+
+def _simplex_integral(Lambda):
+    """
+    Compute int_{standard simplex} exp(Lambda . s) ds.
+
+    Uses the partial-fractions / divided-differences formula:
+        I = sum_i exp(Lambda_i) / prod_{j!=i} (Lambda_i - Lambda_j)
+
+    Args:
+        Lambda: D-dim real array of eigenvalues.
+
+    Returns:
+        float: Integral value (always positive).
+    """
+    Lambda = np.asarray(Lambda, dtype=float).copy()
+    D = len(Lambda)
+
+    if D == 1:
+        return float(np.exp(Lambda[0]))
+
+    # Tiny perturbation to resolve exact degeneracy
+    Lambda = Lambda + np.arange(D) * 1e-10
+
+    result = 0.0
+    for i in range(D):
+        denom = 1.0
+        for j in range(D):
+            if j != i:
+                denom *= Lambda[i] - Lambda[j]
+        if abs(denom) > 1e-300:
+            result += np.exp(Lambda[i]) / denom
+    return float(result)

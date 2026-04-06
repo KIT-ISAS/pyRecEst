@@ -200,6 +200,10 @@ from .hypersphere_subset.spherical_harmonics_distribution_real import (
 )
 from .hypersphere_subset.von_mises_fisher_distribution import VonMisesFisherDistribution
 from .hypersphere_subset.watson_distribution import WatsonDistribution
+from .hypersphere_subset.bayesian_complex_watson_mixture_model import (
+    BayesianComplexWatsonMixtureModel,
+)
+from .hypersphere_subset.complex_watson_distribution import ComplexWatsonDistribution
 from .hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
 )
@@ -359,6 +363,8 @@ __all__ = aliases + [
     "SphericalHarmonicsDistributionReal",
     "VonMisesFisherDistribution",
     "WatsonDistribution",
+    "BayesianComplexWatsonMixtureModel",
+    "ComplexWatsonDistribution",
     "AbstractHypertoroidalDistribution",
     "AbstractToroidalBivarVMDistribution",
     "AbstractToroidalDistribution",
