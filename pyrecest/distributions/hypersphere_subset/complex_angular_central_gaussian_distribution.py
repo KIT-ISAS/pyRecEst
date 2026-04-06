@@ -141,9 +141,9 @@ class ComplexAngularCentralGaussianDistribution:
             C_inv_Z = linalg.solve(C, transpose(Z))
             # Hermitian quadratic forms: inner[k] = Z[k]^H C^{-1} Z[k]
             inner = sum(conj(transpose(Z)) * C_inv_Z, axis=0)  # shape (n,)
-            v = (D - 1) / abs(inner)  # shape (n,)
-            # C = (1/N) * sum_k v[k] * z_k z_k^H
-            # = Z.T @ diag(v) @ conj(Z) / N
-            C = transpose(Z) @ (v.reshape(-1, 1) * conj(Z)) / N
+            weights = (D - 1) / abs(inner)  # shape (n,)
+            # C = (1/N) * sum_k weights[k] * z_k z_k^H
+            # = Z.T @ diag(weights) @ conj(Z) / N
+            C = transpose(Z) @ (weights.reshape(-1, 1) * conj(Z)) / N
 
         return C
