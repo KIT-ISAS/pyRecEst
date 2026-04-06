@@ -233,7 +233,7 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
                 max_nfev=int(1e5),
             )
             kappa = np.append(result.x, 0.0)
-        except Exception:  # pylint: disable=broad-except
+        except (ValueError, RuntimeError, OverflowError):
             kappa = np.zeros(d)
 
         # Sort and construct B

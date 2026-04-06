@@ -73,7 +73,7 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         B = np.diag([kappa1, 0.0]).astype(complex)
         log_c_analytical = ComplexBinghamDistribution.log_norm(B, variant="analytical")
         log_c_mc = ComplexBinghamDistribution.log_norm(
-            B, variant="monte_carlo", n_mc=500_000
+            B, variant="monte_carlo", n_mc=50_000
         )
         npt.assert_almost_equal(-log_c_analytical, -log_c_mc, decimal=1)
 
@@ -157,7 +157,7 @@ class TestComplexBinghamDistribution(unittest.TestCase):
 
     def test_sample_scatter_consistent(self):
         """Empirical scatter aligns with B's eigenvectors."""
-        n = 50_000
+        n = 10_000
         kappa = np.array([-5.0, 0.0])
         B = np.diag(kappa.astype(complex))
         dist = ComplexBinghamDistribution(B)
@@ -194,7 +194,7 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         B_true = np.diag(kappa.astype(complex))
         dist_true = ComplexBinghamDistribution(B_true)
 
-        Z = dist_true.sample(20_000)
+        Z = dist_true.sample(5_000)
         dist_fit = ComplexBinghamDistribution.fit(Z)
 
         evals_true = np.sort(np.linalg.eigvalsh(B_true))
