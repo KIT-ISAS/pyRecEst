@@ -131,8 +131,8 @@ class ComplexBinghamDistribution:
 
             # Random phases
             theta = 2.0 * np.pi * np.random.uniform(size=d)
-            W = np.sqrt(S) * np.exp(1j * theta)
-            samples[:, k] = V @ W
+            weighted_phases = np.sqrt(S) * np.exp(1j * theta)
+            samples[:, k] = V @ weighted_phases
 
         return samples
 
@@ -202,10 +202,13 @@ class ComplexBinghamDistribution:
 
         # For each j compute sign_j * exp(log_term_j) where
         #   log_term_j = λ_j - Σ_{k≠j} log|λ_j - λ_k|
+        # diff_matrix[j, k] = eigenvalues[j] - eigenvalues[k] for j != k
+        diff_matrix = eigenvalues[:, np.newaxis] - eigenvalues[np.newaxis, :]
         log_terms = np.empty(d)
         signs = np.empty(d)
         for j in range(d):
-            diffs = eigenvalues[j] - np.delete(eigenvalues, j)
+            mask = np.arange(d) != j
+            diffs = diff_matrix[j, mask]
             signs[j] = np.prod(np.sign(diffs))
             log_terms[j] = eigenvalues[j] - np.sum(np.log(np.abs(diffs)))
 
@@ -272,7 +275,7 @@ class ComplexBinghamDistribution:
         d = S.shape[0]
         eigenvalues_S, V = eigh(S)  # ascending
 
-        def grad_log_C(lam):
+        def grad_log_c(lam):
             """Numerical gradient of log C via forward finite differences."""
             eps = 1e-6
             B_diag = np.diag(lam.astype(complex))
@@ -289,15 +292,15 @@ class ComplexBinghamDistribution:
             return grad
 
         # Initial guess: spread eigenvalues below zero
-        x0 = np.linspace(-(d - 1) * 10, -10, d - 1)
+        initial_eigenvalues = np.linspace(-(d - 1) * 10, -10, d - 1)
 
         def residuals(x):
             lam = np.append(x, 0.0)
-            return grad_log_C(lam) - eigenvalues_S
+            return grad_log_c(lam) - eigenvalues_S
 
         result = least_squares(
             residuals,
-            x0,
+            initial_eigenvalues,
             method="lm",
             ftol=1e-15,
             xtol=1e-10,
