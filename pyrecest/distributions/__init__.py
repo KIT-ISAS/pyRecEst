@@ -74,6 +74,9 @@ from .cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
 from .cart_prod.se2_bingham_distribution import SE2BinghamDistribution
+from .complex_hypersphere.complex_bingham_distribution import (
+    ComplexBinghamDistribution,
+)
 from .cart_prod.state_space_subdivision_distribution import (
     StateSpaceSubdivisionDistribution,
 )
@@ -390,4 +393,5 @@ __all__ = aliases + [
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
     "SE2BinghamDistribution",
+    "ComplexBinghamDistribution",
 ]
