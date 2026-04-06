@@ -159,7 +159,8 @@ class ComplexWatsonDistribution:
             weights = np.asarray(weights, dtype=float).ravel()
             assert weights.shape[0] == N, "dimensions of Z and weights mismatch"
             assert weights.ndim == 1, "weights must be a 1-D vector"
-            # Weighted scatter, normalised so the unweighted result equals Z^H Z
+            # Weighted scatter: Σ_i w_i·z_i·z_i^H, normalised so uniform
+            # weights (w_i=1) reproduce the unweighted result Z^H Z.
             S = (Z * weights[:, None]).conj().T @ Z * (N / np.sum(weights))
 
         # Force Hermitian
@@ -172,7 +173,10 @@ class ComplexWatsonDistribution:
         eigvals = eigvals[idx].real
         eigvecs = eigvecs[:, idx]
 
-        assert np.all(eigvals > 0), "All eigenvalues of scatter matrix must be positive"
+        assert np.all(eigvals > 0), (
+            "All eigenvalues of the scatter matrix must be positive; "
+            "this may indicate that fewer samples than features were provided."
+        )
 
         mu_hat = eigvecs[:, 0]
 
