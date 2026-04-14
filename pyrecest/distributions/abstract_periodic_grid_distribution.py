@@ -1,5 +1,5 @@
-from .abstract_bounded_grid_distribution import AbstractBoundedGridDistribution
+from .abstract_grid_distribution import AbstractGridDistribution
 
 
-class AbstractPeriodicGridDistribution(AbstractBoundedGridDistribution):
+class AbstractPeriodicGridDistribution(AbstractGridDistribution):
     """Class for grid distributions on periodic domains"""
