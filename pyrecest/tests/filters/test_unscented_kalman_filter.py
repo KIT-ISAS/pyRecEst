@@ -65,7 +65,7 @@ class UnscentedKalmanFilterTest(unittest.TestCase):
     def test_predict_linear_2d(self):
         kf = UnscentedKalmanFilter(
             GaussianDistribution(
-                array([0.0, 1.0]), diag(array(array([1.0, 2.0])))
+                array([0.0, 1.0]), diag(array([1.0, 2.0]))
             )
         )
         kf.predict_linear(diag(array([1.0, 2.0])), diag(array([2.0, 1.0])))
