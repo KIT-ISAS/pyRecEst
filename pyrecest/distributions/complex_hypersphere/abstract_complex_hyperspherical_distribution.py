@@ -49,7 +49,7 @@ class AbstractComplexHypersphericalDistribution(AbstractManifoldSpecificDistribu
         return float(2 * np.pi**d / math.factorial(d - 1))
 
     @abstractmethod
-    def pdf(self, za):
+    def pdf(self, xs):
         """Probability density at the given point(s) on the complex unit sphere."""
 
     def mean(self):

@@ -80,7 +80,7 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
     # Sampling  (Kent, Constable & Er, 2004)
     # ------------------------------------------------------------------
 
-    def sample(self, n):
+    def sample(self, n):  # pylint: disable=too-many-locals
         """
         Draw n i.i.d. samples from the complex Bingham distribution.
 
