@@ -44,8 +44,12 @@ from pyrecest.backend import (
     zeros,
 )
 
+from .abstract_complex_hyperspherical_distribution import (
+    AbstractComplexHypersphericalDistribution,
+)
 
-class ComplexBinghamDistribution:
+
+class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
     """Complex Bingham distribution on the complex unit hypersphere.
 
     The distribution is defined on the complex unit sphere
@@ -59,8 +63,6 @@ class ComplexBinghamDistribution:
     ----------
     B : array, shape (d, d), dtype complex128
         Hermitian parameter matrix.
-    dim : int
-        Complex dimension d.
     log_norm_const : float
         Negative log normalization constant (i.e. -log C(B) where C(B) is
         the normalising constant), stored so that
@@ -78,7 +80,7 @@ class ComplexBinghamDistribution:
         B = asarray(B, dtype=complex128)
         assert allclose(B, conj(B).T, atol=1e-10), "B must be Hermitian"
         self.B = B
-        self.dim = B.shape[0]
+        super().__init__(B.shape[0])
         self.log_norm_const = ComplexBinghamDistribution.log_norm(B)
 
     # ------------------------------------------------------------------
@@ -126,7 +128,7 @@ class ComplexBinghamDistribution:
         array, shape (d, n), dtype complex128
             Sampled unit vectors (each column has unit norm).
         """
-        d = self.dim
+        d = self.complex_dim
         if d < 2:
             raise ValueError("Sampling requires d >= 2.")
 
@@ -319,7 +321,7 @@ class ComplexBinghamDistribution:
                 log_cp = ComplexBinghamDistribution.log_norm(
                     diag(array(lam_p, dtype=complex128))
                 )
-                # log_norm_const = -log C, so d(log C)/dλ_i = -d(log_norm_const)/dλ_i
+                # log_norm_const = -log C, so d(log C)/dlambda_i = -d(log_norm_const)/dlambda_i
                 grad[i] = (-log_cp - (-log_c0)) / eps
             return grad
 

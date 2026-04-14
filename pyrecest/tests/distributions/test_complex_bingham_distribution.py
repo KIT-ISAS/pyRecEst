@@ -48,8 +48,11 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         self.assertTrue(math.isfinite(self.cB3.log_norm_const))
 
     def test_dim(self):
-        self.assertEqual(self.cB2.dim, 2)
-        self.assertEqual(self.cB3.dim, 3)
+        self.assertEqual(self.cB2.complex_dim, 2)
+        self.assertEqual(self.cB3.complex_dim, 3)
+        # The real manifold dimension is 2*d - 1
+        self.assertEqual(self.cB2.dim, 3)
+        self.assertEqual(self.cB3.dim, 5)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
