@@ -1,12 +1,12 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-import numpy as np
-
 from pyrecest.backend import (
     abs,
     allclose,
     array,
+    complex128,
     conj,
     exp,
+    eye,
     gammaln,
     linalg,
     log,
@@ -134,7 +134,7 @@ class ComplexAngularCentralGaussianDistribution:
         """
         N = Z.shape[0]
         D = Z.shape[1]
-        C = array(np.eye(D, dtype=complex))
+        C = eye(D, dtype=complex128)
 
         for _ in range(n_iterations):
             # Solve C * X = Z.T to get C^{-1} * Z.T, shape (d, n)

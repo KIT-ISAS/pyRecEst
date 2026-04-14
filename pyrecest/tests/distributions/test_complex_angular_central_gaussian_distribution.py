@@ -1,11 +1,21 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import (
+    array,
+    complex128,
+    conj,
+    eye,
+    ones,
+    pi,
+    real,
+    sqrt,
+    sum,
+    trace,
+)
 from pyrecest.distributions import ComplexAngularCentralGaussianDistribution
 
 
@@ -13,15 +23,14 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Identity matrix case (uniform distribution on complex unit sphere)
-        self.C_identity_2d = array(np.eye(2, dtype=complex))
+        self.C_identity_2d = eye(2, dtype=complex128)
         self.dist_identity_2d = ComplexAngularCentralGaussianDistribution(
             self.C_identity_2d
         )
 
         # Non-trivial Hermitian positive definite matrix for 2D case
         # C = [[2, 1+1j], [1-1j, 3]]
-        C_vals = np.array([[2.0, 1.0 + 1.0j], [1.0 - 1.0j, 3.0]])
-        self.C_nontrivial_2d = array(C_vals)
+        self.C_nontrivial_2d = array([[2.0, 1.0 + 1.0j], [1.0 - 1.0j, 3.0]])
         self.dist_nontrivial_2d = ComplexAngularCentralGaussianDistribution(
             self.C_nontrivial_2d
         )
@@ -33,7 +42,7 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
 
     def test_constructor_non_hermitian_raises(self):
         """Test that constructor rejects a non-Hermitian matrix."""
-        C_bad = array(np.array([[1.0, 2.0 + 1.0j], [0.0, 1.0]]))
+        C_bad = array([[1.0 + 0j, 2.0 + 1.0j], [0.0 + 0j, 1.0 + 0j]])
         with self.assertRaises(AssertionError):
             ComplexAngularCentralGaussianDistribution(C_bad)
 
@@ -45,18 +54,19 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
         """For C=I, the pdf should be constant gamma(d)/(2*pi^d) on the unit sphere."""
         d = 2
         # Expected: gamma(2) / (2*pi^2) = 1 / (2*pi^2)
-        expected = 1.0 / (2.0 * np.pi**d)  # gamma(2)=1
+        expected = 1.0 / (2.0 * float(pi) ** d)  # gamma(2)=1
 
         # Test on several unit vectors
-        z1 = array(np.array([[1.0, 0.0]], dtype=complex))
-        z2 = array(np.array([[0.0, 1.0]], dtype=complex))
-        z3 = array((np.array([1.0, 1.0j]) / np.sqrt(2.0)).reshape(1, -1))
-        z4 = array((np.array([1.0 + 1.0j, 1.0 - 1.0j]) / 2.0).reshape(1, -1))
+        inv_sqrt2 = 1.0 / float(sqrt(array(2.0)))
+        z1 = array([[1.0 + 0j, 0.0 + 0j]])
+        z2 = array([[0.0 + 0j, 1.0 + 0j]])
+        z3 = array([[inv_sqrt2 + 0j, 1j * inv_sqrt2]])
+        z4 = array([[0.5 + 0.5j, 0.5 - 0.5j]])
 
         for z in [z1, z2, z3, z4]:
             p = self.dist_identity_2d.pdf(z)
             npt.assert_allclose(
-                float(np.real(np.array(p[0]))),
+                float(real(p[0])),
                 expected,
                 rtol=1e-6,
                 err_msg=f"PDF for identity C is not constant at {z}",
@@ -68,9 +78,10 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
     )  # pylint: disable=no-member
     def test_pdf_positive(self):
         """PDF values should be positive for any unit vector."""
-        z = array(np.array([[1.0 / np.sqrt(2.0), 1.0j / np.sqrt(2.0)]]))
+        inv_sqrt2 = 1.0 / float(sqrt(array(2.0)))
+        z = array([[inv_sqrt2 + 0j, 1j * inv_sqrt2]])
         p = self.dist_nontrivial_2d.pdf(z)
-        self.assertGreater(float(np.real(np.array(p[0]))), 0.0)
+        self.assertGreater(float(real(p[0])), 0.0)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -78,22 +89,24 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
     )  # pylint: disable=no-member
     def test_pdf_batch_vs_single(self):
         """Batch PDF evaluation should match individual evaluations."""
-        zs = np.array(
-            [
-                [1.0, 0.0],
-                [0.0, 1.0],
-                [1.0 / np.sqrt(2.0), 1.0j / np.sqrt(2.0)],
-            ],
-            dtype=complex,
-        )
-        za = array(zs)
+        inv_sqrt2 = 1.0 / float(sqrt(array(2.0)))
+        z_list = [
+            array([[1.0 + 0j, 0.0 + 0j]]),
+            array([[0.0 + 0j, 1.0 + 0j]]),
+            array([[inv_sqrt2 + 0j, 1j * inv_sqrt2]]),
+        ]
+        za = array([
+            [1.0 + 0j, 0.0 + 0j],
+            [0.0 + 0j, 1.0 + 0j],
+            [inv_sqrt2 + 0j, 1j * inv_sqrt2],
+        ])
 
         p_batch = self.dist_nontrivial_2d.pdf(za)
-        for i, z in enumerate(zs):
-            p_single = self.dist_nontrivial_2d.pdf(array(z.reshape(1, -1)))
+        for i, z in enumerate(z_list):
+            p_single = self.dist_nontrivial_2d.pdf(z)
             npt.assert_allclose(
-                float(np.real(np.array(p_batch[i]))),
-                float(np.real(np.array(p_single[0]))),
+                float(real(p_batch[i])),
+                float(real(p_single[0])),
                 rtol=1e-10,
             )
 
@@ -105,11 +118,8 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
         """Sampled vectors should lie on the complex unit sphere."""
         n = 100
         Z = self.dist_nontrivial_2d.sample(n)
-        Z_np = np.array(Z)
-        norms_sq = np.array(
-            [np.real(np.sum(Z_np[k] * np.conj(Z_np[k]))) for k in range(n)]
-        )
-        npt.assert_allclose(norms_sq, np.ones(n), atol=1e-10)
+        norms_sq = array([float(real(sum(Z[k] * conj(Z[k])))) for k in range(n)])
+        npt.assert_allclose(norms_sq, ones(n), atol=1e-10)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -135,11 +145,10 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
             Z, n_iterations=100
         )
         # Normalize C_est to have trace equal to 2 (matching identity)
-        C_est_np = np.array(C_est)
-        C_est_normalized = C_est_np / np.trace(C_est_np).real * 2.0
+        C_est_normalized = C_est / real(trace(C_est)) * 2.0
         npt.assert_allclose(
-            np.real(C_est_normalized),
-            np.eye(2),
+            real(C_est_normalized),
+            eye(2),
             atol=0.15,
             err_msg="Estimated C does not approximately match identity",
         )
@@ -162,25 +171,21 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
     )  # pylint: disable=no-member
     def test_3d_case(self):
         """Test basic functionality for d=3."""
-        C_3d = array(np.eye(3, dtype=complex))
-        dist = ComplexAngularCentralGaussianDistribution(C_3d)
+        dist = ComplexAngularCentralGaussianDistribution(eye(3, dtype=complex128))
         self.assertEqual(dist.dim, 3)
 
         Z = dist.sample(20)
         self.assertEqual(Z.shape, (20, 3))
 
         # Check unit norms
-        Z_np = np.array(Z)
-        norms_sq = np.array(
-            [np.real(np.sum(Z_np[k] * np.conj(Z_np[k]))) for k in range(20)]
-        )
-        npt.assert_allclose(norms_sq, np.ones(20), atol=1e-10)
+        norms_sq = array([float(real(sum(Z[k] * conj(Z[k])))) for k in range(20)])
+        npt.assert_allclose(norms_sq, ones(20), atol=1e-10)
 
         # For d=3, C=I: pdf should be gamma(3)/(2*pi^3) = 2/(2*pi^3) = 1/pi^3
-        z_test = array(np.array([[1.0, 0.0, 0.0]], dtype=complex))
+        z_test = array([[1.0 + 0j, 0.0 + 0j, 0.0 + 0j]])
         p = dist.pdf(z_test)
-        expected = 1.0 / np.pi**3  # gamma(3)=2, so 2/(2*pi^3)=1/pi^3
-        npt.assert_allclose(float(np.real(np.array(p[0]))), expected, rtol=1e-6)
+        expected = 1.0 / float(pi) ** 3  # gamma(3)=2, so 2/(2*pi^3)=1/pi^3
+        npt.assert_allclose(float(real(p[0])), expected, rtol=1e-6)
 
 
 if __name__ == "__main__":
