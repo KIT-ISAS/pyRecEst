@@ -72,7 +72,7 @@ class ComplexWatsonDistribution:
 
         Returns:
             complex array of shape (n, D)
-        """
+        """  # pylint: disable=too-many-locals
         D = self.dim
 
         # Compute B = -kappa * (I - mu * mu^H)
@@ -238,7 +238,7 @@ class ComplexWatsonDistribution:
 
         Returns:
             log(C_D(kappa)); same shape as kappa (scalar if scalar input)
-        """
+        """  # pylint: disable=too-many-locals
         scalar_input = np.isscalar(kappa)
         kappa_arr = np.atleast_1d(np.asarray(kappa, dtype=float)).ravel()
         log_c = np.zeros_like(kappa_arr)
