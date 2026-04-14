@@ -142,7 +142,7 @@ class BayesianComplexWatsonMixtureModel:
         return parameters
 
     @staticmethod
-    def estimate_posterior(Z, parameters):
+    def estimate_posterior(Z, parameters):  # pylint: disable=too-many-locals,too-many-statements
         """
         Run the variational EM algorithm to estimate posterior parameters.
 
@@ -267,7 +267,7 @@ class BayesianComplexWatsonMixtureModel:
                     )
                 )
                 posterior["kappa"][k] = (
-                    ComplexWatsonDistribution._hypergeometric_ratio_inverse(
+                    ComplexWatsonDistribution.hypergeometric_ratio_inverse(
                         quad_k, D, concentration_max=concentration_max
                     )
                 )
@@ -275,7 +275,7 @@ class BayesianComplexWatsonMixtureModel:
         return posterior
 
     @staticmethod
-    def quadratic_expectation(dyadic_products, B):
+    def quadratic_expectation(dyadic_products, B):  # pylint: disable=too-many-locals
         """
         Compute E_{z ~ cBingham(B_k)}[z^H * A * z] for each A in dyadic_products.
 

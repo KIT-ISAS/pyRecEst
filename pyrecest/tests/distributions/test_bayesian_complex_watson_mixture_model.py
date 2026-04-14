@@ -58,7 +58,6 @@ class TestQuadraticExpectation(unittest.TestCase):
         """E[z^H I z] = E[|z|^2] = 1 by definition."""
         D = 3
         K = 2
-        rng = np.random.default_rng(7)
         B = np.zeros((D, D, K), dtype=complex)
         I_3d = np.eye(D, dtype=complex)[:, :, np.newaxis]
         E = BayesianComplexWatsonMixtureModel.quadratic_expectation(I_3d, B)
@@ -127,7 +126,7 @@ class TestFitDefault(unittest.TestCase):
         rng = np.random.default_rng(42)
         D, K, N = 3, 2, 50
         Z = _make_unit_vectors(D, N, rng)
-        model, posterior = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
+        model, _ = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
         self.assertIsInstance(model, BayesianComplexWatsonMixtureModel)
         self.assertEqual(model.K, K)
         self.assertEqual(model.dim, D)
@@ -177,7 +176,6 @@ class TestFitDefault(unittest.TestCase):
 
     def test_fit_two_cluster_recovery(self):
         """Fit on data from two distinct clusters should assign high weight to each."""
-        rng = np.random.default_rng(99)
         D = 3
         # Two orthogonal modes
         mu1 = np.array([1.0, 0.0, 0.0], dtype=complex)

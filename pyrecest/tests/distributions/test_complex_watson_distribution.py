@@ -102,8 +102,8 @@ class TestComplexWatsonDistribution(unittest.TestCase):
 
     def test_hypergeometric_ratio_bounds(self):
         D = 4
-        r0 = ComplexWatsonDistribution._hypergeometric_ratio(0.0, D)
-        r_large = ComplexWatsonDistribution._hypergeometric_ratio(1000.0, D)
+        r0 = ComplexWatsonDistribution.hypergeometric_ratio(0.0, D)
+        r_large = ComplexWatsonDistribution.hypergeometric_ratio(1000.0, D)
         self.assertAlmostEqual(r0, 1.0 / D, places=5)
         self.assertGreater(r_large, 0.99)
         self.assertLessEqual(r_large, 1.0)
@@ -111,8 +111,8 @@ class TestComplexWatsonDistribution(unittest.TestCase):
     def test_hypergeometric_ratio_inverse(self):
         D = 3
         for kappa in [0.5, 5.0, 50.0]:
-            r = ComplexWatsonDistribution._hypergeometric_ratio(kappa, D)
-            kappa_hat = ComplexWatsonDistribution._hypergeometric_ratio_inverse(r, D)
+            r = ComplexWatsonDistribution.hypergeometric_ratio(kappa, D)
+            kappa_hat = ComplexWatsonDistribution.hypergeometric_ratio_inverse(r, D)
             self.assertAlmostEqual(kappa_hat, kappa, places=3)
 
     def test_sample_on_unit_sphere(self):

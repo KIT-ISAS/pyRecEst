@@ -12,7 +12,7 @@ import math
 
 import numpy as np
 from scipy.optimize import brentq
-from scipy.special import gammaln, hyp1f1
+from scipy.special import gammaln  # pylint: disable=no-name-in-module
 
 
 class ComplexWatsonDistribution:
@@ -47,7 +47,7 @@ class ComplexWatsonDistribution:
         self._log_c = ComplexWatsonDistribution.log_norm(self.dim, self.kappa)
 
     @staticmethod
-    def log_norm(D, kappa):
+    def log_norm(D, kappa):  # pylint: disable=too-many-locals
         """
         Compute the log normalization constant for the complex Watson distribution.
 
@@ -204,7 +204,7 @@ class ComplexWatsonDistribution:
         # High-concentration approximation (Mardia & Dryden 1999)
         kappa_approx = N * (D - 1) / max(N - lambda_max, 1e-300)
         if kappa_approx < 200:
-            kappa_hat = ComplexWatsonDistribution._hypergeometric_ratio_inverse(
+            kappa_hat = ComplexWatsonDistribution.hypergeometric_ratio_inverse(
                 normed_lambda, D, concentration_max=1000
             )
         else:
@@ -213,7 +213,7 @@ class ComplexWatsonDistribution:
         return mu_hat, kappa_hat
 
     @staticmethod
-    def _hypergeometric_ratio(kappa, D):
+    def hypergeometric_ratio(kappa, D):
         """
         Compute E[|mu^H z|^2] = d(log C)/d(kappa) for the complex Watson distribution.
 
@@ -241,9 +241,9 @@ class ComplexWatsonDistribution:
         return -(log_c_plus - log_c_minus) / (2.0 * eps)
 
     @staticmethod
-    def _hypergeometric_ratio_inverse(r, D, concentration_max=500):
+    def hypergeometric_ratio_inverse(r, D, concentration_max=500):
         """
-        Find kappa such that _hypergeometric_ratio(kappa, D) == r.
+        Find kappa such that hypergeometric_ratio(kappa, D) == r.
 
         Args:
             r (float): Target ratio, should be in (1/D, 1).
@@ -261,7 +261,7 @@ class ComplexWatsonDistribution:
             return float(concentration_max)
 
         def objective(k):
-            return ComplexWatsonDistribution._hypergeometric_ratio(k, D) - r
+            return ComplexWatsonDistribution.hypergeometric_ratio(k, D) - r
 
         return brentq(objective, 0.0, float(concentration_max), xtol=1e-8)
 
