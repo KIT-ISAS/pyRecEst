@@ -6,14 +6,14 @@ from .abstract_grid_filter import AbstractGridFilter
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .abstract_nearest_neighbor_tracker import AbstractNearestNeighborTracker
 from .abstract_particle_filter import AbstractParticleFilter
-from .bingham_filter import BinghamFilter
-from .circular_ukf import CircularUKF
 from .abstract_tracker_with_logging import AbstractTrackerWithLogging
+from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
+from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
-from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .global_nearest_neighbor import GlobalNearestNeighbor
 from .gprhm_tracker import GPRHMTracker
+from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .hyperhemisphere_cart_prod_particle_filter import (
     HyperhemisphereCartProdParticleFilter,
 )
@@ -41,10 +41,11 @@ from .manifold_mixins import (
     SE2FilterMixin,
     ToroidalFilterMixin,
 )
+from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
-from .piecewise_constant_filter import PiecewiseConstantFilter
+from .unscented_kalman_filter import UnscentedKalmanFilter
 from .von_mises_filter import VonMisesFilter
 from .von_mises_fisher_filter import VonMisesFisherFilter
 from .wrapped_normal_filter import WrappedNormalFilter
