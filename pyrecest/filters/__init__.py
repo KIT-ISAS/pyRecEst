@@ -20,6 +20,7 @@ from .hyperhemisphere_cart_prod_particle_filter import (
 from .hyperhemispherical_particle_filter import HyperhemisphericalParticleFilter
 from .hyperspherical_dummy_filter import HypersphericalDummyFilter
 from .hyperspherical_particle_filter import HypersphericalParticleFilter
+from .hypertoroidal_fourier_filter import HypertoroidalFourierFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .kalman_filter import KalmanFilter
 from .unscented_kalman_filter import UnscentedKalmanFilter
@@ -76,6 +77,7 @@ __all__ = [
     "HypersphericalFilterMixin",
     "HypersphericalParticleFilter",
     "HypertoroidalFilterMixin",
+    "HypertoroidalFourierFilter",
     "AbstractParticleFilter",
     "HypercylindricalParticleFilter",
     "HypertoroidalParticleFilter",
