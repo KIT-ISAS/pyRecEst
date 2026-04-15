@@ -81,7 +81,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
     def test_mode_shape(self):
         """Mode should be a 4-element array."""
         m = self.dist.mode()
-        self.assertEqual(array(m).shape, (4,))
+        self.assertEqual(m.shape, (4,))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -96,19 +96,19 @@ class TestSE2BinghamDistribution(unittest.TestCase):
 
         # Convert mode DQ → angle-pos
         angle_arr, pos_arr = AbstractSE2Distribution.dual_quaternion_to_angle_pos(m_dq)
-        angle0 = float(array(angle_arr).ravel()[0])
-        pos0 = array(pos_arr).ravel()
+        angle0 = float(angle_arr.reshape(-1)[0])
+        pos0 = pos_arr.reshape(-1)
 
-        p_mode = float(array(self.dist.pdf(m_dq)).ravel()[0])
+        p_mode = float(self.dist.pdf(m_dq).reshape(-1)[0])
 
         rng = random.default_rng(42)
         for _ in range(20):
             # Perturb angle and position (stays on S^1 x R^2 manifold)
             angle_p = angle0 + rng.normal(0, 0.15)
-            pos_p = pos0 + rng.normal(0, 0.15, size=2)
-            ap = array(array([[angle_p, pos_p[0], pos_p[1]]]))
+            pos_p = [float(pos0[0]) + rng.normal(0, 0.15), float(pos0[1]) + rng.normal(0, 0.15)]
+            ap = array([[angle_p, pos_p[0], pos_p[1]]])
             dq_p = AbstractSE2Distribution.angle_pos_to_dual_quaternion(ap)
-            p_perturbed = float(array(self.dist.pdf(dq_p)).ravel()[0])
+            p_perturbed = float(self.dist.pdf(dq_p).reshape(-1)[0])
             self.assertGreaterEqual(p_mode, p_perturbed - 1e-6)
 
     @unittest.skipIf(
@@ -119,7 +119,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
         """sample() must return an (n, 4) array."""
         n = 50
         s = self.dist.sample(n)
-        self.assertEqual(array(s).shape, (n, 4))
+        self.assertEqual(s.shape, (n, 4))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",

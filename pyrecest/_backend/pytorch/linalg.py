@@ -13,6 +13,7 @@ from torch.linalg import (
     matrix_power,
     qr,
     solve,
+    pinv,  # For PyRecEst
 )
 from torch.linalg import matrix_exp as expm
 from torch import block_diag  # For PyRecEst
