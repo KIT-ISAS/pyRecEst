@@ -155,6 +155,9 @@ from .hypersphere_subset.abstract_spherical_harmonics_distribution import (
     AbstractSphericalHarmonicsDistribution,
 )
 from .hypersphere_subset.bingham_distribution import BinghamDistribution
+from .hypersphere_subset.complex_angular_central_gaussian_distribution import (
+    ComplexAngularCentralGaussianDistribution,
+)
 from .hypersphere_subset.custom_hemispherical_distribution import (
     CustomHemisphericalDistribution,
 )
@@ -345,6 +348,7 @@ __all__ = aliases + [
     "AbstractSphericalDistribution",
     "AbstractSphericalHarmonicsDistribution",
     "BinghamDistribution",
+    "ComplexAngularCentralGaussianDistribution",
     "CustomHemisphericalDistribution",
     "CustomHyperhemisphericalDistribution",
     "CustomHypersphericalDistribution",
