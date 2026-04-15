@@ -120,7 +120,7 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
             array([1.0] * self.n, dtype=float)
         )
         # Likelihood peaked near x=1.0
-        def likelihood(meas, x):
+        def likelihood(_, x):
             return float(wn.pdf(array([x])))
 
         self.f.update_likelihood(likelihood, 0.0)
