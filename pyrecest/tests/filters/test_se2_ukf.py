@@ -5,7 +5,7 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, cos, eye, linalg, pi, sin
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.se2_ukf import SE2UKF, _dual_quaternion_multiply
 
@@ -13,57 +13,43 @@ from pyrecest.filters.se2_ukf import SE2UKF, _dual_quaternion_multiply
 def _make_identity_state(scale=0.1):
     """Return a GaussianDistribution centred at the SE(2) identity."""
     mu = array([1.0, 0.0, 0.0, 0.0])
-    C = array(
-        [
-            [scale, 0.0, 0.0, 0.0],
-            [0.0, scale, 0.0, 0.0],
-            [0.0, 0.0, scale, 0.0],
-            [0.0, 0.0, 0.0, scale],
-        ]
-    )
+    C = eye(4) * scale
     return GaussianDistribution(mu, C)
 
 
 def _make_noise(scale=0.01):
     """Return a small-noise GaussianDistribution at the SE(2) identity."""
     mu = array([1.0, 0.0, 0.0, 0.0])
-    C = array(
-        [
-            [scale, 0.0, 0.0, 0.0],
-            [0.0, scale, 0.0, 0.0],
-            [0.0, 0.0, scale, 0.0],
-            [0.0, 0.0, 0.0, scale],
-        ]
-    )
+    C = eye(4) * scale
     return GaussianDistribution(mu, C)
 
 
 class TestDualQuaternionMultiply(unittest.TestCase):
     def test_identity_left(self):
         """Multiplying by the identity from the left leaves dq unchanged."""
-        identity = np.array([1.0, 0.0, 0.0, 0.0])
-        dq = np.array([0.7071, 0.7071, 0.3, -0.1])
+        identity = array([1.0, 0.0, 0.0, 0.0])
+        dq = array([0.7071, 0.7071, 0.3, -0.1])
         result = _dual_quaternion_multiply(identity, dq)
-        npt.assert_allclose(result, dq, atol=1e-10)
+        npt.assert_allclose(np.array(result), np.array(dq), atol=1e-10)
 
     def test_identity_right(self):
         """Multiplying by the identity from the right leaves dq unchanged."""
-        identity = np.array([1.0, 0.0, 0.0, 0.0])
-        dq = np.array([0.7071, 0.7071, 0.3, -0.1])
+        identity = array([1.0, 0.0, 0.0, 0.0])
+        dq = array([0.7071, 0.7071, 0.3, -0.1])
         result = _dual_quaternion_multiply(dq, identity)
-        npt.assert_allclose(result, dq, atol=1e-10)
+        npt.assert_allclose(np.array(result), np.array(dq), atol=1e-10)
 
     def test_rotation_composition(self):
         """Composing two 90-degree rotations gives a 180-degree rotation."""
-        theta = np.pi / 2
-        dq_90 = np.array([np.cos(theta / 2), np.sin(theta / 2), 0.0, 0.0])
+        theta = pi / 2
+        dq_90 = array([cos(theta / 2), sin(theta / 2), 0.0, 0.0])
         result = _dual_quaternion_multiply(dq_90, dq_90)
-        expected = np.array([np.cos(np.pi / 2), np.sin(np.pi / 2), 0.0, 0.0])
-        npt.assert_allclose(result, expected, atol=1e-10)
+        expected = array([cos(pi / 2), sin(pi / 2), 0.0, 0.0])
+        npt.assert_allclose(np.array(result), np.array(expected), atol=1e-10)
 
     def test_result_shape(self):
-        dq1 = np.array([1.0, 0.0, 0.0, 0.0])
-        dq2 = np.array([0.0, 1.0, 0.0, 0.0])
+        dq1 = array([1.0, 0.0, 0.0, 0.0])
+        dq2 = array([0.0, 1.0, 0.0, 0.0])
         result = _dual_quaternion_multiply(dq1, dq2)
         self.assertEqual(result.shape, (4,))
 
@@ -97,7 +83,7 @@ class TestSE2UKF(unittest.TestCase):
     )
     def test_set_state_unnormalised_raises(self):
         mu = array([1.0, 1.0, 0.0, 0.0])  # not unit-norm in first 2 entries
-        C = array(np.eye(4, dtype=float) * 0.1)
+        C = eye(4) * 0.1
         with self.assertRaises(AssertionError):
             self.filter.filter_state = GaussianDistribution(mu, C)
 
@@ -160,7 +146,7 @@ class TestSE2UKF(unittest.TestCase):
     )
     def test_update_identity_returns_gaussian(self):
         self.filter.filter_state = _make_identity_state()
-        z = np.array([1.0, 0.0, 0.0, 0.0])
+        z = array([1.0, 0.0, 0.0, 0.0])
         self.filter.update_identity(_make_noise(), z)
         self.assertIsInstance(self.filter.filter_state, GaussianDistribution)
 
@@ -171,9 +157,10 @@ class TestSE2UKF(unittest.TestCase):
     def test_update_identity_mean_normalised(self):
         """After update the rotation part of the mean must stay normalised."""
         self.filter.filter_state = _make_identity_state()
-        z = np.array([1.0, 0.0, 0.5, -0.3])
-        z[0:2] /= np.linalg.norm(z[0:2])
-        self.filter.update_identity(_make_noise(), z)
+        z = array([1.0, 0.0, 0.5, -0.3])
+        z_np = np.array(z)
+        z_np[0:2] /= np.linalg.norm(z_np[0:2])
+        self.filter.update_identity(_make_noise(), z_np)
         mu = np.array(self.filter.filter_state.mu)
         npt.assert_allclose(np.linalg.norm(mu[0:2]), 1.0, atol=1e-10)
 
