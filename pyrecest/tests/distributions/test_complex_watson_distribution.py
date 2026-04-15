@@ -1,5 +1,7 @@
 import unittest
 
+import pyrecest.backend
+
 import numpy as np
 import numpy.testing as npt
 
@@ -44,17 +46,29 @@ class TestComplexWatsonDistribution(unittest.TestCase):
     # ------------------------------------------------------------------
     # log_norm
     # ------------------------------------------------------------------
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_log_norm_scalar(self):
         lc = ComplexWatsonDistribution.log_norm(2, 2.0)
         self.assertTrue(np.isfinite(lc))
         self.assertIsInstance(lc, float)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_log_norm_array(self):
         kappas = np.array([0.0, 0.1, 1.0, 10.0, 200.0])
         lcs = ComplexWatsonDistribution.log_norm(3, kappas)
         self.assertEqual(lcs.shape, kappas.shape)
         self.assertTrue(np.all(np.isfinite(lcs)))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_log_norm_consistency_across_regimes(self):
         D = 3
         kappa_border = 1.0 / D
@@ -70,6 +84,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
     # ------------------------------------------------------------------
     # pdf
     # ------------------------------------------------------------------
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_pdf_nonnegative(self):
         cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
         pts = np.array([[1.0, 0.0], [0.0, 1.0], [1j, 0.0]], dtype=complex)
@@ -77,6 +95,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         p = cw.pdf(pts)
         self.assertTrue(np.all(p >= 0.0))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_pdf_mode_is_maximum(self):
         cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
         p_mode = cw.pdf(self.mu2)
@@ -84,12 +106,20 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         p_other = cw.pdf(other)
         self.assertGreaterEqual(p_mode, p_other)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_pdf_antipodal_symmetry(self):
         cw = ComplexWatsonDistribution(self.mu3, self.kappa3)
         raw = np.array([1.0, -1j, 0.5], dtype=complex)
         z = raw / np.linalg.norm(raw)
         npt.assert_allclose(cw.pdf(z), cw.pdf(-z), rtol=1e-12)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_pdf_phase_invariance(self):
         cw = ComplexWatsonDistribution(self.mu3, self.kappa3)
         raw = np.array([1.0, 0.5, -0.5j], dtype=complex)
@@ -97,6 +127,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         phase = np.exp(1j * 0.7)
         npt.assert_allclose(cw.pdf(z), cw.pdf(phase * z), rtol=1e-12)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_pdf_single_point(self):
         cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
         p = cw.pdf(self.mu2)
@@ -105,12 +139,20 @@ class TestComplexWatsonDistribution(unittest.TestCase):
     # ------------------------------------------------------------------
     # sample
     # ------------------------------------------------------------------
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_sample_shape(self):
         cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
         np.random.seed(0)
         samples = cw.sample(50)
         self.assertEqual(samples.shape, (50, 2))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_sample_unit_norm(self):
         cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
         np.random.seed(42)
@@ -118,6 +160,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         norms = np.linalg.norm(samples, axis=1)
         npt.assert_allclose(norms, np.ones(200), atol=1e-10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_sample_3d_unit_norm(self):
         cw = ComplexWatsonDistribution(self.mu3, self.kappa3)
         np.random.seed(7)
@@ -133,6 +179,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
     # ------------------------------------------------------------------
     # estimate_parameters / fit
     # ------------------------------------------------------------------
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_estimate_parameters_recovers_mu(self):
         cw_true = ComplexWatsonDistribution(self.mu2, self.kappa2)
         np.random.seed(0)
@@ -141,6 +191,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         overlap = abs(np.vdot(mu_hat, self.mu2))
         self.assertGreater(overlap, 0.95)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_estimate_parameters_recovers_kappa(self):
         cw_true = ComplexWatsonDistribution(self.mu2, self.kappa2)
         np.random.seed(1)
@@ -148,6 +202,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         _, kappa_hat = ComplexWatsonDistribution.estimate_parameters(Z)
         self.assertAlmostEqual(kappa_hat, self.kappa2, delta=0.5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_fit_returns_distribution(self):
         cw_true = ComplexWatsonDistribution(self.mu2, self.kappa2)
         np.random.seed(2)
@@ -155,6 +213,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         cw_fit = ComplexWatsonDistribution.fit(Z)
         self.assertIsInstance(cw_fit, ComplexWatsonDistribution)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_fit_with_weights(self):
         cw_true = ComplexWatsonDistribution(self.mu2, self.kappa2)
         np.random.seed(3)

@@ -1,5 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 import mpmath
+import pyrecest.backend
 from scipy.optimize import brentq
 
 from pyrecest.backend import (
@@ -99,6 +100,9 @@ class ComplexWatsonDistribution:
         Returns:
             complex array of shape (n, D)
         """  # pylint: disable=too-many-locals
+        assert (
+            pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
+        ), "Not supported on JAX backend"
         D = self.dim
 
         # Compute B = -kappa * (I - mu * mu^H)
@@ -265,6 +269,9 @@ class ComplexWatsonDistribution:
         Returns:
             log(C_D(kappa)); same shape as kappa (scalar if scalar input)
         """  # pylint: disable=too-many-locals
+        assert (
+            pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
+        ), "Not supported on JAX backend"
         scalar_input = ndim(asarray(kappa)) == 0
         kappa_arr = atleast_1d(asarray(kappa, dtype=float)).ravel()
         log_c = zeros_like(kappa_arr)
