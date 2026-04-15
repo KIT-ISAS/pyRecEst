@@ -108,6 +108,9 @@ from .conditional.abstract_conditional_distribution import (
 )
 from .conditional.s2_cond_s2_grid_distribution import S2CondS2GridDistribution
 from .conditional.sd_cond_sd_grid_distribution import SdCondSdGridDistribution
+from .conditional.sd_half_cond_sd_half_grid_distribution import (
+    SdHalfCondSdHalfGridDistribution,
+)
 from .conditional.td_cond_td_grid_distribution import TdCondTdGridDistribution
 from .custom_hyperrectangular_distribution import CustomHyperrectangularDistribution
 from .disk_uniform_distribution import DiskUniformDistribution
@@ -333,6 +336,7 @@ __all__ = aliases + [
     "AbstractConditionalDistribution",
     "S2CondS2GridDistribution",
     "SdCondSdGridDistribution",
+    "SdHalfCondSdHalfGridDistribution",
     "TdCondTdGridDistribution",
     "CustomHyperrectangularDistribution",
     "DiskUniformDistribution",
