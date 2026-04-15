@@ -41,6 +41,7 @@ from .manifold_mixins import (
     ToroidalFilterMixin,
 )
 from .random_matrix_tracker import RandomMatrixTracker
+from .se2_ukf import SE2UKF
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .piecewise_constant_filter import PiecewiseConstantFilter
@@ -89,6 +90,7 @@ __all__ = [
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
     "SE2FilterMixin",
+    "SE2UKF",
     "ToroidalFilterMixin",
     "ToroidalParticleFilter",
     "ToroidalWrappedNormalFilter",
