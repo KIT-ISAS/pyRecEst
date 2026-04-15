@@ -50,6 +50,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         phi, theta = meshgrid(
             linspace(0.0, 2 * pi, 10),
             linspace(-pi / 2, pi / 2, 10),
+            indexing="ij"
         )
         phi = phi.ravel()
         theta = theta.ravel()
