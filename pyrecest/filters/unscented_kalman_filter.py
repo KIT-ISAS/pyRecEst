@@ -1,5 +1,4 @@
-# pylint: disable=no-name-in-module,no-member
-import numbers
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 from typing import Callable
 
 import pyrecest.backend
@@ -14,10 +13,11 @@ from .manifold_mixins import EuclideanFilterMixin
 
 
 class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
+    # pylint: disable=too-many-positional-arguments
     def __init__(
         self,
         initial_state: "GaussianDistribution | tuple",
-        dt: numbers.Real = 1,
+        dt: float = 1.0,
         fx: Callable = lambda x, dt: x,
         hx: Callable = lambda x: x,
         points=None,
