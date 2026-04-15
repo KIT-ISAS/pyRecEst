@@ -195,7 +195,8 @@ class TestSE2UKF(unittest.TestCase):
         reason="Not supported on JAX backend",
     )
     def test_predict_then_update_cycle(self):
-        """A full predict+update cycle should leave the state as a GaussianDistribution."""
+        """A full predict+update cycle should leave the state as a GaussianDistribution
+        with a normalised rotation part in the mean."""
         self.filter.filter_state = _make_identity_state()
         self.filter.predict_identity(_make_noise())
         z = array([1.0, 0.0, 0.1, -0.05])
@@ -203,6 +204,8 @@ class TestSE2UKF(unittest.TestCase):
         z_np[0:2] /= np.linalg.norm(z_np[0:2])
         self.filter.update_identity(_make_noise(), z_np)
         self.assertIsInstance(self.filter.filter_state, GaussianDistribution)
+        mu = np.array(self.filter.filter_state.mu)
+        npt.assert_allclose(np.linalg.norm(mu[0:2]), 1.0, atol=1e-10)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",

@@ -230,7 +230,8 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
             z = -z
 
         # --- Augmented state and covariance ---
-        x_aug = np.concatenate([mu, mu_meas])  # 8-D
+        # Concatenate state mean (4-D) and noise mean (4-D) into an 8-D augmented state.
+        x_aug = np.concatenate([mu, mu_meas])  # 8-D augmented state
         C_aug = np.block([[C, np.zeros((4, 4))], [np.zeros((4, 4)), C_meas]])  # 8×8
 
         # --- Augmented sigma points: [x_aug, x_aug ± L_aug[:,k]] for k=0..7 (17 pts) ---
@@ -265,8 +266,8 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         meas_dev = meas_samples - meas_mean[:, np.newaxis]  # 4×17
 
         # Cross-covariance: (aug_samples - x_aug) * meas_dev' / 17
-        # Because meas_dev sums to zero, using aug_samples directly is
-        # equivalent to using centred aug_samples.
+        # Because the column sum of meas_dev is zero (it is mean-centred),
+        # using aug_samples directly is equivalent to using centred aug_samples.
         cross = aug_samples @ meas_dev.T / 17.0  # 8×4 (P_XY)
         P_Y = meas_dev @ meas_dev.T / 17.0  # 4×4 (innovation covariance)
 
