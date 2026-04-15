@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 import pyrecest.backend
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
     array,
     complex128,
