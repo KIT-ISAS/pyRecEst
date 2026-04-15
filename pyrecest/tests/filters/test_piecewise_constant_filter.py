@@ -130,6 +130,10 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
         integral = float(sum(self.f.filter_state.w)) * (2.0 * float(pi) / n)
         npt.assert_allclose(integral, 1.0, rtol=1e-5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_get_point_estimate(self):
         """get_point_estimate should return the mean direction."""
         w = array([1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 4.0, 3.0, 2.0, 1.0])
