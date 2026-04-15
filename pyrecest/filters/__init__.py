@@ -23,6 +23,7 @@ from .hyperspherical_particle_filter import HypersphericalParticleFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .kalman_filter import KalmanFilter
 from .unscented_kalman_filter import UnscentedKalmanFilter
+from .ukf_on_manifolds import UKFOnManifolds
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
 from .lin_periodic_particle_filter import LinPeriodicParticleFilter
@@ -81,6 +82,7 @@ __all__ = [
     "HypertoroidalParticleFilter",
     "KalmanFilter",
     "UnscentedKalmanFilter",
+    "UKFOnManifolds",
     "KernelSMEFilter",
     "LinBoundedFilterMixin",
     "LinBoundedParticleFilter",
