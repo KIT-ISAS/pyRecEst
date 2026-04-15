@@ -20,11 +20,18 @@ from pyrecest.backend import (
     stack,
     vstack,
 )
-from pyrecest.distributions import (
-    AbstractSphericalDistribution,
+
+from ..distributions.hypersphere_subset.hyperhemispherical_uniform_distribution import (
     HyperhemisphericalUniformDistribution,
+)
+
+from ..distributions.hypersphere_subset.hyperspherical_uniform_distribution import (
     HypersphericalUniformDistribution,
 )
+from ..distributions.hypersphere_subset.abstract_spherical_distribution import (
+    AbstractSphericalDistribution,
+)
+
 
 from .abstract_sampler import AbstractSampler
 from .hypertoroidal_sampler import CircularUniformSampler
