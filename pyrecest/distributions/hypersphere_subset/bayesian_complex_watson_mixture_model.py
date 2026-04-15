@@ -1,3 +1,4 @@
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 """
 Bayesian Complex Watson Mixture Model.
 
@@ -12,8 +13,27 @@ Reference:
     https://github.com/libDirectional/libDirectional
 """
 
-import numpy as np
-from scipy.special import digamma
+from scipy.special import digamma  # pylint: disable=no-name-in-module
+
+from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
+    allclose,
+    any,
+    arange,
+    asarray,
+    diag,
+    exp,
+    eye,
+    full,
+    isnan,
+    linalg,
+    linspace,
+    log,
+    maximum,
+    ones,
+    real,
+    zeros,
+    argsort,
+)
 
 from .complex_watson_distribution import ComplexWatsonDistribution
 
@@ -49,16 +69,16 @@ class BayesianComplexWatsonMixtureModel:
             concentrations: (K,) array of concentration parameters.
             alpha: (K,) Dirichlet parameter vector.
         """
-        B = np.asarray(B, dtype=complex)
-        concentrations = np.asarray(concentrations, dtype=float).ravel()
-        alpha = np.asarray(alpha, dtype=float).ravel()
+        B = asarray(B, dtype=complex)
+        concentrations = asarray(concentrations, dtype=float).ravel()
+        alpha = asarray(alpha, dtype=float).ravel()
 
         K = alpha.shape[0]
         assert B.shape[2] == K, "B.shape[2] must equal len(alpha)"
         assert concentrations.shape[0] == K, "len(concentrations) must equal len(alpha)"
 
         for k in range(K):
-            assert np.allclose(
+            assert allclose(
                 B[:, :, k], B[:, :, k].conj().T, atol=1e-6
             ), f"B[:,:,{k}] must be Hermitian"
 
@@ -128,13 +148,13 @@ class BayesianComplexWatsonMixtureModel:
         """
         parameters = {}
         parameters["initial"] = {
-            "B": np.zeros((D, D, K), dtype=complex),
+            "B": zeros((D, D, K), dtype=complex),
             "kappa": 20.0,
-            "alpha": 1.0 / K + np.linspace(-0.14 / K, 0.14 / K, K),
+            "alpha": 1.0 / K + linspace(-0.14 / K, 0.14 / K, K),
         }
         parameters["prior"] = {
-            "B": np.zeros((D, D, K), dtype=complex),
-            "alpha": np.ones(K) / K,
+            "B": zeros((D, D, K), dtype=complex),
+            "alpha": ones(K) / K,
             "saliencies": 1.0,
         }
         parameters["I"] = 40
@@ -168,51 +188,51 @@ class BayesianComplexWatsonMixtureModel:
         assert "alpha" in parameters["prior"]
         assert "I" in parameters
 
-        Z = np.asarray(Z, dtype=complex)
+        Z = asarray(Z, dtype=complex)
         D, N = Z.shape
-        K = len(np.asarray(parameters["initial"]["alpha"]).ravel())
+        K = len(asarray(parameters["initial"]["alpha"]).ravel())
 
-        B_init = np.asarray(parameters["initial"]["B"], dtype=complex)
+        B_init = asarray(parameters["initial"]["B"], dtype=complex)
         for k in range(K):
-            assert np.allclose(
+            assert allclose(
                 B_init[:, :, k], B_init[:, :, k].conj().T, atol=1e-6
             ), "initial B must be Hermitian"
 
         kappa_init = parameters["initial"]["kappa"]
-        if np.ndim(kappa_init) == 0:
-            kappa_init_arr = np.full(K, float(kappa_init))
+        if asarray(kappa_init).ndim == 0:
+            kappa_init_arr = full(K, float(kappa_init))
         else:
-            kappa_init_arr = np.asarray(kappa_init, dtype=float).ravel().copy()
+            kappa_init_arr = asarray(kappa_init, dtype=float).ravel().copy()
 
         posterior = {
             "B": B_init.copy(),
-            "alpha": np.asarray(
+            "alpha": asarray(
                 parameters["initial"]["alpha"], dtype=float
             ).ravel().copy(),
             "kappa": kappa_init_arr,
-            "gamma": np.zeros((N, K)),
+            "gamma": zeros((N, K)),
         }
 
         # Precompute outer products Z[:, n] * conj(Z)[:, n] reshaped to (D*D, N)
         ZZ = (
-            Z[:, np.newaxis, :] * Z.conj()[np.newaxis, :, :]
+            Z[:, None, :] * Z.conj()[None, :, :]
         ).reshape(D * D, N)
 
         # Log saliencies shape (N, K)
         saliencies = parameters["prior"].get("saliencies", 1.0)
-        saliencies_arr = np.asarray(saliencies)
+        saliencies_arr = asarray(saliencies)
         if saliencies_arr.ndim == 0:
-            ln_saliencies = np.full((N, K), np.log(max(float(saliencies_arr), 1e-7)))
+            ln_saliencies = full((N, K), log(max(float(saliencies_arr), 1e-7)))
         else:
             saliencies_vec = saliencies_arr.ravel()
             assert len(saliencies_vec) == N
             ln_saliencies = (
-                np.log(np.maximum(saliencies_vec, 1e-7))[:, np.newaxis]
-                * np.ones((N, K))
+                log(maximum(saliencies_vec, 1e-7))[:, None]
+                * ones((N, K))
             )
 
-        prior_B = np.asarray(parameters["prior"]["B"], dtype=complex)
-        prior_alpha = np.asarray(parameters["prior"]["alpha"], dtype=float).ravel()
+        prior_B = asarray(parameters["prior"]["B"], dtype=complex)
+        prior_alpha = asarray(parameters["prior"]["alpha"], dtype=float).ravel()
         concentration_max = 500.0
 
         for _ in range(parameters["I"]):
@@ -222,17 +242,17 @@ class BayesianComplexWatsonMixtureModel:
             quad = BayesianComplexWatsonMixtureModel.quadratic_expectation(
                 ZZ.reshape(D, D, N), posterior["B"]
             )
-            log_gamma += posterior["kappa"][np.newaxis, :] * quad
+            log_gamma += posterior["kappa"][None, :] * quad
             log_gamma += ComplexWatsonDistribution.log_norm(D, posterior["kappa"])[
-                np.newaxis, :
+                None, :
             ]
-            log_gamma += digamma(posterior["alpha"])[np.newaxis, :]
+            log_gamma += digamma(posterior["alpha"])[None, :]
 
             log_gamma -= log_gamma.max(axis=1, keepdims=True)
-            gamma = np.exp(log_gamma)
+            gamma = exp(log_gamma)
             gamma /= gamma.sum(axis=1, keepdims=True)
 
-            assert not np.any(np.isnan(gamma)), "NaN in gamma during E-step"
+            assert not any(isnan(gamma)), "NaN in gamma during E-step"
             posterior["gamma"] = gamma
 
             # M-step
@@ -240,7 +260,7 @@ class BayesianComplexWatsonMixtureModel:
 
             posterior["alpha"] = prior_alpha + N_k
 
-            cov_matrix = (ZZ @ gamma) / np.maximum(N_k[np.newaxis, :], 1e-300)
+            cov_matrix = (ZZ @ gamma) / maximum(N_k[None, :], 1e-300)
             cov_matrix = cov_matrix.reshape(D, D, K)
 
             for k in range(K):
@@ -260,7 +280,7 @@ class BayesianComplexWatsonMixtureModel:
                 cov_k = cov_matrix[:, :, k].reshape(D, D, 1)
                 Bk = posterior["B"][:, :, k].reshape(D, D, 1)
                 quad_k = float(
-                    np.real(
+                    real(
                         BayesianComplexWatsonMixtureModel.quadratic_expectation(
                             cov_k, Bk
                         )[0, 0]
@@ -291,40 +311,40 @@ class BayesianComplexWatsonMixtureModel:
         Returns:
             ndarray of shape (N, K): real values E[z^H A_n z].
         """
-        dyadic_products = np.asarray(dyadic_products, dtype=complex)
-        B = np.asarray(B, dtype=complex)
+        dyadic_products = asarray(dyadic_products, dtype=complex)
+        B = asarray(B, dtype=complex)
 
         if B.ndim == 2:
-            B = B[:, :, np.newaxis]
+            B = B[:, :, None]
 
         D = B.shape[0]
         N = dyadic_products.shape[2] if dyadic_products.ndim == 3 else 1
         K = B.shape[2]
 
         if dyadic_products.ndim == 2:
-            dyadic_products = dyadic_products[:, :, np.newaxis]
+            dyadic_products = dyadic_products[:, :, None]
 
         dp_reshaped = dyadic_products.reshape(D * D, N)
-        E = np.zeros((N, K))
+        E = zeros((N, K))
 
         for k in range(K):
             Bk = 0.5 * (B[:, :, k] + B[:, :, k].conj().T)
-            eigenvalues, U = np.linalg.eigh(Bk)
+            eigenvalues, U = linalg.eigh(Bk)
 
-            idx = np.argsort(eigenvalues)[::-1]
-            Lambda = np.real(eigenvalues[idx])
+            idx = argsort(eigenvalues)[::-1]
+            Lambda = real(eigenvalues[idx])
             U = U[:, idx]
 
-            if np.any(Lambda > 1.0):
-                Lambda_perturbed = Lambda + np.arange(1, D + 1) * 1e-2
+            if any(Lambda > 1.0):
+                Lambda_perturbed = Lambda + arange(1, D + 1) * 1e-2
                 Lambda_shifted = Lambda_perturbed - Lambda_perturbed.max()
                 c_diag = _complex_bingham_first_order_moments(Lambda_shifted, D)
-                cov_k = U @ np.diag(c_diag) @ U.conj().T
+                cov_k = U @ diag(c_diag) @ U.conj().T
             else:
-                cov_k = np.eye(D, dtype=complex) / D
+                cov_k = eye(D, dtype=complex) / D
 
             cov_vec = cov_k.ravel(order="C")
-            E[:, k] = np.real(dp_reshaped.T @ cov_vec.conj())
+            E[:, k] = real(dp_reshaped.T @ cov_vec.conj())
 
         return E
 
@@ -347,21 +367,21 @@ def _complex_bingham_first_order_moments(Lambda_shifted, D):
     Returns:
         ndarray: D-dim non-negative real array normalised to sum 1.
     """
-    Lambda = np.asarray(Lambda_shifted, dtype=float)
+    Lambda = asarray(Lambda_shifted, dtype=float)
     eps = 1e-5
-    log_F0 = np.log(max(_simplex_integral(Lambda), 1e-300))
-    moments = np.zeros(D)
+    log_F0 = log(max(_simplex_integral(Lambda), 1e-300))
+    moments = zeros(D)
     for i in range(D):
         L_plus = Lambda.copy()
         L_plus[i] += eps
-        log_F_plus = np.log(max(_simplex_integral(L_plus), 1e-300))
+        log_F_plus = log(max(_simplex_integral(L_plus), 1e-300))
         moments[i] = (log_F_plus - log_F0) / eps
 
     total = moments.sum()
     if total > 1e-10:
         moments /= total
     else:
-        moments = np.ones(D) / D
+        moments = ones(D) / D
     return moments
 
 
@@ -378,14 +398,14 @@ def _simplex_integral(Lambda):
     Returns:
         float: Integral value (always positive).
     """
-    Lambda = np.asarray(Lambda, dtype=float).copy()
+    Lambda = asarray(Lambda, dtype=float).copy()
     D = len(Lambda)
 
     if D == 1:
-        return float(np.exp(Lambda[0]))
+        return float(exp(Lambda[0]))
 
     # Tiny perturbation to resolve exact degeneracy
-    Lambda = Lambda + np.arange(D) * 1e-10
+    Lambda = Lambda + arange(D) * 1e-10
 
     result = 0.0
     for i in range(D):
@@ -394,5 +414,5 @@ def _simplex_integral(Lambda):
             if j != i:
                 denom *= Lambda[i] - Lambda[j]
         if abs(denom) > 1e-300:
-            result += np.exp(Lambda[i]) / denom
+            result += float(exp(Lambda[i])) / denom
     return float(result)

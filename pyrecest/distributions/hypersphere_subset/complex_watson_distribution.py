@@ -1,3 +1,4 @@
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 """
 Complex Watson distribution on the complex unit sphere in C^D.
 
@@ -8,11 +9,33 @@ Reference:
     (Statistical Methodology), Blackwell Publishers Ltd., 1999, 61, 913-926.
 """
 
-import math
-
-import numpy as np
 from scipy.optimize import brentq
-from scipy.special import gammaln  # pylint: disable=no-name-in-module
+
+from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
+    abs,
+    any,
+    argmax,
+    argsort,
+    asarray,
+    atleast_1d,
+    conj,
+    exp,
+    eye,
+    gammaln,
+    linalg,
+    log,
+    maximum,
+    ones_like,
+    outer,
+    pi,
+    random,
+    real,
+    sqrt,
+    sum,
+    where,
+    zeros,
+    zeros_like,
+)
 
 
 class ComplexWatsonDistribution:
@@ -35,10 +58,10 @@ class ComplexWatsonDistribution:
             mu: D-dimensional complex unit vector (the mode direction).
             kappa (float): Concentration parameter (>= 0).
         """
-        mu = np.asarray(mu, dtype=complex)
+        mu = asarray(mu, dtype=complex)
         assert mu.ndim == 1, "mu must be a 1-D vector"
         assert (
-            abs(np.linalg.norm(mu) - 1.0) < self.EPSILON
+            abs(linalg.norm(mu) - 1.0) < self.EPSILON
         ), "mu must be normalized (|mu|=1)"
 
         self.mu = mu
@@ -66,41 +89,42 @@ class ComplexWatsonDistribution:
         Returns:
             float or ndarray: -log(C(D, kappa)), same shape as kappa.
         """
-        scalar_input = np.ndim(kappa) == 0
-        kappa = np.atleast_1d(np.asarray(kappa, dtype=float)).ravel()
-        log_c = np.zeros_like(kappa)
+        kappa_as_arr = asarray(kappa, dtype=float)
+        scalar_input = kappa_as_arr.ndim == 0
+        kappa = atleast_1d(kappa_as_arr).ravel()
+        log_c = zeros_like(kappa)
 
         # Asymptotic formula for high kappa
         # log C ~ log(2) + D*log(pi) + (1-D)*log(kappa) + kappa
         # log_c_high is evaluated for all kappa before masking; clip to avoid log(0) warning
         log_c_high = (
-            math.log(2) + D * math.log(math.pi)
-            + (1 - D) * np.log(np.maximum(kappa, 1e-300)) + kappa
+            log(2.0) + D * log(pi)
+            + (1 - D) * log(maximum(kappa, 1e-300)) + kappa
         )
 
         # Intermediate formula (Mardia1999 Eq. 3):
         # log C = log_c_high + log(1 - sum_{j=0}^{D-2} kappa^j * exp(-kappa) / j!)
-        running = np.exp(-kappa)
+        running = exp(-kappa)
         correction_sum = running.copy()
         for j in range(1, D - 1):
             running = running * kappa / j
             correction_sum = correction_sum + running
         if D >= 2:
-            log_c_medium = log_c_high + np.log(
-                np.maximum(1.0 - correction_sum, 1e-300)
+            log_c_medium = log_c_high + log(
+                maximum(1.0 - correction_sum, 1e-300)
             )
         else:
             log_c_medium = log_c_high
 
         # Taylor series for low kappa (Mardia1999 Eq. 4):
         # 1F1(1; D; kappa) = 1 + kappa/D + kappa^2/(D*(D+1)) + ...
-        running_prod = np.ones_like(kappa)
-        series_sum = np.ones_like(kappa)
+        running_prod = ones_like(kappa)
+        series_sum = ones_like(kappa)
         for j in range(10):
             running_prod = running_prod * kappa / (D + j)
             series_sum = series_sum + running_prod
         log_c_low = (
-            math.log(2) + D * math.log(math.pi) - gammaln(D) + np.log(series_sum)
+            log(2.0) + D * log(pi) - gammaln(D) + log(series_sum)
         )
 
         mask_low = kappa < 1.0 / D
@@ -127,12 +151,12 @@ class ComplexWatsonDistribution:
         Returns:
             ndarray: N-dimensional real array of PDF values.
         """
-        Z = np.asarray(Z, dtype=complex)
+        Z = asarray(Z, dtype=complex)
         if Z.ndim == 1:
             Z = Z.reshape(-1, 1)
         # |mu^H z|^2 for each column
-        inner = np.abs(self.mu.conj() @ Z) ** 2
-        return np.real(np.exp(self._log_c + self.kappa * inner))
+        inner = abs(conj(self.mu) @ Z) ** 2
+        return real(exp(self._log_c + self.kappa * inner))
 
     def sample(self, n):
         """
@@ -148,7 +172,7 @@ class ComplexWatsonDistribution:
             ndarray: D x n complex matrix of samples.
         """
         B = -self.kappa * (
-            np.eye(self.dim, dtype=complex) - np.outer(self.mu, self.mu.conj())
+            eye(self.dim, dtype=complex) - outer(self.mu, conj(self.mu))
         )
         B = 0.5 * (B + B.conj().T)
         return _sample_complex_bingham(B, n)
@@ -182,22 +206,22 @@ class ComplexWatsonDistribution:
         Returns:
             tuple: (mu_hat, kappa_hat) — complex unit mode vector and concentration.
         """
-        Z = np.asarray(Z, dtype=complex)
+        Z = asarray(Z, dtype=complex)
         D, N = Z.shape
 
         if weights is None:
-            S = Z @ Z.conj().T
+            S = Z @ conj(Z).T
         else:
-            weights = np.asarray(weights, dtype=float).ravel()
+            weights = asarray(weights, dtype=float).ravel()
             assert len(weights) == N, "weights length must match number of samples"
-            S = (Z * weights) @ Z.conj().T * N / np.sum(weights)
+            S = (Z * weights) @ conj(Z).T * N / sum(weights)
 
-        S = 0.5 * (S + S.conj().T)  # enforce Hermitian
+        S = 0.5 * (S + conj(S).T)  # enforce Hermitian
 
-        eigenvalues, eigenvectors = np.linalg.eigh(S)
-        idx = np.argmax(eigenvalues)
+        eigenvalues, eigenvectors = linalg.eigh(S)
+        idx = argmax(eigenvalues)
         mu_hat = eigenvectors[:, idx]
-        lambda_max = float(np.real(eigenvalues[idx]))
+        lambda_max = float(real(eigenvalues[idx]))
 
         normed_lambda = lambda_max / N
 
@@ -285,24 +309,24 @@ def _sample_complex_bingham(B, n):
     Returns:
         ndarray: D x n complex matrix of samples (each column is a unit vector).
     """
-    B = np.asarray(B, dtype=complex)
+    B = asarray(B, dtype=complex)
     D = B.shape[0]
-    B = 0.5 * (B + B.conj().T)
+    B = 0.5 * (B + conj(B).T)
 
     # Eigendecompose -B (so eigenvalues are non-negative in descending order)
-    eigenvalues, V = np.linalg.eigh(-B)
-    idx = np.argsort(eigenvalues)[::-1]
-    Lambda = np.real(eigenvalues[idx])
+    eigenvalues, V = linalg.eigh(-B)
+    idx = argsort(eigenvalues)[::-1]
+    Lambda = real(eigenvalues[idx])
     V = V[:, idx]
 
     # Shift so smallest eigenvalue is 0 (doesn't change the distribution)
     Lambda = Lambda - Lambda[-1]
 
-    Z = np.zeros((D, n), dtype=complex)
+    Z = zeros((D, n), dtype=complex)
     for i in range(n):
         s = _sample_diagonal_complex_bingham_magnitudes(Lambda, D)
-        theta = 2.0 * np.pi * np.random.rand(D)
-        w = np.sqrt(s) * np.exp(1j * theta)
+        theta = 2.0 * pi * random.uniform(size=(D,))
+        w = sqrt(s) * exp(1j * theta)
         Z[:, i] = V @ w
 
     return Z
@@ -325,20 +349,20 @@ def _sample_diagonal_complex_bingham_magnitudes(Lambda, D):
 
     # Precompute for the truncated exponential inverse CDF
     large = Lambda_pos >= 0.03
-    safe_lambda = np.where(large, Lambda_pos, 1.0)
-    temp1 = np.where(large, -1.0 / safe_lambda, 0.0)
-    temp2 = np.where(large, 1.0 - np.exp(-Lambda_pos), 0.0)
+    safe_lambda = where(large, Lambda_pos, 1.0)
+    temp1 = where(large, -1.0 / safe_lambda, 0.0)
+    temp2 = where(large, 1.0 - exp(-Lambda_pos), 0.0)
 
-    s = np.zeros(D)
+    s = zeros(D)
     while True:
-        U = np.random.rand(D - 1)
-        if np.any(large):
-            s[: D - 1][large] = temp1[large] * np.log(1.0 - U[large] * temp2[large])
-        if np.any(~large):
+        U = random.uniform(size=(D - 1,))
+        if any(large):
+            s[: D - 1][large] = temp1[large] * log(1.0 - U[large] * temp2[large])
+        if any(~large):
             s[: D - 1][~large] = U[~large]
 
-        if np.sum(s[: D - 1]) < 1.0:
+        if sum(s[: D - 1]) < 1.0:
             break
 
-    s[D - 1] = 1.0 - np.sum(s[: D - 1])
+    s[D - 1] = 1.0 - sum(s[: D - 1])
     return s

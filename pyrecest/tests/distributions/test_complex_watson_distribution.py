@@ -1,18 +1,20 @@
+import math
 import unittest
 
-import numpy as np
 import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.backend import abs, all, array, einsum, exp, linalg, ones, random, stack
 
 from pyrecest.distributions.hypersphere_subset.complex_watson_distribution import (
     ComplexWatsonDistribution,
 )
 
 
-def _random_unit_vector(D, rng=None):
+def _random_unit_vector(D):
     """Return a random unit vector in C^D."""
-    rng = rng or np.random.default_rng(42)
-    z = rng.standard_normal(D) + 1j * rng.standard_normal(D)
-    return z / np.linalg.norm(z)
+    z = random.normal(size=(D,)) + 1j * random.normal(size=(D,))
+    return z / linalg.norm(z)
 
 
 class TestComplexWatsonLogNorm(unittest.TestCase):
@@ -23,7 +25,7 @@ class TestComplexWatsonLogNorm(unittest.TestCase):
         self.assertIsInstance(val, float)
 
     def test_array_input(self):
-        kappas = np.array([0.1, 1.0, 10.0, 200.0])
+        kappas = array([0.1, 1.0, 10.0, 200.0])
         vals = ComplexWatsonDistribution.log_norm(3, kappas)
         self.assertEqual(vals.shape, (4,))
 
@@ -31,7 +33,7 @@ class TestComplexWatsonLogNorm(unittest.TestCase):
         # For low kappa, log C ~ log(2) + 2*log(pi) - log(Gamma(2)) + log(1) = log(2 pi^2)
         # so log_c = -log(2*pi^2)
         log_c = ComplexWatsonDistribution.log_norm(2, 1e-10)
-        expected = -np.log(2 * np.pi**2)
+        expected = -math.log(2 * math.pi**2)
         self.assertAlmostEqual(log_c, expected, places=5)
 
     def test_continuity_across_regimes(self):
@@ -52,11 +54,11 @@ class TestComplexWatsonDistribution(unittest.TestCase):
     """Tests for ComplexWatsonDistribution."""
 
     def setUp(self):
-        self.rng = np.random.default_rng(0)
+        random.seed(0)
 
     def _unit_mu(self, D):
-        z = self.rng.standard_normal(D) + 1j * self.rng.standard_normal(D)
-        return z / np.linalg.norm(z)
+        z = random.normal(size=(D,)) + 1j * random.normal(size=(D,))
+        return z / linalg.norm(z)
 
     def test_constructor(self):
         D = 3
@@ -70,25 +72,25 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         D = 3
         mu = self._unit_mu(D)
         dist = ComplexWatsonDistribution(mu, 5.0)
-        Z = np.stack([_random_unit_vector(D, self.rng) for _ in range(10)], axis=1)
+        Z = stack([_random_unit_vector(D) for _ in range(10)], axis=1)
         p = dist.pdf(Z)
-        self.assertTrue(np.all(p > 0))
+        self.assertTrue(all(p > 0))
 
     def test_pdf_mode_is_maximum(self):
         """The PDF at the mode (mu) should be >= the PDF at any other point."""
         D = 3
         mu = self._unit_mu(D)
         dist = ComplexWatsonDistribution(mu, 10.0)
-        Z = np.stack([_random_unit_vector(D, self.rng) for _ in range(50)], axis=1)
+        Z = stack([_random_unit_vector(D) for _ in range(50)], axis=1)
         p_mode = dist.pdf(mu.reshape(-1, 1))[0]
-        self.assertTrue(np.all(p_mode >= dist.pdf(Z) - 1e-10))
+        self.assertTrue(all(p_mode >= dist.pdf(Z) - 1e-10))
 
     def test_pdf_antipodal_symmetry(self):
         """The PDF should be the same at z and -z (|mu^H z|^2 = |mu^H (-z)|^2)."""
         D = 3
         mu = self._unit_mu(D)
         dist = ComplexWatsonDistribution(mu, 5.0)
-        z = _random_unit_vector(D, self.rng).reshape(-1, 1)
+        z = _random_unit_vector(D).reshape(-1, 1)
         npt.assert_allclose(dist.pdf(z), dist.pdf(-z), rtol=1e-10)
 
     def test_pdf_phase_invariance(self):
@@ -96,8 +98,8 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         D = 3
         mu = self._unit_mu(D)
         dist = ComplexWatsonDistribution(mu, 5.0)
-        z = _random_unit_vector(D, self.rng).reshape(-1, 1)
-        phase = np.exp(1j * 1.23)
+        z = _random_unit_vector(D).reshape(-1, 1)
+        phase = exp(1j * 1.23)
         npt.assert_allclose(dist.pdf(z), dist.pdf(phase * z), rtol=1e-10)
 
     def test_hypergeometric_ratio_bounds(self):
@@ -120,8 +122,8 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         mu = self._unit_mu(D)
         dist = ComplexWatsonDistribution(mu, 5.0)
         Z = dist.sample(200)
-        norms = np.abs(np.einsum("di,di->i", Z.conj(), Z))
-        npt.assert_allclose(norms, np.ones(200), atol=1e-10)
+        norms = abs(einsum("di,di->i", Z.conj(), Z))
+        npt.assert_allclose(norms, ones(200), atol=1e-10)
 
     def test_sample_concentrated_near_mode(self):
         """With high kappa, |mu^H z|^2 should be close to 1."""
@@ -129,7 +131,7 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         mu = self._unit_mu(D)
         dist = ComplexWatsonDistribution(mu, 200.0)
         Z = dist.sample(100)
-        inner_sq = np.abs(mu.conj() @ Z) ** 2
+        inner_sq = abs(mu.conj() @ Z) ** 2
         self.assertGreater(inner_sq.mean(), 0.9)
 
     def test_fit_recovers_parameters(self):
@@ -144,7 +146,6 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         ip = abs(dist_hat.mu.conj() @ mu)
         self.assertGreater(ip, 0.99)
         self.assertAlmostEqual(dist_hat.kappa, kappa, delta=2.0)
-
 
 
 if __name__ == "__main__":
