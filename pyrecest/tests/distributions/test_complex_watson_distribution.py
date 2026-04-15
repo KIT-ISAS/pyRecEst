@@ -53,9 +53,6 @@ class TestComplexWatsonLogNorm(unittest.TestCase):
 class TestComplexWatsonDistribution(unittest.TestCase):
     """Tests for ComplexWatsonDistribution."""
 
-    def setUp(self):
-        random.seed(0)
-
     def _unit_mu(self, D):
         z = random.normal(size=(D,)) + 1j * random.normal(size=(D,))
         return z / linalg.norm(z)

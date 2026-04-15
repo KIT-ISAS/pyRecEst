@@ -80,7 +80,6 @@ class TestQuadraticExpectation(unittest.TestCase):
         D = 4
         N = 10
         K = 3
-        random.seed(1)
         Z = _make_unit_vectors(D, N)
         dp = Z[:, None, :] * Z.conj()[None, :, :]
         dp = dp.reshape(D, D, N)
@@ -92,7 +91,6 @@ class TestQuadraticExpectation(unittest.TestCase):
         D = 3
         N = 5
         K = 2
-        random.seed(2)
         Z = _make_unit_vectors(D, N)
         dp = (Z[:, None, :] * Z.conj()[None, :, :]).reshape(D, D, N)
         B = zeros((D, D, K), dtype=complex)
@@ -136,7 +134,6 @@ class TestParametersDefault(unittest.TestCase):
 
 class TestFitDefault(unittest.TestCase):
     def test_fit_returns_model(self):
-        random.seed(42)
         D, K, N = 3, 2, 50
         Z = _make_unit_vectors(D, N)
         model, _ = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
@@ -145,7 +142,6 @@ class TestFitDefault(unittest.TestCase):
         self.assertEqual(model.dim, D)
 
     def test_posterior_keys(self):
-        random.seed(0)
         D, K, N = 3, 2, 30
         Z = _make_unit_vectors(D, N)
         _, posterior = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
@@ -153,7 +149,6 @@ class TestFitDefault(unittest.TestCase):
             self.assertIn(key, posterior)
 
     def test_gamma_sums_to_one(self):
-        random.seed(1)
         D, K, N = 3, 2, 40
         Z = _make_unit_vectors(D, N)
         _, posterior = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
@@ -161,21 +156,18 @@ class TestFitDefault(unittest.TestCase):
         npt.assert_allclose(gamma.sum(axis=1), ones(N), atol=1e-8)
 
     def test_alpha_positive(self):
-        random.seed(2)
         D, K, N = 3, 2, 40
         Z = _make_unit_vectors(D, N)
         _, posterior = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
         self.assertTrue(all(posterior["alpha"] > 0))
 
     def test_kappa_nonnegative(self):
-        random.seed(3)
         D, K, N = 3, 3, 60
         Z = _make_unit_vectors(D, N)
         _, posterior = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
         self.assertTrue(all(posterior["kappa"] >= 0))
 
     def test_B_hermitian_after_fit(self):
-        random.seed(4)
         D, K, N = 3, 2, 40
         Z = _make_unit_vectors(D, N)
         model, _ = BayesianComplexWatsonMixtureModel.fit_default(Z, K)
