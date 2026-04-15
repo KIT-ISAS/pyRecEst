@@ -113,8 +113,8 @@ class TestComplexBinghamDistribution(unittest.TestCase):
     )
     def test_pdf_invariant_to_phase(self):
         """pdf(exp(i*alpha)*z) == pdf(z) for any global phase alpha."""
-        z0 = 0.6 + 0.3j
-        z = array([z0, sqrt(1 - abs(z0) ** 2)], dtype=complex)
+        z = array([0.6 + 0.3j, 0.0], dtype=complex)
+        z[1] = sqrt(1 - abs(z[0]) ** 2)
         p0 = self.cB2.pdf(z)
         for alpha in [0.3, 1.0, float(pi)]:
             p1 = self.cB2.pdf(exp(1j * alpha) * z)
