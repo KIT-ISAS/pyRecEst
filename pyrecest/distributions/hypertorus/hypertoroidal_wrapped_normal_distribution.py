@@ -1,8 +1,6 @@
 import copy
 from typing import Union
 
-import numpy as np
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -14,14 +12,15 @@ from pyrecest.backend import (
     int32,
     int64,
     linalg,
+    log,
     meshgrid,
     mod,
     pi,
     random,
     stack,
+    sum,
+    zeros,
 )
-from pyrecest.utils.numpy_conversion import to_numpy as _to_numpy
-from scipy.stats import multivariate_normal
 
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
@@ -84,21 +83,19 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
             -1, self.dim
         )
 
-        # Calculate the PDF values by considering all combinations of offsets.
-        # Accumulate into a plain numpy array to avoid __array_wrap__ warnings
-        # when mixing torch tensors with scipy return values.
-        pdf_values = np.zeros(xs.shape[0])
-        mean_np = _to_numpy(self.mu.flatten())
-        cov_np = _to_numpy(self.C)
+        # Compute multivariate normal pdf using backend operations to avoid
+        # scipy compatibility warnings with non-numpy backends.
+        d = xs.shape[-1]
+        cov_inv = linalg.inv(self.C)
+        log_coeff = -0.5 * d * log(2.0 * pi) - 0.5 * log(linalg.det(self.C))
+        pdf_values = zeros(xs.shape[0])
+        mu_flat = self.mu.flatten()
         for offset in offset_combinations:
-            shifted_xa = xs + offset[None, :]
-            pdf_values += multivariate_normal.pdf(
-                _to_numpy(shifted_xa),
-                mean=mean_np,
-                cov=cov_np,
-            )
+            diff = xs + offset[None, :] - mu_flat
+            log_pdf = log_coeff - 0.5 * sum(diff * (diff @ cov_inv), axis=-1)
+            pdf_values = pdf_values + exp(log_pdf)
 
-        return array(pdf_values)
+        return pdf_values
 
     def shift(self, shift_by) -> "HypertoroidalWrappedNormalDistribution":
         """

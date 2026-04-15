@@ -227,6 +227,7 @@ BACKEND_ATTRIBUTES = {
         "logm",
         "matrix_power",
         "norm",
+        "pinv",
         "qr",
         "quadratic_assignment",
         "polar",

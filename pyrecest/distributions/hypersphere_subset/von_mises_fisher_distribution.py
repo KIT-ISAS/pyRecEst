@@ -21,13 +21,12 @@ from pyrecest.backend import (
     pi,
     sin,
     sinh,
+    to_numpy,
     zeros,
 )
 from scipy.special import iv
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
-from pyrecest.utils.numpy_conversion import to_numpy as _to_numpy
-
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu, kappa):
@@ -46,8 +45,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         if self.dim == 2:
             self.C = kappa / (4 * pi * sinh(kappa))
         else:
-            self.C = _to_numpy(kappa) ** ((self.dim + 1) / 2.0 - 1) / (
-                (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, _to_numpy(kappa))
+            self.C = float(kappa) ** ((self.dim + 1) / 2.0 - 1) / (
+                (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, to_numpy(kappa))
             )
 
     def pdf(self, xs):
@@ -166,8 +165,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def a_d(d: Union[int, int32, int64], kappa):
-        bessel1 = array(iv(d / 2, _to_numpy(kappa)))
-        bessel2 = array(iv(d / 2 - 1, _to_numpy(kappa)))
+        bessel1 = array(iv(d / 2, to_numpy(kappa)))
+        bessel2 = array(iv(d / 2 - 1, to_numpy(kappa)))
         if isnan(bessel1) or isnan(bessel2):
             print(f"Bessel functions returned NaN for d={d}, kappa={kappa}")
         return bessel1 / bessel2

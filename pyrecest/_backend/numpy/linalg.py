@@ -12,6 +12,7 @@ from numpy.linalg import (
     matrix_power,
     matrix_rank,
     norm,
+    pinv,
     svd,
 )
 from scipy.linalg import (

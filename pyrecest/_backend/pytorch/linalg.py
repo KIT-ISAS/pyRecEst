@@ -11,6 +11,7 @@ from torch.linalg import (
     eigvalsh,
     inv,
     matrix_power,
+    pinv,
     qr,
     solve,
 )

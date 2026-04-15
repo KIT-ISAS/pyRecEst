@@ -188,7 +188,9 @@ def matmul(x, y, out=None):
 
 
 def to_numpy(x):
-    return x.numpy()
+    if _torch.is_tensor(x):
+        return x.detach().numpy()
+    return x
 
 
 def one_hot(labels, num_classes):

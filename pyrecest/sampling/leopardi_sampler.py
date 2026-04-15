@@ -32,7 +32,6 @@ from scipy.special import betainc  # pylint: disable=E0611
 from ..distributions import (
     AbstractHypersphereSubsetDistribution,
 )
-from pyrecest.utils.numpy_conversion import to_numpy as _to_numpy
 
 
 def get_cap_area(dim, colatitude):
@@ -57,7 +56,7 @@ def get_cap_area(dim, colatitude):
     x = sin(colatitude / 2) ** 2
     a = dim / 2
     b = dim / 2
-    area = area_sphere * betainc(float(a), float(b), float(_to_numpy(x)))
+    area = area_sphere * betainc(float(a), float(b), float(x))
     return area
 
 
@@ -79,7 +78,7 @@ def get_cap_colatitude(dim, area):
     )
 
     def f(s, dim, area):
-        result = get_cap_area(dim, s) - area
+        result = float(get_cap_area(dim, s) - area)
         if result < 0 and abs(result) < 1e-12:
             # Adjust for numerical errors near zero
             result = 0

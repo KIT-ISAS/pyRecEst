@@ -1,14 +1,19 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 import numpy as np
 from pyrecest.backend import (
+    all,
+    allclose,
     argmax,
     argsort,
     array,
     column_stack,
     concatenate,
+    diag,
     exp,
     linalg,
+    ones,
     pi,
+    random,
     sort,
     sqrt,
     sum,
@@ -19,7 +24,6 @@ from scipy.special import iv
 from ..abstract_se2_distribution import AbstractSE2Distribution
 from ..hypersphere_subset.bingham_distribution import BinghamDistribution
 from ..nonperiodic.custom_linear_distribution import CustomLinearDistribution
-from pyrecest.utils.numpy_conversion import to_numpy as _to_np
 
 
 class SE2BinghamDistribution(AbstractSE2Distribution):
@@ -70,9 +74,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
 
         if C2 is None:
             assert C.shape == (4, 4), "C must be 4x4 when C2 and C3 are not provided."
-            assert np.allclose(
-                _to_np(C), _to_np(C).T
-            ), "Full C matrix must be symmetric."
+            assert allclose(C, C.T, atol=1e-6), "Full C matrix must be symmetric."
             self.C = C
             self.C1 = C[:2, :2]
             self.C2 = C[2:, :2]
@@ -81,8 +83,8 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
             assert C.shape == (2, 2), "C1 must be 2x2."
             assert C2.shape == (2, 2), "C2 must be 2x2."
             assert C3.shape == (2, 2), "C3 must be 2x2."
-            assert np.allclose(_to_np(C), _to_np(C).T), "C1 must be symmetric."
-            assert np.allclose(_to_np(C3), _to_np(C3).T), "C3 must be symmetric."
+            assert allclose(C, C.T, atol=1e-6), "C1 must be symmetric."
+            assert allclose(C3, C3.T, atol=1e-6), "C3 must be symmetric."
             self.C1 = C
             self.C2 = C2
             self.C3 = C3
@@ -93,8 +95,8 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
                 ]
             ).T
 
-        assert np.all(
-            np.linalg.eigvalsh(_to_np(self.C3)) <= 0
+        assert all(
+            linalg.eigvalsh(self.C3) <= 0
         ), "C3 must be negative semi-definite."
 
         self._nc = None  # lazily computed
@@ -208,13 +210,11 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
 
         # Step 2: sample Gaussian conditional
         # mean_i = -C3^{-1} * C2 * x_rot_i
-        cov = _to_np(-0.5 * C3_inv)
-        means = _to_np(
-            (-C3_inv @ array(self.C2, dtype=float) @ array(bingham_samples).T).T
-        )
-        lin_samples = array(
-            means + np.random.multivariate_normal(np.zeros(2), cov, size=n)
-        )
+        cov = -0.5 * C3_inv
+        means = (-C3_inv @ array(self.C2, dtype=float) @ array(bingham_samples).T).T
+        # Sample n zero-mean perturbations from N(0, cov) and add respective means
+        noise = random.multivariate_normal(array([0.0, 0.0]), cov, (n,))
+        lin_samples = means + noise
 
         return column_stack([bingham_samples, lin_samples])
 
@@ -230,17 +230,17 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         b : BinghamDistribution
             Marginal Bingham distribution on S^1.
         """
-        C1 = _to_np(self.C1, dtype=float)
-        C2 = _to_np(self.C2, dtype=float)
-        C3 = _to_np(self.C3, dtype=float)
-        C3_inv = np.linalg.inv(C3)
+        C1 = array(self.C1, dtype=float)
+        C2 = array(self.C2, dtype=float)
+        C3 = array(self.C3, dtype=float)
+        C3_inv = linalg.inv(C3)
         bm = C1 - C2.T @ C3_inv @ C2
-        eigenvalues, eigenvectors = np.linalg.eigh(bm)
-        order = np.argsort(eigenvalues)
+        eigenvalues, eigenvectors = linalg.eigh(bm)
+        order = argsort(eigenvalues)
         eigenvalues = eigenvalues[order]
         eigenvectors = eigenvectors[:, order]
-        z = array(eigenvalues - eigenvalues[-1])
-        m = array(eigenvectors)
+        z = eigenvalues - eigenvalues[-1]
+        m = eigenvectors
         return BinghamDistribution(z, m)
 
     def marginalize_periodic(self):
@@ -255,7 +255,8 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         dist : CustomLinearDistribution
             Marginal distribution over R^2.
         """
-        C_np = array(self.C, dtype=float)
+        from pyrecest.backend import to_numpy  # pylint: disable=import-outside-toplevel
+        C_mat = to_numpy(array(self.C, dtype=float))
         nc = self.nc
 
         def _marginal_pdf(xs):
@@ -266,7 +267,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
                 def integrand(theta, xl=x_lin):
                     x_rot = np.array([np.cos(theta), np.sin(theta)])
                     x = np.concatenate([x_rot, xl])
-                    return np.exp(float(x @ C_np @ x))
+                    return np.exp(float(x @ C_mat @ x))
 
                 val, _ = quad(integrand, 0.0, 2.0 * np.pi)
                 out[i] = val / nc
@@ -291,21 +292,19 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         dist : SE2BinghamDistribution
             Fitted distribution.
         """
-        samples = _to_np(samples, dtype=float)
+        samples = array(samples, dtype=float)
         if samples.shape[1] == 3:
-            samples = np.array(
-                AbstractSE2Distribution.angle_pos_to_dual_quaternion(array(samples))
-            )
+            samples = AbstractSE2Distribution.angle_pos_to_dual_quaternion(samples)
         assert samples.shape[1] == 4
 
         n = samples.shape[0]
         if weights is None:
-            weights = np.ones(n) / n
+            weights = ones(n) / n
         else:
-            weights = np.asarray(weights, dtype=float)
-            weights = weights / weights.sum()
+            weights = array(weights, dtype=float)
+            weights = weights / sum(weights)
 
-        w = weights[:, np.newaxis]
+        w = weights.reshape(-1, 1)
         s_rot, s_lin = samples[:, :2], samples[:, 2:]
 
         # Bingham block: estimate Schur complement from weighted scatter
@@ -315,30 +314,30 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
         c2_est, c3_est = SE2BinghamDistribution._fit_gaussian_block(s_rot, s_lin, w)
 
         # Recover C1 from Schur complement definition
-        c1_est = schur_c + c2_est.T @ np.linalg.inv(c3_est) @ c2_est
+        c1_est = schur_c + c2_est.T @ linalg.inv(c3_est) @ c2_est
         c1_est = 0.5 * (c1_est + c1_est.T)
 
-        return SE2BinghamDistribution(array(c1_est), array(c2_est), array(c3_est))
+        return SE2BinghamDistribution(c1_est, c2_est, c3_est)
 
     @staticmethod
     def _schur_from_scatter(s_rot, w):
         """Return the estimated Schur complement C1 - C2' C3^{-1} C2 from samples."""
         scatter = (s_rot * w).T @ s_rot
-        eigenvalues, eigenvectors = np.linalg.eigh(scatter)
-        order = np.argsort(eigenvalues)
+        eigenvalues, eigenvectors = linalg.eigh(scatter)
+        order = argsort(eigenvalues)
         eigenvalues, eigenvectors = eigenvalues[order], eigenvectors[:, order]
         z = eigenvalues - eigenvalues[-1]
-        return eigenvectors @ np.diag(z) @ eigenvectors.T
+        return eigenvectors @ diag(z) @ eigenvectors.T
 
     @staticmethod
     def _fit_gaussian_block(s_rot, s_lin, w):
         """Return estimated (C2, C3) via weighted linear regression."""
         reg_a = (s_rot * w).T @ s_rot
         # Use pinv for numerical stability when reg_a is nearly singular
-        reg_beta = (s_lin * w).T @ s_rot @ np.linalg.pinv(reg_a)
+        reg_beta = (s_lin * w).T @ s_rot @ linalg.pinv(reg_a)
         residuals = s_lin - s_rot @ reg_beta.T
         reg_cov = (residuals * w).T @ residuals
         # Use pinv: reg_cov may be ill-conditioned when samples cluster on a subspace
-        c3_est = np.linalg.pinv(-2.0 * reg_cov)
+        c3_est = linalg.pinv(-2.0 * reg_cov)
         c3_est = 0.5 * (c3_est + c3_est.T)
         return -c3_est @ reg_beta, c3_est
