@@ -1,7 +1,7 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, eye
 from pyrecest.distributions.hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
 )
@@ -40,9 +40,7 @@ class HypertoroidalDummyFilterTest(unittest.TestCase):
         self.assertEqual(est.shape, (2,))
 
     def test_predict_identity_is_noop(self):
-        import numpy as np
-
-        noise = HypertoroidalWrappedNormalDistribution(array([0.0, 0.0]), np.eye(2) * 0.5)
+        noise = HypertoroidalWrappedNormalDistribution(array([0.0, 0.0]), eye(2) * 0.5)
         state_before = self.filter_t2.filter_state
         self.filter_t2.predict_identity(noise)
         self.assertIs(self.filter_t2.filter_state, state_before)
@@ -53,9 +51,7 @@ class HypertoroidalDummyFilterTest(unittest.TestCase):
         self.assertIs(self.filter_t2.filter_state, state_before)
 
     def test_update_identity_is_noop(self):
-        import numpy as np
-
-        noise = HypertoroidalWrappedNormalDistribution(array([0.0, 0.0]), np.eye(2) * 0.5)
+        noise = HypertoroidalWrappedNormalDistribution(array([0.0, 0.0]), eye(2) * 0.5)
         measurement = array([1.0, 2.0])
         state_before = self.filter_t2.filter_state
         self.filter_t2.update_identity(noise, measurement)
