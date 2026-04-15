@@ -1,5 +1,4 @@
 import unittest
-import warnings
 
 import numpy.testing as npt
 import pyrecest.backend
@@ -137,10 +136,6 @@ class TestStateSpaceSubdivisionFilterPredictLinear(unittest.TestCase):
 
         # Build an identity-like transition: f(next=i | current=j) = delta(i==j)
         # Approximate with a very narrow wrapped normal
-        from pyrecest.distributions.circle.wrapped_normal_distribution import (  # pylint: disable=import-outside-toplevel
-            WrappedNormalDistribution,
-        )
-
         def identity_transition(xa, xb):
             # Very sharp wrapped normal centred on xa=xb
             diff = xa[:, 0] - xb[:, 0]

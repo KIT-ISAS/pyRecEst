@@ -57,7 +57,7 @@ class StateSpaceSubdivisionFilter(AbstractFilter, HypercylindricalFilterMixin):
     # Prediction
     # ------------------------------------------------------------------
 
-    def predict_linear(
+    def predict_linear(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         self,
         transition_density=None,
         covariance_matrices=None,
@@ -232,7 +232,7 @@ class StateSpaceSubdivisionFilter(AbstractFilter, HypercylindricalFilterMixin):
     # Update
     # ------------------------------------------------------------------
 
-    def update(self, likelihood_periodic_grid=None, likelihoods_linear=None):
+    def update(self, likelihood_periodic_grid=None, likelihoods_linear=None):  # pylint: disable=too-many-locals
         """
         Perform the measurement update step.
 
@@ -281,7 +281,7 @@ class StateSpaceSubdivisionFilter(AbstractFilter, HypercylindricalFilterMixin):
 
         if likelihoods_linear is not None:
             n_likelihoods = len(likelihoods_linear)
-            assert n_likelihoods == 1 or n_likelihoods == n_areas, (
+            assert n_likelihoods in (1, n_areas), (
                 "likelihoods_linear must have 1 or n_areas elements."
             )
 
