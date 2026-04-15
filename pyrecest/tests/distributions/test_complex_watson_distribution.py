@@ -170,6 +170,10 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         norms = np.linalg.norm(samples, axis=1)
         npt.assert_allclose(norms, np.ones(100), atol=1e-10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_sample_raises_for_dim1(self):
         mu1 = np.array([1.0 + 0j])
         with self.assertRaises(ValueError):
