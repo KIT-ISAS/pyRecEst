@@ -382,7 +382,7 @@ class HypertoroidalFourierDistribution(
             return conj(self.trigonometric_moment(-n))
 
         # Ensure we have at least 2n+1 coefficients in each dimension
-        target_size = (2 * n * ones(self.dim, dtype=int) + 1).astype(int)
+        target_size = tuple(int(2 * n + 1) for _ in range(self.dim))
 
         if self.transformation == "sqrt":
             tfd = self.transform_via_coefficients("square", target_size)
