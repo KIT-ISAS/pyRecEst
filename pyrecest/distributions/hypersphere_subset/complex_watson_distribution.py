@@ -102,7 +102,7 @@ class ComplexWatsonDistribution:
         """  # pylint: disable=too-many-locals
         assert (
             pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
-        ), "Not supported on JAX backend"
+        ), "sample() uses in-place array assignment which is incompatible with JAX. Use numpy or pytorch backend instead."
         D = self.dim
 
         # Compute B = -kappa * (I - mu * mu^H)
@@ -271,7 +271,7 @@ class ComplexWatsonDistribution:
         """  # pylint: disable=too-many-locals
         assert (
             pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
-        ), "Not supported on JAX backend"
+        ), "log_norm() uses in-place array assignment which is incompatible with JAX. Use numpy or pytorch backend instead."
         scalar_input = ndim(asarray(kappa)) == 0
         kappa_arr = atleast_1d(asarray(kappa, dtype=float)).ravel()
         log_c = zeros_like(kappa_arr)

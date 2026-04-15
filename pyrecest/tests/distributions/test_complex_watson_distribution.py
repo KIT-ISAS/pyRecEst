@@ -1,9 +1,8 @@
 import unittest
 
-import pyrecest.backend
-
 import numpy as np
 import numpy.testing as npt
+import pyrecest.backend
 
 from pyrecest.distributions import ComplexWatsonDistribution
 
