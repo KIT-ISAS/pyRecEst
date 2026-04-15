@@ -46,10 +46,6 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
         """Setting state with a non-PWC circular distribution should convert it."""
         import warnings
 
-        from pyrecest.distributions.circle.wrapped_normal_distribution import (
-            WrappedNormalDistribution,
-        )
-
         wn = WrappedNormalDistribution(array(1.0), array(0.5))
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -123,7 +119,9 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
             array([1.0] * self.n, dtype=float)
         )
         # Likelihood peaked near x=1.0
-        likelihood = lambda meas, x: float(wn.pdf(array([x])))
+        def likelihood(meas, x):
+            return float(wn.pdf(array([x])))
+
         self.f.update_likelihood(likelihood, 0.0)
 
         self.assertIsInstance(self.f.filter_state, PiecewiseConstantDistribution)
