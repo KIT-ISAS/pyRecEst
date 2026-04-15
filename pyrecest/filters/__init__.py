@@ -45,16 +45,12 @@ from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .von_mises_filter import VonMisesFilter
 from .von_mises_fisher_filter import VonMisesFisherFilter
 from .wrapped_normal_filter import WrappedNormalFilter
-from .manifold_mixins import EuclideanFilterMixin, HypertoroidalFilterMixin
-from .von_mises_fisher_filter import VonMisesFisherFilter
 
 __all__ = [
-    "AbstractDummyFilter",
     "AbstractAxialFilter",
+    "AbstractDummyFilter",
     "AbstractExtendedObjectTracker",
     "AbstractFilter",
-    "BinghamFilter",
-    "CircularUKF",
     "AbstractFilterManifoldMixin",
     "AbstractGridFilter",
     "AbstractHypersphereSubsetFilter",
@@ -62,26 +58,28 @@ __all__ = [
     "AbstractNearestNeighborTracker",
     "AbstractParticleFilter",
     "AbstractTrackerWithLogging",
+    "BinghamFilter",
     "CircularFilterMixin",
     "CircularParticleFilter",
+    "CircularUKF",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
     "GlobalNearestNeighbor",
     "GPRHMTracker",
+    "HypercylindricalFilterMixin",
+    "HypercylindricalParticleFilter",
     "HyperhemisphereCartProdParticleFilter",
     "HyperhemisphericalFilterMixin",
     "HyperhemisphericalParticleFilter",
-    "HypercylindricalFilterMixin",
     "HypersphericalDummyFilter",
     "HypersphericalFilterMixin",
     "HypersphericalParticleFilter",
     "HypertoroidalFilterMixin",
-    "AbstractParticleFilter",
-    "HypercylindricalParticleFilter",
     "HypertoroidalParticleFilter",
     "KalmanFilter",
     "KernelSMEFilter",
     "LinBoundedFilterMixin",
+    "LinBoundedParticleFilter",
     "LinPeriodicFilterMixin",
     "LinPeriodicParticleFilter",
     "RandomMatrixTracker",
@@ -92,6 +90,4 @@ __all__ = [
     "VonMisesFilter",
     "VonMisesFisherFilter",
     "WrappedNormalFilter",
-    "EuclideanParticleFilter",
-    "VonMisesFisherFilter",
 ]
