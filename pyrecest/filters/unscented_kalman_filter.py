@@ -1,0 +1,172 @@
+# pylint: disable=no-name-in-module,no-member,duplicate-code
+from copy import copy
+from typing import Callable
+
+import pyrecest.backend
+from bayesian_filters.kalman import MerweScaledSigmaPoints
+from bayesian_filters.kalman import UnscentedKalmanFilter as BayesianFiltersUKF
+
+from pyrecest.backend import atleast_1d
+from pyrecest.distributions import GaussianDistribution
+
+from .abstract_filter import AbstractFilter
+from .manifold_mixins import EuclideanFilterMixin
+
+
+class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
+    # pylint: disable=too-many-positional-arguments
+    def __init__(
+        self,
+        initial_state: "GaussianDistribution | tuple",
+        dt: float = 1.0,
+        fx: Callable = lambda x, dt: x,
+        hx: Callable = lambda x: x,
+        points=None,
+    ):
+        if isinstance(initial_state, GaussianDistribution):
+            dim_x = initial_state.dim
+        elif isinstance(initial_state, tuple) and len(initial_state) == 2:
+            dim_x = len(initial_state[0])
+        else:
+            raise ValueError(
+                "initial_state must be a GaussianDistribution or a tuple of (mean, covariance)"
+            )
+
+        if points is None:
+            # Standard settings for Gaussian approximations
+            points = MerweScaledSigmaPoints(dim_x, alpha=0.001, beta=2, kappa=0)
+
+        EuclideanFilterMixin.__init__(self)
+        bfukf = BayesianFiltersUKF(
+            dim_x=dim_x, dim_z=dim_x, dt=dt, hx=hx, fx=fx, points=points
+        )
+        AbstractFilter.__init__(self, bfukf)
+
+        # Set initial state
+        if isinstance(initial_state, GaussianDistribution):
+            self._filter_state.x = initial_state.mu
+            self._filter_state.P = initial_state.C
+        else:
+            self._filter_state.x = initial_state[0]
+            self._filter_state.P = initial_state[1]
+        self._filter_state.x_prior = copy(self._filter_state.x)
+        self._filter_state.P_prior = copy(self._filter_state.P)
+        # Track whether predict() has been called before update()
+        self._predicted = False
+
+    @property
+    def filter_state(
+        self,
+    ) -> GaussianDistribution:
+        return GaussianDistribution(self._filter_state.x, self._filter_state.P)
+
+    @filter_state.setter
+    def filter_state(self, new_state: "GaussianDistribution | tuple"):
+        if isinstance(new_state, GaussianDistribution):
+            self._filter_state.x = new_state.mu
+            self._filter_state.P = new_state.C
+        elif isinstance(new_state, tuple) and len(new_state) == 2:
+            self._filter_state.x = new_state[0]
+            self._filter_state.P = new_state[1]
+        else:
+            raise ValueError(
+                "new_state must be a GaussianDistribution or a tuple of (mean, covariance)"
+            )
+
+    def _ensure_predicted(self):
+        """Run a zero-noise predict to populate sigma points if needed."""
+        if not self._predicted:
+            import numpy as np  # bayesian_filters operates on numpy arrays
+
+            dim_x = self._filter_state.x.shape[0]
+            self._filter_state.Q = np.zeros((dim_x, dim_x))
+
+            def _identity_fx(x, _dt):
+                return x
+
+            self._filter_state.predict(fx=_identity_fx)
+            self._predicted = True
+
+    def predict_nonlinear(self, fx, sys_noise_cov, dt=None, **fx_args):
+        """
+        :param fx: Function with signature fx(x, dt, **fx_args)
+        :param sys_noise_cov: Process noise matrix Q
+        """
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
+        ), "Not supported on this backend"
+        self._filter_state.Q = sys_noise_cov
+        self._filter_state.predict(dt=dt, fx=fx, **fx_args)
+        self._predicted = True
+
+    def update_nonlinear(self, measurement, hx, cov_mat_meas, **hx_args):
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
+        ), "Not supported on this backend"
+        self._ensure_predicted()
+        self._filter_state.update(z=measurement, hx=hx, R=cov_mat_meas, **hx_args)
+        self._predicted = False
+
+    def predict_identity(self, sys_noise_cov, dt=None):
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
+        ), "Not supported on this backend"
+        self._filter_state.Q = sys_noise_cov
+
+        def fx(x, _):
+            return x
+
+        self._filter_state.predict(dt=dt, fx=fx)
+        self._predicted = True
+
+    def predict_linear(self, system_matrix, sys_noise_cov, sys_input=None, dt=None):
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
+        ), "Not supported on this backend"
+        self._filter_state.Q = sys_noise_cov
+
+        if sys_input is None:
+
+            def fx(x, _):
+                return system_matrix @ x
+
+        else:
+
+            def fx(x, _):
+                return system_matrix @ x + sys_input
+
+        self._filter_state.predict(dt=dt, fx=fx)
+        self._predicted = True
+
+    def update_identity(self, meas, meas_cov):
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
+        ), "Not supported on this backend"
+        self._ensure_predicted()
+
+        def hx(x):
+            return x
+
+        self._filter_state.update(z=atleast_1d(meas), R=meas_cov, hx=hx)
+        self._predicted = False
+
+    def update_linear(self, measurement, measurement_matrix, cov_mat_meas):
+        assert pyrecest.backend.__backend_name__ not in (
+            "pytorch",
+            "jax",
+        ), "Not supported on this backend"
+        self._ensure_predicted()
+
+        def hx(x):
+            return measurement_matrix @ x
+
+        self._filter_state.update(z=measurement, R=cov_mat_meas, hx=hx)
+        self._predicted = False
+
+    def get_point_estimate(self):
+        return self._filter_state.x
