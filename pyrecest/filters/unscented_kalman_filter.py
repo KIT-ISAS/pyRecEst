@@ -1,4 +1,5 @@
 # pylint: disable=no-name-in-module,no-member,duplicate-code
+from copy import copy
 from typing import Callable
 
 import pyrecest.backend
@@ -48,8 +49,8 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         else:
             self._filter_state.x = initial_state[0]
             self._filter_state.P = initial_state[1]
-        self._filter_state.x_prior = self._filter_state.x.copy()
-        self._filter_state.P_prior = self._filter_state.P.copy()
+        self._filter_state.x_prior = copy(self._filter_state.x)
+        self._filter_state.P_prior = copy(self._filter_state.P)
         # Track whether predict() has been called before update()
         self._predicted = False
 
