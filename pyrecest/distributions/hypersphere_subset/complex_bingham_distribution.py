@@ -31,7 +31,6 @@ from pyrecest.backend import (
     linspace,
     log,
     max,
-    maximum,
     minimum,
     pi,
     prod,
@@ -87,12 +86,12 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
     # Core methods
     # ------------------------------------------------------------------
 
-    def pdf(self, z):
+    def pdf(self, xs):
         """Evaluate the pdf at one or more points on the complex unit sphere.
 
         Parameters
         ----------
-        z : array_like, shape (d,) or (d, n)
+        xs : array_like, shape (d,) or (d, n)
             Each column (or the single vector) is a point on the complex unit
             sphere.
 
@@ -101,13 +100,13 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
         array, shape (n,) or float
             Pdf value(s).
         """
-        z = asarray(z, dtype=complex128)
-        single = z.ndim == 1
+        xs = asarray(xs, dtype=complex128)
+        single = xs.ndim == 1
         if single:
-            z = z[:, None]
-        # Re(z^H B z) for each column
-        Bz = self.B @ z  # (d, n)
-        vals = real(einsum("ij,ij->j", conj(z), Bz))  # shape (n,)
+            xs = xs[:, None]
+        # Re(xs^H B xs) for each column
+        Bxs = self.B @ xs  # (d, n)
+        vals = real(einsum("ij,ij->j", conj(xs), Bxs))  # shape (n,)
         p = exp(self.log_norm_const + vals)
         return float(p[0]) if single else p
 
