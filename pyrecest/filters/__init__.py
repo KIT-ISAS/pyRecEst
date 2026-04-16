@@ -22,6 +22,7 @@ from .hyperhemispherical_grid_filter import HyperhemisphericalGridFilter
 from .hyperhemispherical_particle_filter import HyperhemisphericalParticleFilter
 from .hyperspherical_dummy_filter import HypersphericalDummyFilter
 from .hyperspherical_particle_filter import HypersphericalParticleFilter
+from .hypertoroidal_dummy_filter import HypertoroidalDummyFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .kalman_filter import KalmanFilter
 from .kernel_sme_filter import KernelSMEFilter
@@ -80,6 +81,7 @@ __all__ = [
     "HypersphericalDummyFilter",
     "HypersphericalFilterMixin",
     "HypersphericalParticleFilter",
+    "HypertoroidalDummyFilter",
     "HypertoroidalFilterMixin",
     "AbstractParticleFilter",
     "HypercylindricalParticleFilter",
