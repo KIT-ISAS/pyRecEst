@@ -42,6 +42,7 @@ from .manifold_mixins import (
 )
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
+from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .unscented_kalman_filter import UnscentedKalmanFilter
@@ -91,6 +92,7 @@ __all__ = [
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
     "SE2FilterMixin",
+    "StateSpaceSubdivisionFilter",
     "ToroidalFilterMixin",
     "ToroidalParticleFilter",
     "ToroidalWrappedNormalFilter",
