@@ -118,8 +118,8 @@ class TestToroidalFourierDistributionPDF(unittest.TestCase):
 
 class TestToroidalFourierDistributionIntegrate(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Not supported on JAX backend",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
+        reason="Not supported on pytorch or JAX backend",
     )
     def test_integrate_full_domain_sqrt(self):
         twn = ToroidalWrappedNormalDistribution(
@@ -163,8 +163,8 @@ class TestToroidalFourierDistributionIntegrate(unittest.TestCase):
 
 class TestToroidalFourierDistributionMoments(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Not supported on JAX backend",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
+        reason="Not supported on pytorch or JAX backend",
     )
     def test_mean_direction_close_to_twn(self):
         mu = array([1.0, 2.5])
@@ -187,8 +187,8 @@ class TestToroidalFourierDistributionMoments(unittest.TestCase):
 
 class TestToroidalFourierDistributionToTWN(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Not supported on JAX backend",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
+        reason="Not supported on pytorch or JAX backend",
     )
     def test_to_twn_recovers_mean(self):
         mu = array([1.0, 2.5])
@@ -198,8 +198,8 @@ class TestToroidalFourierDistributionToTWN(unittest.TestCase):
         npt.assert_allclose(twn_recovered.mu, mu, atol=1e-2)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Not supported on JAX backend",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
+        reason="Not supported on pytorch or JAX backend",
     )
     def test_to_twn_recovers_covariance(self):
         mu = array([1.0, 2.5])
@@ -211,8 +211,8 @@ class TestToroidalFourierDistributionToTWN(unittest.TestCase):
         npt.assert_allclose(twn_recovered.C[1, 1], C[1, 1], atol=5e-2)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Not supported on JAX backend",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
+        reason="Not supported on pytorch or JAX backend",
     )
     def test_to_twn_returns_twn_type(self):
         twn = ToroidalWrappedNormalDistribution(
@@ -225,8 +225,8 @@ class TestToroidalFourierDistributionToTWN(unittest.TestCase):
 
 class TestToroidalFourierDistributionCircularCorrelation(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Not supported on JAX backend",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),  # pylint: disable=no-member
+        reason="Not supported on pytorch or JAX backend",
     )
     def test_circular_correlation_independent(self):
         twn = ToroidalWrappedNormalDistribution(
