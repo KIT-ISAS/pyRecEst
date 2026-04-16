@@ -26,6 +26,8 @@ from .hyperspherical_ukf import HypersphericalUKF
 from .hypertoroidal_dummy_filter import HypertoroidalDummyFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .kalman_filter import KalmanFilter
+from .unscented_kalman_filter import UnscentedKalmanFilter
+from .ukf_on_manifolds import UKFOnManifolds
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
 from .lin_periodic_particle_filter import LinPeriodicParticleFilter
@@ -48,7 +50,6 @@ from .random_matrix_tracker import RandomMatrixTracker
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
-from .unscented_kalman_filter import UnscentedKalmanFilter
 from .von_mises_filter import VonMisesFilter
 from .von_mises_fisher_filter import VonMisesFisherFilter
 from .wrapped_normal_filter import WrappedNormalFilter
@@ -90,6 +91,7 @@ __all__ = [
     "HypertoroidalParticleFilter",
     "KalmanFilter",
     "UnscentedKalmanFilter",
+    "UKFOnManifolds",
     "KernelSMEFilter",
     "LinBoundedFilterMixin",
     "LinBoundedParticleFilter",
