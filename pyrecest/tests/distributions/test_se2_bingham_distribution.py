@@ -1,10 +1,11 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
-from pyrecest.backend import array, ones, all, random
+from pyrecest.backend import array, ones, all
 from pyrecest.distributions import SE2BinghamDistribution
 
 
@@ -101,7 +102,7 @@ class TestSE2BinghamDistribution(unittest.TestCase):
 
         p_mode = float(self.dist.pdf(m_dq).reshape(-1)[0])
 
-        rng = random.default_rng(42)
+        rng = np.random.default_rng(42)
         for _ in range(20):
             # Perturb angle and position (stays on S^1 x R^2 manifold)
             angle_p = angle0 + rng.normal(0, 0.15)
