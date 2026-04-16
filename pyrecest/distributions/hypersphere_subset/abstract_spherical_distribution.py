@@ -22,7 +22,7 @@ class AbstractSphericalDistribution(
         phi = linspace(0, pi, num_points)
 
         # Create a meshgrid for theta and phi angles
-        theta, phi = meshgrid(theta, phi)
+        theta, phi = meshgrid(theta, phi, indexing="ij")
 
         # Calculate the x, y, and z coordinates
         x = sin(phi) * cos(theta)
