@@ -5,13 +5,10 @@ import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
-from pyrecest.backend import array, column_stack, diag, linspace, meshgrid, pi, sum
+from pyrecest.backend import array, column_stack, linspace, meshgrid, pi
 from pyrecest.distributions import WrappedNormalDistribution
 from pyrecest.distributions.hypertorus.hypertoroidal_fourier_distribution import (
     HypertoroidalFourierDistribution,
-)
-from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution import (
-    HypertoroidalWrappedNormalDistribution,
 )
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
@@ -22,7 +19,7 @@ from pyrecest.filters.hypertoroidal_fourier_filter import HypertoroidalFourierFi
 def _integrate_1d(hfd, n=200):
     """Numerical integral of a 1-D HFD over [0, 2*pi)."""
     xs = linspace(0.0, 2.0 * pi, n, endpoint=False)
-    return float(sum(hfd.pdf(xs))) * float(2.0 * pi / n)
+    return float(hfd.pdf(xs).sum()) * float(2.0 * pi / n)
 
 
 def _integrate_2d(hfd, n=60):
@@ -31,7 +28,7 @@ def _integrate_2d(hfd, n=60):
     y = linspace(0.0, 2.0 * pi, n, endpoint=False)
     X, Y = meshgrid(x, y, indexing="ij")
     pts = column_stack((X.flatten(), Y.flatten()))
-    return float(sum(hfd.pdf(pts))) * float((2.0 * pi / n) ** 2)
+    return float(hfd.pdf(pts).sum()) * float((2.0 * pi / n) ** 2)
 
 
 class TestHypertoroidalFourierFilter(unittest.TestCase):

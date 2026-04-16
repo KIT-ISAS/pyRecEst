@@ -4,7 +4,6 @@ import warnings
 from pyrecest.backend import (
     array,
     column_stack,
-    ones,
     pi,
     reshape,
     signal,
@@ -205,7 +204,6 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
             # args[0:dim]     -> x_{k+1} grid values (shape: grid_shape)
             # args[dim:2*dim] -> x_k grid values      (shape: grid_shape)
             grid_shape = args[0].shape
-            n_pts = args[0].size
 
             # Propagate x_k through the deterministic system function
             f_out = f(*args[dim:])
@@ -253,7 +251,7 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
         hfd_trans = self.get_f_trans_as_hfd(f, noise_distribution)
         self.predict_nonlinear_via_transition_density(hfd_trans, truncate_joint_sqrt)
 
-    def predict_nonlinear_via_transition_density(
+    def predict_nonlinear_via_transition_density(  # pylint: disable=too-many-locals
         self, f_trans, truncate_joint_sqrt=True
     ):
         """
@@ -377,7 +375,6 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
         z : array_like, shape (dim,), optional
             Measurement.  Must be provided when ``likelihood`` is a callable.
         """
-        dim = self._filter_state.dim
         n_coefficients = self._filter_state.coeff_mat.shape
 
         if z is None:
