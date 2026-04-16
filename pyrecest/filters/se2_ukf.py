@@ -8,9 +8,20 @@ Reference:
     San Diego, USA, 2015.
 """
 
-import numpy as np
-from scipy.linalg import cholesky
-
+# pylint: disable=redefined-builtin
+from pyrecest.backend import (
+    abs,
+    array,
+    asarray,
+    concatenate,
+    empty,
+    eye,
+    hstack,
+    linalg,
+    mean,
+    vstack,
+    zeros,
+)
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
@@ -39,11 +50,11 @@ def _dual_quaternion_multiply(dq1, dq2):
 
     Returns
     -------
-    numpy.ndarray, shape (4,)
+    array, shape (4,)
     """
     a, b, c, d = dq1
     e, f, g, h = dq2
-    return np.array(
+    return array(
         [
             a * e - b * f,
             b * e + a * f,
@@ -73,10 +84,8 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
 
     def __init__(self):
         # Default initial state: identity transform, isotropic uncertainty.
-        from pyrecest.backend import array  # pylint: disable=import-outside-toplevel
-
         initial_state = GaussianDistribution(
-            array([1.0, 0.0, 0.0, 0.0]), array(np.eye(4))
+            array([1.0, 0.0, 0.0, 0.0]), eye(4)
         )
         SE2FilterMixin.__init__(self)
         AbstractFilter.__init__(self, initial_state)
@@ -97,7 +106,7 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         assert new_state.C.shape == (4, 4), "Covariance must be 4×4"
         assert new_state.mu.shape[0] == 4, "Mean must be 4-D"
         assert (
-            abs(np.linalg.norm(np.asarray(new_state.mu[:2], dtype=float)) - 1.0)
+            abs(linalg.norm(asarray(new_state.mu[:2])) - 1.0)
             < 1e-10
         ), "First two entries of the mean must be normalized"
         self._filter_state = new_state
@@ -129,45 +138,45 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         assert gauss_sys.C.shape == (4, 4), "System covariance must be 4×4"
         assert gauss_sys.mu.shape[0] == 4, "System noise mean must be 4-D"
         assert (
-            abs(np.linalg.norm(np.asarray(gauss_sys.mu[:2], dtype=float)) - 1.0)
+            abs(linalg.norm(asarray(gauss_sys.mu[:2])) - 1.0)
             < 1e-10
         ), "First two entries of the system noise mean must be normalized"
 
-        mu = np.asarray(self._filter_state.mu, dtype=float)
-        C = np.asarray(self._filter_state.C, dtype=float)
-        mu_noise = np.asarray(gauss_sys.mu, dtype=float)
-        C_noise = np.asarray(gauss_sys.C, dtype=float)
+        mu = asarray(self._filter_state.mu)
+        C = asarray(self._filter_state.C)
+        mu_noise = asarray(gauss_sys.mu)
+        C_noise = asarray(gauss_sys.C)
 
         # --- State sigma points (9 points) ---
         # MATLAB: [0, 2*chol(C)', -2*chol(C)'] + mu
         # chol(C) returns upper-triangular R with R'*R = C; columns of 2*R'
-        # = columns of 2*L where L = numpy's lower-triangular Cholesky.
-        L_state = cholesky(C, lower=True)
-        state_sigmas = np.empty((4, 9))
+        # = columns of 2*L where L = lower-triangular Cholesky.
+        L_state = linalg.cholesky(C)
+        state_sigmas = empty((4, 9))
         state_sigmas[:, 0] = mu
         for i in range(4):
             state_sigmas[:, i + 1] = mu + 2.0 * L_state[:, i]
             state_sigmas[:, i + 5] = mu - 2.0 * L_state[:, i]
 
         # Normalise quaternion part of state sigma points
-        norms = np.linalg.norm(state_sigmas[:2, :], axis=0)
-        state_sigmas[:2, :] /= norms[np.newaxis, :]
+        norms = linalg.norm(state_sigmas[:2, :], axis=0)
+        state_sigmas[:2, :] /= norms[None, :]
 
         # --- Noise sigma points (9 points) ---
         # MATLAB: [0, chol(4*C_noise)', -chol(4*C_noise)'] + mu_noise
-        L_noise = cholesky(4.0 * C_noise, lower=True)
-        noise_sigmas = np.empty((4, 9))
+        L_noise = linalg.cholesky(4.0 * C_noise)
+        noise_sigmas = empty((4, 9))
         noise_sigmas[:, 0] = mu_noise
         for i in range(4):
             noise_sigmas[:, i + 1] = mu_noise + L_noise[:, i]
             noise_sigmas[:, i + 5] = mu_noise - L_noise[:, i]
 
         # Normalise quaternion part of noise sigma points
-        norms = np.linalg.norm(noise_sigmas[:2, :], axis=0)
-        noise_sigmas[:2, :] /= norms[np.newaxis, :]
+        norms = linalg.norm(noise_sigmas[:2, :], axis=0)
+        noise_sigmas[:2, :] /= norms[None, :]
 
         # --- Prediction samples (81 = 9×9 samples) ---
-        pred_samples = np.empty((4, 81))
+        pred_samples = empty((4, 81))
         for i in range(9):
             for j in range(9):
                 pred_samples[:, i * 9 + j] = _dual_quaternion_multiply(
@@ -179,13 +188,11 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         new_C = (CP + CP.T) / 2.0  # symmetrise to avoid numerical issues
 
         # Mean from state sigma points (normalised)
-        new_mu = np.mean(state_sigmas, axis=1)
-        new_mu[:2] /= np.linalg.norm(new_mu[:2])
-
-        from pyrecest.backend import array  # pylint: disable=import-outside-toplevel
+        new_mu = mean(state_sigmas, axis=1)
+        new_mu[:2] /= linalg.norm(new_mu[:2])
 
         self._filter_state = GaussianDistribution(
-            array(new_mu), array(new_C), check_validity=False
+            new_mu, new_C, check_validity=False
         )
 
     # ------------------------------------------------------------------
@@ -213,48 +220,48 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         assert gauss_meas.C.shape == (4, 4), "Measurement covariance must be 4×4"
         assert gauss_meas.mu.shape[0] == 4, "Measurement noise mean must be 4-D"
         assert (
-            abs(np.linalg.norm(np.asarray(gauss_meas.mu[:2], dtype=float)) - 1.0)
+            abs(linalg.norm(asarray(gauss_meas.mu[:2])) - 1.0)
             < 1e-10
         ), "First two entries of the measurement noise mean must be normalised"
 
-        mu = np.asarray(self._filter_state.mu, dtype=float)
-        C = np.asarray(self._filter_state.C, dtype=float)
-        mu_noise = np.asarray(gauss_meas.mu, dtype=float)
-        C_noise = np.asarray(gauss_meas.C, dtype=float)
-        z = np.asarray(z, dtype=float).flatten()
+        mu = asarray(self._filter_state.mu)
+        C = asarray(self._filter_state.C)
+        mu_noise = asarray(gauss_meas.mu)
+        C_noise = asarray(gauss_meas.C)
+        z = asarray(z).flatten()
 
         # Take the closer of the two antipodal representations
-        if np.linalg.norm(z - mu) > np.linalg.norm(-z - mu):
+        if linalg.norm(z - mu) > linalg.norm(-z - mu):
             z = -z
 
         # --- Augmented state and covariance ---
-        xaug = np.concatenate([mu, mu_noise])
-        CAUG = np.block([[C, np.zeros((4, 4))], [np.zeros((4, 4)), C_noise]])
+        xaug = concatenate([mu, mu_noise])
+        CAUG = vstack([hstack([C, zeros((4, 4))]), hstack([zeros((4, 4)), C_noise])])
 
         # 17 sigma points from augmented state
         # MATLAB: [zeros(8,1), chol(8*CAUG)', -chol(8*CAUG)'] + xaug
-        L_aug = cholesky(8.0 * CAUG, lower=True)
-        aug_sigmas = np.empty((8, 17))
+        L_aug = linalg.cholesky(8.0 * CAUG)
+        aug_sigmas = empty((8, 17))
         aug_sigmas[:, 0] = xaug
         for i in range(8):
             aug_sigmas[:, i + 1] = xaug + L_aug[:, i]
             aug_sigmas[:, i + 9] = xaug - L_aug[:, i]
 
         # Normalise quaternion part of the noise sigma points (indices 4:6)
-        norms_noise = np.linalg.norm(aug_sigmas[4:6, :], axis=0)
-        norm_noise_rot = aug_sigmas[4:6, :] / norms_noise[np.newaxis, :]
-        norm_noise = np.vstack([norm_noise_rot, aug_sigmas[6:8, :]])
+        norms_noise = linalg.norm(aug_sigmas[4:6, :], axis=0)
+        norm_noise_rot = aug_sigmas[4:6, :] / norms_noise[None, :]
+        norm_noise = vstack([norm_noise_rot, aug_sigmas[6:8, :]])
 
         # --- Apply measurement function: z_pred = state_part [⊗] noise ---
-        meas_samples = np.empty((4, 17))
+        meas_samples = empty((4, 17))
         for i in range(17):
             meas_samples[:, i] = _dual_quaternion_multiply(
                 aug_sigmas[:4, i], norm_noise[:, i]
             )
 
         # --- UKF cross-covariance and measurement covariance ---
-        mean_meas = np.mean(meas_samples, axis=1)
-        meas_dev = meas_samples - mean_meas[:, np.newaxis]
+        mean_meas = mean(meas_samples, axis=1)
+        meas_dev = meas_samples - mean_meas[:, None]
 
         # PXY = (1/17) * aug_sigmas @ meas_dev^T
         PXY = (aug_sigmas @ meas_dev.T) / 17.0
@@ -263,19 +270,17 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         PY = (meas_dev @ meas_dev.T) / 17.0
 
         # --- Kalman update ---
-        K = PXY @ np.linalg.inv(PY)
+        K = PXY @ linalg.inv(PY)
         xeaug = xaug + K @ (z - mean_meas)
         xe = xeaug[:4]
         CEAUG = CAUG - K @ PY @ K.T
         new_C = CEAUG[:4, :4]
 
         # Normalise quaternion part of updated mean
-        xe[:2] /= np.linalg.norm(xe[:2])
-
-        from pyrecest.backend import array  # pylint: disable=import-outside-toplevel
+        xe[:2] /= linalg.norm(xe[:2])
 
         self._filter_state = GaussianDistribution(
-            array(xe), array(new_C), check_validity=False
+            xe, new_C, check_validity=False
         )
 
     # ------------------------------------------------------------------

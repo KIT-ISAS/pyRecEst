@@ -23,11 +23,7 @@ from .hyperspherical_dummy_filter import HypersphericalDummyFilter
 from .hyperspherical_particle_filter import HypersphericalParticleFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .kalman_filter import KalmanFilter
-<<<<<<< copilot/port-se2ukf-to-pyrecest-again
 from .se2_ukf import SE2UKF
-from .unscented_kalman_filter import UnscentedKalmanFilter
-=======
->>>>>>> main
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
 from .lin_periodic_particle_filter import LinPeriodicParticleFilter
