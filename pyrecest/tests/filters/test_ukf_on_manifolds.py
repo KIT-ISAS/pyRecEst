@@ -1,8 +1,11 @@
 """Tests for UKFOnManifolds."""
 import unittest
 
-import numpy as np
 import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
+import pyrecest.backend
+from pyrecest.backend import all, array, diag, eye, linalg, pi, random, zeros
 
 from pyrecest.filters.ukf_on_manifolds import UKFOnManifolds
 
@@ -32,18 +35,18 @@ def _phi_inv_so2(state_ref, state):
     """Inverse retraction on SO(2)."""
     diff = state - state_ref
     # wrap to [-pi, pi]
-    diff = (diff + np.pi) % (2 * np.pi) - np.pi
-    return np.array([diff])
+    diff = (diff + pi) % (2 * pi) - pi
+    return array([diff])
 
 
 class TestUKFOnManifoldsEuclidean(unittest.TestCase):
     """Verify the filter recovers Kalman-filter results on a Euclidean state space."""
 
     def _make_filter(self, d=1, alpha=1e-3):
-        Q = np.eye(d) * 0.1
-        R = np.eye(d) * 0.5
-        state0 = np.zeros(d)
-        P0 = np.eye(d)
+        Q = eye(d) * 0.1
+        R = eye(d) * 0.5
+        state0 = zeros(d)
+        P0 = eye(d)
 
         def f(s, omega, w, dt):  # pylint: disable=unused-argument
             return s + w
@@ -67,12 +70,12 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
     def test_initialization_state(self):
         ukf = self._make_filter(d=2)
         state, P = ukf.filter_state
-        npt.assert_array_equal(state, np.zeros(2))
-        npt.assert_array_equal(P, np.eye(2))
+        npt.assert_array_equal(state, zeros(2))
+        npt.assert_array_equal(P, eye(2))
 
     def test_get_point_estimate_initial(self):
         ukf = self._make_filter(d=2)
-        npt.assert_array_equal(ukf.get_point_estimate(), np.zeros(2))
+        npt.assert_array_equal(ukf.get_point_estimate(), zeros(2))
 
     def test_predict_identity_increases_covariance(self):
         """After a predict step (no control), P should increase by Q."""
@@ -81,23 +84,23 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         ukf.predict(omega=None, dt=1.0)
         _, P_after = ukf.filter_state
         # P should increase (P_after >= P_before elementwise for diagonal)
-        self.assertTrue(np.all(np.diag(P_after) >= np.diag(P_before)))
+        self.assertTrue(all(diag(P_after) >= diag(P_before)))
 
     def test_update_reduces_covariance(self):
         """After an update step, P should be smaller."""
         ukf = self._make_filter(d=2)
         ukf.predict(omega=None, dt=1.0)
         _, P_before_update = ukf.filter_state
-        ukf.update(y=np.array([0.5, -0.5]))
+        ukf.update(y=array([0.5, -0.5]))
         _, P_after_update = ukf.filter_state
         # Covariance should decrease after update
-        self.assertTrue(np.all(np.diag(P_after_update) < np.diag(P_before_update)))
+        self.assertTrue(all(diag(P_after_update) < diag(P_before_update)))
 
     def test_update_moves_state_toward_measurement(self):
         """The state estimate should move toward the measurement after update."""
         ukf = self._make_filter(d=1)
         ukf.predict(omega=None, dt=1.0)
-        y = np.array([2.0])
+        y = array([2.0])
         state_before, _ = ukf.filter_state
         ukf.update(y=y)
         state_after, _ = ukf.filter_state
@@ -107,8 +110,8 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
 
     def test_filter_state_setter_getter_roundtrip(self):
         ukf = self._make_filter(d=2)
-        new_state = np.array([1.0, 2.0])
-        new_P = np.diag([3.0, 4.0])
+        new_state = array([1.0, 2.0])
+        new_P = diag(array([3.0, 4.0]))
         ukf.filter_state = (new_state, new_P)
         state_out, P_out = ukf.filter_state
         npt.assert_array_equal(state_out, new_state)
@@ -116,11 +119,11 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
 
     def test_alpha_scalar_vs_array_equivalent(self):
         """Passing a scalar alpha should give the same result as [alpha, alpha, alpha]."""
-        Q = np.eye(2) * 0.1
-        R = np.eye(2) * 0.5
-        state0 = np.zeros(2)
-        P0 = np.eye(2)
-        measurement = np.array([1.0, -1.0])
+        Q = eye(2) * 0.1
+        R = eye(2) * 0.5
+        state0 = zeros(2)
+        P0 = eye(2)
+        measurement = array([1.0, -1.0])
 
         def f(s, omega, w, dt):  # pylint: disable=unused-argument
             return s + w
@@ -145,10 +148,10 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
     def test_repeated_updates_converge(self):
         """Multiple measurements of the same value should converge the estimate."""
         ukf = self._make_filter(d=1, alpha=1e-3)
-        y_true = np.array([5.0])
+        y_true = array([5.0])
         for _ in range(20):
             ukf.predict(omega=None, dt=1.0)
-            ukf.update(y=y_true + np.random.default_rng(0).normal(0, 0.1, 1))
+            ukf.update(y=y_true + random.normal(loc=0.0, scale=0.1, size=(1,)))
         state, _ = ukf.filter_state
         # Should be close to 5
         npt.assert_allclose(state[0], 5.0, atol=1.0)
@@ -156,31 +159,30 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
     def test_covariance_remains_symmetric_pd(self):
         """Covariance matrix must stay symmetric and positive-definite."""
         ukf = self._make_filter(d=3)
-        rng = np.random.default_rng(42)
         for _ in range(10):
             ukf.predict(omega=None, dt=0.5)
-            ukf.update(y=rng.normal(0, 1, 3))
+            ukf.update(y=random.normal(loc=0.0, scale=1.0, size=(3,)))
         _, P = ukf.filter_state
         npt.assert_allclose(P, P.T, atol=1e-12)
-        eigvals = np.linalg.eigvalsh(P)
-        self.assertTrue(np.all(eigvals > 0))
+        eigvals = linalg.eigvalsh(P)
+        self.assertTrue(all(eigvals > 0))
 
 
 class TestUKFOnManifoldsSO2(unittest.TestCase):
     """Test UKF-M on the circle SO(2) ~ angle."""
 
     def _make_filter(self):
-        Q = np.array([[0.01]])  # 1×1 noise
-        R = np.array([[0.1]])
+        Q = array([[0.01]])  # 1×1 noise
+        R = array([[0.1]])
         state0 = 0.0  # scalar angle
-        P0 = np.array([[0.5]])
+        P0 = array([[0.5]])
 
         def f(s, omega, w, dt):  # pylint: disable=unused-argument
             # constant-velocity on SO(2)
             return s + w[0]
 
         def h(s):
-            return np.array([s])
+            return array([s])
 
         return UKFOnManifolds(
             f=f, h=h,
@@ -194,12 +196,12 @@ class TestUKFOnManifoldsSO2(unittest.TestCase):
         ukf = self._make_filter()
         state, P = ukf.filter_state
         self.assertAlmostEqual(float(state), 0.0)
-        npt.assert_array_equal(P, np.array([[0.5]]))
+        npt.assert_array_equal(P, array([[0.5]]))
 
     def test_update_moves_toward_measurement(self):
         ukf = self._make_filter()
         ukf.predict(omega=None, dt=1.0)
-        y = np.array([0.3])
+        y = array([0.3])
         state_before, _ = ukf.filter_state
         ukf.update(y=y)
         state_after, _ = ukf.filter_state
@@ -210,7 +212,7 @@ class TestUKFOnManifoldsSO2(unittest.TestCase):
         ukf = self._make_filter()
         ukf.predict(omega=None, dt=1.0)
         _, P_pred = ukf.filter_state
-        ukf.update(y=np.array([0.1]))
+        ukf.update(y=array([0.1]))
         _, P_upd = ukf.filter_state
         self.assertLess(float(P_upd[0, 0]), float(P_pred[0, 0]))
 
@@ -242,15 +244,15 @@ class TestUKFOnManifoldsLinearEquivalence(unittest.TestCase):
         ukf = UKFOnManifolds(
             f=f, h=h,
             phi=lambda s, xi: s + xi[0],
-            phi_inv=lambda s_ref, s: np.array([s - s_ref]),
-            Q=np.array([[Q_val]]),
-            R=np.array([[R_val]]),
+            phi_inv=lambda s_ref, s: array([s - s_ref]),
+            Q=array([[Q_val]]),
+            R=array([[R_val]]),
             alpha=1e-3,
-            state0=np.array([x0]),
-            P0=np.array([[P0]]),
+            state0=array([x0]),
+            P0=array([[P0]]),
         )
         ukf.predict(omega=None, dt=1.0)
-        ukf.update(y=np.array([y]))
+        ukf.update(y=array([y]))
         state_ukfm, P_ukfm = ukf.filter_state
 
         # --- Exact Kalman ---
