@@ -266,10 +266,8 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
         Mirrors MATLAB's makeSureEigenvaluesAreNotTooClose.
         """
         lam = flip(sort(eigenvalues), axis=0)
-        diffs = diff(lam)  # non-positive for sorted-descending
-        diffs = minimum(diffs, -0.01)  # enforce gap >= 0.01
-        lam[1:] = lam[0] + cumsum(diffs)
-        return lam
+        diffs = minimum(diff(lam), -0.01)  # enforce gap >= 0.01
+        return concatenate([lam[:1], lam[0:1] + cumsum(diffs)])
 
     @classmethod
     def fit(cls, Z):
