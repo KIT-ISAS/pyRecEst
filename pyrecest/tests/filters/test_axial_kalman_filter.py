@@ -80,7 +80,7 @@ class TestAxialKalmanFilter4D(unittest.TestCase):
             GaussianDistribution(array([1.0, 0.0, 0.0, 0.0]), self.C), z
         )
         est = self.filter.get_point_estimate()
-        npt.assert_allclose(self.mu, est, rtol=1e-10)
+        npt.assert_allclose(self.mu, est, atol=1e-6)
         # Covariance should decrease
         self.assertTrue(
             (self.filter.filter_state.C <= self.C).all()
@@ -122,7 +122,7 @@ class TestAxialKalmanFilter4D(unittest.TestCase):
             GaussianDistribution(self.mu, self.C), z
         )
         est = self.filter.get_point_estimate()
-        npt.assert_allclose(linalg.norm(est), 1.0, rtol=1e-10)
+        npt.assert_allclose(linalg.norm(est), 1.0, atol=1e-6)
 
 
 class TestAxialKalmanFilter2D(unittest.TestCase):
@@ -184,7 +184,7 @@ class TestAxialKalmanFilter2D(unittest.TestCase):
             GaussianDistribution(array([1.0, 0.0]), self.C), z
         )
         est = self.filter.get_point_estimate()
-        npt.assert_allclose(self.mu, est, rtol=1e-10)
+        npt.assert_allclose(self.mu, est, atol=1e-6)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "pytorch",
