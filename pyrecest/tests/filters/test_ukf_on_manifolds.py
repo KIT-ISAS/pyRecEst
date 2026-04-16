@@ -133,7 +133,7 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
-    def test_alpha_scalar_vs_array_equivalent(self):
+    def test_alpha_scalar_vs_array_equivalent(self):  # pylint: disable=too-many-locals
         """Passing a scalar alpha should give the same result as [alpha, alpha, alpha]."""
         Q = eye(2) * 0.1
         R = eye(2) * 0.5
@@ -147,8 +147,8 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         def h(s):
             return s
 
-        common = dict(f=f, h=h, phi=_phi_euclidean, phi_inv=_phi_inv_euclidean,
-                      Q=Q, R=R, state0=state0, P0=P0)
+        common = {"f": f, "h": h, "phi": _phi_euclidean, "phi_inv": _phi_inv_euclidean,
+                  "Q": Q, "R": R, "state0": state0, "P0": P0}
         ukf_scalar = UKFOnManifolds(alpha=1e-3, **common)
         ukf_array = UKFOnManifolds(alpha=[1e-3, 1e-3, 1e-3], **common)
 

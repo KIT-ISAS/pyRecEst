@@ -45,7 +45,6 @@ from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
-from .unscented_kalman_filter import UnscentedKalmanFilter
 from .von_mises_filter import VonMisesFilter
 from .von_mises_fisher_filter import VonMisesFisherFilter
 from .wrapped_normal_filter import WrappedNormalFilter

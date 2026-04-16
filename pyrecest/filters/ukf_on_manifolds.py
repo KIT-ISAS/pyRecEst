@@ -9,7 +9,7 @@ Reference Python implementation:
     https://github.com/CAOR-MINES-ParisTech/ukfm
 """
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 from typing import Any, Callable
 
 import pyrecest.backend
@@ -29,7 +29,7 @@ class _Weights:
         self.w0 = m / (m + d) + 3.0 - alpha**2
 
 
-class UKFOnManifolds(AbstractFilter):
+class UKFOnManifolds(AbstractFilter):  # pylint: disable=too-many-instance-attributes
     """Unscented Kalman Filter on (parallelizable) Manifolds.
 
     Implements the UKF-M algorithm that works for states living on smooth
@@ -98,7 +98,7 @@ class UKFOnManifolds(AbstractFilter):
 
     TOL = 1e-9  # tolerance for ensuring positive-definiteness
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         f: Callable,
         h: Callable,
@@ -128,7 +128,7 @@ class UKFOnManifolds(AbstractFilter):
         # Dimensions
         self.d = P0.shape[0]  # tangent-space dimension
         self.q = Q.shape[0]  # noise dimension
-        self.l = R.shape[0]  # measurement dimension
+        self.meas_dim = R.shape[0]  # measurement dimension
 
         # Sigma-point weights — three sets with potentially different alphas
         # Handle scalar or length-3 array-like for alpha
@@ -174,7 +174,7 @@ class UKFOnManifolds(AbstractFilter):
     # Prediction / propagation
     # ------------------------------------------------------------------
 
-    def predict(self, omega=None, dt: float = 1.0):
+    def predict(self, omega=None, dt: float = 1.0):  # pylint: disable=too-many-locals
         """Propagate the filter state.
 
         Parameters
@@ -244,7 +244,7 @@ class UKFOnManifolds(AbstractFilter):
     # Update
     # ------------------------------------------------------------------
 
-    def update(self, y):
+    def update(self, y):  # pylint: disable=too-many-locals
         """Update the filter with a new measurement.
 
         Parameters
@@ -262,7 +262,7 @@ class UKFOnManifolds(AbstractFilter):
         xis = w_u.sqrt_d_lambda * chol_P  # shape (d, d)
 
         # Compute predicted measurements at sigma points
-        ys = zeros((2 * self.d, self.l))
+        ys = zeros((2 * self.d, self.meas_dim))
         hat_y = asarray(self.h(self._state)).ravel()
         for j in range(self.d):
             s_plus = self.phi(self._state, xis[j])
