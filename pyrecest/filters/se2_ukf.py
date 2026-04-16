@@ -115,7 +115,8 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
     # Prediction
     # ------------------------------------------------------------------
 
-    def predict_identity(self, gauss_sys: GaussianDistribution):
+    def predict_identity(  # pylint: disable=too-many-locals
+            self, gauss_sys: GaussianDistribution):
         """Predict using a zero-mean identity motion model with noise.
 
         The model assumes:
@@ -199,7 +200,8 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
     # Update
     # ------------------------------------------------------------------
 
-    def update_identity(self, gauss_meas: GaussianDistribution, z):
+    def update_identity(  # pylint: disable=too-many-locals
+            self, gauss_meas: GaussianDistribution, z):
         """Incorporate a dual-quaternion measurement.
 
         Assumes the identity measurement model  ``z = x [⊗] v``  where

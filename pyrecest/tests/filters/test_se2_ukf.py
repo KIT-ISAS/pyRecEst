@@ -5,7 +5,6 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
-import pyrecest.backend
 from pyrecest.backend import allclose, array, asarray, cos, eye, linalg, pi, sin, trace
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.se2_ukf import SE2UKF, _dual_quaternion_multiply
@@ -25,12 +24,9 @@ class TestDualQuaternionMultiply(unittest.TestCase):
     def test_non_commutativity(self):
         dq1 = array([cos(0.3), sin(0.3), 0.1, 0.2])
         dq2 = array([cos(0.5), sin(0.5), -0.1, 0.3])
-        self.assertFalse(
-            allclose(
-                _dual_quaternion_multiply(dq1, dq2),
-                _dual_quaternion_multiply(dq2, dq1),
-            )
-        )
+        result_12 = _dual_quaternion_multiply(dq1, dq2)
+        result_21 = _dual_quaternion_multiply(dq2, dq1)
+        self.assertFalse(allclose(result_12, result_21))
 
 
 class TestSE2UKFInitialization(unittest.TestCase):
