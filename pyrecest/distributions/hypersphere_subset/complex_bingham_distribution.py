@@ -15,7 +15,6 @@ from pyrecest.backend import (
     all,
     allclose,
     arange,
-    argsort,
     array,
     asarray,
     complex128,
@@ -27,6 +26,7 @@ from pyrecest.backend import (
     einsum,
     empty,
     exp,
+    flip,
     linalg,
     linspace,
     log,
@@ -138,10 +138,9 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
 
         # Eigendecomposition of -B (eigenvectors V, eigenvalues Lambda of -B)
         eigenvalues_neg, V = linalg.eigh(-self.B)  # sorted ascending
-        # Sort descending
-        idx = argsort(eigenvalues_neg)[::-1]
-        eigenvalues_neg = eigenvalues_neg[idx]
-        V = V[:, idx]
+        # Sort descending (eigh gives ascending order, flip to get descending)
+        eigenvalues_neg = flip(eigenvalues_neg, axis=0)
+        V = flip(V, axis=1)
 
         # Shift so the last (smallest) eigenvalue of -B becomes 0
         Lambda = eigenvalues_neg - eigenvalues_neg[-1]  # Lambda >= 0, Lambda[-1] = 0
@@ -266,7 +265,7 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
 
         Mirrors MATLAB's makeSureEigenvaluesAreNotTooClose.
         """
-        lam = sort(eigenvalues)[::-1].copy()
+        lam = flip(sort(eigenvalues), axis=0)
         diffs = diff(lam)  # non-positive for sorted-descending
         diffs = minimum(diffs, -0.01)  # enforce gap >= 0.01
         lam[1:] = lam[0] + cumsum(diffs)
