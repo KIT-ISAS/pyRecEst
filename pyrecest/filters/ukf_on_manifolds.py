@@ -12,6 +12,7 @@ Reference Python implementation:
 # pylint: disable=no-name-in-module,no-member
 from typing import Any, Callable
 
+import pyrecest.backend
 from pyrecest.backend import asarray, broadcast_to, eye, linalg, outer, sqrt, sum, vstack, zeros
 
 from .abstract_filter import AbstractFilter
@@ -184,6 +185,8 @@ class UKFOnManifolds(AbstractFilter):
         dt:
             Integration step (seconds).
         """
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError("predict is not supported on the JAX backend.")
         P = self._P + self.TOL * eye(self.d)
 
         w_zero = zeros(self.q)
@@ -249,6 +252,8 @@ class UKFOnManifolds(AbstractFilter):
         y:
             1-D measurement vector, shape ``(l,)``.
         """
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError("update is not supported on the JAX backend.")
         y = asarray(y).ravel()
         P = self._P + self.TOL * eye(self.d)
 

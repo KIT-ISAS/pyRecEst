@@ -77,6 +77,10 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         ukf = self._make_filter(d=2)
         npt.assert_array_equal(ukf.get_point_estimate(), zeros(2))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_predict_identity_increases_covariance(self):
         """After a predict step (no control), P should increase by Q."""
         ukf = self._make_filter(d=2)
@@ -86,6 +90,10 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         # P should increase (P_after >= P_before elementwise for diagonal)
         self.assertTrue(all(diag(P_after) >= diag(P_before)))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_update_reduces_covariance(self):
         """After an update step, P should be smaller."""
         ukf = self._make_filter(d=2)
@@ -96,6 +104,10 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         # Covariance should decrease after update
         self.assertTrue(all(diag(P_after_update) < diag(P_before_update)))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_update_moves_state_toward_measurement(self):
         """The state estimate should move toward the measurement after update."""
         ukf = self._make_filter(d=1)
@@ -117,6 +129,10 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         npt.assert_array_equal(state_out, new_state)
         npt.assert_array_equal(P_out, new_P)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_alpha_scalar_vs_array_equivalent(self):
         """Passing a scalar alpha should give the same result as [alpha, alpha, alpha]."""
         Q = eye(2) * 0.1
@@ -145,6 +161,10 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         npt.assert_allclose(state_s, state_a)
         npt.assert_allclose(P_s, P_a)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_repeated_updates_converge(self):
         """Multiple measurements of the same value should converge the estimate."""
         ukf = self._make_filter(d=1, alpha=1e-3)
@@ -156,6 +176,10 @@ class TestUKFOnManifoldsEuclidean(unittest.TestCase):
         # Should be close to 5
         npt.assert_allclose(state[0], 5.0, atol=1.0)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_covariance_remains_symmetric_pd(self):
         """Covariance matrix must stay symmetric and positive-definite."""
         ukf = self._make_filter(d=3)
@@ -198,6 +222,10 @@ class TestUKFOnManifoldsSO2(unittest.TestCase):
         self.assertAlmostEqual(float(state), 0.0)
         npt.assert_array_equal(P, array([[0.5]]))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_update_moves_toward_measurement(self):
         ukf = self._make_filter()
         ukf.predict(omega=None, dt=1.0)
@@ -208,6 +236,10 @@ class TestUKFOnManifoldsSO2(unittest.TestCase):
         self.assertGreater(float(state_after), float(state_before))
         self.assertLess(float(state_after), float(y[0]))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_covariance_decreases_after_update(self):
         ukf = self._make_filter()
         ukf.predict(omega=None, dt=1.0)
@@ -223,6 +255,10 @@ class TestUKFOnManifoldsLinearEquivalence(unittest.TestCase):
     very close to the exact Kalman filter.
     """
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_linear_1d_matches_kalman(self):
         """
         x_{k+1} = x_k + w_k,  w_k ~ N(0, Q)
