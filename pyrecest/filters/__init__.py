@@ -1,4 +1,5 @@
 from .abstract_axial_filter import AbstractAxialFilter
+from .axial_kalman_filter import AxialKalmanFilter
 from .abstract_dummy_filter import AbstractDummyFilter
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
 from .abstract_filter import AbstractFilter
@@ -53,6 +54,7 @@ from .wrapped_normal_filter import WrappedNormalFilter
 __all__ = [
     "AbstractDummyFilter",
     "AbstractAxialFilter",
+    "AxialKalmanFilter",
     "AbstractExtendedObjectTracker",
     "AbstractFilter",
     "BinghamFilter",
