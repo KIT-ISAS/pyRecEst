@@ -39,8 +39,8 @@ class HypersphericalUKFTest(unittest.TestCase):
         self.filter_2d.filter_state = self.gauss_2d
         g = self.filter_2d.filter_state
         self.assertIsInstance(g, GaussianDistribution)
-        npt.assert_equal(self.gauss_2d.mu, g.mu)
-        npt.assert_equal(self.gauss_2d.C, g.C)
+        npt.assert_array_equal(np.asarray(self.gauss_2d.mu), np.asarray(g.mu))
+        npt.assert_array_equal(np.asarray(self.gauss_2d.C), np.asarray(g.C))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),

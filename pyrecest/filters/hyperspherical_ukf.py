@@ -140,7 +140,7 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
             array(mu), array(ukf.P), check_validity=False
         )
 
-    def predict_nonlinear_arbitrary_noise(
+    def predict_nonlinear_arbitrary_noise(  # pylint: disable=too-many-locals
         self,
         f: Callable,
         noise_samples,
