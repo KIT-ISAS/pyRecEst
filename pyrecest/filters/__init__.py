@@ -17,8 +17,8 @@ from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .hyperhemisphere_cart_prod_particle_filter import (
     HyperhemisphereCartProdParticleFilter,
 )
-from .hyperhemispherical_particle_filter import HyperhemisphericalParticleFilter
 from .hyperhemispherical_grid_filter import HyperhemisphericalGridFilter
+from .hyperhemispherical_particle_filter import HyperhemisphericalParticleFilter
 from .hyperspherical_dummy_filter import HypersphericalDummyFilter
 from .hyperspherical_particle_filter import HypersphericalParticleFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
@@ -43,6 +43,7 @@ from .manifold_mixins import (
 )
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
+from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .unscented_kalman_filter import UnscentedKalmanFilter
@@ -93,6 +94,7 @@ __all__ = [
     "RandomMatrixTracker",
     "SE2FilterMixin",
     "SE2UKF",
+    "StateSpaceSubdivisionFilter",
     "ToroidalFilterMixin",
     "ToroidalParticleFilter",
     "ToroidalWrappedNormalFilter",
