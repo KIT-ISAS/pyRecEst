@@ -38,37 +38,13 @@ class ToroidalFourierDistribution(
     """
 
     def __init__(self, coeff_mat, transformation: str = "sqrt"):
-        # Warn and embed if coeff_mat is 1-D or has a dimension of size 1
-        # (mirrors MATLAB: if any(size(C) == 1), C = blkdiag(0, C, 0); end)
         cm = array(coeff_mat) if not hasattr(coeff_mat, "shape") else coeff_mat
         if ndim(cm) < 2 or (ndim(cm) >= 2 and any(s == 1 for s in cm.shape)):
-            warnings.warn(
+            raise ValueError(
                 "ToroidalFourierDistribution:VectorGiven: "
-                "ToroidalFourierDistributions with only one coefficient in a "
-                "dimension are not allowed, filling up to 3 in each dimension.",
-                RuntimeWarning,
+                "ToroidalFourierDistributions require a 2-D coefficient matrix "
+                "with at least 3 entries in each dimension."
             )
-            if ndim(cm) == 0:
-                # Scalar → 3×3 with scalar in centre
-                new_c = zeros((3, 3), dtype=complex)
-                new_c[1, 1] = cm
-                coeff_mat = new_c
-            elif ndim(cm) == 1:
-                # 1-D vector of length n → 3×(n+2) (blkdiag(0, C, 0))
-                n = cm.shape[0]
-                new_c = zeros((3, n + 2), dtype=complex)
-                new_c[1, 1 : n + 1] = cm
-                coeff_mat = new_c
-            else:
-                # 2-D with some dimension == 1 → pad that dimension to 3
-                rows, cols = cm.shape[0], cm.shape[1]
-                new_rows = max(rows, 3) if rows > 1 else 3
-                new_cols = max(cols, 3) if cols > 1 else 3
-                new_c = zeros((new_rows, new_cols), dtype=complex)
-                r_off = (new_rows - rows) // 2
-                c_off = (new_cols - cols) // 2
-                new_c[r_off : r_off + rows, c_off : c_off + cols] = cm
-                coeff_mat = new_c
 
         HypertoroidalFourierDistribution.__init__(self, coeff_mat, transformation)
         assert self.dim == 2, (

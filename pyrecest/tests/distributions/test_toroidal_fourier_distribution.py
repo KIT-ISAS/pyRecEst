@@ -1,5 +1,4 @@
 import unittest
-import warnings
 
 import numpy.testing as npt
 
@@ -55,14 +54,15 @@ class TestToroidalFourierDistributionConstructor(unittest.TestCase):
         self.assertIsInstance(tfd, ToroidalFourierDistribution)
         self.assertEqual(tfd.transformation, "identity")
 
-    def test_vector_input_warns_and_pads(self):
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_vector_input_raises(self):
         c = zeros(5, dtype=complex)
         c[2] = 1.0 / (2 * pi)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            tfd = ToroidalFourierDistribution(array(c), "identity")
-        self.assertTrue(any("VectorGiven" in str(warning.message) for warning in w))
-        self.assertEqual(tfd.dim, 2)
+        with self.assertRaises(ValueError):
+            ToroidalFourierDistribution(array(c), "identity")
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
