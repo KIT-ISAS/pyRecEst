@@ -13,6 +13,10 @@ from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
 from .global_nearest_neighbor import GlobalNearestNeighbor
+from .joint_probabilistic_data_association_filter import (
+    JPDAF,
+    JointProbabilisticDataAssociationFilter,
+)
 from .gprhm_tracker import GPRHMTracker
 from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .hyperhemisphere_cart_prod_particle_filter import (
@@ -74,6 +78,8 @@ __all__ = [
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
     "GlobalNearestNeighbor",
+    "JPDAF",
+    "JointProbabilisticDataAssociationFilter",
     "GPRHMTracker",
     "HyperhemisphereCartProdParticleFilter",
     "HyperhemisphericalFilterMixin",
