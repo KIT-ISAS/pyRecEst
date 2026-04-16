@@ -5,7 +5,6 @@ from pyrecest.backend import (
     arange,
     array,
     exp,
-    imag,
     log,
     ndim,
     pi,
@@ -47,6 +46,7 @@ class ToroidalFourierDistribution(
             )
 
         HypertoroidalFourierDistribution.__init__(self, coeff_mat, transformation)
+        AbstractToroidalDistribution.__init__(self)
         assert self.dim == 2, (
             "ToroidalFourierDistribution requires a 2-D coefficient matrix, "
             f"but got dim={self.dim}."
@@ -55,7 +55,7 @@ class ToroidalFourierDistribution(
     # ------------------------------------------------------------------
     # Analytical integral with optional bounds
     # ------------------------------------------------------------------
-    def integrate(self, integration_boundaries=None):
+    def integrate(self, integration_boundaries=None):  # pylint: disable=too-many-locals
         """
         Compute the integral of the pdf over the given rectangular region.
 
@@ -70,11 +70,11 @@ class ToroidalFourierDistribution(
             Value of the integral.
         """
         if integration_boundaries is None:
-            l = zeros(2)
+            lo = zeros(2)
             r = 2 * pi * array([1.0, 1.0])
         else:
             bounds = array(integration_boundaries)
-            l = bounds[:, 0]
+            lo = bounds[:, 0]
             r = bounds[:, 1]
 
         # Work in identity representation
@@ -103,12 +103,12 @@ class ToroidalFourierDistribution(
             for idx, kval in enumerate(k_range):
                 ki = float(kval)
                 if ki == 0.0:
-                    fv[idx] = float(r[d]) - float(l[d])
+                    fv[idx] = float(r[d]) - float(lo[d])
                 else:
                     fv[idx] = (
                         -1j
                         / ki
-                        * (exp(1j * ki * float(r[d])) - exp(1j * ki * float(l[d])))
+                        * (exp(1j * ki * float(r[d])) - exp(1j * ki * float(lo[d])))
                     )
             factor_vecs.append(fv)
 
@@ -310,4 +310,5 @@ class ToroidalFourierDistribution(
         elif len(n_coefficients) == 1:
             n_coefficients = (int(n_coefficients[0]), int(n_coefficients[0]))
         n_coefficients = tuple(int(n) for n in n_coefficients)
-        return super().from_distribution(distribution, n_coefficients, desired_transformation)
+        hfd = super().from_distribution(distribution, n_coefficients, desired_transformation)
+        return cls(hfd.coeff_mat, hfd.transformation)
