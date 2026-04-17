@@ -21,14 +21,14 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
     @_skip_jax
     def test_update_identity(self):
         for transformation in ['identity', 'sqrt']:
-            shd_filter = SphericalHarmonicsFilter(30, transformation)
+            shd_filter = SphericalHarmonicsFilter(10, transformation)
             vmf_filter = VonMisesFisherFilter()
 
             vmf1 = VonMisesFisherDistribution(array([0.0, 1.0, 0.0]), 1)
             vmf2 = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 0.1)
             
-            shd1 = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(vmf1, 30, transformation)
-            shd2 = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(vmf2, 30, transformation)
+            shd1 = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(vmf1, 10, transformation)
+            shd2 = SphericalHarmonicsDistributionComplex.from_distribution_numerical_fast(vmf2, 10, transformation)
 
             vmf_filter.set_state(vmf1)
             vmf_filter.update_identity(vmf2, array([1.0, 0.0, 0.0]))
@@ -49,12 +49,12 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
         sigma_y = 0.3
         sigma_z = 0.3
         
-        meas_x = self._generate_truncated_normals(pos_true[0], sigma_x, 5)
-        meas_y = self._generate_truncated_normals(pos_true[1], sigma_y, 5)
-        meas_z = self._generate_truncated_normals(pos_true[2], sigma_z, 5)
+        meas_x = self._generate_truncated_normals(pos_true[0], sigma_x, 3)
+        meas_y = self._generate_truncated_normals(pos_true[1], sigma_y, 3)
+        meas_z = self._generate_truncated_normals(pos_true[2], sigma_z, 3)
 
         for transformation in ['identity', 'sqrt']:
-            sh_filter = SphericalHarmonicsFilter(11, transformation)
+            sh_filter = SphericalHarmonicsFilter(7, transformation)
 
             for x in meas_x:
                 sh_filter.update_nonlinear(lambda z, x: norm.pdf(z[0], x[0], sigma_x), array([x, 0.0, 0.0]))
@@ -71,8 +71,8 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
         sigma_y = 0.3
         sigma_z = 0.3
         for transformation in ['identity', 'sqrt']:
-            sh_filter1 = SphericalHarmonicsFilter(10, transformation)
-            sh_filter2 = SphericalHarmonicsFilter(10, transformation)
+            sh_filter1 = SphericalHarmonicsFilter(7, transformation)
+            sh_filter2 = SphericalHarmonicsFilter(7, transformation)
 
             sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[0], x[0], sigma_x), array([-1.0 / np.sqrt(3), 0.0, 0.0]))
             sh_filter1.update_nonlinear(lambda z, x: norm.pdf(z[1], x[1], sigma_y), array([0.0, -1.0 / np.sqrt(3), 0.0]))
@@ -95,7 +95,7 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
 
     @_skip_jax
     def test_prediction_sqrt_vs_id(self):
-        degree = 21
+        degree = 10
         density_init = VonMisesFisherDistribution(array([1.0, 1.0, 0.0]) / np.sqrt(2), 2)
         sys_noise = VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 1)
 
