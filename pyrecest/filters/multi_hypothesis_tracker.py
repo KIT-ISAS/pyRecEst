@@ -3,16 +3,20 @@ from copy import deepcopy
 from math import log
 import warnings
 
-import numpy as np
 from scipy.stats import chi2
 
 from pyrecest.backend import (
+    all,
     argmax,
     array,
+    asarray,
     exp,
+    linalg,
     log as backend_log,
     max as backend_max,
     ndim,
+    pi,
+    sqrt,
     stack,
     sum as backend_sum,
 )
@@ -227,7 +231,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
             return
 
         if isinstance(sys_noises, GaussianDistribution):
-            if not np.all(np.asarray(sys_noises.mu) == 0.0):
+            if not all(asarray(sys_noises.mu) == 0.0):
                 raise ValueError("System noise mean is expected to be zero")
             sys_noises = sys_noises.C
 
@@ -259,9 +263,9 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
             warnings.warn("Currently, there are zero global hypotheses.")
             return
 
-        measurements_np = np.asarray(measurements)
-        measurement_matrix_np = np.asarray(measurement_matrix)
-        cov_mats_meas_np = np.asarray(cov_mats_meas)
+        measurements_np = asarray(measurements)
+        measurement_matrix_np = asarray(measurement_matrix)
+        cov_mats_meas_np = asarray(cov_mats_meas)
 
         if measurements_np.ndim != 2:
             raise ValueError("measurements must be a 2D array")
@@ -419,7 +423,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
                 measurements.shape[0],
             )
             if not self.association_param.get("square_dist", True):
-                gating_distance_threshold = np.sqrt(gating_distance_threshold)
+                gating_distance_threshold = sqrt(gating_distance_threshold)
 
         max_measurements_per_track = self.association_param[
             "max_measurements_per_track"
@@ -428,12 +432,12 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
         for i in range(n_tracks):
             track_candidates = []
             gaussian = filter_bank[i].filter_state
-            predicted_measurement = measurement_matrix @ np.asarray(gaussian.mu)
+            predicted_measurement = measurement_matrix @ asarray(gaussian.mu)
             for j in range(n_meas):
                 meas_cov = self._get_measurement_covariance(cov_mats_meas, j)
                 innovation_cov = (
-                    measurement_matrix @ np.asarray(gaussian.C) @ measurement_matrix.T
-                    + np.asarray(meas_cov)
+                    measurement_matrix @ asarray(gaussian.C) @ measurement_matrix.T
+                    + asarray(meas_cov)
                 )
                 innovation = measurements[:, j] - predicted_measurement
                 mahalanobis_squared, log_likelihood = (
@@ -444,7 +448,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
                 )
                 gating_distance = mahalanobis_squared
                 if not self.association_param.get("square_dist", True):
-                    gating_distance = np.sqrt(gating_distance)
+                    gating_distance = sqrt(gating_distance)
                 if gating_distance <= gating_distance_threshold:
                     gain = (
                         log(detection_probability)
@@ -551,26 +555,27 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
 
     @staticmethod
     def _mahalanobis_squared_and_log_likelihood(innovation, innovation_cov):
-        innovation = np.asarray(innovation)
-        innovation_cov = np.asarray(innovation_cov)
+        innovation = asarray(innovation)
+        innovation_cov = asarray(innovation_cov)
 
         mahalanobis_squared = float(
-            innovation.T @ np.linalg.solve(innovation_cov, innovation)
+            innovation.T @ linalg.solve(innovation_cov, innovation)
         )
-        sign, log_det = np.linalg.slogdet(innovation_cov)
-        if sign <= 0.0:
+        det_val = float(linalg.det(innovation_cov))
+        if det_val <= 0.0:
             raise ValueError("Innovation covariance must be positive definite")
+        log_det = backend_log(det_val)
 
         log_likelihood = -0.5 * (
             mahalanobis_squared
-            + innovation.shape[0] * np.log(2.0 * np.pi)
+            + innovation.shape[0] * backend_log(2.0 * pi)
             + log_det
         )
         return mahalanobis_squared, float(log_likelihood)
 
     @staticmethod
     def _get_measurement_covariance(cov_mats_meas, measurement_index):
-        if np.asarray(cov_mats_meas).ndim == 2:
+        if ndim(asarray(cov_mats_meas)) == 2:
             return cov_mats_meas
         return cov_mats_meas[:, :, measurement_index]
 
