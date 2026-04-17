@@ -283,10 +283,17 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
     def _fit_from_grid(grid_vals_real, degree, transformation):
         """Fit SH coefficients to real-valued grid values on a DH grid.
 
-        *grid_vals_real* is a 2D array (numpy or backend tensor) with shape
-        matching the DH grid for *degree*.  Returns a new
+        *grid_vals_real* is a 2D array with shape matching the DH grid for
+        *degree*.  Returns a new
         :class:`SphericalHarmonicsDistributionComplex`.
+
+        .. note::
+            ``pysh.SHGrid.from_array`` requires plain numpy arrays, so this
+            method is only supported on the ``"numpy"`` backend.
         """
+        assert (
+            pyrecest.backend.__backend_name__ == "numpy"  # pylint: disable=no-member
+        ), "pysh.SHGrid.from_array requires the numpy backend"
         import numpy as _np  # noqa: PLC0415
         import pyshtools as pysh  # pylint: disable=import-error
 
@@ -373,6 +380,10 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
             import numpy as _np  # noqa: PLC0415
             import pyshtools as pysh  # pylint: disable=import-error
+
+            assert (
+                pyrecest.backend.__backend_name__ == "numpy"  # pylint: disable=no-member
+            ), "pysh.SHGrid.from_array requires the numpy backend"
 
             def _grid_to_coeff(grid_vals):
                 grid_vals_np = _np.asarray(grid_vals)
