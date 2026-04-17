@@ -56,6 +56,9 @@ from pyrecest.backend import (
     zeros,
 )
 from pyrecest.distributions import GaussianDistribution, LinearDiracDistribution
+from pyrecest.distributions.abstract_manifold_specific_distribution import (
+    AbstractManifoldSpecificDistribution,
+)
 from pyrecest.distributions.nonperiodic.abstract_linear_distribution import (
     AbstractLinearDistribution,
 )
