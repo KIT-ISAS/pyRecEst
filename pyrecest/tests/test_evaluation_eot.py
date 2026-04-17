@@ -12,14 +12,14 @@ class TestEvalationEOT(TestEvalationBase):
         ]
 
         (
-            last_filter_states,  # pylint: disable=R0801
-            runtimes,  # pylint: disable=R0801
-            run_failed,  # pylint: disable=R0801
-            groundtruths,  # pylint: disable=R0801
-            measurements,  # pylint: disable=R0801
-            scenario_config,  # pylint: disable=R0801
-            filter_configs,  # pylint: disable=R0801
-            evaluation_config,  # pylint: disable=R0801
+            _last_filter_states,  # pylint: disable=R0801
+            _runtimes,  # pylint: disable=R0801
+            _run_failed,  # pylint: disable=R0801
+            _groundtruths,  # pylint: disable=R0801
+            _measurements,  # pylint: disable=R0801
+            _scenario_config,  # pylint: disable=R0801
+            _filter_configs,  # pylint: disable=R0801
+            _evaluation_config,  # pylint: disable=R0801
         ) = evaluate_for_simulation_config(
             self.scenario_name,
             filters_configs_input,

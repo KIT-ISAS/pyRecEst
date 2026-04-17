@@ -98,9 +98,9 @@ def generate_measurements(groundtruth, simulation_config):
                     )
 
             if sample_from == "vertices":
-                measurements[t] = random_points_on_boundary(curr_shape, n_meas_curr)
+                measurements[t] = curr_shape.sample_on_boundary(n_meas_curr)
             elif sample_from == "within":
-                measurements[t] = random_points_within(curr_shape, n_meas_curr)
+                measurements[t] = curr_shape.sample_within(n_meas_curr)
             else:
                 raise ValueError("eot_sample_from must be either 'vertices' or 'within'.")
 

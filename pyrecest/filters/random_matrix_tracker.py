@@ -61,8 +61,8 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         x_rows = self.kinematic_state.shape[0]
         y_rows = x_rows // 2
 
-        if Cw.shape in ((), (1,)):
-            Cw = Cw * eye(x_rows)
+        if sys_noise_cov.shape in ((), (1,)):
+            sys_noise_cov = sys_noise_cov * eye(x_rows)
 
         self.kinematic_state = F @ self.kinematic_state
         self.covariance = F @ self.covariance @ F.T + sys_noise_cov
@@ -78,7 +78,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         if self.kinematic_state_to_pos_matrix is None:
             # Usually, the measurement matrix is mapping the kinematic state to the position.
             self.kinematic_state_to_pos_matrix = meas_mat
-        if np.size(measurements) == 0:
+        if measurements.size == 0:
             warnings.warn("No measurements given, skipping update step.")
             return
 
