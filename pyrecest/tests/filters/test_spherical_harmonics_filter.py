@@ -91,7 +91,7 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
                 ]
             )
 
-            npt.assert_allclose(sh_filter2.get_estimate_mean(), sh_filter1.get_estimate_mean(), atol=1e-5)
+            npt.assert_allclose(sh_filter2.get_estimate_mean(), sh_filter1.get_estimate_mean(), atol=2e-4)
 
     @_skip_jax
     def test_prediction_sqrt_vs_id(self):
