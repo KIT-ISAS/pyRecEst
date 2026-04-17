@@ -1,11 +1,10 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, eye, pi, sin
+from pyrecest.backend import array, concatenate, cos, eye, linalg, pi, sin, trace
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.se2_ukf import SE2UKF, _dual_quaternion_multiply
 
@@ -30,14 +29,14 @@ class TestDualQuaternionMultiply(unittest.TestCase):
         identity = array([1.0, 0.0, 0.0, 0.0])
         dq = array([0.7071, 0.7071, 0.3, -0.1])
         result = _dual_quaternion_multiply(identity, dq)
-        npt.assert_allclose(np.array(result), np.array(dq), atol=1e-10)
+        npt.assert_allclose(result, dq, atol=1e-10)
 
     def test_identity_right(self):
         """Multiplying by the identity from the right leaves dq unchanged."""
         identity = array([1.0, 0.0, 0.0, 0.0])
         dq = array([0.7071, 0.7071, 0.3, -0.1])
         result = _dual_quaternion_multiply(dq, identity)
-        npt.assert_allclose(np.array(result), np.array(dq), atol=1e-10)
+        npt.assert_allclose(result, dq, atol=1e-10)
 
     def test_rotation_composition(self):
         """Composing two 90-degree rotations gives a 180-degree rotation."""
@@ -46,7 +45,7 @@ class TestDualQuaternionMultiply(unittest.TestCase):
         result = _dual_quaternion_multiply(dq_90, dq_90)
         # cos(pi/2) == 0, sin(pi/2) == 1 (exact mathematical values)
         expected = array([0.0, 1.0, 0.0, 0.0])
-        npt.assert_allclose(np.array(result), np.array(expected), atol=1e-6)
+        npt.assert_allclose(result, expected, atol=1e-6)
 
     def test_result_shape(self):
         dq1 = array([1.0, 0.0, 0.0, 0.0])
@@ -75,8 +74,8 @@ class TestSE2UKF(unittest.TestCase):
         self.filter.filter_state = state
         fs = self.filter.filter_state
         self.assertIsInstance(fs, GaussianDistribution)
-        npt.assert_allclose(np.array(fs.mu), np.array(state.mu), atol=1e-10)
-        npt.assert_allclose(np.array(fs.C), np.array(state.C), atol=1e-10)
+        npt.assert_allclose(fs.mu, state.mu, atol=1e-10)
+        npt.assert_allclose(fs.C, state.C, atol=1e-10)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -106,8 +105,8 @@ class TestSE2UKF(unittest.TestCase):
         """After prediction the rotation part of the mean must stay normalised."""
         self.filter.filter_state = _make_identity_state()
         self.filter.predict_identity(_make_noise())
-        mu = np.array(self.filter.filter_state.mu)
-        npt.assert_allclose(np.linalg.norm(mu[0:2]), 1.0, atol=1e-10)
+        mu = self.filter.filter_state.mu
+        npt.assert_allclose(linalg.norm(mu[0:2]), 1.0, atol=1e-10)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -116,7 +115,7 @@ class TestSE2UKF(unittest.TestCase):
     def test_predict_identity_covariance_shape(self):
         self.filter.filter_state = _make_identity_state()
         self.filter.predict_identity(_make_noise())
-        C = np.array(self.filter.filter_state.C)
+        C = self.filter.filter_state.C
         self.assertEqual(C.shape, (4, 4))
 
     @unittest.skipIf(
@@ -126,7 +125,7 @@ class TestSE2UKF(unittest.TestCase):
     def test_predict_identity_covariance_symmetric(self):
         self.filter.filter_state = _make_identity_state()
         self.filter.predict_identity(_make_noise())
-        C = np.array(self.filter.filter_state.C)
+        C = self.filter.filter_state.C
         npt.assert_allclose(C, C.T, atol=1e-12)
 
     @unittest.skipIf(
@@ -136,9 +135,9 @@ class TestSE2UKF(unittest.TestCase):
     def test_predict_identity_covariance_increases(self):
         """Adding process noise should make the covariance (trace) larger."""
         self.filter.filter_state = _make_identity_state(scale=0.05)
-        C_before = np.trace(np.array(self.filter.filter_state.C))
+        C_before = trace(self.filter.filter_state.C)
         self.filter.predict_identity(_make_noise(scale=0.05))
-        C_after = np.trace(np.array(self.filter.filter_state.C))
+        C_after = trace(self.filter.filter_state.C)
         self.assertGreater(C_after, C_before)
 
     @unittest.skipIf(
@@ -159,11 +158,10 @@ class TestSE2UKF(unittest.TestCase):
         """After update the rotation part of the mean must stay normalised."""
         self.filter.filter_state = _make_identity_state()
         z = array([1.0, 0.0, 0.5, -0.3])
-        z_np = np.array(z)
-        z_np[0:2] /= np.linalg.norm(z_np[0:2])
-        self.filter.update_identity(_make_noise(), z_np)
-        mu = np.array(self.filter.filter_state.mu)
-        npt.assert_allclose(np.linalg.norm(mu[0:2]), 1.0, atol=1e-10)
+        z = concatenate([z[0:2] / linalg.norm(z[0:2]), z[2:]])
+        self.filter.update_identity(_make_noise(), z)
+        mu = self.filter.filter_state.mu
+        npt.assert_allclose(linalg.norm(mu[0:2]), 1.0, atol=1e-10)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -172,10 +170,10 @@ class TestSE2UKF(unittest.TestCase):
     def test_update_identity_covariance_decreases(self):
         """An informative measurement should reduce uncertainty."""
         self.filter.filter_state = _make_identity_state(scale=0.5)
-        C_before = np.trace(np.array(self.filter.filter_state.C))
+        C_before = trace(self.filter.filter_state.C)
         z = array([1.0, 0.0, 0.0, 0.0])
         self.filter.update_identity(_make_noise(scale=0.01), z)
-        C_after = np.trace(np.array(self.filter.filter_state.C))
+        C_after = trace(self.filter.filter_state.C)
         self.assertLess(C_after, C_before)
 
     @unittest.skipIf(
@@ -188,12 +186,11 @@ class TestSE2UKF(unittest.TestCase):
         self.filter.filter_state = _make_identity_state()
         self.filter.predict_identity(_make_noise())
         z = array([1.0, 0.0, 0.1, -0.05])
-        z_np = np.array(z)
-        z_np[0:2] /= np.linalg.norm(z_np[0:2])
-        self.filter.update_identity(_make_noise(), z_np)
+        z = concatenate([z[0:2] / linalg.norm(z[0:2]), z[2:]])
+        self.filter.update_identity(_make_noise(), z)
         self.assertIsInstance(self.filter.filter_state, GaussianDistribution)
-        mu = np.array(self.filter.filter_state.mu)
-        npt.assert_allclose(np.linalg.norm(mu[0:2]), 1.0, atol=1e-10)
+        mu = self.filter.filter_state.mu
+        npt.assert_allclose(linalg.norm(mu[0:2]), 1.0, atol=1e-10)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -202,7 +199,7 @@ class TestSE2UKF(unittest.TestCase):
     def test_get_point_estimate(self):
         self.filter.filter_state = _make_identity_state()
         est = self.filter.get_point_estimate()
-        npt.assert_allclose(np.array(est), [1.0, 0.0, 0.0, 0.0], atol=1e-10)
+        npt.assert_allclose(est, [1.0, 0.0, 0.0, 0.0], atol=1e-10)
 
 
 if __name__ == "__main__":
