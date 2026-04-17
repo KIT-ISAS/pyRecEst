@@ -251,6 +251,9 @@ BACKEND_ATTRIBUTES = {
         "randint",
         "seed",
         "uniform",
+        # For PyRecEst
+        "get_state",
+        "set_state",
     ],
     "fft": [  # For PyRecEst
         "rfft",
