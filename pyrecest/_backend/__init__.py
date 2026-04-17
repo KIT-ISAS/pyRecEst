@@ -236,6 +236,7 @@ BACKEND_ATTRIBUTES = {
         "svd",
         "matrix_rank",
         "block_diag",  # For PyRecEst
+        "pinv",
     ],
     "random": [
         "choice",
