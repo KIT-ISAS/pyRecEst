@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 from copy import deepcopy
 from math import log
 import warnings
@@ -247,7 +247,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
         if self.log_prior_estimates:
             self.store_prior_estimates()
 
-    def update_linear(self, measurements, measurement_matrix, cov_mats_meas):
+    def update_linear(self, measurements, measurement_matrix, cov_mats_meas):  # pylint: disable=too-many-locals
         if self.get_number_of_targets() == 0:
             warnings.warn("Currently, there are zero targets.")
             return
@@ -393,7 +393,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
             + n_tracks * log(missed_detection_probability)
         )
 
-    def _build_candidate_measurements(
+    def _build_candidate_measurements(  # pylint: disable=too-many-locals
         self,
         filter_bank,
         measurements,
@@ -527,7 +527,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
         recurse(0, set(), [], 0.0)
         return best_assignments
 
-    def _apply_assignment(
+    def _apply_assignment(  # pylint: disable=too-many-positional-arguments
         self,
         filter_bank,
         assignment,
