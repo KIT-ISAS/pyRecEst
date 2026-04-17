@@ -29,6 +29,7 @@ from .kalman_filter import KalmanFilter
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
 from .lin_periodic_particle_filter import LinPeriodicParticleFilter
+from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
 from .manifold_mixins import (
     AbstractFilterManifoldMixin,
     AbstractHypersphereSubsetFilter,
@@ -96,6 +97,8 @@ __all__ = [
     "LinBoundedFilterMixin",
     "LinBoundedParticleFilter",
     "LinPeriodicFilterMixin",
+    "BernoulliComponent",
+    "MultiBernoulliTracker",
     "LinPeriodicParticleFilter",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
