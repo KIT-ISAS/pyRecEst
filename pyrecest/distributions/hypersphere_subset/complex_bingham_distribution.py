@@ -8,6 +8,7 @@ Reference:
   Kent, J. T. "The Complex Bingham Distribution and Shape Analysis."
   Journal of the Royal Statistical Society. Series B (Methodological), 1994, 285-299.
 """
+from copy import copy
 from scipy.optimize import least_squares
 
 from pyrecest.backend import (
@@ -320,7 +321,7 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
             log_c0 = ComplexBinghamDistribution.log_norm(B_diag)
             grad = empty(d)
             for i in range(d):
-                lam_p = lam.copy()
+                lam_p = copy(lam)
                 lam_p[i] += eps
                 log_cp = ComplexBinghamDistribution.log_norm(
                     diag(array(lam_p, dtype=complex128))
