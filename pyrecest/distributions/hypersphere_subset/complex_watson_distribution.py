@@ -9,6 +9,7 @@ Reference:
     (Statistical Methodology), Blackwell Publishers Ltd., 1999, 61, 913-926.
 """
 
+import pyrecest.backend
 from scipy.optimize import brentq
 
 from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
@@ -89,6 +90,8 @@ class ComplexWatsonDistribution:
         Returns:
             float or ndarray: -log(C(D, kappa)), same shape as kappa.
         """
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError("log_norm is not supported on the JAX backend.")
         kappa_as_arr = asarray(kappa, dtype=float)
         scalar_input = kappa_as_arr.ndim == 0
         kappa = atleast_1d(kappa_as_arr).ravel()
@@ -346,6 +349,11 @@ def _sample_diagonal_complex_bingham_magnitudes(Lambda, D):
         ndarray: D-dimensional vector of squared magnitudes.
     """
     Lambda_pos = Lambda[: D - 1]  # first D-1 (positive) eigenvalues
+
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError(
+            "_sample_diagonal_complex_bingham_magnitudes is not supported on the JAX backend."
+        )
 
     # Precompute for the truncated exponential inverse CDF
     large = Lambda_pos >= 0.03

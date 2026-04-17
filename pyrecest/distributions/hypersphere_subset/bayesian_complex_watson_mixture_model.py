@@ -13,6 +13,7 @@ Reference:
     https://github.com/libDirectional/libDirectional
 """
 
+import pyrecest.backend
 from scipy.special import digamma  # pylint: disable=no-name-in-module
 
 from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
@@ -178,6 +179,11 @@ class BayesianComplexWatsonMixtureModel:
             dict: Posterior with keys ``B``, ``kappa``, ``alpha``, ``gamma``.
         """
         uniform_component = parameters.get("uniformComponent", False)
+
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError(
+                "estimate_posterior is not supported on the JAX backend."
+            )
 
         assert "initial" in parameters
         assert "B" in parameters["initial"]
@@ -368,6 +374,10 @@ def _complex_bingham_first_order_moments(Lambda_shifted, D):
         ndarray: D-dim non-negative real array normalised to sum 1.
     """
     Lambda = asarray(Lambda_shifted, dtype=float)
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError(
+            "_complex_bingham_first_order_moments is not supported on the JAX backend."
+        )
     eps = 1e-5
     log_F0 = log(max(_simplex_integral(Lambda), 1e-300))
     moments = zeros(D)

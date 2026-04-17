@@ -1,6 +1,7 @@
 import unittest
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
@@ -44,6 +45,10 @@ class TestSimplexIntegralMixture(unittest.TestCase):
         self.assertAlmostEqual(_simplex_integral(Lambda), expected, places=5)
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on JAX backend",
+)
 class TestComplexBinghamFirstOrderMoments(unittest.TestCase):
     def test_uniform_zero_eigenvalues(self):
         D = 3
@@ -66,6 +71,10 @@ class TestComplexBinghamFirstOrderMoments(unittest.TestCase):
         self.assertGreater(moments[1], moments[2])
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on JAX backend",
+)
 class TestQuadraticExpectation(unittest.TestCase):
     def test_identity_input_equals_moments_sum(self):
         """E[z^H I z] = E[|z|^2] = 1 by definition."""
@@ -132,6 +141,10 @@ class TestParametersDefault(unittest.TestCase):
         self.assertEqual(len(params["initial"]["alpha"]), K)
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on JAX backend",
+)
 class TestFitDefault(unittest.TestCase):
     def test_fit_returns_model(self):
         D, K, N = 3, 2, 50

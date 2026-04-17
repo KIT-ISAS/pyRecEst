@@ -2,6 +2,7 @@ import math
 import unittest
 
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import abs, all, array, einsum, exp, linalg, ones, random, stack
@@ -17,6 +18,10 @@ def _random_unit_vector(D):
     return z / linalg.norm(z)
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on JAX backend",
+)
 class TestComplexWatsonLogNorm(unittest.TestCase):
     """Tests for the log normalisation constant."""
 
@@ -50,6 +55,10 @@ class TestComplexWatsonLogNorm(unittest.TestCase):
         self.assertAlmostEqual(v3, v4, places=2)
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on JAX backend",
+)
 class TestComplexWatsonDistribution(unittest.TestCase):
     """Tests for ComplexWatsonDistribution."""
 
