@@ -48,9 +48,10 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
         transformation : str, optional
             Transformation to use ('sqrt' or 'identity'). Default is 'sqrt'.
         """
-        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        if pyrecest.backend.__backend_name__ in ("jax", "pytorch"):  # pylint: disable=no-member
             raise NotImplementedError(
-                "HypertoroidalFourierFilter is not supported on the JAX backend."
+                "HypertoroidalFourierFilter is not supported on the "
+                f"{pyrecest.backend.__backend_name__} backend."
             )
         if isinstance(n_coefficients, int):
             n_coefficients = (n_coefficients,)
