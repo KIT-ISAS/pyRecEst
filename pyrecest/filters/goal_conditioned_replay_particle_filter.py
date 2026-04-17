@@ -31,7 +31,7 @@ from typing import Any
 
 import pyrecest.backend
 
-# pylint: disable=no-name-in-module,no-member,redefined-builtin
+# pylint: disable=no-name-in-module,no-member,redefined-builtin,duplicate-code
 from pyrecest.backend import (
     arange,
     argmin,

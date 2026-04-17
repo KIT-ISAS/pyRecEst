@@ -27,7 +27,7 @@ from typing import Callable
 
 import pyrecest.backend
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 from pyrecest.backend import (
     argmax,
     argmin,
@@ -499,7 +499,7 @@ class GoalConditionedReplayIMMFilter(  # pylint: disable=too-many-instance-attri
 
     @staticmethod
     def _coerce_measurement_noise_cov(meas_noise, dim: int, name: str = "meas_noise"):
-        if hasattr(meas_noise, "dim"):
+        if hasattr(meas_noise, "dim") and not callable(meas_noise.dim):
             if meas_noise.dim != dim:
                 raise ValueError(f"{name}.dim must equal {dim}")
             if hasattr(meas_noise, "C"):
