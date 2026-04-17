@@ -91,6 +91,7 @@ from numpy import (
     count_nonzero,
     full_like,
     isinf,
+    isfinite,
     deg2rad,
     rad2deg,
     argsort,
