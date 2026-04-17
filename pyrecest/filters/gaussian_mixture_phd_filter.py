@@ -63,7 +63,7 @@ class GaussianMixturePHDState:
         return 0 if not self.dists else self.dists[0].dim
 
 
-class GaussianMixturePHDFilter(AbstractMultitargetTracker):
+class GaussianMixturePHDFilter(AbstractMultitargetTracker):  # pylint: disable=too-many-instance-attributes
     """
     Lightweight Gaussian-mixture PHD filter for linear/Gaussian multitarget tracking.
 
@@ -107,11 +107,11 @@ class GaussianMixturePHDFilter(AbstractMultitargetTracker):
         self.extraction_threshold = extraction_threshold
         self.max_components = max_components
 
-        self._components = []
+        self._components: list[GaussianDistribution] = []
         self._weights = zeros((0,))
         self._dim = None
 
-        self.birth_components = []
+        self.birth_components: list[GaussianDistribution] = []
         self.birth_weights = zeros((0,))
 
         if birth_components is not None:
@@ -257,6 +257,7 @@ class GaussianMixturePHDFilter(AbstractMultitargetTracker):
         birth_state = GaussianMixturePHDState(birth_components, birth_weights)
         return birth_state.dists, birth_state.w
 
+    # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
     def predict_linear(
         self,
         system_matrix,
@@ -316,7 +317,7 @@ class GaussianMixturePHDFilter(AbstractMultitargetTracker):
         if self.log_prior_estimates:
             self.store_prior_estimates()
 
-    # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
+    # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments,too-many-branches,too-many-statements
     def update_linear(
         self,
         measurements,
