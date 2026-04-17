@@ -189,6 +189,7 @@ BACKEND_ATTRIBUTES = {
         "count_nonzero",
         "full_like",
         "isinf",
+        "isfinite",
         "deg2rad",
         "rad2deg",
         "argsort",
@@ -236,6 +237,7 @@ BACKEND_ATTRIBUTES = {
         "svd",
         "matrix_rank",
         "block_diag",  # For PyRecEst
+        "pinv",
     ],
     "random": [
         "choice",

@@ -13,6 +13,11 @@ from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
 from .global_nearest_neighbor import GlobalNearestNeighbor
+from .joint_probabilistic_data_association_filter import (
+    JPDAF,
+    JointProbabilisticDataAssociationFilter,
+)
+from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
 from .gprhm_tracker import GPRHMTracker
 from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .hyperhemisphere_cart_prod_particle_filter import (
@@ -22,12 +27,11 @@ from .hyperhemispherical_grid_filter import HyperhemisphericalGridFilter
 from .hyperhemispherical_particle_filter import HyperhemisphericalParticleFilter
 from .hyperspherical_dummy_filter import HypersphericalDummyFilter
 from .hyperspherical_particle_filter import HypersphericalParticleFilter
+from .hypertoroidal_fourier_filter import HypertoroidalFourierFilter
 from .hyperspherical_ukf import HypersphericalUKF
 from .hypertoroidal_dummy_filter import HypertoroidalDummyFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
 from .kalman_filter import KalmanFilter
-from .unscented_kalman_filter import UnscentedKalmanFilter
-from .ukf_on_manifolds import UKFOnManifolds
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
 from .lin_periodic_particle_filter import LinPeriodicParticleFilter
@@ -45,11 +49,14 @@ from .manifold_mixins import (
     SE2FilterMixin,
     ToroidalFilterMixin,
 )
+from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
+from .ukf_on_manifolds import UKFOnManifolds
+from .unscented_kalman_filter import UnscentedKalmanFilter
 from .von_mises_filter import VonMisesFilter
 from .von_mises_fisher_filter import VonMisesFisherFilter
 from .wrapped_normal_filter import WrappedNormalFilter
@@ -73,7 +80,10 @@ __all__ = [
     "CircularUKF",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
+    "GoalConditionedReplayParticleFilter",
     "GlobalNearestNeighbor",
+    "JPDAF",
+    "JointProbabilisticDataAssociationFilter",
     "GPRHMTracker",
     "HypercylindricalFilterMixin",
     "HypercylindricalParticleFilter",
@@ -87,6 +97,9 @@ __all__ = [
     "HypersphericalUKF",
     "HypertoroidalDummyFilter",
     "HypertoroidalFilterMixin",
+    "HypertoroidalFourierFilter",
+    "AbstractParticleFilter",
+    "HypercylindricalParticleFilter",
     "HypertoroidalParticleFilter",
     "KalmanFilter",
     "UnscentedKalmanFilter",
@@ -95,6 +108,8 @@ __all__ = [
     "LinBoundedFilterMixin",
     "LinBoundedParticleFilter",
     "LinPeriodicFilterMixin",
+    "BernoulliComponent",
+    "MultiBernoulliTracker",
     "LinPeriodicParticleFilter",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
