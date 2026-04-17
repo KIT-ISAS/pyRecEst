@@ -53,7 +53,7 @@ from .abstract_filter import AbstractFilter
 from .manifold_mixins import EuclideanFilterMixin
 
 
-class A(AbstractFilter, EuclideanFilterMixin):
+class GoalConditionedReplayIMMFilter(AbstractFilter, EuclideanFilterMixin):
     """Goal-conditioned replay filter with discrete goals and IMM-style mode switching.
 
     Parameters
@@ -114,7 +114,9 @@ class A(AbstractFilter, EuclideanFilterMixin):
     def __init__(
         self,
         initial_state,
-        candidate_goals,
+        candidate_goals=None,
+        *,
+        goal_candidates=None,
         dt: float = 1.0,
         attraction_strength: float = 1.0,
         velocity_decay: float = 0.95,
@@ -135,6 +137,18 @@ class A(AbstractFilter, EuclideanFilterMixin):
     ):
         raw_mean, raw_cov = self._extract_mean_and_cov(initial_state)
         raw_state_dim = raw_mean.shape[0]
+
+        if candidate_goals is None:
+            candidate_goals = goal_candidates
+        elif goal_candidates is not None:
+            goal_candidates = self._parse_candidate_goals(goal_candidates, raw_state_dim)
+            candidate_goals = self._parse_candidate_goals(candidate_goals, raw_state_dim)
+            if candidate_goals.shape != goal_candidates.shape or backend_sum((candidate_goals - goal_candidates) ** 2) > 0:
+                raise ValueError(
+                    "candidate_goals and goal_candidates must match when both are provided"
+                )
+        if candidate_goals is None:
+            raise ValueError("candidate_goals or goal_candidates must be provided")
 
         parsed_goals = self._parse_candidate_goals(candidate_goals, raw_state_dim)
         self._candidate_goals = parsed_goals
@@ -224,9 +238,10 @@ class A(AbstractFilter, EuclideanFilterMixin):
     def from_factorized_priors(
         cls,
         position_distribution,
-        candidate_goals,
+        candidate_goals=None,
         velocity_distribution=None,
         *,
+        goal_candidates=None,
         goal_prior=None,
         mode_prior=None,
         initial_velocity_covariance=None,
@@ -239,6 +254,13 @@ class A(AbstractFilter, EuclideanFilterMixin):
         compatible first and second moments through ``mean()`` and either
         ``covariance()`` or ``C``.
         """
+        if candidate_goals is None:
+            candidate_goals = goal_candidates
+        elif goal_candidates is not None:
+            raise ValueError(
+                "Provide at most one of candidate_goals and goal_candidates"
+            )
+
         position_mean, position_cov = cls._extract_distribution_moments(
             position_distribution,
             "position_distribution",
@@ -469,6 +491,29 @@ class A(AbstractFilter, EuclideanFilterMixin):
         return matrix
 
     @staticmethod
+    def _coerce_measurement_noise_cov(meas_noise, dim: int, name: str = "meas_noise"):
+        if hasattr(meas_noise, "dim"):
+            if meas_noise.dim != dim:
+                raise ValueError(f"{name}.dim must equal {dim}")
+            if hasattr(meas_noise, "C"):
+                return GoalConditionedReplayIMMFilter._as_square_matrix(
+                    meas_noise.C,
+                    dim,
+                    name,
+                )
+            if hasattr(meas_noise, "covariance"):
+                return GoalConditionedReplayIMMFilter._as_square_matrix(
+                    meas_noise.covariance(),
+                    dim,
+                    name,
+                )
+        return GoalConditionedReplayIMMFilter._as_square_matrix(
+            meas_noise,
+            dim,
+            name,
+        )
+
+    @staticmethod
     def _augment_position_state(position_mean, position_cov, velocity_cov):
         position_dim = position_mean.shape[0]
         zeros_block = zeros((position_dim, position_dim))
@@ -536,6 +581,81 @@ class A(AbstractFilter, EuclideanFilterMixin):
         ]
         self._component_weights = self._build_initial_component_weights()
         self._update_collapsed_state()
+
+    def initialize_from_state_priors(
+        self,
+        position_prior,
+        velocity_prior=None,
+        *,
+        goal_prior=None,
+        mode_prior=None,
+    ):
+        """Reset the filter from separate position / velocity priors.
+
+        This is a convenience instance-level analogue of
+        :meth:`from_factorized_priors`.
+        """
+        position_mean, position_cov = self._extract_distribution_moments(
+            position_prior,
+            "position_prior",
+        )
+        position_mean = atleast_1d(array(position_mean))
+        position_cov = self._as_square_matrix(
+            position_cov,
+            position_mean.shape[0],
+            "position_prior covariance",
+        )
+
+        if position_mean.shape != (self.position_dim,):
+            raise ValueError(
+                f"position_prior mean must have shape ({self.position_dim},)"
+            )
+
+        if velocity_prior is None:
+            canonical_mean, canonical_cov = self._canonical_state(
+                position_mean,
+                position_cov,
+            )
+        else:
+            velocity_mean, velocity_cov = self._extract_distribution_moments(
+                velocity_prior,
+                "velocity_prior",
+            )
+            velocity_mean = atleast_1d(array(velocity_mean))
+            velocity_cov = self._as_square_matrix(
+                velocity_cov,
+                velocity_mean.shape[0],
+                "velocity_prior covariance",
+            )
+            if velocity_mean.shape != (self.position_dim,):
+                raise ValueError(
+                    f"velocity_prior mean must have shape ({self.position_dim},)"
+                )
+            zeros_cross = zeros((self.position_dim, self.position_dim))
+            canonical_mean = concatenate([position_mean, velocity_mean], axis=0)
+            canonical_cov = concatenate(
+                [
+                    concatenate([position_cov, zeros_cross], axis=1),
+                    concatenate([zeros_cross, velocity_cov], axis=1),
+                ],
+                axis=0,
+            )
+
+        if goal_prior is not None:
+            self.goal_prior = self._validate_probability_vector(
+                goal_prior,
+                self.n_goals,
+                "goal_prior",
+            )
+        if mode_prior is not None:
+            self.mode_prior = self._validate_probability_vector(
+                mode_prior,
+                self.n_modes,
+                "mode_prior",
+            )
+
+        self.filter_state = (canonical_mean, canonical_cov)
+        return self
 
     @property
     def dim(self):
@@ -1092,8 +1212,23 @@ class A(AbstractFilter, EuclideanFilterMixin):
             dim * log(2.0 * pi) + log(det_covariance) + quadratic_form
         )
 
+    @staticmethod
+    def _looks_like_measurement_distribution(value) -> bool:
+        return hasattr(value, "dim") and (
+            hasattr(value, "sample") or hasattr(value, "pdf")
+        )
+
+    def _resolve_measurement_and_noise_args(self, measurement, meas_noise):
+        if self._looks_like_measurement_distribution(measurement) and not self._looks_like_measurement_distribution(meas_noise):
+            return meas_noise, measurement
+        return measurement, meas_noise
+
     def update_identity(self, measurement, meas_noise, return_log_marginal: bool = False):
-        meas_noise = self._as_square_matrix(
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.state_dim,
             "meas_noise",
@@ -1112,8 +1247,12 @@ class A(AbstractFilter, EuclideanFilterMixin):
         meas_noise,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         measurement = atleast_1d(array(measurement))
-        meas_noise = self._as_square_matrix(
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.position_dim,
             "meas_noise",
@@ -1135,6 +1274,10 @@ class A(AbstractFilter, EuclideanFilterMixin):
         meas_noise,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         return self.update_position(
             measurement=measurement,
             meas_noise=meas_noise,
@@ -1156,7 +1299,7 @@ class A(AbstractFilter, EuclideanFilterMixin):
                 f"measurement_matrix must have {self.state_dim} columns"
             )
 
-        meas_noise = self._as_square_matrix(
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             measurement_matrix.shape[0],
             "meas_noise",
@@ -1183,7 +1326,7 @@ class A(AbstractFilter, EuclideanFilterMixin):
         """Update with a nonlinear measurement function via EKF linearization."""
         measurement = atleast_1d(array(measurement))
         measurement_dim = measurement.shape[0]
-        cov_mat_meas = self._as_square_matrix(
+        cov_mat_meas = self._coerce_measurement_noise_cov(
             cov_mat_meas,
             measurement_dim,
             "cov_mat_meas",
@@ -1233,8 +1376,12 @@ class A(AbstractFilter, EuclideanFilterMixin):
         meas_noise,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         measurement = atleast_1d(array(measurement))
-        meas_noise = self._as_square_matrix(
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.position_dim,
             "meas_noise",
@@ -1256,13 +1403,17 @@ class A(AbstractFilter, EuclideanFilterMixin):
         meas_noise,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         """Reweight discrete goal hypotheses from a measurement in goal space.
 
         This does not alter the continuous component states. It only updates the
         posterior weights over discrete goal/mode hypotheses.
         """
         measurement = atleast_1d(array(measurement))
-        meas_noise = self._as_square_matrix(
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.position_dim,
             "meas_noise",
@@ -1283,7 +1434,11 @@ class A(AbstractFilter, EuclideanFilterMixin):
         )
 
     def association_likelihood_identity(self, measurement, meas_noise):
-        meas_noise = self._as_square_matrix(
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.state_dim,
             "meas_noise",
@@ -1303,7 +1458,7 @@ class A(AbstractFilter, EuclideanFilterMixin):
                 f"measurement_matrix must have {self.state_dim} columns"
             )
 
-        meas_noise = self._as_square_matrix(
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             measurement_matrix.shape[0],
             "meas_noise",
@@ -1317,7 +1472,11 @@ class A(AbstractFilter, EuclideanFilterMixin):
         )
 
     def association_likelihood_position(self, measurement, meas_noise):
-        meas_noise = self._as_square_matrix(
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.position_dim,
             "meas_noise",
@@ -1332,7 +1491,11 @@ class A(AbstractFilter, EuclideanFilterMixin):
 
 
     def association_likelihood_velocity(self, measurement, meas_noise):
-        meas_noise = self._as_square_matrix(
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.position_dim,
             "meas_noise",
@@ -1346,8 +1509,12 @@ class A(AbstractFilter, EuclideanFilterMixin):
         )
 
     def association_likelihood_goal(self, measurement, meas_noise):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         measurement = atleast_1d(array(measurement))
-        meas_noise = self._as_square_matrix(
+        meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
             self.position_dim,
             "meas_noise",
