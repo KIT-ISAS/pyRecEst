@@ -1,4 +1,4 @@
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=redefined-builtin,no-name-in-module,no-member,duplicate-code
 
 """Linear-Gaussian Joint Probabilistic Data Association Filter."""
 
