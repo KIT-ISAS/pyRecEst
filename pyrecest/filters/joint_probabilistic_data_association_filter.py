@@ -55,6 +55,7 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
 
         self.latest_association_probabilities = None
         self.latest_map_association = None
+        self._latest_posterior_hypotheses = None
         self.filter_bank = []
 
         if initial_prior is not None:
@@ -189,12 +190,12 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
             map_association = -_np.ones(n_targets, dtype=int)
             self.latest_association_probabilities = association_probabilities
             self.latest_map_association = map_association
-            self._latest_posterior_hypotheses = [dict() for _ in range(n_targets)]
+            self._latest_posterior_hypotheses = [{} for _ in range(n_targets)]
             return association_probabilities, map_association
 
         log_likelihoods = _np.full((n_targets, n_meas), -_np.inf)
         eligible_measurements = [[] for _ in range(n_targets)]
-        posterior_hypotheses = [dict() for _ in range(n_targets)]
+        posterior_hypotheses = [{} for _ in range(n_targets)]
 
         for target_index in range(n_targets):
             state = self.filter_bank[target_index].filter_state
@@ -328,7 +329,7 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
         return map_association
 
     # pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
-    def update_linear(self, measurements, measurement_matrix, cov_mats_meas):
+    def update_linear(self, measurements, measurement_matrix, covMatsMeas):
         assert (
             pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
@@ -340,7 +341,7 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
         association_probabilities, _ = self.find_association_probabilities(
             measurements,
             measurement_matrix,
-            cov_mats_meas,
+            covMatsMeas,
         )
 
         posterior_hypotheses = getattr(self, "_latest_posterior_hypotheses", None)
