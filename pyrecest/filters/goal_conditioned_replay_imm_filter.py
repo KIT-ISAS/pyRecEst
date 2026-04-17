@@ -53,7 +53,9 @@ from .abstract_filter import AbstractFilter
 from .manifold_mixins import EuclideanFilterMixin
 
 
-class GoalConditionedReplayIMMFilter(AbstractFilter, EuclideanFilterMixin):
+class GoalConditionedReplayIMMFilter(  # pylint: disable=too-many-instance-attributes,too-many-public-methods
+    AbstractFilter, EuclideanFilterMixin
+):
     """Goal-conditioned replay filter with discrete goals and IMM-style mode switching.
 
     Parameters
@@ -227,7 +229,7 @@ class GoalConditionedReplayIMMFilter(AbstractFilter, EuclideanFilterMixin):
             "mode_prior",
         )
 
-        self._component_states = []
+        self._component_states: list[GaussianDistribution] = []
         self._component_weights = self._build_initial_component_weights()
 
         EuclideanFilterMixin.__init__(self)
@@ -412,7 +414,7 @@ class GoalConditionedReplayIMMFilter(AbstractFilter, EuclideanFilterMixin):
         if raw_state_dim == self.position_dim:
             return eye(self.position_dim)
         if raw_state_dim == self.state_dim:
-            return raw_cov[self.position_dim :, self.position_dim :]
+            return raw_cov[self.velocity_slice, self.velocity_slice]
         raise ValueError(
             "Initial state dimension must match either position_dim or "
             "2 * position_dim"
@@ -1403,15 +1405,15 @@ class GoalConditionedReplayIMMFilter(AbstractFilter, EuclideanFilterMixin):
         meas_noise,
         return_log_marginal: bool = False,
     ):
-        measurement, meas_noise = self._resolve_measurement_and_noise_args(
-            measurement,
-            meas_noise,
-        )
         """Reweight discrete goal hypotheses from a measurement in goal space.
 
         This does not alter the continuous component states. It only updates the
         posterior weights over discrete goal/mode hypotheses.
         """
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         measurement = atleast_1d(array(measurement))
         meas_noise = self._coerce_measurement_noise_cov(
             meas_noise,
