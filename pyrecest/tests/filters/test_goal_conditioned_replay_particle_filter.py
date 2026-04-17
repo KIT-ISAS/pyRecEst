@@ -7,10 +7,10 @@ from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import GoalConditionedReplayParticleFilter
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported"
+)
 class TestGoalConditionedReplayParticleFilter(unittest.TestCase):
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported"
-    )
     def test_predict_replay_moves_velocity_toward_goal(self):
         random.seed(0)
 
@@ -35,9 +35,6 @@ class TestGoalConditionedReplayParticleFilter(unittest.TestCase):
         self.assertEqual(velocity_estimate.shape, (2,))
         self.assertGreater(float(velocity_estimate[0]), 0.2)
 
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported"
-    )
     def test_position_update_returns_log_marginal_and_pulls_particles_to_measurement(
         self,
     ):
@@ -69,9 +66,6 @@ class TestGoalConditionedReplayParticleFilter(unittest.TestCase):
         self.assertFalse(logical_or(isnan(log_marginal), isinf(log_marginal)))
         self.assertGreater(float(position_estimate[0]), 0.5)
 
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported"
-    )
     def test_linear_association_likelihood_is_positive(self):
         random.seed(2)
 
