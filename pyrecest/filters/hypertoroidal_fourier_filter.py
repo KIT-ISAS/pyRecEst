@@ -1,5 +1,7 @@
 import warnings
 
+import pyrecest.backend
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     array,
@@ -46,6 +48,10 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
         transformation : str, optional
             Transformation to use ('sqrt' or 'identity'). Default is 'sqrt'.
         """
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError(
+                "HypertoroidalFourierFilter is not supported on the JAX backend."
+            )
         if isinstance(n_coefficients, int):
             n_coefficients = (n_coefficients,)
         n_coefficients = tuple(int(n) for n in n_coefficients)

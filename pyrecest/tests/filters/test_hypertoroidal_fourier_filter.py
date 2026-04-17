@@ -36,6 +36,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
     # Constructor / initial state
     # -----------------------------------------------------------------
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_init_1d_sqrt(self):
         """1-D filter with sqrt transformation starts with a uniform HFD."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -45,6 +49,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         self.assertEqual(f.filter_state.transformation, "sqrt")
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_init_1d_identity(self):
         """1-D filter with identity transformation starts with a uniform HFD."""
         f = HypertoroidalFourierFilter((11,), "identity")
@@ -52,6 +60,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         self.assertEqual(f.filter_state.transformation, "identity")
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_init_int_arg(self):
         """Passing an int instead of a tuple creates a 1-D filter."""
         f = HypertoroidalFourierFilter(11)
@@ -73,6 +85,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
     # filter_state setter
     # -----------------------------------------------------------------
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_set_state_hfd(self):
         """Setting state with a matching HFD works without warnings."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -87,6 +103,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         )
         self.assertIsInstance(f.filter_state, HypertoroidalFourierDistribution)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_set_state_non_hfd_converts(self):
         """Setting state with a non-HFD distribution triggers a warning and converts."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -99,6 +119,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         )
         self.assertIsInstance(f.filter_state, HypertoroidalFourierDistribution)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_set_state_different_transformation_warns(self):
         """Setting state with a differently transformed HFD triggers a warning."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -113,6 +137,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
             any("setState:transDiffer" in str(wi.message) for wi in w)
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_set_state_different_n_coeffs_warns(self):
         """Setting state with a different number of coefficients triggers a warning."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -131,6 +159,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
     # predict_identity - 1D
     # -----------------------------------------------------------------
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_predict_identity_1d_sqrt(self):
         """1-D predict_identity (sqrt): posterior is still normalized."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -147,6 +179,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         self.assertIsInstance(f.filter_state, HypertoroidalFourierDistribution)
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_predict_identity_1d_identity(self):
         """1-D predict_identity (identity): posterior is still normalized."""
         f = HypertoroidalFourierFilter((11,), "identity")
@@ -163,6 +199,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         self.assertIsInstance(f.filter_state, HypertoroidalFourierDistribution)
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_predict_identity_1d_auto_converts_noise(self):
         """1-D predict_identity: non-HFD noise is converted automatically."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -207,6 +247,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
     # update_identity - 1D
     # -----------------------------------------------------------------
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_update_identity_1d_sqrt(self):
         """1-D update_identity (sqrt): posterior integrates to 1."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -220,6 +264,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         f.update_identity(meas_noise, array([1.5]))
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_update_identity_1d_identity(self):
         """1-D update_identity (identity): posterior integrates to 1."""
         f = HypertoroidalFourierFilter((11,), "identity")
@@ -233,6 +281,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         f.update_identity(meas_noise, array([1.5]))
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_update_identity_1d_auto_converts_noise(self):
         """1-D update_identity: non-HFD noise is converted automatically."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -378,6 +430,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
     # update_nonlinear
     # -----------------------------------------------------------------
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_update_nonlinear_with_hfd(self):
         """update_nonlinear with a pre-computed HFD likelihood."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
@@ -422,6 +478,10 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
     # get_point_estimate
     # -----------------------------------------------------------------
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
     def test_get_point_estimate_1d(self):
         """get_point_estimate returns a value in [0, 2*pi)."""
         f = HypertoroidalFourierFilter((11,), "sqrt")
