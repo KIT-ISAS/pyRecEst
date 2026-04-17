@@ -109,7 +109,7 @@ class GaussianMixturePHDFilter(AbstractMultitargetTracker):  # pylint: disable=t
 
         self._components: list[GaussianDistribution] = []
         self._weights = zeros((0,))
-        self._dim = None
+        self._dim: int | None = None
 
         self.birth_components: list[GaussianDistribution] = []
         self.birth_weights = zeros((0,))
