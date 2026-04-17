@@ -119,7 +119,7 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
     def __init__(
         self,
         n_particles: int | int32 | int64,
-        position_dim: int | int32 | int64,
+        position_dim: int | int32 | int64 | None = None,
         initial_state: (
             AbstractLinearDistribution
             | LinearDiracDistribution
@@ -127,6 +127,7 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
             | None
         ) = None,
         *,
+        spatial_dim: int | int32 | int64 | None = None,
         dt: float = 1.0,
         alpha: float | Any = 0.95,
         beta: float | Any = 1.0,
@@ -145,14 +146,33 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         initial_velocity_distribution: AbstractLinearDistribution | None = None,
         initial_goal_distribution: AbstractLinearDistribution | None = None,
     ):
-        if not (isinstance(position_dim, int) and position_dim > 0):
-            raise ValueError("position_dim must be a positive integer")
-        if not (isinstance(n_particles, int) and n_particles > 0):
+        if position_dim is None:
+            position_dim = spatial_dim
+        elif spatial_dim is not None and int(spatial_dim) != int(position_dim):
+            raise ValueError(
+                "position_dim and spatial_dim must match when both are provided"
+            )
+
+        if position_dim is None:
+            raise ValueError("Either position_dim or spatial_dim must be provided")
+
+        try:
+            position_dim = int(position_dim)
+            n_particles = int(n_particles)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "position_dim/spatial_dim and n_particles must be positive integers"
+            ) from exc
+
+        if position_dim <= 0:
+            raise ValueError("position_dim/spatial_dim must be a positive integer")
+        if n_particles <= 0:
             raise ValueError("n_particles must be a positive integer")
         if dt <= 0.0:
             raise ValueError("dt must be positive")
 
         self.position_dim = position_dim
+        self.spatial_dim = position_dim
         self.state_dim = 3 * position_dim
 
         self.dt = float(dt)
@@ -227,15 +247,22 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
     def from_factorized_priors(
         cls,
         n_particles: int,
-        position_dim: int,
+        position_dim: int | None = None,
         position_distribution: AbstractLinearDistribution | None = None,
         velocity_distribution: AbstractLinearDistribution | None = None,
         goal_distribution: AbstractLinearDistribution | None = None,
         *,
+        spatial_dim: int | None = None,
         candidate_goals=None,
         goal_prior_weights=None,
         **kwargs,
     ) -> "GoalConditionedReplayParticleFilter":
+        if position_dim is None:
+            position_dim = spatial_dim
+        elif spatial_dim is not None and int(spatial_dim) != int(position_dim):
+            raise ValueError(
+                "position_dim and spatial_dim must match when both are provided"
+            )
         replay_filter = cls(
             n_particles=n_particles,
             position_dim=position_dim,
@@ -437,6 +464,36 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
             concatenate((positions, velocities, goals), axis=1)
         )
         self._initialize_transition_diagnostics()
+        return self
+
+    def initialize_from_state_priors(
+        self,
+        position_prior=None,
+        velocity_prior=None,
+        goal_prior=None,
+        weights=None,
+        *,
+        candidate_goals=None,
+        goal_prior_weights=None,
+    ):
+        """Backward-compatible alias for factorized initialization.
+
+        Each prior may be given either as a distribution, a single state vector
+        to broadcast to all particles, or an explicit particle matrix.
+        """
+        self.set_state_components(
+            positions=position_prior,
+            velocities=velocity_prior,
+            goals=goal_prior,
+            weights=weights,
+        )
+        if candidate_goals is not None:
+            self.set_candidate_goals(candidate_goals, goal_prior_weights)
+            if goal_prior is None:
+                self.sample_goals_from_candidates(
+                    candidate_goals,
+                    goal_prior_weights,
+                )
         return self
 
     def set_state_components(self, positions, velocities=None, goals=None, weights=None):
@@ -1118,6 +1175,17 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
             return_log_marginal=return_log_marginal,
         )
 
+    @staticmethod
+    def _looks_like_measurement_distribution(value) -> bool:
+        return hasattr(value, "dim") and (
+            hasattr(value, "sample") or hasattr(value, "pdf")
+        )
+
+    def _resolve_measurement_and_noise_args(self, measurement, meas_noise):
+        if self._looks_like_measurement_distribution(measurement) and not self._looks_like_measurement_distribution(meas_noise):
+            return meas_noise, measurement
+        return measurement, meas_noise
+
     def _component_measurement_matrix(self, component: str):
         if component == "position":
             return concatenate(
@@ -1221,6 +1289,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         meas_noise: AbstractLinearDistribution,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         measurement = atleast_1d(squeeze(measurement))
         if measurement.shape != (self.state_dim,):
             raise ValueError(
@@ -1242,6 +1314,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         meas_noise: AbstractLinearDistribution,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         if meas_noise.dim != self.position_dim:
             raise ValueError("meas_noise.dim must equal position_dim")
         measurement = atleast_1d(squeeze(measurement))
@@ -1263,6 +1339,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         meas_noise: AbstractLinearDistribution,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         if meas_noise.dim != self.position_dim:
             raise ValueError("meas_noise.dim must equal position_dim")
         measurement = atleast_1d(squeeze(measurement))
@@ -1284,6 +1364,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         meas_noise: AbstractLinearDistribution,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         if meas_noise.dim != self.position_dim:
             raise ValueError("meas_noise.dim must equal position_dim")
         measurement = atleast_1d(squeeze(measurement))
@@ -1305,6 +1389,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         meas_noise: AbstractLinearDistribution,
         return_log_marginal: bool = False,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         return self.update_position(
             measurement=measurement,
             meas_noise=meas_noise,
@@ -1316,6 +1404,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         measurement,
         meas_noise: AbstractLinearDistribution,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         return self.association_likelihood_linear(
             measurement,
             self._component_measurement_matrix("position"),
@@ -1327,6 +1419,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         measurement,
         meas_noise: AbstractLinearDistribution,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         return self.association_likelihood_linear(
             measurement,
             self._component_measurement_matrix("velocity"),
@@ -1338,6 +1434,10 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         measurement,
         meas_noise: AbstractLinearDistribution,
     ):
+        measurement, meas_noise = self._resolve_measurement_and_noise_args(
+            measurement,
+            meas_noise,
+        )
         return self.association_likelihood_linear(
             measurement,
             self._component_measurement_matrix("goal"),
