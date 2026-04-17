@@ -14,6 +14,7 @@ from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
 from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
 from .global_nearest_neighbor import GlobalNearestNeighbor
+from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
 from .gprhm_tracker import GPRHMTracker
 from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .hyperhemisphere_cart_prod_particle_filter import (
@@ -44,6 +45,7 @@ from .manifold_mixins import (
     SE2FilterMixin,
     ToroidalFilterMixin,
 )
+from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
@@ -75,6 +77,7 @@ __all__ = [
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
     "GoalConditionedReplayIMMFilter",
+    "GoalConditionedReplayParticleFilter",
     "GlobalNearestNeighbor",
     "GPRHMTracker",
     "HyperhemisphereCartProdParticleFilter",
@@ -98,6 +101,8 @@ __all__ = [
     "LinBoundedFilterMixin",
     "LinBoundedParticleFilter",
     "LinPeriodicFilterMixin",
+    "BernoulliComponent",
+    "MultiBernoulliTracker",
     "LinPeriodicParticleFilter",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
