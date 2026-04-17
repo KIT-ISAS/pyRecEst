@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 import copy
 from math import log
 from numbers import Real
@@ -64,7 +64,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
     approximation similar in spirit to the existing nearest-neighbor tracker.
     """
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         initial_prior=None,
@@ -203,6 +203,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         )
         return likelihood, mahalanobis_distance_squared
 
+    # pylint: disable=too-many-locals
     def _build_association_matrix(self, measurements, measurement_matrix, cov_mats_meas):
         num_components = self.get_number_of_components()
         num_measurements = measurements.shape[1]
@@ -459,6 +460,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         _, col_ind = linear_sum_assignment(association_matrix)
         return array(col_ind)
 
+    # pylint: disable=too-many-locals
     def update_linear(self, measurements, measurement_matrix, cov_mats_meas):
         """Update the multi-Bernoulli tracker with linear/Gaussian measurements."""
         assert (
