@@ -18,7 +18,7 @@ class TestGoalConditionedReplayIMMFilter(unittest.TestCase):
 
         filt = GoalConditionedReplayIMMFilter(
             initial_state=(np.array([0.0, 0.0]), 0.01 * np.eye(2)),
-            goal_candidates=np.array([[1.0, 0.0]]),
+            candidate_goals=np.array([[1.0, 0.0]]),
             dt=1.0,
             attraction_strength=1.0,
             velocity_decay=0.5,
