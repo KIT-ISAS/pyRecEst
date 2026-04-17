@@ -132,7 +132,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
 
         try:
             probability_ndim = ndim(probability)
-        except TypeError:
+        except (TypeError, AttributeError):
             probability_ndim = None
 
         if probability_ndim is not None and probability_ndim > 0:
