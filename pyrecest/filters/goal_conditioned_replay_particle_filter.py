@@ -30,7 +30,7 @@ import copy
 from collections.abc import Callable
 from typing import Any
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
     arange,
     argmin,
@@ -52,12 +52,8 @@ from pyrecest.backend import (
     vstack,
     where,
     zeros,
-    zeros_like,
 )
 from pyrecest.distributions import GaussianDistribution, LinearDiracDistribution
-from pyrecest.distributions.abstract_manifold_specific_distribution import (
-    AbstractManifoldSpecificDistribution,
-)
 from pyrecest.distributions.nonperiodic.abstract_linear_distribution import (
     AbstractLinearDistribution,
 )
@@ -65,6 +61,7 @@ from pyrecest.distributions.nonperiodic.abstract_linear_distribution import (
 from .euclidean_particle_filter import EuclideanParticleFilter
 
 
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
     """Particle filter for goal-conditioned replay with sparse jumps.
 
@@ -115,7 +112,7 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         Optional factorized priors used when ``initial_state`` is omitted.
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-statements
     def __init__(
         self,
         n_particles: int | int32 | int64,
@@ -196,7 +193,7 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         self._candidate_goals = None
         self._candidate_goal_weights = None
         self._last_update_log_marginal = None
-        self._last_transition_diagnostics = None
+        self._last_transition_diagnostics: dict[str, Any] = {}
 
         self._validate_probability(self.jump_probability, "jump_probability")
         self._validate_probability(
@@ -522,7 +519,7 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         if isinstance(component, tuple) and len(component) == 2:
             component = GaussianDistribution(component[0], component[1])
 
-        if isinstance(component, AbstractManifoldSpecificDistribution):
+        if isinstance(component, AbstractLinearDistribution):
             self._validate_component_distribution(component, name)
             samples = component.sample(n_particles)
             return self._coerce_particle_matrix(
@@ -909,7 +906,7 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
     def predict_goal_conditioned(self, **kwargs):
         return self.predict_replay(**kwargs)
 
-    # pylint: disable=too-many-locals,too-many-branches
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def predict_replay(
         self,
         dt: float | None = None,
@@ -1285,10 +1282,14 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
 
     def update_identity(
         self,
+        meas_noise,
         measurement,
-        meas_noise: AbstractLinearDistribution,
+        shift_instead_of_add: bool = True,
         return_log_marginal: bool = False,
     ):
+        if not shift_instead_of_add:
+            raise NotImplementedError()
+
         measurement, meas_noise = self._resolve_measurement_and_noise_args(
             measurement,
             meas_noise,
