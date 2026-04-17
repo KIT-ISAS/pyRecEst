@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module,no-member,duplicate-code
+# pylint: disable=no-name-in-module,no-member,duplicate-code,redefined-builtin
 from copy import deepcopy
 from math import log
 import warnings
