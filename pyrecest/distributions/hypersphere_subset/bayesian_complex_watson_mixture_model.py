@@ -14,6 +14,7 @@ Reference:
 """
 
 import pyrecest.backend
+from copy import copy
 from scipy.special import digamma  # pylint: disable=no-name-in-module
 
 from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
@@ -34,6 +35,7 @@ from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
     real,
     zeros,
     argsort,
+    flip,
 )
 
 from .complex_watson_distribution import ComplexWatsonDistribution
@@ -206,15 +208,15 @@ class BayesianComplexWatsonMixtureModel:
 
         kappa_init = parameters["initial"]["kappa"]
         if asarray(kappa_init).ndim == 0:
-            kappa_init_arr = full(K, float(kappa_init))
+            kappa_init_arr = full((K,), float(kappa_init))
         else:
-            kappa_init_arr = asarray(kappa_init, dtype=float).ravel().copy()
+            kappa_init_arr = copy(asarray(kappa_init, dtype=float).ravel())
 
         posterior = {
-            "B": B_init.copy(),
-            "alpha": asarray(
+            "B": copy(B_init),
+            "alpha": copy(asarray(
                 parameters["initial"]["alpha"], dtype=float
-            ).ravel().copy(),
+            ).ravel()),
             "kappa": kappa_init_arr,
             "gamma": zeros((N, K)),
         }
@@ -243,7 +245,7 @@ class BayesianComplexWatsonMixtureModel:
 
         for _ in range(parameters["I"]):
             # E-step
-            log_gamma = ln_saliencies.copy()
+            log_gamma = copy(ln_saliencies)
 
             quad = BayesianComplexWatsonMixtureModel.quadratic_expectation(
                 ZZ.reshape(D, D, N), posterior["B"]
@@ -337,7 +339,7 @@ class BayesianComplexWatsonMixtureModel:
             Bk = 0.5 * (B[:, :, k] + B[:, :, k].conj().T)
             eigenvalues, U = linalg.eigh(Bk)
 
-            idx = argsort(eigenvalues)[::-1]
+            idx = flip(argsort(eigenvalues), axis=0)
             Lambda = real(eigenvalues[idx])
             U = U[:, idx]
 
@@ -382,7 +384,7 @@ def _complex_bingham_first_order_moments(Lambda_shifted, D):
     log_F0 = log(max(_simplex_integral(Lambda), 1e-300))
     moments = zeros(D)
     for i in range(D):
-        L_plus = Lambda.copy()
+        L_plus = copy(Lambda)
         L_plus[i] += eps
         log_F_plus = log(max(_simplex_integral(L_plus), 1e-300))
         moments[i] = (log_F_plus - log_F0) / eps
@@ -408,7 +410,7 @@ def _simplex_integral(Lambda):
     Returns:
         float: Integral value (always positive).
     """
-    Lambda = asarray(Lambda, dtype=float).copy()
+    Lambda = copy(asarray(Lambda, dtype=float))
     D = len(Lambda)
 
     if D == 1:

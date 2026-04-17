@@ -10,6 +10,7 @@ Reference:
 """
 
 import pyrecest.backend
+from copy import copy
 from scipy.optimize import brentq
 
 from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
@@ -36,6 +37,7 @@ from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
     where,
     zeros,
     zeros_like,
+    flip,
 )
 
 
@@ -108,7 +110,7 @@ class ComplexWatsonDistribution:
         # Intermediate formula (Mardia1999 Eq. 3):
         # log C = log_c_high + log(1 - sum_{j=0}^{D-2} kappa^j * exp(-kappa) / j!)
         running = exp(-kappa)
-        correction_sum = running.copy()
+        correction_sum = copy(running)
         for j in range(1, D - 1):
             running = running * kappa / j
             correction_sum = correction_sum + running
@@ -318,7 +320,7 @@ def _sample_complex_bingham(B, n):
 
     # Eigendecompose -B (so eigenvalues are non-negative in descending order)
     eigenvalues, V = linalg.eigh(-B)
-    idx = argsort(eigenvalues)[::-1]
+    idx = flip(argsort(eigenvalues), axis=0)
     Lambda = real(eigenvalues[idx])
     V = V[:, idx]
 
