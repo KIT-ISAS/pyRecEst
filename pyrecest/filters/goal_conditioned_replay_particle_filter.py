@@ -30,6 +30,8 @@ import copy
 from collections.abc import Callable
 from typing import Any
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
     arange,
@@ -143,6 +145,11 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         initial_velocity_distribution: AbstractLinearDistribution | None = None,
         initial_goal_distribution: AbstractLinearDistribution | None = None,
     ):
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError(
+                "GoalConditionedReplayParticleFilter is not supported on the JAX backend."
+            )
+
         if position_dim is None:
             position_dim = spatial_dim
         elif spatial_dim is not None and int(spatial_dim) != int(position_dim):
