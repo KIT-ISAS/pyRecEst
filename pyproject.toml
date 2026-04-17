@@ -47,7 +47,7 @@ filterwarnings = [
 py-version = "3.13"
 fail-under = 10
 ignore = ["CVS"]
-ignored-modules = ["pyrecest.backend"]
+ignored-modules = ["pyrecest.backend", "healpy"]
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
@@ -66,3 +66,9 @@ disable = [
 
 [tool.pylint.FORMAT]
 max-line-length = 180
+
+[tool.pylint.DESIGN]
+max-args = 6
+max-parents = 15
+max-public-methods = 25
+min-public-methods = 0
