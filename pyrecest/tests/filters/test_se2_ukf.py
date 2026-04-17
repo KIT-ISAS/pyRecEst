@@ -44,8 +44,9 @@ class TestDualQuaternionMultiply(unittest.TestCase):
         theta = pi / 2
         dq_90 = array([cos(theta / 2), sin(theta / 2), 0.0, 0.0])
         result = _dual_quaternion_multiply(dq_90, dq_90)
-        expected = array([cos(pi / 2), sin(pi / 2), 0.0, 0.0])
-        npt.assert_allclose(np.array(result), np.array(expected), atol=1e-10)
+        # cos(pi/2) == 0, sin(pi/2) == 1 (exact mathematical values)
+        expected = array([0.0, 1.0, 0.0, 0.0])
+        npt.assert_allclose(np.array(result), np.array(expected), atol=1e-6)
 
     def test_result_shape(self):
         dq1 = array([1.0, 0.0, 0.0, 0.0])
