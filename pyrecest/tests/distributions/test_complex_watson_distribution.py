@@ -62,7 +62,7 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         kappas = np.array([0.0, 0.1, 1.0, 10.0, 200.0])
         lcs = ComplexWatsonDistribution.log_norm(3, kappas)
         self.assertEqual(lcs.shape, kappas.shape)
-        self.assertTrue(np.all(np.isfinite(lcs)))
+        self.assertTrue(np.all(np.isfinite(np.asarray(lcs, dtype=float))))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
@@ -92,7 +92,7 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         pts = np.array([[1.0, 0.0], [0.0, 1.0], [1j, 0.0]], dtype=complex)
         pts /= np.linalg.norm(pts, axis=1, keepdims=True)
         p = cw.pdf(pts)
-        self.assertTrue(np.all(p >= 0.0))
+        self.assertTrue(np.all(np.asarray(p, dtype=float) >= 0.0))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member

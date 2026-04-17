@@ -8,6 +8,7 @@ from pyrecest.backend import (
     all,
     arange,
     argsort,
+    flip,
     array,
     asarray,
     atleast_1d,
@@ -120,7 +121,7 @@ class ComplexWatsonDistribution:
         Lambda, V = linalg.eigh(-B)
 
         # Reorder to descending
-        idx = argsort(Lambda)[::-1]
+        idx = flip(argsort(Lambda))
         Lambda = real(Lambda[idx])
         V = V[:, idx]
 
@@ -199,7 +200,7 @@ class ComplexWatsonDistribution:
         eigvals, eigvecs = linalg.eigh(S)
 
         # Reorder to descending
-        idx = argsort(eigvals)[::-1]
+        idx = flip(argsort(eigvals))
         eigvals = real(eigvals[idx])
         eigvecs = eigvecs[:, idx]
 
