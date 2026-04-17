@@ -140,6 +140,7 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
             System noise distribution.  Must have a 4-D mean (first two
             entries normalised) and a 4×4 covariance.
         """
+        # pylint: disable=too-many-locals
         assert isinstance(gauss_sys, GaussianDistribution)
         mu_sys = asarray(gauss_sys.mu)
         C_sys = asarray(gauss_sys.C)
@@ -224,6 +225,7 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         z : array_like, shape (4,)
             Measurement in dual-quaternion representation.
         """
+        # pylint: disable=too-many-locals
         assert isinstance(gauss_meas, GaussianDistribution)
         mu_meas = asarray(gauss_meas.mu)
         C_meas = asarray(gauss_meas.C)

@@ -5,7 +5,7 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, eye, linalg, pi, sin
+from pyrecest.backend import array, cos, eye, pi, sin
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.se2_ukf import SE2UKF, _dual_quaternion_multiply
 
