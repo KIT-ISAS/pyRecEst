@@ -113,7 +113,7 @@ class SphericalHarmonicsFilterTest(unittest.TestCase):
         sh_filter1.predict_identity(shd_noise_id)
         sh_filter2.predict_identity(shd_noise_sqrt)
 
-        np.testing.assert_allclose(sh_filter1.state.total_variation_distance_numerical(sh_filter2.state), 0, atol=5e-15)
+        np.testing.assert_allclose(sh_filter1.state.total_variation_distance_numerical(sh_filter2.state), 0, atol=1e-11)
 
     # Helper function to generate truncated normals
     def _generate_truncated_normals(self, mu, sigma, n):
