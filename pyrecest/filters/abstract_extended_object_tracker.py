@@ -66,6 +66,10 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
         - A vector representing both the estimated kinematic state and extent.
         """
 
+    @property
+    def filter_state(self):
+        return self
+
     @abstractmethod
     def get_point_estimate_kinematics(self):
         """

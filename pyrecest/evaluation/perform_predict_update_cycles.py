@@ -51,17 +51,22 @@ def perform_predict_update_cycles(
 
         all_meas_curr_time_step = np.atleast_2d(measurements[t])
         n_updates = all_meas_curr_time_step.shape[0]
-        for m in range(n_updates):
-            curr_meas = all_meas_curr_time_step[m, :]
 
-            if not scenario_config.get("use_likelihood", False):
-                filter_obj.update_identity(
-                    meas_noise=meas_noise_for_filter, measurement=np.squeeze(curr_meas)
-                )
+        if scenario_config.get("eot", False):
+            meas_matrix = scenario_config.get("eot_meas_matrix")
+            filter_obj.update(all_meas_curr_time_step.T, meas_matrix, meas_noise_for_filter)
+        else:
+            for m in range(n_updates):
+                curr_meas = all_meas_curr_time_step[m, :]
 
-            # If plotting is required
-            if scenario_config.get("plot", False):
-                raise NotImplementedError("Plotting is not implemented yet.")
+                if not scenario_config.get("use_likelihood", False):
+                    filter_obj.update_identity(
+                        meas_noise=meas_noise_for_filter, measurement=np.squeeze(curr_meas)
+                    )
+
+                # If plotting is required
+                if scenario_config.get("plot", False):
+                    raise NotImplementedError("Plotting is not implemented yet.")
 
         # Save results only if required (takes time)
         if extract_all_estimates:
