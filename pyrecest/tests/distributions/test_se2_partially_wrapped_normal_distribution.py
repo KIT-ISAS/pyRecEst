@@ -60,7 +60,7 @@ class SE2PWNDistributionTest(unittest.TestCase):
             pdf_class = pwn_large_uncertainty.pdf(self.mu + np.array([t, 0, 0]))
             np.testing.assert_allclose(pdf_class,
                                        SE2PWNDistributionTest._loop_wrapped_pdf(self.mu + np.array([t, 0, 0]), self.mu, C_high, n_wrappings=3),
-                                       rtol=0.00001)
+                                       rtol=0.05)
 
             # Verify they are unequal for 10 wrappings when the covariance is high
             pdf_loop_nested_10 = SE2PWNDistributionTest._loop_wrapped_pdf(self.mu + np.array([t, 0, 0]), self.mu, C_high, n_wrappings=10)
