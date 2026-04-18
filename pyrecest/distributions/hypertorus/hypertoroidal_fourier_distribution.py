@@ -2,6 +2,8 @@ import copy
 import math
 import warnings
 
+import pyrecest.backend
+
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -311,6 +313,10 @@ class HypertoroidalFourierDistribution(
         else:
             mode = "full"
 
+        if pyrecest.backend.__backend_name__ == "pytorch":  # pylint: disable=no-member
+            raise NotImplementedError(
+                "transform_via_coefficients (square) is not supported for the pytorch backend."
+            )
         conv = signal.fftconvolve(self.coeff_mat, self.coeff_mat, mode=mode)
         result = copy.deepcopy(self)
         result.coeff_mat = conv
