@@ -6,6 +6,10 @@ from pyrecest.backend import array, eye, isinf, isnan, random, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import GoalConditionedReplayIMMFilter
 
+from .test_goal_conditioned_replay_common import (
+    assert_association_likelihood_linear_positive,
+)
+
 
 class TestGoalConditionedReplayIMMFilter(unittest.TestCase):
     @unittest.skipIf(
@@ -107,14 +111,4 @@ class TestGoalConditionedReplayIMMFilter(unittest.TestCase):
             jump_probability=0.0,
         )
 
-        H_vel = zeros((2, 4))
-        H_vel[:, 2:4] = eye(2)
-        meas_noise = GaussianDistribution(zeros(2), 0.05 * eye(2))
-
-        assoc = filt.association_likelihood_linear(
-            array([0.2, 0.0]),
-            H_vel,
-            meas_noise,
-        )
-
-        self.assertGreater(assoc, 0.0)
+        assert_association_likelihood_linear_positive(self, filt, state_dim=4)
