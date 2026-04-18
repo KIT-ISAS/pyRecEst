@@ -70,6 +70,9 @@ class HypertoroidalUniformDistribution(
         """
         return 2.0 * pi * random.uniform(size=(n, self.dim))
 
+    def get_manifold_size(self):
+        return (2.0 * pi) ** self.dim
+
     def shift(self, shift_by) -> "HypertoroidalUniformDistribution":
         """
         Shifts the distribution by shift_angles.
