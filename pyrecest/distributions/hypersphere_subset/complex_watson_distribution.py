@@ -121,7 +121,7 @@ class ComplexWatsonDistribution:
         Lambda, V = linalg.eigh(-B)
 
         # Reorder to descending
-        idx = flip(argsort(Lambda))
+        idx = flip(argsort(Lambda), axis=0)
         Lambda = real(Lambda[idx])
         V = V[:, idx]
 
@@ -200,7 +200,7 @@ class ComplexWatsonDistribution:
         eigvals, eigvecs = linalg.eigh(S)
 
         # Reorder to descending
-        idx = flip(argsort(eigvals))
+        idx = flip(argsort(eigvals), axis=0)
         eigvals = real(eigvals[idx])
         eigvecs = eigvecs[:, idx]
 
