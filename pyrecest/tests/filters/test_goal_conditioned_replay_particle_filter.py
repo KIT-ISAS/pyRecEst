@@ -7,6 +7,10 @@ from pyrecest.backend import array, eye, isinf, isnan, logical_or, random, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import GoalConditionedReplayParticleFilter
 
+from .test_goal_conditioned_replay_common import (
+    assert_association_likelihood_linear_positive,
+)
+
 
 @unittest.skipIf(
     pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported"
@@ -81,17 +85,7 @@ class TestGoalConditionedReplayParticleFilter(unittest.TestCase):
             goal_prior=array([1.0, 0.0]),
         )
 
-        H_vel = zeros((2, 6))
-        H_vel[:, 2:4] = eye(2)
-        meas_noise = GaussianDistribution(zeros(2), 0.05 * eye(2))
-
-        assoc = filt.association_likelihood_linear(
-            array([0.2, 0.0]),
-            H_vel,
-            meas_noise,
-        )
-
-        self.assertGreater(float(assoc), 0.0)
+        assert_association_likelihood_linear_positive(self, filt, state_dim=6)
 
 
 if __name__ == "__main__":
