@@ -8,6 +8,7 @@ from pyrecest.filters import (
 
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
+# pylint: disable=too-many-locals
 def configure_for_filter(filter_config, scenario_config, precalculated_params=None):
     if precalculated_params is not None:
         raise NotImplementedError(

@@ -11,16 +11,7 @@ class TestEvalationEOT(TestEvalationBase):
             {"name": "random_matrix", "parameter": None},
         ]
 
-        (
-            last_filter_states,  # pylint: disable=R0801
-            runtimes,  # pylint: disable=R0801
-            run_failed,  # pylint: disable=R0801
-            groundtruths,  # pylint: disable=R0801
-            measurements,  # pylint: disable=R0801
-            scenario_config,  # pylint: disable=R0801
-            filter_configs,  # pylint: disable=R0801
-            evaluation_config,  # pylint: disable=R0801
-        ) = evaluate_for_simulation_config(
+        evaluate_for_simulation_config(  # pylint: disable=R0801
             self.scenario_name,
             filters_configs_input,
             n_runs=self.n_runs_default,
