@@ -1,4 +1,4 @@
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=redefined-builtin,no-name-in-module,no-member,duplicate-code
 import warnings
 
 import pyrecest.backend
