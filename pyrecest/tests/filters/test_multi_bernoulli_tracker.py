@@ -175,7 +175,6 @@ class MultiBernoulliTrackerTest(unittest.TestCase):
             array([10.0, 0.0, 20.0, 0.0]),
         )
 
-
     def test_persistent_labels_are_assigned_and_preserved(self):
         tracker = MultiBernoulliTracker(
             initial_prior=self.initial_components,
@@ -268,7 +267,6 @@ class MultiBernoulliTrackerTest(unittest.TestCase):
                     label="dup",
                 ),
             ]
-
 
     def test_labeled_components_can_be_looked_up_by_label(self):
         tracker = MultiBernoulliTracker(
