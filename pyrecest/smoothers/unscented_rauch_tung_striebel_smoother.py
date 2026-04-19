@@ -1,19 +1,18 @@
 """Unscented Rauch--Tung--Striebel smoother for nonlinear Gaussian models."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
 from copy import copy
-
 import inspect
 from typing import Callable, Sequence
 
-import pyrecest.backend
+import pyrecest.backend  # pylint: disable=no-member
 from bayesian_filters.kalman import MerweScaledSigmaPoints
 from pyrecest.backend import asarray, linalg, ndim, outer, stack, zeros
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_smoother import AbstractSmoother
-from .rauch_tung_striebel_smoother import RauchTungStriebelSmoother
 
 
 class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
@@ -45,7 +44,8 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
 
     @staticmethod
     def _assert_supported_backend():
-        assert pyrecest.backend.__backend_name__ not in (
+        backend_name: str = getattr(pyrecest.backend, "__backend_name__", "")
+        assert backend_name not in (
             "pytorch",
             "jax",
         ), "Not supported on this backend"
@@ -150,7 +150,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
         sys_noise_covariance,
         time_step,
     ) -> tuple[GaussianDistribution, object]:
-        filtered_state = RauchTungStriebelSmoother._as_gaussian(filtered_state)
+        filtered_state = self._as_gaussian(filtered_state)
         sigma_points = self._get_sigma_points(filtered_state.dim)
         sigma_point_array = asarray(
             sigma_points.sigma_points(filtered_state.mu, filtered_state.C)
@@ -182,9 +182,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
                 propagated_deviation,
             )
 
-        predicted_covariance = RauchTungStriebelSmoother._symmetrize(
-            predicted_covariance
-        )
+        predicted_covariance = self._symmetrize(predicted_covariance)
 
         return (
             GaussianDistribution(
@@ -195,14 +193,14 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             cross_covariance,
         )
 
-    def _update_state(
+    def _update_state(  # pylint: disable=too-many-locals
         self,
         predicted_state: "GaussianDistribution | tuple",
         measurement,
         measurement_function: Callable,
         meas_noise_covariance,
     ) -> GaussianDistribution:
-        predicted_state = RauchTungStriebelSmoother._as_gaussian(predicted_state)
+        predicted_state = self._as_gaussian(predicted_state)
         measurement = asarray(measurement).reshape(-1)
 
         sigma_points = self._get_sigma_points(predicted_state.dim)
@@ -251,9 +249,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
         filtered_covariance = (
             predicted_state.C - kalman_gain @ innovation_covariance @ kalman_gain.T
         )
-        filtered_covariance = RauchTungStriebelSmoother._symmetrize(
-            filtered_covariance
-        )
+        filtered_covariance = self._symmetrize(filtered_covariance)
 
         return GaussianDistribution(
             filtered_mean,
@@ -261,7 +257,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             check_validity=False,
         )
 
-    def filter(
+    def filter(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
         self,
         initial_state: "GaussianDistribution | tuple",
         measurements,
@@ -283,8 +279,8 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             Cross-covariances ``Cov[x_t, x_{t+1}]`` needed by the URTS backward pass.
         """
         self._assert_supported_backend()
-        initial_state = RauchTungStriebelSmoother._as_gaussian(initial_state)
-        measurement_list = RauchTungStriebelSmoother._normalize_measurements(measurements)
+        initial_state = self._as_gaussian(initial_state)
+        measurement_list = self._normalize_measurements(measurements)
 
         if len(measurement_list) == 0:
             raise ValueError("At least one measurement is required.")
@@ -298,7 +294,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             "measurement_functions",
             default=lambda x: x,
         )
-        meas_noise_covariances_list = RauchTungStriebelSmoother._normalize_matrix_sequence(
+        meas_noise_covariances_list = self._normalize_matrix_sequence(
             meas_noise_covariances,
             len(measurement_list),
             "meas_noise_covariances",
@@ -310,7 +306,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             "transition_functions",
             default=lambda x, _dt=1.0: x,
         )
-        sys_noise_covariances_list = RauchTungStriebelSmoother._normalize_matrix_sequence(
+        sys_noise_covariances_list = self._normalize_matrix_sequence(
             sys_noise_covariances,
             max(len(measurement_list) - 1, 0),
             "sys_noise_covariances",
@@ -365,54 +361,48 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
         """Run the unscented RTS backward pass."""
         self._assert_supported_backend()
 
-        filtered_states = [
-            RauchTungStriebelSmoother._as_gaussian(state) for state in filtered_states
-        ]
-        predicted_states = [
-            RauchTungStriebelSmoother._as_gaussian(state) for state in predicted_states
-        ]
+        filt_list = [self._as_gaussian(state) for state in filtered_states]
+        pred_list = [self._as_gaussian(state) for state in predicted_states]
 
-        if len(filtered_states) == 0:
+        if len(filt_list) == 0:
             return [], []
-        if len(predicted_states) != len(filtered_states) - 1:
+        if len(pred_list) != len(filt_list) - 1:
             raise ValueError(
                 "predicted_states must have length len(filtered_states) - 1."
             )
-        if len(predicted_cross_covariances) != len(predicted_states):
+        if len(predicted_cross_covariances) != len(pred_list):
             raise ValueError(
                 "predicted_cross_covariances must have the same length as predicted_states."
             )
 
-        smoothed_states: list[GaussianDistribution] = [None] * len(filtered_states)
-        smoother_gains: list = [None] * len(predicted_states)
-        smoothed_states[-1] = filtered_states[-1]
+        smoothed: list[GaussianDistribution | None] = [None] * len(filt_list)
+        gains: list = [None] * len(pred_list)
+        smoothed[-1] = filt_list[-1]
 
-        for time_idx in range(len(filtered_states) - 2, -1, -1):
+        for time_idx in range(len(filt_list) - 2, -1, -1):
             cross_covariance = asarray(predicted_cross_covariances[time_idx])
-            predicted_covariance = predicted_states[time_idx].C
-            smoother_gain = linalg.solve(predicted_covariance.T, cross_covariance.T).T
-            smoother_gains[time_idx] = smoother_gain
+            smoother_gain = linalg.solve(pred_list[time_idx].C.T, cross_covariance.T).T
+            gains[time_idx] = smoother_gain
 
-            mean_update = smoothed_states[time_idx + 1].mu - predicted_states[time_idx].mu
-            smoothed_mean = filtered_states[time_idx].mu + smoother_gain @ mean_update
-            covariance_update = (
-                smoothed_states[time_idx + 1].C - predicted_states[time_idx].C
-            )
+            next_smoothed = smoothed[time_idx + 1]
+            assert next_smoothed is not None
+
+            mean_update = next_smoothed.mu - pred_list[time_idx].mu
+            smoothed_mean = filt_list[time_idx].mu + smoother_gain @ mean_update
+            covariance_update = next_smoothed.C - pred_list[time_idx].C
             smoothed_covariance = (
-                filtered_states[time_idx].C
+                filt_list[time_idx].C
                 + smoother_gain @ covariance_update @ smoother_gain.T
             )
-            smoothed_covariance = RauchTungStriebelSmoother._symmetrize(
-                smoothed_covariance
-            )
+            smoothed_covariance = self._symmetrize(smoothed_covariance)
 
-            smoothed_states[time_idx] = GaussianDistribution(
+            smoothed[time_idx] = GaussianDistribution(
                 smoothed_mean,
                 smoothed_covariance,
                 check_validity=False,
             )
 
-        return smoothed_states, smoother_gains
+        return [s for s in smoothed if s is not None], gains
 
     def smooth_from_filtered(
         self,
@@ -424,38 +414,36 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
         """Smooth from filtered states by recomputing nonlinear predictions."""
         self._assert_supported_backend()
 
-        filtered_states = [
-            RauchTungStriebelSmoother._as_gaussian(state) for state in filtered_states
-        ]
-        if len(filtered_states) == 0:
+        filt_list = [self._as_gaussian(state) for state in filtered_states]
+        if len(filt_list) == 0:
             return [], []
 
-        state_dim = filtered_states[0].dim
+        state_dim = filt_list[0].dim
         transition_functions_list = self._normalize_callable_sequence(
             transition_functions,
-            max(len(filtered_states) - 1, 0),
+            max(len(filt_list) - 1, 0),
             "transition_functions",
             default=lambda x, _dt=1.0: x,
         )
-        sys_noise_covariances_list = RauchTungStriebelSmoother._normalize_matrix_sequence(
+        sys_noise_covariances_list = self._normalize_matrix_sequence(
             sys_noise_covariances,
-            max(len(filtered_states) - 1, 0),
+            max(len(filt_list) - 1, 0),
             "sys_noise_covariances",
             state_dim,
             default=zeros((state_dim, state_dim)),
         )
         time_steps_list = self._normalize_scalar_sequence(
             time_steps,
-            max(len(filtered_states) - 1, 0),
+            max(len(filt_list) - 1, 0),
             "time_steps",
             default=1.0,
         )
 
         predicted_states: list[GaussianDistribution] = []
         predicted_cross_covariances: list = []
-        for time_idx in range(len(filtered_states) - 1):
+        for time_idx in range(len(filt_list) - 1):
             predicted_state, predicted_cross_covariance = self._predict_state(
-                filtered_states[time_idx],
+                filt_list[time_idx],
                 transition_functions_list[time_idx],
                 sys_noise_covariances_list[time_idx],
                 time_steps_list[time_idx],
@@ -464,12 +452,12 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             predicted_cross_covariances.append(predicted_cross_covariance)
 
         return self.smooth(
-            filtered_states=filtered_states,
+            filtered_states=filt_list,
             predicted_states=predicted_states,
             predicted_cross_covariances=predicted_cross_covariances,
         )
 
-    def filter_and_smooth(
+    def filter_and_smooth(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         initial_state: "GaussianDistribution | tuple",
         measurements,

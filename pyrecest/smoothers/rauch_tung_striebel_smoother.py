@@ -1,12 +1,11 @@
 """Rauch--Tung--Striebel smoother for linear Gaussian state-space models."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
-from copy import copy
-
 from typing import Sequence
 
-from pyrecest.backend import asarray, eye, linalg, ndim, zeros
+from pyrecest.backend import eye, linalg, zeros
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_smoother import AbstractSmoother
@@ -45,120 +44,47 @@ class RauchTungStriebelSmoother(AbstractSmoother):
         prediction step. Defaults to zero.
     """
 
-    @staticmethod
-    def _as_gaussian(state: "GaussianDistribution | tuple") -> GaussianDistribution:
-        if isinstance(state, GaussianDistribution):
-            return state
-        if isinstance(state, tuple) and len(state) == 2:
-            return GaussianDistribution(state[0], state[1], check_validity=False)
-        raise ValueError(
-            "State must be a GaussianDistribution or a tuple of (mean, covariance)."
+    def _backward_pass(
+        self,
+        filt_list: list[GaussianDistribution],
+        pred_list: list[GaussianDistribution],
+        sys_matrices_list: list,
+    ) -> tuple[list[GaussianDistribution], list]:
+        """RTS backward recursion given pre-computed filtered/predicted states."""
+        n_states = len(filt_list)
+        smoothed: list[GaussianDistribution | None] = [None] * n_states
+        gains: list = [None] * len(pred_list)
+
+        last = filt_list[-1]
+        smoothed[-1] = GaussianDistribution(
+            last.mu, self._symmetrize(last.C), check_validity=False
         )
 
-    @staticmethod
-    def _symmetrize(matrix):
-        return 0.5 * (matrix + matrix.T)
+        for t in range(n_states - 2, -1, -1):
+            system_matrix = sys_matrices_list[t]
+            smoother_gain = linalg.solve(
+                pred_list[t].C.T,
+                (filt_list[t].C @ system_matrix.T).T,
+            ).T
+            gains[t] = smoother_gain
 
-    @staticmethod
-    def _normalize_measurements(measurements) -> list:
-        if isinstance(measurements, (list, tuple)):
-            return [asarray(measurement).reshape(-1) for measurement in measurements]
+            next_smoothed = smoothed[t + 1]
+            assert next_smoothed is not None
 
-        measurements_array = asarray(measurements)
-        if ndim(measurements_array) == 0:
-            return [measurements_array.reshape((1,))]
-        if ndim(measurements_array) == 1:
-            return [asarray([measurement]) for measurement in measurements_array]
-        if ndim(measurements_array) == 2:
-            return [measurements_array[idx] for idx in range(measurements_array.shape[0])]
-        raise ValueError("Measurements must be a 1-D or 2-D array, or a Python sequence.")
+            smoothed_mean = filt_list[t].mu + smoother_gain @ (
+                next_smoothed.mu - pred_list[t].mu
+            )
+            smoothed_cov = (
+                filt_list[t].C
+                + smoother_gain @ (next_smoothed.C - pred_list[t].C) @ smoother_gain.T
+            )
+            smoothed[t] = GaussianDistribution(
+                smoothed_mean, self._symmetrize(smoothed_cov), check_validity=False
+            )
 
-    @staticmethod
-    def _normalize_matrix_sequence(values, length: int, name: str, matrix_dim: int, default=None) -> list:
-        if length == 0:
-            return []
+        return [s for s in smoothed if s is not None], gains
 
-        if values is None:
-            if default is None:
-                raise ValueError(f"{name} must be provided.")
-            default_arr = asarray(default)
-            return [copy(default_arr) for _ in range(length)]
-
-        values_arr = asarray(values)
-        if ndim(values_arr) == 0:
-            if matrix_dim != 1:
-                raise ValueError(
-                    f"Scalar input for {name} is only supported in one-dimensional models."
-                )
-            scalar_matrix = asarray([[values_arr]])
-            return [copy(scalar_matrix) for _ in range(length)]
-        if ndim(values_arr) == 1 and matrix_dim == 1 and values_arr.shape[0] == length:
-            return [asarray([[values_arr[idx]]]) for idx in range(length)]
-        if ndim(values_arr) == 2:
-            return [copy(values_arr) for _ in range(length)]
-        if ndim(values_arr) == 3 and values_arr.shape[0] == length:
-            return [copy(values_arr[idx]) for idx in range(length)]
-
-        if isinstance(values, (list, tuple)) and len(values) == length:
-            normalized_values = []
-            for value in values:
-                value_arr = asarray(value)
-                if ndim(value_arr) == 0:
-                    if matrix_dim != 1:
-                        raise ValueError(
-                            f"Scalar entries in {name} are only supported in one-dimensional models."
-                        )
-                    normalized_values.append(asarray([[value_arr]]))
-                else:
-                    normalized_values.append(value_arr)
-            return normalized_values
-
-        raise ValueError(
-            f"{name} must be a single matrix or a sequence with length {length}."
-        )
-
-    @staticmethod
-    def _normalize_vector_sequence(values, length: int, name: str, vector_dim: int) -> list:
-        if length == 0:
-            return []
-
-        if values is None:
-            return [None] * length
-
-        values_arr = asarray(values)
-        if ndim(values_arr) == 0:
-            if vector_dim != 1:
-                raise ValueError(
-                    f"Scalar input for {name} is only supported in one-dimensional models."
-                )
-            scalar_vector = asarray([values_arr])
-            return [copy(scalar_vector) for _ in range(length)]
-        if ndim(values_arr) == 1:
-            if vector_dim == 1 and values_arr.shape[0] == length:
-                return [asarray([values_arr[idx]]) for idx in range(length)]
-            return [copy(values_arr) for _ in range(length)]
-        if ndim(values_arr) == 2 and values_arr.shape[0] == length:
-            return [copy(values_arr[idx]) for idx in range(length)]
-
-        if isinstance(values, (list, tuple)) and len(values) == length:
-            normalized_values = []
-            for value in values:
-                value_arr = asarray(value)
-                if ndim(value_arr) == 0:
-                    if vector_dim != 1:
-                        raise ValueError(
-                            f"Scalar entries in {name} are only supported in one-dimensional models."
-                        )
-                    normalized_values.append(asarray([value_arr]))
-                else:
-                    normalized_values.append(value_arr)
-            return normalized_values
-
-        raise ValueError(
-            f"{name} must be a single vector or a sequence with length {length}."
-        )
-
-    def filter(
+    def filter(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
         self,
         initial_state: "GaussianDistribution | tuple",
         measurements,
@@ -313,68 +239,28 @@ class RauchTungStriebelSmoother(AbstractSmoother):
             List of RTS smoother gains, one per backward recursion step.
         """
 
-        filtered_state_list = [self._as_gaussian(state) for state in filtered_states]
-        predicted_state_list = [self._as_gaussian(state) for state in predicted_states]
+        filt_list = [self._as_gaussian(state) for state in filtered_states]
+        pred_list = [self._as_gaussian(state) for state in predicted_states]
 
-        if len(filtered_state_list) == 0:
+        if len(filt_list) == 0:
             raise ValueError("At least one filtered state is required.")
-        if len(predicted_state_list) != max(len(filtered_state_list) - 1, 0):
+        if len(pred_list) != max(len(filt_list) - 1, 0):
             raise ValueError(
                 "predicted_states must contain one entry fewer than filtered_states."
             )
 
-        state_dim = filtered_state_list[0].dim
-        system_matrices_list = self._normalize_matrix_sequence(
+        state_dim = filt_list[0].dim
+        sys_matrices_list = self._normalize_matrix_sequence(
             system_matrices,
-            max(len(filtered_state_list) - 1, 0),
+            max(len(filt_list) - 1, 0),
             "system_matrices",
             state_dim,
             default=eye(state_dim),
         )
 
-        smoothed_states: list[GaussianDistribution | None] = [None] * len(
-            filtered_state_list
-        )
-        smoother_gains: list = [None] * max(len(filtered_state_list) - 1, 0)
+        return self._backward_pass(filt_list, pred_list, sys_matrices_list)
 
-        last_state = filtered_state_list[-1]
-        smoothed_states[-1] = GaussianDistribution(
-            last_state.mu,
-            self._symmetrize(last_state.C),
-            check_validity=False,
-        )
-
-        for time_idx in range(len(filtered_state_list) - 2, -1, -1):
-            filtered_state = filtered_state_list[time_idx]
-            predicted_next_state = predicted_state_list[time_idx]
-            system_matrix = system_matrices_list[time_idx]
-
-            smoother_gain = linalg.solve(
-                predicted_next_state.C.T,
-                (filtered_state.C @ system_matrix.T).T,
-            ).T
-            smoother_gains[time_idx] = smoother_gain
-
-            next_smoothed_state = smoothed_states[time_idx + 1]
-            assert next_smoothed_state is not None
-
-            smoothed_mean = filtered_state.mu + smoother_gain @ (
-                next_smoothed_state.mu - predicted_next_state.mu
-            )
-            smoothed_covariance = filtered_state.C + smoother_gain @ (
-                next_smoothed_state.C - predicted_next_state.C
-            ) @ smoother_gain.T
-            smoothed_covariance = self._symmetrize(smoothed_covariance)
-
-            smoothed_states[time_idx] = GaussianDistribution(
-                smoothed_mean,
-                smoothed_covariance,
-                check_validity=False,
-            )
-
-        return [state for state in smoothed_states if state is not None], smoother_gains
-
-    def filter_and_smooth(
+    def filter_and_smooth(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         initial_state: "GaussianDistribution | tuple",
         measurements,
