@@ -121,7 +121,7 @@ def _solve_subproblem(
         "_full_assignment": full_assignment,
     }
 
-def murty_k_best_assignments(
+def murty_k_best_assignments(  # pylint: disable=too-many-locals
     cost_matrix,
     k: int = 1,
     row_non_assignment_costs=None,
@@ -198,7 +198,7 @@ def murty_k_best_assignments(
     if root_solution is None:
         return []
 
-    solution_heap = []
+    solution_heap: list[tuple[float, int, _MurtySubproblem, dict]] = []
     counter = 0
     heappush(
         solution_heap,
@@ -206,7 +206,7 @@ def murty_k_best_assignments(
     )
     counter += 1
 
-    ranked_solutions = []
+    ranked_solutions: list[dict] = []
     while solution_heap and len(ranked_solutions) < k:
         _, _, subproblem, solution = heappop(solution_heap)
         ranked_solutions.append(
