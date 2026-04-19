@@ -7,7 +7,7 @@ from copy import copy
 import inspect
 from typing import Callable, Sequence
 
-import pyrecest.backend  # pylint: disable=no-member
+import pyrecest.backend
 from bayesian_filters.kalman import MerweScaledSigmaPoints
 from pyrecest.backend import asarray, linalg, ndim, outer, stack, zeros
 from pyrecest.distributions import GaussianDistribution
