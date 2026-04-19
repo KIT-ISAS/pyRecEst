@@ -268,8 +268,8 @@ class UnscentedKalmanFilter:
             dz = (sigmas_h[i] - z_pred)[:, np.newaxis]
             Pxz += Wc[i] * (dx @ dz.T)
 
-        # Kalman gain
-        K = Pxz @ np.linalg.inv(Pz)
+        # Kalman gain  (solve Pz K^T = Pxz^T  =>  K = (Pz^{-1} Pxz^T)^T)
+        K = np.linalg.solve(Pz, Pxz.T).T
 
         self.x = self.x + K @ (z - z_pred)
         self.P = self.P - K @ Pz @ K.T
