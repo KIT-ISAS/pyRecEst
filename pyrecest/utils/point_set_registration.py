@@ -1,8 +1,8 @@
 """Point-set registration utilities for registration-aware tracking.
 
-This module is intentionally lightweight and numpy/scipy based so it can be
-used directly in tracking pipelines that operate on static landmarks such as
-neuron centroids or ROI summaries across imaging sessions.
+This module is intentionally lightweight so it can be used directly in tracking
+pipelines that operate on static landmarks such as neuron centroids or ROI
+summaries across imaging sessions.
 
 The main entry point is :func:`joint_registration_assignment`, which performs
 alternating one-to-one assignment (Hungarian algorithm with optional gating) and
@@ -16,13 +16,30 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Literal
 
-import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from pyrecest.backend import (
+    any,
+    array_equal,
+    asarray,
+    concatenate,
+    empty,
+    eye,
+    full,
+    int64,
+    isfinite,
+    linalg,
+    mean,
+    ones,
+    quantile,
+    sqrt,
+    sum,
+    where,
+    zeros,
+)
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 
 TransformModel = Literal["translation", "rigid", "affine"]
-AssociationCostFn = Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+AssociationCostFn = Callable
 
 
 @dataclass(frozen=True)
@@ -37,12 +54,12 @@ class AffineTransform:
         Translation vector of shape ``(dim,)``.
     """
 
-    matrix: NDArray[np.float64]
-    offset: NDArray[np.float64]
+    matrix: object
+    offset: object
 
     def __post_init__(self) -> None:
-        matrix = np.asarray(self.matrix, dtype=float)
-        offset = np.asarray(self.offset, dtype=float).reshape(-1)
+        matrix = asarray(self.matrix)
+        offset = asarray(self.offset).reshape(-1)
         if matrix.ndim != 2:
             raise ValueError("matrix must be two-dimensional.")
         if matrix.shape[0] != matrix.shape[1]:
@@ -61,18 +78,18 @@ class AffineTransform:
         """Return the identity transform in ``dim`` dimensions."""
         if dim <= 0:
             raise ValueError("dim must be positive.")
-        return AffineTransform(np.eye(dim, dtype=float), np.zeros(dim, dtype=float))
+        return AffineTransform(eye(dim), zeros(dim))
 
-    def apply(self, points: ArrayLike) -> NDArray[np.float64]:
+    def apply(self, points) -> object:
         """Apply the transform to an ``(n_points, dim)`` array of points."""
         points_array = _as_point_array(points)
         if points_array.shape[1] != self.dim:
             raise ValueError("Point dimension does not match transform dimension.")
         return (self.matrix @ points_array.T).T + self.offset
 
-    def homogeneous_matrix(self) -> NDArray[np.float64]:
+    def homogeneous_matrix(self) -> object:
         """Return the homogeneous representation of the affine transform."""
-        transform = np.eye(self.dim + 1, dtype=float)
+        transform = eye(self.dim + 1)
         transform[: self.dim, : self.dim] = self.matrix
         transform[: self.dim, -1] = self.offset
         return transform
@@ -83,18 +100,18 @@ class RegistrationResult:
     """Result of alternating registration and assignment."""
 
     transform: AffineTransform
-    assignment: NDArray[np.int64]
-    matched_reference_indices: NDArray[np.int64]
-    matched_moving_indices: NDArray[np.int64]
-    transformed_reference_points: NDArray[np.float64]
-    matched_costs: NDArray[np.float64]
+    assignment: object
+    matched_reference_indices: object
+    matched_moving_indices: object
+    transformed_reference_points: object
+    matched_costs: object
     rmse: float
     n_iterations: int
     converged: bool
 
 
-def _as_point_array(points: ArrayLike) -> NDArray[np.float64]:
-    points_array = np.asarray(points, dtype=float)
+def _as_point_array(points):
+    points_array = asarray(points)
     if points_array.ndim != 2:
         raise ValueError("points must have shape (n_points, dim).")
     if points_array.shape[0] == 0:
@@ -104,8 +121,7 @@ def _as_point_array(points: ArrayLike) -> NDArray[np.float64]:
     return points_array
 
 
-
-def _validate_pair(source_points: ArrayLike, target_points: ArrayLike) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+def _validate_pair(source_points, target_points):
     source = _as_point_array(source_points)
     target = _as_point_array(target_points)
     if source.shape != target.shape:
@@ -113,20 +129,18 @@ def _validate_pair(source_points: ArrayLike, target_points: ArrayLike) -> tuple[
     return source, target
 
 
-
-def _normalize_weights(weights: ArrayLike | None, n_points: int) -> NDArray[np.float64]:
+def _normalize_weights(weights, n_points):
     if weights is None:
-        return np.full(n_points, 1.0 / n_points, dtype=float)
-    weights_array = np.asarray(weights, dtype=float).reshape(-1)
+        return full(n_points, 1.0 / n_points)
+    weights_array = asarray(weights).reshape(-1)
     if weights_array.shape[0] != n_points:
         raise ValueError("weights must have length n_points.")
-    if np.any(weights_array < 0.0):
+    if any(weights_array < 0.0):
         raise ValueError("weights must be non-negative.")
     weight_sum = float(weights_array.sum())
     if weight_sum <= 0.0:
         raise ValueError("weights must sum to a positive value.")
     return weights_array / weight_sum
-
 
 
 def _minimum_required_matches(model: TransformModel, dim: int) -> int:
@@ -139,13 +153,12 @@ def _minimum_required_matches(model: TransformModel, dim: int) -> int:
     raise ValueError(f"Unsupported transform model: {model}")
 
 
-
 def estimate_transform(
-    source_points: ArrayLike,
-    target_points: ArrayLike,
+    source_points,
+    target_points,
     *,
     model: TransformModel = "affine",
-    weights: ArrayLike | None = None,
+    weights=None,
     allow_reflection: bool = False,
 ) -> AffineTransform:
     """Estimate a transform from matched source/target point pairs.
@@ -172,29 +185,29 @@ def estimate_transform(
         )
 
     normalized_weights = _normalize_weights(weights, n_points)
-    source_centroid = np.average(source, axis=0, weights=normalized_weights)
-    target_centroid = np.average(target, axis=0, weights=normalized_weights)
+    source_centroid = sum(normalized_weights[:, None] * source, axis=0)
+    target_centroid = sum(normalized_weights[:, None] * target, axis=0)
 
     if model == "translation":
-        return AffineTransform(np.eye(dim, dtype=float), target_centroid - source_centroid)
+        return AffineTransform(eye(dim), target_centroid - source_centroid)
 
     if model == "rigid":
         source_centered = source - source_centroid
         target_centered = target - target_centroid
         covariance = (normalized_weights[:, None] * source_centered).T @ target_centered
-        left_singular_vectors, _, right_singular_vectors_transposed = np.linalg.svd(covariance)
+        left_singular_vectors, _, right_singular_vectors_transposed = linalg.svd(covariance)
         rotation = right_singular_vectors_transposed.T @ left_singular_vectors.T
-        if np.linalg.det(rotation) < 0.0 and not allow_reflection:
+        if linalg.det(rotation) < 0.0 and not allow_reflection:
             right_singular_vectors_transposed[-1, :] *= -1.0
             rotation = right_singular_vectors_transposed.T @ left_singular_vectors.T
         offset = target_centroid - rotation @ source_centroid
         return AffineTransform(rotation, offset)
 
     if model == "affine":
-        design_matrix = np.concatenate([source, np.ones((n_points, 1), dtype=float)], axis=1)
-        weighted_design_matrix = design_matrix * np.sqrt(normalized_weights)[:, None]
-        weighted_targets = target * np.sqrt(normalized_weights)[:, None]
-        coefficients, _, _, _ = np.linalg.lstsq(weighted_design_matrix, weighted_targets, rcond=None)
+        design_matrix = concatenate([source, ones((n_points, 1))], axis=1)
+        weighted_design_matrix = design_matrix * sqrt(normalized_weights)[:, None]
+        weighted_targets = target * sqrt(normalized_weights)[:, None]
+        coefficients = linalg.pinv(weighted_design_matrix) @ weighted_targets
         matrix = coefficients[:dim, :].T
         offset = coefficients[dim, :]
         return AffineTransform(matrix, offset)
@@ -202,8 +215,7 @@ def estimate_transform(
     raise ValueError(f"Unsupported transform model: {model}")
 
 
-
-def solve_gated_assignment(cost_matrix: ArrayLike, *, max_cost: float = np.inf) -> NDArray[np.int64]:
+def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
     """Solve one-to-one assignment with optional gating.
 
     Parameters
@@ -216,34 +228,34 @@ def solve_gated_assignment(cost_matrix: ArrayLike, *, max_cost: float = np.inf) 
 
     Returns
     -------
-    numpy.ndarray
-        Integer array of shape ``(n_rows,)`` mapping each row to a column index
-        or ``-1`` if the row is left unmatched.
+    Integer array of shape ``(n_rows,)`` mapping each row to a column index
+    or ``-1`` if the row is left unmatched.
     """
 
-    costs = np.asarray(cost_matrix, dtype=float)
+    costs = asarray(cost_matrix)
     if costs.ndim != 2:
         raise ValueError("cost_matrix must be two-dimensional.")
     if costs.shape[0] == 0:
-        return np.zeros((0,), dtype=np.int64)
+        return zeros((0,), dtype=int64)
     if costs.shape[1] == 0:
-        return -np.ones((costs.shape[0],), dtype=np.int64)
+        return zeros((costs.shape[0],), dtype=int64) - 1
 
-    finite_costs = costs[np.isfinite(costs)]
+    finite_mask = isfinite(costs)
+    finite_costs = costs[finite_mask]
     if finite_costs.size == 0:
-        return -np.ones((costs.shape[0],), dtype=np.int64)
+        return zeros((costs.shape[0],), dtype=int64) - 1
 
-    if np.isfinite(max_cost):
+    if isfinite(max_cost):
         dummy_cost = float(max_cost)
     else:
         dummy_cost = float(finite_costs.max() + 1.0)
 
     padded_size = max(costs.shape)
-    padded_costs = np.full((padded_size, padded_size), dummy_cost, dtype=float)
+    padded_costs = full((padded_size, padded_size), dummy_cost)
     padded_costs[: costs.shape[0], : costs.shape[1]] = costs
     row_indices, col_indices = linear_sum_assignment(padded_costs)
 
-    assignment = -np.ones((costs.shape[0],), dtype=np.int64)
+    assignment = zeros((costs.shape[0],), dtype=int64) - 1
     for row_index, col_index in zip(row_indices, col_indices):
         if row_index >= costs.shape[0] or col_index >= costs.shape[1]:
             continue
@@ -252,22 +264,23 @@ def solve_gated_assignment(cost_matrix: ArrayLike, *, max_cost: float = np.inf) 
     return assignment
 
 
-
-def _default_cost(
-    transformed_reference_points: NDArray[np.float64],
-    moving_points: NDArray[np.float64],
-) -> NDArray[np.float64]:
+def _default_cost(transformed_reference_points, moving_points):
     return cdist(transformed_reference_points, moving_points, metric="euclidean")
 
 
+def _compute_rmse(matched_costs) -> float:
+    if matched_costs.size > 0:
+        return float(sqrt(mean(matched_costs**2)))
+    return float("inf")
+
 
 def joint_registration_assignment(
-    reference_points: ArrayLike,
-    moving_points: ArrayLike,
+    reference_points,
+    moving_points,
     *,
     model: TransformModel = "affine",
     initial_transform: AffineTransform | None = None,
-    max_cost: float = np.inf,
+    max_cost: float = float("inf"),
     cost_function: AssociationCostFn | None = None,
     max_iterations: int = 25,
     tolerance: float = 1e-8,
@@ -327,27 +340,28 @@ def joint_registration_assignment(
         raise ValueError("min_matches must be positive.")
 
     if initial_transform is None:
-        reference_location = np.median(reference, axis=0)
-        moving_location = np.median(moving, axis=0)
-        initial_transform = AffineTransform(np.eye(dim, dtype=float), moving_location - reference_location)
+        reference_location = quantile(reference, 0.5, axis=0)
+        moving_location = quantile(moving, 0.5, axis=0)
+        initial_transform = AffineTransform(eye(dim), moving_location - reference_location)
     elif initial_transform.dim != dim:
         raise ValueError("initial_transform dimension must match the point dimension.")
 
     transform = initial_transform
-    assignment = -np.ones((reference.shape[0],), dtype=np.int64)
+    assignment = zeros((reference.shape[0],), dtype=int64) - 1
     converged = False
+    iteration = 0
     association_cost = _default_cost if cost_function is None else cost_function
 
     for iteration in range(1, max_iterations + 1):
         transformed_reference = transform.apply(reference)
-        current_costs = np.asarray(association_cost(transformed_reference, moving), dtype=float)
+        current_costs = asarray(association_cost(transformed_reference, moving))
         if current_costs.shape != (reference.shape[0], moving.shape[0]):
             raise ValueError(
                 "cost_function must return an array of shape (n_reference, n_moving)."
             )
 
         new_assignment = solve_gated_assignment(current_costs, max_cost=max_cost)
-        matched_reference_indices = np.flatnonzero(new_assignment >= 0)
+        matched_reference_indices = where(new_assignment >= 0)[0]
         if matched_reference_indices.size < min_matches:
             assignment = new_assignment
             transformed_reference = transform.apply(reference)
@@ -355,14 +369,14 @@ def joint_registration_assignment(
             matched_costs = (
                 current_costs[matched_reference_indices, matched_moving_indices]
                 if matched_reference_indices.size > 0
-                else np.empty((0,), dtype=float)
+                else empty((0,))
             )
-            rmse = float(np.sqrt(np.mean(matched_costs**2))) if matched_costs.size > 0 else np.inf
+            rmse = _compute_rmse(matched_costs)
             return RegistrationResult(
                 transform=transform,
                 assignment=assignment,
-                matched_reference_indices=matched_reference_indices.astype(np.int64),
-                matched_moving_indices=matched_moving_indices.astype(np.int64),
+                matched_reference_indices=matched_reference_indices.astype(int64),
+                matched_moving_indices=matched_moving_indices.astype(int64),
                 transformed_reference_points=transformed_reference,
                 matched_costs=matched_costs,
                 rmse=rmse,
@@ -379,10 +393,10 @@ def joint_registration_assignment(
         )
 
         parameter_change = max(
-            float(np.linalg.norm(updated_transform.matrix - transform.matrix)),
-            float(np.linalg.norm(updated_transform.offset - transform.offset)),
+            float(linalg.norm(updated_transform.matrix - transform.matrix)),
+            float(linalg.norm(updated_transform.offset - transform.offset)),
         )
-        same_assignment = np.array_equal(new_assignment, assignment)
+        same_assignment = bool(array_equal(new_assignment, assignment))
         transform = updated_transform
         assignment = new_assignment
 
@@ -391,21 +405,21 @@ def joint_registration_assignment(
             break
 
     transformed_reference = transform.apply(reference)
-    final_costs = np.asarray(association_cost(transformed_reference, moving), dtype=float)
-    matched_reference_indices = np.flatnonzero(assignment >= 0)
+    final_costs = asarray(association_cost(transformed_reference, moving))
+    matched_reference_indices = where(assignment >= 0)[0]
     matched_moving_indices = assignment[matched_reference_indices]
     matched_costs = (
         final_costs[matched_reference_indices, matched_moving_indices]
         if matched_reference_indices.size > 0
-        else np.empty((0,), dtype=float)
+        else empty((0,))
     )
-    rmse = float(np.sqrt(np.mean(matched_costs**2))) if matched_costs.size > 0 else np.inf
+    rmse = _compute_rmse(matched_costs)
 
     return RegistrationResult(
         transform=transform,
         assignment=assignment,
-        matched_reference_indices=matched_reference_indices.astype(np.int64),
-        matched_moving_indices=matched_moving_indices.astype(np.int64),
+        matched_reference_indices=matched_reference_indices.astype(int64),
+        matched_moving_indices=matched_moving_indices.astype(int64),
         transformed_reference_points=transformed_reference,
         matched_costs=matched_costs,
         rmse=rmse,
