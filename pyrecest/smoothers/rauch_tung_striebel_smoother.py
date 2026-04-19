@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from copy import copy
+
 from typing import Sequence
 
 from pyrecest.backend import asarray, eye, linalg, ndim, zeros
@@ -80,7 +82,7 @@ class RauchTungStriebelSmoother(AbstractSmoother):
             if default is None:
                 raise ValueError(f"{name} must be provided.")
             default_arr = asarray(default)
-            return [default_arr.copy() for _ in range(length)]
+            return [copy(default_arr) for _ in range(length)]
 
         values_arr = asarray(values)
         if ndim(values_arr) == 0:
@@ -89,13 +91,13 @@ class RauchTungStriebelSmoother(AbstractSmoother):
                     f"Scalar input for {name} is only supported in one-dimensional models."
                 )
             scalar_matrix = asarray([[values_arr]])
-            return [scalar_matrix.copy() for _ in range(length)]
+            return [copy(scalar_matrix) for _ in range(length)]
         if ndim(values_arr) == 1 and matrix_dim == 1 and values_arr.shape[0] == length:
             return [asarray([[values_arr[idx]]]) for idx in range(length)]
         if ndim(values_arr) == 2:
-            return [values_arr.copy() for _ in range(length)]
+            return [copy(values_arr) for _ in range(length)]
         if ndim(values_arr) == 3 and values_arr.shape[0] == length:
-            return [values_arr[idx].copy() for idx in range(length)]
+            return [copy(values_arr[idx]) for idx in range(length)]
 
         if isinstance(values, (list, tuple)) and len(values) == length:
             normalized_values = []
@@ -130,13 +132,13 @@ class RauchTungStriebelSmoother(AbstractSmoother):
                     f"Scalar input for {name} is only supported in one-dimensional models."
                 )
             scalar_vector = asarray([values_arr])
-            return [scalar_vector.copy() for _ in range(length)]
+            return [copy(scalar_vector) for _ in range(length)]
         if ndim(values_arr) == 1:
             if vector_dim == 1 and values_arr.shape[0] == length:
                 return [asarray([values_arr[idx]]) for idx in range(length)]
-            return [values_arr.copy() for _ in range(length)]
+            return [copy(values_arr) for _ in range(length)]
         if ndim(values_arr) == 2 and values_arr.shape[0] == length:
-            return [values_arr[idx].copy() for idx in range(length)]
+            return [copy(values_arr[idx]) for idx in range(length)]
 
         if isinstance(values, (list, tuple)) and len(values) == length:
             normalized_values = []

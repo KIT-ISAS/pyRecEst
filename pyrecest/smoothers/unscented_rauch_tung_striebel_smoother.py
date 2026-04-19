@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from copy import copy
+
 import inspect
 from typing import Callable, Sequence
 
@@ -165,7 +167,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             propagated_sigma_points,
             sigma_points.Wm,
         )
-        predicted_covariance = asarray(sys_noise_covariance).copy()
+        predicted_covariance = copy(asarray(sys_noise_covariance))
         cross_covariance = zeros((filtered_state.dim, filtered_state.dim))
 
         for idx in range(propagated_sigma_points.shape[0]):
@@ -219,7 +221,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             measurement_sigma_points,
             sigma_points.Wm,
         )
-        innovation_covariance = asarray(meas_noise_covariance).copy()
+        innovation_covariance = copy(asarray(meas_noise_covariance))
         state_measurement_cross_covariance = zeros(
             (predicted_state.dim, predicted_measurement.shape[0])
         )
