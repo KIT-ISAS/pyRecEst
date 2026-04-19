@@ -1,4 +1,3 @@
-import numpy as np
 import numpy.testing as npt
 
 from pyrecest.backend import array, eye
@@ -60,7 +59,7 @@ def test_update_linear_skips_dummy_assignment_from_precomputed_cost_matrix():
 
     prior_estimate = tracker.get_point_estimate().copy()
     measurements = array([[100.0], [0.0]])
-    impossible_costs = array([[np.inf]])
+    impossible_costs = array([[float("inf")]])
 
     tracker.update_linear(
         measurements,

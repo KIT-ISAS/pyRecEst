@@ -1,8 +1,7 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 import warnings
 
-import numpy as _np
-from pyrecest.backend import all, empty, full, repeat, squeeze, stack
+from pyrecest.backend import all, any, asarray, empty, full, isfinite, repeat, squeeze, stack, where
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
@@ -42,7 +41,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
 
     @staticmethod
     def _coerce_cost_matrix(cost_matrix):
-        pairwise_costs = _np.asarray(cost_matrix, dtype=float)
+        pairwise_costs = asarray(cost_matrix)
         if pairwise_costs.ndim != 2:
             raise ValueError("pairwise_cost_matrix must be two-dimensional")
         return pairwise_costs
@@ -70,8 +69,8 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         pad_to = max(n_targets, n_meas) + int(self.association_param["max_new_tracks"])
         association_matrix = full((pad_to, pad_to), gating_cost)
 
-        finite_mask = _np.isfinite(pairwise_cost_matrix)
-        association_matrix[:n_targets, :n_meas] = _np.where(
+        finite_mask = isfinite(pairwise_cost_matrix)
+        association_matrix[:n_targets, :n_meas] = where(
             finite_mask,
             pairwise_cost_matrix,
             infeasible_assignment_cost,
@@ -80,7 +79,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         _, col_ind = linear_sum_assignment(association_matrix)
         association = col_ind[:n_targets]
 
-        if warn_on_no_meas_for_track and _np.any(association >= n_meas):
+        if warn_on_no_meas_for_track and any(association >= n_meas):
             warnings.warn(
                 "GNN: No measurement was within the gating threshold for at least one target.",
                 stacklevel=2,
