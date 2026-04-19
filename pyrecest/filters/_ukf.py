@@ -1,6 +1,6 @@
 """
-Pure-NumPy implementations of Merwe-scaled and Julier sigma-point generators
-and an Unscented Kalman Filter (UKF), replacing the former dependency on the
+Implementations of Merwe-scaled and Julier sigma-point generators and an
+Unscented Kalman Filter (UKF), replacing the former dependency on the
 ``bayesian_filters`` package.
 
 The public API (class names, constructor signatures, attribute names, and
@@ -11,7 +11,23 @@ a one-line import change.
 
 from copy import deepcopy
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    array,
+    asarray,
+    copy,
+    einsum,
+    empty,
+    empty_like,
+    expand_dims,
+    eye,
+    float64,
+    full,
+    linalg,
+    reshape,
+    transpose,
+    zeros,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -46,14 +62,14 @@ class MerweScaledSigmaPoints:
         n = self.n
         lam = self.alpha**2 * (n + self.kappa) - n
 
-        self.Wm = np.full(2 * n + 1, 0.5 / (n + lam))
+        self.Wm = full(2 * n + 1, 0.5 / (n + lam))
         self.Wm[0] = lam / (n + lam)
 
-        self.Wc = self.Wm.copy()
+        self.Wc = copy(self.Wm)
         self.Wc[0] = lam / (n + lam) + (1.0 - self.alpha**2 + self.beta)
 
     # ------------------------------------------------------------------
-    def sigma_points(self, x: np.ndarray, P: np.ndarray) -> np.ndarray:
+    def sigma_points(self, x, P):
         """Return ``(2n+1, n)`` sigma-point matrix.
 
         Parameters
@@ -66,12 +82,12 @@ class MerweScaledSigmaPoints:
         n = self.n
         lam = self.alpha**2 * (n + self.kappa) - n
 
-        x = np.asarray(x, dtype=float).flatten()
-        P = np.asarray(P, dtype=float)
+        x = reshape(asarray(x, dtype=float64), (-1,))
+        P = asarray(P, dtype=float64)
 
-        U = np.linalg.cholesky((n + lam) * P)  # lower-triangular
+        U = linalg.cholesky((n + lam) * P)  # lower-triangular
 
-        sigmas = np.empty((2 * n + 1, n))
+        sigmas = empty((2 * n + 1, n))
         sigmas[0] = x
         for i in range(n):
             sigmas[i + 1] = x + U[:, i]
@@ -100,13 +116,13 @@ class JulierSigmaPoints:
         n = self.n
         k = n + self.kappa
 
-        self.Wm = np.full(2 * n + 1, 0.5 / k)
+        self.Wm = full(2 * n + 1, 0.5 / k)
         self.Wm[0] = self.kappa / k
 
-        self.Wc = self.Wm.copy()
+        self.Wc = copy(self.Wm)
 
     # ------------------------------------------------------------------
-    def sigma_points(self, x: np.ndarray, P: np.ndarray) -> np.ndarray:
+    def sigma_points(self, x, P):
         """Return ``(2n+1, n)`` sigma-point matrix.
 
         Parameters
@@ -119,12 +135,12 @@ class JulierSigmaPoints:
         n = self.n
         k = n + self.kappa
 
-        x = np.asarray(x, dtype=float).flatten()
-        P = np.asarray(P, dtype=float)
+        x = reshape(asarray(x, dtype=float64), (-1,))
+        P = asarray(P, dtype=float64)
 
-        U = np.linalg.cholesky(k * P)  # lower-triangular
+        U = linalg.cholesky(k * P)  # lower-triangular
 
-        sigmas = np.empty((2 * n + 1, n))
+        sigmas = empty((2 * n + 1, n))
         sigmas[0] = x
         for i in range(n):
             sigmas[i + 1] = x + U[:, i]
@@ -164,14 +180,14 @@ class UnscentedKalmanFilter:
         self._fx = fx
         self._points = points
 
-        self.x = np.zeros(dim_x)
-        self.P = np.eye(dim_x)
-        self.Q = np.eye(dim_x)
-        self.R = np.eye(dim_z)
+        self.x = zeros(dim_x)
+        self.P = eye(dim_x)
+        self.Q = eye(dim_x)
+        self.R = eye(dim_z)
 
         # Populated after predict()
-        self.x_prior = self.x.copy()
-        self.P_prior = self.P.copy()
+        self.x_prior = copy(self.x)
+        self.P_prior = copy(self.P)
 
     # ------------------------------------------------------------------
     # Public API
@@ -195,28 +211,28 @@ class UnscentedKalmanFilter:
         sigmas = self._points.sigma_points(self.x, self.P)
         n_sigmas = sigmas.shape[0]
 
-        sigmas_f = np.empty_like(sigmas)
+        sigmas_f = empty_like(sigmas)
         for i in range(n_sigmas):
-            sigmas_f[i] = np.asarray(fx(sigmas[i], dt, **fx_args), dtype=float).flatten()
+            sigmas_f[i] = reshape(asarray(fx(sigmas[i], dt, **fx_args), dtype=float64), (-1,))
 
         Wm = self._points.Wm
         Wc = self._points.Wc
 
-        x_pred = (Wm[:, np.newaxis] * sigmas_f).sum(axis=0)
+        x_pred = einsum("i,ij->j", Wm, sigmas_f)
 
-        P_pred = np.zeros((self.dim_x, self.dim_x))
+        P_pred = zeros((self.dim_x, self.dim_x))
         for i in range(n_sigmas):
-            d = (sigmas_f[i] - x_pred)[:, np.newaxis]
-            P_pred += Wc[i] * (d @ d.T)
-        P_pred += np.asarray(self.Q, dtype=float)
-        P_pred = 0.5 * (P_pred + P_pred.T)
+            d = expand_dims(sigmas_f[i] - x_pred, -1)
+            P_pred = P_pred + Wc[i] * (d @ transpose(d))
+        P_pred = P_pred + asarray(self.Q, dtype=float64)
+        P_pred = 0.5 * (P_pred + transpose(P_pred))
 
         self.x = x_pred
         self.P = P_pred
         self._sigmas_f = sigmas_f  # store for update
 
-        self.x_prior = self.x.copy()
-        self.P_prior = self.P.copy()
+        self.x_prior = copy(self.x)
+        self.P_prior = copy(self.P)
 
     def update(self, z, R=None, hx=None, **hx_args):
         """UKF update step.
@@ -234,9 +250,9 @@ class UnscentedKalmanFilter:
             hx = self._hx
         if R is None:
             R = self.R
-        R = np.asarray(R, dtype=float)
+        R = asarray(R, dtype=float64)
 
-        z = np.asarray(z, dtype=float).flatten()
+        z = reshape(asarray(z, dtype=float64), (-1,))
 
         # Re-generate sigma points if predict() was not called
         if not hasattr(self, "_sigmas_f"):
@@ -248,32 +264,32 @@ class UnscentedKalmanFilter:
         Wc = self._points.Wc
 
         # Propagate sigma points through hx
-        sigmas_h = np.empty((n_sigmas, self.dim_z))
+        sigmas_h = empty((n_sigmas, self.dim_z))
         for i in range(n_sigmas):
-            sigmas_h[i] = np.asarray(hx(sigmas_f[i], **hx_args), dtype=float).flatten()
+            sigmas_h[i] = reshape(asarray(hx(sigmas_f[i], **hx_args), dtype=float64), (-1,))
 
-        z_pred = (Wm[:, np.newaxis] * sigmas_h).sum(axis=0)
+        z_pred = einsum("i,ij->j", Wm, sigmas_h)
 
         # Innovation covariance
-        Pz = np.zeros((self.dim_z, self.dim_z))
+        Pz = zeros((self.dim_z, self.dim_z))
         for i in range(n_sigmas):
-            dz = (sigmas_h[i] - z_pred)[:, np.newaxis]
-            Pz += Wc[i] * (dz @ dz.T)
-        Pz += R
+            dz = expand_dims(sigmas_h[i] - z_pred, -1)
+            Pz = Pz + Wc[i] * (dz @ transpose(dz))
+        Pz = Pz + R
 
         # Cross-covariance
-        Pxz = np.zeros((self.dim_x, self.dim_z))
+        Pxz = zeros((self.dim_x, self.dim_z))
         for i in range(n_sigmas):
-            dx = (sigmas_f[i] - self.x)[:, np.newaxis]
-            dz = (sigmas_h[i] - z_pred)[:, np.newaxis]
-            Pxz += Wc[i] * (dx @ dz.T)
+            dx = expand_dims(sigmas_f[i] - self.x, -1)
+            dz = expand_dims(sigmas_h[i] - z_pred, -1)
+            Pxz = Pxz + Wc[i] * (dx @ transpose(dz))
 
         # Kalman gain  (solve Pz K^T = Pxz^T  =>  K = (Pz^{-1} Pxz^T)^T)
-        K = np.linalg.solve(Pz, Pxz.T).T
+        K = transpose(linalg.solve(Pz, transpose(Pxz)))
 
         self.x = self.x + K @ (z - z_pred)
-        self.P = self.P - K @ Pz @ K.T
-        self.P = 0.5 * (self.P + self.P.T)
+        self.P = self.P - K @ Pz @ transpose(K)
+        self.P = 0.5 * (self.P + transpose(self.P))
 
         # Clear cached sigma points
         del self._sigmas_f
