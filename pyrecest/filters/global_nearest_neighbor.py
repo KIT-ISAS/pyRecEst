@@ -1,4 +1,7 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+import warnings
+
+import numpy as _np
 from pyrecest.backend import all, empty, full, repeat, squeeze, stack
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
@@ -15,12 +18,19 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         log_prior_estimates=True,
         log_posterior_estimates=True,
     ):
+        default_association_param = {
+            "distance_metric_pos": "Mahalanobis",
+            "square_dist": True,
+            "max_new_tracks": 10,
+            "gating_distance_threshold": chi2.ppf(0.999, 2) ** 2,
+            "infeasible_assignment_cost": None,
+        }
         if association_param is None:
+            association_param = default_association_param
+        else:
             association_param = {
-                "distance_metric_pos": "Mahalanobis",
-                "square_dist": True,
-                "max_new_tracks": 10,
-                "gating_distance_threshold": chi2.ppf(0.999, 2) ** 2,
+                **default_association_param,
+                **association_param,
             }
 
         super().__init__(
@@ -29,6 +39,54 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             log_prior_estimates=log_prior_estimates,
             log_posterior_estimates=log_posterior_estimates,
         )
+
+    @staticmethod
+    def _coerce_cost_matrix(cost_matrix):
+        pairwise_costs = _np.asarray(cost_matrix, dtype=float)
+        if pairwise_costs.ndim != 2:
+            raise ValueError("pairwise_cost_matrix must be two-dimensional")
+        return pairwise_costs
+
+    def find_association_from_cost_matrix(
+        self,
+        pairwise_cost_matrix,
+        warn_on_no_meas_for_track=True,
+    ):
+        pairwise_cost_matrix = self._coerce_cost_matrix(pairwise_cost_matrix)
+        n_targets, n_meas = pairwise_cost_matrix.shape
+
+        gating_cost = float(self.association_param["gating_distance_threshold"])
+        infeasible_assignment_cost = self.association_param[
+            "infeasible_assignment_cost"
+        ]
+        if infeasible_assignment_cost is None:
+            infeasible_assignment_cost = gating_cost + 1.0
+        infeasible_assignment_cost = float(infeasible_assignment_cost)
+        if infeasible_assignment_cost <= gating_cost:
+            raise ValueError(
+                "infeasible_assignment_cost must be greater than gating_distance_threshold"
+            )
+
+        pad_to = max(n_targets, n_meas) + int(self.association_param["max_new_tracks"])
+        association_matrix = full((pad_to, pad_to), gating_cost)
+
+        finite_mask = _np.isfinite(pairwise_cost_matrix)
+        association_matrix[:n_targets, :n_meas] = _np.where(
+            finite_mask,
+            pairwise_cost_matrix,
+            infeasible_assignment_cost,
+        )
+
+        _, col_ind = linear_sum_assignment(association_matrix)
+        association = col_ind[:n_targets]
+
+        if warn_on_no_meas_for_track and _np.any(association >= n_meas):
+            warnings.warn(
+                "GNN: No measurement was within the gating threshold for at least one target.",
+                stacklevel=2,
+            )
+
+        return association
 
     # pylint: disable=too-many-locals
     def find_association(
@@ -71,11 +129,15 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             )
 
             if all_cov_mat_meas_equal and all_cov_mat_state_equal:
+                if cov_mats_meas.ndim == 2:
+                    meas_cov = cov_mats_meas
+                else:
+                    meas_cov = cov_mats_meas[:, :, 0]
                 curr_cov_mahalanobis = (
                     measurement_matrix
                     @ all_cov_mats_prior[:, :, 0]
                     @ measurement_matrix.T
-                    + cov_mats_meas[:, :, 0]
+                    + meas_cov
                 )
                 dists = cdist(
                     (measurement_matrix @ all_means_prior).T,
@@ -125,21 +187,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         else:
             raise ValueError("Association scheme not recognized")
 
-        # Pad to square and add max_new_tracks rows and columns
-        pad_to = max(n_targets, n_meas) + self.association_param["max_new_tracks"]
-        association_matrix = full(
-            (pad_to, pad_to), self.association_param["gating_distance_threshold"]
+        return self.find_association_from_cost_matrix(
+            dists,
+            warn_on_no_meas_for_track=warn_on_no_meas_for_track,
         )
-        association_matrix[: dists.shape[0], : dists.shape[1]] = dists
-
-        # Use the Hungarian algorithm to find the optimal assignment
-        _, col_ind = linear_sum_assignment(association_matrix)
-
-        association = col_ind[:n_targets]
-
-        if warn_on_no_meas_for_track and any(association > n_meas):
-            print(
-                "GNN: No measurement was within gating threshold for at least one target."
-            )
-
-        return association
