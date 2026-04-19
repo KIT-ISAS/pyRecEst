@@ -3,9 +3,10 @@ from copy import copy
 from typing import Callable
 
 import pyrecest.backend
-from bayesian_filters.kalman import MerweScaledSigmaPoints
-from bayesian_filters.kalman import UnscentedKalmanFilter as BayesianFiltersUKF
 from pyrecest.backend import atleast_1d
+
+from ._ukf import MerweScaledSigmaPoints
+from ._ukf import UnscentedKalmanFilter as BayesianFiltersUKF
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
@@ -75,7 +76,7 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
     def _ensure_predicted(self):
         """Run a zero-noise predict to populate sigma points if needed."""
         if not self._predicted:
-            import numpy as np  # bayesian_filters operates on numpy arrays
+            import numpy as np
 
             dim_x = self._filter_state.x.shape[0]
             self._filter_state.Q = np.zeros((dim_x, dim_x))

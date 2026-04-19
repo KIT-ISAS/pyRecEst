@@ -38,7 +38,6 @@ line-length = 180
 
 [tool.pytest.ini_options]
 filterwarnings = [
-    "ignore::DeprecationWarning:bayesian_filters.*",
     "ignore::DeprecationWarning:mpmath.*",
     "ignore::scipy.optimize.OptimizeWarning",
 ]

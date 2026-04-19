@@ -10,7 +10,8 @@ References:
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
-from bayesian_filters.kalman import MerweScaledSigmaPoints, UnscentedKalmanFilter
+
+from ._ukf import MerweScaledSigmaPoints, UnscentedKalmanFilter
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, atleast_1d, mod, pi, sign
@@ -23,7 +24,7 @@ from .manifold_mixins import CircularFilterMixin
 def _make_ukf(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     fx, hx, dim_z, x0, P0, Q, R, alpha=1e-3, beta=2.0, kappa=0.0
 ):
-    """Helper to build a UnscentedKalmanFilter from bayesian_filters.
+    """Helper to build an UnscentedKalmanFilter.
 
     Parameters
     ----------

@@ -15,9 +15,10 @@ from typing import Callable
 
 import numpy as np
 import pyrecest.backend
-from bayesian_filters.kalman import MerweScaledSigmaPoints
-from bayesian_filters.kalman import UnscentedKalmanFilter as BayesianFiltersUKF
 from pyrecest.backend import array
+
+from ._ukf import MerweScaledSigmaPoints
+from ._ukf import UnscentedKalmanFilter as BayesianFiltersUKF
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
