@@ -433,7 +433,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         row_sums = transition_matrix.sum(axis=1)
         if pyrecest.backend.any(row_sums <= 0.0):
             raise ValueError("Each row of transition_matrix must sum to a positive value.")
-        if not allclose(row_sums, ones(n_models)):
+        if not allclose(row_sums, 1.0):
             warnings.warn(
                 "Rows of transition_matrix do not sum to one. Renormalizing rows.",
                 UserWarning,
@@ -458,7 +458,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
                 raise ValueError(
                     "At least one model probability must be strictly positive."
                 )
-            if not isclose(curr_sum, array(1.0)):
+            if not isclose(curr_sum, 1.0):
                 warnings.warn(
                     "mode_probabilities do not sum to one. Renormalizing.",
                     UserWarning,
@@ -526,7 +526,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         curr_sum = weights.sum()
         if curr_sum <= 0.0:
             raise ValueError("At least one mixture weight must be strictly positive.")
-        if not isclose(curr_sum, array(1.0)):
+        if not isclose(curr_sum, 1.0):
             weights = weights / curr_sum
 
         means = stack([asarray(curr_state.mu, dtype=float) for curr_state in gaussians])
@@ -575,7 +575,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         return float(
             -0.5
             * (
-                innovation.shape[0] * float(log(array(2.0 * pi)))
+                innovation.shape[0] * float(log(2.0 * pi))
                 + logdet
                 + mahalanobis_distance
             )
