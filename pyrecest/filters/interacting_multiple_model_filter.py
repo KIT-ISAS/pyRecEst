@@ -5,9 +5,28 @@ import copy
 import warnings
 from collections.abc import Sequence
 
-import numpy as _np
 import pyrecest.backend
-from pyrecest.backend import array, eye
+from pyrecest.backend import (
+    allclose,
+    argmax,
+    array,
+    asarray,
+    diag,
+    empty,
+    exp,
+    eye,
+    full,
+    isclose,
+    isfinite,
+    linalg,
+    log,
+    ones,
+    outer,
+    pi,
+    stack,
+    zeros,
+    zeros_like,
+)
 from scipy.special import logsumexp
 
 from pyrecest.distributions import GaussianDistribution, GaussianMixture
@@ -139,7 +158,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
     @property
     def most_likely_model_index(self) -> int:
         """Index of the most likely current model."""
-        return int(_np.argmax(self.mode_probabilities))
+        return int(argmax(self.mode_probabilities))
 
     def interact(self):
         """Perform the IMM interaction (mixing) step.
@@ -147,7 +166,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         The current model probabilities are propagated through the transition matrix,
         and a mixed Gaussian prior is computed for each destination model.
         """
-        previous_probabilities = _np.asarray(self.mode_probabilities, dtype=float).reshape(
+        previous_probabilities = asarray(self.mode_probabilities, dtype=float).reshape(
             -1
         )
         predicted_probabilities = previous_probabilities @ self.transition_matrix
@@ -158,7 +177,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         previous_states = [
             self._as_gaussian(curr_filter.filter_state) for curr_filter in self.filter_bank
         ]
-        mixing_probabilities = _np.zeros((self.n_models, self.n_models), dtype=float)
+        mixing_probabilities = zeros((self.n_models, self.n_models))
 
         for curr_model in range(self.n_models):
             curr_normalizer = predicted_probabilities[curr_model]
@@ -274,7 +293,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         )
         meas_noises = self._broadcast_model_argument(meas_noises, "meas_noises")
 
-        log_likelihoods = _np.empty(self.n_models, dtype=float)
+        log_likelihoods = empty(self.n_models)
         for model_index, (curr_filter, curr_measurement_matrix, curr_meas_noise) in enumerate(
             zip(self.filter_bank, measurement_matrices, meas_noises)
         ):
@@ -287,7 +306,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
             )
 
         self.latest_log_model_likelihoods = log_likelihoods
-        self.latest_model_likelihoods = _np.exp(log_likelihoods)
+        self.latest_model_likelihoods = exp(log_likelihoods)
         self.update_mode_probabilities(log_likelihoods=log_likelihoods)
 
         for curr_filter, curr_measurement_matrix, curr_meas_noise in zip(
@@ -345,39 +364,39 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
             )
 
         if likelihoods is not None:
-            likelihoods = _np.asarray(likelihoods, dtype=float).reshape(-1)
+            likelihoods = asarray(likelihoods, dtype=float).reshape(-1)
             if likelihoods.shape != (self.n_models,):
                 raise ValueError(
                     "likelihoods must contain exactly one value per model in the IMM."
                 )
-            if _np.any(likelihoods < 0.0):
+            if pyrecest.backend.any(likelihoods < 0.0):
                 raise ValueError("likelihoods must be nonnegative.")
-            log_likelihoods = _np.full(self.n_models, -_np.inf, dtype=float)
+            log_likelihoods = full(self.n_models, -float('inf'))
             positive = likelihoods > 0.0
-            log_likelihoods[positive] = _np.log(likelihoods[positive])
+            log_likelihoods[positive] = log(likelihoods[positive])
             self.latest_model_likelihoods = likelihoods
         else:
-            log_likelihoods = _np.asarray(log_likelihoods, dtype=float).reshape(-1)
+            log_likelihoods = asarray(log_likelihoods, dtype=float).reshape(-1)
             if log_likelihoods.shape != (self.n_models,):
                 raise ValueError(
                     "log_likelihoods must contain exactly one value per model in the IMM."
                 )
-            self.latest_model_likelihoods = _np.exp(log_likelihoods)
+            self.latest_model_likelihoods = exp(log_likelihoods)
 
-        prior_probabilities = _np.asarray(self.mode_probabilities, dtype=float).reshape(-1)
-        log_prior = _np.full(self.n_models, -_np.inf, dtype=float)
+        prior_probabilities = asarray(self.mode_probabilities, dtype=float).reshape(-1)
+        log_prior = full(self.n_models, -float('inf'))
         positive = prior_probabilities > 0.0
-        log_prior[positive] = _np.log(prior_probabilities[positive])
+        log_prior[positive] = log(prior_probabilities[positive])
 
         log_posterior_unnormalized = log_prior + log_likelihoods
-        if not _np.isfinite(log_posterior_unnormalized).any():
+        if not isfinite(log_posterior_unnormalized).any():
             raise ValueError(
                 "All model posterior weights are numerically zero. Check the supplied "
                 "likelihoods and priors."
             )
 
         log_normalizer = logsumexp(log_posterior_unnormalized)
-        posterior_probabilities = _np.exp(
+        posterior_probabilities = exp(
             log_posterior_unnormalized - log_normalizer
         )
 
@@ -403,18 +422,18 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
 
     @staticmethod
     def _prepare_transition_matrix(transition_matrix, n_models):
-        transition_matrix = _np.asarray(transition_matrix, dtype=float)
+        transition_matrix = asarray(transition_matrix, dtype=float)
         if transition_matrix.shape != (n_models, n_models):
             raise ValueError(
                 "transition_matrix must have shape (n_models, n_models)."
             )
-        if _np.any(transition_matrix < 0.0):
+        if pyrecest.backend.any(transition_matrix < 0.0):
             raise ValueError("transition_matrix must be elementwise nonnegative.")
 
         row_sums = transition_matrix.sum(axis=1)
-        if _np.any(row_sums <= 0.0):
+        if pyrecest.backend.any(row_sums <= 0.0):
             raise ValueError("Each row of transition_matrix must sum to a positive value.")
-        if not _np.allclose(row_sums, 1.0):
+        if not allclose(row_sums, ones(n_models)):
             warnings.warn(
                 "Rows of transition_matrix do not sum to one. Renormalizing rows.",
                 UserWarning,
@@ -425,21 +444,21 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
     @staticmethod
     def _prepare_mode_probabilities(mode_probabilities, n_models):
         if mode_probabilities is None:
-            mode_probabilities = _np.ones(n_models, dtype=float) / n_models
+            mode_probabilities = ones(n_models) / n_models
         else:
-            mode_probabilities = _np.asarray(mode_probabilities, dtype=float).reshape(-1)
+            mode_probabilities = asarray(mode_probabilities, dtype=float).reshape(-1)
             if mode_probabilities.shape != (n_models,):
                 raise ValueError(
                     "mode_probabilities must contain exactly one value per model."
                 )
-            if _np.any(mode_probabilities < 0.0):
+            if pyrecest.backend.any(mode_probabilities < 0.0):
                 raise ValueError("mode_probabilities must be elementwise nonnegative.")
             curr_sum = mode_probabilities.sum()
             if curr_sum <= 0.0:
                 raise ValueError(
                     "At least one model probability must be strictly positive."
                 )
-            if not _np.isclose(curr_sum, 1.0):
+            if not isclose(curr_sum, array(1.0)):
                 warnings.warn(
                     "mode_probabilities do not sum to one. Renormalizing.",
                     UserWarning,
@@ -491,33 +510,33 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
                 "Subfilter states must be Gaussian or expose mean/covariance information."
             )
 
-        mu = _np.asarray(mu, dtype=float).reshape(-1)
-        covariance = _np.asarray(covariance, dtype=float)
+        mu = asarray(mu, dtype=float).reshape(-1)
+        covariance = asarray(covariance, dtype=float)
         if covariance.ndim == 0:
             covariance = covariance.reshape((1, 1))
         elif covariance.ndim == 1:
-            covariance = _np.diag(covariance)
+            covariance = diag(covariance)
         return GaussianDistribution(mu, covariance, check_validity=False)
 
     @staticmethod
     def _moment_match_gaussians(gaussians, weights) -> GaussianDistribution:
-        weights = _np.asarray(weights, dtype=float).reshape(-1)
+        weights = asarray(weights, dtype=float).reshape(-1)
         if weights.shape != (len(gaussians),):
             raise ValueError("weights must have one entry per Gaussian component.")
         curr_sum = weights.sum()
         if curr_sum <= 0.0:
             raise ValueError("At least one mixture weight must be strictly positive.")
-        if not _np.isclose(curr_sum, 1.0):
+        if not isclose(curr_sum, array(1.0)):
             weights = weights / curr_sum
 
-        means = _np.stack([_np.asarray(curr_state.mu, dtype=float) for curr_state in gaussians])
-        covariance = _np.zeros_like(_np.asarray(gaussians[0].C, dtype=float), dtype=float)
+        means = stack([asarray(curr_state.mu, dtype=float) for curr_state in gaussians])
+        covariance = zeros_like(asarray(gaussians[0].C, dtype=float))
         mean = weights @ means
         for curr_weight, curr_state in zip(weights, gaussians):
-            curr_covariance = _np.asarray(curr_state.C, dtype=float)
-            curr_diff = _np.asarray(curr_state.mu, dtype=float) - mean
+            curr_covariance = asarray(curr_state.C, dtype=float)
+            curr_diff = asarray(curr_state.mu, dtype=float) - mean
             covariance += curr_weight * (
-                curr_covariance + _np.outer(curr_diff, curr_diff)
+                curr_covariance + outer(curr_diff, curr_diff)
             )
         covariance = 0.5 * (covariance + covariance.T)
         return GaussianDistribution(mean, covariance, check_validity=False)
@@ -529,33 +548,34 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         measurement_matrix,
         meas_noise,
     ) -> float:
-        measurement = _np.asarray(measurement, dtype=float).reshape(-1)
-        measurement_matrix = _np.asarray(measurement_matrix, dtype=float)
-        meas_noise = _np.asarray(meas_noise, dtype=float)
+        measurement = asarray(measurement, dtype=float).reshape(-1)
+        measurement_matrix = asarray(measurement_matrix, dtype=float)
+        meas_noise = asarray(meas_noise, dtype=float)
         if meas_noise.ndim == 0:
             meas_noise = meas_noise.reshape((1, 1))
         elif meas_noise.ndim == 1:
-            meas_noise = _np.diag(meas_noise)
+            meas_noise = diag(meas_noise)
 
-        innovation = measurement - measurement_matrix @ _np.asarray(
+        innovation = measurement - measurement_matrix @ asarray(
             predicted_state.mu, dtype=float
         )
         innovation_covariance = (
-            measurement_matrix @ _np.asarray(predicted_state.C, dtype=float) @ measurement_matrix.T
+            measurement_matrix @ asarray(predicted_state.C, dtype=float) @ measurement_matrix.T
             + meas_noise
         )
-        sign, logdet = _np.linalg.slogdet(innovation_covariance)
-        if sign <= 0.0:
+        det_value = float(linalg.det(innovation_covariance))
+        if det_value <= 0.0:
             raise ValueError(
                 "Innovation covariance must be positive definite to evaluate the IMM likelihood."
             )
+        logdet = float(log(array(det_value)))
         mahalanobis_distance = float(
-            innovation.T @ _np.linalg.solve(innovation_covariance, innovation)
+            innovation.T @ linalg.solve(innovation_covariance, innovation)
         )
         return float(
             -0.5
             * (
-                innovation.shape[0] * _np.log(2.0 * _np.pi)
+                innovation.shape[0] * float(log(array(2.0 * pi)))
                 + logdet
                 + mahalanobis_distance
             )
