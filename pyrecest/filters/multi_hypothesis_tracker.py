@@ -471,7 +471,9 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
 
         return candidate_measurements
 
-    def _enumerate_candidate_assignments(self, candidate_measurements, base_log_score):
+    def _enumerate_candidate_assignments(  # pylint: disable=too-many-locals
+        self, candidate_measurements, base_log_score
+    ):
         max_assignments = int(
             self.association_param["max_hypotheses_per_global_hypothesis"]
         )

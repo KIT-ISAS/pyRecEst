@@ -61,7 +61,7 @@ class MultiHypothesisTrackerEnumerationTest(unittest.TestCase):
         ]
         base_log_score = -4.5
 
-        actual = tracker._enumerate_candidate_assignments(
+        actual = tracker._enumerate_candidate_assignments(  # pylint: disable=protected-access
             candidate_measurements,
             base_log_score,
         )
@@ -76,7 +76,7 @@ class MultiHypothesisTrackerEnumerationTest(unittest.TestCase):
         tracker = MultiHypothesisTracker.__new__(MultiHypothesisTracker)
         tracker.association_param = {"max_hypotheses_per_global_hypothesis": 3}
 
-        actual = tracker._enumerate_candidate_assignments([[], []], -2.0)
+        actual = tracker._enumerate_candidate_assignments([[], []], -2.0)  # pylint: disable=protected-access
 
         self.assertEqual(actual, [(-2.0, (-1, -1))])
 

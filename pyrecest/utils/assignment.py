@@ -5,7 +5,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from heapq import heappop, heappush
 
-import numpy as _np
+from pyrecest.backend import (
+    abs as _abs,
+    any as _any,
+    asarray as _asarray,
+    concatenate as _concatenate,
+    full as _full,
+    isfinite as _isfinite,
+    sum as _sum,
+    where as _where,
+    zeros as _zeros,
+)
 from scipy.optimize import linear_sum_assignment
 
 @dataclass(frozen=True)
@@ -16,25 +26,25 @@ class _MurtySubproblem:
     forbidden_pairs: tuple[tuple[int, int], ...]
     branching_row_start: int
 
-def _coerce_non_assignment_costs(costs, size: int, name: str) -> _np.ndarray:
+def _coerce_non_assignment_costs(costs, size: int, name: str):
     if costs is None:
-        return _np.zeros(size, dtype=float)
+        return _zeros(size, dtype=float)
 
-    costs = _np.asarray(costs, dtype=float).reshape(-1)
+    costs = _asarray(costs, dtype=float).reshape(-1)
     if costs.shape[0] != size:
         raise ValueError(f"{name} must have length {size}")
     return costs
 
 def _get_large_cost(cost_matrix, row_non_assignment_costs, col_non_assignment_costs):
-    finite_costs = cost_matrix[_np.isfinite(cost_matrix)]
-    finite_entries = _np.concatenate(
+    finite_costs = cost_matrix[_isfinite(cost_matrix)]
+    finite_entries = _concatenate(
         (
             finite_costs.reshape(-1),
             row_non_assignment_costs.reshape(-1),
             col_non_assignment_costs.reshape(-1),
         )
     )
-    return 2.0 * (float(_np.sum(_np.abs(finite_entries))) + 1.0)
+    return 2.0 * (float(_sum(_abs(finite_entries))) + 1.0)
 
 def _build_augmented_cost_matrix(
     cost_matrix,
@@ -43,7 +53,7 @@ def _build_augmented_cost_matrix(
     large_cost,
 ):
     n_rows, n_cols = cost_matrix.shape
-    augmented_cost_matrix = _np.full(
+    augmented_cost_matrix = _full(
         (n_rows + n_cols, n_cols + n_rows),
         large_cost,
         dtype=float,
@@ -51,7 +61,7 @@ def _build_augmented_cost_matrix(
 
     if n_rows > 0 and n_cols > 0:
         finite_cost_matrix = cost_matrix.copy()
-        finite_cost_matrix[~_np.isfinite(finite_cost_matrix)] = large_cost
+        finite_cost_matrix[~_isfinite(finite_cost_matrix)] = large_cost
         augmented_cost_matrix[:n_rows, :n_cols] = finite_cost_matrix
 
     for row_index, row_cost in enumerate(row_non_assignment_costs):
@@ -63,7 +73,7 @@ def _build_augmented_cost_matrix(
     augmented_cost_matrix[n_rows:, n_cols:] = 0.0
     return augmented_cost_matrix
 
-def _solve_subproblem(
+def _solve_subproblem(  # pylint: disable=too-many-locals
     augmented_cost_matrix,
     n_rows: int,
     n_cols: int,
@@ -92,22 +102,22 @@ def _solve_subproblem(
 
     row_ind, col_ind = linear_sum_assignment(modified_cost_matrix)
     chosen_costs = modified_cost_matrix[row_ind, col_ind]
-    if _np.any(chosen_costs >= large_cost / 2.0):
+    if _any(chosen_costs >= large_cost / 2.0):
         return None
 
-    full_assignment = _np.full(n_rows, -1, dtype=int)
+    full_assignment = _full(n_rows, -1, dtype=int)
     for row_index, col_index in zip(row_ind, col_ind):
         if row_index < n_rows:
             full_assignment[row_index] = col_index
 
-    assignment = _np.full(n_rows, -1, dtype=int)
+    assignment = _full(n_rows, -1, dtype=int)
     for row_index, col_index in enumerate(full_assignment):
         if col_index < n_cols:
             assignment[row_index] = col_index
 
     assigned_columns = {int(col_index) for col_index in assignment if col_index >= 0}
-    unassigned_rows = _np.where(assignment < 0)[0].astype(int)
-    unassigned_cols = _np.asarray(
+    unassigned_rows = _where(assignment < 0)[0].astype(int)
+    unassigned_cols = _asarray(
         [col_index for col_index in range(n_cols) if col_index not in assigned_columns],
         dtype=int,
     )
@@ -159,7 +169,7 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
     if k <= 0:
         return []
 
-    cost_matrix = _np.asarray(cost_matrix, dtype=float)
+    cost_matrix = _asarray(cost_matrix, dtype=float)
     if cost_matrix.ndim != 2:
         raise ValueError("cost_matrix must be a two-dimensional array")
 
