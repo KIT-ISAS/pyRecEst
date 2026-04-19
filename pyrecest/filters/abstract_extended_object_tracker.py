@@ -24,36 +24,38 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
         self.log_prior_extents = log_prior_extents
         self.log_posterior_extents = log_posterior_extents
         if log_prior_extents:
-            self.prior_extents_over_time = array([[]])
+            self.prior_extents_over_time = self.history.register(
+                "prior_extents", pad_with_nan=True
+            )
         if log_posterior_extents:
-            self.posterior_extents_over_time = array([[]])
+            self.posterior_extents_over_time = self.history.register(
+                "posterior_extents", pad_with_nan=True
+            )
 
     def store_prior_estimates(self):
         curr_ests = self.get_point_estimate()
         # pylint: disable=W0201
-        self.prior_estimates_over_time = self._store_estimates(
-            curr_ests, self.prior_estimates_over_time
+        self.prior_estimates_over_time = self._record_estimates(
+            "prior_estimates", curr_ests
         )
 
     def store_posterior_estimates(self):
         curr_ests = self.get_point_estimate()
         # pylint: disable=W0201
-        self.posterior_estimates_over_time = self._store_estimates(
-            curr_ests, self.posterior_estimates_over_time
+        self.posterior_estimates_over_time = self._record_estimates(
+            "posterior_estimates", curr_ests
         )
 
     def store_prior_extent(self):
         curr_ext = self.get_point_estimate_extent()
         # pylint: disable=W0201
-        self.prior_extents_over_time = self._store_estimates(
-            curr_ext, self.prior_extents_over_time
-        )
+        self.prior_extents_over_time = self._record_estimates("prior_extents", curr_ext)
 
     def store_posterior_extents(self):
         curr_ext = self.get_point_estimate_extent()
         # pylint: disable=W0201
-        self.posterior_extents_over_time = self._store_estimates(
-            curr_ext, self.posterior_extents_over_time
+        self.posterior_extents_over_time = self._record_estimates(
+            "posterior_extents", curr_ext
         )
 
     @abstractmethod
