@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 import unittest
 
 import pyrecest.backend
