@@ -1,10 +1,11 @@
 import unittest
 
 import numpy.testing as npt
-import pyrecest.backend
-import scipy
 
-from pyrecest.backend import array, column_stack, diag, dstack, eye, zeros
+# pylint: disable=no-member
+import pyrecest.backend
+
+from pyrecest.backend import array, column_stack, diag, eye, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import KalmanFilter
 from pyrecest.filters.global_nearest_neighbor import GlobalNearestNeighbor

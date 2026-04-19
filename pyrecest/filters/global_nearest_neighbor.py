@@ -69,7 +69,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             return dists
         return dists + pairwise_cost_weight * pairwise_cost_matrix
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-positional-arguments
     def find_association(
         self,
         measurements,
