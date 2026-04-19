@@ -412,6 +412,22 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         """Return the labels of all active Bernoulli components."""
         return [copy.deepcopy(component.label) for component in self.bernoulli_components]
 
+    def get_labeled_components(self, copy_components=True):
+        """Return active Bernoulli components keyed by track label."""
+        return {
+            copy.deepcopy(component.label): (
+                copy.deepcopy(component) if copy_components else component
+            )
+            for component in self.bernoulli_components
+        }
+
+    def get_component_by_label(self, label, copy_component=True):
+        """Return a Bernoulli component by track label."""
+        for component in self.bernoulli_components:
+            if component.label == label:
+                return copy.deepcopy(component) if copy_component else component
+        raise KeyError(f"No Bernoulli component with label {label!r} exists.")
+
     def get_track_labels(self, number_of_targets=None):
         """Return the labels of the extracted target states."""
         labels, _ = self.get_labeled_point_estimate(
