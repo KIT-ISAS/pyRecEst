@@ -325,6 +325,7 @@ class InteractingMultipleModelFilter(AbstractFilter, EuclideanFilterMixin):
         log_likelihoods=None,
         hx_args=None,
     ):
+        # pylint: disable=too-many-arguments,too-many-positional-arguments
         """Update each model with a nonlinear measurement function.
 
         Because current nonlinear filters in PyRecEst do not expose a uniform
