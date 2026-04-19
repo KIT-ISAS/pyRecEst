@@ -1,7 +1,10 @@
 import unittest
+from math import nan
 
-import numpy as np
 import numpy.testing as npt
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, zeros
 
 from pyrecest.filters.abstract_extended_object_tracker import AbstractExtendedObjectTracker
 from pyrecest.filters.abstract_filter import AbstractFilter
@@ -11,7 +14,7 @@ from pyrecest.utils import HistoryRecorder
 
 class _DummyBelief:
     def __init__(self, mean):
-        self._mean = np.asarray(mean)
+        self._mean = array(mean)
         self.dim = self._mean.size
 
     def mean(self):
@@ -29,7 +32,7 @@ class _DummyFilter(AbstractFilter):
 class _DummyMultitargetTracker(AbstractMultitargetTracker):
     def __init__(self):
         super().__init__(log_prior_estimates=True, log_posterior_estimates=True)
-        self._estimate = np.array([])
+        self._estimate = array([])
 
     def get_point_estimate(self, flatten_vector=False):
         if flatten_vector:
@@ -48,8 +51,8 @@ class _DummyExtendedTracker(AbstractExtendedObjectTracker):
             log_prior_extents=True,
             log_posterior_extents=True,
         )
-        self._estimate = np.array([])
-        self._extent = np.array([[]])
+        self._estimate = array([])
+        self._extent = array([[]])
 
     def get_point_estimate(self):
         return self._estimate
@@ -63,7 +66,7 @@ class _DummyExtendedTracker(AbstractExtendedObjectTracker):
         return self._extent
 
     def get_contour_points(self, n):
-        return np.zeros((n, 2))
+        return zeros((n, 2))
 
 
 class HistoryRecorderTest(unittest.TestCase):
@@ -71,12 +74,12 @@ class HistoryRecorderTest(unittest.TestCase):
         recorder = HistoryRecorder()
         recorder.register("estimate", pad_with_nan=True)
 
-        recorder.record("estimate", np.array([1.0, 2.0]), pad_with_nan=True)
-        recorder.record("estimate", np.array([3.0]), pad_with_nan=True)
-        recorder.record("estimate", np.array([4.0, 5.0, 6.0]), pad_with_nan=True)
+        recorder.record("estimate", array([1.0, 2.0]), pad_with_nan=True)
+        recorder.record("estimate", array([3.0]), pad_with_nan=True)
+        recorder.record("estimate", array([4.0, 5.0, 6.0]), pad_with_nan=True)
 
-        expected = np.array(
-            [[1.0, 3.0, 4.0], [2.0, np.nan, 5.0], [np.nan, np.nan, 6.0]]
+        expected = array(
+            [[1.0, 3.0, 4.0], [2.0, nan, 5.0], [nan, nan, 6.0]]
         )
         npt.assert_allclose(recorder["estimate"], expected, equal_nan=True)
 
@@ -97,22 +100,22 @@ class HistoryRecorderTest(unittest.TestCase):
 
         recorded_state = filter_obj.history["filter_state"][0]
         self.assertIsNot(recorded_state, filter_obj.filter_state)
-        npt.assert_array_equal(recorded_state.mean(), np.array([1.0, 2.0]))
+        npt.assert_array_equal(recorded_state.mean(), array([1.0, 2.0]))
         npt.assert_array_equal(
-            filter_obj.history["point_estimate"], np.array([[1.0, 3.0], [2.0, 4.0]])
+            filter_obj.history["point_estimate"], array([[1.0, 3.0], [2.0, 4.0]])
         )
 
     def test_multitarget_tracker_logging_is_mirrored_in_history(self):
         tracker = _DummyMultitargetTracker()
-        tracker._estimate = np.array([1.0, 2.0])
+        tracker._estimate = array([1.0, 2.0])
         tracker.store_prior_estimates()
-        tracker._estimate = np.array([3.0])
+        tracker._estimate = array([3.0])
         tracker.store_prior_estimates()
-        tracker._estimate = np.array([4.0, 5.0, 6.0])
+        tracker._estimate = array([4.0, 5.0, 6.0])
         tracker.store_posterior_estimates()
 
-        expected_prior = np.array([[1.0, 3.0], [2.0, np.nan]])
-        expected_posterior = np.array([[4.0], [5.0], [6.0]])
+        expected_prior = array([[1.0, 3.0], [2.0, nan]])
+        expected_posterior = array([[4.0], [5.0], [6.0]])
         npt.assert_allclose(tracker.prior_estimates_over_time, expected_prior, equal_nan=True)
         npt.assert_allclose(tracker.history["prior_estimates"], expected_prior, equal_nan=True)
         npt.assert_allclose(tracker.posterior_estimates_over_time, expected_posterior, equal_nan=True)
@@ -120,18 +123,18 @@ class HistoryRecorderTest(unittest.TestCase):
 
     def test_extended_tracker_logs_extents_via_same_recorder(self):
         tracker = _DummyExtendedTracker()
-        tracker._estimate = np.array([1.0, 2.0])
-        tracker._extent = np.array([[1.0, 0.0], [0.0, 1.0]])
+        tracker._estimate = array([1.0, 2.0])
+        tracker._extent = array([[1.0, 0.0], [0.0, 1.0]])
         tracker.store_prior_estimates()
         tracker.store_prior_extent()
 
-        tracker._estimate = np.array([3.0])
-        tracker._extent = np.array([[2.0]])
+        tracker._estimate = array([3.0])
+        tracker._extent = array([[2.0]])
         tracker.store_posterior_estimates()
         tracker.store_posterior_extents()
 
-        expected_prior_extents = np.array([[1.0], [0.0], [0.0], [1.0]])
-        expected_posterior_extents = np.array([[2.0]])
+        expected_prior_extents = array([[1.0], [0.0], [0.0], [1.0]])
+        expected_posterior_extents = array([[2.0]])
         npt.assert_allclose(
             tracker.history["prior_extents"], expected_prior_extents, equal_nan=True
         )
