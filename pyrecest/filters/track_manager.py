@@ -195,11 +195,8 @@ class TrackManager(
         self._next_track_id = 0
         self._current_step = -1
 
-        if self.keep_history:
-            tracker_history = getattr(self, "history", None)
-            register = getattr(tracker_history, "register", None)
-            if callable(register) and "track_events" not in tracker_history:
-                register("track_events")
+        if self.keep_history and "track_events" not in self.history:
+            self.history.register("track_events")
 
     @property
     def dim(self) -> int:
