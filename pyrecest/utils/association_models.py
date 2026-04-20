@@ -140,11 +140,8 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
     def _sigmoid(values: Any) -> Any:
         """Numerically stable sigmoid."""
         values = asarray(values, dtype=float)
-        return where(
-            values >= 0.0,
-            1.0 / (1.0 + exp(-values)),
-            exp(values) / (1.0 + exp(values)),
-        )
+        exp_neg = exp(-abs(values))
+        return where(values >= 0.0, 1.0 / (1.0 + exp_neg), exp_neg / (1.0 + exp_neg))
 
     @staticmethod
     def _ensure_binary_labels(labels: Any) -> Any:
