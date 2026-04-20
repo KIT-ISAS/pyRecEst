@@ -9,9 +9,19 @@ boolean masks or as sparse pixel lists such as Suite2p ``stat.npy`` entries with
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Mapping, Sequence
 
-import numpy as np
+from pyrecest.backend import (
+    amax,
+    asarray,
+    full,
+    full_like,
+    int64,
+    isfinite,
+    nonzero,
+    zeros,
+)
 from scipy.optimize import linear_sum_assignment
 
 
@@ -40,20 +50,20 @@ def _extract_roi_support(roi) -> set[tuple[int, int]]:
             raise KeyError(
                 "Sparse ROI mappings must provide both 'ypix' and 'xpix' keys."
             )
-        ypix = np.asarray(roi["ypix"], dtype=np.int64).ravel()
-        xpix = np.asarray(roi["xpix"], dtype=np.int64).ravel()
+        ypix = asarray(roi["ypix"], dtype=int64).ravel()
+        xpix = asarray(roi["xpix"], dtype=int64).ravel()
     elif isinstance(roi, (tuple, list)) and len(roi) == 2:
-        ypix = np.asarray(roi[0], dtype=np.int64).ravel()
-        xpix = np.asarray(roi[1], dtype=np.int64).ravel()
+        ypix = asarray(roi[0], dtype=int64).ravel()
+        xpix = asarray(roi[1], dtype=int64).ravel()
     else:
-        mask = np.asarray(roi)
+        mask = asarray(roi)
         if mask.ndim != 2:
             raise ValueError(
                 "Dense ROI representations must be two-dimensional arrays."
             )
-        ypix, xpix = np.nonzero(mask)
-        ypix = ypix.astype(np.int64, copy=False)
-        xpix = xpix.astype(np.int64, copy=False)
+        ypix, xpix = nonzero(mask)
+        ypix = asarray(ypix, dtype=int64)
+        xpix = asarray(xpix, dtype=int64)
 
     if ypix.shape != xpix.shape:
         raise ValueError("ROI coordinate vectors 'ypix' and 'xpix' must have the same length.")
@@ -79,7 +89,7 @@ def roi_iou(roi_a, roi_b) -> float:
     return float(intersection / union) if union > 0 else 0.0
 
 
-def pairwise_iou_masks(reference_rois: Sequence, query_rois: Sequence) -> np.ndarray:
+def pairwise_iou_masks(reference_rois: Sequence, query_rois: Sequence):
     """Compute a dense pairwise IoU matrix for two ROI collections.
 
     Parameters
@@ -91,13 +101,13 @@ def pairwise_iou_masks(reference_rois: Sequence, query_rois: Sequence) -> np.nda
 
     Returns
     -------
-    numpy.ndarray
+    array
         Matrix with shape ``(len(reference_rois), len(query_rois))``.
     """
 
     n_reference = len(reference_rois)
     n_query = len(query_rois)
-    iou_matrix = np.zeros((n_reference, n_query), dtype=float)
+    iou_matrix = zeros((n_reference, n_query), dtype=float)
 
     if n_reference == 0 or n_query == 0:
         return iou_matrix
@@ -125,7 +135,7 @@ def assign_by_similarity_matrix(
     min_similarity: float = 0.0,
     num_dummy: int | None = None,
     unmatched_value: int = -1,
-) -> np.ndarray:
+):
     """Solve a one-to-one assignment problem by maximizing similarity.
 
     The method pads the similarity matrix with dummy rows/columns and solves the
@@ -147,49 +157,49 @@ def assign_by_similarity_matrix(
 
     Returns
     -------
-    numpy.ndarray
+    array
         Integer vector of length ``n_rows``. Entry ``i`` contains the matched column
         index for row ``i`` or ``unmatched_value`` if no valid match exists.
     """
 
-    similarities = np.asarray(similarity_matrix, dtype=float)
+    similarities = asarray(similarity_matrix, dtype=float)
     if similarities.ndim != 2:
         raise ValueError("similarity_matrix must be two-dimensional.")
 
     n_rows, n_cols = similarities.shape
     if n_rows == 0:
-        return np.zeros(0, dtype=int)
+        return zeros(0, dtype=int)
     if n_cols == 0:
-        return np.full(n_rows, unmatched_value, dtype=int)
+        return full(n_rows, unmatched_value, dtype=int)
 
-    finite_mask = np.isfinite(similarities)
+    finite_mask = isfinite(similarities)
     if not finite_mask.any():
-        return np.full(n_rows, unmatched_value, dtype=int)
+        return full(n_rows, unmatched_value, dtype=int)
 
     if num_dummy is None:
         num_dummy = max(n_rows, n_cols)
     if num_dummy < 0:
         raise ValueError("num_dummy must be non-negative.")
 
-    max_similarity = float(np.max(similarities[finite_mask]))
+    max_similarity = float(amax(similarities[finite_mask]))
     threshold_cost = max_similarity - float(min_similarity)
     dummy_penalty = max(
         1e-12,
-        np.spacing(max(1.0, abs(max_similarity), abs(min_similarity))),
+        sys.float_info.epsilon * max(1.0, abs(max_similarity), abs(min_similarity)),
     )
     dummy_cost = threshold_cost + dummy_penalty
 
     valid_mask = finite_mask & (similarities >= min_similarity)
-    cost_matrix = np.full_like(similarities, dummy_cost)
+    cost_matrix = full_like(similarities, dummy_cost)
     cost_matrix[valid_mask] = max_similarity - similarities[valid_mask]
 
     padded_size = max(n_rows, n_cols) + int(num_dummy)
-    padded_cost = np.full((padded_size, padded_size), dummy_cost, dtype=float)
+    padded_cost = full((padded_size, padded_size), dummy_cost, dtype=float)
     padded_cost[:n_rows, :n_cols] = cost_matrix
 
     row_ind, col_ind = linear_sum_assignment(padded_cost)
 
-    assignment = np.full(n_rows, unmatched_value, dtype=int)
+    assignment = full(n_rows, unmatched_value, dtype=int)
     for row_index, col_index in zip(row_ind, col_ind):
         if row_index >= n_rows:
             continue
@@ -197,7 +207,6 @@ def assign_by_similarity_matrix(
             assignment[row_index] = int(col_index)
 
     return assignment
-
 
 
 # pylint: disable=too-many-positional-arguments
@@ -232,7 +241,7 @@ def associate_rois_by_iou(
 
     Returns
     -------
-    numpy.ndarray or tuple[numpy.ndarray, numpy.ndarray]
+    array or tuple[array, array]
         Assignment vector, optionally together with the IoU matrix.
     """
 
