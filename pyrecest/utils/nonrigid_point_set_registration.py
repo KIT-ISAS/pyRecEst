@@ -8,6 +8,7 @@ tracking, where ROI centroids can undergo local distortions between sessions.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Callable
 
@@ -110,7 +111,7 @@ class ThinPlateSplineTransform:
 
         basis = zeros((point_array.shape[0], 0))
         if self.control_points.shape[0] > 0:
-            distances = cdist(point_array, self.control_points, metric="euclidean")
+            distances = asarray(cdist(point_array, self.control_points, metric="euclidean"))
             basis = _tps_kernel_from_distances(distances)
 
         polynomial = concatenate([ones((point_array.shape[0], 1)), point_array], axis=1)
@@ -186,7 +187,7 @@ def estimate_thin_plate_spline(
     if n_points < 3:
         raise ValueError("At least three matched 2D points are required for TPS fitting.")
 
-    kernel = _tps_kernel_from_distances(cdist(source, source, metric="euclidean"))
+    kernel = _tps_kernel_from_distances(asarray(cdist(source, source, metric="euclidean")))
     polynomial = concatenate([ones((n_points, 1)), source], axis=1)
 
     lhs = zeros((n_points + 3, n_points + 3))
@@ -222,7 +223,7 @@ def _solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
     if finite_costs.size == 0:
         return zeros((costs.shape[0],), dtype=int64) - 1
 
-    dummy_cost = float(max_cost) if isfinite(max_cost) else float(finite_costs.max() + 1.0)
+    dummy_cost = float(max_cost) if math.isfinite(max_cost) else float(finite_costs.max() + 1.0)
     padded_size = max(costs.shape[0], costs.shape[1])
     sanitized_costs = where(finite_mask, costs, dummy_cost)
     padded_costs = full((padded_size, padded_size), dummy_cost)

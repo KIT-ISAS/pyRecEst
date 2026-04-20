@@ -1,12 +1,12 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, zeros
+from pyrecest.backend import array, concatenate, eye, ones, zeros
+from pyrecest.backend import linalg
 from pyrecest.utils.nonrigid_point_set_registration import (
     ThinPlateSplineTransform,
     estimate_thin_plate_spline,
@@ -30,8 +30,8 @@ class TestThinPlateSplineEstimation(unittest.TestCase):
                 [2.0, 1.8],
             ]
         )
-        polynomial = np.column_stack([np.ones(source.shape[0]), source])
-        raw_weights = np.array(
+        polynomial = concatenate([ones((source.shape[0], 1)), source], axis=1)
+        raw_weights = array(
             [
                 [0.06, -0.02],
                 [-0.03, 0.01],
@@ -41,7 +41,7 @@ class TestThinPlateSplineEstimation(unittest.TestCase):
                 [-0.02, -0.03],
             ]
         )
-        projector = np.eye(source.shape[0]) - polynomial @ np.linalg.pinv(polynomial)
+        projector = eye(source.shape[0]) - polynomial @ linalg.pinv(polynomial)
         tps_weights = projector @ raw_weights
 
         true_transform = ThinPlateSplineTransform(
