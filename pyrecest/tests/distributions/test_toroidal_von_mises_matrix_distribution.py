@@ -37,12 +37,20 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         self.testpoints = column_stack([X.ravel(), Y.ravel()])
         self.tvm2 = ToroidalVonMisesMatrixDistribution(self.mu + 1, self.kappa + 0.2, linalg.inv(self.A))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for jax backend",
+    )
     def test_sanity_check(self):
         self.assertIsInstance(self.tvm, ToroidalVonMisesMatrixDistribution)
         self.assertTrue(array_equal(self.tvm.mu, self.mu))
         self.assertTrue(array_equal(self.tvm.kappa, self.kappa))
         self.assertTrue(array_equal(self.tvm.A, self.A))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for jax backend",
+    )
     def test_pdf(self):
         def pdf(xs, mu, kappa, A, C):
             if xs.shape[1] > 1:
@@ -59,12 +67,24 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
 
         npt.assert_allclose(self.tvm.pdf(self.testpoints), pdf(self.testpoints.T, self.mu, self.kappa, self.A, self.tvm.C), rtol=1e-10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for jax backend",
+    )
     def test_integral(self):
         self.assertAlmostEqual(self.tvm.integrate(), 1, places=5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for jax backend",
+    )
     def test_trig_moment_numerical(self):
         npt.assert_allclose(self.tvm.trigonometric_moment_numerical(0), array([1, 1]), atol=1e-5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for jax backend",
+    )
     def test_multiply(self):
         tvmMul = self.tvm.multiply(self.tvm2)
         tvmMulSwapped = self.tvm2.multiply(self.tvm)
@@ -73,6 +93,10 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         npt.assert_allclose(self.tvm.pdf(self.testpoints) * self.tvm2.pdf(self.testpoints), C * tvmMul.pdf(self.testpoints), rtol=1e-10)
         npt.assert_allclose(self.tvm.pdf(self.testpoints) * self.tvm2.pdf(self.testpoints), C * tvmMulSwapped.pdf(self.testpoints), rtol=1e-10)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for jax backend",
+    )
     def test_compare_with_ToroidalFourier_multiplication(self):
         tvmMul = self.tvm.multiply(self.tvm2)
         tvmMulSwapped = self.tvm2.multiply(self.tvm)
@@ -90,6 +114,10 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         npt.assert_allclose(tfMul.pdf(self.testpoints), tvmMul.pdf(self.testpoints), atol=1e-5)
         npt.assert_allclose(tfMulSwapped.pdf(self.testpoints), tvmMulSwapped.pdf(self.testpoints), atol=1e-5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for jax backend",
+    )
     def test_product_approximation(self):
         mu1 = array([1.7, 0.5])
         kappa1 = array([0.8, 0.3])
