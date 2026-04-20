@@ -109,7 +109,7 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         weights2 = tvm2.pdf(samples.T)
         weights = weights1 * weights2
 
-        weights = weights / sum(weights)
+        weights = weights / sum(weights)  # normalize; subsequent sum(x * weights) acts as weighted mean
 
         muApprox = arctan2(
             sum(sin(samples) * weights, axis=1),
