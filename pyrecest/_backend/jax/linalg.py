@@ -13,6 +13,7 @@ from jax.numpy.linalg import (  # NOQA
     solve,
     svd,
     qr,
+    pinv,
 )
 from jax.scipy.linalg import (
     expm,

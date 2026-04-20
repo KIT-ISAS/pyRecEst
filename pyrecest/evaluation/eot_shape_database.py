@@ -55,7 +55,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
 
             points[i] = random_point
 
-        return np.array(points)
+        return np.array([(point.x, point.y) for point in points])
 
 
 class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
@@ -105,7 +105,7 @@ class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method
                 segments.append(line_of_sight)
 
             # Check for intersections along the direction to the vertex
-            direction = np.array(vertex) - np.array(point.coords)
+            direction = np.array(vertex) - np.array(point.coords[0])
             far_away_point = Point(np.array(vertex) + 1000 * direction)
             ray = LineString([point, far_away_point])
 

@@ -13,6 +13,7 @@ from numpy.linalg import (
     matrix_rank,
     norm,
     svd,
+    pinv,
 )
 from scipy.linalg import (
     expm,

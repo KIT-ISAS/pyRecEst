@@ -46,6 +46,7 @@ from .cart_prod.abstract_lin_hypersphere_subset_cart_prod_distribution import (
 from .cart_prod.abstract_lin_periodic_cart_prod_distribution import (
     AbstractLinPeriodicCartProdDistribution,
 )
+from .cart_prod.cart_prod_dirac_distribution import CartProdDiracDistribution
 from .cart_prod.cart_prod_stacked_distribution import CartProdStackedDistribution
 from .cart_prod.custom_hypercylindrical_distribution import (
     CustomHypercylindricalDistribution,
@@ -68,8 +69,17 @@ from .cart_prod.lin_hypersphere_subset_dirac_distribution import (
 from .cart_prod.lin_periodic_cart_prod_dirac_distribution import (
     LinPeriodicCartProdDiracDistribution,
 )
+from .cart_prod.mardia_sutton_distribution import MardiaSuttonDistribution
 from .cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
+)
+from .cart_prod.se2_bingham_distribution import SE2BinghamDistribution
+from .cart_prod.se2_pwn_distribution import SE2PWNDistribution
+from .cart_prod.state_space_subdivision_distribution import (
+    StateSpaceSubdivisionDistribution,
+)
+from .cart_prod.state_space_subdivision_gaussian_distribution import (
+    StateSpaceSubdivisionGaussianDistribution,
 )
 from .circle.abstract_circular_distribution import AbstractCircularDistribution
 from .circle.circular_dirac_distribution import CircularDiracDistribution
@@ -77,23 +87,37 @@ from .circle.circular_fourier_distribution import CircularFourierDistribution
 from .circle.circular_mixture import CircularMixture
 from .circle.circular_uniform_distribution import CircularUniformDistribution
 from .circle.custom_circular_distribution import CustomCircularDistribution
+from .circle.generalized_von_mises_distribution import GvMDistribution
+from .circle.piecewise_constant_distribution import PiecewiseConstantDistribution
 from .circle.sine_skewed_distributions import (
     AbstractSineSkewedDistribution,
     GeneralizedKSineSkewedVonMisesDistribution,
+    GeneralizedKSineSkewedWrappedCauchyDistribution,
+    GSSVMDistribution,
     SineSkewedVonMisesDistribution,
     SineSkewedWrappedCauchyDistribution,
     SineSkewedWrappedNormalDistribution,
 )
 from .circle.von_mises_distribution import VonMisesDistribution
 from .circle.wrapped_cauchy_distribution import WrappedCauchyDistribution
+from .circle.wrapped_exponential_distribution import WrappedExponentialDistribution
 from .circle.wrapped_laplace_distribution import WrappedLaplaceDistribution
 from .circle.wrapped_normal_distribution import WrappedNormalDistribution
 from .conditional.abstract_conditional_distribution import (
     AbstractConditionalDistribution,
 )
+from .conditional.s2_cond_s2_grid_distribution import S2CondS2GridDistribution
+from .conditional.sd_cond_sd_grid_distribution import SdCondSdGridDistribution
+from .conditional.sd_half_cond_sd_half_grid_distribution import (
+    SdHalfCondSdHalfGridDistribution,
+)
+from .conditional.td_cond_td_grid_distribution import TdCondTdGridDistribution
 from .custom_hyperrectangular_distribution import CustomHyperrectangularDistribution
 from .disk_uniform_distribution import DiskUniformDistribution
 from .ellipsoidal_ball_uniform_distribution import EllipsoidalBallUniformDistribution
+from .hypersphere_subset.abstract_complex_hyperspherical_distribution import (
+    AbstractComplexHypersphericalDistribution,
+)
 from .hypersphere_subset.abstract_hemispherical_distribution import (
     AbstractHemisphericalDistribution,
 )
@@ -105,6 +129,9 @@ from .hypersphere_subset.abstract_hypersphere_subset_dirac_distribution import (
 )
 from .hypersphere_subset.abstract_hypersphere_subset_distribution import (
     AbstractHypersphereSubsetDistribution,
+)
+from .hypersphere_subset.abstract_hypersphere_subset_grid_distribution import (
+    AbstractHypersphereSubsetGridDistribution,
 )
 from .hypersphere_subset.abstract_hypersphere_subset_uniform_distribution import (
     AbstractHypersphereSubsetUniformDistribution,
@@ -122,6 +149,11 @@ from .hypersphere_subset.abstract_spherical_harmonics_distribution import (
     AbstractSphericalHarmonicsDistribution,
 )
 from .hypersphere_subset.bingham_distribution import BinghamDistribution
+from .hypersphere_subset.complex_angular_central_gaussian_distribution import (
+    ComplexAngularCentralGaussianDistribution,
+)
+from .hypersphere_subset.complex_bingham_distribution import ComplexBinghamDistribution
+from .hypersphere_subset.complex_watson_distribution import ComplexWatsonDistribution
 from .hypersphere_subset.custom_hemispherical_distribution import (
     CustomHemisphericalDistribution,
 )
@@ -140,6 +172,9 @@ from .hypersphere_subset.hyperhemispherical_bingham_distribution import (
 from .hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
 )
+from .hypersphere_subset.hyperhemispherical_grid_distribution import (
+    HyperhemisphericalGridDistribution,
+)
 from .hypersphere_subset.hyperhemispherical_uniform_distribution import (
     HyperhemisphericalUniformDistribution,
 )
@@ -149,10 +184,14 @@ from .hypersphere_subset.hyperhemispherical_watson_distribution import (
 from .hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,
 )
+from .hypersphere_subset.hyperspherical_grid_distribution import (
+    HypersphericalGridDistribution,
+)
 from .hypersphere_subset.hyperspherical_mixture import HypersphericalMixture
 from .hypersphere_subset.hyperspherical_uniform_distribution import (
     HypersphericalUniformDistribution,
 )
+from .hypersphere_subset.spherical_grid_distribution import SphericalGridDistribution
 from .hypersphere_subset.spherical_harmonics_distribution_complex import (
     SphericalHarmonicsDistributionComplex,
 )
@@ -164,12 +203,19 @@ from .hypersphere_subset.watson_distribution import WatsonDistribution
 from .hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
 )
+from .hypertorus.abstract_toroidal_bivar_vm_distribution import (
+    AbstractToroidalBivarVMDistribution,
+)
 from .hypertorus.abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertorus.custom_hypertoroidal_distribution import (
     CustomHypertoroidalDistribution,
 )
 from .hypertorus.custom_toroidal_distribution import CustomToroidalDistribution
 from .hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
+from .hypertorus.hypertoroidal_fourier_distribution import (
+    HypertoroidalFourierDistribution,
+)
+from .hypertorus.hypertoroidal_grid_distribution import HypertoroidalGridDistribution
 from .hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from .hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
@@ -178,8 +224,14 @@ from .hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
 from .hypertorus.toroidal_dirac_distribution import ToroidalDiracDistribution
+from .hypertorus.toroidal_fourier_distribution import ToroidalFourierDistribution
 from .hypertorus.toroidal_mixture import ToroidalMixture
 from .hypertorus.toroidal_uniform_distribution import ToroidalUniformDistribution
+from .hypertorus.toroidal_vm_matrix_distribution import ToroidalVMMatrixDistribution
+from .hypertorus.toroidal_vm_rivest_distribution import ToroidalVMRivestDistribution
+from .hypertorus.toroidal_von_mises_cosine_distribution import (
+    ToroidalVonMisesCosineDistribution,
+)
 from .hypertorus.toroidal_von_mises_sine_distribution import (
     ToroidalVonMisesSineDistribution,
 )
@@ -198,6 +250,7 @@ from .nonperiodic.hyperrectangular_uniform_distribution import (
 )
 from .nonperiodic.linear_dirac_distribution import LinearDiracDistribution
 from .nonperiodic.linear_mixture import LinearMixture
+from .se2_dirac_distribution import SE2DiracDistribution
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
 
@@ -209,6 +262,7 @@ ToroidalWDDistribution = ToroidalDiracDistribution
 VMDistribution = VonMisesDistribution
 WDDistribution = CircularDiracDistribution
 VMFDistribution = VonMisesFisherDistribution
+WEDistribution = WrappedExponentialDistribution
 
 aliases = [
     "HypertoroidalWNDistribution",
@@ -218,9 +272,11 @@ aliases = [
     "VMDistribution",
     "WDDistribution",
     "VMFDistribution",
+    "WEDistribution",
 ]
 
 __all__ = aliases + [
+    "GvMDistribution",
     "GeneralizedKSineSkewedVonMisesDistribution",
     "AbstractBoundedDomainDistribution",
     "AbstractBoundedNonPeriodicDistribution",
@@ -248,6 +304,7 @@ __all__ = aliases + [
     "AbstractLinHypersphereCartProdDistribution",
     "AbstractLinHypersphereSubsetCartProdDistribution",
     "AbstractLinPeriodicCartProdDistribution",
+    "CartProdDiracDistribution",
     "HyperhemisphericalDiracDistribution",
     "HypersphericalDiracDistribution",
     "CartProdStackedDistribution",
@@ -259,6 +316,10 @@ __all__ = aliases + [
     "LinHypersphereSubsetCartProdDiracDistribution",
     "LinPeriodicCartProdDiracDistribution",
     "PartiallyWrappedNormalDistribution",
+    "SE2PWNDistribution",
+    "MardiaSuttonDistribution",
+    "StateSpaceSubdivisionDistribution",
+    "StateSpaceSubdivisionGaussianDistribution",
     "AbstractCircularDistribution",
     "CircularDiracDistribution",
     "CircularFourierDistribution",
@@ -267,14 +328,22 @@ __all__ = aliases + [
     "CustomCircularDistribution",
     "AbstractSineSkewedDistribution",
     "GeneralizedKSineSkewedVonMisesDistribution",
+    "GeneralizedKSineSkewedWrappedCauchyDistribution",
+    "GSSVMDistribution",
     "SineSkewedVonMisesDistribution",
     "SineSkewedWrappedCauchyDistribution",
     "SineSkewedWrappedNormalDistribution",
+    "PiecewiseConstantDistribution",
     "VonMisesDistribution",
     "WrappedCauchyDistribution",
+    "WrappedExponentialDistribution",
     "WrappedLaplaceDistribution",
     "WrappedNormalDistribution",
     "AbstractConditionalDistribution",
+    "S2CondS2GridDistribution",
+    "SdCondSdGridDistribution",
+    "SdHalfCondSdHalfGridDistribution",
+    "TdCondTdGridDistribution",
     "CustomHyperrectangularDistribution",
     "DiskUniformDistribution",
     "EllipsoidalBallUniformDistribution",
@@ -282,39 +351,54 @@ __all__ = aliases + [
     "AbstractHyperhemisphericalDistribution",
     "AbstractHypersphereSubsetDiracDistribution",
     "AbstractHypersphereSubsetDistribution",
+    "AbstractHypersphereSubsetGridDistribution",
     "AbstractHypersphereSubsetUniformDistribution",
     "AbstractHypersphericalDistribution",
     "AbstractSphereSubsetDistribution",
     "AbstractSphericalDistribution",
     "AbstractSphericalHarmonicsDistribution",
     "BinghamDistribution",
+    "ComplexWatsonDistribution",
+    "AbstractComplexHypersphericalDistribution",
+    "ComplexBinghamDistribution",
+    "ComplexAngularCentralGaussianDistribution",
     "CustomHemisphericalDistribution",
     "CustomHyperhemisphericalDistribution",
     "CustomHypersphericalDistribution",
     "HemisphericalUniformDistribution",
     "HyperhemisphericalBinghamDistribution",
     "HyperhemisphericalDiracDistribution",
+    "HyperhemisphericalGridDistribution",
     "HyperhemisphericalUniformDistribution",
     "HyperhemisphericalWatsonDistribution",
     "HypersphericalDiracDistribution",
+    "HypersphericalGridDistribution",
     "HypersphericalMixture",
     "HypersphericalUniformDistribution",
+    "SphericalGridDistribution",
     "SphericalHarmonicsDistributionComplex",
     "SphericalHarmonicsDistributionReal",
     "VonMisesFisherDistribution",
     "WatsonDistribution",
     "AbstractHypertoroidalDistribution",
+    "AbstractToroidalBivarVMDistribution",
     "AbstractToroidalDistribution",
     "CustomHypertoroidalDistribution",
     "CustomToroidalDistribution",
     "HypertoroidalDiracDistribution",
+    "HypertoroidalFourierDistribution",
+    "HypertoroidalGridDistribution",
     "HypertoroidalMixture",
     "HypertoroidalUniformDistribution",
     "HypertoroidalWrappedNormalDistribution",
     "ToroidalDiracDistribution",
+    "ToroidalFourierDistribution",
     "ToroidalMixture",
     "ToroidalUniformDistribution",
+    "ToroidalVonMisesCosineDistribution",
     "ToroidalVonMisesSineDistribution",
+    "ToroidalVMMatrixDistribution",
+    "ToroidalVMRivestDistribution",
     "ToroidalWrappedNormalDistribution",
     "AbstractHyperrectangularDistribution",
     "AbstractLinearDistribution",
@@ -324,6 +408,8 @@ __all__ = aliases + [
     "HyperrectangularUniformDistribution",
     "LinearDiracDistribution",
     "LinearMixture",
+    "SE2DiracDistribution",
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
+    "SE2BinghamDistribution",
 ]
