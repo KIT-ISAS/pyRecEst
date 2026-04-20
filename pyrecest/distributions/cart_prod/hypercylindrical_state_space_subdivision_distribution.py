@@ -1,8 +1,7 @@
 import copy
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import argmax, argmin, array, abs as backend_abs
-from pyrecest.backend import pi as backend_pi
+from pyrecest.backend import array
 from pyrecest.backend import sum as backend_sum
 
 from pyrecest.distributions.cart_prod.abstract_hypercylindrical_distribution import (
@@ -33,6 +32,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
     Based on MATLAB implementation in libDirectional.
     """
 
+    # pylint: disable=super-init-not-called,non-parent-init-called
     def __init__(self, gd, lin_distributions):
         StateSpaceSubdivisionDistribution.__init__(self, gd, lin_distributions)
         # Calling AbstractHypercylindricalDistribution.__init__ directly would
@@ -40,7 +40,6 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         # attributes, which conflicts with the read-only properties defined in
         # StateSpaceSubdivisionDistribution. We therefore call only the part of
         # the init chain that sets self._dim.
-        # pylint: disable=non-parent-init-called
         from pyrecest.distributions.abstract_manifold_specific_distribution import (
             AbstractManifoldSpecificDistribution,
         )
@@ -49,6 +48,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
             self, gd.dim + lin_distributions[0].dim
         )
 
+    # pylint: disable=too-many-locals
     def pdf(self, xs):
         """
         Evaluate the joint pdf at the query points using nearest-neighbor
@@ -67,7 +67,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         xs_np = np.atleast_2d(np.asarray(xs, dtype=float))
         n_eval = xs_np.shape[0]
         x_bound = xs_np[:, : self.bound_dim]  # (n_eval, bound_dim)
-        x_lin = xs_np[:, self.bound_dim :]  # (n_eval, lin_dim)
+        x_lin = xs_np[:, self.bound_dim:]  # (n_eval, lin_dim)
 
         # Find nearest grid indices (vectorised toroidal distance)
         grid_np = np.asarray(self.gd.get_grid(), dtype=float)  # (n_grid, bound_dim)
@@ -191,7 +191,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
             grid_type,
         )
 
-    # pylint: disable=too-many-positional-arguments
+    # pylint: disable=too-many-positional-arguments,too-many-locals
     @staticmethod
     def from_function(
         fun,
