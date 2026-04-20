@@ -70,6 +70,18 @@ from .track_manager import (
 )
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
+from .track_manager import (
+    AssociationResult,
+    Track,
+    TrackManager,
+    TrackManagerStepResult,
+    TrackStatus,
+    build_global_nearest_neighbor_associator,
+    build_kalman_measurement_initiator,
+    build_linear_gaussian_predictor,
+    build_linear_gaussian_updater,
+    solve_global_nearest_neighbor,
+)
 from .ukf_on_manifolds import UKFOnManifolds
 from .unscented_kalman_filter import UnscentedKalmanFilter
 from .von_mises_filter import VonMisesFilter
