@@ -56,6 +56,18 @@ from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
 from .se2_ukf import SE2UKF
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
+from .track_manager import (
+    AssociationResult,
+    Track,
+    TrackManager,
+    TrackManagerStepResult,
+    TrackStatus,
+    build_global_nearest_neighbor_associator,
+    build_kalman_measurement_initiator,
+    build_linear_gaussian_predictor,
+    build_linear_gaussian_updater,
+    solve_global_nearest_neighbor,
+)
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .ukf_on_manifolds import UKFOnManifolds
@@ -77,6 +89,7 @@ __all__ = [
     "AbstractNearestNeighborTracker",
     "AbstractParticleFilter",
     "AbstractTrackerWithLogging",
+    "AssociationResult",
     "BinghamFilter",
     "CircularFilterMixin",
     "CircularParticleFilter",
@@ -119,6 +132,15 @@ __all__ = [
     "LinPeriodicParticleFilter",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
+    "Track",
+    "TrackManager",
+    "TrackManagerStepResult",
+    "TrackStatus",
+    "build_global_nearest_neighbor_associator",
+    "build_kalman_measurement_initiator",
+    "build_linear_gaussian_predictor",
+    "build_linear_gaussian_updater",
+    "solve_global_nearest_neighbor",
     "SE2FilterMixin",
     "SE2UKF",
     "StateSpaceSubdivisionFilter",

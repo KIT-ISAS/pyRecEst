@@ -18,12 +18,12 @@ from pyrecest.backend import (
 )
 from pyrecest.distributions import GaussianDistribution
 from scipy.linalg import pinv
-from scipy.optimize import linear_sum_assignment
 from scipy.stats import chi2
 
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .kalman_filter import KalmanFilter
 from .manifold_mixins import EuclideanFilterMixin
+from .track_manager import solve_global_nearest_neighbor
 
 
 class BernoulliComponent:
@@ -261,15 +261,14 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         return likelihood, mahalanobis_distance_squared
 
     # pylint: disable=too-many-locals
-    def _build_association_matrix(
-        self, measurements, measurement_matrix, cov_mats_meas
-    ):
+    def _build_assignment_costs(self, measurements, measurement_matrix, cov_mats_meas):
         num_components = self.get_number_of_components()
         num_measurements = measurements.shape[1]
         invalid_cost = 1e12
-        association_matrix = full(
-            (num_components, num_measurements + num_components), invalid_cost
+        detection_cost_matrix = full(
+            (num_components, num_measurements), invalid_cost
         )
+        missed_detection_costs = full((num_components,), invalid_cost)
         gating_distance_threshold = self._get_gating_distance_threshold(
             measurements.shape[0]
         )
@@ -286,7 +285,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             missed_detection_weight = max(
                 1.0 - predicted_existence * detection_probability, 1e-12
             )
-            association_matrix[i, num_measurements + i] = -log(missed_detection_weight)
+            missed_detection_costs[i] = -log(missed_detection_weight)
 
             for j in range(num_measurements):
                 measurement_covariance = self._get_measurement_covariance(
@@ -307,9 +306,9 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
                         * likelihood
                         / clutter_intensity
                     )
-                    association_matrix[i, j] = -log(max(detection_weight, 1e-12))
+                    detection_cost_matrix[i, j] = -log(max(detection_weight, 1e-12))
 
-        return association_matrix
+        return detection_cost_matrix, missed_detection_costs
 
     @staticmethod
     def _get_state_birth_mean(
@@ -566,11 +565,21 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         if self.get_number_of_components() == 0:
             return array([])
 
-        association_matrix = self._build_association_matrix(
+        detection_cost_matrix, missed_detection_costs = self._build_assignment_costs(
             measurements, measurement_matrix, cov_mats_meas
         )
-        _, col_ind = linear_sum_assignment(association_matrix)
-        return array(col_ind)
+        association_result = solve_global_nearest_neighbor(
+            detection_cost_matrix,
+            unassigned_track_cost=missed_detection_costs,
+            unassigned_measurement_cost=0.0,
+            invalid_cost=1e12,
+            dummy_dummy_cost=0.0,
+        )
+
+        association = full((self.get_number_of_components(),), measurements.shape[1])
+        for component_index, measurement_index in association_result.matches:
+            association[component_index] = measurement_index
+        return association
 
     # pylint: disable=too-many-locals
     def update_linear(self, measurements, measurement_matrix, cov_mats_meas):

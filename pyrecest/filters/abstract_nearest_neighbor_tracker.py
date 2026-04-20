@@ -131,7 +131,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
 
         currMeasCov = covMatsMeas
         for i in range(self.get_number_of_targets()):
-            if association[i] <= measurements.shape[1]:
+            if association[i] < measurements.shape[1]:
                 if covMatsMeas.ndim != 2:
                     currMeasCov = covMatsMeas[:, :, association[i]]
                 self.filter_bank[i].update_linear(
