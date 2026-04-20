@@ -20,33 +20,65 @@ from pyrecest.backend import (
     stack,
     vstack,
 )
-from pyrecest.distributions import (
-    AbstractHypersphericalDistribution,
+
+from ..distributions.hypersphere_subset.abstract_spherical_distribution import (
     AbstractSphericalDistribution,
+)
+from ..distributions.hypersphere_subset.hyperhemispherical_uniform_distribution import (
+    HyperhemisphericalUniformDistribution,
+)
+from ..distributions.hypersphere_subset.hyperspherical_uniform_distribution import (
     HypersphericalUniformDistribution,
 )
-
 from .abstract_sampler import AbstractSampler
 from .hypertoroidal_sampler import CircularUniformSampler
-from .leopardi_sampler import get_partition_points_polar
+from .leopardi_sampler import get_partition_points_cartesian
 
 
-def get_grid_hypersphere(method: str, grid_density_parameter: int):
+def get_grid_hypersphere(method: str, grid_density_parameter: int, dim: int):
     if method == "healpix":
+        assert dim == 2, "HealpixSampler is only implemented for S2 (dim=2)"
         samples, grid_specific_description = HealpixSampler().get_grid(
             grid_density_parameter
         )
     elif method == "driscoll_healy":
+        assert dim == 2, "DriscollHealySampler is only implemented for S2 (dim=2)"
         samples, grid_specific_description = DriscollHealySampler().get_grid(
             grid_density_parameter
         )
     elif method in ("fibonacci", "spherical_fibonacci"):
+        assert dim == 2, "SphericalFibonacciSampler is only implemented for S2 (dim=2)"
         samples, grid_specific_description = SphericalFibonacciSampler().get_grid(
             grid_density_parameter
         )
     elif method == "healpix_hopf":
+        assert dim == 3, "HealpixHopfSampler is only implemented for S3 (dim=3)"
         samples, grid_specific_description = HealpixHopfSampler().get_grid(
             grid_density_parameter
+        )
+    elif method == "fibonacci_hopf":
+        assert dim == 3, "FibonacciHopfSampler is only implemented for S3 (dim=3)"
+        samples, grid_specific_description = FibonacciHopfSampler().get_grid(
+            grid_density_parameter
+        )
+    elif method == "leopardi":
+        ls = LeopardiSampler(original_code_column_order=True)
+        samples, grid_specific_description = ls.get_grid(grid_density_parameter, dim)
+    elif method in ("leopardi_symm_antipodal",):
+        ls_symm = SymmetricLeopardiSampler(
+            original_code_column_order=True,
+            delete_half=False,
+            symmetry_type="antipodal",
+        )
+        samples, grid_specific_description = ls_symm.get_grid(
+            grid_density_parameter, dim
+        )
+    elif method in ("leopardi_symm_plane",):
+        ls_symm = SymmetricLeopardiSampler(
+            original_code_column_order=True, delete_half=False, symmetry_type="plane"
+        )
+        samples, grid_specific_description = ls_symm.get_grid(
+            grid_density_parameter, dim
         )
     else:
         raise ValueError(f"Unknown method {method}")
@@ -54,12 +86,49 @@ def get_grid_hypersphere(method: str, grid_density_parameter: int):
     return samples, grid_specific_description
 
 
-get_grid_sphere = get_grid_hypersphere
+def get_grid_sphere(method: str, grid_density_parameter: int):
+    return get_grid_hypersphere(method, grid_density_parameter, dim=2)
+
+
+def get_grid_hyperhemisphere(method: str, grid_density_parameter: int, dim: int):
+    if method in ("leopardi_symm",):
+        ls_symm = SymmetricLeopardiSampler(
+            original_code_column_order=True, delete_half=True, symmetry_type=""
+        )
+        samples, _ = ls_symm.get_grid(grid_density_parameter * 2, dim)
+        # To have upper half along last dim instead of first
+        grid_specific_description = {
+            "scheme": method,
+            "n_side": grid_density_parameter,
+        }
+    elif method in ("leopardi_symm_plane", "leopardi_symm_antipodal"):
+        raise ValueError(
+            "In grids for the hyperhemisphere, there is no southern hemisphere (those points are discarded). "
+            "Hence, specifying the symmetry type (plane/antipodal) does not make sense."
+            'Use "leopardi_symm" for hyperhemispheres instead of "leopardi_symm_plane" or "leopardi_symm_antipodal".'
+        )
+    elif method == "leopardi":
+        raise ValueError(
+            "Leopardi sampler does not support sampling on hyperhemispheres. Use 'leopardi_symm' instead."
+        )
+    else:
+        raise ValueError(f"Unknown method {method}")
+
+    return samples, grid_specific_description
 
 
 class AbstractHypersphericalUniformSampler(AbstractSampler):
     def sample_stochastic(self, n_samples: int, dim: int):
         return HypersphericalUniformDistribution(dim).sample(n_samples)
+
+    @abstractmethod
+    def get_grid(self, grid_density_parameter, dim: int):
+        raise NotImplementedError()
+
+
+class AbstractHyperhemisphericalUniformSampler(AbstractSampler):
+    def sample_stochastic(self, n_samples: int, dim: int):
+        return HyperhemisphericalUniformDistribution(dim).sample(n_samples)
 
     @abstractmethod
     def get_grid(self, grid_density_parameter, dim: int):
@@ -128,25 +197,54 @@ class HealpixSampler(AbstractHypersphericalUniformSampler):
 
 
 class LeopardiSampler(AbstractHypersphericalUniformSampler):
-    def __init__(self, original_code_column_order=False):
+    def __init__(self, original_code_column_order=True):
         self.original_code_column_order = original_code_column_order
         assert backend.__backend_name__ != "jax", "Backend unsupported"
 
     def get_grid(self, grid_density_parameter, dim: int):
-        # Use [::-1] due to different convention
-        grid_hypersph_coord = flip(
-            get_partition_points_polar(dim, grid_density_parameter), axis=0
-        ).T
-        grid_eucl = AbstractHypersphericalDistribution.hypersph_to_cart(
-            grid_hypersph_coord, mode="colatitude"
+        # Use flip due to different convention
+        grid_eucl = get_partition_points_cartesian(
+            dim, grid_density_parameter, delete_half=False, symmetry_type="asymm"
         )
+
+        grid_eucl = flip(grid_eucl, axis=1)
         if self.original_code_column_order:
-            grid_eucl = flip(grid_eucl, axis=1)
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
 
         grid_specific_description = {
             "scheme": "leopardi",
             "n_side": grid_density_parameter,
+        }
+        return grid_eucl, grid_specific_description
+
+
+class SymmetricLeopardiSampler(AbstractHypersphericalUniformSampler):
+    def __init__(
+        self, original_code_column_order=True, delete_half=False, symmetry_type="plane"
+    ):
+        self.original_code_column_order = original_code_column_order
+        self.delete_half = delete_half
+        self.symmetry_type = symmetry_type
+        assert backend.__backend_name__ != "jax", "Backend unsupported"
+
+    def get_grid(self, grid_density_parameter, dim: int):
+        # Use [::-1] due to different convention
+        grid_eucl = get_partition_points_cartesian(
+            dim,
+            grid_density_parameter,
+            delete_half=self.delete_half,
+            symmetry_type=self.symmetry_type,
+        )
+
+        grid_eucl = flip(grid_eucl, axis=1)
+        if self.original_code_column_order:
+            grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
+
+        grid_specific_description = {
+            "scheme": "leopardi_symm",
+            "n_side": grid_density_parameter,
+            "delete_half": self.delete_half,
+            "symmetry_type": self.symmetry_type,
         }
         return grid_eucl, grid_specific_description
 
@@ -225,16 +323,12 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
 
 # pylint: disable=too-many-locals
 class HealpixHopfSampler(AbstractHopfBasedS3Sampler):
-    def get_grid(self, grid_density_parameter, dim: int = 3):
+    def get_grid(self, grid_density_parameter):
         """
         Hopf coordinates are (θ, ϕ, ψ) where θ and ϕ are the angles for the sphere and ψ is the angle on the circle
         First parameter is the number of points on the sphere, second parameter is the number of points on the circle.
         """
         import healpy as hp
-
-        assert (
-            dim == 3
-        ), "HealpixHopfSampler is supposed to be used for the 3-sphere, i.e. dim=3"
 
         if isinstance(grid_density_parameter, int):
             grid_density_parameter = [grid_density_parameter]

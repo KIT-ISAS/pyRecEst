@@ -1,15 +1,16 @@
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
-from filterpy.kalman import KalmanFilter as FilterPyKalmanFilter
+from bayesian_filters.kalman import KalmanFilter as BayesianFiltersKalmanFilter
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import eye
 from pyrecest.distributions import GaussianDistribution
 
-from .abstract_euclidean_filter import AbstractEuclideanFilter
+from .abstract_filter import AbstractFilter
+from .manifold_mixins import EuclideanFilterMixin
 
 
-class KalmanFilter(AbstractEuclideanFilter):
+class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
     def __init__(self, initial_state):
         """
         Initialize the Kalman filter with the initial state.
@@ -25,8 +26,16 @@ class KalmanFilter(AbstractEuclideanFilter):
                 "initial_state must be a GaussianDistribution or a tuple of (mean, covariance)"
             )
 
-        self._filter_state = FilterPyKalmanFilter(dim_x=dim_x, dim_z=dim_x)
+        EuclideanFilterMixin.__init__(self)
+        bfkf = BayesianFiltersKalmanFilter(dim_x=dim_x, dim_z=dim_x)
+        AbstractFilter.__init__(self, bfkf)
+        # Overwrite parameter of BayesianFiltersKalmanFilter with those of initial_state
         self.filter_state = initial_state
+
+    @property
+    def dim(self):
+        """Returns the dimension of the state."""
+        return self._filter_state.x.shape[0]
 
     @property
     def filter_state(

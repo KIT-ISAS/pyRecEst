@@ -1,11 +1,10 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, column_stack, linalg
+from pyrecest.backend import array, column_stack, linalg, pi
 from pyrecest.distributions.hypersphere_subset.abstract_sphere_subset_distribution import (
     AbstractSphereSubsetDistribution,
 )

@@ -1,5 +1,3 @@
-from math import pi
-
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     arccos,
@@ -8,6 +6,7 @@ from pyrecest.backend import (
     column_stack,
     cos,
     ndim,
+    pi,
     sin,
     where,
 )

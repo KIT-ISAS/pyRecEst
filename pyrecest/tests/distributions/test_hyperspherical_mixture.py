@@ -1,11 +1,10 @@
 import unittest
-from math import pi
 
 from numpy.testing import assert_allclose
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arange, array, linspace, meshgrid, sqrt, stack, sum
+from pyrecest.backend import arange, array, linspace, meshgrid, pi, sqrt, stack, sum
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
     HypersphericalMixture,
@@ -22,7 +21,9 @@ class HypersphericalMixtureTest(unittest.TestCase):
         smix = HypersphericalMixture([wad, vmf], w)
 
         phi, theta = meshgrid(
-            linspace(0.0, 2.0 * pi, 10), linspace(-pi / 2.0, pi / 2.0, 10)
+            linspace(0.0, 2.0 * pi, 10),
+            linspace(-pi / 2.0, pi / 2.0, 10),
+            indexing="ij",
         )
         points = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
             stack([phi.ravel(), theta.ravel()], axis=-1)
@@ -41,10 +42,11 @@ class HypersphericalMixtureTest(unittest.TestCase):
         smix = HypersphericalMixture([wad, vmf], w)
 
         a, b, c, d = meshgrid(
-            arange(-1, 4), arange(-1, 4), arange(-1, 4), arange(-1, 4)
+            arange(-1, 4), arange(-1, 4), arange(-1, 4), arange(-1, 4), indexing="ij"
         )
         points = array([a.ravel(), b.ravel(), c.ravel(), d.ravel()]).T
-        points = points / sqrt(sum(points**2, axis=1, keepdims=True))
+        norms = sqrt(sum(points**2, axis=1, keepdims=True))
+        points = points[norms.ravel() > 0] / norms[norms.ravel() > 0]
 
         assert_allclose(
             smix.pdf(points),

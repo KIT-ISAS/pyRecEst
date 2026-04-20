@@ -1,4 +1,3 @@
-from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -9,6 +8,7 @@ from pyrecest.backend import (
     int64,
     linalg,
     ones,
+    pi,
     random,
     sin,
     sqrt,

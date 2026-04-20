@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -28,6 +27,7 @@ from pyrecest.backend import (
     mod,
     ndim,
     ones,
+    pi,
     sin,
     sqrt,
     tile,
@@ -351,7 +351,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
                 m[self.bound_dim] + lin_size * sigma,
                 100,
             )
-            x, theta = meshgrid(x_vals, theta_vals)
+            x, theta = meshgrid(x_vals, theta_vals, indexing="ij")
 
             # Evaluate pdf at the grid points
             points = vstack((x.ravel(), theta.ravel())).T
@@ -398,7 +398,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
         phi = linspace(0.0, 2 * pi, 100)
         lin = linspace(limits_linear[0], limits_linear[1], 100)
-        Phi, L = meshgrid(phi, lin)
+        Phi, L = meshgrid(phi, lin, indexing="ij")
         points = vstack([Phi.ravel(), L.ravel()]).T
         C = self.pdf(points)
         C = C.reshape(Phi.shape)

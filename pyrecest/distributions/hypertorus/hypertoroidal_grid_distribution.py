@@ -1,143 +1,310 @@
-from math import pi
-from typing import Union
+import math
+import warnings
 
-import numpy as np
+from beartype import beartype
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=redefined-builtin
 from pyrecest.backend import (
-    arange,
+    abs,
+    all,
+    any,
+    argmin,
     array,
-    cos,
-    floor,
-    int32,
+    cast,
     int64,
     linspace,
+    meshgrid,
+    min,
     mod,
-    random,
-    sin,
+    ndim,
+    ones,
+    pi,
+    reshape,
+    stack,
     sum,
 )
 
 from ..abstract_grid_distribution import AbstractGridDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 
 
 class HypertoroidalGridDistribution(
     AbstractGridDistribution, AbstractHypertoroidalDistribution
 ):
-    """
-    Grid distribution on the hypertorus. Stores values at equidistant grid points
-    on [0, 2*pi)^dim. Currently only dim=1 (circle) is fully supported.
+    """Grid-based distribution on a hypertorus.
+
+    Python convention:
+        * grid: array of shape (n_grid_points, dim)
+        * grid_values: array of shape (n_grid_points,)
+        * pdf(x): x has shape (n_eval, dim)
+
     """
 
-    def __init__(self, grid_values, dim: Union[int, int32, int64] = 1):
-        """
-        Parameters
-        ----------
-        grid_values : array-like
-            Values at the equidistant grid points. Shape (n,) for dim=1.
-        dim : int
-            Dimension of the hypertorus (default 1).
-        """
-        assert dim == 1, "Currently only dim=1 (circle) is supported."
-        grid_values = np.asarray(grid_values, dtype=float)
-        n = grid_values.shape[0]
-        grid = np.linspace(0.0, 2.0 * pi, n, endpoint=False)
-        AbstractGridDistribution.__init__(
-            self, grid_values, grid_type="equidistant", grid=grid, dim=dim
-        )
+    # pylint: disable=too-many-positional-arguments
+    def __init__(
+        self,
+        grid_values,
+        grid_type: str = "custom",
+        grid=None,
+        enforce_pdf_nonnegative: bool = True,
+        dim: int | None = None,
+    ):
+        dim = grid_values.ndim
+
+        # Initialize hypertoroidal base class
         AbstractHypertoroidalDistribution.__init__(self, dim)
+        # Initialize grid base class
+        AbstractGridDistribution.__init__(
+            self,
+            grid_values,
+            grid_type,
+            grid,
+            dim=dim,
+            enforce_pdf_nonnegative=enforce_pdf_nonnegative,
+        )
 
-    @property
-    def n_grid_points(self):
-        return self.grid_values.shape[0]
+        # Check if normalized. If not: normalize in place.
+        self.normalize_in_place()
 
+    # ------------------------------------------------------------------ utils
     def get_closest_point(self, xs):
-        """
-        Find the index of the closest grid point for each query point.
+        """Return the closest grid point (toroidal distance) to x.
 
         Parameters
         ----------
-        xs : array-like
-            Query points, shape (n,) for dim=1.
-
-        Returns
-        -------
-        grid_points : ndarray
-            The closest grid points.
-        indices : ndarray of int
-            The indices of the closest grid points.
+        x : array_like, shape (dim,) or (1, dim)
         """
-        n = self.n_grid_points
-        xs_mod = np.mod(np.asarray(xs, dtype=float).ravel(), 2.0 * pi)
-        indices = (np.floor(xs_mod * n / (2.0 * pi) + 0.5) % n).astype(int)
-        return self.grid[indices], indices
+        if xs.shape[1] != self.dim:
+            raise ValueError(
+                f"Expected point of dimension {self.dim}, got {xs.shape[1]}"
+            )
+        if self.grid is None or self.grid.size == 0:
+            raise ValueError("Grid is empty; cannot find closest point.")
 
-    def get_grid_point(self, idx):
-        """Return the grid point at index idx as a 1-D array."""
-        return array([self.grid[idx]])
+        # Toroidal squared distance: min(Δ^2, (2π - |Δ|)^2) summed over dimensions
+        delta = self.grid[None, :, :] - xs[:, None, :]  # (1, n_grid, dim)
+        abs_delta = abs(delta)
+        dists = sum(min((abs_delta**2, (2 * pi - abs_delta) ** 2)), axis=-1)
+        min_index = int(argmin(dists[0]))
+        return self.grid[min_index]
 
     def get_manifold_size(self):
-        return (2.0 * pi) ** self.dim
+        return AbstractHypertoroidalDistribution.get_manifold_size(self)
 
-    # Override so we use the grid-based trigonometric moment for efficiency
-    def trigonometric_moment(self, n: Union[int, int32, int64]):
-        """Compute the n-th trigonometric moment from grid values."""
-        grid = self.grid
-        w = self.grid_values / np.sum(self.grid_values)
-        # Riemann sum approximation: sum_i w_i * exp(i*n*theta_i) * (2*pi/N) * N/(2*pi) = sum_i w_i * exp(i*n*theta_i)
-        # But since grid_values already encodes the weights proportional to the pdf,
-        # we compute: sum_i grid_values[i] * exp(i*n*theta[i]) / sum_i grid_values[i]
-        return np.sum(w * np.exp(1j * n * grid))
-
-    def mean_direction(self):
-        """Compute the mean direction from the grid values."""
-        m1 = self.trigonometric_moment(1)
-        return np.mod(np.angle(m1), 2.0 * pi)
-
-    def mode(self):
-        """Return the grid point with the highest weight."""
-        idx = int(np.argmax(self.grid_values))
-        return array([self.grid[idx]])
-
-    def sample(self, n: Union[int, int32, int64]):
-        """Sample n points from the distribution using weighted sampling."""
-        w = self.grid_values / np.sum(self.grid_values)
-        indices = np.random.choice(len(w), size=n, p=w)
-        return array(self.grid[indices])
-
-    def pdf(self, xs):
-        """Evaluate the pdf at xs using nearest-neighbor interpolation."""
-        _, indices = self.get_closest_point(xs)
-        n = self.n_grid_points
-        normalization = np.sum(self.grid_values) * (2.0 * pi) / n
-        return array(self.grid_values[indices] / normalization)
-
-    def integrate(self, integration_boundaries=None):
-        """Integrate the distribution over the full circle."""
-        assert integration_boundaries is None, (
-            "Custom integration boundaries are not supported."
-        )
-        n = self.n_grid_points
-        return float(np.sum(self.grid_values) * (2.0 * pi) / n)
-
+    # ---------------------------------------------------------- grid helpers
     @staticmethod
-    def from_distribution(dist, n: Union[int, int32, int64]):
-        """
-        Create a HypertoroidalGridDistribution by sampling a distribution at
-        equidistant grid points.
+    def generate_cartesian_product_grid(n_grid_points):
+        """Generate a Cartesian product grid on [0, 2π)^dim.
 
         Parameters
         ----------
-        dist : AbstractHypertoroidalDistribution
-            The distribution to approximate.
-        n : int
-            Number of grid points.
-
-        Returns
-        -------
-        HypertoroidalGridDistribution
+        n_grid_points : int or sequence of int
+            Number of grid points along each dimension.
         """
-        grid = np.linspace(0.0, 2.0 * pi, n, endpoint=False)
-        grid_values = np.asarray(dist.pdf(array(grid)), dtype=float)
-        return HypertoroidalGridDistribution(grid_values, dim=dist.dim)
+        if any(array(n_grid_points) <= 0):
+            raise ValueError("n_grid_points must contain positive integers")
+
+        axes = [linspace(0.0, 2.0 * pi - 2.0 * pi / n, n) for n in n_grid_points]
+        mesh = meshgrid(*axes, indexing="ij")
+        grid = stack([m.ravel() for m in mesh], axis=-1)  # (n_samples, dim)
+        return grid
+
+    # ---------------------------------------------------------------- combine
+    def multiply(self, other):
+        assert all(
+            self.grid == other.grid
+        ), "Multiply:IncompatibleGrid: Can only multiply for equal grids."
+        return super().multiply(other)
+
+    # pylint: disable=too-many-locals
+    def pdf(self, xs):
+        """Evaluate the pdf at given query points.
+
+        Parameters
+        ----------
+        xs : array_like (backend compatible), shape (n_points_eval, dim) or (dim,)
+        """
+        # 1. Handle shapes using backend functions
+        if ndim(xs) == 1:
+            xs = reshape(xs, (1, -1))
+
+        if xs.shape[1] != self.dim:
+            raise ValueError(
+                f"Expected xs with shape (n_points_eval, {self.dim}), got {xs.shape}"
+            )
+
+        if self.grid_type != "cartesian_prod":
+            return self.value_of_closest(xs)
+
+        # 2. Cartesian product grid logic
+        n_grid_points = self.grid_values.shape
+        dim = self.dim
+
+        # We collect column indices in a list and stack them at the end.
+        indices_cols = []
+
+        for d in range(dim):
+            step = 2.0 * pi / n_grid_points[d]
+
+            # Calculate index as float first
+            # (val + step/2) // step gives the index, but as a float type
+            idx_float = (xs[:, d] + step / 2.0) // step
+
+            # Cast to int64 using the backend's explicit cast function
+            idx_int = cast(idx_float, int64)
+
+            # Apply modulo
+            idx_wrapped = mod(idx_int, n_grid_points[d])
+            indices_cols.append(idx_wrapped)
+
+        # Stack columns to shape (n_points, dim)
+        indices = stack(indices_cols, axis=1)
+
+        # 3. Calculate Strides
+        # We calculate strides using Python's math.prod on the shape tuple,
+        # then convert the result to a backend array.
+        strides_list = [
+            math.prod(n_grid_points[d + 1 :]) for d in range(dim)  # noqa: E203
+        ]
+        strides = array(strides_list, dtype=int64)
+
+        # 4. Calculate Flat Indices
+        # Sum (indices * strides) along the columns
+        flat_indices = sum(indices * strides, axis=1)
+
+        # 5. Index into flattened grid
+        # Reshape grid values to 1D
+        grid_flat = reshape(self.grid_values, (-1,))
+
+        # Use standard indexing (backends support integer array indexing)
+        p = grid_flat[flat_indices]
+
+        return p
+
+    def get_grid(self):
+        if self.grid is not None and self.grid.shape[0] > 0:
+            return self.grid
+        if self.grid_type == "cartesian_prod":
+            warnings.warn(
+                "Grid:GenerateDuringRunTime: Generating grid anew on call to "
+                "get_grid(). If you require the grid frequently, store it in the class.",
+                RuntimeWarning,
+            )
+            if self.n_grid_points is None:
+                raise ValueError("Cannot generate grid: n_grid_points is not defined.")
+            return self.generate_cartesian_product_grid(self.n_grid_points)
+        raise ValueError(
+            "Grid:UnknownGrid: Grid was not provided and is thus unavailable"
+        )
+
+    def pdf_unnormalized(self, xs):
+        if self.grid_type != "cartesian_prod":
+            raise ValueError(
+                "pdf_unnormalized is only defined for 'cartesian_prod' grids."
+            )
+        p = self.integrate() * self.pdf(xs)
+        return p
+
+    def value_of_closest(self, xa):
+        """Return pdf values of the closest grid point for each query.
+
+        Parameters
+        ----------
+        xa : array_like, shape (n_eval, dim) or (dim,)
+        """
+        if xa.ndim == 1:
+            xa = xa.reshape(1, -1)
+        if xa.shape[1] != self.dim:
+            raise ValueError(
+                f"Expected xa with shape (n_eval, {self.dim}), got {xa.shape}"
+            )
+
+        if self.grid is None or self.grid.size == 0:
+            raise ValueError("Grid is empty; cannot evaluate value_of_closest.")
+
+        # Broadcast differences: (n_eval, n_grid, dim)
+        delta = self.grid[None, :, :] - xa[:, None, :]
+        abs_delta = abs(delta)
+        dists = sum(min((abs_delta**2, (2 * pi - abs_delta) ** 2)), axis=-1)
+        min_inds = argmin(dists, axis=1)
+        return self.grid_values[min_inds]
+
+    @staticmethod
+    @beartype
+    def from_distribution(
+        distribution: AbstractHypertoroidalDistribution,
+        n_grid_points: tuple | list,
+        grid_type: str = "cartesian_prod",
+        enforce_pdf_nonnegative: bool = True,
+    ):
+        """Create a grid distribution from an existing hypertoroidal distribution."""
+        assert distribution.dim == len(
+            n_grid_points
+        ), "from_distribution:DimensionMismatch: n_grid_points must specify number of grid points along each dimension (i.e., have length equal to distribution.dim)."
+        # Generic case: sample pdf of the given distribution on a grid.
+        hgd = HypertoroidalGridDistribution.from_function(
+            distribution.pdf,
+            n_grid_points,
+            grid_type=grid_type,
+            enforce_pdf_nonnegative=enforce_pdf_nonnegative,
+        )
+        return hgd
+
+    @staticmethod
+    @beartype
+    def from_function(
+        fun,
+        n_grid_points: tuple | list,
+        grid_type: str = "cartesian_prod",
+        enforce_pdf_nonnegative: bool = True,
+    ):
+        """Construct a grid distribution by sampling a function on a grid.
+        You need to provide the number of grid points along each dimension.
+        Dimensionality of the torus is determined by the length of n_grid_points.
+
+        Parameters
+        ----------
+        fun : callable
+            Function handle representing a (possibly unnormalized) pdf.
+            Must accept an array of shape (n_eval, dim) and return shape (n_eval,).
+        n_grid_points : int or sequence of int
+            Number of grid points along each dimension.
+
+        """
+        if grid_type == "cartesian_prod":
+            grid = HypertoroidalGridDistribution.generate_cartesian_product_grid(
+                n_grid_points
+            )
+        else:
+            raise ValueError("Grid scheme not recognized")
+
+        # fun expects points as (prod(n_grid_points), dim) matrix
+        grid_values = fun(grid)
+        grid_values = reshape(grid_values, n_grid_points)
+
+        sgd = HypertoroidalGridDistribution(
+            grid_values=grid_values,
+            grid_type=grid_type,
+            grid=grid,
+            enforce_pdf_nonnegative=enforce_pdf_nonnegative,
+        )
+        return sgd
+
+    def plot(self, *args, **kwargs):
+        # Initially equally weighted and then overwrite to prevent
+        # normalization in the constructor of the Dirac distribution
+        hdd = HypertoroidalDiracDistribution(
+            self.grid,
+            (1.0 / len(self.grid_values)) * ones(len(self.grid_values)),
+        )
+        # Overwrite with actual (possibly unnormalized) weights
+        hdd.w = self.grid_values.copy()
+        return hdd.plot(*args, **kwargs)
+
+    def trigonometric_moment(self, n):
+        hwd = HypertoroidalDiracDistribution(
+            self.grid, self.grid_values / sum(self.grid_values)
+        )
+        m = hwd.trigonometric_moment(n)
+        return m
