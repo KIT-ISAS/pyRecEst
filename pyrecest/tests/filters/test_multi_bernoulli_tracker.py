@@ -175,6 +175,148 @@ class MultiBernoulliTrackerTest(unittest.TestCase):
             array([10.0, 0.0, 20.0, 0.0]),
         )
 
+    def test_persistent_labels_are_assigned_and_preserved(self):
+        tracker = MultiBernoulliTracker(
+            initial_prior=self.initial_components,
+            tracker_param={
+                "survival_probability": 0.99,
+                "detection_probability": 0.9,
+                "clutter_intensity": 1e-12,
+                "gating_probability": 0.999,
+                "gating_distance_threshold": None,
+                "pruning_threshold": 1e-4,
+                "maximum_number_of_components": None,
+                "birth_existence_probability": 0.8,
+                "birth_covariance": self.birth_covariance,
+                "measurement_to_state_matrix": None,
+            },
+        )
+
+        component_labels_before = tracker.get_component_labels()
+        self.assertEqual(component_labels_before, [0, 1])
+
+        measurement = array([[0.0], [0.0]])
+        tracker.update_linear(measurement, self.measurement_matrix, eye(2))
+
+        self.assertEqual(tracker.get_component_labels(), component_labels_before)
+
+        labels, point_estimates = tracker.get_labeled_point_estimate()
+        self.assertEqual(labels, [component_labels_before[0]])
+        npt.assert_array_equal(point_estimates.flatten(), zeros(4))
+
+    def test_birth_components_receive_unique_labels_across_updates(self):
+        tracker = MultiBernoulliTracker(
+            tracker_param={
+                "survival_probability": 0.99,
+                "detection_probability": 0.9,
+                "clutter_intensity": 1e-9,
+                "gating_probability": 0.999,
+                "gating_distance_threshold": None,
+                "pruning_threshold": 1e-4,
+                "maximum_number_of_components": None,
+                "birth_existence_probability": 0.7,
+                "birth_covariance": self.birth_covariance,
+                "measurement_to_state_matrix": None,
+            }
+        )
+
+        tracker.update_linear(array([[10.0], [20.0]]), self.measurement_matrix, eye(2))
+        first_label = tracker.bernoulli_components[0].label
+
+        tracker.update_linear(array([[30.0], [40.0]]), self.measurement_matrix, eye(2))
+        component_labels = tracker.get_component_labels()
+
+        self.assertEqual(len(component_labels), 2)
+        self.assertEqual(len(set(component_labels)), 2)
+        self.assertEqual(component_labels[0], first_label)
+
+    def test_explicit_labels_are_preserved_and_duplicate_labels_fail(self):
+        tracker = MultiBernoulliTracker(
+            initial_prior=[
+                BernoulliComponent(
+                    0.8,
+                    GaussianDistribution(zeros(4), diag(array([1.0, 1.0, 1.0, 1.0]))),
+                    label="cell_a",
+                ),
+                BernoulliComponent(
+                    0.6,
+                    GaussianDistribution(
+                        array([1.0, 0.0, 2.0, 0.0]),
+                        diag(array([1.0, 1.0, 1.0, 1.0])),
+                    ),
+                    label="cell_b",
+                ),
+            ]
+        )
+
+        self.assertEqual(tracker.get_component_labels(), ["cell_a", "cell_b"])
+
+        with self.assertRaises(ValueError):
+            tracker.filter_state = [
+                BernoulliComponent(
+                    0.9,
+                    GaussianDistribution(zeros(4), diag(array([1.0, 1.0, 1.0, 1.0]))),
+                    label="dup",
+                ),
+                BernoulliComponent(
+                    0.4,
+                    GaussianDistribution(
+                        array([2.0, 0.0, 3.0, 0.0]),
+                        diag(array([1.0, 1.0, 1.0, 1.0])),
+                    ),
+                    label="dup",
+                ),
+            ]
+
+    def test_labeled_components_can_be_looked_up_by_label(self):
+        tracker = MultiBernoulliTracker(
+            initial_prior=self.initial_components,
+            tracker_param={
+                "survival_probability": 0.99,
+                "detection_probability": 0.9,
+                "clutter_intensity": 1e-12,
+                "gating_probability": 0.999,
+                "gating_distance_threshold": None,
+                "pruning_threshold": 1e-4,
+                "maximum_number_of_components": None,
+                "birth_existence_probability": 0.8,
+                "birth_covariance": self.birth_covariance,
+                "measurement_to_state_matrix": None,
+            },
+        )
+
+        labels = tracker.get_component_labels()
+        components = tracker.get_labeled_components()
+
+        self.assertEqual(set(components.keys()), set(labels))
+        npt.assert_array_equal(
+            tracker.get_component_by_label(labels[0]).get_point_estimate(),
+            tracker.bernoulli_components[0].get_point_estimate(),
+        )
+
+        with self.assertRaises(KeyError):
+            tracker.get_component_by_label("missing")
+
+    def test_labeled_tuple_initialization_is_supported(self):
+        tracker = MultiBernoulliTracker(
+            initial_prior=[
+                (
+                    0.8,
+                    GaussianDistribution(
+                        array([2.0, 0.0, 3.0, 0.0]),
+                        diag(array([1.0, 1.0, 1.0, 1.0])),
+                    ),
+                    "tuple_label",
+                )
+            ]
+        )
+
+        self.assertEqual(tracker.get_component_labels(), ["tuple_label"])
+        npt.assert_array_equal(
+            tracker.get_component_by_label("tuple_label").get_point_estimate(),
+            array([2.0, 0.0, 3.0, 0.0]),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
