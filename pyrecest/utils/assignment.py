@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import copy
 from dataclasses import dataclass
 from heapq import heappop, heappush
 
@@ -61,7 +62,7 @@ def _build_augmented_cost_matrix(
     )
 
     if n_rows > 0 and n_cols > 0:
-        finite_cost_matrix = cost_matrix.copy()
+        finite_cost_matrix = copy(cost_matrix)
         finite_cost_matrix[~_isfinite(finite_cost_matrix)] = large_cost
         augmented_cost_matrix[:n_rows, :n_cols] = finite_cost_matrix
 
@@ -81,7 +82,7 @@ def _solve_subproblem(  # pylint: disable=too-many-locals
     large_cost: float,
     subproblem: _MurtySubproblem,
 ):
-    modified_cost_matrix = augmented_cost_matrix.copy()
+    modified_cost_matrix = copy(augmented_cost_matrix)
 
     for row_index, col_index in subproblem.forbidden_pairs:
         modified_cost_matrix[row_index, col_index] = large_cost
