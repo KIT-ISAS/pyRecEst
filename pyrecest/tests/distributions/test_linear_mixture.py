@@ -35,7 +35,7 @@ class LinearMixtureTest(unittest.TestCase):
             simplefilter("ignore", category=UserWarning)
             lm = LinearMixture([gm1, gm2], array([0.3, 0.7]))
 
-        x, y = meshgrid(linspace(-2, 2, 100), linspace(-2, 2, 100))
+        x, y = meshgrid(linspace(-2, 2, 100), linspace(-2, 2, 100), indexing="ij")
         points = column_stack((x.ravel(), y.ravel()))
 
         npt.assert_allclose(

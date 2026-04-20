@@ -2,6 +2,7 @@ import unittest
 import warnings
 
 import numpy.testing as npt
+import pyrecest
 import pyrecest.backend
 from parameterized import parameterized
 
@@ -36,6 +37,10 @@ from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_
 )
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on the JAX backend",
+)
 class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def setUp(self):
         random.seed(1)
@@ -516,7 +521,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def test_basis_function(self, _, coeff_mat, expected_func):
         shd = SphericalHarmonicsDistributionComplex(1.0 / sqrt(4.0 * pi))
         shd.coeff_mat = coeff_mat
-        phi, theta = meshgrid(linspace(0.0, 2.0 * pi, 10), linspace(0.0, pi, 10))
+        phi, theta = meshgrid(
+            linspace(0.0, 2.0 * pi, 10), linspace(0.0, pi, 10), indexing="ij"
+        )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(
             shd.pdf(column_stack([x, y, z])), expected_func(x, y, z), atol=1e-6
@@ -769,7 +776,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def test_basis_function_complex(self, name, coeff_mat, expected_func):
         shd = SphericalHarmonicsDistributionComplex(1 / sqrt(4 * pi), assert_real=False)
         shd.coeff_mat = coeff_mat
-        phi, theta = meshgrid(linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10))
+        phi, theta = meshgrid(
+            linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10), indexing="ij"
+        )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
 
         vals_to_test = shd.pdf(column_stack([x, y, z]))
@@ -1085,7 +1094,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             warnings.simplefilter("ignore", UserWarning)
             shd = SphericalHarmonicsDistributionComplex(coeff_mat)
         rshd = shd.to_spherical_harmonics_distribution_real()
-        phi, theta = meshgrid(linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10))
+        phi, theta = meshgrid(
+            linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10), indexing="ij"
+        )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(
             rshd.pdf(column_stack((x, y, z))),
@@ -1203,7 +1214,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             dist, 3
         )
         phi, theta = meshgrid(
-            linspace(0.0, 2.0 * pi, 10), linspace(-pi / 2.0, pi / 2.0, 10)
+            linspace(0.0, 2.0 * pi, 10),
+            linspace(-pi / 2.0, pi / 2.0, 10),
+            indexing="ij",
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(shd.mean_direction(), dist.mean_direction(), atol=1e-10)
