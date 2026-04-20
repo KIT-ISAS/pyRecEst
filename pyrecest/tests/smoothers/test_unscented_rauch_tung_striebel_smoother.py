@@ -4,7 +4,7 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, to_numpy
+from pyrecest.backend import array
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.smoothers import UnscentedRauchTungStriebelSmoother
 
@@ -36,30 +36,30 @@ class UnscentedRauchTungStriebelSmootherTest(unittest.TestCase):
         self.assertEqual(len(smoothed_states), 3)
         self.assertEqual(len(smoother_gains), 2)
 
-        npt.assert_allclose(to_numpy(filtered_states[0].mu), array([0.5]))
-        npt.assert_allclose(to_numpy(filtered_states[1].mu), array([1.25]))
-        npt.assert_allclose(to_numpy(filtered_states[2].mu), array([1.375]))
+        npt.assert_allclose(filtered_states[0].mu, array([0.5]))
+        npt.assert_allclose(filtered_states[1].mu, array([1.25]))
+        npt.assert_allclose(filtered_states[2].mu, array([1.375]))
 
-        npt.assert_allclose(to_numpy(predicted_states[0].mu), array([0.5]))
-        npt.assert_allclose(to_numpy(predicted_states[1].mu), array([1.25]))
+        npt.assert_allclose(predicted_states[0].mu, array([0.5]))
+        npt.assert_allclose(predicted_states[1].mu, array([1.25]))
 
-        npt.assert_allclose(to_numpy(smoothed_states[0].mu), array([0.90625]))
-        npt.assert_allclose(to_numpy(smoothed_states[1].mu), array([1.3125]))
-        npt.assert_allclose(to_numpy(smoothed_states[2].mu), array([1.375]))
+        npt.assert_allclose(smoothed_states[0].mu, array([0.90625]))
+        npt.assert_allclose(smoothed_states[1].mu, array([1.3125]))
+        npt.assert_allclose(smoothed_states[2].mu, array([1.375]))
 
-        npt.assert_allclose(to_numpy(filtered_states[0].C), array([[0.5]]))
-        npt.assert_allclose(to_numpy(filtered_states[1].C), array([[0.5]]))
-        npt.assert_allclose(to_numpy(filtered_states[2].C), array([[0.5]]))
+        npt.assert_allclose(filtered_states[0].C, array([[0.5]]))
+        npt.assert_allclose(filtered_states[1].C, array([[0.5]]))
+        npt.assert_allclose(filtered_states[2].C, array([[0.5]]))
 
-        npt.assert_allclose(to_numpy(predicted_states[0].C), array([[1.0]]))
-        npt.assert_allclose(to_numpy(predicted_states[1].C), array([[1.0]]))
+        npt.assert_allclose(predicted_states[0].C, array([[1.0]]))
+        npt.assert_allclose(predicted_states[1].C, array([[1.0]]))
 
-        npt.assert_allclose(to_numpy(smoothed_states[0].C), array([[0.34375]]))
-        npt.assert_allclose(to_numpy(smoothed_states[1].C), array([[0.375]]))
-        npt.assert_allclose(to_numpy(smoothed_states[2].C), array([[0.5]]))
+        npt.assert_allclose(smoothed_states[0].C, array([[0.34375]]))
+        npt.assert_allclose(smoothed_states[1].C, array([[0.375]]))
+        npt.assert_allclose(smoothed_states[2].C, array([[0.5]]))
 
-        npt.assert_allclose(to_numpy(smoother_gains[0]), array([[0.5]]))
-        npt.assert_allclose(to_numpy(smoother_gains[1]), array([[0.5]]))
+        npt.assert_allclose(smoother_gains[0], array([[0.5]]))
+        npt.assert_allclose(smoother_gains[1], array([[0.5]]))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
@@ -103,14 +103,14 @@ class UnscentedRauchTungStriebelSmootherTest(unittest.TestCase):
             smoothed_states_direct,
             smoothed_states_recomputed,
         ):
-            npt.assert_allclose(to_numpy(state_direct.mu), to_numpy(state_recomputed.mu))
-            npt.assert_allclose(to_numpy(state_direct.C), to_numpy(state_recomputed.C))
+            npt.assert_allclose(state_direct.mu, state_recomputed.mu)
+            npt.assert_allclose(state_direct.C, state_recomputed.C)
 
         npt.assert_allclose(
-            to_numpy(smoothed_states_recomputed[-1].mu),
-            to_numpy(filtered_states[-1].mu),
+            smoothed_states_recomputed[-1].mu,
+            filtered_states[-1].mu,
         )
         npt.assert_allclose(
-            to_numpy(smoothed_states_recomputed[-1].C),
-            to_numpy(filtered_states[-1].C),
+            smoothed_states_recomputed[-1].C,
+            filtered_states[-1].C,
         )

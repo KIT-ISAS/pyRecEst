@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 
-from pyrecest.backend import array, eye, to_numpy
+from pyrecest.backend import array, eye
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.smoothers import RauchTungStriebelSmoother
 
@@ -24,18 +24,18 @@ class RauchTungStriebelSmootherTest(unittest.TestCase):
         self.assertEqual(len(smoothed_states), 2)
         self.assertEqual(len(smoother_gains), 1)
 
-        npt.assert_allclose(to_numpy(filtered_states[0].mu), array([0.5]))
-        npt.assert_allclose(to_numpy(filtered_states[1].mu), array([1.4]))
-        npt.assert_allclose(to_numpy(predicted_states[0].mu), array([0.5]))
-        npt.assert_allclose(to_numpy(smoothed_states[0].mu), array([0.8]))
-        npt.assert_allclose(to_numpy(smoothed_states[1].mu), array([1.4]))
+        npt.assert_allclose(filtered_states[0].mu, array([0.5]))
+        npt.assert_allclose(filtered_states[1].mu, array([1.4]))
+        npt.assert_allclose(predicted_states[0].mu, array([0.5]))
+        npt.assert_allclose(smoothed_states[0].mu, array([0.8]))
+        npt.assert_allclose(smoothed_states[1].mu, array([1.4]))
 
-        npt.assert_allclose(to_numpy(filtered_states[0].C), array([[0.5]]))
-        npt.assert_allclose(to_numpy(filtered_states[1].C), array([[0.6]]))
-        npt.assert_allclose(to_numpy(predicted_states[0].C), array([[1.5]]))
-        npt.assert_allclose(to_numpy(smoothed_states[0].C), array([[0.4]]))
-        npt.assert_allclose(to_numpy(smoothed_states[1].C), array([[0.6]]))
-        npt.assert_allclose(to_numpy(smoother_gains[0]), array([[1.0 / 3.0]]))
+        npt.assert_allclose(filtered_states[0].C, array([[0.5]]))
+        npt.assert_allclose(filtered_states[1].C, array([[0.6]]))
+        npt.assert_allclose(predicted_states[0].C, array([[1.5]]))
+        npt.assert_allclose(smoothed_states[0].C, array([[0.4]]))
+        npt.assert_allclose(smoothed_states[1].C, array([[0.6]]))
+        npt.assert_allclose(smoother_gains[0], array([[1.0 / 3.0]]))
 
     def test_smoothing_does_not_change_last_filtered_state(self):
         smoother = RauchTungStriebelSmoother()
@@ -51,8 +51,8 @@ class RauchTungStriebelSmootherTest(unittest.TestCase):
             system_matrices=array([[1.0]]),
         )
 
-        npt.assert_allclose(to_numpy(smoothed_states[-1].mu), to_numpy(filtered_states[-1].mu))
-        npt.assert_allclose(to_numpy(smoothed_states[-1].C), to_numpy(filtered_states[-1].C))
+        npt.assert_allclose(smoothed_states[-1].mu, filtered_states[-1].mu)
+        npt.assert_allclose(smoothed_states[-1].C, filtered_states[-1].C)
 
     def test_identity_defaults_and_tuple_initial_state(self):
         smoother = RauchTungStriebelSmoother()
@@ -70,8 +70,8 @@ class RauchTungStriebelSmootherTest(unittest.TestCase):
         self.assertEqual(len(smoothed_states), 2)
 
         self.assertLessEqual(
-            float(to_numpy(smoothed_states[0].C)[0, 0]),
-            float(to_numpy(filtered_states[0].C)[0, 0]),
+            float(smoothed_states[0].C[0, 0]),
+            float(filtered_states[0].C[0, 0]),
         )
 
     def test_single_measurement_sequence_returns_single_smoothed_state(self):
@@ -87,8 +87,8 @@ class RauchTungStriebelSmootherTest(unittest.TestCase):
         self.assertEqual(len(predicted_states), 0)
         self.assertEqual(len(smoothed_states), 1)
         self.assertEqual(len(smoother_gains), 0)
-        npt.assert_allclose(to_numpy(smoothed_states[0].mu), to_numpy(filtered_states[0].mu))
-        npt.assert_allclose(to_numpy(smoothed_states[0].C), to_numpy(filtered_states[0].C))
+        npt.assert_allclose(smoothed_states[0].mu, filtered_states[0].mu)
+        npt.assert_allclose(smoothed_states[0].C, filtered_states[0].C)
 
 
 if __name__ == "__main__":
