@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
+import pyrecest.backend
 
 from pyrecest.utils import murty_k_best_assignments
 
@@ -86,6 +87,10 @@ class MurtyAssignmentTest(unittest.TestCase):
 
         return unique_solutions
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
     def test_matches_bruteforce_for_small_random_problems(self):
         rng = np.random.default_rng(0)
 
@@ -132,6 +137,10 @@ class MurtyAssignmentTest(unittest.TestCase):
                             expected_solution["cost"],
                         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
     def test_empty_column_case_returns_all_rows_unassigned(self):
         solutions = murty_k_best_assignments(
             np.empty((2, 0)),

@@ -1,5 +1,6 @@
 import unittest
 
+import pyrecest.backend
 from pyrecest.filters.multi_hypothesis_tracker import MultiHypothesisTracker
 
 
@@ -51,6 +52,10 @@ class MultiHypothesisTrackerEnumerationTest(unittest.TestCase):
             unique_solutions.append(solution)
         return unique_solutions
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
     def test_enumeration_matches_bruteforce(self):
         tracker = MultiHypothesisTracker.__new__(MultiHypothesisTracker)
         tracker.association_param = {"max_hypotheses_per_global_hypothesis": 5}
@@ -72,6 +77,10 @@ class MultiHypothesisTrackerEnumerationTest(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
     def test_enumeration_without_candidates_returns_all_missed_detections(self):
         tracker = MultiHypothesisTracker.__new__(MultiHypothesisTracker)
         tracker.association_param = {"max_hypotheses_per_global_hypothesis": 3}

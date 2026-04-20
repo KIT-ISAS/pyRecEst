@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from heapq import heappop, heappush
 
+import pyrecest.backend
 from pyrecest.backend import (
     abs as _abs,
     any as _any,
@@ -168,6 +169,11 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
     """
     if k <= 0:
         return []
+
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError(
+            "murty_k_best_assignments is not supported on the JAX backend."
+        )
 
     cost_matrix = _asarray(cost_matrix, dtype=float)
     if cost_matrix.ndim != 2:
