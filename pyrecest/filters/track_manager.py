@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Generic explicit track lifecycle management for PyRecEst.
 
 This module provides a reusable layer around single-target filters:
@@ -20,10 +18,12 @@ The helper uses SciPy's Hungarian implementation and therefore operates on
 NumPy arrays.
 """
 
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
@@ -53,7 +53,7 @@ class TrackStatus(str, Enum):
 
 
 @dataclass
-class Track:
+class Track:  # pylint: disable=too-many-instance-attributes
     """Container for one managed track."""
 
     track_id: int
@@ -112,7 +112,7 @@ class AssociationResult:
 
 
 @dataclass
-class TrackManagerStepResult:
+class TrackManagerStepResult:  # pylint: disable=too-many-instance-attributes
     """Summary of one :meth:`TrackManager.step` call."""
 
     step: int
@@ -125,7 +125,7 @@ class TrackManagerStepResult:
     association: Optional[AssociationResult] = None
 
 
-class TrackManager(AbstractMultitargetTracker):
+class TrackManager(AbstractMultitargetTracker):  # pylint: disable=too-many-instance-attributes
     """Explicit lifecycle manager around a bank of single-target filters.
 
     The manager does not assume a specific measurement modality or cost model.
@@ -563,7 +563,7 @@ class TrackManager(AbstractMultitargetTracker):
         )
 
     @staticmethod
-    def _normalize_association_result(
+    def _normalize_association_result(  # pylint: disable=too-many-branches
         association: AssociationResult,
         num_tracks: int,
         num_measurements: int,
@@ -629,7 +629,7 @@ class TrackManager(AbstractMultitargetTracker):
         )
 
 
-def solve_global_nearest_neighbor(
+def solve_global_nearest_neighbor(  # pylint: disable=too-many-locals
     cost_matrix: np.ndarray,
     unassigned_track_cost: Any,
     unassigned_measurement_cost: Optional[Any] = None,
@@ -790,7 +790,7 @@ def build_linear_gaussian_predictor(
         current_system_matrix = kwargs.get("system_matrix", system_matrix)
         current_sys_noise_cov = kwargs.get("sys_noise_cov", sys_noise_cov)
         current_sys_input = kwargs.get("sys_input", sys_input_array)
-        track.single_target_filter.predict_linear(
+        cast(KalmanFilter, track.single_target_filter).predict_linear(
             current_system_matrix,
             current_sys_noise_cov,
             current_sys_input,
@@ -835,7 +835,7 @@ def build_linear_gaussian_updater(
             )
         else:
             covariance = measurement_covariance
-        track.single_target_filter.update_linear(
+        cast(KalmanFilter, track.single_target_filter).update_linear(
             np.asarray(measurement_vector),
             measurement_matrix,
             np.asarray(covariance),
@@ -909,6 +909,7 @@ def _coerce_cost_vector(cost: Any, length: int, name: str) -> np.ndarray:
     return vector
 
 
+# pylint: disable=duplicate-code
 __all__ = [
     "AssociationResult",
     "Track",

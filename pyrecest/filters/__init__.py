@@ -12,8 +12,8 @@ from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
-from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
 from .global_nearest_neighbor import GlobalNearestNeighbor
+from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
 from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
 from .gprhm_tracker import GPRHMTracker
 from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
@@ -32,6 +32,7 @@ from .joint_probabilistic_data_association_filter import (
     JPDAF,
     JointProbabilisticDataAssociationFilter,
 )
+from .interacting_multiple_model_filter import IMM, InteractingMultipleModelFilter
 from .kalman_filter import KalmanFilter
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
@@ -100,6 +101,8 @@ __all__ = [
     "GlobalNearestNeighbor",
     "JPDAF",
     "JointProbabilisticDataAssociationFilter",
+    "IMM",
+    "InteractingMultipleModelFilter",
     "GPRHMTracker",
     "HypercylindricalFilterMixin",
     "HypercylindricalParticleFilter",
