@@ -98,8 +98,8 @@ class AffineTransform:
         return transform
 
 
-@dataclass(frozen=True)  # pylint: disable=too-many-instance-attributes
-class RegistrationResult:
+@dataclass(frozen=True)
+class RegistrationResult:  # pylint: disable=too-many-instance-attributes
     """Result of alternating registration and assignment."""
 
     transform: AffineTransform
