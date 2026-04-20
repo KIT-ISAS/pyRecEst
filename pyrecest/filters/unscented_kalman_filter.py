@@ -1,5 +1,4 @@
 # pylint: disable=no-name-in-module,no-member,duplicate-code
-from copy import copy
 from typing import Callable
 
 import pyrecest.backend
@@ -7,6 +6,7 @@ from pyrecest.backend import atleast_1d, zeros
 
 from ._ukf import MerweScaledSigmaPoints
 from ._ukf import UnscentedKalmanFilter as BayesianFiltersUKF
+from ._ukf import _UKFModel
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
@@ -38,7 +38,7 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
 
         EuclideanFilterMixin.__init__(self)
         bfukf = BayesianFiltersUKF(
-            dim_x=dim_x, dim_z=dim_x, dt=dt, hx=hx, fx=fx, points=points
+            _UKFModel(dim_x=dim_x, dim_z=dim_x, dt=dt, hx=hx, fx=fx, points=points)
         )
         AbstractFilter.__init__(self, bfukf)
 
@@ -49,8 +49,6 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         else:
             self._filter_state.x = initial_state[0]
             self._filter_state.P = initial_state[1]
-        self._filter_state.x_prior = copy(self._filter_state.x)
-        self._filter_state.P_prior = copy(self._filter_state.P)
         # Track whether predict() has been called before update()
         self._predicted = False
 

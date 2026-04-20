@@ -11,7 +11,7 @@ References:
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
-from ._ukf import MerweScaledSigmaPoints, UnscentedKalmanFilter
+from ._ukf import MerweScaledSigmaPoints, UnscentedKalmanFilter, _UKFModel
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, atleast_1d, mod, pi, sign
@@ -35,12 +35,7 @@ def _make_ukf(  # pylint: disable=too-many-arguments,too-many-positional-argumen
     """
     points = MerweScaledSigmaPoints(n=1, alpha=alpha, beta=beta, kappa=kappa)
     ukf = UnscentedKalmanFilter(
-        dim_x=1,
-        dim_z=dim_z,
-        dt=1.0,
-        hx=hx,
-        fx=fx,
-        points=points,
+        _UKFModel(dim_x=1, dim_z=dim_z, dt=1.0, hx=hx, fx=fx, points=points)
     )
     ukf.x = array([x0])
     ukf.P = array([[P0]])

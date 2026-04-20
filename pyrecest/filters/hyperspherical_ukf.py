@@ -15,7 +15,7 @@ from typing import Callable
 
 import pyrecest.backend
 from pyrecest.backend import (
-    all,
+    all,  # pylint: disable=redefined-builtin
     array,
     asarray,
     empty,
@@ -29,6 +29,7 @@ from pyrecest.backend import (
 
 from ._ukf import MerweScaledSigmaPoints
 from ._ukf import UnscentedKalmanFilter as BayesianFiltersUKF
+from ._ukf import _UKFModel
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
@@ -96,7 +97,7 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
         """Build a BayesianFiltersUKF initialized from the current filter state."""
         points = self._make_sigma_points(dim_x)
         ukf = BayesianFiltersUKF(
-            dim_x=dim_x, dim_z=dim_z, dt=1.0, hx=hx, fx=fx, points=points
+            _UKFModel(dim_x=dim_x, dim_z=dim_z, dt=1.0, hx=hx, fx=fx, points=points)
         )
         ukf.x = reshape(asarray(self._filter_state.mu, dtype=float64), (-1,))
         ukf.P = asarray(self._filter_state.C, dtype=float64)
