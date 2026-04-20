@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from copy import copy
 from dataclasses import dataclass
 from heapq import heappop, heappush
 
@@ -10,9 +9,11 @@ import pyrecest.backend
 from pyrecest.backend import (
     abs as _abs,
     any as _any,
+    array as _array,
     asarray as _asarray,
     concatenate as _concatenate,
     full as _full,
+    int64 as _int64,
     isfinite as _isfinite,
     sum as _sum,
     where as _where,
@@ -62,7 +63,7 @@ def _build_augmented_cost_matrix(
     )
 
     if n_rows > 0 and n_cols > 0:
-        finite_cost_matrix = copy(cost_matrix)
+        finite_cost_matrix = _array(cost_matrix)
         finite_cost_matrix[~_isfinite(finite_cost_matrix)] = large_cost
         augmented_cost_matrix[:n_rows, :n_cols] = finite_cost_matrix
 
@@ -82,7 +83,7 @@ def _solve_subproblem(  # pylint: disable=too-many-locals
     large_cost: float,
     subproblem: _MurtySubproblem,
 ):
-    modified_cost_matrix = copy(augmented_cost_matrix)
+    modified_cost_matrix = _array(augmented_cost_matrix)
 
     for row_index, col_index in subproblem.forbidden_pairs:
         modified_cost_matrix[row_index, col_index] = large_cost
@@ -107,21 +108,21 @@ def _solve_subproblem(  # pylint: disable=too-many-locals
     if _any(chosen_costs >= large_cost / 2.0):
         return None
 
-    full_assignment = _full(n_rows, -1, dtype=int)
+    full_assignment = _full((n_rows,), -1, dtype=_int64)
     for row_index, col_index in zip(row_ind, col_ind):
         if row_index < n_rows:
             full_assignment[row_index] = col_index
 
-    assignment = _full(n_rows, -1, dtype=int)
+    assignment = _full((n_rows,), -1, dtype=_int64)
     for row_index, col_index in enumerate(full_assignment):
         if col_index < n_cols:
             assignment[row_index] = col_index
 
     assigned_columns = {int(col_index) for col_index in assignment if col_index >= 0}
-    unassigned_rows = _where(assignment < 0)[0].astype(int)
+    unassigned_rows = _asarray(_where(assignment < 0)[0], dtype=_int64)
     unassigned_cols = _asarray(
         [col_index for col_index in range(n_cols) if col_index not in assigned_columns],
-        dtype=int,
+        dtype=_int64,
     )
 
     total_cost = float(augmented_cost_matrix[row_ind, col_ind].sum())
