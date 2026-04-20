@@ -44,7 +44,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
 
     @staticmethod
     def _assert_supported_backend():
-        backend_name: str = getattr(pyrecest.backend, "__backend_name__", "")
+        backend_name: str = getattr(pyrecest.backend, "__backend_name__", "")  # pylint: disable=no-member
         assert backend_name not in (
             "pytorch",
             "jax",
@@ -352,7 +352,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
 
         return filtered_states, predicted_states, predicted_cross_covariances
 
-    def smooth(
+    def smooth(  # pylint: disable=too-many-locals
         self,
         filtered_states: Sequence["GaussianDistribution | tuple"],
         predicted_states: Sequence["GaussianDistribution | tuple"],
