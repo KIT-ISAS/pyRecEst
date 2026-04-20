@@ -3,6 +3,8 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, zeros
 from pyrecest.utils.nonrigid_point_set_registration import (
@@ -13,6 +15,10 @@ from pyrecest.utils.nonrigid_point_set_registration import (
 
 
 class TestThinPlateSplineEstimation(unittest.TestCase):
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_estimate_thin_plate_spline_recovers_known_warp(self):
         source = array(
             [
@@ -61,6 +67,10 @@ class TestThinPlateSplineEstimation(unittest.TestCase):
 
 
 class TestJointThinPlateSplineRegistrationAssignment(unittest.TestCase):
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_joint_tps_registration_assignment_recovers_permuted_matches(self):
         reference = array(
             [
@@ -117,6 +127,10 @@ class TestJointThinPlateSplineRegistrationAssignment(unittest.TestCase):
         )
         self.assertTrue(result.converged)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_joint_tps_registration_assignment_handles_missing_points_and_outliers(self):
         reference = array(
             [
@@ -170,6 +184,10 @@ class TestJointThinPlateSplineRegistrationAssignment(unittest.TestCase):
         self.assertEqual(int((result.assignment >= 0).sum()), 3)
         self.assertTrue(bool((result.assignment[[0, 2, 4]] == -1).all()))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_joint_tps_registration_assignment_supports_custom_cost_function(self):
         reference = array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
         moving = array([[0.3, -0.1], [1.3, -0.1], [2.3, -0.1]])

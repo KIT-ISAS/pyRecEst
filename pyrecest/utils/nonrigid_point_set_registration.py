@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     any,
@@ -170,6 +172,11 @@ def estimate_thin_plate_spline(
     regularization:
         Non-negative ridge penalty applied to the TPS kernel matrix.
     """
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError(
+            "estimate_thin_plate_spline is not supported on the JAX backend."
+        )
+
     if regularization < 0.0:
         raise ValueError("regularization must be non-negative.")
 
@@ -287,6 +294,11 @@ def joint_tps_registration_assignment(
     regularization:
         Non-negative ridge penalty for TPS fitting.
     """
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError(
+            "joint_tps_registration_assignment is not supported on the JAX backend."
+        )
+
     reference = _as_point_array(reference_points)
     moving = _as_point_array(moving_points)
 
