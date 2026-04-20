@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, cos, deg2rad, eye, sin, vstack, zeros
 from pyrecest.utils.point_set_registration import (
     AffineTransform,

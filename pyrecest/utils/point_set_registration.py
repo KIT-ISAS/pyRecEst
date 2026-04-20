@@ -13,9 +13,11 @@ rotation, or affine deformation must be estimated before data association.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import Callable, Literal
+from typing import Any, Callable, Literal
 
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     any,
     array_equal,
@@ -54,8 +56,8 @@ class AffineTransform:
         Translation vector of shape ``(dim,)``.
     """
 
-    matrix: object
-    offset: object
+    matrix: Any
+    offset: Any
 
     def __post_init__(self) -> None:
         matrix = asarray(self.matrix)
@@ -80,14 +82,14 @@ class AffineTransform:
             raise ValueError("dim must be positive.")
         return AffineTransform(eye(dim), zeros(dim))
 
-    def apply(self, points) -> object:
+    def apply(self, points) -> Any:
         """Apply the transform to an ``(n_points, dim)`` array of points."""
         points_array = _as_point_array(points)
         if points_array.shape[1] != self.dim:
             raise ValueError("Point dimension does not match transform dimension.")
         return (self.matrix @ points_array.T).T + self.offset
 
-    def homogeneous_matrix(self) -> object:
+    def homogeneous_matrix(self) -> Any:
         """Return the homogeneous representation of the affine transform."""
         transform = eye(self.dim + 1)
         transform[: self.dim, : self.dim] = self.matrix
@@ -95,16 +97,16 @@ class AffineTransform:
         return transform
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True)  # pylint: disable=too-many-instance-attributes
 class RegistrationResult:
     """Result of alternating registration and assignment."""
 
     transform: AffineTransform
-    assignment: object
-    matched_reference_indices: object
-    matched_moving_indices: object
-    transformed_reference_points: object
-    matched_costs: object
+    assignment: Any
+    matched_reference_indices: Any
+    matched_moving_indices: Any
+    transformed_reference_points: Any
+    matched_costs: Any
     rmse: float
     n_iterations: int
     converged: bool
@@ -131,7 +133,7 @@ def _validate_pair(source_points, target_points):
 
 def _normalize_weights(weights, n_points):
     if weights is None:
-        return full(n_points, 1.0 / n_points)
+        return full((n_points,), 1.0 / n_points)
     weights_array = asarray(weights).reshape(-1)
     if weights_array.shape[0] != n_points:
         raise ValueError("weights must have length n_points.")
@@ -153,7 +155,7 @@ def _minimum_required_matches(model: TransformModel, dim: int) -> int:
     raise ValueError(f"Unsupported transform model: {model}")
 
 
-def estimate_transform(
+def estimate_transform(  # pylint: disable=too-many-locals
     source_points,
     target_points,
     *,
@@ -245,7 +247,7 @@ def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
     if finite_costs.size == 0:
         return zeros((costs.shape[0],), dtype=int64) - 1
 
-    if isfinite(max_cost):
+    if math.isfinite(max_cost):
         dummy_cost = float(max_cost)
     else:
         dummy_cost = float(finite_costs.max() + 1.0)
@@ -274,7 +276,7 @@ def _compute_rmse(matched_costs) -> float:
     return float("inf")
 
 
-def joint_registration_assignment(
+def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     reference_points,
     moving_points,
     *,
