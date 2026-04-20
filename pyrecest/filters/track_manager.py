@@ -67,6 +67,15 @@ class Track:  # pylint: disable=too-many-instance-attributes
     event_history: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
+    def history(self) -> List[Dict[str, Any]]:
+        """Backward-compatible alias for event_history."""
+        return self.event_history
+
+    @history.setter
+    def history(self, value: List[Dict[str, Any]]) -> None:
+        self.event_history = value
+
+    @property
     def dim(self) -> int:
         """Return the state dimension of the underlying filter."""
 
@@ -185,8 +194,12 @@ class TrackManager(
         self.tracks: List[Track] = []
         self._next_track_id = 0
         self._current_step = -1
-        if self.keep_history and "track_events" not in self.history:
-            self.history.register("track_events")
+
+        if self.keep_history:
+            tracker_history = getattr(self, "history", None)
+            register = getattr(tracker_history, "register", None)
+            if callable(register) and "track_events" not in tracker_history:
+                register("track_events")
 
     @property
     def dim(self) -> int:
@@ -558,13 +571,21 @@ class TrackManager(
     def _record_history(self, track: Track, step: int, event: str, **payload) -> None:
         if not self.keep_history:
             return
+
         event_record = {"track_id": track.track_id, "step": int(step), "event": event}
         event_record.update(payload)
+
         track.event_history.append(copy.deepcopy(event_record))
-        self.record_history("track_events", event_record, copy_value=True)
+
+        record_history = getattr(self, "record_history", None)
+        if callable(record_history):
+            record_history("track_events", event_record, copy_value=True)
 
     def clear_history(self, name=None):
-        super().clear_history(name)
+        parent_clear_history = getattr(super(), "clear_history", None)
+        if callable(parent_clear_history):
+            parent_clear_history(name)
+
         if name is None or name == "track_events":
             for track in self.tracks:
                 track.event_history.clear()
