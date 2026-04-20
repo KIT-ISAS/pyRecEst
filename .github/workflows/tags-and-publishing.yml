@@ -87,16 +87,45 @@ jobs:
       - name: Extract repository name
         run: echo "REPO_NAME=$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
+      - name: Find previous tag
+        id: prev_tag
+        shell: bash
+        run: |
+          PREV_TAG="$(git tag --sort=-version:refname | sed -n '2p')"
+          echo "tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate AI release notes
+        if: steps.prev_tag.outputs.tag != ''
+        id: ai_notes
+        uses: github/copilot-release-notes@main
+        with:
+          base-ref: ${{ steps.prev_tag.outputs.tag }}
+          head-ref: ${{ env.VERSION }}
+          pr-strategy: github-api
+          instructions: .github/release-notes-instructions.md
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+
+      - name: Fallback notes for first release
+        if: steps.prev_tag.outputs.tag == ''
+        run: echo "Initial release." > RELEASE_NOTES.md
+
+      - name: Write AI notes to file
+        if: steps.prev_tag.outputs.tag != ''
+        run: |
+          cat > RELEASE_NOTES.md <<'EOF'
+          ${{ steps.ai_notes.outputs.release-notes }}
+          EOF
+
       - name: Build package
         run: python -m poetry build
 
       - name: Create GitHub Release and Upload Artifacts
-        env:
-          VERSION: ${{ env.VERSION }}
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
           name: Release ${{ env.VERSION }}
+          bodyFile: RELEASE_NOTES.md
           artifacts: ./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}-py3-none-any.whl,./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
