@@ -12,6 +12,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Mapping, Sequence
 
+import pyrecest.backend
 from pyrecest.backend import (
     amax,
     asarray,
@@ -105,6 +106,11 @@ def pairwise_iou_masks(reference_rois: Sequence, query_rois: Sequence):
         Matrix with shape ``(len(reference_rois), len(query_rois))``.
     """
 
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError(
+            "pairwise_iou_masks is not supported on the jax backend."
+        )
+
     n_reference = len(reference_rois)
     n_query = len(query_rois)
     iou_matrix = zeros((n_reference, n_query), dtype=float)
@@ -165,6 +171,11 @@ def assign_by_similarity_matrix(
     similarities = asarray(similarity_matrix, dtype=float)
     if similarities.ndim != 2:
         raise ValueError("similarity_matrix must be two-dimensional.")
+
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError(
+            "assign_by_similarity_matrix is not supported on the jax backend."
+        )
 
     n_rows, n_cols = similarities.shape
     if n_rows == 0:
