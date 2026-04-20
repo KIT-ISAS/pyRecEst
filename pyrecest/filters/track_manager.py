@@ -65,7 +65,7 @@ class Track:  # pylint: disable=too-many-instance-attributes
     first_step: int = 0
     last_step: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
-    history: List[Dict[str, Any]] = field(default_factory=list)
+    event_history: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
     def dim(self) -> int:
@@ -184,6 +184,8 @@ class TrackManager(AbstractMultitargetTracker):  # pylint: disable=too-many-inst
         self.tracks: List[Track] = []
         self._next_track_id = 0
         self._current_step = -1
+        if self.keep_history and "track_events" not in self.history:
+            self.history.register("track_events")
 
     @property
     def dim(self) -> int:
@@ -539,9 +541,16 @@ class TrackManager(AbstractMultitargetTracker):  # pylint: disable=too-many-inst
     def _record_history(self, track: Track, step: int, event: str, **payload) -> None:
         if not self.keep_history:
             return
-        event_record = {"step": int(step), "event": event}
+        event_record = {"track_id": track.track_id, "step": int(step), "event": event}
         event_record.update(payload)
-        track.history.append(event_record)
+        track.event_history.append(copy.deepcopy(event_record))
+        self.record_history("track_events", event_record, copy_value=True)
+
+    def clear_history(self, name=None):
+        super().clear_history(name)
+        if name is None or name == "track_events":
+            for track in self.tracks:
+                track.event_history.clear()
 
     @staticmethod
     def _normalize_status(status: TrackStatus) -> TrackStatus:
