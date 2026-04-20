@@ -1,7 +1,7 @@
 # pylint: disable=no-name-in-module,no-member,duplicate-code
 import copy
 from math import log
-from numbers import Real
+from numbers import Integral, Real
 
 import pyrecest.backend
 
@@ -27,13 +27,27 @@ from .manifold_mixins import EuclideanFilterMixin
 
 
 class BernoulliComponent:
-    """A Bernoulli component used by :class:`MultiBernoulliTracker`."""
+    """A Bernoulli component used by :class:`MultiBernoulliTracker`.
 
-    def __init__(self, existence_probability, single_target_state):
+    Parameters
+    ----------
+    existence_probability : float
+        Probability that the component exists.
+    single_target_state
+        Either a single-target filter or a state distribution from which a
+        :class:`KalmanFilter` can be instantiated.
+    label : hashable, optional
+        Persistent track label. If omitted, :class:`MultiBernoulliTracker`
+        assigns a monotonically increasing integer label automatically when the
+        component becomes active.
+    """
+
+    def __init__(self, existence_probability, single_target_state, label=None):
         if not 0.0 <= float(existence_probability) <= 1.0:
             raise ValueError("existence_probability must be in [0, 1]")
 
         self.existence_probability = float(existence_probability)
+        self.label = copy.deepcopy(label)
 
         if isinstance(single_target_state, EuclideanFilterMixin):
             self.single_target_filter = copy.deepcopy(single_target_state)
@@ -93,6 +107,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         )
 
         self.tracker_param = tracker_param
+        self._next_label = 0
         self.birth_components = []
         if birth_components is not None:
             self.birth_components = self._normalize_components(birth_components)
@@ -113,10 +128,20 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             and isinstance(component[0], Real)
         )
 
+    @staticmethod
+    def _is_labeled_existence_state_tuple(component):
+        return (
+            isinstance(component, tuple)
+            and len(component) == 3
+            and isinstance(component[0], Real)
+        )
+
     @classmethod
     def _normalize_component(cls, component):
         if isinstance(component, BernoulliComponent):
             return copy.deepcopy(component)
+        if cls._is_labeled_existence_state_tuple(component):
+            return BernoulliComponent(component[0], component[1], label=component[2])
         if cls._is_existence_state_tuple(component):
             return BernoulliComponent(component[0], component[1])
         return BernoulliComponent(1.0, component)
@@ -124,6 +149,40 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
     @classmethod
     def _normalize_components(cls, components):
         return [cls._normalize_component(component) for component in components]
+
+    def _assign_missing_labels(self, components):
+        used_labels = set()
+        integer_labels = []
+
+        for component in components:
+            if component.label is None:
+                continue
+
+            try:
+                hash(component.label)
+            except TypeError as exc:
+                raise TypeError("Track labels must be hashable.") from exc
+
+            if component.label in used_labels:
+                raise ValueError("Track labels must be unique among active components.")
+
+            used_labels.add(component.label)
+            if isinstance(component.label, Integral):
+                integer_labels.append(int(component.label))
+
+        if integer_labels:
+            self._next_label = max(self._next_label, max(integer_labels) + 1)
+
+        for component in components:
+            if component.label is not None:
+                continue
+
+            while self._next_label in used_labels:
+                self._next_label += 1
+
+            component.label = self._next_label
+            used_labels.add(component.label)
+            self._next_label += 1
 
     @staticmethod
     def _get_component_probability(probability, index):
@@ -300,6 +359,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
     @filter_state.setter
     def filter_state(self, new_state):
         self.bernoulli_components = self._normalize_components(new_state)
+        self._assign_missing_labels(self.bernoulli_components)
         if self.log_prior_estimates:
             self.store_prior_estimates()
 
@@ -341,6 +401,43 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             return 0
         return int(argmax(self.get_cardinality_distribution()))
 
+    def _select_components_for_extraction(self, number_of_targets):
+        return sorted(
+            self.bernoulli_components,
+            key=lambda component: component.existence_probability,
+            reverse=True,
+        )[:number_of_targets]
+
+    def get_component_labels(self):
+        """Return the labels of all active Bernoulli components."""
+        return [
+            copy.deepcopy(component.label) for component in self.bernoulli_components
+        ]
+
+    def get_labeled_components(self, copy_components=True):
+        """Return active Bernoulli components keyed by track label."""
+        return {
+            copy.deepcopy(component.label): (
+                copy.deepcopy(component) if copy_components else component
+            )
+            for component in self.bernoulli_components
+        }
+
+    def get_component_by_label(self, label, copy_component=True):
+        """Return a Bernoulli component by track label."""
+        for component in self.bernoulli_components:
+            if component.label == label:
+                return copy.deepcopy(component) if copy_component else component
+        raise KeyError(f"No Bernoulli component with label {label!r} exists.")
+
+    def get_track_labels(self, number_of_targets=None):
+        """Return the labels of the extracted target states."""
+        labels, _ = self.get_labeled_point_estimate(
+            flatten_vector=False,
+            number_of_targets=number_of_targets,
+        )
+        return labels
+
     def get_point_estimate(self, flatten_vector=False, number_of_targets=None):
         """Return extracted target states.
 
@@ -348,20 +445,31 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         cardinality is used, and the states of the Bernoulli components with the
         highest existence probabilities are returned.
         """
+        _, point_estimates = self.get_labeled_point_estimate(
+            flatten_vector=flatten_vector,
+            number_of_targets=number_of_targets,
+        )
+        return point_estimates
+
+    def get_labeled_point_estimate(self, flatten_vector=False, number_of_targets=None):
+        """Return extracted target states together with persistent labels."""
         if not self.bernoulli_components:
-            return array([]) if flatten_vector else empty((0, 0))
+            point_estimates = array([]) if flatten_vector else empty((0, 0))
+            return [], point_estimates
 
         if number_of_targets is None:
             number_of_targets = self.get_number_of_targets()
 
         if number_of_targets <= 0:
             point_estimates = empty((self.dim, 0))
+            labels = []
         else:
-            selected_components = sorted(
-                self.bernoulli_components,
-                key=lambda component: component.existence_probability,
-                reverse=True,
-            )[:number_of_targets]
+            selected_components = self._select_components_for_extraction(
+                number_of_targets
+            )
+            labels = [
+                copy.deepcopy(component.label) for component in selected_components
+            ]
             point_estimates = stack(
                 [component.get_point_estimate() for component in selected_components],
                 axis=1,
@@ -370,7 +478,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         if flatten_vector:
             point_estimates = point_estimates.flatten()
 
-        return point_estimates
+        return labels, point_estimates
 
     def prune(self, pruning_threshold=None):
         """Remove Bernoulli components with low existence probability."""
@@ -439,6 +547,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             active_birth_components = self._normalize_components(birth_components)
 
         self.bernoulli_components.extend(copy.deepcopy(active_birth_components))
+        self._assign_missing_labels(self.bernoulli_components)
         self.prune()
         self.cap()
 
@@ -538,6 +647,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             if birth_component is not None:
                 self.bernoulli_components.append(birth_component)
 
+        self._assign_missing_labels(self.bernoulli_components)
         self.prune()
         self.cap()
 

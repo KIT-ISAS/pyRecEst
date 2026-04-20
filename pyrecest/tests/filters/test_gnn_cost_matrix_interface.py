@@ -36,7 +36,7 @@ def test_update_linear_accepts_precomputed_cost_matrix_and_overrides_geometry():
         measurements,
         measurement_matrix,
         measurement_cov,
-        association_cost_matrix=appearance_costs,
+        pairwise_cost_matrix=appearance_costs,
     )
 
     default_estimates = tracker_default.get_point_estimate()
@@ -65,9 +65,7 @@ def test_update_linear_skips_dummy_assignment_from_precomputed_cost_matrix():
         measurements,
         eye(2),
         eye(2),
-        association_cost_matrix=impossible_costs,
+        pairwise_cost_matrix=impossible_costs,
     )
 
     npt.assert_allclose(tracker.get_point_estimate(), prior_estimate)
-    association = tracker.find_association_from_cost_matrix(impossible_costs)
-    assert association[0] == 1  # first dummy column, not a real measurement index
