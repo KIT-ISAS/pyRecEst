@@ -16,9 +16,30 @@ convenient when ground-truth match matrices are available.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+from pyrecest.backend import (
+    abs,
+    all,
+    any,
+    asarray,
+    clip,
+    concatenate,
+    diag,
+    empty_like,
+    exp,
+    isfinite,
+    linalg,
+    log,
+    max,
+    ones,
+    ones_like,
+    unique,
+    where,
+    zeros,
+)
 
 
 _COST_MODE = Literal["negative_log_probability", "one_minus_probability"]
@@ -31,8 +52,8 @@ class _BinaryClassWeights:
     negative: float
     positive: float
 
-    def as_array(self, labels: np.ndarray) -> np.ndarray:
-        return np.where(labels == 1, self.positive, self.negative).astype(float)
+    def as_array(self, labels: Any) -> Any:
+        return where(labels == 1, self.positive, self.negative).astype(float)
 
 
 class LogisticPairwiseAssociationModel:
@@ -109,43 +130,43 @@ class LogisticPairwiseAssociationModel:
         self.probability_clip = float(probability_clip)
 
         self.n_features_in_: int | None = None
-        self.feature_mean_: np.ndarray | None = None
-        self.feature_scale_: np.ndarray | None = None
-        self.coefficients_: np.ndarray | None = None
+        self.feature_mean_: Any | None = None
+        self.feature_scale_: Any | None = None
+        self.coefficients_: Any | None = None
         self.intercept_: float | None = None
         self.n_iter_: int = 0
         self.converged_: bool = False
         self.class_weights_: _BinaryClassWeights | None = None
 
     @staticmethod
-    def _sigmoid(values: np.ndarray) -> np.ndarray:
+    def _sigmoid(values: Any) -> Any:
         """Numerically stable sigmoid."""
-        values = np.asarray(values, dtype=float)
-        result = np.empty_like(values, dtype=float)
+        values = asarray(values, dtype=float)
+        result = empty_like(values, dtype=float)
         nonnegative = values >= 0.0
-        result[nonnegative] = 1.0 / (1.0 + np.exp(-values[nonnegative]))
-        exp_values = np.exp(values[~nonnegative])
+        result[nonnegative] = 1.0 / (1.0 + exp(-values[nonnegative]))
+        exp_values = exp(values[~nonnegative])
         result[~nonnegative] = exp_values / (1.0 + exp_values)
         return result
 
     @staticmethod
-    def _ensure_binary_labels(labels: np.ndarray) -> np.ndarray:
-        labels = np.asarray(labels)
+    def _ensure_binary_labels(labels: Any) -> Any:
+        labels = asarray(labels)
         if labels.size == 0:
             raise ValueError("At least one labeled example is required")
 
-        unique_labels = np.unique(labels)
-        if not np.all(np.isin(unique_labels, [0, 1, False, True])):
+        unique_labels = unique(labels)
+        if not all(int(label) in (0, 1) for label in unique_labels):
             raise ValueError("labels must only contain binary values 0/1 or False/True")
 
         labels = labels.astype(int)
-        if np.unique(labels).size != 2:
+        if unique(labels).size != 2:
             raise ValueError("Both negative and positive examples are required")
         return labels
 
     @staticmethod
-    def _prepare_training_features(features: np.ndarray) -> np.ndarray:
-        features = np.asarray(features, dtype=float)
+    def _prepare_training_features(features: Any) -> Any:
+        features = asarray(features, dtype=float)
         if features.ndim == 1:
             features = features[:, None]
         if features.ndim < 2:
@@ -153,16 +174,16 @@ class LogisticPairwiseAssociationModel:
         flattened = features.reshape(-1, features.shape[-1])
         if flattened.shape[0] == 0:
             raise ValueError("At least one feature vector is required")
-        if not np.all(np.isfinite(flattened)):
+        if not all(isfinite(flattened)):
             raise ValueError("features must be finite")
         return flattened
 
     @staticmethod
     def _prepare_prediction_features(
-        features: np.ndarray,
+        features: Any,
         expected_feature_dimension: int,
-    ) -> tuple[np.ndarray, tuple[int, ...]]:
-        features = np.asarray(features, dtype=float)
+    ) -> tuple[Any, tuple[int, ...]]:
+        features = asarray(features, dtype=float)
         if features.ndim == 1:
             if features.shape[0] != expected_feature_dimension:
                 raise ValueError(
@@ -178,17 +199,19 @@ class LogisticPairwiseAssociationModel:
             original_shape = features.shape[:-1]
             flattened = features.reshape(-1, expected_feature_dimension)
 
-        if not np.all(np.isfinite(flattened)):
+        if not all(isfinite(flattened)):
             raise ValueError("features must be finite")
         return flattened, original_shape
 
-    def _resolve_class_weights(self, labels: np.ndarray) -> _BinaryClassWeights:
+    def _resolve_class_weights(self, labels: Any) -> _BinaryClassWeights:
         if self.class_weight is None:
             return _BinaryClassWeights(negative=1.0, positive=1.0)
 
         if self.class_weight == "balanced":
-            class_counts = np.bincount(labels, minlength=2).astype(float)
-            if np.any(class_counts == 0.0):
+            n_total = labels.shape[0]
+            n_pos = int(sum(labels))
+            class_counts = asarray([float(n_total - n_pos), float(n_pos)])
+            if any(class_counts == 0.0):
                 raise ValueError("Both classes must be present when using balanced class weights")
             total_count = class_counts.sum()
             return _BinaryClassWeights(
@@ -206,15 +229,15 @@ class LogisticPairwiseAssociationModel:
 
     def _build_effective_sample_weights(
         self,
-        labels: np.ndarray,
-        sample_weight: np.ndarray | None,
-    ) -> np.ndarray:
-        weights = np.ones(labels.shape[0], dtype=float)
+        labels: Any,
+        sample_weight: Any | None,
+    ) -> Any:
+        weights = ones(labels.shape[0], dtype=float)
         if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight, dtype=float)
+            sample_weight = asarray(sample_weight, dtype=float)
             if sample_weight.shape != labels.shape:
                 raise ValueError("sample_weight must match the flattened label shape")
-            if np.any(sample_weight < 0.0):
+            if any(sample_weight < 0.0):
                 raise ValueError("sample_weight must be non-negative")
             weights *= sample_weight
 
@@ -222,32 +245,32 @@ class LogisticPairwiseAssociationModel:
         self.class_weights_ = class_weights
         weights *= class_weights.as_array(labels)
 
-        if not np.any(weights > 0.0):
+        if not any(weights > 0.0):
             raise ValueError("At least one example must receive positive weight")
         return weights
 
-    def _fit_standardization(self, features: np.ndarray) -> np.ndarray:
+    def _fit_standardization(self, features: Any) -> Any:
         if self.standardize:
             feature_mean = features.mean(axis=0)
             feature_scale = features.std(axis=0)
-            feature_scale = np.where(feature_scale > 0.0, feature_scale, 1.0)
+            feature_scale = where(feature_scale > 0.0, feature_scale, 1.0)
         else:
-            feature_mean = np.zeros(features.shape[1], dtype=float)
-            feature_scale = np.ones(features.shape[1], dtype=float)
+            feature_mean = zeros(features.shape[1], dtype=float)
+            feature_scale = ones(features.shape[1], dtype=float)
 
         self.feature_mean_ = feature_mean
         self.feature_scale_ = feature_scale
         return (features - self.feature_mean_) / self.feature_scale_
 
-    def _transform_features(self, features: np.ndarray) -> np.ndarray:
+    def _transform_features(self, features: Any) -> Any:
         if self.feature_mean_ is None or self.feature_scale_ is None:
             raise RuntimeError("The association model is not fitted")
         return (features - self.feature_mean_) / self.feature_scale_
 
-    def _design_matrix(self, features: np.ndarray) -> np.ndarray:
+    def _design_matrix(self, features: Any) -> Any:
         if self.fit_intercept:
-            return np.concatenate(
-                [np.ones((features.shape[0], 1), dtype=float), features], axis=1
+            return concatenate(
+                [ones((features.shape[0], 1), dtype=float), features], axis=1
             )
         return features
 
@@ -257,9 +280,9 @@ class LogisticPairwiseAssociationModel:
 
     def fit(
         self,
-        features: np.ndarray,
-        labels: np.ndarray,
-        sample_weight: np.ndarray | None = None,
+        features: Any,
+        labels: Any,
+        sample_weight: Any | None = None,
     ) -> "LogisticPairwiseAssociationModel":
         """Fit the association model.
 
@@ -276,7 +299,7 @@ class LogisticPairwiseAssociationModel:
             ``labels``.
         """
         flattened_features = self._prepare_training_features(features)
-        labels = self._ensure_binary_labels(np.asarray(labels).reshape(-1))
+        labels = self._ensure_binary_labels(asarray(labels).reshape(-1))
 
         if flattened_features.shape[0] != labels.shape[0]:
             raise ValueError(
@@ -284,7 +307,7 @@ class LogisticPairwiseAssociationModel:
             )
 
         if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight, dtype=float).reshape(-1)
+            sample_weight = asarray(sample_weight, dtype=float).reshape(-1)
             if sample_weight.shape[0] != labels.shape[0]:
                 raise ValueError("sample_weight must match the number of flattened labels")
 
@@ -293,8 +316,8 @@ class LogisticPairwiseAssociationModel:
         design_matrix = self._design_matrix(standardized_features)
         effective_weights = self._build_effective_sample_weights(labels, sample_weight)
 
-        parameter_vector = np.zeros(design_matrix.shape[1], dtype=float)
-        regularization_mask = np.ones_like(parameter_vector)
+        parameter_vector = zeros(design_matrix.shape[1], dtype=float)
+        regularization_mask = ones_like(parameter_vector)
         if self.fit_intercept:
             regularization_mask[0] = 0.0
 
@@ -310,16 +333,16 @@ class LogisticPairwiseAssociationModel:
             curvature = effective_weights * probabilities * (1.0 - probabilities)
             hessian = design_matrix.T @ (design_matrix * curvature[:, None])
             if self.l2_regularization > 0.0:
-                hessian += self.l2_regularization * np.diag(regularization_mask)
+                hessian += self.l2_regularization * diag(regularization_mask)
 
             try:
-                step = np.linalg.solve(hessian, gradient)
-            except np.linalg.LinAlgError:
-                step = np.linalg.pinv(hessian) @ gradient
+                step = linalg.solve(hessian, gradient)
+            except Exception:
+                step = linalg.pinv(hessian) @ gradient
 
             parameter_vector -= step
             self.n_iter_ = iteration
-            if np.max(np.abs(step)) <= self.tolerance:
+            if max(abs(step)) <= self.tolerance:
                 self.converged_ = True
                 break
 
@@ -332,7 +355,7 @@ class LogisticPairwiseAssociationModel:
 
         return self
 
-    def decision_function(self, features: np.ndarray) -> np.ndarray:
+    def decision_function(self, features: Any) -> Any:
         """Return posterior log-odds for the provided feature vectors."""
         self._require_fitted()
         assert self.n_features_in_ is not None
@@ -341,24 +364,24 @@ class LogisticPairwiseAssociationModel:
         )
         standardized_features = self._transform_features(flattened_features)
         if self.fit_intercept:
-            parameter_vector = np.concatenate(([self.intercept_], self.coefficients_))
+            parameter_vector = concatenate(([self.intercept_], self.coefficients_))
         else:
             parameter_vector = self.coefficients_
         logits = self._design_matrix(standardized_features) @ parameter_vector
         if original_shape == ():
-            return np.asarray(logits[0])
+            return asarray(logits[0])
         return logits.reshape(original_shape)
 
-    def predict_log_odds(self, features: np.ndarray) -> np.ndarray:
+    def predict_log_odds(self, features: Any) -> Any:
         """Alias for :meth:`decision_function`."""
         return self.decision_function(features)
 
-    def predict_match_probability(self, features: np.ndarray) -> np.ndarray:
+    def predict_match_probability(self, features: Any) -> Any:
         """Return posterior match probabilities for the provided feature vectors."""
         log_odds = self.decision_function(features)
-        return self._sigmoid(np.asarray(log_odds, dtype=float))
+        return self._sigmoid(asarray(log_odds, dtype=float))
 
-    def predict(self, features: np.ndarray, threshold: float = 0.5) -> np.ndarray:
+    def predict(self, features: Any, threshold: float = 0.5) -> Any:
         """Predict binary match decisions using the supplied threshold."""
         if not 0.0 < threshold < 1.0:
             raise ValueError("threshold must lie in (0, 1)")
@@ -367,10 +390,10 @@ class LogisticPairwiseAssociationModel:
 
     def pairwise_cost_matrix(
         self,
-        pairwise_features: np.ndarray,
+        pairwise_features: Any,
         *,
         mode: _COST_MODE = "negative_log_probability",
-    ) -> np.ndarray:
+    ) -> Any:
         """Convert pairwise features into an assignment cost matrix.
 
         Parameters
@@ -383,13 +406,13 @@ class LogisticPairwiseAssociationModel:
             ``"negative_log_probability"`` returns ``-log p(match | features)``.
             ``"one_minus_probability"`` returns ``1 - p(match | features)``.
         """
-        probabilities = np.clip(
+        probabilities = clip(
             self.predict_match_probability(pairwise_features),
             self.probability_clip,
             1.0 - self.probability_clip,
         )
         if mode == "negative_log_probability":
-            return -np.log(probabilities)
+            return -log(probabilities)
         if mode == "one_minus_probability":
             return 1.0 - probabilities
         raise ValueError(f"Unsupported cost mode: {mode}")
