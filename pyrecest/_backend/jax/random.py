@@ -49,10 +49,16 @@ def _rand(state, size, *args, **kwargs):
     return state, jax.random.uniform(key, size, *args, **kwargs)
 
 
-def rand(size, *args, **kwargs):
-    size = size if hasattr(size, "__iter__") else (size,)
+def rand(*args, **kwargs):
+    # Support numpy-style rand(d0, d1, ...) as well as rand((d0, d1, ...))
+    if len(args) == 1 and hasattr(args[0], "__iter__"):
+        size = tuple(args[0])
+    elif len(args) >= 1:
+        size = args
+    else:
+        size = ()
     state, has_state, kwargs = get_state(**kwargs)
-    state, res = _rand(state, size, *args, **kwargs)
+    state, res = _rand(state, size, **kwargs)
     return set_state_return(has_state, state, res)
 
 
