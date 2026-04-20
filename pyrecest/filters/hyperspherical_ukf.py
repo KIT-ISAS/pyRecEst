@@ -14,8 +14,8 @@ Ported from the MATLAB libDirectional library:
 from typing import Callable
 
 import pyrecest.backend
-from pyrecest.backend import (
-    all,  # pylint: disable=redefined-builtin
+from pyrecest.backend import (  # pylint: disable=redefined-builtin
+    all,
     array,
     asarray,
     empty,

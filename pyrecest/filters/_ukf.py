@@ -223,7 +223,9 @@ class UnscentedKalmanFilter:
         self.P = P_pred
         self._sigmas_f = sigmas_f  # store for update()
 
-    def _innovation_matrices(self, sigmas_f, sigmas_h, z_pred, R, Wc):
+    def _innovation_matrices(  # pylint: disable=too-many-positional-arguments
+        self, sigmas_f, sigmas_h, z_pred, R, Wc
+    ):
         """Compute innovation covariance *Pz* and cross-covariance *Pxz*."""
         Pz = zeros((self._model.dim_z, self._model.dim_z))
         Pxz = zeros((self._model.dim_x, self._model.dim_z))
