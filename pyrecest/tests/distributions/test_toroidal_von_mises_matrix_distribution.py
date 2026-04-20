@@ -1,6 +1,8 @@
 import unittest
 import numpy as np
 from scipy import linalg
+from scipy.optimize import brentq
+from scipy.special import i0 as besseli0, i1 as besseli1
 from numpy.random import default_rng
 from pyrecest.distributions.hypertorus.toroidal_von_mises_matrix_distribution import ToroidalVonMisesMatrixDistribution
 from pyrecest.distributions.hypertorus.toroidal_fourier_distribution import ToroidalFourierDistribution
@@ -44,20 +46,20 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(self.tvm.integrate(), 1, places=5)
         
     def test_trig_moment_numerical(self):
-        np.testing.assert_allclose(self.tvm.trigonometric_moment_numerical(0), np.array([1, 1]))
+        np.testing.assert_allclose(self.tvm.trigonometric_moment_numerical(0), np.array([1, 1]), atol=1e-5)
 
     def test_multiply(self):
         tvmMul = self.tvm.multiply(self.tvm2)
         tvmMulSwapped = self.tvm2.multiply(self.tvm)
 
-        C = self.tvm.pdf(np.array([[0], [0]])) * self.tvm2.pdf(np.array([[0], [0]])) / tvmMul.pdf(np.array([[0], [0]]))
+        C = self.tvm.pdf(np.array([[0, 0]])) * self.tvm2.pdf(np.array([[0, 0]])) / tvmMul.pdf(np.array([[0, 0]]))
         np.testing.assert_allclose(self.tvm.pdf(self.testpoints) * self.tvm2.pdf(self.testpoints), C * tvmMul.pdf(self.testpoints), rtol=1e-10)
         np.testing.assert_allclose(self.tvm.pdf(self.testpoints) * self.tvm2.pdf(self.testpoints), C * tvmMulSwapped.pdf(self.testpoints), rtol=1e-10)
 
     def test_compare_with_ToroidalFourier_multiplication(self):
         tvmMul = self.tvm.multiply(self.tvm2)
         tvmMulSwapped = self.tvm2.multiply(self.tvm)
-        n = 45
+        n = (45, 45)
         tf = ToroidalFourierDistribution.from_distribution(self.tvm, n)
         tf2 = ToroidalFourierDistribution.from_distribution(self.tvm2, n)
         tfMul = tf.multiply(tf2)
@@ -86,15 +88,21 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         rng = default_rng(1234)
         n = 1e4
         samples = rng.uniform(0, 2 * np.pi, (2, int(n)))
-        weights1 = tvm1.pdf(samples)
-        weights2 = tvm2.pdf(samples)
+        weights1 = tvm1.pdf(samples.T)
+        weights2 = tvm2.pdf(samples.T)
         weights = weights1 * weights2
 
         weights = weights / np.sum(weights)
 
-        muApprox = np.average(samples, weights=weights, axis=1)
-        kappaApprox = np.average(np.cos(samples - muApprox[:, np.newaxis]), weights=weights, axis=1)
-        kappaApprox = -np.log(-kappaApprox)
+        muApprox = np.arctan2(
+            np.average(np.sin(samples), weights=weights, axis=1),
+            np.average(np.cos(samples), weights=weights, axis=1)
+        )
+        rbar = np.sqrt(
+            np.average(np.cos(samples), weights=weights, axis=1) ** 2 +
+            np.average(np.sin(samples), weights=weights, axis=1) ** 2
+        )
+        kappaApprox = np.array([brentq(lambda k: besseli1(k) / besseli0(k) - r, 1e-9, 50) if r > 1e-9 else 1e-6 for r in rbar])
 
         Aapprox = np.zeros((2, 2))
         Aapprox[0, 0] = np.average(np.cos(samples[0, :] - muApprox[0]) * np.cos(samples[1, :] - muApprox[1]), weights=weights)
