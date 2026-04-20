@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pyrecest.backend import (
     arange,
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 
 Observation = tuple[int, int]
 MatchedEdge = tuple[Observation, Observation, float]
-PairwiseCostsInput = Mapping[tuple[int, int], np.ndarray] | Sequence[np.ndarray]
+PairwiseCostsInput = Mapping[tuple[int, int], Any] | Sequence[Any]
 SessionSizesInput = Mapping[int, int] | Sequence[int]
 TrackInput = Mapping[int, int] | Sequence[Observation]
 
