@@ -12,7 +12,7 @@ class GaussVonMisesDistributionTest(unittest.TestCase):
     def setUp(self):
         random.seed(0)
         self.g = GaussVonMisesDistribution(2, 1.3, 3, 0, 0.001, 0.7)
-        self.testpoints = 2 * float(pi) * random.rand(2, 100)
+        self.testpoints = 2 * float(pi) * random.uniform(size=(2, 100))
 
     @staticmethod
     def _non_vectorized_pdf(gvm, xa):
