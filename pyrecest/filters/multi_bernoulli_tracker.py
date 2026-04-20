@@ -410,7 +410,9 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
 
     def get_component_labels(self):
         """Return the labels of all active Bernoulli components."""
-        return [copy.deepcopy(component.label) for component in self.bernoulli_components]
+        return [
+            copy.deepcopy(component.label) for component in self.bernoulli_components
+        ]
 
     def get_labeled_components(self, copy_components=True):
         """Return active Bernoulli components keyed by track label."""
@@ -465,7 +467,9 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             selected_components = self._select_components_for_extraction(
                 number_of_targets
             )
-            labels = [copy.deepcopy(component.label) for component in selected_components]
+            labels = [
+                copy.deepcopy(component.label) for component in selected_components
+            ]
             point_estimates = stack(
                 [component.get_point_estimate() for component in selected_components],
                 axis=1,
