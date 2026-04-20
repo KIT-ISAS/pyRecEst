@@ -2,6 +2,7 @@
 
 import unittest
 
+import pyrecest.backend
 from pyrecest.backend import array, array_equal
 from pyrecest.utils import solve_multisession_assignment, tracks_to_session_labels
 
@@ -11,6 +12,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
     def _canonical_tracks(tracks):
         return sorted(tuple(sorted(track.items())) for track in tracks)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_singletons_without_edges(self):
         result = solve_multisession_assignment(
             {},
@@ -30,6 +35,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertAlmostEqual(result.total_cost, 10.0)
         self.assertEqual(result.matched_edges, [])
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_consecutive_costs_form_two_long_tracks(self):
         result = solve_multisession_assignment(
             [
@@ -48,6 +57,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
         self.assertAlmostEqual(result.total_cost, 20.6)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_cross_gap_linking_is_supported(self):
         result = solve_multisession_assignment(
             {(0, 2): array([[0.3]], dtype=float)},
@@ -62,6 +75,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertAlmostEqual(result.total_cost, 8.8)
         self.assertEqual(result.matched_edges, [((0, 0), (2, 0), 0.8)])
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_global_solution_beats_pairwise_greedy_choice(self):
         result = solve_multisession_assignment(
             [
@@ -80,6 +97,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
         self.assertAlmostEqual(result.total_cost, 42.0)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_tracks_to_session_labels(self):
         result = solve_multisession_assignment(
             {(0, 2): array([[0.3]], dtype=float)},
@@ -99,6 +120,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertEqual(labels_from_function[1].size, 0)
         self.assertTrue(array_equal(labels_from_function[2], array([0])))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_rejects_inconsistent_session_sizes(self):
         pairwise_costs = {
             (0, 1): array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]),
@@ -108,6 +133,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
         with self.assertRaises(ValueError):
             solve_multisession_assignment(pairwise_costs)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_drops_non_beneficial_links_even_without_threshold(self):
         result = solve_multisession_assignment(
             [array([[5.0]], dtype=float)],

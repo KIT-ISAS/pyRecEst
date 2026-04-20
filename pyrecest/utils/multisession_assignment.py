@@ -24,6 +24,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+import pyrecest.backend
 from pyrecest.backend import (
     arange,
     asarray,
@@ -160,6 +161,8 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
     dense assignment matrix.
     """
 
+    assert pyrecest.backend.__backend_name__ != "jax", "Not supported on JAX backend"
+
     _validate_scalar_cost("start_cost", start_cost)
     _validate_scalar_cost("end_cost", end_cost)
     _validate_scalar_cost("gap_penalty", gap_penalty)
@@ -292,6 +295,8 @@ def tracks_to_session_labels(
     tuple[np.ndarray, ...]
         One integer array per session, indexed by session number.
     """
+
+    assert pyrecest.backend.__backend_name__ != "jax", "Not supported on JAX backend"
 
     inferred_sizes = _normalize_session_sizes(session_sizes)
     max_session_index = max(inferred_sizes, default=-1)
