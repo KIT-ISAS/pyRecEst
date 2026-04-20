@@ -115,7 +115,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         assert xa.shape[0] == self.lin_dim + 1
 
         theta = self.get_theta(xa[1:, :])
-        mvn_vals = _mvn.pdf(asarray(xa[1:, :]).T, mean=asarray(self.mu), cov=asarray(self.P))
+        mvn_vals = _mvn.pdf(xa[1:, :].T, mean=asarray(self.mu), cov=asarray(self.P))
         p = mvn_vals * exp(self.kappa * cos(xa[0, :] - theta)) / (
             2.0 * float(pi) * iv(0, self.kappa)
         )
@@ -218,12 +218,10 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         w00 = 1.0 - 2.0 * weta0 - 2.0 * lin_dim * wxi0
 
         n_pts = 2 * lin_dim + 3
-        d = zeros((lin_dim + 1, n_pts))
+        d = asarray(zeros((lin_dim + 1, n_pts))).copy()
 
         # Column 0: origin (all zeros) — N00
         # Columns 1-2: Neta0 (±eta on the periodic axis)
-        d = asarray(d)
-        d = d.copy()
         d[lin_dim, 1] = -eta
         d[lin_dim, 2] = eta
         # Columns 3..n_pts-1: Nxi0 (±xi on each linear axis)
@@ -231,16 +229,15 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             d[i, 3 + 2 * i] = -xi
             d[i, 3 + 2 * i + 1] = xi
 
-        w = full(n_pts, wxi0)
-        w = asarray(w).copy()
+        w = asarray(full(n_pts, wxi0)).copy()
         w[0] = w00
         w[1] = weta0
         w[2] = weta0
 
         # Transform back to original parameterisation
         lin_part = d[1:, :]  # (linD, n_pts)
-        theta_vals = asarray(self.get_theta(array(lin_part)))
-        d[0, :] = asarray(mod(array(d[0, :]) + array(theta_vals), 2.0 * pi))
+        theta_vals = self.get_theta(array(lin_part))
+        d[0, :] = mod(array(d[0, :]) + theta_vals, 2.0 * pi)
         d[1:, :] = asarray(self.A) @ lin_part + asarray(self.mu).reshape(-1, 1)
 
         return array(d), array(w)
@@ -305,8 +302,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         if self.lin_dim == 1:
             def marginal_pdf(theta):
                 theta = atleast_1d(asarray(theta))
-                result = zeros_like(theta, dtype=float64)
-                result = asarray(result).copy()
+                result = asarray(zeros_like(theta, dtype=float64)).copy()
                 for idx, t in enumerate(asarray(theta).ravel()):
                     result.ravel()[idx] = nquad(
                         lambda x: self.pdf(array([t, x])), bounds_linear
