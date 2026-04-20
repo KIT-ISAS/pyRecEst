@@ -59,7 +59,7 @@ class MultiSessionAssignmentResult:
         return mapping
 
 
-def solve_multisession_assignment(
+def solve_multisession_assignment(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     pairwise_costs: PairwiseCostsInput,
     session_sizes: Optional[SessionSizesInput] = None,
     *,
@@ -338,7 +338,7 @@ def _reconstruct_tracks(
             continue
 
         track: Dict[int, int] = {}
-        current_node = node_idx
+        current_node: Optional[int] = node_idx
         while current_node is not None:
             if current_node in visited:
                 raise RuntimeError("Encountered a cycle while reconstructing tracks.")
