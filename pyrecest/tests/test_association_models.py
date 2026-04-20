@@ -29,14 +29,14 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
         random.seed(7)
         positive_examples = column_stack(
             [
-                random.normal(loc=0.2, scale=0.08, size=80),
-                random.normal(loc=0.85, scale=0.06, size=80),
+                0.2 + 0.08 * random.normal(size=(80,)),
+                0.85 + 0.06 * random.normal(size=(80,)),
             ]
         )
         negative_examples = column_stack(
             [
-                random.normal(loc=2.4, scale=0.25, size=80),
-                random.normal(loc=0.12, scale=0.05, size=80),
+                2.4 + 0.25 * random.normal(size=(80,)),
+                0.12 + 0.05 * random.normal(size=(80,)),
             ]
         )
         self.training_features = vstack([positive_examples, negative_examples])
