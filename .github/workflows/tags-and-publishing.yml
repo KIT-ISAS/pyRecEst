@@ -1,74 +1,116 @@
----
 name: Check for version change, add tag, build, and publish
-
-permissions:
-  contents: write
 
 on: # yamllint disable-line rule:truthy
   pull_request:
     types: [closed]
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build only; do not push a tag or create/update a GitHub release"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
 
 jobs:
   check_if_tag_exists:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    if: github.event.pull_request.merged == true
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
+    outputs:
+      tag_version: ${{ steps.extract_version_and_check_tag.outputs.tag_version }}
+      tag_exists: ${{ steps.extract_version_and_check_tag.outputs.tag_exists }}
+      dry_run: ${{ steps.set_mode.outputs.dry_run }}
     steps:
       - name: Check out code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+
+      - name: Set mode
+        id: set_mode
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "dry_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dry_run=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
-      - name: Install toml package
-        run: pip install toml
-
       - name: Extract version from pyproject.toml and check if tag exists
         id: extract_version_and_check_tag
+        shell: bash
         run: |
-          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
-          EXISTS=$(git ls-remote --tags origin refs/tags/"${VERSION}" | wc -l)
+          VERSION=$(python -c "import pathlib, tomllib; data = tomllib.loads(pathlib.Path('pyproject.toml').read_text(encoding='utf-8')); print(data['tool']['poetry']['version'])")
+          EXISTS=$(git ls-remote --tags origin "refs/tags/${VERSION}" | wc -l | tr -d ' ')
           echo "tag_version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag_exists=${EXISTS}" >> "$GITHUB_OUTPUT"
-    outputs:
-      tag_version: ${{ steps.extract_version_and_check_tag.outputs.tag_version }}
-      tag_exists: ${{ steps.extract_version_and_check_tag.outputs.tag_exists }}
+
+      - name: Fail manual non-dry-run if tag already exists
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == false && steps.extract_version_and_check_tag.outputs.tag_exists == '1' }}
+        shell: bash
+        run: |
+          echo "Tag ${{ steps.extract_version_and_check_tag.outputs.tag_version }} already exists."
+          echo "Run this workflow with dry_run=true to test the pipeline without publishing."
+          exit 1
 
   set_version_tag:
     needs: check_if_tag_exists
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    if: ${{ github.event.pull_request.merged == true && needs.check_if_tag_exists.outputs.tag_exists != '1' }}
+    if: ${{ needs.check_if_tag_exists.outputs.dry_run != 'true' && needs.check_if_tag_exists.outputs.tag_exists != '1' }}
+    outputs:
+      tag_set: ${{ steps.create_tag.outputs.tag_set }}
     steps:
       - name: Check out code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
 
       - name: Create new tag
-        run: git tag ${{ needs.check_if_tag_exists.outputs.tag_version }}
-
-      - name: Push new tag
-        run: git push origin ${{ needs.check_if_tag_exists.outputs.tag_version }}
-    outputs:
-      tag_set: "true"
+        id: create_tag
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${{ needs.check_if_tag_exists.outputs.tag_version }}"
+          git push origin "${{ needs.check_if_tag_exists.outputs.tag_version }}"
+          echo "tag_set=true" >> "$GITHUB_OUTPUT"
 
   build_and_publish:
-    needs: set_version_tag
+    needs:
+      - check_if_tag_exists
+      - set_version_tag
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.merged == true && needs.set_version_tag.outputs.tag_set == 'true' }}
-
+    if: >-
+      ${{
+        always() &&
+        needs.check_if_tag_exists.result == 'success' &&
+        (
+          needs.check_if_tag_exists.outputs.dry_run == 'true' ||
+          needs.set_version_tag.result == 'success'
+        )
+      }}
     permissions:
       contents: write
+    env:
+      VERSION: ${{ needs.check_if_tag_exists.outputs.tag_version }}
+      DRY_RUN: ${{ needs.check_if_tag_exists.outputs.dry_run }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -78,24 +120,20 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade poetry
 
-      - name: Extract version from tag
-        id: extract_version
-        run: |
-          TAG_NAME=$(git describe --tags --abbrev=0)
-          echo "VERSION=${TAG_NAME}" >> "$GITHUB_ENV"
-
       - name: Extract repository name
+        shell: bash
         run: echo "REPO_NAME=$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Find previous tag
+        if: ${{ env.DRY_RUN != 'true' }}
         id: prev_tag
         shell: bash
         run: |
-          PREV_TAG="$(git tag --sort=-version:refname | sed -n '2p')"
+          PREV_TAG="$(git tag --sort=-version:refname | grep -vx "${VERSION}" | sed -n '1p')"
           echo "tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Generate AI release notes
-        if: steps.prev_tag.outputs.tag != ''
+        if: ${{ env.DRY_RUN != 'true' && steps.prev_tag.outputs.tag != '' }}
         id: ai_notes
         uses: github/copilot-release-notes@main
         with:
@@ -107,20 +145,27 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
 
       - name: Fallback notes for first release
-        if: steps.prev_tag.outputs.tag == ''
+        if: ${{ env.DRY_RUN != 'true' && steps.prev_tag.outputs.tag == '' }}
         run: echo "Initial release." > RELEASE_NOTES.md
 
       - name: Write AI notes to file
-        if: steps.prev_tag.outputs.tag != ''
+        if: ${{ env.DRY_RUN != 'true' && steps.prev_tag.outputs.tag != '' }}
+        shell: bash
         run: |
           cat > RELEASE_NOTES.md <<'EOF'
           ${{ steps.ai_notes.outputs.release-notes }}
           EOF
 
+      - name: Write dry-run notes
+        if: ${{ env.DRY_RUN == 'true' }}
+        run: |
+          echo "Dry run: no tag pushed and no GitHub release created." > RELEASE_NOTES.md
+
       - name: Build package
         run: python -m poetry build
 
       - name: Create GitHub Release and Upload Artifacts
+        if: ${{ env.DRY_RUN != 'true' }}
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
