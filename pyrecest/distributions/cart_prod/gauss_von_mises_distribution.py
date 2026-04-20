@@ -1,6 +1,4 @@
-import numpy as _np
 from scipy.integrate import nquad
-from scipy.linalg import cholesky as _scipy_cholesky
 from scipy.special import iv
 from scipy.stats import multivariate_normal as _mvn
 from scipy.stats import vonmises as _vonmises
@@ -9,11 +7,15 @@ from pyrecest.backend import (
     arccos,
     array,
     allclose,
+    asarray,
+    atleast_1d,
+    atleast_2d,
     concatenate,
     cos,
     eye,
     exp,
     float64,
+    full,
     hstack,
     imag,
     linalg,
@@ -26,6 +28,7 @@ from pyrecest.backend import (
     sum,
     vstack,
     zeros,
+    zeros_like,
 )
 
 from ..nonperiodic.gaussian_distribution import GaussianDistribution
@@ -44,21 +47,21 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
 
     def __init__(self, mu, P, alpha, beta, Gamma, kappa):
         # Convert scalars/lists to arrays
-        mu = _np.atleast_1d(_np.asarray(mu, dtype=_np.float64))
-        P = _np.atleast_2d(_np.asarray(P, dtype=_np.float64))
-        beta = _np.atleast_1d(_np.asarray(beta, dtype=_np.float64))
-        Gamma = _np.atleast_2d(_np.asarray(Gamma, dtype=_np.float64))
+        mu = atleast_1d(asarray(mu, dtype=float64))
+        P = atleast_2d(asarray(P, dtype=float64))
+        beta = atleast_1d(asarray(beta, dtype=float64))
+        Gamma = atleast_2d(asarray(Gamma, dtype=float64))
 
         n = mu.shape[0]
 
         # Validate parameters
         assert P.shape == (n, n), "P and mu must have matching size"
-        assert _np.allclose(P, P.T), "P must be symmetric"
-        _scipy_cholesky(P, lower=True)  # raises if not positive definite
+        assert allclose(P, P.T), "P must be symmetric"
+        linalg.cholesky(P)  # raises if not positive definite
 
         assert beta.shape == (n,), "size of beta must match size of mu"
         assert Gamma.shape == (n, n), "Gamma and mu must have matching size"
-        assert _np.allclose(Gamma, Gamma.T), "Gamma must be symmetric"
+        assert allclose(Gamma, Gamma.T), "Gamma must be symmetric"
         assert float(kappa) > 0, "kappa has to be a positive scalar"
 
         AbstractHypercylindricalDistribution.__init__(self, bound_dim=1, lin_dim=n)
@@ -70,7 +73,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         self.Gamma = array(Gamma)
         self.kappa = float(kappa)
         # Lower triangular Cholesky factor of P
-        self.A = array(_scipy_cholesky(P, lower=True))
+        self.A = linalg.cholesky(P)
 
     def get_theta(self, xa):
         """Compute the angle offset theta for each column of xa (linear part).
@@ -104,7 +107,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         -------
         p : scalar or array of shape (n,)
         """
-        xa = _np.asarray(xa, dtype=_np.float64)
+        xa = asarray(xa, dtype=float64)
         single_point = xa.ndim == 1
         if single_point:
             xa = xa.reshape(-1, 1)
@@ -112,8 +115,8 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         assert xa.shape[0] == self.lin_dim + 1
 
         theta = self.get_theta(xa[1:, :])
-        mvn_vals = _mvn.pdf(xa[1:, :].T, mean=_np.asarray(self.mu), cov=_np.asarray(self.P))
-        p = mvn_vals * _np.exp(self.kappa * _np.cos(xa[0, :] - _np.asarray(theta))) / (
+        mvn_vals = _mvn.pdf(asarray(xa[1:, :]).T, mean=asarray(self.mu), cov=asarray(self.P))
+        p = mvn_vals * exp(self.kappa * cos(xa[0, :] - theta)) / (
             2.0 * float(pi) * iv(0, self.kappa)
         )
 
@@ -132,40 +135,40 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         """
         from ..circle.von_mises_distribution import VonMisesDistribution
 
-        M = _np.eye(self.lin_dim) - 1j * _np.asarray(self.Gamma)
+        M = eye(self.lin_dim) - 1j * asarray(self.Gamma)
         eiphi = (
-            1.0 / _np.sqrt(_np.linalg.det(M))
+            1.0 / sqrt(linalg.det(M))
             * VonMisesDistribution.besselratio(0, self.kappa)
-            * _np.exp(
+            * exp(
                 1j * self.alpha
-                - 0.5 * _np.asarray(self.beta) @ _np.linalg.solve(M, _np.asarray(self.beta))
+                - 0.5 * asarray(self.beta) @ linalg.solve(M, asarray(self.beta))
             )
         )
-        return concatenate([array([float(_np.real(eiphi)), float(_np.imag(eiphi))]), self.mu])
+        return concatenate([array([float(real(eiphi)), float(imag(eiphi))]), self.mu])
 
     def hybrid_moment_numerical(self):
         """Numerical hybrid moment E[cos(theta), sin(theta), x_1, ..., x_linD]."""
-        P_np = _np.asarray(self.P)
-        mu_np = _np.asarray(self.mu)
+        P_arr = asarray(self.P)
+        mu_arr = asarray(self.mu)
         scale = 10.0
 
-        bounds_periodic = [[0.0, 2.0 * _np.pi]]
+        bounds_periodic = [[0.0, 2.0 * float(pi)]]
         bounds_linear = [
-            [float(mu_np[i]) - scale * float(_np.sqrt(P_np[i, i])),
-             float(mu_np[i]) + scale * float(_np.sqrt(P_np[i, i]))]
+            [float(mu_arr[i]) - scale * float(sqrt(P_arr[i, i])),
+             float(mu_arr[i]) + scale * float(sqrt(P_arr[i, i]))]
             for i in range(self.lin_dim)
         ]
         bounds = bounds_periodic + bounds_linear
 
         if self.lin_dim == 1:
             e_cos = nquad(
-                lambda theta, x: _np.cos(theta) * self.pdf(_np.array([theta, x])), bounds
+                lambda theta, x: float(cos(array(theta))) * self.pdf(array([theta, x])), bounds
             )[0]
             e_sin = nquad(
-                lambda theta, x: _np.sin(theta) * self.pdf(_np.array([theta, x])), bounds
+                lambda theta, x: float(sin(array(theta))) * self.pdf(array([theta, x])), bounds
             )[0]
             e_x = nquad(
-                lambda theta, x: x * self.pdf(_np.array([theta, x])), bounds
+                lambda theta, x: x * self.pdf(array([theta, x])), bounds
             )[0]
             return array([e_cos, e_sin, e_x])
 
@@ -188,7 +191,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         ).T  # (linD, n)
         theta = self.get_theta(s_gauss)  # (n,)
         vm_samples = _vonmises.rvs(kappa=self.kappa, loc=0.0, size=n)
-        vm_samples = _np.mod(vm_samples + _np.asarray(theta), 2.0 * _np.pi)
+        vm_samples = mod(array(vm_samples) + theta, 2.0 * pi)
         return vstack([array(vm_samples).reshape(1, -1), s_gauss])
 
     def sample_deterministic_horwood(self):
@@ -215,10 +218,12 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         w00 = 1.0 - 2.0 * weta0 - 2.0 * lin_dim * wxi0
 
         n_pts = 2 * lin_dim + 3
-        d = _np.zeros((lin_dim + 1, n_pts))
+        d = zeros((lin_dim + 1, n_pts))
 
         # Column 0: origin (all zeros) — N00
         # Columns 1-2: Neta0 (±eta on the periodic axis)
+        d = asarray(d)
+        d = d.copy()
         d[lin_dim, 1] = -eta
         d[lin_dim, 2] = eta
         # Columns 3..n_pts-1: Nxi0 (±xi on each linear axis)
@@ -226,16 +231,17 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             d[i, 3 + 2 * i] = -xi
             d[i, 3 + 2 * i + 1] = xi
 
-        w = _np.full(n_pts, wxi0)
+        w = full(n_pts, wxi0)
+        w = asarray(w).copy()
         w[0] = w00
         w[1] = weta0
         w[2] = weta0
 
         # Transform back to original parameterisation
         lin_part = d[1:, :]  # (linD, n_pts)
-        theta_vals = _np.asarray(self.get_theta(array(lin_part)))
-        d[0, :] = _np.mod(d[0, :] + theta_vals, 2.0 * _np.pi)
-        d[1:, :] = _np.asarray(self.A) @ lin_part + _np.asarray(self.mu).reshape(-1, 1)
+        theta_vals = asarray(self.get_theta(array(lin_part)))
+        d[0, :] = asarray(mod(array(d[0, :]) + array(theta_vals), 2.0 * pi))
+        d[1:, :] = asarray(self.A) @ lin_part + asarray(self.mu).reshape(-1, 1)
 
         return array(d), array(w)
 
@@ -244,15 +250,15 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         if integration_boundaries is not None:
             return self.integrate_numerically(integration_boundaries)
 
-        P_np = _np.asarray(self.P)
-        mu_np = _np.asarray(self.mu)
+        P_arr = asarray(self.P)
+        mu_arr = asarray(self.mu)
         scale = 10.0
-        bounds = [[0.0, 2.0 * _np.pi]] + [
-            [float(mu_np[i]) - scale * float(_np.sqrt(P_np[i, i])),
-             float(mu_np[i]) + scale * float(_np.sqrt(P_np[i, i]))]
+        bounds = [[0.0, 2.0 * float(pi)]] + [
+            [float(mu_arr[i]) - scale * float(sqrt(P_arr[i, i])),
+             float(mu_arr[i]) + scale * float(sqrt(P_arr[i, i]))]
             for i in range(self.lin_dim)
         ]
-        return nquad(lambda *args: self.pdf(_np.array(args)), bounds)[0]
+        return nquad(lambda *args: self.pdf(array(args)), bounds)[0]
 
     def to_gaussian(self):
         """Approximate conversion to a Gaussian (valid for large kappa, small Gamma).
@@ -287,22 +293,23 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             CustomHypertoroidalDistribution,
         )
 
-        P_np = _np.asarray(self.P)
-        mu_np = _np.asarray(self.mu)
+        P_arr = asarray(self.P)
+        mu_arr = asarray(self.mu)
         scale = 10.0
         bounds_linear = [
-            [float(mu_np[i]) - scale * float(_np.sqrt(P_np[i, i])),
-             float(mu_np[i]) + scale * float(_np.sqrt(P_np[i, i]))]
+            [float(mu_arr[i]) - scale * float(sqrt(P_arr[i, i])),
+             float(mu_arr[i]) + scale * float(sqrt(P_arr[i, i]))]
             for i in range(self.lin_dim)
         ]
 
         if self.lin_dim == 1:
             def marginal_pdf(theta):
-                theta = _np.atleast_1d(_np.asarray(theta))
-                result = _np.zeros_like(theta, dtype=_np.float64)
-                for idx, t in enumerate(theta.ravel()):
+                theta = atleast_1d(asarray(theta))
+                result = zeros_like(theta, dtype=float64)
+                result = asarray(result).copy()
+                for idx, t in enumerate(asarray(theta).ravel()):
                     result.ravel()[idx] = nquad(
-                        lambda x: self.pdf(_np.array([t, x])), bounds_linear
+                        lambda x: self.pdf(array([t, x])), bounds_linear
                     )[0]
                 return result
 
