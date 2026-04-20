@@ -18,8 +18,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-# pylint: disable=no-name-in-module,no-member
-import pyrecest.backend
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
+from numpy.linalg import LinAlgError
 from pyrecest.backend import (
     abs,
     all,
@@ -56,7 +56,7 @@ class _BinaryClassWeights:
         return where(labels == 1, self.positive, self.negative).astype(float)
 
 
-class LogisticPairwiseAssociationModel:
+class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-attributes
     """Learn pairwise match probabilities from arbitrary association features.
 
     The model uses binary logistic regression with optional feature
@@ -97,7 +97,7 @@ class LogisticPairwiseAssociationModel:
     overlap, and shape-correlation channels for every candidate neuron pair.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         *,
         fit_intercept: bool = True,
@@ -278,7 +278,7 @@ class LogisticPairwiseAssociationModel:
         if self.n_features_in_ is None or self.coefficients_ is None or self.intercept_ is None:
             raise RuntimeError("The association model must be fitted before use")
 
-    def fit(
+    def fit(  # pylint: disable=too-many-locals
         self,
         features: Any,
         labels: Any,
@@ -337,7 +337,7 @@ class LogisticPairwiseAssociationModel:
 
             try:
                 step = linalg.solve(hessian, gradient)
-            except Exception:
+            except LinAlgError:
                 step = linalg.pinv(hessian) @ gradient
 
             parameter_vector -= step
