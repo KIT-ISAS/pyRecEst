@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from math import nan
 from typing import Any
 
-import pyrecest.backend as backend
+from pyrecest import backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, full, hstack, pad
@@ -81,7 +81,7 @@ class HistoryRecorder:
         if name is None:
             for history_name in list(self._entries):
                 self.clear(history_name)
-            return
+            return None
 
         entry = self._entries[name]
         entry.values = array([[]]) if entry.pad_with_nan else []

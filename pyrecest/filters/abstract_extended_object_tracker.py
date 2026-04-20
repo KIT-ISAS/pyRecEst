@@ -2,8 +2,8 @@ from abc import abstractmethod
 
 import matplotlib.pyplot as plt
 
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, vstack
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import vstack
 
 from .abstract_tracker_with_logging import AbstractTrackerWithLogging
 

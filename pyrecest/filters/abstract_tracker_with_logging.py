@@ -8,6 +8,10 @@ class AbstractTrackerWithLogging(ABC):
         self.log_prior_estimates = log_prior_estimates
         self.log_posterior_estimates = log_posterior_estimates
         self.history = HistoryRecorder()
+        self.prior_estimates_over_time = None
+        self.posterior_estimates_over_time = None
+        self.prior_extents_over_time = None
+        self.posterior_extents_over_time = None
 
         if log_prior_estimates:
             self.prior_estimates_over_time = self.history.register(

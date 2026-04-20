@@ -25,19 +25,18 @@ class _DummyBelief:
 
 
 class _DummyFilter(AbstractFilter):
-    def __init__(self, initial_filter_state):
-        super().__init__(initial_filter_state)
+    pass
 
 
 class _DummyMultitargetTracker(AbstractMultitargetTracker):
     def __init__(self):
         super().__init__(log_prior_estimates=True, log_posterior_estimates=True)
-        self._estimate = array([])
+        self.estimate = array([])
 
     def get_point_estimate(self, flatten_vector=False):
         if flatten_vector:
-            return self._estimate
-        return self._estimate.reshape(-1, 1)
+            return self.estimate
+        return self.estimate.reshape(-1, 1)
 
     def get_number_of_targets(self):
         return 1
@@ -51,19 +50,19 @@ class _DummyExtendedTracker(AbstractExtendedObjectTracker):
             log_prior_extents=True,
             log_posterior_extents=True,
         )
-        self._estimate = array([])
-        self._extent = array([[]])
+        self.estimate = array([])
+        self.extent = array([[]])
 
     def get_point_estimate(self):
-        return self._estimate
+        return self.estimate
 
     def get_point_estimate_kinematics(self):
-        return self._estimate
+        return self.estimate
 
     def get_point_estimate_extent(self, flatten_matrix=False):
         if flatten_matrix:
-            return self._extent.flatten()
-        return self._extent
+            return self.extent.flatten()
+        return self.extent
 
     def get_contour_points(self, n):
         return zeros((n, 2))
@@ -107,11 +106,11 @@ class HistoryRecorderTest(unittest.TestCase):
 
     def test_multitarget_tracker_logging_is_mirrored_in_history(self):
         tracker = _DummyMultitargetTracker()
-        tracker._estimate = array([1.0, 2.0])
+        tracker.estimate = array([1.0, 2.0])
         tracker.store_prior_estimates()
-        tracker._estimate = array([3.0])
+        tracker.estimate = array([3.0])
         tracker.store_prior_estimates()
-        tracker._estimate = array([4.0, 5.0, 6.0])
+        tracker.estimate = array([4.0, 5.0, 6.0])
         tracker.store_posterior_estimates()
 
         expected_prior = array([[1.0, 3.0], [2.0, nan]])
@@ -123,13 +122,13 @@ class HistoryRecorderTest(unittest.TestCase):
 
     def test_extended_tracker_logs_extents_via_same_recorder(self):
         tracker = _DummyExtendedTracker()
-        tracker._estimate = array([1.0, 2.0])
-        tracker._extent = array([[1.0, 0.0], [0.0, 1.0]])
+        tracker.estimate = array([1.0, 2.0])
+        tracker.extent = array([[1.0, 0.0], [0.0, 1.0]])
         tracker.store_prior_estimates()
         tracker.store_prior_extent()
 
-        tracker._estimate = array([3.0])
-        tracker._extent = array([[2.0]])
+        tracker.estimate = array([3.0])
+        tracker.extent = array([[2.0]])
         tracker.store_posterior_estimates()
         tracker.store_posterior_extents()
 
