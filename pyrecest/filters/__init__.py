@@ -32,6 +32,7 @@ from .joint_probabilistic_data_association_filter import (
     JPDAF,
     JointProbabilisticDataAssociationFilter,
 )
+from .interacting_multiple_model_filter import IMM, InteractingMultipleModelFilter
 from .kalman_filter import KalmanFilter
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
@@ -87,6 +88,8 @@ __all__ = [
     "GlobalNearestNeighbor",
     "JPDAF",
     "JointProbabilisticDataAssociationFilter",
+    "IMM",
+    "InteractingMultipleModelFilter",
     "GPRHMTracker",
     "HypercylindricalFilterMixin",
     "HypercylindricalParticleFilter",
