@@ -118,7 +118,7 @@ def pairwise_iou_masks(reference_rois: Sequence, query_rois: Sequence) -> np.nda
     return iou_matrix
 
 
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-locals
 
 def assign_by_similarity_matrix(
     similarity_matrix,
@@ -175,7 +175,7 @@ def assign_by_similarity_matrix(
     threshold_cost = max_similarity - float(min_similarity)
     dummy_penalty = max(
         1e-12,
-        np.finfo(float).eps * max(1.0, abs(max_similarity), abs(min_similarity)),
+        np.spacing(max(1.0, abs(max_similarity), abs(min_similarity))),
     )
     dummy_cost = threshold_cost + dummy_penalty
 
@@ -200,6 +200,7 @@ def assign_by_similarity_matrix(
 
 
 
+# pylint: disable=too-many-positional-arguments
 def associate_rois_by_iou(
     reference_rois: Sequence,
     query_rois: Sequence,
