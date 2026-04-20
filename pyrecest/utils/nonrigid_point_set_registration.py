@@ -220,7 +220,7 @@ def _solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
 
     finite_mask = isfinite(costs)
     finite_costs = costs[finite_mask]
-    if finite_costs.size == 0:
+    if finite_costs.shape[0] == 0:
         return zeros((costs.shape[0],), dtype=int64) - 1
 
     dummy_cost = float(max_cost) if math.isfinite(max_cost) else float(finite_costs.max() + 1.0)
@@ -246,7 +246,7 @@ def _default_cost(transformed_reference_points, moving_points):
 
 
 def _compute_rmse(matched_costs) -> float:
-    if matched_costs.size > 0:
+    if matched_costs.shape[0] > 0:
         return float(sqrt(mean(matched_costs * matched_costs)))
     return float("inf")
 
@@ -331,12 +331,12 @@ def joint_tps_registration_assignment(
         new_assignment = _solve_gated_assignment(current_costs, max_cost=max_cost)
         matched_reference_indices = where(new_assignment >= 0)[0]
 
-        if matched_reference_indices.size < min_matches:
+        if matched_reference_indices.shape[0] < min_matches:
             assignment = new_assignment
             matched_moving_indices = assignment[matched_reference_indices]
             matched_costs = (
                 current_costs[matched_reference_indices, matched_moving_indices]
-                if matched_reference_indices.size > 0
+                if matched_reference_indices.shape[0] > 0
                 else empty((0,))
             )
             rmse = _compute_rmse(matched_costs)
@@ -378,7 +378,7 @@ def joint_tps_registration_assignment(
     matched_moving_indices = assignment[matched_reference_indices]
     matched_costs = (
         final_costs[matched_reference_indices, matched_moving_indices]
-        if matched_reference_indices.size > 0
+        if matched_reference_indices.shape[0] > 0
         else empty((0,))
     )
     rmse = _compute_rmse(matched_costs)
