@@ -25,7 +25,8 @@ class _DummyBelief:
 
 
 class _DummyFilter(AbstractFilter):
-    pass
+    def __init__(self, initial_filter_state=None):
+        AbstractFilter.__init__(self, initial_filter_state)
 
 
 class _DummyMultitargetTracker(AbstractMultitargetTracker):
