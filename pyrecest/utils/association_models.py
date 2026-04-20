@@ -28,14 +28,12 @@ from pyrecest.backend import (
     clip,
     concatenate,
     diag,
-    empty_like,
     exp,
     isfinite,
     linalg,
     log,
     max,
     ones,
-    ones_like,
     unique,
     where,
     zeros,
@@ -142,12 +140,11 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
     def _sigmoid(values: Any) -> Any:
         """Numerically stable sigmoid."""
         values = asarray(values, dtype=float)
-        result = empty_like(values, dtype=float)
-        nonnegative = values >= 0.0
-        result[nonnegative] = 1.0 / (1.0 + exp(-values[nonnegative]))
-        exp_values = exp(values[~nonnegative])
-        result[~nonnegative] = exp_values / (1.0 + exp_values)
-        return result
+        return where(
+            values >= 0.0,
+            1.0 / (1.0 + exp(-values)),
+            exp(values) / (1.0 + exp(values)),
+        )
 
     @staticmethod
     def _ensure_binary_labels(labels: Any) -> Any:
@@ -317,9 +314,13 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         effective_weights = self._build_effective_sample_weights(labels, sample_weight)
 
         parameter_vector = zeros(design_matrix.shape[1], dtype=float)
-        regularization_mask = ones_like(parameter_vector)
+        n_params = design_matrix.shape[1]
         if self.fit_intercept:
-            regularization_mask[0] = 0.0
+            regularization_mask = concatenate(
+                [zeros(1, dtype=float), ones(n_params - 1, dtype=float)]
+            )
+        else:
+            regularization_mask = ones(n_params, dtype=float)
 
         self.converged_ = False
         for iteration in range(1, self.max_iterations + 1):
