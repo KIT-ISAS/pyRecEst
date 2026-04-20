@@ -22,10 +22,24 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import numpy as np
+from pyrecest.backend import (
+    arange,
+    asarray,
+    concatenate,
+    empty,
+    full,
+    isfinite,
+    nonzero,
+    ones,
+    zeros,
+)
 from scipy.optimize import linprog
 from scipy.sparse import coo_matrix
+
+if TYPE_CHECKING:
+    import numpy as np
 
 Observation = tuple[int, int]
 MatchedEdge = tuple[Observation, Observation, float]
@@ -191,11 +205,11 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
         n_observations,
     )
 
-    predecessors = np.full(n_observations, -1, dtype=int)
-    successors = np.full(n_observations, -1, dtype=int)
+    predecessors = full(n_observations, -1, dtype=int)
+    successors = full(n_observations, -1, dtype=int)
     matched_edges: list[MatchedEdge] = []
 
-    for edge_index in np.flatnonzero(selected_edge_mask):
+    for edge_index in nonzero(selected_edge_mask)[0]:
         source_global = int(left_nodes[edge_index])
         target_global = int(right_nodes[edge_index])
 
@@ -300,7 +314,7 @@ def tracks_to_session_labels(
                 )
 
     labels = [
-        np.full(inferred_sizes.get(session_index, 0), fill_value, dtype=int)
+        full(inferred_sizes.get(session_index, 0), fill_value, dtype=int)
         for session_index in range(max_session_index + 1)
     ]
 
@@ -314,7 +328,7 @@ def tracks_to_session_labels(
 
 
 def _validate_scalar_cost(name: str, value: float) -> None:
-    if not np.isfinite(value):
+    if not isfinite(value):
         raise ValueError(f"{name} must be finite.")
 
 
@@ -329,7 +343,7 @@ def _normalize_pairwise_costs(
             source_session, target_session = int(key[0]), int(key[1])
             if source_session >= target_session:
                 raise ValueError("Pairwise-cost keys must satisfy source_session < target_session.")
-            matrix = np.asarray(value, dtype=float)
+            matrix = asarray(value, dtype=float)
             if matrix.ndim != 2:
                 raise ValueError("Each pairwise cost matrix must be two-dimensional.")
             normalized[(source_session, target_session)] = matrix
@@ -337,7 +351,7 @@ def _normalize_pairwise_costs(
 
     normalized = {}
     for session_idx, value in enumerate(pairwise_costs):
-        matrix = np.asarray(value, dtype=float)
+        matrix = asarray(value, dtype=float)
         if matrix.ndim != 2:
             raise ValueError("Each pairwise cost matrix must be two-dimensional.")
         normalized[(session_idx, session_idx + 1)] = matrix
@@ -442,14 +456,14 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
         if gap < 0:
             raise ValueError("Session indices must define a forward-in-time edge ordering.")
 
-        adjusted_matrix = np.asarray(cost_matrix, dtype=float) + float(gap_penalty) * gap
+        adjusted_matrix = asarray(cost_matrix, dtype=float) + float(gap_penalty) * gap
         gain_matrix = (float(start_cost) + float(end_cost)) - adjusted_matrix
 
-        valid_mask = np.isfinite(adjusted_matrix) & (gain_matrix > 0.0)
+        valid_mask = isfinite(adjusted_matrix) & (gain_matrix > 0.0)
         if cost_threshold is not None:
             valid_mask &= adjusted_matrix <= float(cost_threshold)
 
-        source_indices, target_indices = np.nonzero(valid_mask)
+        source_indices, target_indices = nonzero(valid_mask)
         if source_indices.size == 0:
             continue
 
@@ -459,15 +473,15 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
         adjusted_costs.append(adjusted_matrix[valid_mask].astype(float))
 
     if not edge_gains:
-        empty_int = np.empty(0, dtype=int)
-        empty_float = np.empty(0, dtype=float)
+        empty_int = empty(0, dtype=int)
+        empty_float = empty(0, dtype=float)
         return empty_int, empty_int.copy(), empty_float, empty_float.copy()
 
     return (
-        np.concatenate(left_nodes),
-        np.concatenate(right_nodes),
-        np.concatenate(edge_gains),
-        np.concatenate(adjusted_costs),
+        concatenate(left_nodes),
+        concatenate(right_nodes),
+        concatenate(edge_gains),
+        concatenate(adjusted_costs),
     )
 
 
@@ -479,21 +493,21 @@ def _solve_max_weight_matching(
 ) -> np.ndarray:
     num_edges = int(edge_gains.size)
     if num_edges == 0 or num_nodes == 0:
-        return np.zeros(num_edges, dtype=bool)
+        return zeros(num_edges, dtype=bool)
 
-    edge_ids = np.arange(num_edges, dtype=int)
-    row_ids = np.concatenate((left_nodes, num_nodes + right_nodes))
-    col_ids = np.concatenate((edge_ids, edge_ids))
+    edge_ids = arange(num_edges, dtype=int)
+    row_ids = concatenate((left_nodes, num_nodes + right_nodes))
+    col_ids = concatenate((edge_ids, edge_ids))
 
     constraint_matrix = coo_matrix(
-        (np.ones(2 * num_edges, dtype=float), (row_ids, col_ids)),
+        (ones(2 * num_edges, dtype=float), (row_ids, col_ids)),
         shape=(2 * num_nodes, num_edges),
     ).tocsr()
 
     solution = linprog(
         c=-edge_gains,
         A_ub=constraint_matrix,
-        b_ub=np.ones(2 * num_nodes, dtype=float),
+        b_ub=ones(2 * num_nodes, dtype=float),
         bounds=(0.0, 1.0),
         method="highs",
     )
@@ -504,7 +518,7 @@ def _solve_max_weight_matching(
             f"{solution.message}"
         )
 
-    return np.asarray(solution.x > 0.5, dtype=bool)
+    return asarray(solution.x > 0.5, dtype=bool)
 
 
 def _reconstruct_tracks(

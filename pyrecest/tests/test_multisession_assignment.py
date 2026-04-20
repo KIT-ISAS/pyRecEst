@@ -2,8 +2,7 @@
 
 import unittest
 
-import numpy as np
-
+from pyrecest.backend import array, array_equal
 from pyrecest.utils import solve_multisession_assignment, tracks_to_session_labels
 
 
@@ -34,8 +33,8 @@ class TestMultiSessionAssignment(unittest.TestCase):
     def test_consecutive_costs_form_two_long_tracks(self):
         result = solve_multisession_assignment(
             [
-                np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
-                np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+                array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+                array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
             ],
             start_cost=5.0,
             end_cost=5.0,
@@ -51,7 +50,7 @@ class TestMultiSessionAssignment(unittest.TestCase):
 
     def test_cross_gap_linking_is_supported(self):
         result = solve_multisession_assignment(
-            {(0, 2): np.array([[0.3]], dtype=float)},
+            {(0, 2): array([[0.3]], dtype=float)},
             session_sizes=[1, 0, 1],
             start_cost=4.0,
             end_cost=4.0,
@@ -66,8 +65,8 @@ class TestMultiSessionAssignment(unittest.TestCase):
     def test_global_solution_beats_pairwise_greedy_choice(self):
         result = solve_multisession_assignment(
             [
-                np.array([[0.0, 1.0], [1.0, 100.0]], dtype=float),
-                np.array([[100.0, 0.0], [0.0, 100.0]], dtype=float),
+                array([[0.0, 1.0], [1.0, 100.0]], dtype=float),
+                array([[100.0, 0.0], [0.0, 100.0]], dtype=float),
             ],
             start_cost=10.0,
             end_cost=10.0,
@@ -83,7 +82,7 @@ class TestMultiSessionAssignment(unittest.TestCase):
 
     def test_tracks_to_session_labels(self):
         result = solve_multisession_assignment(
-            {(0, 2): np.array([[0.3]], dtype=float)},
+            {(0, 2): array([[0.3]], dtype=float)},
             session_sizes=[1, 0, 1],
             start_cost=4.0,
             end_cost=4.0,
@@ -91,19 +90,19 @@ class TestMultiSessionAssignment(unittest.TestCase):
         )
 
         labels = result.to_session_labels(session_sizes=[1, 0, 1])
-        self.assertTrue(np.array_equal(labels[0], np.array([0])))
+        self.assertTrue(array_equal(labels[0], array([0])))
         self.assertEqual(labels[1].size, 0)
-        self.assertTrue(np.array_equal(labels[2], np.array([0])))
+        self.assertTrue(array_equal(labels[2], array([0])))
 
         labels_from_function = tracks_to_session_labels(result.tracks, session_sizes=[1, 0, 1])
-        self.assertTrue(np.array_equal(labels_from_function[0], np.array([0])))
+        self.assertTrue(array_equal(labels_from_function[0], array([0])))
         self.assertEqual(labels_from_function[1].size, 0)
-        self.assertTrue(np.array_equal(labels_from_function[2], np.array([0])))
+        self.assertTrue(array_equal(labels_from_function[2], array([0])))
 
     def test_rejects_inconsistent_session_sizes(self):
         pairwise_costs = {
-            (0, 1): np.zeros((2, 3)),
-            (1, 2): np.zeros((4, 1)),
+            (0, 1): array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]),
+            (1, 2): array([[0.0], [0.0], [0.0], [0.0]]),
         }
 
         with self.assertRaises(ValueError):
@@ -111,7 +110,7 @@ class TestMultiSessionAssignment(unittest.TestCase):
 
     def test_drops_non_beneficial_links_even_without_threshold(self):
         result = solve_multisession_assignment(
-            [np.array([[5.0]], dtype=float)],
+            [array([[5.0]], dtype=float)],
             start_cost=1.0,
             end_cost=1.0,
         )
