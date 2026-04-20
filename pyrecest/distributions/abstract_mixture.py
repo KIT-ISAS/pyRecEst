@@ -76,7 +76,7 @@ class AbstractMixture(AbstractDistributionType):
                 if occ_val != 0:
                     try:
                         sample_i = self.dists[i].sample(occ_val)
-                    except (NotImplementedError, AssertionError, ValueError):
+                    except (NotImplementedError, AssertionError, ValueError, TypeError):
                         sample_i = self.dists[i].sample_metropolis_hastings(occ_val)
                     sample_i = pyrecest.backend.atleast_2d(sample_i)
                     samples.append(sample_i)
@@ -89,7 +89,7 @@ class AbstractMixture(AbstractDistributionType):
         for i, occ in enumerate(occurrences):
             occ_val = occ.item() if hasattr(occ, "item") else int(occ)
             if occ_val != 0:
-                s[count : count + occ_val, :] = self.dists[i].sample(occ_val)  # noqa: E203
+                s[count : count + occ_val] = self.dists[i].sample(occ_val)  # noqa: E203
                 count += occ_val
 
         return s

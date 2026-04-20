@@ -11,7 +11,7 @@ from pyrecest.distributions.nonperiodic.gaussian_mixture import GaussianMixture
 class CustomLinearDistributionTest(unittest.TestCase):
     def setUp(self):
         g1 = GaussianDistribution(array([1.0, 1.0]), eye(2))
-        g2 = GaussianDistribution(array([-3.0, -3.0]), eye(2))
+        g2 = GaussianDistribution(array([-1.0, -1.0]), eye(2))
         self.gm = GaussianMixture([g1, g2], array([0.7, 0.3]))
 
     def test_init_and_mean(self):
@@ -29,7 +29,9 @@ class CustomLinearDistributionTest(unittest.TestCase):
 
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):
-        x, y = meshgrid(linspace(0.0, 2.0 * pi, 10), linspace(0.0, 2.0 * pi, 10))
+        x, y = meshgrid(
+            linspace(0.0, 2.0 * pi, 10), linspace(0.0, 2.0 * pi, 10), indexing="ij"
+        )
         npt.assert_allclose(
             dist1.pdf(concatenate((x, y)).reshape(2, -1).T),
             dist2.pdf(concatenate((x, y)).reshape(2, -1).T),

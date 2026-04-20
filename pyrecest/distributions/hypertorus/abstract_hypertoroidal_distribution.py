@@ -203,7 +203,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         elif self.dim == 2:
             step = 2 * pi / resolution
             alpha, beta = meshgrid(
-                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step)
+                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step), indexing="ij"
             )
             f = self.pdf(column_stack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
@@ -268,9 +268,22 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     ):
         # jscpd:ignore-end
         if proposal is None:
+            if pyrecest.backend.__backend_name__ == "jax":
+                import jax as _jax  # pylint: disable=import-error
+                import jax.numpy as _jnp  # pylint: disable=import-error
 
-            def proposal(x):
-                return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
+                def proposal_jax(key, x):
+                    key, subkey = _jax.random.split(key)
+                    noise = _jax.random.normal(subkey, shape=(self.dim,))
+                    return _jnp.mod(x + noise, 2.0 * _jnp.pi)
+
+                proposal = proposal_jax
+            else:
+
+                def proposal_np(x):
+                    return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
+
+                proposal = proposal_np
 
         if start_point is None:
             start_point = self.mean_direction()

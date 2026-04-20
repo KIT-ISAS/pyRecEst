@@ -1,7 +1,6 @@
 import copy
 import unittest
 import warnings
-from math import pi
 
 import numpy.testing as npt
 import pyrecest
@@ -12,6 +11,7 @@ from pyrecest.backend import (
     eye,
     linspace,
     meshgrid,
+    pi,
     random,
     sin,
     sqrt,
@@ -48,8 +48,7 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         """
         # S² grid
         phi, theta = meshgrid(
-            linspace(0.0, 2 * pi, 10),
-            linspace(-pi / 2, pi / 2, 10),
+            linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10), indexing="ij"
         )
         phi = phi.ravel()
         theta = theta.ravel()

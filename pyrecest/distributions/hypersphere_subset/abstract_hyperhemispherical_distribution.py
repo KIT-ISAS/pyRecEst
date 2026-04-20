@@ -5,7 +5,7 @@ from typing import Union
 import matplotlib.pyplot as plt
 import pyrecest.backend
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 from pyrecest.backend import (
     array,
     concatenate,
@@ -19,11 +19,6 @@ from pyrecest.backend import (
     random,
     vstack,
     zeros,
-    sqrt,
-    cos,
-    sin,
-    linalg,
-    stack,
 )
 from scipy.optimize import minimize
 
@@ -65,44 +60,31 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             from .hyperhemispherical_uniform_distribution import (
                 HyperhemisphericalUniformDistribution,
             )
+
             if pyrecest.backend.__backend_name__ in ("numpy", "pytorch"):
-                def proposal(_):
+
+                def proposal_np(_):
                     return HyperhemisphericalUniformDistribution(self.dim).sample(1)
+
+                proposal = proposal_np
             else:
                 # JAX backend: proposal(key, x) -> x_prop
-                import jax as _jax
-                import jax.numpy as _jnp
+                import jax as _jax  # pylint: disable=import-error
+                import jax.numpy as _jnp  # pylint: disable=import-error
 
-                def proposal(key, _):
+                def proposal_jax(key, _):
                     """JAX independence proposal: uniform on upper hemisphere."""
-                    if self.dim == 2:
-                        # Explicit S² sampling
-                        key, key_phi = _jax.random.split(key)
-                        key, key_sz = _jax.random.split(key)
-
-                        phi = 2.0 * _jnp.pi * _jax.random.uniform(key_phi, shape=(1,))
-                        sz = 2.0 * _jax.random.uniform(key_sz, shape=(1,)) - 1.0
-                        r = _jnp.sqrt(1.0 - sz**2)
-
-                        # Shape (1, 3)
-                        s = _jnp.stack(
-                            [r * _jnp.cos(phi), r * _jnp.sin(phi), sz],
-                            axis=1,
-                        )
-                    else:
-                        # General S^d: sample N(0, I) in R^{d+1} and normalize
-                        key, subkey = _jax.random.split(key)
-                        samples_unnorm = _jax.random.normal(subkey, shape=(1, self.dim + 1))
-                        norms = _jnp.linalg.norm(samples_unnorm, axis=1, keepdims=True)
-                        s = samples_unnorm / norms
-
+                    key, subkey = _jax.random.split(key)
+                    s = _jax.random.normal(subkey, shape=(1, self.dim + 1))
                     # Project to upper hemisphere: last coordinate >= 0
-                    # s shape: (1, dim+1); last coord is s[..., -1:]
                     sign = _jnp.where(s[..., -1:] < 0.0, -1.0, 1.0)
                     s = sign * s
 
+                    # Ensure exact unit norm (avoids float32 rounding errors)
+                    s = s / _jnp.linalg.norm(s, axis=-1, keepdims=True)
                     return s
 
+                proposal = proposal_jax
 
         if start_point is None:
             start_point = HyperhemisphericalUniformDistribution(self.dim).sample(1)
@@ -222,6 +204,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             linspace(-1, 1, resolution),
             linspace(-1, 1, resolution),
             linspace(0, 1, resolution // 2),
+            indexing="ij",
         )
         mask = (x**2 + y**2 + z**2 <= 1) & (z >= 0)
         x, y, z = x[mask].reshape(-1, 1), y[mask].reshape(-1, 1), z[mask].reshape(-1, 1)

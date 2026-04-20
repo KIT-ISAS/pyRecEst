@@ -1,7 +1,7 @@
+import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Union
-import inspect
 
 import pyrecest.backend
 
@@ -66,7 +66,6 @@ class AbstractManifoldSpecificDistribution(ABC):
         raise NotImplementedError("set_mode is not implemented for this distribution")
 
     # Need to use Union instead of | to support torch.dtype
-    # Need to use Union instead of | to support torch.dtype
     def sample(self, n: Union[int, int32, int64]):
         """Obtain n samples from the distribution."""
         return self.sample_metropolis_hastings(n)
@@ -85,7 +84,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         """Metropolis Hastings sampling algorithm."""
         if pyrecest.backend.__backend_name__ == "jax":
             # Get a key from your global JAX random state *outside* of lax.scan
-            import jax as _jax
+            import jax as _jax  # pylint: disable=import-error
 
             key = random.get_state()
             key, key_for_mh = _jax.random.split(key)
@@ -110,7 +109,7 @@ class AbstractManifoldSpecificDistribution(ABC):
             # You could optionally stash `key_out` somewhere if you want chain continuation.
             return squeeze(samples)
 
-        # Non-JAX backends → your old NumPy/Torch code
+        # Non-JAX backends -> your old NumPy/Torch code
         if proposal is None or start_point is None:
             raise NotImplementedError(
                 "Default proposals and starting points should be set in inheriting classes."
@@ -124,7 +123,9 @@ class AbstractManifoldSpecificDistribution(ABC):
 
         while i < total_samples:
             x_new = proposal(x)
-            assert x_new.shape == x.shape, "Proposal must return a vector of same shape as input"
+            assert (
+                x_new.shape == x.shape
+            ), "Proposal must return a vector of same shape as input"
             pdfx_new = self.pdf(x_new)
             a = pdfx_new / pdfx
             if a.item() > 1 or a.item() > random.rand(1):
@@ -136,18 +137,22 @@ class AbstractManifoldSpecificDistribution(ABC):
         relevant_samples = s[burn_in::skipping, :]
         return squeeze(relevant_samples)
 
+
 # pylint: disable=too-many-positional-arguments,too-many-locals,too-many-arguments
 def sample_metropolis_hastings_jax(
     key,
-    log_pdf,      # function: x -> log p(x)
-    proposal,     # function: (key, x) -> x_prop
+    log_pdf,  # function: x -> log p(x)
+    proposal,  # function: (key, x) -> x_prop
     start_point,
     n: int,
     burn_in: int = 10,
     skipping: int = 5,
 ):
     """
-    Metropolis-Hastings sampler in JAX.
+    Metropolis-Hastings sampler in JAX using a plain Python loop.
+
+    Uses a Python loop (rather than lax.scan) so that log_pdf may call
+    non-JAX-traceable code (e.g. scipy).
 
     key:        jax.random.PRNGKey
     log_pdf:    callable x -> log p(x)
@@ -155,50 +160,41 @@ def sample_metropolis_hastings_jax(
     start_point: initial state (array)
     n:          number of samples to return (after burn-in and thinning)
     """
-    import jax.numpy as _jnp
-    from jax import lax as _lax
-    from jax import random as _random
-
+    import jax.numpy as _jnp  # pylint: disable=import-error
+    from jax import random as _random  # pylint: disable=import-error
 
     start_point = _jnp.asarray(start_point)
     total_steps = burn_in + n * skipping
+    chain = []
 
-    def one_step(carry, _):
-        key, x, log_px = carry
+    x = start_point
+
+    def _to_scalar(val):
+        """Convert a JAX array of any shape to a Python float."""
+        return float(_jnp.asarray(val).ravel()[0])
+
+    log_px = _to_scalar(log_pdf(x))
+
+    for _ in range(total_steps):
         key, key_prop, key_u = _random.split(key, 3)
 
         # Propose new state
         x_prop = proposal(key_prop, x)
-        log_px_prop = log_pdf(x_prop)
+        log_px_prop = _to_scalar(log_pdf(x_prop))
 
-        # log_alpha = log p(x_prop) - log p(x)
+        # Metropolis acceptance
         log_alpha = log_px_prop - log_px
+        log_u = _to_scalar(_jnp.log(_random.uniform(key_u, shape=())))
 
-        # Draw u ~ Uniform(0, 1)
-        u = _random.uniform(key_u, shape=())
-        log_u = _jnp.log(u)
+        if log_u < min(0.0, log_alpha):
+            x = x_prop
+            log_px = log_px_prop
 
-        # Accept if log u < min(0, log_alpha)
-        # (equivalent to u < exp(min(0, log_alpha)))
-        log_alpha_capped = _jnp.minimum(0.0, log_alpha)
-        accept = log_u < log_alpha_capped  # scalar bool
+        chain.append(x)
 
-        # Branch without Python if
-        x_new = _jnp.where(accept, x_prop, x)
-        log_px_new = _jnp.where(accept, log_px_prop, log_px)
-
-        return (key, x_new, log_px_new), x_new
-
-    init_carry = (key, start_point, log_pdf(start_point))
-    (key_out, _, _), chain = _lax.scan(
-        one_step,
-        init_carry,
-        xs=None,
-        length=total_steps,
-    )
-
-    samples = chain[burn_in::skipping]
-    return samples, key_out
+    chain_array = _jnp.stack(chain, axis=0)
+    samples = chain_array[burn_in::skipping]
+    return samples, key
 
 
 def _assert_proposal_supports_key(proposal: Callable):
@@ -225,14 +221,11 @@ def _assert_proposal_supports_key(proposal: Callable):
 
     # Count positional(-or-keyword) parameters
     num_positional = sum(
-        p.kind in (inspect.Parameter.POSITIONAL_ONLY,
-                   inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        p.kind
+        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
         for p in params
     )
-    has_var_positional = any(
-        p.kind == inspect.Parameter.VAR_POSITIONAL
-        for p in params
-    )
+    has_var_positional = any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params)
 
     if has_var_positional or num_positional >= 2:
         # Looks compatible with (key, x)

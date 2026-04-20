@@ -120,9 +120,14 @@ def multivariate_normal(size, *args, **kwargs):
     return set_state_return(has_state, state, res)
    
    
-unsupported_functions = [
-    'multinomial',
-]
-for func_name in unsupported_functions:
-    exec(f"{func_name} = lambda *args, **kwargs: NotImplementedError('This function is not supported in this JAX backend.')")
+def multinomial(n, pvals):
+    """Sample from a multinomial distribution using JAX."""
+    import jax.numpy as _jnp
+    state, has_state, _ = _get_state()
+    state, key = jax.random.split(state)
+    backend.jax_global_random_state = state
+    pvals = _jnp.asarray(pvals, dtype=_jnp.float32)
+    pvals = pvals / pvals.sum()
+    samples = jax.random.categorical(key, _jnp.log(pvals), shape=(n,))
+    return _jnp.bincount(samples, minlength=len(pvals))
 
