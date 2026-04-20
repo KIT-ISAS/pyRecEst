@@ -59,6 +59,9 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
         beta: float = 2.0,
         kappa: float = 0.0,
     ):
+        assert pyrecest.backend.__backend_name__ not in (
+            "jax",
+        ), "HypersphericalUKF is not supported on the JAX backend"
         self._alpha = alpha
         self._beta = beta
         self._kappa = kappa

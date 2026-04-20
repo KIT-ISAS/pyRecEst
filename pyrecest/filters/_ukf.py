@@ -7,6 +7,8 @@ Unscented Kalman Filter (UKF), replacing the former dependency on the
 from collections import namedtuple
 from copy import deepcopy
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     asarray,
@@ -51,6 +53,9 @@ class MerweScaledSigmaPoints:
     """
 
     def __init__(self, n: int, alpha: float, beta: float, kappa: float):
+        assert pyrecest.backend.__backend_name__ not in (
+            "jax",
+        ), "MerweScaledSigmaPoints is not supported on the JAX backend"
         self.n = n
         self.alpha = alpha
         self.beta = beta
@@ -107,6 +112,9 @@ class JulierSigmaPoints:
     """
 
     def __init__(self, n: int, kappa: float = 0.0):
+        assert pyrecest.backend.__backend_name__ not in (
+            "jax",
+        ), "JulierSigmaPoints is not supported on the JAX backend"
         self.n = n
         self.kappa = kappa
         self._compute_weights()
