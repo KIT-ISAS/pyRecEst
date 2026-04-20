@@ -88,7 +88,7 @@ class MultiSessionAssignmentResult:
         )
 
 
-def solve_multisession_assignment(
+def solve_multisession_assignment(  # pylint: disable=too-many-locals
     pairwise_costs: PairwiseCostsInput,
     session_sizes: SessionSizesInput | None = None,
     *,
@@ -412,7 +412,7 @@ def _build_observation_index(
     return global_to_observation, observation_to_global
 
 
-def _build_candidate_edges(
+def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-locals
     pairwise_costs: Mapping[tuple[int, int], np.ndarray],
     session_sizes: Mapping[int, int],
     session_positions: Mapping[int, int],
