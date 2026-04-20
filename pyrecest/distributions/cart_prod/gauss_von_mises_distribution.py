@@ -7,7 +7,6 @@ from pyrecest.backend import (
     arccos,
     array,
     allclose,
-    asarray,
     atleast_1d,
     atleast_2d,
     concatenate,
@@ -47,10 +46,10 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
 
     def __init__(self, mu, P, alpha, beta, Gamma, kappa):
         # Convert scalars/lists to arrays
-        mu = atleast_1d(asarray(mu, dtype=float64))
-        P = atleast_2d(asarray(P, dtype=float64))
-        beta = atleast_1d(asarray(beta, dtype=float64))
-        Gamma = atleast_2d(asarray(Gamma, dtype=float64))
+        mu = atleast_1d(array(mu, dtype=float64))
+        P = atleast_2d(array(P, dtype=float64))
+        beta = atleast_1d(array(beta, dtype=float64))
+        Gamma = atleast_2d(array(Gamma, dtype=float64))
 
         n = mu.shape[0]
 
@@ -107,7 +106,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         -------
         p : scalar or array of shape (n,)
         """
-        xa = asarray(xa, dtype=float64)
+        xa = array(xa, dtype=float64)
         single_point = xa.ndim == 1
         if single_point:
             xa = xa.reshape(-1, 1)
@@ -115,7 +114,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         assert xa.shape[0] == self.lin_dim + 1
 
         theta = self.get_theta(xa[1:, :])
-        mvn_vals = _mvn.pdf(xa[1:, :].T, mean=asarray(self.mu), cov=asarray(self.P))
+        mvn_vals = _mvn.pdf(xa[1:, :].T, mean=self.mu, cov=self.P)
         p = mvn_vals * exp(self.kappa * cos(xa[0, :] - theta)) / (
             2.0 * float(pi) * iv(0, self.kappa)
         )
@@ -135,27 +134,25 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         """
         from ..circle.von_mises_distribution import VonMisesDistribution
 
-        M = eye(self.lin_dim) - 1j * asarray(self.Gamma)
+        M = eye(self.lin_dim) - 1j * self.Gamma
         eiphi = (
             1.0 / sqrt(linalg.det(M))
             * VonMisesDistribution.besselratio(0, self.kappa)
             * exp(
                 1j * self.alpha
-                - 0.5 * asarray(self.beta) @ linalg.solve(M, asarray(self.beta))
+                - 0.5 * self.beta @ linalg.solve(M, self.beta)
             )
         )
         return concatenate([array([float(real(eiphi)), float(imag(eiphi))]), self.mu])
 
     def hybrid_moment_numerical(self):
         """Numerical hybrid moment E[cos(theta), sin(theta), x_1, ..., x_linD]."""
-        P_arr = asarray(self.P)
-        mu_arr = asarray(self.mu)
         scale = 10.0
 
         bounds_periodic = [[0.0, 2.0 * float(pi)]]
         bounds_linear = [
-            [float(mu_arr[i]) - scale * float(sqrt(P_arr[i, i])),
-             float(mu_arr[i]) + scale * float(sqrt(P_arr[i, i]))]
+            [float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
+             float(self.mu[i]) + scale * float(sqrt(self.P[i, i]))]
             for i in range(self.lin_dim)
         ]
         bounds = bounds_periodic + bounds_linear
@@ -218,7 +215,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         w00 = 1.0 - 2.0 * weta0 - 2.0 * lin_dim * wxi0
 
         n_pts = 2 * lin_dim + 3
-        d = asarray(zeros((lin_dim + 1, n_pts))).copy()
+        d = zeros((lin_dim + 1, n_pts))
 
         # Column 0: origin (all zeros) — N00
         # Columns 1-2: Neta0 (±eta on the periodic axis)
@@ -229,16 +226,16 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             d[i, 3 + 2 * i] = -xi
             d[i, 3 + 2 * i + 1] = xi
 
-        w = asarray(full(n_pts, wxi0)).copy()
+        w = full(n_pts, wxi0)
         w[0] = w00
         w[1] = weta0
         w[2] = weta0
 
         # Transform back to original parameterisation
         lin_part = d[1:, :]  # (linD, n_pts)
-        theta_vals = self.get_theta(array(lin_part))
-        d[0, :] = mod(array(d[0, :]) + theta_vals, 2.0 * pi)
-        d[1:, :] = asarray(self.A) @ lin_part + asarray(self.mu).reshape(-1, 1)
+        theta_vals = self.get_theta(lin_part)
+        d[0, :] = mod(d[0, :] + theta_vals, 2.0 * pi)
+        d[1:, :] = self.A @ lin_part + self.mu.reshape(-1, 1)
 
         return array(d), array(w)
 
@@ -247,12 +244,10 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         if integration_boundaries is not None:
             return self.integrate_numerically(integration_boundaries)
 
-        P_arr = asarray(self.P)
-        mu_arr = asarray(self.mu)
         scale = 10.0
         bounds = [[0.0, 2.0 * float(pi)]] + [
-            [float(mu_arr[i]) - scale * float(sqrt(P_arr[i, i])),
-             float(mu_arr[i]) + scale * float(sqrt(P_arr[i, i]))]
+            [float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
+             float(self.mu[i]) + scale * float(sqrt(self.P[i, i]))]
             for i in range(self.lin_dim)
         ]
         return nquad(lambda *args: self.pdf(array(args)), bounds)[0]
@@ -290,20 +285,18 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             CustomHypertoroidalDistribution,
         )
 
-        P_arr = asarray(self.P)
-        mu_arr = asarray(self.mu)
         scale = 10.0
         bounds_linear = [
-            [float(mu_arr[i]) - scale * float(sqrt(P_arr[i, i])),
-             float(mu_arr[i]) + scale * float(sqrt(P_arr[i, i]))]
+            [float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
+             float(self.mu[i]) + scale * float(sqrt(self.P[i, i]))]
             for i in range(self.lin_dim)
         ]
 
         if self.lin_dim == 1:
             def marginal_pdf(theta):
-                theta = atleast_1d(asarray(theta))
-                result = asarray(zeros_like(theta, dtype=float64)).copy()
-                for idx, t in enumerate(asarray(theta).ravel()):
+                theta = atleast_1d(array(theta, dtype=float64))
+                result = zeros_like(theta, dtype=float64)
+                for idx, t in enumerate(theta.ravel()):
                     result.ravel()[idx] = nquad(
                         lambda x: self.pdf(array([t, x])), bounds_linear
                     )[0]
