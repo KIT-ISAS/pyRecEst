@@ -2,6 +2,7 @@ import unittest
 from scipy.stats import multivariate_normal
 from scipy.special import iv
 
+import pyrecest.backend
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.cart_prod.gauss_von_mises_distribution import GaussVonMisesDistribution
 from pyrecest.backend import allclose, cos, exp, linalg, pi, random, squeeze, zeros, all
@@ -32,6 +33,10 @@ class GaussVonMisesDistributionTest(unittest.TestCase):
              / (2.0 * float(pi) * iv(0, gvm.kappa)))
         return float(squeeze(p))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_pdf(self):
         self.assertTrue(allclose(
             self.g.pdf(self.testpoints),
@@ -54,6 +59,10 @@ class GaussVonMisesDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(gauss.mu, self.g.mode()))
         self.assertTrue(allclose(gauss.C[1:, 1:], self.g.P, atol=1e-10))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_sampling(self):
         # Deterministic Horwood sampler returns 2*lin_dim + 3 sigma points
         expected_n = 2 * self.g.lin_dim + 3

@@ -1,3 +1,4 @@
+import pyrecest.backend
 from scipy.integrate import nquad
 from scipy.special import iv
 from scipy.stats import multivariate_normal as _mvn
@@ -201,6 +202,10 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         w : array of shape (2*lin_dim + 3,)
             Sigma-point weights.
         """
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError(
+                "sample_deterministic_horwood is not supported on the JAX backend."
+            )
         lin_dim = self.lin_dim
 
         def B(p_val, kappa_val):
