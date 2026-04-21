@@ -6,16 +6,17 @@ of globally consistent tracks, with at most one detection per session on each
 track. The formulation supports skipped sessions through optional cross-session
 edges and a configurable gap penalty.
 
-The optimization is a minimum-cost path-cover problem on a DAG. To avoid
-materializing a dense ``2N x 2N`` assignment matrix, the implementation uses an
-equivalent sparse maximum-weight matching formulation: relative to leaving every
-observation disconnected, each admissible edge contributes a *gain* of
+The optimization is a minimum-cost path-cover problem on a DAG. Relative to
+leaving every observation disconnected, each admissible edge contributes a
+*gain* of
 
 ``start_cost + end_cost - adjusted_link_cost``.
 
-Only edges with positive gain can improve the objective, so the sparse solver
-operates on admissible candidate edges rather than on all ``N^2`` observation
-pairs.
+Only edges with positive gain can improve the objective, so the solver operates
+on admissible candidate edges rather than on all ``N^2`` observation pairs. The
+resulting sparse bipartite matching problem is solved as a rectangular linear
+assignment with per-row dummy "unmatched" columns using SciPy's sparse
+Jonker-Volgenant implementation.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import linprog
 from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import min_weight_full_bipartite_matching
 
 Observation = tuple[int, int]
 MatchedEdge = tuple[Observation, Observation, float]
@@ -142,8 +144,10 @@ def solve_multisession_assignment(
     ``start_cost + end_cost - c``
 
     subject to at-most-one-predecessor and at-most-one-successor constraints.
-    This is equivalent to the minimum-cost path-cover objective while avoiding a
-    dense assignment matrix.
+    This is equivalent to the minimum-cost path-cover objective. Internally,
+    the sparse matching problem is reduced to a rectangular assignment in which
+    every source observation can either connect to an admissible successor or to
+    its own dummy "unmatched" column.
     """
 
     _validate_scalar_cost("start_cost", start_cost)
@@ -477,6 +481,97 @@ def _solve_max_weight_matching(
     edge_gains: np.ndarray,
     num_nodes: int,
 ) -> np.ndarray:
+    try:
+        return _solve_max_weight_matching_sparse(
+            left_nodes,
+            right_nodes,
+            edge_gains,
+            num_nodes,
+        )
+    except ValueError:
+        return _solve_max_weight_matching_via_linprog(
+            left_nodes,
+            right_nodes,
+            edge_gains,
+            num_nodes,
+        )
+
+
+def _solve_max_weight_matching_sparse(
+    left_nodes: np.ndarray,
+    right_nodes: np.ndarray,
+    edge_gains: np.ndarray,
+    num_nodes: int,
+) -> np.ndarray:
+    """Solve the sparse bipartite matching problem with LAPJVsp.
+
+    The optional-matching objective is turned into a full rectangular
+    assignment: every left node is matched either to one admissible right node
+    or to its own dummy "unmatched" column. Because the sparse assignment
+    always covers all rows, adding the same positive offset to every row edge
+    preserves the original maximum-gain objective while satisfying SciPy's
+    requirement that sparse edge weights are non-zero.
+    """
+
+    num_edges = int(edge_gains.size)
+    if num_edges == 0 or num_nodes == 0:
+        return np.zeros(num_edges, dtype=bool)
+
+    left_nodes = np.asarray(left_nodes, dtype=int)
+    right_nodes = np.asarray(right_nodes, dtype=int)
+    edge_gains = np.asarray(edge_gains, dtype=float)
+
+    row_ids = np.concatenate((left_nodes, np.arange(num_nodes, dtype=int)))
+    col_ids = np.concatenate((right_nodes, num_nodes + np.arange(num_nodes, dtype=int)))
+
+    base_weight = min(1.0, 0.5 * float(np.min(edge_gains)))
+    base_weight = max(base_weight, np.nextafter(0.0, 1.0))
+    weights = np.concatenate(
+        (
+            edge_gains + base_weight,
+            np.full(num_nodes, base_weight, dtype=float),
+        )
+    )
+
+    biadjacency = coo_matrix(
+        (weights, (row_ids, col_ids)),
+        shape=(num_nodes, 2 * num_nodes),
+    ).tocsr()
+
+    matched_rows, matched_cols = min_weight_full_bipartite_matching(
+        biadjacency,
+        maximize=True,
+    )
+
+    if matched_rows.size != num_nodes:
+        raise RuntimeError("Sparse assignment did not produce a full row cover.")
+
+    edge_lookup = {
+        (int(source_node), int(target_node)): edge_index
+        for edge_index, (source_node, target_node) in enumerate(zip(left_nodes, right_nodes))
+    }
+    selected_edge_mask = np.zeros(num_edges, dtype=bool)
+
+    for source_node, assigned_column in zip(matched_rows, matched_cols):
+        assigned_column = int(assigned_column)
+        if assigned_column >= num_nodes:
+            continue
+        edge_index = edge_lookup.get((int(source_node), assigned_column))
+        if edge_index is None:
+            raise RuntimeError("Sparse assignment selected a non-admissible edge.")
+        selected_edge_mask[edge_index] = True
+
+    return selected_edge_mask
+
+
+def _solve_max_weight_matching_via_linprog(
+    left_nodes: np.ndarray,
+    right_nodes: np.ndarray,
+    edge_gains: np.ndarray,
+    num_nodes: int,
+) -> np.ndarray:
+    """Fallback solver that keeps the original LP formulation."""
+
     num_edges = int(edge_gains.size)
     if num_edges == 0 or num_nodes == 0:
         return np.zeros(num_edges, dtype=bool)
