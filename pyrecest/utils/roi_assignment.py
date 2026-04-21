@@ -16,6 +16,7 @@ import pyrecest.backend
 from pyrecest.backend import (
     amax,
     asarray,
+    float64,
     full,
     full_like,
     int64,
@@ -62,7 +63,13 @@ def _extract_roi_support(roi) -> set[tuple[int, int]]:
             raise ValueError(
                 "Dense ROI representations must be two-dimensional arrays."
             )
-        ypix, xpix = nonzero(mask)
+        nonzero_result = nonzero(mask)
+        if isinstance(nonzero_result, tuple):
+            ypix, xpix = nonzero_result
+        else:
+            # PyTorch returns a 2D tensor of shape (N, ndim)
+            ypix = nonzero_result[:, 0]
+            xpix = nonzero_result[:, 1]
         ypix = asarray(ypix, dtype=int64)
         xpix = asarray(xpix, dtype=int64)
 
@@ -113,7 +120,7 @@ def pairwise_iou_masks(reference_rois: Sequence, query_rois: Sequence):
 
     n_reference = len(reference_rois)
     n_query = len(query_rois)
-    iou_matrix = zeros((n_reference, n_query), dtype=float)
+    iou_matrix = zeros((n_reference, n_query), dtype=float64)
 
     if n_reference == 0 or n_query == 0:
         return iou_matrix
@@ -168,7 +175,7 @@ def assign_by_similarity_matrix(
         index for row ``i`` or ``unmatched_value`` if no valid match exists.
     """
 
-    similarities = asarray(similarity_matrix, dtype=float)
+    similarities = asarray(similarity_matrix, dtype=float64)
     if similarities.ndim != 2:
         raise ValueError("similarity_matrix must be two-dimensional.")
 
@@ -179,13 +186,13 @@ def assign_by_similarity_matrix(
 
     n_rows, n_cols = similarities.shape
     if n_rows == 0:
-        return zeros(0, dtype=int)
+        return zeros((0,), dtype=int64)
     if n_cols == 0:
-        return full(n_rows, unmatched_value, dtype=int)
+        return full((n_rows,), unmatched_value, dtype=int64)
 
     finite_mask = isfinite(similarities)
     if not finite_mask.any():
-        return full(n_rows, unmatched_value, dtype=int)
+        return full((n_rows,), unmatched_value, dtype=int64)
 
     if num_dummy is None:
         num_dummy = max(n_rows, n_cols)
@@ -205,12 +212,12 @@ def assign_by_similarity_matrix(
     cost_matrix[valid_mask] = max_similarity - similarities[valid_mask]
 
     padded_size = max(n_rows, n_cols) + int(num_dummy)
-    padded_cost = full((padded_size, padded_size), dummy_cost, dtype=float)
+    padded_cost = full((padded_size, padded_size), dummy_cost, dtype=float64)
     padded_cost[:n_rows, :n_cols] = cost_matrix
 
     row_ind, col_ind = linear_sum_assignment(padded_cost)
 
-    assignment = full(n_rows, unmatched_value, dtype=int)
+    assignment = full((n_rows,), unmatched_value, dtype=int64)
     for row_index, col_index in zip(row_ind, col_ind):
         if row_index >= n_rows:
             continue
