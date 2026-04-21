@@ -222,6 +222,16 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             raise ValueError("class weights must be positive")
         return _BinaryClassWeights(negative=negative_weight, positive=positive_weight)
 
+    @staticmethod
+    def _flatten_sample_weight(sample_weight: Any | None, labels: Any) -> Any | None:
+        if sample_weight is None:
+            return None
+
+        flattened_sample_weight = asarray(sample_weight, dtype=float).reshape(-1)
+        if flattened_sample_weight.shape[0] != labels.shape[0]:
+            raise ValueError("sample_weight must match the number of flattened labels")
+        return flattened_sample_weight
+
     def _build_effective_sample_weights(
         self,
         labels: Any,
@@ -273,6 +283,40 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         if self.n_features_in_ is None or self.coefficients_ is None or self.intercept_ is None:
             raise RuntimeError("The association model must be fitted before use")
 
+    def _prepare_fit_inputs(
+        self,
+        flattened_features: Any,
+        labels: Any,
+        sample_weight: Any | None,
+    ) -> tuple[Any, Any]:
+        self.n_features_in_ = flattened_features.shape[1]
+        standardized_features = self._fit_standardization(flattened_features)
+        design_matrix = self._design_matrix(standardized_features)
+        effective_weights = self._build_effective_sample_weights(labels, sample_weight)
+        return design_matrix, effective_weights
+
+    def _regularization_mask(self, n_params: int) -> Any:
+        if self.fit_intercept:
+            return concatenate([zeros(1, dtype=float), ones(n_params - 1, dtype=float)])
+        return ones(n_params, dtype=float)
+
+    @staticmethod
+    def _effective_tolerance(parameter_vector: Any, requested_tolerance: float) -> float:
+        try:
+            dtype_eps = float(_numpy.finfo(parameter_vector.dtype).eps)
+        except (AttributeError, TypeError, ValueError):
+            dtype_eps = float(_numpy.finfo(float).eps)
+        dtype_threshold = dtype_eps * 1000.0
+        return dtype_threshold if dtype_threshold > requested_tolerance else requested_tolerance
+
+    def _store_fitted_parameters(self, parameter_vector: Any) -> None:
+        if self.fit_intercept:
+            self.intercept_ = float(parameter_vector[0])
+            self.coefficients_ = parameter_vector[1:]
+            return
+        self.intercept_ = 0.0
+        self.coefficients_ = parameter_vector
+
     def fit(  # pylint: disable=too-many-locals
         self,
         features: Any,
@@ -295,30 +339,17 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         """
         flattened_features = self._prepare_training_features(features)
         labels = self._ensure_binary_labels(asarray(labels).reshape(-1))
-
         if flattened_features.shape[0] != labels.shape[0]:
             raise ValueError(
                 "The number of feature vectors must equal the number of labels after flattening"
             )
 
-        if sample_weight is not None:
-            sample_weight = asarray(sample_weight, dtype=float).reshape(-1)
-            if sample_weight.shape[0] != labels.shape[0]:
-                raise ValueError("sample_weight must match the number of flattened labels")
-
-        self.n_features_in_ = flattened_features.shape[1]
-        standardized_features = self._fit_standardization(flattened_features)
-        design_matrix = self._design_matrix(standardized_features)
-        effective_weights = self._build_effective_sample_weights(labels, sample_weight)
-
+        sample_weight = self._flatten_sample_weight(sample_weight, labels)
+        design_matrix, effective_weights = self._prepare_fit_inputs(
+            flattened_features, labels, sample_weight
+        )
         parameter_vector = zeros(design_matrix.shape[1], dtype=float)
-        n_params = design_matrix.shape[1]
-        if self.fit_intercept:
-            regularization_mask = concatenate(
-                [zeros(1, dtype=float), ones(n_params - 1, dtype=float)]
-            )
-        else:
-            regularization_mask = ones(n_params, dtype=float)
+        regularization_mask = self._regularization_mask(design_matrix.shape[1])
 
         self.converged_ = False
         for iteration in range(1, self.max_iterations + 1):
@@ -327,12 +358,13 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             residual = (probabilities - labels) * effective_weights
             gradient = design_matrix.T @ residual
             if self.l2_regularization > 0.0:
-                gradient += self.l2_regularization * regularization_mask * parameter_vector
+                regularization = self.l2_regularization * regularization_mask
+                gradient = gradient + regularization * parameter_vector
 
             curvature = effective_weights * probabilities * (1.0 - probabilities)
             hessian = design_matrix.T @ (design_matrix * curvature[:, None])
             if self.l2_regularization > 0.0:
-                hessian += self.l2_regularization * diag(regularization_mask)
+                hessian = hessian + self.l2_regularization * diag(regularization_mask)
 
             try:
                 step = linalg.solve(hessian, gradient)
@@ -341,23 +373,11 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
 
             parameter_vector -= step
             self.n_iter_ = iteration
-            try:
-                _dtype_eps = float(_numpy.finfo(parameter_vector.dtype).eps)
-            except (AttributeError, TypeError, ValueError):
-                _dtype_eps = float(_numpy.finfo(float).eps)
-            _dtype_threshold = _dtype_eps * 1000.0
-            _effective_tolerance = _dtype_threshold if _dtype_threshold > self.tolerance else self.tolerance
-            if max(abs(step)) <= _effective_tolerance:
+            if max(abs(step)) <= self._effective_tolerance(parameter_vector, self.tolerance):
                 self.converged_ = True
                 break
 
-        if self.fit_intercept:
-            self.intercept_ = float(parameter_vector[0])
-            self.coefficients_ = parameter_vector[1:]
-        else:
-            self.intercept_ = 0.0
-            self.coefficients_ = parameter_vector
-
+        self._store_fitted_parameters(parameter_vector)
         return self
 
     def decision_function(self, features: Any) -> Any:
