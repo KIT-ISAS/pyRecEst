@@ -1,7 +1,25 @@
 import copy
 
-# pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import (
+    abs,
+    argmax,
+    argmin,
+    arange,
+    array,
+    asarray,
+    atleast_2d,
+    column_stack,
+    concatenate,
+    full,
+    minimum,
+    ndim,
+    pi,
+    random,
+    reshape,
+    unique,
+    zeros,
+)
 from pyrecest.backend import sum as backend_sum
 
 from pyrecest.distributions.cart_prod.abstract_hypercylindrical_distribution import (
@@ -62,35 +80,33 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         p : array, shape (n_samples,)
         """
-        import numpy as np
-
-        xs_np = np.atleast_2d(np.asarray(xs, dtype=float))
-        n_eval = xs_np.shape[0]
-        x_bound = xs_np[:, : self.bound_dim]  # (n_eval, bound_dim)
-        x_lin = xs_np[:, self.bound_dim:]  # (n_eval, lin_dim)
+        xs = atleast_2d(asarray(xs))
+        n_eval = xs.shape[0]
+        x_bound = xs[:, : self.bound_dim]  # (n_eval, bound_dim)
+        x_lin = xs[:, self.bound_dim:]  # (n_eval, lin_dim)
 
         # Find nearest grid indices (vectorised toroidal distance)
-        grid_np = np.asarray(self.gd.get_grid(), dtype=float)  # (n_grid, bound_dim)
-        delta = grid_np[None, :, :] - x_bound[:, None, :]  # (n_eval, n_grid, bound_dim)
-        abs_delta = np.abs(delta)
-        dists = np.sum(
-            np.minimum(abs_delta**2, (2.0 * np.pi - abs_delta) ** 2), axis=-1
+        grid = asarray(self.gd.get_grid())  # (n_grid, bound_dim)
+        delta = grid[None, :, :] - x_bound[:, None, :]  # (n_eval, n_grid, bound_dim)
+        abs_delta = abs(delta)
+        dists = backend_sum(
+            minimum(abs_delta**2, (2.0 * pi - abs_delta) ** 2), axis=-1
         )  # (n_eval, n_grid)
-        indices = np.argmin(dists, axis=1)  # (n_eval,)
+        indices = argmin(dists, axis=1)  # (n_eval,)
 
         # Evaluate periodic marginal pdf (nearest-neighbor)
-        f_bound = np.asarray(self.gd.pdf(array(x_bound)), dtype=float).ravel()
+        f_bound = reshape(self.gd.pdf(x_bound), (-1,))
 
         # Evaluate conditional linear pdfs
-        f_lin = np.zeros(n_eval)
-        for i_grid in np.unique(indices):
+        f_lin = zeros(n_eval)
+        for i_grid in unique(indices):
+            i_grid = int(i_grid)
             mask = indices == i_grid
-            f_lin[mask] = np.asarray(
-                self.linear_distributions[i_grid].pdf(array(x_lin[mask])),
-                dtype=float,
-            ).ravel()
+            f_lin[mask] = reshape(
+                self.linear_distributions[i_grid].pdf(x_lin[mask]), (-1,)
+            )
 
-        return array(f_bound * f_lin)
+        return f_bound * f_lin
 
     def marginalize_linear(self):
         """Return the marginal distribution over the bounded (periodic) part."""
@@ -109,27 +125,23 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         m : array, shape (bound_dim + lin_dim,)
         """
-        import numpy as np
-
         n = self.gd.n_grid_points
-        pdf_at_grid_points = np.empty(n)
-        lin_modes = np.empty((n, self.lin_dim))
+        pdf_at_grid_points = zeros(n)
+        lin_modes = zeros((n, self.lin_dim))
 
         for i in range(n):
-            lin_mode = np.asarray(
-                self.linear_distributions[i].mode(), dtype=float
-            ).ravel()
+            lin_mode = reshape(asarray(self.linear_distributions[i].mode()), (-1,))
             lin_modes[i] = lin_mode
             pdf_at_grid_points[i] = float(self.gd.grid_values[i]) * float(
-                np.asarray(
-                    self.linear_distributions[i].pdf(array(lin_mode.reshape(1, -1))),
-                    dtype=float,
-                ).ravel()[0]
+                reshape(
+                    self.linear_distributions[i].pdf(reshape(lin_mode, (1, -1))),
+                    (-1,),
+                )[0]
             )
 
-        best = int(np.argmax(pdf_at_grid_points))
-        bound_point = np.asarray(self.gd.get_grid_point(best), dtype=float).ravel()
-        return array(np.concatenate([bound_point, lin_modes[best]]))
+        best = int(argmax(pdf_at_grid_points))
+        bound_point = reshape(asarray(self.gd.get_grid_point(best)), (-1,))
+        return concatenate([bound_point, lin_modes[best]])
 
     def sample(self, n: int):
         """
@@ -143,29 +155,27 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         s : array, shape (n, bound_dim + lin_dim)
         """
-        import numpy as np
-
         # Sample indices from the grid distribution weighted by grid_values
-        weights = np.asarray(self.gd.grid_values, dtype=float).ravel()
-        weights = weights / np.sum(weights)
-        indices = np.random.choice(len(weights), size=n, p=weights)
+        weights = reshape(self.gd.grid_values, (-1,))
+        weights = weights / backend_sum(weights)
+        n_grid = len(weights)
+        indices = random.choice(arange(n_grid), size=(n,), p=weights)
 
         # Get the corresponding grid points: shape (n, bound_dim)
-        grid_np = np.asarray(self.gd.get_grid(), dtype=float)  # (n_grid, bound_dim)
-        samples_bounded = grid_np[indices]  # (n, bound_dim)
+        grid = asarray(self.gd.get_grid())  # (n_grid, bound_dim)
+        samples_bounded = grid[indices]  # (n, bound_dim)
 
-        samples_linear = np.empty((n, self.lin_dim))
-        for i_grid in np.unique(indices):
+        samples_linear = zeros((n, self.lin_dim))
+        for i_grid in unique(indices):
+            i_grid = int(i_grid)
             mask = indices == i_grid
-            count = int(np.sum(mask))
-            lin_samp = np.asarray(
-                self.linear_distributions[i_grid].sample(count), dtype=float
-            )
-            if lin_samp.ndim == 1:
-                lin_samp = lin_samp.reshape(-1, 1)
+            count = int(backend_sum(mask))
+            lin_samp = asarray(self.linear_distributions[i_grid].sample(count))
+            if ndim(lin_samp) == 1:
+                lin_samp = reshape(lin_samp, (-1, 1))
             samples_linear[mask] = lin_samp
 
-        return array(np.column_stack([samples_bounded, samples_linear]))
+        return column_stack([samples_bounded, samples_linear])
 
     @staticmethod
     def from_distribution(distribution, no_of_grid_points, grid_type="cartesian_prod"):
@@ -226,8 +236,6 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         HypercylindricalStateSpaceSubdivisionDistribution
         """
-        import numpy as np
-
         assert dim_lin == 1, "Currently, linear dimension must be 1."
         assert dim_bound == 1, "Currently, bounded dimension must be 1."
 
@@ -235,24 +243,23 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         grid = HypertoroidalGridDistribution.generate_cartesian_product_grid(
             (no_of_grid_points,)
         )
-        grid_np = np.asarray(grid, dtype=float)  # shape (n, 1)
 
-        grid_values = np.zeros(no_of_grid_points)
+        grid_values = []
         cds = []
 
         for i in range(no_of_grid_points):
-            grid_i = float(grid_np[i, 0])
+            grid_i = float(grid[i, 0])
 
             def fun_curr(y, _grid_i=grid_i):
                 """Evaluate fun with the periodic part fixed to _grid_i."""
-                y_1d = np.asarray(y, dtype=float).ravel()
+                y_1d = reshape(asarray(y), (-1,))
                 m = y_1d.shape[0]
-                x_input = np.column_stack([np.full(m, _grid_i), y_1d])
-                return np.asarray(fun(array(x_input)), dtype=float).ravel()
+                x_input = column_stack([full((m,), _grid_i), y_1d])
+                return reshape(asarray(fun(x_input)), (-1,))
 
             # Unnormalized conditional to compute the marginal weight
             cd_unnorm = CustomLinearDistribution(
-                lambda x, fc=fun_curr: array(fc(np.asarray(x))), dim_lin
+                lambda x, fc=fun_curr: fc(x), dim_lin
             )
 
             integral_val = float(
@@ -261,12 +268,12 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
                     right=array([float(int_range[1])]),
                 )
             )
-            grid_values[i] = integral_val
+            grid_values.append(integral_val)
 
             # Normalized conditional: p(lin | bound = grid_i)
             cds.append(
                 CustomLinearDistribution(
-                    lambda x, fc=fun_curr: array(fc(np.asarray(x))),
+                    lambda x, fc=fun_curr: fc(x),
                     dim_lin,
                     scale_by=1.0 / integral_val,
                 )

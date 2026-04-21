@@ -1,10 +1,9 @@
 import unittest
 from math import pi
 
-import numpy as np
 import numpy.testing as npt
 
-from pyrecest.backend import array
+from pyrecest.backend import all, array, squeeze
 from pyrecest.distributions.cart_prod.custom_hypercylindrical_distribution import (
     CustomHypercylindricalDistribution,
 )
@@ -73,15 +72,15 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         )
         test_points = array([[0.0, 1.0], [pi / 2, 0.5], [pi, 1.0]])
         p = hcrbd.pdf(test_points)
-        self.assertEqual(np.asarray(p).shape, (3,))
+        self.assertEqual(array(p).shape, (3,))
 
     def test_pdf_nonnegative(self):
         hcrbd = HypercylindricalStateSpaceSubdivisionDistribution.from_distribution(
             self.chd, self.n
         )
         test_points = array([[0.0, 1.0], [pi / 2, 0.5], [pi, 1.0]])
-        p = np.asarray(hcrbd.pdf(test_points))
-        self.assertTrue(np.all(p >= 0.0))
+        p = hcrbd.pdf(test_points)
+        self.assertTrue(all(p >= 0.0))
 
     def test_pdf_approximation(self):
         """Test that the pdf approximation is reasonably close to the true pdf."""
@@ -91,8 +90,8 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         test_points = array(
             [[0.0, 1.0], [pi / 2, 0.5], [pi, 1.0], [3 * pi / 2, 1.5]]
         )
-        p_approx = np.asarray(hcrbd.pdf(test_points))
-        p_true = np.asarray(self.chd.pdf(test_points))
+        p_approx = hcrbd.pdf(test_points)
+        p_true = self.chd.pdf(test_points)
         npt.assert_allclose(p_approx, p_true, rtol=0.3)
 
     def test_mode_reasonable(self):
@@ -100,11 +99,11 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
             self.chd, self.n
         )
         m = hcrbd.mode()
-        self.assertEqual(np.asarray(m).shape, (2,))
+        self.assertEqual(array(m).shape, (2,))
         # Mode of periodic part should be near 0 (von Mises mean)
-        npt.assert_allclose(np.asarray(m[0]) % (2 * pi), 0.0, atol=2 * pi / self.n)
+        npt.assert_allclose(float(m[0]) % (2 * pi), 0.0, atol=2 * pi / self.n)
         # Mode of linear part should be near 1.0 (Gaussian mean)
-        npt.assert_allclose(np.asarray(m[1]), 1.0, atol=0.1)
+        npt.assert_allclose(float(m[1]), 1.0, atol=0.1)
 
     def test_sample_shape(self):
         from pyrecest.distributions.circle.circular_uniform_distribution import (
@@ -123,7 +122,7 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         ]
         hcrbd = HypercylindricalStateSpaceSubdivisionDistribution(gd, lin_dists)
         samples = hcrbd.sample(50)
-        self.assertEqual(np.asarray(samples).shape, (50, 2))
+        self.assertEqual(array(samples).shape, (50, 2))
 
     def test_pdf_integrates_to_one(self):
         """Coarse check that the pdf integrates close to 1."""
@@ -133,7 +132,7 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
             self.fun, self.n, 1, 1
         )
         integral, _ = dblquad(
-            lambda y, x: float(np.squeeze(hcrbd.pdf(np.array([[x, y]])))),
+            lambda y, x: float(squeeze(hcrbd.pdf(array([[x, y]])))),
             0,
             2 * pi,
             -4,
