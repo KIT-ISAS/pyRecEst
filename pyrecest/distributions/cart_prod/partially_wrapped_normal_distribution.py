@@ -74,19 +74,24 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         multiples = array(range(-m, m + 1)) * 2.0 * pi
 
         # create meshgrid for all combinations of multiples
-        mesh = array(meshgrid(*[multiples] * self.bound_dim)).reshape(
+        mesh = array(meshgrid(*[multiples] * self.bound_dim, indexing="ij")).reshape(
             -1, self.bound_dim
         )
 
-        # reshape xs for broadcasting
-        xs_reshaped = tile(xs[:, : self.bound_dim], (mesh.shape[0], 1))  # noqa: E203
+        # Keep evaluations in sample-major order so each contiguous block
+        # corresponds to all wrapping offsets of a single sample.
+        xs_reshaped = repeat(
+            xs[:, : self.bound_dim], mesh.shape[0], axis=0  # noqa: E203
+        )
 
         # prepare data for wrapping (not applied to linear dimensions)
-        xs_wrapped = xs_reshaped + repeat(mesh, xs.shape[0], axis=0)
+        xs_wrapped = xs_reshaped + tile(mesh, (xs.shape[0], 1))
         xs_wrapped = concatenate(
             [
                 xs_wrapped,
-                tile(xs[:, self.bound_dim :], (mesh.shape[0], 1)),  # noqa: E203
+                repeat(
+                    xs[:, self.bound_dim :], mesh.shape[0], axis=0  # noqa: E203
+                ),
             ],
             axis=1,
         )
@@ -96,7 +101,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         evals = array(mvn.pdf(xs_wrapped))  # For being compatible with all backends
 
         # sum evaluations for the wrapped dimensions
-        summed_evals = sum(evals.reshape((2 * m + 1) ** self.bound_dim, -1), axis=0)
+        summed_evals = sum(evals.reshape(-1, (2 * m + 1) ** self.bound_dim), axis=1)
 
         return summed_evals
 

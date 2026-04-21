@@ -9,12 +9,12 @@ class SE2PWNDistributionTest(unittest.TestCase):
 
     def setUp(self):
         self.mu = np.array([2, 3, 4])
-        self.si1, self.si2, self.si3 = 0.9, 1.5, 1.7
-        self.rho12, self.rho13, self.rho23 = 0.5, 0.3, 0.4
+        si1, si2, si3 = 0.9, 1.5, 1.7
+        rho12, rho13, rho23 = 0.5, 0.3, 0.4
         self.C = np.array([
-            [self.si1**2, self.si1*self.si2*self.rho12, self.si1*self.si3*self.rho13],
-            [self.si1*self.si2*self.rho12, self.si2**2, self.si2*self.si3*self.rho23],
-            [self.si1*self.si3*self.rho13, self.si2*self.si3*self.rho23, self.si3**2]
+            [si1**2, si1 * si2 * rho12, si1 * si3 * rho13],
+            [si1 * si2 * rho12, si2**2, si2 * si3 * rho23],
+            [si1 * si3 * rho13, si2 * si3 * rho23, si3**2],
         ])
         self.pwn = SE2PartiallyWrappedNormalDistribution(self.mu, self.C)
 
