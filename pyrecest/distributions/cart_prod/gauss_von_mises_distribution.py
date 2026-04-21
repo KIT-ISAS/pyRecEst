@@ -4,6 +4,7 @@ from scipy.special import iv
 from scipy.stats import multivariate_normal as _mvn
 from scipy.stats import vonmises as _vonmises
 
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
     arccos,
     array,
