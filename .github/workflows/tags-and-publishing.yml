@@ -1,4 +1,3 @@
----
 name: Check for version change, add tag, build, and publish
 
 on: # yamllint disable-line rule:truthy
@@ -140,7 +139,7 @@ jobs:
         with:
           base-ref: ${{ steps.prev_tag.outputs.tag }}
           head-ref: ${{ env.VERSION }}
-          pr-strategy: github-api
+          pr-strategy: merge-commits
           instructions: .github/release-notes-instructions.md
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
@@ -159,7 +158,8 @@ jobs:
 
       - name: Write dry-run notes
         if: ${{ env.DRY_RUN == 'true' }}
-        run: echo "Dry run: no tag pushed and no GitHub release created." > RELEASE_NOTES.md
+        run: |
+          echo "Dry run: no tag pushed and no GitHub release created." > RELEASE_NOTES.md
 
       - name: Build package
         run: python -m poetry build
