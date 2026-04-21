@@ -186,7 +186,7 @@ def assign_by_similarity_matrix(
 
     n_rows, n_cols = similarities.shape
     if n_rows == 0:
-        return zeros((0,), dtype=int64)
+        return zeros(0, dtype=int64)
     if n_cols == 0:
         return full((n_rows,), unmatched_value, dtype=int64)
 
