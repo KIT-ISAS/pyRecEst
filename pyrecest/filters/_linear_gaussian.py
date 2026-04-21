@@ -1,18 +1,18 @@
 # pylint: disable=no-name-in-module,no-member
 """Backend-native linear-Gaussian predict/update primitives."""
 
-from pyrecest.backend import atleast_1d, atleast_2d, eye, linalg, transpose
+from pyrecest.backend import asarray, atleast_1d, atleast_2d, eye, float64, linalg, transpose
 
 
 def _as_vector(x, name):
-    x = atleast_1d(x)
+    x = atleast_1d(asarray(x, dtype=float64))
     if len(x.shape) != 1:
         raise ValueError(f"{name} must be one-dimensional after coercion")
     return x
 
 
 def _as_matrix(x, name):
-    x = atleast_2d(x)
+    x = atleast_2d(asarray(x, dtype=float64))
     if len(x.shape) != 2:
         raise ValueError(f"{name} must be two-dimensional after coercion")
     return x
