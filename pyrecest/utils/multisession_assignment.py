@@ -20,6 +20,7 @@ pairs.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -333,7 +334,7 @@ def tracks_to_session_labels(
 
 
 def _validate_scalar_cost(name: str, value: float) -> None:
-    if not isfinite(value):
+    if not math.isfinite(value):
         raise ValueError(f"{name} must be finite.")
 
 
