@@ -245,13 +245,35 @@ jobs:
           name: release-notes-${{ env.VERSION }}
           path: RELEASE_NOTES.md
 
+      - name: Show publish settings
+        if: ${{ env.DRY_RUN != 'true' }}
+        shell: bash
+        run: |
+          echo "DRY_RUN=${DRY_RUN}"
+          echo "VERSION=${VERSION}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
+          echo "RELEASE_NOTES_MODE=${RELEASE_NOTES_MODE}"
+          echo "PREV_TAG=${{ steps.prev_tag.outputs.tag }}"
+
       - name: Create GitHub Release and Upload Artifacts
         if: ${{ env.DRY_RUN != 'true' }}
+        id: create_release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
+          commit: ${{ github.sha }}
           name: Release ${{ env.VERSION }}
           bodyFile: RELEASE_NOTES.md
           artifacts: ./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}-py3-none-any.whl,./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
+
+      - name: Verify release was created
+        if: ${{ env.DRY_RUN != 'true' }}
+        shell: bash
+        run: |
+          if [ -z "${{ steps.create_release.outputs.html_url }}" ]; then
+            echo "Release step finished but did not return a release URL."
+            exit 1
+          fi
+          echo "Release created: ${{ steps.create_release.outputs.html_url }}"
