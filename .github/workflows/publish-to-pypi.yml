@@ -1,0 +1,266 @@
+name: Publish to PyPI
+
+on:
+  workflow_run:
+    workflows:
+      - Check for version change, add tag, build, and publish
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      target_index:
+        description: "Package index to publish to"
+        required: true
+        type: choice
+        default: testpypi
+        options:
+          - testpypi
+          - pypi
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        github.event.workflow_run.conclusion == 'success'
+      }}
+    outputs:
+      package_name: ${{ steps.meta.outputs.package_name }}
+      version: ${{ steps.meta.outputs.version }}
+      target_index: ${{ steps.target.outputs.target_index }}
+      environment_name: ${{ steps.target.outputs.environment_name }}
+      publish_allowed: ${{ steps.gate.outputs.publish_allowed }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Read package metadata
+        id: meta
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import pathlib
+          import tomllib
+
+          data = tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))
+          poetry = data["tool"]["poetry"]
+
+          print(f"package_name={poetry['name']}")
+          print(f"version={poetry['version']}")
+          PY
+
+      - name: Resolve target index
+        id: target
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TARGET_INDEX="${{ inputs.target_index }}"
+          else
+            TARGET_INDEX="pypi"
+          fi
+
+          echo "target_index=${TARGET_INDEX}" >> "$GITHUB_OUTPUT"
+
+          if [ "${TARGET_INDEX}" = "testpypi" ]; then
+            echo "environment_name=testpypi" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment_name=pypi" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Decide whether to publish
+        id: gate
+        uses: actions/github-script@v8
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        with:
+          script: |
+            const version = process.env.VERSION;
+
+            if (context.eventName === "workflow_dispatch") {
+              core.setOutput("publish_allowed", "true");
+              return;
+            }
+
+            const runId = context.payload.workflow_run.id;
+            const upstreamStartedAt = Date.parse(
+              context.payload.workflow_run.created_at ||
+              context.payload.workflow_run.updated_at
+            );
+
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: runId,
+                per_page: 100,
+              }
+            );
+
+            const dryRunArtifact = artifacts.find(
+              (artifact) => artifact.name === `release-notes-${version}`
+            );
+
+            if (dryRunArtifact) {
+              core.info(`Upstream run ${runId} was a dry run; skipping publish.`);
+              core.setOutput("publish_allowed", "false");
+              return;
+            }
+
+            let release;
+            try {
+              const response = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: version,
+              });
+              release = response.data;
+            } catch (error) {
+              if (error.status === 404) {
+                core.info(`No GitHub release found for tag ${version}; skipping publish.`);
+                core.setOutput("publish_allowed", "false");
+                return;
+              }
+              throw error;
+            }
+
+            const publishedAt = Date.parse(release.published_at || release.created_at);
+
+            if (
+              !Number.isFinite(upstreamStartedAt) ||
+              !Number.isFinite(publishedAt) ||
+              publishedAt < upstreamStartedAt
+            ) {
+              core.info(
+                `Release ${version} was not created by the completed upstream run; skipping publish.`
+              );
+              core.setOutput("publish_allowed", "false");
+              return;
+            }
+
+            core.setOutput("publish_allowed", "true");
+
+  publish:
+    needs: resolve
+    if: ${{ needs.resolve.outputs.publish_allowed == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.resolve.outputs.environment_name }}
+      url: ${{ needs.resolve.outputs.target_index == 'testpypi' && format('https://test.pypi.org/p/{0}', needs.resolve.outputs.package_name) || format('https://pypi.org/p/{0}', needs.resolve.outputs.package_name) }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out source for manual publish
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Prepare dist directory
+        shell: bash
+        run: mkdir -p dist
+
+      - name: Install build and validation tools
+        shell: bash
+        run: python -m pip install --upgrade poetry twine
+
+      - name: Download release assets from GitHub Release
+        if: ${{ github.event_name == 'workflow_run' }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          owner = os.environ["OWNER"]
+          repo = os.environ["REPO"]
+          version = os.environ["VERSION"]
+          token = os.environ["GITHUB_TOKEN"]
+
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{version}",
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {token}",
+                  "X-GitHub-Api-Version": "2026-03-10",
+              },
+          )
+          with urllib.request.urlopen(req) as resp:
+              release = json.load(resp)
+
+          dist_dir = pathlib.Path("dist")
+          wanted = []
+
+          for asset in release["assets"]:
+              name = asset["name"]
+              if name.endswith(".whl") or name.endswith(".tar.gz"):
+                  wanted.append(asset)
+
+          if not wanted:
+              raise SystemExit(
+                  f"No wheel or source distribution assets found on release {version}."
+              )
+
+          for asset in wanted:
+              req = urllib.request.Request(
+                  asset["url"],
+                  headers={
+                      "Accept": "application/octet-stream",
+                      "Authorization": f"Bearer {token}",
+                      "X-GitHub-Api-Version": "2026-03-10",
+                  },
+              )
+              with urllib.request.urlopen(req) as resp:
+                  data = resp.read()
+
+              target = dist_dir / asset["name"]
+              target.write_bytes(data)
+              print(f"Downloaded {target}")
+          PY
+
+      - name: Build distributions for manual publish
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: python -m poetry build
+
+      - name: Check distributions
+        shell: bash
+        run: python -m twine check dist/*
+
+      - name: Publish to PyPI
+        if: ${{ needs.resolve.outputs.target_index == 'pypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Publish to TestPyPI
+        if: ${{ needs.resolve.outputs.target_index == 'testpypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
