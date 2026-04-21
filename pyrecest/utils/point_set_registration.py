@@ -17,6 +17,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Callable, Literal
 
+import pyrecest.backend
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     any,
@@ -178,6 +180,7 @@ def estimate_transform(  # pylint: disable=too-many-locals
         Only relevant for the rigid model. If ``False`` the returned rotation is
         constrained to have determinant ``+1``.
     """
+    assert pyrecest.backend.__backend_name__ != "jax", "Not supported for the JAX backend."
 
     source, target = _validate_pair(source_points, target_points)
     n_points, dim = source.shape
@@ -234,6 +237,7 @@ def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
     Integer array of shape ``(n_rows,)`` mapping each row to a column index
     or ``-1`` if the row is left unmatched.
     """
+    assert pyrecest.backend.__backend_name__ != "jax", "Not supported for the JAX backend."
 
     costs = asarray(cost_matrix)
     if costs.ndim != 2:
@@ -328,6 +332,7 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
     allow_reflection:
         Passed through to :func:`estimate_transform` for the rigid model.
     """
+    assert pyrecest.backend.__backend_name__ != "jax", "Not supported for the JAX backend."
 
     reference = _as_point_array(reference_points)
     moving = _as_point_array(moving_points)
