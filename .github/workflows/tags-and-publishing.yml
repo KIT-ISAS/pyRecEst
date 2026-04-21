@@ -133,13 +133,11 @@ jobs:
           echo "tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Generate AI release notes
-        if: ${{ env.DRY_RUN != 'true' && steps.prev_tag.outputs.tag != '' }}
         id: ai_notes
-        uses: github/copilot-release-notes@main
+        uses: FlorianPfaff/copilot-release-notes@main
         with:
           base-ref: ${{ steps.prev_tag.outputs.tag }}
           head-ref: ${{ env.VERSION }}
-          pr-strategy: merge-commits
           instructions: .github/release-notes-instructions.md
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
