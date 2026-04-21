@@ -3,6 +3,7 @@ from math import pi
 
 import numpy.testing as npt
 
+import pyrecest.backend
 from pyrecest.backend import all, array, squeeze
 from pyrecest.distributions.cart_prod.custom_hypercylindrical_distribution import (
     CustomHypercylindricalDistribution,
@@ -66,6 +67,10 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         lin_marginal = hcrbd.marginalize_periodic()
         self.assertIsInstance(lin_marginal, LinearMixture)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Not supported on this backend",
+    )
     def test_pdf_shape(self):
         hcrbd = HypercylindricalStateSpaceSubdivisionDistribution.from_distribution(
             self.chd, self.n
@@ -74,6 +79,10 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         p = hcrbd.pdf(test_points)
         self.assertEqual(array(p).shape, (3,))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Not supported on this backend",
+    )
     def test_pdf_nonnegative(self):
         hcrbd = HypercylindricalStateSpaceSubdivisionDistribution.from_distribution(
             self.chd, self.n
@@ -82,6 +91,10 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         p = hcrbd.pdf(test_points)
         self.assertTrue(all(p >= 0.0))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Not supported on this backend",
+    )
     def test_pdf_approximation(self):
         """Test that the pdf approximation is reasonably close to the true pdf."""
         hcrbd = HypercylindricalStateSpaceSubdivisionDistribution.from_distribution(
@@ -94,6 +107,10 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         p_true = self.chd.pdf(test_points)
         npt.assert_allclose(p_approx, p_true, rtol=0.3)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Not supported on this backend",
+    )
     def test_mode_reasonable(self):
         hcrbd = HypercylindricalStateSpaceSubdivisionDistribution.from_distribution(
             self.chd, self.n
@@ -105,6 +122,10 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         # Mode of linear part should be near 1.0 (Gaussian mean)
         npt.assert_allclose(float(m[1]), 1.0, atol=0.1)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Not supported on this backend",
+    )
     def test_sample_shape(self):
         from pyrecest.distributions.circle.circular_uniform_distribution import (
             CircularUniformDistribution,
@@ -124,6 +145,10 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         samples = hcrbd.sample(50)
         self.assertEqual(array(samples).shape, (50, 2))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Not supported on this backend",
+    )
     def test_pdf_integrates_to_one(self):
         """Coarse check that the pdf integrates close to 1."""
         from scipy.integrate import dblquad

@@ -1,5 +1,7 @@
 import copy
 
+import pyrecest.backend
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
@@ -80,6 +82,9 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         p : array, shape (n_samples,)
         """
+        assert (
+            pyrecest.backend.__backend_name__ == "numpy"
+        ), "Only supported for numpy backend"
         xs = atleast_2d(asarray(xs))
         n_eval = xs.shape[0]
         x_bound = xs[:, : self.bound_dim]  # (n_eval, bound_dim)
@@ -125,6 +130,9 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         m : array, shape (bound_dim + lin_dim,)
         """
+        assert (
+            pyrecest.backend.__backend_name__ == "numpy"
+        ), "Only supported for numpy backend"
         n = self.gd.n_grid_points
         pdf_at_grid_points = zeros(n)
         lin_modes = zeros((n, self.lin_dim))
@@ -155,6 +163,9 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         s : array, shape (n, bound_dim + lin_dim)
         """
+        assert (
+            pyrecest.backend.__backend_name__ == "numpy"
+        ), "Only supported for numpy backend"
         # Sample indices from the grid distribution weighted by grid_values
         weights = reshape(self.gd.grid_values, (-1,))
         weights = weights / backend_sum(weights)
