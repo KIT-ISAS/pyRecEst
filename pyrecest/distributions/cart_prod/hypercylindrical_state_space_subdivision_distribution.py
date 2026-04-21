@@ -1,9 +1,8 @@
 import copy
 
-import pyrecest.backend
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
+    __backend_name__ as backend_name,
     abs,
     argmax,
     argmin,
@@ -57,9 +56,9 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         StateSpaceSubdivisionDistribution.__init__(self, gd, lin_distributions)
         # Calling AbstractHypercylindricalDistribution.__init__ directly would
         # fail because it tries to set self.bound_dim / self.lin_dim as instance
-        # attributes, which conflicts with the read-only properties defined in
-        # StateSpaceSubdivisionDistribution. We therefore call only the part of
-        # the init chain that sets self._dim.
+        # attributes while StateSpaceSubdivisionDistribution derives them from
+        # the grid and conditional linear distributions. We therefore call only
+        # the part of the init chain that sets self._dim.
         from pyrecest.distributions.abstract_manifold_specific_distribution import (
             AbstractManifoldSpecificDistribution,
         )
@@ -82,12 +81,10 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         p : array, shape (n_samples,)
         """
-        assert (
-            pyrecest.backend.__backend_name__ == "numpy"
-        ), "Only supported for numpy backend"
+        assert backend_name == "numpy", "Only supported for numpy backend"
         xs = atleast_2d(asarray(xs))
         n_eval = xs.shape[0]
-        x_bound = xs[:, : self.bound_dim]  # (n_eval, bound_dim)
+        x_bound = xs[:, :self.bound_dim]  # (n_eval, bound_dim)
         x_lin = xs[:, self.bound_dim:]  # (n_eval, lin_dim)
 
         # Find nearest grid indices (vectorised toroidal distance)
@@ -130,9 +127,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         m : array, shape (bound_dim + lin_dim,)
         """
-        assert (
-            pyrecest.backend.__backend_name__ == "numpy"
-        ), "Only supported for numpy backend"
+        assert backend_name == "numpy", "Only supported for numpy backend"
         n = self.gd.n_grid_points
         pdf_at_grid_points = zeros(n)
         lin_modes = zeros((n, self.lin_dim))
@@ -163,9 +158,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         -------
         s : array, shape (n, bound_dim + lin_dim)
         """
-        assert (
-            pyrecest.backend.__backend_name__ == "numpy"
-        ), "Only supported for numpy backend"
+        assert backend_name == "numpy", "Only supported for numpy backend"
         # Sample indices from the grid distribution weighted by grid_values
         weights = reshape(self.gd.grid_values, (-1,))
         weights = weights / backend_sum(weights)

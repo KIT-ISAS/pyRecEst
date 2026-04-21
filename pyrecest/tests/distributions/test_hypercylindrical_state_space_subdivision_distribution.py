@@ -3,8 +3,12 @@ from math import pi
 
 import numpy.testing as npt
 
-import pyrecest.backend
-from pyrecest.backend import all, array, squeeze
+from pyrecest.backend import (
+    __backend_name__ as backend_name,
+    all as backend_all,
+    array,
+    squeeze,
+)
 from pyrecest.distributions.cart_prod.custom_hypercylindrical_distribution import (
     CustomHypercylindricalDistribution,
 )
@@ -68,7 +72,7 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         self.assertIsInstance(lin_marginal, LinearMixture)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ != "numpy",
+        backend_name != "numpy",
         reason="Not supported on this backend",
     )
     def test_pdf_shape(self):
@@ -80,7 +84,7 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         self.assertEqual(array(p).shape, (3,))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ != "numpy",
+        backend_name != "numpy",
         reason="Not supported on this backend",
     )
     def test_pdf_nonnegative(self):
@@ -89,10 +93,10 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         )
         test_points = array([[0.0, 1.0], [pi / 2, 0.5], [pi, 1.0]])
         p = hcrbd.pdf(test_points)
-        self.assertTrue(all(p >= 0.0))
+        self.assertTrue(backend_all(p >= 0.0))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ != "numpy",
+        backend_name != "numpy",
         reason="Not supported on this backend",
     )
     def test_pdf_approximation(self):
@@ -108,7 +112,7 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         npt.assert_allclose(p_approx, p_true, rtol=0.3)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ != "numpy",
+        backend_name != "numpy",
         reason="Not supported on this backend",
     )
     def test_mode_reasonable(self):
@@ -123,7 +127,7 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         npt.assert_allclose(float(m[1]), 1.0, atol=0.1)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ != "numpy",
+        backend_name != "numpy",
         reason="Not supported on this backend",
     )
     def test_sample_shape(self):
@@ -146,7 +150,7 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         self.assertEqual(array(samples).shape, (50, 2))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ != "numpy",
+        backend_name != "numpy",
         reason="Not supported on this backend",
     )
     def test_pdf_integrates_to_one(self):
@@ -170,4 +174,3 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
