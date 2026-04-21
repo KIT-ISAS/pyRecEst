@@ -281,6 +281,36 @@ def _compute_rmse(matched_costs) -> float:
     return float("inf")
 
 
+def _build_registration_result(
+    transform: AffineTransform,
+    assignment: Any,
+    transformed_reference_points: Any,
+    costs: Any,
+    *,
+    iteration: int,
+    converged: bool,
+) -> RegistrationResult:
+    matched_reference_indices = where(assignment >= 0)[0]
+    matched_moving_indices = assignment[matched_reference_indices]
+    matched_costs = (
+        costs[matched_reference_indices, matched_moving_indices]
+        if len(matched_reference_indices) > 0
+        else empty((0,))
+    )
+    rmse = _compute_rmse(matched_costs)
+    return RegistrationResult(
+        transform=transform,
+        assignment=assignment,
+        matched_reference_indices=cast(matched_reference_indices, int64),
+        matched_moving_indices=cast(matched_moving_indices, int64),
+        transformed_reference_points=transformed_reference_points,
+        matched_costs=matched_costs,
+        rmse=rmse,
+        n_iterations=iteration,
+        converged=converged,
+    )
+
+
 def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     reference_points,
     moving_points,
@@ -372,23 +402,12 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
         matched_reference_indices = where(new_assignment >= 0)[0]
         if len(matched_reference_indices) < min_matches:
             assignment = new_assignment
-            transformed_reference = transform.apply(reference)
-            matched_moving_indices = assignment[matched_reference_indices]
-            matched_costs = (
-                current_costs[matched_reference_indices, matched_moving_indices]
-                if len(matched_reference_indices) > 0
-                else empty((0,))
-            )
-            rmse = _compute_rmse(matched_costs)
-            return RegistrationResult(
-                transform=transform,
-                assignment=assignment,
-                matched_reference_indices=cast(matched_reference_indices, int64),
-                matched_moving_indices=cast(matched_moving_indices, int64),
-                transformed_reference_points=transformed_reference,
-                matched_costs=matched_costs,
-                rmse=rmse,
-                n_iterations=iteration,
+            return _build_registration_result(
+                transform,
+                assignment,
+                transformed_reference,
+                current_costs,
+                iteration=iteration,
                 converged=False,
             )
 
@@ -414,23 +433,11 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
 
     transformed_reference = transform.apply(reference)
     final_costs = asarray(association_cost(transformed_reference, moving))
-    matched_reference_indices = where(assignment >= 0)[0]
-    matched_moving_indices = assignment[matched_reference_indices]
-    matched_costs = (
-        final_costs[matched_reference_indices, matched_moving_indices]
-        if len(matched_reference_indices) > 0
-        else empty((0,))
-    )
-    rmse = _compute_rmse(matched_costs)
-
-    return RegistrationResult(
-        transform=transform,
-        assignment=assignment,
-        matched_reference_indices=cast(matched_reference_indices, int64),
-        matched_moving_indices=cast(matched_moving_indices, int64),
-        transformed_reference_points=transformed_reference,
-        matched_costs=matched_costs,
-        rmse=rmse,
-        n_iterations=iteration,
+    return _build_registration_result(
+        transform,
+        assignment,
+        transformed_reference,
+        final_costs,
+        iteration=iteration,
         converged=converged,
     )
