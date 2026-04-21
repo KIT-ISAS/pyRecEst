@@ -25,16 +25,17 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-import pyrecest.backend
-from pyrecest.backend import (
+from pyrecest.backend import (  # pylint: disable=no-name-in-module
+    __backend_name__,
     arange,
     asarray,
+    cast,
     concatenate,
     empty,
     full,
     isfinite,
-    nonzero,
     ones,
+    where,
     zeros,
 )
 from scipy.optimize import linprog
@@ -162,7 +163,7 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
     dense assignment matrix.
     """
 
-    assert pyrecest.backend.__backend_name__ != "jax", "Not supported on JAX backend"
+    assert __backend_name__ != "jax", "Not supported on JAX backend"
 
     _validate_scalar_cost("start_cost", start_cost)
     _validate_scalar_cost("end_cost", end_cost)
@@ -213,7 +214,7 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
     successors = full(n_observations, -1, dtype=int)
     matched_edges: list[MatchedEdge] = []
 
-    for edge_index in nonzero(selected_edge_mask)[0]:
+    for edge_index in where(selected_edge_mask)[0]:
         source_global = int(left_nodes[edge_index])
         target_global = int(right_nodes[edge_index])
 
@@ -297,7 +298,7 @@ def tracks_to_session_labels(
         One integer array per session, indexed by session number.
     """
 
-    assert pyrecest.backend.__backend_name__ != "jax", "Not supported on JAX backend"
+    assert __backend_name__ != "jax", "Not supported on JAX backend"
 
     inferred_sizes = _normalize_session_sizes(session_sizes)
     max_session_index = max(inferred_sizes, default=-1)
@@ -469,19 +470,22 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
         if cost_threshold is not None:
             valid_mask &= adjusted_matrix <= float(cost_threshold)
 
-        source_indices, target_indices = nonzero(valid_mask)
-        if source_indices.size == 0:
+        source_indices, target_indices = where(valid_mask)
+        if source_indices.shape[0] == 0:
             continue
 
-        left_nodes.append(session_offsets[source_session] + source_indices.astype(int))
-        right_nodes.append(session_offsets[target_session] + target_indices.astype(int))
-        edge_gains.append(gain_matrix[valid_mask].astype(float))
-        adjusted_costs.append(adjusted_matrix[valid_mask].astype(float))
+        left_nodes.append(session_offsets[source_session] + cast(source_indices, int))
+        right_nodes.append(session_offsets[target_session] + cast(target_indices, int))
+        edge_gains.append(cast(gain_matrix[valid_mask], float))
+        adjusted_costs.append(cast(adjusted_matrix[valid_mask], float))
 
     if not edge_gains:
-        empty_int = empty(0, dtype=int)
-        empty_float = empty(0, dtype=float)
-        return empty_int, empty_int.copy(), empty_float, empty_float.copy()
+        return (
+            empty(0, dtype=int),
+            empty(0, dtype=int),
+            empty(0, dtype=float),
+            empty(0, dtype=float),
+        )
 
     return (
         concatenate(left_nodes),
@@ -497,7 +501,7 @@ def _solve_max_weight_matching(
     edge_gains: np.ndarray,
     num_nodes: int,
 ) -> np.ndarray:
-    num_edges = int(edge_gains.size)
+    num_edges = int(edge_gains.shape[0])
     if num_edges == 0 or num_nodes == 0:
         return zeros(num_edges, dtype=bool)
 
