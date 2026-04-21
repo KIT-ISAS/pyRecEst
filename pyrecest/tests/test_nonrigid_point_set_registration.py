@@ -5,7 +5,7 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, concatenate, eye, ones, zeros
+from pyrecest.backend import array, asarray, concatenate, eye, ones, zeros
 from pyrecest.backend import linalg
 from pyrecest.utils.nonrigid_point_set_registration import (
     ThinPlateSplineTransform,
@@ -181,8 +181,9 @@ class TestJointThinPlateSplineRegistrationAssignment(unittest.TestCase):
             regularization=1e-8,
         )
 
-        self.assertEqual(int((result.assignment >= 0).sum()), 3)
-        self.assertTrue(bool((result.assignment[[0, 2, 4]] == -1).all()))
+        assignment = asarray(result.assignment)
+        self.assertEqual(int((assignment >= 0).sum()), 3)
+        self.assertTrue(bool((assignment[[0, 2, 4]] == -1).all()))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",

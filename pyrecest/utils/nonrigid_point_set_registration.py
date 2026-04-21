@@ -10,13 +10,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
-    any,
     array_equal,
     asarray,
     cast,
@@ -32,7 +31,6 @@ from pyrecest.backend import (
     ones,
     quantile,
     sqrt,
-    sum,
     where,
     zeros,
 )
@@ -40,7 +38,7 @@ from pyrecest.backend import linalg
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 
-NonRigidAssociationCostFn = Callable
+NonRigidAssociationCostFn = Callable[[Any, Any], Any]
 
 
 @dataclass(frozen=True)
@@ -120,15 +118,15 @@ class ThinPlateSplineTransform:
 
 
 @dataclass(frozen=True)
-class ThinPlateSplineRegistrationResult:
+class ThinPlateSplineRegistrationResult:  # pylint: disable=too-many-instance-attributes
     """Result of alternating TPS registration and assignment."""
 
     transform: ThinPlateSplineTransform
-    assignment: object
-    matched_reference_indices: object
-    matched_moving_indices: object
-    transformed_reference_points: object
-    matched_costs: object
+    assignment: Any
+    matched_reference_indices: Any
+    matched_moving_indices: Any
+    transformed_reference_points: Any
+    matched_costs: Any
     rmse: float
     n_iterations: int
     converged: bool
@@ -252,7 +250,7 @@ def _compute_rmse(matched_costs) -> float:
     return float("inf")
 
 
-def joint_tps_registration_assignment(
+def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too-many-locals
     reference_points,
     moving_points,
     *,
