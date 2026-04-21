@@ -56,6 +56,12 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
             return self.extent.flatten()
         return self.extent
 
+    def predict(self, delta_t: float | int, sys_noise_cov, system_matrix, tau: float | int = 1.0):
+        self.predict_linear(sys_noise_cov, system_matrix, delta_t, tau)
+
+    def update(self, measurements, meas_mat, meas_noise_cov):
+        self.update_linear(measurements, meas_mat, meas_noise_cov)
+
     def predict_linear(self, sys_noise_cov, system_matrix, delta_t:float|int = 1.0, tau:float|int = 1.0):
         F = system_matrix
         x_rows = self.kinematic_state.shape[0]

@@ -73,7 +73,7 @@ def generate_measurements(groundtruth, simulation_config):
                 raise ValueError(
                     "Currently only R^2 and SE(2) scenarios are supported."
                 )
-            if not isinstance(shape, PolygonWithSampling):
+            if not isinstance(curr_shape, PolygonWithSampling):
                 curr_shape.__class__ = (
                     PolygonWithSampling  # Evil class sugery to add sampling methods
                 )
@@ -84,7 +84,7 @@ def generate_measurements(groundtruth, simulation_config):
                 ), "Cannot use both intensity_lambda and n_meas_at_individual_time_step."
                 n_meas_curr = simulation_config["n_meas_at_individual_time_step"][t]
             else:
-                if sample_from == "vertices":
+                if sample_from == "boundary":
                     n_meas_curr = generate_n_measurements_PPP(
                         curr_shape.length, simulation_config["intensity_lambda"]
                     )
@@ -94,15 +94,15 @@ def generate_measurements(groundtruth, simulation_config):
                     )
                 else:
                     raise ValueError(
-                        "sample_on must be either 'vertices' or 'surface'."
+                        "eot_sample_from must be either 'boundary' or 'within'."
                     )
 
-            if sample_from == "vertices":
+            if sample_from == "boundary":
                 measurements[t] = curr_shape.sample_on_boundary(n_meas_curr)
             elif sample_from == "within":
                 measurements[t] = curr_shape.sample_within(n_meas_curr)
             else:
-                raise ValueError("eot_sample_from must be either 'vertices' or 'within'.")
+                raise ValueError("eot_sample_from must be either 'boundary' or 'within'.")
 
     elif simulation_config.get("mtt", False):
         assert (
