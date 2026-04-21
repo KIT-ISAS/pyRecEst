@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
-import pyrecest.backend
+import pyrecest.backend as backend
 from pyrecest.utils.roi_assignment import (
     assign_by_similarity_matrix,
     associate_rois_by_iou,
@@ -35,7 +35,7 @@ class TestRoiIoU(unittest.TestCase):
         self.assertAlmostEqual(roi_iou(roi_a, roi_b), 0.5)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        backend.__backend_name__ == "jax",
         reason="Not supported on the jax backend",
     )
     def test_pairwise_iou_masks_supports_suite2p_sparse_dicts(self):
@@ -61,7 +61,7 @@ class TestRoiIoU(unittest.TestCase):
 
 class TestSimilarityAssignment(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        backend.__backend_name__ == "jax",
         reason="Not supported on the jax backend",
     )
     def test_assignment_maximizes_global_similarity(self):
@@ -76,7 +76,7 @@ class TestSimilarityAssignment(unittest.TestCase):
         npt.assert_array_equal(assignment, np.array([1, 0]))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        backend.__backend_name__ == "jax",
         reason="Not supported on the jax backend",
     )
     def test_assignment_keeps_match_at_exact_threshold(self):
@@ -87,7 +87,7 @@ class TestSimilarityAssignment(unittest.TestCase):
 
 class TestRoiAssociation(unittest.TestCase):
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        backend.__backend_name__ == "jax",
         reason="Not supported on the jax backend",
     )
     def test_associate_rois_by_iou_recovers_crossed_order(self):
@@ -123,7 +123,7 @@ class TestRoiAssociation(unittest.TestCase):
         npt.assert_allclose(iou_matrix, np.array([[0.0, 1.0], [1.0, 0.0]]))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        backend.__backend_name__ == "jax",
         reason="Not supported on the jax backend",
     )
     def test_associate_rois_by_iou_rejects_low_overlap(self):
