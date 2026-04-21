@@ -115,7 +115,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         measurements,
         measurement_matrix,
         covMatsMeas,
-        association_cost_matrix=None,
+        pairwise_cost_matrix=None,
     ):
         assert (
             pyrecest.backend.__backend_name__ == "numpy"
@@ -129,17 +129,17 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             == self.filter_bank[0].get_point_estimate().shape[0]
         ), "Dimensions of measurement matrix must match state and measurement dimensions."
 
-        if association_cost_matrix is None:
+        if pairwise_cost_matrix is None:
             association = self.find_association(
                 measurements, measurement_matrix, covMatsMeas
             )
         else:
             if not hasattr(self, "find_association_from_cost_matrix"):
                 raise NotImplementedError(
-                    "This tracker does not support association_cost_matrix."
+                    "This tracker does not support pairwise_cost_matrix."
                 )
             association = self.find_association_from_cost_matrix(
-                association_cost_matrix
+                pairwise_cost_matrix
             )
 
         currMeasCov = covMatsMeas
