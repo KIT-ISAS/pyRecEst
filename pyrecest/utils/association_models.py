@@ -151,7 +151,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             raise ValueError("At least one labeled example is required")
 
         unique_labels = unique(labels)
-        if any((unique_labels != 0) & (unique_labels != 1)):
+        if not all((unique_labels == 0) | (unique_labels == 1)):
             raise ValueError("labels must only contain binary values 0/1 or False/True")
 
         labels = labels.astype(int)
@@ -345,8 +345,8 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
                 _dtype_eps = float(_numpy.finfo(parameter_vector.dtype).eps)
             except (AttributeError, TypeError, ValueError):
                 _dtype_eps = float(_numpy.finfo(float).eps)
-            _min_tol = _dtype_eps * 1000.0
-            _effective_tolerance = _min_tol if _min_tol > self.tolerance else self.tolerance
+            _dtype_threshold = _dtype_eps * 1000.0
+            _effective_tolerance = _dtype_threshold if _dtype_threshold > self.tolerance else self.tolerance
             if max(abs(step)) <= _effective_tolerance:
                 self.converged_ = True
                 break
