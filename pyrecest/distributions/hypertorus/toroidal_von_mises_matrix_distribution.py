@@ -421,7 +421,7 @@ class ToroidalVonMisesMatrixDistribution(AbstractToroidalDistribution):
         Returns:
             dist (CustomCircularDistribution): marginal distribution
         """
-        assert dimension == 1 or dimension == 2
+        assert dimension in (1, 2)
 
         other = 3 - dimension
 
@@ -441,20 +441,20 @@ class ToroidalVonMisesMatrixDistribution(AbstractToroidalDistribution):
 
         return CustomCircularDistribution(f)
 
-    def shift(self, shift_angles):
+    def shift(self, shift_by):
         """
         Shift distribution by the given angles.
 
         Parameters:
-            shift_angles: array of shape (dim,) or (dim, 1)
+            shift_by: array of shape (dim,) or (dim, 1)
 
         Returns:
             tvm (ToroidalVonMisesMatrixDistribution): shifted distribution
         """
-        shift_angles = reshape(shift_angles, (-1,))
-        assert shift_angles.shape == (self.dim,)
+        shift_by = reshape(shift_by, (-1,))
+        assert shift_by.shape == (self.dim,)
         tvm = ToroidalVonMisesMatrixDistribution(self.mu, self.kappa, self.A)
-        tvm.mu = mod(self.mu + shift_angles, 2 * pi)
+        tvm.mu = mod(self.mu + shift_by, 2 * pi)
         return tvm
 
     @staticmethod

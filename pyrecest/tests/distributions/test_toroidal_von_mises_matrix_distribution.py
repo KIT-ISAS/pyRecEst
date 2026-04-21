@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 from scipy.optimize import brentq
-from scipy.special import i0 as besseli0, i1 as besseli1
+from scipy.special import i0 as besseli0, i1 as besseli1  # pylint: disable=no-name-in-module
 
 import pyrecest.backend
 from pyrecest.backend import (
@@ -19,8 +19,7 @@ from pyrecest.backend import (
     random,
     sin,
     sqrt,
-    squeeze,
-    sum,
+    sum as backend_sum,
     zeros,
 )
 from pyrecest.distributions.hypertorus.toroidal_von_mises_matrix_distribution import ToroidalVonMisesMatrixDistribution
@@ -38,7 +37,7 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         self.tvm2 = ToroidalVonMisesMatrixDistribution(self.mu + 1, self.kappa + 0.2, linalg.inv(self.A))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),  # pylint: disable=no-member
         reason="Only supported for numpy backend",
     )
     def test_sanity_check(self):
@@ -48,7 +47,7 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         self.assertTrue(array_equal(self.tvm.A, self.A))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),  # pylint: disable=no-member
         reason="Only supported for numpy backend",
     )
     def test_pdf(self):
@@ -68,21 +67,21 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         npt.assert_allclose(self.tvm.pdf(self.testpoints), pdf(self.testpoints.T, self.mu, self.kappa, self.A, self.tvm.C), rtol=1e-10)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),  # pylint: disable=no-member
         reason="Only supported for numpy backend",
     )
     def test_integral(self):
         self.assertAlmostEqual(self.tvm.integrate(), 1, places=5)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),  # pylint: disable=no-member
         reason="Only supported for numpy backend",
     )
     def test_trig_moment_numerical(self):
         npt.assert_allclose(self.tvm.trigonometric_moment_numerical(0), array([1, 1]), atol=1e-5)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),  # pylint: disable=no-member
         reason="Only supported for numpy backend",
     )
     def test_multiply(self):
@@ -94,7 +93,7 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         npt.assert_allclose(self.tvm.pdf(self.testpoints) * self.tvm2.pdf(self.testpoints), C * tvmMulSwapped.pdf(self.testpoints), rtol=1e-10)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),  # pylint: disable=no-member
         reason="Only supported for numpy backend",
     )
     def test_compare_with_ToroidalFourier_multiplication(self):
@@ -115,10 +114,10 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         npt.assert_allclose(tfMulSwapped.pdf(self.testpoints), tvmMulSwapped.pdf(self.testpoints), atol=1e-5)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),  # pylint: disable=no-member
         reason="Only supported for numpy backend",
     )
-    def test_product_approximation(self):
+    def test_product_approximation(self):  # pylint: disable=too-many-locals
         mu1 = array([1.7, 0.5])
         kappa1 = array([0.8, 0.3])
         A1 = 0.1 * array([[1, 0.2], [0.2, 1]])
@@ -137,23 +136,23 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         weights2 = tvm2.pdf(samples.T)
         weights = weights1 * weights2
 
-        weights = weights / sum(weights)  # normalize; subsequent sum(x * weights) acts as weighted mean
+        weights = weights / backend_sum(weights)  # normalize; subsequent backend_sum(x * weights) acts as weighted mean
 
         muApprox = arctan2(
-            sum(sin(samples) * weights, axis=1),
-            sum(cos(samples) * weights, axis=1),
+            backend_sum(sin(samples) * weights, axis=1),
+            backend_sum(cos(samples) * weights, axis=1),
         )
         rbar = sqrt(
-            sum(cos(samples) * weights, axis=1) ** 2 +
-            sum(sin(samples) * weights, axis=1) ** 2
+            backend_sum(cos(samples) * weights, axis=1) ** 2 +
+            backend_sum(sin(samples) * weights, axis=1) ** 2
         )
-        kappaApprox = array([brentq(lambda k: besseli1(k) / besseli0(k) - r, 1e-9, 50) if r > 1e-9 else 1e-6 for r in rbar])
+        kappaApprox = array([brentq(lambda k, r=r: besseli1(k) / besseli0(k) - r, 1e-9, 50) if r > 1e-9 else 1e-6 for r in rbar])
 
         Aapprox = zeros((2, 2))
-        Aapprox[0, 0] = sum(cos(samples[0, :] - muApprox[0]) * cos(samples[1, :] - muApprox[1]) * weights)
-        Aapprox[0, 1] = sum(cos(samples[0, :] - muApprox[0]) * sin(samples[1, :] - muApprox[1]) * weights)
-        Aapprox[1, 0] = sum(sin(samples[0, :] - muApprox[0]) * cos(samples[1, :] - muApprox[1]) * weights)
-        Aapprox[1, 1] = sum(sin(samples[0, :] - muApprox[0]) * sin(samples[1, :] - muApprox[1]) * weights)
+        Aapprox[0, 0] = backend_sum(cos(samples[0, :] - muApprox[0]) * cos(samples[1, :] - muApprox[1]) * weights)
+        Aapprox[0, 1] = backend_sum(cos(samples[0, :] - muApprox[0]) * sin(samples[1, :] - muApprox[1]) * weights)
+        Aapprox[1, 0] = backend_sum(sin(samples[0, :] - muApprox[0]) * cos(samples[1, :] - muApprox[1]) * weights)
+        Aapprox[1, 1] = backend_sum(sin(samples[0, :] - muApprox[0]) * sin(samples[1, :] - muApprox[1]) * weights)
 
         tvmApprox = ToroidalVonMisesMatrixDistribution(muApprox, kappaApprox, Aapprox)
 
