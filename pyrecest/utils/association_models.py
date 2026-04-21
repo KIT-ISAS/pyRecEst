@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
+import numpy as _numpy
 from numpy.linalg import LinAlgError
 from pyrecest.backend import (
     abs,
@@ -150,7 +151,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             raise ValueError("At least one labeled example is required")
 
         unique_labels = unique(labels)
-        if not all(int(label) in (0, 1) for label in unique_labels):
+        if any((unique_labels != 0) & (unique_labels != 1)):
             raise ValueError("labels must only contain binary values 0/1 or False/True")
 
         labels = labels.astype(int)
@@ -340,7 +341,13 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
 
             parameter_vector -= step
             self.n_iter_ = iteration
-            if max(abs(step)) <= self.tolerance:
+            try:
+                _dtype_eps = float(_numpy.finfo(parameter_vector.dtype).eps)
+            except (AttributeError, TypeError, ValueError):
+                _dtype_eps = float(_numpy.finfo(float).eps)
+            _min_tol = _dtype_eps * 1000.0
+            _effective_tolerance = _min_tol if _min_tol > self.tolerance else self.tolerance
+            if max(abs(step)) <= _effective_tolerance:
                 self.converged_ = True
                 break
 
@@ -362,7 +369,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         )
         standardized_features = self._transform_features(flattened_features)
         if self.fit_intercept:
-            parameter_vector = concatenate(([self.intercept_], self.coefficients_))
+            parameter_vector = concatenate((asarray([self.intercept_]), self.coefficients_))
         else:
             parameter_vector = self.coefficients_
         logits = self._design_matrix(standardized_features) @ parameter_vector
