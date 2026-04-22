@@ -13,7 +13,7 @@ from typing import Any, Callable
 
 import pyrecest.backend
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 from pyrecest.backend import (
     asarray,
     concatenate,

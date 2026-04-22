@@ -208,7 +208,7 @@ def summarize_assignment(assignment, costs) -> MatchSummary:
     )
 
 
-def run_registration_loop(
+def run_registration_loop(  # pylint: disable=too-many-locals
     reference,
     moving,
     initial_transform,

@@ -18,7 +18,7 @@ from typing import Any, Callable, Literal
 
 import pyrecest.backend
 
-# pylint: disable=redefined-builtin,no-name-in-module,no-member
+# pylint: disable=redefined-builtin,no-name-in-module,no-member,duplicate-code
 from pyrecest.backend import (
     any,
     asarray,
