@@ -5,6 +5,7 @@ on: # yamllint disable-line rule:truthy
     types: [closed]
     branches:
       - main
+  #checkov:skip=CKV_GHA_7:workflow_dispatch inputs are intentional for manual release control
   workflow_dispatch:
     inputs:
       dry_run:
@@ -12,6 +13,14 @@ on: # yamllint disable-line rule:truthy
         required: true
         type: boolean
         default: true
+      release_notes_mode:
+        description: "How to generate release notes for manual runs"
+        required: true
+        type: choice
+        default: github
+        options:
+          - github
+          - copilot
 
 permissions:
   contents: write
@@ -24,6 +33,7 @@ jobs:
       tag_version: ${{ steps.extract_version_and_check_tag.outputs.tag_version }}
       tag_exists: ${{ steps.extract_version_and_check_tag.outputs.tag_exists }}
       dry_run: ${{ steps.set_mode.outputs.dry_run }}
+      release_notes_mode: ${{ steps.set_mode.outputs.release_notes_mode }}
     steps:
       - name: Check out code
         uses: actions/checkout@v5
@@ -39,6 +49,12 @@ jobs:
             echo "dry_run=true" >> "$GITHUB_OUTPUT"
           else
             echo "dry_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "release_notes_mode=${{ inputs.release_notes_mode }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_notes_mode=copilot" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up Python
@@ -105,6 +121,7 @@ jobs:
     env:
       VERSION: ${{ needs.check_if_tag_exists.outputs.tag_version }}
       DRY_RUN: ${{ needs.check_if_tag_exists.outputs.dry_run }}
+      RELEASE_NOTES_MODE: ${{ needs.check_if_tag_exists.outputs.release_notes_mode }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -129,46 +146,135 @@ jobs:
         id: prev_tag
         shell: bash
         run: |
-          PREV_TAG="$(git tag --sort=-version:refname | grep -vx "${VERSION}" | sed -n '1p')"
+          PREV_TAG="$(git tag --sort=-version:refname | grep -vx "${VERSION}" | sed -n '1p' || true)"
           echo "tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
 
-      - name: Generate AI release notes
+      - name: Determine head ref for notes generation
+        id: head_ref
+        shell: bash
+        run: |
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "ref=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${VERSION}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate Copilot release notes
+        if: ${{ env.RELEASE_NOTES_MODE == 'copilot' && steps.prev_tag.outputs.tag != '' }}
         id: ai_notes
         uses: FlorianPfaff/copilot-release-notes@main
         with:
           base-ref: ${{ steps.prev_tag.outputs.tag }}
-          head-ref: ${{ env.VERSION }}
+          head-ref: ${{ steps.head_ref.outputs.ref }}
           instructions: .github/release-notes-instructions.md
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          COPILOT_TIMEOUT_MS: "900000"
+          COPILOT_HEARTBEAT_MS: "30000"
+          COPILOT_DEBUG_DIR: "${{ runner.temp }}/copilot-debug"
+          COPILOT_SAVE_PROMPT: "false"
 
-      - name: Fallback notes for first release
-        if: ${{ env.DRY_RUN != 'true' && steps.prev_tag.outputs.tag == '' }}
-        run: echo "Initial release." > RELEASE_NOTES.md
-
-      - name: Write AI notes to file
-        if: ${{ env.DRY_RUN != 'true' && steps.prev_tag.outputs.tag != '' }}
+      - name: Write Copilot notes to file
+        if: ${{ env.RELEASE_NOTES_MODE == 'copilot' && steps.prev_tag.outputs.tag != '' }}
         shell: bash
         run: |
           cat > RELEASE_NOTES.md <<'EOF'
           ${{ steps.ai_notes.outputs.release-notes }}
           EOF
 
-      - name: Write dry-run notes
-        if: ${{ env.DRY_RUN == 'true' }}
+      - name: Generate GitHub release notes
+        if: ${{ env.RELEASE_NOTES_MODE == 'github' && steps.prev_tag.outputs.tag != '' }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          TARGET_COMMITISH: ${{ steps.head_ref.outputs.ref }}
+          PREV_TAG: ${{ steps.prev_tag.outputs.tag }}
         run: |
-          echo "Dry run: no tag pushed and no GitHub release created." > RELEASE_NOTES.md
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+
+          payload = {
+              "tag_name": os.environ["VERSION"],
+              "target_commitish": os.environ["TARGET_COMMITISH"],
+          }
+
+          prev_tag = os.environ.get("PREV_TAG", "").strip()
+          if prev_tag:
+              payload["previous_tag_name"] = prev_tag
+
+          for candidate in (".github/release.yml", ".github/release.yaml"):
+              if pathlib.Path(candidate).exists():
+                  payload["configuration_file_path"] = candidate
+                  break
+
+          req = urllib.request.Request(
+              f'https://api.github.com/repos/{os.environ["OWNER"]}/{os.environ["REPO"]}/releases/generate-notes',
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f'Bearer {os.environ["GITHUB_TOKEN"]}',
+                  "X-GitHub-Api-Version": "2026-03-10",
+              },
+              method="POST",
+          )
+
+          with urllib.request.urlopen(req) as resp:
+              data = json.load(resp)
+
+          pathlib.Path("RELEASE_NOTES.md").write_text(
+              data["body"].rstrip() + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Fallback notes for first release
+        if: ${{ steps.prev_tag.outputs.tag == '' }}
+        run: echo "Initial release." > RELEASE_NOTES.md
 
       - name: Build package
         run: python -m poetry build
 
+      - name: Upload release notes artifact for dry runs
+        if: ${{ env.DRY_RUN == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes-${{ env.VERSION }}
+          path: RELEASE_NOTES.md
+
+      - name: Show publish settings
+        if: ${{ env.DRY_RUN != 'true' }}
+        shell: bash
+        run: |
+          echo "DRY_RUN=${DRY_RUN}"
+          echo "VERSION=${VERSION}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
+          echo "RELEASE_NOTES_MODE=${RELEASE_NOTES_MODE}"
+          echo "PREV_TAG=${{ steps.prev_tag.outputs.tag }}"
+
       - name: Create GitHub Release and Upload Artifacts
         if: ${{ env.DRY_RUN != 'true' }}
+        id: create_release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
+          commit: ${{ github.sha }}
           name: Release ${{ env.VERSION }}
           bodyFile: RELEASE_NOTES.md
           artifacts: ./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}-py3-none-any.whl,./dist/${{ env.REPO_NAME }}-${{ env.VERSION }}.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
+
+      - name: Verify release was created
+        if: ${{ env.DRY_RUN != 'true' }}
+        shell: bash
+        run: |
+          if [ -z "${{ steps.create_release.outputs.html_url }}" ]; then
+            echo "Release step finished but did not return a release URL."
+            exit 1
+          fi
+          echo "Release created: ${{ steps.create_release.outputs.html_url }}"
