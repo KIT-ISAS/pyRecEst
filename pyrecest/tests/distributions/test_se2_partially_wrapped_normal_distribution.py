@@ -1,89 +1,78 @@
-import numpy as np
 import unittest
-from itertools import product
-from pyrecest.distributions.se2_partially_wrapped_normal_distribution import SE2PartiallyWrappedNormalDistribution
 
-from scipy.stats import multivariate_normal
+import numpy as np
+import numpy.testing as npt
 
-class SE2PWNDistributionTest(unittest.TestCase):
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
+from pyrecest.backend import array
+from pyrecest.distributions import (
+    SE2PartiallyWrappedNormalDistribution as ExportedSE2PartiallyWrappedNormalDistribution,
+)
+from pyrecest.distributions.cart_prod.se2_pwn_distribution import SE2PWNDistribution
+from pyrecest.distributions.se2_partially_wrapped_normal_distribution import (
+    SE2PartiallyWrappedNormalDistribution,
+)
 
+
+class TestSE2PartiallyWrappedNormalDistribution(unittest.TestCase):
     def setUp(self):
-        self.mu = np.array([2, 3, 4])
-        si1, si2, si3 = 0.9, 1.5, 1.7
-        rho12, rho13, rho23 = 0.5, 0.3, 0.4
-        self.C = np.array([
-            [si1**2, si1 * si2 * rho12, si1 * si3 * rho13],
-            [si1 * si2 * rho12, si2**2, si2 * si3 * rho23],
-            [si1 * si3 * rho13, si2 * si3 * rho23, si3**2],
-        ])
-        self.pwn = SE2PartiallyWrappedNormalDistribution(self.mu, self.C)
+        self.mu = array([1.0, 2.0, 3.0])
+        self.C = array([[0.9, 0.4, 0.2], [0.4, 1.0, 0.3], [0.2, 0.3, 1.0]])
+        self.dist = SE2PartiallyWrappedNormalDistribution(self.mu, self.C)
+        self.legacy_dist = SE2PWNDistribution(self.mu, self.C)
 
-    @staticmethod
-    def _loop_wrapped_pdf(x, mu, C, n_wrappings=10):
-        bound_dim = 1
-        # Ensure x is at least 2D for iteration
-        x = np.array(np.atleast_2d(x), dtype=np.float64)
+    def test_top_level_export(self):
+        self.assertIs(
+            ExportedSE2PartiallyWrappedNormalDistribution,
+            SE2PartiallyWrappedNormalDistribution,
+        )
 
-        n_samples = x.shape[0]
-        results = np.zeros(n_samples)
+    def test_is_legacy_compatible_subclass(self):
+        self.assertTrue(
+            issubclass(SE2PartiallyWrappedNormalDistribution, SE2PWNDistribution)
+        )
+        self.assertIsInstance(self.dist, SE2PWNDistribution)
 
-        # Generate all combinations of offsets for the bound_dim dimensions
-        offset_values = [i*2*np.pi for i in range(-n_wrappings, n_wrappings+1)]
-        all_combinations = list(product(offset_values, repeat=bound_dim))
+    def test_pdf_matches_legacy_distribution(self):
+        points = array([[1.0, 2.0, 3.0], [1.1, 1.9, 2.8], [0.3, -0.2, 4.1]])
+        npt.assert_allclose(
+            np.asarray(self.dist.pdf(points)), np.asarray(self.legacy_dist.pdf(points))
+        )
 
-        # Iterate over each sample
-        for i in range(n_samples):
-            sample = x[i]
-            p = 0
-            # Iterate over each offset combination and add to the sample before evaluating the PDF
-            for offset in all_combinations:
-                shifted_sample = sample.copy()
-                shifted_sample[:bound_dim] += np.array(offset)
-                p += multivariate_normal.pdf(shifted_sample, mu, C)
-            results[i] = p
+    def test_mean_4d_matches_legacy_api(self):
+        npt.assert_allclose(
+            np.asarray(self.dist.mean_4d()), np.asarray(self.legacy_dist.mean4D())
+        )
 
-        # If input was 1D, return a single value; otherwise, return the array
-        return results[0] if x.shape[0] == 1 else results
+    def test_covariance_4d_matches_legacy_api(self):
+        npt.assert_allclose(
+            np.asarray(self.dist.covariance_4d()),
+            np.asarray(self.legacy_dist.covariance4D()),
+        )
 
-    def test_pdf(self):
-        self.assertAlmostEqual(self.pwn.pdf(self.mu), SE2PWNDistributionTest._loop_wrapped_pdf(self.mu, self.mu, self.C), places=10)
-        self.assertAlmostEqual(self.pwn.pdf(self.mu-1), SE2PWNDistributionTest._loop_wrapped_pdf(self.mu-1, self.mu, self.C), places=10)
-        self.assertAlmostEqual(self.pwn.pdf(self.mu+2), SE2PWNDistributionTest._loop_wrapped_pdf(self.mu+2, self.mu, self.C), places=10)
-        x = np.random.rand(20, 3)
-        np.testing.assert_allclose(self.pwn.pdf(x), SE2PWNDistributionTest._loop_wrapped_pdf(x, self.mu, self.C, n_wrappings=10), rtol=1e-10)
-
-    def test_pdf_large_uncertainty(self):
-        C_high = 100 * np.eye(3, 3)
-        pwn_large_uncertainty = SE2PartiallyWrappedNormalDistribution(self.mu, C_high)
-        for t in range(1, 7):
-            # Verify they are equal for 3 wrappings (same number of wrappings as in the class)
-            pdf_class = pwn_large_uncertainty.pdf(self.mu + np.array([t, 0, 0]))
-            np.testing.assert_allclose(pdf_class,
-                                       SE2PWNDistributionTest._loop_wrapped_pdf(self.mu + np.array([t, 0, 0]), self.mu, C_high, n_wrappings=3),
-                                       rtol=0.05)
-
-            # Verify they are unequal for 10 wrappings when the covariance is high
-            pdf_loop_nested_10 = SE2PWNDistributionTest._loop_wrapped_pdf(self.mu + np.array([t, 0, 0]), self.mu, C_high, n_wrappings=10)
-
-            # Calculate the relative errors
-            relative_errors = np.abs(pdf_class - pdf_loop_nested_10) / pdf_class
-            # Find the maximum relative error
-            max_relative_error = np.max(relative_errors)
-            self.assertGreater(max_relative_error, 0.00001)
-
-    def test_integral(self):
-        self.assertAlmostEqual(self.pwn.integrate(), 1, places=5)
-
-    def test_sampling_basic(self):
+    def test_covariance_4d_numerical_matches_legacy_api(self):
         np.random.seed(0)
-        n = 10
-        s = self.pwn.sample(n)
-        self.assertEqual(s.shape[0], n)
-        self.assertEqual(s.shape[1], 3)
-        s = s[:, 0]
-        self.assertTrue(np.all(s >= 0))
-        self.assertTrue(np.all(s < 2 * np.pi))
+        cov_new = np.asarray(self.dist.covariance_4d_numerical(20000))
+        np.random.seed(0)
+        cov_legacy = np.asarray(self.legacy_dist.covariance4D_numerical(20000))
+        npt.assert_allclose(cov_new, cov_legacy, atol=5e-2)
+
+    def test_from_samples_returns_descriptive_class(self):
+        np.random.seed(42)
+        samples = np.asarray(self.legacy_dist.sample(50000))
+        fitted = SE2PartiallyWrappedNormalDistribution.from_samples(samples)
+        self.assertIsInstance(fitted, SE2PartiallyWrappedNormalDistribution)
+        npt.assert_allclose(np.asarray(fitted.mu), np.asarray(self.mu), atol=0.05)
+        npt.assert_allclose(np.asarray(fitted.C), np.asarray(self.C), atol=0.1)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for JAX backend",
+    )
+    def test_integrate(self):
+        self.assertAlmostEqual(self.dist.integrate(), 1.0, places=5)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
