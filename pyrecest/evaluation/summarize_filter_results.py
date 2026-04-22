@@ -1,6 +1,6 @@
 import warnings
 
-import numpy as np
+from pyrecest.backend import mean, std, sum
 
 from .determine_all_deviations import determine_all_deviations
 from .get_distance_function import get_distance_function
@@ -40,10 +40,10 @@ def summarize_filter_results(
     errors_all = determine_all_deviations(
         filter_results, extract_mean, distance_function, groundtruths
     )
-    errors_mean = np.mean(errors_all, axis=1)
-    errors_std = np.std(errors_all, axis=1)
-    times_mean = np.mean(runtimes, axis=1)
-    failure_rates = np.sum(run_failed, axis=1) / run_failed.shape[1]
+    errors_mean = mean(errors_all, axis=1)
+    errors_std = std(errors_all, axis=1)
+    times_mean = mean(runtimes, axis=1)
+    failure_rates = sum(run_failed, axis=1) / run_failed.shape[1]
 
     results_summarized = filter_configs
     for d, err, std, time, fail_rate in zip(
