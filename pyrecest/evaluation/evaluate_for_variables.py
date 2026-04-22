@@ -2,7 +2,8 @@ import datetime
 import os
 from typing import Any
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import save
 
 from .iterate_configs_and_runs import iterate_configs_and_runs
 
@@ -54,7 +55,7 @@ def evaluate_for_variables(
         f"{scenario_config['name']}_{date_and_time.strftime('%Y-%m-%d--%H-%M-%S')}.npy",
     )
 
-    np.save(
+    save(
         filename,
         {
             "groundtruths": groundtruths,
