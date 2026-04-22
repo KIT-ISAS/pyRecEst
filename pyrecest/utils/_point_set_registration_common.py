@@ -1,5 +1,3 @@
-# pyrecest/utils/_point_set_registration_common.py
-
 """Shared helpers for rigid and non-rigid point-set registration."""
 
 from __future__ import annotations
@@ -28,6 +26,8 @@ from scipy.spatial.distance import cdist
 
 @dataclass(frozen=True)
 class RegistrationResultBase:  # pylint: disable=too-many-instance-attributes
+    """Shared fields for registration result containers."""
+
     assignment: Any
     matched_reference_indices: Any
     matched_moving_indices: Any
@@ -40,6 +40,8 @@ class RegistrationResultBase:  # pylint: disable=too-many-instance-attributes
 
 @dataclass(frozen=True)
 class MatchSummary:
+    """Matched indices, costs, and RMSE diagnostics for an assignment."""
+
     matched_reference_indices: Any
     matched_moving_indices: Any
     matched_costs: Any
@@ -48,6 +50,8 @@ class MatchSummary:
 
 @dataclass(frozen=True)
 class RegistrationLoopState:
+    """Common bookkeeping state for alternating registration loops."""
+
     transform: Any
     assignment: Any
     transformed_reference_points: Any
@@ -58,6 +62,8 @@ class RegistrationLoopState:
 
 @dataclass(frozen=True)
 class RegistrationLoopConfig:
+    """Configuration shared by the rigid and non-rigid registration loops."""
+
     max_cost: float
     cost_function: Any
     max_iterations: int
@@ -67,12 +73,20 @@ class RegistrationLoopConfig:
 
 @dataclass(frozen=True)
 class RegistrationLoopCallbacks:
+    """Problem-specific callbacks for the shared registration loop."""
+
     fit_transform: Callable[[Any, Any], Any]
     compute_change: Callable[[Any, Any, Any, Any], float]
     assignment_solver: Callable[..., Any]
 
 
-def as_point_array(points, *, expected_dim: int | None = None, expected_dim_error: str | None = None):
+def as_point_array(
+    points,
+    *,
+    expected_dim: int | None = None,
+    expected_dim_error: str | None = None,
+):
+    """Validate a point array and optionally enforce its ambient dimension."""
     point_array = asarray(points)
     if point_array.ndim != 2:
         raise ValueError("points must have shape (n_points, dim).")
@@ -93,6 +107,7 @@ def validate_pair(
     expected_dim: int | None = None,
     expected_dim_error: str | None = None,
 ):
+    """Validate a pair of matched point arrays."""
     source = as_point_array(
         source_points,
         expected_dim=expected_dim,
@@ -109,13 +124,17 @@ def validate_pair(
 
 
 def validate_cost_matrix(cost_matrix, *, n_reference: int, n_moving: int):
+    """Validate the shape of an association cost matrix."""
     costs = asarray(cost_matrix)
     if costs.shape != (n_reference, n_moving):
-        raise ValueError("cost_function must return an array of shape (n_reference, n_moving).")
+        raise ValueError(
+            "cost_function must return an array of shape (n_reference, n_moving)."
+        )
     return costs
 
 
 def evaluate_registration_costs(transform, reference, moving, association_cost):
+    """Transform reference points and evaluate the association cost matrix."""
     transformed_reference = transform.apply(reference)
     current_costs = validate_cost_matrix(
         association_cost(transformed_reference, moving),
@@ -126,6 +145,7 @@ def evaluate_registration_costs(transform, reference, moving, association_cost):
 
 
 def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
+    """Solve one-to-one assignment with optional gating."""
     costs = asarray(cost_matrix)
     if costs.ndim != 2:
         raise ValueError("cost_matrix must be two-dimensional.")
@@ -139,7 +159,11 @@ def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
     if finite_costs.shape[0] == 0:
         return zeros((costs.shape[0],), dtype=int64) - 1
 
-    dummy_cost = float(max_cost) if math.isfinite(max_cost) else float(finite_costs.max() + 1.0)
+    dummy_cost = (
+        float(max_cost)
+        if math.isfinite(max_cost)
+        else float(finite_costs.max() + 1.0)
+    )
     padded_size = max(costs.shape[0], costs.shape[1])
     sanitized_costs = where(finite_mask, costs, dummy_cost)
     padded_costs = full((padded_size, padded_size), dummy_cost)
@@ -156,16 +180,19 @@ def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
 
 
 def default_cost(transformed_reference_points, moving_points):
+    """Default Euclidean association cost."""
     return cdist(transformed_reference_points, moving_points, metric="euclidean")
 
 
 def compute_rmse(matched_costs) -> float:
+    """Compute the RMSE over matched costs."""
     if matched_costs.shape[0] > 0:
         return float(sqrt(mean(matched_costs * matched_costs)))
     return float("inf")
 
 
 def summarize_assignment(assignment, costs) -> MatchSummary:
+    """Extract matched row/column indices and diagnostics from an assignment."""
     matched_reference_indices = where(assignment >= 0)[0]
     matched_moving_indices = assignment[matched_reference_indices]
     matched_costs = (
@@ -188,6 +215,7 @@ def run_registration_loop(
     config: RegistrationLoopConfig,
     callbacks: RegistrationLoopCallbacks,
 ) -> RegistrationLoopState:
+    """Run the shared alternating assignment/refit loop."""
     transform = initial_transform
     assignment = zeros((reference.shape[0],), dtype=int64) - 1
     converged = False
@@ -202,7 +230,10 @@ def run_registration_loop(
             association_cost,
         )
 
-        new_assignment = callbacks.assignment_solver(current_costs, max_cost=config.max_cost)
+        new_assignment = callbacks.assignment_solver(
+            current_costs,
+            max_cost=config.max_cost,
+        )
         matched_reference_indices = where(new_assignment >= 0)[0]
 
         if matched_reference_indices.shape[0] < config.min_matches:
@@ -253,6 +284,7 @@ def run_registration_loop(
 
 
 def build_registration_result(result_type, state: RegistrationLoopState):
+    """Construct a registration result object from common bookkeeping."""
     summary = summarize_assignment(state.assignment, state.costs)
     return result_type(
         transform=state.transform,
