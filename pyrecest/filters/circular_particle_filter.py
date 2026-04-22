@@ -1,16 +1,15 @@
-from math import pi
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import float64, int32, int64, linspace, sum
+from pyrecest.backend import float64, int32, int64, linspace, pi, sum
 from pyrecest.distributions import CircularDiracDistribution
 
-from .abstract_hypertoroidal_filter import AbstractHypertoroidalFilter
 from .abstract_particle_filter import AbstractParticleFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
+from .manifold_mixins import CircularFilterMixin
 
 
-class CircularParticleFilter(HypertoroidalParticleFilter):
+class CircularParticleFilter(HypertoroidalParticleFilter, CircularFilterMixin):
     # pylint: disable=non-parent-init-called,super-init-not-called
     def __init__(self, n_particles: Union[int, int32, int64]) -> None:
         """
@@ -21,7 +20,7 @@ class CircularParticleFilter(HypertoroidalParticleFilter):
         filter_state = CircularDiracDistribution(
             linspace(0.0, 2.0 * pi, n_particles, endpoint=False)
         )
-        AbstractHypertoroidalFilter.__init__(self, filter_state)
+        CircularFilterMixin.__init__(self)
         AbstractParticleFilter.__init__(self, filter_state)
 
     def compute_association_likelihood(self, likelihood) -> float64:

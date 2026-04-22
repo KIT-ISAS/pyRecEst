@@ -1,12 +1,9 @@
-from math import pi
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
     arctan2,
     array,
     cos,
-    cross,
     dot,
     exp,
     eye,
@@ -15,6 +12,7 @@ from pyrecest.backend import (
     linspace,
     min,
     ndim,
+    pi,
     reshape,
     sin,
     stack,
@@ -33,7 +31,7 @@ def pol2cart(phi, r=1.0):
 
 def angle_between_two_vectors(x, y):
     dot_prod = dot(x, y)
-    cross_prod = cross(x, y)
+    cross_prod = x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
     return -arctan2(cross_prod, dot_prod) % (2 * pi)
 
 

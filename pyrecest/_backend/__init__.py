@@ -189,7 +189,9 @@ BACKEND_ATTRIBUTES = {
         "count_nonzero",
         "full_like",
         "isinf",
+        "isfinite",
         "deg2rad",
+        "rad2deg",
         "argsort",
         "max",
         "min",
@@ -198,6 +200,7 @@ BACKEND_ATTRIBUTES = {
         "vmap",
         "gammaln",
         "round",
+        "array_equal",
         # For Riemannian score-based SDE
         "log1p"
     ],
@@ -233,6 +236,8 @@ BACKEND_ATTRIBUTES = {
         "sqrtm",
         "svd",
         "matrix_rank",
+        "block_diag",  # For PyRecEst
+        "pinv",
     ],
     "random": [
         "choice",
@@ -246,11 +251,24 @@ BACKEND_ATTRIBUTES = {
         "randint",
         "seed",
         "uniform",
+        # For PyRecEst
+        "get_state",
+        "set_state",
     ],
-    "fft": [  # For pyrecest
+    "fft": [  # For PyRecEst
         "rfft",
         "irfft",
-     ],
+        "fftshift",
+        "ifftshift",
+        "fftn",
+        "ifftn",
+    ],
+    "spatial": [  # For PyRecEst
+        "Rotation",
+    ],
+    "signal": [  # For PyRecEst
+        "fftconvolve",
+    ],
 }
 
 

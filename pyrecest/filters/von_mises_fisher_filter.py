@@ -2,12 +2,14 @@
 from pyrecest.backend import array, ndim
 from pyrecest.distributions import VonMisesFisherDistribution
 
-from .abstract_hyperspherical_filter import AbstractHypersphericalFilter
+from .abstract_filter import AbstractFilter
+from .manifold_mixins import HypersphericalFilterMixin
 
 
-class VonMisesFisherFilter(AbstractHypersphericalFilter):
+class VonMisesFisherFilter(AbstractFilter, HypersphericalFilterMixin):
     def __init__(self):
-        AbstractHypersphericalFilter.__init__(
+        HypersphericalFilterMixin.__init__(self)
+        AbstractFilter.__init__(
             self, VonMisesFisherDistribution(array([1.0, 0.0]), 1.0)
         )
 
@@ -21,6 +23,14 @@ class VonMisesFisherFilter(AbstractHypersphericalFilter):
             filter_state, VonMisesFisherDistribution
         ), "filter_state must be an instance of VonMisesFisherDistribution."
         self._filter_state = filter_state
+
+    def set_state(self, state):
+        """Set the filter state."""
+        self.filter_state = state
+
+    def get_estimate_mean(self):
+        """Return the mean direction of the current filter state."""
+        return self.filter_state.mean_direction()
 
     def predict_identity(self, sys_noise):
         """

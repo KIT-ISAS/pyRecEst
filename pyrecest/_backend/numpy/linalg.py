@@ -13,8 +13,12 @@ from numpy.linalg import (
     matrix_rank,
     norm,
     svd,
+    pinv,
 )
-from scipy.linalg import expm
+from scipy.linalg import (
+    expm,
+    block_diag,  # For PyRecEst
+)
 
 from .._shared_numpy.linalg import (
     fractional_matrix_power,

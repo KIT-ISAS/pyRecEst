@@ -1,12 +1,11 @@
 from abc import abstractmethod
-from math import pi
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, ndim, sin
+from pyrecest.backend import cos, cosh, exp, mod, ndim, pi, sin, sinh
 from scipy.special import ive  # pylint: disable=no-name-in-module
-from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+from .von_mises_distribution import VonMisesDistribution
 from .wrapped_cauchy_distribution import WrappedCauchyDistribution
 from .wrapped_normal_distribution import WrappedNormalDistribution
 
@@ -41,7 +40,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
     def pdf(self, xs):
         # Evaluate the von Mises distribution and multiply by (1 + lambda_ * sin(xa - mu))
         assert self.k == 1, "Currently, only k=1 is supported"
-        vm_pdf = vonmises.pdf(xs, self.kappa, loc=self.mu)
+        vm_pdf = VonMisesDistribution(self.mu, self.kappa).pdf(xs)
         skew_factor = (1 + self.lambda_ * sin(self.k * (xs - self.mu))) ** self.m
         if self.m == 1:
             norm_const = 1
@@ -80,9 +79,36 @@ class SineSkewedVonMisesDistribution(GeneralizedKSineSkewedVonMisesDistribution)
         super().__init__(mu, kappa, lambda_, k=1, m=1)
 
 
+class GSSVMDistribution(GeneralizedKSineSkewedVonMisesDistribution):
+    """
+    Generalized Skew-Symmetric Von Mises (GSSVM) distribution.
+
+    Special case of GeneralizedKSineSkewedVonMisesDistribution with k=1 fixed.
+    Corresponds to GSSVMDistribution in libDirectional.
+
+    Parameters:
+    - mu (float): Mean direction of the distribution.
+    - kappa (float): Concentration parameter (non-negative).
+    - lambda_ (float): Skewness parameter, must be between -1 and 1 inclusive.
+    - n (int): Order/power of the sine skewing term, must be a positive integer.
+    """
+
+    def __init__(self, mu, kappa, lambda_, n):
+        super().__init__(mu, kappa, lambda_, k=1, m=n)
+
+    @property
+    def n(self):
+        return self.m
+
+    def shift(self, shift_by):
+        if ndim(shift_by) != 0:
+            raise ValueError("angle must be a scalar")
+        return GSSVMDistribution(self.mu + shift_by, self.kappa, self.lambda_, self.n)
+
+
 def bessel_ratio(p, z):
     """
-    Computes the ratio I_p(z) / I_p(0) in a numerically stable manner using
+    Computes the ratio I_p(z) / I_0(z) in a numerically stable manner using
     exponentially scaled modified Bessel functions.
 
     Parameters:
@@ -90,16 +116,10 @@ def bessel_ratio(p, z):
     - z: Argument for the Bessel function.
 
     Returns:
-    - The ratio of I_p(z) to I_p(0), calculated in a numerically stable way.
+    - The ratio I_p(z) / I_0(z), calculated in a numerically stable way.
     """
-    # Compute the scaled Bessel function values for both the numerator and denominator.
-    scaled_numerator = ive(p, z)
-    scaled_denominator = ive(p, 0)
-
-    # Since ive(p, z) = iv(p, z) * exp(-|z|), and ive(p, 0) = iv(p, 0),
-    # when we take the ratio, the exp(-|z|) terms cancel out for the ratio calculation.
-    # Therefore, the ratio of the scaled values directly gives us the ratio of the original Bessel functions.
-    return scaled_numerator / scaled_denominator
+    # ive(p, z) = iv(p, z) * exp(-|z|), so ive(p, z) / ive(0, z) = iv(p, z) / iv(0, z).
+    return ive(p, z) / ive(0, z)
 
 
 class AbstractSineSkewedDistribution(AbstractCircularDistribution):
@@ -160,3 +180,67 @@ class SineSkewedWrappedCauchyDistribution(AbstractSineSkewedDistribution):
 
     def base_pdf(self, xs):
         return self.wrapped_cauchy.pdf(xs)
+
+
+class GeneralizedKSineSkewedWrappedCauchyDistribution(AbstractCircularDistribution):
+    """
+    Generalized K Sine-Skewed Wrapped Cauchy (GSSC) distribution.
+    See Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
+    Toroidal Distributions, Florence Nightingale Directional Statistics volume, Springer.
+    Parameters:
+    - mu (float): Mean direction of the distribution.
+    - gamma (float): Concentration parameter of the wrapped Cauchy distribution (positive).
+    - lambda_ (float): Skewness parameter, must be between -1 and 1 inclusive.
+    - k (int): Sine multiplier, currently supports only k=1.
+    - m (int): Power of the sine term, must be a positive integer.
+    """
+
+    # pylint: disable=too-many-positional-arguments
+    def __init__(self, mu, gamma, lambda_, k, m):
+        AbstractCircularDistribution.__init__(self)
+        self.mu = mod(mu, 2 * pi)
+        self.gamma = gamma
+        self.lambda_ = lambda_
+        self.k = k
+        self.m = m
+
+        self.validate_parameters()
+
+    def validate_parameters(self):
+        assert self.gamma > 0
+        assert -1.0 <= self.lambda_ and self.lambda_ <= 1.0
+        assert isinstance(self.m, int) and self.m >= 1
+
+    def pdf(self, xs):
+        assert self.k == 1, "Currently, only k=1 is supported"
+        # Use the WC pdf formula directly to ensure correct centering at mu
+        wc_pdf_vals = (
+            1 / (2 * pi) * sinh(self.gamma) / (cosh(self.gamma) - cos(xs - self.mu))
+        )
+        skew_factor = (1 + self.lambda_ * sin(self.k * (xs - self.mu))) ** self.m
+        # For the wrapped Cauchy: E[cos(n*(x-mu))] = exp(-n*k*gamma)
+        r2 = exp(-2 * self.k * self.gamma)
+        r4 = exp(-4 * self.k * self.gamma)
+        if self.m == 1:
+            norm_const = 1
+        elif self.m == 2:
+            norm_const = 1 / (1 + self.lambda_**2 / 2 * (1 - r2))
+        elif self.m == 3:
+            norm_const = 1 / (1 + 3 * self.lambda_**2 / 2 * (1 - r2))
+        elif self.m == 4:
+            norm_const = 1 / (
+                1
+                + self.lambda_**4 / 8 * (3 - 4 * r2 + r4)
+                + 3 * self.lambda_**2 * (1 - r2)
+            )
+        else:
+            raise NotImplementedError("m > 4 not implemented")
+
+        return norm_const * wc_pdf_vals * skew_factor
+
+    def shift(self, shift_by):
+        if ndim(shift_by) != 0:
+            raise ValueError("angle must be a scalar")
+        return GeneralizedKSineSkewedWrappedCauchyDistribution(
+            self.mu + shift_by, self.gamma, self.lambda_, self.k, self.m
+        )

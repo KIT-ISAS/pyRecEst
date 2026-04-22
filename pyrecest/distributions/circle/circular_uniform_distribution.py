@@ -1,6 +1,4 @@
-from math import pi
-
-from pyrecest.backend import where
+from pyrecest.backend import pi, where
 
 from ..hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,

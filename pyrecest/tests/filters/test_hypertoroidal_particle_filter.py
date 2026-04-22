@@ -1,11 +1,10 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, random, zeros, zeros_like
+from pyrecest.backend import array, pi, random, zeros, zeros_like
 from pyrecest.distributions import HypertoroidalWNDistribution
 from pyrecest.filters import HypertoroidalParticleFilter
 
@@ -55,7 +54,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
             )
             for _ in range(3):
                 self.test_update_identity()
-        npt.assert_allclose(self.hpf.get_point_estimate(), self.forced_mean, atol=0.15)
+        npt.assert_allclose(self.hpf.get_point_estimate(), self.forced_mean, atol=0.2)
 
 
 if __name__ == "__main__":

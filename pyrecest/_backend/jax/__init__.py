@@ -73,6 +73,7 @@ from jax.numpy import (
     vstack,
     where,
     zeros_like,
+    # For pyrecest
     diag,
     diff,
     apply_along_axis,
@@ -92,7 +93,9 @@ from jax.numpy import (
     count_nonzero,
     full_like,
     isinf,
+    isfinite,
     deg2rad,
+    rad2deg,
     argsort,
     max,
     min,
@@ -139,6 +142,7 @@ from jax.numpy import (
     linspace,
     ones,
     round,
+    array_equal,
     # For Riemannian score-based SDE
     log1p,
 )
@@ -173,7 +177,9 @@ from .._backend_config import jax_rtol as rtol
 from . import autodiff
 from . import linalg
 from . import random
-from . import fft
+from . import fft   # For PyRecEst
+from . import spatial  # For PyRecEst
+from . import signal  # For PyRecEst
 
 from jax.numpy import array
 

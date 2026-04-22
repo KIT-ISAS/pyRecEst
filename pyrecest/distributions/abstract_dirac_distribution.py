@@ -3,6 +3,8 @@ import warnings
 from collections.abc import Callable
 from typing import Union
 
+from beartype import beartype
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     all,
@@ -31,12 +33,12 @@ class AbstractDiracDistribution(AbstractDistributionType):
         :param d: Dirac locations as a numpy array.
         :param w: Weights of Dirac locations as a numpy array. If not provided, defaults to uniform weights.
         """
-        if w is None:
-            w = ones(d.shape[0]) / d.shape[0]
-
-        assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
         self.d = copy.copy(d)
-        self.w = copy.copy(w)
+        if w is None:
+            self.w = ones(d.shape[0]) / d.shape[0]
+        else:
+            assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
+            self.w = copy.copy(w)
         self.normalize_in_place()
 
     def normalize_in_place(self):
@@ -52,7 +54,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
         dist.normalize_in_place()
         return dist
 
-    def apply_function(self, f: Callable, f_supports_multiple: bool = True):
+    @beartype
+    def apply_function(self, f: Callable, function_is_vectorized: bool = True):
         """
         Apply a function to the Dirac locations and return a new distribution.
 
@@ -60,7 +63,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         :returns: A new distribution with the function applied to the locations.
         """
         dist = copy.deepcopy(self)
-        if f_supports_multiple:
+        if function_is_vectorized:
             dist.d = f(dist.d)
         else:
             dist.d = apply_along_axis(f, 1, dist.d)
@@ -68,13 +71,13 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
-        wNew = f(dist.d)
+        w_new = f(dist.d)
 
-        assert wNew.shape == dist.w.shape, "Function returned wrong output dimensions."
-        assert all(wNew >= 0), "All weights should be greater than or equal to 0."
-        assert sum(wNew) > 0, "The sum of all weights should be greater than 0."
+        assert w_new.shape == dist.w.shape, "Function returned wrong output dimensions."
+        assert all(w_new >= 0), "All weights should be greater than or equal to 0."
+        assert sum(w_new) > 0, "The sum of all weights should be greater than 0."
 
-        dist.w = wNew * dist.w
+        dist.w = w_new * dist.w
         dist.w = dist.w / sum(dist.w)
 
         return dist
