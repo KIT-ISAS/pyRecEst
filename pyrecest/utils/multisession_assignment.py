@@ -26,6 +26,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
     arange,
@@ -101,6 +103,25 @@ class MultiSessionAssignmentResult:
         """
 
         return tracks_to_session_labels(
+            self.tracks,
+            session_sizes=session_sizes,
+            fill_value=fill_value,
+        )
+
+    def to_index_matrix(
+        self,
+        session_sizes: SessionSizesInput | None = None,
+        *,
+        fill_value: int = -1,
+    ) -> np.ndarray:
+        """Convert the recovered tracks to a dense track-by-session index matrix.
+
+        Each row corresponds to one recovered track and each column corresponds
+        to one session. Entries store the detection index assigned to that track
+        in that session or ``fill_value`` if the track is absent.
+        """
+
+        return tracks_to_index_matrix(
             self.tracks,
             session_sizes=session_sizes,
             fill_value=fill_value,
@@ -336,6 +357,123 @@ def tracks_to_session_labels(
             labels[session_index][detection_index] = track_index
 
     return tuple(labels)
+
+
+def solve_multisession_assignment_from_similarity(
+    pairwise_similarities: PairwiseCostsInput,
+    session_sizes: SessionSizesInput | None = None,
+    *,
+    start_cost: float = 0.0,
+    end_cost: float = 0.0,
+    gap_penalty: float = 0.0,
+    similarity_threshold: float | None = None,
+) -> MultiSessionAssignmentResult:
+    """Recover globally consistent tracks from pairwise similarity matrices.
+
+    This convenience wrapper is intended for Track2p-style pipelines in which
+    pairwise ROI matchers naturally produce similarities, such as IoU or other
+    scores in ``[0, 1]``. Similarities are converted to costs via ``1 - s`` and
+    then passed to :func:`solve_multisession_assignment`.
+
+    Parameters
+    ----------
+    pairwise_similarities
+        Mapping or sequence of pairwise similarity matrices. It follows the same
+        layout conventions as ``pairwise_costs`` in
+        :func:`solve_multisession_assignment`.
+    session_sizes
+        Optional per-session detection counts.
+    start_cost
+        Penalty for starting a new track.
+    end_cost
+        Penalty for ending a track.
+    gap_penalty
+        Additional penalty applied per skipped session for non-consecutive
+        edges, exactly as in :func:`solve_multisession_assignment`.
+    similarity_threshold
+        Optional lower bound on admissible similarities. Pairs with smaller
+        similarity are forbidden.
+
+    Returns
+    -------
+    MultiSessionAssignmentResult
+        Globally optimal tracks and the selected directed edges.
+    """
+
+    normalized_similarities = _normalize_pairwise_costs(pairwise_similarities)
+    converted_costs: dict[tuple[int, int], np.ndarray] = {}
+
+    for key, similarity_matrix in normalized_similarities.items():
+        if not np.all(np.isfinite(np.asarray(similarity_matrix, dtype=float))):
+            raise ValueError("Similarity matrices must contain only finite values.")
+        cost_matrix = 1.0 - np.asarray(similarity_matrix, dtype=float)
+        if similarity_threshold is not None:
+            cost_matrix = cost_matrix.copy()
+            cost_matrix[np.asarray(similarity_matrix, dtype=float) < float(similarity_threshold)] = np.inf
+        converted_costs[key] = cost_matrix
+
+    return solve_multisession_assignment(
+        converted_costs,
+        session_sizes=session_sizes,
+        start_cost=start_cost,
+        end_cost=end_cost,
+        gap_penalty=gap_penalty,
+    )
+
+
+def tracks_to_index_matrix(
+    tracks: Sequence[TrackInput],
+    session_sizes: SessionSizesInput | None = None,
+    *,
+    fill_value: int = -1,
+) -> np.ndarray:
+    """Convert explicit tracks to a dense track-by-session index matrix.
+
+    Parameters
+    ----------
+    tracks
+        Sequence of track representations. Each track can either be a mapping
+        from session index to detection index or a sequence of
+        ``(session_index, detection_index)`` pairs.
+    session_sizes
+        Optional per-session detection counts. When provided, it determines the
+        number of session columns in the output. Otherwise the column count is
+        inferred from the maximum session index present in ``tracks``.
+    fill_value
+        Value used for sessions in which a track is not present.
+
+    Returns
+    -------
+    np.ndarray
+        Integer array of shape ``(n_tracks, n_sessions)``.
+    """
+
+    assert __backend_name__ != "jax", "Not supported on JAX backend"
+
+    normalized_sizes = _normalize_session_sizes(session_sizes)
+    max_session_index = max(normalized_sizes, default=-1)
+
+    normalized_tracks: list[list[Observation]] = []
+    for track in tracks:
+        items = _iter_track_items(track)
+        for session_index, _ in items:
+            max_session_index = max(max_session_index, int(session_index))
+        normalized_tracks.append(items)
+
+    if max_session_index < 0:
+        return full((len(tracks), 0), fill_value, dtype=int)
+
+    index_matrix = full(
+        (len(normalized_tracks), max_session_index + 1),
+        fill_value,
+        dtype=int,
+    )
+
+    for track_index, items in enumerate(normalized_tracks):
+        for session_index, detection_index in items:
+            index_matrix[track_index, session_index] = detection_index
+
+    return index_matrix
 
 
 def _validate_scalar_cost(name: str, value: float) -> None:
@@ -679,5 +817,7 @@ def _iter_track_items(track: TrackInput) -> list[Observation]:
 __all__ = [
     "MultiSessionAssignmentResult",
     "solve_multisession_assignment",
+    "solve_multisession_assignment_from_similarity",
+    "tracks_to_index_matrix",
     "tracks_to_session_labels",
 ]
