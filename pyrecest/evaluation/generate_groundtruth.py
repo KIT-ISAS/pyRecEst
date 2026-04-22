@@ -1,5 +1,3 @@
-import numpy as np
-
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import atleast_2d, empty_like, squeeze
 
@@ -28,7 +26,7 @@ def generate_groundtruth(simulation_param, x0=None):
     ), "Mismatch in number of targets."
 
     # Initialize ground truth
-    groundtruth = np.empty(simulation_param["n_timesteps"], dtype=object)
+    groundtruth = [None] * simulation_param["n_timesteps"]
 
     if "inputs" in simulation_param:
         assert (
