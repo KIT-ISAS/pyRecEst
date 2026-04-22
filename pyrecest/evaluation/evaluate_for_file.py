@@ -1,7 +1,8 @@
 import os
 from typing import Any
 
-import numpy as np
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, concatenate, load, ones, zeros
 
 from .evaluate_for_variables import evaluate_for_variables
 
@@ -22,13 +23,13 @@ def evaluate_for_file(
 ) -> tuple[
     dict,
     list[dict],
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray[np.ndarray],
+    Any,
+    Any,
+    Any,
+    Any,
+    Any,
 ]:
-    data = np.load(input_file_name, allow_pickle=True).item()
+    data = load(input_file_name, allow_pickle=True).item()
 
     if "name" not in scenario_config:
         scenario_config["name"] = os.path.splitext(os.path.basename(input_file_name))[0]
@@ -39,7 +40,7 @@ def evaluate_for_file(
     else:
         scenario_config["n_timesteps"] = data["groundtruths"].shape[1]
 
-    n_meas_at_individual_time_step = np.zeros(data["measurements"].shape[1], dtype=int)
+    n_meas_at_individual_time_step = zeros(data["measurements"].shape[1], dtype=int)
 
     for idx, inner_array in enumerate(data["measurements"][0]):
         if inner_array.ndim == 2:
@@ -52,8 +53,8 @@ def evaluate_for_file(
     )
     scenario_config.setdefault(
         "apply_sys_noise_times",
-        np.concatenate(
-            [np.ones(scenario_config["n_timesteps"] - 1, dtype=bool), [False]]
+        concatenate(
+            [ones(scenario_config["n_timesteps"] - 1, dtype=bool), array([False])]
         ),
     )
 
