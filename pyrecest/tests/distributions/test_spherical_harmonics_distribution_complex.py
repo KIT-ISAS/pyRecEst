@@ -1,7 +1,8 @@
 import unittest
-from math import pi
+import warnings
 
 import numpy.testing as npt
+import pyrecest
 import pyrecest.backend
 from parameterized import parameterized
 
@@ -18,6 +19,7 @@ from pyrecest.backend import (
     linspace,
     meshgrid,
     ones_like,
+    pi,
     random,
     sin,
     sqrt,
@@ -35,6 +37,10 @@ from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_
 )
 
 
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on the JAX backend",
+)
 class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def setUp(self):
         random.seed(1)
@@ -120,9 +126,11 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             ]
         )
         # First initialize and overwrite afterward to prevent normalization
-        shd = SphericalHarmonicsDistributionComplex(
-            array([[1.0, float("NaN"), float("NaN")], [0.0, 0.0, 0.0]])
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            shd = SphericalHarmonicsDistributionComplex(
+                array([[1.0, float("NaN"), float("NaN")], [0.0, 0.0, 0.0]])
+            )
         shd.coeff_mat = unnormalized_coeffs
         shd.transformation = transformation
         int_val_num = shd.integrate_numerically()
@@ -130,13 +138,16 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         npt.assert_almost_equal(int_val_ana, int_val_num)
 
     def test_truncation(self):
-        shd = SphericalHarmonicsDistributionComplex(self.unnormalized_coeffs)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            shd = SphericalHarmonicsDistributionComplex(self.unnormalized_coeffs)
 
         with self.assertWarns(UserWarning):
             shd2 = shd.truncate(4)
         self.assertEqual(shd2.coeff_mat.shape, (5, 9))
         self.assertTrue(all(isnan(shd2.coeff_mat[4, :]) | (shd2.coeff_mat[4, :] == 0)))
-        shd3 = shd.truncate(5)
+        with self.assertWarns(UserWarning):
+            shd3 = shd.truncate(5)
         self.assertEqual(shd3.coeff_mat.shape, (6, 11))
         self.assertTrue(
             all(
@@ -510,7 +521,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def test_basis_function(self, _, coeff_mat, expected_func):
         shd = SphericalHarmonicsDistributionComplex(1.0 / sqrt(4.0 * pi))
         shd.coeff_mat = coeff_mat
-        phi, theta = meshgrid(linspace(0.0, 2.0 * pi, 10), linspace(0.0, pi, 10))
+        phi, theta = meshgrid(
+            linspace(0.0, 2.0 * pi, 10), linspace(0.0, pi, 10), indexing="ij"
+        )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(
             shd.pdf(column_stack([x, y, z])), expected_func(x, y, z), atol=1e-6
@@ -763,7 +776,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     def test_basis_function_complex(self, name, coeff_mat, expected_func):
         shd = SphericalHarmonicsDistributionComplex(1 / sqrt(4 * pi), assert_real=False)
         shd.coeff_mat = coeff_mat
-        phi, theta = meshgrid(linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10))
+        phi, theta = meshgrid(
+            linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10), indexing="ij"
+        )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
 
         vals_to_test = shd.pdf(column_stack([x, y, z]))
@@ -1075,9 +1090,13 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         "Test not supported for this backend",
     )
     def test_conversion(self, _, coeff_mat):
-        shd = SphericalHarmonicsDistributionComplex(coeff_mat)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            shd = SphericalHarmonicsDistributionComplex(coeff_mat)
         rshd = shd.to_spherical_harmonics_distribution_real()
-        phi, theta = meshgrid(linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10))
+        phi, theta = meshgrid(
+            linspace(0.0, 2 * pi, 10), linspace(-pi / 2, pi / 2, 10), indexing="ij"
+        )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(
             rshd.pdf(column_stack((x, y, z))),
@@ -1177,7 +1196,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         "Test not supported for this backend",
     )
     def test_mean_direction(self, _, input_array, expected_output, fun_to_test):
-        shd = SphericalHarmonicsDistributionComplex(array(input_array))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            shd = SphericalHarmonicsDistributionComplex(array(input_array))
         npt.assert_allclose(fun_to_test(shd), expected_output, atol=1e-10)
 
     @unittest.skipIf(
@@ -1193,7 +1214,9 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
             dist, 3
         )
         phi, theta = meshgrid(
-            linspace(0.0, 2.0 * pi, 10), linspace(-pi / 2.0, pi / 2.0, 10)
+            linspace(0.0, 2.0 * pi, 10),
+            linspace(-pi / 2.0, pi / 2.0, 10),
+            indexing="ij",
         )
         x, y, z = AbstractSphericalDistribution.sph_to_cart(phi.ravel(), theta.ravel())
         npt.assert_allclose(shd.mean_direction(), dist.mean_direction(), atol=1e-10)
@@ -1225,9 +1248,11 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
     )
     def test_transformation_via_integral_shd(self):
         # Test approximating a spherical harmonic distribution
-        dist = SphericalHarmonicsDistributionComplex(
-            array([[1, float("NaN"), float("NaN")], [0.0, 1, 0]])
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            dist = SphericalHarmonicsDistributionComplex(
+                array([[1, float("NaN"), float("NaN")], [0.0, 1, 0]])
+            )
 
         shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
             dist.pdf, 1
@@ -1243,11 +1268,11 @@ class SphericalHarmonicsDistributionComplexTest(unittest.TestCase):
         dist = VonMisesFisherDistribution(array([0.0, -1.0, 0.0]), 1.0)
         diffs = zeros(len(orders))
 
-        for order in range(1, len(orders)+1):
+        for order in range(1, len(orders) + 1):
             shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
                 dist.pdf, order
             )
-            diffs[order-1] = shd.hellinger_distance_numerical(dist)
+            diffs[order - 1] = shd.hellinger_distance_numerical(dist)
         # Check if the deviation from true density is decreasing
         self.assertTrue(all(diff(diffs) < 0.0))
 

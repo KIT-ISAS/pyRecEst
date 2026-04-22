@@ -3,20 +3,24 @@ from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, ones_like, random, reshape, sum, vmap, vstack
+from pyrecest.backend import hstack, ndim, ones_like, random, sum, vmap, vstack
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
 
-from .abstract_filter_type import AbstractFilterType
+from .abstract_filter import AbstractFilter
 
 
-class AbstractParticleFilter(AbstractFilterType):
+class AbstractParticleFilter(AbstractFilter):
     def __init__(self, initial_filter_state=None):
-        AbstractFilterType.__init__(self, initial_filter_state)
+        AbstractFilter.__init__(self, initial_filter_state)
 
     def predict_identity(self, noise_distribution):
-        self.predict_nonlinear(f=lambda x: x, noise_distribution=noise_distribution)
+        self.predict_nonlinear(
+            f=lambda x: x,
+            noise_distribution=noise_distribution,
+            function_is_vectorized=True,
+        )
 
     def predict_nonlinear(
         self,
@@ -31,12 +35,15 @@ class AbstractParticleFilter(AbstractFilterType):
         )
 
         if function_is_vectorized:
-            self.filter_state.d = f(self.filter_state.d)
+            d_f_applied = f(self.filter_state.d)
         else:
             self.filter_state = self.filter_state.apply_function(f)
+            d_f_applied = self.filter_state.d
 
         n_particles = self.filter_state.w.shape[0]
-        if noise_distribution is not None:
+        if noise_distribution is None:
+            updated_particles = d_f_applied
+        else:
             # Cannot easily use vmap because control flow depends on data for some lower level function
             updated_particles = []
             for i in range(n_particles):
@@ -44,14 +51,17 @@ class AbstractParticleFilter(AbstractFilterType):
                     noise = noise_distribution.sample(
                         1
                     )  # Assuming sample(1) returns a single row of values
-                    updated_particles.append(self.filter_state.d[i] + noise)
+                    updated_particles.append(d_f_applied[i] + noise)
                 else:
-                    noise_curr = noise_distribution.set_mean(self.filter_state.d[i])
+                    noise_curr = noise_distribution.set_mean(d_f_applied[i])
                     updated_particles.append(noise_curr.sample(1))
 
-            self.filter_state.d = reshape(
-                vstack(updated_particles), self.filter_state.d.shape
-            )
+        if self.filter_state.dim == 1:
+            updated_particles = hstack(updated_particles)
+        else:
+            updated_particles = vstack(updated_particles)
+
+        self._filter_state.d = updated_particles
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
         assert (

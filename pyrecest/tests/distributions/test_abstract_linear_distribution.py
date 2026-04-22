@@ -14,12 +14,13 @@ from pyrecest.distributions import (
     GaussianDistribution,
 )
 
+matplotlib.pyplot.close("all")
 matplotlib.use("Agg")
 
 
 class TestAbstractLinearDistribution(unittest.TestCase):
     def setUp(self):
-        self.mu_2D = array([5.0, 1.0])
+        self.mu_2D = array([0.0, 0.0])
         self.C_2D = array([[2.0, 1.0], [1.0, 1.0]])
         self.mu_3D = array([1.0, 2.0, 3.0])
         self.C_3D = array([[1.1, 0.4, 0.0], [0.4, 0.9, 0.0], [0.0, 0.0, 1.0]])

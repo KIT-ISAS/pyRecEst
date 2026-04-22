@@ -1,5 +1,4 @@
 import copy
-from math import pi
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -15,6 +14,7 @@ from pyrecest.backend import (
     linalg,
     meshgrid,
     mod,
+    pi,
     random,
     stack,
     zeros,
@@ -37,7 +37,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         assert (
             C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1]
         ), "C must be of shape (dim, dim)"
-        assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        assert C.ndim == 0 or allclose(C, C.T, atol=1e-8), "C must be symmetric"
         assert (
             C.ndim == 0
             and C > 0.0

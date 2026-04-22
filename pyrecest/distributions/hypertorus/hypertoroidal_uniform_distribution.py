@@ -1,8 +1,7 @@
-from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import int32, int64, log, ndim, ones, prod, random, zeros
+from pyrecest.backend import int32, int64, log, ndim, ones, pi, prod, random, zeros
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -70,6 +69,9 @@ class HypertoroidalUniformDistribution(
         :returns: Sample of size n
         """
         return 2.0 * pi * random.uniform(size=(n, self.dim))
+
+    def get_manifold_size(self):
+        return (2.0 * pi) ** self.dim
 
     def shift(self, shift_by) -> "HypertoroidalUniformDistribution":
         """
