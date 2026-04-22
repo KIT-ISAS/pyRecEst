@@ -78,20 +78,18 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             -1, self.bound_dim
         )
 
-        # Keep evaluations in sample-major order so each contiguous block
-        # corresponds to all wrapping offsets of a single sample.
+        # reshape xs for broadcasting: repeat each row mesh.shape[0] times so that
+        # every xs[i] is paired with every mesh offset before moving to xs[i+1]
         xs_reshaped = repeat(
-            xs[:, : self.bound_dim], mesh.shape[0], axis=0  # noqa: E203
-        )
+            xs[:, : self.bound_dim], mesh.shape[0], axis=0
+        )  # noqa: E203
 
         # prepare data for wrapping (not applied to linear dimensions)
         xs_wrapped = xs_reshaped + tile(mesh, (xs.shape[0], 1))
         xs_wrapped = concatenate(
             [
                 xs_wrapped,
-                repeat(
-                    xs[:, self.bound_dim :], mesh.shape[0], axis=0  # noqa: E203
-                ),
+                repeat(xs[:, self.bound_dim :], mesh.shape[0], axis=0),  # noqa: E203
             ],
             axis=1,
         )

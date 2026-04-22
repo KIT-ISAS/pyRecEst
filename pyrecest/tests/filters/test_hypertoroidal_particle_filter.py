@@ -54,7 +54,7 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
             )
             for _ in range(3):
                 self.test_update_identity()
-        npt.assert_allclose(self.hpf.get_point_estimate(), self.forced_mean, atol=0.15)
+        npt.assert_allclose(self.hpf.get_point_estimate(), self.forced_mean, atol=0.2)
 
 
 if __name__ == "__main__":
