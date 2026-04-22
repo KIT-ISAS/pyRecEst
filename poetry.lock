@@ -101,27 +101,6 @@ files = [
 pycodestyle = ">=2.12.0"
 
 [[package]]
-name = "bayesian-filters"
-version = "1.4.5"
-description = "Kalman filtering and optimal estimation library"
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-files = [
-    {file = "bayesian_filters-1.4.5-py3-none-any.whl", hash = "sha256:6d9a6e019ad5166a4a12e95220a6dad1a9bd96b1a97ca4b7d363e061a7d8d1fb"},
-    {file = "bayesian_filters-1.4.5.tar.gz", hash = "sha256:93266955ed7ab08fb1180976d39861c5585bebce0cc6e32ed1eebf1c9f19cb0a"},
-]
-
-[package.dependencies]
-matplotlib = "*"
-numpy = "*"
-scipy = "*"
-
-[package.extras]
-dev = ["pytest (>=8.0.0)", "pytest-cov (>=4.0.0)"]
-docs = ["mkdocs (>=1.5.0)", "mkdocs-material (>=9.0.0)", "mkdocstrings[python] (>=0.24.0)"]
-
-[[package]]
 name = "beartype"
 version = "0.22.9"
 description = "Unbearably fast near-real-time pure-Python runtime-static type-checker."
@@ -2458,4 +2437,4 @@ pytorch-support = []
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.15"
-content-hash = "95d271bdbab3e1c9bfd4748593875e70face0f31da47d2482554aaec31c4bca7"
+content-hash = "5a6fa08ce413041f5c4f63478ca9631d01603e0514852dfe5d4f0fb06d3e810b"
