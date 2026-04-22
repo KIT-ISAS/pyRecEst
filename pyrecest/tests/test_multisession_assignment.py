@@ -1,6 +1,7 @@
 """Tests for global multi-session association."""
 
 import unittest
+from unittest.mock import patch
 
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
@@ -149,6 +150,61 @@ class TestMultiSessionAssignment(unittest.TestCase):
 
         self.assertEqual(self._canonical_tracks(result.tracks), [((0, 0),), ((1, 0),)])
         self.assertAlmostEqual(result.total_cost, 4.0)
+
+    def test_sparse_backend_matches_previous_linprog_backend(self):
+        rng = np.random.default_rng(42)
+        num_nodes = 12
+        all_pairs = [(left, right) for left in range(num_nodes) for right in range(num_nodes)]
+        selected_pairs = rng.choice(len(all_pairs), size=40, replace=False)
+
+        left_nodes = np.array([all_pairs[index][0] for index in selected_pairs], dtype=int)
+        right_nodes = np.array([all_pairs[index][1] for index in selected_pairs], dtype=int)
+        edge_gains = rng.uniform(0.1, 10.0, size=selected_pairs.size)
+
+        sparse_mask = multisession_assignment_module._solve_max_weight_matching(
+            left_nodes,
+            right_nodes,
+            edge_gains,
+            num_nodes,
+        )
+        linprog_mask = multisession_assignment_module._solve_max_weight_matching_via_linprog(
+            left_nodes,
+            right_nodes,
+            edge_gains,
+            num_nodes,
+        )
+
+        self._assert_valid_matching(sparse_mask, left_nodes, right_nodes)
+        self._assert_valid_matching(linprog_mask, left_nodes, right_nodes)
+        self.assertAlmostEqual(
+            float(edge_gains[sparse_mask].sum()),
+            float(edge_gains[linprog_mask].sum()),
+        )
+
+    def test_sparse_backend_falls_back_to_linprog_when_requested(self):
+        pairwise_costs = [
+            np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+            np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+        ]
+
+        with patch.object(
+            multisession_assignment_module,
+            "min_weight_full_bipartite_matching",
+            side_effect=ValueError("forced sparse-backend failure"),
+        ):
+            result = solve_multisession_assignment(
+                pairwise_costs,
+                start_cost=5.0,
+                end_cost=5.0,
+                cost_threshold=10.0,
+            )
+
+        expected_tracks = [
+            ((0, 0), (1, 0), (2, 0)),
+            ((0, 1), (1, 1), (2, 1)),
+        ]
+        self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
+        self.assertAlmostEqual(result.total_cost, 20.6)
 
 
 if __name__ == "__main__":
