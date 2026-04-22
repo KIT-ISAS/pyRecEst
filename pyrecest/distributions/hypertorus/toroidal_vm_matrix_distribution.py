@@ -24,6 +24,32 @@ from .abstract_toroidal_distribution import AbstractToroidalDistribution
 _2pi = 2.0 * pi
 
 
+def _initialize_toroidal_matrix_distribution(instance, mu, kappa, A):
+    """Initialize common state for bivariate toroidal matrix distributions."""
+    AbstractToroidalDistribution.__init__(instance)
+    assert mu.shape == (2,)
+    assert kappa.shape == (2,)
+    assert A.shape == (2, 2)
+    assert kappa[0] > 0
+    assert kappa[1] > 0
+
+    instance.mu = mod(mu, _2pi)
+    instance.kappa = kappa
+    instance.A = A
+
+
+def _matrix_parameters_and_concentrations(instance):
+    """Return A entries and kappa values in a fixed order."""
+    return (
+        instance.A[0, 0],
+        instance.A[0, 1],
+        instance.A[1, 0],
+        instance.A[1, 1],
+        instance.kappa[0],
+        instance.kappa[1],
+    )
+
+
 class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
     """Bivariate von Mises distribution, matrix version.
 
@@ -35,16 +61,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
     """
 
     def __init__(self, mu, kappa, A):
-        AbstractToroidalDistribution.__init__(self)
-        assert mu.shape == (2,)
-        assert kappa.shape == (2,)
-        assert A.shape == (2, 2)
-        assert kappa[0] > 0
-        assert kappa[1] > 0
-
-        self.mu = mod(mu, _2pi)
-        self.kappa = kappa
-        self.A = A
+        _initialize_toroidal_matrix_distribution(self, mu, kappa, A)
 
         use_numerical = kappa[0] > 1.5 or kappa[1] > 1.5 or max(abs(A)) > 1.0
 
@@ -77,12 +94,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
 
     def _norm_const_approx(self, n=8):
         """Approximate normalization constant using Taylor series (up to n=8 summands)."""
-        a11 = self.A[0, 0]
-        a12 = self.A[0, 1]
-        a21 = self.A[1, 0]
-        a22 = self.A[1, 1]
-        k1 = self.kappa[0]
-        k2 = self.kappa[1]
+        a11, a12, a21, a22, k1, k2 = _matrix_parameters_and_concentrations(self)
         pi_f = pi
 
         total = 4 * pi_f**2  # n=0 term
@@ -294,10 +306,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         mu_d = self.mu[dimension]
         k_d = self.kappa[dimension]
         k_o = self.kappa[other]
-        a11 = self.A[0, 0]
-        a12 = self.A[0, 1]
-        a21 = self.A[1, 0]
-        a22 = self.A[1, 1]
+        a11, a12, a21, a22, _, _ = _matrix_parameters_and_concentrations(self)
         C_val = self.C
 
         if dimension == 0:
