@@ -1,5 +1,4 @@
 import copy
-from math import pi
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -19,6 +18,7 @@ from pyrecest.backend import (
     isnan,
     linalg,
     ndim,
+    pi,
     sin,
     sinh,
     zeros,
@@ -32,6 +32,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def __init__(self, mu, kappa):
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6
+        assert mu.ndim == 1, "mu must be a vector"
         assert (
             mu.shape[0] >= 2
         ), "mu must be at least two-dimensional for the circular case"
@@ -51,7 +52,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def pdf(self, xs):
         assert xs.shape[-1] == self.input_dim
 
-        return self.C * exp(self.kappa * self.mu.T @ xs.T)
+        return self.C * exp(self.kappa * xs @ self.mu)
 
     def mean_direction(self):
         return self.mu
@@ -130,7 +131,10 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return self.mu
 
     def set_mean(self, new_mean):
-        self.set_mode(new_mean)
+        assert new_mean.shape == self.mu.shape
+        dist = self
+        dist.mu = copy.deepcopy(new_mean)
+        return dist
 
     def set_mode(self, new_mode):
         assert new_mode.shape == self.mu.shape

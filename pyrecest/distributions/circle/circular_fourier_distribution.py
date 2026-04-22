@@ -1,5 +1,4 @@
 import warnings
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -19,6 +18,7 @@ from pyrecest.backend import (
     int32,
     int64,
     linspace,
+    pi,
     real,
     sin,
     sqrt,
@@ -100,12 +100,10 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             cNew = self.c - other.c
             fdNew = CircularFourierDistribution(
                 c=cNew,
+                n=self.n,
                 transformation=self.transformation,
                 multiplied_by_n=self.multiplied_by_n,
             )
-        fdNew.n = (
-            self.n
-        )  # The number should not change! We store it if we use a complex one now and set it to None if we falsely believe we know the number (it is not clear for complex ones)
         return fdNew
 
     def pdf(self, xs):

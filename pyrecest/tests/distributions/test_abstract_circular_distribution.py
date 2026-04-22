@@ -1,11 +1,10 @@
 import unittest
-from math import pi
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, arange, array
+from pyrecest.backend import allclose, arange, array, pi
 from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
 
 
@@ -61,7 +60,7 @@ class AbstractCircularDistributionTest(unittest.TestCase):
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
-    def test_integral_numerical(self):
+    def test_integrate_numerically(self):
         """Tests if the numerical computation of integral matches the actual integral."""
         intervals = [
             (2.0, 2.0),

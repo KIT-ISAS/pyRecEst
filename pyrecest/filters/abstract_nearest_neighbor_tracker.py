@@ -9,9 +9,9 @@ import pyrecest.backend
 from pyrecest.backend import dstack, ndim, stack
 from pyrecest.distributions import GaussianDistribution
 
-from .abstract_euclidean_filter import AbstractEuclideanFilter
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .kalman_filter import KalmanFilter
+from .manifold_mixins import EuclideanFilterMixin
 
 
 class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
@@ -28,7 +28,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         self.association_param = association_param or {}
 
         if initial_prior is not None:
-            self.state = initial_prior
+            self.filter_state = initial_prior
         else:
             self._filter_state = None
 
@@ -62,7 +62,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
     @filter_state.setter
     def filter_state(self, new_state):
         if isinstance(new_state, list) and all(
-            isinstance(item, AbstractEuclideanFilter) for item in new_state
+            isinstance(item, EuclideanFilterMixin) for item in new_state
         ):
             assert all(
                 id(new_state[i]) != id(new_state[j])
@@ -75,7 +75,6 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
                 KalmanFilter(filter_state) for filter_state in new_state
             ]
 
-        # pylint: disable=E1101
         if self.log_prior_estimates:
             self.store_prior_estimates()
 
@@ -97,7 +96,6 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         curr_input = inputs
 
         for i in range(self.get_number_of_targets()):
-            # Overwrite if different for each track
             if system_matrices is not None and ndim(system_matrices) == 3:
                 curr_sys_matrix = system_matrices[:, :, i]
             if sys_noises is not None and ndim(sys_noises) == 3:
@@ -109,11 +107,16 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
                 curr_sys_matrix, curr_sys_noise, curr_input
             )
 
-        # pylint: disable=E1101
         if self.log_prior_estimates:
             self.store_prior_estimates()
 
-    def update_linear(self, measurements, measurement_matrix, covMatsMeas):
+    def update_linear(
+        self,
+        measurements,
+        measurement_matrix,
+        covMatsMeas,
+        pairwise_cost_matrix=None,
+    ):
         assert (
             pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
@@ -125,19 +128,28 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             and measurement_matrix.shape[1]
             == self.filter_bank[0].get_point_estimate().shape[0]
         ), "Dimensions of measurement matrix must match state and measurement dimensions."
-        association = self.find_association(
-            measurements, measurement_matrix, covMatsMeas
-        )
+
+        if pairwise_cost_matrix is None:
+            association = self.find_association(
+                measurements, measurement_matrix, covMatsMeas
+            )
+        else:
+            if not hasattr(self, "find_association_from_cost_matrix"):
+                raise NotImplementedError(
+                    "This tracker does not support pairwise_cost_matrix."
+                )
+            association = self.find_association_from_cost_matrix(
+                pairwise_cost_matrix
+            )
 
         currMeasCov = covMatsMeas
         for i in range(self.get_number_of_targets()):
-            if association[i] <= measurements.shape[1]:
+            if association[i] < measurements.shape[1]:
                 if covMatsMeas.ndim != 2:
                     currMeasCov = covMatsMeas[:, :, association[i]]
                 self.filter_bank[i].update_linear(
                     measurements[:, association[i]], measurement_matrix, currMeasCov
                 )
-        # pylint: disable=E1101
         if self.log_posterior_estimates:
             self.store_posterior_estimates()
 

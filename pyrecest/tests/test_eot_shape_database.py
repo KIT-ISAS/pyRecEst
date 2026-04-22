@@ -56,7 +56,6 @@ class TestCross(unittest.TestCase):
 
 
 class TestStarfish(unittest.TestCase):
-    @classmethod
     def setUp(self):
         self.starfish = StarFish()
         # self.starfish_kernel = self.starfish.compute_kernel()
