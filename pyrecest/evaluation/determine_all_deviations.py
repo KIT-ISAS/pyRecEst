@@ -2,6 +2,7 @@ import warnings
 
 from beartype import beartype
 from beartype.typing import Callable
+import pyrecest.backend
 from pyrecest.backend import any, empty, is_array, isinf, sum
 
 
@@ -13,6 +14,10 @@ def determine_all_deviations(
     groundtruths,
     mean_calculation_symm: str = "",
 ):
+    assert (
+        pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
+    ), "Not supported for the JAX backend."
+
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
