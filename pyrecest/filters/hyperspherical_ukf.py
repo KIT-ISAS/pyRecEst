@@ -13,11 +13,10 @@ Ported from the MATLAB libDirectional library:
 # pylint: disable=no-name-in-module,no-member,duplicate-code
 from typing import Callable
 
-import numpy as np
 import pyrecest.backend
 from bayesian_filters.kalman import MerweScaledSigmaPoints
 from bayesian_filters.kalman import UnscentedKalmanFilter as BayesianFiltersUKF
-from pyrecest.backend import array
+from pyrecest.backend import all, array, asarray, empty, eye, linalg, zeros
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
@@ -50,9 +49,9 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
         self._alpha = alpha
         self._beta = beta
         self._kappa = kappa
-        mu0 = np.zeros(dim)
+        mu0 = zeros(dim)
         mu0[0] = 1.0
-        initial_state = GaussianDistribution(array(mu0), array(np.eye(dim)))
+        initial_state = GaussianDistribution(array(mu0), array(eye(dim)))
         HypersphericalFilterMixin.__init__(self)
         AbstractFilter.__init__(self, initial_state)
 
@@ -87,13 +86,13 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
         ukf = BayesianFiltersUKF(
             dim_x=dim_x, dim_z=dim_z, dt=1.0, hx=hx, fx=fx, points=points
         )
-        ukf.x = np.asarray(self._filter_state.mu, dtype=float).flatten().copy()
-        ukf.P = np.asarray(self._filter_state.C, dtype=float).copy()
+        ukf.x = asarray(self._filter_state.mu, dtype=float).flatten().copy()
+        ukf.P = asarray(self._filter_state.C, dtype=float).copy()
         return ukf
 
     @staticmethod
-    def _normalize(x: np.ndarray) -> np.ndarray:
-        n = np.linalg.norm(x)
+    def _normalize(x):
+        n = linalg.norm(x)
         if n == 0.0:
             raise ValueError("Mean is zero; normalization failed.")
         return x / n
@@ -122,12 +121,12 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
         if not isinstance(gauss_sys, GaussianDistribution):
             gauss_sys = GaussianDistribution.from_distribution(gauss_sys)
 
-        Q = np.asarray(gauss_sys.C, dtype=float)
+        Q = asarray(gauss_sys.C, dtype=float)
         dim_x = self._filter_state.dim
 
         def _fx(x, _dt):
             x_unit = self._normalize(x)
-            y = np.asarray(f(array(x_unit)), dtype=float).flatten()
+            y = asarray(f(array(x_unit)), dtype=float).flatten()
             return self._normalize(y)
 
         ukf = self._build_ukf(dim_x, dim_x, _fx, lambda x: x)
@@ -163,29 +162,29 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
             "jax",
         ), "Not supported on this backend"
 
-        noise_samples = np.asarray(noise_samples, dtype=float)
-        noise_weights = np.asarray(noise_weights, dtype=float).flatten()
+        noise_samples = asarray(noise_samples, dtype=float)
+        noise_weights = asarray(noise_weights, dtype=float).flatten()
         assert noise_samples.shape[1] == noise_weights.shape[0]
-        assert np.all(noise_weights > 0)
+        assert all(noise_weights > 0)
         noise_weights = noise_weights / noise_weights.sum()
 
-        mu = np.asarray(self._filter_state.mu, dtype=float).flatten()
-        C = np.asarray(self._filter_state.C, dtype=float)
+        mu = asarray(self._filter_state.mu, dtype=float).flatten()
+        C = asarray(self._filter_state.C, dtype=float)
         dim_x = mu.shape[0]
 
         points = self._make_sigma_points(dim_x)
         sigmas = points.sigma_points(mu, C)  # shape: (2*dim_x+1, dim_x)
-        state_weights = np.asarray(points.Wm, dtype=float)
+        state_weights = asarray(points.Wm, dtype=float)
 
         n_sigmas = sigmas.shape[0]
         n_noise = noise_samples.shape[1]
 
-        new_samples = np.empty((dim_x, n_sigmas * n_noise))
-        new_weights = np.empty(n_sigmas * n_noise)
+        new_samples = empty((dim_x, n_sigmas * n_noise))
+        new_weights = empty(n_sigmas * n_noise)
         k = 0
         for i in range(n_sigmas):
             for j in range(n_noise):
-                x_new = np.asarray(
+                x_new = asarray(
                     f(array(sigmas[i]), array(noise_samples[:, j])),
                     dtype=float,
                 ).flatten()
@@ -196,9 +195,9 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
         new_weights = new_weights / new_weights.sum()
 
         # Weighted mean and covariance
-        predicted_mean = (new_samples * new_weights[np.newaxis, :]).sum(axis=1)
-        diff = new_samples - predicted_mean[:, np.newaxis]
-        predicted_cov = (diff * new_weights[np.newaxis, :]) @ diff.T
+        predicted_mean = (new_samples * new_weights[None, :]).sum(axis=1)
+        diff = new_samples - predicted_mean[:, None]
+        predicted_cov = (diff * new_weights[None, :]) @ diff.T
 
         predicted_mean = self._normalize(predicted_mean)
         self._filter_state = GaussianDistribution(
@@ -243,17 +242,17 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
         if not isinstance(gauss_meas, GaussianDistribution):
             gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
 
-        z_np = np.asarray(z, dtype=float).flatten()
+        z_np = asarray(z, dtype=float).flatten()
         dim_z = z_np.shape[0]
         dim_x = self._filter_state.dim
-        R = np.asarray(gauss_meas.C, dtype=float)
+        R = asarray(gauss_meas.C, dtype=float)
 
         def _hx(x):
             x_unit = self._normalize(x)
-            return np.asarray(f(array(x_unit)), dtype=float).flatten()
+            return asarray(f(array(x_unit)), dtype=float).flatten()
 
         ukf = self._build_ukf(dim_x, dim_z, lambda x, _dt: x, _hx)
-        ukf.Q = np.zeros((dim_x, dim_x))
+        ukf.Q = zeros((dim_x, dim_x))
         ukf.R = R
         ukf.predict()
         ukf.update(z_np)
