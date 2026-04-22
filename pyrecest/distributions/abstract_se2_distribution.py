@@ -6,6 +6,7 @@ from pyrecest.backend import (
     array,
     column_stack,
     cos,
+    full,
     hstack,
     linalg,
     linspace,
@@ -129,8 +130,6 @@ class AbstractSE2Distribution(AbstractHypercylindricalDistribution):
         angle_color=None,
         fade=False,
     ):
-        import numpy as _np
-
         lin_states = lin_states.T
         if pos_color is None:
             pos_color = [0.4660, 0.6740, 0.1880]
@@ -144,21 +143,21 @@ class AbstractSE2Distribution(AbstractHypercylindricalDistribution):
 
         if fade:
             rgbtmp = pos_color
-            r_range_pos = _np.linspace(rgbtmp[0], 1, lin_states.shape[1] + 1)
-            g_range_pos = _np.linspace(rgbtmp[1], 1, lin_states.shape[1] + 1)
-            b_range_pos = _np.linspace(rgbtmp[2], 1, lin_states.shape[1] + 1)
+            r_range_pos = linspace(rgbtmp[0], 1, lin_states.shape[1] + 1)
+            g_range_pos = linspace(rgbtmp[1], 1, lin_states.shape[1] + 1)
+            b_range_pos = linspace(rgbtmp[2], 1, lin_states.shape[1] + 1)
             rgbtmp = angle_color
-            r_range_angle = _np.linspace(rgbtmp[0], 1, lin_states.shape[1] + 1)
-            g_range_angle = _np.linspace(rgbtmp[1], 1, lin_states.shape[1] + 1)
-            b_range_angle = _np.linspace(rgbtmp[2], 1, lin_states.shape[1] + 1)
+            r_range_angle = linspace(rgbtmp[0], 1, lin_states.shape[1] + 1)
+            g_range_angle = linspace(rgbtmp[1], 1, lin_states.shape[1] + 1)
+            b_range_angle = linspace(rgbtmp[2], 1, lin_states.shape[1] + 1)
         else:
-            r_range_pos = _np.full(lin_states.shape[1] + 1, pos_color[0])
-            g_range_pos = _np.full(lin_states.shape[1] + 1, pos_color[1])
-            b_range_pos = _np.full(lin_states.shape[1] + 1, pos_color[2])
+            r_range_pos = full(lin_states.shape[1] + 1, pos_color[0])
+            g_range_pos = full(lin_states.shape[1] + 1, pos_color[1])
+            b_range_pos = full(lin_states.shape[1] + 1, pos_color[2])
 
-            r_range_angle = _np.full(lin_states.shape[1] + 1, angle_color[0])
-            g_range_angle = _np.full(lin_states.shape[1] + 1, angle_color[1])
-            b_range_angle = _np.full(lin_states.shape[1] + 1, angle_color[2])
+            r_range_angle = full(lin_states.shape[1] + 1, angle_color[0])
+            g_range_angle = full(lin_states.shape[1] + 1, angle_color[1])
+            b_range_angle = full(lin_states.shape[1] + 1, angle_color[2])
         h = []
         for i in range(lin_states.shape[1]):
             if arrow_scaling != 0:
