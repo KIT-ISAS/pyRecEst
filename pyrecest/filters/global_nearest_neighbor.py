@@ -2,7 +2,7 @@
 import warnings
 
 import pyrecest.backend
-from pyrecest.backend import all, empty, full, repeat, squeeze, stack
+from pyrecest.backend import all, any, empty, full, repeat, squeeze, stack
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
@@ -206,8 +206,9 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         association = col_ind[:n_targets]
 
         if warn_on_no_meas_for_track and any(association >= n_meas):
-            print(
-                "GNN: No measurement was within gating threshold for at least one target."
+            warnings.warn(
+                "GNN: No measurement was within gating threshold for at least one target.",
+                stacklevel=2,
             )
 
         return association
@@ -230,9 +231,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             measurement_matrix.shape[0] == measurements.shape[0]
             and measurement_matrix.shape[1]
             == self.filter_bank[0].get_point_estimate().shape[0]
-        ), (
-            "Dimensions of measurement matrix must match state and measurement dimensions."
-        )
+        ), "Dimensions of measurement matrix must match state and measurement dimensions."
         association = self.find_association(
             measurements,
             measurement_matrix,

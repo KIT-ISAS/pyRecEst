@@ -3,7 +3,7 @@ name = "pyrecest"
 description = "Framework for recursive Bayesian estimation in Python."
 readme = "README.md"
 authors = ["Florian Pfaff <pfaff@ias.uni-stuttgart.de>"]
-version = "1.0.1"
+version = "1.0.2"
  
 [tool.poetry.dependencies]
 python = ">=3.11,<3.15"
@@ -11,7 +11,6 @@ numpy = "*"
 scipy = "^1.17.1"
 matplotlib = "*"
 mpmath = "*"
-bayesian-filters = "*"
 pyshtools = "*"
 beartype = "*"
 shapely = "*"
@@ -39,7 +38,6 @@ line-length = 180
 
 [tool.pytest.ini_options]
 filterwarnings = [
-    "ignore::DeprecationWarning:bayesian_filters.*",
     "ignore::DeprecationWarning:mpmath.*",
     "ignore::scipy.optimize.OptimizeWarning",
 ]
@@ -61,6 +59,7 @@ disable = [
   "use-symbolic-message-instead",
   "C",
   "W0221",
+  "redefined-builtin",
   "cyclic-import",
 ]
 
