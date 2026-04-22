@@ -21,27 +21,25 @@ import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     any,
-    array_equal,
     asarray,
     concatenate,
     eye,
     full,
-    int64,
     linalg,
     ones,
     quantile,
     sqrt,
     sum,
-    where,
     zeros,
 )
 
 from ._point_set_registration_common import (
+    RegistrationLoopCallbacks,
+    RegistrationLoopConfig,
     RegistrationResultBase,
     as_point_array as _as_point_array,
     build_registration_result,
-    default_cost,
-    evaluate_registration_costs,
+    run_registration_loop,
     solve_gated_assignment,
     validate_pair as _validate_pair,
 )
@@ -177,7 +175,9 @@ def estimate_transform(  # pylint: disable=too-many-locals
         source_centered = source - source_centroid
         target_centered = target - target_centroid
         covariance = (normalized_weights[:, None] * source_centered).T @ target_centered
-        left_singular_vectors, _, right_singular_vectors_transposed = linalg.svd(covariance)
+        left_singular_vectors, _, right_singular_vectors_transposed = linalg.svd(
+            covariance
+        )
         rotation = right_singular_vectors_transposed.T @ left_singular_vectors.T
         if linalg.det(rotation) < 0.0 and not allow_reflection:
             right_singular_vectors_transposed[-1, :] *= -1.0
@@ -278,7 +278,12 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
             allow_reflection=allow_reflection,
         )
 
-    def _compute_change(previous_transform, updated_transform, _reference, _transformed_reference):
+    def _compute_change(
+        previous_transform,
+        updated_transform,
+        _reference,
+        _transformed_reference,
+    ):
         return max(
             float(linalg.norm(updated_transform.matrix - previous_transform.matrix)),
             float(linalg.norm(updated_transform.offset - previous_transform.offset)),
