@@ -1,21 +1,24 @@
 import warnings
 
-import numpy as np
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
+    any,
     arange,
     array,
     ceil,
+    fft,
     floor,
     isclose,
     linspace,
+    maximum,
     mod,
     pi,
+    real,
     round,
     sin,
     sqrt,
     sum,
+    tile,
     where,
 )
 
@@ -75,10 +78,10 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
             r = arange(-lower, upper)
             sinc_vals = matlab_sinc((xs / step_size)[:, None] - r[None, :])
             if self.enforce_pdf_nonnegative:
-                coeffs = np.tile(sqrt(self.grid_values), sinc_repetitions)
+                coeffs = tile(sqrt(self.grid_values), sinc_repetitions)
                 p = sum(coeffs * sinc_vals, axis=1) ** 2
             else:
-                coeffs = np.tile(self.grid_values, sinc_repetitions)
+                coeffs = tile(self.grid_values, sinc_repetitions)
                 p = sum(coeffs * sinc_vals, axis=1)
             return p
         else:
@@ -94,16 +97,16 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 fd_to_conv = distribution.truncate(no_of_gridpoints)
-            c_shifted = np.fft.ifftshift(fd_to_conv.c)
-            vals_on_grid = np.real(np.fft.ifft(c_shifted)) * (
+            c_shifted = fft.ifftshift(fd_to_conv.c)
+            vals_on_grid = real(fft.ifftn(c_shifted)) * (
                 len(fd_to_conv.a) + len(fd_to_conv.b)
             )
             if fd_to_conv.transformation == "identity":
-                if np.any(vals_on_grid < 0):
+                if any(vals_on_grid < 0):
                     warnings.warn(
                         "Negative values occurred. Increasing them to 0."
                     )
-                    vals_on_grid = np.maximum(vals_on_grid, 0)
+                    vals_on_grid = maximum(vals_on_grid, 0)
             elif fd_to_conv.transformation == "sqrt":
                 vals_on_grid = vals_on_grid ** 2
             else:
