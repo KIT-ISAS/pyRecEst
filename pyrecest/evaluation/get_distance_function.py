@@ -1,5 +1,4 @@
-import numpy as np
-from numpy.linalg import norm
+from pyrecest.backend import arccos, dot, linalg
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 
 
@@ -12,40 +11,42 @@ def get_distance_function(
     if "circle" in manifold_name or "hypertorus" in manifold_name:
 
         def distance_function(xest, xtrue):
-            return norm(AbstractHypertoroidalDistribution.angular_error(xest, xtrue))
+            return linalg.norm(
+                AbstractHypertoroidalDistribution.angular_error(xest, xtrue)
+            )
 
     elif "hypersphere" in manifold_name:
 
         def distance_function(x1, x2):
-            return np.arccos(np.dot(x1, x2))
+            return arccos(dot(x1, x2))
 
     elif "hypersphereSymmetric" in manifold_name:
 
         def distance_function(x1, x2):
-            return min(np.arccos(np.dot(x1, x2)), np.arccos(np.dot(x1, -x2)))
+            return min(arccos(dot(x1, x2)), arccos(dot(x1, -x2)))
 
     elif "se2" in manifold_name or "se2linear" in manifold_name:
 
         def distance_function(x1, x2):
-            return norm(x1[1:3, :] - x2[1:3, :])
+            return linalg.norm(x1[1:3, :] - x2[1:3, :])
 
     elif "se2bounded" in manifold_name:
 
         def distance_function(xest, xtrue):
-            return norm(
+            return linalg.norm(
                 AbstractHypertoroidalDistribution.angular_error(xest[0, :], xtrue[0, :])
             )
 
     elif "se3" in manifold_name or "se3linear" in manifold_name:
 
         def distance_function(x1, x2):
-            return norm(x1[4:7, :] - x2[4:7, :])
+            return linalg.norm(x1[4:7, :] - x2[4:7, :])
 
     elif "se3bounded" in manifold_name:
 
         def distance_function(x1, x2):
             return min(
-                np.arccos(np.dot(x1[:4], x2[:4])), np.arccos(np.dot(x1[:4], -x2[:4]))
+                arccos(dot(x1[:4], x2[:4])), arccos(dot(x1[:4], -x2[:4]))
             )
 
     elif (
@@ -53,7 +54,7 @@ def get_distance_function(
     ) and "MTT" not in manifold_name:
 
         def distance_function(x1, x2):
-            return norm(x1 - x2)
+            return linalg.norm(x1 - x2)
 
     elif (
         "euclidean" in manifold_name or "Euclidean" in manifold_name
