@@ -270,66 +270,35 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
     elif initial_transform.dim != dim:
         raise ValueError("initial_transform dimension must match the point dimension.")
 
-    transform = initial_transform
-    assignment = zeros((reference.shape[0],), dtype=int64) - 1
-    converged = False
-    iteration = 0
-    association_cost = default_cost if cost_function is None else cost_function
-
-    for iteration in range(1, max_iterations + 1):
-        transformed_reference, current_costs = evaluate_registration_costs(
-            transform,
-            reference,
-            moving,
-            association_cost,
-        )
-
-        new_assignment = solve_gated_assignment(current_costs, max_cost=max_cost)
-        matched_reference_indices = where(new_assignment >= 0)[0]
-        if len(matched_reference_indices) < min_matches:
-            assignment = new_assignment
-            return build_registration_result(
-                RegistrationResult,
-                transform=transform,
-                assignment=assignment,
-                transformed_reference_points=transformed_reference,
-                costs=current_costs,
-                iteration=iteration,
-                converged=False,
-            )
-
-        matched_moving_indices = new_assignment[matched_reference_indices]
-        updated_transform = estimate_transform(
-            reference[matched_reference_indices],
-            moving[matched_moving_indices],
+    def _fit_transform(matched_reference, matched_moving):
+        return estimate_transform(
+            matched_reference,
+            matched_moving,
             model=model,
             allow_reflection=allow_reflection,
         )
 
-        parameter_change = max(
-            float(linalg.norm(updated_transform.matrix - transform.matrix)),
-            float(linalg.norm(updated_transform.offset - transform.offset)),
+    def _compute_change(previous_transform, updated_transform, _reference, _transformed_reference):
+        return max(
+            float(linalg.norm(updated_transform.matrix - previous_transform.matrix)),
+            float(linalg.norm(updated_transform.offset - previous_transform.offset)),
         )
-        same_assignment = bool(array_equal(new_assignment, assignment))
-        transform = updated_transform
-        assignment = new_assignment
 
-        if same_assignment and parameter_change <= tolerance:
-            converged = True
-            break
-
-    transformed_reference, final_costs = evaluate_registration_costs(
-        transform,
+    loop_state = run_registration_loop(
         reference,
         moving,
-        association_cost,
+        initial_transform,
+        RegistrationLoopConfig(
+            max_cost=max_cost,
+            cost_function=cost_function,
+            max_iterations=max_iterations,
+            min_matches=min_matches,
+            tolerance=tolerance,
+        ),
+        RegistrationLoopCallbacks(
+            fit_transform=_fit_transform,
+            compute_change=_compute_change,
+            assignment_solver=solve_gated_assignment,
+        ),
     )
-    return build_registration_result(
-        RegistrationResult,
-        transform=transform,
-        assignment=assignment,
-        transformed_reference_points=transformed_reference,
-        costs=final_costs,
-        iteration=iteration,
-        converged=converged,
-    )
+    return build_registration_result(RegistrationResult, loop_state)
