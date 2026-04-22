@@ -25,8 +25,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
 
-import numpy as np
-from pyrecest.backend import empty, stack
+from pyrecest.backend import asarray, empty, full, isfinite, isscalar, stack, to_numpy
 from pyrecest.distributions import GaussianDistribution
 from scipy.optimize import linear_sum_assignment
 
@@ -40,7 +39,8 @@ InitiatorFn = Callable[..., AbstractFilter]
 AssociatorFn = Callable[..., "AssociationResult"]
 TrackPredicateFn = Callable[["Track"], bool]
 TrackMetadataInitializerFn = Callable[..., Optional[Dict[str, Any]]]
-CostMatrixBuilderFn = Callable[..., np.ndarray]
+ArrayLike = Any
+CostMatrixBuilderFn = Callable[..., ArrayLike]
 
 
 class TrackStatus(str, Enum):
@@ -107,7 +107,7 @@ class AssociationResult:
     matches: List[Tuple[int, int]] = field(default_factory=list)
     unmatched_track_indices: Optional[List[int]] = None
     unmatched_measurement_indices: Optional[List[int]] = None
-    cost_matrix: Optional[np.ndarray] = None
+    cost_matrix: Optional[ArrayLike] = None
 
 
 @dataclass
@@ -649,7 +649,7 @@ class TrackManager(
 
 
 def solve_global_nearest_neighbor(  # pylint: disable=too-many-locals
-    cost_matrix: np.ndarray,
+    cost_matrix: ArrayLike,
     unassigned_track_cost: Any,
     unassigned_measurement_cost: Optional[Any] = None,
     invalid_cost: float = 1e12,
@@ -676,7 +676,7 @@ def solve_global_nearest_neighbor(  # pylint: disable=too-many-locals
         non-zero dummy-dummy cost to reproduce their historic gating semantics.
     """
 
-    matrix = np.asarray(cost_matrix, dtype=float)
+    matrix = asarray(cost_matrix, dtype=float)
     if matrix.ndim != 2:
         raise ValueError("cost_matrix must be two-dimensional")
 
@@ -711,9 +711,9 @@ def solve_global_nearest_neighbor(  # pylint: disable=too-many-locals
     )
 
     finite_matrix = matrix.copy()
-    finite_matrix[~np.isfinite(finite_matrix)] = float(invalid_cost)
+    finite_matrix[~isfinite(finite_matrix)] = float(invalid_cost)
 
-    augmented_cost = np.full(
+    augmented_cost = full(
         (num_tracks + num_measurements, num_measurements + num_tracks),
         float(invalid_cost),
     )
@@ -731,7 +731,7 @@ def solve_global_nearest_neighbor(  # pylint: disable=too-many-locals
 
     augmented_cost[num_tracks:, num_measurements:] = float(dummy_dummy_cost)
 
-    row_ind, col_ind = linear_sum_assignment(augmented_cost)
+    row_ind, col_ind = linear_sum_assignment(to_numpy(augmented_cost))
 
     matches: List[Tuple[int, int]] = []
     unmatched_track_indices: List[int] = []
@@ -797,15 +797,15 @@ def build_global_nearest_neighbor_associator(
 
 
 def build_linear_gaussian_predictor(
-    system_matrix: np.ndarray,
-    sys_noise_cov: np.ndarray,
-    sys_input: Optional[np.ndarray] = None,
+    system_matrix: ArrayLike,
+    sys_noise_cov: ArrayLike,
+    sys_input: Optional[ArrayLike] = None,
 ) -> PredictorFn:
     """Create a linear/Gaussian prediction hook for filters supporting it."""
 
-    system_matrix = np.asarray(system_matrix)
-    sys_noise_cov = np.asarray(sys_noise_cov)
-    sys_input_array = None if sys_input is None else np.asarray(sys_input)
+    system_matrix = asarray(system_matrix)
+    sys_noise_cov = asarray(sys_noise_cov)
+    sys_input_array = None if sys_input is None else asarray(sys_input)
 
     def predictor(track: Track, **kwargs) -> None:
         current_system_matrix = kwargs.get("system_matrix", system_matrix)
@@ -821,19 +821,19 @@ def build_linear_gaussian_predictor(
 
 
 def build_linear_gaussian_updater(
-    measurement_matrix: np.ndarray,
+    measurement_matrix: ArrayLike,
     measurement_covariance: Any,
-    measurement_getter: Optional[Callable[..., np.ndarray]] = None,
+    measurement_getter: Optional[Callable[..., ArrayLike]] = None,
 ) -> UpdaterFn:
     """Create a linear/Gaussian update hook for filters supporting it."""
 
-    measurement_matrix = np.asarray(measurement_matrix)
+    measurement_matrix = asarray(measurement_matrix)
 
     if measurement_getter is None:
 
-        def measurement_getter(measurement: Any, **kwargs) -> np.ndarray:
+        def measurement_getter(measurement: Any, **kwargs) -> ArrayLike:
             del kwargs
-            return np.asarray(measurement)
+            return asarray(measurement)
 
     def updater(
         track: Track,
@@ -857,9 +857,9 @@ def build_linear_gaussian_updater(
         else:
             covariance = measurement_covariance
         cast(KalmanFilter, track.single_target_filter).update_linear(
-            np.asarray(measurement_vector),
+            asarray(measurement_vector),
             measurement_matrix,
-            np.asarray(covariance),
+            asarray(covariance),
         )
 
     return updater
@@ -867,23 +867,23 @@ def build_linear_gaussian_updater(
 
 def build_kalman_measurement_initiator(
     initial_covariance: Any,
-    measurement_getter: Optional[Callable[..., np.ndarray]] = None,
+    measurement_getter: Optional[Callable[..., ArrayLike]] = None,
     measurement_to_state_mapping: Optional[Any] = None,
 ) -> InitiatorFn:
     """Create a Kalman-filter initiator from measurements."""
 
     if measurement_getter is None:
 
-        def measurement_getter(measurement: Any, **kwargs) -> np.ndarray:
+        def measurement_getter(measurement: Any, **kwargs) -> ArrayLike:
             del kwargs
-            return np.asarray(measurement)
+            return asarray(measurement)
 
     def initiator(
         measurement: Any,
         measurement_index: Optional[int] = None,
         **kwargs,
     ) -> AbstractFilter:
-        measurement_vector = np.asarray(
+        measurement_vector = asarray(
             measurement_getter(
                 measurement,
                 measurement_index=measurement_index,
@@ -900,7 +900,7 @@ def build_kalman_measurement_initiator(
                 **kwargs,
             )
         else:
-            state_mean = np.asarray(measurement_to_state_mapping) @ measurement_vector
+            state_mean = asarray(measurement_to_state_mapping) @ measurement_vector
 
         if callable(initial_covariance):
             covariance = initial_covariance(
@@ -912,19 +912,19 @@ def build_kalman_measurement_initiator(
             covariance = initial_covariance
 
         return KalmanFilter(
-            GaussianDistribution(np.asarray(state_mean), np.asarray(covariance))
+            GaussianDistribution(asarray(state_mean), asarray(covariance))
         )
 
     return initiator
 
 
-def _coerce_cost_vector(cost: Any, length: int, name: str) -> np.ndarray:
+def _coerce_cost_vector(cost: Any, length: int, name: str) -> ArrayLike:
     """Normalize scalar or iterable costs to a length-``length`` vector."""
 
-    if np.isscalar(cost):
-        return np.full(length, float(cost))
+    if isscalar(cost):
+        return full((length,), float(cost))
 
-    vector = np.asarray(cost, dtype=float).reshape(-1)
+    vector = asarray(cost, dtype=float).reshape(-1)
     if vector.size != length:
         raise ValueError(f"{name} must be scalar or have length {length}")
     return vector
