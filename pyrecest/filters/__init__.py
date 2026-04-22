@@ -12,8 +12,8 @@ from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
-from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
 from .global_nearest_neighbor import GlobalNearestNeighbor
+from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
 from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
 from .gprhm_tracker import GPRHMTracker
 from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
@@ -28,6 +28,7 @@ from .hyperspherical_ukf import HypersphericalUKF
 from .hypertoroidal_dummy_filter import HypertoroidalDummyFilter
 from .hypertoroidal_fourier_filter import HypertoroidalFourierFilter
 from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
+from .interacting_multiple_model_filter import IMM, InteractingMultipleModelFilter
 from .joint_probabilistic_data_association_filter import (
     JPDAF,
     JointProbabilisticDataAssociationFilter,
@@ -57,6 +58,18 @@ from .se2_ukf import SE2UKF
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
+from .track_manager import (
+    AssociationResult,
+    Track,
+    TrackManager,
+    TrackManagerStepResult,
+    TrackStatus,
+    build_global_nearest_neighbor_associator,
+    build_kalman_measurement_initiator,
+    build_linear_gaussian_predictor,
+    build_linear_gaussian_updater,
+    solve_global_nearest_neighbor,
+)
 from .ukf_on_manifolds import UKFOnManifolds
 from .unscented_kalman_filter import UnscentedKalmanFilter
 from .von_mises_filter import VonMisesFilter
@@ -76,6 +89,7 @@ __all__ = [
     "AbstractNearestNeighborTracker",
     "AbstractParticleFilter",
     "AbstractTrackerWithLogging",
+    "AssociationResult",
     "BinghamFilter",
     "CircularFilterMixin",
     "CircularParticleFilter",
@@ -87,6 +101,8 @@ __all__ = [
     "GlobalNearestNeighbor",
     "JPDAF",
     "JointProbabilisticDataAssociationFilter",
+    "IMM",
+    "InteractingMultipleModelFilter",
     "GPRHMTracker",
     "HypercylindricalFilterMixin",
     "HypercylindricalParticleFilter",
@@ -116,6 +132,15 @@ __all__ = [
     "LinPeriodicParticleFilter",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
+    "Track",
+    "TrackManager",
+    "TrackManagerStepResult",
+    "TrackStatus",
+    "build_global_nearest_neighbor_associator",
+    "build_kalman_measurement_initiator",
+    "build_linear_gaussian_predictor",
+    "build_linear_gaussian_updater",
+    "solve_global_nearest_neighbor",
     "SE2FilterMixin",
     "SE2UKF",
     "StateSpaceSubdivisionFilter",
