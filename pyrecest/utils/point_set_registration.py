@@ -13,7 +13,6 @@ rotation, or affine deformation must be estimated before data association.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import Any, Callable, Literal
 
@@ -24,15 +23,11 @@ from pyrecest.backend import (
     any,
     array_equal,
     asarray,
-    cast,
     concatenate,
-    empty,
     eye,
     full,
     int64,
-    isfinite,
     linalg,
-    mean,
     ones,
     quantile,
     sqrt,
@@ -40,8 +35,16 @@ from pyrecest.backend import (
     where,
     zeros,
 )
-from scipy.optimize import linear_sum_assignment
-from scipy.spatial.distance import cdist
+
+from ._point_set_registration_common import (
+    RegistrationResultBase,
+    as_point_array as _as_point_array,
+    build_registration_result,
+    default_cost,
+    evaluate_registration_costs,
+    solve_gated_assignment,
+    validate_pair as _validate_pair,
+)
 
 TransformModel = Literal["translation", "rigid", "affine"]
 AssociationCostFn = Callable
@@ -101,37 +104,10 @@ class AffineTransform:
 
 
 @dataclass(frozen=True)
-class RegistrationResult:  # pylint: disable=too-many-instance-attributes
+class RegistrationResult(RegistrationResultBase):  # pylint: disable=too-many-instance-attributes
     """Result of alternating registration and assignment."""
 
     transform: AffineTransform
-    assignment: Any
-    matched_reference_indices: Any
-    matched_moving_indices: Any
-    transformed_reference_points: Any
-    matched_costs: Any
-    rmse: float
-    n_iterations: int
-    converged: bool
-
-
-def _as_point_array(points):
-    points_array = asarray(points)
-    if points_array.ndim != 2:
-        raise ValueError("points must have shape (n_points, dim).")
-    if points_array.shape[0] == 0:
-        raise ValueError("At least one point is required.")
-    if points_array.shape[1] == 0:
-        raise ValueError("Point dimension must be positive.")
-    return points_array
-
-
-def _validate_pair(source_points, target_points):
-    source = _as_point_array(source_points)
-    target = _as_point_array(target_points)
-    if source.shape != target.shape:
-        raise ValueError("source_points and target_points must have the same shape.")
-    return source, target
 
 
 def _normalize_weights(weights, n_points):
@@ -221,96 +197,6 @@ def estimate_transform(  # pylint: disable=too-many-locals
     raise ValueError(f"Unsupported transform model: {model}")
 
 
-def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
-    """Solve one-to-one assignment with optional gating.
-
-    Parameters
-    ----------
-    cost_matrix:
-        Array of shape ``(n_rows, n_cols)``.
-    max_cost:
-        Matches with cost strictly larger than this value are rejected and
-        encoded as ``-1`` in the output.
-
-    Returns
-    -------
-    Integer array of shape ``(n_rows,)`` mapping each row to a column index
-    or ``-1`` if the row is left unmatched.
-    """
-    assert pyrecest.backend.__backend_name__ != "jax", "Not supported for the JAX backend."
-
-    costs = asarray(cost_matrix)
-    if costs.ndim != 2:
-        raise ValueError("cost_matrix must be two-dimensional.")
-    if costs.shape[0] == 0:
-        return zeros((0,), dtype=int64)
-    if costs.shape[1] == 0:
-        return zeros((costs.shape[0],), dtype=int64) - 1
-
-    finite_mask = isfinite(costs)
-    finite_costs = costs[finite_mask]
-    if len(finite_costs) == 0:
-        return zeros((costs.shape[0],), dtype=int64) - 1
-
-    if math.isfinite(max_cost):
-        dummy_cost = float(max_cost)
-    else:
-        dummy_cost = float(finite_costs.max() + 1.0)
-
-    padded_size = max(costs.shape)
-    padded_costs = full((padded_size, padded_size), dummy_cost)
-    padded_costs[: costs.shape[0], : costs.shape[1]] = costs
-    row_indices, col_indices = linear_sum_assignment(padded_costs)
-
-    assignment = zeros((costs.shape[0],), dtype=int64) - 1
-    for row_index, col_index in zip(row_indices, col_indices):
-        if row_index >= costs.shape[0] or col_index >= costs.shape[1]:
-            continue
-        if costs[row_index, col_index] <= max_cost:
-            assignment[row_index] = int(col_index)
-    return assignment
-
-
-def _default_cost(transformed_reference_points, moving_points):
-    return cdist(transformed_reference_points, moving_points, metric="euclidean")
-
-
-def _compute_rmse(matched_costs) -> float:
-    if len(matched_costs) > 0:
-        return float(sqrt(mean(matched_costs**2)))
-    return float("inf")
-
-
-def _build_registration_result(
-    transform: AffineTransform,
-    assignment: Any,
-    transformed_reference_points: Any,
-    costs: Any,
-    *,
-    iteration: int,
-    converged: bool,
-) -> RegistrationResult:
-    matched_reference_indices = where(assignment >= 0)[0]
-    matched_moving_indices = assignment[matched_reference_indices]
-    matched_costs = (
-        costs[matched_reference_indices, matched_moving_indices]
-        if len(matched_reference_indices) > 0
-        else empty((0,))
-    )
-    rmse = _compute_rmse(matched_costs)
-    return RegistrationResult(
-        transform=transform,
-        assignment=assignment,
-        matched_reference_indices=cast(matched_reference_indices, int64),
-        matched_moving_indices=cast(matched_moving_indices, int64),
-        transformed_reference_points=transformed_reference_points,
-        matched_costs=matched_costs,
-        rmse=rmse,
-        n_iterations=iteration,
-        converged=converged,
-    )
-
-
 def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     reference_points,
     moving_points,
@@ -388,25 +274,26 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
     assignment = zeros((reference.shape[0],), dtype=int64) - 1
     converged = False
     iteration = 0
-    association_cost = _default_cost if cost_function is None else cost_function
+    association_cost = default_cost if cost_function is None else cost_function
 
     for iteration in range(1, max_iterations + 1):
-        transformed_reference = transform.apply(reference)
-        current_costs = asarray(association_cost(transformed_reference, moving))
-        if current_costs.shape != (reference.shape[0], moving.shape[0]):
-            raise ValueError(
-                "cost_function must return an array of shape (n_reference, n_moving)."
-            )
+        transformed_reference, current_costs = evaluate_registration_costs(
+            transform,
+            reference,
+            moving,
+            association_cost,
+        )
 
         new_assignment = solve_gated_assignment(current_costs, max_cost=max_cost)
         matched_reference_indices = where(new_assignment >= 0)[0]
         if len(matched_reference_indices) < min_matches:
             assignment = new_assignment
-            return _build_registration_result(
-                transform,
-                assignment,
-                transformed_reference,
-                current_costs,
+            return build_registration_result(
+                RegistrationResult,
+                transform=transform,
+                assignment=assignment,
+                transformed_reference_points=transformed_reference,
+                costs=current_costs,
                 iteration=iteration,
                 converged=False,
             )
@@ -431,13 +318,18 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
             converged = True
             break
 
-    transformed_reference = transform.apply(reference)
-    final_costs = asarray(association_cost(transformed_reference, moving))
-    return _build_registration_result(
+    transformed_reference, final_costs = evaluate_registration_costs(
         transform,
-        assignment,
-        transformed_reference,
-        final_costs,
+        reference,
+        moving,
+        association_cost,
+    )
+    return build_registration_result(
+        RegistrationResult,
+        transform=transform,
+        assignment=assignment,
+        transformed_reference_points=transformed_reference,
+        costs=final_costs,
         iteration=iteration,
         converged=converged,
     )

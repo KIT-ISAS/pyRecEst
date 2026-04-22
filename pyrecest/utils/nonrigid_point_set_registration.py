@@ -8,7 +8,6 @@ tracking, where ROI centroids can undergo local distortions between sessions.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -18,25 +17,28 @@ import pyrecest.backend
 from pyrecest.backend import (
     array_equal,
     asarray,
-    cast,
     concatenate,
-    empty,
     eye,
-    full,
     int64,
-    isfinite,
     log,
     maximum,
-    mean,
     ones,
     quantile,
-    sqrt,
     where,
     zeros,
 )
 from pyrecest.backend import linalg
-from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
+
+from ._point_set_registration_common import (
+    RegistrationResultBase,
+    as_point_array as _as_point_array,
+    build_registration_result,
+    default_cost,
+    evaluate_registration_costs,
+    solve_gated_assignment as _solve_gated_assignment,
+    validate_pair as _validate_pair,
+)
 
 NonRigidAssociationCostFn = Callable[[Any, Any], Any]
 
@@ -106,7 +108,11 @@ class ThinPlateSplineTransform:
 
     def apply(self, points):
         """Apply the transform to an ``(n_points, 2)`` array of points."""
-        point_array = _as_point_array(points)
+        point_array = _as_point_array(
+            points,
+            expected_dim=2,
+            expected_dim_error="Only 2D point sets are currently supported.",
+        )
 
         basis = zeros((point_array.shape[0], 0))
         if self.control_points.shape[0] > 0:
@@ -118,37 +124,10 @@ class ThinPlateSplineTransform:
 
 
 @dataclass(frozen=True)
-class ThinPlateSplineRegistrationResult:  # pylint: disable=too-many-instance-attributes
+class ThinPlateSplineRegistrationResult(RegistrationResultBase):  # pylint: disable=too-many-instance-attributes
     """Result of alternating TPS registration and assignment."""
 
     transform: ThinPlateSplineTransform
-    assignment: Any
-    matched_reference_indices: Any
-    matched_moving_indices: Any
-    transformed_reference_points: Any
-    matched_costs: Any
-    rmse: float
-    n_iterations: int
-    converged: bool
-
-
-def _as_point_array(points):
-    point_array = asarray(points)
-    if point_array.ndim != 2:
-        raise ValueError("points must have shape (n_points, dim).")
-    if point_array.shape[0] == 0:
-        raise ValueError("At least one point is required.")
-    if point_array.shape[1] != 2:
-        raise ValueError("Only 2D point sets are currently supported.")
-    return point_array
-
-
-def _validate_pair(source_points, target_points):
-    source = _as_point_array(source_points)
-    target = _as_point_array(target_points)
-    if source.shape != target.shape:
-        raise ValueError("source_points and target_points must have the same shape.")
-    return source, target
 
 
 def _tps_kernel_from_distances(distances, epsilon: float = 1e-12):
@@ -180,7 +159,12 @@ def estimate_thin_plate_spline(
     if regularization < 0.0:
         raise ValueError("regularization must be non-negative.")
 
-    source, target = _validate_pair(source_points, target_points)
+    source, target = _validate_pair(
+        source_points,
+        target_points,
+        expected_dim=2,
+        expected_dim_error="Only 2D point sets are currently supported.",
+    )
     n_points = source.shape[0]
 
     if n_points < 3:
@@ -206,48 +190,6 @@ def estimate_thin_plate_spline(
         weights=weights,
         affine_coefficients=affine_coefficients,
     )
-
-
-def _solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
-    costs = asarray(cost_matrix)
-    if costs.ndim != 2:
-        raise ValueError("cost_matrix must be two-dimensional.")
-    if costs.shape[0] == 0:
-        return zeros((0,), dtype=int64)
-    if costs.shape[1] == 0:
-        return zeros((costs.shape[0],), dtype=int64) - 1
-
-    finite_mask = isfinite(costs)
-    finite_costs = costs[finite_mask]
-    if finite_costs.shape[0] == 0:
-        return zeros((costs.shape[0],), dtype=int64) - 1
-
-    dummy_cost = float(max_cost) if math.isfinite(max_cost) else float(finite_costs.max() + 1.0)
-    padded_size = max(costs.shape[0], costs.shape[1])
-    sanitized_costs = where(finite_mask, costs, dummy_cost)
-    padded_costs = full((padded_size, padded_size), dummy_cost)
-    padded_costs[: costs.shape[0], : costs.shape[1]] = sanitized_costs
-
-    row_indices, col_indices = linear_sum_assignment(padded_costs)
-    assignment = zeros((costs.shape[0],), dtype=int64) - 1
-
-    for row_index, col_index in zip(row_indices, col_indices):
-        if row_index >= costs.shape[0] or col_index >= costs.shape[1]:
-            continue
-        if isfinite(costs[row_index, col_index]) and costs[row_index, col_index] <= max_cost:
-            assignment[row_index] = int(col_index)
-
-    return assignment
-
-
-def _default_cost(transformed_reference_points, moving_points):
-    return cdist(transformed_reference_points, moving_points, metric="euclidean")
-
-
-def _compute_rmse(matched_costs) -> float:
-    if matched_costs.shape[0] > 0:
-        return float(sqrt(mean(matched_costs * matched_costs)))
-    return float("inf")
 
 
 def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too-many-locals
@@ -299,8 +241,16 @@ def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too
             "joint_tps_registration_assignment is not supported on the JAX backend."
         )
 
-    reference = _as_point_array(reference_points)
-    moving = _as_point_array(moving_points)
+    reference = _as_point_array(
+        reference_points,
+        expected_dim=2,
+        expected_dim_error="Only 2D point sets are currently supported.",
+    )
+    moving = _as_point_array(
+        moving_points,
+        expected_dim=2,
+        expected_dim_error="Only 2D point sets are currently supported.",
+    )
 
     if max_iterations <= 0:
         raise ValueError("max_iterations must be positive.")
@@ -317,37 +267,28 @@ def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too
 
     assignment = zeros((reference.shape[0],), dtype=int64) - 1
     converged = False
-    association_cost = _default_cost if cost_function is None else cost_function
+    association_cost = default_cost if cost_function is None else cost_function
 
     for iteration in range(1, max_iterations + 1):
-        transformed_reference = transform.apply(reference)
-        current_costs = asarray(association_cost(transformed_reference, moving))
-        if current_costs.shape != (reference.shape[0], moving.shape[0]):
-            raise ValueError(
-                "cost_function must return an array of shape (n_reference, n_moving)."
-            )
+        transformed_reference, current_costs = evaluate_registration_costs(
+            transform,
+            reference,
+            moving,
+            association_cost,
+        )
 
         new_assignment = _solve_gated_assignment(current_costs, max_cost=max_cost)
         matched_reference_indices = where(new_assignment >= 0)[0]
 
         if matched_reference_indices.shape[0] < min_matches:
             assignment = new_assignment
-            matched_moving_indices = assignment[matched_reference_indices]
-            matched_costs = (
-                current_costs[matched_reference_indices, matched_moving_indices]
-                if matched_reference_indices.shape[0] > 0
-                else empty((0,))
-            )
-            rmse = _compute_rmse(matched_costs)
-            return ThinPlateSplineRegistrationResult(
+            return build_registration_result(
+                ThinPlateSplineRegistrationResult,
                 transform=transform,
                 assignment=assignment,
-                matched_reference_indices=cast(matched_reference_indices, int64),
-                matched_moving_indices=cast(matched_moving_indices, int64),
                 transformed_reference_points=transformed_reference,
-                matched_costs=matched_costs,
-                rmse=rmse,
-                n_iterations=iteration,
+                costs=current_costs,
+                iteration=iteration,
                 converged=False,
             )
 
@@ -371,25 +312,18 @@ def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too
             converged = True
             break
 
-    transformed_reference = transform.apply(reference)
-    final_costs = asarray(association_cost(transformed_reference, moving))
-    matched_reference_indices = where(assignment >= 0)[0]
-    matched_moving_indices = assignment[matched_reference_indices]
-    matched_costs = (
-        final_costs[matched_reference_indices, matched_moving_indices]
-        if matched_reference_indices.shape[0] > 0
-        else empty((0,))
+    transformed_reference, final_costs = evaluate_registration_costs(
+        transform,
+        reference,
+        moving,
+        association_cost,
     )
-    rmse = _compute_rmse(matched_costs)
-
-    return ThinPlateSplineRegistrationResult(
+    return build_registration_result(
+        ThinPlateSplineRegistrationResult,
         transform=transform,
         assignment=assignment,
-        matched_reference_indices=cast(matched_reference_indices, int64),
-        matched_moving_indices=cast(matched_moving_indices, int64),
         transformed_reference_points=transformed_reference,
-        matched_costs=matched_costs,
-        rmse=rmse,
-        n_iterations=iteration,
+        costs=final_costs,
+        iteration=iteration,
         converged=converged,
     )
