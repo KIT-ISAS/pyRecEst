@@ -251,6 +251,9 @@ from .nonperiodic.hyperrectangular_uniform_distribution import (
 from .nonperiodic.linear_dirac_distribution import LinearDiracDistribution
 from .nonperiodic.linear_mixture import LinearMixture
 from .se2_dirac_distribution import SE2DiracDistribution
+from .se2_partially_wrapped_normal_distribution import (
+    SE2PartiallyWrappedNormalDistribution,
+)
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
 
@@ -412,4 +415,5 @@ __all__ = aliases + [
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
     "SE2BinghamDistribution",
+    "SE2PartiallyWrappedNormalDistribution",
 ]
