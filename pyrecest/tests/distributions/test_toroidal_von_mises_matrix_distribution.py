@@ -53,7 +53,7 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
     def test_pdf(self):
         def pdf(xs, mu, kappa, A, C):
             if xs.shape[1] > 1:
-                results = [pdf(xs[:, i:i + 1], mu, kappa, A, C) for i in range(xs.shape[1])]
+                results = [pdf(xs[:, i:i + 1], mu, kappa, A, C) for i in range(xs.shape[1])]  # noqa: E203
                 return array(results)
             xi = xs[:, 0]
             return C * exp(
