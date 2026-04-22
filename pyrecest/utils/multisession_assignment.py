@@ -21,17 +21,34 @@ Jonker-Volgenant implementation.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
+from pyrecest.backend import (  # pylint: disable=no-name-in-module
+    __backend_name__,
+    arange,
+    asarray,
+    cast,
+    concatenate,
+    empty,
+    full,
+    isfinite,
+    ones,
+    where,
+    zeros,
+)
 from scipy.optimize import linprog
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import min_weight_full_bipartite_matching
 
+if TYPE_CHECKING:
+    import numpy as np
+
 Observation = tuple[int, int]
 MatchedEdge = tuple[Observation, Observation, float]
-PairwiseCostsInput = Mapping[tuple[int, int], np.ndarray] | Sequence[np.ndarray]
+PairwiseCostsInput = Mapping[tuple[int, int], Any] | Sequence[Any]
 SessionSizesInput = Mapping[int, int] | Sequence[int]
 TrackInput = Mapping[int, int] | Sequence[Observation]
 
@@ -90,7 +107,7 @@ class MultiSessionAssignmentResult:
         )
 
 
-def solve_multisession_assignment(
+def solve_multisession_assignment(  # pylint: disable=too-many-locals
     pairwise_costs: PairwiseCostsInput,
     session_sizes: SessionSizesInput | None = None,
     *,
@@ -150,6 +167,8 @@ def solve_multisession_assignment(
     its own dummy "unmatched" column.
     """
 
+    assert __backend_name__ != "jax", "Not supported on JAX backend"
+
     _validate_scalar_cost("start_cost", start_cost)
     _validate_scalar_cost("end_cost", end_cost)
     _validate_scalar_cost("gap_penalty", gap_penalty)
@@ -195,11 +214,11 @@ def solve_multisession_assignment(
         n_observations,
     )
 
-    predecessors = np.full(n_observations, -1, dtype=int)
-    successors = np.full(n_observations, -1, dtype=int)
+    predecessors = full(n_observations, -1, dtype=int)
+    successors = full(n_observations, -1, dtype=int)
     matched_edges: list[MatchedEdge] = []
 
-    for edge_index in np.flatnonzero(selected_edge_mask):
+    for edge_index in where(selected_edge_mask)[0]:
         source_global = int(left_nodes[edge_index])
         target_global = int(right_nodes[edge_index])
 
@@ -283,6 +302,8 @@ def tracks_to_session_labels(
         One integer array per session, indexed by session number.
     """
 
+    assert __backend_name__ != "jax", "Not supported on JAX backend"
+
     inferred_sizes = _normalize_session_sizes(session_sizes)
     max_session_index = max(inferred_sizes, default=-1)
 
@@ -304,7 +325,7 @@ def tracks_to_session_labels(
                 )
 
     labels = [
-        np.full(inferred_sizes.get(session_index, 0), fill_value, dtype=int)
+        full(inferred_sizes.get(session_index, 0), fill_value, dtype=int)
         for session_index in range(max_session_index + 1)
     ]
 
@@ -318,7 +339,7 @@ def tracks_to_session_labels(
 
 
 def _validate_scalar_cost(name: str, value: float) -> None:
-    if not np.isfinite(value):
+    if not math.isfinite(value):
         raise ValueError(f"{name} must be finite.")
 
 
@@ -333,7 +354,7 @@ def _normalize_pairwise_costs(
             source_session, target_session = int(key[0]), int(key[1])
             if source_session >= target_session:
                 raise ValueError("Pairwise-cost keys must satisfy source_session < target_session.")
-            matrix = np.asarray(value, dtype=float)
+            matrix = asarray(value, dtype=float)
             if matrix.ndim != 2:
                 raise ValueError("Each pairwise cost matrix must be two-dimensional.")
             normalized[(source_session, target_session)] = matrix
@@ -341,7 +362,7 @@ def _normalize_pairwise_costs(
 
     normalized = {}
     for session_idx, value in enumerate(pairwise_costs):
-        matrix = np.asarray(value, dtype=float)
+        matrix = asarray(value, dtype=float)
         if matrix.ndim != 2:
             raise ValueError("Each pairwise cost matrix must be two-dimensional.")
         normalized[(session_idx, session_idx + 1)] = matrix
@@ -416,7 +437,7 @@ def _build_observation_index(
     return global_to_observation, observation_to_global
 
 
-def _build_candidate_edges(
+def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-locals
     pairwise_costs: Mapping[tuple[int, int], np.ndarray],
     session_sizes: Mapping[int, int],
     session_positions: Mapping[int, int],
@@ -446,32 +467,35 @@ def _build_candidate_edges(
         if gap < 0:
             raise ValueError("Session indices must define a forward-in-time edge ordering.")
 
-        adjusted_matrix = np.asarray(cost_matrix, dtype=float) + float(gap_penalty) * gap
+        adjusted_matrix = asarray(cost_matrix, dtype=float) + float(gap_penalty) * gap
         gain_matrix = (float(start_cost) + float(end_cost)) - adjusted_matrix
 
-        valid_mask = np.isfinite(adjusted_matrix) & (gain_matrix > 0.0)
+        valid_mask = isfinite(adjusted_matrix) & (gain_matrix > 0.0)
         if cost_threshold is not None:
             valid_mask &= adjusted_matrix <= float(cost_threshold)
 
-        source_indices, target_indices = np.nonzero(valid_mask)
-        if source_indices.size == 0:
+        source_indices, target_indices = where(valid_mask)
+        if source_indices.shape[0] == 0:
             continue
 
-        left_nodes.append(session_offsets[source_session] + source_indices.astype(int))
-        right_nodes.append(session_offsets[target_session] + target_indices.astype(int))
-        edge_gains.append(gain_matrix[valid_mask].astype(float))
-        adjusted_costs.append(adjusted_matrix[valid_mask].astype(float))
+        left_nodes.append(session_offsets[source_session] + cast(source_indices, int))
+        right_nodes.append(session_offsets[target_session] + cast(target_indices, int))
+        edge_gains.append(cast(gain_matrix[valid_mask], float))
+        adjusted_costs.append(cast(adjusted_matrix[valid_mask], float))
 
     if not edge_gains:
-        empty_int = np.empty(0, dtype=int)
-        empty_float = np.empty(0, dtype=float)
-        return empty_int, empty_int.copy(), empty_float, empty_float.copy()
+        return (
+            empty(0, dtype=int),
+            empty(0, dtype=int),
+            empty(0, dtype=float),
+            empty(0, dtype=float),
+        )
 
     return (
-        np.concatenate(left_nodes),
-        np.concatenate(right_nodes),
-        np.concatenate(edge_gains),
-        np.concatenate(adjusted_costs),
+        concatenate(left_nodes),
+        concatenate(right_nodes),
+        concatenate(edge_gains),
+        concatenate(adjusted_costs),
     )
 
 
@@ -572,23 +596,23 @@ def _solve_max_weight_matching_via_linprog(
 ) -> np.ndarray:
     """Fallback solver that keeps the original LP formulation."""
 
-    num_edges = int(edge_gains.size)
+    num_edges = int(edge_gains.shape[0])
     if num_edges == 0 or num_nodes == 0:
-        return np.zeros(num_edges, dtype=bool)
+        return zeros(num_edges, dtype=bool)
 
-    edge_ids = np.arange(num_edges, dtype=int)
-    row_ids = np.concatenate((left_nodes, num_nodes + right_nodes))
-    col_ids = np.concatenate((edge_ids, edge_ids))
+    edge_ids = arange(num_edges, dtype=int)
+    row_ids = concatenate((left_nodes, num_nodes + right_nodes))
+    col_ids = concatenate((edge_ids, edge_ids))
 
     constraint_matrix = coo_matrix(
-        (np.ones(2 * num_edges, dtype=float), (row_ids, col_ids)),
+        (ones(2 * num_edges, dtype=float), (row_ids, col_ids)),
         shape=(2 * num_nodes, num_edges),
     ).tocsr()
 
     solution = linprog(
         c=-edge_gains,
         A_ub=constraint_matrix,
-        b_ub=np.ones(2 * num_nodes, dtype=float),
+        b_ub=ones(2 * num_nodes, dtype=float),
         bounds=(0.0, 1.0),
         method="highs",
     )
@@ -599,7 +623,7 @@ def _solve_max_weight_matching_via_linprog(
             f"{solution.message}"
         )
 
-    return np.asarray(solution.x > 0.5, dtype=bool)
+    return asarray(solution.x > 0.5, dtype=bool)
 
 
 def _reconstruct_tracks(

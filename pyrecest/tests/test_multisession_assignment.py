@@ -3,9 +3,11 @@
 import unittest
 from unittest.mock import patch
 
-import numpy as np
-
-import pyrecest.utils.multisession_assignment as multisession_assignment_module
+from pyrecest.backend import (  # pylint: disable=no-name-in-module
+    __backend_name__,
+    array,
+    array_equal,
+)
 from pyrecest.utils import solve_multisession_assignment, tracks_to_session_labels
 
 
@@ -14,14 +16,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
     def _canonical_tracks(tracks):
         return sorted(tuple(sorted(track.items())) for track in tracks)
 
-    @staticmethod
-    def _assert_valid_matching(mask, left_nodes, right_nodes):
-        selected_indices = np.flatnonzero(mask)
-        if selected_indices.size == 0:
-            return
-        assert np.unique(left_nodes[selected_indices]).size == selected_indices.size
-        assert np.unique(right_nodes[selected_indices]).size == selected_indices.size
-
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_singletons_without_edges(self):
         result = solve_multisession_assignment(
             {},
@@ -41,11 +39,15 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertAlmostEqual(result.total_cost, 10.0)
         self.assertEqual(result.matched_edges, [])
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_consecutive_costs_form_two_long_tracks(self):
         result = solve_multisession_assignment(
             [
-                np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
-                np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+                array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+                array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
             ],
             start_cost=5.0,
             end_cost=5.0,
@@ -59,9 +61,13 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
         self.assertAlmostEqual(result.total_cost, 20.6)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_cross_gap_linking_is_supported(self):
         result = solve_multisession_assignment(
-            {(0, 2): np.array([[0.3]], dtype=float)},
+            {(0, 2): array([[0.3]], dtype=float)},
             session_sizes=[1, 0, 1],
             start_cost=4.0,
             end_cost=4.0,
@@ -73,11 +79,15 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertAlmostEqual(result.total_cost, 8.8)
         self.assertEqual(result.matched_edges, [((0, 0), (2, 0), 0.8)])
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_global_solution_beats_pairwise_greedy_choice(self):
         result = solve_multisession_assignment(
             [
-                np.array([[0.0, 1.0], [1.0, 100.0]], dtype=float),
-                np.array([[100.0, 0.0], [0.0, 100.0]], dtype=float),
+                array([[0.0, 1.0], [1.0, 100.0]], dtype=float),
+                array([[100.0, 0.0], [0.0, 100.0]], dtype=float),
             ],
             start_cost=10.0,
             end_cost=10.0,
@@ -91,9 +101,13 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
         self.assertAlmostEqual(result.total_cost, 42.0)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_tracks_to_session_labels(self):
         result = solve_multisession_assignment(
-            {(0, 2): np.array([[0.3]], dtype=float)},
+            {(0, 2): array([[0.3]], dtype=float)},
             session_sizes=[1, 0, 1],
             start_cost=4.0,
             end_cost=4.0,
@@ -101,27 +115,35 @@ class TestMultiSessionAssignment(unittest.TestCase):
         )
 
         labels = result.to_session_labels(session_sizes=[1, 0, 1])
-        self.assertTrue(np.array_equal(labels[0], np.array([0])))
-        self.assertEqual(labels[1].size, 0)
-        self.assertTrue(np.array_equal(labels[2], np.array([0])))
+        self.assertTrue(array_equal(labels[0], array([0])))
+        self.assertEqual(labels[1].shape[0], 0)
+        self.assertTrue(array_equal(labels[2], array([0])))
 
         labels_from_function = tracks_to_session_labels(result.tracks, session_sizes=[1, 0, 1])
-        self.assertTrue(np.array_equal(labels_from_function[0], np.array([0])))
-        self.assertEqual(labels_from_function[1].size, 0)
-        self.assertTrue(np.array_equal(labels_from_function[2], np.array([0])))
+        self.assertTrue(array_equal(labels_from_function[0], array([0])))
+        self.assertEqual(labels_from_function[1].shape[0], 0)
+        self.assertTrue(array_equal(labels_from_function[2], array([0])))
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_rejects_inconsistent_session_sizes(self):
         pairwise_costs = {
-            (0, 1): np.zeros((2, 3)),
-            (1, 2): np.zeros((4, 1)),
+            (0, 1): array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]),
+            (1, 2): array([[0.0], [0.0], [0.0], [0.0]]),
         }
 
         with self.assertRaises(ValueError):
             solve_multisession_assignment(pairwise_costs)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_drops_non_beneficial_links_even_without_threshold(self):
         result = solve_multisession_assignment(
-            [np.array([[5.0]], dtype=float)],
+            [array([[5.0]], dtype=float)],
             start_cost=1.0,
             end_cost=1.0,
         )
