@@ -7,6 +7,9 @@ from .multisession_assignment import (
     tracks_to_index_matrix,
     tracks_to_session_labels,
 )
+from .multisession_assignment_observation_costs import (
+    solve_multisession_assignment_with_observation_costs,
+)
 
 from .nonrigid_point_set_registration import (
     ThinPlateSplineRegistrationResult,
@@ -20,6 +23,7 @@ __all__ = [
     "solve_multisession_assignment",
     "solve_multisession_assignment_from_similarity",
     "tracks_to_index_matrix",
+    "solve_multisession_assignment_with_observation_costs",
     "tracks_to_session_labels",
     "ThinPlateSplineRegistrationResult",
     "ThinPlateSplineTransform",
