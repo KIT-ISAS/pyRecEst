@@ -1,8 +1,7 @@
-import numpy as np
 from beartype import beartype
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ones  # noqa: F821
+from pyrecest.backend import empty, ones
 from pyrecest.distributions import AbstractHypersphericalDistribution
 from pyrecest.distributions.cart_prod.hyperhemisphere_cart_prod_dirac_distribution import (
     HyperhemisphereCartProdDiracDistribution,
@@ -22,7 +21,7 @@ from .abstract_particle_filter import AbstractParticleFilter
 
 class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
     def __init__(
-        self, n_particles: int | np.int32 | np.int64, dim_hemisphere, n_hemispheres
+        self, n_particles: int, dim_hemisphere: int, n_hemispheres: int
     ) -> None:
         """
         Constructor
@@ -32,7 +31,7 @@ class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
         dim (int > 0): Dimension
         """
         initial_filter_state = HyperhemisphereCartProdDiracDistribution(
-            np.empty((n_particles, (dim_hemisphere + 1) * n_hemispheres)),
+            empty((n_particles, (dim_hemisphere + 1) * n_hemispheres)),
             ones(n_particles) / n_particles,
             dim_hemisphere,
             n_hemispheres,
