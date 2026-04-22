@@ -163,7 +163,7 @@ def summarize_assignment(assignment, costs) -> MatchSummary:
         rmse=compute_rmse(matched_costs),
     )
 
-
+# pylint: disable=too-many-arguments
 def build_registration_result(
     result_type,
     *,
