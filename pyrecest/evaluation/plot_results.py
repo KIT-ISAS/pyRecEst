@@ -1,8 +1,8 @@
 import warnings
 
 import matplotlib.pyplot as plt
-import numpy as np
 from beartype import beartype
+from pyrecest.backend import any, asarray, isnan, load, shape, size, zeros
 
 from .get_axis_label import get_axis_label
 from .group_results_by_filter import group_results_by_filter
@@ -31,17 +31,17 @@ def plot_results(
         print("Not all warnings are enabled.")
 
     # Expand plot_log to handle all plots (pad it)
-    if np.size(plot_log) == 1:
-        plot_log = False * np.ones((2, 3), dtype=bool)
+    if size(plot_log) == 1:
+        plot_log = zeros((2, 3), dtype=bool)
     else:
-        assert np.shape(plot_log) == (2, 3)
+        assert shape(plot_log) == (2, 3)
     plot_random_filter = True
 
     if filename is None:
         # Prompt for filename
         filename = input("Please enter the filename to load: ")
 
-    data = np.load(filename, allow_pickle=True).item()
+    data = load(filename, allow_pickle=True).item()
     # Get the mean errors and mean times for each filter configuration
     results_summarized = summarize_filter_results(**data)
     [min_param, max_param] = get_min_max_param(results_summarized)
@@ -68,10 +68,10 @@ def plot_results(
         # Iterate over all possible names and plot the lines for those that were evaluated
         color, style_marker, style_line = get_plot_style_for_filter(curr_filter_name)
 
-        params = np.asarray(results_grouped[curr_filter_name]["parameter"])
-        errors_mean = np.asarray(results_grouped[curr_filter_name]["error_mean"])
-        errors_std = np.asarray(results_grouped[curr_filter_name]["error_std"])
-        times_mean = np.asarray(results_grouped[curr_filter_name]["time_mean"])
+        params = asarray(results_grouped[curr_filter_name]["parameter"])
+        errors_mean = asarray(results_grouped[curr_filter_name]["error_mean"])
+        errors_std = asarray(results_grouped[curr_filter_name]["error_std"])
+        times_mean = asarray(results_grouped[curr_filter_name]["time_mean"])
 
         if curr_filter_name.startswith("ff") or curr_filter_name == "htgf":
             params = params**state_dim
@@ -82,8 +82,8 @@ def plot_results(
         plt.figure(0)
         if (
             params[0] is not None
-            and not np.any(np.isnan(params))
-            and np.size(params) > 1
+            and not any(isnan(params))
+            and size(params) > 1
         ):
             if plot_stds:
                 plt.plot(
@@ -121,8 +121,8 @@ def plot_results(
         plt.figure(1)
         if (
             params[0] is not None
-            and not np.any(np.isnan(params))
-            and np.size(params) > 1
+            and not any(isnan(params))
+            and size(params) > 1
         ):
             plt.plot(
                 params,
@@ -151,8 +151,8 @@ def plot_results(
         plt.figure(2)
         if (
             params[0] is not None
-            and not np.any(np.isnan(params))
-            and np.size(params) > 1
+            and not any(isnan(params))
+            and size(params) > 1
         ):
             plt.plot(
                 times_factor * times_mean,
