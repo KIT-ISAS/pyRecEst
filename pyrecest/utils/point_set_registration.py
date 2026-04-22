@@ -33,6 +33,7 @@ from pyrecest.backend import (
     quantile,
     sqrt,
     sum,
+    where,
     zeros,
 )
 from scipy.spatial.distance import cdist
@@ -340,8 +341,8 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
         validate_cost_matrix_shape(current_costs, reference.shape[0], moving.shape[0])
 
         new_assignment = solve_gated_assignment(current_costs, max_cost=max_cost)
-        matched_reference_indices = new_assignment >= 0
-        if matched_reference_indices.sum() < min_matches:
+        matched_reference_indices = where(new_assignment >= 0)[0]
+        if matched_reference_indices.shape[0] < min_matches:
             assignment = new_assignment
             return _build_registration_result(
                 transform,
@@ -352,7 +353,6 @@ def joint_registration_assignment(  # pylint: disable=too-many-arguments,too-man
                 converged=False,
             )
 
-        matched_reference_indices = (new_assignment >= 0).nonzero()[0]
         matched_moving_indices = new_assignment[matched_reference_indices]
         updated_transform = estimate_transform(
             reference[matched_reference_indices],
