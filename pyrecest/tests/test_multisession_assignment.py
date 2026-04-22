@@ -3,12 +3,20 @@
 import unittest
 from unittest.mock import patch
 
+import numpy as np
+
+import pyrecest.utils.multisession_assignment as multisession_assignment_module
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
     array,
     array_equal,
 )
-from pyrecest.utils import solve_multisession_assignment, tracks_to_session_labels
+from pyrecest.utils import (
+    solve_multisession_assignment,
+    solve_multisession_assignment_from_similarity,
+    tracks_to_index_matrix,
+    tracks_to_session_labels,
+)
 
 
 class TestMultiSessionAssignment(unittest.TestCase):
@@ -150,6 +158,80 @@ class TestMultiSessionAssignment(unittest.TestCase):
 
         self.assertEqual(self._canonical_tracks(result.tracks), [((0, 0),), ((1, 0),)])
         self.assertAlmostEqual(result.total_cost, 4.0)
+
+    @staticmethod
+    def _assert_valid_matching(mask, left_nodes, right_nodes):
+        selected_left = left_nodes[mask]
+        selected_right = right_nodes[mask]
+        assert len(selected_left) == len(set(int(value) for value in selected_left))
+        assert len(selected_right) == len(set(int(value) for value in selected_right))
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_similarity_wrapper_respects_threshold(self):
+        result = solve_multisession_assignment_from_similarity(
+            [array([[0.95, 0.20], [0.30, 0.90]], dtype=float)],
+            start_cost=1.0,
+            end_cost=1.0,
+            similarity_threshold=0.80,
+        )
+
+        expected_tracks = [
+            ((0, 0), (1, 0)),
+            ((0, 1), (1, 1)),
+        ]
+        self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
+        self.assertAlmostEqual(result.total_cost, 4.15)
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_similarity_wrapper_supports_gap_links(self):
+        result = solve_multisession_assignment_from_similarity(
+            {(0, 2): array([[0.95]], dtype=float)},
+            session_sizes=[1, 0, 1],
+            start_cost=1.0,
+            end_cost=1.0,
+            gap_penalty=0.10,
+            similarity_threshold=0.90,
+        )
+
+        self.assertEqual(self._canonical_tracks(result.tracks), [((0, 0), (2, 0))])
+        self.assertAlmostEqual(result.total_cost, 2.15)
+        self.assertEqual(result.matched_edges[0][0], (0, 0))
+        self.assertEqual(result.matched_edges[0][1], (2, 0))
+        self.assertAlmostEqual(result.matched_edges[0][2], 0.15)
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_tracks_to_index_matrix(self):
+        tracks = [{0: 2, 2: 1}, {1: 0}]
+        index_matrix = tracks_to_index_matrix(tracks, session_sizes=[3, 1, 2])
+        self.assertTrue(
+            array_equal(
+                index_matrix,
+                array([[2, -1, 1], [-1, 0, -1]]),
+            )
+        )
+
+        result = solve_multisession_assignment(
+            {(0, 2): array([[0.3]], dtype=float)},
+            session_sizes=[1, 0, 1],
+            start_cost=4.0,
+            end_cost=4.0,
+            gap_penalty=0.5,
+        )
+        self.assertTrue(
+            array_equal(
+                result.to_index_matrix(session_sizes=[1, 0, 1]),
+                array([[0, -1, 0]]),
+            )
+        )
 
     def test_sparse_backend_matches_previous_linprog_backend(self):
         rng = np.random.default_rng(42)
