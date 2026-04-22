@@ -15,11 +15,9 @@ import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
-    array_equal,
     asarray,
     concatenate,
     eye,
-    int64,
     log,
     maximum,
     ones,
@@ -31,12 +29,13 @@ from pyrecest.backend import linalg
 from scipy.spatial.distance import cdist
 
 from ._point_set_registration_common import (
+    RegistrationLoopCallbacks,
+    RegistrationLoopConfig,
     RegistrationResultBase,
     as_point_array as _as_point_array,
     build_registration_result,
-    default_cost,
-    evaluate_registration_costs,
-    solve_gated_assignment as _solve_gated_assignment,
+    run_registration_loop,
+    solve_gated_assignment,
     validate_pair as _validate_pair,
 )
 
@@ -70,7 +69,9 @@ class ThinPlateSplineTransform:
         if control_points.ndim != 2:
             raise ValueError("control_points must be two-dimensional.")
         if control_points.shape[1] != 2:
-            raise ValueError("ThinPlateSplineTransform currently supports 2D points only.")
+            raise ValueError(
+                "ThinPlateSplineTransform currently supports 2D points only."
+            )
         if weights.shape != control_points.shape:
             raise ValueError("weights must have the same shape as control_points.")
         if affine_coefficients.shape != (3, 2):
@@ -265,65 +266,37 @@ def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too
             raise ValueError("initial_transform dimension must match the point dimension.")
         transform = initial_transform
 
-    assignment = zeros((reference.shape[0],), dtype=int64) - 1
-    converged = False
-    association_cost = default_cost if cost_function is None else cost_function
-
-    for iteration in range(1, max_iterations + 1):
-        transformed_reference, current_costs = evaluate_registration_costs(
-            transform,
-            reference,
-            moving,
-            association_cost,
-        )
-
-        new_assignment = _solve_gated_assignment(current_costs, max_cost=max_cost)
-        matched_reference_indices = where(new_assignment >= 0)[0]
-
-        if matched_reference_indices.shape[0] < min_matches:
-            assignment = new_assignment
-            return build_registration_result(
-                ThinPlateSplineRegistrationResult,
-                transform=transform,
-                assignment=assignment,
-                transformed_reference_points=transformed_reference,
-                costs=current_costs,
-                iteration=iteration,
-                converged=False,
-            )
-
-        matched_moving_indices = new_assignment[matched_reference_indices]
-        updated_transform = estimate_thin_plate_spline(
-            reference[matched_reference_indices],
-            moving[matched_moving_indices],
+    def _fit_transform(matched_reference, matched_moving):
+        return estimate_thin_plate_spline(
+            matched_reference,
+            matched_moving,
             regularization=regularization,
         )
 
-        updated_transformed_reference = updated_transform.apply(reference)
-        displacement_change = float(
-            linalg.norm(updated_transformed_reference - transformed_reference)
-        )
-        same_assignment = bool(array_equal(new_assignment, assignment))
+    def _compute_change(
+        _previous_transform,
+        updated_transform,
+        reference_points_array,
+        transformed_reference,
+    ):
+        updated_transformed_reference = updated_transform.apply(reference_points_array)
+        return float(linalg.norm(updated_transformed_reference - transformed_reference))
 
-        transform = updated_transform
-        assignment = new_assignment
-
-        if same_assignment and displacement_change <= tolerance:
-            converged = True
-            break
-
-    transformed_reference, final_costs = evaluate_registration_costs(
-        transform,
+    loop_state = run_registration_loop(
         reference,
         moving,
-        association_cost,
+        transform,
+        RegistrationLoopConfig(
+            max_cost=max_cost,
+            cost_function=cost_function,
+            max_iterations=max_iterations,
+            min_matches=min_matches,
+            tolerance=tolerance,
+        ),
+        RegistrationLoopCallbacks(
+            fit_transform=_fit_transform,
+            compute_change=_compute_change,
+            assignment_solver=solve_gated_assignment,
+        ),
     )
-    return build_registration_result(
-        ThinPlateSplineRegistrationResult,
-        transform=transform,
-        assignment=assignment,
-        transformed_reference_points=transformed_reference,
-        costs=final_costs,
-        iteration=iteration,
-        converged=converged,
-    )
+    return build_registration_result(ThinPlateSplineRegistrationResult, loop_state)
