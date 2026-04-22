@@ -53,7 +53,7 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
     def test_pdf(self):
         def pdf(xs, mu, kappa, A, C):
             if xs.shape[1] > 1:
-                results = [pdf(xs[:, i:i + 1], mu, kappa, A, C) for i in range(xs.shape[1])]  # noqa: E203
+                results = [pdf(xs[:, i:i + 1], mu, kappa, A, C) for i in range(xs.shape[1])]
                 return array(results)
             xi = xs[:, 0]
             return C * exp(
@@ -148,11 +148,13 @@ class ToroidalVMMatrixDistributionTest(unittest.TestCase):
         )
         kappaApprox = array([brentq(lambda k, r=r: besseli1(k) / besseli0(k) - r, 1e-9, 50) if r > 1e-9 else 1e-6 for r in rbar])
 
+        sample0 = samples[0]
+        sample1 = samples[1]
         Aapprox = zeros((2, 2))
-        Aapprox[0, 0] = backend_sum(cos(samples[0, :] - muApprox[0]) * cos(samples[1, :] - muApprox[1]) * weights)
-        Aapprox[0, 1] = backend_sum(cos(samples[0, :] - muApprox[0]) * sin(samples[1, :] - muApprox[1]) * weights)
-        Aapprox[1, 0] = backend_sum(sin(samples[0, :] - muApprox[0]) * cos(samples[1, :] - muApprox[1]) * weights)
-        Aapprox[1, 1] = backend_sum(sin(samples[0, :] - muApprox[0]) * sin(samples[1, :] - muApprox[1]) * weights)
+        Aapprox[0, 0] = backend_sum(cos(sample0 - muApprox[0]) * cos(sample1 - muApprox[1]) * weights)
+        Aapprox[0, 1] = backend_sum(cos(sample0 - muApprox[0]) * sin(sample1 - muApprox[1]) * weights)
+        Aapprox[1, 0] = backend_sum(sin(sample0 - muApprox[0]) * cos(sample1 - muApprox[1]) * weights)
+        Aapprox[1, 1] = backend_sum(sin(sample0 - muApprox[0]) * sin(sample1 - muApprox[1]) * weights)
 
         tvmApprox = ToroidalVonMisesMatrixDistribution(muApprox, kappaApprox, Aapprox)
 
