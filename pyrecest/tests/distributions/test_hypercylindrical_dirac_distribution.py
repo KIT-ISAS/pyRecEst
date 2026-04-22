@@ -1,5 +1,4 @@
 import unittest
-from math import pi
 
 import numpy.testing as npt
 
@@ -15,6 +14,7 @@ from pyrecest.backend import (
     eye,
     ones,
     ones_like,
+    pi,
     random,
     sum,
     zeros_like,

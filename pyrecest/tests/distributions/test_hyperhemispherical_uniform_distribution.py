@@ -1,12 +1,11 @@
 """Test for uniform distribution for hyperhemispheres"""
 
 import unittest
-from math import pi
 
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, linalg, ones, random, reshape
+from pyrecest.backend import allclose, linalg, ones, pi, random, reshape
 from pyrecest.distributions import HyperhemisphericalUniformDistribution
 
 

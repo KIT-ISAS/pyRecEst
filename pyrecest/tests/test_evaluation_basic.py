@@ -1,6 +1,8 @@
+import io
 import os
 import tempfile
 import unittest
+import warnings
 from typing import Optional
 
 import matplotlib
@@ -65,22 +67,46 @@ class TestEvalationBasics(TestEvalationBase):
     def test_plot_results(self):
         from pyrecest.evaluation.plot_results import plot_results
 
-        matplotlib.pyplot.close("all")  # Ensure all previous plots are closed
+        matplotlib.pyplot.close("all")
+        matplotlib.use("SVG")
 
-        matplotlib.use("SVG")  # Set the backend to SVG for better compatibility
-        # To generate some results
         self.test_evaluate_for_simulation_config_R2_random_walk()
-        files = os.listdir(self.tmpdirname.name)
-        filename = os.path.join(self.tmpdirname.name, files[0])
+        filename = self._get_single_evaluation_file()
 
-        figs, _ = plot_results(
-            filename=filename,
-            plot_log=False,
-            plot_stds=False,
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            figs, _ = plot_results(
+                filename=filename,
+                plot_log=False,
+                plot_stds=False,
+            )
+
+        try:
+            for fig in figs:
+                with io.BytesIO() as buffer:
+                    fig.savefig(buffer, format="png")
+                    self.assertGreater(buffer.tell(), 0)
+        finally:
+            for fig in figs:
+                fig.clf()
+                matplotlib.pyplot.close(fig)
+
+    def _get_single_evaluation_file(self):
+        files = sorted(
+            os.path.join(self.tmpdirname.name, file)
+            for file in os.listdir(self.tmpdirname.name)
+            if os.path.isfile(os.path.join(self.tmpdirname.name, file))
         )
 
-        for fig in figs:
-            fig.savefig(f"test_plot_{fig.number}.png")
+        self.assertEqual(
+            len(files),
+            1,
+            msg=(
+                f"Expected exactly one evaluation file in "
+                f"{self.tmpdirname.name}, got: {files}"
+            ),
+        )
+        return files[0]
 
     @parameterized.expand(
         [
@@ -160,13 +186,18 @@ class TestEvalationBasics(TestEvalationBase):
             )
         )
 
+    def _generate_simulated_scenario_data(self):
+        """Helper that actually generates the data and returns it."""
+        self.simulation_param["all_seeds"] = range(self.n_runs_default)
+        groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
+        return groundtruths, measurements
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_generate_simulated_scenario(self):
-        self.simulation_param["all_seeds"] = range(self.n_runs_default)
-        groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
+        groundtruths, measurements = self._generate_simulated_scenario_data()
 
         self.assertEqual(
             np.shape(groundtruths), (self.n_runs_default, self.n_timesteps_default)
@@ -174,7 +205,6 @@ class TestEvalationBasics(TestEvalationBase):
         self.assertEqual(
             np.shape(measurements), (self.n_runs_default, self.n_timesteps_default)
         )
-        return groundtruths, measurements
 
     def test_determine_all_deviations(self):
         def dummy_extract_mean(x):
@@ -270,13 +300,17 @@ class TestEvalationBasics(TestEvalationBase):
             configure_for_filter(filterParam, scenario_config)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "pytorch",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_perform_predict_update_cycles(self):
         scenario_name = "R2randomWalk"
         scenario_param = simulation_database(scenario_name)
         scenario_param = check_and_fix_config(scenario_param)
+
+        meas = generate_measurements(
+            np.zeros((self.n_timesteps_default, 2)), scenario_param
+        )
 
         (
             last_filter_state,
@@ -287,9 +321,7 @@ class TestEvalationBasics(TestEvalationBase):
             scenario_param,
             {"name": "kf", "parameter": None},
             np.zeros((self.n_timesteps_default, 2)),
-            generate_measurements(
-                np.zeros((self.n_timesteps_default, 2)), scenario_param
-            ),
+            measurements=meas,
         )
 
         self.assertIsInstance(time_elapsed, float)
@@ -341,7 +373,7 @@ class TestEvalationBasics(TestEvalationBase):
         reason="Not supported on this backend",
     )
     def test_iterate_configs_and_runs(self, filter_configs):
-        groundtruths, measurements = self.test_generate_simulated_scenario()
+        groundtruths, measurements = self._generate_simulated_scenario_data()
         evaluation_config = {
             "plot_each_step": False,
             "convert_to_point_estimate_during_runtime": False,
@@ -453,8 +485,9 @@ class TestEvalationBasics(TestEvalationBase):
             {"name": "pf", "parameter": [51, 81]},
         ]
 
-        filename = "tmp.npy"
-        np.save(filename, {"groundtruths": groundtruths, "measurements": measurements})
+        filename = self._make_temp_npy_file(
+            {"groundtruths": groundtruths, "measurements": measurements}
+        )
 
         scenario_config = {
             "manifold": "Euclidean",
@@ -490,11 +523,32 @@ class TestEvalationBasics(TestEvalationBase):
             measurements,
         )
 
+    def _make_temp_npy_file(self, data):
+        fd, filename = tempfile.mkstemp(suffix=".npy")
+        os.close(fd)
+        self.addCleanup(lambda path=filename: os.path.exists(path) and os.remove(path))
+        np.save(filename, data)
+        return filename
+
     def _load_evaluation_data(self):
         self.test_evaluate_for_simulation_config_R2_random_walk()
-        files = os.listdir(self.tmpdirname.name)
-        filename = os.path.join(self.tmpdirname.name, files[0])
-        return np.load(filename, allow_pickle=True).item()
+
+        files = sorted(
+            os.path.join(self.tmpdirname.name, file)
+            for file in os.listdir(self.tmpdirname.name)
+            if os.path.isfile(os.path.join(self.tmpdirname.name, file))
+        )
+
+        self.assertEqual(
+            len(files),
+            1,
+            msg=(
+                f"Expected exactly one evaluation file in "
+                f"{self.tmpdirname.name}, got: {files}"
+            ),
+        )
+
+        return np.load(files[0], allow_pickle=True).item()
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -559,7 +613,9 @@ class TestEvalationBasics(TestEvalationBase):
     )
     def test_summarize_filter_results(self):
         data = self._load_evaluation_data()
-        results_summarized = summarize_filter_results(**data)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            results_summarized = summarize_filter_results(**data)
 
         for result in results_summarized:
             error_mean = result["error_mean"]

@@ -1,5 +1,3 @@
-from math import pi
-
 import mpmath
 import numpy.testing as npt
 
@@ -16,6 +14,7 @@ from pyrecest.backend import (
     linalg,
     log,
     ones,
+    pi,
     tile,
     vstack,
     zeros,
@@ -80,11 +79,11 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             np.generic: The value of the pdf at xs.
         """
         assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
-        p = self.norm_const * exp(self.kappa * (self.mu @ xs.T) ** 2)
+        p = self.norm_const * exp(self.kappa * (xs @ self.mu) ** 2)
         return p
 
     def ln_pdf(self, xs):
-        return self.ln_norm_const + self.kappa * (self.mu @ xs.T) ** 2
+        return self.ln_norm_const + self.kappa * (xs @ self.mu) ** 2
 
     def to_bingham(self) -> BinghamDistribution:
         if self.kappa < 0:

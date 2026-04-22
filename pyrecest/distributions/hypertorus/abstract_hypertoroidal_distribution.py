@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from math import pi
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -26,6 +25,7 @@ from pyrecest.backend import (
     minimum,
     mod,
     ones,
+    pi,
     random,
     sin,
     sqrt,
@@ -86,7 +86,10 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         integration_boundaries = atleast_2d(integration_boundaries)
         assert integration_boundaries.shape[-1] == 2
 
-        return nquad(f, integration_boundaries)[0]
+        def scalar_f(*args):
+            return f(*args).item()  # ensures 0-dim scalar
+
+        return nquad(scalar_f, integration_boundaries)[0]
 
     def integrate_numerically(self, integration_boundaries=None):
         assert (
@@ -200,7 +203,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         elif self.dim == 2:
             step = 2 * pi / resolution
             alpha, beta = meshgrid(
-                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step)
+                arange(0.0, 2.0 * pi, step), arange(0.0, 2.0 * pi, step), indexing="ij"
             )
             f = self.pdf(column_stack((alpha.ravel(), beta.ravel())))
             f = f.reshape(alpha.shape)
@@ -265,9 +268,22 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
     ):
         # jscpd:ignore-end
         if proposal is None:
+            if pyrecest.backend.__backend_name__ == "jax":
+                import jax as _jax  # pylint: disable=import-error
+                import jax.numpy as _jnp  # pylint: disable=import-error
 
-            def proposal(x):
-                return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
+                def proposal_jax(key, x):
+                    key, subkey = _jax.random.split(key)
+                    noise = _jax.random.normal(subkey, shape=(self.dim,))
+                    return _jnp.mod(x + noise, 2.0 * _jnp.pi)
+
+                proposal = proposal_jax
+            else:
+
+                def proposal_np(x):
+                    return mod(x + random.normal(0.0, 1.0, (self.dim,)), 2.0 * pi)
+
+                proposal = proposal_np
 
         if start_point is None:
             start_point = self.mean_direction()

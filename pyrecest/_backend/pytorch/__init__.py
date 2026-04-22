@@ -61,10 +61,10 @@ from torch import (
     count_nonzero,
     full_like,
     isinf,
+    isfinite,
     deg2rad,
+    rad2deg,
     argsort,
-    max,
-    min,
     roll,
     dstack,
     vmap,
@@ -72,6 +72,8 @@ from torch import (
     # For Riemannian score-based SDE
     log1p,
 )
+from torch import equal as array_equal  # For PyRecEst
+
 from torch import broadcast_tensors as broadcast_arrays
 from torch import repeat_interleave as repeat
 from torch.special import gammaln as _gammaln
@@ -85,6 +87,8 @@ from . import (
     random,  # NOQA
     # for pyrecest
     fft,  # NOQA
+    spatial,  # NOQA
+    signal,  # NOQA
 )
 from ._common import array, cast, from_numpy
 from ._dtype import (
@@ -320,6 +324,7 @@ def allclose(a, b, atol=atol, rtol=rtol):
         a = _torch.tensor(a)
     if not isinstance(b, _torch.Tensor):
         b = _torch.tensor(b)
+    a, b = convert_to_wider_dtype([a, b])
     a, b = _torch.broadcast_tensors(a, b)
     return _torch.allclose(a, b, atol=atol, rtol=rtol)
 
@@ -354,11 +359,12 @@ def shape(val):
     return val.shape
 
 
-def amax(a, axis=None):
+def max(a, axis=None):
     if axis is None:
         return _torch.max(array(a))
     return _torch.max(array(a), dim=axis).values
 
+amax=max
 
 def maximum(a, b):
     return _torch.max(array(a), array(b))
@@ -391,6 +397,7 @@ def isclose(x, y, rtol=rtol, atol=atol):
         x = _torch.tensor(x)
     if not _torch.is_tensor(y):
         y = _torch.tensor(y)
+    x, y = convert_to_wider_dtype([x, y])
     return _torch.isclose(x, y, atol=atol, rtol=rtol)
 
 
@@ -808,10 +815,11 @@ def sort(a, axis=-1):
     return sorted_a
 
 
-def amin(a, axis=-1):
+def min(a, axis=-1):
     (values, _) = _torch.min(a, dim=axis)
     return values
 
+amin = min
 
 def take(a, indices, axis=0):
     if not _torch.is_tensor(indices):

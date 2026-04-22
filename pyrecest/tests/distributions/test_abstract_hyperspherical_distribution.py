@@ -1,16 +1,16 @@
 import unittest
-from math import pi
 
 import matplotlib
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, linalg, log, sqrt
+from pyrecest.backend import array, linalg, log, pi, sqrt
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     VonMisesFisherDistribution,
 )
 
+matplotlib.pyplot.close("all")
 matplotlib.use("Agg")
 
 

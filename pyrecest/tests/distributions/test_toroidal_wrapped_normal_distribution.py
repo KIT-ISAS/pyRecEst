@@ -1,11 +1,10 @@
 import unittest
-from math import pi
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, mod
+from pyrecest.backend import allclose, array, mod, pi
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )

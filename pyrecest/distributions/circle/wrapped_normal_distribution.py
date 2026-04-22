@@ -1,4 +1,3 @@
-from math import pi
 from typing import Union
 
 import pyrecest.backend
@@ -16,6 +15,7 @@ from pyrecest.backend import (
     mod,
     ndim,
     ones,
+    pi,
     random,
     sqrt,
     squeeze,
@@ -50,6 +50,10 @@ class WrappedNormalDistribution(
         """
         AbstractCircularDistribution.__init__(self)
         HypertoroidalWrappedNormalDistribution.__init__(self, mu, sigma**2)
+        if ndim(mu) != 0:
+            raise ValueError(f"mu must be a scalar, but got shape {mu.shape}.")
+        if ndim(sigma) != 0:
+            raise ValueError(f"sigma must be a scalar, but got shape {sigma.shape}.")
 
     @property
     def sigma(self):
@@ -68,7 +72,7 @@ class WrappedNormalDistribution(
         x = mod(xs, 2.0 * pi)
         x = where(x < 0, x + 2.0 * pi, x)
         x -= self.mu
-        max_iterations: int = 1000
+        max_iterations = 1000
         if pyrecest.backend.__backend_name__ != "jax":
             n_inputs = xs.shape[0]
             result = zeros(n_inputs)
@@ -78,7 +82,7 @@ class WrappedNormalDistribution(
 
             for i in range(n_inputs):
                 old_result = 0.0
-                result[i] = exp(x[i] * x[i] * tmp)
+                result[i] = squeeze(exp(x[i] * x[i] * tmp))
 
                 for k in range(1, max_iterations + 1):
                     xp = x[i] + 2 * pi * k
@@ -86,7 +90,7 @@ class WrappedNormalDistribution(
                     tp = xp * xp * tmp
                     tm = xm * xm * tmp
                     old_result = result[i]
-                    result[i] += exp(tp) + exp(tm)
+                    result[i] += (exp(tp) + exp(tm)).squeeze()
 
                     if result[i] == old_result:
                         break

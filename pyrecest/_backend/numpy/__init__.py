@@ -91,13 +91,16 @@ from numpy import (
     count_nonzero,
     full_like,
     isinf,
+    isfinite,
     deg2rad,
+    rad2deg,
     argsort,
     max,
     min,
     roll,
     dstack,
     round,
+    array_equal,
     # For Riemannian score-based SDE
     log1p,
 )
@@ -166,6 +169,8 @@ from . import (
     random,  # NOQA
     # For pyrecest
     fft,  # NOQA
+    spatial,  # NOQA
+    signal,  # NOQA
 )
 from ._common import (
     _box_binary_scalar,
