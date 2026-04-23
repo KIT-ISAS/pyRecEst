@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 import inspect
-from copy import copy
 from typing import Callable, Sequence
+
+from pyrecest import copy
 
 # pylint: disable=no-member
 import pyrecest.backend
@@ -184,7 +185,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             propagated_sigma_points,
             sigma_points.Wm,
         )
-        predicted_covariance = copy(asarray(sys_noise_covariance))
+        predicted_covariance = copy.copy(asarray(sys_noise_covariance))
         cross_covariance = zeros((filtered_state.dim, filtered_state.dim))
 
         for idx in range(propagated_sigma_points.shape[0]):
@@ -236,7 +237,7 @@ class UnscentedRauchTungStriebelSmoother(AbstractSmoother):
             measurement_sigma_points,
             sigma_points.Wm,
         )
-        innovation_covariance = copy(asarray(meas_noise_covariance))
+        innovation_covariance = copy.copy(asarray(meas_noise_covariance))
         state_measurement_cross_covariance = zeros(
             (predicted_state.dim, predicted_measurement.shape[0])
         )
