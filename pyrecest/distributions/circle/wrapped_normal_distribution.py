@@ -48,12 +48,14 @@ class WrappedNormalDistribution(
         """
         Initialize a wrapped normal distribution with mean mu and standard deviation sigma.
         """
-        AbstractCircularDistribution.__init__(self)
-        HypertoroidalWrappedNormalDistribution.__init__(self, mu, sigma**2)
+        mu = array(mu)
+        sigma = array(sigma)
         if ndim(mu) != 0:
             raise ValueError(f"mu must be a scalar, but got shape {mu.shape}.")
         if ndim(sigma) != 0:
             raise ValueError(f"sigma must be a scalar, but got shape {sigma.shape}.")
+        AbstractCircularDistribution.__init__(self)
+        HypertoroidalWrappedNormalDistribution.__init__(self, mu, sigma**2)
 
     @property
     def sigma(self):
