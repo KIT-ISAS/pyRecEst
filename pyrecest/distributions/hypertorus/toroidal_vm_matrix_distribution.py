@@ -1,4 +1,3 @@
-import copy
 from math import factorial
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -26,12 +25,8 @@ _2pi = 2.0 * pi
 
 def _initialize_toroidal_matrix_distribution(instance, mu, kappa, A):
     """Initialize common state for bivariate toroidal matrix distributions."""
-    AbstractToroidalDistribution.__init__(instance)
-    assert mu.shape == (2,)
-    assert kappa.shape == (2,)
-    assert A.shape == (2, 2)
-    assert kappa[0] > 0
-    assert kappa[1] > 0
+    assert (mu.shape, kappa.shape, A.shape) == ((2,), (2,), (2, 2))
+    assert kappa[0] > 0 and kappa[1] > 0
 
     instance.mu = mod(mu, _2pi)
     instance.kappa = kappa
@@ -61,6 +56,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
     """
 
     def __init__(self, mu, kappa, A):
+        super().__init__()
         _initialize_toroidal_matrix_distribution(self, mu, kappa, A)
 
         use_numerical = kappa[0] > 1.5 or kappa[1] > 1.5 or max(abs(A)) > 1.0
@@ -332,6 +328,6 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
     def shift(self, shift_by):
         """Return a copy of this distribution shifted by shift_by."""
         assert shift_by.shape == (2,)
-        result = copy.copy(self)
-        result.mu = mod(self.mu + shift_by, _2pi)
-        return result
+        return ToroidalVMMatrixDistribution(
+            mod(self.mu + shift_by, _2pi), self.kappa, self.A
+        )
