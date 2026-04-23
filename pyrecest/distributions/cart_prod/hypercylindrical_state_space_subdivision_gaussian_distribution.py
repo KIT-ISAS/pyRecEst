@@ -154,14 +154,12 @@ class HypercylindricalStateSpaceSubdivisionGaussianDistribution(
             [periodic_mode.reshape(-1), self.gaussians[mode_index].mode().reshape(-1)]
         )
 
-    def integrate(self, left=None, right=None):
-        del left, right
+    def integrate(self, integration_boundaries=None):
+        del integration_boundaries
         return 1.0
 
     @staticmethod
-    def from_distribution(
-        distribution, no_of_grid_points, grid_type="CartesianProd"
-    ):
+    def from_distribution(distribution, no_of_grid_points, grid_type="CartesianProd"):
         del distribution, no_of_grid_points, grid_type
         raise NotImplementedError(
             "This PR branch does not contain the non-Gaussian hypercylindrical "
@@ -169,7 +167,7 @@ class HypercylindricalStateSpaceSubdivisionGaussianDistribution(
         )
 
     @staticmethod
-    def from_function(
+    def from_function(  # pylint: disable=too-many-positional-arguments
         fun,
         no_of_grid_points,
         dim_lin,
