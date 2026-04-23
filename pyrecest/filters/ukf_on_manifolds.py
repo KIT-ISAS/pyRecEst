@@ -12,11 +12,11 @@ Reference Python implementation:
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from typing import Any, Callable
 
-from pyrecest import copy
 import pyrecest.backend
 from pyrecest.backend import (
     asarray,
     broadcast_to,
+    copy,
     eye,
     linalg,
     outer,
@@ -155,7 +155,7 @@ class UKFOnManifolds(AbstractFilter):  # pylint: disable=too-many-instance-attri
         self._w_u = _Weights(self.d, float(alpha_arr[2]))  # update
 
         self._state = state0
-        self._P = copy.copy(P0)
+        self._P = copy(P0)
 
         # AbstractFilter stores the filter state; we use a tuple (state, P)
         AbstractFilter.__init__(self, (self._state, self._P))
