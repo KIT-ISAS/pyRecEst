@@ -96,11 +96,11 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         return theta
 
     def pdf(self, xs):
-        """Evaluate the pdf at each column of xa.
+        """Evaluate the pdf at each column of xs.
 
         Parameters
         ----------
-        xa : array of shape (lin_dim + 1,) or (lin_dim + 1, n)
+        xs : array of shape (lin_dim + 1,) or (lin_dim + 1, n)
             First row/element is the periodic variable, the rest are linear.
 
         Returns
@@ -263,6 +263,9 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         ]
         return nquad(lambda *args: self.pdf(array(args)), bounds)[0]
 
+    def _integrate_linear_at_angle(self, theta, bounds_linear):
+        return nquad(lambda x: self.pdf(array([theta, x])), bounds_linear)[0]
+
     def to_gaussian(self):
         """Approximate conversion to a Gaussian (valid for large kappa, small Gamma).
 
@@ -312,10 +315,11 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             def marginal_pdf(theta):
                 theta = atleast_1d(array(theta, dtype=float64))
                 result = zeros_like(theta, dtype=float64)
-                for idx, t in enumerate(theta.ravel()):
-                    result.ravel()[idx] = nquad(
-                        lambda x, t=t: self.pdf(array([t, x])), bounds_linear
-                    )[0]
+                result_values = result.ravel()
+                for idx, theta_value in enumerate(theta.ravel()):
+                    result_values[idx] = self._integrate_linear_at_angle(
+                        theta_value, bounds_linear
+                    )
                 return result
 
             dist = CustomHypertoroidalDistribution(marginal_pdf, self.bound_dim)
