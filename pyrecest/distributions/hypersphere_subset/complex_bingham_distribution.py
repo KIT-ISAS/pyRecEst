@@ -9,7 +9,7 @@ Reference:
   Journal of the Royal Statistical Society. Series B (Methodological), 1994, 285-299.
 """
 
-from copy import copy
+from pyrecest import copy
 
 import pyrecest.backend
 from pyrecest.backend import (
@@ -317,7 +317,7 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
             log_c0 = ComplexBinghamDistribution.log_norm(B_diag)
             grad = empty(d)
             for i in range(d):
-                lam_p = copy(lam)
+                lam_p = copy.copy(lam)
                 lam_p[i] += eps
                 log_cp = ComplexBinghamDistribution.log_norm(
                     diag(array(lam_p, dtype=complex128))
