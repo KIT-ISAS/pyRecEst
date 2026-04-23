@@ -206,6 +206,10 @@ class TestEvalationBasics(TestEvalationBase):
             np.shape(measurements), (self.n_runs_default, self.n_timesteps_default)
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_determine_all_deviations(self):
         def dummy_extract_mean(x):
             return x
@@ -608,7 +612,7 @@ class TestEvalationBasics(TestEvalationBase):
         self.assertEqual(repackaged_data1, repackaged_data2)
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "pytorch",
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
     def test_summarize_filter_results(self):
