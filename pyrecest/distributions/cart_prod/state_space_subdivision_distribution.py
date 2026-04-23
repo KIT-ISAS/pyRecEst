@@ -31,16 +31,26 @@ class StateSpaceSubdivisionDistribution:
         ), "Number of grid points in gd must match length of linear_distributions."
         self.gd = copy.deepcopy(gd)
         self.linear_distributions = list(copy.deepcopy(linear_distributions))
+        self.bound_dim = self.gd.dim
+        self.lin_dim = self.linear_distributions[0].dim
 
     @property
     def bound_dim(self):
         """Dimension of the periodic/bounded space (ambient dimension of grid points)."""
-        return self.gd.dim
+        return self._bound_dim
+
+    @bound_dim.setter
+    def bound_dim(self, value):
+        self._bound_dim = value
 
     @property
     def lin_dim(self):
         """Dimension of the linear space."""
-        return self.linear_distributions[0].dim
+        return self._lin_dim
+
+    @lin_dim.setter
+    def lin_dim(self, value):
+        self._lin_dim = value
 
     def hybrid_mean(self):
         """
