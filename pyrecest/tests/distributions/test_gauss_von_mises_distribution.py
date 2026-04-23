@@ -2,7 +2,7 @@ import unittest
 from scipy.stats import multivariate_normal
 from scipy.special import iv
 
-import pyrecest.backend as backend
+from pyrecest import backend
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.cart_prod.gauss_von_mises_distribution import GaussVonMisesDistribution
 from pyrecest.backend import allclose, cos, exp, linalg, pi, random, squeeze, zeros, all
