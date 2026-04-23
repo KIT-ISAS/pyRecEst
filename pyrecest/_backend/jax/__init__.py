@@ -157,6 +157,10 @@ def has_autodiff():
     """
     return True
 
+
+def isscalar(x):
+    return _jnp.isscalar(x) and not isinstance(x, _jnp.ndarray)
+
 from ._dtype import (
     set_default_dtype, as_dtype
 )
