@@ -2,7 +2,7 @@ import unittest
 from scipy.stats import multivariate_normal
 from scipy.special import iv
 
-import pyrecest.backend
+import pyrecest.backend as backend
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.cart_prod.gauss_von_mises_distribution import GaussVonMisesDistribution
 from pyrecest.backend import allclose, cos, exp, linalg, pi, random, squeeze, zeros, all
@@ -34,7 +34,7 @@ class GaussVonMisesDistributionTest(unittest.TestCase):
         return float(squeeze(p))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_pdf(self):
@@ -60,7 +60,7 @@ class GaussVonMisesDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(gauss.C[1:, 1:], self.g.P, atol=1e-10))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
+        backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_sampling(self):
