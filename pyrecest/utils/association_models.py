@@ -30,6 +30,8 @@ from pyrecest.backend import (
     concatenate,
     diag,
     exp,
+    float64,
+    int64,
     isfinite,
     linalg,
     log,
@@ -52,7 +54,7 @@ class _BinaryClassWeights:
     positive: float
 
     def as_array(self, labels: Any) -> Any:
-        return where(labels == 1, self.positive, self.negative).astype(float)
+        return asarray(where(labels == 1, self.positive, self.negative), dtype=float64)
 
 
 class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-attributes
@@ -115,7 +117,11 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             raise ValueError("tolerance must be positive")
         if not 0.0 < probability_clip < 0.5:
             raise ValueError("probability_clip must lie in (0, 0.5)")
-        if class_weight != "balanced" and class_weight is not None and not isinstance(class_weight, dict):
+        if (
+            class_weight != "balanced"
+            and class_weight is not None
+            and not isinstance(class_weight, dict)
+        ):
             raise ValueError(
                 "class_weight must be None, 'balanced', or a dictionary with labels 0 and 1"
             )
@@ -140,13 +146,13 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
     @staticmethod
     def _sigmoid(values: Any) -> Any:
         """Numerically stable sigmoid."""
-        values = asarray(values, dtype=float)
+        values = asarray(values, dtype=float64)
         exp_neg = exp(-abs(values))
         return where(values >= 0.0, 1.0 / (1.0 + exp_neg), exp_neg / (1.0 + exp_neg))
 
     @staticmethod
     def _ensure_binary_labels(labels: Any) -> Any:
-        labels = asarray(labels)
+        labels = asarray(labels).reshape(-1)
         if labels.size == 0:
             raise ValueError("At least one labeled example is required")
 
@@ -154,18 +160,19 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         if not all((unique_labels == 0) | (unique_labels == 1)):
             raise ValueError("labels must only contain binary values 0/1 or False/True")
 
-        labels = labels.astype(int)
+        labels = asarray(labels, dtype=int64)
         if unique(labels).size != 2:
             raise ValueError("Both negative and positive examples are required")
         return labels
 
     @staticmethod
     def _prepare_training_features(features: Any) -> Any:
-        features = asarray(features, dtype=float)
+        features = asarray(features, dtype=float64)
         if features.ndim == 1:
             features = features[:, None]
         if features.ndim < 2:
             raise ValueError("features must be at least one-dimensional")
+
         flattened = features.reshape(-1, features.shape[-1])
         if flattened.shape[0] == 0:
             raise ValueError("At least one feature vector is required")
@@ -178,7 +185,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         features: Any,
         expected_feature_dimension: int,
     ) -> tuple[Any, tuple[int, ...]]:
-        features = asarray(features, dtype=float)
+        features = asarray(features, dtype=float64)
         if features.ndim == 1:
             if features.shape[0] != expected_feature_dimension:
                 raise ValueError(
@@ -204,14 +211,14 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
 
         if self.class_weight == "balanced":
             n_total = labels.shape[0]
-            n_pos = int(sum(labels))
-            class_counts = asarray([float(n_total - n_pos), float(n_pos)])
-            if any(class_counts == 0.0):
+            n_pos = int(labels.sum())
+            n_neg = n_total - n_pos
+            if n_neg == 0 or n_pos == 0:
                 raise ValueError("Both classes must be present when using balanced class weights")
-            total_count = class_counts.sum()
+            total_count = float(n_total)
             return _BinaryClassWeights(
-                negative=total_count / (2.0 * class_counts[0]),
-                positive=total_count / (2.0 * class_counts[1]),
+                negative=total_count / (2.0 * n_neg),
+                positive=total_count / (2.0 * n_pos),
             )
 
         if 0 not in self.class_weight or 1 not in self.class_weight:
@@ -227,7 +234,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         if sample_weight is None:
             return None
 
-        flattened_sample_weight = asarray(sample_weight, dtype=float).reshape(-1)
+        flattened_sample_weight = asarray(sample_weight, dtype=float64).reshape(-1)
         if flattened_sample_weight.shape[0] != labels.shape[0]:
             raise ValueError("sample_weight must match the number of flattened labels")
         return flattened_sample_weight
@@ -237,18 +244,18 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         labels: Any,
         sample_weight: Any | None,
     ) -> Any:
-        weights = ones(labels.shape[0], dtype=float)
+        weights = ones(labels.shape[0], dtype=float64)
         if sample_weight is not None:
-            sample_weight = asarray(sample_weight, dtype=float)
+            sample_weight = asarray(sample_weight, dtype=float64)
             if sample_weight.shape != labels.shape:
                 raise ValueError("sample_weight must match the flattened label shape")
             if any(sample_weight < 0.0):
                 raise ValueError("sample_weight must be non-negative")
-            weights *= sample_weight
+            weights = weights * sample_weight
 
         class_weights = self._resolve_class_weights(labels)
         self.class_weights_ = class_weights
-        weights *= class_weights.as_array(labels)
+        weights = weights * class_weights.as_array(labels)
 
         if not any(weights > 0.0):
             raise ValueError("At least one example must receive positive weight")
@@ -260,12 +267,12 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             feature_scale = features.std(axis=0)
             feature_scale = where(feature_scale > 0.0, feature_scale, 1.0)
         else:
-            feature_mean = zeros(features.shape[1], dtype=float)
-            feature_scale = ones(features.shape[1], dtype=float)
+            feature_mean = zeros(features.shape[1], dtype=float64)
+            feature_scale = ones(features.shape[1], dtype=float64)
 
         self.feature_mean_ = feature_mean
         self.feature_scale_ = feature_scale
-        return (features - self.feature_mean_) / self.feature_scale_
+        return (features - feature_mean) / feature_scale
 
     def _transform_features(self, features: Any) -> Any:
         if self.feature_mean_ is None or self.feature_scale_ is None:
@@ -274,13 +281,16 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
 
     def _design_matrix(self, features: Any) -> Any:
         if self.fit_intercept:
-            return concatenate(
-                [ones((features.shape[0], 1), dtype=float), features], axis=1
-            )
+            intercept_column = ones((features.shape[0], 1), dtype=float64)
+            return concatenate((intercept_column, features), axis=1)
         return features
 
     def _require_fitted(self) -> None:
-        if self.n_features_in_ is None or self.coefficients_ is None or self.intercept_ is None:
+        if (
+            self.n_features_in_ is None
+            or self.coefficients_ is None
+            or self.intercept_ is None
+        ):
             raise RuntimeError("The association model must be fitted before use")
 
     def _prepare_fit_inputs(
@@ -297,8 +307,10 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
 
     def _regularization_mask(self, n_params: int) -> Any:
         if self.fit_intercept:
-            return concatenate([zeros(1, dtype=float), ones(n_params - 1, dtype=float)])
-        return ones(n_params, dtype=float)
+            return concatenate(
+                (zeros(1, dtype=float64), ones(n_params - 1, dtype=float64))
+            )
+        return ones(n_params, dtype=float64)
 
     @staticmethod
     def _effective_tolerance(parameter_vector: Any, requested_tolerance: float) -> float:
@@ -323,22 +335,9 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         labels: Any,
         sample_weight: Any | None = None,
     ) -> "LogisticPairwiseAssociationModel":
-        """Fit the association model.
-
-        Parameters
-        ----------
-        features:
-            Feature matrix of shape ``(n_samples, n_features)`` or feature tensor
-            of shape ``(..., n_features)``.
-        labels:
-            Binary labels with shape ``(n_samples,)`` or ``(...)`` matching the
-            leading dimensions of ``features``.
-        sample_weight:
-            Optional non-negative per-example weights with the same shape as
-            ``labels``.
-        """
+        """Fit the association model."""
         flattened_features = self._prepare_training_features(features)
-        labels = self._ensure_binary_labels(asarray(labels).reshape(-1))
+        labels = self._ensure_binary_labels(labels)
         if flattened_features.shape[0] != labels.shape[0]:
             raise ValueError(
                 "The number of feature vectors must equal the number of labels after flattening"
@@ -348,7 +347,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         design_matrix, effective_weights = self._prepare_fit_inputs(
             flattened_features, labels, sample_weight
         )
-        parameter_vector = zeros(design_matrix.shape[1], dtype=float)
+        parameter_vector = zeros(design_matrix.shape[1], dtype=float64)
         regularization_mask = self._regularization_mask(design_matrix.shape[1])
 
         self.converged_ = False
@@ -371,7 +370,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             except LinAlgError:
                 step = linalg.pinv(hessian) @ gradient
 
-            parameter_vector -= step
+            parameter_vector = parameter_vector - step
             self.n_iter_ = iteration
             if max(abs(step)) <= self._effective_tolerance(parameter_vector, self.tolerance):
                 self.converged_ = True
@@ -389,7 +388,8 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         )
         standardized_features = self._transform_features(flattened_features)
         if self.fit_intercept:
-            parameter_vector = concatenate((asarray([self.intercept_]), self.coefficients_))
+            intercept = asarray([self.intercept_], dtype=float64)
+            parameter_vector = concatenate((intercept, self.coefficients_))
         else:
             parameter_vector = self.coefficients_
         logits = self._design_matrix(standardized_features) @ parameter_vector
@@ -403,15 +403,13 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
 
     def predict_match_probability(self, features: Any) -> Any:
         """Return posterior match probabilities for the provided feature vectors."""
-        log_odds = self.decision_function(features)
-        return self._sigmoid(asarray(log_odds, dtype=float))
+        return self._sigmoid(self.decision_function(features))
 
     def predict(self, features: Any, threshold: float = 0.5) -> Any:
         """Predict binary match decisions using the supplied threshold."""
         if not 0.0 < threshold < 1.0:
             raise ValueError("threshold must lie in (0, 1)")
-        probabilities = self.predict_match_probability(features)
-        return probabilities >= threshold
+        return self.predict_match_probability(features) >= threshold
 
     def pairwise_cost_matrix(
         self,
@@ -419,18 +417,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         *,
         mode: _COST_MODE = "negative_log_probability",
     ) -> Any:
-        """Convert pairwise features into an assignment cost matrix.
-
-        Parameters
-        ----------
-        pairwise_features:
-            Pairwise feature tensor of shape ``(..., n_features)``. For neuron
-            tracking this is typically ``(n_reference_rois, n_candidate_rois,
-            n_features)``.
-        mode:
-            ``"negative_log_probability"`` returns ``-log p(match | features)``.
-            ``"one_minus_probability"`` returns ``1 - p(match | features)``.
-        """
+        """Convert pairwise features into an assignment cost matrix."""
         probabilities = clip(
             self.predict_match_probability(pairwise_features),
             self.probability_clip,
