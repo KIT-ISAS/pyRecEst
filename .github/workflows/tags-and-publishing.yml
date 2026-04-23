@@ -199,7 +199,7 @@ jobs:
 
           payload = {
               "tag_name": os.environ["VERSION"],
-              "target_commitish": os.environ["TARGET_COMMITISH"]",
+              "target_commitish": os.environ["TARGET_COMMITISH"],
           }
 
           prev_tag = os.environ.get("PREV_TAG", "").strip()
