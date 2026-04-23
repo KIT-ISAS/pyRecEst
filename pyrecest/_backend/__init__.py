@@ -96,6 +96,7 @@ BACKEND_ATTRIBUTES = {
         "imag",
         "isclose",
         "isnan",
+        "isscalar",
         "is_array",
         "is_complex",
         "is_floating",
