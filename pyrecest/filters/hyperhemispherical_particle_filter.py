@@ -1,4 +1,4 @@
-import numpy as np
+from pyrecest.backend import empty
 from pyrecest.distributions.hypersphere_subset.abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
 )
@@ -13,9 +13,7 @@ from .manifold_mixins import HyperhemisphericalFilterMixin
 class HyperhemisphericalParticleFilter(
     AbstractParticleFilter, HyperhemisphericalFilterMixin
 ):
-    def __init__(
-        self, n_particles: int | np.int32 | np.int64, dim: int | np.int32 | np.int64
-    ) -> None:
+    def __init__(self, n_particles: int, dim: int) -> None:
         """
         Constructor
 
@@ -24,7 +22,7 @@ class HyperhemisphericalParticleFilter(
         dim (int > 0): Dimension
         """
         initial_filter_state = HyperhemisphericalDiracDistribution(
-            np.empty((n_particles, dim + 1))
+            empty((n_particles, dim + 1))
         )
         HyperhemisphericalFilterMixin.__init__(self)
         AbstractParticleFilter.__init__(self, initial_filter_state=initial_filter_state)
