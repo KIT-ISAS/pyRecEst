@@ -4,7 +4,7 @@ import copy
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dot, linalg, ndim, random
+from pyrecest.backend import dot, linalg, ndim, random, reshape
 from scipy.linalg import cholesky
 
 from .abstract_linear_distribution import AbstractLinearDistribution
@@ -60,14 +60,13 @@ class GaussianDistribution(AbstractLinearDistribution):
             log_probs = distribution.log_prob(xs)
             pdfvals = _torch.exp(log_probs)
         elif pyrecest.backend.__backend_name__ == "jax":
-            from jax import numpy as jnp  # pylint: disable=import-error
             from jax.scipy.stats import (  # pylint: disable=import-error
                 multivariate_normal,
             )
 
             if xs.ndim == 1 and self.dim == 1:
                 # For 1-D distributions, we need to reshape the input to a 2-D tensor
-                xs = jnp.reshape(xs, (-1, 1))
+                xs = reshape(xs, (-1, 1))
 
             pdfvals = multivariate_normal.pdf(xs, self.mu, self.C)
         else:

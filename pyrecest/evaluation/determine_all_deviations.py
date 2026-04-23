@@ -1,8 +1,9 @@
 import warnings
 
-import numpy as np
+import pyrecest.backend
 from beartype import beartype
 from beartype.typing import Callable
+from pyrecest.backend import any, empty, is_array, isinf, sum
 
 
 @beartype
@@ -13,6 +14,10 @@ def determine_all_deviations(
     groundtruths,
     mean_calculation_symm: str = "",
 ):
+    assert (
+        pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
+    ), "Not supported for the JAX backend."
+
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
@@ -21,12 +26,12 @@ def determine_all_deviations(
         2,
     ), "Assuming groundtruths to be a 2-D array of shape (n_runs, n_timesteps) composed arrays of shape (n_dim,) or (n_targets,n_dim)."
 
-    all_deviations_last_mat = np.empty((len(results), groundtruths.shape[0]))
+    all_deviations_last_mat = empty((len(results), groundtruths.shape[0]))
 
     for config_no, result_curr_config in enumerate(results):
         for run in range(len(groundtruths)):
-            if isinstance(result_curr_config[run], np.ndarray):
-                # If estimates are already given as numpy array, use it
+            if is_array(result_curr_config[run]):
+                # If estimates are already given as an array, use it
                 final_estimate = result_curr_config[run]
             elif callable(extract_mean):
                 # Otherwise, use extract_mean to obtain the estimate
@@ -40,12 +45,12 @@ def determine_all_deviations(
                 )
             else:
                 warnings.warn("No estimate for this filter, setting error to inf.")
-                all_deviations_last_mat[config_no][run] = np.inf
+                all_deviations_last_mat[config_no][run] = float("inf")
 
-        if np.any(np.isinf(all_deviations_last_mat[config_no])):
+        if any(isinf(all_deviations_last_mat[config_no])):
             print(
                 f"Warning: {result_curr_config['filterName']} with {result_curr_config['filterParams']} "
-                f"parameters apparently failed {np.sum(np.isinf(all_deviations_last_mat[config_no]))} "
+                f"parameters apparently failed {sum(isinf(all_deviations_last_mat[config_no]))} "
                 "times. Check if this is plausible."
             )
 
