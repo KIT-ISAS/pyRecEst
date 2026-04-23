@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from pyrecest import copy
-from pyrecest.backend import asarray, ndim
+from pyrecest.backend import asarray, copy, ndim
 from pyrecest.distributions import GaussianDistribution
 
 
@@ -55,7 +54,7 @@ class AbstractSmoother(ABC):
             if default is None:
                 raise ValueError(f"{name} must be provided.")
             default_arr = asarray(default)
-            return [copy.copy(default_arr) for _ in range(length)]
+            return [copy(default_arr) for _ in range(length)]
 
         values_arr = asarray(values)
         if ndim(values_arr) == 0:
@@ -64,13 +63,13 @@ class AbstractSmoother(ABC):
                     f"Scalar input for {name} is only supported in one-dimensional models."
                 )
             scalar_matrix = asarray([[values_arr]])
-            return [copy.copy(scalar_matrix) for _ in range(length)]
+            return [copy(scalar_matrix) for _ in range(length)]
         if ndim(values_arr) == 1 and matrix_dim == 1 and values_arr.shape[0] == length:
             return [asarray([[values_arr[idx]]]) for idx in range(length)]
         if ndim(values_arr) == 2:
-            return [copy.copy(values_arr) for _ in range(length)]
+            return [copy(values_arr) for _ in range(length)]
         if ndim(values_arr) == 3 and values_arr.shape[0] == length:
-            return [copy.copy(values_arr[idx]) for idx in range(length)]
+            return [copy(values_arr[idx]) for idx in range(length)]
 
         if isinstance(values, (list, tuple)) and len(values) == length:
             normalized_values = []
@@ -107,13 +106,13 @@ class AbstractSmoother(ABC):
                     f"Scalar input for {name} is only supported in one-dimensional models."
                 )
             scalar_vector = asarray([values_arr])
-            return [copy.copy(scalar_vector) for _ in range(length)]
+            return [copy(scalar_vector) for _ in range(length)]
         if ndim(values_arr) == 1:
             if vector_dim == 1 and values_arr.shape[0] == length:
                 return [asarray([values_arr[idx]]) for idx in range(length)]
-            return [copy.copy(values_arr) for _ in range(length)]
+            return [copy(values_arr) for _ in range(length)]
         if ndim(values_arr) == 2 and values_arr.shape[0] == length:
-            return [copy.copy(values_arr[idx]) for idx in range(length)]
+            return [copy(values_arr[idx]) for idx in range(length)]
 
         if isinstance(values, (list, tuple)) and len(values) == length:
             normalized_values = []
