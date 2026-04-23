@@ -2,10 +2,9 @@ import unittest
 
 import numpy.testing as npt
 import pyrecest.backend
-from pyrecest import copy
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, pi
+from pyrecest.backend import array, copy, pi
 from pyrecest.distributions.circle.piecewise_constant_distribution import (
     PiecewiseConstantDistribution,
 )
@@ -63,7 +62,7 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
 
         w = array([1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 4.0, 3.0, 2.0, 1.0])
         self.f.filter_state = PiecewiseConstantDistribution(w)
-        w_before = copy.copy(self.f.filter_state.w)
+        w_before = copy(self.f.filter_state.w)
 
         A = array(np.eye(self.n))
         self.f.predict(A)
@@ -76,7 +75,7 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
 
         w = array([1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 4.0, 3.0, 2.0, 1.0])
         self.f.filter_state = PiecewiseConstantDistribution(w)
-        w_before = copy.copy(self.f.filter_state.w)
+        w_before = copy(self.f.filter_state.w)
 
         # Shift all weight to next interval (cyclic permutation)
         A = array(np.roll(np.eye(self.n), 1, axis=0))
@@ -100,7 +99,7 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
         H = array(np.random.default_rng(0).uniform(0.5, 1.5, (lw, self.n)))
         z = 0.5  # falls in measurement interval 0 (first interval [0, 2pi/5))
 
-        w_before = copy.copy(self.f.filter_state.w)
+        w_before = copy(self.f.filter_state.w)
         self.f.update(H, z)
 
         # The updated weights should be proportional to H[0, :] * w_before
