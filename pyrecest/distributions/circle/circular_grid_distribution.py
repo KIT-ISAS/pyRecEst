@@ -52,6 +52,42 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
             enforce_pdf_nonnegative=enforce_pdf_nonnegative,
         )
 
+    @staticmethod
+    def _matlab_sinc(x):
+        return where(isclose(x, 0.0), 1.0, sin(x) / x)
+
+    def _pdf_via_sinc(self, xs, sinc_repetitions):
+        if sinc_repetitions % 2 != 1:
+            raise ValueError("sinc_repetitions must be an odd integer.")
+
+        grid_size = self.grid_values.shape[0]
+        step_size = 2.0 * pi / grid_size
+        lower = int(floor(sinc_repetitions / 2) * grid_size)
+        upper = int(ceil(sinc_repetitions / 2) * grid_size)
+        repetitions = arange(-lower, upper)
+        sinc_vals = self._matlab_sinc((xs / step_size)[:, None] - repetitions[None, :])
+        grid_values = (
+            sqrt(self.grid_values)
+            if self.enforce_pdf_nonnegative
+            else self.grid_values
+        )
+        density = sum(tile(grid_values, sinc_repetitions) * sinc_vals, axis=1)
+        if self.enforce_pdf_nonnegative:
+            return density**2
+        return density
+
+    def _pdf_via_fourier(self, xs):
+        transformation = "sqrt" if self.enforce_pdf_nonnegative else "identity"
+        function_values = (
+            sqrt(self.grid_values)
+            if self.enforce_pdf_nonnegative
+            else self.grid_values
+        )
+        fd = CircularFourierDistribution.from_function_values(
+            function_values, transformation
+        )
+        return fd.pdf(xs)
+
     def get_manifold_size(self):
         return 2 * pi
 
@@ -65,36 +101,8 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
     def pdf(self, xs, use_sinc=False, sinc_repetitions=5):
         xs = array(xs)
         if use_sinc:
-            if sinc_repetitions % 2 != 1:
-                raise ValueError("sinc_repetitions must be an odd integer.")
-            n = self.grid_values.shape[0]
-            step_size = 2.0 * pi / n
-
-            def matlab_sinc(x):
-                return where(isclose(x, 0.0), 1.0, sin(x) / x)
-
-            lower = int(floor(sinc_repetitions / 2) * n)
-            upper = int(ceil(sinc_repetitions / 2) * n)
-            r = arange(-lower, upper)
-            sinc_vals = matlab_sinc((xs / step_size)[:, None] - r[None, :])
-            if self.enforce_pdf_nonnegative:
-                coeffs = tile(sqrt(self.grid_values), sinc_repetitions)
-                p = sum(coeffs * sinc_vals, axis=1) ** 2
-            else:
-                coeffs = tile(self.grid_values, sinc_repetitions)
-                p = sum(coeffs * sinc_vals, axis=1)
-            return p
-        else:
-            transformation = "sqrt" if self.enforce_pdf_nonnegative else "identity"
-            function_values = (
-                sqrt(self.grid_values)
-                if self.enforce_pdf_nonnegative
-                else self.grid_values
-            )
-            fd = CircularFourierDistribution.from_function_values(
-                function_values, transformation
-            )
-            return fd.pdf(xs)
+            return self._pdf_via_sinc(xs, sinc_repetitions)
+        return self._pdf_via_fourier(xs)
 
     @staticmethod
     def from_distribution(distribution, no_of_gridpoints, enforce_pdf_nonnegative=True):
@@ -113,16 +121,15 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
                     )
                     vals_on_grid = maximum(vals_on_grid, 0)
             elif fd_to_conv.transformation == "sqrt":
-                vals_on_grid = vals_on_grid ** 2
+                vals_on_grid = vals_on_grid**2
             else:
                 raise ValueError("Transformation unsupported")
             return CircularGridDistribution(vals_on_grid, enforce_pdf_nonnegative)
-        else:
-            return CircularGridDistribution.from_function(
-                lambda x: distribution.pdf(x),
-                no_of_gridpoints,
-                enforce_pdf_nonnegative,
-            )
+        return CircularGridDistribution.from_function(
+            distribution.pdf,
+            no_of_gridpoints,
+            enforce_pdf_nonnegative,
+        )
 
     @staticmethod
     def from_function(fun, no_of_gridpoints, enforce_pdf_nonnegative=True):
