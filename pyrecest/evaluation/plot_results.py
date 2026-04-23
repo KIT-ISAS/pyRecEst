@@ -2,7 +2,8 @@ import warnings
 
 import matplotlib.pyplot as plt
 from beartype import beartype
-from pyrecest.backend import any, asarray, isnan, load, shape, size, zeros
+from numpy import load
+from pyrecest.backend import any, asarray, isnan, shape, size, zeros
 
 from .get_axis_label import get_axis_label
 from .group_results_by_filter import group_results_by_filter
