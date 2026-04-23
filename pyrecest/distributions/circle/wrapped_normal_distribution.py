@@ -83,7 +83,6 @@ class WrappedNormalDistribution(
             nc = 1.0 / sqrt(2.0 * pi) / self.sigma
 
             for i in range(n_inputs):
-                old_result = 0.0
                 result[i] = squeeze(exp(x[i] * x[i] * tmp))
 
                 for k in range(1, max_iterations + 1):
@@ -91,11 +90,13 @@ class WrappedNormalDistribution(
                     xm = x[i] - 2 * pi * k
                     tp = xp * xp * tmp
                     tm = xm * xm * tmp
-                    old_result = result[i]
-                    result[i] += (exp(tp) + exp(tm)).squeeze()
+                    increment = (exp(tp) + exp(tm)).squeeze()
+                    new_result = result[i] + increment
 
-                    if result[i] == old_result:
+                    if new_result == result[i]:
                         break
+
+                    result[i] = new_result
 
                 result[i] *= nc
         else:
