@@ -10,6 +10,8 @@ from .multisession_assignment import (
 from .multisession_assignment_observation_costs import (
     solve_multisession_assignment_with_observation_costs,
 )
+
+from .assignment import murty_k_best_assignments
 from .nonrigid_point_set_registration import (
     ThinPlateSplineRegistrationResult,
     ThinPlateSplineTransform,
@@ -42,4 +44,5 @@ __all__ = [
     "roi_centroid",
     "weighted_roi_cosine_similarity",
     "weighted_roi_jaccard",
+    "murty_k_best_assignments",
 ]
