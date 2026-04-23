@@ -1,7 +1,6 @@
 import pyrecest.backend
 from scipy.integrate import nquad
 from scipy.special import iv
-from scipy.stats import multivariate_normal as _mvn
 from scipy.stats import vonmises as _vonmises
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
@@ -46,7 +45,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         SIAM/ASA Journal on Uncertainty Quantification, 2014, 2, 276-304
     """
 
-    def __init__(self, mu, P, alpha, beta, Gamma, kappa):
+    def __init__(self, mu, P, alpha, beta, Gamma, kappa):  # pylint: disable=too-many-arguments,too-many-positional-arguments
         # Convert scalars/lists to arrays
         mu = atleast_1d(array(mu, dtype=float64))
         P = atleast_2d(array(P, dtype=float64))
@@ -96,7 +95,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         theta = self.alpha + self.beta @ z + quad  # (n,)
         return theta
 
-    def pdf(self, xa):
+    def pdf(self, xs):
         """Evaluate the pdf at each column of xa.
 
         Parameters
@@ -108,7 +107,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         -------
         p : scalar or array of shape (n,)
         """
-        xa = array(xa, dtype=float64)
+        xa = array(xs, dtype=float64)
         single_point = xa.ndim == 1
         if single_point:
             xa = xa.reshape(-1, 1)
@@ -116,7 +115,9 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         assert xa.shape[0] == self.lin_dim + 1
 
         theta = self.get_theta(xa[1:, :])
-        mvn_vals = _mvn.pdf(xa[1:, :].T, mean=self.mu, cov=self.P)
+        mvn_vals = GaussianDistribution(self.mu, self.P, check_validity=False).pdf(
+            xa[1:, :].T
+        )
         p = mvn_vals * exp(self.kappa * cos(xa[0, :] - theta)) / (
             2.0 * float(pi) * iv(0, self.kappa)
         )
@@ -137,13 +138,11 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         from ..circle.von_mises_distribution import VonMisesDistribution
 
         M = eye(self.lin_dim) - 1j * self.Gamma
+        beta = self.beta + 0j
         eiphi = (
             1.0 / sqrt(linalg.det(M))
             * VonMisesDistribution.besselratio(0, self.kappa)
-            * exp(
-                1j * self.alpha
-                - 0.5 * self.beta @ linalg.solve(M, self.beta)
-            )
+            * exp(1j * self.alpha - 0.5 * beta @ linalg.solve(M, beta))
         )
         return concatenate([array([float(real(eiphi)), float(imag(eiphi))]), self.mu])
 
@@ -153,25 +152,29 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
 
         bounds_periodic = [[0.0, 2.0 * float(pi)]]
         bounds_linear = [
-            [float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
-             float(self.mu[i]) + scale * float(sqrt(self.P[i, i]))]
+            [
+                float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
+                float(self.mu[i]) + scale * float(sqrt(self.P[i, i])),
+            ]
             for i in range(self.lin_dim)
         ]
         bounds = bounds_periodic + bounds_linear
 
         if self.lin_dim == 1:
             e_cos = nquad(
-                lambda theta, x: float(cos(array(theta))) * self.pdf(array([theta, x])), bounds
+                lambda theta, x: float(cos(array(theta))) * self.pdf(array([theta, x])),
+                bounds,
             )[0]
             e_sin = nquad(
-                lambda theta, x: float(sin(array(theta))) * self.pdf(array([theta, x])), bounds
+                lambda theta, x: float(sin(array(theta))) * self.pdf(array([theta, x])),
+                bounds,
             )[0]
-            e_x = nquad(
-                lambda theta, x: x * self.pdf(array([theta, x])), bounds
-            )[0]
+            e_x = nquad(lambda theta, x: x * self.pdf(array([theta, x])), bounds)[0]
             return array([e_cos, e_sin, e_x])
 
-        raise NotImplementedError("hybrid_moment_numerical not implemented for lin_dim > 1")
+        raise NotImplementedError(
+            "hybrid_moment_numerical not implemented for lin_dim > 1"
+        )
 
     def sample(self, n):
         """Draw n samples from the distribution.
@@ -193,7 +196,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         vm_samples = mod(array(vm_samples) + theta, 2.0 * pi)
         return vstack([array(vm_samples).reshape(1, -1), s_gauss])
 
-    def sample_deterministic_horwood(self):
+    def sample_deterministic_horwood(self):  # pylint: disable=too-many-locals
         """Deterministic sigma-point approximation (Horwood, Section 5.1).
 
         Returns
@@ -217,22 +220,22 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         xi = float(sqrt(array(3.0)))
         eta = float(arccos(array(B2 / (2.0 * B1) - 1.0)))
         wxi0 = 1.0 / 6.0
-        weta0 = B1 ** 2 / (4.0 * B1 - B2)
+        weta0 = B1**2 / (4.0 * B1 - B2)
         w00 = 1.0 - 2.0 * weta0 - 2.0 * lin_dim * wxi0
 
         n_pts = 2 * lin_dim + 3
         d = zeros((lin_dim + 1, n_pts))
 
-        # Column 0: origin (all zeros) — N00
-        # Columns 1-2: Neta0 (±eta on the periodic axis)
+        # Column 0: origin (all zeros) - N00
+        # Columns 1-2: Neta0 (+/-eta on the periodic axis)
         d[lin_dim, 1] = -eta
         d[lin_dim, 2] = eta
-        # Columns 3..n_pts-1: Nxi0 (±xi on each linear axis)
+        # Columns 3..n_pts-1: Nxi0 (+/-xi on each linear axis)
         for i in range(lin_dim):
             d[i, 3 + 2 * i] = -xi
             d[i, 3 + 2 * i + 1] = xi
 
-        w = full(n_pts, wxi0)
+        w = full((n_pts,), wxi0)
         w[0] = w00
         w[1] = weta0
         w[2] = weta0
@@ -252,8 +255,10 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
 
         scale = 10.0
         bounds = [[0.0, 2.0 * float(pi)]] + [
-            [float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
-             float(self.mu[i]) + scale * float(sqrt(self.P[i, i]))]
+            [
+                float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
+                float(self.mu[i]) + scale * float(sqrt(self.P[i, i])),
+            ]
             for i in range(self.lin_dim)
         ]
         return nquad(lambda *args: self.pdf(array(args)), bounds)[0]
@@ -264,7 +269,9 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         See Horwood, Section 4.6.
         """
         mtmp = concatenate([array([self.alpha]), self.mu])
-        top_row = hstack([array([[1.0 / sqrt(array(self.kappa))]]), self.beta.reshape(1, -1)])
+        top_row = hstack(
+            [array([[1.0 / sqrt(array(self.kappa))]]), self.beta.reshape(1, -1)]
+        )
         bot_rows = hstack([zeros((self.lin_dim, 1)), self.A])
         Atmp = vstack([top_row, bot_rows])
         Ptmp = Atmp @ Atmp.T
@@ -293,18 +300,21 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
 
         scale = 10.0
         bounds_linear = [
-            [float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
-             float(self.mu[i]) + scale * float(sqrt(self.P[i, i]))]
+            [
+                float(self.mu[i]) - scale * float(sqrt(self.P[i, i])),
+                float(self.mu[i]) + scale * float(sqrt(self.P[i, i])),
+            ]
             for i in range(self.lin_dim)
         ]
 
         if self.lin_dim == 1:
+
             def marginal_pdf(theta):
                 theta = atleast_1d(array(theta, dtype=float64))
                 result = zeros_like(theta, dtype=float64)
                 for idx, t in enumerate(theta.ravel()):
                     result.ravel()[idx] = nquad(
-                        lambda x: self.pdf(array([t, x])), bounds_linear
+                        lambda x, t=t: self.pdf(array([t, x])), bounds_linear
                     )[0]
                 return result
 
