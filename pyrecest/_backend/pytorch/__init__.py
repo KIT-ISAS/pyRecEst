@@ -179,6 +179,10 @@ def has_autodiff():
     return True
 
 
+def isscalar(x):
+    return _np.isscalar(x)
+
+
 def matmul(x, y, out=None):
     for array_ in [x, y]:
         if array_.ndim == 1:

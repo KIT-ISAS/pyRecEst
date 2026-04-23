@@ -18,6 +18,7 @@ from .abstract_mixture import AbstractMixture
 from .abstract_nonperiodic_distribution import AbstractNonperiodicDistribution
 from .abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution
 from .abstract_periodic_distribution import AbstractPeriodicDistribution
+from .abstract_periodic_grid_distribution import AbstractPeriodicGridDistribution
 from .abstract_se2_distribution import AbstractSE2Distribution
 from .abstract_se3_distribution import AbstractSE3Distribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -295,6 +296,7 @@ __all__ = aliases + [
     "AbstractNonperiodicDistribution",
     "AbstractOrthogonalBasisDistribution",
     "AbstractPeriodicDistribution",
+    "AbstractPeriodicGridDistribution",
     "AbstractSE2Distribution",
     "AbstractSE3Distribution",
     "AbstractUniformDistribution",

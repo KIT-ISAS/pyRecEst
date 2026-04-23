@@ -36,6 +36,7 @@ from autograd.numpy import (
     int64,
     isclose,
     isnan,
+    isscalar,
     kron,
     less,
     less_equal,
