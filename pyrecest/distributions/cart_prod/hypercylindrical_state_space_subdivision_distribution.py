@@ -1,7 +1,26 @@
 import copy
 
-import numpy as np
 from scipy.integrate import quad
+
+# pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.backend import (
+    abs,
+    argmin,
+    asarray,
+    atleast_1d,
+    cast,
+    empty,
+    floor,
+    hstack,
+    int64,
+    minimum,
+    mod,
+    ndim,
+    pi,
+    repeat,
+    reshape,
+    sum,
+)
 
 from ..circle.circular_uniform_distribution import CircularUniformDistribution
 from ..hypertorus.hypertoroidal_grid_distribution import HypertoroidalGridDistribution
@@ -59,14 +78,14 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         return copy.deepcopy(self.gd)
 
     def marginalize_periodic(self):
-        weights = np.asarray(self.gd.grid_values).reshape(-1)
-        weights = weights / np.sum(weights)
+        weights = reshape(asarray(self.gd.grid_values), (-1,))
+        weights = weights / sum(weights)
         return LinearMixture(list(self.linear_distributions), weights)
 
     def _closest_grid_indices(self, bounded_xs):
-        bounded_xs = np.asarray(bounded_xs)
-        if bounded_xs.ndim == 1:
-            bounded_xs = bounded_xs.reshape(1, -1)
+        bounded_xs = asarray(bounded_xs)
+        if ndim(bounded_xs) == 1:
+            bounded_xs = reshape(bounded_xs, (1, -1))
 
         if bounded_xs.shape[1] != self.bound_dim:
             raise ValueError(
@@ -76,19 +95,19 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
 
         if getattr(self.gd, "grid_type", None) == "cartesian_prod":
             n_grid_points = int(self.gd.n_grid_points)
-            step = 2.0 * np.pi / n_grid_points
-            wrapped = np.mod(bounded_xs[:, 0], 2.0 * np.pi)
-            return np.floor((wrapped + step / 2.0) / step).astype(int) % n_grid_points
+            step = 2.0 * pi / n_grid_points
+            wrapped = mod(bounded_xs[:, 0], 2.0 * pi)
+            return cast(floor((wrapped + step / 2.0) / step), int64) % n_grid_points
 
-        grid = np.asarray(self.gd.get_grid()).reshape(-1, self.bound_dim)
-        delta = np.abs(grid[None, :, :] - bounded_xs[:, None, :])
-        toroidal_delta = np.minimum(delta, 2.0 * np.pi - delta)
-        return np.argmin(np.sum(toroidal_delta**2, axis=-1), axis=1)
+        grid = reshape(asarray(self.gd.get_grid()), (-1, self.bound_dim))
+        delta = abs(grid[None, :, :] - bounded_xs[:, None, :])
+        toroidal_delta = minimum(delta, 2.0 * pi - delta)
+        return argmin(sum(toroidal_delta**2, axis=-1), axis=1)
 
     def pdf(self, xs):
-        xs = np.asarray(xs)
-        if xs.ndim == 1:
-            xs = xs.reshape(1, -1)
+        xs = asarray(xs)
+        if ndim(xs) == 1:
+            xs = reshape(xs, (1, -1))
 
         expected_dim = self.bound_dim + self.lin_dim
         if xs.shape[1] != expected_dim:
@@ -99,14 +118,19 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         bounded_xs = xs[:, : self.bound_dim]
         linear_xs = xs[:, self.bound_dim :]
         closest_indices = self._closest_grid_indices(bounded_xs)
-        bounded_pdf = np.asarray(self.gd.grid_values).reshape(-1)[closest_indices]
+        bounded_pdf = reshape(asarray(self.gd.grid_values), (-1,))[closest_indices]
 
-        linear_pdf = np.empty(xs.shape[0], dtype=float)
+        linear_pdf = empty(xs.shape[0], dtype=float)
         for row_index, dist_index in enumerate(closest_indices):
             linear_pdf[row_index] = float(
-                np.asarray(
-                    self.linear_distributions[int(dist_index)].pdf(linear_xs[row_index])
-                ).reshape(-1)[0]
+                reshape(
+                    asarray(
+                        self.linear_distributions[int(dist_index)].pdf(
+                            linear_xs[row_index]
+                        )
+                    ),
+                    (-1,),
+                )[0]
             )
 
         values = bounded_pdf * linear_pdf
@@ -139,7 +163,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         *,
         dim_bound=1,
         grid_type="cartesian_prod",
-        int_range=(-np.inf, np.inf),
+        int_range=(-float("inf"), float("inf")),
     ):
         if dim_bound != 1:
             raise NotImplementedError(
@@ -156,7 +180,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         if normalized_grid_type != "cartesian_prod":
             raise ValueError(f"Unsupported grid_type: {grid_type!r}")
 
-        if np.isscalar(no_of_grid_points):
+        if ndim(no_of_grid_points) == 0:
             periodic_grid_shape = [int(no_of_grid_points)]
         else:
             periodic_grid_shape = [int(n) for n in no_of_grid_points]
@@ -171,21 +195,21 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
             periodic_grid_shape,
             grid_type=normalized_grid_type,
         )
-        grid = np.asarray(gd.get_grid()).reshape(-1, dim_bound)
-        marginals = np.empty(gd.n_grid_points, dtype=float)
+        grid = reshape(asarray(gd.get_grid()), (-1, dim_bound))
+        marginals = empty(gd.n_grid_points, dtype=float)
         cds = [None] * gd.n_grid_points
 
         def evaluate_slice(linear_xs, periodic_point, joint_fun):
-            linear_xs = np.asarray(linear_xs)
-            scalar_input = linear_xs.ndim == 0
-            linear_xs_2d = np.atleast_1d(linear_xs).reshape(-1, dim_lin)
-            bounded_part = np.repeat(
-                np.asarray(periodic_point).reshape(1, -1),
+            linear_xs = asarray(linear_xs)
+            scalar_input = ndim(linear_xs) == 0
+            linear_xs_2d = reshape(atleast_1d(linear_xs), (-1, dim_lin))
+            bounded_part = repeat(
+                reshape(asarray(periodic_point), (1, -1)),
                 linear_xs_2d.shape[0],
                 axis=0,
             )
-            joint_points = np.hstack((bounded_part, linear_xs_2d))
-            values = np.asarray(joint_fun(joint_points)).reshape(-1)
+            joint_points = hstack((bounded_part, linear_xs_2d))
+            values = reshape(asarray(joint_fun(joint_points)), (-1,))
             return float(values[0]) if scalar_input else values
 
         for idx, periodic_point in enumerate(grid):
@@ -210,7 +234,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
 
             cds[idx] = CustomLinearDistribution(conditional_pdf, dim_lin)
 
-        gd.grid_values = marginals.reshape(gd.grid_values.shape)
+        gd.grid_values = reshape(marginals, gd.grid_values.shape)
         gd.normalize_in_place(warn_unnorm=False)
 
         return HypercylindricalStateSpaceSubdivisionDistribution(gd, cds)
