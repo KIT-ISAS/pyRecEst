@@ -116,7 +116,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
             )
 
         bounded_xs = xs[:, : self.bound_dim]
-        linear_xs = xs[:, self.bound_dim :]
+        linear_xs = xs[:, self.bound_dim :]  # noqa: E203
         closest_indices = self._closest_grid_indices(bounded_xs)
         bounded_pdf = reshape(asarray(self.gd.grid_values), (-1,))[closest_indices]
 
@@ -156,7 +156,7 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
         )
 
     @staticmethod
-    def from_function(
+    def from_function(  # pylint: disable=too-many-locals
         fun,
         no_of_grid_points,
         dim_lin,
