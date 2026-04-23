@@ -24,10 +24,11 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
+    amin,
     arange,
     asarray,
     cast,
@@ -43,9 +44,7 @@ from scipy.optimize import linprog
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import min_weight_full_bipartite_matching
 
-if TYPE_CHECKING:
-    import numpy as np
-
+BackendArray = Any
 Observation = tuple[int, int]
 MatchedEdge = tuple[Observation, Observation, float]
 PairwiseCostsInput = Mapping[tuple[int, int], Any] | Sequence[Any]
@@ -88,7 +87,7 @@ class MultiSessionAssignmentResult:
         session_sizes: SessionSizesInput | None = None,
         *,
         fill_value: int = -1,
-    ) -> tuple[np.ndarray, ...]:
+    ) -> tuple[BackendArray, ...]:
         """Convert the recovered tracks to dense per-session label arrays.
 
         Parameters
@@ -280,7 +279,7 @@ def tracks_to_session_labels(
     session_sizes: SessionSizesInput | None = None,
     *,
     fill_value: int = -1,
-) -> tuple[np.ndarray, ...]:
+) -> tuple[BackendArray, ...]:
     """Convert explicit tracks to dense per-session label arrays.
 
     Parameters
@@ -298,7 +297,7 @@ def tracks_to_session_labels(
 
     Returns
     -------
-    tuple[np.ndarray, ...]
+    tuple[BackendArray, ...]
         One integer array per session, indexed by session number.
     """
 
@@ -345,9 +344,9 @@ def _validate_scalar_cost(name: str, value: float) -> None:
 
 def _normalize_pairwise_costs(
     pairwise_costs: PairwiseCostsInput,
-) -> dict[tuple[int, int], np.ndarray]:
+) -> dict[tuple[int, int], BackendArray]:
     if isinstance(pairwise_costs, Mapping):
-        normalized: dict[tuple[int, int], np.ndarray] = {}
+        normalized: dict[tuple[int, int], BackendArray] = {}
         for key, value in pairwise_costs.items():
             if len(key) != 2:
                 raise ValueError("Each pairwise-cost key must contain two session indices.")
@@ -385,7 +384,7 @@ def _normalize_session_sizes(
 
 
 def _infer_and_validate_session_sizes(
-    pairwise_costs: Mapping[tuple[int, int], np.ndarray],
+    pairwise_costs: Mapping[tuple[int, int], BackendArray],
     session_sizes: Mapping[int, int],
 ) -> dict[int, int]:
     inferred_sizes = dict(session_sizes)
@@ -438,7 +437,7 @@ def _build_observation_index(
 
 
 def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-locals
-    pairwise_costs: Mapping[tuple[int, int], np.ndarray],
+    pairwise_costs: Mapping[tuple[int, int], BackendArray],
     session_sizes: Mapping[int, int],
     session_positions: Mapping[int, int],
     session_offsets: Mapping[int, int],
@@ -447,11 +446,11 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
     end_cost: float,
     gap_penalty: float,
     cost_threshold: float | None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    left_nodes: list[np.ndarray] = []
-    right_nodes: list[np.ndarray] = []
-    edge_gains: list[np.ndarray] = []
-    adjusted_costs: list[np.ndarray] = []
+) -> tuple[BackendArray, BackendArray, BackendArray, BackendArray]:
+    left_nodes: list[BackendArray] = []
+    right_nodes: list[BackendArray] = []
+    edge_gains: list[BackendArray] = []
+    adjusted_costs: list[BackendArray] = []
 
     for (source_session, target_session), cost_matrix in sorted(pairwise_costs.items()):
         expected_shape = (session_sizes[source_session], session_sizes[target_session])
@@ -500,11 +499,11 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
 
 
 def _solve_max_weight_matching(
-    left_nodes: np.ndarray,
-    right_nodes: np.ndarray,
-    edge_gains: np.ndarray,
+    left_nodes: BackendArray,
+    right_nodes: BackendArray,
+    edge_gains: BackendArray,
     num_nodes: int,
-) -> np.ndarray:
+) -> BackendArray:
     try:
         return _solve_max_weight_matching_sparse(
             left_nodes,
@@ -521,12 +520,12 @@ def _solve_max_weight_matching(
         )
 
 
-def _solve_max_weight_matching_sparse(
-    left_nodes: np.ndarray,
-    right_nodes: np.ndarray,
-    edge_gains: np.ndarray,
+def _solve_max_weight_matching_sparse(  # pylint: disable=too-many-locals
+    left_nodes: BackendArray,
+    right_nodes: BackendArray,
+    edge_gains: BackendArray,
     num_nodes: int,
-) -> np.ndarray:
+) -> BackendArray:
     """Solve the sparse bipartite matching problem with LAPJVsp.
 
     The optional-matching objective is turned into a full rectangular
@@ -537,23 +536,24 @@ def _solve_max_weight_matching_sparse(
     requirement that sparse edge weights are non-zero.
     """
 
-    num_edges = int(edge_gains.size)
+    left_nodes = asarray(left_nodes, dtype=int)
+    right_nodes = asarray(right_nodes, dtype=int)
+    edge_gains = asarray(edge_gains, dtype=float)
+
+    num_edges = int(edge_gains.shape[0])
     if num_edges == 0 or num_nodes == 0:
-        return np.zeros(num_edges, dtype=bool)
+        return zeros(num_edges, dtype=bool)
 
-    left_nodes = np.asarray(left_nodes, dtype=int)
-    right_nodes = np.asarray(right_nodes, dtype=int)
-    edge_gains = np.asarray(edge_gains, dtype=float)
+    node_ids = arange(num_nodes, dtype=int)
+    row_ids = concatenate((left_nodes, node_ids))
+    col_ids = concatenate((right_nodes, num_nodes + node_ids))
 
-    row_ids = np.concatenate((left_nodes, np.arange(num_nodes, dtype=int)))
-    col_ids = np.concatenate((right_nodes, num_nodes + np.arange(num_nodes, dtype=int)))
-
-    base_weight = min(1.0, 0.5 * float(np.min(edge_gains)))
-    base_weight = max(base_weight, np.nextafter(0.0, 1.0))
-    weights = np.concatenate(
+    base_weight = min(1.0, 0.5 * float(amin(edge_gains)))
+    base_weight = max(base_weight, math.ulp(0.0))
+    weights = concatenate(
         (
             edge_gains + base_weight,
-            np.full(num_nodes, base_weight, dtype=float),
+            full(num_nodes, base_weight, dtype=float),
         )
     )
 
@@ -574,7 +574,7 @@ def _solve_max_weight_matching_sparse(
         (int(source_node), int(target_node)): edge_index
         for edge_index, (source_node, target_node) in enumerate(zip(left_nodes, right_nodes))
     }
-    selected_edge_mask = np.zeros(num_edges, dtype=bool)
+    selected_edge_mask = zeros(num_edges, dtype=bool)
 
     for source_node, assigned_column in zip(matched_rows, matched_cols):
         assigned_column = int(assigned_column)
@@ -589,11 +589,11 @@ def _solve_max_weight_matching_sparse(
 
 
 def _solve_max_weight_matching_via_linprog(
-    left_nodes: np.ndarray,
-    right_nodes: np.ndarray,
-    edge_gains: np.ndarray,
+    left_nodes: BackendArray,
+    right_nodes: BackendArray,
+    edge_gains: BackendArray,
     num_nodes: int,
-) -> np.ndarray:
+) -> BackendArray:
     """Fallback solver that keeps the original LP formulation."""
 
     num_edges = int(edge_gains.shape[0])
@@ -628,8 +628,8 @@ def _solve_max_weight_matching_via_linprog(
 
 def _reconstruct_tracks(
     global_to_observation: Sequence[Observation],
-    predecessors: np.ndarray,
-    successors: np.ndarray,
+    predecessors: BackendArray,
+    successors: BackendArray,
     session_positions: Mapping[int, int],
 ) -> list[dict[int, int]]:
     visited: set[int] = set()
