@@ -86,8 +86,13 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
             return p
         else:
             transformation = "sqrt" if self.enforce_pdf_nonnegative else "identity"
+            function_values = (
+                sqrt(self.grid_values)
+                if self.enforce_pdf_nonnegative
+                else self.grid_values
+            )
             fd = CircularFourierDistribution.from_function_values(
-                self.grid_values, transformation
+                function_values, transformation
             )
             return fd.pdf(xs)
 
