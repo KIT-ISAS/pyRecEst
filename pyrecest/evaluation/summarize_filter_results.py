@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import pyrecest.backend
 
 from .determine_all_deviations import determine_all_deviations
 from .get_distance_function import get_distance_function
@@ -18,6 +19,10 @@ def summarize_filter_results(
     last_estimates=None,
     **_
 ):
+    assert (
+        pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
+    ), "Not supported for the JAX backend."
+
     if last_filter_states is not None and last_estimates is not None:
         warnings.warn(
             "Provided both last_filter_states and last_estimates. Using last_estimates."
