@@ -5,15 +5,14 @@ Unscented Kalman Filter (UKF), replacing the former dependency on the
 """
 
 from collections import namedtuple
-
-from pyrecest import copy
+from copy import deepcopy
 
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     asarray,
-    copy as backend_copy,
+    copy,
     einsum,
     empty,
     empty_like,
@@ -71,7 +70,7 @@ class MerweScaledSigmaPoints:
         self.Wm = full(2 * n + 1, 0.5 / (n + lam))
         self.Wm[0] = lam / (n + lam)
 
-        self.Wc = backend_copy(self.Wm)
+        self.Wc = copy(self.Wm)
         self.Wc[0] = lam / (n + lam) + (1.0 - self.alpha**2 + self.beta)
 
     # ------------------------------------------------------------------
@@ -128,7 +127,7 @@ class JulierSigmaPoints:
         self.Wm = full(2 * n + 1, 0.5 / k)
         self.Wm[0] = self.kappa / k
 
-        self.Wc = backend_copy(self.Wm)
+        self.Wc = copy(self.Wm)
 
     # ------------------------------------------------------------------
     def sigma_points(self, x, P):
@@ -288,5 +287,5 @@ class UnscentedKalmanFilter:
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, copy.deepcopy(v, memo))
+            setattr(result, k, deepcopy(v, memo))
         return result
