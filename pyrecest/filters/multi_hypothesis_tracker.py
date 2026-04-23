@@ -3,14 +3,13 @@ import warnings
 from copy import deepcopy
 from math import log
 
-import numpy as _np
-
 from pyrecest.backend import (
     all,
     argmax,
     array,
     asarray,
     exp,
+    full,
     linalg,
 )
 from pyrecest.backend import log as backend_log
@@ -495,10 +494,9 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
             measurement_index: column_index
             for column_index, measurement_index in enumerate(unique_measurements)
         }
-        cost_matrix = _np.full(
+        cost_matrix = full(
             (n_tracks, len(unique_measurements)),
-            _np.inf,
-            dtype=float,
+            float("inf"),
         )
         for track_index, track_candidates in enumerate(candidate_measurements):
             for measurement_index, gain in track_candidates:
