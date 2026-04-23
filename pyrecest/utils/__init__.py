@@ -11,6 +11,7 @@ from .multisession_assignment_observation_costs import (
     solve_multisession_assignment_with_observation_costs,
 )
 
+from .history_recorder import HistoryRecorder
 from .assignment import murty_k_best_assignments
 from .nonrigid_point_set_registration import (
     ThinPlateSplineRegistrationResult,
@@ -34,6 +35,7 @@ __all__ = [
     "tracks_to_index_matrix",
     "solve_multisession_assignment_with_observation_costs",
     "tracks_to_session_labels",
+    "HistoryRecorder",
     "ThinPlateSplineRegistrationResult",
     "ThinPlateSplineTransform",
     "estimate_thin_plate_spline",
