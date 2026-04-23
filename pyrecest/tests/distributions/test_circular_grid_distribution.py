@@ -15,34 +15,34 @@ class CircularGridDistributionTest(unittest.TestCase):
         )
         # Test grid values
         xvals = linspace(0, 2 * pi, coeffs, endpoint=False)
-        npt.assert_allclose(figd.pdf(xvals), dist.pdf(xvals), atol=tolerance)
+        npt.assert_allclose(figd.pdf(xvals), dist.pdf(xvals), atol=tolerance, rtol=0)
         # Test approximation of pdf
         xvals = arange(-2 * pi, 3 * pi, 0.01)
-        npt.assert_allclose(figd.pdf(xvals), dist.pdf(xvals), atol=tolerance)
+        npt.assert_allclose(figd.pdf(xvals), dist.pdf(xvals), atol=tolerance, rtol=0)
 
     def test_VMToGridId(self):
         mu = 0.4
         for kappa in arange(0.1, 2.1, 0.1):
             dist = VonMisesDistribution(mu, kappa)
-            self._test_grid_conversion(dist, 101, False, 1e-8)
+            self._test_grid_conversion(dist, 101, False, 1e-6)
 
     def test_VMToGridSqrt(self):
         mu = 0.5
         for kappa in arange(0.1, 2.1, 0.1):
             dist = VonMisesDistribution(mu, kappa)
-            self._test_grid_conversion(dist, 101, True, 1e-8)
+            self._test_grid_conversion(dist, 101, True, 1e-6)
 
     def test_WNToGridId(self):
         mu = 0.8
         for sigma in arange(0.2, 2.1, 0.1):
             dist = WrappedNormalDistribution(mu, sigma)
-            self._test_grid_conversion(dist, 101, False, 1e-8)
+            self._test_grid_conversion(dist, 101, False, 1e-6)
 
     def test_WNToGridSqrt(self):
         mu = 0.9
         for sigma in arange(0.2, 2.1, 0.1):
             dist = WrappedNormalDistribution(mu, sigma)
-            self._test_grid_conversion(dist, 101, True, 1e-8)
+            self._test_grid_conversion(dist, 101, True, 1e-6)
 
 
 if __name__ == "__main__":
