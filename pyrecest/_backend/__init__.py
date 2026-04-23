@@ -138,6 +138,7 @@ BACKEND_ATTRIBUTES = {
         "set_default_dtype",
         "set_diag",
         "shape",
+        "size",
         "sign",
         "sin",
         "sinh",
