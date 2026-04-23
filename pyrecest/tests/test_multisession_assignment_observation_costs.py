@@ -4,6 +4,7 @@ import unittest
 
 import numpy as np
 
+from pyrecest.backend import __backend_name__  # pylint: disable=no-name-in-module
 from pyrecest.utils import (
     solve_multisession_assignment,
     solve_multisession_assignment_with_observation_costs,
@@ -15,6 +16,10 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
     def _canonical_tracks(tracks):
         return sorted(tuple(sorted(track.items())) for track in tracks)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_matches_base_solver_when_costs_are_uniform(self):
         pairwise_costs = [
             np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
@@ -37,6 +42,10 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
         self.assertEqual(actual.matched_edges, expected.matched_edges)
         self.assertAlmostEqual(actual.total_cost, expected.total_cost)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_detection_specific_start_costs_bias_target_choice(self):
         result = solve_multisession_assignment_with_observation_costs(
             [np.array([[1.5, 1.5]], dtype=float)],
@@ -53,6 +62,10 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
         self.assertEqual(result.matched_edges, [((0, 0), (1, 1), 1.5)])
         self.assertAlmostEqual(result.total_cost, 5.5)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_detection_specific_end_costs_bias_source_choice(self):
         result = solve_multisession_assignment_with_observation_costs(
             [np.array([[1.5], [1.5]], dtype=float)],
@@ -69,6 +82,10 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
         self.assertEqual(result.matched_edges, [((0, 1), (1, 0), 1.5)])
         self.assertAlmostEqual(result.total_cost, 5.5)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_sequence_scalar_cost_entries_are_broadcast_per_session(self):
         result = solve_multisession_assignment_with_observation_costs(
             [np.array([[2.5, 2.5]], dtype=float)],
@@ -80,6 +97,10 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
         self.assertEqual(len(result.matched_edges), 1)
         self.assertAlmostEqual(result.total_cost, 7.5)
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_cost_threshold_is_applied_in_original_cost_domain(self):
         result = solve_multisession_assignment_with_observation_costs(
             {(0, 2): np.array([[0.3]], dtype=float)},

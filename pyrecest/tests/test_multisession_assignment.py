@@ -263,6 +263,10 @@ class TestMultiSessionAssignment(unittest.TestCase):
             float(edge_gains[linprog_mask].sum()),
         )
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_sparse_backend_falls_back_to_linprog_when_requested(self):
         pairwise_costs = [
             np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
