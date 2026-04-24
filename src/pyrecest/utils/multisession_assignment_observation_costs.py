@@ -1,0 +1,230 @@
+"""Extensions for multi-session assignment with observation-specific start/end costs."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+
+from pyrecest.backend import all, asarray, cast, full, isfinite  # pylint: disable=no-name-in-module
+from pyrecest.backend import max as backend_max
+from pyrecest.backend import sum as backend_sum
+
+from ._multisession_assignment_common import (
+    BackendArray,
+    PairwiseCostsInput,
+    SessionSizesInput,
+    infer_and_validate_session_sizes as _infer_and_validate_session_sizes,
+    normalize_pairwise_costs as _normalize_pairwise_costs,
+    normalize_session_sizes as _normalize_session_sizes,
+    session_gap as _session_gap,
+)
+from .multisession_assignment import (
+    MultiSessionAssignmentResult,
+    solve_multisession_assignment,
+)
+
+ObservationCostValue = float | Sequence[float] | BackendArray
+ObservationCostsInput = Mapping[int, ObservationCostValue] | Sequence[ObservationCostValue]
+
+
+@dataclass(frozen=True)
+class _ObservationCostTransform:
+    session_positions: Mapping[int, int]
+    start_costs: Mapping[int, BackendArray]
+    end_costs: Mapping[int, BackendArray]
+    uniform_start_cost: float
+    uniform_end_cost: float
+    gap_penalty: float
+    cost_threshold: float | None
+
+
+def solve_multisession_assignment_with_observation_costs(  # pylint: disable=R0913,R0914
+    pairwise_costs: PairwiseCostsInput,
+    session_sizes: SessionSizesInput | None = None,
+    *,
+    start_cost: float = 0.0,
+    end_cost: float = 0.0,
+    start_costs: ObservationCostsInput | None = None,
+    end_costs: ObservationCostsInput | None = None,
+    gap_penalty: float = 0.0,
+    cost_threshold: float | None = None,
+) -> MultiSessionAssignmentResult:
+    """Solve global multi-session assignment with heterogeneous birth/death costs.
+
+    This is a thin wrapper around :func:`solve_multisession_assignment`. It encodes
+    observation-specific start/end costs into transformed pairwise costs and then
+    maps the reported objective value and matched-edge costs back to the original
+    problem.
+    """
+
+    normalized_pairwise = _normalize_pairwise_costs(pairwise_costs)
+    normalized_sizes = _normalize_session_sizes(session_sizes)
+    session_sizes_map = _infer_and_validate_session_sizes(
+        normalized_pairwise,
+        normalized_sizes,
+    )
+
+    if not session_sizes_map:
+        return MultiSessionAssignmentResult(tracks=[], matched_edges=[], total_cost=0.0)
+
+    normalized_start_costs = _normalize_observation_costs(
+        start_costs,
+        session_sizes_map,
+        default_value=float(start_cost),
+        name="start_costs",
+    )
+    normalized_end_costs = _normalize_observation_costs(
+        end_costs,
+        session_sizes_map,
+        default_value=float(end_cost),
+        name="end_costs",
+    )
+
+    max_start_cost = max(
+        float(backend_max(costs)) if costs.size else float(start_cost)
+        for costs in normalized_start_costs.values()
+    )
+    max_end_cost = max(
+        float(backend_max(costs)) if costs.size else float(end_cost)
+        for costs in normalized_end_costs.values()
+    )
+
+    session_positions = {
+        session_idx: position
+        for position, session_idx in enumerate(sorted(session_sizes_map))
+    }
+    transform = _ObservationCostTransform(
+        session_positions=session_positions,
+        start_costs=normalized_start_costs,
+        end_costs=normalized_end_costs,
+        uniform_start_cost=max_start_cost,
+        uniform_end_cost=max_end_cost,
+        gap_penalty=float(gap_penalty),
+        cost_threshold=cost_threshold,
+    )
+    transformed_pairwise = _transform_pairwise_costs(normalized_pairwise, transform)
+
+    base_result = solve_multisession_assignment(
+        transformed_pairwise,
+        session_sizes=session_sizes_map,
+        start_cost=max_start_cost,
+        end_cost=max_end_cost,
+        gap_penalty=gap_penalty,
+        cost_threshold=None,
+    )
+
+    actual_baseline = sum(
+        float(backend_sum(costs)) for costs in normalized_start_costs.values()
+    ) + sum(float(backend_sum(costs)) for costs in normalized_end_costs.values())
+    uniform_baseline = sum(session_sizes_map.values()) * (max_start_cost + max_end_cost)
+    total_cost = float(base_result.total_cost - uniform_baseline + actual_baseline)
+
+    adjusted_edges = [
+        (
+            source,
+            target,
+            float(
+                transformed_cost
+                - max_end_cost
+                - max_start_cost
+                + normalized_end_costs[source[0]][source[1]]
+                + normalized_start_costs[target[0]][target[1]]
+            ),
+        )
+        for source, target, transformed_cost in base_result.matched_edges
+    ]
+
+    return MultiSessionAssignmentResult(
+        tracks=base_result.tracks,
+        matched_edges=adjusted_edges,
+        total_cost=total_cost,
+    )
+
+
+def _normalize_observation_costs(
+    observation_costs: ObservationCostsInput | None,
+    session_sizes: Mapping[int, int],
+    *,
+    default_value: float,
+    name: str,
+) -> dict[int, BackendArray]:
+    if observation_costs is None:
+        raw_entries: dict[int, ObservationCostValue] = {}
+    elif isinstance(observation_costs, Mapping):
+        raw_entries = {int(session_idx): value for session_idx, value in observation_costs.items()}
+    else:
+        raw_entries = dict(enumerate(observation_costs))
+
+    unknown_sessions = sorted(set(raw_entries) - set(session_sizes))
+    if unknown_sessions:
+        raise ValueError(
+            f"{name} specifies unknown sessions {unknown_sessions}; "
+            f"known sessions are {sorted(session_sizes)}."
+        )
+
+    normalized: dict[int, BackendArray] = {}
+    for session_idx in sorted(session_sizes):
+        session_size = int(session_sizes[session_idx])
+        if session_idx not in raw_entries:
+            values = full(session_size, float(default_value), dtype=float)
+        else:
+            values = _normalize_observation_cost_entry(
+                raw_entries[session_idx],
+                session_size,
+                session_idx=session_idx,
+                name=name,
+            )
+        if not all(isfinite(values)):
+            raise ValueError(f"{name} for session {session_idx} must contain only finite values.")
+        normalized[session_idx] = values
+    return normalized
+
+
+def _normalize_observation_cost_entry(
+    value: ObservationCostValue,
+    session_size: int,
+    *,
+    session_idx: int,
+    name: str,
+) -> BackendArray:
+    values = asarray(value, dtype=float)
+    if values.ndim == 0:
+        return full(session_size, float(values), dtype=float)
+    if values.ndim != 1:
+        raise ValueError(
+            f"{name} entry for session {session_idx} must be a scalar or a one-dimensional array."
+        )
+    if int(values.size) != int(session_size):
+        raise ValueError(
+            f"{name} entry for session {session_idx} has length {values.size}, expected {session_size}."
+        )
+    return cast(values, float)
+
+
+def _transform_pairwise_costs(
+    pairwise_costs: Mapping[tuple[int, int], BackendArray],
+    transform: _ObservationCostTransform,
+) -> dict[tuple[int, int], BackendArray]:
+    transformed: dict[tuple[int, int], BackendArray] = {}
+    for (source_session, target_session), matrix in pairwise_costs.items():
+        gap = _session_gap(source_session, target_session, transform.session_positions)
+        source_end = transform.end_costs[source_session][:, None]
+        target_start = transform.start_costs[target_session][None, :]
+        transformed_matrix = (
+            asarray(matrix, dtype=float)
+            - source_end
+            - target_start
+            + float(transform.uniform_end_cost)
+            + float(transform.uniform_start_cost)
+        )
+
+        if transform.cost_threshold is not None:
+            adjusted_original = asarray(matrix, dtype=float) + float(transform.gap_penalty) * gap
+            transformed_matrix = transformed_matrix.copy()
+            transformed_matrix[adjusted_original > float(transform.cost_threshold)] = float("inf")
+
+        transformed[(source_session, target_session)] = transformed_matrix
+    return transformed
+
+
+__all__ = ["solve_multisession_assignment_with_observation_costs"]
