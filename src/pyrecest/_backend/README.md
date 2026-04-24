@@ -21,7 +21,7 @@ The code in this folder has been modified by Florian Pfaff to adapt it to pyRecE
 
 In order to expose a new backend function/attribute to the rest of the
 codebase, it is necessary to add the name to the respective list in the
-`BACKEND_ATTRIBUTES` dictionary in `pyrecest/_backend/__init__.py`.
+`BACKEND_ATTRIBUTES` dictionary in `src/pyrecest/_backend/__init__.py`.
 This serves two purposes:
 
 1. Define a clear boundary between backend interface and backend-internal code:

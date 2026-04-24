@@ -5,7 +5,7 @@ from pyrecest.backend import allclose, ones, pi
 from pyrecest.distributions.hypersphere_subset.hemispherical_uniform_distribution import (
     HemisphericalUniformDistribution,
 )
-from pyrecest.tests.distributions.test_hyperhemispherical_uniform_distribution import (
+from tests.distributions.test_hyperhemispherical_uniform_distribution import (
     get_random_points,
 )
 

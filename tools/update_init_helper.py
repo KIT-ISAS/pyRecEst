@@ -11,9 +11,12 @@ import inspect
 import os
 import pkgutil
 import subprocess  # nosec
+from pathlib import Path
 
 # The name of the package
 package_name = "pyrecest.distributions"
+source_root = Path("src")
+package_path = source_root / Path(package_name.replace(".", "/"))
 output_file = "new_init.py"  # The file to write the new import statements to
 
 # Get a list of all tracked Python files.
@@ -21,7 +24,9 @@ tracked_files = subprocess.run(
     ["git", "ls-files"], capture_output=True, text=True, check=True
 ).stdout.splitlines()  # nosec
 tracked_files = [
-    file[:-3].replace("/", ".") for file in tracked_files if file.endswith(".py")
+    file[:-3].replace("/", ".").removeprefix("src.")
+    for file in tracked_files
+    if file.endswith(".py") and file.startswith(f"{source_root.as_posix()}/")
 ]
 
 
@@ -50,7 +55,7 @@ def walk_packages(path, prefix):
 # Generate a list of all import statements and class names
 import_statements: list[str] = []
 all_class_names: list[str] = []
-walk_packages([package_name.replace(".", "/")], package_name + ".")
+walk_packages([str(package_path)], package_name + ".")
 
 # Write the import statements and the __all__ variable to the output file
 with open(output_file, "w", encoding="utf-8") as f:
