@@ -37,6 +37,7 @@ from pyrecest.backend import (
     log,
     max,
     ones,
+    size,
     unique,
     where,
     zeros,
@@ -153,7 +154,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
     @staticmethod
     def _ensure_binary_labels(labels: Any) -> Any:
         labels = asarray(labels).reshape(-1)
-        if labels.size == 0:
+        if size(labels) == 0:
             raise ValueError("At least one labeled example is required")
 
         unique_labels = unique(labels)
@@ -161,7 +162,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             raise ValueError("labels must only contain binary values 0/1 or False/True")
 
         labels = asarray(labels, dtype=int64)
-        if unique(labels).size != 2:
+        if size(unique_labels) != 2:
             raise ValueError("Both negative and positive examples are required")
         return labels
 
