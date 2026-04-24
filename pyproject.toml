@@ -40,6 +40,7 @@ line-length = 180
 filterwarnings = [
     "ignore::DeprecationWarning:mpmath.*",
     "ignore::scipy.optimize.OptimizeWarning",
+    "ignore:'return' in a 'finally' block:SyntaxWarning:autograd\\.wrap_util",
 ]
 [tool.pylint.MAIN]
 py-version = "3.13"

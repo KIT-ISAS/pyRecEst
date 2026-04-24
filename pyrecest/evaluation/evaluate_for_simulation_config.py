@@ -1,8 +1,9 @@
 import random
 from typing import Any, Optional
 
-import numpy as np
 from beartype import beartype
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import size
 
 from .evaluate_for_variables import evaluate_for_variables
 from .generate_simulated_scenarios import generate_simulated_scenarios
@@ -16,7 +17,7 @@ def evaluate_for_simulation_config(
     filter_configs: list[dict[str, Any]],
     n_runs: int,
     n_timesteps: Optional[int] = None,
-    initial_seed: Optional[int | np.uint32] = None,
+    initial_seed: Optional[int] = None,
     consecutive_seed: bool = False,
     save_folder: str = ".",
     scenario_customization_params: Optional[dict] = None,
@@ -29,11 +30,11 @@ def evaluate_for_simulation_config(
 ) -> tuple[
     dict,
     list[dict],
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray[np.ndarray],
+    Any,
+    Any,
+    Any,
+    Any,
+    Any,
 ]:
     if isinstance(simulation_config, str):
         simulation_name = simulation_config
@@ -73,15 +74,16 @@ def evaluate_for_simulation_config(
 @beartype
 def get_all_seeds(n_runs: int, seed_input=None, consecutive_seed: bool = True):
     if seed_input is None:
-        seed_input = np.uint32(random.randint(1, 0xFFFFFFFF))  # nosec
+        seed_input = random.randint(1, 0xFFFFFFFF)  # nosec
 
-    if np.size(seed_input) == n_runs:
+    if size(seed_input) == n_runs:
         all_seeds = seed_input
-    elif np.size(seed_input) == 1 and n_runs > 1:
+    elif size(seed_input) == 1 and n_runs > 1:
+        seed_value = int(seed_input)
         if consecutive_seed:
-            all_seeds = list(range(seed_input, seed_input + n_runs))
+            all_seeds = list(range(seed_value, seed_value + n_runs))
         else:
-            random.seed(seed_input)
+            random.seed(seed_value)
             all_seeds = [random.randint(1, 0xFFFFFFFF) for _ in range(n_runs)]  # nosec
     else:
         raise ValueError(
