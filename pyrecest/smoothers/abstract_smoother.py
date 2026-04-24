@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from copy import copy
 
-from pyrecest.backend import asarray, ndim
+from pyrecest.backend import asarray, copy, ndim
 from pyrecest.distributions import GaussianDistribution
 
 

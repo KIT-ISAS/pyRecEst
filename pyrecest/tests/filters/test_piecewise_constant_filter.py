@@ -1,11 +1,10 @@
 import unittest
-from copy import copy
 
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, pi
+from pyrecest.backend import array, copy, pi
 from pyrecest.distributions.circle.piecewise_constant_distribution import (
     PiecewiseConstantDistribution,
 )

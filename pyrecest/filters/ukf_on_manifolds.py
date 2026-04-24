@@ -10,13 +10,13 @@ Reference Python implementation:
 """
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
-from copy import copy
 from typing import Any, Callable
 
 import pyrecest.backend
 from pyrecest.backend import (
     asarray,
     broadcast_to,
+    copy,
     eye,
     linalg,
     outer,

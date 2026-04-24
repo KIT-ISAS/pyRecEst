@@ -5,12 +5,11 @@
 from __future__ import annotations
 
 import inspect
-from copy import copy
 from typing import Callable, Sequence
 
 # pylint: disable=no-member
 import pyrecest.backend
-from pyrecest.backend import asarray, linalg, ndim, outer, stack, zeros
+from pyrecest.backend import asarray, copy, linalg, ndim, outer, stack, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters._ukf import MerweScaledSigmaPoints
 

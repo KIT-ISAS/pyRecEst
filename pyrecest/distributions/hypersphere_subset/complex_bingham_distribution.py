@@ -9,8 +9,6 @@ Reference:
   Journal of the Royal Statistical Society. Series B (Methodological), 1994, 285-299.
 """
 
-from copy import copy
-
 import pyrecest.backend
 from pyrecest.backend import (
     abs,
@@ -22,6 +20,7 @@ from pyrecest.backend import (
     complex128,
     concatenate,
     conj,
+    copy,
     cumsum,
     diag,
     diff,
