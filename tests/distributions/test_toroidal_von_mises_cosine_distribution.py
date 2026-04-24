@@ -11,7 +11,7 @@ from pyrecest.backend import arange, array, column_stack, cos, exp, pi
 from pyrecest.distributions.hypertorus.toroidal_von_mises_cosine_distribution import (
     ToroidalVonMisesCosineDistribution,
 )
-from pyrecest.tests.distributions.test_toroidal_von_mises_sine_distribution import (
+from tests.distributions.test_toroidal_von_mises_sine_distribution import (
     ToroidalBivarVMTestMixin,
 )
 

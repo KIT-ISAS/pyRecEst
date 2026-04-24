@@ -59,9 +59,9 @@ jobs:
       - name: Run tests
         run: |
           export PYRECEST_BACKEND=${{ matrix.backend }}
-          poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_${{ matrix.backend }}.xml ./pyrecest
+          poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_${{ matrix.backend }}.xml ./tests
         env:
-          PYTHONPATH: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}/src
 
       - name: Upload test result artifact
         uses: actions/upload-artifact@v6

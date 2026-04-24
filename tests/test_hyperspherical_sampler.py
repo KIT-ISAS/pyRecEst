@@ -21,14 +21,11 @@ from pyrecest.backend import (
     zeros,
 )
 from pyrecest.sampling.hyperspherical_sampler import (
-    get_grid_hyperhemisphere,
-    get_grid_hypersphere,
-)
-
-from ..sampling.hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,
     DriscollHealySampler,
     FibonacciHopfSampler,
+    get_grid_hyperhemisphere,
+    get_grid_hypersphere,
     HealpixHopfSampler,
     HealpixSampler,
     LeopardiSampler,
