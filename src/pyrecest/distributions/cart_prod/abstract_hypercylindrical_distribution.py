@@ -8,7 +8,6 @@ import scipy.optimize
 from matplotlib import cm
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     allclose,
     any,
@@ -59,13 +58,19 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         return self.integrate_numerically(integration_boundaries)
 
     def integrate_numerically(self, integration_boundaries=None):
+        if pyrecest.backend.__backend_name__ == "jax":
+            raise NotImplementedError("integrate_numerically is not supported for the JAX backend.")
         if integration_boundaries is None:
             integration_boundaries = self.get_reasonable_integration_boundaries()
 
         def f(*args):
-            return self.pdf(array(args))
+            result = self.pdf(array(args))
+            # nquad requires a scalar return value
+            if hasattr(result, '__len__'):
+                return float(result[0])
+            return float(result)
 
-        integration_result = nquad(f, integration_boundaries)[0]
+        integration_result = nquad(f, integration_boundaries.T)[0]
 
         return integration_result
 
@@ -74,20 +79,80 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         Returns reasonable integration boundaries for the specific distribution
         based on the mode and covariance.
         """
-        left = empty((self.bound_dim + self.lin_dim, 1))
-        right = empty((self.bound_dim + self.lin_dim, 1))
+        if pyrecest.backend.__backend_name__ == "jax":
+            raise NotImplementedError("get_reasonable_integration_boundaries is not supported for the JAX backend.")
         P = self.linear_covariance()
         m = self.mode()
 
-        for i in range(self.bound_dim, self.bound_dim + self.lin_dim):
-            left[i] = m[i] - scalingFactor * sqrt(
-                P[i - self.bound_dim, i - self.bound_dim]
-            )
-            right[i] = m[i] + scalingFactor * sqrt(
-                P[i - self.bound_dim, i - self.bound_dim]
-            )
+        periodic_left = zeros(self.bound_dim)
+        periodic_right = 2.0 * pi * ones(self.bound_dim)
+
+        lin_left = array(
+            [m[self.bound_dim + i] - scalingFactor * sqrt(P[i, i])
+             for i in range(self.lin_dim)]
+        )
+        lin_right = array(
+            [m[self.bound_dim + i] + scalingFactor * sqrt(P[i, i])
+             for i in range(self.lin_dim)]
+        )
+
+        left = concatenate([periodic_left, lin_left])
+        right = concatenate([periodic_right, lin_right])
 
         return vstack((left, right))
+
+    def hybrid_moment_numerical(self):
+        if pyrecest.backend.__backend_name__ == "jax":
+            raise NotImplementedError("hybrid_moment_numerical is not supported for the JAX backend.")
+        assert self.bound_dim == 1, "Only implemented for bound_dim = 1"
+        bounds = self.get_reasonable_integration_boundaries()
+        left = bounds[0]
+        right = bounds[1]
+
+        if self.lin_dim == 1:
+            # dblquad(f, a, b, gfun, hfun) computes int_a^b int_{gfun(y)}^{hfun(y)} f(x, y) dx dy
+            # x is the inner (periodic) variable, y is the outer (linear) variable
+            m0 = scipy.integrate.dblquad(
+                lambda x, y: float(cos(array(x)) * self.pdf(array([x, y]))[0]),
+                float(left[1]), float(right[1]),
+                float(left[0]), float(right[0]),
+            )[0]
+            m1 = scipy.integrate.dblquad(
+                lambda x, y: float(sin(array(x)) * self.pdf(array([x, y]))[0]),
+                float(left[1]), float(right[1]),
+                float(left[0]), float(right[0]),
+            )[0]
+            m2 = scipy.integrate.dblquad(
+                lambda x, y: float(y * self.pdf(array([x, y]))[0]),
+                float(left[1]), float(right[1]),
+                float(left[0]), float(right[0]),
+            )[0]
+            return array([m0, m1, m2])
+        if self.lin_dim == 2:
+            ranges = [
+                [float(left[0]), float(right[0])],
+                [float(left[1]), float(right[1])],
+                [float(left[2]), float(right[2])],
+            ]
+
+            def integrand1(x, y, z):
+                return float(cos(array(x)) * self.pdf(array([x, y, z]))[0])
+
+            def integrand2(x, y, z):
+                return float(sin(array(x)) * self.pdf(array([x, y, z]))[0])
+
+            def integrand3(x, y, z):
+                return float(y * self.pdf(array([x, y, z]))[0])
+
+            def integrand4(x, y, z):
+                return float(z * self.pdf(array([x, y, z]))[0])
+
+            m0 = nquad(integrand1, ranges)[0]
+            m1 = nquad(integrand2, ranges)[0]
+            m2 = nquad(integrand3, ranges)[0]
+            m3 = nquad(integrand4, ranges)[0]
+            return array([m0, m1, m2, m3])
+        raise ValueError("lin_dim>2 not supported.")
 
     def mode(self):
         """Find the mode of the distribution by calling mode_numerical."""

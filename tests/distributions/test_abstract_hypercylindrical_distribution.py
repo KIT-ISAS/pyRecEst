@@ -21,7 +21,6 @@ from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution impo
     PartiallyWrappedNormalDistribution,
 )
 
-
 class AbstractHypercylindricalDistributionTest(unittest.TestCase):
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -109,6 +108,24 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
                 )
             )
         )
+        
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported for JAX backend",
+    )
+    def test_hybrid_moment_numerical_gaussian_2d(self):
+        mu = array([5.0, 10.0])
+        C = array([[2.0, 1.0], [1.0, 1.0]])
+        g = PartiallyWrappedNormalDistribution(mu, C, 1)
+        
+        #integrand_cos = lambda x: np.cos(x) * (1/np.sqrt(2*np.pi*C[0, 0])) * np.exp(-((x-mu[0])**2)/(2*C[0, 0]))
+        #integrand_sin = lambda x: np.sin(x) * (1/np.sqrt(2*np.pi*C[0, 0])) * np.exp(-((x-mu[0])**2)/(2*C[0, 0]))
+        #expected_result = np.array([quad(integrand_cos, 0, 2*np.pi)[0],
+        #                            quad(integrand_sin, 0, 2*np.pi)[0],
+        #                            mu[-1]])
+        
+        npt.assert_allclose(g.hybrid_moment_numerical(), g.hybrid_moment())
+
 
 
 if __name__ == "__main__":

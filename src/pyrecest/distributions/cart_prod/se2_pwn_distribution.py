@@ -1,11 +1,17 @@
-import numpy as _np
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
+    arctan2,
     array,
+    column_stack,
     cos,
+    cov,
     exp,
+    log,
+    mean,
+    mod,
+    pi,
     sin,
+    sqrt,
 )
 
 from ..abstract_se2_distribution import AbstractSE2Distribution
@@ -25,10 +31,12 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
     """
 
     def __init__(self, mu, C):
-        PartiallyWrappedNormalDistribution.__init__(self, mu, C, 1)
         AbstractSE2Distribution.__init__(self)
+        PartiallyWrappedNormalDistribution.__init__(
+            self, mu, C, bound_dim=self.bound_dim
+        )
 
-    def mean4D(self):
+    def mean_4d(self):
         """Return the 4-D moment E[cos(x1), sin(x1), x2, x3].
 
         Returns
@@ -37,8 +45,16 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
         """
         return self.hybrid_moment()
 
-    def covariance4D(self):  # pylint: disable=too-many-locals
+    def mean4D(self):
+        """Backward-compatible alias for mean_4d()."""
+        return self.mean_4d()
+
+    def covariance_4d(self):  # pylint: disable=too-many-locals
         """Return the analytical 4-D covariance of [cos(x1), sin(x1), x2, x3].
+
+        Based on the formula from:
+            Gerhard Kurz, "Directional Estimation for Robotic Beating Heart Surgery",
+            Karlsruhe Institute of Technology, 2015.
 
         Returns
         -------
@@ -75,7 +91,11 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
             ]
         )
 
-    def covariance4D_numerical(self, n_samples=10000):
+    def covariance4D(self):
+        """Backward-compatible alias for covariance_4d()."""
+        return self.covariance_4d()
+
+    def covariance_4d_numerical(self, n_samples=10000):
         """Estimate the 4-D covariance of [cos(x1), sin(x1), x2, x3] from samples.
 
         Parameters
@@ -87,12 +107,16 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
         -------
         array of shape (4, 4)
         """
-        s = _np.asarray(self.sample(n_samples))
-        big_s = _np.column_stack([_np.cos(s[:, 0]), _np.sin(s[:, 0]), s[:, 1], s[:, 2]])
-        return array(_np.cov(big_s.T))
+        s = self.sample(n_samples)
+        big_s = column_stack([cos(s[:, 0]), sin(s[:, 0]), s[:, 1], s[:, 2]])
+        return cov(big_s.T)
 
-    @staticmethod
-    def from_samples(samples):
+    def covariance4D_numerical(self, n_samples=10000):
+        """Backward-compatible alias for covariance_4d_numerical()."""
+        return self.covariance_4d_numerical(n_samples)
+
+    @classmethod
+    def from_samples(cls, samples):
         """Fit an SE2PWNDistribution from samples via moment matching.
 
         Parameters
@@ -104,31 +128,33 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
         -------
         SE2PWNDistribution
         """
-        samples = _np.asarray(samples)
-        big_s = _np.column_stack(
+        samples = array(samples)
+        big_s = column_stack(
             [
-                _np.cos(samples[:, 0]),
-                _np.sin(samples[:, 0]),
+                cos(samples[:, 0]),
+                sin(samples[:, 0]),
                 samples[:, 1],
                 samples[:, 2],
             ]
         )
-        mu4 = _np.mean(big_s, axis=0)
+        mu4 = mean(big_s, axis=0)
 
-        mu = _np.zeros(3)
-        mu[0] = _np.mod(_np.arctan2(mu4[1], mu4[0]), 2.0 * _np.pi)
-        m1abs = _np.sqrt(mu4[0] ** 2 + mu4[1] ** 2)
-        mu[1:] = mu4[2:]
+        mu0 = mod(arctan2(mu4[1], mu4[0]), 2.0 * pi)
+        m1abs = sqrt(mu4[0] ** 2 + mu4[1] ** 2)
+        mu = array([mu0, mu4[2], mu4[3]])
 
-        c4 = _np.cov(big_s.T)
+        c4 = cov(big_s.T)
 
-        c = _np.zeros((3, 3))
-        c[0, 0] = -2.0 * _np.log(m1abs)
-        factor = _np.exp(0.5 * c[0, 0])
-        c[0, 1] = (-c4[0, 2] * _np.sin(mu[0]) + c4[1, 2] * _np.cos(mu[0])) * factor
-        c[0, 2] = (-c4[0, 3] * _np.sin(mu[0]) + c4[1, 3] * _np.cos(mu[0])) * factor
-        c[1, 0] = c[0, 1]
-        c[2, 0] = c[0, 2]
-        c[1:3, 1:3] = c4[2:4, 2:4]
+        c00 = -2.0 * log(m1abs)
+        factor = exp(0.5 * c00)
+        c01 = (-c4[0, 2] * sin(mu[0]) + c4[1, 2] * cos(mu[0])) * factor
+        c02 = (-c4[0, 3] * sin(mu[0]) + c4[1, 3] * cos(mu[0])) * factor
+        c = array(
+            [
+                [c00, c01, c02],
+                [c01, c4[2, 2], c4[2, 3]],
+                [c02, c4[3, 2], c4[3, 3]],
+            ]
+        )
 
-        return SE2PWNDistribution(array(mu), array(c))
+        return cls(mu, c)
