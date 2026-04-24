@@ -5,8 +5,20 @@
 import warnings
 from math import log, pi
 
-import numpy as _np
 import pyrecest.backend
+from pyrecest.backend import (
+    any,
+    argmax,
+    asarray,
+    exp,
+    eye,
+    full,
+    isscalar,
+    linalg,
+    ones,
+    outer,
+    zeros,
+)
 from pyrecest.distributions import GaussianDistribution
 from scipy.special import logsumexp
 from scipy.stats import chi2
@@ -73,28 +85,29 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
 
     @staticmethod
     def _prepare_clutter_intensity(clutter_intensity, n_meas):
-        if _np.isscalar(clutter_intensity):
-            clutter_intensity = _np.full(n_meas, float(clutter_intensity))
+        if isscalar(clutter_intensity):
+            clutter_intensity = full((n_meas,), float(clutter_intensity))
         else:
-            clutter_intensity = _np.asarray(clutter_intensity, dtype=float).reshape(-1)
+            clutter_intensity = asarray(clutter_intensity, dtype=float).reshape(-1)
             if clutter_intensity.shape[0] != n_meas:
                 raise ValueError(
                     "If clutter_intensity is not scalar, it must have length n_meas."
                 )
 
-        if _np.any(clutter_intensity <= 0.0):
+        if any(clutter_intensity <= 0.0):
             raise ValueError("clutter_intensity must be strictly positive.")
 
         return clutter_intensity
 
     @staticmethod
     def _log_gaussian_likelihood(innovation, innovation_covariance):
-        sign, logdet = _np.linalg.slogdet(innovation_covariance)
-        if sign <= 0.0:
+        det_value = float(linalg.det(innovation_covariance))
+        if det_value <= 0.0:
             raise ValueError("Innovation covariance must be positive definite.")
+        logdet = log(det_value)
 
         mahalanobis_distance = float(
-            innovation.T @ _np.linalg.solve(innovation_covariance, innovation)
+            innovation.T @ linalg.solve(innovation_covariance, innovation)
         )
         log_likelihood = -0.5 * (
             innovation.shape[0] * log(2.0 * pi) + logdet + mahalanobis_distance
@@ -107,13 +120,13 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
         innovation_covariance = (
             measurement_matrix @ cov_prior @ measurement_matrix.T + meas_cov
         )
-        kalman_gain = _np.linalg.solve(
+        kalman_gain = linalg.solve(
             innovation_covariance.T,
             (cov_prior @ measurement_matrix.T).T,
         ).T
         mu_posterior = mu_prior + kalman_gain @ innovation
 
-        identity_matrix = _np.eye(cov_prior.shape[0])
+        identity_matrix = eye(cov_prior.shape[0])
         cov_posterior = (
             identity_matrix - kalman_gain @ measurement_matrix
         ) @ cov_prior @ (
@@ -147,11 +160,11 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
         n_targets = self.get_number_of_targets()
         if n_targets == 0:
             warnings.warn("Currently, there are zero targets.")
-            return _np.zeros((0, 1)), _np.zeros((0,), dtype=int)
+            return zeros((0, 1)), zeros((0,), dtype=int)
 
-        measurements = _np.asarray(measurements, dtype=float)
-        measurement_matrix = _np.asarray(measurement_matrix, dtype=float)
-        cov_mats_meas = _np.asarray(cov_mats_meas, dtype=float)
+        measurements = asarray(measurements, dtype=float)
+        measurement_matrix = asarray(measurement_matrix, dtype=float)
+        cov_mats_meas = asarray(cov_mats_meas, dtype=float)
 
         if measurements.ndim != 2:
             raise ValueError("measurements must have shape (dim_meas, n_meas)")
@@ -184,14 +197,14 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
         gating_distance_threshold = float(gating_distance_threshold)
 
         if n_meas == 0:
-            association_probabilities = _np.ones((n_targets, 1))
-            map_association = -_np.ones(n_targets, dtype=int)
+            association_probabilities = ones((n_targets, 1))
+            map_association = full((n_targets,), -1, dtype=int)
             self.latest_association_probabilities = association_probabilities
             self.latest_map_association = map_association
             self._latest_posterior_hypotheses = [{} for _ in range(n_targets)]
             return association_probabilities, map_association
 
-        log_likelihoods = _np.full((n_targets, n_meas), -_np.inf)
+        log_likelihoods = full((n_targets, n_meas), float("-inf"))
         eligible_measurements = [[] for _ in range(n_targets)]
         posterior_hypotheses = [{} for _ in range(n_targets)]
 
@@ -246,8 +259,8 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
         detection_log_weight = log(detection_probability)
         max_enumerated_events = int(self.association_param["max_enumerated_events"])
 
-        curr_assignment = -_np.ones(n_targets, dtype=int)
-        used_measurements = _np.zeros(n_meas, dtype=bool)
+        curr_assignment = full((n_targets,), -1, dtype=int)
+        used_measurements = zeros((n_meas,), dtype=bool)
         event_assignments = []
         event_log_weights = []
 
@@ -286,12 +299,12 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
 
         recurse(0, 0.0)
 
-        event_log_weights = _np.asarray(event_log_weights, dtype=float)
-        normalized_event_weights = _np.exp(
+        event_log_weights = asarray(event_log_weights, dtype=float)
+        normalized_event_weights = exp(
             event_log_weights - logsumexp(event_log_weights)
         )
 
-        association_probabilities = _np.zeros((n_targets, n_meas + 1))
+        association_probabilities = zeros((n_targets, n_meas + 1))
         for event_assignment, event_weight in zip(
             event_assignments, normalized_event_weights
         ):
@@ -303,7 +316,7 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
                         target_index, measurement_index + 1
                     ] += event_weight
 
-        map_association = event_assignments[int(_np.argmax(normalized_event_weights))]
+        map_association = event_assignments[int(argmax(normalized_event_weights))]
 
         self.latest_association_probabilities = association_probabilities
         self.latest_map_association = map_association
@@ -362,7 +375,7 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
 
             posterior_covariance = association_probabilities[target_index, 0] * (
                 prior_state.C
-                + _np.outer(
+                + outer(
                     prior_state.mu - posterior_mean,
                     prior_state.mu - posterior_mean,
                 )
@@ -380,7 +393,7 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
                 ]
                 mean_diff = curr_mean - posterior_mean
                 posterior_covariance += curr_beta * (
-                    curr_cov + _np.outer(mean_diff, mean_diff)
+                    curr_cov + outer(mean_diff, mean_diff)
                 )
 
             posterior_covariance = 0.5 * (posterior_covariance + posterior_covariance.T)
