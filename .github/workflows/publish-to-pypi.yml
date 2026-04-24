@@ -1,4 +1,5 @@
 name: Publish to PyPI
+run-name: Publish to ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_index || 'pypi' }}
 
 on:
   workflow_run:
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       target_index:
-        description: "Package index to publish to"
+        description: "Package index to publish to for manual runs"
         required: true
         type: choice
         default: testpypi
@@ -70,18 +71,26 @@ jobs:
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TARGET_INDEX="${{ inputs.target_index }}"
+            TARGET_INDEX="${{ github.event.inputs.target_index }}"
           else
             TARGET_INDEX="pypi"
           fi
 
-          echo "target_index=${TARGET_INDEX}" >> "$GITHUB_OUTPUT"
+          case "${TARGET_INDEX}" in
+            testpypi)
+              ENVIRONMENT_NAME="testpypi"
+              ;;
+            pypi)
+              ENVIRONMENT_NAME="pypi"
+              ;;
+            *)
+              echo "::error::Unsupported target index: ${TARGET_INDEX}"
+              exit 1
+              ;;
+          esac
 
-          if [ "${TARGET_INDEX}" = "testpypi" ]; then
-            echo "environment_name=testpypi" >> "$GITHUB_OUTPUT"
-          else
-            echo "environment_name=pypi" >> "$GITHUB_OUTPUT"
-          fi
+          echo "target_index=${TARGET_INDEX}" >> "$GITHUB_OUTPUT"
+          echo "environment_name=${ENVIRONMENT_NAME}" >> "$GITHUB_OUTPUT"
 
       - name: Decide whether to publish
         id: gate
