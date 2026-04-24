@@ -13,8 +13,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "GitHub Release tag whose assets should be published"
-        required: true
+        description: "GitHub Release tag to publish; leave blank for the latest release"
+        required: false
         type: string
       target_index:
         description: "Package index to publish to for manual runs"
@@ -45,11 +45,35 @@ jobs:
       environment_name: ${{ steps.target.outputs.environment_name }}
       publish_allowed: ${{ steps.gate.outputs.publish_allowed }}
     steps:
+      - name: Resolve manual release tag
+        id: manual_release
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/github-script@v8
+        env:
+          RELEASE_TAG_INPUT: ${{ github.event.inputs.release_tag }}
+        with:
+          script: |
+            const input = (process.env.RELEASE_TAG_INPUT || "").trim();
+
+            if (input) {
+              core.setOutput("release_tag", input);
+              return;
+            }
+
+            const response = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const releaseTag = response.data.tag_name;
+
+            core.info(`No release tag input; using latest release ${releaseTag}.`);
+            core.setOutput("release_tag", releaseTag);
+
       - name: Check out source
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && steps.manual_release.outputs.release_tag || github.event.workflow_run.head_sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -75,7 +99,7 @@ jobs:
         id: release
         shell: bash
         env:
-          MANUAL_RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+          MANUAL_RELEASE_TAG: ${{ steps.manual_release.outputs.release_tag }}
           PACKAGE_VERSION: ${{ steps.meta.outputs.version }}
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
