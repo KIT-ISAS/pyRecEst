@@ -20,7 +20,7 @@ on:
         description: "Package index to publish to for manual runs"
         required: true
         type: choice
-        default: testpypi
+        default: pypi
         options:
           - testpypi
           - pypi
