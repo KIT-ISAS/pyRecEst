@@ -1,7 +1,17 @@
 from __future__ import annotations
 
 # pylint: disable=no-name-in-module,no-member,duplicate-code,too-many-locals
-from pyrecest.backend import array, concatenate, cos, diag, eye, linalg, sin, trace, zeros
+from pyrecest.backend import (
+    array,
+    concatenate,
+    cos,
+    diag,
+    eye,
+    linalg,
+    sin,
+    trace,
+    zeros,
+)
 
 from .mem_ekf_tracker import MEMEKFTracker
 
@@ -283,7 +293,11 @@ class MEMSOEKFTracker(MEMEKFTracker):
             multiplicative_noise_cov,
             meas_noise_cov,
         )
-        expected_measurement, measurement_covariance, jacobian = self._second_order_moments(
+        (
+            expected_measurement,
+            measurement_covariance,
+            jacobian,
+        ) = self._second_order_moments(
             augmented_mean,
             augmented_covariance,
             measurement_matrix,
