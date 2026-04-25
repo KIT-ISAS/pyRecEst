@@ -2,7 +2,7 @@ import numpy as np
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import get_backend_name, mod, pi, squeeze, tile, zeros
+from pyrecest.backend import array, dot, get_backend_name, mod, pi, squeeze, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -130,9 +130,9 @@ def generate_measurements(groundtruth, simulation_config):
             for target_no in range(simulation_config["n_targets"]):
                 if n_observations[t, target_no] == 1:
                     meas_no += 1
-                    measurements[t][meas_no - 1, :] = np.dot(
+                    measurements[t][meas_no - 1, :] = dot(
                         simulation_config["meas_matrix_for_each_target"],
-                        groundtruth[t, target_no, :],
+                        array(groundtruth[t, target_no, :]),
                     ) + squeeze(simulation_config["meas_noise"].sample(1))
                 else:
                     assert (
