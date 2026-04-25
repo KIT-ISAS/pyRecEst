@@ -14,8 +14,6 @@ from pyrecest.filters import (
 class _DummyMultipleExtendedObjectTracker(AbstractMultipleExtendedObjectTracker):
     def __init__(self):
         super().__init__(
-            log_prior_estimates=True,
-            log_posterior_estimates=True,
             log_prior_extents=True,
             log_posterior_extents=True,
             log_prior_measurement_rates=True,
@@ -44,7 +42,7 @@ class _DummyMultipleExtendedObjectTracker(AbstractMultipleExtendedObjectTracker)
             ),
         ]
 
-    def predict(
+    def predict(  # pylint: disable=too-many-positional-arguments
         self,
         dt=None,
         dynamic_model=None,
@@ -64,7 +62,7 @@ class _DummyMultipleExtendedObjectTracker(AbstractMultipleExtendedObjectTracker)
             }
         )
 
-    def update(
+    def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         measurements,
         measurement_model=None,
