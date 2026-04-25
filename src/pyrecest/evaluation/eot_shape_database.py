@@ -23,7 +23,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
         if isinstance(self.boundary, LineString):
             lines = [self.boundary]
         elif isinstance(self.boundary, MultiLineString):
-            lines = list(self.boundary)
+            lines = list(self.boundary.geoms)
         else:
             raise ValueError("Unsupported boundary type")
 
