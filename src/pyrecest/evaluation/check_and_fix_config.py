@@ -44,7 +44,19 @@ def check_and_fix_config(simulation_param):
             "n_meas_at_individual_time_step" not in simulation_param
             and "meas_per_step" not in simulation_param
         )
-        simulation_param.setdefault("detectionProbability", 1)
+        if "detectionProbability" in simulation_param:
+            if (
+                "detection_probability" in simulation_param
+                and simulation_param["detection_probability"]
+                != simulation_param["detectionProbability"]
+            ):
+                raise ValueError(
+                    "Use only one detection probability value for MTT scenarios."
+                )
+            simulation_param["detection_probability"] = simulation_param[
+                "detectionProbability"
+            ]
+        simulation_param.setdefault("detection_probability", 1)
         simulation_param.setdefault("clutter_rate", 0)
 
         assert (
