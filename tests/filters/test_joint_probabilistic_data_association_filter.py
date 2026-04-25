@@ -4,7 +4,7 @@ import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
-from pyrecest.backend import allclose, array, eye
+from pyrecest.backend import allclose, array, copy, eye
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import JPDAF, KalmanFilter
 
@@ -71,6 +71,40 @@ class JointProbabilisticDataAssociationFilterTest(unittest.TestCase):
             self.meas_cov,
         )
         npt.assert_array_equal(shuffled_map_association, array([1, 0]))
+
+    def test_find_association_probabilities_without_measurements(self):
+        tracker = JPDAF(self.kfs_init, association_param=self.association_param)
+        prior_point_estimate = copy(tracker.get_point_estimate())
+        prior_covariances = [copy(state.C) for state in tracker.filter_state]
+
+        association_probabilities, map_association = (
+            tracker.find_association_probabilities(
+                array([[], []], dtype=float),
+                self.meas_mat,
+                self.meas_cov,
+            )
+        )
+
+        npt.assert_allclose(association_probabilities, array([[1.0], [1.0]]))
+        npt.assert_array_equal(map_association, array([-1, -1]))
+        npt.assert_allclose(
+            tracker.latest_association_probabilities,
+            association_probabilities,
+        )
+        npt.assert_array_equal(tracker.latest_map_association, map_association)
+
+        tracker.update_linear(
+            array([[], []], dtype=float),
+            self.meas_mat,
+            self.meas_cov,
+        )
+
+        npt.assert_allclose(tracker.get_point_estimate(), prior_point_estimate)
+        for curr_state, prior_covariance in zip(
+            tracker.filter_state,
+            prior_covariances,
+        ):
+            npt.assert_allclose(curr_state.C, prior_covariance)
 
     def test_update_linear_is_robust_to_far_away_clutter(self):
         tracker_no_clutter = JPDAF(
