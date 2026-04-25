@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-
-import numpy as np
+from typing import Any
 
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
+    all as backend_all,
+    asarray,
     full,
     int64,
+    isfinite,
+    where,
 )
 
 from .multisession_assignment import (
@@ -27,8 +30,8 @@ from .multisession_assignment import (
 )
 
 
-def _default_score_to_cost(scores: np.ndarray) -> np.ndarray:
-    return -np.asarray(scores, dtype=float)
+def _default_score_to_cost(scores: Any) -> Any:
+    return -asarray(scores, dtype=float)
 
 
 def tracks_to_index_matrix(
@@ -62,7 +65,7 @@ def solve_multisession_assignment_from_similarity(  # pylint: disable=too-many-a
     gap_penalty: float = 0.0,
     start_cost: float = 0.0,
     end_cost: float = 0.0,
-    score_to_cost: Callable[[np.ndarray], np.ndarray] | None = None,
+    score_to_cost: Callable[[Any], Any] | None = None,
 ) -> MultiSessionAssignmentResult:
     """Score-native wrapper around :func:`solve_multisession_assignment`."""
     assert __backend_name__ != "jax", "Not supported on JAX backend"
@@ -91,25 +94,25 @@ def solve_multisession_assignment_from_similarity(  # pylint: disable=too-many-a
         for position, session_idx in enumerate(sorted(session_sizes_map))
     }
 
-    transformed_pairwise_costs: dict[tuple[int, int], np.ndarray] = {}
+    transformed_pairwise_costs: dict[tuple[int, int], Any] = {}
     for (source_session, target_session), score_matrix in normalized_pairwise_scores.items():
         gap = session_positions[target_session] - session_positions[source_session] - 1
         if max_gap is not None and gap > max_gap:
             continue
 
-        score_matrix_array = np.asarray(score_matrix, dtype=float)
-        finite_mask = np.isfinite(score_matrix_array)
+        score_matrix_array = asarray(score_matrix, dtype=float)
+        finite_mask = isfinite(score_matrix_array)
         if min_score is not None:
             finite_mask &= score_matrix_array >= float(min_score)
 
-        safe_scores = np.where(np.isfinite(score_matrix_array), score_matrix_array, 0.0)
-        cost_matrix = np.asarray(score_to_cost(safe_scores), dtype=float)
+        safe_scores = where(isfinite(score_matrix_array), score_matrix_array, 0.0)
+        cost_matrix = asarray(score_to_cost(safe_scores), dtype=float)
         if cost_matrix.shape != score_matrix_array.shape:
             raise ValueError("score_to_cost must preserve the input matrix shape.")
 
         cost_matrix = cost_matrix.copy()
-        cost_matrix[~finite_mask] = np.inf
-        if not np.all(np.isfinite(cost_matrix[finite_mask])):
+        cost_matrix[~finite_mask] = math.inf
+        if not bool(backend_all(isfinite(cost_matrix[finite_mask]))):
             raise ValueError(
                 "score_to_cost must return finite costs for admissible scores."
             )
@@ -137,7 +140,12 @@ def stitch_tracks_from_pairwise_scores(
     )
 
 
-def _result_to_index_matrix(self, session_sizes: SessionSizesInput | None = None, *, fill_value: int = -1):
+def _result_to_index_matrix(
+    self,
+    session_sizes: SessionSizesInput | None = None,
+    *,
+    fill_value: int = -1,
+):
     return tracks_to_index_matrix(self.tracks, session_sizes=session_sizes, fill_value=fill_value)
 
 

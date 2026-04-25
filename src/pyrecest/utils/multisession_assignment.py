@@ -22,16 +22,26 @@ Jonker-Volgenant implementation.
 from __future__ import annotations
 
 import math
+import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-import numpy as np
-
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
+    arange,
+    asarray,
+    concatenate,
+    empty,
     full,
     int64,
+    isfinite,
+    min as backend_min,
+    ones,
+    sum as backend_sum,
+    to_numpy,
+    where,
+    zeros,
 )
 from scipy.optimize import linprog
 from scipy.sparse import coo_matrix
@@ -79,7 +89,7 @@ class MultiSessionAssignmentResult:
         session_sizes: SessionSizesInput | None = None,
         *,
         fill_value: int = -1,
-    ) -> tuple[np.ndarray, ...]:
+    ) -> tuple[Any, ...]:
         """Convert the recovered tracks to dense per-session label arrays.
 
         Parameters
@@ -205,11 +215,11 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
         n_observations,
     )
 
-    predecessors = np.full(n_observations, -1, dtype=int)
-    successors = np.full(n_observations, -1, dtype=int)
+    predecessors = full(n_observations, -1, dtype=int)
+    successors = full(n_observations, -1, dtype=int)
     matched_edges: list[MatchedEdge] = []
 
-    for edge_index in np.where(selected_edge_mask)[0]:
+    for edge_index in where(selected_edge_mask)[0]:
         source_global = int(left_nodes[edge_index])
         target_global = int(right_nodes[edge_index])
 
@@ -243,7 +253,7 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
     )
 
     baseline_cost = float(n_observations) * (float(start_cost) + float(end_cost))
-    total_cost = baseline_cost - float(edge_gains[selected_edge_mask].sum())
+    total_cost = baseline_cost - float(backend_sum(edge_gains[selected_edge_mask]))
 
     # Basic internal consistency check.
     observation_count = sum(len(track) for track in tracks)
@@ -271,7 +281,7 @@ def tracks_to_session_labels(
     session_sizes: SessionSizesInput | None = None,
     *,
     fill_value: int = -1,
-) -> tuple[np.ndarray, ...]:
+) -> tuple[Any, ...]:
     """Convert explicit tracks to dense per-session label arrays.
 
     Parameters
@@ -289,7 +299,7 @@ def tracks_to_session_labels(
 
     Returns
     -------
-    tuple[np.ndarray, ...]
+    tuple[Any, ...]
         One integer array per session, indexed by session number.
     """
 
@@ -321,16 +331,16 @@ def _validate_scalar_cost(name: str, value: float) -> None:
 
 def _normalize_pairwise_costs(
     pairwise_costs: PairwiseCostsInput,
-) -> dict[tuple[int, int], np.ndarray]:
+) -> dict[tuple[int, int], Any]:
     if isinstance(pairwise_costs, Mapping):
-        normalized: dict[tuple[int, int], np.ndarray] = {}
+        normalized: dict[tuple[int, int], Any] = {}
         for key, value in pairwise_costs.items():
             if len(key) != 2:
                 raise ValueError("Each pairwise-cost key must contain two session indices.")
             source_session, target_session = int(key[0]), int(key[1])
             if source_session >= target_session:
                 raise ValueError("Pairwise-cost keys must satisfy source_session < target_session.")
-            matrix = np.asarray(value, dtype=float)
+            matrix = asarray(value, dtype=float)
             if matrix.ndim != 2:
                 raise ValueError("Each pairwise cost matrix must be two-dimensional.")
             normalized[(source_session, target_session)] = matrix
@@ -338,7 +348,7 @@ def _normalize_pairwise_costs(
 
     normalized = {}
     for session_idx, value in enumerate(pairwise_costs):
-        matrix = np.asarray(value, dtype=float)
+        matrix = asarray(value, dtype=float)
         if matrix.ndim != 2:
             raise ValueError("Each pairwise cost matrix must be two-dimensional.")
         normalized[(session_idx, session_idx + 1)] = matrix
@@ -361,7 +371,7 @@ def _normalize_session_sizes(
 
 
 def _infer_and_validate_session_sizes(
-    pairwise_costs: Mapping[tuple[int, int], np.ndarray],
+    pairwise_costs: Mapping[tuple[int, int], Any],
     session_sizes: Mapping[int, int],
 ) -> dict[int, int]:
     inferred_sizes = dict(session_sizes)
@@ -451,7 +461,7 @@ def _build_observation_index(
 
 
 def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-locals
-    pairwise_costs: Mapping[tuple[int, int], np.ndarray],
+    pairwise_costs: Mapping[tuple[int, int], Any],
     session_sizes: Mapping[int, int],
     session_positions: Mapping[int, int],
     session_offsets: Mapping[int, int],
@@ -460,11 +470,11 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
     end_cost: float,
     gap_penalty: float,
     cost_threshold: float | None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    left_nodes: list[np.ndarray] = []
-    right_nodes: list[np.ndarray] = []
-    edge_gains: list[np.ndarray] = []
-    adjusted_costs: list[np.ndarray] = []
+) -> tuple[Any, Any, Any, Any]:
+    left_nodes: list[Any] = []
+    right_nodes: list[Any] = []
+    edge_gains: list[Any] = []
+    adjusted_costs: list[Any] = []
 
     for (source_session, target_session), cost_matrix in sorted(pairwise_costs.items()):
         expected_shape = (session_sizes[source_session], session_sizes[target_session])
@@ -480,44 +490,44 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
         if gap < 0:
             raise ValueError("Session indices must define a forward-in-time edge ordering.")
 
-        adjusted_matrix = np.asarray(cost_matrix, dtype=float) + float(gap_penalty) * gap
+        adjusted_matrix = asarray(cost_matrix, dtype=float) + float(gap_penalty) * gap
         gain_matrix = (float(start_cost) + float(end_cost)) - adjusted_matrix
 
-        valid_mask = np.isfinite(adjusted_matrix) & (gain_matrix > 0.0)
+        valid_mask = isfinite(adjusted_matrix) & (gain_matrix > 0.0)
         if cost_threshold is not None:
             valid_mask &= adjusted_matrix <= float(cost_threshold)
 
-        source_indices, target_indices = np.where(valid_mask)
+        source_indices, target_indices = where(valid_mask)
         if source_indices.shape[0] == 0:
             continue
 
-        left_nodes.append(session_offsets[source_session] + source_indices.astype(int))
-        right_nodes.append(session_offsets[target_session] + target_indices.astype(int))
-        edge_gains.append(gain_matrix[valid_mask].astype(float))
-        adjusted_costs.append(adjusted_matrix[valid_mask].astype(float))
+        left_nodes.append(session_offsets[source_session] + asarray(source_indices, dtype=int))
+        right_nodes.append(session_offsets[target_session] + asarray(target_indices, dtype=int))
+        edge_gains.append(asarray(gain_matrix[valid_mask], dtype=float))
+        adjusted_costs.append(asarray(adjusted_matrix[valid_mask], dtype=float))
 
     if not edge_gains:
         return (
-            np.empty(0, dtype=int),
-            np.empty(0, dtype=int),
-            np.empty(0, dtype=float),
-            np.empty(0, dtype=float),
+            empty(0, dtype=int),
+            empty(0, dtype=int),
+            empty(0, dtype=float),
+            empty(0, dtype=float),
         )
 
     return (
-        np.concatenate(left_nodes),
-        np.concatenate(right_nodes),
-        np.concatenate(edge_gains),
-        np.concatenate(adjusted_costs),
+        concatenate(left_nodes),
+        concatenate(right_nodes),
+        concatenate(edge_gains),
+        concatenate(adjusted_costs),
     )
 
 
 def _solve_max_weight_matching(
-    left_nodes: np.ndarray,
-    right_nodes: np.ndarray,
-    edge_gains: np.ndarray,
+    left_nodes: Any,
+    right_nodes: Any,
+    edge_gains: Any,
     num_nodes: int,
-) -> np.ndarray:
+) -> Any:
     try:
         return _solve_max_weight_matching_sparse(
             left_nodes,
@@ -535,11 +545,11 @@ def _solve_max_weight_matching(
 
 
 def _solve_max_weight_matching_sparse(  # pylint: disable=too-many-locals
-    left_nodes: np.ndarray,
-    right_nodes: np.ndarray,
-    edge_gains: np.ndarray,
+    left_nodes: Any,
+    right_nodes: Any,
+    edge_gains: Any,
     num_nodes: int,
-) -> np.ndarray:
+) -> Any:
     """Solve the sparse bipartite matching problem with LAPJVsp.
 
     The optional-matching objective is turned into a full rectangular
@@ -550,28 +560,28 @@ def _solve_max_weight_matching_sparse(  # pylint: disable=too-many-locals
     requirement that sparse edge weights are non-zero.
     """
 
-    left_nodes = np.asarray(left_nodes, dtype=int)
-    right_nodes = np.asarray(right_nodes, dtype=int)
-    edge_gains = np.asarray(edge_gains, dtype=float)
+    left_nodes = asarray(left_nodes, dtype=int)
+    right_nodes = asarray(right_nodes, dtype=int)
+    edge_gains = asarray(edge_gains, dtype=float)
 
     num_edges = int(edge_gains.size)
     if num_edges == 0 or num_nodes == 0:
-        return np.zeros(num_edges, dtype=bool)
+        return zeros(num_edges, dtype=bool)
 
-    row_ids = np.concatenate((left_nodes, np.arange(num_nodes, dtype=int)))
-    col_ids = np.concatenate((right_nodes, num_nodes + np.arange(num_nodes, dtype=int)))
+    row_ids = concatenate((left_nodes, arange(num_nodes, dtype=int)))
+    col_ids = concatenate((right_nodes, num_nodes + arange(num_nodes, dtype=int)))
 
-    base_weight = min(1.0, 0.5 * float(np.min(edge_gains)))
-    base_weight = max(base_weight, np.nextafter(0.0, 1.0))
-    weights = np.concatenate(
+    base_weight = min(1.0, 0.5 * float(backend_min(edge_gains)))
+    base_weight = max(base_weight, sys.float_info.min)
+    weights = concatenate(
         (
             edge_gains + base_weight,
-            np.full(num_nodes, base_weight, dtype=float),
+            full(num_nodes, base_weight, dtype=float),
         )
     )
 
     biadjacency = coo_matrix(
-        (weights, (row_ids, col_ids)),
+        (to_numpy(weights), (to_numpy(row_ids), to_numpy(col_ids))),
         shape=(num_nodes, 2 * num_nodes),
     ).tocsr()
 
@@ -587,7 +597,7 @@ def _solve_max_weight_matching_sparse(  # pylint: disable=too-many-locals
         (int(source_node), int(target_node)): edge_index
         for edge_index, (source_node, target_node) in enumerate(zip(left_nodes, right_nodes))
     }
-    selected_edge_mask = np.zeros(num_edges, dtype=bool)
+    selected_edge_mask = zeros(num_edges, dtype=bool)
 
     for source_node, assigned_column in zip(matched_rows, matched_cols):
         assigned_column = int(assigned_column)
@@ -602,34 +612,34 @@ def _solve_max_weight_matching_sparse(  # pylint: disable=too-many-locals
 
 
 def _solve_max_weight_matching_via_linprog(  # pylint: disable=too-many-locals
-    left_nodes: np.ndarray,
-    right_nodes: np.ndarray,
-    edge_gains: np.ndarray,
+    left_nodes: Any,
+    right_nodes: Any,
+    edge_gains: Any,
     num_nodes: int,
-) -> np.ndarray:
+) -> Any:
     """Fallback solver that keeps the original LP formulation."""
 
-    left_nodes = np.asarray(left_nodes, dtype=int)
-    right_nodes = np.asarray(right_nodes, dtype=int)
-    edge_gains = np.asarray(edge_gains, dtype=float)
+    left_nodes = asarray(left_nodes, dtype=int)
+    right_nodes = asarray(right_nodes, dtype=int)
+    edge_gains = asarray(edge_gains, dtype=float)
 
     num_edges = int(edge_gains.size)
     if num_edges == 0 or num_nodes == 0:
-        return np.zeros(num_edges, dtype=bool)
+        return zeros(num_edges, dtype=bool)
 
-    edge_ids = np.arange(num_edges, dtype=int)
-    row_ids = np.concatenate((left_nodes, num_nodes + right_nodes))
-    col_ids = np.concatenate((edge_ids, edge_ids))
+    edge_ids = arange(num_edges, dtype=int)
+    row_ids = concatenate((left_nodes, num_nodes + right_nodes))
+    col_ids = concatenate((edge_ids, edge_ids))
 
     constraint_matrix = coo_matrix(
-        (np.ones(2 * num_edges, dtype=float), (row_ids, col_ids)),
+        (to_numpy(ones(2 * num_edges, dtype=float)), (to_numpy(row_ids), to_numpy(col_ids))),
         shape=(2 * num_nodes, num_edges),
     ).tocsr()
 
     solution = linprog(
-        c=-edge_gains,
+        c=-to_numpy(edge_gains),
         A_ub=constraint_matrix,
-        b_ub=np.ones(2 * num_nodes, dtype=float),
+        b_ub=to_numpy(ones(2 * num_nodes, dtype=float)),
         bounds=(0.0, 1.0),
         method="highs",
     )
@@ -640,13 +650,13 @@ def _solve_max_weight_matching_via_linprog(  # pylint: disable=too-many-locals
             f"{solution.message}"
         )
 
-    return np.asarray(solution.x > 0.5, dtype=bool)
+    return asarray(solution.x > 0.5, dtype=bool)
 
 
 def _reconstruct_tracks(
     global_to_observation: Sequence[Observation],
-    predecessors: np.ndarray,
-    successors: np.ndarray,
+    predecessors: Any,
+    successors: Any,
     session_positions: Mapping[int, int],
 ) -> list[dict[int, int]]:
     visited: set[int] = set()

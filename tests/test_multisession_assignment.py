@@ -5,13 +5,13 @@
 import unittest
 from unittest.mock import patch
 
-import numpy as np
-
 import pyrecest.utils.multisession_assignment as multisession_assignment_module
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
     array,
     array_equal,
+    asarray,
+    unique,
 )
 from pyrecest.utils import solve_multisession_assignment, tracks_to_session_labels
 
@@ -22,13 +22,13 @@ class TestMultiSessionAssignment(unittest.TestCase):
         return sorted(tuple(sorted(track.items())) for track in tracks)
 
     def _assert_valid_matching(self, selected_mask, left_nodes, right_nodes):
-        selected_mask = np.asarray(selected_mask, dtype=bool)
+        selected_mask = asarray(selected_mask, dtype=bool)
         self.assertEqual(selected_mask.shape, left_nodes.shape)
 
         selected_left_nodes = left_nodes[selected_mask]
         selected_right_nodes = right_nodes[selected_mask]
-        self.assertEqual(selected_left_nodes.size, np.unique(selected_left_nodes).size)
-        self.assertEqual(selected_right_nodes.size, np.unique(selected_right_nodes).size)
+        self.assertEqual(selected_left_nodes.size, unique(selected_left_nodes).size)
+        self.assertEqual(selected_right_nodes.size, unique(selected_right_nodes).size)
 
     @unittest.skipIf(
         __backend_name__ == "jax",
@@ -170,14 +170,16 @@ class TestMultiSessionAssignment(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_sparse_backend_matches_previous_linprog_backend(self):
-        rng = np.random.default_rng(42)
         num_nodes = 12
         all_pairs = [(left, right) for left in range(num_nodes) for right in range(num_nodes)]
-        selected_pairs = rng.choice(len(all_pairs), size=40, replace=False)
+        selected_pairs = [(index * 17 + 3) % len(all_pairs) for index in range(40)]
 
-        left_nodes = np.array([all_pairs[index][0] for index in selected_pairs], dtype=int)
-        right_nodes = np.array([all_pairs[index][1] for index in selected_pairs], dtype=int)
-        edge_gains = rng.uniform(0.1, 10.0, size=selected_pairs.size)
+        left_nodes = array([all_pairs[index][0] for index in selected_pairs], dtype=int)
+        right_nodes = array([all_pairs[index][1] for index in selected_pairs], dtype=int)
+        edge_gains = array(
+            [0.1 + ((index * 37) % 100) / 10.0 for index in range(len(selected_pairs))],
+            dtype=float,
+        )
 
         sparse_mask = multisession_assignment_module._solve_max_weight_matching(
             left_nodes,
@@ -205,8 +207,8 @@ class TestMultiSessionAssignment(unittest.TestCase):
     )
     def test_sparse_backend_falls_back_to_linprog_when_requested(self):
         pairwise_costs = [
-            np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
-            np.array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+            array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
+            array([[0.1, 8.0], [8.0, 0.2]], dtype=float),
         ]
 
         with patch.object(
