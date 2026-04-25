@@ -9,6 +9,7 @@ from beartype import beartype
 from pyrecest.backend import (
     all,
     apply_along_axis,
+    argmax,
     int32,
     int64,
     isclose,
@@ -118,12 +119,13 @@ class AbstractDiracDistribution(AbstractDistributionType):
         raise NotImplementedError("PDF:UNDEFINED, not supported")
 
     def mode(self, rel_tol=0.001):
-        highest_val, ind = max(self.w)
-        if (highest_val / self.w.size) < (1 + rel_tol):
+        ind = int(argmax(self.w))
+        highest_val = float(self.w[ind])
+        if highest_val * self.w.shape[0] < (1 + rel_tol):
             warnings.warn(
                 "The samples may be equally weighted, .mode is likely to return a bad result."
             )
-        return self.d[ind, :]
+        return self.d[ind]
 
     def mode_numerical(self, _=None):
         raise NotImplementedError("PDF:UNDEFINED, not supported")

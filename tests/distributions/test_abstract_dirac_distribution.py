@@ -1,12 +1,33 @@
 import unittest
+import warnings
 
 import matplotlib
+import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import random
+from pyrecest.backend import array, random
+from pyrecest.distributions import LinearDiracDistribution
 
 
 class TestAbstractDiracDistribution(unittest.TestCase):
+    def test_mode_returns_highest_weighted_dirac(self):
+        dist = LinearDiracDistribution(
+            array(
+                [
+                    [0.0, 0.0],
+                    [1.0, 2.0],
+                    [3.0, 4.0],
+                ]
+            ),
+            array([0.1, 0.7, 0.2]),
+        )
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            mode = dist.mode()
+
+        npt.assert_allclose(mode, array([1.0, 2.0]))
+
     def _test_plot_helper(self, name, dist, dim, dirac_cls, **kwargs):
         if dirac_cls is None:
             return  # Prevent failure if no classes are set
