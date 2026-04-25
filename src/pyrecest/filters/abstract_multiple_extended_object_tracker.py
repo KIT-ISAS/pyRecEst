@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Hashable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Hashable, Optional, Sequence
+from typing import Any, Optional
 
 from pyrecest.backend import asarray, concatenate, empty, stack
 
@@ -67,7 +68,7 @@ class MultipleExtendedObjectStepResult:
     diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
-# pylint: disable=too-many-instance-attributes,too-many-public-methods
+# pylint: disable-next=too-many-instance-attributes
 class AbstractMultipleExtendedObjectTracker(AbstractMultitargetTracker):
     """Base class for trackers of multiple extended objects.
 
@@ -349,14 +350,14 @@ class AbstractMultipleExtendedObjectTracker(AbstractMultitargetTracker):
         estimates = self.get_object_estimates()
         if not estimates:
             return 0.0
-        if all(estimate.existence_probability is not None for estimate in estimates):
-            return float(
-                sum(
-                    estimate.existence_probability  # type: ignore[arg-type]
-                    for estimate in estimates
-                )
-            )
-        return float(len(estimates))
+
+        existence_probabilities: list[float] = []
+        for estimate in estimates:
+            existence_probability = estimate.existence_probability
+            if existence_probability is None:
+                return float(len(estimates))
+            existence_probabilities.append(existence_probability)
+        return float(sum(existence_probabilities))
 
     def prune(self, *args, **kwargs) -> None:
         """Optional complexity-reduction hook."""
