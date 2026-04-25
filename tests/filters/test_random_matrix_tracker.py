@@ -123,6 +123,50 @@ class TestRandomMatrixTracker(unittest.TestCase):
         else:
             raise ValueError(f"Invalid test name: {name}")
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Not supported on this backend",
+    )
+    def test_update_extent_matches_matrix_form_with_column_innovation(self):
+        tracker = RandomMatrixTracker(
+            array([0.2, -0.3]),
+            array([[0.4, 0.05], [0.05, 0.3]]),
+            array([[2.0, 0.4], [0.4, 1.2]]),
+        )
+        ys = array([[1.4, 1.6, 1.2], [0.5, 0.2, 0.8]])
+        Cv = array([[0.3, 0.05], [0.05, 0.25]])
+        H = eye(2)
+
+        alpha_prior = tracker.alpha
+        extent_prior = tracker.extent
+        covariance_prior = tracker.covariance
+        kinematic_state_prior = tracker.kinematic_state
+
+        y_mean = mean(ys, axis=1, keepdims=True)
+        ys_demean = ys - y_mean
+        measurement_scatter = ys_demean @ ys_demean.T
+        predicted_measurement = H @ kinematic_state_prior
+
+        Y = extent_prior + Cv
+        S = H @ covariance_prior @ H.T + Y / ys.shape[1]
+        Xsqrt = linalg.cholesky(extent_prior)
+        Ssqrt = linalg.cholesky(S)
+        Ysqrt = linalg.cholesky(Y)
+        innovation = y_mean.flatten() - predicted_measurement
+
+        expected_nsqrt = Xsqrt @ linalg.solve(Ssqrt, innovation.reshape(-1, 1))
+        expected_n = expected_nsqrt @ expected_nsqrt.T
+        expected_xysqrt = linalg.solve(Ysqrt.T, Xsqrt.T).T
+        expected_extent = (
+            alpha_prior * extent_prior
+            + expected_n
+            + expected_xysqrt @ measurement_scatter @ expected_xysqrt.T
+        ) / (alpha_prior + ys.shape[1])
+
+        tracker.update(ys, H, Cv)
+
+        npt.assert_allclose(tracker.extent, expected_extent, rtol=1e-6, atol=1e-6)
+
     @patch("matplotlib.pyplot.show")
     def test_draw_extent_3d(self, mock_show):
         self.tracker = RandomMatrixTracker(
