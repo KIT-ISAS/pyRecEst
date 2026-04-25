@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import unittest
 
 from pyrecest.evaluation.evaluate_for_variables import _expand_filter_configs
