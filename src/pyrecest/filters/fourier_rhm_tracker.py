@@ -269,6 +269,7 @@ class FourierRHMTracker(AbstractExtendedObjectTracker):  # pylint: disable=too-m
         )
         return squared_range - squared_source_range
 
+    # pylint: disable=too-many-locals
     def _update_single(self, measurement, meas_noise_cov, scale_mean, scale_variance):
         state = self._state_vector()
         noise_mean = array([scale_mean, 0.0, 0.0])
