@@ -1,6 +1,6 @@
 import unittest
 
-import numpy as _np
+import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
@@ -16,11 +16,10 @@ class TestBackendRandom(unittest.TestCase):
         else:
             samples = random.randint(0, 5, size=(64,))
 
-        samples_np = _np.asarray(samples)
-        self.assertEqual(samples_np.shape, (64,))
-        self.assertTrue(_np.issubdtype(samples_np.dtype, _np.integer))
-        self.assertTrue(_np.all(samples_np >= 0))
-        self.assertTrue(_np.all(samples_np < 5))
+        npt.assert_equal(samples.shape, (64,))
+        self.assertIn(samples.dtype, (pyrecest.backend.int32, pyrecest.backend.int64))
+        npt.assert_array_less(-1, samples)
+        npt.assert_array_less(samples, 5)
 
 
 if __name__ == "__main__":
