@@ -394,7 +394,10 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
             dt = self.dt
         else:
             dt = float(dt)
-        transition_function = lambda state: self._transition_state(state, dt)
+
+        def transition_function(state):
+            return self._transition_state(state, dt)
+
         transition_jacobian = self._finite_difference_jacobian(
             transition_function,
             self.state,
@@ -449,10 +452,12 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
                 require_positive_semidefinite=False,
             )
 
-        measurement_function = lambda state: self._predict_measurements_from_state(
-            state,
-            measurements,
-        )
+        def measurement_function(state):
+            return self._predict_measurements_from_state(
+                state,
+                measurements,
+            )
+
         predicted_measurements = measurement_function(self.state)
         measurement_jacobian = self._finite_difference_jacobian(
             measurement_function,
@@ -463,9 +468,7 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
         if not self.scale_correction:
             measurement_jacobian[:, -2:] = 0.0
 
-        stacked_measurements = concatenate(
-            [measurement for measurement in measurements]
-        )
+        stacked_measurements = concatenate(list(measurements))
         residual = stacked_measurements - predicted_measurements
         block_measurement_noise = linalg.block_diag(
             *[measurement_noise for _ in range(measurements.shape[0])]
