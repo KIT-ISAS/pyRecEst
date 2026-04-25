@@ -148,7 +148,29 @@ mod = _box_binary_scalar(target=_torch.remainder, box_x2=False)
 power = _box_binary_scalar(target=_torch.pow, box_x2=False)
 
 
-std = _preserve_input_dtype(_add_default_dtype_by_casting(target=_torch.std))
+def std(
+    a,
+    axis=None,
+    dtype=None,
+    out=None,
+    ddof=0,
+    keepdims=False,
+    *,
+    correction=0,
+):
+    if ddof != 0 and correction != 0:
+        raise ValueError("ddof and correction cannot both be nonzero")
+    if correction == 0:
+        correction = ddof
+    if dtype is not None:
+        a = cast(a, dtype=dtype)
+
+    kwargs = {"dim": axis, "correction": correction, "keepdim": keepdims}
+    if out is not None:
+        kwargs["out"] = out
+
+    return _torch.std(a, **kwargs)
+
 
 def cov(input, correction=1, fweights=None, aweights=None, bias=False):
     # for pyrecest
