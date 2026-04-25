@@ -13,7 +13,7 @@ class TestBackendInterface(unittest.TestCase):
         self.assertFalse(isscalar([1]))
 
     @unittest.skipUnless(
-        pyrecest.backend.__backend_name__ == "pytorch",
+        pyrecest.backend.__backend_name__ == "pytorch",  # pylint: disable=no-member
         reason="PyTorch-specific backend behavior",
     )
     def test_pytorch_choice_without_replacement_returns_unique_values(self):
