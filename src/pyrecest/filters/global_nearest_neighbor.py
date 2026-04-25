@@ -32,7 +32,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             "distance_metric_pos": "Mahalanobis",
             "square_dist": True,
             "max_new_tracks": 10,
-            "gating_distance_threshold": chi2.ppf(0.999, 2) ** 2,
+            "gating_distance_threshold": chi2.ppf(0.999, 2),
             "pairwise_cost_weight": 1.0,
         }
         if association_param is None:
