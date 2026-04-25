@@ -54,6 +54,7 @@ from .manifold_mixins import (
 )
 from .mem_ekf_star_tracker import MEMEKFStarTracker, MemEkfStarTracker
 from .mem_ekf_tracker import MEMEKFTracker, MemEkfTracker
+from .mem_soekf_tracker import MEMSOEKFTracker, MemSoekfTracker
 from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
@@ -136,8 +137,10 @@ __all__ = [
     "LinPeriodicParticleFilter",
     "MEMEKFStarTracker",
     "MEMEKFTracker",
+    "MEMSOEKFTracker",
     "MemEkfStarTracker",
     "MemEkfTracker",
+    "MemSoekfTracker",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
     "Track",
