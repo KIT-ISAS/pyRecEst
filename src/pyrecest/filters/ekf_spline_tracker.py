@@ -10,11 +10,7 @@ from pyrecest.backend import (
     linalg,
     linspace,
     outer,
-    pi,
-    reshape,
     sin,
-    stack,
-    vstack,
     zeros,
 )
 
@@ -231,7 +227,10 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
         return tau_vector @ coefficients
 
     def _evaluate_segment(self, segment_index, tau):
-        return self._evaluate_coefficients(self._segment_coefficients(segment_index), tau)
+        return self._evaluate_coefficients(
+            self._segment_coefficients(segment_index),
+            tau,
+        )
 
     def _compute_segment_anchors(self):
         return array(
@@ -276,7 +275,10 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
         best_distance = None
         for grid_index in range(self.closest_point_grid_size + 1):
             tau = grid_index / self.closest_point_grid_size
-            diff = self._evaluate_coefficients(coefficients, tau) - scaled_body_measurement
+            diff = (
+                self._evaluate_coefficients(coefficients, tau)
+                - scaled_body_measurement
+            )
             distance = float(diff @ diff)
             if best_distance is None or distance < best_distance:
                 best_distance = distance
@@ -298,7 +300,10 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
         return tau
 
     def _project_measurement_to_body_spline(self, body_measurement, scales):
-        scaled_body_measurement = self._scaled_body_measurement(body_measurement, scales)
+        scaled_body_measurement = self._scaled_body_measurement(
+            body_measurement,
+            scales,
+        )
         segment_index = self._select_segment(scaled_body_measurement)
         tau = self._closest_tau_on_segment(segment_index, scaled_body_measurement)
         return self._evaluate_segment(segment_index, tau), segment_index, tau
@@ -318,7 +323,10 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
 
     def _predict_measurements_from_state(self, state, measurements):
         return concatenate(
-            [self._predict_measurement_from_state(state, measurement) for measurement in measurements]
+            [
+                self._predict_measurement_from_state(state, measurement)
+                for measurement in measurements
+            ]
         )
 
     def _finite_difference_jacobian(self, function, point):
@@ -355,7 +363,8 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
                 [cos(orientation), sin(orientation)]
             )
             process_noise[0:2, 0:2] = process_noise[0:2, 0:2] + (
-                self.acceleration_variance * outer(position_direction, position_direction)
+                self.acceleration_variance
+                * outer(position_direction, position_direction)
             )
             process_noise[0:2, 3] = process_noise[0:2, 3] + (
                 self.acceleration_variance * position_direction * dt
@@ -365,10 +374,16 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
                 self.acceleration_variance * dt**2
             )
         if self.turn_rate_variance > 0.0:
-            process_noise[2, 2] = process_noise[2, 2] + self.turn_rate_variance * dt**3 / 3.0
-            process_noise[2, 4] = process_noise[2, 4] + self.turn_rate_variance * dt**2 / 2.0
+            process_noise[2, 2] = process_noise[2, 2] + (
+                self.turn_rate_variance * dt**3 / 3.0
+            )
+            process_noise[2, 4] = process_noise[2, 4] + (
+                self.turn_rate_variance * dt**2 / 2.0
+            )
             process_noise[4, 2] = process_noise[2, 4]
-            process_noise[4, 4] = process_noise[4, 4] + self.turn_rate_variance * dt
+            process_noise[4, 4] = process_noise[4, 4] + (
+                self.turn_rate_variance * dt
+            )
         if self.scale_process_noise > 0.0:
             process_noise[5, 5] = process_noise[5, 5] + self.scale_process_noise * dt
             process_noise[6, 6] = process_noise[6, 6] + self.scale_process_noise * dt
@@ -448,7 +463,9 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
         if not self.scale_correction:
             measurement_jacobian[:, -2:] = 0.0
 
-        stacked_measurements = concatenate([measurement for measurement in measurements])
+        stacked_measurements = concatenate(
+            [measurement for measurement in measurements]
+        )
         residual = stacked_measurements - predicted_measurements
         block_measurement_noise = linalg.block_diag(
             *[measurement_noise for _ in range(measurements.shape[0])]
@@ -464,7 +481,10 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
             self.covariance - gain @ innovation_covariance @ gain.T
         )
         self._sync_state_views()
-        self.last_quadratic_form = residual @ linalg.solve(innovation_covariance, residual)
+        self.last_quadratic_form = residual @ linalg.solve(
+            innovation_covariance,
+            residual,
+        )
 
         if self.log_posterior_estimates:
             self.store_posterior_estimates()
@@ -493,7 +513,12 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
     def get_contour_points(self, n=100, scaling_factor=1.0):
         if n <= 0:
             raise ValueError("n must be positive")
-        segment_coordinates = linspace(0.0, float(self.num_control_points), n, endpoint=False)
+        segment_coordinates = linspace(
+            0.0,
+            float(self.num_control_points),
+            n,
+            endpoint=False,
+        )
         rotation_matrix = self._rotation_matrix(self.state[2])
         contour_points = []
         for segment_coordinate in segment_coordinates:
