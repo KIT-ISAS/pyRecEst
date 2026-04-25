@@ -1,9 +1,10 @@
 import unittest
 import warnings
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,too-few-public-methods
 import pyrecest.backend
-from pyrecest.backend import all, array, isinf, linalg
+from pyrecest.backend import all as backend_all
+from pyrecest.backend import array, isinf, linalg
 from pyrecest.evaluation import determine_all_deviations
 
 
@@ -52,7 +53,7 @@ class TestDetermineAllDeviations(unittest.TestCase):
                 groundtruths,
             )
 
-        self.assertTrue(all(isinf(deviations)))
+        self.assertTrue(backend_all(isinf(deviations)))
         self.assertTrue(
             any(
                 "Filter result 0 apparently failed 2 times" in str(warning.message)
