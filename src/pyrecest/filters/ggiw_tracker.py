@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from math import log, pi
-
 # pylint: disable=no-name-in-module,no-member,redefined-builtin,duplicate-code
-from pyrecest.backend import array, concatenate, cos, eye, linalg, linspace, mean, sin, zeros
-from scipy.special import gammaln
+from pyrecest.backend import array, concatenate, cos, eye, gammaln, linalg, linspace, log, mean, pi, sin, zeros
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
 
@@ -247,6 +244,9 @@ class GGIWTracker(AbstractExtendedObjectTracker):  # pylint: disable=too-many-in
         self.predict_linear(*args, **kwargs)
 
     def _gamma_poisson_log_predictive(self, count, gamma_shape, gamma_rate):
+        count = array(count)
+        gamma_shape = array(gamma_shape)
+        gamma_rate = array(gamma_rate)
         return (
             gammaln(gamma_shape + count)
             - gammaln(gamma_shape)
@@ -256,12 +256,12 @@ class GGIWTracker(AbstractExtendedObjectTracker):  # pylint: disable=too-many-in
         )
 
     def _gaussian_log_likelihood(self, innovation, covariance):
-        determinant = float(linalg.det(covariance))
-        if determinant <= 0.0:
+        determinant = linalg.det(covariance)
+        if float(determinant) <= 0.0:
             return float("-inf")
-        mahalanobis_distance = float(innovation.T @ linalg.solve(covariance, innovation))
+        mahalanobis_distance = innovation.T @ linalg.solve(covariance, innovation)
         return -0.5 * (
-            innovation.shape[0] * log(2.0 * pi)
+            innovation.shape[0] * log(array(2.0 * pi))
             + log(determinant)
             + mahalanobis_distance
         )
