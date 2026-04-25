@@ -2,6 +2,7 @@ import unittest
 
 from pyrecest.evaluation.eot_shape_database import (
     Cross,
+    PolygonWithSampling,
     Star,
     StarFish,
     StarShapedPolygon,
@@ -28,6 +29,24 @@ class TestStarShapedPolygon(unittest.TestCase):
             self.square_star_convex_poly.compute_kernel().area,
             self.square_star_convex_poly.area,
         )
+
+    def test_sample_on_boundary_with_hole(self):
+        polygon_with_hole = PolygonWithSampling(
+            [(-1.0, -1.0), (-1.0, 1.0), (1.0, 1.0), (1.0, -1.0)],
+            holes=[
+                [
+                    (-0.25, -0.25),
+                    (-0.25, 0.25),
+                    (0.25, 0.25),
+                    (0.25, -0.25),
+                ]
+            ],
+        )
+
+        self.assertEqual(polygon_with_hole.boundary.geom_type, "MultiLineString")
+        samples = polygon_with_hole.sample_on_boundary(5)
+
+        self.assertEqual(samples.shape, (5, 2))
 
 
 class TestStar(unittest.TestCase):
