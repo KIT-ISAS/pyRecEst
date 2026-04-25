@@ -17,6 +17,7 @@ from pyrecest.backend import (
     sin,
     stack,
     zeros,
+    zeros_like,
 )
 
 from ._ukf import MerweScaledSigmaPoints
@@ -176,7 +177,8 @@ class FourierRHMTracker(AbstractExtendedObjectTracker):  # pylint: disable=too-m
 
     def fourier_basis(self, phi):
         """Return the Fourier basis vector or basis matrix for angle ``phi``."""
-        basis = [0.5]
+        phi = array(phi)
+        basis = [0.5 + zeros_like(phi)]
         for harmonic in range(1, self.n_harmonics + 1):
             basis.extend([cos(harmonic * phi), sin(harmonic * phi)])
         return array(basis)
