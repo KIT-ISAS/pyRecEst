@@ -2,11 +2,13 @@ from pyrecest.filters import (
     EuclideanParticleFilter,
     HypertoroidalParticleFilter,
     KalmanFilter,
+    RandomMatrixTracker,
 )
 
 
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
+# pylint: disable=too-many-locals
 def configure_for_filter(filter_config, scenario_config, precalculated_params=None):
     if precalculated_params is not None:
         raise NotImplementedError(
@@ -119,6 +121,23 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
 
         else:
             raise NotImplementedError("Manifold not supported yet")
+
+    elif filter_name == "random_matrix":
+        initial_state = scenario_config["initial_prior"].mean()
+        initial_covariance = scenario_config["initial_prior"].covariance()
+        initial_extent = scenario_config["eot_initial_extent"]
+
+        filter_obj = RandomMatrixTracker(initial_state, initial_covariance, initial_extent)
+
+        dt = scenario_config.get("eot_dt", 1.0)
+        tau = scenario_config.get("eot_tau", 10.0)
+        system_matrix = scenario_config.get("eot_system_matrix")
+        process_noise = scenario_config.get("eot_process_noise")
+
+        def prediction_routine():  # type: ignore[misc]
+            return filter_obj.predict(dt, process_noise, tau, system_matrix)
+
+        meas_noise_for_filter = scenario_config.get("eot_meas_noise_cov")
 
     elif filter_name in ["sgf", "hgf"]:
         raise NotImplementedError("SGF and HGF not implemented yet")

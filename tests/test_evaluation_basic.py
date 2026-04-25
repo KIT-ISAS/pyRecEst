@@ -56,6 +56,17 @@ class TestEvalationBase(unittest.TestCase):
     def tearDown(self):
         self.tmpdirname.cleanup()
 
+    def _evaluate_for_simulation_config(self, filters_configs_input):
+        return evaluate_for_simulation_config(
+            self.scenario_name,
+            filters_configs_input,
+            n_runs=self.n_runs_default,
+            n_timesteps=self.n_timesteps_default,
+            initial_seed=1,
+            auto_warning_on_off=False,
+            save_folder=self.tmpdirname.name,
+        )
+
 
 class TestEvalationBasics(TestEvalationBase):
     scenario_name: Optional[str] = "R2randomWalk"
@@ -456,15 +467,7 @@ class TestEvalationBasics(TestEvalationBase):
             scenario_config,  # pylint: disable=R0801
             filter_configs,  # pylint: disable=R0801
             evaluation_config,  # pylint: disable=R0801
-        ) = evaluate_for_simulation_config(
-            self.scenario_name,
-            filters_configs_input,
-            n_runs=self.n_runs_default,
-            n_timesteps=self.n_timesteps_default,
-            initial_seed=1,
-            auto_warning_on_off=False,
-            save_folder=self.tmpdirname.name,
-        )
+        ) = self._evaluate_for_simulation_config(filters_configs_input)
         self._validate_eval_data(
             scenario_config,
             filter_configs,
