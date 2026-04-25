@@ -14,6 +14,11 @@ mpmath = "*"
 pyshtools = "*"
 beartype = "*"
 shapely = "*"
+healpy = { version = "*", optional = true }
+torch = { version = "*", optional = true }
+jax = { version = "*", optional = true }
+jaxlib = { version = "*", optional = true }
+autograd = { version = "*", optional = true }
 
 [tool.poetry.extras]
 healpy_support = ["healpy"]
