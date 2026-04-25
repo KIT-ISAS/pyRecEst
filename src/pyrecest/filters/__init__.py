@@ -17,6 +17,7 @@ from .axial_kalman_filter import AxialKalmanFilter
 from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
+from .ekf_spline_tracker import EKFSplineTracker, EkfSplineTracker
 from .euclidean_particle_filter import EuclideanParticleFilter
 from .fourier_rhm_tracker import FourierRHMTracker
 from .ggiw_tracker import GGIWTracker
@@ -104,6 +105,8 @@ __all__ = [
     "CircularFilterMixin",
     "CircularParticleFilter",
     "CircularUKF",
+    "EKFSplineTracker",
+    "EkfSplineTracker",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
     "ExtendedObjectAssociationResult",
