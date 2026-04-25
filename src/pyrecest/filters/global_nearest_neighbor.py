@@ -32,7 +32,8 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             "distance_metric_pos": "Mahalanobis",
             "square_dist": True,
             "max_new_tracks": 10,
-            "gating_distance_threshold": chi2.ppf(0.999, 2),
+            "gating_probability": 0.999,
+            "gating_distance_threshold": None,
             "pairwise_cost_weight": 1.0,
         }
         if association_param is None:
@@ -49,6 +50,21 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
             log_prior_estimates=log_prior_estimates,
             log_posterior_estimates=log_posterior_estimates,
         )
+
+    def _get_gating_distance_threshold(self, measurement_dim):
+        gating_distance_threshold = self.association_param[
+            "gating_distance_threshold"
+        ]
+        if gating_distance_threshold is not None:
+            return gating_distance_threshold
+
+        chi_square_quantile = chi2.ppf(
+            self.association_param["gating_probability"],
+            measurement_dim,
+        )
+        if self.association_param.get("square_dist", True):
+            return chi_square_quantile
+        return chi_square_quantile**0.5
 
     @staticmethod
     def _validate_pairwise_cost_matrix(pairwise_cost_matrix, n_targets, n_meas):
@@ -188,6 +204,9 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         else:
             raise ValueError("Association scheme not recognized")
 
+        if self.association_param.get("square_dist", True):
+            dists = dists**2
+
         pairwise_cost_matrix = self._validate_pairwise_cost_matrix(
             pairwise_cost_matrix, n_targets, n_meas
         )
@@ -196,7 +215,7 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         # Pad to square and add max_new_tracks rows and columns
         pad_to = max(n_targets, n_meas) + self.association_param["max_new_tracks"]
         association_matrix = full(
-            (pad_to, pad_to), self.association_param["gating_distance_threshold"]
+            (pad_to, pad_to), self._get_gating_distance_threshold(measurements.shape[0])
         )
         association_matrix[: dists.shape[0], : dists.shape[1]] = dists
 
