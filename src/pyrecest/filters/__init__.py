@@ -11,6 +11,7 @@ from .axial_kalman_filter import AxialKalmanFilter
 from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
+from .ekf_spline_tracker import EKFSplineTracker, EkfSplineTracker
 from .euclidean_particle_filter import EuclideanParticleFilter
 from .ggiw_tracker import GGIWTracker
 from .global_nearest_neighbor import GlobalNearestNeighbor
@@ -95,6 +96,8 @@ __all__ = [
     "CircularFilterMixin",
     "CircularParticleFilter",
     "CircularUKF",
+    "EKFSplineTracker",
+    "EkfSplineTracker",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
     "GoalConditionedReplayIMMFilter",
