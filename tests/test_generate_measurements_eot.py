@@ -7,6 +7,8 @@ from shapely.geometry import Polygon
 
 
 class TestGenerateMeasurementsEot(unittest.TestCase):
+    """Regression coverage for EOT measurement placement over time."""
+
     def assert_all_between(self, values, lower, upper):
         self.assertTrue(bool(backend_all(lower < values)))
         self.assertTrue(bool(backend_all(values < upper)))
