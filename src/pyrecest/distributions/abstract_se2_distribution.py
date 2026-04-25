@@ -36,6 +36,12 @@ class AbstractSE2Distribution(AbstractHypercylindricalDistribution):
             ax = fig.add_subplot(111)
         return ax
 
+    @staticmethod
+    def _matplotlib_color(color):
+        if isinstance(color, str):
+            return color
+        return [float(channel) for channel in color]
+
     # pylint: disable=too-many-locals
     def plot_state(self, scaling_factor=1, circle_color=None, angle_color=None):
         assert (
@@ -47,6 +53,9 @@ class AbstractSE2Distribution(AbstractHypercylindricalDistribution):
 
         if angle_color is None:
             angle_color = array([0.8500, 0.3250, 0.0980])
+
+        circle_color = self._matplotlib_color(circle_color)
+        angle_color = self._matplotlib_color(angle_color)
 
         linear_covmat = self.linear_covariance()
         hybrid_moment = self.hybrid_moment()
@@ -153,6 +162,9 @@ class AbstractSE2Distribution(AbstractHypercylindricalDistribution):
 
         if angle_color is None:
             angle_color = [0.4660, 0.6740, 0.1880]
+
+        pos_color = AbstractSE2Distribution._matplotlib_color(pos_color)
+        angle_color = AbstractSE2Distribution._matplotlib_color(angle_color)
 
         ax = AbstractSE2Distribution._get_2d_axes()
         hold_status = ax.get_label() == "hold"
