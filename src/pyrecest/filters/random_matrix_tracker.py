@@ -91,16 +91,17 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         Y = self.extent + Cv
         S = H @ self.covariance @ H.T + Y / y_cols
         K = self.covariance @ linalg.solve(S, H).T
-        self.kinematic_state = self.kinematic_state + K @ (y_.flatten() - Hx)
+        innovation = y_.flatten() - Hx
+        self.kinematic_state = self.kinematic_state + K @ innovation
         self.covariance = self.covariance - K @ S @ K.T
 
         Xsqrt = linalg.cholesky(self.extent)
         Ssqrt = linalg.cholesky(S)
         Ysqrt = linalg.cholesky(Y)
 
-        Nsqrt = Xsqrt * linalg.inv(Ssqrt) @ (y_ - Hx)
+        Nsqrt = Xsqrt @ linalg.solve(Ssqrt, innovation.reshape(-1, 1))
         N = Nsqrt @ Nsqrt.T
-        XYsqrt = Xsqrt * linalg.inv(Ysqrt)
+        XYsqrt = linalg.solve(Ysqrt.T, Xsqrt.T).T
 
         self.extent = (self.alpha * self.extent + N + XYsqrt @ Y_ @ XYsqrt.T) / (
             self.alpha + y_cols

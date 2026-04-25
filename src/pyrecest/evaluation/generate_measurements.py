@@ -2,7 +2,7 @@ import numpy as np
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import mod, pi, squeeze, sum, tile, zeros
+from pyrecest.backend import array, dot, get_backend_name, mod, pi, squeeze, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -107,6 +107,10 @@ def generate_measurements(groundtruth, simulation_config):
                 )
 
     elif simulation_config.get("mtt", False):
+        if get_backend_name() == "jax":
+            raise NotImplementedError(
+                "generate_measurements does not support MTT scenarios with the JAX backend."
+            )
         assert (
             simulation_config["clutter_rate"] == 0
         ), "Clutter currently not supported."
@@ -117,20 +121,19 @@ def generate_measurements(groundtruth, simulation_config):
             (simulation_config["n_timesteps"], simulation_config["n_targets"]),
         )
 
+        measurement_dim = simulation_config["meas_matrix_for_each_target"].shape[0]
         for t in range(simulation_config["n_timesteps"]):
-            n_meas_at_t = sum(n_observations[t, :])
-            measurements[t] = float("NaN") * zeros(
-                (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
-            )
+            n_meas_at_t = int(np.sum(n_observations[t, :]))
+            measurements[t] = float("NaN") * zeros((n_meas_at_t, measurement_dim))
 
             meas_no = 0
             for target_no in range(simulation_config["n_targets"]):
                 if n_observations[t, target_no] == 1:
                     meas_no += 1
-                    measurements[t][meas_no - 1, :] = np.dot(
+                    measurements[t][meas_no - 1, :] = dot(
                         simulation_config["meas_matrix_for_each_target"],
-                        groundtruth[t, target_no, :],
-                    ) + simulation_config["meas_noise"].sample(1)
+                        array(groundtruth[t, target_no, :]),
+                    ) + squeeze(simulation_config["meas_noise"].sample(1))
                 else:
                     assert (
                         n_observations[t, target_no] == 0
