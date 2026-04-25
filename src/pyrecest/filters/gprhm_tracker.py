@@ -639,7 +639,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         measurement_jacobian, predicted_measurements, noise_covariance = (
             self._stack_measurement_terms(measurements, measurement_noise)
         )
-        residual = concatenate([measurement for measurement in measurements])
+        residual = concatenate(list(measurements))
         residual = residual - predicted_measurements
         covariance_measurement = self._symmetrize(
             measurement_jacobian @ self.covariance @ measurement_jacobian.T
