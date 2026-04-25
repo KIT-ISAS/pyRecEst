@@ -27,7 +27,7 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
     the currently predicted closed spline, then corrected with an EKF update.
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     def __init__(
         self,
         control_points=None,
@@ -440,7 +440,7 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
             "(n_measurements, 2)"
         )
 
-    def update(self, measurements, R=None):
+    def update(self, measurements, R=None):  # pylint: disable=too-many-locals
         measurements = self._normalize_measurements(measurements)
         if R is None:
             measurement_noise = self.measurement_noise
