@@ -47,11 +47,11 @@ def determine_all_deviations(
                 warnings.warn("No estimate for this filter, setting error to inf.")
                 all_deviations_last_mat[config_no][run] = float("inf")
 
-        if any(isinf(all_deviations_last_mat[config_no])):
-            print(
-                f"Warning: {result_curr_config['filterName']} with {result_curr_config['filterParams']} "
-                f"parameters apparently failed {sum(isinf(all_deviations_last_mat[config_no]))} "
-                "times. Check if this is plausible."
+        failed_mask = isinf(all_deviations_last_mat[config_no])
+        if any(failed_mask):
+            warnings.warn(
+                f"Filter result {config_no} apparently failed "
+                f"{int(sum(failed_mask))} times. Check if this is plausible."
             )
 
     return all_deviations_last_mat
