@@ -62,7 +62,6 @@ disable = [
   "W0221",
   "redefined-builtin",
   "cyclic-import",
-  "duplicate-code",
 ]
 
 [tool.pylint.FORMAT]
