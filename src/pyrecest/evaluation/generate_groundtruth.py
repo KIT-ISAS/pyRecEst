@@ -30,7 +30,10 @@ def generate_groundtruth(simulation_param, x0=None):
     # Initialize ground truth
     groundtruth = np.empty(simulation_param["n_timesteps"], dtype=object)
 
-    if "inputs" in simulation_param:
+    has_inputs = (
+        "inputs" in simulation_param and simulation_param["inputs"] is not None
+    )
+    if has_inputs:
         assert (
             simulation_param["inputs"].shape[1] == simulation_param["n_timesteps"] - 1
         ), "Mismatch in number of timesteps."
@@ -40,44 +43,38 @@ def generate_groundtruth(simulation_param, x0=None):
     for t in range(1, simulation_param["n_timesteps"]):
         groundtruth[t] = empty_like(groundtruth[0])
         for target_no in range(simulation_param["n_targets"]):
+            previous_state = groundtruth[t - 1][target_no, :]
             if "gen_next_state_with_noise" in simulation_param:
-                if (
-                    "inputs" not in simulation_param
-                    or simulation_param["inputs"] is None
-                ):
+                if not has_inputs:
                     groundtruth[t][target_no, :] = simulation_param[
                         "gen_next_state_with_noise"
-                    ](groundtruth[t - 1, target_no, :])
+                    ](previous_state)
                 else:
                     groundtruth[t][target_no, :] = simulation_param[
                         "gen_next_state_with_noise"
                     ](
-                        groundtruth[t - 1][target_no, :],
-                        simulation_param["inputs"][t - 1, :],
+                        previous_state,
+                        simulation_param["inputs"][:, t - 1],
                     )
 
             elif "sys_noise" in simulation_param:
                 if "gen_next_state_without_noise" in simulation_param:
-                    if (
-                        "inputs" not in simulation_param
-                        or simulation_param["inputs"] is None
-                    ):
+                    if not has_inputs:
                         state_to_add_noise_to = simulation_param[
                             "gen_next_state_without_noise"
-                        ](groundtruth[t - 1, target_no, :])
+                        ](previous_state)
                     else:
                         state_to_add_noise_to = simulation_param[
                             "gen_next_state_without_noise"
                         ](
-                            groundtruth[:, t - 1, target_no],
-                            simulation_param["inputs"][t - 1, :],
+                            previous_state,
+                            simulation_param["inputs"][:, t - 1],
                         )
                 else:
                     assert (
-                        "inputs" not in simulation_param
-                        or simulation_param["inputs"] is None
+                        not has_inputs
                     ), "No inputs accepted for the identity system model."
-                    state_to_add_noise_to = groundtruth[t - 1][target_no, :]
+                    state_to_add_noise_to = previous_state
 
                 groundtruth[t][target_no, :] = state_to_add_noise_to + simulation_param[
                     "sys_noise"

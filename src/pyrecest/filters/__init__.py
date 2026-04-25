@@ -53,6 +53,7 @@ from .manifold_mixins import (
     SE2FilterMixin,
     ToroidalFilterMixin,
 )
+from .mem_ekf_tracker import MEMEKFTracker, MemEkfTracker
 from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
@@ -134,6 +135,8 @@ __all__ = [
     "BernoulliComponent",
     "MultiBernoulliTracker",
     "LinPeriodicParticleFilter",
+    "MEMEKFTracker",
+    "MemEkfTracker",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
     "Track",
