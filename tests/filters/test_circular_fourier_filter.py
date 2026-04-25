@@ -7,7 +7,7 @@ import scipy.integrate
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
-from pyrecest.backend import abs, array, linspace, sign, sin
+from pyrecest.backend import abs, linspace, sign, sin
 from pyrecest.distributions import CircularFourierDistribution, VonMisesDistribution
 from pyrecest.filters.circular_fourier_filter import CircularFourierFilter
 
@@ -83,7 +83,9 @@ class CircularFourierFilterTest(unittest.TestCase):
                     atol=1e-8,
                 )
 
-                fNoiseDistShifted = fNoiseDist.shift(array([1.0]))
+                fNoiseDistShifted = VonMisesDistribution(
+                    fNoiseDist.mu + 1.0, fNoiseDist.kappa
+                )
                 fourierFilterLin.predict_identity(fNoiseDistShifted)
                 fourierFilterNl.predict_nonlinear(lambda x: x + 1, fNoiseDist, False)
                 npt.assert_allclose(
