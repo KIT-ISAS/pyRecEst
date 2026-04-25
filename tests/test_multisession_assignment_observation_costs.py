@@ -1,3 +1,4 @@
+# pylint: disable=duplicate-code
 """Tests for observation-specific multi-session assignment costs."""
 
 import unittest
