@@ -66,7 +66,7 @@ class CircularFourierFilterTest(unittest.TestCase):
                 fourierFilterLin.predict_identity(fNoiseDist)
                 fourierFilterNl.predict_nonlinear(lambda x: x, fNoiseDist, True)
                 npt.assert_allclose(
-                    fourierFilterLin.get_estimate().kldNumerical(
+                    fourierFilterLin.get_estimate().kld_numerical(
                         fourierFilterNl.get_estimate()
                     ),
                     0,
@@ -77,7 +77,7 @@ class CircularFourierFilterTest(unittest.TestCase):
                 fourierFilterLin.predict_identity(fNoiseDistShifted)
                 fourierFilterNl.predict_nonlinear(lambda x: x + 1, fNoiseDist, False)
                 npt.assert_allclose(
-                    fourierFilterLin.get_estimate().kldNumerical(
+                    fourierFilterLin.get_estimate().kld_numerical(
                         fourierFilterNl.get_estimate()
                     ),
                     0,
