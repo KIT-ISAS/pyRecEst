@@ -7,6 +7,22 @@ import numpy as np
 from .iterate_configs_and_runs import iterate_configs_and_runs
 
 
+def _filter_parameter_values(parameter):
+    if parameter is None:
+        return [None]
+    if isinstance(parameter, (list, tuple)):
+        return list(parameter) or [None]
+    return [parameter]
+
+
+def _expand_filter_configs(filter_configs):
+    return [
+        {"name": filter_config["name"], "parameter": parameter}
+        for filter_config in filter_configs
+        for parameter in _filter_parameter_values(filter_config["parameter"])
+    ]
+
+
 # pylint: disable=R0913,R0914, too-many-positional-arguments
 def evaluate_for_variables(
     groundtruths,
@@ -32,11 +48,7 @@ def evaluate_for_variables(
         "auto_warning_on_off": auto_warning_on_off,
     }
 
-    filter_configs = [
-        {"name": f["name"], "parameter": p}
-        for f in filter_configs
-        for p in (f["parameter"] or [None])
-    ]
+    filter_configs = _expand_filter_configs(filter_configs)
 
     (
         last_filter_states,  # pylint: disable=R0801

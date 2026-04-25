@@ -115,7 +115,7 @@ class GPRHMTracker(AbstractExtendedObjectTracker):
     def get_contour_points(self, n: int = 100):
         angles = linspace(0.0, 2 * pi, n, endpoint=False)
         star_point = self.H @ self.m
-        extents = self.get_extents_on_grid()
+        extents = self.get_extents_on_grid(n)
         coords = pol2cart(angles, extents) + reshape(star_point, (-1, 1))
         return coords.T
 

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, linspace, mod, pi, sin
+from pyrecest.backend import array, cos, linspace, log, mod, pi, sin
 
 from ..hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
@@ -40,6 +40,30 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
             return 1.0 - self.integrate_numerically(array([x_mod, starting_point_mod]))
 
         return self.integrate_numerically(array([starting_point_mod, x_mod]))
+
+    def kld_numerical(self, other):
+        """
+        Calculates the Kullback-Leibler divergence numerically.
+
+        Args:
+            other (AbstractCircularDistribution): Distribution to compare against.
+
+        Returns:
+            : The Kullback-Leibler divergence D_KL(self || other).
+        """
+        assert isinstance(other, AbstractCircularDistribution)
+        assert (
+            self.dim == other.dim
+        ), "Cannot compare distributions with different number of dimensions."
+
+        def kld_fun(*args):
+            x = array(args)
+            pdf_self = self.pdf(x)
+            if pdf_self <= 0.0:
+                return 0.0 * pdf_self
+            return pdf_self * log(pdf_self / other.pdf(x))
+
+        return self.integrate_fun_over_domain(kld_fun, self.dim)
 
     def to_vm(self):
         """
