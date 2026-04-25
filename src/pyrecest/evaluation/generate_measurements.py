@@ -2,7 +2,7 @@ import numpy as np
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import mod, pi, squeeze, sum, tile, zeros
+from pyrecest.backend import mod, pi, squeeze, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -119,7 +119,7 @@ def generate_measurements(groundtruth, simulation_config):
 
         measurement_dim = simulation_config["meas_matrix_for_each_target"].shape[0]
         for t in range(simulation_config["n_timesteps"]):
-            n_meas_at_t = int(sum(n_observations[t, :]))
+            n_meas_at_t = int(np.sum(n_observations[t, :]))
             measurements[t] = float("NaN") * zeros((n_meas_at_t, measurement_dim))
 
             meas_no = 0
