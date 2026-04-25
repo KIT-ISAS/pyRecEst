@@ -1,10 +1,10 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import array, diag, eye, linalg
 from pyrecest.filters import EKFSplineTracker, EkfSplineTracker
 
@@ -55,7 +55,7 @@ class TestEKFSplineTracker(unittest.TestCase):
             array([1.0, 0.0, 0.1]),
             atol=1e-4,
         )
-        self.assertTrue(np.all(linalg.eigvalsh(tracker.covariance) > -1e-10))
+        self.assertTrue(backend_all(linalg.eigvalsh(tracker.covariance) > -1e-10))
 
     def test_update_moves_position_and_scale_for_outer_measurement(self):
         tracker = EKFSplineTracker(
@@ -68,7 +68,7 @@ class TestEKFSplineTracker(unittest.TestCase):
         self.assertGreater(float(tracker.kinematic_state[0]), 0.0)
         self.assertGreater(float(tracker.scale_state[0]), 1.0)
         self.assertIsNotNone(tracker.last_quadratic_form)
-        self.assertTrue(np.all(linalg.eigvalsh(tracker.covariance) > -1e-10))
+        self.assertTrue(backend_all(linalg.eigvalsh(tracker.covariance) > -1e-10))
 
     def test_scale_correction_can_be_disabled(self):
         tracker = EKFSplineTracker(
