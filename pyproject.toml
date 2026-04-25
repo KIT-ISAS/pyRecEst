@@ -64,9 +64,7 @@ disable = [
   "deprecated-pragma",
   "use-symbolic-message-instead",
   "C",
-  "W0221",
   "redefined-builtin",
-  "cyclic-import",
 ]
 
 [tool.pylint.FORMAT]
