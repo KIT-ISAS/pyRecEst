@@ -1,3 +1,4 @@
+# pylint: disable=duplicate-code,too-many-arguments,too-many-positional-arguments
 import unittest
 
 import numpy.testing as npt
