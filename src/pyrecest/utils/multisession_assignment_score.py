@@ -40,7 +40,7 @@ def tracks_to_index_matrix(
     """Convert tracks to a dense ``track x session`` ROI-index matrix."""
     assert __backend_name__ != "jax", "Not supported on JAX backend"
 
-    inferred_sizes, max_session_index = _infer_track_session_sizes(
+    _, max_session_index = _infer_track_session_sizes(
         tracks,
         session_sizes,
         validate_unique_sessions=True,
