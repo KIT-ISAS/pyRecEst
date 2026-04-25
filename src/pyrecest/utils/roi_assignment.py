@@ -411,7 +411,7 @@ def otsu_similarity_threshold(similarities, *, nbins: int = 256) -> float:
     return float(bin_centers[best_index])
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches,too-many-locals
 def minimum_similarity_threshold(similarities, *, nbins: int = 256) -> float:
     """Estimate a threshold by locating a valley between the two strongest modes."""
 
