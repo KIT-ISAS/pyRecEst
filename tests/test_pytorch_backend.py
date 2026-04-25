@@ -1,5 +1,7 @@
 import unittest
+from typing import Any
 
+pytorch_backend: Any
 try:
     from pyrecest._backend import pytorch as pytorch_backend
 except ModuleNotFoundError:
