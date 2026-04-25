@@ -10,7 +10,7 @@ from pyrecest.filters import GGIWTracker
 
 @unittest.skipIf(
     pyrecest.backend.__backend_name__ != "numpy",
-    reason="GGIW tracker tests currently exercise the numpy/scipy likelihood path",
+    reason="GGIW tracker tests currently use numpy.testing assertions",
 )
 class TestGGIWTracker(unittest.TestCase):
     def setUp(self):
