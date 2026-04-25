@@ -117,11 +117,10 @@ def generate_measurements(groundtruth, simulation_config):
             (simulation_config["n_timesteps"], simulation_config["n_targets"]),
         )
 
+        measurement_dim = simulation_config["meas_matrix_for_each_target"].shape[0]
         for t in range(simulation_config["n_timesteps"]):
-            n_meas_at_t = sum(n_observations[t, :])
-            measurements[t] = float("NaN") * zeros(
-                (simulation_config["meas_matrix_for_each_target"].shape[0], n_meas_at_t)
-            )
+            n_meas_at_t = int(sum(n_observations[t, :]))
+            measurements[t] = float("NaN") * zeros((n_meas_at_t, measurement_dim))
 
             meas_no = 0
             for target_no in range(simulation_config["n_targets"]):
@@ -130,7 +129,7 @@ def generate_measurements(groundtruth, simulation_config):
                     measurements[t][meas_no - 1, :] = np.dot(
                         simulation_config["meas_matrix_for_each_target"],
                         groundtruth[t, target_no, :],
-                    ) + simulation_config["meas_noise"].sample(1)
+                    ) + squeeze(simulation_config["meas_noise"].sample(1))
                 else:
                     assert (
                         n_observations[t, target_no] == 0
