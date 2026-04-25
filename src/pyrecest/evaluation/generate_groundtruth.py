@@ -30,7 +30,9 @@ def generate_groundtruth(simulation_param, x0=None):
     # Initialize ground truth
     groundtruth = np.empty(simulation_param["n_timesteps"], dtype=object)
 
-    has_inputs = "inputs" in simulation_param and simulation_param["inputs"] is not None
+    has_inputs = (
+        "inputs" in simulation_param and simulation_param["inputs"] is not None
+    )
     if has_inputs:
         assert (
             simulation_param["inputs"].shape[1] == simulation_param["n_timesteps"] - 1
@@ -69,7 +71,9 @@ def generate_groundtruth(simulation_param, x0=None):
                             simulation_param["inputs"][:, t - 1],
                         )
                 else:
-                    assert not has_inputs, "No inputs accepted for the identity system model."
+                    assert (
+                        not has_inputs
+                    ), "No inputs accepted for the identity system model."
                     state_to_add_noise_to = previous_state
 
                 groundtruth[t][target_no, :] = state_to_add_noise_to + simulation_param[
