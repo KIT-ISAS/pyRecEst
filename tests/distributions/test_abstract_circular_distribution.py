@@ -4,8 +4,8 @@ import unittest
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, arange, array, pi
-from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
+from pyrecest.backend import allclose, arange, array, log, pi
+from pyrecest.distributions import CircularUniformDistribution, VonMisesDistribution, WrappedNormalDistribution
 
 
 class AbstractCircularDistributionTest(unittest.TestCase):
@@ -84,6 +84,27 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                             rtol=1e-10,
                         )
                     )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_kld_numerical(self):
+        """Tests numerical computation of the Kullback-Leibler divergence."""
+        uniform = CircularUniformDistribution()
+        vm = VonMisesDistribution(array(0.3), array(1.8))
+
+        for dist in self.distributions:
+            with self.subTest(distribution=dist):
+                self.assertTrue(allclose(dist.kld_numerical(dist), 0.0, atol=1e-10))
+
+        self.assertTrue(
+            allclose(
+                vm.kld_numerical(uniform),
+                log(2.0 * pi) - vm.entropy(),
+                rtol=1e-8,
+            )
+        )
 
 
 if __name__ == "__main__":
