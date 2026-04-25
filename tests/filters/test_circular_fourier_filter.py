@@ -1,4 +1,5 @@
 import unittest
+import warnings
 from math import pi
 
 import numpy.testing as npt
@@ -61,7 +62,8 @@ class CircularFourierFilterTest(unittest.TestCase):
             )
 
             # Suppress warnings
-            with np.errstate(all="ignore"):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
                 fourierFilterLin.predict_identity(fNoiseDist)
                 fourierFilterNl.predict_nonlinear(lambda x: x, fNoiseDist, True)
                 npt.assert_allclose(
