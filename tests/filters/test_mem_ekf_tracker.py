@@ -2,7 +2,7 @@ import unittest
 
 import numpy.testing as npt
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,duplicate-code
 import pyrecest.backend
 from pyrecest.backend import all, array, diag, eye, linalg, pi
 from pyrecest.filters import MEMEKFTracker, MemEkfTracker
@@ -37,7 +37,10 @@ class TestMEMEKFTracker(unittest.TestCase):
         npt.assert_allclose(self.tracker.kinematic_state, self.kinematic_state)
         npt.assert_allclose(self.tracker.covariance, self.covariance)
         npt.assert_allclose(self.tracker.get_point_estimate_shape(), self.shape_state)
-        npt.assert_allclose(self.tracker.get_point_estimate_extent(), diag(array([4.0, 1.0])))
+        npt.assert_allclose(
+            self.tracker.get_point_estimate_extent(),
+            diag(array([4.0, 1.0])),
+        )
         self.assertEqual(self.tracker.get_point_estimate().shape[0], 7)
 
     def test_extent_respects_orientation(self):
@@ -67,9 +70,15 @@ class TestMEMEKFTracker(unittest.TestCase):
 
         self.tracker.predict_linear(system_matrix, 0.01 * eye(4))
 
-        npt.assert_allclose(self.tracker.kinematic_state, array([0.5, -0.5, 1.0, -1.0]))
+        npt.assert_allclose(
+            self.tracker.kinematic_state,
+            array([0.5, -0.5, 1.0, -1.0]),
+        )
         npt.assert_allclose(self.tracker.shape_state, self.shape_state)
-        npt.assert_allclose(self.tracker.get_point_estimate_extent(), diag(array([4.0, 1.0])))
+        npt.assert_allclose(
+            self.tracker.get_point_estimate_extent(),
+            diag(array([4.0, 1.0])),
+        )
 
     def test_update_moves_centroid_and_updates_shape(self):
         tracker = MEMEKFTracker(
