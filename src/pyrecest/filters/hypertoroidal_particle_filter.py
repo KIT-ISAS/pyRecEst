@@ -10,10 +10,7 @@ from pyrecest.backend import (
     linspace,
     mod,
     pi,
-    random,
-    sum,
     tile,
-    zeros_like,
 )
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
@@ -56,12 +53,5 @@ class HypertoroidalParticleFilter(AbstractParticleFilter, HypertoroidalFilterMix
         self.filter_state.d = mod(self.filter_state.d, 2.0 * pi)
 
     def predict_nonlinear_nonadditive(self, f: Callable, samples, weights):
-        assert samples.shape == weights.size, "samples and weights must match in size"
-
-        weights /= sum(weights)
-        n = self.filter_state.shape[0]
-        noise_ids = random.choice(arange(weights.size), size=n, p=weights)
-        d = zeros_like(self.filter_state)
-        for i in range(n):
-            d[i, :] = f(self.filter_state[i, :], samples[noise_ids[i, :]])
-        self.filter_state = d
+        super().predict_nonlinear_nonadditive(f, samples, weights)
+        self.filter_state.d = mod(self.filter_state.d, 2.0 * pi)

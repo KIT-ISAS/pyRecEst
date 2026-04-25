@@ -78,7 +78,7 @@ def generate_measurements(groundtruth, simulation_config):
                     PolygonWithSampling  # Evil class surgery to add sampling methods
                 )
 
-            if simulation_config.get("n_meas_at_individual_time_step", None):
+            if "n_meas_at_individual_time_step" in simulation_config:
                 assert (
                     "intensity_lambda" not in simulation_config
                 ), "Cannot use both intensity_lambda and n_meas_at_individual_time_step."

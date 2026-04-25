@@ -12,6 +12,7 @@ from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
+from .fourier_rhm_tracker import FourierRHMTracker
 from .ggiw_tracker import GGIWTracker
 from .global_nearest_neighbor import GlobalNearestNeighbor
 from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
@@ -59,6 +60,7 @@ from .manifold_mixins import (
     SE2FilterMixin,
     ToroidalFilterMixin,
 )
+from .mem_ekf_tracker import MEMEKFTracker, MemEkfTracker
 from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
@@ -107,6 +109,7 @@ __all__ = [
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
     "FullSCGPTracker",
+    "FourierRHMTracker",
     "GoalConditionedReplayIMMFilter",
     "GoalConditionedReplayParticleFilter",
     "GGIWTracker",
@@ -142,6 +145,8 @@ __all__ = [
     "BernoulliComponent",
     "MultiBernoulliTracker",
     "LinPeriodicParticleFilter",
+    "MEMEKFTracker",
+    "MemEkfTracker",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
     "SCGPTracker",

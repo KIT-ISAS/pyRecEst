@@ -49,6 +49,13 @@ class TestGPRHMTracker(unittest.TestCase):
         self.n_measurements = 10
         self.R = eye(2) * 0.1  # Measurement noise covariance
 
+    def test_get_contour_points_honors_requested_count(self):
+        requested_points = 32
+
+        predicted_points = self.tracker.get_contour_points(requested_points)
+
+        self.assertEqual(predicted_points.shape, (requested_points, 2))
+
     def test_iou_after_updates(self):
         for _ in range(self.n_steps):
             points_from_contour_no_noise = random_points_on_contour(

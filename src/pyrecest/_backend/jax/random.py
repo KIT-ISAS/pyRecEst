@@ -74,7 +74,7 @@ uniform = rand
 
 def _randint(state, size, *args, **kwargs):
     state, key = jax.random.split(state)
-    return state, jax.random.uniform(key, size, *args, **kwargs)
+    return state, jax.random.randint(key, size, *args, **kwargs)
 
 
 def randint(size, *args, **kwargs):
