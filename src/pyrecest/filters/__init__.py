@@ -16,7 +16,14 @@ from .ggiw_tracker import GGIWTracker
 from .global_nearest_neighbor import GlobalNearestNeighbor
 from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
 from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
-from .gprhm_tracker import GPRHMTracker
+from .gprhm_tracker import (
+    DecorrelatedSCGPTracker,
+    DecorrelatedScGpTracker,
+    FullSCGPTracker,
+    GPRHMTracker,
+    SCGPTracker,
+    ScGpTracker,
+)
 from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
 from .hyperhemisphere_cart_prod_particle_filter import (
     HyperhemisphereCartProdParticleFilter,
@@ -95,8 +102,11 @@ __all__ = [
     "CircularFilterMixin",
     "CircularParticleFilter",
     "CircularUKF",
+    "DecorrelatedSCGPTracker",
+    "DecorrelatedScGpTracker",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
+    "FullSCGPTracker",
     "GoalConditionedReplayIMMFilter",
     "GoalConditionedReplayParticleFilter",
     "GGIWTracker",
@@ -134,6 +144,8 @@ __all__ = [
     "LinPeriodicParticleFilter",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
+    "SCGPTracker",
+    "ScGpTracker",
     "Track",
     "TrackManager",
     "TrackManagerStepResult",
