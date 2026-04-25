@@ -12,6 +12,7 @@ from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
+from .fourier_rhm_tracker import FourierRHMTracker
 from .ggiw_tracker import GGIWTracker
 from .global_nearest_neighbor import GlobalNearestNeighbor
 from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
@@ -97,6 +98,7 @@ __all__ = [
     "CircularUKF",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
+    "FourierRHMTracker",
     "GoalConditionedReplayIMMFilter",
     "GoalConditionedReplayParticleFilter",
     "GGIWTracker",
