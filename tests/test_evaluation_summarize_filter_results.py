@@ -20,7 +20,7 @@ class TestSummarizeFilterResultsWarnings(unittest.TestCase):
         for index in np.ndindex(groundtruths.shape):
             groundtruths[index] = np.zeros(2)
 
-        last_estimates = np.zeros((1, n_runs, 2))
+        last_filter_states = np.zeros((1, n_runs, 2))
         runtimes = np.ones((1, n_runs))
         run_failed = np.zeros((1, n_runs), dtype=bool)
 
@@ -32,7 +32,7 @@ class TestSummarizeFilterResultsWarnings(unittest.TestCase):
                 runtimes=runtimes,
                 groundtruths=groundtruths,
                 run_failed=run_failed,
-                last_estimates=last_estimates,
+                last_filter_states=last_filter_states,
             )
 
         warning_messages = [str(warning.message) for warning in caught]
