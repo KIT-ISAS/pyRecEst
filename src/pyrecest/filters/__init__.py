@@ -12,6 +12,7 @@ from .bingham_filter import BinghamFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
 from .euclidean_particle_filter import EuclideanParticleFilter
+from .fourier_rhm_tracker import FourierRHMTracker
 from .ggiw_tracker import GGIWTracker
 from .global_nearest_neighbor import GlobalNearestNeighbor
 from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
@@ -57,6 +58,8 @@ from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
 from .se2_ukf import SE2UKF
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
+from .toroidal_particle_filter import ToroidalParticleFilter
+from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .track_manager import (
     AssociationResult,
     Track,
@@ -69,8 +72,6 @@ from .track_manager import (
     build_linear_gaussian_updater,
     solve_global_nearest_neighbor,
 )
-from .toroidal_particle_filter import ToroidalParticleFilter
-from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
 from .ukf_on_manifolds import UKFOnManifolds
 from .unscented_kalman_filter import UnscentedKalmanFilter
 from .von_mises_filter import VonMisesFilter
@@ -97,6 +98,7 @@ __all__ = [
     "CircularUKF",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
+    "FourierRHMTracker",
     "GoalConditionedReplayIMMFilter",
     "GoalConditionedReplayParticleFilter",
     "GGIWTracker",
