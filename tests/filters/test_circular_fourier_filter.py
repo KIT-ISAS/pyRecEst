@@ -5,6 +5,8 @@ from math import pi
 import numpy.testing as npt
 import scipy.integrate
 
+# pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 from pyrecest.backend import abs, array, linspace, sign, sin
 from pyrecest.distributions import CircularFourierDistribution, VonMisesDistribution
 from pyrecest.filters.circular_fourier_filter import CircularFourierFilter
@@ -12,6 +14,10 @@ from pyrecest.filters.circular_fourier_filter import CircularFourierFilter
 
 class CircularFourierFilterTest(unittest.TestCase):
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        reason="HypertoroidalFourierFilter is not supported on this backend",
+    )
     def testPredictNonlinear1D(self):
         densityInit = VonMisesDistribution(3, 5)
         fNoiseDist = VonMisesDistribution(0.5, 10)
@@ -46,6 +52,10 @@ class CircularFourierFilterTest(unittest.TestCase):
                 atol=2e-5,
             )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
+        reason="HypertoroidalFourierFilter is not supported on this backend",
+    )
     def testPredictNonlinearForLinear1D(self):
         densityInit = VonMisesDistribution(3, 5)
         fNoiseDist = VonMisesDistribution(0.5, 10)
