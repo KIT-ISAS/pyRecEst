@@ -1,11 +1,10 @@
 import unittest
 
-import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member,duplicate-code
 import pyrecest.backend
-from pyrecest.backend import array, eye, linalg, zeros
+from pyrecest.backend import abs, all, array, eye, linalg, zeros
 from pyrecest.filters import (
     DecorrelatedSCGPTracker,
     DecorrelatedScGpTracker,
@@ -68,7 +67,7 @@ class TestSCGPTracker(unittest.TestCase):
         self.assertGreater(tracker.kinematic_state[0], 1.9)
         npt.assert_allclose(tracker.kinematic_state[2], 0.2, atol=1e-3)
         self.assertLess(tracker.shape_state[0], 2.0)
-        self.assertTrue(np.all(linalg.eigvalsh(tracker.covariance) > -1e-10))
+        npt.assert_array_less(-1e-10, linalg.eigvalsh(tracker.covariance))
 
     def test_full_update_creates_kinematic_shape_cross_covariance(self):
         tracker = self._make_tracker()
@@ -76,9 +75,9 @@ class TestSCGPTracker(unittest.TestCase):
         tracker.update(array([1.4, 0.2]))
 
         cross_covariance = tracker.covariance[:5, 5:]
-        self.assertTrue(np.any(np.abs(cross_covariance) > 1e-12))
+        self.assertFalse(all(abs(cross_covariance) <= 1e-12))
         self.assertIsNotNone(tracker.last_quadratic_form)
-        self.assertTrue(np.all(linalg.eigvalsh(tracker.covariance) > -1e-10))
+        npt.assert_array_less(-1e-10, linalg.eigvalsh(tracker.covariance))
 
     def test_decorrelated_update_keeps_cross_covariance_zero(self):
         tracker = self._make_tracker(DecorrelatedSCGPTracker)
@@ -87,7 +86,7 @@ class TestSCGPTracker(unittest.TestCase):
 
         cross_covariance = tracker.covariance[:5, 5:]
         npt.assert_allclose(cross_covariance, zeros(cross_covariance.shape), atol=1e-12)
-        self.assertTrue(np.all(linalg.eigvalsh(tracker.covariance) > -1e-10))
+        npt.assert_array_less(-1e-10, linalg.eigvalsh(tracker.covariance))
 
     def test_full_tracker_contour_and_bounding_box(self):
         tracker = self._make_tracker()
