@@ -5,7 +5,6 @@ from math import pi
 import numpy.testing as npt
 import scipy.integrate
 
-import pyrecest.backend as np
 from pyrecest.backend import abs, linspace, sign, sin
 from pyrecest.distributions import CircularFourierDistribution, VonMisesDistribution
 from pyrecest.filters.circular_fourier_filter import CircularFourierFilter
