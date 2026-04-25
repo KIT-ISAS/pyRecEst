@@ -81,7 +81,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
             ),
             (
                 "larger",
-                array([[1.0, 0.0], [0.0, 1.0], [-1.0, 0.0], [0.0, -1.0]]),
+                array([[2.0, 0.0], [0.0, 2.0], [-2.0, 0.0], [0.0, -2.0]]),
                 "The extent should now be larger since the measurements are spaced more widely",
             ),
         ]
