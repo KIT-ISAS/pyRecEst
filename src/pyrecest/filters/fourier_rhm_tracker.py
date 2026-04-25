@@ -39,7 +39,7 @@ class FourierRHMTracker(AbstractExtendedObjectTracker):  # pylint: disable=too-m
     noise.
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     def __init__(
         self,
         n_harmonics,
