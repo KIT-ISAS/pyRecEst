@@ -4,7 +4,8 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, pi, random, zeros, zeros_like
+from pyrecest.backend import all as backend_all
+from pyrecest.backend import array, ones, pi, random, zeros, zeros_like
 from pyrecest.distributions import HypertoroidalWNDistribution
 from pyrecest.filters import HypertoroidalParticleFilter
 
@@ -42,6 +43,24 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
             self.forced_mean,
         )
         self.assertEqual(self.hpf.get_point_estimate().shape, (3,))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported'"
+    )
+    def test_predict_nonlinear_nonadditive(self):
+        n_noise_samples = 10
+        samples = random.uniform(size=(n_noise_samples, 3))
+        weights = ones(n_noise_samples) / n_noise_samples
+
+        def f(x, w):
+            return x + w
+
+        old_shape = self.hpf.filter_state.d.shape
+        self.hpf.predict_nonlinear_nonadditive(f, samples, weights)
+
+        self.assertEqual(self.hpf.filter_state.d.shape, old_shape)
+        self.assertTrue(bool(backend_all(self.hpf.filter_state.d >= 0.0)))
+        self.assertTrue(bool(backend_all(self.hpf.filter_state.d < 2.0 * pi)))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported'"
