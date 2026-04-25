@@ -11,19 +11,43 @@ from torch.distributions.multivariate_normal import (
 from ._dtype import _allow_complex_dtype, _modify_func_default_dtype
 
 
+def _choice_size(size):
+    if size is None:
+        return None, 1
+    if not hasattr(size, "__iter__"):
+        size = (size,)
+    size = tuple(int(dim) for dim in size)
+    return size, int(_torch.prod(_torch.tensor(size)).item())
+
+
 def choice(a, size=None, replace=True, p=None):
     assert _torch.is_tensor(a), "a must be a tensor"
+    size, num_samples = _choice_size(size)
     if p is not None:
         assert _torch.is_tensor(p), "p must be a tensor"
         if not replace:
-            raise ValueError("Sampling without replacement is not supported with PyTorch when probabilities are given.")
-        
-        p = _torch.tensor(p, dtype=_torch.float32)
+            raise ValueError(
+                "Sampling without replacement is not supported with PyTorch when probabilities are given."
+            )
+
+        p = _torch.as_tensor(p, dtype=_torch.float32, device=a.device)
         p = p / p.sum()  # Normalize probabilities
-        indices = _torch.multinomial(p, num_samples=_torch.prod(_torch.tensor(size)), replacement=True)
+        indices = _torch.multinomial(p, num_samples=num_samples, replacement=True)
+        if size is not None:
+            indices = indices.reshape(size)
+    elif replace:
+        indices = _torch.randint(0, len(a), size or (), device=a.device)
     else:
-        indices = _torch.randint(0, len(a), size)
-    
+        if num_samples > len(a):
+            raise ValueError(
+                "Cannot take a larger sample than population when 'replace=False'."
+            )
+        indices = _torch.randperm(len(a), device=a.device)[:num_samples]
+        if size is None:
+            indices = indices[0]
+        else:
+            indices = indices.reshape(size)
+
     return a[indices]
 
 
