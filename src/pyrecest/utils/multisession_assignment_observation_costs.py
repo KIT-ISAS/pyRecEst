@@ -1,3 +1,4 @@
+# pylint: disable=duplicate-code
 """Extensions for multi-session assignment with observation-specific costs."""
 
 from __future__ import annotations
