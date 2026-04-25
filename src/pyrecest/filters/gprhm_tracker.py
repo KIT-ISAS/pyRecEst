@@ -1,4 +1,5 @@
-# pylint: disable=redefined-builtin,no-name-in-module,no-member,too-many-lines
+# pylint: disable=duplicate-code,invalid-name,no-member,no-name-in-module
+# pylint: disable=redefined-builtin,too-many-lines,too-many-locals
 from pyrecest.backend import (
     abs,
     all,
@@ -20,7 +21,6 @@ from pyrecest.backend import (
     pi,
     reshape,
     sin,
-    sqrt,
     stack,
     vstack,
     zeros,
@@ -184,7 +184,7 @@ class GPRHMTracker(AbstractExtendedObjectTracker):
             self.store_posterior_extents()
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class FullSCGPTracker(AbstractExtendedObjectTracker):
     """Full star-convex Gaussian-process tracker.
 
@@ -325,7 +325,9 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         if matrix.shape != (dim, dim):
             raise ValueError(f"{name} must have shape ({dim}, {dim})")
         matrix = cls._symmetrize(matrix)
-        if require_positive_semidefinite and not all(linalg.eigvalsh(matrix) >= -1e-12):
+        if require_positive_semidefinite and not all(
+            linalg.eigvalsh(matrix) >= -1e-12
+        ):
             raise ValueError(f"{name} must be positive semidefinite")
         return matrix
 
@@ -463,24 +465,16 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             position_noise_direction = 0.5 * dt**2 * array(
                 [cos(orientation), sin(orientation)]
             )
-            velocity_noise_direction = dt * array([cos(orientation), sin(orientation)])
             process_noise[0:2, 0:2] = process_noise[0:2, 0:2] + (
                 self.acceleration_variance
                 * outer(position_noise_direction, position_noise_direction)
             )
             process_noise[0:2, 3] = process_noise[0:2, 3] + (
-                self.acceleration_variance
-                * position_noise_direction
-                * dt
+                self.acceleration_variance * position_noise_direction * dt
             )
             process_noise[3, 0:2] = process_noise[0:2, 3]
             process_noise[3, 3] = process_noise[3, 3] + (
                 self.acceleration_variance * dt**2
-            )
-            process_noise[0:2, 0:2] = process_noise[0:2, 0:2] + (
-                self.acceleration_variance
-                * outer(velocity_noise_direction, velocity_noise_direction)
-                * 0.0
             )
         return self._symmetrize(process_noise)
 
@@ -565,7 +559,9 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         radius_derivative = basis_derivative_row @ self.shape_state
         predicted_measurement = position + self.scale_mean * unit_direction * radius
 
-        center_direction_jacobian = (outer(unit_direction, unit_direction) - eye(2)) / delta_norm
+        center_direction_jacobian = (
+            outer(unit_direction, unit_direction) - eye(2)
+        ) / delta_norm
         theta_center_jacobian = array(
             [unit_direction[1], -unit_direction[0]]
         ) / delta_norm
