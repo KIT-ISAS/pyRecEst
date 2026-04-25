@@ -65,6 +65,7 @@ disable = [
   "use-symbolic-message-instead",
   "C",
   "redefined-builtin",
+  "cyclic-import",
 ]
 
 [tool.pylint.FORMAT]
