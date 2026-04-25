@@ -1,5 +1,6 @@
 import mpmath
 import numpy.testing as npt
+import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
@@ -14,7 +15,6 @@ from pyrecest.backend import (
     linalg,
     log,
     ones,
-    pi,
     tile,
     vstack,
     zeros,
@@ -50,7 +50,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             self._norm_const = array(
                 float(
                     mpmath.gamma((self.dim + 1) / 2)
-                    / (2 * mpmath.pi ** ((self.dim + 1) / 2))
+                    / (2 * float(pyrecest.backend.pi) ** ((self.dim + 1) / 2))
                     / mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa)
                 )
             )
@@ -61,7 +61,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         if self._ln_norm_const is None:
             self._ln_norm_const = array(
                 (gammaln(array((self.dim + 1) / 2)))
-                - log(2 * pi ** ((self.dim + 1) / 2))
+                - log(2 * pyrecest.backend.pi ** ((self.dim + 1) / 2))
                 - float(
                     mpmath.log(mpmath.hyper([0.5], [(self.dim + 1) / 2.0], self.kappa))
                 )

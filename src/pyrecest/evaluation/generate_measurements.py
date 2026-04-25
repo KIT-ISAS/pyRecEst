@@ -73,9 +73,9 @@ def generate_measurements(groundtruth, simulation_config):
                 raise ValueError(
                     "Currently only R^2 and SE(2) scenarios are supported."
                 )
-            if not isinstance(shape, PolygonWithSampling):
+            if not isinstance(curr_shape, PolygonWithSampling):
                 curr_shape.__class__ = (
-                    PolygonWithSampling  # Evil class sugery to add sampling methods
+                    PolygonWithSampling  # Evil class surgery to add sampling methods
                 )
 
             if simulation_config.get("n_meas_at_individual_time_step", None):

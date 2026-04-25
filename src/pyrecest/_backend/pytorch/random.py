@@ -48,7 +48,7 @@ def uniform(low=0.0, high=1.0, size=(1,), dtype=None):
         size = (size,)
     if low >= high:
         raise ValueError("Upper bound must be higher than lower bound")
-    return (high - low) * rand(*size, dtype=dtype) + low
+    return (high - low) * rand(size, dtype=dtype) + low
 
 
 @_modify_func_default_dtype(copy=False, kw_only=True)
