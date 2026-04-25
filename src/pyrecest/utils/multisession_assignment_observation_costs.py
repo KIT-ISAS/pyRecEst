@@ -119,20 +119,21 @@ def solve_multisession_assignment_with_observation_costs(  # pylint: disable=R09
     uniform_baseline = sum(session_sizes_map.values()) * (max_start_cost + max_end_cost)
     total_cost = float(base_result.total_cost - uniform_baseline + actual_baseline)
 
-    adjusted_edges = [
-        (
-            source,
-            target,
-            float(
-                transformed_cost
-                - max_end_cost
-                - max_start_cost
-                + normalized_end_costs[source[0]][source[1]]
-                + normalized_start_costs[target[0]][target[1]]
-            ),
+    adjusted_edges = []
+    for source, target, _ in base_result.matched_edges:
+        source_session, source_detection = source
+        target_session, target_detection = target
+        gap = _session_gap(source_session, target_session, session_positions)
+        original_cost = normalized_pairwise[(source_session, target_session)][
+            source_detection, target_detection
+        ]
+        adjusted_edges.append(
+            (
+                source,
+                target,
+                float(original_cost) + float(gap_penalty) * gap,
+            )
         )
-        for source, target, transformed_cost in base_result.matched_edges
-    ]
 
     return MultiSessionAssignmentResult(
         tracks=base_result.tracks,
