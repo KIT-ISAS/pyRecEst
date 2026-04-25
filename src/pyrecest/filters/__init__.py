@@ -3,6 +3,12 @@ from .abstract_dummy_filter import AbstractDummyFilter
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
 from .abstract_filter import AbstractFilter
 from .abstract_grid_filter import AbstractGridFilter
+from .abstract_multiple_extended_object_tracker import (
+    AbstractMultipleExtendedObjectTracker,
+    ExtendedObjectAssociationResult,
+    ExtendedObjectEstimate,
+    MultipleExtendedObjectStepResult,
+)
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .abstract_nearest_neighbor_tracker import AbstractNearestNeighborTracker
 from .abstract_particle_filter import AbstractParticleFilter
@@ -86,6 +92,7 @@ __all__ = [
     "AbstractFilterManifoldMixin",
     "AbstractGridFilter",
     "AbstractHypersphereSubsetFilter",
+    "AbstractMultipleExtendedObjectTracker",
     "AbstractMultitargetTracker",
     "AbstractNearestNeighborTracker",
     "AbstractParticleFilter",
@@ -97,6 +104,8 @@ __all__ = [
     "CircularUKF",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
+    "ExtendedObjectAssociationResult",
+    "ExtendedObjectEstimate",
     "GoalConditionedReplayIMMFilter",
     "GoalConditionedReplayParticleFilter",
     "GGIWTracker",
@@ -131,6 +140,7 @@ __all__ = [
     "LinPeriodicFilterMixin",
     "BernoulliComponent",
     "MultiBernoulliTracker",
+    "MultipleExtendedObjectStepResult",
     "LinPeriodicParticleFilter",
     "PiecewiseConstantFilter",
     "RandomMatrixTracker",
