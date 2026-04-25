@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pyrecest.backend
 
-# pylint: disable=no-name-in-module,no-member,redefined-builtin
+# pylint: disable=no-name-in-module,no-member,redefined-builtin,duplicate-code
 from pyrecest.backend import (
     arctan2,
     array,
