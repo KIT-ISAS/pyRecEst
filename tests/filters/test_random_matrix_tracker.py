@@ -127,6 +127,7 @@ class TestRandomMatrixTracker(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "pytorch",
         reason="Not supported on this backend",
     )
+    # pylint: disable-next=too-many-locals
     def test_update_extent_matches_matrix_form_with_column_innovation(self):
         tracker = RandomMatrixTracker(
             array([0.2, -0.3]),
