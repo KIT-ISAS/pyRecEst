@@ -9,13 +9,14 @@ permissions:
   contents: write
 
 on: # yamllint disable-line rule:truthy
-  # Trigger mega-linter at every push. Action will also be visible from Pull Requests to main
+  # Trigger mega-linter on pushes to main. The action will also be visible
+  # from Pull Requests to any branch.
   push:
     branches:
       - main
   pull_request:
     branches:
-      - main
+      - "**"
 
 env: # Comment env block if you do not want to apply fixes
   # Apply linter fixes configuration
