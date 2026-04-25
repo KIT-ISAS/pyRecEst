@@ -389,7 +389,7 @@ class KernelSMEFilter(AbstractMultitargetTracker):
                     (lambda_vec**2) * Pij[i, j, :]
                 )  # noqa: E203
 
-                # --- clutter-related terms (3)- (6) ---
+                # --- clutter-related terms (3)–(6) ---
                 clutter_i = clutter_pdf[i]
                 clutter_j = clutter_pdf[j]
                 midpoint = 0.5 * (testPoints[:, i] + testPoints[:, j])
