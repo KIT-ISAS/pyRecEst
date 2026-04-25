@@ -35,7 +35,7 @@ def summarize_filter_results(
             "Either last_filter_states or last_estimates must be provided."
         )
 
-    if groundtruths.shape[1] < 1000:
+    if groundtruths.shape[0] < 1000:
         warnings.warn("Using less than 1000 runs. This may lead to unreliable results.")
 
     extract_mean = get_extract_mean(
