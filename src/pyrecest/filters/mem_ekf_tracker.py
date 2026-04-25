@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-# pylint: disable=no-name-in-module,no-member,too-many-instance-attributes
+# pylint: disable=no-name-in-module,no-member,too-many-instance-attributes,duplicate-code
 from pyrecest.backend import (
     array,
     concatenate,
