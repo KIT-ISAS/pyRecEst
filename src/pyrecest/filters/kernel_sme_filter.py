@@ -196,6 +196,12 @@ class KernelSMEFilter(AbstractMultitargetTracker):
             dists = dists**2  # Squared Mahalanobis distances are usually considered
             # Filter out all that are incompatible with all tracks
             measurements = measurements[:, any(dists < gating_threshold, axis=0)]
+            n_meas = measurements.shape[1]
+
+        if n_meas == 0:
+            if self.log_posterior_estimates:
+                self.store_posterior_estimates()
+            return
 
         test_points = KernelSMEFilter.gen_test_points(measurements, kernel_width)
         pseudo_meas = KernelSMEFilter.calc_pseudo_meas(

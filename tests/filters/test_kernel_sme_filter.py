@@ -376,6 +376,33 @@ class TestKernelSMEFilter(unittest.TestCase):
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
+    def test_gating_rejecting_all_measurements_keeps_prior(self):
+        tracker = KernelSMEFilter()
+        tracker.filter_state = self.gaussians_2DCV
+        prior_x = copy.deepcopy(tracker.x)
+        prior_c = copy.deepcopy(tracker.C)
+
+        far_measurements = array([[100.0, -100.0], [100.0, -100.0]])
+
+        tracker.update_linear(
+            far_measurements,
+            self.measurement_matrix_2DCV,
+            eye(2),
+            0,
+            zeros(2),
+            1,
+            True,
+            gating_threshold=1.0,
+        )
+
+        npt.assert_allclose(tracker.x, prior_x)
+        npt.assert_allclose(tracker.C, prior_c)
+        self.assertEqual(tracker.posterior_estimates_over_time.shape, (12, 1))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_logging(self):
         tracker = KernelSMEFilter()
         tracker.filter_state = self.gaussians_2DCV
