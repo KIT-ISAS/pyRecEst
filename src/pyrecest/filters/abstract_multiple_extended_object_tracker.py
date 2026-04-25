@@ -55,7 +55,7 @@ class ExtendedObjectAssociationResult:
 
 
 @dataclass
-class MultipleExtendedObjectStepResult:
+class MultipleExtendedObjectStepResult:  # pylint: disable=too-many-instance-attributes
     """Summary of one predict/update step of a MEOT tracker."""
 
     estimates: list[ExtendedObjectEstimate] = field(default_factory=list)
