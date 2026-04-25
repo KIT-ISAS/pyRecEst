@@ -2,7 +2,7 @@ import numpy as np
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import mod, pi, squeeze, tile, zeros
+from pyrecest.backend import get_backend_name, mod, pi, squeeze, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -107,6 +107,10 @@ def generate_measurements(groundtruth, simulation_config):
                 )
 
     elif simulation_config.get("mtt", False):
+        if get_backend_name() == "jax":
+            raise NotImplementedError(
+                "generate_measurements does not support MTT scenarios with the JAX backend."
+            )
         assert (
             simulation_config["clutter_rate"] == 0
         ), "Clutter currently not supported."
