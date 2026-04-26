@@ -248,9 +248,11 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         self.state = concatenate([self.kinematic_state, self.shape_state])
 
         self.kinematic_covariance = self._as_covariance_matrix(
-            0.1 * eye(self.kinematic_dim)
-            if kinematic_covariance is None
-            else kinematic_covariance,
+            (
+                0.1 * eye(self.kinematic_dim)
+                if kinematic_covariance is None
+                else kinematic_covariance
+            ),
             self.kinematic_dim,
             "kinematic_covariance",
         )
@@ -274,9 +276,11 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
 
         self.dt = float(dt)
         self.sys_noise = self._as_covariance_matrix(
-            zeros((self.kinematic_dim, self.kinematic_dim))
-            if sys_noise is None
-            else sys_noise,
+            (
+                zeros((self.kinematic_dim, self.kinematic_dim))
+                if sys_noise is None
+                else sys_noise
+            ),
             self.kinematic_dim,
             "sys_noise",
             require_positive_semidefinite=False,
@@ -289,9 +293,11 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         )
         self.radial_noise_variance = float(radial_noise_variance)
         self.measurement_noise = self._as_covariance_matrix(
-            zeros((self.measurement_dim, self.measurement_dim))
-            if measurement_noise is None
-            else measurement_noise,
+            (
+                zeros((self.measurement_dim, self.measurement_dim))
+                if measurement_noise is None
+                else measurement_noise
+            ),
             self.measurement_dim,
             "measurement_noise",
             require_positive_semidefinite=False,
@@ -325,9 +331,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         if matrix.shape != (dim, dim):
             raise ValueError(f"{name} must have shape ({dim}, {dim})")
         matrix = cls._symmetrize(matrix)
-        if require_positive_semidefinite and not all(
-            linalg.eigvalsh(matrix) >= -1e-12
-        ):
+        if require_positive_semidefinite and not all(linalg.eigvalsh(matrix) >= -1e-12):
             raise ValueError(f"{name} must be positive semidefinite")
         return matrix
 
@@ -396,17 +400,20 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             angles = array([phi])
         else:
             angles = phi
-        return array(
-            [
+        return (
+            array(
                 [
-                    -sin(angle - phi_n)
-                    / self._kernel_width**2
-                    * self._periodic_kernel(angle - phi_n)
-                    for phi_n in self.phi_pts
+                    [
+                        -sin(angle - phi_n)
+                        / self._kernel_width**2
+                        * self._periodic_kernel(angle - phi_n)
+                        for phi_n in self.phi_pts
+                    ]
+                    for angle in angles
                 ]
-                for angle in angles
-            ]
-        ) @ self._k_uu_inv
+            )
+            @ self._k_uu_inv
+        )
 
     def _residual_extent_covariance(self, phi):
         kernel_vector = self._kernel_vector(phi)
@@ -462,8 +469,8 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         )
         if self.velocities and self.acceleration_variance > 0.0:
             orientation = self.kinematic_state[2]
-            position_noise_direction = 0.5 * dt**2 * array(
-                [cos(orientation), sin(orientation)]
+            position_noise_direction = (
+                0.5 * dt**2 * array([cos(orientation), sin(orientation)])
             )
             process_noise[0:2, 0:2] = process_noise[0:2, 0:2] + (
                 self.acceleration_variance
@@ -537,8 +544,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         if measurements.shape[0] == self.measurement_dim:
             return measurements.T
         raise ValueError(
-            "measurements must have shape (2, n_measurements) or "
-            "(n_measurements, 2)"
+            "measurements must have shape (2, n_measurements) or " "(n_measurements, 2)"
         )
 
     def _measurement_model_terms(self, measurement, measurement_noise):
@@ -562,15 +568,17 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         center_direction_jacobian = (
             outer(unit_direction, unit_direction) - eye(2)
         ) / delta_norm
-        theta_center_jacobian = array(
-            [unit_direction[1], -unit_direction[0]]
-        ) / delta_norm
+        theta_center_jacobian = (
+            array([unit_direction[1], -unit_direction[0]]) / delta_norm
+        )
         measurement_jacobian = zeros((self.measurement_dim, self.state.shape[0]))
         measurement_jacobian[:, :2] = eye(2) + self.scale_mean * (
             center_direction_jacobian * radius
             + outer(unit_direction, theta_center_jacobian) * radius_derivative
         )
-        measurement_jacobian[:, 2] = -self.scale_mean * unit_direction * radius_derivative
+        measurement_jacobian[:, 2] = (
+            -self.scale_mean * unit_direction * radius_derivative
+        )
         measurement_jacobian[:, self.kinematic_dim :] = self.scale_mean * outer(
             unit_direction,
             basis_row,

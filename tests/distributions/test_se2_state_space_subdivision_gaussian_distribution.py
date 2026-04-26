@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 from pyrecest.backend import array, eye
-
 from pyrecest.distributions import GaussianDistribution, VonMisesDistribution
 from pyrecest.distributions.cart_prod.se2_state_space_subdivision_gaussian_distribution import (
     SE2StateSpaceSubdivisionGaussianDistribution,
 )
-from pyrecest.distributions.circle.circular_grid_distribution import CircularGridDistribution
+from pyrecest.distributions.circle.circular_grid_distribution import (
+    CircularGridDistribution,
+)
 
 
 class TestSE2StateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
@@ -18,9 +19,7 @@ class TestSE2StateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         n = 100
         vm = VonMisesDistribution(0, 1)
         fig = CircularGridDistribution.from_distribution(vm, n)
-        gaussians = [
-            GaussianDistribution(array([0.0, 0.0]), eye(2)) for _ in range(n)
-        ]
+        gaussians = [GaussianDistribution(array([0.0, 0.0]), eye(2)) for _ in range(n)]
         SE2StateSpaceSubdivisionGaussianDistribution(fig, gaussians)
 
     @unittest.skipIf(
@@ -33,9 +32,7 @@ class TestSE2StateSpaceSubdivisionGaussianDistribution(unittest.TestCase):
         n = 100
         vm = VonMisesDistribution(0, 1)
         fig = CircularGridDistribution.from_distribution(vm, n)
-        gaussians = [
-            GaussianDistribution(array([0.0, 0.0]), eye(2)) for _ in range(n)
-        ]
+        gaussians = [GaussianDistribution(array([0.0, 0.0]), eye(2)) for _ in range(n)]
         apd = SE2StateSpaceSubdivisionGaussianDistribution(fig, gaussians)
         apd.plot_state()
         plt.close("all")

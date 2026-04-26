@@ -73,7 +73,10 @@ class MEMSOEKFTracker(MEMEKFTracker):
                 2.0 * first_extent_row @ multiplicative_noise_cov @ first_row_jacobian,
                 first_extent_row @ multiplicative_noise_cov @ second_row_jacobian
                 + second_extent_row @ multiplicative_noise_cov @ first_row_jacobian,
-                2.0 * second_extent_row @ multiplicative_noise_cov @ second_row_jacobian,
+                2.0
+                * second_extent_row
+                @ multiplicative_noise_cov
+                @ second_row_jacobian,
             ]
         )
 
@@ -197,11 +200,14 @@ class MEMSOEKFTracker(MEMEKFTracker):
                         and shape_start <= row_index < shape_stop
                         and shape_start <= col_index < shape_stop
                     ):
-                        value = value + shape_hessians[
-                            output_index - 2,
-                            row_index - shape_start,
-                            col_index - shape_start,
-                        ]
+                        value = (
+                            value
+                            + shape_hessians[
+                                output_index - 2,
+                                row_index - shape_start,
+                                col_index - shape_start,
+                            ]
+                        )
                     row.append(value)
                 rows.append(row)
             corrected_hessians.append(rows)
@@ -331,7 +337,9 @@ class MEMSOEKFTracker(MEMEKFTracker):
 
         shape_start = kinematic_dim
         shape_stop = shape_start + 3
-        self.kinematic_state = self.kinematic_state + updated_augmented_mean[:kinematic_dim]
+        self.kinematic_state = (
+            self.kinematic_state + updated_augmented_mean[:kinematic_dim]
+        )
         self.covariance = self._symmetrize(
             updated_augmented_covariance[:kinematic_dim, :kinematic_dim]
         )

@@ -68,10 +68,7 @@ class MEMEKFStarTracker(MEMEKFTracker):
 
         return array(
             [
-                2.0
-                * first_extent_row
-                @ multiplicative_noise_cov
-                @ first_row_jacobian,
+                2.0 * first_extent_row @ multiplicative_noise_cov @ first_row_jacobian,
                 2.0
                 * second_extent_row
                 @ multiplicative_noise_cov
@@ -150,9 +147,7 @@ class MEMEKFStarTracker(MEMEKFTracker):
         sigma_12 = innovation_covariance[0, 1]
         sigma_22 = innovation_covariance[1, 1]
         pseudo_mean = array([sigma_11, sigma_22, sigma_12])
-        pseudo_covariance = self._pseudo_measurement_covariance(
-            innovation_covariance
-        )
+        pseudo_covariance = self._pseudo_measurement_covariance(innovation_covariance)
         if self.covariance_regularization > 0.0:
             pseudo_covariance = pseudo_covariance + (
                 self.covariance_regularization * eye(3)
