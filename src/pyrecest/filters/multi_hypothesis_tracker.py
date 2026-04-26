@@ -1,8 +1,8 @@
 # pylint: disable=no-name-in-module,no-member,duplicate-code,redefined-builtin
 import warnings
+from copy import deepcopy
 from math import log
 
-from pyrecest import copy
 from pyrecest.backend import (
     all,
     argmax,
@@ -159,7 +159,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
             )
 
         self._global_hypotheses = [
-            copy.deepcopy(filter_bank) for filter_bank in filter_banks
+            deepcopy(filter_bank) for filter_bank in filter_banks
         ]
         self._global_hypothesis_histories = [[] for _ in self._global_hypotheses]
 
@@ -529,7 +529,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
         measurement_matrix,
         cov_mats_meas,
     ):
-        updated_filter_bank = copy.deepcopy(filter_bank)
+        updated_filter_bank = deepcopy(filter_bank)
         for track_index, measurement_index in enumerate(assignment):
             if measurement_index < 0:
                 continue
@@ -582,7 +582,7 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
             return []
 
         if all(isinstance(item, EuclideanFilterMixin) for item in hypothesis):
-            filter_bank = copy.deepcopy(hypothesis)
+            filter_bank = deepcopy(hypothesis)
         else:
             filter_bank = [KalmanFilter(filter_state) for filter_state in hypothesis]
 
