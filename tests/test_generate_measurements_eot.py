@@ -1,7 +1,8 @@
 # pylint: disable=duplicate-code
 import unittest
 
-from pyrecest.backend import all as backend_all, array
+from pyrecest.backend import all as backend_all
+from pyrecest.backend import array
 from pyrecest.evaluation import generate_measurements
 from shapely.geometry import Polygon
 

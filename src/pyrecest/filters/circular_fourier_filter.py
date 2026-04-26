@@ -15,7 +15,10 @@ from pyrecest.backend import (
     sqrt,
     zeros,
 )
-from pyrecest.distributions import AbstractCircularDistribution, CircularFourierDistribution
+from pyrecest.distributions import (
+    AbstractCircularDistribution,
+    CircularFourierDistribution,
+)
 from pyrecest.distributions.circle.circular_uniform_distribution import (
     CircularUniformDistribution,
 )
@@ -86,15 +89,15 @@ class CircularFourierFilter(AbstractCircularFilter):
 
         if is_array(d_sys):
             no_coefficients = self.no_of_coefficients
-            assert self.filter_state.transformation == "sqrt", (
-                "Only sqrt transformation currently supported"
+            assert (
+                self.filter_state.transformation == "sqrt"
+            ), "Only sqrt transformation currently supported"
+            assert (
+                d_sys.size == no_coefficients
+            ), "Assume that as many grid points are used as there are coefficients."
+            density_values = (
+                fft.irfft(self.filter_state.get_c(), n=no_coefficients) ** 2
             )
-            assert d_sys.size == no_coefficients, (
-                "Assume that as many grid points are used as there are coefficients."
-            )
-            density_values = fft.irfft(
-                self.filter_state.get_c(), n=no_coefficients
-            ) ** 2
             predicted_values = (
                 signal.fftconvolve(density_values, d_sys, mode="same")
                 * no_coefficients
@@ -164,9 +167,7 @@ class CircularFourierFilter(AbstractCircularFilter):
     def updateIdentity(self, dMeas, z):
         self.update_identity(dMeas, z)
 
-    def _convert_to_circular_fourier(
-        self, distribution, warning_id
-    ):
+    def _convert_to_circular_fourier(self, distribution, warning_id):
         if isinstance(distribution, CircularFourierDistribution):
             return copy.deepcopy(distribution)
 

@@ -3,10 +3,10 @@ import warnings
 from math import pi
 
 import numpy.testing as npt
-import scipy.integrate
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
+import scipy.integrate
 from pyrecest.backend import abs, linspace, sign, sin
 from pyrecest.distributions import CircularFourierDistribution, VonMisesDistribution
 from pyrecest.filters.circular_fourier_filter import CircularFourierFilter
@@ -24,7 +24,9 @@ class CircularFourierFilterTest(unittest.TestCase):
         noCoeffs = 31
 
         def aGen(a):
-            return lambda te: pi * (sin(sign(te - pi) / 2.0 * abs(te - pi) ** a / pi ** (a - 1)) + 1)
+            return lambda te: pi * (
+                sin(sign(te - pi) / 2.0 * abs(te - pi) ** a / pi ** (a - 1)) + 1
+            )
 
         def f_trans(xkk, xk):
             return fNoiseDist.pdf(xkk - a(xk))
@@ -32,6 +34,7 @@ class CircularFourierFilterTest(unittest.TestCase):
         def fPredUsingInt(xkk):
             res = []
             for xkkCurr in xkk:
+
                 def integrand(xkCurr, xkkValue=xkkCurr):
                     return f_trans(xkkValue, xkCurr) * densityInit.pdf(xkCurr)
 
@@ -42,8 +45,10 @@ class CircularFourierFilterTest(unittest.TestCase):
         xvals = linspace(0, 2 * pi, 100)
         for transformation in ["identity", "sqrt"]:
             fourierFilterNl = CircularFourierFilter(noCoeffs, transformation)
-            fourierFilterNl.filter_state = CircularFourierDistribution.from_distribution(
-                densityInit, noCoeffs, transformation
+            fourierFilterNl.filter_state = (
+                CircularFourierDistribution.from_distribution(
+                    densityInit, noCoeffs, transformation
+                )
             )
             fourierFilterNl.predict_nonlinear(aGen(4), fNoiseDist)
             npt.assert_allclose(
@@ -62,12 +67,16 @@ class CircularFourierFilterTest(unittest.TestCase):
         noCoeffs = 31
         for transformation in ["identity", "sqrt"]:
             fourierFilterLin = CircularFourierFilter(noCoeffs, transformation)
-            fourierFilterLin.filter_state = CircularFourierDistribution.from_distribution(
-                densityInit, noCoeffs, transformation
+            fourierFilterLin.filter_state = (
+                CircularFourierDistribution.from_distribution(
+                    densityInit, noCoeffs, transformation
+                )
             )
             fourierFilterNl = CircularFourierFilter(noCoeffs, transformation)
-            fourierFilterNl.filter_state = CircularFourierDistribution.from_distribution(
-                densityInit, noCoeffs, transformation
+            fourierFilterNl.filter_state = (
+                CircularFourierDistribution.from_distribution(
+                    densityInit, noCoeffs, transformation
+                )
             )
 
             # Suppress warnings

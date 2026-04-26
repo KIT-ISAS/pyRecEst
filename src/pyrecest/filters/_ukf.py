@@ -12,7 +12,9 @@ import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     asarray,
-    copy as backend_copy,
+)
+from pyrecest.backend import copy as backend_copy
+from pyrecest.backend import (
     einsum,
     empty,
     empty_like,
