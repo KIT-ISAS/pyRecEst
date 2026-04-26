@@ -5,9 +5,9 @@ Unscented Kalman Filter (UKF), replacing the former dependency on the
 """
 
 from collections import namedtuple
+from copy import deepcopy
 
 import pyrecest.backend
-from pyrecest import copy
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -287,5 +287,5 @@ class UnscentedKalmanFilter:
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, copy.deepcopy(v, memo))
+            setattr(result, k, deepcopy(v, memo))
         return result
