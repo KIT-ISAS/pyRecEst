@@ -2,17 +2,7 @@ import numpy as np
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import (
-    array,
-    dot,
-    get_backend_name,
-    mod,
-    pi,
-    squeeze,
-    tile,
-    to_numpy,
-    zeros,
-)
+from pyrecest.backend import array, dot, get_backend_name, mod, pi, squeeze, tile, zeros
 from pyrecest.distributions import (
     AbstractHypertoroidalDistribution,
     GaussianDistribution,
@@ -26,7 +16,14 @@ from shapely.geometry import Polygon
 
 
 def _as_shapely_scalar(value):
-    return float(to_numpy(value))
+    if np.isscalar(value):
+        return float(value)
+    if hasattr(value, "item"):
+        try:
+            return float(value.item())
+        except (TypeError, ValueError):
+            pass
+    return float(np.asarray(value).reshape(-1)[0])
 
 
 # pylint: disable=too-many-branches,too-many-locals,too-many-statements
