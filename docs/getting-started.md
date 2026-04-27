@@ -79,12 +79,15 @@ Install the matching optional extra before selecting a non-default backend.
 
 Some examples and APIs are backend-specific. For example,
 `examples/basic/multi_target_tracking.py` currently checks for the NumPy backend
-at runtime.
+at runtime. See [backend compatibility](backend-compatibility.md) for the
+support model and known limitations.
 
 ## Explore More Usage
 
 - Start with [the examples guide](../examples/README.md) for runnable scripts.
 - Look at [the API overview](api-overview.md) to find the package that owns a
   concept.
+- Check [backend compatibility](backend-compatibility.md) before relying on a
+  non-default backend for advanced APIs.
 - Use `tests/` as executable reference material for advanced APIs that do not
   have dedicated tutorials yet.

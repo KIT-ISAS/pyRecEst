@@ -15,6 +15,8 @@ toward a generated documentation site.
   choose a backend, and set up a development checkout.
 - [API overview](api-overview.md): understand the main packages and where common
   public classes live.
+- [Backend compatibility](backend-compatibility.md): choose between NumPy,
+  PyTorch, and JAX and understand known support gaps.
 - [Examples](../examples/README.md): browse executable scripts that demonstrate
   basic workflows.
 
@@ -32,4 +34,5 @@ Good next documentation additions would be:
   evaluation;
 - shape and convention notes for measurements, state vectors, covariances, and
   grids;
-- backend compatibility notes for APIs that do not support every backend.
+- API-specific backend support tables for advanced distributions, trackers,
+  evaluators, and utilities.

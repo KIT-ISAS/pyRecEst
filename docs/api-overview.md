@@ -19,7 +19,8 @@ from pyrecest.filters import KalmanFilter
 
 Dynamic backend facade used by the rest of the project. The default backend is
 NumPy. PyTorch and JAX support are selected through `PYRECEST_BACKEND` before
-importing `pyrecest`.
+importing `pyrecest`. See [backend compatibility](backend-compatibility.md) for
+backend-specific support notes and known limitations.
 
 ### `pyrecest.distributions`
 
