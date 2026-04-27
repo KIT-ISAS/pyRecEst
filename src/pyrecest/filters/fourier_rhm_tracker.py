@@ -19,8 +19,8 @@ from pyrecest.backend import (
     zeros,
     zeros_like,
 )
+from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 
-from ._ukf import MerweScaledSigmaPoints
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
 
 

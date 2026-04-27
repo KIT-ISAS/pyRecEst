@@ -15,6 +15,7 @@ from .hyperspherical_sampler import (
     get_grid_hypersphere,
 )
 from .hypertoroidal_sampler import CircularUniformSampler
+from .sigma_points import JulierSigmaPoints, MerweScaledSigmaPoints
 
 __all__ = [
     "AbstractSampler",
@@ -30,4 +31,6 @@ __all__ = [
     "HealpixHopfSampler",
     "FibonacciHopfSampler",
     "LeopardiSampler",
+    "JulierSigmaPoints",
+    "MerweScaledSigmaPoints",
 ]
