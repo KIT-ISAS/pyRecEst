@@ -5,6 +5,14 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 
 
 class WrappedCauchyDistribution(AbstractCircularDistribution):
+    """Wrapped Cauchy distribution on the circle.
+
+    References
+    ----------
+    Jammalamadaka, S. R., & SenGupta, A. (2001). Topics in Circular
+    Statistics. World Scientific.
+    """
+
     def __init__(self, mu, gamma):
         AbstractCircularDistribution.__init__(self)
         self.mu = mod(mu, 2 * pi)
