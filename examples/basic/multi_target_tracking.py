@@ -53,8 +53,7 @@ def make_tracker():
 
 def run_tracker():
     """Run prediction and update steps and return labeled estimates."""
-    dt = 1.0
-    system_matrix = array([[1.0, dt], [0.0, 1.0]])
+    system_matrix = array([[1.0, 1.0], [0.0, 1.0]])
     system_noise_covariance = diag(array([0.03, 0.01]))
     measurement_matrix = array([[1.0, 0.0]])
     measurement_noise_covariance = array([[0.16]])
