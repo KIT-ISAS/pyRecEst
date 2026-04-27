@@ -1,21 +1,107 @@
 # PyRecEst
 
-*Recursive Bayesian Estimation for Python*
+Recursive Bayesian Estimation for Python.
 
-PyRecEst is a Python library tailored for recursive Bayesian estimation, compatible with numpy, pytorch, and jax backends.
+PyRecEst is a Python library for recursive Bayesian estimation on Euclidean
+spaces and manifolds. It uses a NumPy backend by default and can also run with
+PyTorch or JAX backends.
 
-Features of PyRecEst include:
+## Features
 
-* Distribution and Densities: Provides tools for handling distributions and densities across Euclidean spaces and manifolds.
-* Filters and Trackers: Offers a suite of recursive Bayesian estimators (filters or trackers) for both Euclidean spaces and manifolds. This includes capabilities for:
-  * Multi-Target Tracking (MTT)
-  * Extended Object Tracking (EOT)
-* Evaluation Framework: Contains an evaluation framework to facilitate comparison between different filters.
-* Sampling Methods: Includes methods for sampling of the distributions and generating grids.
+PyRecEst provides tools for:
 
-## Usage
+- distributions and densities on Euclidean spaces and manifolds;
+- recursive Bayesian estimators, filters, and trackers;
+- multi-target tracking (MTT) and extended object tracking (EOT);
+- evaluation of filters and trackers; and
+- sampling distributions and generating grids.
 
-Please refer to the test cases for usage examples.
+## Installation
+
+PyRecEst requires Python 3.11 or newer and earlier than Python 3.15.
+
+Install the package from PyPI:
+
+```bash
+python -m pip install pyrecest
+```
+
+Optional backend and domain-specific dependencies can be installed with extras:
+
+```bash
+python -m pip install "pyrecest[pytorch_support]"
+python -m pip install "pyrecest[jax_support]"
+python -m pip install "pyrecest[healpy_support]"
+```
+
+For development from a source checkout, use Poetry or the provided conda
+environment:
+
+```bash
+poetry install --with dev --all-extras
+# or
+conda env create -f environment.yml
+```
+
+## Quickstart
+
+The following example runs a one-dimensional constant-velocity Kalman filter.
+It uses the backend abstraction exposed by `pyrecest.backend`, so the same code
+can run on supported numerical backends.
+
+```python
+from pyrecest.backend import array, diag
+from pyrecest.filters import KalmanFilter
+
+
+dt = 1.0
+system_matrix = array([[1.0, dt], [0.0, 1.0]])
+measurement_matrix = array([[1.0, 0.0]])
+system_noise_cov = diag(array([0.05, 0.01]))
+measurement_noise_cov = array([[0.25]])
+measurements = [0.9, 2.0, 3.1, 3.9, 5.2]
+
+kalman_filter = KalmanFilter((array([0.0, 1.0]), diag(array([1.0, 1.0]))))
+
+for measurement in measurements:
+    kalman_filter.predict_linear(system_matrix, system_noise_cov)
+    kalman_filter.update_linear(
+        array([measurement]), measurement_matrix, measurement_noise_cov
+    )
+    print(kalman_filter.get_point_estimate())
+```
+
+Run the complete script with:
+
+```bash
+python examples/basic/kalman_filter.py
+```
+
+## Backends
+
+PyRecEst imports `pyrecest.backend` dynamically. The default backend is NumPy.
+Set `PYRECEST_BACKEND` before Python imports `pyrecest` to select another
+backend:
+
+```bash
+PYRECEST_BACKEND=pytorch python examples/basic/kalman_filter.py
+PYRECEST_BACKEND=jax python examples/basic/kalman_filter.py
+```
+
+Install the matching optional extra before using a non-default backend.
+
+## Examples and tests
+
+- `examples/basic/kalman_filter.py` contains a small executable Kalman filter
+  example.
+- `tests/` contains additional usage examples for distributions, filters,
+  smoothers, evaluation, sampling, metrics, and tracking utilities.
+
+To run the test suite from a development environment:
+
+```bash
+python -m pytest
+```
 
 ## Citation
 
@@ -53,7 +139,11 @@ If you use **PyRecEst** in your research, please cite:
 
 - Florian Pfaff (<pfaff@ias.uni-stuttgart.de>)
 
-PyRecEst borrows its structure from libDirectional and follows its code closely for many classes. libDirectional, a project to which I contributed extensively, is [available on GitHub](https://github.com/libDirectional). The backend implementations are based on those of [geomstats](https://github.com/geomstats/geomstats).
+PyRecEst borrows its structure from libDirectional and follows its code closely
+for many classes. libDirectional, a project to which Florian Pfaff contributed
+extensively, is [available on GitHub](https://github.com/libDirectional). The
+backend implementations are based on those of
+[geomstats](https://github.com/geomstats/geomstats).
 
 ## License
 `PyRecEst` is licensed under the MIT License.
