@@ -5,7 +5,7 @@ import pyrecest.backend
 import scipy
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, linspace
+from pyrecest.backend import allclose, array, diag, linalg, linspace, matvec, to_numpy
 from pyrecest.distributions import GaussianDistribution
 from scipy.stats import multivariate_normal
 
@@ -61,6 +61,30 @@ class GaussianDistributionTest(unittest.TestCase):
         g_shifted = g.shift(shift_by)
 
         self.assertTrue(allclose(g_shifted.mode(), mu + shift_by, atol=1e-6))
+
+    def test_multiply_matches_information_form(self):
+        distributions = [
+            GaussianDistribution(array([0.0, 1.0]), diag(array([4.0, 1.0]))),
+            GaussianDistribution(array([1.0, -0.5]), diag(array([1.0, 2.25]))),
+            GaussianDistribution(array([-0.75, 0.25]), diag(array([0.5, 0.75]))),
+        ]
+
+        product = distributions[0]
+        for distribution in distributions[1:]:
+            product = product.multiply(distribution)
+
+        precision_sum = sum(linalg.inv(distribution.C) for distribution in distributions)
+        weighted_mean_sum = sum(
+            matvec(linalg.inv(distribution.C), distribution.mu)
+            for distribution in distributions
+        )
+        expected_covariance = linalg.inv(precision_sum)
+        expected_mean = matvec(expected_covariance, weighted_mean_sum)
+
+        npt.assert_allclose(to_numpy(product.mu), to_numpy(expected_mean), atol=1e-10)
+        npt.assert_allclose(
+            to_numpy(product.C), to_numpy(expected_covariance), atol=1e-10
+        )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
