@@ -3,7 +3,22 @@
 This directory contains small executable examples that demonstrate common
 PyRecEst workflows.
 
+Run examples from the repository root after installing PyRecEst or after
+installing a development checkout.
+
 ## Basic examples
+
+### Gaussian multiplication
+
+`basic/gaussian_multiplication.py` multiplies several two-dimensional Gaussian
+distributions and checks the result against the closed-form information
+representation.
+
+Run it with:
+
+```bash
+python examples/basic/gaussian_multiplication.py
+```
 
 ### Kalman filter
 
@@ -21,8 +36,35 @@ Run it from the repository root with:
 python examples/basic/kalman_filter.py
 ```
 
+### Multi-target tracking
+
+`basic/multi_target_tracking.py` runs a small linear/Gaussian
+multi-Bernoulli-tracker scenario with two labeled targets, missed detections,
+and clutter measurements.
+
+Run it with:
+
+```bash
+python examples/basic/multi_target_tracking.py
+```
+
+This example currently requires the NumPy backend.
+
+### von Mises-Fisher multiplication
+
+`basic/von_mises_fisher_multiplication.py` multiplies two von Mises-Fisher
+distributions on the unit sphere and verifies the analytic product relation.
+
+Run it with:
+
+```bash
+python examples/basic/von_mises_fisher_multiplication.py
+```
+
+## Backend selection
+
 Select a non-default backend by setting `PYRECEST_BACKEND` before running the
-script, for example:
+script. For example, on a bash-compatible shell:
 
 ```bash
 PYRECEST_BACKEND=pytorch python examples/basic/kalman_filter.py

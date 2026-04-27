@@ -77,6 +77,17 @@ Run the complete script with:
 python examples/basic/kalman_filter.py
 ```
 
+## Documentation
+
+The `docs/` directory contains the first project documentation pages:
+
+- [Getting started](docs/getting-started.md) covers installation, development
+  setup, backend selection, and running examples.
+- [API overview](docs/api-overview.md) maps the main packages and points to the
+  most common public entry points.
+- [Examples](examples/README.md) lists the executable examples and what each
+  one demonstrates.
+
 ## Backends
 
 PyRecEst imports `pyrecest.backend` dynamically. The default backend is NumPy.
