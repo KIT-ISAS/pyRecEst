@@ -59,7 +59,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         Shift the distribution by a given vector.
 
         :param shift_by: The shift vector. Must be of the same dimension as the distribution.
-        :type shift_by
+        :type shift_by:
 
         :return: The shifted distribution.
         :rtype: CustomHypertoroidalDistribution

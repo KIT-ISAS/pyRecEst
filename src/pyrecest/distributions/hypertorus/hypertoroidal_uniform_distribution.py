@@ -75,10 +75,10 @@ class HypertoroidalUniformDistribution(
 
     def shift(self, shift_by) -> "HypertoroidalUniformDistribution":
         """
-        Shifts the distribution by shift_angles.
+        Shifts the distribution by shift_by.
         Since this is a uniform distribution, the shift does not change the distribution.
 
-        :param shift_angles: Angles to shift by
+        :param shift_by: Angles to shift by
         :returns: Shifted distribution
         """
         assert shift_by.shape == (self.dim,)

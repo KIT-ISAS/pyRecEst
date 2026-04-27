@@ -15,8 +15,10 @@ toward a generated documentation site.
   choose a backend, and set up a development checkout.
 - [API overview](api-overview.md): understand the main packages and where common
   public classes live.
-- [Examples](../examples/README.md): browse executable scripts that demonstrate
-  basic workflows.
+- [Examples](examples.md): browse executable scripts that demonstrate basic
+  workflows.
+- [API reference](reference/index.md): generated reference pages for the main
+  public packages.
 
 ## Current Documentation Scope
 
@@ -27,7 +29,6 @@ smoothers, samplers, and evaluation helpers.
 
 Good next documentation additions would be:
 
-- generated API reference from public docstrings;
 - task-focused tutorials for distributions, filters, smoothers, tracking, and
   evaluation;
 - shape and convention notes for measurements, state vectors, covariances, and

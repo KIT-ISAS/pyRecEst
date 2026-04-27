@@ -35,6 +35,10 @@ autopep8 = "^2.3.2"
 pytest = "*"
 parameterized = "*"
 
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6.1"
+mkdocstrings = { version = "^1.0.4", extras = ["python"] }
+
 [tool.mypy]
 check_untyped_defs = true
 

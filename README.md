@@ -85,8 +85,17 @@ The `docs/` directory contains the first project documentation pages:
   setup, backend selection, and running examples.
 - [API overview](docs/api-overview.md) maps the main packages and points to the
   most common public entry points.
+- [API reference](docs/reference/index.md) contains generated package reference
+  pages built with MkDocs and mkdocstrings.
 - [Examples](examples/README.md) lists the executable examples and what each
   one demonstrates.
+
+Build the documentation site locally with:
+
+```bash
+poetry install --with docs --without dev
+poetry run mkdocs build --strict
+```
 
 ## Backends
 

@@ -43,9 +43,9 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
 
     def shift(self, shift_by):
         """
-        Shifts the distribution by shift_angles.
+        Shifts the distribution by shift_by.
 
-        :param shift_angles: angles to shift by
+        :param shift_by: angles to shift by
         :returns: shifted distribution
         """
         assert shift_by.shape == (self.dim,)

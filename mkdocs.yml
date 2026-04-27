@@ -1,0 +1,36 @@
+site_name: PyRecEst
+site_description: Recursive Bayesian Estimation for Python.
+repo_url: https://github.com/FlorianPfaff/PyRecEst
+repo_name: FlorianPfaff/PyRecEst
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Examples: examples.md
+  - API Overview: api-overview.md
+  - API Reference:
+      - Reference Index: reference/index.md
+      - Distributions: reference/distributions.md
+      - Filters: reference/filters.md
+      - Smoothers: reference/smoothers.md
+      - Sampling: reference/sampling.md
+      - Evaluation: reference/evaluation.md
+      - Utilities: reference/utils.md
+
+theme:
+  name: mkdocs
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - src
+          options:
+            docstring_style: sphinx
+            show_if_no_docstring: true
+            show_source: false
+            members_order: source
+
+strict: true
