@@ -29,7 +29,23 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
+    """von Mises-Fisher distribution on the unit hypersphere.
+
+    The distribution is defined on unit vectors in ``R^d``. In PyRecEst,
+    ``input_dim`` is ``d`` and ``dim`` is the manifold dimension ``d - 1``.
+    """
+
     def __init__(self, mu, kappa):
+        """Create a von Mises-Fisher distribution.
+
+        Parameters
+        ----------
+        mu : array-like, shape (d,)
+            Unit mean direction in the embedding space.
+        kappa : float
+            Positive concentration parameter. Larger values concentrate more
+            mass around ``mu``.
+        """
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6
         assert mu.ndim == 1, "mu must be a vector"
@@ -50,23 +66,39 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             )
 
     def pdf(self, xs):
+        """Evaluate the density at unit vectors.
+
+        Parameters
+        ----------
+        xs : array-like, shape (d,) or (..., d)
+            Unit-vector evaluation point or batch of points in the embedding
+            space.
+        """
         assert xs.shape[-1] == self.input_dim
 
         return self.C * exp(self.kappa * xs @ self.mu)
 
     def mean_direction(self):
+        """Return the unit mean direction with shape ``(d,)``."""
         return self.mu
 
     def sample(self, n):
-        """
-        Generate n von Mises-Fisher distributed random vectors.
+        """Generate random unit vectors from the distribution.
 
-        Parameters:
-        n (int): Number of samples to generate.
+        Parameters
+        ----------
+        n : int
+            Number of samples to generate.
 
-        Returns:
-        array: n von Mises-Fisher distributed random vectors.
-        # Requires scipy 1.11 or later
+        Returns
+        -------
+        array-like, shape (n, d)
+            Random samples on the unit hypersphere.
+
+        Notes
+        -----
+        Sampling currently requires the NumPy backend and SciPy's
+        ``vonmises_fisher`` implementation.
         """
         assert (
             pyrecest.backend.__backend_name__ == "numpy"
@@ -82,6 +114,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return samples
 
     def sample_deterministic(self):
+        """Return deterministic sigma points matched to the mean direction."""
         samples = zeros((self.dim + 1, self.dim * 2 + 1))
         samples[0, 0] = 1
         m1 = iv(self.dim / 2, self.kappa, 1) / iv(self.dim / 2 + 1, self.kappa, 1)
@@ -97,6 +130,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return samples
 
     def get_rotation_matrix(self):
+        """Return an orthogonal matrix whose first column is ``mu``."""
         M = zeros((self.dim + 1, self.dim + 1))
         M[:, 0] = self.mu
         Q, R = linalg.qr(M)
@@ -105,11 +139,13 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return Q
 
     def mean_resultant_vector(self):
+        """Return the mean resultant vector with shape ``(d,)``."""
         r = self.a_d(self.input_dim, self.kappa) * self.mu
         return r
 
     @staticmethod
     def from_distribution(d):
+        """Fit a von Mises-Fisher distribution to mean-resultant information."""
         assert d.input_dim >= 2, "mu must be at least 2-D for the circular case"
 
         m = d.mean_resultant_vector()
@@ -117,6 +153,14 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def from_mean_resultant_vector(m):
+        """Create a distribution from a mean resultant vector.
+
+        Parameters
+        ----------
+        m : array-like, shape (d,)
+            Mean resultant vector. Its direction becomes ``mu`` and its norm is
+            inverted to estimate ``kappa``.
+        """
         assert ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
@@ -128,21 +172,25 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return V
 
     def mode(self):
+        """Return the modal direction, equal to ``mu``."""
         return self.mu
 
     def set_mean(self, new_mean):
+        """Replace the mean direction and return the distribution."""
         assert new_mean.shape == self.mu.shape
         dist = self
         dist.mu = copy.deepcopy(new_mean)
         return dist
 
     def set_mode(self, new_mode):
+        """Replace the modal direction and return the distribution."""
         assert new_mode.shape == self.mu.shape
         dist = self
         dist.mu = copy.deepcopy(new_mode)
         return dist
 
     def multiply(self, other: "VonMisesFisherDistribution"):
+        """Multiply two vMF densities and return the normalized product."""
         assert self.mu.shape == other.mu.shape
 
         mu_ = self.kappa * self.mu + other.kappa * other.mu
@@ -151,6 +199,10 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution(mu_, kappa_)
 
     def convolve(self, other: "VonMisesFisherDistribution"):
+        """Convolve with a zonal vMF distribution.
+
+        ``other`` must be zonal around the final coordinate axis.
+        """
         assert other.mu[-1] == 1, "Other is not zonal"
         assert all(self.mu.shape == other.mu.shape)
         d = self.dim + 1
@@ -165,6 +217,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def a_d(d: Union[int, int32, int64], kappa):
+        """Return the ratio of modified Bessel functions used by vMF moments."""
         bessel1 = array(iv(d / 2, kappa))
         bessel2 = array(iv(d / 2 - 1, kappa))
         if isnan(bessel1) or isnan(bessel2):
@@ -173,6 +226,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def a_d_inverse(d: Union[int, int32, int64], x: float):
+        """Numerically invert :meth:`a_d` for dimension ``d`` and value ``x``."""
         kappa_ = x * (d - x**2) / (1 - x**2)
         if isnan(kappa_):
             print(f"Initial kappa_ is NaN for d={d}, x={x}")
