@@ -4,7 +4,7 @@ import copy
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import dot, linalg, ndim, random, reshape
+from pyrecest.backend import linalg, matvec, ndim, random, reshape
 from scipy.linalg import cholesky
 
 from .abstract_linear_distribution import AbstractLinearDistribution
@@ -97,9 +97,13 @@ class GaussianDistribution(AbstractLinearDistribution):
 
     def multiply(self, other):
         assert self.dim == other.dim
-        K = linalg.solve(self.C + other.C, self.C)
-        new_mu = self.mu + dot(K, (other.mu - self.mu))
-        new_C = self.C - dot(K, self.C)
+        self_precision = linalg.inv(self.C)
+        other_precision = linalg.inv(other.C)
+        new_C = linalg.inv(self_precision + other_precision)
+        new_mu = matvec(
+            new_C,
+            matvec(self_precision, self.mu) + matvec(other_precision, other.mu),
+        )
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def convolve(self, other):
