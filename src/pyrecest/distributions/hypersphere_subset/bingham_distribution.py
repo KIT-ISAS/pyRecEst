@@ -25,6 +25,14 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class BinghamDistribution(AbstractHypersphericalDistribution):
+    """Bingham distribution on the hypersphere.
+
+    References
+    ----------
+    Bingham, C. (1974). An antipodally symmetric distribution on the sphere.
+    The Annals of Statistics, 2(6), 1201-1225.
+    """
+
     def __init__(self, Z, M):
         AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
