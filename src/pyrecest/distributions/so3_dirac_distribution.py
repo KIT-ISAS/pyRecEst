@@ -10,7 +10,6 @@ from pyrecest.backend import (
     array,
     asarray,
     clip,
-    isfinite,
     linalg,
     ndim,
     spatial,
