@@ -111,7 +111,9 @@ Common starting points include:
 
 ## Where To Look Next
 
-- Use [the examples guide](../examples/README.md) for small runnable workflows.
+- Use [the examples guide](examples.md) for small runnable workflows.
+- Use [the generated API reference](reference/index.md) for package-level
+  reference pages built from docstrings.
 - Use `tests/` as executable reference coverage for APIs that do not yet have
   dedicated tutorials.
 - Use module docstrings and class docstrings for detailed mathematical notes

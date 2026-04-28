@@ -23,12 +23,9 @@ class AbstractUniformDistribution(AbstractDistributionType):
     @abstractmethod
     def get_manifold_size(self):
         """
-        Compute the probability density function at each point in xs.
+        Compute the size of the distribution's manifold.
 
-        :param xs: Points at which to compute the pdf.
-        :type xs:
-
-        :return: The pdf evaluated at each point in xs.
+        :return: Size of the manifold.
         :rtype:
         """
 
