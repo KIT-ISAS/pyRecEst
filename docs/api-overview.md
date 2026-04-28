@@ -75,6 +75,7 @@ Samplers and grid generators for Euclidean and manifold domains.
 Common starting points include:
 
 - `GaussianSampler`;
+- `MerweScaledSigmaPoints` and `JulierSigmaPoints`;
 - `FibonacciGridSampler`;
 - `FibonacciRejectionSampler`;
 - `SobolGridSampler`;

@@ -27,8 +27,8 @@ from pyrecest.backend import (  # pylint: disable=redefined-builtin
     zeros,
 )
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 
-from ._ukf import MerweScaledSigmaPoints
 from ._ukf import UnscentedKalmanFilter as BayesianFiltersUKF
 from ._ukf import _UKFModel
 from .abstract_filter import AbstractFilter
