@@ -29,11 +29,9 @@ class HyperhemisphericalUniformDistribution(
             numpy.ndarray: n sampled points.
         """
         s = HypersphericalUniformDistribution(self.dim).sample(n)
-        # Mirror ones with negative on the last dimension up for hemisphere. This
-        # may give a disadvantage to ones with exactly zero at the first dimension but
-        # since this is hit with quasi probability zero, we neglect
-        # this.
-        s = (1 - 2 * (s[-1, :] < 0)) * s
+        # Mirror samples with negative last coordinate up to the hemisphere.
+        # Samples exactly on the equator are left unchanged; this has probability zero.
+        s = (1 - 2 * (s[:, -1:] < 0)) * s
         return s
 
     def get_manifold_size(self) -> float:
