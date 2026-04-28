@@ -17,14 +17,13 @@ from pyrecest.backend import (
     log,
     ndim,
     one_hot,
-    reshape,
     stack,
     sum,
     transpose,
-    where,
     zeros,
 )
 
+from ._so3_quaternion import normalize_quaternions
 from .hypersphere_subset.bingham_distribution import BinghamDistribution
 from .hypersphere_subset.hyperhemispherical_bingham_distribution import (
     HyperhemisphericalBinghamDistribution,
@@ -57,25 +56,8 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
         return BinghamDistribution.calculate_F(Z)
 
     @staticmethod
-    def _as_quaternion_batch(quaternions):
-        quaternions = array(quaternions, dtype=float)
-        if ndim(quaternions) == 1:
-            assert quaternions.shape[0] == 4, "SO(3) quaternions must have length 4."
-            quaternions = reshape(quaternions, (1, 4))
-        else:
-            assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
-            quaternions = reshape(quaternions, (-1, 4))
-        return quaternions
-
-    @staticmethod
     def _normalize_quaternions(quaternions):
-        quaternions = SO3BinghamDistribution._as_quaternion_batch(quaternions)
-        norms = linalg.norm(quaternions, None, -1)
-        assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
-
-        normalized = quaternions / reshape(norms, (-1, 1))
-        sign = where(normalized[:, -1:] < 0.0, -1.0, 1.0)
-        return sign * normalized
+        return normalize_quaternions(quaternions)
 
     @staticmethod
     def _quaternion_right_multiply_matrix(quaternion):

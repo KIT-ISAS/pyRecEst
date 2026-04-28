@@ -11,12 +11,11 @@ from pyrecest.backend import (
     clip,
     linalg,
     ndim,
-    reshape,
     spatial,
     sum,
-    where,
 )
 
+from ._so3_quaternion import normalize_quaternions
 from .hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
 )
@@ -37,17 +36,7 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
 
     @staticmethod
     def _normalize_quaternions(quaternions):
-        quaternions = array(quaternions, dtype=float)
-        if ndim(quaternions) == 1:
-            quaternions = reshape(quaternions, (1, 4))
-
-        assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
-        norms = linalg.norm(quaternions, None, -1)
-        assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
-
-        normalized = quaternions / reshape(norms, (-1, 1))
-        sign = where(normalized[:, -1:] < 0.0, -1.0, 1.0)
-        return sign * normalized
+        return normalize_quaternions(quaternions)
 
     @staticmethod
     def _require_rotation_method(method_name):
