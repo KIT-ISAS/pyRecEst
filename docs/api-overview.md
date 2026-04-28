@@ -13,6 +13,9 @@ from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import KalmanFilter
 ```
 
+See [Shapes and conventions](conventions.md) for the expected vector, matrix,
+batch, measurement-set, and manifold-coordinate shapes used by common APIs.
+
 ## Package Map
 
 ### `pyrecest.backend`
@@ -73,6 +76,8 @@ Common starting points include:
 
 - `GaussianSampler`;
 - `FibonacciGridSampler`;
+- `SobolGridSampler`;
+- `HaltonGridSampler`;
 - `SphericalFibonacciSampler`;
 - `HealpixHopfSampler`;
 - `LeopardiSampler`;

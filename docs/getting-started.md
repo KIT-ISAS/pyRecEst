@@ -89,5 +89,7 @@ support model and known limitations.
   concept.
 - Check [backend compatibility](backend-compatibility.md) before relying on a
   non-default backend for advanced APIs.
+- Read [Shapes and conventions](conventions.md) before writing custom models or
+  tracker measurement sets.
 - Use `tests/` as executable reference material for advanced APIs that do not
   have dedicated tutorials yet.

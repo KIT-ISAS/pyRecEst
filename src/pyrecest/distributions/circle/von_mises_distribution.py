@@ -23,6 +23,14 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 
 
 class VonMisesDistribution(AbstractCircularDistribution):
+    """Von Mises distribution on the circle.
+
+    References
+    ----------
+    Jammalamadaka, S. R., & SenGupta, A. (2001). Topics in Circular
+    Statistics. World Scientific.
+    """
+
     def __init__(
         self,
         mu,
