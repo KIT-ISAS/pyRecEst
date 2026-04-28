@@ -6,6 +6,7 @@ from pyrecest.backend import (
     amax,
     array,
     asarray,
+    clip,
     linalg,
     ndim,
     spatial,
