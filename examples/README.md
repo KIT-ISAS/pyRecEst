@@ -71,7 +71,8 @@ PYRECEST_BACKEND=pytorch python examples/basic/kalman_filter.py
 ```
 
 Install the matching optional dependency extra before using a non-default
-backend.
+backend. See [backend compatibility](../docs/backend-compatibility.md) for
+known backend-specific limitations.
 
 ## Notebooks
 
