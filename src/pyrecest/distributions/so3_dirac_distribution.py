@@ -3,20 +3,16 @@
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    all,
     amax,
-    arccos,
     array,
     asarray,
-    clip,
     linalg,
     ndim,
-    reshape,
     spatial,
     sum,
-    where,
 )
 
+from ._so3_helpers import geodesic_distance, normalize_quaternions
 from .hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
 )
@@ -35,19 +31,7 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
         quaternions = self._normalize_quaternions(d)
         super().__init__(quaternions, w=w)
 
-    @staticmethod
-    def _normalize_quaternions(quaternions):
-        quaternions = array(quaternions, dtype=float)
-        if ndim(quaternions) == 1:
-            quaternions = reshape(quaternions, (1, 4))
-
-        assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
-        norms = linalg.norm(quaternions, None, -1)
-        assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
-
-        normalized = quaternions / reshape(norms, (-1, 1))
-        sign = where(normalized[:, -1:] < 0.0, -1.0, 1.0)
-        return sign * normalized
+    _normalize_quaternions = staticmethod(normalize_quaternions)
 
     @staticmethod
     def _require_rotation_method(method_name):
@@ -89,13 +73,7 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
         self._require_rotation_method("from_quat")
         return array(spatial.Rotation.from_quat(self.mean()).as_matrix())
 
-    @staticmethod
-    def geodesic_distance(rotation_a, rotation_b):
-        """Return the SO(3) geodesic distance between quaternions in radians."""
-        quat_a = SO3DiracDistribution._normalize_quaternions(rotation_a)
-        quat_b = SO3DiracDistribution._normalize_quaternions(rotation_b)
-        inner = abs(sum(quat_a * quat_b, axis=-1))
-        return 2.0 * arccos(clip(inner, 0.0, 1.0))
+    geodesic_distance = staticmethod(geodesic_distance)
 
     def distance_to(self, rotation):
         """Return geodesic distances from all Dirac locations to ``rotation``."""

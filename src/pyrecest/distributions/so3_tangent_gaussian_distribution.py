@@ -3,9 +3,7 @@
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    all,
     amax,
-    arccos,
     arctan2,
     array,
     clip,
@@ -27,6 +25,7 @@ from pyrecest.backend import (
     zeros,
 )
 
+from ._so3_helpers import as_batch, geodesic_distance, normalize_quaternions
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 from .nonperiodic.gaussian_distribution import GaussianDistribution
 
@@ -54,34 +53,11 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
     def input_dim(self):
         return 4
 
-    @staticmethod
-    def _as_batch(values, width, name):
-        values = array(values, dtype=float)
-        if ndim(values) == 1:
-            assert values.shape[0] == width, f"{name} must have length {width}."
-            values = reshape(values, (1, width))
-        else:
-            assert values.shape[-1] == width, f"{name} must have length {width}."
-            values = reshape(values, (-1, width))
-        return values
-
-    @staticmethod
-    def _normalize_quaternions(quaternions):
-        quaternions = SO3TangentGaussianDistribution._as_batch(
-            quaternions, 4, "SO(3) quaternions"
-        )
-        norms = linalg.norm(quaternions, None, -1)
-        assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
-
-        normalized = quaternions / reshape(norms, (-1, 1))
-        sign = where(normalized[:, -1:] < 0.0, -1.0, 1.0)
-        return sign * normalized
+    _normalize_quaternions = staticmethod(normalize_quaternions)
 
     @staticmethod
     def _as_tangent_batch(tangent_vectors):
-        return SO3TangentGaussianDistribution._as_batch(
-            tangent_vectors, 3, "SO(3) tangent vectors"
-        )
+        return as_batch(tangent_vectors, 3, "SO(3) tangent vectors")
 
     @staticmethod
     def _quaternion_conjugate(quaternions):
@@ -159,13 +135,7 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
         )
         return vector_part * scale
 
-    @staticmethod
-    def geodesic_distance(rotation_a, rotation_b):
-        """Return the SO(3) geodesic distance between quaternions in radians."""
-        quat_a = SO3TangentGaussianDistribution._normalize_quaternions(rotation_a)
-        quat_b = SO3TangentGaussianDistribution._normalize_quaternions(rotation_b)
-        inner = abs(sum(quat_a * quat_b, axis=-1))
-        return 2.0 * arccos(clip(inner, 0.0, 1.0))
+    geodesic_distance = staticmethod(geodesic_distance)
 
     @staticmethod
     def as_rotation_matrices(quaternions):
