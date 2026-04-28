@@ -76,6 +76,10 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
     To keep the implementation lightweight and close to the rest of PyRecEst, this
     tracker retains a single multi-Bernoulli posterior via a best-assignment
     approximation similar in spirit to the existing nearest-neighbor tracker.
+
+    Measurements are represented as arrays with shape ``(m, num_measurements)``.
+    The measurement matrix has shape ``(m, n)``, where ``n`` is the single-target
+    state dimension and ``m`` is the measurement dimension.
     """
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -87,6 +91,26 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         log_prior_estimates=True,
         log_posterior_estimates=True,
     ):
+        """Create a multi-Bernoulli tracker.
+
+        Parameters
+        ----------
+        initial_prior : iterable, optional
+            Initial Bernoulli components. Each item can be a
+            :class:`BernoulliComponent`, ``(existence_probability, state)``,
+            ``(existence_probability, state, label)``, or a single-target state
+            accepted by :class:`KalmanFilter`.
+        tracker_param : dict, optional
+            Tracker parameters. Supported keys include survival and detection
+            probabilities, clutter intensity, gating settings, pruning and
+            capping limits, and optional birth settings.
+        birth_components : iterable, optional
+            Bernoulli components appended during prediction.
+        log_prior_estimates : bool, optional
+            If true, store prior estimates after prediction.
+        log_posterior_estimates : bool, optional
+            If true, store posterior estimates after update.
+        """
         if tracker_param is None:
             tracker_param = {
                 "survival_probability": 0.99,
@@ -343,6 +367,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
 
     @property
     def dim(self):
+        """Return the single-target state dimension ``n``."""
         if not self.bernoulli_components:
             raise ValueError(
                 "Cannot provide the state dimension if no Bernoulli components exist."
@@ -351,10 +376,12 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
 
     @property
     def filter_state(self):
+        """Return a deep copy of the active Bernoulli components."""
         return copy.deepcopy(self.bernoulli_components)
 
     @filter_state.setter
     def filter_state(self, new_state):
+        """Replace active Bernoulli components and assign missing labels."""
         self.bernoulli_components = self._normalize_components(new_state)
         self._assign_missing_labels(self.bernoulli_components)
         if self.log_prior_estimates:
@@ -412,7 +439,14 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         ]
 
     def get_labeled_components(self, copy_components=True):
-        """Return active Bernoulli components keyed by track label."""
+        """Return active Bernoulli components keyed by track label.
+
+        Parameters
+        ----------
+        copy_components : bool, optional
+            If true, return deep copies. If false, return references to the
+            tracker-owned components.
+        """
         return {
             copy.deepcopy(component.label): (
                 copy.deepcopy(component) if copy_components else component
@@ -421,14 +455,30 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         }
 
     def get_component_by_label(self, label, copy_component=True):
-        """Return a Bernoulli component by track label."""
+        """Return a Bernoulli component by track label.
+
+        Parameters
+        ----------
+        label : hashable
+            Track label to retrieve.
+        copy_component : bool, optional
+            If true, return a deep copy. If false, return the tracker-owned
+            component.
+        """
         for component in self.bernoulli_components:
             if component.label == label:
                 return copy.deepcopy(component) if copy_component else component
         raise KeyError(f"No Bernoulli component with label {label!r} exists.")
 
     def get_track_labels(self, number_of_targets=None):
-        """Return the labels of the extracted target states."""
+        """Return the labels of the extracted target states.
+
+        Parameters
+        ----------
+        number_of_targets : int, optional
+            Number of most likely target states to extract. If omitted, use the
+            MAP cardinality estimate.
+        """
         labels, _ = self.get_labeled_point_estimate(
             flatten_vector=False,
             number_of_targets=number_of_targets,
@@ -441,6 +491,20 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         The state extraction follows a common multi-Bernoulli convention: the MAP
         cardinality is used, and the states of the Bernoulli components with the
         highest existence probabilities are returned.
+
+        Parameters
+        ----------
+        flatten_vector : bool, optional
+            If true, flatten the output into a one-dimensional vector.
+        number_of_targets : int, optional
+            Number of most likely target states to extract. If omitted, use the
+            MAP cardinality estimate.
+
+        Returns
+        -------
+        array-like, shape (n, number_of_targets)
+            Extracted point estimates. If ``flatten_vector`` is true, the result
+            is flattened.
         """
         _, point_estimates = self.get_labeled_point_estimate(
             flatten_vector=flatten_vector,
@@ -449,7 +513,15 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         return point_estimates
 
     def get_labeled_point_estimate(self, flatten_vector=False, number_of_targets=None):
-        """Return extracted target states together with persistent labels."""
+        """Return extracted target states together with persistent labels.
+
+        Returns
+        -------
+        tuple
+            ``(labels, point_estimates)`` where labels is a list of persistent
+            track labels and point estimates has shape ``(n, number_of_targets)``
+            unless ``flatten_vector`` is true.
+        """
         if not self.bernoulli_components:
             point_estimates = array([]) if flatten_vector else empty((0, 0))
             return [], point_estimates
@@ -510,7 +582,23 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
     def predict_linear(
         self, system_matrices, sys_noises, inputs=None, birth_components=None
     ):
-        """Predict all Bernoulli components with a linear/Gaussian model."""
+        """Predict all Bernoulli components with a linear/Gaussian model.
+
+        Parameters
+        ----------
+        system_matrices : array-like, shape (n, n) or (n, n, num_components)
+            Shared or per-component state-transition matrices.
+        sys_noises : array-like or GaussianDistribution
+            Shared process-noise covariance with shape ``(n, n)``,
+            per-component covariances with shape ``(n, n, num_components)``, or
+            a zero-mean :class:`GaussianDistribution`.
+        inputs : array-like, optional
+            Shared input with shape ``(n,)`` or per-component inputs with shape
+            ``(n, num_components)``.
+        birth_components : iterable, optional
+            Components appended after prediction instead of the tracker's stored
+            birth components.
+        """
         if isinstance(sys_noises, GaussianDistribution):
             assert backend_all(sys_noises.mu == 0)
             sys_noises = sys_noises.C
@@ -552,7 +640,17 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             self.store_prior_estimates()
 
     def find_association(self, measurements, measurement_matrix, cov_mats_meas):
-        """Find the best measurement-to-Bernoulli association."""
+        """Find the best measurement-to-Bernoulli association.
+
+        Parameters
+        ----------
+        measurements : array-like, shape (m,) or (m, num_measurements)
+            Measurement vector or measurement matrix.
+        measurement_matrix : array-like, shape (m, n)
+            Linear map from state vectors to measurement vectors.
+        cov_mats_meas : array-like, shape (m, m) or (m, m, num_measurements)
+            Shared or per-measurement covariance matrices.
+        """
         assert (
             pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
@@ -581,7 +679,19 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
 
     # pylint: disable=too-many-locals
     def update_linear(self, measurements, measurement_matrix, cov_mats_meas):
-        """Update the multi-Bernoulli tracker with linear/Gaussian measurements."""
+        """Update the tracker with linear/Gaussian measurements.
+
+        Parameters
+        ----------
+        measurements : array-like, shape (m,) or (m, num_measurements)
+            Measurement vector or matrix whose columns are individual
+            measurements.
+        measurement_matrix : array-like, shape (m, n)
+            Linear map from state vectors to measurement vectors.
+        cov_mats_meas : array-like, shape (m, m) or (m, m, num_measurements)
+            Shared measurement-noise covariance or per-measurement covariance
+            matrices.
+        """
         assert (
             pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported for numpy backend"
