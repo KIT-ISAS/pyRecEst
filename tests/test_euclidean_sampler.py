@@ -3,7 +3,12 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import mean, ones, random, std, zeros
-from pyrecest.sampling.euclidean_sampler import FibonacciGridSampler, GaussianSampler
+from pyrecest.sampling import FibonacciRejectionSampler as PublicFibonacciRejectionSampler
+from pyrecest.sampling.euclidean_sampler import (
+    FibonacciGridSampler,
+    FibonacciRejectionSampler,
+    GaussianSampler,
+)
 from scipy.stats import shapiro
 
 
@@ -117,6 +122,122 @@ class TestFibonacciGridSampler(unittest.TestCase):
             self.assertEqual(V.shape, (d, d))
             self.assertEqual(R.shape, (d,))
             npt.assert_allclose(V.T @ V, np.eye(d), atol=1e-12)
+
+
+class TestFibonacciRejectionSampler(unittest.TestCase):
+    def setUp(self):
+        self.sampler = FibonacciRejectionSampler()
+
+    def test_unit_density_accepts_all_unit_cube_candidates(self):
+        """A unit-density target with max_density=1 should accept all candidates."""
+        n_candidates = 25
+        samples, info = self.sampler.sample_rejection(
+            lambda xs: np.ones(xs.shape[0]),
+            n_candidates=n_candidates,
+            dim=2,
+            max_density=1.0,
+        )
+        expected = FibonacciGridSampler().get_uniform_samples(n_candidates, 3)[:, :2]
+
+        self.assertEqual(samples.shape, (n_candidates, 2))
+        npt.assert_allclose(samples, expected)
+        self.assertEqual(info["n_candidates"], n_candidates)
+        self.assertEqual(info["n_accepted"], n_candidates)
+        self.assertEqual(info["n_rejected"], 0)
+        self.assertEqual(info["acceptance_rate"], 1.0)
+        npt.assert_allclose(info["bounding_box"], np.array([[0.0, 1.0], [0.0, 1.0]]))
+
+    def test_bounding_box_mapping(self):
+        """Accepted samples should be mapped from the unit grid into the bounding box."""
+        n_candidates = 30
+        bounding_box = np.array([[-2.0, 2.0], [10.0, 20.0]])
+        samples, _ = self.sampler.sample_rejection(
+            lambda xs: np.ones(xs.shape[0]),
+            n_candidates=n_candidates,
+            dim=2,
+            max_density=1.0,
+            bounding_box=bounding_box,
+        )
+        unit_samples = FibonacciGridSampler().get_uniform_samples(n_candidates, 3)[:, :2]
+        expected = unit_samples * np.array([4.0, 10.0]) + np.array([-2.0, 10.0])
+
+        npt.assert_allclose(samples, expected)
+        self.assertTrue(np.all(samples[:, 0] >= -2.0))
+        self.assertTrue(np.all(samples[:, 0] <= 2.0))
+        self.assertTrue(np.all(samples[:, 1] >= 10.0))
+        self.assertTrue(np.all(samples[:, 1] <= 20.0))
+
+    def test_rejection_rule_matches_fibonacci_ordinate(self):
+        """The last Fibonacci-grid coordinate should drive deterministic rejection."""
+        n_candidates = 40
+        samples, info = self.sampler.sample_rejection(
+            lambda xs: np.full(xs.shape[0], 0.5),
+            n_candidates=n_candidates,
+            dim=1,
+            max_density=1.0,
+        )
+        proposal_grid = FibonacciGridSampler().get_uniform_samples(n_candidates, 2)
+        expected = proposal_grid[proposal_grid[:, 1] <= 0.5, :1]
+
+        npt.assert_allclose(samples, expected)
+        self.assertEqual(info["n_accepted"], expected.shape[0])
+        self.assertEqual(info["n_rejected"], n_candidates - expected.shape[0])
+
+    def test_sampling_is_deterministic(self):
+        """Repeated calls with the same density should return identical accepted samples."""
+        pdf = lambda xs: np.exp(-np.sum(xs**2, axis=1))
+        bounding_box = np.array([[-1.0, 1.0], [-1.0, 1.0]])
+        samples1, info1 = self.sampler.sample_rejection(pdf, 60, 2, 1.0, bounding_box)
+        samples2, info2 = self.sampler.sample_rejection(pdf, 60, 2, 1.0, bounding_box)
+
+        npt.assert_array_equal(samples1, samples2)
+        self.assertEqual(info1["n_accepted"], info2["n_accepted"])
+        self.assertEqual(info1["n_rejected"], info2["n_rejected"])
+
+    def test_zero_candidates(self):
+        """Requesting no candidates should return empty samples and zero metadata."""
+        samples, info = self.sampler.sample_rejection(
+            lambda xs: np.ones(xs.shape[0]),
+            n_candidates=0,
+            dim=2,
+            max_density=1.0,
+        )
+
+        self.assertEqual(samples.shape, (0, 2))
+        self.assertEqual(info["n_candidates"], 0)
+        self.assertEqual(info["n_accepted"], 0)
+        self.assertEqual(info["n_rejected"], 0)
+        self.assertEqual(info["acceptance_rate"], 0.0)
+
+    def test_max_density_must_bound_pdf(self):
+        """The sampler should reject invalid density upper bounds."""
+        with self.assertRaises(ValueError):
+            self.sampler.sample_rejection(
+                lambda xs: np.ones(xs.shape[0]),
+                n_candidates=10,
+                dim=1,
+                max_density=0.5,
+            )
+
+    def test_invalid_bounding_box(self):
+        """Bounding boxes need one lower and one upper value per dimension."""
+        with self.assertRaises(ValueError):
+            self.sampler.sample_rejection(
+                lambda xs: np.ones(xs.shape[0]),
+                n_candidates=10,
+                dim=2,
+                max_density=1.0,
+                bounding_box=np.array([[0.0, 1.0]]),
+            )
+
+    def test_sample_stochastic_is_not_available(self):
+        """Density-free stochastic sampling is not the rejection sampler interface."""
+        with self.assertRaises(NotImplementedError):
+            self.sampler.sample_stochastic(10, 2)
+
+    def test_public_sampling_import(self):
+        """FibonacciRejectionSampler should be exported from pyrecest.sampling."""
+        self.assertIs(PublicFibonacciRejectionSampler, FibonacciRejectionSampler)
 
 
 if __name__ == "__main__":
