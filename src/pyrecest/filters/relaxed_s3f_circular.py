@@ -14,13 +14,29 @@ unchanged.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
-import numpy as np
-
-from pyrecest.backend import asarray as backend_asarray
+from pyrecest.backend import (
+    abs as backend_abs,
+    angle as backend_angle,
+    array,
+    asarray,
+    column_stack,
+    cos,
+    empty,
+    exp,
+    linspace,
+    mod,
+    outer,
+    pi,
+    sin,
+    stack,
+    sum as backend_sum,
+    zeros,
+    zeros_like,
+)
 
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
-
 
 SUPPORTED_RELAXED_S3F_VARIANTS = ("baseline", "r1", "r1_r2")
 
@@ -29,23 +45,23 @@ SUPPORTED_RELAXED_S3F_VARIANTS = ("baseline", "r1", "r1_r2")
 class CircularCellStatistics:
     """Closed-form statistics for uniform circular cells."""
 
-    grid: np.ndarray
+    grid: Any
     cell_width: float
-    body_increment: np.ndarray
-    representative_displacements: np.ndarray
-    mean_displacements: np.ndarray
-    covariance_inflations: np.ndarray
+    body_increment: Any
+    representative_displacements: Any
+    mean_displacements: Any
+    covariance_inflations: Any
 
 
-def rotation_matrix(angle: float) -> np.ndarray:
+def rotation_matrix(angle: float) -> Any:
     """Return the 2-D rotation matrix for ``angle``."""
 
-    c = np.cos(angle)
-    s = np.sin(angle)
-    return np.array([[c, -s], [s, c]], dtype=float)
+    c = cos(angle)
+    s = sin(angle)
+    return array([[c, -s], [s, c]], dtype=float)
 
 
-def rotate_body_increment(angles: np.ndarray, body_increment: np.ndarray) -> np.ndarray:
+def rotate_body_increment(angles: Any, body_increment: Any) -> Any:
     """Rotate a body-frame increment for one or more angles.
 
     Parameters
@@ -56,17 +72,17 @@ def rotate_body_increment(angles: np.ndarray, body_increment: np.ndarray) -> np.
         Vector ``(u_x, u_y)`` in the body frame.
     """
 
-    angles = np.asarray(angles, dtype=float).reshape(-1)
+    angles = asarray(angles, dtype=float).reshape(-1)
     u = _as_body_increment(body_increment)
-    c = np.cos(angles)
-    s = np.sin(angles)
-    return np.column_stack((c * u[0] - s * u[1], s * u[0] + c * u[1]))
+    c = cos(angles)
+    s = sin(angles)
+    return column_stack((c * u[0] - s * u[1], s * u[0] + c * u[1]))
 
 
 def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
     n_cells: int,
-    body_increment: np.ndarray,
-    grid: np.ndarray | None = None,
+    body_increment: Any,
+    grid: Any | None = None,
 ) -> CircularCellStatistics:
     """Compute R1/R2 statistics for equal-width cells on S1.
 
@@ -80,14 +96,14 @@ def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
 
     u = _as_body_increment(body_increment)
     centers = (
-        np.linspace(0.0, 2.0 * np.pi, n_cells, endpoint=False)
+        linspace(0.0, 2.0 * pi, n_cells, endpoint=False)
         if grid is None
-        else np.asarray(grid, dtype=float).reshape(-1)
+        else asarray(grid, dtype=float).reshape(-1)
     )
     if centers.shape[0] != n_cells:
         raise ValueError("grid must contain exactly n_cells entries.")
 
-    width = 2.0 * np.pi / n_cells
+    width = 2.0 * pi / n_cells
     half_width = 0.5 * width
     first_factor = _safe_sinc(half_width)
     second_factor = _safe_sinc(2.0 * half_width)
@@ -95,17 +111,17 @@ def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
     representative_displacements = rotate_body_increment(centers, u)
     mean_displacements = first_factor * representative_displacements
 
-    covariance_inflations = np.empty((n_cells, 2, 2), dtype=float)
+    covariance_inflation_list = []
     for idx, center in enumerate(centers):
-        cos_2 = np.cos(2.0 * center)
-        sin_2 = np.sin(2.0 * center)
+        cos_2 = cos(2.0 * center)
+        sin_2 = sin(2.0 * center)
 
         e_cos2 = 0.5 * (1.0 + second_factor * cos_2)
         e_sin2 = 0.5 * (1.0 - second_factor * cos_2)
         e_cossin = 0.5 * second_factor * sin_2
 
         ux, uy = u
-        second_moment = np.array(
+        second_moment = array(
             [
                 [
                     ux * ux * e_cos2 - 2.0 * ux * uy * e_cossin + uy * uy * e_sin2,
@@ -119,8 +135,14 @@ def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
             dtype=float,
         )
         mean = mean_displacements[idx]
-        cov = second_moment - np.outer(mean, mean)
-        covariance_inflations[idx] = 0.5 * (cov + cov.T)
+        cov = second_moment - outer(mean, mean)
+        covariance_inflation_list.append(0.5 * (cov + cov.T))
+
+    covariance_inflations = (
+        stack(covariance_inflation_list, axis=0)
+        if covariance_inflation_list
+        else empty((0, 2, 2), dtype=float)
+    )
 
     return CircularCellStatistics(
         grid=centers,
@@ -134,9 +156,9 @@ def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
 
 def predict_circular_relaxed(
     filter_: StateSpaceSubdivisionFilter,
-    body_increment: np.ndarray,
+    body_increment: Any,
     variant: str = "r1_r2",
-    process_noise_cov: np.ndarray | None = None,
+    process_noise_cov: Any | None = None,
 ) -> CircularCellStatistics:
     """Predict an ``S1 x R2`` S3F with the selected relaxed variant.
 
@@ -164,44 +186,45 @@ def predict_circular_relaxed(
     if state.lin_dim != 2:
         raise ValueError("predict_circular_relaxed requires a 2-D linear state.")
 
-    grid = np.asarray(state.gd.get_grid(), dtype=float).reshape(-1)
+    grid = asarray(state.gd.get_grid(), dtype=float).reshape(-1)
     stats = uniform_circular_cell_statistics(n_cells, body_increment, grid=grid)
 
     if variant == "baseline":
         displacements = stats.representative_displacements
-        covariance_inflations = np.zeros_like(stats.covariance_inflations)
+        covariance_inflations = zeros_like(stats.covariance_inflations)
     elif variant == "r1":
         displacements = stats.mean_displacements
-        covariance_inflations = np.zeros_like(stats.covariance_inflations)
+        covariance_inflations = zeros_like(stats.covariance_inflations)
     else:
         displacements = stats.mean_displacements
         covariance_inflations = stats.covariance_inflations
 
     q_base = (
-        np.zeros((2, 2), dtype=float)
+        zeros((2, 2), dtype=float)
         if process_noise_cov is None
-        else np.asarray(process_noise_cov, dtype=float)
+        else asarray(process_noise_cov, dtype=float)
     )
     if q_base.shape != (2, 2):
         raise ValueError("process_noise_cov must have shape (2, 2).")
 
-    covariance_matrices = np.empty((2, 2, n_cells), dtype=float)
-    for idx in range(n_cells):
-        covariance_matrices[:, :, idx] = q_base + covariance_inflations[idx]
+    covariance_matrices = stack(
+        [q_base + covariance_inflations[idx] for idx in range(n_cells)],
+        axis=2,
+    )
 
     filter_.predict_linear(
-        covariance_matrices=backend_asarray(covariance_matrices),
-        linear_input_vectors=backend_asarray(displacements.T),
+        covariance_matrices=asarray(covariance_matrices),
+        linear_input_vectors=asarray(displacements.T),
     )
     return stats
 
 
-def grid_probability_masses(grid_values: np.ndarray) -> np.ndarray:
+def grid_probability_masses(grid_values: Any) -> Any:
     """Convert equal-cell grid density values to normalized cell masses."""
 
-    values = np.asarray(grid_values, dtype=float).reshape(-1)
-    total = np.sum(values)
-    if total <= 0.0:
+    values = asarray(grid_values, dtype=float).reshape(-1)
+    total = backend_sum(values)
+    if float(total) <= 0.0:
         raise ValueError("grid values must have positive total mass.")
     return values / total
 
@@ -209,26 +232,26 @@ def grid_probability_masses(grid_values: np.ndarray) -> np.ndarray:
 def circular_error(angle_a: float, angle_b: float) -> float:
     """Return the wrapped absolute angular error in radians."""
 
-    return float(np.abs((angle_a - angle_b + np.pi) % (2.0 * np.pi) - np.pi))
+    return float(backend_abs(mod(angle_a - angle_b + pi, 2.0 * pi) - pi))
 
 
-def circular_weighted_mean(angles: np.ndarray, weights: np.ndarray) -> float:
+def circular_weighted_mean(angles: Any, weights: Any) -> float:
     """Return the circular mean angle for weighted grid values."""
 
-    angles = np.asarray(angles, dtype=float).reshape(-1)
+    angles = asarray(angles, dtype=float).reshape(-1)
     weights = grid_probability_masses(weights)
-    moment = np.sum(weights * np.exp(1j * angles))
-    return float(np.mod(np.angle(moment), 2.0 * np.pi))
+    moment = backend_sum(weights * exp(1j * angles))
+    return float(mod(backend_angle(moment), 2.0 * pi))
 
 
 def _safe_sinc(x: float) -> float:
     if abs(x) < 1e-14:
         return 1.0
-    return float(np.sin(x) / x)
+    return float(sin(x) / x)
 
 
-def _as_body_increment(body_increment: np.ndarray) -> np.ndarray:
-    u = np.asarray(body_increment, dtype=float).reshape(-1)
+def _as_body_increment(body_increment: Any) -> Any:
+    u = asarray(body_increment, dtype=float).reshape(-1)
     if u.shape != (2,):
         raise ValueError("body_increment must be a 2-D vector.")
     return u
