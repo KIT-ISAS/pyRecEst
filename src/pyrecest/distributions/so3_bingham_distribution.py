@@ -1,26 +1,25 @@
 """Bingham distribution on SO(3)."""
 
-import numpy as _np
-from scipy.integrate import quad
-from scipy.special import iv
-
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
     all,
     amax,
     arccos,
+    argsort,
     array,
     clip,
+    column_stack,
     diag,
+    dot,
     eye,
     linalg,
     log,
     ndim,
+    one_hot,
     reshape,
     stack,
     sum,
-    to_numpy,
     transpose,
     where,
     zeros,
@@ -53,18 +52,9 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
     @staticmethod
     def calculate_normalization_constant(Z):
         """Return the 4-D Bingham normalizing constant."""
-        Z_np = _np.asarray(to_numpy(Z), dtype=float)
-        assert Z_np.shape == (4,), "Z must have shape (4,)."
-
-        def integrand(u):
-            first_pair = iv(0, 0.5 * _np.abs(float(Z_np[0] - Z_np[1])) * u)
-            second_pair = iv(0, 0.5 * _np.abs(float(Z_np[2] - Z_np[3])) * (1.0 - u))
-            exponent = 0.5 * (Z_np[0] + Z_np[1]) * u + 0.5 * (Z_np[2] + Z_np[3]) * (
-                1.0 - u
-            )
-            return first_pair * second_pair * _np.exp(exponent)
-
-        return float(2.0 * _np.pi**2 * quad(integrand, 0.0, 1.0)[0])
+        Z = array(Z, dtype=float)
+        assert Z.shape == (4,), "Z must have shape (4,)."
+        return BinghamDistribution.calculate_F(Z)
 
     @staticmethod
     def _as_quaternion_batch(quaternions):
@@ -107,22 +97,20 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
 
     @staticmethod
     def _orthogonal_completion(mode):
-        mode_np = _np.asarray(
-            to_numpy(SO3BinghamDistribution._canonicalize_quaternion(mode)), dtype=float
-        )
-        basis: list[_np.ndarray] = []
-        for column in _np.eye(4):
-            vector = column - _np.dot(column, mode_np) * mode_np
+        mode = SO3BinghamDistribution._canonicalize_quaternion(mode)
+        basis = []
+        for column in eye(4):
+            vector = column - dot(column, mode) * mode
             for existing in basis:
-                vector = vector - _np.dot(vector, existing) * existing
+                vector = vector - dot(vector, existing) * existing
 
-            norm = _np.linalg.norm(vector)
+            norm = linalg.norm(vector)
             if norm > 1e-10:
                 basis.append(vector / norm)
             if len(basis) == 3:
                 break
 
-        return array(_np.column_stack((*basis, mode_np)))
+        return column_stack((*basis, mode))
 
     @classmethod
     def from_mode_and_concentration(cls, mode, concentration):
@@ -135,19 +123,21 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
     @classmethod
     def from_concentration_matrix(cls, concentration_matrix):
         """Create from a symmetric 4-by-4 exponent matrix."""
-        matrix_np = _np.asarray(to_numpy(concentration_matrix), dtype=float)
-        assert matrix_np.shape == (4, 4), "concentration_matrix must have shape (4, 4)."
-        matrix_np = 0.5 * (matrix_np + matrix_np.T)
+        concentration_matrix = array(concentration_matrix, dtype=float)
+        assert concentration_matrix.shape == (
+            4,
+            4,
+        ), "concentration_matrix must have shape (4, 4)."
+        concentration_matrix = 0.5 * (
+            concentration_matrix + transpose(concentration_matrix)
+        )
 
-        eigenvalues, eigenvectors = _np.linalg.eigh(matrix_np)
-        order = _np.argsort(eigenvalues)
+        eigenvalues, eigenvectors = linalg.eigh(concentration_matrix)
+        order = argsort(eigenvalues)
         eigenvalues = eigenvalues[order]
         eigenvectors = eigenvectors[:, order]
-        if eigenvectors[-1, -1] < 0.0:
-            eigenvectors[:, -1] = -eigenvectors[:, -1]
 
         Z = eigenvalues - eigenvalues[-1]
-        Z[-1] = 0.0
         return cls(array(Z), array(eigenvectors))
 
     @classmethod
@@ -189,20 +179,22 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
 
     def moment_weights(self):
         """Return normalized Bingham moment weights without backend mutation."""
-        Z_np = _np.asarray(to_numpy(self.distFullSphere.Z), dtype=float)
-        normalizer = self.calculate_normalization_constant(Z_np)
+        Z = array(self.distFullSphere.Z, dtype=float)
+        normalizer = self.calculate_normalization_constant(Z)
         epsilon = 0.001
-        derivatives = _np.zeros(4)
+        derivatives = []
         for idx in range(4):
-            delta = _np.zeros(4)
-            delta[idx] = epsilon
-            derivatives[idx] = (
-                self.calculate_normalization_constant(Z_np + delta)
-                - self.calculate_normalization_constant(Z_np - delta)
-            ) / (2.0 * epsilon)
+            delta = epsilon * one_hot(idx, 4)
+            derivatives.append(
+                (
+                    self.calculate_normalization_constant(Z + delta)
+                    - self.calculate_normalization_constant(Z - delta)
+                )
+                / (2.0 * epsilon)
+            )
 
-        weights = derivatives / normalizer
-        weights = weights / _np.sum(weights)
+        weights = array(derivatives, dtype=float) / normalizer
+        weights = weights / sum(weights)
         return array(weights)
 
     def moment(self):
