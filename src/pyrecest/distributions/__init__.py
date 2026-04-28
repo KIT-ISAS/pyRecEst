@@ -255,6 +255,7 @@ from .se2_dirac_distribution import SE2DiracDistribution
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
 from .so3_product_dirac_distribution import SO3ProductDiracDistribution
+from .so3_dirac_distribution import SO3DiracDistribution
 
 # Aliases for brevity and compatibility with libDirectional
 HypertoroidalWNDistribution = HypertoroidalWrappedNormalDistribution
@@ -415,5 +416,6 @@ __all__ = aliases + [
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
     "SO3ProductDiracDistribution",
+    "SO3DiracDistribution",
     "SE2BinghamDistribution",
 ]
