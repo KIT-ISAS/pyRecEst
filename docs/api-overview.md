@@ -51,6 +51,7 @@ Common starting points include:
 
 - `KalmanFilter` for linear Gaussian Euclidean state estimation;
 - `UnscentedKalmanFilter` and `UKFOnManifolds` for nonlinear models;
+- `ManifoldExponentialMovingAverage` for streaming manifold-valued samples;
 - `EuclideanParticleFilter` and manifold-specific particle filters;
 - `VonMisesFilter`, `VonMisesFisherFilter`, and Fourier or grid filters for
   directional estimation;

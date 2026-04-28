@@ -53,6 +53,7 @@ from .kalman_filter import KalmanFilter
 from .kernel_sme_filter import KernelSMEFilter
 from .lin_bounded_particle_filter import LinBoundedParticleFilter
 from .lin_periodic_particle_filter import LinPeriodicParticleFilter
+from .manifold_exponential_moving_average import ManifoldExponentialMovingAverage
 from .manifold_mixins import (
     AbstractFilterManifoldMixin,
     AbstractHypersphereSubsetFilter,
@@ -157,6 +158,7 @@ __all__ = [
     "LinBoundedParticleFilter",
     "LinPeriodicFilterMixin",
     "BernoulliComponent",
+    "ManifoldExponentialMovingAverage",
     "MultiBernoulliTracker",
     "MultipleExtendedObjectStepResult",
     "LinPeriodicParticleFilter",

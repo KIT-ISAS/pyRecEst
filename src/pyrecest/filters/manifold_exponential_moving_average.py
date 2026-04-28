@@ -1,0 +1,87 @@
+"""Exponential moving average for states on manifolds."""
+
+from typing import Any, Callable
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import asarray
+
+from .abstract_filter import AbstractFilter
+
+
+class ManifoldExponentialMovingAverage(AbstractFilter):
+    """Exponential moving average on a manifold.
+
+    The estimate is updated by moving from the current state toward each new
+    sample in the tangent space at the current estimate:
+
+    ``x_new = phi(x, alpha * phi_inv(x, sample))``.
+
+    Parameters
+    ----------
+    initial_state:
+        Initial manifold element. If ``None``, the first update initializes the
+        estimate directly from the first sample.
+    alpha:
+        Weight of the new sample. Must be in ``[0, 1]``.
+    phi:
+        Retraction with signature ``phi(state, tangent_vector) -> state``.
+    phi_inv:
+        Inverse retraction with signature
+        ``phi_inv(state_ref, state) -> tangent_vector``.
+    """
+
+    def __init__(
+        self,
+        initial_state: Any,
+        alpha: float,
+        phi: Callable,
+        phi_inv: Callable,
+    ):
+        if not callable(phi):
+            raise TypeError("phi must be callable")
+        if not callable(phi_inv):
+            raise TypeError("phi_inv must be callable")
+
+        self.phi = phi
+        self.phi_inv = phi_inv
+        self._alpha = self._validate_alpha(alpha)
+
+        AbstractFilter.__init__(self, initial_state)
+
+    @staticmethod
+    def _validate_alpha(alpha: float) -> float:
+        alpha = float(alpha)
+        if alpha < 0.0 or alpha > 1.0:
+            raise ValueError("alpha must be between 0 and 1")
+        return alpha
+
+    @property
+    def alpha(self) -> float:
+        """Weight assigned to each new sample."""
+        return self._alpha
+
+    @alpha.setter
+    def alpha(self, alpha: float):
+        self._alpha = self._validate_alpha(alpha)
+
+    @property
+    def filter_state(self):
+        """Return the current manifold estimate."""
+        return self._filter_state
+
+    @filter_state.setter
+    def filter_state(self, new_state):
+        self._filter_state = new_state
+
+    def update(self, sample):
+        """Update the moving average with a new manifold-valued sample."""
+        if self._filter_state is None:
+            self._filter_state = sample
+            return
+
+        tangent_update = self.alpha * asarray(self.phi_inv(self._filter_state, sample))
+        self._filter_state = self.phi(self._filter_state, tangent_update)
+
+    def get_point_estimate(self):
+        """Return the current manifold estimate."""
+        return self._filter_state
