@@ -17,6 +17,8 @@ toward a generated documentation site.
   public classes live.
 - [Task tutorials](tutorials/index.md): work through common distribution,
   filtering, tracking, and evaluation tasks.
+- [Backend compatibility](backend-compatibility.md): choose between NumPy,
+  PyTorch, and JAX and understand known support gaps.
 - [Shapes and conventions](conventions.md): learn the expected state,
   measurement, covariance, batch, and manifold-coordinate shapes.
 - [Examples](examples.md): browse executable scripts that demonstrate basic
@@ -35,4 +37,5 @@ Good next documentation additions would be:
 
 - deeper convention notes for grids, state-space subdivisions, and advanced
   tracker outputs;
-- backend compatibility notes for APIs that do not support every backend.
+- API-specific backend support tables for advanced distributions, trackers,
+  evaluators, and utilities.

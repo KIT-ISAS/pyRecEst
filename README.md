@@ -85,6 +85,8 @@ The `docs/` directory contains the first project documentation pages:
   setup, backend selection, and running examples.
 - [API overview](docs/api-overview.md) maps the main packages and points to the
   most common public entry points.
+- [Backend compatibility](docs/backend-compatibility.md) explains the NumPy,
+  PyTorch, and JAX support model and known limitations.
 - [API reference](docs/reference/index.md) contains generated package reference
   pages built with MkDocs and mkdocstrings.
 - [Task tutorials](docs/tutorials/index.md) show common distribution, filtering,
