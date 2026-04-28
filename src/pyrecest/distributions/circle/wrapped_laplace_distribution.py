@@ -5,6 +5,15 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 
 
 class WrappedLaplaceDistribution(AbstractCircularDistribution):
+    """Wrapped Laplace distribution on the circle.
+
+    References
+    ----------
+    Jammalamadaka, S. R., & Kozubowski, T. J. (2004). New families of
+    wrapped distributions for modeling skew circular data. Communications in
+    Statistics - Theory and Methods, 33(9), 2059-2074.
+    """
+
     def __init__(self, lambda_, kappa_):
         AbstractCircularDistribution.__init__(self)
         assert lambda_.shape in ((1,), ())
