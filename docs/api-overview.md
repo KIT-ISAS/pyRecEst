@@ -22,7 +22,8 @@ batch, measurement-set, and manifold-coordinate shapes used by common APIs.
 
 Dynamic backend facade used by the rest of the project. The default backend is
 NumPy. PyTorch and JAX support are selected through `PYRECEST_BACKEND` before
-importing `pyrecest`.
+importing `pyrecest`. See [backend compatibility](backend-compatibility.md) for
+backend-specific support notes and known limitations.
 
 ### `pyrecest.distributions`
 
@@ -51,6 +52,7 @@ Common starting points include:
 
 - `KalmanFilter` for linear Gaussian Euclidean state estimation;
 - `UnscentedKalmanFilter` and `UKFOnManifolds` for nonlinear models;
+- `ManifoldExponentialMovingAverage` for streaming manifold-valued samples;
 - `EuclideanParticleFilter` and manifold-specific particle filters;
 - `VonMisesFilter`, `VonMisesFisherFilter`, and Fourier or grid filters for
   directional estimation;
@@ -74,7 +76,9 @@ Samplers and grid generators for Euclidean and manifold domains.
 Common starting points include:
 
 - `GaussianSampler`;
+- `MerweScaledSigmaPoints` and `JulierSigmaPoints`;
 - `FibonacciGridSampler`;
+- `FibonacciRejectionSampler`;
 - `SobolGridSampler`;
 - `HaltonGridSampler`;
 - `SphericalFibonacciSampler`;
@@ -111,7 +115,9 @@ Common starting points include:
 
 ## Where To Look Next
 
-- Use [the examples guide](../examples/README.md) for small runnable workflows.
+- Use [the examples guide](examples.md) for small runnable workflows.
+- Use [the generated API reference](reference/index.md) for package-level
+  reference pages built from docstrings.
 - Use `tests/` as executable reference coverage for APIs that do not yet have
   dedicated tutorials.
 - Use module docstrings and class docstrings for detailed mathematical notes
