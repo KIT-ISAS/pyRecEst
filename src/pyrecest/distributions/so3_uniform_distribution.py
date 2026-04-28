@@ -15,7 +15,7 @@ from pyrecest.backend import (
 from .hypersphere_subset.hyperhemispherical_uniform_distribution import (
     HyperhemisphericalUniformDistribution,
 )
-from .so3_dirac_distribution import SO3DiracDistribution
+from .so3_dirac_distribution import normalize_quaternions
 
 
 class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
@@ -32,7 +32,7 @@ class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
 
     @staticmethod
     def _normalize_quaternions(quaternions):
-        return SO3DiracDistribution._normalize_quaternions(quaternions)
+        return normalize_quaternions(quaternions)
 
     def pdf(self, xs):
         """Evaluate the constant SO(3) density."""
@@ -46,7 +46,7 @@ class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
 
     def sample(self, n):
         """Draw ``n`` canonical scalar-last unit quaternions."""
-        return super().sample(n)
+        return self._normalize_quaternions(super().sample(n))
 
     def mode(self):
         """Mode is undefined for a uniform SO(3) distribution."""

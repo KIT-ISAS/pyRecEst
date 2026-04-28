@@ -22,6 +22,21 @@ from .hypersphere_subset.hyperhemispherical_dirac_distribution import (
 )
 
 
+def normalize_quaternions(quaternions):
+    """Return canonical scalar-last unit quaternions shaped ``(n, 4)``."""
+    quaternions = array(quaternions, dtype=float)
+    if ndim(quaternions) == 1:
+        quaternions = reshape(quaternions, (1, 4))
+
+    assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
+    norms = linalg.norm(quaternions, None, -1)
+    assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
+
+    normalized = quaternions / reshape(norms, (-1, 1))
+    sign = where(normalized[:, -1:] < 0.0, -1.0, 1.0)
+    return sign * normalized
+
+
 class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
     """Weighted Dirac distribution on SO(3).
 
@@ -32,22 +47,12 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
     """
 
     def __init__(self, d, w=None):
-        quaternions = self._normalize_quaternions(d)
+        quaternions = normalize_quaternions(d)
         super().__init__(quaternions, w=w)
 
     @staticmethod
     def _normalize_quaternions(quaternions):
-        quaternions = array(quaternions, dtype=float)
-        if ndim(quaternions) == 1:
-            quaternions = reshape(quaternions, (1, 4))
-
-        assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
-        norms = linalg.norm(quaternions, None, -1)
-        assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
-
-        normalized = quaternions / reshape(norms, (-1, 1))
-        sign = where(normalized[:, -1:] < 0.0, -1.0, 1.0)
-        return sign * normalized
+        return normalize_quaternions(quaternions)
 
     @staticmethod
     def _require_rotation_method(method_name):
@@ -92,8 +97,8 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
     @staticmethod
     def geodesic_distance(rotation_a, rotation_b):
         """Return the SO(3) geodesic distance between quaternions in radians."""
-        quat_a = SO3DiracDistribution._normalize_quaternions(rotation_a)
-        quat_b = SO3DiracDistribution._normalize_quaternions(rotation_b)
+        quat_a = normalize_quaternions(rotation_a)
+        quat_b = normalize_quaternions(rotation_b)
         inner = abs(sum(quat_a * quat_b, axis=-1))
         return 2.0 * arccos(clip(inner, 0.0, 1.0))
 
