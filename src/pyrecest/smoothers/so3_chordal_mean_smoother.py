@@ -72,13 +72,10 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
 
         if ndim(rotation_array) == 3:
             if rotation_array.shape[1:] == (3, 3):
-                return [
-                    rotation_array[idx] for idx in range(rotation_array.shape[0])
-                ]
+                return [rotation_array[idx] for idx in range(rotation_array.shape[0])]
             if rotation_array.shape[:2] == (3, 3):
                 return [
-                    rotation_array[:, :, idx]
-                    for idx in range(rotation_array.shape[2])
+                    rotation_array[:, :, idx] for idx in range(rotation_array.shape[2])
                 ]
 
         raise ValueError(
@@ -125,14 +122,8 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
         determinant = linalg.det(
             left_singular_vectors @ right_singular_vectors_transposed
         )
-        correction = diag(
-            asarray([1.0, 1.0, 1.0 if determinant >= 0.0 else -1.0])
-        )
-        return (
-            left_singular_vectors
-            @ correction
-            @ right_singular_vectors_transposed
-        )
+        correction = diag(asarray([1.0, 1.0, 1.0 if determinant >= 0.0 else -1.0]))
+        return left_singular_vectors @ correction @ right_singular_vectors_transposed
 
     @staticmethod
     def chordal_distance(rotation_a, rotation_b):
@@ -156,9 +147,7 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
             "weights",
         )
         if normalized_weights is None:
-            normalized_weights = asarray(
-                [1.0 / len(rotation_list) for _ in rotation_list]
-            )
+            normalized_weights = asarray([1.0 / len(rotation_list) for _ in rotation_list])
 
         mean_matrix = zeros((3, 3))
         for idx, rotation in enumerate(rotation_list):
@@ -166,18 +155,30 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
 
         return cls.project_to_so3(mean_matrix)
 
+    def _active_parameters(self, window_size):
+        if window_size is None:
+            return self.window_size, self.kernel_weights
+        return self._validate_window_size(window_size), None
+
+    @staticmethod
+    def _window_bounds(sequence_length: int, window_size: int, idx: int):
+        before = window_size // 2
+        after = window_size - before - 1
+        start = max(0, idx - before)
+        stop = min(sequence_length, idx + after + 1)
+        first_kernel_index = before - (idx - start)
+        return start, stop, first_kernel_index
+
     def _local_weights(
         self,
-        start: int,
-        stop: int,
-        first_kernel_index: int,
-        *,
+        window_bounds,
         sample_weights,
         kernel_weights,
     ):
         if sample_weights is None and kernel_weights is None:
             return None
 
+        start, stop, first_kernel_index = window_bounds
         local_weights = []
         for rotation_idx in range(start, stop):
             weight = 1.0
@@ -218,12 +219,7 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
         if len(rotation_list) == 0:
             return []
 
-        active_window_size = (
-            self.window_size
-            if window_size is None
-            else self._validate_window_size(window_size)
-        )
-
+        active_window_size, active_kernel_weights = self._active_parameters(window_size)
         sample_weights = self._normalize_weight_vector(
             weights,
             len(rotation_list),
@@ -231,24 +227,16 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
             normalize=False,
         )
 
-        before = active_window_size // 2
-        after = active_window_size - before - 1
         smoothed = []
-
         for idx in range(len(rotation_list)):
-            start = max(0, idx - before)
-            stop = min(len(rotation_list), idx + after + 1)
-            first_kernel_index = before - (idx - start)
+            window_bounds = self._window_bounds(len(rotation_list), active_window_size, idx)
             local_weights = self._local_weights(
-                start,
-                stop,
-                first_kernel_index,
-                sample_weights=sample_weights,
-                kernel_weights=self.kernel_weights if window_size is None else None,
+                window_bounds,
+                sample_weights,
+                active_kernel_weights,
             )
-            smoothed.append(
-                self.chordal_mean(rotation_list[start:stop], local_weights)
-            )
+            start, stop, _ = window_bounds
+            smoothed.append(self.chordal_mean(rotation_list[start:stop], local_weights))
 
         return smoothed
 
