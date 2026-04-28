@@ -143,9 +143,11 @@ class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
         simple_factories = (
             (AbstractSE2Distribution, SE2DiracDistribution),
             (AbstractSE3Distribution, SE3DiracDistribution),
-            (AbstractHyperhemisphericalDistribution, HyperhemisphericalDiracDistribution),
+            (
+                AbstractHyperhemisphericalDistribution,
+                HyperhemisphericalDiracDistribution,
+            ),
             (AbstractHypersphericalDistribution, HypersphericalDiracDistribution),
-            (AbstractLinearDistribution, LinearDiracDistribution),
         )
         for distribution_type, factory in simple_factories:
             if isinstance(state, distribution_type):
@@ -158,6 +160,9 @@ class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
             if state.dim == 1:
                 return cls._circular_dirac_factory
             return partial(HypertoroidalDiracDistribution, dim=state.dim)
+
+        if isinstance(state, AbstractLinearDistribution):
+            return LinearDiracDistribution
 
         return LinearDiracDistribution
 
