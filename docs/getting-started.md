@@ -91,6 +91,8 @@ support model and known limitations.
 
 ## Explore More Usage
 
+- Work through [the task tutorials](tutorials/index.md) for distribution,
+  filtering, tracking, and evaluation workflows.
 - Start with [the examples guide](examples.md) for runnable scripts.
 - Look at [the API overview](api-overview.md) to find the package that owns a
   concept.
