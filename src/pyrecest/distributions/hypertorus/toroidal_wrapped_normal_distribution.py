@@ -12,8 +12,14 @@ from .hypertoroidal_wrapped_normal_distribution import (
 class ToroidalWrappedNormalDistribution(
     HypertoroidalWrappedNormalDistribution, AbstractToroidalDistribution
 ):
-    """
-    Toroidal Wrapped Normal Distribution.
+    """Bivariate wrapped normal distribution on the torus.
+
+    References
+    ----------
+    Kurz, G., Gilitschenski, I., Dolgov, M., & Hanebeck, U. D. (2014).
+    Bivariate Angular Estimation Under Consideration of Dependencies Using
+    Directional Statistics. Proceedings of the 53rd IEEE Conference on
+    Decision and Control.
     """
 
     def mean_4D(self):

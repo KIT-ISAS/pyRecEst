@@ -56,6 +56,12 @@ class HypertoroidalFourierDistribution(
         - 'identity':  pdf(x) = sum_k C_k exp(i k⋅x)
         - 'sqrt':      pdf(x) = | sum_k C_k exp(i k⋅x) |^2
         - 'log':       pdf(x) ∝ exp(sum_k C_k exp(i k⋅x))  (no auto-normalization)
+
+    References
+    ----------
+    Pfaff, F., Kurz, G., & Hanebeck, U. D. (2016). Multivariate Angular
+    Filtering Using Fourier Series. Journal of Advances in Information
+    Fusion, 11(2), 206-226.
     """
 
     def __init__(self, coeff_mat, transformation: str = "sqrt"):

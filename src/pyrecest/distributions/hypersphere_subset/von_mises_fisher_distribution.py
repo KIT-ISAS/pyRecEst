@@ -29,6 +29,15 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
+    """Von Mises-Fisher distribution on the hypersphere.
+
+    References
+    ----------
+    Fisher, R. (1953). Dispersion on a sphere. Proceedings of the Royal
+    Society of London. Series A, Mathematical and Physical Sciences,
+    217(1130), 295-305.
+    """
+
     def __init__(self, mu, kappa):
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6

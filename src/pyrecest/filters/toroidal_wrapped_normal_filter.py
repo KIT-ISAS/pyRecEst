@@ -9,6 +9,20 @@ from .manifold_mixins import ToroidalFilterMixin
 
 
 class ToroidalWrappedNormalFilter(AbstractFilter, ToroidalFilterMixin):
+    """Filter based on the bivariate wrapped normal distribution.
+
+    References
+    ----------
+    Kurz, G., Gilitschenski, I., Dolgov, M., & Hanebeck, U. D. (2014).
+    Bivariate Angular Estimation Under Consideration of Dependencies Using
+    Directional Statistics. Proceedings of the 53rd IEEE Conference on
+    Decision and Control.
+
+    Kurz, G., Pfaff, F., & Hanebeck, U. D. (2017). Nonlinear Toroidal
+    Filtering Based on Bivariate Wrapped Normal Distributions. Proceedings of
+    the 20th International Conference on Information Fusion.
+    """
+
     def __init__(self):
         ToroidalFilterMixin.__init__(self)
         AbstractFilter.__init__(

@@ -95,5 +95,7 @@ at runtime.
   concept.
 - Use [the API reference](reference/index.md) for generated public package
   reference pages.
+- Read [Shapes and conventions](conventions.md) before writing custom models or
+  tracker measurement sets.
 - Use `tests/` as executable reference material for advanced APIs that do not
   have dedicated tutorials yet.
