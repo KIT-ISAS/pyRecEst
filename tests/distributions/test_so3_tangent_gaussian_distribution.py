@@ -4,40 +4,14 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import (
-    array,
-    cos,
-    diag,
-    eye,
-    linalg,
-    ones,
-    pi,
-    random,
-    sin,
-    sqrt,
-    to_numpy,
-)
+from pyrecest.backend import array, diag, linalg, ones, pi, random, sqrt
 from pyrecest.distributions import SO3TangentGaussianDistribution
-
-ATOL = 1e-6
-
-
-def scalar(value):
-    return float(to_numpy(value).reshape(-1)[0])
-
-
-def z_quaternion(angle):
-    return array([0.0, 0.0, sin(angle / 2.0), cos(angle / 2.0)])
-
-
-def z_rotation(angle):
-    return array(
-        [
-            [cos(angle), -sin(angle), 0.0],
-            [sin(angle), cos(angle), 0.0],
-            [0.0, 0.0, 1.0],
-        ]
-    )
+from tests.distributions.so3_test_helpers import (
+    ATOL,
+    assert_matches_z_rotation,
+    scalar,
+    z_quaternion,
+)
 
 
 class SO3TangentGaussianDistributionTest(unittest.TestCase):
@@ -107,14 +81,7 @@ class SO3TangentGaussianDistributionTest(unittest.TestCase):
             z_quaternion(pi / 2.0), diag(array([0.1, 0.1, 0.1]))
         )
 
-        npt.assert_allclose(
-            dist.mean_rotation_matrix(), z_rotation(pi / 2.0), atol=ATOL
-        )
-        npt.assert_allclose(
-            dist.mean_rotation_matrix().T @ dist.mean_rotation_matrix(),
-            eye(3),
-            atol=ATOL,
-        )
+        assert_matches_z_rotation(self, dist.mean_rotation_matrix(), pi / 2.0)
 
 
 if __name__ == "__main__":
