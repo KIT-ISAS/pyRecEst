@@ -5,10 +5,8 @@ from pyrecest.backend import (
     abs,
     all,
     amax,
-    arccos,
     argsort,
     array,
-    clip,
     column_stack,
     diag,
     dot,
@@ -23,7 +21,7 @@ from pyrecest.backend import (
     zeros,
 )
 
-from ._so3_quaternion import normalize_quaternions
+from ._so3_helpers import geodesic_distance, normalize_quaternions
 from .hypersphere_subset.bingham_distribution import BinghamDistribution
 from .hypersphere_subset.hyperhemispherical_bingham_distribution import (
     HyperhemisphericalBinghamDistribution,
@@ -222,13 +220,7 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
         """Draw ``n`` canonical scalar-last unit quaternion samples."""
         return self._normalize_quaternions(super().sample(n))
 
-    @staticmethod
-    def geodesic_distance(rotation_a, rotation_b):
-        """Return the SO(3) geodesic distance between quaternions in radians."""
-        quat_a = SO3BinghamDistribution._normalize_quaternions(rotation_a)
-        quat_b = SO3BinghamDistribution._normalize_quaternions(rotation_b)
-        inner = abs(sum(quat_a * quat_b, axis=-1))
-        return 2.0 * arccos(clip(inner, 0.0, 1.0))
+    geodesic_distance = staticmethod(geodesic_distance)
 
     @staticmethod
     def as_rotation_matrices(quaternions):

@@ -255,6 +255,7 @@ from .se2_dirac_distribution import SE2DiracDistribution
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
 from .so3_bingham_distribution import SO3BinghamDistribution
+from .so3_tangent_gaussian_distribution import SO3TangentGaussianDistribution
 from .so3_dirac_distribution import SO3DiracDistribution
 
 # Aliases for brevity and compatibility with libDirectional
@@ -416,6 +417,7 @@ __all__ = aliases + [
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
     "SO3BinghamDistribution",
+    "SO3TangentGaussianDistribution",
     "SO3DiracDistribution",
     "SE2BinghamDistribution",
 ]
