@@ -86,5 +86,7 @@ at runtime.
 - Start with [the examples guide](../examples/README.md) for runnable scripts.
 - Look at [the API overview](api-overview.md) to find the package that owns a
   concept.
+- Read [Shapes and conventions](conventions.md) before writing custom models or
+  tracker measurement sets.
 - Use `tests/` as executable reference material for advanced APIs that do not
   have dedicated tutorials yet.
