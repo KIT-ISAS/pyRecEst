@@ -20,5 +20,5 @@ user code.
 - [Getting started](../getting-started.md) covers installation and backend
   selection.
 - [API overview](../api-overview.md) maps the main packages.
-- [Examples](../../examples/README.md) lists the executable scripts in the
+- [Examples](../examples.md) lists the executable scripts in the
   repository.
