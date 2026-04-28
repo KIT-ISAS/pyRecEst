@@ -6,25 +6,33 @@ import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, cos, eye, pi, sin, stack
 from pyrecest.distributions import SO3DiracDistribution
+from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribution import (
+    HyperhemisphericalDiracDistribution,
+)
 
 ATOL = 1e-6
 
 
 class SO3DiracDistributionTest(unittest.TestCase):
+    def test_inherits_hyperhemispherical_dirac_distribution(self):
+        dist = SO3DiracDistribution(array([0.0, 0.0, 0.0, 1.0]))
+
+        self.assertIsInstance(dist, HyperhemisphericalDiracDistribution)
+
     def test_constructor_normalizes_and_canonicalizes_quaternions(self):
         dist = SO3DiracDistribution(
-            array([[-2.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 3.0]]),
+            array([[0.0, 0.0, 0.0, -2.0], [0.0, 0.0, 0.0, 3.0]]),
             array([2.0 / 3.0, 1.0 / 3.0]),
         )
 
-        npt.assert_allclose(dist.d[0], array([1.0, 0.0, 0.0, 0.0]), atol=ATOL)
+        npt.assert_allclose(dist.d[0], array([0.0, 0.0, 0.0, 1.0]), atol=ATOL)
         npt.assert_allclose(dist.d[1], array([0.0, 0.0, 0.0, 1.0]), atol=ATOL)
         npt.assert_allclose(dist.w, array([2.0 / 3.0, 1.0 / 3.0]), atol=ATOL)
         self.assertTrue(dist.is_valid())
 
     def test_antipodal_quaternions_have_same_mean(self):
         angle = pi / 3.0
-        quat = array([cos(angle / 2.0), 0.0, 0.0, sin(angle / 2.0)])
+        quat = array([0.0, 0.0, sin(angle / 2.0), cos(angle / 2.0)])
         dist = SO3DiracDistribution(stack([quat, -quat], axis=0))
 
         npt.assert_allclose(dist.mean(), quat, atol=ATOL)
@@ -42,9 +50,9 @@ class SO3DiracDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.as_rotation_matrices(), rotations, atol=ATOL)
 
     def test_geodesic_distance_respects_antipodal_equivalence(self):
-        identity = array([1.0, 0.0, 0.0, 0.0])
-        identity_antipodal = array([-1.0, 0.0, 0.0, 0.0])
-        quarter_turn = array([cos(pi / 4.0), 0.0, 0.0, sin(pi / 4.0)])
+        identity = array([0.0, 0.0, 0.0, 1.0])
+        identity_antipodal = array([0.0, 0.0, 0.0, -1.0])
+        quarter_turn = array([0.0, 0.0, sin(pi / 4.0), cos(pi / 4.0)])
 
         npt.assert_allclose(
             SO3DiracDistribution.geodesic_distance(identity, identity_antipodal),
@@ -59,11 +67,11 @@ class SO3DiracDistributionTest(unittest.TestCase):
 
     def test_mode_returns_highest_weight_canonical_quaternion(self):
         dist = SO3DiracDistribution(
-            array([[1.0, 0.0, 0.0, 0.0], [-0.5, 0.5, 0.5, 0.5]]),
+            array([[0.0, 0.0, 0.0, 1.0], [0.5, 0.5, 0.5, -0.5]]),
             array([0.1, 0.9]),
         )
 
-        npt.assert_allclose(dist.mode(), array([0.5, -0.5, -0.5, -0.5]), atol=ATOL)
+        npt.assert_allclose(dist.mode(), array([-0.5, -0.5, -0.5, 0.5]), atol=ATOL)
 
 
 if __name__ == "__main__":
