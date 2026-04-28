@@ -3,19 +3,16 @@
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    arccos,
-    clip,
     log,
     ones,
     pi,
     stack,
-    sum,
 )
 
+from ._so3_helpers import geodesic_distance, normalize_quaternions
 from .hypersphere_subset.hyperhemispherical_uniform_distribution import (
     HyperhemisphericalUniformDistribution,
 )
-from .so3_dirac_distribution import normalize_quaternions
 
 
 class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
@@ -60,13 +57,7 @@ class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
         """Mean axis is undefined for a uniform SO(3) distribution."""
         raise AttributeError("Mean axis not available for uniform SO(3) distribution")
 
-    @staticmethod
-    def geodesic_distance(rotation_a, rotation_b):
-        """Return the SO(3) geodesic distance between quaternions in radians."""
-        quat_a = SO3UniformDistribution._normalize_quaternions(rotation_a)
-        quat_b = SO3UniformDistribution._normalize_quaternions(rotation_b)
-        inner = abs(sum(quat_a * quat_b, axis=-1))
-        return 2.0 * arccos(clip(inner, 0.0, 1.0))
+    geodesic_distance = staticmethod(geodesic_distance)
 
     @staticmethod
     def as_rotation_matrices(quaternions):
