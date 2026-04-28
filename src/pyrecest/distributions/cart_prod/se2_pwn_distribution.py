@@ -18,10 +18,12 @@ class SE2PWNDistribution(PartiallyWrappedNormalDistribution, AbstractSE2Distribu
     The first component is the rotation angle (periodic), the second and
     third components are the 2-D translation (linear).
 
-    Based on:
-        Gerhard Kurz, Igor Gilitschenski, Uwe D. Hanebeck,
-        "The Partially Wrapped Normal Distribution for SE(2) Estimation",
-        Proc. IEEE MFI 2014.
+    References
+    ----------
+    Kurz, G., Gilitschenski, I., & Hanebeck, U. D. (2014). The Partially
+    Wrapped Normal Distribution for SE(2) Estimation. Proceedings of the
+    2014 IEEE International Conference on Multisensor Fusion and Information
+    Integration.
     """
 
     def __init__(self, mu, C):

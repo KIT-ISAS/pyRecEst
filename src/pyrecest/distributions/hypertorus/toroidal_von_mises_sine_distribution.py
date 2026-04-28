@@ -7,6 +7,14 @@ from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDist
 
 
 class ToroidalVonMisesSineDistribution(AbstractToroidalBivarVMDistribution):
+    """Bivariate von Mises sine model on the torus.
+
+    References
+    ----------
+    Singh, H., Hnizdo, V., & Demchuk, E. (2002). Probabilistic model for
+    two dependent circular variables. Biometrika, 89(3), 719-723.
+    """
+
     def __init__(self, mu, kappa, lambda_):
         AbstractToroidalBivarVMDistribution.__init__(self, mu, kappa)
         assert lambda_.shape == ()

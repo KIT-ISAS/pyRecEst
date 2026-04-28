@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 from pyrecest.backend import eye, zeros
 from scipy.special import erfinv as scipy_erfinv
+from scipy.stats import qmc
 
 from ..distributions.nonperiodic.gaussian_distribution import GaussianDistribution
 from .abstract_sampler import AbstractSampler
@@ -135,6 +136,60 @@ class FibonacciRejectionSampler(AbstractEuclideanSampler):
             "bounding_box": bounding_box,
             "max_density": max_density,
         }
+
+
+class _QMCProposalGridSampler(AbstractEuclideanSampler):
+    """Base class for deterministic low-discrepancy proposal grids."""
+
+    def sample_stochastic(self, n_samples: int, dim: int):
+        """Return deterministic proposal points on the unit hypercube."""
+        return self.get_uniform_samples(n_samples, dim)
+
+    def get_uniform_samples(self, n_samples: int, dim: int):
+        """Return deterministic proposal points in ``[0, 1)^dim``.
+
+        Parameters
+        ----------
+        n_samples : int
+            Number of proposal points.
+        dim : int
+            Dimension of the unit hypercube.
+
+        Returns
+        -------
+        np.ndarray of shape (n_samples, dim)
+        """
+        n_samples, dim = self._validate_grid_args(n_samples, dim)
+        if n_samples == 0:
+            return np.empty((0, dim))
+        return self._make_engine(dim).random(n_samples)
+
+    @staticmethod
+    def _validate_grid_args(n_samples: int, dim: int):
+        n_samples = int(n_samples)
+        dim = int(dim)
+        if n_samples < 0:
+            raise ValueError("n_samples must be nonnegative")
+        if dim < 1:
+            raise ValueError("dim must be positive")
+        return n_samples, dim
+
+    def _make_engine(self, dim: int):
+        raise NotImplementedError
+
+
+class SobolGridSampler(_QMCProposalGridSampler):
+    """Deterministic Sobol proposal grid on the Euclidean unit hypercube."""
+
+    def _make_engine(self, dim: int):
+        return qmc.Sobol(d=dim, scramble=False)
+
+
+class HaltonGridSampler(_QMCProposalGridSampler):
+    """Deterministic Halton proposal grid on the Euclidean unit hypercube."""
+
+    def _make_engine(self, dim: int):
+        return qmc.Halton(d=dim, scramble=False)
 
 
 def _is_prime(n):

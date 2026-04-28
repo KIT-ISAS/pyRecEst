@@ -4,6 +4,8 @@ from .euclidean_sampler import (
     FibonacciGridSampler,
     FibonacciRejectionSampler,
     GaussianSampler,
+    HaltonGridSampler,
+    SobolGridSampler,
 )
 from .hyperspherical_sampler import (
     AbstractHopfBasedS3Sampler,
@@ -23,6 +25,8 @@ __all__ = [
     "GaussianSampler",
     "FibonacciGridSampler",
     "FibonacciRejectionSampler",
+    "SobolGridSampler",
+    "HaltonGridSampler",
     "get_grid_hypersphere",
     "CircularUniformSampler",
     "AbstractHypersphericalUniformSampler",

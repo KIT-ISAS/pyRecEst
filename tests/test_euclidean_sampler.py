@@ -4,10 +4,14 @@ import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import mean, ones, random, std, zeros
 from pyrecest.sampling import FibonacciRejectionSampler as PublicFibonacciRejectionSampler
+from pyrecest.sampling import HaltonGridSampler as PublicHaltonGridSampler
+from pyrecest.sampling import SobolGridSampler as PublicSobolGridSampler
 from pyrecest.sampling.euclidean_sampler import (
     FibonacciGridSampler,
     FibonacciRejectionSampler,
     GaussianSampler,
+    HaltonGridSampler,
+    SobolGridSampler,
 )
 from scipy.stats import shapiro
 
@@ -123,7 +127,6 @@ class TestFibonacciGridSampler(unittest.TestCase):
             self.assertEqual(R.shape, (d,))
             npt.assert_allclose(V.T @ V, np.eye(d), atol=1e-12)
 
-
 class TestFibonacciRejectionSampler(unittest.TestCase):
     def setUp(self):
         self.sampler = FibonacciRejectionSampler()
@@ -238,6 +241,64 @@ class TestFibonacciRejectionSampler(unittest.TestCase):
     def test_public_sampling_import(self):
         """FibonacciRejectionSampler should be exported from pyrecest.sampling."""
         self.assertIs(PublicFibonacciRejectionSampler, FibonacciRejectionSampler)
+
+
+class TestDeterministicProposalGridSamplers(unittest.TestCase):
+    def test_sobol_first_points(self):
+        """Sobol samples should match the unscrambled low-discrepancy sequence."""
+        samples = SobolGridSampler().get_uniform_samples(4, 2)
+        expected = np.array(
+            [
+                [0.0, 0.0],
+                [0.5, 0.5],
+                [0.75, 0.25],
+                [0.25, 0.75],
+            ]
+        )
+        npt.assert_allclose(samples, expected)
+
+    def test_halton_first_points(self):
+        """Halton samples should match the unscrambled low-discrepancy sequence."""
+        samples = HaltonGridSampler().get_uniform_samples(5, 2)
+        expected = np.array(
+            [
+                [0.0, 0.0],
+                [0.5, 1.0 / 3.0],
+                [0.25, 2.0 / 3.0],
+                [0.75, 1.0 / 9.0],
+                [0.125, 4.0 / 9.0],
+            ]
+        )
+        npt.assert_allclose(samples, expected)
+
+    def test_proposal_grids_are_deterministic(self):
+        """Repeated calls should return identical proposal grids."""
+        for sampler in (SobolGridSampler(), HaltonGridSampler()):
+            with self.subTest(sampler=sampler.__class__.__name__):
+                samples1 = sampler.get_uniform_samples(16, 3)
+                samples2 = sampler.get_uniform_samples(16, 3)
+                npt.assert_array_equal(samples1, samples2)
+
+    def test_sample_stochastic_returns_unit_hypercube_proposals(self):
+        """The sampler interface should return deterministic unit-hypercube points."""
+        for sampler in (SobolGridSampler(), HaltonGridSampler()):
+            with self.subTest(sampler=sampler.__class__.__name__):
+                samples = sampler.sample_stochastic(8, 3)
+                self.assertEqual(samples.shape, (8, 3))
+                self.assertTrue(np.all(samples >= 0.0))
+                self.assertTrue(np.all(samples < 1.0))
+
+    def test_zero_samples(self):
+        """Requesting zero proposals should return an empty two-dimensional array."""
+        for sampler in (SobolGridSampler(), HaltonGridSampler()):
+            with self.subTest(sampler=sampler.__class__.__name__):
+                samples = sampler.get_uniform_samples(0, 3)
+                self.assertEqual(samples.shape, (0, 3))
+
+    def test_public_sampling_imports(self):
+        """Sobol and Halton samplers should be exported from pyrecest.sampling."""
+        self.assertIs(PublicSobolGridSampler, SobolGridSampler)
+        self.assertIs(PublicHaltonGridSampler, HaltonGridSampler)
 
 
 if __name__ == "__main__":
