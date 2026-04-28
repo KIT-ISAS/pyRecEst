@@ -11,7 +11,7 @@ from typing import Callable, Sequence
 import pyrecest.backend
 from pyrecest.backend import asarray, copy, linalg, ndim, outer, stack, zeros
 from pyrecest.distributions import GaussianDistribution
-from pyrecest.filters._ukf import MerweScaledSigmaPoints
+from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 
 from .abstract_smoother import AbstractSmoother
 

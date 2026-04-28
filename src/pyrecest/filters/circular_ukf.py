@@ -14,8 +14,9 @@ import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, atleast_1d, mod, pi, sign
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 
-from ._ukf import MerweScaledSigmaPoints, UnscentedKalmanFilter, _UKFModel
+from ._ukf import UnscentedKalmanFilter, _UKFModel
 from .abstract_filter import AbstractFilter
 from .manifold_mixins import CircularFilterMixin
 

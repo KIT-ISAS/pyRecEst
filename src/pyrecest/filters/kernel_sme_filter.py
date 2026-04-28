@@ -28,8 +28,8 @@ from pyrecest.backend import (
     zeros_like,
 )
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.sampling.sigma_points import JulierSigmaPoints
 
-from ._ukf import JulierSigmaPoints
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 
 
