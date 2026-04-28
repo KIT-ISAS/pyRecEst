@@ -3,19 +3,13 @@
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
-    all,
     arccos,
-    array,
     clip,
-    linalg,
     log,
-    ndim,
     ones,
     pi,
-    reshape,
     stack,
     sum,
-    where,
 )
 
 from .hypersphere_subset.hyperhemispherical_uniform_distribution import (
@@ -24,6 +18,7 @@ from .hypersphere_subset.hyperhemispherical_uniform_distribution import (
 from .hypersphere_subset.hyperspherical_uniform_distribution import (
     HypersphericalUniformDistribution,
 )
+from .so3_dirac_distribution import SO3DiracDistribution
 
 
 class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
@@ -39,25 +34,8 @@ class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
         super().__init__(dim=3)
 
     @staticmethod
-    def _as_quaternion_batch(quaternions):
-        quaternions = array(quaternions, dtype=float)
-        if ndim(quaternions) == 1:
-            assert quaternions.shape[0] == 4, "SO(3) quaternions must have length 4."
-            quaternions = reshape(quaternions, (1, 4))
-        else:
-            assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
-            quaternions = reshape(quaternions, (-1, 4))
-        return quaternions
-
-    @staticmethod
     def _normalize_quaternions(quaternions):
-        quaternions = SO3UniformDistribution._as_quaternion_batch(quaternions)
-        norms = linalg.norm(quaternions, None, -1)
-        assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
-
-        normalized = quaternions / reshape(norms, (-1, 1))
-        sign = where(normalized[:, -1:] < 0.0, -1.0, 1.0)
-        return sign * normalized
+        return SO3DiracDistribution._normalize_quaternions(quaternions)
 
     def pdf(self, xs):
         """Evaluate the constant SO(3) density."""
