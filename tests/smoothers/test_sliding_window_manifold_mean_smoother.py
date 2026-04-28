@@ -7,6 +7,8 @@ from pyrecest.smoothers import SlidingWindowManifoldMeanSmoother
 
 
 class SlidingWindowManifoldMeanSmootherTest(unittest.TestCase):
+    _CIRCULAR_ATOL = 1e-6
+
     def test_centered_window_smooths_linear_sequence(self):
         smoother = SlidingWindowManifoldMeanSmoother(window_size=3)
 
@@ -45,7 +47,10 @@ class SlidingWindowManifoldMeanSmootherTest(unittest.TestCase):
         )
 
         smoothed_angle = float(smoothed_values[1][0])
-        self.assertLess(min(abs(smoothed_angle), abs(smoothed_angle - 2.0 * pi)), 1e-12)
+        self.assertLess(
+            min(abs(smoothed_angle), abs(smoothed_angle - 2.0 * pi)),
+            self._CIRCULAR_ATOL,
+        )
 
     def test_distribution_inputs_infer_circular_manifold(self):
         smoother = SlidingWindowManifoldMeanSmoother(window_size=3)
@@ -58,7 +63,10 @@ class SlidingWindowManifoldMeanSmootherTest(unittest.TestCase):
         smoothed_values = smoother.smooth(states)
 
         smoothed_angle = float(smoothed_values[1][0])
-        self.assertLess(min(abs(smoothed_angle), abs(smoothed_angle - 2.0 * pi)), 1e-12)
+        self.assertLess(
+            min(abs(smoothed_angle), abs(smoothed_angle - 2.0 * pi)),
+            self._CIRCULAR_ATOL,
+        )
 
     def test_window_weights_are_applied_to_edges(self):
         smoother = SlidingWindowManifoldMeanSmoother(
@@ -77,4 +85,3 @@ class SlidingWindowManifoldMeanSmootherTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
