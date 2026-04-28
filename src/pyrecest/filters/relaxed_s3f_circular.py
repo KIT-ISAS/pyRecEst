@@ -17,6 +17,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from pyrecest.backend import asarray as backend_asarray
+
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
 
 
@@ -61,7 +63,7 @@ def rotate_body_increment(angles: np.ndarray, body_increment: np.ndarray) -> np.
     return np.column_stack((c * u[0] - s * u[1], s * u[0] + c * u[1]))
 
 
-def uniform_circular_cell_statistics(
+def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
     n_cells: int,
     body_increment: np.ndarray,
     grid: np.ndarray | None = None,
@@ -188,8 +190,8 @@ def predict_circular_relaxed(
         covariance_matrices[:, :, idx] = q_base + covariance_inflations[idx]
 
     filter_.predict_linear(
-        covariance_matrices=covariance_matrices,
-        linear_input_vectors=displacements.T,
+        covariance_matrices=backend_asarray(covariance_matrices),
+        linear_input_vectors=backend_asarray(displacements.T),
     )
     return stats
 
