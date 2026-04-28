@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from functools import partial
 
 from pyrecest.backend import any as backend_any
 from pyrecest.backend import asarray, concatenate, ndim, stack, sum
@@ -134,7 +135,11 @@ class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
         return weights / weights_sum
 
     @staticmethod
-    def _default_distribution_factory(state):
+    def _circular_dirac_factory(points, weights):
+        return CircularDiracDistribution(points.reshape(-1), weights)
+
+    @classmethod
+    def _default_distribution_factory(cls, state):
         simple_factories = (
             (AbstractSE2Distribution, SE2DiracDistribution),
             (AbstractSE3Distribution, SE3DiracDistribution),
@@ -147,21 +152,12 @@ class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
                 return factory
 
         if isinstance(state, AbstractHypercylindricalDistribution):
-            bound_dim = state.bound_dim
-            return lambda points, weights: HypercylindricalDiracDistribution(
-                bound_dim, points, weights
-            )
+            return partial(HypercylindricalDiracDistribution, state.bound_dim)
 
         if isinstance(state, AbstractHypertoroidalDistribution):
             if state.dim == 1:
-                return lambda points, weights: CircularDiracDistribution(
-                    points.reshape(-1), weights
-                )
-
-            dim = state.dim
-            return lambda points, weights: HypertoroidalDiracDistribution(
-                points, weights, dim=dim
-            )
+                return cls._circular_dirac_factory
+            return partial(HypertoroidalDiracDistribution, dim=state.dim)
 
         return LinearDiracDistribution
 
