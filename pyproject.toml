@@ -49,6 +49,9 @@ check_untyped_defs = true
 [tool.ruff]
 line-length = 180
 
+[tool.isort]
+profile = "black"
+
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::DeprecationWarning:mpmath.*",

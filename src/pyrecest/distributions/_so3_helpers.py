@@ -10,6 +10,7 @@ from pyrecest.backend import (
     linalg,
     ndim,
     reshape,
+    stack,
     sum,
     where,
 )
@@ -44,3 +45,27 @@ def geodesic_distance(rotation_a, rotation_b):
     quat_b = normalize_quaternions(rotation_b)
     inner = abs(sum(quat_a * quat_b, axis=-1))
     return 2.0 * arccos(clip(inner, 0.0, 1.0))
+
+
+def quaternions_to_rotation_matrices(quaternions):
+    """Convert scalar-last quaternions to rotation matrices."""
+    quaternions = normalize_quaternions(quaternions)
+    x, y, z, w = (
+        quaternions[:, 0],
+        quaternions[:, 1],
+        quaternions[:, 2],
+        quaternions[:, 3],
+    )
+    row_0 = stack(
+        (1.0 - 2.0 * (y * y + z * z), 2.0 * (x * y - z * w), 2.0 * (x * z + y * w)),
+        axis=-1,
+    )
+    row_1 = stack(
+        (2.0 * (x * y + z * w), 1.0 - 2.0 * (x * x + z * z), 2.0 * (y * z - x * w)),
+        axis=-1,
+    )
+    row_2 = stack(
+        (2.0 * (x * z - y * w), 2.0 * (y * z + x * w), 1.0 - 2.0 * (x * x + y * y)),
+        axis=-1,
+    )
+    return stack((row_0, row_1, row_2), axis=-2)
