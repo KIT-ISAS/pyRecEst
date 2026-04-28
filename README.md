@@ -87,6 +87,8 @@ The `docs/` directory contains the first project documentation pages:
   most common public entry points.
 - [API reference](docs/reference/index.md) contains generated package reference
   pages built with MkDocs and mkdocstrings.
+- [Task tutorials](docs/tutorials/index.md) show common distribution, filtering,
+  tracking, and evaluation workflows.
 - [Shapes and conventions](docs/conventions.md) documents common vector,
   matrix, measurement-set, batch, and manifold-coordinate shapes.
 - [Examples](examples/README.md) lists the executable examples and what each

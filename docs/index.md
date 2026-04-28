@@ -15,6 +15,8 @@ toward a generated documentation site.
   choose a backend, and set up a development checkout.
 - [API overview](api-overview.md): understand the main packages and where common
   public classes live.
+- [Task tutorials](tutorials/index.md): work through common distribution,
+  filtering, tracking, and evaluation tasks.
 - [Shapes and conventions](conventions.md): learn the expected state,
   measurement, covariance, batch, and manifold-coordinate shapes.
 - [Examples](examples.md): browse executable scripts that demonstrate basic
@@ -31,8 +33,6 @@ smoothers, samplers, and evaluation helpers.
 
 Good next documentation additions would be:
 
-- task-focused tutorials for distributions, filters, smoothers, tracking, and
-  evaluation;
 - deeper convention notes for grids, state-space subdivisions, and advanced
   tracker outputs;
 - backend compatibility notes for APIs that do not support every backend.
