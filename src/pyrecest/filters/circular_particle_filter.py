@@ -10,6 +10,14 @@ from .manifold_mixins import CircularFilterMixin
 
 
 class CircularParticleFilter(HypertoroidalParticleFilter, CircularFilterMixin):
+    """Sequential importance resampling particle filter on the circle.
+
+    References
+    ----------
+    Kurz, G., Gilitschenski, I., & Hanebeck, U. D. (2015). Recursive
+    Bayesian Filtering in Circular State Spaces. arXiv preprint.
+    """
+
     # pylint: disable=non-parent-init-called,super-init-not-called
     def __init__(self, n_particles: Union[int, int32, int64]) -> None:
         """

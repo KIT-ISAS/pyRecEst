@@ -7,6 +7,14 @@ from .manifold_mixins import HypersphericalFilterMixin
 
 
 class VonMisesFisherFilter(AbstractFilter, HypersphericalFilterMixin):
+    """Filter based on the von Mises-Fisher distribution.
+
+    References
+    ----------
+    Kurz, G., Gilitschenski, I., & Hanebeck, U. D. (2016). Unscented von
+    Mises-Fisher Filtering. IEEE Signal Processing Letters.
+    """
+
     def __init__(self):
         HypersphericalFilterMixin.__init__(self)
         AbstractFilter.__init__(

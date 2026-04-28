@@ -10,6 +10,18 @@ from .manifold_mixins import CircularFilterMixin
 
 
 class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
+    """Filter based on the wrapped normal distribution.
+
+    References
+    ----------
+    Kurz, G., Gilitschenski, I., & Hanebeck, U. D. (2013). Recursive
+    Nonlinear Filtering for Angular Data Based on Circular Distributions.
+    Proceedings of the 2013 American Control Conference.
+
+    Kurz, G., Gilitschenski, I., & Hanebeck, U. D. (2015). Recursive
+    Bayesian Filtering in Circular State Spaces. arXiv preprint.
+    """
+
     def __init__(self, wn=None):
         """Initialize the filter."""
         if wn is None:

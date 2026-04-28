@@ -29,10 +29,18 @@ from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribu
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
-    """von Mises-Fisher distribution on the unit hypersphere.
+    """
+    von Mises-Fisher distribution on the unit hypersphere.
 
     The distribution is defined on unit vectors in ``R^d``. In PyRecEst,
     ``input_dim`` is ``d`` and ``dim`` is the manifold dimension ``d - 1``.
+    Von Mises-Fisher distribution on the hypersphere.
+
+    References
+    ----------
+    Fisher, R. (1953). Dispersion on a sphere. Proceedings of the Royal
+    Society of London. Series A, Mathematical and Physical Sciences,
+    217(1130), 295-305.
     """
 
     def __init__(self, mu, kappa):

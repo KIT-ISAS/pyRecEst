@@ -38,6 +38,16 @@ from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDist
 
 
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
+    """Partially wrapped normal distribution on periodic-linear domains.
+
+    References
+    ----------
+    Kurz, G., Gilitschenski, I., & Hanebeck, U. D. (2014). The Partially
+    Wrapped Normal Distribution for SE(2) Estimation. Proceedings of the
+    2014 IEEE International Conference on Multisensor Fusion and Information
+    Integration.
+    """
+
     def __init__(self, mu, C, bound_dim: Union[int, int32, int64]):
         assert bound_dim >= 0, "bound_dim must be non-negative"
         assert ndim(mu) == 1, "mu must be a 1-dimensional array"

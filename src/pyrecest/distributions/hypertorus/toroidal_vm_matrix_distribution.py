@@ -27,11 +27,17 @@ _2pi = 2.0 * pi
 class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
     """Bivariate von Mises distribution, matrix version.
 
-    See:
-    - Mardia, K. V. Statistics of Directional Data. JRSS-B, 1975.
-    - Mardia, K. V. & Jupp, P. E. Directional Statistics. Wiley, 1999.
-    - Kurz, Hanebeck. Toroidal Information Fusion Based on the Bivariate
-      von Mises Distribution. MFI 2015.
+    References
+    ----------
+    Mardia, K. V. (1975). Statistics of Directional Data. Journal of the
+    Royal Statistical Society: Series B, 37, 349-393.
+
+    Mardia, K. V., & Jupp, P. E. (1999). Directional Statistics. Wiley.
+
+    Kurz, G., & Hanebeck, U. D. (2015). Toroidal Information Fusion Based on
+    the Bivariate von Mises Distribution. Proceedings of the 2015 IEEE
+    International Conference on Multisensor Fusion and Information
+    Integration.
     """
 
     def __init__(self, mu, kappa, A):

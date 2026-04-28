@@ -34,8 +34,12 @@ from .von_mises_distribution import VonMisesDistribution
 class WrappedNormalDistribution(
     AbstractCircularDistribution, HypertoroidalWrappedNormalDistribution
 ):
-    """
-    This class implements the wrapped normal distribution.
+    """Wrapped normal distribution on the circle.
+
+    References
+    ----------
+    Jammalamadaka, S. R., & SenGupta, A. (2001). Topics in Circular
+    Statistics. World Scientific.
     """
 
     MAX_SIGMA_BEFORE_UNIFORM = 10

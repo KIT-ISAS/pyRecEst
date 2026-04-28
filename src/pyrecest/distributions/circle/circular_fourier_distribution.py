@@ -30,8 +30,17 @@ from .circular_dirac_distribution import CircularDiracDistribution
 
 
 class CircularFourierDistribution(AbstractCircularDistribution):
-    """
-    Circular Fourier Distribution. This is based on my implementation for pytorch in pyDirectional
+    """Circular distribution represented by a Fourier series.
+
+    References
+    ----------
+    Pfaff, F., Kurz, G., & Hanebeck, U. D. (2015). Multimodal Circular
+    Filtering Using Fourier Series. Proceedings of the 18th International
+    Conference on Information Fusion.
+
+    Pfaff, F., Kurz, G., & Hanebeck, U. D. (2016). Nonlinear Prediction for
+    Circular Filtering Using Fourier Series. Proceedings of the 19th
+    International Conference on Information Fusion.
     """
 
     # pylint: disable=too-many-arguments, too-many-positional-arguments
