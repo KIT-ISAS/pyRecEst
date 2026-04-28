@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
+from pyrecest.backend import asarray as backend_asarray
 from pyrecest.distributions.cart_prod.state_space_subdivision_gaussian_distribution import (
     StateSpaceSubdivisionGaussianDistribution,
 )
@@ -56,8 +57,8 @@ class RelaxedS3FCircularTest(unittest.TestCase):
         filter_.update(
             likelihoods_linear=[
                 GaussianDistribution(
-                    np.array([0.2, 0.1]),
-                    np.eye(2) * 0.05,
+                    backend_asarray(np.array([0.2, 0.1])),
+                    backend_asarray(np.eye(2) * 0.05),
                     check_validity=False,
                 )
             ]
@@ -87,13 +88,17 @@ class RelaxedS3FCircularTest(unittest.TestCase):
 def _make_filter(n_cells: int) -> StateSpaceSubdivisionFilter:
     grid = np.linspace(0.0, 2.0 * np.pi, n_cells, endpoint=False).reshape(-1, 1)
     gd = HypertoroidalGridDistribution(
-        np.ones(n_cells) / (2.0 * np.pi),
+        backend_asarray(np.ones(n_cells) / (2.0 * np.pi)),
         grid_type="custom",
-        grid=grid,
+        grid=backend_asarray(grid),
     )
     gd.normalize_in_place(warn_unnorm=False)
     gaussians = [
-        GaussianDistribution(np.zeros(2), np.eye(2) * 0.1, check_validity=False)
+        GaussianDistribution(
+            backend_asarray(np.zeros(2)),
+            backend_asarray(np.eye(2) * 0.1),
+            check_validity=False,
+        )
         for _ in range(n_cells)
     ]
     state = StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
