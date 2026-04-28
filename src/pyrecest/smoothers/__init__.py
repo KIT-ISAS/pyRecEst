@@ -1,5 +1,6 @@
 from .abstract_smoother import AbstractSmoother
 from .rauch_tung_striebel_smoother import RauchTungStriebelSmoother, RTSSmoother
+from .sliding_window_manifold_mean_smoother import SlidingWindowManifoldMeanSmoother
 from .so3_chordal_mean_smoother import SO3ChordalMeanSmoother, SO3CMSmoother
 from .unscented_rauch_tung_striebel_smoother import (
     UnscentedRauchTungStriebelSmoother,
@@ -10,6 +11,7 @@ __all__ = [
     "AbstractSmoother",
     "RauchTungStriebelSmoother",
     "RTSSmoother",
+    "SlidingWindowManifoldMeanSmoother",
     "SO3ChordalMeanSmoother",
     "SO3CMSmoother",
     "UnscentedRauchTungStriebelSmoother",
