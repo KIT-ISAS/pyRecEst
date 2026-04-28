@@ -72,6 +72,8 @@ Common starting points include:
 
 - `GaussianSampler`;
 - `FibonacciGridSampler`;
+- `SobolGridSampler`;
+- `HaltonGridSampler`;
 - `SphericalFibonacciSampler`;
 - `HealpixHopfSampler`;
 - `LeopardiSampler`;
