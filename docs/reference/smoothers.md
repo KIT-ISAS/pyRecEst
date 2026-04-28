@@ -1,0 +1,3 @@
+# Smoothers
+
+::: pyrecest.smoothers

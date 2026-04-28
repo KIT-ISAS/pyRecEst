@@ -9,7 +9,24 @@ from .manifold_mixins import EuclideanFilterMixin
 
 
 class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
+    """Kalman filter for linear Gaussian Euclidean state-space models.
+
+    The filter state is stored as a :class:`GaussianDistribution` with mean
+    vector shape ``(n,)`` and covariance matrix shape ``(n, n)``. Prediction
+    uses ``x_k = F x_{k-1} + u + w`` and updates use
+    ``z_k = H x_k + v``.
+    """
+
     def __init__(self, initial_state):
+        """Create a Kalman filter from a Gaussian state.
+
+        Parameters
+        ----------
+        initial_state : GaussianDistribution or tuple
+            Initial state distribution. Tuples must contain ``(mean,
+            covariance)`` with mean shape ``(n,)`` or scalar shape for a
+            one-dimensional state, and covariance shape ``(n, n)``.
+        """
         EuclideanFilterMixin.__init__(self)
         AbstractFilter.__init__(self, self._coerce_state(initial_state))
 
@@ -34,11 +51,12 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
 
     @property
     def dim(self):
-        """Returns the dimension of the state."""
+        """Return the dimension ``n`` of the Euclidean state vector."""
         return self._filter_state.dim
 
     @property
     def filter_state(self) -> GaussianDistribution:
+        """Return a Gaussian copy of the current filter state."""
         return GaussianDistribution(
             self._filter_state.mu,
             self._filter_state.C,
@@ -50,16 +68,23 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
         """
         Set the filter state.
 
-        :param new_state: Provide GaussianDistribution or mean and covariance as state.
+        Parameters
+        ----------
+        new_state : GaussianDistribution or tuple
+            Replacement state distribution. Tuples must contain ``(mean,
+            covariance)``.
         """
         self._filter_state = self._coerce_state(new_state)
 
     def predict_identity(self, sys_noise_cov, sys_input=None):
-        """
-        Predicts the next state assuming identity transition matrix.
+        """Predict one step with an identity transition matrix.
 
-        :param sys_noise_cov: System noise covariance.
-        :param sys_input: System input.
+        Parameters
+        ----------
+        sys_noise_cov : array-like, shape (n, n)
+            Additive process-noise covariance.
+        sys_input : array-like, shape (n,), optional
+            Additive deterministic input applied after the identity transition.
         """
         self.predict_linear(eye(self.dim), sys_noise_cov, sys_input)
 
@@ -69,12 +94,16 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
         sys_noise_cov,
         sys_input=None,
     ):
-        """
-        Predicts the next state assuming a linear system model.
+        """Predict one step with a linear Gaussian system model.
 
-        :param system_matrix: System transition matrix.
-        :param sys_noise_cov: System noise covariance.
-        :param sys_input: System input.
+        Parameters
+        ----------
+        system_matrix : array-like, shape (n, n)
+            State-transition matrix ``F``.
+        sys_noise_cov : array-like, shape (n, n)
+            Additive process-noise covariance ``Q``.
+        sys_input : array-like, shape (n,), optional
+            Additive deterministic input ``u``.
         """
         new_mean, new_covariance = linear_gaussian_predict(
             mean=self._filter_state.mu,
@@ -90,11 +119,14 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
         )
 
     def update_identity(self, meas_noise, measurement):
-        """
-        Update the filter state with measurement, assuming identity measurement matrix.
+        """Update with a measurement matrix equal to the identity.
 
-        :param measurement: Measurement.
-        :param meas_noise: Measurement noise covariance.
+        Parameters
+        ----------
+        meas_noise : array-like, shape (n, n)
+            Measurement-noise covariance.
+        measurement : array-like, shape (n,)
+            Measurement vector.
         """
         self.update_linear(
             measurement=measurement,
@@ -108,12 +140,17 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
         measurement_matrix,
         meas_noise,
     ):
-        """
-        Update the filter state with measurement, assuming a linear measurement model.
+        """Update the state with a linear Gaussian measurement model.
 
-        :param measurement: Measurement.
-        :param measurement_matrix: Measurement matrix.
-        :param meas_noise: Covariance matrix for measurement.
+        Parameters
+        ----------
+        measurement : array-like, shape (m,)
+            Measurement vector ``z``.
+        measurement_matrix : array-like, shape (m, n)
+            Measurement matrix ``H`` mapping state vectors to measurement
+            vectors.
+        meas_noise : array-like, shape (m, m)
+            Measurement-noise covariance ``R``.
         """
         new_mean, new_covariance = linear_gaussian_update(
             mean=self._filter_state.mu,
@@ -129,5 +166,5 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
         )
 
     def get_point_estimate(self):
-        """Returns the mean of the current filter state."""
+        """Return the posterior mean vector with shape ``(n,)``."""
         return self._filter_state.mu

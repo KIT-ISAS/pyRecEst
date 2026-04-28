@@ -52,7 +52,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         Calculates probability density function for the given input.
 
-        :param xa: Input data for PDF calculation.
+        :param xs: Input data for PDF calculation.
         :return: PDF value.
         """
         val = self.value(xs)

@@ -43,6 +43,13 @@ Run the test suite from the repository root:
 python -m pytest
 ```
 
+Build the documentation site, including generated API reference pages, with:
+
+```bash
+poetry install --with docs --without dev
+poetry run mkdocs build --strict
+```
+
 ## Run A First Example
 
 The Kalman filter example is the smallest end-to-end filter workflow:
@@ -84,11 +91,13 @@ support model and known limitations.
 
 ## Explore More Usage
 
-- Start with [the examples guide](../examples/README.md) for runnable scripts.
+- Start with [the examples guide](examples.md) for runnable scripts.
 - Look at [the API overview](api-overview.md) to find the package that owns a
   concept.
 - Check [backend compatibility](backend-compatibility.md) before relying on a
   non-default backend for advanced APIs.
+- Use [the API reference](reference/index.md) for generated public package
+  reference pages.
 - Read [Shapes and conventions](conventions.md) before writing custom models or
   tracker measurement sets.
 - Use `tests/` as executable reference material for advanced APIs that do not

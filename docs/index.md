@@ -19,8 +19,10 @@ toward a generated documentation site.
   PyTorch, and JAX and understand known support gaps.
 - [Shapes and conventions](conventions.md): learn the expected state,
   measurement, covariance, batch, and manifold-coordinate shapes.
-- [Examples](../examples/README.md): browse executable scripts that demonstrate
-  basic workflows.
+- [Examples](examples.md): browse executable scripts that demonstrate basic
+  workflows.
+- [API reference](reference/index.md): generated reference pages for the main
+  public packages.
 
 ## Current Documentation Scope
 
@@ -31,7 +33,6 @@ smoothers, samplers, and evaluation helpers.
 
 Good next documentation additions would be:
 
-- generated API reference from public docstrings;
 - task-focused tutorials for distributions, filters, smoothers, tracking, and
   evaluation;
 - deeper convention notes for grids, state-space subdivisions, and advanced

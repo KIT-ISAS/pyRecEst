@@ -87,10 +87,19 @@ The `docs/` directory contains the first project documentation pages:
   most common public entry points.
 - [Backend compatibility](docs/backend-compatibility.md) explains the NumPy,
   PyTorch, and JAX support model and known limitations.
+- [API reference](docs/reference/index.md) contains generated package reference
+  pages built with MkDocs and mkdocstrings.
 - [Shapes and conventions](docs/conventions.md) documents common vector,
   matrix, measurement-set, batch, and manifold-coordinate shapes.
 - [Examples](examples/README.md) lists the executable examples and what each
   one demonstrates.
+
+Build the documentation site locally with:
+
+```bash
+poetry install --with docs --without dev
+poetry run mkdocs build --strict
+```
 
 ## Backends
 
