@@ -31,6 +31,7 @@ class FibonacciRejectionSampler(AbstractEuclideanSampler):
         n_candidates: int,
         dim: int,
         max_density: float,
+        *,
         bounding_box=None,
     ):
         """Sample an arbitrary bounded density with deterministic Fibonacci proposals.
@@ -61,10 +62,16 @@ class FibonacciRejectionSampler(AbstractEuclideanSampler):
 
         if n_candidates == 0:
             samples = np.empty((0, dim))
-            return samples, self._get_info(n_candidates, samples, bounding_box, max_density)
+            return samples, self._get_info(
+                n_candidates, samples, bounding_box, max_density
+            )
 
-        proposal_grid = FibonacciGridSampler().get_uniform_samples(n_candidates, dim + 1)
-        candidate_samples = self._map_to_bounding_box(proposal_grid[:, :dim], bounding_box)
+        proposal_grid = FibonacciGridSampler().get_uniform_samples(
+            n_candidates, dim + 1
+        )
+        candidate_samples = self._map_to_bounding_box(
+            proposal_grid[:, :dim], bounding_box
+        )
         density_values = self._evaluate_pdf(pdf, candidate_samples, n_candidates)
 
         if np.any(density_values < 0):
@@ -101,7 +108,9 @@ class FibonacciRejectionSampler(AbstractEuclideanSampler):
         if not np.all(np.isfinite(bounding_box)):
             raise ValueError("bounding_box must be finite")
         if np.any(bounding_box[:, 1] <= bounding_box[:, 0]):
-            raise ValueError("bounding_box upper bounds must be greater than lower bounds")
+            raise ValueError(
+                "bounding_box upper bounds must be greater than lower bounds"
+            )
 
         return n_candidates, dim, max_density, bounding_box
 

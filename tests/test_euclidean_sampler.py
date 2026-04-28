@@ -3,7 +3,9 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import mean, ones, random, std, zeros
-from pyrecest.sampling import FibonacciRejectionSampler as PublicFibonacciRejectionSampler
+from pyrecest.sampling import (
+    FibonacciRejectionSampler as PublicFibonacciRejectionSampler,
+)
 from pyrecest.sampling import HaltonGridSampler as PublicHaltonGridSampler
 from pyrecest.sampling import SobolGridSampler as PublicSobolGridSampler
 from pyrecest.sampling.euclidean_sampler import (
@@ -127,6 +129,7 @@ class TestFibonacciGridSampler(unittest.TestCase):
             self.assertEqual(R.shape, (d,))
             npt.assert_allclose(V.T @ V, np.eye(d), atol=1e-12)
 
+
 class TestFibonacciRejectionSampler(unittest.TestCase):
     def setUp(self):
         self.sampler = FibonacciRejectionSampler()
@@ -161,7 +164,9 @@ class TestFibonacciRejectionSampler(unittest.TestCase):
             max_density=1.0,
             bounding_box=bounding_box,
         )
-        unit_samples = FibonacciGridSampler().get_uniform_samples(n_candidates, 3)[:, :2]
+        unit_samples = FibonacciGridSampler().get_uniform_samples(n_candidates, 3)[
+            :, :2
+        ]
         expected = unit_samples * np.array([4.0, 10.0]) + np.array([-2.0, 10.0])
 
         npt.assert_allclose(samples, expected)
@@ -188,10 +193,17 @@ class TestFibonacciRejectionSampler(unittest.TestCase):
 
     def test_sampling_is_deterministic(self):
         """Repeated calls with the same density should return identical accepted samples."""
-        pdf = lambda xs: np.exp(-np.sum(xs**2, axis=1))
+
+        def pdf(xs):
+            return np.exp(-np.sum(xs**2, axis=1))
+
         bounding_box = np.array([[-1.0, 1.0], [-1.0, 1.0]])
-        samples1, info1 = self.sampler.sample_rejection(pdf, 60, 2, 1.0, bounding_box)
-        samples2, info2 = self.sampler.sample_rejection(pdf, 60, 2, 1.0, bounding_box)
+        samples1, info1 = self.sampler.sample_rejection(
+            pdf, 60, 2, 1.0, bounding_box=bounding_box
+        )
+        samples2, info2 = self.sampler.sample_rejection(
+            pdf, 60, 2, 1.0, bounding_box=bounding_box
+        )
 
         npt.assert_array_equal(samples1, samples2)
         self.assertEqual(info1["n_accepted"], info2["n_accepted"])
