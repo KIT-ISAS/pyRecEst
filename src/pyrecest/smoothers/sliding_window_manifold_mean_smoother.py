@@ -135,21 +135,16 @@ class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
 
     @staticmethod
     def _default_distribution_factory(state):
-        if isinstance(state, AbstractSE2Distribution):
-            return lambda points, weights: SE2DiracDistribution(points, weights)
-
-        if isinstance(state, AbstractSE3Distribution):
-            return lambda points, weights: SE3DiracDistribution(points, weights)
-
-        if isinstance(state, AbstractHyperhemisphericalDistribution):
-            return lambda points, weights: HyperhemisphericalDiracDistribution(
-                points, weights
-            )
-
-        if isinstance(state, AbstractHypersphericalDistribution):
-            return lambda points, weights: HypersphericalDiracDistribution(
-                points, weights
-            )
+        simple_factories = (
+            (AbstractSE2Distribution, SE2DiracDistribution),
+            (AbstractSE3Distribution, SE3DiracDistribution),
+            (AbstractHyperhemisphericalDistribution, HyperhemisphericalDiracDistribution),
+            (AbstractHypersphericalDistribution, HypersphericalDiracDistribution),
+            (AbstractLinearDistribution, LinearDiracDistribution),
+        )
+        for distribution_type, factory in simple_factories:
+            if isinstance(state, distribution_type):
+                return factory
 
         if isinstance(state, AbstractHypercylindricalDistribution):
             bound_dim = state.bound_dim
@@ -168,10 +163,7 @@ class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
                 points, weights, dim=dim
             )
 
-        if isinstance(state, AbstractLinearDistribution):
-            return lambda points, weights: LinearDiracDistribution(points, weights)
-
-        return lambda points, weights: LinearDiracDistribution(points, weights)
+        return LinearDiracDistribution
 
     def smooth(self, states: Sequence) -> list:
         """Return smoothed manifold mean values for a sequence of states."""
