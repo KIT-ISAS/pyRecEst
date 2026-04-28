@@ -13,6 +13,7 @@ from pyrecest.backend import (
     ndim,
     reshape,
     spatial,
+    sqrt,
     sum,
     where,
 )
@@ -97,9 +98,21 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
         inner = abs(sum(quat_a * quat_b, axis=-1))
         return 2.0 * arccos(clip(inner, 0.0, 1.0))
 
+    @staticmethod
+    def chordal_distance(rotation_a, rotation_b):
+        """Return the SO(3) Frobenius chordal distance between quaternions."""
+        quat_a = SO3DiracDistribution._normalize_quaternions(rotation_a)
+        quat_b = SO3DiracDistribution._normalize_quaternions(rotation_b)
+        inner = abs(sum(quat_a * quat_b, axis=-1))
+        return 2.0 * sqrt(2.0) * sqrt(clip(1.0 - inner**2, 0.0, 1.0))
+
     def distance_to(self, rotation):
         """Return geodesic distances from all Dirac locations to ``rotation``."""
         return self.geodesic_distance(self.d, rotation)
+
+    def chordal_distance_to(self, rotation):
+        """Return chordal distances from all Dirac locations to ``rotation``."""
+        return self.chordal_distance(self.d, rotation)
 
     @staticmethod
     def from_distribution(distribution, n_particles):
@@ -112,6 +125,10 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
     def angular_error_mean(self, rotation):
         """Return the weighted mean angular error to ``rotation`` in radians."""
         return sum(self.w * self.distance_to(rotation))
+
+    def chordal_error_mean(self, rotation):
+        """Return the weighted mean chordal error to ``rotation``."""
+        return sum(self.w * self.chordal_distance_to(rotation))
 
     def is_valid(self, tolerance=1e-6):
         """Return whether all stored quaternions are normalized and canonical."""
