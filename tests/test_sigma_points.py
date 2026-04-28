@@ -3,12 +3,12 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
-import pyrecest.backend
+from pyrecest.backend import __backend_name__
 from pyrecest.sampling import JulierSigmaPoints, MerweScaledSigmaPoints
 
 
 @unittest.skipIf(
-    pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+    __backend_name__ in ("pytorch", "jax"),
     reason="Sigma-point tests use NumPy assertions",
 )
 class TestSigmaPoints(unittest.TestCase):
