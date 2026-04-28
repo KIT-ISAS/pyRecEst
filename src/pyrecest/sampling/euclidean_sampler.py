@@ -19,6 +19,134 @@ class GaussianSampler(AbstractEuclideanSampler):
         return GaussianDistribution(zeros(dim), eye(dim)).sample(n_samples)
 
 
+class FibonacciRejectionSampler(AbstractEuclideanSampler):
+    """Deterministic rejection sampler using Fibonacci proposal grids."""
+
+    def sample_stochastic(self, n_samples: int, dim: int):
+        raise NotImplementedError("Use sample_rejection with a density function.")
+
+    def sample_rejection(
+        self,
+        pdf,
+        n_candidates: int,
+        dim: int,
+        max_density: float,
+        *,
+        bounding_box=None,
+    ):
+        """Sample an arbitrary bounded density with deterministic Fibonacci proposals.
+
+        Parameters
+        ----------
+        pdf : callable
+            Density function accepting an array of shape ``(n_candidates, dim)``.
+        n_candidates : int
+            Number of deterministic proposal points before rejection.
+        dim : int
+            Dimension of the Euclidean domain.
+        max_density : float
+            Upper bound on ``pdf`` inside the bounding box.
+        bounding_box : np.ndarray of shape (dim, 2), optional
+            Lower and upper bounds for each dimension. Defaults to the unit hypercube.
+
+        Returns
+        -------
+        samples : np.ndarray of shape (n_accepted, dim)
+            Accepted samples.
+        info : dict
+            Rejection metadata.
+        """
+        n_candidates, dim, max_density, bounding_box = self._validate_rejection_args(
+            n_candidates, dim, max_density, bounding_box
+        )
+
+        if n_candidates == 0:
+            samples = np.empty((0, dim))
+            return samples, self._get_info(
+                n_candidates, samples, bounding_box, max_density
+            )
+
+        proposal_grid = FibonacciGridSampler().get_uniform_samples(
+            n_candidates, dim + 1
+        )
+        candidate_samples = self._map_to_bounding_box(
+            proposal_grid[:, :dim], bounding_box
+        )
+        density_values = self._evaluate_pdf(pdf, candidate_samples, n_candidates)
+
+        if np.any(density_values < 0):
+            raise ValueError("pdf must be nonnegative")
+        if np.any(density_values > max_density * (1.0 + 1e-12)):
+            raise ValueError("max_density must upper-bound pdf on the bounding box")
+
+        rejection_threshold = proposal_grid[:, dim] * max_density
+        accepted = rejection_threshold <= density_values
+        samples = candidate_samples[accepted]
+        info = self._get_info(n_candidates, samples, bounding_box, max_density)
+        return samples, info
+
+    @staticmethod
+    def _validate_rejection_args(n_candidates, dim, max_density, bounding_box):
+        n_candidates = int(n_candidates)
+        dim = int(dim)
+        max_density = float(max_density)
+
+        if n_candidates < 0:
+            raise ValueError("n_candidates must be nonnegative")
+        if dim < 1:
+            raise ValueError("dim must be positive")
+        if not np.isfinite(max_density) or max_density <= 0:
+            raise ValueError("max_density must be positive and finite")
+
+        if bounding_box is None:
+            bounding_box = np.column_stack((np.zeros(dim), np.ones(dim)))
+        else:
+            bounding_box = np.asarray(bounding_box, dtype=float)
+
+        if bounding_box.shape != (dim, 2):
+            raise ValueError("bounding_box must have shape (dim, 2)")
+        if not np.all(np.isfinite(bounding_box)):
+            raise ValueError("bounding_box must be finite")
+        if np.any(bounding_box[:, 1] <= bounding_box[:, 0]):
+            raise ValueError(
+                "bounding_box upper bounds must be greater than lower bounds"
+            )
+
+        return n_candidates, dim, max_density, bounding_box
+
+    @staticmethod
+    def _map_to_bounding_box(unit_samples, bounding_box):
+        lower = bounding_box[:, 0]
+        width = bounding_box[:, 1] - bounding_box[:, 0]
+        return unit_samples * width + lower
+
+    @staticmethod
+    def _evaluate_pdf(pdf, samples, n_candidates):
+        density_values = np.asarray(pdf(samples), dtype=float)
+        if density_values.ndim == 0:
+            density_values = np.full(n_candidates, density_values)
+        else:
+            density_values = density_values.reshape(-1)
+
+        if density_values.shape[0] != n_candidates:
+            raise ValueError("pdf must return one density value per candidate sample")
+        if not np.all(np.isfinite(density_values)):
+            raise ValueError("pdf must return finite density values")
+        return density_values
+
+    @staticmethod
+    def _get_info(n_candidates, samples, bounding_box, max_density):
+        n_accepted = samples.shape[0]
+        return {
+            "n_candidates": n_candidates,
+            "n_accepted": n_accepted,
+            "n_rejected": n_candidates - n_accepted,
+            "acceptance_rate": n_accepted / n_candidates if n_candidates else 0.0,
+            "bounding_box": bounding_box,
+            "max_density": max_density,
+        }
+
+
 class _QMCProposalGridSampler(AbstractEuclideanSampler):
     """Base class for deterministic low-discrepancy proposal grids."""
 

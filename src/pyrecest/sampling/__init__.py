@@ -2,6 +2,7 @@ from .abstract_sampler import AbstractSampler
 from .euclidean_sampler import (
     AbstractEuclideanSampler,
     FibonacciGridSampler,
+    FibonacciRejectionSampler,
     GaussianSampler,
     HaltonGridSampler,
     SobolGridSampler,
@@ -23,6 +24,7 @@ __all__ = [
     "AbstractEuclideanSampler",
     "GaussianSampler",
     "FibonacciGridSampler",
+    "FibonacciRejectionSampler",
     "SobolGridSampler",
     "HaltonGridSampler",
     "get_grid_hypersphere",
