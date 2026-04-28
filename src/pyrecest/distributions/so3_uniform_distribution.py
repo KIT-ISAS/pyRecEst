@@ -15,9 +15,6 @@ from pyrecest.backend import (
 from .hypersphere_subset.hyperhemispherical_uniform_distribution import (
     HyperhemisphericalUniformDistribution,
 )
-from .hypersphere_subset.hyperspherical_uniform_distribution import (
-    HypersphericalUniformDistribution,
-)
 from .so3_dirac_distribution import SO3DiracDistribution
 
 
@@ -49,9 +46,7 @@ class SO3UniformDistribution(HyperhemisphericalUniformDistribution):
 
     def sample(self, n):
         """Draw ``n`` canonical scalar-last unit quaternions."""
-        assert isinstance(n, int) and n > 0, "n must be a positive integer"
-        samples = HypersphericalUniformDistribution(3).sample(n)
-        return self._normalize_quaternions(samples)
+        return super().sample(n)
 
     def mode(self):
         """Mode is undefined for a uniform SO(3) distribution."""
