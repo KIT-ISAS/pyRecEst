@@ -7,6 +7,15 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Examples: examples.md
+  - Guides:
+      - Shapes and Conventions: conventions.md
+      - Backend Compatibility: backend-compatibility.md
+  - Tutorials:
+      - Overview: tutorials/index.md
+      - Use a Distribution: tutorials/use-a-distribution.md
+      - Write a Filter Loop: tutorials/write-a-filter-loop.md
+      - Run a Tracker: tutorials/run-a-tracker.md
+      - Evaluate a Simulation: tutorials/evaluate-a-simulation.md
   - API Overview: api-overview.md
   - API Reference:
       - Reference Index: reference/index.md

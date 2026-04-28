@@ -15,6 +15,8 @@ toward a generated documentation site.
   choose a backend, and set up a development checkout.
 - [API overview](api-overview.md): understand the main packages and where common
   public classes live.
+- [Task tutorials](tutorials/index.md): work through common distribution,
+  filtering, tracking, and evaluation tasks.
 - [Backend compatibility](backend-compatibility.md): choose between NumPy,
   PyTorch, and JAX and understand known support gaps.
 - [Shapes and conventions](conventions.md): learn the expected state,
@@ -33,8 +35,6 @@ smoothers, samplers, and evaluation helpers.
 
 Good next documentation additions would be:
 
-- task-focused tutorials for distributions, filters, smoothers, tracking, and
-  evaluation;
 - deeper convention notes for grids, state-space subdivisions, and advanced
   tracker outputs;
 - API-specific backend support tables for advanced distributions, trackers,
