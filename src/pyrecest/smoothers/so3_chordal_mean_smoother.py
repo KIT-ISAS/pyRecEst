@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Sequence
 
 # pylint: disable=no-member
-import pyrecest.backend as backend
+from pyrecest import backend
 from pyrecest.backend import asarray, diag, linalg, ndim, zeros
 
 from .abstract_smoother import AbstractSmoother
@@ -171,6 +171,7 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
         start: int,
         stop: int,
         first_kernel_index: int,
+        *,
         sample_weights,
         kernel_weights,
     ):
@@ -222,9 +223,6 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
             if window_size is None
             else self._validate_window_size(window_size)
         )
-        active_kernel_weights = (
-            self.kernel_weights if window_size is None else None
-        )
 
         sample_weights = self._normalize_weight_vector(
             weights,
@@ -245,8 +243,8 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
                 start,
                 stop,
                 first_kernel_index,
-                sample_weights,
-                active_kernel_weights,
+                sample_weights=sample_weights,
+                kernel_weights=self.kernel_weights if window_size is None else None,
             )
             smoothed.append(
                 self.chordal_mean(rotation_list[start:stop], local_weights)
