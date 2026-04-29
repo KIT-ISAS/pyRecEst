@@ -254,6 +254,7 @@ from .nonperiodic.linear_mixture import LinearMixture
 from .se2_dirac_distribution import SE2DiracDistribution
 from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
+from .so3_product_dirac_distribution import SO3ProductDiracDistribution
 from .so3_bingham_distribution import SO3BinghamDistribution
 from .so3_dirac_distribution import SO3DiracDistribution
 from .so3_product_tangent_gaussian_distribution import (
@@ -420,6 +421,7 @@ __all__ = aliases + [
     "SE2DiracDistribution",
     "SE3CartProdStackedDistribution",
     "SE3DiracDistribution",
+    "SO3ProductDiracDistribution",
     "SO3BinghamDistribution",
     "SO3TangentGaussianDistribution",
     "SO3UniformDistribution",
