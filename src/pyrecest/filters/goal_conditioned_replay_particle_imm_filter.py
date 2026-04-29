@@ -496,6 +496,8 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
             "mode_indices": copy(self._mode_indices),
             "velocity_jump": velocity_jump,
             "position_jump": position_jump,
+            "position_proposal_mask": zeros((self.n_particles,)),
+            "position_proposal_samples": zeros((self.n_particles, self.position_dim)),
             "control_field": control_field,
             "dynamic_goals": dynamic_goals,
             "goals_for_dynamics": goals_for_dynamics,

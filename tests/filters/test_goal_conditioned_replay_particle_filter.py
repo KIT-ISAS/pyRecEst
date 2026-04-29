@@ -87,6 +87,45 @@ class TestGoalConditionedReplayParticleFilter(unittest.TestCase):
 
         assert_association_likelihood_linear_positive(self, filt, state_dim=6)
 
+    def test_position_likelihood_with_proposal_rejuvenates_particles(self):
+        random.seed(3)
+
+        filt = GoalConditionedReplayParticleFilter(
+            n_particles=256,
+            spatial_dim=2,
+        )
+        filt.initialize_from_state_priors(
+            position_prior=array([0.0, 0.0]),
+            velocity_prior=array([0.0, 0.0]),
+            goal_prior=array([1.0, 0.0]),
+        )
+        proposal_positions = array(
+            [
+                [0.8, 0.0],
+                [1.0, 0.0],
+                [1.2, 0.0],
+            ]
+        )
+
+        def likelihood(positions):
+            residual = positions - array([1.0, 0.0])
+            return 1.0 / (
+                1.0 + residual[:, 0] * residual[:, 0] + residual[:, 1] * residual[:, 1]
+            )
+
+        log_marginal = filt.update_position_likelihood_with_proposal(
+            likelihood,
+            position_proposal=proposal_positions,
+            proposal_weights=array([0.2, 0.6, 0.2]),
+            proposal_probability=1.0,
+            return_log_marginal=True,
+        )
+        position_estimate = filt.get_position_estimate()
+
+        self.assertFalse(logical_or(isnan(log_marginal), isinf(log_marginal)))
+        self.assertGreater(float(position_estimate[0]), 0.9)
+        self.assertGreater(float(filt.last_position_proposal_fraction), 0.99)
+
 
 if __name__ == "__main__":
     unittest.main()

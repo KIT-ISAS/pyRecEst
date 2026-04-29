@@ -344,12 +344,23 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
             / self._last_transition_diagnostics["goal_reset_mask"].shape[0]
         )
 
+    @property
+    def last_position_proposal_fraction(self) -> float:
+        proposal_mask = self._last_transition_diagnostics.get(
+            "position_proposal_mask"
+        )
+        if proposal_mask is None:
+            return 0.0
+        return float(sum(proposal_mask) / proposal_mask.shape[0])
+
     def _initialize_transition_diagnostics(self):
         self._last_transition_diagnostics = {
             "jump_mask": zeros((self.n_particles,)),
             "goal_reset_mask": zeros((self.n_particles,)),
             "velocity_jump": zeros((self.n_particles, self.position_dim)),
             "position_jump": zeros((self.n_particles, self.position_dim)),
+            "position_proposal_mask": zeros((self.n_particles,)),
+            "position_proposal_samples": zeros((self.n_particles, self.position_dim)),
             "control_field": zeros((self.n_particles, self.position_dim)),
             "dynamic_goals": zeros((self.n_particles, self.position_dim)),
             "goals_for_dynamics": zeros((self.n_particles, self.position_dim)),
@@ -368,6 +379,18 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
     def _validate_probability(self, probability: float, name: str):
         if not (0.0 <= probability <= 1.0):
             raise ValueError(f"{name} must lie in [0, 1]")
+
+    @staticmethod
+    def _validate_probability_vector(vector, expected_size: int, name: str):
+        vector = atleast_1d(array(vector))
+        if vector.shape != (expected_size,):
+            raise ValueError(f"{name} must have shape ({expected_size},)")
+        if float(sum(vector)) <= 0.0:
+            raise ValueError(f"{name} must have positive total mass")
+        for value in vector:
+            if float(value) < 0.0:
+                raise ValueError(f"{name} must not contain negative entries")
+        return vector / sum(vector)
 
     def _validate_component_distribution(
         self,
@@ -631,6 +654,57 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
         self._candidate_goals = candidate_goals
         self._candidate_goal_weights = goal_prior_weights
         return candidate_goals[indices]
+
+    def _sample_position_proposal(
+        self,
+        position_proposal,
+        proposal_weights=None,
+        *,
+        n_samples: int,
+    ):
+        if isinstance(position_proposal, tuple) and len(position_proposal) == 2:
+            position_proposal = GaussianDistribution(
+                position_proposal[0],
+                position_proposal[1],
+            )
+
+        if isinstance(position_proposal, AbstractLinearDistribution):
+            if proposal_weights is not None:
+                raise ValueError(
+                    "proposal_weights are only supported for discrete proposals"
+                )
+            self._validate_component_distribution(
+                position_proposal,
+                "position_proposal",
+            )
+            return self._sample_component_distribution(
+                position_proposal,
+                dim=self.position_dim,
+                n_samples=n_samples,
+                name="position_proposal",
+            )
+
+        proposal_positions = self._coerce_particle_matrix(
+            position_proposal,
+            self.position_dim,
+            name="position_proposal",
+        )
+        n_positions = proposal_positions.shape[0]
+        if n_positions <= 0:
+            raise ValueError("position_proposal must contain at least one position")
+        if proposal_weights is None:
+            proposal_weights = ones((n_positions,)) / n_positions
+        proposal_weights = self._validate_probability_vector(
+            proposal_weights,
+            n_positions,
+            "proposal_weights",
+        )
+        proposal_indices = random.choice(
+            arange(n_positions),
+            n_samples,
+            p=proposal_weights,
+        )
+        return proposal_positions[proposal_indices]
 
     def get_state_estimate(self):
         return self.filter_state.mean()
@@ -1073,6 +1147,8 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
             "goal_reset_mask": goal_reset_mask,
             "velocity_jump": velocity_jump,
             "position_jump": position_jump,
+            "position_proposal_mask": zeros((self.n_particles,)),
+            "position_proposal_samples": zeros((self.n_particles, self.position_dim)),
             "control_field": control_field,
             "dynamic_goals": dynamic_goals,
             "goals_for_dynamics": goals_for_dynamics,
@@ -1178,6 +1254,82 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
             measurement=measurement,
             return_log_marginal=return_log_marginal,
         )
+
+    def apply_position_proposal(
+        self,
+        position_proposal,
+        proposal_weights=None,
+        *,
+        proposal_probability: float = 1.0,
+    ):
+        """Rejuvenate position particles from a measurement-guided proposal.
+
+        ``position_proposal`` may be a linear distribution, a ``(mean,
+        covariance)`` tuple, or a matrix of candidate positions.  Candidate
+        matrices are sampled with ``proposal_weights`` when provided.  Velocity
+        and goal particles, particle weights, and IMM mode indices in subclasses
+        are left unchanged.
+        """
+
+        proposal_probability = float(proposal_probability)
+        self._validate_probability(proposal_probability, "proposal_probability")
+
+        proposal_mask = self._draw_bernoulli_mask(proposal_probability)
+        proposal_samples = self._sample_position_proposal(
+            position_proposal,
+            proposal_weights,
+            n_samples=self.n_particles,
+        )
+        particles = copy.deepcopy(self.filter_state.d)
+        particles[:, self.position_slice] = where(
+            reshape(proposal_mask, (-1, 1)) > 0,
+            proposal_samples,
+            particles[:, self.position_slice],
+        )
+
+        new_state = type(self.filter_state)(
+            particles,
+            copy.deepcopy(self.filter_state.w),
+        )
+        self._filter_state = new_state
+        diagnostics = copy.deepcopy(self._last_transition_diagnostics)
+        diagnostics["position_proposal_mask"] = proposal_mask
+        diagnostics["position_proposal_samples"] = proposal_samples
+        self._last_transition_diagnostics = diagnostics
+        return self
+
+    def update_position_likelihood_with_proposal(
+        self,
+        likelihood,
+        measurement=None,
+        *,
+        position_proposal,
+        proposal_weights=None,
+        proposal_probability: float = 1.0,
+        return_log_marginal: bool = False,
+    ):
+        """Update by position likelihood, then refresh positions from a proposal.
+
+        This is useful when the observation likelihood is available on a grid or
+        candidate bank: the usual likelihood update preserves Bayesian
+        reweighting/resampling of the augmented particles, while the proposal
+        step moves a configurable subset of position particles onto
+        measurement-supported states for subsequent replay predictions.
+        """
+
+        update_result = self.update_position_likelihood(
+            likelihood,
+            measurement=measurement,
+            return_log_marginal=return_log_marginal,
+        )
+        self.apply_position_proposal(
+            position_proposal,
+            proposal_weights,
+            proposal_probability=proposal_probability,
+        )
+        if return_log_marginal:
+            return update_result
+        return self
 
     @staticmethod
     def _looks_like_measurement_distribution(value) -> bool:
