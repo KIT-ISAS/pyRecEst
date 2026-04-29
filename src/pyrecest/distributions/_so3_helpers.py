@@ -76,10 +76,14 @@ def exp_map_identity(tangent_vectors):
     """Map SO(3) tangent vectors at identity to scalar-last quaternions."""
     tangent_vectors = array(tangent_vectors, dtype=float)
     if ndim(tangent_vectors) == 1:
-        assert tangent_vectors.shape[0] == 3, "SO(3) tangent vectors must have length 3."
+        assert (
+            tangent_vectors.shape[0] == 3
+        ), "SO(3) tangent vectors must have length 3."
         tangent_vectors = reshape(tangent_vectors, (1, 3))
     else:
-        assert tangent_vectors.shape[-1] == 3, "SO(3) tangent vectors must have length 3."
+        assert (
+            tangent_vectors.shape[-1] == 3
+        ), "SO(3) tangent vectors must have length 3."
 
     angles = linalg.norm(tangent_vectors, axis=-1)
     angles_col = reshape(angles, tuple(angles.shape) + (1,))

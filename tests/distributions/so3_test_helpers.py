@@ -53,6 +53,4 @@ def assert_pdf_peak_matches_log_pdf(test_case, dist, covariance, tangent_dim, of
 
     test_case.assertGreater(mode_pdf, offset_pdf)
     npt.assert_allclose(mode_pdf, expected_mode_pdf, atol=ATOL)
-    npt.assert_allclose(
-        scalar(dist.ln_pdf(dist.mode())), math.log(mode_pdf), atol=ATOL
-    )
+    npt.assert_allclose(scalar(dist.ln_pdf(dist.mode())), math.log(mode_pdf), atol=ATOL)

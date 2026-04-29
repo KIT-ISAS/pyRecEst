@@ -7,8 +7,8 @@ from pyrecest.backend import array, diag, linalg, ones, pi, random
 from pyrecest.distributions import SO3TangentGaussianDistribution
 from tests.distributions.so3_test_helpers import (
     ATOL,
-    assert_pdf_peak_matches_log_pdf,
     assert_matches_z_rotation,
+    assert_pdf_peak_matches_log_pdf,
     z_quaternion,
 )
 
