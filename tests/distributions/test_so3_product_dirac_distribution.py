@@ -6,6 +6,9 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, linalg, ones, pi, random, sum
 from pyrecest.distributions import SO3ProductDiracDistribution
+from pyrecest.distributions.cart_prod.hyperhemisphere_cart_prod_dirac_distribution import (
+    HyperhemisphereCartProdDiracDistribution,
+)
 from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
 )
@@ -75,6 +78,10 @@ class SO3ProductDiracDistributionTest(unittest.TestCase):
         self.assertEqual(dist.d.shape, (2, 2, 4))
         self.assertEqual(dist.as_flat_quaternions().shape, (2, 8))
         npt.assert_allclose(dist.as_flat_quaternions(), flat_locations)
+        self.assertIsInstance(dist, HyperhemisphereCartProdDiracDistribution)
+        self.assertEqual(dist.dim_hemisphere, 3)
+        self.assertEqual(dist.n_hemispheres, 2)
+        npt.assert_allclose(dist.as_component_array(), dist.as_quaternions())
 
     def test_single_particle_input_with_num_rotations(self):
         locations = array(
