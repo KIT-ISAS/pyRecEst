@@ -24,6 +24,9 @@ from .ggiw_tracker import GGIWTracker
 from .global_nearest_neighbor import GlobalNearestNeighbor
 from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
 from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
+from .goal_conditioned_replay_particle_imm_filter import (
+    GoalConditionedReplayParticleIMMFilter,
+)
 from .gprhm_tracker import (
     DecorrelatedSCGPTracker,
     DecorrelatedScGpTracker,
@@ -128,6 +131,7 @@ __all__ = [
     "FourierRHMTracker",
     "GoalConditionedReplayIMMFilter",
     "GoalConditionedReplayParticleFilter",
+    "GoalConditionedReplayParticleIMMFilter",
     "GGIWTracker",
     "GlobalNearestNeighbor",
     "JPDAF",
