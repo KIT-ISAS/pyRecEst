@@ -1,4 +1,3 @@
-import math
 import unittest
 
 import numpy.testing as npt
@@ -6,42 +5,22 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     array,
-    cos,
     diag,
     eye,
     linalg,
     ones,
     pi,
     random,
-    sin,
     sqrt,
-    to_numpy,
 )
 from pyrecest.distributions import SO3ProductTangentGaussianDistribution
-
-ATOL = 1e-6
-
-
-def scalar(value):
-    return float(to_numpy(value).reshape(-1)[0])
-
-
-def z_quaternion(angle):
-    return array([0.0, 0.0, sin(angle / 2.0), cos(angle / 2.0)])
-
-
-def x_quaternion(angle):
-    return array([sin(angle / 2.0), 0.0, 0.0, cos(angle / 2.0)])
-
-
-def z_rotation(angle):
-    return array(
-        [
-            [cos(angle), -sin(angle), 0.0],
-            [sin(angle), cos(angle), 0.0],
-            [0.0, 0.0, 1.0],
-        ]
-    )
+from tests.distributions.so3_test_helpers import (
+    ATOL,
+    assert_pdf_peak_matches_log_pdf,
+    x_quaternion,
+    z_quaternion,
+    z_rotation,
+)
 
 
 class SO3ProductTangentGaussianDistributionTest(unittest.TestCase):
@@ -90,15 +69,7 @@ class SO3ProductTangentGaussianDistributionTest(unittest.TestCase):
             array([0.4, 0.0, 0.0, 0.0, -0.2, 0.0]), base=dist.mean()
         )
 
-        mode_pdf = scalar(dist.pdf(dist.mode()))
-        offset_pdf = scalar(dist.pdf(offset))
-        expected_mode_pdf = 1.0 / scalar(sqrt((2.0 * pi) ** 6 * linalg.det(covariance)))
-
-        self.assertGreater(mode_pdf, offset_pdf)
-        npt.assert_allclose(mode_pdf, expected_mode_pdf, atol=ATOL)
-        npt.assert_allclose(
-            scalar(dist.ln_pdf(dist.mode())), math.log(mode_pdf), atol=ATOL
-        )
+        assert_pdf_peak_matches_log_pdf(self, dist, covariance, 6, offset)
 
     def test_sampling_returns_unit_product_quaternions(self):
         random.seed(0)

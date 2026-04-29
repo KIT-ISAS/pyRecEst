@@ -5,12 +5,7 @@ from pyrecest.backend import (
     abs,
     all,
     amax,
-    arccos,
-    arctan2,
     array,
-    clip,
-    concatenate,
-    cos,
     diag,
     linalg,
     log,
@@ -19,15 +14,22 @@ from pyrecest.backend import (
     pi,
     random,
     reshape,
-    sin,
     stack,
     sum,
     take,
     transpose,
-    where,
     zeros,
 )
 
+from ._so3_helpers import (
+    exp_map_identity,
+    geodesic_distance as so3_geodesic_distance,
+    log_map_identity,
+    normalize_quaternions,
+    quaternion_conjugate,
+    quaternion_multiply,
+    quaternions_to_rotation_matrices,
+)
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 from .nonperiodic.gaussian_distribution import GaussianDistribution
 
@@ -62,16 +64,7 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
     def get_manifold_size(self):
         return pi ** (2 * self.num_rotations)
 
-    @staticmethod
-    def _normalize_quaternions(quaternions):
-        quaternions = array(quaternions, dtype=float)
-        assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
-
-        norms = linalg.norm(quaternions, axis=-1)
-        assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
-
-        normalized = quaternions / reshape(norms, tuple(norms.shape) + (1,))
-        return where(normalized[..., -1:] < 0.0, -normalized, normalized)
+    _normalize_quaternions = staticmethod(normalize_quaternions)
 
     @staticmethod
     def _as_product_point(rotations, num_rotations=None):
@@ -181,64 +174,10 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
 
         return tangent_vectors, inferred_num_rotations
 
-    @staticmethod
-    def _quaternion_conjugate(quaternions):
-        quaternions = SO3ProductTangentGaussianDistribution._normalize_quaternions(
-            quaternions
-        )
-        return quaternions * array([-1.0, -1.0, -1.0, 1.0])
-
-    @staticmethod
-    def _quaternion_multiply(left, right):
-        left = SO3ProductTangentGaussianDistribution._normalize_quaternions(left)
-        right = SO3ProductTangentGaussianDistribution._normalize_quaternions(right)
-
-        x1, y1, z1, w1 = left[..., 0], left[..., 1], left[..., 2], left[..., 3]
-        x2, y2, z2, w2 = right[..., 0], right[..., 1], right[..., 2], right[..., 3]
-        product = stack(
-            (
-                w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
-                w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
-                w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
-                w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
-            ),
-            -1,
-        )
-        return SO3ProductTangentGaussianDistribution._normalize_quaternions(product)
-
-    @staticmethod
-    def _exp_map_so3_identity(tangent_vectors):
-        angles = linalg.norm(tangent_vectors, axis=-1)
-        angles_col = reshape(angles, tuple(angles.shape) + (1,))
-        safe_angles = where(angles_col > 1e-12, angles_col, 1.0)
-        vector_scale = where(
-            angles_col > 1e-12,
-            sin(0.5 * angles_col) / safe_angles,
-            0.5 - angles_col**2 / 48.0,
-        )
-        return SO3ProductTangentGaussianDistribution._normalize_quaternions(
-            concatenate(
-                (tangent_vectors * vector_scale, cos(0.5 * angles_col)), axis=-1
-            )
-        )
-
-    @staticmethod
-    def _log_map_so3_identity(rotations):
-        rotations = SO3ProductTangentGaussianDistribution._normalize_quaternions(
-            rotations
-        )
-        vector_part = rotations[..., :3]
-        scalar_part = clip(rotations[..., 3], -1.0, 1.0)
-        vector_norm = linalg.norm(vector_part, axis=-1)
-        angles = 2.0 * arctan2(vector_norm, scalar_part)
-        vector_norm_col = reshape(vector_norm, tuple(vector_norm.shape) + (1,))
-        safe_norm = where(vector_norm_col > 1e-12, vector_norm_col, 1.0)
-        scale = where(
-            vector_norm_col > 1e-12,
-            reshape(angles, tuple(angles.shape) + (1,)) / safe_norm,
-            2.0,
-        )
-        return vector_part * scale
+    _quaternion_conjugate = staticmethod(quaternion_conjugate)
+    _quaternion_multiply = staticmethod(quaternion_multiply)
+    _exp_map_so3_identity = staticmethod(exp_map_identity)
+    _log_map_so3_identity = staticmethod(log_map_identity)
 
     @staticmethod
     def exp_map(tangent_vectors, base=None, num_rotations=None):
@@ -335,8 +274,7 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
             rotation_b, num_rotations=inferred_num_rotations
         )
 
-        inner = abs(sum(rotation_a * rotation_b, axis=-1))
-        distances = 2.0 * arccos(clip(inner, 0.0, 1.0))
+        distances = so3_geodesic_distance(rotation_a, rotation_b)
         if reduce:
             return sum(distances, axis=-1)
         return distances
@@ -344,39 +282,7 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
     @staticmethod
     def as_rotation_matrices(quaternions):
         """Convert scalar-last quaternions to rotation matrices."""
-        quaternions = SO3ProductTangentGaussianDistribution._normalize_quaternions(
-            quaternions
-        )
-        x = quaternions[..., 0]
-        y = quaternions[..., 1]
-        z = quaternions[..., 2]
-        w = quaternions[..., 3]
-
-        row_0 = stack(
-            (
-                1.0 - 2.0 * (y * y + z * z),
-                2.0 * (x * y - z * w),
-                2.0 * (x * z + y * w),
-            ),
-            -1,
-        )
-        row_1 = stack(
-            (
-                2.0 * (x * y + z * w),
-                1.0 - 2.0 * (x * x + z * z),
-                2.0 * (y * z - x * w),
-            ),
-            -1,
-        )
-        row_2 = stack(
-            (
-                2.0 * (x * z - y * w),
-                2.0 * (y * z + x * w),
-                1.0 - 2.0 * (x * x + y * y),
-            ),
-            -1,
-        )
-        return stack((row_0, row_1, row_2), -2)
+        return quaternions_to_rotation_matrices(quaternions)
 
     def pdf(self, xs):
         """Evaluate the tangent Gaussian density at SO(3)^K rotations."""
