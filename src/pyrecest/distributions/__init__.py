@@ -256,6 +256,9 @@ from .se3_cart_prod_stacked_distribution import SE3CartProdStackedDistribution
 from .se3_dirac_distribution import SE3DiracDistribution
 from .so3_bingham_distribution import SO3BinghamDistribution
 from .so3_dirac_distribution import SO3DiracDistribution
+from .so3_product_tangent_gaussian_distribution import (
+    SO3ProductTangentGaussianDistribution,
+)
 from .so3_tangent_gaussian_distribution import SO3TangentGaussianDistribution
 from .so3_uniform_distribution import SO3UniformDistribution
 
@@ -421,5 +424,6 @@ __all__ = aliases + [
     "SO3TangentGaussianDistribution",
     "SO3UniformDistribution",
     "SO3DiracDistribution",
+    "SO3ProductTangentGaussianDistribution",
     "SE2BinghamDistribution",
 ]

@@ -4,11 +4,7 @@
 from pyrecest.backend import (
     abs,
     amax,
-    arctan2,
     array,
-    clip,
-    concatenate,
-    cos,
     diag,
     linalg,
     log,
@@ -16,19 +12,19 @@ from pyrecest.backend import (
     ndim,
     pi,
     random,
-    reshape,
-    sin,
-    stack,
     sum,
     transpose,
-    where,
     zeros,
 )
 
 from ._so3_helpers import (
     as_batch,
+    exp_map_identity,
     geodesic_distance,
+    log_map_identity,
     normalize_quaternions,
+    quaternion_conjugate,
+    quaternion_multiply,
     quaternions_to_rotation_matrices,
 )
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
@@ -64,28 +60,8 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
     def _as_tangent_batch(tangent_vectors):
         return as_batch(tangent_vectors, 3, "SO(3) tangent vectors")
 
-    @staticmethod
-    def _quaternion_conjugate(quaternions):
-        quaternions = SO3TangentGaussianDistribution._normalize_quaternions(quaternions)
-        return quaternions * array([-1.0, -1.0, -1.0, 1.0])
-
-    @staticmethod
-    def _quaternion_multiply(left, right):
-        left = SO3TangentGaussianDistribution._normalize_quaternions(left)
-        right = SO3TangentGaussianDistribution._normalize_quaternions(right)
-
-        x1, y1, z1, w1 = left[:, 0], left[:, 1], left[:, 2], left[:, 3]
-        x2, y2, z2, w2 = right[:, 0], right[:, 1], right[:, 2], right[:, 3]
-        product = stack(
-            (
-                w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
-                w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
-                w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
-                w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
-            ),
-            axis=-1,
-        )
-        return SO3TangentGaussianDistribution._normalize_quaternions(product)
+    _quaternion_conjugate = staticmethod(quaternion_conjugate)
+    _quaternion_multiply = staticmethod(quaternion_multiply)
 
     @staticmethod
     def exp_map(tangent_vectors, base=None):
@@ -96,20 +72,7 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
         tangent_vectors = SO3TangentGaussianDistribution._as_tangent_batch(
             tangent_vectors
         )
-        angles = linalg.norm(tangent_vectors, None, -1)
-        angles_col = reshape(angles, (-1, 1))
-        safe_angles = where(angles_col > 1e-12, angles_col, 1.0)
-        vector_scale = where(
-            angles_col > 1e-12,
-            sin(0.5 * angles_col) / safe_angles,
-            0.5 - angles_col**2 / 48.0,
-        )
-        delta_quaternions = concatenate(
-            (tangent_vectors * vector_scale, cos(0.5 * angles_col)), axis=-1
-        )
-        delta_quaternions = SO3TangentGaussianDistribution._normalize_quaternions(
-            delta_quaternions
-        )
+        delta_quaternions = exp_map_identity(tangent_vectors)
 
         if base is None:
             return delta_quaternions
@@ -129,16 +92,7 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
                 SO3TangentGaussianDistribution._quaternion_conjugate(base), rotations
             )
 
-        vector_part = rotations[:, :3]
-        scalar_part = clip(rotations[:, 3], -1.0, 1.0)
-        vector_norm = linalg.norm(vector_part, None, -1)
-        angles = 2.0 * arctan2(vector_norm, scalar_part)
-        vector_norm_col = reshape(vector_norm, (-1, 1))
-        safe_norm = where(vector_norm_col > 1e-12, vector_norm_col, 1.0)
-        scale = where(
-            vector_norm_col > 1e-12, reshape(angles, (-1, 1)) / safe_norm, 2.0
-        )
-        return vector_part * scale
+        return log_map_identity(rotations)
 
     geodesic_distance = staticmethod(geodesic_distance)
 

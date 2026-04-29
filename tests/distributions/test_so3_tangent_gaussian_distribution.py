@@ -1,15 +1,14 @@
-import math
 import unittest
 
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, diag, linalg, ones, pi, random, sqrt
+from pyrecest.backend import array, diag, linalg, ones, pi, random
 from pyrecest.distributions import SO3TangentGaussianDistribution
 from tests.distributions.so3_test_helpers import (
     ATOL,
+    assert_pdf_peak_matches_log_pdf,
     assert_matches_z_rotation,
-    scalar,
     z_quaternion,
 )
 
@@ -37,15 +36,7 @@ class SO3TangentGaussianDistributionTest(unittest.TestCase):
         dist = SO3TangentGaussianDistribution(array([0.0, 0.0, 0.0, 1.0]), covariance)
         offset = SO3TangentGaussianDistribution.exp_map(array([0.4, 0.0, 0.0]))
 
-        mode_pdf = scalar(dist.pdf(dist.mode()))
-        offset_pdf = scalar(dist.pdf(offset))
-        expected_mode_pdf = 1.0 / scalar(sqrt((2.0 * pi) ** 3 * linalg.det(covariance)))
-
-        self.assertGreater(mode_pdf, offset_pdf)
-        npt.assert_allclose(mode_pdf, expected_mode_pdf, atol=ATOL)
-        npt.assert_allclose(
-            scalar(dist.ln_pdf(dist.mode())), math.log(mode_pdf), atol=ATOL
-        )
+        assert_pdf_peak_matches_log_pdf(self, dist, covariance, 3, offset)
 
     def test_sampling_returns_unit_quaternions(self):
         random.seed(0)
