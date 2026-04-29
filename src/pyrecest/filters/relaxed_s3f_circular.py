@@ -23,11 +23,9 @@ from pyrecest.backend import (
     asarray,
     column_stack,
     cos,
-    empty,
     exp,
     linspace,
     mod,
-    outer,
     pi,
     sin,
     stack,
@@ -113,38 +111,34 @@ def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
     representative_displacements = rotate_body_increment(centers, u)
     mean_displacements = first_factor * representative_displacements
 
-    covariance_inflation_list = []
-    for idx, center in enumerate(centers):
-        cos_2 = cos(2.0 * center)
-        sin_2 = sin(2.0 * center)
+    cos_2 = cos(2.0 * centers)
+    sin_2 = sin(2.0 * centers)
+    e_cos2 = 0.5 * (1.0 + second_factor * cos_2)
+    e_sin2 = 0.5 * (1.0 - second_factor * cos_2)
+    e_cossin = 0.5 * second_factor * sin_2
 
-        e_cos2 = 0.5 * (1.0 + second_factor * cos_2)
-        e_sin2 = 0.5 * (1.0 - second_factor * cos_2)
-        e_cossin = 0.5 * second_factor * sin_2
-
-        ux, uy = u
-        second_moment = array(
-            [
-                [
-                    ux * ux * e_cos2 - 2.0 * ux * uy * e_cossin + uy * uy * e_sin2,
-                    (ux * ux - uy * uy) * e_cossin + ux * uy * second_factor * cos_2,
-                ],
-                [
-                    (ux * ux - uy * uy) * e_cossin + ux * uy * second_factor * cos_2,
-                    ux * ux * e_sin2 + 2.0 * ux * uy * e_cossin + uy * uy * e_cos2,
-                ],
-            ],
-            dtype=float,
-        )
-        mean = mean_displacements[idx]
-        cov = second_moment - outer(mean, mean)
-        covariance_inflation_list.append(0.5 * (cov + cov.T))
-
-    covariance_inflations = (
-        stack(covariance_inflation_list, axis=0)
-        if covariance_inflation_list
-        else empty((0, 2, 2), dtype=float)
+    ux, uy = u
+    second_moment_00 = ux * ux * e_cos2 - 2.0 * ux * uy * e_cossin + uy * uy * e_sin2
+    second_moment_01 = (ux * ux - uy * uy) * e_cossin + ux * uy * second_factor * cos_2
+    second_moment_11 = ux * ux * e_sin2 + 2.0 * ux * uy * e_cossin + uy * uy * e_cos2
+    second_moments = stack(
+        [
+            stack([second_moment_00, second_moment_01], axis=1),
+            stack([second_moment_01, second_moment_11], axis=1),
+        ],
+        axis=1,
     )
+
+    mean_x = mean_displacements[:, 0]
+    mean_y = mean_displacements[:, 1]
+    mean_outer_products = stack(
+        [
+            stack([mean_x * mean_x, mean_x * mean_y], axis=1),
+            stack([mean_y * mean_x, mean_y * mean_y], axis=1),
+        ],
+        axis=1,
+    )
+    covariance_inflations = second_moments - mean_outer_products
 
     return CircularCellStatistics(
         grid=centers,

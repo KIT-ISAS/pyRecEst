@@ -195,6 +195,48 @@ class TestStateSpaceSubdivisionFilterUpdate(unittest.TestCase):
             # Mean should be halfway between 0 and 2
             npt.assert_allclose(ld.mu, array([1.0]), atol=1e-10)
 
+    def test_update_single_linear_likelihood_matches_per_cell_likelihoods(self):
+        """The single-likelihood fast path should match the generic per-cell update."""
+        n = 8
+        gd = HypertoroidalGridDistribution.from_distribution(
+            VonMisesDistribution(1.0, 2.0), (n,)
+        )
+        gaussians = [
+            GaussianDistribution(
+                array([0.2 * i, -0.1 * i]),
+                array([[1.0 + 0.1 * i, 0.02], [0.02, 0.8 + 0.05 * i]]),
+            )
+            for i in range(n)
+        ]
+        likelihood = GaussianDistribution(
+            array([0.4, -0.2]),
+            array([[0.7, 0.1], [0.1, 0.5]]),
+        )
+
+        fast_filter = StateSpaceSubdivisionFilter(
+            StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
+        )
+        generic_filter = StateSpaceSubdivisionFilter(
+            StateSpaceSubdivisionGaussianDistribution(gd, gaussians)
+        )
+
+        fast_filter.update(likelihoods_linear=[likelihood])
+        generic_filter.update(likelihoods_linear=[likelihood for _ in range(n)])
+
+        npt.assert_allclose(
+            fast_filter.filter_state.gd.grid_values,
+            generic_filter.filter_state.gd.grid_values,
+            rtol=1e-6,
+            atol=1e-7,
+        )
+        for fast_dist, generic_dist in zip(
+            fast_filter.filter_state.linear_distributions,
+            generic_filter.filter_state.linear_distributions,
+            strict=True,
+        ):
+            npt.assert_allclose(fast_dist.mu, generic_dist.mu, rtol=1e-6, atol=1e-7)
+            npt.assert_allclose(fast_dist.C, generic_dist.C, rtol=1e-6, atol=1e-7)
+
     def test_update_joint(self):
         """Joint update: both periodic and linear likelihoods should narrow the state."""
         n = 40
