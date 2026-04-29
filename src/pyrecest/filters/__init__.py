@@ -75,6 +75,7 @@ from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
 from .piecewise_constant_filter import PiecewiseConstantFilter
 from .random_matrix_tracker import RandomMatrixTracker
 from .se2_ukf import SE2UKF
+from .so3_product_particle_filter import SO3ProductParticleFilter
 from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
 from .toroidal_particle_filter import ToroidalParticleFilter
 from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
@@ -183,6 +184,7 @@ __all__ = [
     "solve_global_nearest_neighbor",
     "SE2FilterMixin",
     "SE2UKF",
+    "SO3ProductParticleFilter",
     "StateSpaceSubdivisionFilter",
     "ToroidalFilterMixin",
     "ToroidalParticleFilter",
