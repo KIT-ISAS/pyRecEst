@@ -23,7 +23,9 @@ from pyrecest.backend import (
 
 from ._so3_helpers import (
     exp_map_identity,
-    geodesic_distance as so3_geodesic_distance,
+)
+from ._so3_helpers import geodesic_distance as so3_geodesic_distance
+from ._so3_helpers import (
     log_map_identity,
     normalize_quaternions,
     quaternion_conjugate,
