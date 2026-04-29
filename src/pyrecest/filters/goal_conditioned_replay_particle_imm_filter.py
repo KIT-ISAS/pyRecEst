@@ -15,9 +15,8 @@ replay dynamics:
 
 from __future__ import annotations
 
-import copy
-
 # pylint: disable=no-name-in-module,no-member,duplicate-code
+from pyrecest import copy
 from pyrecest.backend import (
     arange,
     argmax,
@@ -101,7 +100,9 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
     def mode_indices(self):
         """Current discrete mode index for each particle."""
 
-        return copy.deepcopy(self._mode_indices)
+        if self._mode_indices is None:
+            return None
+        return copy(self._mode_indices)
 
     @property
     def mode_probabilities(self):
@@ -180,9 +181,10 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
             self.n_particles,
             p=normalized_weights,
         )
-        new_state = copy.deepcopy(self.filter_state)
-        new_state.d = self.filter_state.d[indices]
-        new_state.w = ones_like(self.filter_state.w) / self.n_particles
+        new_state = type(self.filter_state)(
+            copy(self.filter_state.d[indices]),
+            ones_like(self.filter_state.w) / self.n_particles,
+        )
         if self._mode_indices is None:
             raise ValueError("Mode indices must be initialized before updating")
         self.filter_state = new_state
@@ -308,7 +310,7 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
             goal_reset_distribution, "goal_reset_distribution"
         )
 
-        previous_mode_indices = copy.deepcopy(self._mode_indices)
+        previous_mode_indices = copy(self._mode_indices)
         self._mode_indices = self._sample_transitioned_modes(transition_matrix)
         self._last_mode_transition_mask = array(
             self._mode_indices != previous_mode_indices
@@ -476,10 +478,12 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
             jump_velocity,
         )
 
-        new_state = copy.deepcopy(self.filter_state)
-        new_state.d = concatenate(
-            [positions_new, velocities_new, goals_new],
-            axis=1,
+        new_state = type(self.filter_state)(
+            concatenate(
+                [positions_new, velocities_new, goals_new],
+                axis=1,
+            ),
+            copy(self.filter_state.w),
         )
         self.filter_state = new_state
         self._last_transition_diagnostics = {
@@ -489,7 +493,7 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
             "goal_reset_mask": goal_reset_mask,
             "mode_transition_mask": self._last_mode_transition_mask,
             "previous_mode_indices": previous_mode_indices,
-            "mode_indices": copy.deepcopy(self._mode_indices),
+            "mode_indices": copy(self._mode_indices),
             "velocity_jump": velocity_jump,
             "position_jump": position_jump,
             "control_field": control_field,
@@ -502,7 +506,7 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
         mode_indices = self._mode_indices
         if mode_indices is None:
             raise ValueError("Mode indices must be initialized before prediction")
-        transitioned = copy.deepcopy(mode_indices)
+        transitioned = copy(mode_indices)
         for source_mode in range(self.n_modes):
             source_mask = mode_indices == source_mode
             count = int(self._to_scalar(sum(source_mask)))
