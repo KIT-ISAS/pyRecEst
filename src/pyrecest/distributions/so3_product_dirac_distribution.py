@@ -1,16 +1,14 @@
 """Dirac distributions on Cartesian products of SO(3)."""
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,arguments-renamed
 from pyrecest.backend import (
     abs,
     all,
     arange,
     arccos,
-    argmax,
     array,
     clip,
     linalg,
-    outer,
     pi,
     random,
     reshape,
@@ -19,16 +17,15 @@ from pyrecest.backend import (
     where,
 )
 
-from .abstract_dirac_distribution import AbstractDiracDistribution
-from .cart_prod.abstract_cart_prod_distribution import AbstractCartProdDistribution
+from .cart_prod.hyperhemisphere_cart_prod_dirac_distribution import (
+    HyperhemisphereCartProdDiracDistribution,
+)
 from .hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
 )
 
 
-class SO3ProductDiracDistribution(
-    AbstractDiracDistribution, AbstractCartProdDistribution
-):
+class SO3ProductDiracDistribution(HyperhemisphereCartProdDiracDistribution):
     """Weighted Dirac distribution on SO(3)^K.
 
     Rotations are represented as scalar-last unit quaternions ``(x, y, z, w)``.
@@ -42,12 +39,13 @@ class SO3ProductDiracDistribution(
             d, num_rotations=num_rotations
         )
         self.num_rotations = inferred_num_rotations
-        self.dim = 3 * self.num_rotations
-        super().__init__(quaternions, w=w)
-
-    @property
-    def input_dim(self):
-        return 4 * self.num_rotations
+        super().__init__(
+            quaternions,
+            w=w,
+            dim_hemisphere=3,
+            n_hemispheres=inferred_num_rotations,
+            store_flat=False,
+        )
 
     def get_manifold_size(self):
         return pi ** (2 * self.num_rotations)
@@ -72,9 +70,10 @@ class SO3ProductDiracDistribution(
                     and inferred_num_rotations != num_rotations
                 ):
                     raise ValueError("num_rotations does not match input shape.")
-                quaternions = reshape(
+                quaternions = SO3ProductDiracDistribution._as_component_array(
                     quaternions,
-                    (quaternions.shape[0], inferred_num_rotations, 4),
+                    dim_hemisphere=3,
+                    n_hemispheres=inferred_num_rotations,
                 )
         elif quaternions.ndim == 3:
             if quaternions.shape[-1] != 4:
@@ -112,7 +111,7 @@ class SO3ProductDiracDistribution(
 
     def as_flat_quaternions(self):
         """Return Dirac locations with shape ``(n, 4 * K)``."""
-        return reshape(self.d, (self.d.shape[0], 4 * self.num_rotations))
+        return self.as_flat_array()
 
     def sample(self, n):
         indices = random.choice(arange(self.d.shape[0]), n, p=self.w)
@@ -123,7 +122,9 @@ class SO3ProductDiracDistribution(
 
     def marginalize_rotation(self, rotation_index):
         """Return the single SO(3) marginal at ``rotation_index``."""
-        return HyperhemisphericalDiracDistribution(self.d[:, rotation_index, :], self.w)
+        return HyperhemisphericalDiracDistribution(
+            self.component_particles(rotation_index), self.w
+        )
 
     def marginalize_rotations(self, rotation_indices):
         """Return the SO(3)^L marginal selected by ``rotation_indices``."""
@@ -137,20 +138,10 @@ class SO3ProductDiracDistribution(
         """
         if rotation_index is not None:
             return self._moment_for_rotation(rotation_index)
-        return stack(
-            [self._moment_for_rotation(i) for i in range(self.num_rotations)], 0
-        )
+        return super().moment()
 
     def _moment_for_rotation(self, rotation_index):
-        quaternions = self.d[:, rotation_index, :]
-        weighted_outer_products = stack(
-            [
-                self.w[i] * outer(quaternions[i, :], quaternions[i, :])
-                for i in range(self.d.shape[0])
-            ],
-            0,
-        )
-        return sum(weighted_outer_products, axis=0) / sum(self.w)
+        return self._moment_for_component(rotation_index)
 
     def mean_quaternion(self, rotation_index=None):
         """Return the weighted chordal quaternion mean."""
@@ -162,12 +153,7 @@ class SO3ProductDiracDistribution(
         )
 
     def _mean_quaternion_for_rotation(self, rotation_index):
-        eigenvalues, eigenvectors = linalg.eigh(
-            self._moment_for_rotation(rotation_index)
-        )
-        mean_quaternion = eigenvectors[:, argmax(eigenvalues)]
-        mean_quaternion = mean_quaternion / linalg.norm(mean_quaternion)
-        return self._canonicalize_quaternions(mean_quaternion)
+        return self._mean_axis_for_component(rotation_index)
 
     def mean(self):
         """Return the weighted chordal quaternion mean for each component."""
