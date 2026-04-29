@@ -4,7 +4,7 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, eye, pi, sin, stack
+from pyrecest.backend import array, cos, eye, linalg, pi, sin, sqrt, stack
 from pyrecest.distributions import SO3DiracDistribution
 from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
@@ -64,6 +64,47 @@ class SO3DiracDistributionTest(unittest.TestCase):
             array([pi / 2.0]),
             atol=ATOL,
         )
+
+    def test_chordal_distance_matches_so3_frobenius_metric(self):
+        identity = array([0.0, 0.0, 0.0, 1.0])
+        identity_antipodal = array([0.0, 0.0, 0.0, -1.0])
+        quarter_turn = array([0.0, 0.0, sin(pi / 4.0), cos(pi / 4.0)])
+        half_turn = array([0.0, 0.0, 1.0, 0.0])
+        quarter_turn_matrix = array(
+            [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
+        )
+
+        npt.assert_allclose(
+            SO3DiracDistribution.chordal_distance(identity, identity_antipodal),
+            array([0.0]),
+            atol=ATOL,
+        )
+        npt.assert_allclose(
+            SO3DiracDistribution.chordal_distance(identity, quarter_turn),
+            linalg.norm(eye(3) - quarter_turn_matrix),
+            atol=ATOL,
+        )
+        npt.assert_allclose(
+            SO3DiracDistribution.chordal_distance(identity, half_turn),
+            array([2.0 * sqrt(2.0)]),
+            atol=ATOL,
+        )
+
+    def test_so3_distance_methods_accept_batches(self):
+        identity = array([0.0, 0.0, 0.0, 1.0])
+        quarter_turn = array([0.0, 0.0, sin(pi / 4.0), cos(pi / 4.0)])
+        dist = SO3DiracDistribution(
+            stack([identity, quarter_turn], axis=0), array([0.25, 0.75])
+        )
+
+        npt.assert_allclose(
+            dist.distance_to(identity), array([0.0, pi / 2.0]), atol=ATOL
+        )
+        npt.assert_allclose(
+            dist.chordal_distance_to(identity), array([0.0, 2.0]), atol=ATOL
+        )
+        npt.assert_allclose(dist.angular_error_mean(identity), 0.75 * pi / 2.0)
+        npt.assert_allclose(dist.chordal_error_mean(identity), 1.5, atol=ATOL)
 
     def test_mode_returns_highest_weight_canonical_quaternion(self):
         dist = SO3DiracDistribution(
