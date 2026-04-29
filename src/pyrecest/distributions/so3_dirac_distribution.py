@@ -3,9 +3,11 @@
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    all,
     amax,
     array,
     asarray,
+    clip,
     linalg,
     ndim,
     spatial,
