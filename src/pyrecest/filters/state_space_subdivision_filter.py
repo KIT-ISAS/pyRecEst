@@ -2,7 +2,8 @@ import copy
 import warnings
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, asarray, concatenate, linalg, stack
+from pyrecest.backend import array, asarray, concatenate, einsum, exp, less_equal, linalg, log, stack, transpose
+from pyrecest.backend import any as backend_any
 from pyrecest.backend import sum as backend_sum
 
 from ..distributions.cart_prod.state_space_subdivision_gaussian_distribution import (
@@ -283,40 +284,97 @@ class StateSpaceSubdivisionFilter(AbstractFilter, HypercylindricalFilterMixin):
                 n_areas,
             ), "likelihoods_linear must have 1 or n_areas elements."
 
-            # Compute the grid-weight factor for each area i:
-            #   factor_i = N(mu_pred_i; mu_like_j, C_pred_i + C_like_j)
-            # where j = i if n_likelihoods > 1 else 0.
-            # Collect into an array and multiply in one shot (backend-safe).
-            pdf_values = []
-            for i in range(n_areas):
-                j = i if n_likelihoods > 1 else 0
-                combined_cov = state.linear_distributions[i].C + likelihoods_linear[j].C
-                temp_g = GaussianDistribution(
-                    likelihoods_linear[j].mu, combined_cov, check_validity=False
-                )
-                pdf_values.append(
-                    asarray(temp_g.pdf(state.linear_distributions[i].mu)).reshape((1,))
-                )
-            factors = concatenate(pdf_values)  # shape (n_areas,)
-            state.gd.grid_values = state.gd.grid_values * factors
+            if n_likelihoods == 1:
+                self._update_single_linear_likelihood(likelihoods_linear[0])
+            else:
+                # Compute the grid-weight factor for each area i:
+                #   factor_i = N(mu_pred_i; mu_like_j, C_pred_i + C_like_j)
+                # where j = i if n_likelihoods > 1 else 0.
+                # Collect into an array and multiply in one shot (backend-safe).
+                pdf_values = []
+                for i in range(n_areas):
+                    j = i if n_likelihoods > 1 else 0
+                    combined_cov = state.linear_distributions[i].C + likelihoods_linear[j].C
+                    temp_g = GaussianDistribution(
+                        likelihoods_linear[j].mu, combined_cov, check_validity=False
+                    )
+                    pdf_values.append(
+                        asarray(temp_g.pdf(state.linear_distributions[i].mu)).reshape((1,))
+                    )
+                factors = concatenate(pdf_values)  # shape (n_areas,)
+                state.gd.grid_values = state.gd.grid_values * factors
 
-            # Update the linear distributions (Kalman update in information form):
-            #   C_new^{-1} = C_prior^{-1} + C_like^{-1}
-            #   mu_new = C_new (C_prior^{-1} mu_prior + C_like^{-1} mu_like)
-            for i in range(n_areas):
-                j = i if n_likelihoods > 1 else 0
-                C_prior_inv = linalg.inv(state.linear_distributions[i].C)
-                C_like_inv = linalg.inv(likelihoods_linear[j].C)
-                C_new_inv = C_prior_inv + C_like_inv
-                C_new = linalg.inv(C_new_inv)
-                mu_new = C_new @ (
-                    C_prior_inv @ state.linear_distributions[i].mu
-                    + C_like_inv @ likelihoods_linear[j].mu
-                )
-                state.linear_distributions[i].mu = mu_new
-                state.linear_distributions[i].C = C_new
+                # Update the linear distributions (Kalman update in information form):
+                #   C_new^{-1} = C_prior^{-1} + C_like^{-1}
+                #   mu_new = C_new (C_prior^{-1} mu_prior + C_like^{-1} mu_like)
+                for i in range(n_areas):
+                    j = i if n_likelihoods > 1 else 0
+                    C_prior_inv = linalg.inv(state.linear_distributions[i].C)
+                    C_like_inv = linalg.inv(likelihoods_linear[j].C)
+                    C_new_inv = C_prior_inv + C_like_inv
+                    C_new = linalg.inv(C_new_inv)
+                    mu_new = C_new @ (
+                        C_prior_inv @ state.linear_distributions[i].mu
+                        + C_like_inv @ likelihoods_linear[j].mu
+                    )
+                    state.linear_distributions[i].mu = mu_new
+                    state.linear_distributions[i].C = C_new
 
         state.gd.normalize_in_place(warn_unnorm=False)
+
+    def _update_single_linear_likelihood(self, likelihood):  # pylint: disable=too-many-locals
+        """Vectorized update for one linear Gaussian likelihood."""
+
+        state = self._filter_state
+        likelihood_mu = asarray(likelihood.mu, dtype=float).reshape(-1)
+        likelihood_cov = asarray(likelihood.C, dtype=float)
+        means = stack([dist.mu for dist in state.linear_distributions])
+        covariances = stack([dist.C for dist in state.linear_distributions])
+
+        combined_covariances = covariances + likelihood_cov
+        deltas = means - likelihood_mu
+        combined_determinants = linalg.det(combined_covariances)
+        if bool(backend_any(less_equal(combined_determinants, 0.0))):
+            raise ValueError("Combined covariance matrices must be positive definite.")
+
+        combined_precisions = linalg.inv(combined_covariances)
+        solved_deltas = einsum("nij,nj->ni", combined_precisions, deltas)
+        exponents = einsum("ni,ni->n", deltas, solved_deltas)
+        dimension = likelihood_mu.shape[0]
+        factors = exp(
+            -0.5
+            * (
+                dimension * log(2.0 * 3.141592653589793)
+                + log(combined_determinants)
+                + exponents
+            )
+        )
+        state.gd.grid_values = state.gd.grid_values * factors
+
+        prior_precisions = linalg.inv(covariances)
+        likelihood_precision = linalg.inv(likelihood_cov)
+        posterior_precisions = prior_precisions + likelihood_precision
+        posterior_covariances = linalg.inv(posterior_precisions)
+        posterior_covariances = 0.5 * (
+            posterior_covariances + transpose(posterior_covariances, (0, 2, 1))
+        )
+
+        prior_information_means = einsum("nij,nj->ni", prior_precisions, means)
+        likelihood_information_mean = likelihood_precision @ likelihood_mu
+        posterior_means = einsum(
+            "nij,nj->ni",
+            posterior_covariances,
+            prior_information_means + likelihood_information_mean,
+        )
+
+        for distribution, posterior_mean, posterior_covariance in zip(
+            state.linear_distributions,
+            posterior_means,
+            posterior_covariances,
+            strict=True,
+        ):
+            distribution.mu = posterior_mean
+            distribution.C = posterior_covariance
 
     # ------------------------------------------------------------------
     # Estimates
