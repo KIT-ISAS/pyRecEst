@@ -3,7 +3,17 @@ import unittest
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,duplicate-code
-from pyrecest.backend import array, concatenate, eye, isinf, isnan, ones, random, zeros
+from pyrecest.backend import (
+    array,
+    concatenate,
+    eye,
+    isinf,
+    isnan,
+    ones,
+    random,
+    sum as backend_sum,
+    zeros,
+)
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import GoalConditionedReplayParticleIMMFilter
 
@@ -134,6 +144,42 @@ class TestGoalConditionedReplayParticleIMMFilter(unittest.TestCase):
         )
 
         assert_association_likelihood_linear_positive(self, filt, state_dim=6)
+
+    def test_position_likelihood_with_proposal_keeps_imm_modes_valid(self):
+        random.seed(4)
+
+        filt = GoalConditionedReplayParticleIMMFilter(
+            n_particles=128,
+            spatial_dim=2,
+            mode_stickiness=1.0,
+        )
+        filt.initialize_from_state_priors(
+            position_prior=array([0.0, 0.0]),
+            velocity_prior=array([0.0, 0.0]),
+            goal_prior=array([1.0, 0.0]),
+        )
+        proposal_positions = array([[1.8, 0.0], [2.0, 0.0], [2.2, 0.0]])
+
+        def likelihood(positions):
+            residual = positions - array([2.0, 0.0])
+            return 1.0 / (
+                1.0 + residual[:, 0] * residual[:, 0] + residual[:, 1] * residual[:, 1]
+            )
+
+        log_marginal = filt.update_position_likelihood_with_proposal(
+            likelihood,
+            position_proposal=proposal_positions,
+            proposal_weights=array([0.2, 0.6, 0.2]),
+            proposal_probability=1.0,
+            return_log_marginal=True,
+        )
+
+        self.assertFalse(isnan(log_marginal))
+        self.assertFalse(isinf(log_marginal))
+        self.assertEqual(filt.mode_indices.shape, (filt.n_particles,))
+        self.assertAlmostEqual(float(backend_sum(filt.mode_probabilities)), 1.0)
+        self.assertGreater(float(filt.get_position_estimate()[0]), 1.8)
+        self.assertGreater(float(filt.last_position_proposal_fraction), 0.99)
 
 
 if __name__ == "__main__":
