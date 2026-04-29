@@ -257,6 +257,7 @@ from .se3_dirac_distribution import SE3DiracDistribution
 from .so3_bingham_distribution import SO3BinghamDistribution
 from .so3_dirac_distribution import SO3DiracDistribution
 from .so3_tangent_gaussian_distribution import SO3TangentGaussianDistribution
+from .so3_uniform_distribution import SO3UniformDistribution
 
 # Aliases for brevity and compatibility with libDirectional
 HypertoroidalWNDistribution = HypertoroidalWrappedNormalDistribution
@@ -418,6 +419,7 @@ __all__ = aliases + [
     "SE3DiracDistribution",
     "SO3BinghamDistribution",
     "SO3TangentGaussianDistribution",
+    "SO3UniformDistribution",
     "SO3DiracDistribution",
     "SE2BinghamDistribution",
 ]
