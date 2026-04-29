@@ -142,7 +142,10 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
 
     geodesic_distance = staticmethod(geodesic_distance)
 
-    as_rotation_matrices = staticmethod(quaternions_to_rotation_matrices)
+    @staticmethod
+    def as_rotation_matrices(quaternions):
+        """Convert scalar-last quaternions to rotation matrices."""
+        return quaternions_to_rotation_matrices(quaternions)
 
     def pdf(self, xs):
         """Evaluate the tangent Gaussian density at SO(3) quaternions."""
