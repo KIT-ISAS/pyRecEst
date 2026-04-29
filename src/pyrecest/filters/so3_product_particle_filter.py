@@ -19,22 +19,22 @@ from pyrecest.backend import (
 )
 from pyrecest.distributions import SO3DiracDistribution
 from pyrecest.distributions._so3_helpers import geodesic_distance, normalize_quaternions
-from pyrecest.distributions.cart_prod.hyperhemisphere_cart_prod_dirac_distribution import (
-    HyperhemisphereCartProdDiracDistribution,
-)
 from pyrecest.distributions.so3_tangent_gaussian_distribution import (
     SO3TangentGaussianDistribution,
 )
 
-from .abstract_particle_filter import AbstractParticleFilter
+from .hyperhemisphere_cart_prod_particle_filter import (
+    HyperhemisphereCartProdParticleFilter,
+)
 
 
-class SO3ProductParticleFilter(AbstractParticleFilter):
+class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
     """Particle filter for states on ``SO(3)^K``.
 
     Particles are exposed as scalar-last unit quaternions with shape
     ``(n_particles, num_rotations, 4)``. Internally, the filter stores them in
-    PyRecEst's existing hyperhemisphere Cartesian-product Dirac distribution.
+    the generic hyperhemisphere Cartesian-product particle filter with
+    ``dim_hemisphere=3``.
     """
 
     def __init__(
@@ -50,24 +50,21 @@ class SO3ProductParticleFilter(AbstractParticleFilter):
             raise ValueError("num_rotations must be positive.")
 
         self.num_rotations = int(num_rotations)
+        super().__init__(
+            n_particles=n_particles,
+            dim_hemisphere=3,
+            n_hemispheres=self.num_rotations,
+        )
+
         particles = self._identity_particles(n_particles, self.num_rotations)
         if initial_particles is not None:
             particles = self._as_particle_array(initial_particles, self.num_rotations)
             if particles.shape[0] != n_particles:
                 raise ValueError("initial_particles must contain n_particles entries.")
 
-        if weights is None:
-            weights = ones(n_particles) / n_particles
-        else:
+        if weights is not None:
             weights = self._normalize_weights(weights)
-
-        initial_filter_state = HyperhemisphereCartProdDiracDistribution(
-            self._flatten_particles(particles),
-            weights,
-            dim_hemisphere=3,
-            n_hemispheres=self.num_rotations,
-        )
-        super().__init__(initial_filter_state=initial_filter_state)
+        self.set_particles(particles, weights=weights)
 
     @staticmethod
     def _identity_particles(n_particles, num_rotations):

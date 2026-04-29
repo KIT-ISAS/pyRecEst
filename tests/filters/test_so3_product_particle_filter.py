@@ -3,8 +3,11 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, diag, linalg, ones, pi, random, sin, cos, stack
-from pyrecest.filters import SO3ProductParticleFilter
+from pyrecest.backend import array, cos, diag, linalg, ones, pi, random, sin, stack
+from pyrecest.filters import (
+    HyperhemisphereCartProdParticleFilter,
+    SO3ProductParticleFilter,
+)
 
 ATOL = 1e-6
 
@@ -21,6 +24,9 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
     def test_initializes_identity_particles(self):
         filt = SO3ProductParticleFilter(n_particles=5, num_rotations=2)
 
+        self.assertIsInstance(filt, HyperhemisphereCartProdParticleFilter)
+        self.assertEqual(filt.filter_state.dim_hemisphere, 3)
+        self.assertEqual(filt.filter_state.n_hemispheres, 2)
         self.assertEqual(filt.particles.shape, (5, 2, 4))
         self.assertEqual(filt.filter_state.d.shape, (5, 8))
         npt.assert_allclose(linalg.norm(filt.particles, axis=-1), ones((5, 2)))
