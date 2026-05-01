@@ -10,6 +10,7 @@ nav:
   - Guides:
       - Shapes and Conventions: conventions.md
       - Backend Compatibility: backend-compatibility.md
+      - Representation Conversion: representation-conversion.md
   - Tutorials:
       - Overview: tutorials/index.md
       - Use a Distribution: tutorials/use-a-distribution.md
