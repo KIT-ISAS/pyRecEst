@@ -105,6 +105,33 @@ from pyrecest.distributions.conversion import register_conversion_alias
 register_conversion_alias("my_particles", MyParticleDistribution)
 ```
 
+## Hypertoroidal representations
+
+Hypertoroidal aliases are domain-aware. For a hypertoroidal source,
+`"particles"` resolves to `HypertoroidalDiracDistribution` and `"grid"`
+resolves to `HypertoroidalGridDistribution`.
+
+```python
+from pyrecest.backend import array, eye
+from pyrecest.distributions import HypertoroidalWrappedNormalDistribution
+
+
+distribution = HypertoroidalWrappedNormalDistribution(
+    array([0.0, 1.0]),
+    0.05 * eye(2),
+)
+
+particles = distribution.approximate_as("particles", n_particles=1000)
+grid = distribution.approximate_as("grid", n_grid_points=64)
+```
+
+For grid conversions, a scalar resolution is broadcast to all hypertoroidal
+dimensions. For example, `n_grid_points=64` on a two-dimensional hypertorus is
+equivalent to `n_grid_points=(64, 64)`.
+
+Grid distributions can also be converted deterministically to weighted Dirac
+distributions by placing one Dirac component at each grid point.
+
 ## Common parameters
 
 Common conversion parameters depend on the target representation:
