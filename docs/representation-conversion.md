@@ -4,8 +4,7 @@ PyRecEst distributions often support several representations of the same
 uncertainty state: analytic densities, Dirac/particle sets, grids, Fourier
 series, mixtures, and moment-matched approximations.
 
-Use `convert_distribution` or the method alias `approximate_as` to make these
-conversions explicit and discoverable.
+Use `convert_distribution` to make these conversions explicit and discoverable.
 
 ```python
 from pyrecest.backend import array, eye
@@ -16,12 +15,9 @@ prior = GaussianDistribution(array([0.0, 0.0]), eye(2))
 particles = convert_distribution(prior, LinearDiracDistribution, n_particles=1000)
 ```
 
-The same conversion can be written from the source distribution when the source
-inherits from one of the common PyRecEst distribution base classes:
-
-```python
-particles = prior.approximate_as(LinearDiracDistribution, n_particles=1000)
-```
+Some PyRecEst distribution base classes also expose convenience wrappers such as
+`convert_to(...)` and `approximate_as(...)`; these delegate to the same generic
+conversion gateway when available.
 
 ## Target-centric conversions
 
