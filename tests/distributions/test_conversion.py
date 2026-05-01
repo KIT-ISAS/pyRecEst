@@ -1,8 +1,15 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, eye, random
-from pyrecest.distributions import GaussianDistribution, LinearDiracDistribution
+from pyrecest.backend import allclose, array, eye, pi, random
+from pyrecest.distributions import (
+    CircularDiracDistribution,
+    CircularFourierDistribution,
+    CircularGridDistribution,
+    GaussianDistribution,
+    LinearDiracDistribution,
+    VonMisesDistribution,
+)
 from pyrecest.distributions.conversion import (
     ConversionError,
     ConversionResult,
@@ -136,6 +143,71 @@ class ConversionTest(unittest.TestCase):
 
         self.assertTrue(can_convert(gaussian, "particles"))
         self.assertFalse(can_convert(gaussian, "not_a_representation"))
+
+    def test_circular_von_mises_to_particles_alias(self):
+        random.seed(0)
+        distribution = VonMisesDistribution(array(0.4), 2.5)
+
+        particles = distribution.approximate_as("particles", n_particles=20)
+
+        self.assertIsInstance(particles, CircularDiracDistribution)
+        self.assertEqual(particles.d.shape[0], 20)
+
+    def test_circular_von_mises_to_grid_alias(self):
+        distribution = VonMisesDistribution(array(0.4), 2.5)
+
+        grid = distribution.approximate_as("grid", no_of_gridpoints=32)
+
+        self.assertIsInstance(grid, CircularGridDistribution)
+        self.assertEqual(grid.grid_values.shape[0], 32)
+        self.assertTrue(allclose(grid.grid_values, distribution.pdf(grid.get_grid())))
+
+    def test_circular_von_mises_to_fourier_alias(self):
+        distribution = VonMisesDistribution(array(0.4), 2.5)
+
+        fourier = distribution.approximate_as("fourier", n=32)
+
+        self.assertIsInstance(fourier, CircularFourierDistribution)
+        self.assertEqual(fourier.n, 32)
+        self.assertTrue(allclose(fourier.integrate(), 1.0, atol=5e-2))
+
+    def test_circular_grid_to_fourier_alias(self):
+        grid = VonMisesDistribution(array(0.4), 2.5).approximate_as(
+            "grid", no_of_gridpoints=32
+        )
+
+        fourier = grid.approximate_as("fourier", n=32)
+
+        self.assertIsInstance(fourier, CircularFourierDistribution)
+        self.assertEqual(fourier.n, 32)
+
+    def test_circular_fourier_to_grid_alias(self):
+        fourier = VonMisesDistribution(array(0.4), 2.5).approximate_as(
+            "fourier", n=32
+        )
+
+        grid = fourier.approximate_as("grid", no_of_gridpoints=32)
+
+        self.assertIsInstance(grid, CircularGridDistribution)
+        self.assertEqual(grid.grid_values.shape[0], 32)
+        self.assertTrue(allclose(grid.grid_values, fourier.pdf(grid.get_grid())))
+
+    def test_circular_dirac_to_fourier_identity(self):
+        particles = CircularDiracDistribution(
+            array([0.0, pi]), array([0.25, 0.75])
+        )
+
+        fourier = particles.approximate_as(
+            "fourier",
+            n=9,
+            transformation="identity",
+            store_values_multiplied_by_n=False,
+        )
+
+        self.assertIsInstance(fourier, CircularFourierDistribution)
+        self.assertEqual(fourier.n, 9)
+        self.assertFalse(fourier.multiplied_by_n)
+        self.assertTrue(allclose(fourier.get_c()[0], 1.0 / (2.0 * pi)))
 
 
 if __name__ == "__main__":
