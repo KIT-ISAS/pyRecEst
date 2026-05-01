@@ -101,7 +101,7 @@ def register_conversion(
                 target_type=target_type,
                 converter=func,
                 exact=exact,
-                method=method or func.__name__,
+                method=method or _callable_name(func),
             ),
         )
         return func
@@ -239,6 +239,13 @@ def _matching_registered_conversions(distribution, target_type: type):
     )
 
 
+def _callable_name(func: Callable[..., Any]) -> str:
+    name = getattr(func, "__name__", None)
+    if isinstance(name, str):
+        return name
+    return repr(func)
+
+
 def _call_conversion_callable(
     func: Callable[..., Any],
     distribution,
@@ -246,7 +253,7 @@ def _call_conversion_callable(
     *,
     conversion_name: str | None = None,
 ):
-    name = conversion_name or getattr(func, "__name__", repr(func))
+    name = conversion_name if conversion_name is not None else _callable_name(func)
     _validate_conversion_arguments(func, kwargs, name)
     try:
         return func(distribution, **kwargs)
