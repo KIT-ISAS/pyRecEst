@@ -43,7 +43,9 @@ Common starting points include:
 
 Use `pyrecest.distributions.conversion.convert_distribution(...)` to convert
 between analytic, Dirac/particle, grid, Fourier, and moment-matched
-representations. See [representation conversion](representation-conversion.md).
+representations. The target may be a concrete class or an alias such as
+`"particles"`, `"gaussian"`, `"grid"`, or `"fourier"`. See
+[representation conversion](representation-conversion.md).
 
 ### `pyrecest.filters`
 
