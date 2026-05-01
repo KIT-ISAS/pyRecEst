@@ -59,7 +59,15 @@ class _RegisteredConversion:
     method: str
 
 
+@dataclass
+class _ConversionAlias:
+    target_type_or_resolver: type | Callable[[Any], type]
+    default_kwargs: dict[str, Any] = field(default_factory=dict)
+    description: str | None = None
+
+
 _CONVERSION_REGISTRY: list[_RegisteredConversion] = []
+_CONVERSION_ALIAS_REGISTRY: dict[str, _ConversionAlias] = {}
 
 
 def register_conversion(
@@ -111,9 +119,50 @@ def register_conversion(
     return _decorator
 
 
+def register_conversion_alias(
+    alias: str,
+    target_type_or_resolver: type | Callable[[Any], type],
+    *,
+    default_kwargs: dict[str, Any] | None = None,
+    description: str | None = None,
+) -> None:
+    """Register a string alias for a target representation.
+
+    Parameters
+    ----------
+    alias
+        Alias accepted by :func:`convert_distribution`, for example
+        ``"particles"`` or ``"gaussian"``. Aliases are case-insensitive;
+        hyphens and spaces are normalized to underscores.
+    target_type_or_resolver
+        Concrete target class or callable ``resolver(source_distribution)``
+        returning a concrete target class. Resolvers make aliases domain-aware.
+    default_kwargs
+        Optional conversion arguments supplied by default. User-provided
+        keyword arguments override these defaults.
+    description
+        Optional human-readable description used by
+        :func:`registered_conversion_aliases`.
+    """
+
+    _CONVERSION_ALIAS_REGISTRY[_normalize_alias(alias)] = _ConversionAlias(
+        target_type_or_resolver=target_type_or_resolver,
+        default_kwargs=dict(default_kwargs or {}),
+        description=description,
+    )
+
+
+def registered_conversion_aliases() -> tuple[tuple[str, str | None], ...]:
+    """Return registered custom conversion aliases."""
+
+    return tuple(
+        (alias, entry.description) for alias, entry in _CONVERSION_ALIAS_REGISTRY.items()
+    )
+
+
 def convert_distribution(
     distribution,
-    target_type: type,
+    target_type,
     /,
     *,
     return_info: bool = False,
@@ -136,7 +185,8 @@ def convert_distribution(
     target_type
         Concrete target representation class, such as
         ``LinearDiracDistribution``, ``CircularGridDistribution``, or
-        ``GaussianDistribution``.
+        ``GaussianDistribution``; or a conversion alias such as ``"particles"``,
+        ``"gaussian"``, ``"grid"``, or ``"fourier"``.
     return_info
         If false, return the converted distribution directly. If true, return a
         :class:`ConversionResult`.
@@ -152,10 +202,16 @@ def convert_distribution(
         Converted distribution, or metadata wrapper if ``return_info=True``.
     """
 
+    target_type, alias_kwargs, target_alias = _resolve_target_type(
+        distribution, target_type
+    )
+    conversion_kwargs = {**alias_kwargs, **kwargs}
+
     if not isinstance(target_type, type):
-        raise TypeError("target_type must be a distribution class.")
+        raise TypeError("target_type must be a distribution class or conversion alias.")
 
     source_type = type(distribution)
+    method_prefix = f"alias:{target_alias}->" if target_alias is not None else ""
 
     if isinstance(distribution, target_type):
         converted = copy.deepcopy(distribution) if copy_if_same else distribution
@@ -163,21 +219,23 @@ def convert_distribution(
             distribution=converted,
             source_type=source_type,
             target_type=target_type,
-            method="identity",
+            method=f"{method_prefix}identity",
             exact=True,
-            parameters=dict(kwargs),
+            parameters=dict(conversion_kwargs),
         )
         return result if return_info else result.distribution
 
     for entry in _matching_registered_conversions(distribution, target_type):
-        converted = _call_conversion_callable(entry.converter, distribution, kwargs)
+        converted = _call_conversion_callable(
+            entry.converter, distribution, conversion_kwargs
+        )
         result = ConversionResult(
             distribution=converted,
             source_type=source_type,
             target_type=target_type,
-            method=entry.method,
+            method=f"{method_prefix}{entry.method}",
             exact=entry.exact,
-            parameters=dict(kwargs),
+            parameters=dict(conversion_kwargs),
         )
         return result if return_info else result.distribution
 
@@ -186,16 +244,16 @@ def convert_distribution(
         converted = _call_conversion_callable(
             from_distribution,
             distribution,
-            kwargs,
+            conversion_kwargs,
             conversion_name=f"{target_type.__name__}.from_distribution",
         )
         result = ConversionResult(
             distribution=converted,
             source_type=source_type,
             target_type=target_type,
-            method=f"{target_type.__name__}.from_distribution",
+            method=f"{method_prefix}{target_type.__name__}.from_distribution",
             exact=False,
-            parameters=dict(kwargs),
+            parameters=dict(conversion_kwargs),
         )
         return result if return_info else result.distribution
 
@@ -205,12 +263,17 @@ def convert_distribution(
     )
 
 
-def can_convert(distribution, target_type: type) -> bool:
+def can_convert(distribution, target_type) -> bool:
     """Return whether a conversion route exists.
 
     This only checks for a route. It does not verify that all conversion
     arguments required by the route have been supplied.
     """
+
+    try:
+        target_type, _, _ = _resolve_target_type(distribution, target_type)
+    except ConversionError:
+        return False
 
     if not isinstance(target_type, type):
         return False
@@ -227,6 +290,139 @@ def registered_conversions() -> tuple[tuple[type, type, str, bool], ...]:
     return tuple(
         (entry.source_type, entry.target_type, entry.method, entry.exact)
         for entry in _CONVERSION_REGISTRY
+    )
+
+
+def _normalize_alias(alias: str) -> str:
+    return alias.strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _resolve_target_type(distribution, target_type):
+    if isinstance(target_type, str):
+        return _resolve_conversion_alias(distribution, target_type)
+    return target_type, {}, None
+
+
+def _resolve_conversion_alias(distribution, alias: str):
+    alias_normalized = _normalize_alias(alias)
+    custom_alias = _CONVERSION_ALIAS_REGISTRY.get(alias_normalized)
+    if custom_alias is not None:
+        target_type = _resolve_alias_entry(distribution, custom_alias)
+        return target_type, custom_alias.default_kwargs, alias_normalized
+
+    target_type = _resolve_builtin_alias(distribution, alias_normalized)
+    return target_type, {}, alias_normalized
+
+
+def _resolve_alias_entry(distribution, alias_entry: _ConversionAlias):
+    target_type_or_resolver = alias_entry.target_type_or_resolver
+    if isinstance(target_type_or_resolver, type):
+        return target_type_or_resolver
+    target_type = target_type_or_resolver(distribution)
+    if not isinstance(target_type, type):
+        raise ConversionError(
+            "Conversion alias resolver must return a distribution class."
+        )
+    return target_type
+
+
+def _resolve_builtin_alias(distribution, alias: str):
+    # Imports stay local to avoid import cycles with pyrecest.distributions.
+    from .circle.abstract_circular_distribution import AbstractCircularDistribution
+    from .circle.circular_dirac_distribution import CircularDiracDistribution
+    from .circle.circular_fourier_distribution import CircularFourierDistribution
+    from .circle.circular_grid_distribution import CircularGridDistribution
+    from .hypersphere_subset.abstract_hyperhemispherical_distribution import (
+        AbstractHyperhemisphericalDistribution,
+    )
+    from .hypersphere_subset.abstract_hyperspherical_distribution import (
+        AbstractHypersphericalDistribution,
+    )
+    from .hypersphere_subset.hyperhemispherical_dirac_distribution import (
+        HyperhemisphericalDiracDistribution,
+    )
+    from .hypersphere_subset.hyperhemispherical_grid_distribution import (
+        HyperhemisphericalGridDistribution,
+    )
+    from .hypersphere_subset.hyperspherical_dirac_distribution import (
+        HypersphericalDiracDistribution,
+    )
+    from .hypersphere_subset.hyperspherical_grid_distribution import (
+        HypersphericalGridDistribution,
+    )
+    from .hypertorus.abstract_hypertoroidal_distribution import (
+        AbstractHypertoroidalDistribution,
+    )
+    from .hypertorus.hypertoroidal_dirac_distribution import (
+        HypertoroidalDiracDistribution,
+    )
+    from .hypertorus.hypertoroidal_fourier_distribution import (
+        HypertoroidalFourierDistribution,
+    )
+    from .hypertorus.hypertoroidal_grid_distribution import (
+        HypertoroidalGridDistribution,
+    )
+    from .nonperiodic.abstract_linear_distribution import AbstractLinearDistribution
+    from .nonperiodic.gaussian_distribution import GaussianDistribution
+    from .nonperiodic.linear_dirac_distribution import LinearDiracDistribution
+
+    if alias in ("gaussian", "normal", "moment_matched_gaussian"):
+        return GaussianDistribution
+
+    if alias in ("linear_dirac", "linear_particles"):
+        return LinearDiracDistribution
+    if alias == "circular_dirac":
+        return CircularDiracDistribution
+    if alias == "hypertoroidal_dirac":
+        return HypertoroidalDiracDistribution
+    if alias == "hyperspherical_dirac":
+        return HypersphericalDiracDistribution
+    if alias == "hyperhemispherical_dirac":
+        return HyperhemisphericalDiracDistribution
+
+    if alias in ("particles", "dirac", "samples"):
+        if isinstance(distribution, AbstractCircularDistribution):
+            return CircularDiracDistribution
+        if isinstance(distribution, AbstractHypertoroidalDistribution):
+            return HypertoroidalDiracDistribution
+        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
+            return HyperhemisphericalDiracDistribution
+        if isinstance(distribution, AbstractHypersphericalDistribution):
+            return HypersphericalDiracDistribution
+        if isinstance(distribution, AbstractLinearDistribution):
+            return LinearDiracDistribution
+
+    if alias == "circular_grid":
+        return CircularGridDistribution
+    if alias == "hypertoroidal_grid":
+        return HypertoroidalGridDistribution
+    if alias == "hyperspherical_grid":
+        return HypersphericalGridDistribution
+    if alias == "hyperhemispherical_grid":
+        return HyperhemisphericalGridDistribution
+
+    if alias == "grid":
+        if isinstance(distribution, AbstractCircularDistribution):
+            return CircularGridDistribution
+        if isinstance(distribution, AbstractHypertoroidalDistribution):
+            return HypertoroidalGridDistribution
+        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
+            return HyperhemisphericalGridDistribution
+        if isinstance(distribution, AbstractHypersphericalDistribution):
+            return HypersphericalGridDistribution
+
+    if alias == "circular_fourier":
+        return CircularFourierDistribution
+    if alias == "hypertoroidal_fourier":
+        return HypertoroidalFourierDistribution
+    if alias == "fourier":
+        if isinstance(distribution, AbstractCircularDistribution):
+            return CircularFourierDistribution
+        if isinstance(distribution, AbstractHypertoroidalDistribution):
+            return HypertoroidalFourierDistribution
+
+    raise ConversionError(
+        f"Unknown conversion alias '{alias}'. Use a concrete target class or register the alias with register_conversion_alias(...)."
     )
 
 
@@ -315,5 +511,7 @@ __all__ = [
     "can_convert",
     "convert_distribution",
     "register_conversion",
+    "register_conversion_alias",
+    "registered_conversion_aliases",
     "registered_conversions",
 ]
