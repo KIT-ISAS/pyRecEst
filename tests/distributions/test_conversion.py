@@ -1,8 +1,14 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, eye, random
-from pyrecest.distributions import GaussianDistribution, LinearDiracDistribution
+from pyrecest.backend import allclose, array, eye, random, sum
+from pyrecest.distributions import (
+    GaussianDistribution,
+    HypertoroidalDiracDistribution,
+    HypertoroidalGridDistribution,
+    HypertoroidalWrappedNormalDistribution,
+    LinearDiracDistribution,
+)
 from pyrecest.distributions.conversion import (
     ConversionError,
     ConversionResult,
@@ -136,6 +142,46 @@ class ConversionTest(unittest.TestCase):
 
         self.assertTrue(can_convert(gaussian, "particles"))
         self.assertFalse(can_convert(gaussian, "not_a_representation"))
+
+    def test_hypertoroidal_particles_alias_samples_distribution(self):
+        random.seed(0)
+        distribution = HypertoroidalWrappedNormalDistribution(
+            array([0.1, 1.0]), 0.05 * eye(2)
+        )
+
+        particles = convert_distribution(
+            distribution, "particles", n_particles=11
+        )
+
+        self.assertIsInstance(particles, HypertoroidalDiracDistribution)
+        self.assertEqual(particles.dim, 2)
+        self.assertEqual(particles.d.shape, (11, 2))
+        self.assertTrue(allclose(sum(particles.w), 1.0))
+
+    def test_hypertoroidal_grid_alias_accepts_scalar_resolution(self):
+        distribution = HypertoroidalWrappedNormalDistribution(
+            array([0.1, 1.0]), 0.05 * eye(2)
+        )
+
+        grid = convert_distribution(distribution, "grid", n_grid_points=4)
+
+        self.assertIsInstance(grid, HypertoroidalGridDistribution)
+        self.assertEqual(grid.dim, 2)
+        self.assertEqual(grid.grid_values.shape, (4, 4))
+        self.assertEqual(grid.get_grid().shape, (16, 2))
+
+    def test_hypertoroidal_grid_converts_to_weighted_dirac(self):
+        distribution = HypertoroidalWrappedNormalDistribution(
+            array([0.1, 1.0]), 0.05 * eye(2)
+        )
+        grid = distribution.approximate_as("grid", n_grid_points=(3, 4))
+
+        particles = grid.approximate_as("particles")
+
+        self.assertIsInstance(particles, HypertoroidalDiracDistribution)
+        self.assertEqual(particles.dim, 2)
+        self.assertEqual(particles.d.shape, (12, 2))
+        self.assertTrue(allclose(sum(particles.w), 1.0))
 
 
 if __name__ == "__main__":
