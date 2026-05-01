@@ -114,3 +114,21 @@ Common conversion parameters depend on the target representation:
 - `n_grid_points` for hypertoroidal grids.
 - `no_of_grid_points` and `grid_type` for hypersphere-subset grids.
 - `n` for Fourier representations.
+
+## Circular conversions
+
+The circular aliases are domain-aware. For circular source distributions:
+
+```python
+from pyrecest.backend import array
+from pyrecest.distributions import VonMisesDistribution
+
+vm = VonMisesDistribution(array(0.4), 2.5)
+
+particles = vm.approximate_as("particles", n_particles=1000)
+grid = vm.approximate_as("grid", no_of_gridpoints=128)
+fourier = vm.approximate_as("fourier", n=128)
+```
+
+Circular Fourier distributions can also be converted back to grid form with
+`fourier.approximate_as("grid", no_of_gridpoints=128)`.
