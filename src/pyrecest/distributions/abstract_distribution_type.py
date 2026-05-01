@@ -32,6 +32,4 @@ class AbstractDistributionType(ABC):
         self, target_type: type, /, *, return_info: bool = False, **kwargs
     ):
         """Alias for :meth:`convert_to` emphasizing approximate conversions."""
-        return self.convert_to(
-            target_type, return_info=return_info, **kwargs
-        )
+        return self.convert_to(target_type, return_info=return_info, **kwargs)

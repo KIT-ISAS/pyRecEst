@@ -278,13 +278,9 @@ def _validate_conversion_arguments(
     skipped_source_argument = False
 
     for param in params:
-        if (
-            not skipped_source_argument
-            and param.kind
-            in (
-                inspect.Parameter.POSITIONAL_ONLY,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            )
+        if not skipped_source_argument and param.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
         ):
             skipped_source_argument = True
             continue

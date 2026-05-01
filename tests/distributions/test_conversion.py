@@ -44,9 +44,7 @@ class ConversionTest(unittest.TestCase):
     def test_identity_conversion_is_exact(self):
         gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-        result = convert_distribution(
-            gaussian, GaussianDistribution, return_info=True
-        )
+        result = convert_distribution(gaussian, GaussianDistribution, return_info=True)
 
         self.assertIs(result.distribution, gaussian)
         self.assertTrue(result.exact)
