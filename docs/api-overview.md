@@ -41,6 +41,10 @@ Common starting points include:
 - `HypertoroidalFourierDistribution` and hypertoroidal grid or wrapped-normal
   distributions for toroidal states.
 
+Use `pyrecest.distributions.conversion.convert_distribution(...)` to convert
+between analytic, Dirac/particle, grid, Fourier, and moment-matched
+representations. See [representation conversion](representation-conversion.md).
+
 ### `pyrecest.filters`
 
 Recursive Bayesian estimators and trackers. The package includes standard
