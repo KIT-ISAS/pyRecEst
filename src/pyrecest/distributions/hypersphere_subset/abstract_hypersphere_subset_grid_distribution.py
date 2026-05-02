@@ -74,7 +74,11 @@ class AbstractHypersphereSubsetGridDistribution(
 
     @classmethod
     def from_distribution(
-        cls, distribution, no_of_grid_points, grid_type, enforce_pdf_nonnegative=True
+        cls,
+        distribution,
+        no_of_grid_points,
+        grid_type=None,
+        enforce_pdf_nonnegative=True,
     ):
         from .hyperhemispherical_grid_distribution import (
             HyperhemisphericalGridDistribution,
@@ -86,6 +90,12 @@ class AbstractHypersphereSubsetGridDistribution(
             raise ValueError(
                 "Already a grid distribution. Use directly instead of converting."
             )
+
+        if grid_type is None:
+            if issubclass(cls, HyperhemisphericalGridDistribution):
+                grid_type = "leopardi_symm"
+            else:
+                grid_type = "leopardi"
 
         if (
             isinstance(distribution, AbstractHypersphericalDistribution)

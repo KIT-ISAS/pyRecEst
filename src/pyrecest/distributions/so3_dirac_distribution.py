@@ -94,13 +94,13 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
         """Return chordal distances from all Dirac locations to ``rotation``."""
         return self.chordal_distance(self.d, rotation)
 
-    @staticmethod
-    def from_distribution(distribution, n_particles):
+    @classmethod
+    def from_distribution(cls, distribution, n_particles=None):
         """Create an SO(3) Dirac distribution by sampling another distribution."""
         assert (
             isinstance(n_particles, int) and n_particles > 0
         ), "n_particles must be a positive integer"
-        return SO3DiracDistribution(distribution.sample(n_particles))
+        return cls(distribution.sample(n_particles))
 
     def angular_error_mean(self, rotation):
         """Return the weighted mean angular error to ``rotation`` in radians."""

@@ -15,6 +15,35 @@ class AbstractHypersphereSubsetDiracDistribution(
         AbstractHypersphereSubsetDistribution.__init__(self, d.shape[-1] - 1)
         AbstractDiracDistribution.__init__(self, d, w=w)
 
+    @classmethod
+    def from_distribution(cls, distribution, n_particles=None):
+        """Approximate a hypersphere-subset distribution as weighted Diracs.
+
+        Grid distributions are converted deterministically by reusing their grid
+        points as Dirac locations and their grid values as weights. Non-grid
+        distributions fall back to the generic sampling-based Dirac conversion
+        and therefore require ``n_particles``.
+        """
+
+        from .abstract_hypersphere_subset_grid_distribution import (
+            AbstractHypersphereSubsetGridDistribution,
+        )
+
+        if isinstance(distribution, AbstractHypersphereSubsetGridDistribution):
+            if not cls.is_valid_for_conversion(distribution):
+                raise ValueError(
+                    f"Cannot convert {type(distribution).__name__} to {cls.__name__}."
+                )
+            return cls(distribution.get_grid(), distribution.grid_values)
+
+        if n_particles is None:
+            raise ValueError(
+                f"{cls.__name__}.from_distribution(...) requires n_particles "
+                "unless the source is a hypersphere-subset grid distribution."
+            )
+
+        return super().from_distribution(distribution, n_particles)
+
     def moment(self):
         # Compute the weighted moment matrix
         moment_matrix = zeros(
