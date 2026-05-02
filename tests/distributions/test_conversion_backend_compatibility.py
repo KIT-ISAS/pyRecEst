@@ -1,7 +1,7 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
-import pyrecest.backend as backend
+from pyrecest import backend
 from pyrecest.backend import allclose, array, diag, is_array, random, sum as backend_sum, to_numpy
 from pyrecest.distributions import GaussianDistribution, LinearDiracDistribution
 from pyrecest.distributions.conversion import ConversionError, can_convert, convert_distribution
