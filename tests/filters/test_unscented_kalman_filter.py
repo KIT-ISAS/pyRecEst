@@ -10,6 +10,7 @@ import pyrecest.backend
 from pyrecest.backend import allclose, array, diag, eye
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.unscented_kalman_filter import UnscentedKalmanFilter
+from pyrecest.models import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
 
 
 class UnscentedKalmanFilterTest(unittest.TestCase):
@@ -79,6 +80,76 @@ class UnscentedKalmanFilterTest(unittest.TestCase):
             diag(array([1.0, 2.0])), diag(array([2.0, 1.0])), array([2.0, -2.0])
         )
         self.assertTrue(allclose(kf.get_point_estimate(), array([2.0, 2.0])))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_predict_model_matches_predict_nonlinear(self):
+        initial_state = GaussianDistribution(
+            array([1.0, -0.5]), diag(array([0.5, 0.25]))
+        )
+        direct = UnscentedKalmanFilter(initial_state)
+        via_model = copy.deepcopy(direct)
+        sys_noise_cov = diag(array([0.2, 0.1]))
+
+        def fx(x, dt, bias=0.0):
+            return array([x[0] + dt + bias, 2.0 * x[1]])
+
+        direct.predict_nonlinear(fx, sys_noise_cov, dt=0.25, bias=0.1)
+        transition_model = AdditiveNoiseTransitionModel(
+            transition_function=fx,
+            noise_distribution=GaussianDistribution(
+                array([0.0, 0.0]), sys_noise_cov
+            ),
+            dt=0.25,
+            function_args={"bias": 0.1},
+        )
+        via_model.predict_model(transition_model)
+
+        self.assertTrue(
+            allclose(via_model.get_point_estimate(), direct.get_point_estimate())
+        )
+        self.assertTrue(
+            allclose(
+                via_model.filter_state.covariance(), direct.filter_state.covariance()
+            )
+        )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_model_matches_update_nonlinear(self):
+        initial_state = GaussianDistribution(
+            array([0.5, -1.0]), diag(array([0.75, 0.5]))
+        )
+        direct = UnscentedKalmanFilter(initial_state)
+        via_model = copy.deepcopy(direct)
+        meas_noise_cov = diag(array([0.3, 0.4]))
+        measurement = array([1.2, -0.2])
+
+        def hx(x, offset=0.0):
+            return array([x[0] + offset, x[0] + x[1]])
+
+        direct.update_nonlinear(measurement, hx, meas_noise_cov, offset=0.1)
+        measurement_model = AdditiveNoiseMeasurementModel(
+            measurement_function=hx,
+            noise_distribution=GaussianDistribution(
+                array([0.0, 0.0]), meas_noise_cov
+            ),
+            function_args={"offset": 0.1},
+        )
+        via_model.update_model(measurement_model, measurement)
+
+        self.assertTrue(
+            allclose(via_model.get_point_estimate(), direct.get_point_estimate())
+        )
+        self.assertTrue(
+            allclose(
+                via_model.filter_state.covariance(), direct.filter_state.covariance()
+            )
+        )
 
 
 if __name__ == "__main__":
