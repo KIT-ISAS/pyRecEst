@@ -630,6 +630,36 @@ def _import_distribution_class(module_name: str, class_name: str) -> type:
     return distribution_class
 
 
+def _resolve_direct_builtin_alias(alias: str) -> type | None:
+    class_spec = _DIRECT_BUILTIN_ALIAS_CLASS_SPECS.get(alias)
+    if class_spec is None:
+        return None
+    return _resolve_class(class_spec)
+
+
+def _resolve_domain_builtin_alias(
+    distribution, alias_domains: tuple[AliasDomain, ...]
+) -> type | None:
+    for source_class_spec, target_class_spec in alias_domains:
+        if isinstance(distribution, _resolve_class(source_class_spec)):
+            return _resolve_class(target_class_spec)
+    return None
+
+
+def _resolve_class(class_spec: ClassSpec) -> type:
+    module_name, class_name = class_spec
+    return _import_distribution_class(module_name, class_name)
+
+
+@lru_cache(maxsize=None)
+def _import_distribution_class(module_name: str, class_name: str) -> type:
+    module = import_module(module_name)
+    distribution_class = getattr(module, class_name)
+    if not isinstance(distribution_class, type):
+        raise ConversionError(f"{module_name}.{class_name} is not a class.")
+    return distribution_class
+
+
 def _matching_registered_conversions(distribution, target_type: type):
     return (
         entry
