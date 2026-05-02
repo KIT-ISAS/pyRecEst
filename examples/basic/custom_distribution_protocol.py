@@ -43,7 +43,7 @@ class ScalarGaussianLikeDistribution:
         if n < 0:
             raise ValueError("n must be non-negative")
 
-        generator = Random(0) if rng is None else rng
+        generator = Random(0) if rng is None else rng  # nosec B311
         standard_deviation = sqrt(self._variance)
         return [generator.gauss(self._mean, standard_deviation) for _ in range(n)]
 
@@ -80,7 +80,7 @@ def run_example() -> tuple[ScalarGaussianLikeDistribution, list[float], float]:
     if not isinstance(distribution, SupportsInputDim):
         raise TypeError("distribution must expose an input dimension")
 
-    samples = distribution.sample(3, rng=Random(1))
+    samples = distribution.sample(3, rng=Random(1))  # nosec B311
     density_at_mean = distribution.pdf([distribution.mean()])[0]
     return distribution, samples, density_at_mean
 
