@@ -5,6 +5,7 @@ evolve and how measurements are evaluated. These objects are deliberately small
 and capability-oriented so filters can opt into the pieces they need.
 """
 
+from .additive_noise import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
 from .likelihood import (
     DensityTransitionModel,
     LikelihoodMeasurementModel,
@@ -31,6 +32,8 @@ from .validation import (
 )
 
 __all__ = [
+    "AdditiveNoiseMeasurementModel",
+    "AdditiveNoiseTransitionModel",
     "DensityTransitionModel",
     "LikelihoodMeasurementModel",
     "SampleableTransitionModel",
