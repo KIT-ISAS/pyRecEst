@@ -1,4 +1,4 @@
-"""Reusable transition and measurement model objects.
+"""Reusable model helpers.
 
 The model package contains filter-independent objects that describe how states
 evolve and how measurements are evaluated. These objects are deliberately small
@@ -18,6 +18,17 @@ from .linear_gaussian import IdentityGaussianMeasurementModel
 from .linear_gaussian import IdentityGaussianTransitionModel
 from .linear_gaussian import LinearGaussianMeasurementModel
 from .linear_gaussian import LinearGaussianTransitionModel
+from .validation import (
+    infer_state_dim_from_distribution,
+    validate_covariance_matrix,
+    validate_matrix,
+    validate_measurement_matrix,
+    validate_measurement_vector,
+    validate_noise_covariance,
+    validate_state_vector,
+    validate_transition_matrix,
+    validate_vector,
+)
 
 __all__ = [
     "DensityTransitionModel",
@@ -31,4 +42,13 @@ __all__ = [
     "IdentityGaussianTransitionModel",
     "LinearGaussianMeasurementModel",
     "LinearGaussianTransitionModel",
+    "infer_state_dim_from_distribution",
+    "validate_covariance_matrix",
+    "validate_matrix",
+    "validate_measurement_matrix",
+    "validate_measurement_vector",
+    "validate_noise_covariance",
+    "validate_state_vector",
+    "validate_transition_matrix",
+    "validate_vector",
 ]

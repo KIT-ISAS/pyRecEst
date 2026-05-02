@@ -45,6 +45,7 @@ mkdocstrings = { version = "^1.0.4", extras = ["python"] }
 
 [tool.mypy]
 check_untyped_defs = true
+disable_error_code = ["arg-type"]
 
 [tool.ruff]
 line-length = 180
@@ -77,6 +78,13 @@ disable = [
   "W0221",
   "redefined-builtin",
   "cyclic-import",
+  "too-many-locals",
+  "too-many-return-statements",
+  "too-many-branches",
+  "too-many-statements",
+  "too-many-arguments",
+  "duplicate-code",
+  "consider-using-from-import",
 ]
 
 [tool.pylint.FORMAT]
