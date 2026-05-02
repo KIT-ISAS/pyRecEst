@@ -85,7 +85,10 @@ class SampleableTransitionModelTest(unittest.TestCase):
         self.assertTrue(allclose(model.sample_next(array([10.0]), n=3), array([[10.0], [11.0], [12.0]])))
 
     def test_unary_sample_next_callback(self):
-        model = SampleableTransitionModel(lambda state: state + array([1.0]))
+        def shift_state(state):
+            return state + array([1.0])
+
+        model = SampleableTransitionModel(shift_state)
 
         self.assertTrue(allclose(model.sample_next(array([10.0])), array([11.0])))
 
@@ -105,8 +108,11 @@ class SampleableTransitionModelTest(unittest.TestCase):
             model.transition_density(array([1.0]), array([0.0]))
 
     def test_particle_filter_vectorization_flag_is_stored(self):
+        def identity_state(state):
+            return state
+
         model = SampleableTransitionModel(
-            lambda state: state,
+            identity_state,
             function_is_vectorized=False,
         )
 
