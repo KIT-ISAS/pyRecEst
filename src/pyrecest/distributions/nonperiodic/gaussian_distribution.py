@@ -228,5 +228,13 @@ class GaussianDistribution(AbstractLinearDistribution):
                 distribution.to_gaussian()
             )  # Assuming to_gaussian method is defined in GaussianMixtureDistribution
         else:
-            gaussian = GaussianDistribution(distribution.mean, distribution.covariance)
+            mean = distribution.mean
+            if callable(mean):
+                mean = mean()
+
+            covariance = distribution.covariance
+            if callable(covariance):
+                covariance = covariance()
+
+            gaussian = GaussianDistribution(mean, covariance, check_validity=False)
         return gaussian

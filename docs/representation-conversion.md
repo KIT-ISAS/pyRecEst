@@ -8,16 +8,21 @@ Use `convert_distribution` to make these conversions explicit and discoverable.
 
 ```python
 from pyrecest.backend import array, eye
-from pyrecest.distributions import GaussianDistribution, LinearDiracDistribution
+from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.conversion import convert_distribution
 
 prior = GaussianDistribution(array([0.0, 0.0]), eye(2))
-particles = convert_distribution(prior, LinearDiracDistribution, n_particles=1000)
+particles = convert_distribution(prior, "particles", n_particles=1000)
 ```
 
 Some PyRecEst distribution base classes also expose convenience wrappers such as
 `convert_to(...)` and `approximate_as(...)`; these delegate to the same generic
 conversion gateway when available.
+
+```python
+particles = prior.approximate_as("particles", n_particles=1000)
+gaussian = particles.approximate_as("gaussian")
+```
 
 ## Target-centric conversions
 
@@ -43,7 +48,7 @@ Use `return_info=True` when you need to know how the conversion was performed.
 ```python
 result = convert_distribution(
     prior,
-    LinearDiracDistribution,
+    "particles",
     n_particles=1000,
     return_info=True,
 )
@@ -75,6 +80,29 @@ After registration, the normal gateway works:
 
 ```python
 particles = convert_distribution(source, MyParticleDistribution, n_particles=1000)
+```
+
+## String aliases
+
+The conversion gateway accepts concrete classes and a small set of built-in
+aliases. Useful aliases include:
+
+- `"particles"`, `"dirac"`, and `"samples"` for domain-aware Dirac/particle
+  representations;
+- `"gaussian"` and `"moment_matched_gaussian"` for Gaussian moment matching;
+- `"grid"` for domain-aware circular, hypertoroidal, hyperspherical, or
+  hyperhemispherical grid representations;
+- `"fourier"` for circular or hypertoroidal Fourier representations;
+- explicit aliases such as `"linear_dirac"`, `"circular_grid"`,
+  `"hypertoroidal_grid"`, and `"circular_fourier"`.
+
+Aliases are case-insensitive, and hyphens or spaces are normalized to
+underscores. Custom aliases can be registered with `register_conversion_alias`:
+
+```python
+from pyrecest.distributions.conversion import register_conversion_alias
+
+register_conversion_alias("my_particles", MyParticleDistribution)
 ```
 
 ## Common parameters
