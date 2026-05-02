@@ -1,0 +1,2 @@
+"""Linear Gaussian models."""
+
