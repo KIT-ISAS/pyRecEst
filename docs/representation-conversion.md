@@ -151,3 +151,20 @@ Common conversion parameters depend on the target representation:
 | `n` | Fourier targets | Fourier truncation/order parameter used by the target representation. |
 | `return_info` | conversion gateway | Return a `ConversionResult` instead of only the converted distribution. |
 | `copy_if_same` | conversion gateway | Return a deep copy for identity conversion instead of the original object. |
+
+## Error messages
+
+Alias-related conversion errors distinguish between two cases:
+
+- an unknown alias, such as `"not_a_representation"`;
+- a known alias that is not valid for the source distribution, such as asking a
+  linear Gaussian distribution for a domain-aware `"grid"` representation.
+
+For known-but-unsupported aliases, the error message names the source type and
+lists aliases that are supported for that source. For unknown aliases, the error
+message lists known built-in aliases, aliases supported by the current source,
+and any custom aliases registered with `register_conversion_alias(...)`.
+
+Use an explicit target class when you intentionally want to try a conversion
+outside the domain-aware alias system, or register a custom alias for a new
+representation family.

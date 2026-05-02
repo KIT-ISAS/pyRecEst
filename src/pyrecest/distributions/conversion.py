@@ -186,6 +186,34 @@ _DOMAIN_BUILTIN_ALIAS_CLASS_SPECS: dict[str, tuple[AliasDomain, ...]] = {
     "samples": _PARTICLE_ALIAS_DOMAINS,
 }
 
+_BUILTIN_ALIAS_DESCRIPTIONS: dict[str, str] = {
+    "particles": "domain-aware Dirac/particle representation",
+    "dirac": "domain-aware Dirac representation",
+    "samples": "domain-aware Dirac/particle representation",
+    "gaussian": "Gaussian moment-matched representation",
+    "normal": "Gaussian moment-matched representation",
+    "moment_matched_gaussian": "Gaussian moment-matched representation",
+    "linear_dirac": "linear Dirac representation",
+    "linear_particles": "linear Dirac/particle representation",
+    "circular_dirac": "circular Dirac representation",
+    "hypertoroidal_dirac": "hypertoroidal Dirac representation",
+    "hyperspherical_dirac": "hyperspherical Dirac representation",
+    "hyperhemispherical_dirac": "hyperhemispherical Dirac representation",
+    "grid": "domain-aware grid representation",
+    "circular_grid": "circular grid representation",
+    "hypertoroidal_grid": "hypertoroidal grid representation",
+    "hyperspherical_grid": "hyperspherical grid representation",
+    "hyperhemispherical_grid": "hyperhemispherical grid representation",
+    "fourier": "domain-aware Fourier representation",
+    "circular_fourier": "circular Fourier representation",
+    "hypertoroidal_fourier": "hypertoroidal Fourier representation",
+}
+
+_DIRECT_GAUSSIAN_ALIASES = frozenset(
+    {"gaussian", "normal", "moment_matched_gaussian"}
+)
+_DIRECT_LINEAR_ALIASES = frozenset({"linear_dirac", "linear_particles"})
+
 
 def register_conversion(
     source_type: type,
@@ -457,9 +485,115 @@ def _resolve_builtin_alias(distribution, alias: str):
         if target_type is not None:
             return target_type
 
-    raise ConversionError(
-        f"Unknown conversion alias '{alias}'. Use a concrete target class or register the alias with register_conversion_alias(...)."
+    if alias in _BUILTIN_ALIAS_DESCRIPTIONS:
+        raise _unsupported_builtin_alias_error(distribution, alias)
+
+    raise _unknown_builtin_alias_error(distribution, alias)
+
+
+def _unsupported_builtin_alias_error(distribution, alias: str) -> ConversionError:
+    source_name = type(distribution).__name__
+    return ConversionError(
+        f"Conversion alias '{alias}' is known, but it is not supported for source type "
+        f"{source_name}. Supported aliases for {source_name}: "
+        f"{_format_aliases(_supported_builtin_aliases_for_source(distribution))}. "
+        "Use a concrete target class for an explicit conversion attempt, or register "
+        "a source-specific alias with register_conversion_alias(...)."
     )
+
+
+def _unknown_builtin_alias_error(distribution, alias: str) -> ConversionError:
+    source_name = type(distribution).__name__
+    message = (
+        f"Unknown conversion alias '{alias}'. Known built-in aliases: "
+        f"{_format_aliases(sorted(_BUILTIN_ALIAS_DESCRIPTIONS))}. Supported aliases "
+        f"for {source_name}: "
+        f"{_format_aliases(_supported_builtin_aliases_for_source(distribution))}."
+    )
+
+    custom_aliases = sorted(_CONVERSION_ALIAS_REGISTRY)
+    if custom_aliases:
+        message += f" Registered custom aliases: {_format_aliases(custom_aliases)}."
+    else:
+        message += " No custom aliases are currently registered."
+
+    message += (
+        " Use a concrete target class or register the alias with "
+        "register_conversion_alias(...)."
+    )
+    return ConversionError(message)
+
+
+def _supported_builtin_aliases_for_source(distribution) -> tuple[str, ...]:
+    aliases = set()
+
+    if _is_instance_of_class_spec(distribution, _ABSTRACT_CIRCULAR):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "circular_dirac",
+                "grid",
+                "circular_grid",
+                "fourier",
+                "circular_fourier",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_HYPERTOROIDAL):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "hypertoroidal_dirac",
+                "grid",
+                "hypertoroidal_grid",
+                "fourier",
+                "hypertoroidal_fourier",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_HYPERHEMISPHERICAL):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "hyperhemispherical_dirac",
+                "grid",
+                "hyperhemispherical_grid",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_HYPERSPHERICAL):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "hyperspherical_dirac",
+                "grid",
+                "hyperspherical_grid",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_LINEAR):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                *_DIRECT_LINEAR_ALIASES,
+                *_DIRECT_GAUSSIAN_ALIASES,
+            }
+        )
+
+    return tuple(sorted(aliases))
+
+
+def _format_aliases(aliases) -> str:
+    aliases = tuple(aliases)
+    if not aliases:
+        return "none"
+    return ", ".join(f"'{alias}'" for alias in aliases)
 
 
 def _resolve_direct_builtin_alias(alias: str) -> type | None:
@@ -473,9 +607,13 @@ def _resolve_domain_builtin_alias(
     distribution, alias_domains: tuple[AliasDomain, ...]
 ) -> type | None:
     for source_class_spec, target_class_spec in alias_domains:
-        if isinstance(distribution, _resolve_class(source_class_spec)):
+        if _is_instance_of_class_spec(distribution, source_class_spec):
             return _resolve_class(target_class_spec)
     return None
+
+
+def _is_instance_of_class_spec(distribution, class_spec: ClassSpec) -> bool:
+    return isinstance(distribution, _resolve_class(class_spec))
 
 
 def _resolve_class(class_spec: ClassSpec) -> type:
