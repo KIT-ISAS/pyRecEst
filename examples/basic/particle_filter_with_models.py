@@ -1,6 +1,6 @@
 """Particle filter example using reusable transition and likelihood models."""
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=import-error,no-name-in-module,no-member
 from pyrecest.backend import array, diag
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import EuclideanParticleFilter
@@ -8,6 +8,8 @@ from pyrecest.models import (
     LikelihoodMeasurementModel,
     SampleableTransitionModel,
 )
+
+from _filter_example_output import print_position_velocity_estimates
 
 
 def make_constant_velocity_sampler(dt, process_noise):
@@ -74,15 +76,7 @@ def main():
     """Print the posterior estimates produced by the particle-filter loop."""
     measurements, estimates = run_filter()
 
-    print("step  measurement  position  velocity")
-    for step, (measurement, estimate) in enumerate(
-        zip(measurements, estimates), start=1
-    ):
-        position, velocity = estimate
-        print(
-            f"{step:>4}  {measurement:>11.2f}  "
-            f"{float(position):>8.3f}  {float(velocity):>8.3f}"
-        )
+    print_position_velocity_estimates(measurements, estimates)
 
 
 if __name__ == "__main__":
