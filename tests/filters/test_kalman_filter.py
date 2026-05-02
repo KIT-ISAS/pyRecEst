@@ -7,6 +7,28 @@ from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.kalman_filter import KalmanFilter
 
 
+class _LinearGaussianTransitionModel:
+    def __init__(self, system_matrix, system_noise_cov, sys_input=None):
+        self.system_matrix = system_matrix
+        self.system_noise_cov = system_noise_cov
+        if sys_input is not None:
+            self.sys_input = sys_input
+
+
+class _LinearGaussianTransitionModelWithAliases:
+    def __init__(self, system_matrix, sys_noise_cov, system_input=None):
+        self.system_matrix = system_matrix
+        self.sys_noise_cov = sys_noise_cov
+        if system_input is not None:
+            self.system_input = system_input
+
+
+class _LinearGaussianMeasurementModel:
+    def __init__(self, measurement_matrix, meas_noise):
+        self.measurement_matrix = measurement_matrix
+        self.meas_noise = meas_noise
+
+
 class KalmanFilterTest(unittest.TestCase):
     def test_initialization_mean_cov(self):
         filter_custom = KalmanFilter((array([1]), array([[10000]])))
@@ -40,6 +62,27 @@ class KalmanFilterTest(unittest.TestCase):
         )
         self.assertTrue(allclose(filter_add.filter_state.C, filter_id.filter_state.C))
 
+    def test_update_model_matches_update_linear_2d(self):
+        initial_state = (array([0.0, 1.0]), diag(array([1.0, 2.0])))
+        filter_linear = KalmanFilter(initial_state)
+        filter_model = KalmanFilter(initial_state)
+
+        measurement = array([1.0, 0.0])
+        measurement_matrix = eye(2)
+        meas_noise = diag(array([2.0, 1.0]))
+        measurement_model = _LinearGaussianMeasurementModel(
+            measurement_matrix,
+            meas_noise,
+        )
+
+        filter_linear.update_linear(measurement, measurement_matrix, meas_noise)
+        filter_model.update_model(measurement_model, measurement)
+
+        self.assertTrue(
+            allclose(filter_linear.get_point_estimate(), filter_model.get_point_estimate())
+        )
+        self.assertTrue(allclose(filter_linear.filter_state.C, filter_model.filter_state.C))
+
     def test_predict_identity_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))
         kf.predict_identity(array([[3]]), array([1]))
@@ -54,6 +97,50 @@ class KalmanFilterTest(unittest.TestCase):
 
         kf.predict_linear(diag(array([1, 2])), diag(array([2, 1])), array([2, -2]))
         self.assertTrue(allclose(kf.get_point_estimate(), array([2, 2])))
+
+    def test_predict_model_matches_predict_linear_2d(self):
+        initial_state = (array([0.0, 1.0]), diag(array([1.0, 2.0])))
+        filter_linear = KalmanFilter(initial_state)
+        filter_model = KalmanFilter(initial_state)
+
+        system_matrix = diag(array([1.0, 2.0]))
+        sys_noise_cov = diag(array([2.0, 1.0]))
+        sys_input = array([2.0, -2.0])
+        transition_model = _LinearGaussianTransitionModel(
+            system_matrix,
+            sys_noise_cov,
+            sys_input,
+        )
+
+        filter_linear.predict_linear(system_matrix, sys_noise_cov, sys_input)
+        filter_model.predict_model(transition_model)
+
+        self.assertTrue(
+            allclose(filter_linear.get_point_estimate(), filter_model.get_point_estimate())
+        )
+        self.assertTrue(allclose(filter_linear.filter_state.C, filter_model.filter_state.C))
+
+    def test_predict_model_accepts_existing_noise_and_input_aliases(self):
+        initial_state = (array([0.0, 1.0]), diag(array([1.0, 2.0])))
+        filter_linear = KalmanFilter(initial_state)
+        filter_model = KalmanFilter(initial_state)
+
+        system_matrix = diag(array([1.0, 2.0]))
+        sys_noise_cov = diag(array([2.0, 1.0]))
+        system_input = array([2.0, -2.0])
+        transition_model = _LinearGaussianTransitionModelWithAliases(
+            system_matrix,
+            sys_noise_cov,
+            system_input,
+        )
+
+        filter_linear.predict_linear(system_matrix, sys_noise_cov, system_input)
+        filter_model.predict_model(transition_model)
+
+        self.assertTrue(
+            allclose(filter_linear.get_point_estimate(), filter_model.get_point_estimate())
+        )
+        self.assertTrue(allclose(filter_linear.filter_state.C, filter_model.filter_state.C))
 
 
 if __name__ == "__main__":
