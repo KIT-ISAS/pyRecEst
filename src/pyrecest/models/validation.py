@@ -8,11 +8,12 @@ without creating dependency cycles.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from numbers import Integral
 from typing import Any
 
-import pyrecest.backend as backend
+from pyrecest import backend
+
+# pylint: disable=too-many-arguments
 
 
 def _as_backend_array(value: Any, name: str):
@@ -195,7 +196,7 @@ def validate_noise_covariance(
 
 
 def _maybe_call(value: Any, *, allow_methods: bool) -> Any:
-    if isinstance(value, Callable):
+    if callable(value):
         if not allow_methods:
             raise ValueError("Callable distribution attributes are disabled for this inference attempt.")
         return value()
