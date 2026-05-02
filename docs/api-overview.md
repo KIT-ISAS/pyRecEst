@@ -1,8 +1,9 @@
 # API Overview
 
 PyRecEst exposes most user-facing classes through package-level imports such as
-`pyrecest.distributions`, `pyrecest.filters`, `pyrecest.sampling`,
-`pyrecest.smoothers`, `pyrecest.evaluation`, and `pyrecest.utils`.
+`pyrecest.distributions`, `pyrecest.filters`, `pyrecest.models`,
+`pyrecest.sampling`, `pyrecest.smoothers`, `pyrecest.evaluation`, and
+`pyrecest.utils`.
 
 Use backend-compatible arrays from `pyrecest.backend` in examples and user code
 when the same code should run on more than one numerical backend.
@@ -11,6 +12,7 @@ when the same code should run on more than one numerical backend.
 from pyrecest.backend import array, diag
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters import KalmanFilter
+from pyrecest.models import LikelihoodMeasurementModel
 ```
 
 See [Shapes and conventions](conventions.md) for the expected vector, matrix,
@@ -46,6 +48,24 @@ between analytic, Dirac/particle, grid, Fourier, and moment-matched
 representations. The target may be a concrete class or an alias such as
 `"particles"`, `"gaussian"`, `"grid"`, or `"fourier"`. See
 [representation conversion](representation-conversion.md).
+
+### `pyrecest.models`
+
+Reusable transition and measurement model objects that describe model
+capabilities independently of a concrete filter. The initial model layer focuses
+on likelihood-based measurement models and transition models that can either
+sample next states or evaluate transition densities.
+
+Common starting points include:
+
+- `LikelihoodMeasurementModel` for particle-filter or grid-filter style
+  measurement likelihoods;
+- `SampleableTransitionModel` for transition models that can draw samples from
+  a next-state distribution;
+- `DensityTransitionModel` for transition models that can evaluate transition
+  densities.
+
+See [model objects](models.md) for usage patterns and conventions.
 
 ### `pyrecest.filters`
 
