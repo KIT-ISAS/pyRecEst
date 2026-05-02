@@ -4,6 +4,7 @@ from typing import Callable
 import pyrecest.backend
 from pyrecest.backend import atleast_1d, zeros
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.models import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
 from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 
 from ._ukf import UnscentedKalmanFilter as BayesianFiltersUKF
@@ -103,6 +104,53 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         self._ensure_predicted()
         self._filter_state.update(z=measurement, hx=hx, R=cov_mat_meas, **hx_args)
         self._predicted = False
+
+    def predict_model(
+        self,
+        model: AdditiveNoiseTransitionModel,
+        dt=None,
+        **fx_args,
+    ):
+        """Run a prediction step using an additive-noise transition model.
+
+        This is an adapter around :meth:`predict_nonlinear`; it does not change
+        the UKF algorithm or deprecate the existing function/covariance API.
+
+        Parameters
+        ----------
+        model:
+            Reusable transition model containing the deterministic transition
+            function and additive process-noise covariance.
+        dt:
+            Optional time step overriding ``model.dt``.
+        fx_args:
+            Optional transition-function keyword arguments overriding the
+            model's default ``function_args`` for this prediction.
+        """
+        return self.predict_nonlinear(
+            model.evaluate,
+            model.noise_covariance,
+            dt=model.dt if dt is None else dt,
+            **fx_args,
+        )
+
+    def update_model(
+        self,
+        model: AdditiveNoiseMeasurementModel,
+        measurement,
+        **hx_args,
+    ):
+        """Run an update step using an additive-noise measurement model.
+
+        This is an adapter around :meth:`update_nonlinear`; it preserves the
+        existing direct nonlinear update API while allowing model-object reuse.
+        """
+        return self.update_nonlinear(
+            measurement,
+            model.evaluate,
+            model.noise_covariance,
+            **hx_args,
+        )
 
     def predict_identity(self, sys_noise_cov, dt=None):
         assert pyrecest.backend.__backend_name__ not in (
