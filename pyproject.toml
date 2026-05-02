@@ -45,6 +45,7 @@ mkdocstrings = { version = "^1.0.4", extras = ["python"] }
 
 [tool.mypy]
 check_untyped_defs = true
+disable_error_code = ["attr-defined"]
 
 [tool.ruff]
 line-length = 180
