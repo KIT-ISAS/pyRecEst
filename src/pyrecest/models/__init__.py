@@ -14,6 +14,10 @@ from .likelihood import (
     SupportsTransitionDensity,
     SupportsTransitionSampling,
 )
+from .linear_gaussian import IdentityGaussianMeasurementModel
+from .linear_gaussian import IdentityGaussianTransitionModel
+from .linear_gaussian import LinearGaussianMeasurementModel
+from .linear_gaussian import LinearGaussianTransitionModel
 
 __all__ = [
     "DensityTransitionModel",
@@ -23,4 +27,8 @@ __all__ = [
     "SupportsLogLikelihood",
     "SupportsTransitionDensity",
     "SupportsTransitionSampling",
+    "IdentityGaussianMeasurementModel",
+    "IdentityGaussianTransitionModel",
+    "LinearGaussianMeasurementModel",
+    "LinearGaussianTransitionModel",
 ]
