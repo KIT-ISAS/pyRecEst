@@ -56,22 +56,12 @@ jobs:
 
       - name: Install system build dependencies (when binary not available)
         run: |
-          retry() {
-            for attempt in 1 2 3; do
-              "$@" && return 0
-              echo "Command failed on attempt ${attempt}; retrying..."
-              sleep $((attempt * 20))
-            done
-
-            "$@"
-          }
-
-          retry sudo apt-get update
-          retry sudo apt-get install -y \
-            gfortran pkg-config ninja-build \
-            libopenblas-dev liblapack-dev \
-            libfftw3-dev libhealpix-cxx-dev
-
+          sudo apt-get update
+          sudo apt-get install -y \
+          gfortran pkg-config ninja-build \
+          libopenblas-dev liblapack-dev \
+          libfftw3-dev libhealpix-cxx-dev
+        
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

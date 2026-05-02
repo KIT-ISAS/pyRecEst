@@ -1,38 +1,18 @@
 import unittest
-import warnings
 
 # pylint: disable=no-name-in-module,no-member
-import pyrecest
-from pyrecest.backend import all as backend_all
-from pyrecest.backend import allclose, array, eye, linalg, random, sum
-from pyrecest.distributions import GaussianDistribution, LinearDiracDistribution
+from pyrecest.backend import allclose, array, eye, random
+from pyrecest.distributions import (
+    GaussianDistribution,
+    GaussianMixture,
+    LinearDiracDistribution,
+)
 from pyrecest.distributions.conversion import (
     ConversionError,
     ConversionResult,
     can_convert,
     convert_distribution,
     register_conversion_alias,
-)
-from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribution import (
-    HyperhemisphericalDiracDistribution,
-)
-from pyrecest.distributions.hypersphere_subset.hyperhemispherical_grid_distribution import (
-    HyperhemisphericalGridDistribution,
-)
-from pyrecest.distributions.hypersphere_subset.hyperhemispherical_uniform_distribution import (
-    HyperhemisphericalUniformDistribution,
-)
-from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
-    HypersphericalDiracDistribution,
-)
-from pyrecest.distributions.hypersphere_subset.hyperspherical_grid_distribution import (
-    HypersphericalGridDistribution,
-)
-from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution import (
-    VonMisesFisherDistribution,
-)
-from pyrecest.distributions.hypersphere_subset.watson_distribution import (
-    WatsonDistribution,
 )
 
 
@@ -161,109 +141,81 @@ class ConversionTest(unittest.TestCase):
         self.assertTrue(can_convert(gaussian, "particles"))
         self.assertFalse(can_convert(gaussian, "not_a_representation"))
 
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ != "numpy",  # pylint: disable=no-member
-        reason="vMF sampling-based conversion currently requires the NumPy backend.",
-    )
-    def test_hyperspherical_particles_alias(self):
+    def test_linear_dirac_from_distribution_accepts_n_samples_alias(self):
         random.seed(0)
-        vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 5.0)
+        gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-        particles = convert_distribution(vmf, "particles", n_particles=20)
-
-        self.assertIsInstance(particles, HypersphericalDiracDistribution)
-        self.assertEqual(particles.d.shape, (20, 3))
-        self.assertTrue(allclose(sum(particles.w), 1.0))
-        self.assertTrue(allclose(linalg.norm(particles.d, axis=1), 1.0, atol=1e-10))
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Leopardi grid generation is not supported on this backend.",
-    )
-    def test_hyperspherical_grid_alias_uses_default_grid_type(self):
-        mu = array([1.0, 0.0, 0.0])
-        vmf = VonMisesFisherDistribution(mu, 5.0)
-
-        grid = convert_distribution(vmf, "grid", no_of_grid_points=84)
-
-        self.assertIsInstance(grid, HypersphericalGridDistribution)
-        self.assertEqual(grid.grid_type, "leopardi")
-        self.assertEqual(grid.get_grid().shape[1], vmf.input_dim)
-        self.assertTrue(allclose(linalg.norm(grid.get_grid(), axis=1), 1.0, atol=1e-10))
-        self.assertTrue(allclose(grid.mean_direction(), mu, atol=0.35))
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Leopardi grid generation is not supported on this backend.",
-    )
-    def test_hyperspherical_grid_to_particles_alias_uses_weighted_grid(self):
-        vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 5.0)
-        grid = convert_distribution(vmf, "grid", no_of_grid_points=84)
-
-        particles = convert_distribution(grid, "particles")
-
-        self.assertIsInstance(particles, HypersphericalDiracDistribution)
-        self.assertEqual(particles.d.shape, grid.get_grid().shape)
-        self.assertTrue(allclose(particles.d, grid.get_grid()))
-        self.assertTrue(allclose(sum(particles.w), 1.0))
-        self.assertTrue(allclose(particles.mean_direction(), grid.mean_direction()))
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Leopardi grid generation is not supported on this backend.",
-    )
-    def test_hyperhemispherical_grid_alias_uses_default_grid_type(self):
-        uniform = HyperhemisphericalUniformDistribution(2)
-
-        grid = convert_distribution(uniform, "grid", no_of_grid_points=40)
-
-        self.assertIsInstance(grid, HyperhemisphericalGridDistribution)
-        self.assertEqual(grid.grid_type, "leopardi_symm")
-        self.assertEqual(grid.get_grid().shape[1], uniform.input_dim)
-        self.assertTrue(backend_all(grid.get_grid()[:, -1] >= -1e-12))
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Leopardi grid generation is not supported on this backend.",
-    )
-    def test_watson_to_hyperhemispherical_grid_alias(self):
-        watson = WatsonDistribution(array([1.0, 0.0, 0.0]), 1.0)
-
-        grid = convert_distribution(
-            watson, "hyperhemispherical_grid", no_of_grid_points=40
+        particles = convert_distribution(
+            gaussian, LinearDiracDistribution, n_samples=25
         )
 
-        self.assertIsInstance(grid, HyperhemisphericalGridDistribution)
-        self.assertEqual(grid.grid_type, "leopardi_symm")
-        self.assertEqual(grid.get_grid().shape[1], watson.input_dim)
-        self.assertTrue(backend_all(grid.get_grid()[:, -1] >= -1e-12))
+        self.assertIsInstance(particles, LinearDiracDistribution)
+        self.assertEqual(particles.d.shape[0], 25)
 
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
-        reason="Leopardi grid generation is not supported on this backend.",
-    )
-    def test_hyperhemispherical_grid_to_particles_alias_uses_weighted_grid(self):
-        uniform = HyperhemisphericalUniformDistribution(2)
-        grid = convert_distribution(uniform, "grid", no_of_grid_points=40)
+    def test_linear_dirac_rejects_conflicting_particle_count_aliases(self):
+        gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-        particles = convert_distribution(grid, "particles")
+        with self.assertRaises(ConversionError):
+            convert_distribution(
+                gaussian,
+                LinearDiracDistribution,
+                n_particles=5,
+                n_samples=6,
+            )
 
-        self.assertIsInstance(particles, HyperhemisphericalDiracDistribution)
-        self.assertEqual(particles.d.shape, grid.get_grid().shape)
-        self.assertTrue(allclose(particles.d, grid.get_grid()))
-        self.assertTrue(allclose(sum(particles.w), 1.0))
-        self.assertTrue(backend_all(particles.d[:, -1] >= -1e-12))
-
-    def test_hyperhemispherical_grid_mean_direction_uses_row_indexing(self):
-        grid = HyperhemisphericalGridDistribution(
-            array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]), array([0.1, 0.9])
+    def test_linear_dirac_set_mean_uses_current_mean_method(self):
+        particles = LinearDiracDistribution(
+            array([[0.0, 0.0], [2.0, 0.0]]), array([0.5, 0.5])
         )
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            mode = grid.mean_direction()
+        particles.set_mean(array([3.0, 1.0]))
 
-        self.assertTrue(allclose(mode, array([0.0, 0.0, 1.0])))
+        self.assertTrue(allclose(particles.mean(), array([3.0, 1.0])))
+
+    def test_weighted_samples_default_weights_use_number_of_samples(self):
+        samples = array([[0.0, 0.0], [2.0, 0.0], [4.0, 0.0]])
+
+        mean, covariance = LinearDiracDistribution.weighted_samples_to_mean_and_cov(
+            samples
+        )
+
+        self.assertTrue(allclose(mean, array([2.0, 0.0])))
+        self.assertTrue(
+            allclose(
+                covariance,
+                array([[8.0 / 3.0, 0.0], [0.0, 0.0]]),
+            )
+        )
+
+    def test_gaussian_mixture_to_gaussian_moment_match(self):
+        mixture = GaussianMixture(
+            [
+                GaussianDistribution(array([0.0]), array([[1.0]])),
+                GaussianDistribution(array([2.0]), array([[1.0]])),
+            ],
+            array([0.25, 0.75]),
+        )
+
+        gaussian = convert_distribution(mixture, "gaussian")
+
+        self.assertIsInstance(gaussian, GaussianDistribution)
+        self.assertTrue(allclose(gaussian.mean(), array([1.5])))
+        self.assertTrue(allclose(gaussian.covariance(), array([[1.75]])))
+
+    def test_gaussian_mixture_to_linear_dirac_via_particles_alias(self):
+        random.seed(0)
+        mixture = GaussianMixture(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([2.0, 0.0]), eye(2)),
+            ],
+            array([0.25, 0.75]),
+        )
+
+        particles = convert_distribution(mixture, "particles", n_samples=30)
+
+        self.assertIsInstance(particles, LinearDiracDistribution)
+        self.assertEqual(particles.d.shape, (30, 2))
 
 
 if __name__ == "__main__":
