@@ -1,12 +1,14 @@
 """Kalman filter example using reusable linear-Gaussian model objects."""
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=import-error,no-name-in-module,no-member
 from pyrecest.backend import array, diag
 from pyrecest.filters import KalmanFilter
 from pyrecest.models import (
     LinearGaussianMeasurementModel,
     LinearGaussianTransitionModel,
 )
+
+from _filter_example_output import print_position_velocity_estimates
 
 
 def run_filter():
@@ -37,18 +39,9 @@ def main():
     """Print the posterior estimates produced by the filter loop."""
     measurements, estimates, final_covariance = run_filter()
 
-    print("step  measurement  position  velocity")
-    for step, (measurement, estimate) in enumerate(
-        zip(measurements, estimates), start=1
-    ):
-        position, velocity = estimate
-        print(
-            f"{step:>4}  {measurement:>11.2f}  "
-            f"{float(position):>8.3f}  {float(velocity):>8.3f}"
-        )
-
-    print("\nFinal covariance:")
-    print(final_covariance)
+    print_position_velocity_estimates(
+        measurements, estimates, final_covariance=final_covariance
+    )
 
 
 if __name__ == "__main__":
