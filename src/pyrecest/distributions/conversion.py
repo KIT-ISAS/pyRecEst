@@ -326,6 +326,9 @@ def _resolve_alias_entry(distribution, alias_entry: _ConversionAlias):
     return target_type
 
 
+# The built-in resolver intentionally maps a compact user-facing alias vocabulary
+# across several distribution domains while keeping imports lazy to avoid cycles.
+# pylint: disable-next=too-many-locals,too-many-return-statements,too-many-branches
 def _resolve_builtin_alias(distribution, alias: str):
     # Imports stay local to avoid import cycles with pyrecest.distributions.
     from .circle.abstract_circular_distribution import AbstractCircularDistribution
