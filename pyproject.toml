@@ -84,6 +84,7 @@ disable = [
   "too-many-statements",
   "too-many-arguments",
   "duplicate-code",
+  "import-error",
   "consider-using-from-import",
 ]
 
