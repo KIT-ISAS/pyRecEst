@@ -60,7 +60,7 @@ class LikelihoodMeasurementModelTest(unittest.TestCase):
 
     def test_from_distribution_factory(self):
         model = LikelihoodMeasurementModel.from_distribution_factory(
-            lambda state: DummyDistribution(state),
+            DummyDistribution,
             log_pdf_method="log_pdf",
         )
 
@@ -84,6 +84,11 @@ class SampleableTransitionModelTest(unittest.TestCase):
         self.assertFalse(model.has_transition_density)
         self.assertTrue(allclose(model.sample_next(array([10.0]), n=3), array([[10.0], [11.0], [12.0]])))
 
+    def test_unary_sample_next_callback(self):
+        model = SampleableTransitionModel(lambda state: state + array([1.0]))
+
+        self.assertTrue(allclose(model.sample_next(array([10.0])), array([11.0])))
+
     def test_optional_transition_density(self):
         model = SampleableTransitionModel(
             lambda state, n=1: state + reshape(arange(n), (n, 1)),
@@ -98,6 +103,14 @@ class SampleableTransitionModelTest(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             model.transition_density(array([1.0]), array([0.0]))
+
+    def test_particle_filter_vectorization_flag_is_stored(self):
+        model = SampleableTransitionModel(
+            lambda state: state,
+            function_is_vectorized=False,
+        )
+
+        self.assertFalse(model.function_is_vectorized)
 
 
 class DensityTransitionModelTest(unittest.TestCase):
