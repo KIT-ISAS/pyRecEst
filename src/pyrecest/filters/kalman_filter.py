@@ -8,6 +8,33 @@ from .abstract_filter import AbstractFilter
 from .manifold_mixins import EuclideanFilterMixin
 
 
+_MODEL_ATTRIBUTE_SENTINEL = object()
+
+
+def _get_required_model_attribute(model, *names):
+    """Return the first available attribute from a structural model object."""
+    for name in names:
+        value = getattr(model, name, _MODEL_ATTRIBUTE_SENTINEL)
+        if value is not _MODEL_ATTRIBUTE_SENTINEL:
+            return value
+
+    options = ", ".join(f"`{name}`" for name in names)
+    raise AttributeError(
+        f"{type(model).__name__} must expose one of the following "
+        f"attributes: {options}."
+    )
+
+
+def _get_optional_model_attribute(model, *names):
+    """Return the first available optional structural-model attribute."""
+    for name in names:
+        value = getattr(model, name, _MODEL_ATTRIBUTE_SENTINEL)
+        if value is not _MODEL_ATTRIBUTE_SENTINEL:
+            return value
+
+    return None
+
+
 class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
     """Kalman filter for linear Gaussian Euclidean state-space models.
 
@@ -118,6 +145,36 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
             check_validity=False,
         )
 
+    def predict_model(self, transition_model):
+        """Predict one step with a linear Gaussian transition model object.
+
+        The model object is consumed structurally. It must expose a
+        ``system_matrix`` attribute and either ``system_noise_cov`` or
+        ``sys_noise_cov``. If present, ``sys_input`` or ``system_input`` is
+        forwarded as the deterministic transition input.
+
+        Parameters
+        ----------
+        transition_model : object
+            Linear Gaussian transition model object compatible with
+            :meth:`predict_linear`.
+        """
+        system_matrix = _get_required_model_attribute(
+            transition_model,
+            "system_matrix",
+        )
+        sys_noise_cov = _get_required_model_attribute(
+            transition_model,
+            "system_noise_cov",
+            "sys_noise_cov",
+        )
+        sys_input = _get_optional_model_attribute(
+            transition_model,
+            "sys_input",
+            "system_input",
+        )
+        self.predict_linear(system_matrix, sys_noise_cov, sys_input)
+
     def update_identity(self, meas_noise, measurement):
         """Update with a measurement matrix equal to the identity.
 
@@ -164,6 +221,32 @@ class KalmanFilter(AbstractFilter, EuclideanFilterMixin):
             new_covariance,
             check_validity=False,
         )
+
+    def update_model(self, measurement_model, measurement):
+        """Update the state with a linear Gaussian measurement model object.
+
+        The model object is consumed structurally. It must expose a
+        ``measurement_matrix`` attribute and either ``meas_noise`` or
+        ``measurement_noise_cov``.
+
+        Parameters
+        ----------
+        measurement_model : object
+            Linear Gaussian measurement model object compatible with
+            :meth:`update_linear`.
+        measurement : array-like, shape (m,)
+            Measurement vector ``z``.
+        """
+        measurement_matrix = _get_required_model_attribute(
+            measurement_model,
+            "measurement_matrix",
+        )
+        meas_noise = _get_required_model_attribute(
+            measurement_model,
+            "meas_noise",
+            "measurement_noise_cov",
+        )
+        self.update_linear(measurement, measurement_matrix, meas_noise)
 
     def get_point_estimate(self):
         """Return the posterior mean vector with shape ``(n,)``."""
