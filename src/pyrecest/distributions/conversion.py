@@ -326,6 +326,7 @@ def _resolve_alias_entry(distribution, alias_entry: _ConversionAlias):
     return target_type
 
 
+# pylint: disable=too-many-locals,too-many-return-statements,too-many-branches
 def _resolve_builtin_alias(distribution, alias: str):
     # Imports stay local to avoid import cycles with pyrecest.distributions.
     from .circle.abstract_circular_distribution import AbstractCircularDistribution
@@ -424,6 +425,9 @@ def _resolve_builtin_alias(distribution, alias: str):
     raise ConversionError(
         f"Unknown conversion alias '{alias}'. Use a concrete target class or register the alias with register_conversion_alias(...)."
     )
+
+
+# pylint: enable=too-many-locals,too-many-return-statements,too-many-branches
 
 
 def _matching_registered_conversions(distribution, target_type: type):
