@@ -12,45 +12,22 @@ The conventions are intentionally simple:
 
 The classes do not modify filters directly. They only make the model
 capabilities explicit so filter adapters can consume them later without
-duplicating callback conventions.
+duplicating callback conventions. The public capability protocols live in
+:mod:`pyrecest.protocols.models` and are re-exported here for backwards
+compatibility.
 """
 
 from __future__ import annotations
 
 from inspect import Parameter, signature
-from typing import Any, Callable, Protocol, runtime_checkable
+from typing import Any, Callable
 
-
-@runtime_checkable
-class SupportsLikelihood(Protocol):
-    """Protocol for measurement models that can evaluate ``p(z | x)``."""
-
-    def likelihood(self, measurement: Any, state: Any) -> Any:
-        """Return the likelihood of ``measurement`` for ``state``."""
-
-
-@runtime_checkable
-class SupportsLogLikelihood(Protocol):
-    """Protocol for measurement models that can evaluate log-likelihoods."""
-
-    def log_likelihood(self, measurement: Any, state: Any) -> Any:
-        """Return the log-likelihood of ``measurement`` for ``state``."""
-
-
-@runtime_checkable
-class SupportsTransitionSampling(Protocol):
-    """Protocol for transition models that can sample ``p(x_k | x_{k-1})``."""
-
-    def sample_next(self, state: Any, n: int = 1) -> Any:
-        """Draw ``n`` next-state samples conditioned on ``state``."""
-
-
-@runtime_checkable
-class SupportsTransitionDensity(Protocol):
-    """Protocol for transition models that can evaluate ``p(x_k | x_{k-1})``."""
-
-    def transition_density(self, state_next: Any, state_previous: Any) -> Any:
-        """Return transition density values."""
+from pyrecest.protocols.models import (
+    SupportsLikelihood,
+    SupportsLogLikelihood,
+    SupportsTransitionDensity,
+    SupportsTransitionSampling,
+)
 
 
 def _ensure_callable(value: Any, name: str) -> None:
@@ -100,25 +77,7 @@ def _evaluate_distribution_method(distribution: Any, method_name: str, *args: An
 
 
 class LikelihoodMeasurementModel:
-    """Measurement model specified by a likelihood callback.
-
-    Parameters
-    ----------
-    likelihood
-        Callable with signature ``likelihood(measurement, state)`` returning
-        values proportional to ``p(measurement | state)``.
-    log_likelihood
-        Optional callable with signature ``log_likelihood(measurement, state)``.
-        If omitted, :meth:`log_likelihood` raises :class:`NotImplementedError`.
-    name
-        Optional human-readable model name used in diagnostics and examples.
-
-    Notes
-    -----
-    This class is intentionally representation-agnostic. ``measurement`` and
-    ``state`` can be scalars, backend arrays, particles, manifold coordinates,
-    or any other objects understood by the provided callback.
-    """
+    """Measurement model specified by a likelihood callback."""
 
     def __init__(
         self,
@@ -144,22 +103,7 @@ class LikelihoodMeasurementModel:
         log_pdf_method: str | None = None,
         name: str | None = None,
     ) -> "LikelihoodMeasurementModel":
-        """Create a likelihood model from a state-conditioned distribution.
-
-        Parameters
-        ----------
-        distribution_factory
-            Callable returning the conditional measurement distribution for a
-            state, for example ``lambda x: GaussianDistribution(h(x), R)``.
-        pdf_method
-            Name of the density method on the returned distribution. PyRecEst
-            distributions commonly expose ``pdf``.
-        log_pdf_method
-            Optional name of the log-density method on the returned
-            distribution.
-        name
-            Optional human-readable model name.
-        """
+        """Create a likelihood model from a state-conditioned distribution."""
 
         _ensure_callable(distribution_factory, "distribution_factory")
 
@@ -197,22 +141,7 @@ class LikelihoodMeasurementModel:
 
 
 class SampleableTransitionModel:
-    """Transition model specified by a next-state sampler.
-
-    Parameters
-    ----------
-    sample_next
-        Callable with signature ``sample_next(state)`` or
-        ``sample_next(state, n=1)`` returning samples from ``p(x_k | state)``.
-    transition_density
-        Optional callable with signature
-        ``transition_density(state_next, state_previous)``.
-    name
-        Optional human-readable model name.
-    function_is_vectorized
-        Whether ``sample_next`` accepts a batch of states. This preserves the
-        legacy particle-model adapter contract.
-    """
+    """Transition model specified by a next-state sampler."""
 
     def __init__(
         self,
@@ -254,19 +183,7 @@ class SampleableTransitionModel:
 
 
 class DensityTransitionModel:
-    """Transition model specified by a transition-density callback.
-
-    Parameters
-    ----------
-    transition_density
-        Callable with signature ``transition_density(state_next,
-        state_previous)`` returning values proportional to
-        ``p(state_next | state_previous)``.
-    sample_next
-        Optional callable with signature ``sample_next(state, n=1)``.
-    name
-        Optional human-readable model name.
-    """
+    """Transition model specified by a transition-density callback."""
 
     def __init__(
         self,
