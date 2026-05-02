@@ -11,6 +11,7 @@ the examples and tests when working with less common APIs.
 
 - [Distributions](distributions.md)
 - [Filters](filters.md)
+- [Models](models.md)
 - [Smoothers](smoothers.md)
 - [Sampling](sampling.md)
 - [Evaluation](evaluation.md)
