@@ -1,14 +1,11 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, eye, pi, random
+from pyrecest.backend import allclose, array, eye, random
 from pyrecest.distributions import (
-    CircularDiracDistribution,
-    CircularFourierDistribution,
-    CircularGridDistribution,
     GaussianDistribution,
+    GaussianMixture,
     LinearDiracDistribution,
-    VonMisesDistribution,
 )
 from pyrecest.distributions.conversion import (
     ConversionError,
@@ -144,70 +141,81 @@ class ConversionTest(unittest.TestCase):
         self.assertTrue(can_convert(gaussian, "particles"))
         self.assertFalse(can_convert(gaussian, "not_a_representation"))
 
-    def test_circular_von_mises_to_particles_alias(self):
+    def test_linear_dirac_from_distribution_accepts_n_samples_alias(self):
         random.seed(0)
-        distribution = VonMisesDistribution(array(0.4), 2.5)
+        gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-        particles = distribution.approximate_as("particles", n_particles=20)
-
-        self.assertIsInstance(particles, CircularDiracDistribution)
-        self.assertEqual(particles.d.shape[0], 20)
-
-    def test_circular_von_mises_to_grid_alias(self):
-        distribution = VonMisesDistribution(array(0.4), 2.5)
-
-        grid = distribution.approximate_as("grid", no_of_gridpoints=32)
-
-        self.assertIsInstance(grid, CircularGridDistribution)
-        self.assertEqual(grid.grid_values.shape[0], 32)
-        self.assertTrue(allclose(grid.grid_values, distribution.pdf(grid.get_grid())))
-
-    def test_circular_von_mises_to_fourier_alias(self):
-        distribution = VonMisesDistribution(array(0.4), 2.5)
-
-        fourier = distribution.approximate_as("fourier", n=32)
-
-        self.assertIsInstance(fourier, CircularFourierDistribution)
-        self.assertEqual(fourier.n, 32)
-        self.assertTrue(allclose(fourier.integrate(), 1.0, atol=5e-2))
-
-    def test_circular_grid_to_fourier_alias(self):
-        grid = VonMisesDistribution(array(0.4), 2.5).approximate_as(
-            "grid", no_of_gridpoints=32
+        particles = convert_distribution(
+            gaussian, LinearDiracDistribution, n_samples=25
         )
 
-        fourier = grid.approximate_as("fourier", n=32)
+        self.assertIsInstance(particles, LinearDiracDistribution)
+        self.assertEqual(particles.d.shape[0], 25)
 
-        self.assertIsInstance(fourier, CircularFourierDistribution)
-        self.assertEqual(fourier.n, 32)
+    def test_linear_dirac_rejects_conflicting_particle_count_aliases(self):
+        gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-    def test_circular_fourier_to_grid_alias(self):
-        fourier = VonMisesDistribution(array(0.4), 2.5).approximate_as(
-            "fourier", n=32
+        with self.assertRaises(ConversionError):
+            convert_distribution(
+                gaussian,
+                LinearDiracDistribution,
+                n_particles=5,
+                n_samples=6,
+            )
+
+    def test_linear_dirac_set_mean_uses_current_mean_method(self):
+        particles = LinearDiracDistribution(
+            array([[0.0, 0.0], [2.0, 0.0]]), array([0.5, 0.5])
         )
 
-        grid = fourier.approximate_as("grid", no_of_gridpoints=32)
+        particles.set_mean(array([3.0, 1.0]))
 
-        self.assertIsInstance(grid, CircularGridDistribution)
-        self.assertEqual(grid.grid_values.shape[0], 32)
-        self.assertTrue(allclose(grid.grid_values, fourier.pdf(grid.get_grid())))
+        self.assertTrue(allclose(particles.mean(), array([3.0, 1.0])))
 
-    def test_circular_dirac_to_fourier_identity(self):
-        particles = CircularDiracDistribution(
-            array([0.0, pi]), array([0.25, 0.75])
+    def test_weighted_samples_default_weights_use_number_of_samples(self):
+        samples = array([[0.0, 0.0], [2.0, 0.0], [4.0, 0.0]])
+
+        mean, covariance = LinearDiracDistribution.weighted_samples_to_mean_and_cov(
+            samples
         )
 
-        fourier = particles.approximate_as(
-            "fourier",
-            n=9,
-            transformation="identity",
-            store_values_multiplied_by_n=False,
+        self.assertTrue(allclose(mean, array([2.0, 0.0])))
+        self.assertTrue(
+            allclose(
+                covariance,
+                array([[8.0 / 3.0, 0.0], [0.0, 0.0]]),
+            )
         )
 
-        self.assertIsInstance(fourier, CircularFourierDistribution)
-        self.assertEqual(fourier.n, 9)
-        self.assertFalse(fourier.multiplied_by_n)
-        self.assertTrue(allclose(fourier.get_c()[0], 1.0 / (2.0 * pi)))
+    def test_gaussian_mixture_to_gaussian_moment_match(self):
+        mixture = GaussianMixture(
+            [
+                GaussianDistribution(array([0.0]), array([[1.0]])),
+                GaussianDistribution(array([2.0]), array([[1.0]])),
+            ],
+            array([0.25, 0.75]),
+        )
+
+        gaussian = convert_distribution(mixture, "gaussian")
+
+        self.assertIsInstance(gaussian, GaussianDistribution)
+        self.assertTrue(allclose(gaussian.mean(), array([1.5])))
+        self.assertTrue(allclose(gaussian.covariance(), array([[1.75]])))
+
+    def test_gaussian_mixture_to_linear_dirac_via_particles_alias(self):
+        random.seed(0)
+        mixture = GaussianMixture(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([2.0, 0.0]), eye(2)),
+            ],
+            array([0.25, 0.75]),
+        )
+
+        particles = convert_distribution(mixture, "particles", n_samples=30)
+
+        self.assertIsInstance(particles, LinearDiracDistribution)
+        self.assertEqual(particles.d.shape, (30, 2))
 
 
 if __name__ == "__main__":
