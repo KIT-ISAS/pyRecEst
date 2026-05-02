@@ -132,8 +132,31 @@ class ConversionTest(unittest.TestCase):
     def test_unknown_string_alias_raises_helpful_error(self):
         gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-        with self.assertRaises(ConversionError):
+        with self.assertRaises(ConversionError) as context:
             convert_distribution(gaussian, "not_a_representation")
+        message = str(context.exception)
+
+        self.assertIn("Unknown conversion alias 'not_a_representation'", message)
+        self.assertIn("Known built-in aliases", message)
+        self.assertIn("Supported aliases for GaussianDistribution", message)
+        self.assertIn("'particles'", message)
+        self.assertIn("'gaussian'", message)
+
+    def test_known_alias_not_supported_by_source_reports_valid_aliases(self):
+        gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
+
+        with self.assertRaises(ConversionError) as context:
+            convert_distribution(gaussian, "grid")
+        message = str(context.exception)
+
+        self.assertIn("Conversion alias 'grid' is known", message)
+        self.assertIn(
+            "not supported for source type GaussianDistribution", message
+        )
+        self.assertIn("Supported aliases for GaussianDistribution", message)
+        self.assertIn("'particles'", message)
+        self.assertIn("'gaussian'", message)
+        self.assertNotIn("Unknown conversion alias", message)
 
     def test_can_convert_supports_string_aliases(self):
         gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
