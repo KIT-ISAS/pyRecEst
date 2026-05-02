@@ -22,6 +22,40 @@ class AbstractParticleFilter(AbstractFilter):
             function_is_vectorized=True,
         )
 
+    def predict_model(self, transition_model):
+        """Predict using a reusable particle transition model.
+
+        The model must expose a ``sample_next`` callable. If the model has a
+        truthy ``function_is_vectorized`` attribute, ``sample_next`` is called
+        once with all current particle locations. Otherwise, it is called once
+        per particle and the returned particles are stacked using the same
+        convention as :meth:`predict_nonlinear`.
+        """
+        if not hasattr(transition_model, "sample_next"):
+            raise TypeError(
+                "Particle-filter transition models must expose a sample_next callable."
+            )
+
+        sample_next = transition_model.sample_next
+        function_is_vectorized = getattr(transition_model, "function_is_vectorized", True)
+
+        if function_is_vectorized:
+            updated_particles = sample_next(self.filter_state.d)
+        else:
+            updated_particles = [sample_next(particle) for particle in self.filter_state.d]
+            if self.filter_state.dim == 1:
+                updated_particles = hstack(updated_particles)
+            else:
+                updated_particles = vstack(updated_particles)
+
+        if updated_particles.shape != self.filter_state.d.shape:
+            raise ValueError(
+                "sample_next returned particles with shape "
+                f"{updated_particles.shape}, expected {self.filter_state.d.shape}."
+            )
+
+        self._filter_state.d = updated_particles
+
     def predict_nonlinear(
         self,
         f: Callable,
@@ -101,6 +135,23 @@ class AbstractParticleFilter(AbstractFilter):
             self._filter_state.w = (
                 ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
             )
+
+    def update_model(self, measurement_model, measurement=None):
+        """Update using a reusable particle measurement model.
+
+        The model must expose a ``likelihood`` callable. If ``measurement`` is
+        provided, the callable is interpreted as ``likelihood(measurement,
+        particles)``. Otherwise it is interpreted as ``likelihood(particles)``.
+        """
+        if not hasattr(measurement_model, "likelihood"):
+            raise TypeError(
+                "Particle-filter measurement models must expose a likelihood callable."
+            )
+
+        self.update_nonlinear_using_likelihood(
+            measurement_model.likelihood,
+            measurement=measurement,
+        )
 
     def update_identity(
         self, meas_noise, measurement, shift_instead_of_add: bool = True
