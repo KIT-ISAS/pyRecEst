@@ -60,7 +60,7 @@ class LikelihoodMeasurementModelTest(unittest.TestCase):
 
     def test_from_distribution_factory(self):
         model = LikelihoodMeasurementModel.from_distribution_factory(
-            lambda state: DummyDistribution(state),
+            DummyDistribution,
             log_pdf_method="log_pdf",
         )
 
