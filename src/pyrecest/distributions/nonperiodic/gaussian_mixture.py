@@ -23,14 +23,14 @@ class GaussianMixture(LinearMixture, AbstractLinearDistribution):
         for dist in self.dists:
             dist.mu += mean_offset  # type: ignore
 
-    def to_gaussian(self):
+    def to_gaussian(self, check_validity=True):
         gauss_array = self.dists
         mu, C = self.mixture_parameters_to_gaussian_parameters(
             array([g.mu for g in gauss_array]),
             stack([g.C for g in gauss_array], axis=2),
             self.w,
         )
-        return GaussianDistribution(mu, C)
+        return GaussianDistribution(mu, C, check_validity=check_validity)
 
     def covariance(self):
         gauss_array = self.dists
@@ -46,7 +46,7 @@ class GaussianMixture(LinearMixture, AbstractLinearDistribution):
         means, covariance_matrices, weights=None
     ):
         if weights is None:
-            weights = ones(means.shape[1]) / means.shape[1]
+            weights = ones(means.shape[0]) / means.shape[0]
 
         C_from_cov = sum(covariance_matrices * weights.reshape(1, 1, -1), axis=2)
         mu, C_from_means = LinearDiracDistribution.weighted_samples_to_mean_and_cov(

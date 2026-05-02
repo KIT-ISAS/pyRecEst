@@ -48,6 +48,18 @@ product relation.
 python examples/basic/von_mises_fisher_multiplication.py
 ```
 
+### Representation Conversion
+
+`examples/basic/representation_conversion.py` demonstrates the generic
+representation-conversion gateway. It converts a Gaussian distribution to a
+weighted Dirac/particle representation and moment-matches those particles back
+to a Gaussian. It also converts a circular von Mises distribution to grid and
+Fourier representations.
+
+```bash
+python examples/basic/representation_conversion.py
+```
+
 ## Backend Selection
 
 Select a non-default backend by setting `PYRECEST_BACKEND` before running the
