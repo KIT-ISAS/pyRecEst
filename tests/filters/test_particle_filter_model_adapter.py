@@ -67,7 +67,7 @@ class ParticleFilterModelAdapterTest(unittest.TestCase):
 
         def likelihood(meas, particles):
             residual = particles[:, 0] - meas[0]
-            return 1.0 / (1.0 + residual * residual)
+            return 1.0 * (residual == 0.0)
 
         direct_filter = copy.deepcopy(self.filter)
         model_filter = copy.deepcopy(self.filter)
