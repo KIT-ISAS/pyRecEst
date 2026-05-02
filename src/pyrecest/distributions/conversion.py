@@ -443,6 +443,9 @@ def _resolve_alias_entry(distribution, alias_entry: _ConversionAlias):
     return target_type
 
 
+# The built-in resolver intentionally maps a compact user-facing alias vocabulary
+# across several distribution domains while keeping imports lazy to avoid cycles.
+# pylint: disable-next=too-many-locals,too-many-return-statements,too-many-branches
 def _resolve_builtin_alias(distribution, alias: str):
     target_type = _resolve_direct_builtin_alias(alias)
     if target_type is not None:

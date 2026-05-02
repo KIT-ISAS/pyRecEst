@@ -101,6 +101,33 @@ also supports explicit state passing in some random functions. Code that needs
 fully functional JAX-style random handling should pass and manage state
 deliberately instead of relying only on implicit global state.
 
+## Representation Conversion
+
+The distribution representation-conversion gateway is tested under the same
+backend matrix as the rest of the suite. The portable baseline currently covers:
+
+- Euclidean analytic-to-particle conversion, for example
+  `GaussianDistribution -> LinearDiracDistribution` through sampling;
+- particle-to-Gaussian conversion through moment matching;
+- class-based and alias-based routes such as `LinearDiracDistribution` and
+  `"particles"`;
+- backend-independent argument validation for missing or unsupported conversion
+  parameters.
+
+Conversion results are expected to keep arrays in the active backend
+representation when the source and target representation are backend-portable.
+For example, running with `PYRECEST_BACKEND=pytorch` should produce PyTorch
+tensors for linear Dirac particles, while `PYRECEST_BACKEND=jax` should produce
+JAX arrays.
+
+Backend portability is route-specific. A conversion that delegates to a target
+class's `from_distribution(...)` method inherits that target's backend support.
+Routes based on SciPy-heavy grids, manifold operations, plotting, or
+backend-specific samplers may still be NumPy-only or have explicit PyTorch/JAX
+limitations. When adding a new conversion route, add a focused backend test if
+the route is intended to be portable, or document and test the explicit
+restriction if it is not.
+
 ## Choosing A Backend
 
 Start with NumPy when learning the library, reproducing examples, or using
