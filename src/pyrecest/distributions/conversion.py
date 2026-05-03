@@ -13,6 +13,8 @@ import copy
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import lru_cache
+from importlib import import_module
 from typing import Any
 
 
@@ -66,8 +68,151 @@ class _ConversionAlias:
     description: str | None = None
 
 
+ClassSpec = tuple[str, str]
+AliasDomain = tuple[ClassSpec, ClassSpec]
+
 _CONVERSION_REGISTRY: list[_RegisteredConversion] = []
 _CONVERSION_ALIAS_REGISTRY: dict[str, _ConversionAlias] = {}
+
+_ABSTRACT_CIRCULAR: ClassSpec = (
+    "pyrecest.distributions.circle.abstract_circular_distribution",
+    "AbstractCircularDistribution",
+)
+_ABSTRACT_HYPERHEMISPHERICAL: ClassSpec = (
+    "pyrecest.distributions.hypersphere_subset.abstract_hyperhemispherical_distribution",
+    "AbstractHyperhemisphericalDistribution",
+)
+_ABSTRACT_HYPERSPHERICAL: ClassSpec = (
+    "pyrecest.distributions.hypersphere_subset.abstract_hyperspherical_distribution",
+    "AbstractHypersphericalDistribution",
+)
+_ABSTRACT_HYPERTOROIDAL: ClassSpec = (
+    "pyrecest.distributions.hypertorus.abstract_hypertoroidal_distribution",
+    "AbstractHypertoroidalDistribution",
+)
+_ABSTRACT_LINEAR: ClassSpec = (
+    "pyrecest.distributions.nonperiodic.abstract_linear_distribution",
+    "AbstractLinearDistribution",
+)
+_CIRCULAR_DIRAC: ClassSpec = (
+    "pyrecest.distributions.circle.circular_dirac_distribution",
+    "CircularDiracDistribution",
+)
+_CIRCULAR_FOURIER: ClassSpec = (
+    "pyrecest.distributions.circle.circular_fourier_distribution",
+    "CircularFourierDistribution",
+)
+_CIRCULAR_GRID: ClassSpec = (
+    "pyrecest.distributions.circle.circular_grid_distribution",
+    "CircularGridDistribution",
+)
+_GAUSSIAN: ClassSpec = (
+    "pyrecest.distributions.nonperiodic.gaussian_distribution",
+    "GaussianDistribution",
+)
+_HYPERHEMISPHERICAL_DIRAC: ClassSpec = (
+    "pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribution",
+    "HyperhemisphericalDiracDistribution",
+)
+_HYPERHEMISPHERICAL_GRID: ClassSpec = (
+    "pyrecest.distributions.hypersphere_subset.hyperhemispherical_grid_distribution",
+    "HyperhemisphericalGridDistribution",
+)
+_HYPERSPHERICAL_DIRAC: ClassSpec = (
+    "pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution",
+    "HypersphericalDiracDistribution",
+)
+_HYPERSPHERICAL_GRID: ClassSpec = (
+    "pyrecest.distributions.hypersphere_subset.hyperspherical_grid_distribution",
+    "HypersphericalGridDistribution",
+)
+_HYPERTOROIDAL_DIRAC: ClassSpec = (
+    "pyrecest.distributions.hypertorus.hypertoroidal_dirac_distribution",
+    "HypertoroidalDiracDistribution",
+)
+_HYPERTOROIDAL_FOURIER: ClassSpec = (
+    "pyrecest.distributions.hypertorus.hypertoroidal_fourier_distribution",
+    "HypertoroidalFourierDistribution",
+)
+_HYPERTOROIDAL_GRID: ClassSpec = (
+    "pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution",
+    "HypertoroidalGridDistribution",
+)
+_LINEAR_DIRAC: ClassSpec = (
+    "pyrecest.distributions.nonperiodic.linear_dirac_distribution",
+    "LinearDiracDistribution",
+)
+
+_DIRECT_BUILTIN_ALIAS_CLASS_SPECS: dict[str, ClassSpec] = {
+    "circular_dirac": _CIRCULAR_DIRAC,
+    "circular_fourier": _CIRCULAR_FOURIER,
+    "circular_grid": _CIRCULAR_GRID,
+    "gaussian": _GAUSSIAN,
+    "hyperhemispherical_dirac": _HYPERHEMISPHERICAL_DIRAC,
+    "hyperhemispherical_grid": _HYPERHEMISPHERICAL_GRID,
+    "hyperspherical_dirac": _HYPERSPHERICAL_DIRAC,
+    "hyperspherical_grid": _HYPERSPHERICAL_GRID,
+    "hypertoroidal_dirac": _HYPERTOROIDAL_DIRAC,
+    "hypertoroidal_fourier": _HYPERTOROIDAL_FOURIER,
+    "hypertoroidal_grid": _HYPERTOROIDAL_GRID,
+    "linear_dirac": _LINEAR_DIRAC,
+    "linear_particles": _LINEAR_DIRAC,
+    "moment_matched_gaussian": _GAUSSIAN,
+    "normal": _GAUSSIAN,
+}
+
+_PARTICLE_ALIAS_DOMAINS: tuple[AliasDomain, ...] = (
+    (_ABSTRACT_CIRCULAR, _CIRCULAR_DIRAC),
+    (_ABSTRACT_HYPERTOROIDAL, _HYPERTOROIDAL_DIRAC),
+    (_ABSTRACT_HYPERHEMISPHERICAL, _HYPERHEMISPHERICAL_DIRAC),
+    (_ABSTRACT_HYPERSPHERICAL, _HYPERSPHERICAL_DIRAC),
+    (_ABSTRACT_LINEAR, _LINEAR_DIRAC),
+)
+_GRID_ALIAS_DOMAINS: tuple[AliasDomain, ...] = (
+    (_ABSTRACT_CIRCULAR, _CIRCULAR_GRID),
+    (_ABSTRACT_HYPERTOROIDAL, _HYPERTOROIDAL_GRID),
+    (_ABSTRACT_HYPERHEMISPHERICAL, _HYPERHEMISPHERICAL_GRID),
+    (_ABSTRACT_HYPERSPHERICAL, _HYPERSPHERICAL_GRID),
+)
+_FOURIER_ALIAS_DOMAINS: tuple[AliasDomain, ...] = (
+    (_ABSTRACT_CIRCULAR, _CIRCULAR_FOURIER),
+    (_ABSTRACT_HYPERTOROIDAL, _HYPERTOROIDAL_FOURIER),
+)
+_DOMAIN_BUILTIN_ALIAS_CLASS_SPECS: dict[str, tuple[AliasDomain, ...]] = {
+    "dirac": _PARTICLE_ALIAS_DOMAINS,
+    "fourier": _FOURIER_ALIAS_DOMAINS,
+    "grid": _GRID_ALIAS_DOMAINS,
+    "particles": _PARTICLE_ALIAS_DOMAINS,
+    "samples": _PARTICLE_ALIAS_DOMAINS,
+}
+
+_BUILTIN_ALIAS_DESCRIPTIONS: dict[str, str] = {
+    "particles": "domain-aware Dirac/particle representation",
+    "dirac": "domain-aware Dirac representation",
+    "samples": "domain-aware Dirac/particle representation",
+    "gaussian": "Gaussian moment-matched representation",
+    "normal": "Gaussian moment-matched representation",
+    "moment_matched_gaussian": "Gaussian moment-matched representation",
+    "linear_dirac": "linear Dirac representation",
+    "linear_particles": "linear Dirac/particle representation",
+    "circular_dirac": "circular Dirac representation",
+    "hypertoroidal_dirac": "hypertoroidal Dirac representation",
+    "hyperspherical_dirac": "hyperspherical Dirac representation",
+    "hyperhemispherical_dirac": "hyperhemispherical Dirac representation",
+    "grid": "domain-aware grid representation",
+    "circular_grid": "circular grid representation",
+    "hypertoroidal_grid": "hypertoroidal grid representation",
+    "hyperspherical_grid": "hyperspherical grid representation",
+    "hyperhemispherical_grid": "hyperhemispherical grid representation",
+    "fourier": "domain-aware Fourier representation",
+    "circular_fourier": "circular Fourier representation",
+    "hypertoroidal_fourier": "hypertoroidal Fourier representation",
+}
+
+_DIRECT_GAUSSIAN_ALIASES = frozenset(
+    {"gaussian", "normal", "moment_matched_gaussian"}
+)
+_DIRECT_LINEAR_ALIASES = frozenset({"linear_dirac", "linear_particles"})
 
 
 def register_conversion(
@@ -326,104 +471,193 @@ def _resolve_alias_entry(distribution, alias_entry: _ConversionAlias):
     return target_type
 
 
+# The built-in resolver intentionally maps a compact user-facing alias vocabulary
+# across several distribution domains while keeping imports lazy to avoid cycles.
+# pylint: disable-next=too-many-locals,too-many-return-statements,too-many-branches
 def _resolve_builtin_alias(distribution, alias: str):
-    # Imports stay local to avoid import cycles with pyrecest.distributions.
-    from .circle.abstract_circular_distribution import AbstractCircularDistribution
-    from .circle.circular_dirac_distribution import CircularDiracDistribution
-    from .circle.circular_fourier_distribution import CircularFourierDistribution
-    from .circle.circular_grid_distribution import CircularGridDistribution
-    from .hypersphere_subset.abstract_hyperhemispherical_distribution import (
-        AbstractHyperhemisphericalDistribution,
-    )
-    from .hypersphere_subset.abstract_hyperspherical_distribution import (
-        AbstractHypersphericalDistribution,
-    )
-    from .hypersphere_subset.hyperhemispherical_dirac_distribution import (
-        HyperhemisphericalDiracDistribution,
-    )
-    from .hypersphere_subset.hyperhemispherical_grid_distribution import (
-        HyperhemisphericalGridDistribution,
-    )
-    from .hypersphere_subset.hyperspherical_dirac_distribution import (
-        HypersphericalDiracDistribution,
-    )
-    from .hypersphere_subset.hyperspherical_grid_distribution import (
-        HypersphericalGridDistribution,
-    )
-    from .hypertorus.abstract_hypertoroidal_distribution import (
-        AbstractHypertoroidalDistribution,
-    )
-    from .hypertorus.hypertoroidal_dirac_distribution import (
-        HypertoroidalDiracDistribution,
-    )
-    from .hypertorus.hypertoroidal_fourier_distribution import (
-        HypertoroidalFourierDistribution,
-    )
-    from .hypertorus.hypertoroidal_grid_distribution import (
-        HypertoroidalGridDistribution,
-    )
-    from .nonperiodic.abstract_linear_distribution import AbstractLinearDistribution
-    from .nonperiodic.gaussian_distribution import GaussianDistribution
-    from .nonperiodic.linear_dirac_distribution import LinearDiracDistribution
+    target_type = _resolve_direct_builtin_alias(alias)
+    if target_type is not None:
+        return target_type
 
-    if alias in ("gaussian", "normal", "moment_matched_gaussian"):
-        return GaussianDistribution
+    domain_aliases = _DOMAIN_BUILTIN_ALIAS_CLASS_SPECS.get(alias)
+    if domain_aliases is not None:
+        target_type = _resolve_domain_builtin_alias(distribution, domain_aliases)
+        if target_type is not None:
+            return target_type
 
-    if alias in ("linear_dirac", "linear_particles"):
-        return LinearDiracDistribution
-    if alias == "circular_dirac":
-        return CircularDiracDistribution
-    if alias == "hypertoroidal_dirac":
-        return HypertoroidalDiracDistribution
-    if alias == "hyperspherical_dirac":
-        return HypersphericalDiracDistribution
-    if alias == "hyperhemispherical_dirac":
-        return HyperhemisphericalDiracDistribution
+    if alias in _BUILTIN_ALIAS_DESCRIPTIONS:
+        raise _unsupported_builtin_alias_error(distribution, alias)
 
-    if alias in ("particles", "dirac", "samples"):
-        if isinstance(distribution, AbstractCircularDistribution):
-            return CircularDiracDistribution
-        if isinstance(distribution, AbstractHypertoroidalDistribution):
-            return HypertoroidalDiracDistribution
-        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
-            return HyperhemisphericalDiracDistribution
-        if isinstance(distribution, AbstractHypersphericalDistribution):
-            return HypersphericalDiracDistribution
-        if isinstance(distribution, AbstractLinearDistribution):
-            return LinearDiracDistribution
+    raise _unknown_builtin_alias_error(distribution, alias)
 
-    if alias == "circular_grid":
-        return CircularGridDistribution
-    if alias == "hypertoroidal_grid":
-        return HypertoroidalGridDistribution
-    if alias == "hyperspherical_grid":
-        return HypersphericalGridDistribution
-    if alias == "hyperhemispherical_grid":
-        return HyperhemisphericalGridDistribution
 
-    if alias == "grid":
-        if isinstance(distribution, AbstractCircularDistribution):
-            return CircularGridDistribution
-        if isinstance(distribution, AbstractHypertoroidalDistribution):
-            return HypertoroidalGridDistribution
-        if isinstance(distribution, AbstractHyperhemisphericalDistribution):
-            return HyperhemisphericalGridDistribution
-        if isinstance(distribution, AbstractHypersphericalDistribution):
-            return HypersphericalGridDistribution
-
-    if alias == "circular_fourier":
-        return CircularFourierDistribution
-    if alias == "hypertoroidal_fourier":
-        return HypertoroidalFourierDistribution
-    if alias == "fourier":
-        if isinstance(distribution, AbstractCircularDistribution):
-            return CircularFourierDistribution
-        if isinstance(distribution, AbstractHypertoroidalDistribution):
-            return HypertoroidalFourierDistribution
-
-    raise ConversionError(
-        f"Unknown conversion alias '{alias}'. Use a concrete target class or register the alias with register_conversion_alias(...)."
+def _unsupported_builtin_alias_error(distribution, alias: str) -> ConversionError:
+    source_name = type(distribution).__name__
+    return ConversionError(
+        f"Conversion alias '{alias}' is known, but it is not supported for source type "
+        f"{source_name}. Supported aliases for {source_name}: "
+        f"{_format_aliases(_supported_builtin_aliases_for_source(distribution))}. "
+        "Use a concrete target class for an explicit conversion attempt, or register "
+        "a source-specific alias with register_conversion_alias(...)."
     )
+
+
+def _unknown_builtin_alias_error(distribution, alias: str) -> ConversionError:
+    source_name = type(distribution).__name__
+    message = (
+        f"Unknown conversion alias '{alias}'. Known built-in aliases: "
+        f"{_format_aliases(sorted(_BUILTIN_ALIAS_DESCRIPTIONS))}. Supported aliases "
+        f"for {source_name}: "
+        f"{_format_aliases(_supported_builtin_aliases_for_source(distribution))}."
+    )
+
+    custom_aliases = sorted(_CONVERSION_ALIAS_REGISTRY)
+    if custom_aliases:
+        message += f" Registered custom aliases: {_format_aliases(custom_aliases)}."
+    else:
+        message += " No custom aliases are currently registered."
+
+    message += (
+        " Use a concrete target class or register the alias with "
+        "register_conversion_alias(...)."
+    )
+    return ConversionError(message)
+
+
+def _supported_builtin_aliases_for_source(distribution) -> tuple[str, ...]:
+    aliases = set()
+
+    if _is_instance_of_class_spec(distribution, _ABSTRACT_CIRCULAR):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "circular_dirac",
+                "grid",
+                "circular_grid",
+                "fourier",
+                "circular_fourier",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_HYPERTOROIDAL):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "hypertoroidal_dirac",
+                "grid",
+                "hypertoroidal_grid",
+                "fourier",
+                "hypertoroidal_fourier",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_HYPERHEMISPHERICAL):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "hyperhemispherical_dirac",
+                "grid",
+                "hyperhemispherical_grid",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_HYPERSPHERICAL):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                "hyperspherical_dirac",
+                "grid",
+                "hyperspherical_grid",
+            }
+        )
+    elif _is_instance_of_class_spec(distribution, _ABSTRACT_LINEAR):
+        aliases.update(
+            {
+                "particles",
+                "dirac",
+                "samples",
+                *_DIRECT_LINEAR_ALIASES,
+                *_DIRECT_GAUSSIAN_ALIASES,
+            }
+        )
+
+    return tuple(sorted(aliases))
+
+
+def _format_aliases(aliases) -> str:
+    aliases = tuple(aliases)
+    if not aliases:
+        return "none"
+    return ", ".join(f"'{alias}'" for alias in aliases)
+
+
+def _resolve_direct_builtin_alias(alias: str) -> type | None:
+    class_spec = _DIRECT_BUILTIN_ALIAS_CLASS_SPECS.get(alias)
+    if class_spec is None:
+        return None
+    return _resolve_class(class_spec)
+
+
+def _resolve_domain_builtin_alias(
+    distribution, alias_domains: tuple[AliasDomain, ...]
+) -> type | None:
+    for source_class_spec, target_class_spec in alias_domains:
+        if _is_instance_of_class_spec(distribution, source_class_spec):
+            return _resolve_class(target_class_spec)
+    return None
+
+
+def _is_instance_of_class_spec(distribution, class_spec: ClassSpec) -> bool:
+    return isinstance(distribution, _resolve_class(class_spec))
+
+
+def _resolve_class(class_spec: ClassSpec) -> type:
+    module_name, class_name = class_spec
+    return _import_distribution_class(module_name, class_name)
+
+
+@lru_cache(maxsize=None)
+def _import_distribution_class(module_name: str, class_name: str) -> type:
+    module = import_module(module_name)
+    distribution_class = getattr(module, class_name)
+    if not isinstance(distribution_class, type):
+        raise ConversionError(f"{module_name}.{class_name} is not a class.")
+    return distribution_class
+
+
+def _resolve_direct_builtin_alias(alias: str) -> type | None:
+    class_spec = _DIRECT_BUILTIN_ALIAS_CLASS_SPECS.get(alias)
+    if class_spec is None:
+        return None
+    return _resolve_class(class_spec)
+
+
+def _resolve_domain_builtin_alias(
+    distribution, alias_domains: tuple[AliasDomain, ...]
+) -> type | None:
+    for source_class_spec, target_class_spec in alias_domains:
+        if isinstance(distribution, _resolve_class(source_class_spec)):
+            return _resolve_class(target_class_spec)
+    return None
+
+
+def _resolve_class(class_spec: ClassSpec) -> type:
+    module_name, class_name = class_spec
+    return _import_distribution_class(module_name, class_name)
+
+
+@lru_cache(maxsize=None)
+def _import_distribution_class(module_name: str, class_name: str) -> type:
+    module = import_module(module_name)
+    distribution_class = getattr(module, class_name)
+    if not isinstance(distribution_class, type):
+        raise ConversionError(f"{module_name}.{class_name} is not a class.")
+    return distribution_class
 
 
 def _matching_registered_conversions(distribution, target_type: type):
