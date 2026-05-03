@@ -5,7 +5,7 @@ from collections.abc import Callable
 from typing import Any
 
 # pylint: disable=no-name-in-module,no-member,too-many-instance-attributes,too-many-positional-arguments
-from pyrecest.backend import asarray
+from pyrecest.backend import asarray, is_array
 
 
 def _as_optional_array(value):
@@ -35,6 +35,8 @@ def _distribution_covariance(distribution):
     covariance = _call_or_value(distribution, "C")
     if covariance is not None:
         return covariance
+    if is_array(distribution):
+        return asarray(distribution)
     covariance = _call_or_value(distribution, "cov")
     if covariance is not None:
         return covariance
@@ -337,4 +339,6 @@ class AdditiveNoiseMeasurementModel:
             raise NotImplementedError(
                 "The measurement noise distribution does not provide pdf(x)"
             )
-        return self.noise_distribution.pdf(self.measurement_residual(measurement, state))
+        return self.noise_distribution.pdf(
+            self.measurement_residual(measurement, state)
+        )
