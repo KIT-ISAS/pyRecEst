@@ -58,7 +58,7 @@ class HyperhemisphericalGridDistribution(
             UserWarning,
         )
         index_max = argmax(self.grid_values)
-        mu = self.grid[:, index_max]
+        mu = self.grid[index_max, :]
         return mu
 
     def to_full_sphere(self, method="antipodal"):
@@ -144,8 +144,8 @@ class HyperhemisphericalGridDistribution(
         points = self.get_grid_point(indices)
 
         # For a single query, return 1D outputs for convenience.
-        if points.ndim == 2 and points.shape[1] == 1:
-            points = points[:, 0]
+        if points.ndim == 2 and points.shape[0] == 1:
+            points = points[0, :]
             indices = indices[0]
 
         return points, indices

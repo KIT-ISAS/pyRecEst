@@ -56,6 +56,15 @@ class VonMisesDistribution(AbstractCircularDistribution):
         p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
 
+    def sample(self, n):
+        """Draw samples from the von Mises distribution."""
+        return mod(
+            array(
+                vonmises.rvs(kappa=float(self.kappa), loc=float(self.mu), size=int(n))
+            ),
+            2.0 * pi,
+        )
+
     def set_mean(self, mu):
         """
         Set the mean direction of the distribution.
