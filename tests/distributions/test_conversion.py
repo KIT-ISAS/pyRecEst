@@ -49,9 +49,7 @@ class ConversionTest(unittest.TestCase):
     def test_identity_conversion_is_exact(self):
         gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-        result = convert_distribution(
-            gaussian, GaussianDistribution, return_info=True
-        )
+        result = convert_distribution(gaussian, GaussianDistribution, return_info=True)
 
         self.assertIs(result.distribution, gaussian)
         self.assertTrue(result.exact)
@@ -83,9 +81,7 @@ class ConversionTest(unittest.TestCase):
         random.seed(0)
         gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
-        particles = gaussian.approximate_as(
-            LinearDiracDistribution, n_particles=25
-        )
+        particles = gaussian.approximate_as(LinearDiracDistribution, n_particles=25)
 
         self.assertIsInstance(particles, LinearDiracDistribution)
         self.assertEqual(particles.d.shape[0], 25)
@@ -150,9 +146,7 @@ class ConversionTest(unittest.TestCase):
         message = str(context.exception)
 
         self.assertIn("Conversion alias 'grid' is known", message)
-        self.assertIn(
-            "not supported for source type GaussianDistribution", message
-        )
+        self.assertIn("not supported for source type GaussianDistribution", message)
         self.assertIn("Supported aliases for GaussianDistribution", message)
         self.assertIn("'particles'", message)
         self.assertIn("'gaussian'", message)

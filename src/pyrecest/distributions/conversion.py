@@ -209,9 +209,7 @@ _BUILTIN_ALIAS_DESCRIPTIONS: dict[str, str] = {
     "hypertoroidal_fourier": "hypertoroidal Fourier representation",
 }
 
-_DIRECT_GAUSSIAN_ALIASES = frozenset(
-    {"gaussian", "normal", "moment_matched_gaussian"}
-)
+_DIRECT_GAUSSIAN_ALIASES = frozenset({"gaussian", "normal", "moment_matched_gaussian"})
 _DIRECT_LINEAR_ALIASES = frozenset({"linear_dirac", "linear_particles"})
 
 
@@ -301,7 +299,8 @@ def registered_conversion_aliases() -> tuple[tuple[str, str | None], ...]:
     """Return registered custom conversion aliases."""
 
     return tuple(
-        (alias, entry.description) for alias, entry in _CONVERSION_ALIAS_REGISTRY.items()
+        (alias, entry.description)
+        for alias, entry in _CONVERSION_ALIAS_REGISTRY.items()
     )
 
 
@@ -678,13 +677,9 @@ def _validate_conversion_arguments(
     skipped_source_argument = False
 
     for param in params:
-        if (
-            not skipped_source_argument
-            and param.kind
-            in (
-                inspect.Parameter.POSITIONAL_ONLY,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            )
+        if not skipped_source_argument and param.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
         ):
             skipped_source_argument = True
             continue
