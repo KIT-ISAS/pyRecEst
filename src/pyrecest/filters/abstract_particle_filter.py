@@ -2,7 +2,6 @@ import copy
 from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-# pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import hstack, ndim, ones_like, random, sum, vmap, vstack
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
@@ -23,14 +22,7 @@ class AbstractParticleFilter(AbstractFilter):
         )
 
     def predict_model(self, transition_model):
-        """Predict using a reusable particle transition model.
-
-        The model must expose a ``sample_next`` callable. If the model has a
-        truthy ``function_is_vectorized`` attribute, ``sample_next`` is called
-        once with all current particle locations. Otherwise, it is called once
-        per particle and the returned particles are stacked using the same
-        convention as :meth:`predict_nonlinear`.
-        """
+        """Predict using a reusable particle transition model."""
         if not hasattr(transition_model, "sample_next"):
             raise TypeError(
                 "Particle-filter transition models must expose a sample_next callable."
@@ -78,13 +70,10 @@ class AbstractParticleFilter(AbstractFilter):
         if noise_distribution is None:
             updated_particles = d_f_applied
         else:
-            # Cannot easily use vmap because control flow depends on data for some lower level function
             updated_particles = []
             for i in range(n_particles):
                 if not shift_instead_of_add:
-                    noise = noise_distribution.sample(
-                        1
-                    )  # Assuming sample(1) returns a single row of values
+                    noise = noise_distribution.sample(1)
                     updated_particles.append(d_f_applied[i] + noise)
                 else:
                     noise_curr = noise_distribution.set_mean(d_f_applied[i])
@@ -121,28 +110,18 @@ class AbstractParticleFilter(AbstractFilter):
         if self._filter_state is None:
             self._filter_state = copy.deepcopy(new_state)
         elif isinstance(new_state, type(self.filter_state)):
-            assert (
-                self.filter_state.d.shape == new_state.d.shape
-            )  # This also ensures the dimension and type stays the same
+            assert self.filter_state.d.shape == new_state.d.shape
             self._filter_state = copy.deepcopy(new_state)
         else:
-            # Sample if it does not inherit from the previous distribution
             samples = new_state.sample(self.filter_state.w.shape[0])
-            assert (
-                samples.shape == self.filter_state.d.shape
-            )  # This also ensures the dimension and type stays the same
+            assert samples.shape == self.filter_state.d.shape
             self._filter_state.d = samples
             self._filter_state.w = (
                 ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
             )
 
     def update_model(self, measurement_model, measurement=None):
-        """Update using a reusable particle measurement model.
-
-        The model must expose a ``likelihood`` callable. If ``measurement`` is
-        provided, the callable is interpreted as ``likelihood(measurement,
-        particles)``. Otherwise it is interpreted as ``likelihood(particles)``.
-        """
+        """Update using a reusable particle measurement model."""
         if not hasattr(measurement_model, "likelihood"):
             raise TypeError(
                 "Particle-filter measurement models must expose a likelihood callable."
@@ -154,7 +133,10 @@ class AbstractParticleFilter(AbstractFilter):
         )
 
     def update_identity(
-        self, meas_noise, measurement, shift_instead_of_add: bool = True
+        self,
+        meas_noise,
+        measurement,
+        shift_instead_of_add: bool = True,
     ):
         assert (
             measurement is None
