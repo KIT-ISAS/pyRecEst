@@ -21,6 +21,11 @@ from .adapters import (
     sample_next_state,
 )
 from .additive_noise import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
+from .grid import (
+    GridLikelihoodMeasurementModel,
+    GridTransitionDensityFactoryModel,
+    GridTransitionDensityModel,
+)
 from .likelihood import (
     DensityTransitionModel,
     LikelihoodMeasurementModel,
@@ -50,6 +55,9 @@ __all__ = [
     "AdditiveNoiseMeasurementModel",
     "AdditiveNoiseTransitionModel",
     "DensityTransitionModel",
+    "GridLikelihoodMeasurementModel",
+    "GridTransitionDensityFactoryModel",
+    "GridTransitionDensityModel",
     "IdentityGaussianMeasurementModel",
     "IdentityGaussianTransitionModel",
     "LikelihoodMeasurementModel",
