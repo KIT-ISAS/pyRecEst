@@ -15,12 +15,12 @@ def run_filter():
     """Run a constant-velocity Kalman filter using model objects."""
     dt = 1.0
     transition_model = LinearGaussianTransitionModel(
-        system_matrix=array([[1.0, dt], [0.0, 1.0]]),
-        system_noise_cov=diag(array([0.05, 0.01])),
+        matrix=array([[1.0, dt], [0.0, 1.0]]),
+        noise_cov=diag(array([0.05, 0.01])),
     )
     measurement_model = LinearGaussianMeasurementModel(
-        measurement_matrix=array([[1.0, 0.0]]),
-        meas_noise=array([[0.25]]),
+        matrix=array([[1.0, 0.0]]),
+        noise_cov=array([[0.25]]),
     )
 
     measurements = [0.9, 2.0, 3.1, 3.9, 5.2]
