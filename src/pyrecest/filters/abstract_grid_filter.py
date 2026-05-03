@@ -114,7 +114,7 @@ class AbstractGridFilter(AbstractFilter):
                 "transition_model must expose transition_density_for_filter(filter) "
                 "or a transition_density attribute."
             )
-        predict_via_density(transition_density)
+        predict_via_density(transition_density)  # pylint: disable=not-callable
 
     def plot_filter_state(self):
         self.filter_state.plot_state()
