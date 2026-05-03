@@ -55,7 +55,10 @@ class AbstractParticleFilter(AbstractFilter):
         function_is_vectorized: bool = True,
         shift_instead_of_add: bool = True,
     ):
-        assert noise_distribution is None or self.filter_state.dim == noise_distribution.dim
+        assert (
+            noise_distribution is None
+            or self.filter_state.dim == noise_distribution.dim
+        )
 
         if function_is_vectorized:
             d_f_applied = f(self.filter_state.d)
@@ -84,7 +87,9 @@ class AbstractParticleFilter(AbstractFilter):
         self._filter_state.d = updated_particles
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
-        assert samples.shape[0] == weights.shape[0], "samples and weights must match in size"
+        assert (
+            samples.shape[0] == weights.shape[0]
+        ), "samples and weights must match in size"
 
         weights = weights / sum(weights)
         n_particles = self.filter_state.w.shape[0]
@@ -111,7 +116,9 @@ class AbstractParticleFilter(AbstractFilter):
             samples = new_state.sample(self.filter_state.w.shape[0])
             assert samples.shape == self.filter_state.d.shape
             self._filter_state.d = samples
-            self._filter_state.w = ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
+            self._filter_state.w = (
+                ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
+            )
 
     def update_model(self, measurement_model, measurement=None):
         """Update using a reusable particle measurement model."""
@@ -125,7 +132,12 @@ class AbstractParticleFilter(AbstractFilter):
             measurement=measurement,
         )
 
-    def update_identity(self, meas_noise, measurement, shift_instead_of_add: bool = True):
+    def update_identity(
+        self,
+        meas_noise,
+        measurement,
+        shift_instead_of_add: bool = True,
+    ):
         assert (
             measurement is None
             or measurement.shape == (meas_noise.dim,)
@@ -146,10 +158,14 @@ class AbstractParticleFilter(AbstractFilter):
         if measurement is None:
             self._filter_state = self.filter_state.reweigh(likelihood)
         else:
-            self._filter_state = self.filter_state.reweigh(lambda x: likelihood(measurement, x))
+            self._filter_state = self.filter_state.reweigh(
+                lambda x: likelihood(measurement, x)
+            )
 
         self._filter_state.d = self.filter_state.sample(self.filter_state.w.shape[0])
-        self._filter_state.w = 1 / self.filter_state.w.shape[0] * ones_like(self.filter_state.w)
+        self._filter_state.w = (
+            1 / self.filter_state.w.shape[0] * ones_like(self.filter_state.w)
+        )
 
     def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
         likelihood_val = sum(likelihood.pdf(self.filter_state.d) * self.filter_state.w)
