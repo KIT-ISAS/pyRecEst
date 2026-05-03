@@ -13,6 +13,7 @@ nav:
       - Representation Conversion: representation-conversion.md
       - Model Objects: models.md
       - Public Protocols: protocols.md
+      - Protocol Capability Matrix: protocol-capability-matrix.md
   - Tutorials:
       - Overview: tutorials/index.md
       - Use a Distribution: tutorials/use-a-distribution.md
