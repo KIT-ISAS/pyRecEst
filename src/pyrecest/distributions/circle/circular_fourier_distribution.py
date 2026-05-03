@@ -309,14 +309,30 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
         if isinstance(distribution, CircularDiracDistribution):
+            if transformation != "identity":
+                warnings.warn(
+                    "CircularDiracDistribution is represented in Fourier form "
+                    "with identity transformation.",
+                    RuntimeWarning,
+                )
+                transformation = "identity"
+            coeffs = array(
+                [
+                    conj(distribution.trigonometric_moment(k).squeeze())
+                    / (2.0 * pi)
+                    for k in range(int(n) // 2 + 1)
+                ]
+            )
             fd = CircularFourierDistribution(
-                conj(distribution.trigonometric_moment(n)) / (2.0 * pi),
-                transformation,
+                c=coeffs,
+                n=int(n),
+                transformation=transformation,
                 multiplied_by_n=False,
             )
             if store_values_multiplied_by_n:
                 warnings.warn("Scaling up for WD (this is not recommended).")
                 fd.c = fd.c * fd.n
+                fd.multiplied_by_n = True
         else:
             xs = arange(
                 0.0, 2.0 * pi, 2.0 * pi / n

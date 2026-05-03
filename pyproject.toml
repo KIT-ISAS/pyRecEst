@@ -45,7 +45,6 @@ mkdocstrings = { version = "^1.0.4", extras = ["python"] }
 
 [tool.mypy]
 check_untyped_defs = true
-disable_error_code = ["arg-type"]
 
 [tool.ruff]
 line-length = 180
@@ -84,8 +83,6 @@ disable = [
   "too-many-statements",
   "too-many-arguments",
   "duplicate-code",
-  "import-error",
-  "consider-using-from-import",
 ]
 
 [tool.pylint.FORMAT]
