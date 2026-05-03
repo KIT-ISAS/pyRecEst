@@ -90,10 +90,10 @@ class AbstractParticleFilter(AbstractFilter):
                     noise_curr = noise_distribution.set_mean(d_f_applied[i])
                     updated_particles.append(noise_curr.sample(1))
 
-        if self.filter_state.dim == 1:
-            updated_particles = hstack(updated_particles)
-        else:
-            updated_particles = vstack(updated_particles)
+            if self.filter_state.dim == 1:
+                updated_particles = hstack(updated_particles)
+            else:
+                updated_particles = vstack(updated_particles)
 
         self._filter_state.d = updated_particles
 
