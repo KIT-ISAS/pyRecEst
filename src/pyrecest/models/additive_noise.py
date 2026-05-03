@@ -1,9 +1,10 @@
 """Additive-noise nonlinear transition and measurement models."""
 
+import inspect
 from collections.abc import Callable
 from typing import Any
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=no-name-in-module,no-member,too-many-instance-attributes,too-many-positional-arguments
 from pyrecest.backend import asarray
 
 
@@ -32,38 +33,100 @@ def _distribution_covariance(distribution):
     if covariance is not None:
         return covariance
     covariance = _call_or_value(distribution, "C")
-    return _call_or_value(distribution, "cov") if covariance is None else covariance
+    if covariance is not None:
+        return covariance
+    covariance = _call_or_value(distribution, "cov")
+    if covariance is not None:
+        return covariance
+    if (
+        distribution is not None
+        and not hasattr(distribution, "sample")
+        and not hasattr(distribution, "pdf")
+    ):
+        return asarray(distribution)
+    return None
 
 
-def _require_callable(function, name):
+def _require_callable(function: Any, name: str) -> Callable[..., Any]:
     if not callable(function):
         raise TypeError(f"{name} must be callable")
+    return function
 
 
-def _parse_noise_model_options(args, kwargs):
-    names = ("noise_mean", "noise_covariance", "jacobian", "vectorized")
-    if len(args) > len(names):
-        raise TypeError(f"Expected at most {len(names)} optional positional arguments")
+def _pop_function_alias(
+    kwargs: dict[str, Any],
+    canonical_name: str,
+    alias_name: str,
+    current_value: Any,
+) -> Any:
+    """Resolve legacy constructor aliases without accepting ambiguous input."""
+    alias_value = kwargs.pop(alias_name, None)
+    if current_value is not None and alias_value is not None:
+        raise TypeError(f"Got both {canonical_name} and {alias_name}")
+    return current_value if current_value is not None else alias_value
 
-    options = {
-        "noise_mean": None,
-        "noise_covariance": None,
-        "jacobian": None,
-        "vectorized": False,
-    }
-    for name, value in zip(names, args):
-        if name in kwargs:
-            raise TypeError(f"Got multiple values for argument {name}")
-        options[name] = value
 
-    for name in names[len(args) :]:
-        if name in kwargs:
-            options[name] = kwargs.pop(name)
-
+def _reject_unexpected_kwargs(kwargs: dict[str, Any]) -> None:
     if kwargs:
         unexpected = ", ".join(sorted(kwargs))
         raise TypeError(f"Unexpected keyword argument(s): {unexpected}")
-    return options
+
+
+def _dt_call_mode(function: Callable[..., Any]) -> str | None:
+    """Return how ``dt`` can be passed to ``function``."""
+    try:
+        signature = inspect.signature(function)
+    except (TypeError, ValueError):
+        return "positional"
+
+    parameters = tuple(signature.parameters.values())
+    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in parameters):
+        return "keyword"
+    if "dt" in signature.parameters:
+        return "keyword"
+    if any(param.kind == inspect.Parameter.VAR_POSITIONAL for param in parameters):
+        return "positional"
+
+    positional = tuple(
+        param
+        for param in parameters
+        if param.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    )
+    return "positional" if len(positional) >= 2 else None
+
+
+def _call_transition_function(
+    function: Callable[..., Any],
+    state: Any,
+    dt: Any,
+    function_args: dict[str, Any],
+    kwargs: dict[str, Any],
+) -> Any:
+    """Call a transition function with default and per-call arguments."""
+    call_kwargs = {**function_args, **kwargs}
+    if dt is None:
+        return function(state, **call_kwargs)
+
+    dt_mode = _dt_call_mode(function)
+    if dt_mode == "keyword" and "dt" not in call_kwargs:
+        return function(state, dt=dt, **call_kwargs)
+    if dt_mode == "positional":
+        return function(state, dt, **call_kwargs)
+    return function(state, **call_kwargs)
+
+
+def _call_measurement_function(
+    function: Callable[..., Any],
+    state: Any,
+    function_args: dict[str, Any],
+    kwargs: dict[str, Any],
+) -> Any:
+    """Call a measurement function with default and per-call arguments."""
+    return function(state, **{**function_args, **kwargs})
 
 
 class AdditiveNoiseTransitionModel:
@@ -79,27 +142,40 @@ class AdditiveNoiseTransitionModel:
 
     def __init__(
         self,
-        f: Callable[[Any], Any],
+        f: Callable[..., Any] | None = None,
         noise_distribution: Any | None = None,
-        *args,
+        noise_mean=None,
+        noise_covariance=None,
+        jacobian: Callable[..., Any] | None = None,
+        vectorized: bool = False,
+        dt=None,
+        function_args: dict[str, Any] | None = None,
         **kwargs,
     ):
-        options = _parse_noise_model_options(args, kwargs)
-        jacobian = options["jacobian"]
+        f = _pop_function_alias(kwargs, "f", "transition_function", f)
+        _reject_unexpected_kwargs(kwargs)
 
-        _require_callable(f, "f")
+        self._f = _require_callable(f, "f")
         if jacobian is not None:
-            _require_callable(jacobian, "jacobian")
-        self._f = f
+            jacobian = _require_callable(jacobian, "jacobian")
         self.noise_distribution = noise_distribution
-        self._noise_mean = _as_optional_array(options["noise_mean"])
-        self._noise_covariance = _as_optional_array(options["noise_covariance"])
+        self._noise_mean = _as_optional_array(noise_mean)
+        self._noise_covariance = _as_optional_array(noise_covariance)
         self._jacobian = jacobian
-        self.vectorized = options["vectorized"]
+        self.vectorized = vectorized
+        self.dt = dt
+        self.function_args = dict(function_args or {})
 
-    def transition_function(self, state):
+    def evaluate(self, state, dt=None, **kwargs):
+        """Evaluate the noise-free transition, including default function args."""
+        effective_dt = self.dt if dt is None else dt
+        return _call_transition_function(
+            self._f, state, effective_dt, self.function_args, kwargs
+        )
+
+    def transition_function(self, state, **kwargs):
         """Evaluate the noise-free transition ``f(state)``."""
-        return self._f(state)
+        return self.evaluate(state, **kwargs)
 
     def propagate(self, state):
         """Alias for :meth:`transition_function`."""
@@ -131,9 +207,10 @@ class AdditiveNoiseTransitionModel:
 
     def jacobian(self, state):
         """Return the transition Jacobian evaluated at ``state``."""
-        if self._jacobian is None:
+        jacobian = self._jacobian
+        if jacobian is None:
             raise NotImplementedError("No transition Jacobian callback was supplied")
-        return self._jacobian(state)
+        return jacobian(state)
 
     def has_jacobian(self):
         """Return whether this model can provide transition Jacobians."""
@@ -169,27 +246,35 @@ class AdditiveNoiseMeasurementModel:
 
     def __init__(
         self,
-        h: Callable[[Any], Any],
+        h: Callable[..., Any] | None = None,
         noise_distribution: Any | None = None,
-        *args,
+        noise_mean=None,
+        noise_covariance=None,
+        jacobian: Callable[..., Any] | None = None,
+        vectorized: bool = False,
+        function_args: dict[str, Any] | None = None,
         **kwargs,
     ):
-        options = _parse_noise_model_options(args, kwargs)
-        jacobian = options["jacobian"]
+        h = _pop_function_alias(kwargs, "h", "measurement_function", h)
+        _reject_unexpected_kwargs(kwargs)
 
-        _require_callable(h, "h")
+        self._h = _require_callable(h, "h")
         if jacobian is not None:
-            _require_callable(jacobian, "jacobian")
-        self._h = h
+            jacobian = _require_callable(jacobian, "jacobian")
         self.noise_distribution = noise_distribution
-        self._noise_mean = _as_optional_array(options["noise_mean"])
-        self._noise_covariance = _as_optional_array(options["noise_covariance"])
+        self._noise_mean = _as_optional_array(noise_mean)
+        self._noise_covariance = _as_optional_array(noise_covariance)
         self._jacobian = jacobian
-        self.vectorized = options["vectorized"]
+        self.vectorized = vectorized
+        self.function_args = dict(function_args or {})
 
-    def measurement_function(self, state):
+    def evaluate(self, state, **kwargs):
+        """Evaluate the noise-free measurement, including default function args."""
+        return _call_measurement_function(self._h, state, self.function_args, kwargs)
+
+    def measurement_function(self, state, **kwargs):
         """Evaluate the noise-free measurement ``h(state)``."""
-        return self._h(state)
+        return self.evaluate(state, **kwargs)
 
     def predict_measurement(self, state):
         """Return ``h(state)`` plus the additive noise mean if available."""
@@ -221,9 +306,10 @@ class AdditiveNoiseMeasurementModel:
 
     def jacobian(self, state):
         """Return the measurement Jacobian evaluated at ``state``."""
-        if self._jacobian is None:
+        jacobian = self._jacobian
+        if jacobian is None:
             raise NotImplementedError("No measurement Jacobian callback was supplied")
-        return self._jacobian(state)
+        return jacobian(state)
 
     def has_jacobian(self):
         """Return whether this model can provide measurement Jacobians."""
