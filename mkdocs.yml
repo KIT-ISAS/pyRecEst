@@ -14,6 +14,8 @@ nav:
       - Model Objects: models.md
       - Public Protocols: protocols.md
       - Protocol Capability Matrix: protocol-capability-matrix.md
+      - Custom Distribution Extensions: custom-distribution.md
+      - Custom Filter Extensions: custom-filter.md
   - Tutorials:
       - Overview: tutorials/index.md
       - Use a Distribution: tutorials/use-a-distribution.md

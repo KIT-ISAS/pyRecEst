@@ -36,6 +36,43 @@ Run it from the repository root with:
 python examples/basic/kalman_filter.py
 ```
 
+### Kalman filter with model objects
+
+`basic/kalman_filter_with_models.py` runs the same constant-velocity Kalman
+filter as `basic/kalman_filter.py`, but defines reusable linear-Gaussian model
+objects and passes them to `predict_model` and `update_model`.
+
+Run it from the repository root with:
+
+```bash
+python examples/basic/kalman_filter_with_models.py
+```
+
+### Unscented Kalman filter with model objects
+
+`basic/ukf_with_models.py` demonstrates additive-noise transition and
+measurement model objects with `UnscentedKalmanFilter`.
+
+Run it from the repository root with:
+
+```bash
+python examples/basic/ukf_with_models.py
+```
+
+This example follows the current backend limitations of
+`UnscentedKalmanFilter`.
+
+### Particle filter with model objects
+
+`basic/particle_filter_with_models.py` demonstrates a particle-filter loop with
+a sampleable transition model and a likelihood-based measurement model.
+
+Run it from the repository root with:
+
+```bash
+python examples/basic/particle_filter_with_models.py
+```
+
 ### Multi-target tracking
 
 `basic/multi_target_tracking.py` runs a small linear/Gaussian
