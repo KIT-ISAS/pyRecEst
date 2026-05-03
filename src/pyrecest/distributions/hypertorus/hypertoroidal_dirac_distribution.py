@@ -58,13 +58,12 @@ class HypertoroidalDiracDistribution(
                 "a hypertoroidal distribution."
             )
 
-        if hasattr(distribution, "grid_values") and callable(
-            getattr(distribution, "get_grid", None)
-        ):
+        get_grid = getattr(distribution, "get_grid", None)
+        if hasattr(distribution, "grid_values") and callable(get_grid):
             weights = reshape(distribution.grid_values, (-1,))
             weights = weights / sum(weights)
             return HypertoroidalDiracDistribution(
-                distribution.get_grid(), weights, dim=distribution.dim
+                get_grid(), weights, dim=distribution.dim
             )
 
         if n_particles is None:
