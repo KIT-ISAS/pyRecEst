@@ -1,19 +1,13 @@
-import warnings
-
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
-    any,
     arange,
     array,
     ceil,
-    fft,
     floor,
     isclose,
     linspace,
-    maximum,
     mod,
     pi,
-    real,
     round,
     sin,
     sqrt,
@@ -107,23 +101,6 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
 
     @staticmethod
     def from_distribution(distribution, no_of_gridpoints, enforce_pdf_nonnegative=True):
-        if isinstance(distribution, CircularFourierDistribution):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                fd_to_conv = distribution.truncate(no_of_gridpoints)
-            c_shifted = fft.ifftshift(fd_to_conv.c)
-            vals_on_grid = real(fft.ifftn(c_shifted)) * (
-                len(fd_to_conv.a) + len(fd_to_conv.b)
-            )
-            if fd_to_conv.transformation == "identity":
-                if any(vals_on_grid < 0):
-                    warnings.warn("Negative values occurred. Increasing them to 0.")
-                    vals_on_grid = maximum(vals_on_grid, 0)
-            elif fd_to_conv.transformation == "sqrt":
-                vals_on_grid = vals_on_grid**2
-            else:
-                raise ValueError("Transformation unsupported")
-            return CircularGridDistribution(vals_on_grid, enforce_pdf_nonnegative)
         return CircularGridDistribution.from_function(
             distribution.pdf,
             no_of_gridpoints,

@@ -214,7 +214,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         return random.multivariate_normal(mean=self.mu, cov=self.C, size=n)
 
     @staticmethod
-    def from_distribution(distribution):
+    def from_distribution(distribution, check_validity=False):
         """Approximate or convert another distribution as a Gaussian.
 
         Gaussian mixtures are converted with ``to_gaussian``. Other
@@ -224,9 +224,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         from .gaussian_mixture import GaussianMixture
 
         if isinstance(distribution, GaussianMixture):
-            gaussian = (
-                distribution.to_gaussian()
-            )  # Assuming to_gaussian method is defined in GaussianMixtureDistribution
+            gaussian = distribution.to_gaussian(check_validity=check_validity)
         else:
             mean = distribution.mean
             if callable(mean):
@@ -236,5 +234,7 @@ class GaussianDistribution(AbstractLinearDistribution):
             if callable(covariance):
                 covariance = covariance()
 
-            gaussian = GaussianDistribution(mean, covariance, check_validity=False)
+            gaussian = GaussianDistribution(
+                mean, covariance, check_validity=check_validity
+            )
         return gaussian
