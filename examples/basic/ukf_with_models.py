@@ -28,11 +28,11 @@ def run_filter():
     dt = 1.0
     transition_model = AdditiveNoiseTransitionModel(
         transition_function=constant_velocity_transition,
-        noise_covariance=diag(array([0.05, 0.01])),
+        noise_distribution=diag(array([0.05, 0.01])),
     )
     measurement_model = AdditiveNoiseMeasurementModel(
         measurement_function=position_measurement,
-        noise_covariance=array([[0.25]]),
+        noise_distribution=array([[0.25]]),
     )
 
     measurements = [0.9, 2.0, 3.1, 3.9, 5.2]
