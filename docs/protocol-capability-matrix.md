@@ -18,7 +18,7 @@ class intentionally gains or loses one of these capabilities.
 ## Distribution capabilities
 
 | Class | `dim` | `input_dim` | `pdf` | `ln_pdf` | `sample` | `mean` | `covariance` | `convert_to` | `approximate_as` | `from_distribution` |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `GaussianDistribution` | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
 | `LinearDiracDistribution` | yes | yes | no | no | yes | yes | yes | yes | yes | yes |
 | `VonMisesDistribution` | yes | yes | yes | yes | yes | yes | no | yes | yes | no |
@@ -38,7 +38,7 @@ Notes:
 ## Filter capabilities
 
 | Class | `dim` | `filter_state` | `get_point_estimate` | `predict_linear` | `update_linear` | `predict_nonlinear` | `update_nonlinear` | `predict_model` | `update_model` | `update_nonlinear_using_likelihood` | history recording |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `KalmanFilter` | yes | yes | yes | yes | yes | no | no | yes | yes | no | yes |
 | `UnscentedKalmanFilter` | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes |
 | `CircularParticleFilter` | yes | yes | yes | no | no | yes | no | yes | yes | yes | yes |
