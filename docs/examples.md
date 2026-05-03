@@ -26,6 +26,41 @@ Kalman filter.
 python examples/basic/kalman_filter.py
 ```
 
+### Kalman Filter With Model Objects
+
+`examples/basic/kalman_filter_with_models.py` runs the same
+one-dimensional constant-velocity Kalman filter as `kalman_filter.py`, but
+defines reusable linear-Gaussian transition and measurement model objects and
+passes them to `predict_model()` and `update_model()`.
+
+```bash
+python examples/basic/kalman_filter_with_models.py
+```
+
+### Unscented Kalman Filter With Model Objects
+
+`examples/basic/ukf_with_models.py` demonstrates the additive-noise nonlinear
+model-object API with an unscented Kalman filter. The transition model stores
+the state propagation function and process-noise covariance; the measurement
+model stores the measurement function and measurement-noise covariance.
+
+```bash
+python examples/basic/ukf_with_models.py
+```
+
+This example follows the current backend limitations of
+`UnscentedKalmanFilter`.
+
+### Particle Filter With Model Objects
+
+`examples/basic/particle_filter_with_models.py` demonstrates a particle-filter
+loop with a sampleable transition model and a likelihood-based measurement
+model.
+
+```bash
+python examples/basic/particle_filter_with_models.py
+```
+
 ### Multi-Target Tracking
 
 `examples/basic/multi_target_tracking.py` runs a small linear/Gaussian
