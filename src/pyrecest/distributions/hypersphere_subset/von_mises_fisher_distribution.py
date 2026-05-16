@@ -13,7 +13,6 @@ from pyrecest.backend import (
     arccos,
     array,
     clip,
-    concatenate,
     cos,
     exp,
     int32,
@@ -146,15 +145,10 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return samples
 
     def sample_deterministic(self):
-        """Return deterministic sigma points matched to the mean direction.
-
-        Returns
-        -------
-        array-like, shape (2 * dim + 1, input_dim)
-            Deterministic samples on the unit hypersphere. Rows are samples,
-            matching the convention used by :meth:`sample`.
-        """
+        """Return deterministic sigma points matched to the mean direction."""
         n_samples = self.dim * 2 + 1
+        samples = zeros((self.input_dim, n_samples))
+        samples[0, 0] = 1.0
 
         mean_res_length = self.a_d(self.input_dim, self.kappa)
         cos_alpha = clip(
@@ -163,23 +157,14 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             1.0,
         )
         alpha = arccos(cos_alpha)
-        sin_alpha = sin(alpha)
-        cos_alpha_val = cos(alpha)
-
-        first_row = concatenate((array([1.0]), cos_alpha_val * ones(2 * self.dim)))
-        tangent_rows = []
         for i in range(self.dim):
-            tangent_rows.append(
-                concatenate(
-                    (
-                        array([0.0]),
-                        zeros(2 * i),
-                        array([sin_alpha, -sin_alpha]),
-                        zeros(2 * (self.dim - i - 1)),
-                    )
-                )
-            )
-        samples = stack([first_row] + tangent_rows, axis=0)
+            positive_col = 2 * i + 1
+            negative_col = positive_col + 1
+            tangent_row = i + 1
+            samples[0, positive_col] = cos(alpha)
+            samples[0, negative_col] = cos(alpha)
+            samples[tangent_row, positive_col] = sin(alpha)
+            samples[tangent_row, negative_col] = -sin(alpha)
 
         Q = self.get_rotation_matrix()
         samples = Q @ samples
@@ -298,9 +283,6 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @staticmethod
     def a_d(d: Union[int, int32, int64], kappa):
         """Return the ratio of modified Bessel functions used by vMF moments."""
-        if kappa <= VonMisesFisherDistribution._KAPPA_EPS:
-            return array(0.0)
-
         bessel1 = array(ive(d / 2, kappa))
         bessel2 = array(ive(d / 2 - 1, kappa))
         if isnan(bessel1) or isnan(bessel2):
