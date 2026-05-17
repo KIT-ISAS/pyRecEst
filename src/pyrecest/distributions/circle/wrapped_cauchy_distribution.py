@@ -21,8 +21,8 @@ class WrappedCauchyDistribution(AbstractCircularDistribution):
 
     def pdf(self, xs):
         assert xs.ndim == 1
-        xs = mod(xs - self.mu, 2 * pi)
-        return 1 / (2 * pi) * sinh(self.gamma) / (cosh(self.gamma) - cos(xs - self.mu))
+        xs_centered = mod(xs - self.mu, 2 * pi)
+        return 1 / (2 * pi) * sinh(self.gamma) / (cosh(self.gamma) - cos(xs_centered))
 
     def cdf(self, xs):
         def coth(x):
