@@ -137,7 +137,7 @@ def _multivariate_normal(state, mean, cov, size=None, *args, **kwargs):
         size = kwargs.pop("shape")
     shape = _shape_from_size(size)
     return state, jax.random.multivariate_normal(
-        key, mean=mean, cov=cov, shape=shape, *args, **kwargs
+        key, mean, cov, shape, *args, **kwargs
     )
 
 
