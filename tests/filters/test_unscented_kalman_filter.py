@@ -38,6 +38,38 @@ class UnscentedKalmanFilterTest(unittest.TestCase):
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
+    def test_initialization_does_not_evaluate_measurement_function(self):
+        def hx(_x):
+            raise AssertionError("constructor must not evaluate hx")
+
+        kf = UnscentedKalmanFilter(
+            GaussianDistribution(array([0.0, 1.0]), diag(array([1.0, 2.0]))),
+            hx=hx,
+        )
+
+        kf.update_linear(array([1.0]), array([[1.0, 0.0]]), array([[0.5]]))
+        npt.assert_allclose(kf.get_point_estimate(), array([2.0 / 3.0, 1.0]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_default_measurement_covariance_shape_mismatch_raises(self):
+        kf = UnscentedKalmanFilter(
+            GaussianDistribution(array([0.0, 1.0]), diag(array([1.0, 2.0]))),
+            dim_z=2,
+        )
+
+        def hx(x):
+            return array([x[0]])
+
+        with self.assertRaisesRegex(ValueError, "default measurement noise covariance"):
+            kf._filter_state.update(z=array([1.0]), hx=hx)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_update_linear_1d(self):
         kf = UnscentedKalmanFilter(GaussianDistribution(array([0.0]), array([[1.0]])))
         kf.update_identity(array([3.0]), array([[1.0]]))
