@@ -116,7 +116,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
     ) -> None:
         if self.dim == 1:
             phi = linspace(0, 2 * pi, 320)
-            x = array([sin(phi), cos(phi)])
+            x = vstack((sin(phi), cos(phi))).T
             p = self.pdf(x)
             plt.plot(phi, p)
             plt.show()
