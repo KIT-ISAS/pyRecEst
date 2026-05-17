@@ -541,8 +541,10 @@ class FixedIntervalMEMQKFSmoother(FixedLagMEMQKFSmoother):
         predicted_states: Sequence | None = None,
         system_matrices=None,
         shape_system_matrices=None,
+        lag: int | None = None,
     ) -> tuple[list[MEMQKFTrackerState], list[list[Any]]]:
         """Return full-interval smoothed MEM-QKF tracker states."""
+        _ = lag
         lag_value = max(len(filtered_states) - 1, 0)
         return super().smooth(
             filtered_states=filtered_states,

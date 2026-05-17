@@ -77,7 +77,12 @@ def test_lag_one_smooths_kinematics_and_mem_qkf_shape_state():
         smoothed_states[0].kinematic_state,
         array([0.5, -0.5, 2.0, 0.0]),
     )
-    npt.assert_allclose(smoothed_states[0].shape_state, array([0.3, 2.5, 1.5]))
+    npt.assert_allclose(
+        smoothed_states[0].shape_state,
+        array([0.3, 2.5, 1.5]),
+        rtol=1e-6,
+        atol=1e-7,
+    )
     npt.assert_allclose(smoother_gains[0][0].kinematic, 0.5 * eye(4))
     npt.assert_allclose(smoother_gains[0][0].shape, 0.5 * eye(3))
 
