@@ -275,13 +275,12 @@ class ToroidalFourierDistribution(
         fvals : 2-D array
             Function values on a regular grid over [0, 2π)^2.
         n_coefficients : tuple[int, int] or None
-            If None, inferred from fvals shape.
+            If None, inferred from fvals shape and rounded up to odd side lengths.
         desired_transformation : str
         already_transformed : bool
         """
-        if n_coefficients is None:
-            n_coefficients = fvals.shape
-        n_coefficients = tuple(int(n) for n in n_coefficients)
+        if n_coefficients is not None:
+            n_coefficients = tuple(int(n) for n in n_coefficients)
         return super().from_function_values(
             fvals,
             n_coefficients=n_coefficients,
