@@ -112,6 +112,29 @@ class TestSE2UKF(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on JAX backend",
     )
+    def test_predict_identity_mean_uses_system_noise_mean(self):
+        """A non-identity process-noise mean must move the predicted mean."""
+        self.filter.filter_state = _make_identity_state(scale=1e-12)
+
+        theta = pi / 3.0
+        motion_mu = array([cos(theta / 2.0), sin(theta / 2.0), 0.25, -0.1])
+        motion = GaussianDistribution(motion_mu, eye(4) * 1e-12)
+
+        self.filter.predict_identity(motion)
+
+        expected = _dual_quaternion_multiply(
+            array([1.0, 0.0, 0.0, 0.0]),
+            motion_mu,
+        )
+        expected = concatenate(
+            [expected[0:2] / linalg.norm(expected[0:2]), expected[2:]]
+        )
+        npt.assert_allclose(self.filter.filter_state.mu, expected, atol=1e-6)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
     def test_predict_identity_covariance_shape(self):
         self.filter.filter_state = _make_identity_state()
         self.filter.predict_identity(_make_noise())
