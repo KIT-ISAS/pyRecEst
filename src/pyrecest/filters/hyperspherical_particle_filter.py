@@ -45,7 +45,9 @@ class HypersphericalParticleFilter(AbstractParticleFilter, HypersphericalFilterM
         if not shift_instead_of_add:
             raise NotImplementedError()
         noise_copy = copy.deepcopy(meas_noise)
-        noise_copy.set_mean(measurement)
+        shifted_noise = noise_copy.set_mean(measurement)
+        if shifted_noise is not None:
+            noise_copy = shifted_noise
         self.update_nonlinear(noise_copy.pdf)
 
     def update_nonlinear(self, likelihood, z=None):
