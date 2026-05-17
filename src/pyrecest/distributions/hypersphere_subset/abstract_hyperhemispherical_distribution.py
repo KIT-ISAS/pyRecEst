@@ -193,7 +193,8 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
         assert self.dim == 2, "Currently only implemented for 2D hemispheres."
 
-        s0 = random.uniform(size=self.dim) * pi
+        upper_bounds = self.__class__.get_full_integration_boundaries(self.dim)[:, 1]
+        s0 = random.uniform(size=self.dim) * upper_bounds
         result = minimize(
             objective_function_2d,
             s0,
