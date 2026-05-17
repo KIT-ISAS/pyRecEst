@@ -2,7 +2,7 @@
 from typing import Callable
 
 import pyrecest.backend
-from pyrecest.backend import asarray, atleast_1d, zeros
+from pyrecest.backend import atleast_1d, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.models import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
 from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
