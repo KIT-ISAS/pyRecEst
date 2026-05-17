@@ -2,7 +2,7 @@
 from typing import Callable
 
 import pyrecest.backend
-from pyrecest.backend import asarray, atleast_1d, float64, reshape, zeros
+from pyrecest.backend import asarray, atleast_1d, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.models import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
 from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
@@ -26,15 +26,12 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
     ):
         if isinstance(initial_state, GaussianDistribution):
             dim_x = initial_state.dim
-            initial_mean = initial_state.mu
         elif isinstance(initial_state, tuple) and len(initial_state) == 2:
             dim_x = len(initial_state[0])
-            initial_mean = initial_state[0]
         else:
             raise ValueError(
                 "initial_state must be a GaussianDistribution or a tuple of (mean, covariance)"
             )
-        dim_z = reshape(asarray(hx(initial_mean), dtype=float64), (-1,)).shape[0] if dim_z is None else dim_z
 
         if points is None:
             # Standard settings for Gaussian approximations
