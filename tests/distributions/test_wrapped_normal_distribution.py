@@ -48,6 +48,17 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         fx = ones_like(x) / (2.0 * pi)
         self.assertTrue(allclose(wn_large_sigma.pdf(x), fx, rtol=1e-10))
 
+    def test_convolve_adds_variances(self):
+        """Convolution must add wrapped-normal variances, not square them."""
+        first = WrappedNormalDistribution(array(0.3), array(2.0))
+        second = WrappedNormalDistribution(array(0.4), array(3.0))
+
+        convolved = first.convolve(second)
+
+        self.assertTrue(allclose(convolved.mu, array(0.7), atol=1e-12))
+        self.assertTrue(allclose(convolved.C, array(13.0), atol=1e-12))
+        self.assertTrue(allclose(convolved.sigma, sqrt(array(13.0)), atol=1e-12))
+
 
 if __name__ == "__main__":
     unittest.main()
