@@ -1,6 +1,7 @@
 import unittest
 
 import matplotlib
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -83,6 +84,17 @@ class ToroidalVMSineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCase
         npt.assert_allclose(self.tvm.mu, self.mu)
         npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Regression test uses NumPy/scipy scalar semantics",
+    )
+    def test_zero_kappa_normalizer_is_finite(self):
+        tvm = ToroidalVonMisesSineDistribution(
+            array([1.0, 2.0]), array([0.0, 0.0]), array(0.5)
+        )
+        self.assertTrue(np.isfinite(tvm.norm_const))
+        self.assertAlmostEqual(tvm.integrate(), 1.0, delta=1e-5)
 
     def _unnormalized_pdf(self, xs):
         return exp(
