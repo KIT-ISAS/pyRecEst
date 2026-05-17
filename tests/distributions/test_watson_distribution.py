@@ -118,6 +118,28 @@ class TestWatsonDistribution(unittest.TestCase):
             err_msg="ln_pdf does not return correct log probabilities.",
         )
 
+    def test_set_mode_returns_new_distribution(self):
+        mu = array([0.0, 0.0, 1.0])
+        new_mode = array([1.0, 0.0, 0.0])
+        dist = WatsonDistribution(mu, 2.0)
+
+        shifted = dist.set_mode(new_mode)
+
+        self.assertIsNot(shifted, dist)
+        npt.assert_allclose(dist.mu, mu)
+        npt.assert_allclose(shifted.mu, new_mode)
+
+    def test_shift_accepts_flat_canonical_mu_and_returns_new_distribution(self):
+        mu = array([0.0, 0.0, 1.0])
+        new_mode = array([1.0, 0.0, 0.0])
+        dist = WatsonDistribution(mu, 2.0)
+
+        shifted = dist.shift(new_mode)
+
+        self.assertIsNot(shifted, dist)
+        npt.assert_allclose(dist.mu, mu)
+        npt.assert_allclose(shifted.mu, new_mode)
+
 
 # Running the tests
 if __name__ == "__main__":
