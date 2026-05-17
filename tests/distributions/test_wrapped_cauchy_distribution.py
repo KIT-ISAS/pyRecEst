@@ -38,6 +38,10 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
             dist.pdf(xs=self.xs), custom_wrapped.pdf(xs=self.xs), atol=0.0001
         )
 
+    def test_pdf_mode_for_nonzero_mean(self):
+        dist = WrappedCauchyDistribution(array(1.0), array(0.5))
+        npt.assert_array_less(dist.pdf(array([2.0])), dist.pdf(array([1.0])))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
