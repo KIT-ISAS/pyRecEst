@@ -31,15 +31,24 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     def sph_to_cart(angles1, angles2, mode="inclination") -> tuple:
         """
         Convert spherical coordinates to Cartesian coordinates.
-        For different convetions, see https://en.wikipedia.org/wiki/Spherical_coordinate_system
-        Supported convetions:
-        inclination and azimuth (θ_inc, φ_az,right)
-        azimuth, and colatitude
-        Refer to the respective functions for more information.
+
+        Supported conventions:
+
+        * ``mode="inclination"``: legacy S2 convention with arguments
+          ``(azimuth, colatitude)`` and Cartesian coordinates
+          ``(sin(colatitude) * cos(azimuth),
+          sin(colatitude) * sin(azimuth), cos(colatitude))``.
+        * ``mode="elevation"``: arguments ``(azimuth, elevation)`` and
+          Cartesian coordinates ``(cos(elevation) * cos(azimuth),
+          cos(elevation) * sin(azimuth), sin(elevation))``.
+        * ``mode="colatitude"``: the PyRecEst hyperspherical convention with
+          arguments ``(azimuth, colatitude)``. This delegates to
+          ``AbstractHypersphereSubsetDistribution.hypersph_to_cart`` and thus
+          matches the integration convention used for S2.
         """
         assert ndim(angles1) == 1 and ndim(angles2) == 1, "Inputs must be 1-dimensional"
         if mode == "inclination":
-            # This follows the (θ_inc, φ_az,right) convention
+            # This follows the legacy (azimuth, colatitude) S2 convention.
             x, y, z = AbstractSphereSubsetDistribution._sph_to_cart_inclination(
                 angles1, angles2
             )
@@ -54,7 +63,9 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             coords = atleast_2d(coords)
             x, y, z = coords[:, 0], coords[:, 1], coords[:, 2]
         else:
-            raise ValueError("Mode must be either 'colatitude' or 'elevation'")
+            raise ValueError(
+                "Mode must be either 'inclination', 'colatitude', or 'elevation'"
+            )
 
         return x, y, z
 
@@ -84,6 +95,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
             angles = AbstractHypersphereSubsetDistribution.cart_to_hypersph(
                 column_stack((x, y, z)), mode=mode
             )
+            angles = atleast_2d(angles)
             phi, theta = angles[:, 0], angles[:, 1]
         else:
             raise ValueError(
