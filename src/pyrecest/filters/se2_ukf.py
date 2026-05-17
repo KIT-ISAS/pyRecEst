@@ -192,13 +192,16 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
                 )
         pred_samples = column_stack(pred_cols)  # 4×81
 
-        # Covariance from outer-product mean (not centred – matches MATLAB).
-        CP = pred_samples @ pred_samples.T / 81.0
-        new_C = (CP + CP.T) / 2.0  # symmetrise
-
-        # Mean from state samples (not prediction samples – matches MATLAB).
-        new_mu = mean(state_samples, axis=1)
+        # Mean and covariance from the propagated prediction samples.
+        # Store C as an actual covariance, not as the uncentered second moment
+        # E[x x^T].  GaussianDistribution.C is used elsewhere as a covariance,
+        # so it must be centered around the stored mean.
+        new_mu = mean(pred_samples, axis=1)
         new_mu = concatenate([new_mu[0:2] / linalg.norm(new_mu[0:2]), new_mu[2:]])
+
+        deviations = pred_samples - new_mu[:, None]
+        CP = deviations @ deviations.T / pred_samples.shape[1]
+        new_C = (CP + CP.T) / 2.0  # symmetrise
 
         self._filter_state = GaussianDistribution(array(new_mu), array(new_C))
 
