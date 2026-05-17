@@ -9,6 +9,7 @@ from beartype import beartype
 from pyrecest.backend import (
     all,
     apply_along_axis,
+    arange,
     argmax,
     int32,
     int64,
@@ -84,7 +85,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     def sample(self, n: Union[int, int32, int64]):
-        samples = random.choice(self.d, n, p=self.w)
+        indices = random.choice(arange(self.d.shape[0]), n, p=self.w)
+        samples = self.d[indices]
         return samples
 
     def entropy(self) -> float:
