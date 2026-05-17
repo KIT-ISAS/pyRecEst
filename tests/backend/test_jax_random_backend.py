@@ -1,9 +1,9 @@
 import pytest
 
 jax = pytest.importorskip("jax")
-import jax.numpy as jnp
+import jax.numpy as jnp  # noqa: E402
 
-from pyrecest._backend.jax import random
+from pyrecest._backend.jax import random  # noqa: E402
 
 
 def test_multivariate_normal_accepts_numpy_argument_order():
