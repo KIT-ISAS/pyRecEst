@@ -68,6 +68,28 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
                 self.assertEqual(s.shape, (n, chd.input_dim))
                 npt.assert_allclose(sum(s**2, axis=1), ones(n), rtol=1e-10)
 
+    def test_watson_set_mode_returns_new_distribution(self):
+        mu = array([0.0, 0.0, 1.0])
+        new_mode = array([0.0, 1.0, 0.0])
+        dist = HyperhemisphericalWatsonDistribution(mu, self.kappa_)
+
+        shifted = dist.set_mode(new_mode)
+
+        self.assertIsNot(shifted, dist)
+        npt.assert_allclose(dist.mu, mu)
+        npt.assert_allclose(shifted.mu, new_mode)
+
+    def test_watson_shift_accepts_flat_canonical_mu_and_returns_new_distribution(self):
+        mu = array([0.0, 0.0, 1.0])
+        new_mode = array([0.0, 1.0, 0.0])
+        dist = HyperhemisphericalWatsonDistribution(mu, self.kappa_)
+
+        shifted = dist.shift(new_mode)
+
+        self.assertIsNot(shifted, dist)
+        npt.assert_allclose(dist.mu, mu)
+        npt.assert_allclose(shifted.mu, new_mode)
+
 
 if __name__ == "__main__":
     unittest.main()
