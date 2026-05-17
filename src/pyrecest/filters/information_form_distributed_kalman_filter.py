@@ -10,6 +10,7 @@ from dataclasses import dataclass
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, atleast_1d, atleast_2d, copy as backend_copy, eye, linalg, zeros
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.protocols.common import BackendArray
 
 from .abstract_filter import AbstractFilter
 from .manifold_mixins import EuclideanFilterMixin
@@ -58,7 +59,7 @@ class InformationContribution:
     '''Additive IDKF information-vector contribution.'''
 
     key: ContributionKey
-    y: object
+    y: BackendArray
     epoch: int = 0
     operation_count: int = 0
     operation_hash: str | None = None
@@ -77,8 +78,8 @@ class InformationContribution:
 class GlobalInformationState:
     '''Shared information matrix and operation metadata.'''
 
-    Y: object
-    transform_to_end: object | None = None
+    Y: BackendArray
+    transform_to_end: BackendArray | None = None
     epoch: int = 0
     operation_count: int = 0
     operation_hash: str | None = None
