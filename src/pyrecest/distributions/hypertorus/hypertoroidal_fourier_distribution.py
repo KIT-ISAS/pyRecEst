@@ -458,6 +458,19 @@ class HypertoroidalFourierDistribution(
             desired_transformation=desired_transformation,
         )
 
+    @staticmethod
+    def _odd_coefficient_shape(shape_like) -> tuple[int, ...]:
+        """Return a positive, odd coefficient shape for centered Fourier modes."""
+        result = []
+        for n in shape_like:
+            n_int = int(n)
+            if n_int <= 0:
+                raise ValueError(
+                    "from_function_values: n_coefficients must be positive."
+                )
+            result.append(n_int if n_int % 2 == 1 else n_int + 1)
+        return tuple(result)
+
     @classmethod
     @beartype
     def from_function_values(
@@ -475,10 +488,14 @@ class HypertoroidalFourierDistribution(
 
         n_coefficients : tuple[int, ...], optional
             Desired number of Fourier coefficients along each dimension.
-            If None, defaults to size(fvals) plus 1 in even-dimension sizes.
+            If None, defaults to size(fvals) plus one for even sizes. Explicit
+            even coefficient counts are rounded up as well, because centered
+            Fourier coefficient tensors require odd side lengths.
         """
         if n_coefficients is None:
-            n_coefficients = fvals.shape
+            n_coefficients = cls._odd_coefficient_shape(shape(fvals))
+        else:
+            n_coefficients = cls._odd_coefficient_shape(n_coefficients)
 
         dim = len(n_coefficients)
         assert dim == ndim(fvals), (
