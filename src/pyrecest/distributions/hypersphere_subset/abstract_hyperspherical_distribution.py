@@ -53,6 +53,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point=None,
+        proposal_log_pdf: Callable | None = None,
     ):
         # jscpd:ignore-end
         """
@@ -64,6 +65,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             skipping (int, optional): Number of samples to skip between each kept sample. Defaults to 5.
             proposal (function, optional): Proposal distribution for the Metropolis-Hastings algorithm. Defaults to None.
             start_point (, optional): Starting point for the Metropolis-Hastings algorithm. Defaults to None.
+            proposal_log_pdf (function, optional): Log proposal density ``log q(candidate | current)``.
 
         Returns:
             : Sampled points.
@@ -104,6 +106,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             skipping=skipping,
             proposal=proposal,
             start_point=start_point,
+            proposal_log_pdf=proposal_log_pdf,
         )
 
     def plot(
