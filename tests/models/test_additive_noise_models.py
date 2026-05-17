@@ -64,6 +64,16 @@ class AdditiveNoiseTransitionModelTest(unittest.TestCase):
         )
         self.assertTrue(model.has_jacobian())
 
+    def test_transition_vectorized_aliases_stay_in_sync(self):
+        model = AdditiveNoiseTransitionModel(lambda x: x, vectorized=True)
+
+        self.assertTrue(model.vectorized)
+        self.assertTrue(model.function_is_vectorized)
+        model.function_is_vectorized = False
+        self.assertFalse(model.vectorized)
+        model.vectorized = True
+        self.assertTrue(model.function_is_vectorized)
+
     def test_transition_density_uses_additive_residual(self):
         noise = DummyNoise(
             mean=array([0.0]),
