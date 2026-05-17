@@ -99,6 +99,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point=None,
+        proposal_log_pdf: Callable | None = None,
     ):
         if start_point is None:
             if "mean" not in vars(self.__class__) and self._mean_numerical is None:
@@ -146,6 +147,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             skipping=skipping,
             proposal=proposal,
             start_point=start_point,
+            proposal_log_pdf=proposal_log_pdf,
         )
 
     def mean_numerical(self):
