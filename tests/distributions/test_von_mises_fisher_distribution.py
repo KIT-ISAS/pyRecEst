@@ -88,6 +88,24 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         )
         self.assertAlmostEqual(_as_float(linalg.norm(vmf.mean_resultant_vector())), 0.0)
 
+    def test_set_mean_returns_new_distribution(self):
+        new_mu = array([0.0, 0.0, 1.0])
+
+        shifted = self.vmf.set_mean(new_mu)
+
+        self.assertIsNot(shifted, self.vmf)
+        npt.assert_allclose(self.vmf.mu, self.mu)
+        npt.assert_allclose(shifted.mu, new_mu)
+
+    def test_set_mode_returns_new_distribution(self):
+        new_mu = array([0.0, 0.0, 1.0])
+
+        shifted = self.vmf.set_mode(new_mu)
+
+        self.assertIsNot(shifted, self.vmf)
+        npt.assert_allclose(self.vmf.mu, self.mu)
+        npt.assert_allclose(shifted.mu, new_mu)
+
     def test_from_zero_mean_resultant_vector_returns_uniform(self):
         vmf = VonMisesFisherDistribution.from_mean_resultant_vector(
             array([0.0, 0.0, 0.0])
