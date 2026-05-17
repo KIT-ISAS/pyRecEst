@@ -266,10 +266,16 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def convolve(self, other: "VonMisesFisherDistribution"):
         """Convolve with a zonal vMF distribution.
 
-        ``other`` must be zonal around the final coordinate axis.
+        ``other`` must be zonal around the final coordinate axis unless either
+        operand is uniform. Convolution with a uniform density is uniform.
         """
-        assert other.mu[-1] == 1, "Other is not zonal"
         assert all(self.mu.shape == other.mu.shape)
+        if self.kappa <= self._KAPPA_EPS or other.kappa <= self._KAPPA_EPS:
+            return VonMisesFisherDistribution(
+                self._default_mean_direction(self.input_dim), 0.0
+            )
+
+        assert other.mu[-1] == 1, "Other is not zonal"
         d = self.dim + 1
 
         mu_ = self.mu
