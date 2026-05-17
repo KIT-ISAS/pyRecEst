@@ -140,7 +140,14 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return samples
 
     def sample_deterministic(self):
-        """Return deterministic sigma points matched to the mean direction."""
+        """Return deterministic sigma points matched to the mean direction.
+
+        Returns
+        -------
+        array-like, shape (2 * dim + 1, input_dim)
+            Deterministic samples on the unit hypersphere. Rows are samples,
+            matching the convention used by :meth:`sample`.
+        """
         n_samples = self.dim * 2 + 1
 
         mean_res_length = self.a_d(self.input_dim, self.kappa)
@@ -170,7 +177,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
         Q = self.get_rotation_matrix()
         samples = Q @ samples
-        return samples
+        return samples.T
 
     def get_rotation_matrix(self):
         """Return an orthogonal matrix whose first column is ``mu``."""
