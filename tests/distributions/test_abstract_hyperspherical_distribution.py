@@ -68,6 +68,14 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         vmf = VonMisesFisherDistribution(mu, kappa)
         self.assertLess(linalg.norm(vmf.mean_direction_numerical() - mu), 1e-6)
 
+    def test_plotting_error_free_1d(self):
+        """Tests the plotting function for circular distributions."""
+
+        mu = array([1.0, 0.0])
+        kappa = 10.0
+        vmf = VonMisesFisherDistribution(mu, kappa)
+        vmf.plot()
+
     def test_plotting_error_free_2d(self):
         """Tests the plotting function"""
 
