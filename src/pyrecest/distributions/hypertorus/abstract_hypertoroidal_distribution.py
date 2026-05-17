@@ -274,6 +274,7 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point=None,
+        proposal_log_pdf: Callable | None = None,
     ):
         # jscpd:ignore-end
         if proposal is None:
@@ -299,7 +300,13 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         # pylint: disable=duplicate-code
         s = AbstractManifoldSpecificDistribution.sample_metropolis_hastings(
-            self, n, burn_in, skipping, proposal=proposal, start_point=start_point
+            self,
+            n,
+            burn_in,
+            skipping,
+            proposal=proposal,
+            start_point=start_point,
+            proposal_log_pdf=proposal_log_pdf,
         )
         return s
 
