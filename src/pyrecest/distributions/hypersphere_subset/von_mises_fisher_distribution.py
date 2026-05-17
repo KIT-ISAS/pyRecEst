@@ -47,16 +47,20 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     217(1130), 295-305.
     """
 
+    _KAPPA_EPS = 1e-12
+
     def __init__(self, mu, kappa):
         """Create a von Mises-Fisher distribution.
 
         Parameters
         ----------
         mu : array-like, shape (d,)
-            Unit mean direction in the embedding space.
+            Unit mean direction in the embedding space. For ``kappa == 0``,
+            this direction is arbitrary because the distribution is uniform.
         kappa : float
-            Positive concentration parameter. Larger values concentrate more
-            mass around ``mu``.
+            Nonnegative concentration parameter. Larger values concentrate more
+            mass around ``mu``. ``kappa == 0`` is the uniform distribution on the
+            hypersphere.
         """
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
         epsilon = 1e-6
@@ -64,13 +68,15 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         assert (
             mu.shape[0] >= 2
         ), "mu must be at least two-dimensional for the circular case"
-        assert kappa > 0, "kappa must be a positive scalar"
+        assert kappa >= 0, "kappa must be a nonnegative scalar"
         assert abs(linalg.norm(mu) - 1.0) < epsilon, "mu must be a normalized"
 
         self.mu = mu
         self.kappa = kappa
 
-        if self.dim == 2:
+        if kappa <= self._KAPPA_EPS:
+            self.C = 1.0 / self.compute_unit_hypersphere_surface(self.dim)
+        elif self.dim == 2:
             self.C = kappa / (4 * pi * sinh(kappa))
         else:
             self.C = kappa ** ((self.dim + 1) / 2.0 - 1) / (
@@ -115,6 +121,14 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         assert (
             pyrecest.backend.__backend_name__ == "numpy"
         ), "Only supported on NumPy backend"
+
+        if self.kappa <= self._KAPPA_EPS:
+            from .hyperspherical_uniform_distribution import (
+                HypersphericalUniformDistribution,
+            )
+
+            return HypersphericalUniformDistribution(self.dim).sample(n)
+
         from scipy.stats import vonmises_fisher
 
         # Create a von Mises-Fisher distribution object
@@ -180,6 +194,12 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         return VonMisesFisherDistribution.from_mean_resultant_vector(m)
 
     @staticmethod
+    def _default_mean_direction(input_dim: Union[int, int32, int64]):
+        """Return an arbitrary unit direction for uniform vMF objects."""
+        input_dim = int(input_dim)
+        return array([1.0] + [0.0] * (input_dim - 1))
+
+    @staticmethod
     def from_mean_resultant_vector(m):
         """Create a distribution from a mean resultant vector.
 
@@ -187,13 +207,19 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         ----------
         m : array-like, shape (d,)
             Mean resultant vector. Its direction becomes ``mu`` and its norm is
-            inverted to estimate ``kappa``.
+            inverted to estimate ``kappa``. A zero vector represents the uniform
+            distribution and therefore receives an arbitrary stored direction.
         """
         assert ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
-        mean_res_vector = m / linalg.norm(m)
         mean_res_length = linalg.norm(m)
+        if mean_res_length <= VonMisesFisherDistribution._KAPPA_EPS:
+            return VonMisesFisherDistribution(
+                VonMisesFisherDistribution._default_mean_direction(m.shape[0]), 0.0
+            )
+
+        mean_res_vector = m / mean_res_length
         kappa_ = VonMisesFisherDistribution.a_d_inverse(m.shape[0], mean_res_length)
 
         V = VonMisesFisherDistribution(mean_res_vector, kappa_)
@@ -223,6 +249,10 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
         mu_ = self.kappa * self.mu + other.kappa * other.mu
         kappa_ = linalg.norm(mu_)
+        if kappa_ <= self._KAPPA_EPS:
+            return VonMisesFisherDistribution(
+                self._default_mean_direction(self.input_dim), 0.0
+            )
         mu_ = mu_ / kappa_
         return VonMisesFisherDistribution(mu_, kappa_)
 
@@ -246,6 +276,9 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @staticmethod
     def a_d(d: Union[int, int32, int64], kappa):
         """Return the ratio of modified Bessel functions used by vMF moments."""
+        if kappa <= VonMisesFisherDistribution._KAPPA_EPS:
+            return array(0.0)
+
         bessel1 = array(ive(d / 2, kappa))
         bessel2 = array(ive(d / 2 - 1, kappa))
         if isnan(bessel1) or isnan(bessel2):
@@ -255,6 +288,9 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @staticmethod
     def a_d_inverse(d: Union[int, int32, int64], x: float):
         """Numerically invert :meth:`a_d` for dimension ``d`` and value ``x``."""
+        if x <= VonMisesFisherDistribution._KAPPA_EPS:
+            return 0.0
+
         kappa_ = x * (d - x**2) / (1 - x**2)
         if isnan(kappa_):
             print(f"Initial kappa_ is NaN for d={d}, x={x}")
