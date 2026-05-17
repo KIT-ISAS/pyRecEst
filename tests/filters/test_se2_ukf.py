@@ -132,6 +132,19 @@ class TestSE2UKF(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on JAX backend",
     )
+    def test_predict_identity_covariance_is_centered(self):
+        """A near-deterministic prediction must not retain mu @ mu.T."""
+        eps = 1e-12
+        self.filter.filter_state = _make_identity_state(scale=eps)
+        self.filter.predict_identity(_make_noise(scale=eps))
+
+        C = self.filter.filter_state.C
+        self.assertLess(float(trace(C)), 1e-8)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
     def test_predict_identity_covariance_increases(self):
         """Adding process noise should make the covariance (trace) larger."""
         self.filter.filter_state = _make_identity_state(scale=0.05)
