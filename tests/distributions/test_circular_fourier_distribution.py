@@ -89,6 +89,35 @@ class TestCircularFourierDistribution(unittest.TestCase):
         fd_real = fd.to_real_fd()
         npt.assert_array_almost_equal(dist.pdf(xs), fd_real.pdf(xs))
 
+    def test_even_number_of_grid_values_is_rejected(self):
+        dist = VonMisesDistribution(2.5, 1.5)
+
+        with self.assertRaisesRegex(ValueError, "requires an odd number"):
+            CircularFourierDistribution.from_distribution(
+                dist, n=64, transformation="identity"
+            )
+
+        with self.assertRaisesRegex(ValueError, "requires an odd number"):
+            CircularFourierDistribution.from_function_values(
+                array([1.0] * 64), transformation="identity"
+            )
+
+        with self.assertRaisesRegex(ValueError, "requires an odd number"):
+            CircularFourierDistribution(
+                c=array([1.0] * 33),
+                n=64,
+                transformation="identity",
+                multiplied_by_n=True,
+            )
+
+        with self.assertRaisesRegex(ValueError, "requires an odd number"):
+            CircularFourierDistribution(
+                a=array([1.0] * 33),
+                b=array([0.0] * 31),
+                transformation="identity",
+                multiplied_by_n=True,
+            )
+
     def test_real_complex_coefficient_round_trip(self):
         a = array([2.0, 3.0, -5.0])
         b = array([7.0, -11.0])
