@@ -335,15 +335,15 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
 
         expected_n_samples = 2 * vmf.dim + 1
         weights = ones(expected_n_samples) / expected_n_samples
-        self.assertEqual(samples.shape, (vmf.input_dim, expected_n_samples))
+        self.assertEqual(samples.shape, (expected_n_samples, vmf.input_dim))
         npt.assert_allclose(
-            linalg.norm(samples, axis=0),
+            linalg.norm(samples, axis=1),
             ones(expected_n_samples),
             rtol=5e-7,
             atol=2e-7,
         )
         npt.assert_allclose(
-            samples @ weights, vmf.mean_resultant_vector(), rtol=5e-7, atol=2e-7
+            weights @ samples, vmf.mean_resultant_vector(), rtol=5e-7, atol=2e-7
         )
 
     def test_a_d_uses_scaled_bessel_ratio_for_large_kappa(self):
