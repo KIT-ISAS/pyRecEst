@@ -1,10 +1,12 @@
+import copy
+
 import mpmath
-import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    allclose,
     array,
     concatenate,
     diag,
@@ -16,7 +18,6 @@ from pyrecest.backend import (
     log,
     ones,
     tile,
-    vstack,
     zeros,
 )
 
@@ -113,14 +114,14 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
 
     def set_mode(self, new_mode):
         assert new_mode.shape == self.mu.shape
-        dist = self
-        dist.mu = new_mode
+        dist = copy.deepcopy(self)
+        dist.mu = copy.deepcopy(new_mode)
         return dist
 
     def shift(self, shift_by):
-        npt.assert_almost_equal(
-            self.mu,
-            vstack([zeros((self.dim, 1)), 1]),
-            "There is no true shifting for the hypersphere. This is a function for compatibility and only works when mu is [0,0,...,1].",
+        canonical_mu = concatenate((zeros(self.input_dim - 1), array([1.0])))
+        assert allclose(self.mu, canonical_mu), (
+            "There is no true shifting for the hypersphere. This is a function "
+            "for compatibility and only works when mu is [0,0,...,1]."
         )
         return self.set_mode(shift_by)
