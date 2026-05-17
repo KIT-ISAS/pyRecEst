@@ -1,3 +1,4 @@
+import copy
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -21,9 +22,10 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return 2.0 * self.dist_full_sphere.pdf(xs)
 
     def set_mode(self, mu) -> "HyperhemisphericalWatsonDistribution":
-        w = self
-        w.mu = mu
-        return w
+        assert mu.shape == self.mu.shape
+        dist = copy.deepcopy(self)
+        dist.mu = copy.deepcopy(mu)
+        return dist
 
     def sample(self, n: Union[int, int32, int64]):
         s_full = self.dist_full_sphere.sample(n)
@@ -51,9 +53,9 @@ class HyperhemisphericalWatsonDistribution(AbstractHyperhemisphericalDistributio
         return self.mu
 
     def shift(self, shift_by) -> "HyperhemisphericalWatsonDistribution":
-        assert allclose(
-            self.mu, concatenate((zeros(self.dim - 1), array([1])))
-        ), "There is no true shifting for the hyperhemisphere. This is a function for compatibility and only works when mu is [0,0,...,1]."
-        dist_shifted = self
-        dist_shifted.mu = shift_by
-        return dist_shifted
+        canonical_mu = concatenate((zeros(self.input_dim - 1), array([1.0])))
+        assert allclose(self.mu, canonical_mu), (
+            "There is no true shifting for the hyperhemisphere. This is a "
+            "function for compatibility and only works when mu is [0,0,...,1]."
+        )
+        return self.set_mode(shift_by)
