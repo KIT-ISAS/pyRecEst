@@ -31,7 +31,8 @@ class HypersphericalUniformDistribution(
         return AbstractHypersphereSubsetUniformDistribution.pdf(self, xs)
 
     def ln_pdf(self, xs):
-        return -self.get_ln_manifold_size() * ones(xs.shape[0])
+        log_density = -self.get_ln_manifold_size()
+        return log_density * ones(xs.shape[0]) if xs.ndim > 1 else log_density
 
     def sample(self, n: Union[int, int32, int64]):
         assert isinstance(n, int) and n > 0, "n must be a positive integer"
