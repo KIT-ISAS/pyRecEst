@@ -281,10 +281,16 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def mode_numerical(self):
         raise NotImplementedError("Method is not implemented yet.")
 
+    @staticmethod
+    def _entropy_integrand_from_pdf_value(pdf_val):
+        """Compute p * log(p), using the convention 0 * log(0) = 0."""
+        return pdf_val * log(pdf_val + (pdf_val == 0))
+
     def entropy_numerical(self):
         def entropy_f_gen():
             def f(points):
-                return self.pdf(points) * log(self.pdf(points))
+                pdf_val = self.pdf(points)
+                return self._entropy_integrand_from_pdf_value(pdf_val)
 
             return f
 
