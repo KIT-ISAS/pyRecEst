@@ -1,3 +1,5 @@
+import copy
+
 from beartype import beartype
 
 # pylint: disable=no-name-in-module,no-member
@@ -87,11 +89,14 @@ class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
             # Add noise
             if noise_distribution is not None:
                 for j in range(self.filter_state.d.shape[0]):
-                    # Set mean to transformed state
-                    # This will fail if set_mean is unavailable
-                    noise_distribution.set_mode(d_fun_applied[j])
+                    # Set mode to transformed state
+                    # This will fail if set_mode is unavailable
+                    noise_curr = copy.deepcopy(noise_distribution)
+                    shifted_noise = noise_curr.set_mode(d_fun_applied[j])
+                    if shifted_noise is not None:
+                        noise_curr = shifted_noise
                     # Sample one noise vector centered at the transformed state to add noise
-                    self.filter_state.d[j, index_arr] = noise_distribution.sample(1)
+                    self.filter_state.d[j, index_arr] = noise_curr.sample(1)
 
     @property
     def filter_state(self):
