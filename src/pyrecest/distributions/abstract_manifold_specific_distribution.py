@@ -9,6 +9,16 @@ import pyrecest.backend
 from pyrecest.backend import empty, int32, int64, log, random, squeeze
 
 
+def _to_scalar(value):
+    """Convert a backend scalar or length-one array to a Python float."""
+    try:
+        return float(value.item())
+    except AttributeError:
+        return float(value)
+    except (TypeError, ValueError, RuntimeError):
+        return float(value.reshape(-1)[0])
+
+
 class AbstractManifoldSpecificDistribution(ABC):
     """
     Abstract base class for distributions catering to specific manifolds.
@@ -106,9 +116,19 @@ class AbstractManifoldSpecificDistribution(ABC):
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point=None,
+        proposal_log_pdf: Callable | None = None,
     ):
         # jscpd:ignore-end
-        """Metropolis Hastings sampling algorithm."""
+        """Metropolis-Hastings sampling algorithm.
+
+        ``proposal`` generates a candidate state from the current state. For
+        non-JAX backends it must be callable as ``proposal(x)``; for JAX it
+        must be callable as ``proposal(key, x)``.
+
+        ``proposal_log_pdf`` is optional and must evaluate
+        ``log q(candidate | current)``. If it is omitted, the proposal is
+        assumed symmetric, recovering the ordinary Metropolis ratio.
+        """
         if pyrecest.backend.__backend_name__ == "jax":
             # Get a key from your global JAX random state *outside* of lax.scan
             import jax as _jax  # pylint: disable=import-error
@@ -132,6 +152,7 @@ class AbstractManifoldSpecificDistribution(ABC):
                 n=int(n),
                 burn_in=int(burn_in),
                 skipping=int(skipping),
+                proposal_log_pdf=proposal_log_pdf,
             )
             # You could optionally stash `key_out` somewhere if you want chain continuation.
             return squeeze(samples)
@@ -146,18 +167,26 @@ class AbstractManifoldSpecificDistribution(ABC):
         s = empty((total_samples, self.input_dim))
         x = start_point
         i = 0
-        pdfx = self.pdf(x)
+        log_pdfx = _to_scalar(self.ln_pdf(x))
 
         while i < total_samples:
             x_new = proposal(x)
             assert (
                 x_new.shape == x.shape
             ), "Proposal must return a vector of same shape as input"
-            pdfx_new = self.pdf(x_new)
-            a = pdfx_new / pdfx
-            if a.item() > 1 or a.item() > random.rand(1):
+            log_pdfx_new = _to_scalar(self.ln_pdf(x_new))
+            log_acceptance_ratio = log_pdfx_new - log_pdfx
+
+            if proposal_log_pdf is not None:
+                log_acceptance_ratio += _to_scalar(
+                    proposal_log_pdf(x, x_new)
+                ) - _to_scalar(proposal_log_pdf(x_new, x))
+
+            if log_acceptance_ratio >= 0.0 or _to_scalar(
+                log(random.rand(1))
+            ) < log_acceptance_ratio:
                 x = x_new
-                pdfx = pdfx_new
+                log_pdfx = log_pdfx_new
             # Record every chain step; rejected proposals keep the current state.
             s[i, :] = x.squeeze()
             i += 1
@@ -175,6 +204,8 @@ def sample_metropolis_hastings_jax(
     n: int,
     burn_in: int = 10,
     skipping: int = 5,
+    # function: (candidate, current) -> log q(candidate | current)
+    proposal_log_pdf=None,
 ):
     """
     Metropolis-Hastings sampler in JAX using a plain Python loop.
@@ -187,6 +218,8 @@ def sample_metropolis_hastings_jax(
     proposal:   callable (key, x) -> x_proposed
     start_point: initial state (array)
     n:          number of samples to return (after burn-in and thinning)
+    proposal_log_pdf: optional callable evaluating log q(candidate | current).
+                      If omitted, the proposal is assumed symmetric.
     """
     import jax.numpy as _jnp  # pylint: disable=import-error
     from jax import random as _random  # pylint: disable=import-error
@@ -210,8 +243,14 @@ def sample_metropolis_hastings_jax(
         x_prop = proposal(key_prop, x)
         log_px_prop = _to_scalar(log_pdf(x_prop))
 
-        # Metropolis acceptance
+        # Metropolis-Hastings acceptance. The proposal correction vanishes for
+        # symmetric proposals.
         log_alpha = log_px_prop - log_px
+        if proposal_log_pdf is not None:
+            log_alpha += _to_scalar(proposal_log_pdf(x, x_prop)) - _to_scalar(
+                proposal_log_pdf(x_prop, x)
+            )
+
         log_u = _to_scalar(_jnp.log(_random.uniform(key_u, shape=())))
 
         if log_u < min(0.0, log_alpha):
