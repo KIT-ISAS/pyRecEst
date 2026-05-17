@@ -10,6 +10,32 @@ from pyrecest.distributions import LinearDiracDistribution
 
 
 class TestAbstractDiracDistribution(unittest.TestCase):
+    def test_sample_selects_complete_multidimensional_diracs(self):
+        dist = LinearDiracDistribution(
+            array(
+                [
+                    [0.0, 1.0],
+                    [2.0, 3.0],
+                    [4.0, 5.0],
+                ]
+            ),
+            array([0.0, 0.0, 1.0]),
+        )
+
+        samples = dist.sample(4)
+
+        npt.assert_allclose(
+            samples,
+            array(
+                [
+                    [4.0, 5.0],
+                    [4.0, 5.0],
+                    [4.0, 5.0],
+                    [4.0, 5.0],
+                ]
+            ),
+        )
+
     def test_mode_returns_highest_weighted_dirac(self):
         dist = LinearDiracDistribution(
             array(
