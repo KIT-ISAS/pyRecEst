@@ -29,6 +29,16 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
 
 
+def _ensure_odd_n(n: int | int32 | int64 | None) -> None:
+    if n is not None and int(n) % 2 == 0:
+        raise ValueError(
+            "CircularFourierDistribution requires an odd number of "
+            "coefficients/grid values. Even lengths contain a Nyquist "
+            "coefficient that is not represented by the current real "
+            "coefficient convention."
+        )
+
+
 class CircularFourierDistribution(AbstractCircularDistribution):
     """Circular distribution represented by a Fourier series.
 
@@ -67,7 +77,8 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 )
                 self.n = 2 * c.shape[0] - 1
             else:
-                self.n = n
+                self.n = int(n)
+            _ensure_odd_n(self.n)
         elif a is not None and b is not None:
             assert a.ndim == 1
             assert b.ndim == 1
@@ -76,6 +87,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             self.c = None
             self.n = a.shape[0] + b.shape[0]
             assert self.n == n or n is None
+            _ensure_odd_n(self.n)
         else:
             raise ValueError("Need to provide either c or a and b.")
 
@@ -308,6 +320,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
+        _ensure_odd_n(n)
         if isinstance(distribution, CircularDiracDistribution):
             if transformation != "identity":
                 warnings.warn(
@@ -355,14 +368,16 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
+        n_values = fvals.shape[0]
+        _ensure_odd_n(n_values)
         c = fft.rfft(fvals)
         if not store_values_multiplied_by_n:
-            c = c * (1.0 / fvals.shape[0])
+            c = c * (1.0 / n_values)
 
         fd = CircularFourierDistribution(
             c=c,
             transformation=transformation,
-            n=fvals.shape[0],
+            n=n_values,
             multiplied_by_n=store_values_multiplied_by_n,
         )
 
