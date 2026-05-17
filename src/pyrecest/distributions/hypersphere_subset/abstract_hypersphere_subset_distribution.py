@@ -10,27 +10,25 @@ from pyrecest.backend import (
     abs,
     all,
     arccos,
+    arctan2,
     array,
     atleast_2d,
     column_stack,
     cos,
-    cumprod,
     cumsum,
     empty,
-    flip,
     float64,
     full,
-    hstack,
     int32,
     int64,
     linalg,
     log,
-    ones,
     pi,
     sin,
     sort,
     sqrt,
     squeeze,
+    where,
     zeros,
 )
 from scipy.integrate import nquad, quad
@@ -40,6 +38,22 @@ from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribu
 
 
 class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
+    """
+    Base class for distributions on subsets of the unit hypersphere.
+
+    The internal ``mode="colatitude"`` hyperspherical convention is the one used
+    by ``gen_fun_hyperspherical_coords`` and by the integration boundaries:
+
+    * ``angles[..., 0]`` is the azimuth and ranges over ``[0, 2*pi)``.
+    * ``angles[..., 1:]`` are colatitudes and range over ``[0, pi]``.
+
+    Hence, for S2 with angles ``(azimuth, colatitude)``, the Cartesian point is
+    ``(sin(colatitude) * sin(azimuth),
+    sin(colatitude) * cos(azimuth), cos(colatitude))``. This is intentionally
+    the same ordering as the numerical integration code; it is not the
+    Wikipedia ordering where the azimuth is the last angle.
+    """
+
     @property
     def input_dim(self) -> int:
         return self.dim + 1
@@ -365,6 +379,13 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     def hypersph_to_cart(hypersph_coords, mode: str = "colatitude"):
+        """
+        Convert hyperspherical coordinates to Cartesian coordinates.
+
+        For ``mode="colatitude"``, PyRecEst uses the convention documented on
+        ``AbstractHypersphereSubsetDistribution``: the first angle is the
+        azimuth and all remaining angles are colatitudes.
+        """
         hypersph_coords = atleast_2d(hypersph_coords)
         if mode == "colatitude":
             cart_coords = (
@@ -389,9 +410,10 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     def cart_to_hypersph(cart_coords, mode: str = "colatitude"):
+        """Inverse of ``hypersph_to_cart`` for the selected convention."""
         cart_coords = atleast_2d(cart_coords)
         if mode == "colatitude":
-            cart_coords = (
+            hypersph_coords = (
                 AbstractHypersphereSubsetDistribution._cart_to_hypersph_colatitude(
                     cart_coords
                 )
@@ -405,59 +427,68 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             theta, phi = AbstractSphereSubsetDistribution.cart_to_sph(
                 cart_coords[:, 0], cart_coords[:, 1], cart_coords[:, 2], mode=mode
             )
-            cart_coords = column_stack((theta, phi))
+            hypersph_coords = column_stack((theta, phi))
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
 
-        return cart_coords.squeeze()
+        return hypersph_coords.squeeze()
 
     @staticmethod
     def _cart_to_hypersph_colatitude(coords):
         """
-        Convert multiple sets of Cartesian coordinates to hyperspherical coordinates.
+        Convert Cartesian coordinates to PyRecEst hyperspherical coordinates.
+
+        This is the inverse of ``_hypersph_to_cart_colatitude``. The first angle
+        is the azimuth in the first two Cartesian components, measured as
+        ``atan2(x0, x1)`` to match the forward map ``x0 = sin(azimuth) * ...``
+        and ``x1 = cos(azimuth) * ...``. Remaining angles are colatitudes.
         """
+        dim = coords.shape[1] - 1
+        angles = empty((coords.shape[0], dim))
 
-        divisors = linalg.norm(coords, axis=-1, keepdims=True)
-        divisors = flip(sqrt(cumsum(flip(coords, axis=-1) ** 2, axis=-1)), axis=-1)
-        divisors = divisors + (divisors == 0)
+        angles[:, 0] = arctan2(coords[:, 0], coords[:, 1])
+        angles[:, 0] = where(angles[:, 0] < 0, angles[:, 0] + 2 * pi, angles[:, 0])
 
-        angles = arccos(coords[:, :-1] / divisors[:, :-1])
+        if dim > 1:
+            # For colatitude angle k, the corresponding Cartesian component is
+            # coords[:, k + 1], and its radius is the norm of components
+            # coords[:, : k + 2]. This is the reverse of the forward map below.
+            partial_norms = sqrt(cumsum(coords**2, axis=1))
+            divisors = partial_norms[:, 2:]
+            divisors = divisors + (divisors == 0)
+
+            cos_colatitudes = coords[:, 2:] / divisors
+            # Protect arccos against tiny floating point overshoots.
+            cos_colatitudes = where(cos_colatitudes > 1.0, 1.0, cos_colatitudes)
+            cos_colatitudes = where(cos_colatitudes < -1.0, -1.0, cos_colatitudes)
+            angles[:, 1:] = arccos(cos_colatitudes)
+
         return angles
 
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):
         """
-        Convert hyperspherical coordinates to Cartesian coordinates in n-dimensions. See
-        https://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates for the conventions used.
+        Convert PyRecEst hyperspherical coordinates to Cartesian coordinates.
 
         Parameters:
         - r (float): The radial distance.
-        - angles (float): The n-1 angles, where the last angle ranges from 0 to 2pi and others from 0 to pi.
+        - angles (float): The first angle is the azimuth in ``[0, 2*pi)`` and
+          the remaining angles are colatitudes in ``[0, pi]``.
 
         Returns:
         - tuple: Cartesian coordinates (x1, x2, ..., xn).
         """
-        # Assuming ang_mat is defined and r is defined
         ang_mat = column_stack(angles)
-        sin_mat = sin(ang_mat)
-        cos_mat = cos(ang_mat)
+        cart_coords = empty((ang_mat.shape[0], ang_mat.shape[1] + 1))
 
-        # Compute the cumulative product of sine values along the columns
-        cumprod_sin = cumprod(sin_mat, axis=1)
+        cart_coords[:, -1] = cos(ang_mat[:, -1])
+        sin_product = sin(ang_mat[:, -1])
+        for i in range(2, ang_mat.shape[1] + 1):
+            cart_coords[:, -i] = sin_product * cos(ang_mat[:, -i])
+            sin_product *= sin(ang_mat[:, -i])
+        cart_coords[:, 0] = sin_product
 
-        # To match the requirement of the original function, shift the cumprod array to the right
-        cumprod_sin_shifted = hstack(
-            [ones((cumprod_sin.shape[0], 1)), cumprod_sin[:, :-1]]
-        )
-
-        # Multiply each cumprod value with the corresponding cosine value
-        sin_cos_terms = r * cumprod_sin_shifted * cos_mat
-
-        # Now, append the terms with all sine values (the last column of cumprod_sin)
-        all_sine_term = r * cumprod_sin[:, -1].reshape(
-            -1, 1
-        )  # Reshape for column-wise appending
-        return hstack([sin_cos_terms, all_sine_term])
+        return r * cart_coords
 
     @staticmethod
     def compute_unit_hypersphere_surface(dim: Union[int, int32, int64]) -> float:
