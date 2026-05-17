@@ -63,6 +63,9 @@ jobs:
       - name: Build cp313 musllinux wheels
         if: steps.cache-wheels.outputs.cache-hit != 'true'
         uses: docker://python:3.13-alpine3.23
+        # Exported dev requirements include optional JAX/Numba/Torch stacks.
+        # They are not needed for MegaLinter import checks, and llvmlite
+        # currently fails to build on Alpine/Python 3.13.
         with:
           args: >-
             /bin/sh -lc "set -eux;
@@ -72,7 +75,7 @@ jobs:
             rm -rf alpine-wheels requirements-alpine.txt;
             mkdir -p alpine-wheels;
             poetry export --with dev --format requirements.txt --without-hashes --output requirements-alpine.txt;
-            sed -i '/^\(torch\|triton\|jax\|jaxlib\|nvidia.*\|intel-openmp\|cuda-bindings\|tbb\|mkl\|healpy\)\([<>=!~ ;].*\)\?$/d' requirements-alpine.txt;
+            sed -i '/^\(torch\|triton\|jax\|jaxlib\|llvmlite\|ml-dtypes\|numba\|opt-einsum\|nvidia.*\|intel-openmp\|cuda-bindings\|tbb\|mkl\|healpy\)\([<>=!~ ;].*\)\?$/d' requirements-alpine.txt;
             python -m pip wheel --no-deps -r requirements-alpine.txt -w alpine-wheels;
             rm -f requirements-alpine.txt"
 
