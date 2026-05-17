@@ -9,7 +9,22 @@ from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,
 )
 from pyrecest.filters.euclidean_particle_filter import EuclideanParticleFilter
-from pyrecest.models import LikelihoodMeasurementModel, SampleableTransitionModel
+from pyrecest.models import (
+    AdditiveNoiseTransitionModel,
+    LikelihoodMeasurementModel,
+    SampleableTransitionModel,
+)
+
+
+class RecordingNoise:
+    def __init__(self, samples):
+        self.samples = samples
+        self.calls = []
+
+    def sample(self, n):
+        start = sum(self.calls)
+        self.calls.append(n)
+        return self.samples[start : start + n]
 
 
 class ParticleFilterModelAdapterTest(unittest.TestCase):
@@ -61,6 +76,56 @@ class ParticleFilterModelAdapterTest(unittest.TestCase):
 
         npt.assert_allclose(model_filter.filter_state.d, direct_filter.filter_state.d)
         npt.assert_allclose(model_filter.filter_state.w, direct_filter.filter_state.w)
+
+    def test_predict_model_passes_particle_count_to_vectorized_additive_transition(self):
+        model_filter = copy.deepcopy(self.filter)
+        noise_samples = array(
+            [
+                [10.0, 0.0],
+                [20.0, 0.0],
+                [30.0, 0.0],
+                [40.0, 0.0],
+            ]
+        )
+        noise = RecordingNoise(noise_samples)
+
+        model_filter.predict_model(
+            AdditiveNoiseTransitionModel(
+                lambda particles: particles,
+                noise_distribution=noise,
+                vectorized=True,
+            )
+        )
+
+        npt.assert_allclose(
+            model_filter.filter_state.d, self.particle_locations + noise_samples
+        )
+        self.assertEqual(noise.calls, [4])
+
+    def test_predict_model_honors_additive_transition_vectorized_flag(self):
+        model_filter = copy.deepcopy(self.filter)
+        noise_samples = array(
+            [
+                [10.0, 0.0],
+                [20.0, 0.0],
+                [30.0, 0.0],
+                [40.0, 0.0],
+            ]
+        )
+        noise = RecordingNoise(noise_samples)
+
+        model_filter.predict_model(
+            AdditiveNoiseTransitionModel(
+                lambda particle: particle,
+                noise_distribution=noise,
+                vectorized=False,
+            )
+        )
+
+        npt.assert_allclose(
+            model_filter.filter_state.d, self.particle_locations + noise_samples
+        )
+        self.assertEqual(noise.calls, [1, 1, 1, 1])
 
     def test_update_model_with_likelihood_measurement_model(self):
         measurement = array([2.0])
