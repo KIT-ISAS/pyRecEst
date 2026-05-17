@@ -21,6 +21,16 @@ from .abstract_filter import AbstractFilter
 from .manifold_mixins import CircularFilterMixin
 
 
+def _measurement_vector(value):
+    """Convert a scalar or vector-valued measurement to a flat 1-D array."""
+    return atleast_1d(array(value, dtype=float)).flatten()
+
+
+def _wrap_periodic_measurement_to_reference(value, reference):
+    """Put periodic measurement components on the branch nearest reference."""
+    return reference + mod(value - reference + pi, 2.0 * pi) - pi
+
+
 def _make_ukf(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     fx, hx, dim_z, x0, P0, Q, R, alpha=1e-3, beta=2.0, kappa=0.0
 ):
@@ -226,18 +236,22 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             "jax",
         ), "Not supported on this backend"
 
-        z = atleast_1d(array(z, dtype=float))
-        dim_z = len(z.flatten())
+        z = _measurement_vector(z)
+        dim_z = len(z)
 
         mu0 = float(self._filter_state.mu[0])
         C0 = float(self._filter_state.C[0, 0])
-        pi_val = float(pi)
 
         if measurement_periodic:
-            for i in range(dim_z):
-                z_i = float(z[i])
-                if abs(mu0 - z_i) > pi_val:
-                    z[i] = z_i + 2.0 * pi_val * float(sign(mu0 - z_i))
+            z_reference = _measurement_vector(f(mu0))
+            if len(z_reference) != dim_z:
+                raise ValueError(
+                    "measurement dimension mismatch: z has dimension "
+                    f"{dim_z}, but f(mu) returns dimension {len(z_reference)}"
+                )
+            z = _wrap_periodic_measurement_to_reference(z, z_reference)
+        else:
+            z_reference = None
 
         if dim_z == 1:
             R_mat = array([[float(gauss_meas.C.flatten()[0])]])
@@ -248,7 +262,15 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             return x
 
         def hx(x):
-            return atleast_1d(array([f(x.flatten()[0])], dtype=float))
+            hx_val = _measurement_vector(f(x.flatten()[0]))
+            if len(hx_val) != dim_z:
+                raise ValueError(
+                    "measurement function must return vectors with consistent "
+                    f"dimension; got {len(hx_val)} and expected {dim_z}"
+                )
+            if measurement_periodic:
+                hx_val = _wrap_periodic_measurement_to_reference(hx_val, z_reference)
+            return hx_val
 
         ukf = _make_ukf(
             fx,
