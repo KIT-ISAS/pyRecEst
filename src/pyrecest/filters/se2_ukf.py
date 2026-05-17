@@ -1,6 +1,12 @@
 """
 SE(2) Unscented Kalman Filter using dual-quaternion state representation.
 
+Conventions:
+    ``_dual_quaternion_multiply(a, b)`` denotes the ordered SE(2)
+    composition ``a [⊕] b``.  Prediction uses right-multiplicative process
+    increments, i.e. ``x_{t+1} = x_t [⊕] v``.  The identity measurement model
+    uses the matching right-perturbation convention ``z = x [⊕] v``.
+
 Reference:
     A Stochastic Filter for Planar Rigid-Body Motions,
     Igor Gilitschenski, Gerhard Kurz, and Uwe D. Hanebeck,
@@ -28,7 +34,7 @@ from .manifold_mixins import SE2FilterMixin
 
 
 def _dual_quaternion_multiply(dq1, dq2):
-    """Multiply two SE(2) dual quaternions.
+    """Multiply two SE(2) dual quaternions in ordered composition order.
 
     Each dual quaternion is represented as a length-4 array
     ``[q1, q2, d1, d2]`` where ``[q1, q2]`` is the unit-norm
@@ -42,7 +48,8 @@ def _dual_quaternion_multiply(dq1, dq2):
                  [-d1,  d2, q1, -q2],
                  [-d2, -d1, q2,  q1]]
 
-    and ``dq_product = M(dq1) @ M(dq2)``.
+    and ``dq_product = M(dq1) @ M(dq2)``.  In this module, that ordered
+    product is denoted ``dq1 [⊕] dq2``.
 
     Parameters
     ----------
@@ -52,7 +59,7 @@ def _dual_quaternion_multiply(dq1, dq2):
     Returns
     -------
     array, shape (4,)
-        Product dual quaternion.
+        Ordered product ``dq1 [⊕] dq2``.
     """
     a, b, c, d = dq1[0], dq1[1], dq1[2], dq1[3]
     e, f, g, h = dq2[0], dq2[1], dq2[2], dq2[3]
@@ -73,6 +80,11 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
     over the 4-D dual-quaternion embedding of SE(2).  The first two
     entries of the mean encode the rotation (and must satisfy
     ``||mu[0:2]|| == 1``); the last two entries encode the translation.
+
+    Ordered composition follows :func:`_dual_quaternion_multiply`: ``a [⊕] b``
+    means the module-level product ``_dual_quaternion_multiply(a, b)``.
+    Prediction therefore composes state samples with process increments as
+    ``x_t [⊕] v``.
 
     Reference:
         A Stochastic Filter for Planar Rigid-Body Motions,
@@ -124,21 +136,21 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
     # ------------------------------------------------------------------
 
     def predict_identity(self, gauss_sys: GaussianDistribution):
-        """Predict with a left-multiplicative noise model on SE(2).
+        """Predict with a right-multiplicative increment model on SE(2).
 
         The motion model is::
 
-            x_{t+1} = v [⊕] x_t
+            x_{t+1} = x_t [⊕] v
 
-        where ``v`` is the system noise.  The mean of ``gauss_sys``
-        encodes the (dual-quaternion) noise mean; the noise is assumed
-        zero-mean in the manifold sense.
+        where ``v`` is the process increment/noise.  The mean of ``gauss_sys``
+        encodes the deterministic dual-quaternion increment; its covariance
+        encodes uncertainty around that increment.
 
         Parameters
         ----------
         gauss_sys : GaussianDistribution
-            System noise distribution.  Must have a 4-D mean (first two
-            entries normalised) and a 4×4 covariance.
+            System noise/increment distribution.  Must have a 4-D mean (first
+            two entries normalised) and a 4×4 covariance.
         """
         # pylint: disable=too-many-locals
         assert isinstance(gauss_sys, GaussianDistribution)
@@ -183,7 +195,7 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
             [noise_samples[0:2, :] / norms[None, :], noise_samples[2:, :]], axis=0
         )
 
-        # --- Predicted samples: all 81 = 9×9 combinations ---
+        # --- Predicted samples: all 81 = 9×9 state [⊕] noise combinations ---
         pred_cols = []
         for i in range(9):
             for j in range(9):
@@ -216,7 +228,9 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
 
             z = x [⊕] v
 
-        where ``v`` is the measurement noise.
+        where ``v`` is the measurement noise, interpreted as a right-hand
+        perturbation under the same ordered composition convention used for
+        prediction.
 
         Parameters
         ----------
@@ -278,7 +292,7 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
         # Build the full normalised noise vectors (4-D each column).
         norm_noise = vstack([noise_rot / norms_n[None, :], aug_samples[6:8, :]])  # 4×17
 
-        # --- Apply measurement function: z_i = state_i ⊕ noise_i ---
+        # --- Apply measurement function: z_i = state_i [⊕] noise_i ---
         meas_cols = []
         for i in range(17):
             meas_cols.append(
