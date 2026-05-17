@@ -1,7 +1,7 @@
 import warnings
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, pi
+from pyrecest.backend import array, mod, pi
 from pyrecest.distributions import VonMisesDistribution
 
 from .abstract_filter import AbstractFilter
@@ -49,7 +49,9 @@ class VonMisesFilter(AbstractFilter, CircularFilterMixin):
         vmMeas (VMDistribution) : distribution of additive noise
         z : measurement in [0, 2pi)
         """
+        z = array(z)
         assert z.shape in ((), (1,)), "z must be a scalar"
+        z = z[0] if z.shape == (1,) else z
         if vmMeas.mu != 0.0:
             warning_message = (
                 "The measurement noise is not centered at 0.0. "
