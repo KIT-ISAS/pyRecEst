@@ -5,8 +5,11 @@ import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, linalg, ones, sqrt
-from pyrecest.distributions import VonMisesFisherDistribution
+from pyrecest.backend import allclose, array, linalg, ones, pi, sqrt
+from pyrecest.distributions import (
+    CustomHypersphericalDistribution,
+    VonMisesFisherDistribution,
+)
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,
 )
@@ -207,6 +210,26 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         mu2 = array([1.0, 2.0, 3.0, 4.0])
         vmf2 = VonMisesFisherDistribution(mu2 / linalg.norm(mu2), array(2.1))
         self._test_hellinger_distance_helper(vmf1, vmf2, numerical_delta=1e-6)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        "Test not supported for this backend",
+    )
+    def test_hellinger_distance_numerical_returns_distance_not_squared(self):
+        """Check against a simple S2 density with known Hellinger distance."""
+        uniform = CustomHypersphericalDistribution(lambda xs: 1.0 / (4.0 * pi), 2)
+        tilted = CustomHypersphericalDistribution(
+            lambda xs: (1.0 + xs[..., 2]) / (4.0 * pi), 2
+        )
+
+        # Affinity for p=1/(4*pi), q=(1+z)/(4*pi) on S2:
+        # int sqrt(p*q) dS = 2*sqrt(2)/3.
+        expected = sqrt(1.0 - 2.0 * sqrt(2.0) / 3.0)
+
+        self.assertAlmostEqual(tilted.integrate(), 1.0, delta=1e-6)
+        self.assertAlmostEqual(
+            uniform.hellinger_distance_numerical(tilted), expected, delta=1e-6
+        )
 
     @parameterized.expand(
         [
