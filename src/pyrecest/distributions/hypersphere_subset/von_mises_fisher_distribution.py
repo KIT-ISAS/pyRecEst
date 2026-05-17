@@ -239,14 +239,14 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def set_mean(self, new_mean):
         """Replace the mean direction and return the distribution."""
         assert new_mean.shape == self.mu.shape
-        dist = self
+        dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mean)
         return dist
 
     def set_mode(self, new_mode):
         """Replace the modal direction and return the distribution."""
         assert new_mode.shape == self.mu.shape
-        dist = self
+        dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mode)
         return dist
 
