@@ -42,6 +42,22 @@ class TestVonMisesFilter(unittest.TestCase):
         )
         self.assertGreater(self.curr_filter.filter_state.kappa, 1.3)
 
+    def test_update_accepts_python_float_measurement(self):
+        meas_noise = VonMisesDistribution(0.0, 1.3)
+
+        self.curr_filter.filter_state = self.vm_prior
+        self.curr_filter.update_identity(meas_noise, 1.1)
+
+        self.assertIsInstance(self.curr_filter.filter_state, VonMisesDistribution)
+
+    def test_update_accepts_default_measurement(self):
+        meas_noise = VonMisesDistribution(0.0, 1.3)
+
+        self.curr_filter.filter_state = self.vm_prior
+        self.curr_filter.update_identity(meas_noise)
+
+        self.assertIsInstance(self.curr_filter.filter_state, VonMisesDistribution)
+
 
 if __name__ == "__main__":
     unittest.main()
