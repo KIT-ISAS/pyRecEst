@@ -29,7 +29,7 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
 
 
-def _ensure_odd_n(n: int | int32 | int64 | None) -> None:
+def _ensure_odd_n(n) -> None:
     if n is not None and int(n) % 2 == 0:
         raise ValueError(
             "CircularFourierDistribution requires an odd number of "
