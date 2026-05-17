@@ -20,6 +20,7 @@ from pyrecest.backend import (
 )
 from pyrecest.distributions import (
     AbstractHypersphereSubsetDistribution,
+    AbstractSphereSubsetDistribution,
     VonMisesFisherDistribution,
 )
 from scipy.integrate import nquad
@@ -29,79 +30,75 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
     @staticmethod
     def _hyperspherical_to_cartesian_2_sphere(angles):
         """
-        Converts hyperspherical angles to Cartesian coordinates for a 2-sphere (embedded in R^3).
+        Converts PyRecEst hyperspherical angles to Cartesian coordinates for S2.
         """
-        theta, phi = angles[:, 0], angles[:, 1]
+        azimuth, colatitude = angles[:, 0], angles[:, 1]
 
-        x = sin(theta) * sin(phi)
-        y = sin(theta) * cos(phi)
-        z = cos(theta)
+        x = sin(azimuth) * sin(colatitude)
+        y = cos(azimuth) * sin(colatitude)
+        z = cos(colatitude)
         return column_stack([x, y, z])
 
     @staticmethod
     def _hyperspherical_to_cartesian_3_sphere(angles):
         """
-        Converts hyperspherical angles to Cartesian coordinates for a 3-sphere (embedded in R^4).
+        Converts PyRecEst hyperspherical angles to Cartesian coordinates for S3.
         """
-        theta1, theta2, theta3 = angles[:, 0], angles[:, 1], angles[:, 2]
+        azimuth, theta, chi = angles[:, 0], angles[:, 1], angles[:, 2]
 
-        w = sin(theta1) * sin(theta2) * sin(theta3)
-        x = sin(theta1) * sin(theta2) * cos(theta3)
-        y = sin(theta1) * cos(theta2)
-        z = cos(theta1)
+        w = sin(azimuth) * sin(theta) * sin(chi)
+        x = cos(azimuth) * sin(theta) * sin(chi)
+        y = cos(theta) * sin(chi)
+        z = cos(chi)
         return column_stack([w, x, y, z])
 
     @staticmethod
     def _hyperspherical_to_cartesian_4_sphere(angles):
         """
-        Converts hyperspherical angles to Cartesian coordinates for a 4-sphere (embedded in R^5).
+        Converts PyRecEst hyperspherical angles to Cartesian coordinates for S4.
         """
-        theta1, theta2, theta3, theta4 = (
+        azimuth, theta1, theta2, theta3 = (
             angles[:, 0],
             angles[:, 1],
             angles[:, 2],
             angles[:, 3],
         )
 
-        v = sin(theta1) * sin(theta2) * sin(theta3) * sin(theta4)
-        w = sin(theta1) * sin(theta2) * sin(theta3) * cos(theta4)
-        x = sin(theta1) * sin(theta2) * cos(theta3)
-        y = sin(theta1) * cos(theta2)
-        z = cos(theta1)
+        v = sin(azimuth) * sin(theta1) * sin(theta2) * sin(theta3)
+        w = cos(azimuth) * sin(theta1) * sin(theta2) * sin(theta3)
+        x = cos(theta1) * sin(theta2) * sin(theta3)
+        y = cos(theta2) * sin(theta3)
+        z = cos(theta3)
         return column_stack([v, w, x, y, z])
 
     @staticmethod
     def hyperspherical_to_cartesian(r, *angles):
         """
-        Convert hyperspherical coordinates to Cartesian coordinates in n-dimensions.
+        Convert PyRecEst hyperspherical coordinates to Cartesian coordinates.
         """
-        sin_values = [sin(angle) for angle in angles]
-        cos_values = [cos(angle) for angle in angles]
-
-        coordinates = []
-        for i in range(len(angles)):
-            coord = r * prod(sin_values[:i]) * cos_values[i]
-            coordinates.append(coord)
-
-        last_coord = r * prod(sin_values)
-        coordinates.append(last_coord)
-
-        return tuple(coordinates)
+        cart_coords = [None] * (len(angles) + 1)
+        cart_coords[-1] = r * cos(angles[-1])
+        sin_product = r * sin(angles[-1])
+        for i in range(2, len(angles) + 1):
+            cart_coords[-i] = sin_product * cos(angles[-i])
+            sin_product *= sin(angles[-i])
+        cart_coords[0] = sin_product
+        return tuple(cart_coords)
 
     @staticmethod
-    def _hyperspherical_to_cartesian_s2(r, theta, phi):
-        z = r * sin(theta) * sin(phi)
-        y = r * sin(theta) * cos(phi)
-        x = r * cos(theta)
+    def _hyperspherical_to_cartesian_s2(r, azimuth, colatitude):
+        x = r * sin(azimuth) * sin(colatitude)
+        y = r * cos(azimuth) * sin(colatitude)
+        z = r * cos(colatitude)
         return x, y, z
 
     @staticmethod
-    def _hyperspherical_to_cartesian_s3(r, chi, theta, phi):
-        w = r * sin(chi) * sin(theta) * sin(phi)
-        z = r * sin(chi) * sin(theta) * cos(phi)
-        y = r * sin(chi) * cos(theta)
-        x = r * cos(chi)
-        return x, y, z, w
+    def _hyperspherical_to_cartesian_s3(r, azimuth, theta, chi):
+        x0 = r * sin(azimuth) * sin(theta) * sin(chi)
+        x1 = r * cos(azimuth) * sin(theta) * sin(chi)
+        x2 = r * cos(theta) * sin(chi)
+        x3 = r * cos(chi)
+        return x0, x1, x2, x3
 
     @staticmethod
     def _uniform_on_sn(*coordinates):
@@ -128,28 +125,28 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
 
     # Adjusted integrand function for spherical coordinates
     @staticmethod
-    def _integrand_s2(phi, theta):
+    def _integrand_s2(azimuth, colatitude):
         (
             x,
             y,
             z,
         ) = TestAbstractHypersphereSubsetDistribution._hyperspherical_to_cartesian_s2(
-            1, theta, phi
+            1, azimuth, colatitude
         )  # radius = 1 for the unit sphere
         return TestAbstractHypersphereSubsetDistribution._uniform_on_sn(x, y, z) * sin(
-            theta
+            colatitude
         )  # Jacobian factor for spherical coordinates
 
     # Adjusted integrand function for hyperspherical coordinates
     @staticmethod
-    def _integrand_s3(phi, theta, chi):
+    def _integrand_s3(azimuth, theta, chi):
         (
             x,
             y,
             z,
             w,
         ) = TestAbstractHypersphereSubsetDistribution._hyperspherical_to_cartesian_s3(
-            1, chi, theta, phi
+            1, azimuth, theta, chi
         )  # radius = 1 for the unit 3-sphere
         return (
             TestAbstractHypersphereSubsetDistribution._uniform_on_sn(x, y, z, w)
@@ -186,12 +183,91 @@ class TestAbstractHypersphereSubsetDistribution(unittest.TestCase):
         # Test for single elements
         for _ in range(10):
             size_samples = (n_samples, dimensions) if n_samples > 1 else dimensions
-            angles = 2.0 * pi * random.uniform(size=size_samples)
+            upper_bounds = array([2.0 * pi] + [pi] * (dimensions - 1))
+            angles = upper_bounds * random.uniform(size=size_samples)
             cartesian_specific = squeeze(column_stack(specific_function(1, *angles.T)))
             cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
                 angles, mode="colatitude"
             )
             npt.assert_allclose(cartesian_specific, cartesian_given, rtol=2e-7)
+
+    def test_hyperspherical_colatitude_known_points_s2(self):
+        """Document the PyRecEst S2 colatitude convention."""
+        angles = array(
+            [
+                [0.0, 0.0],
+                [0.0, pi / 2.0],
+                [pi / 2.0, pi / 2.0],
+                [pi, pi / 2.0],
+                [3.0 * pi / 2.0, pi / 2.0],
+            ]
+        )
+        expected_cartesian = array(
+            [
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, -1.0, 0.0],
+                [-1.0, 0.0, 0.0],
+            ]
+        )
+
+        cartesian_given = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+            angles, mode="colatitude"
+        )
+
+        npt.assert_allclose(cartesian_given, expected_cartesian, atol=1e-7)
+
+    @parameterized.expand([(1,), (2,), (3,), (4,)])
+    def test_hyperspherical_colatitude_forward_backward(self, dimensions):
+        """Check angles -> Cartesian -> angles -> Cartesian consistency."""
+        n_samples = 20
+        if dimensions == 1:
+            angles = 2.0 * pi * random.uniform(size=(n_samples, 1))
+        else:
+            azimuth = 2.0 * pi * random.uniform(size=(n_samples, 1))
+            colatitudes = 0.1 + (pi - 0.2) * random.uniform(
+                size=(n_samples, dimensions - 1)
+            )
+            angles = column_stack((azimuth, colatitudes))
+
+        cartesian = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+            angles, mode="colatitude"
+        )
+        angles_round_trip = AbstractHypersphereSubsetDistribution.cart_to_hypersph(
+            cartesian, mode="colatitude"
+        )
+        cartesian_round_trip = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
+            angles_round_trip, mode="colatitude"
+        )
+
+        npt.assert_allclose(cartesian_round_trip, cartesian, atol=1e-7)
+
+    def test_sphere_colatitude_matches_hyperspherical_convention(self):
+        azimuth = array([0.0, pi / 2.0])
+        colatitude = array([pi / 2.0, pi / 2.0])
+
+        x, y, z = AbstractSphereSubsetDistribution.sph_to_cart(
+            azimuth, colatitude, mode="colatitude"
+        )
+        cartesian = column_stack((x, y, z))
+
+        npt.assert_allclose(
+            cartesian,
+            array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]),
+            atol=1e-7,
+        )
+
+        azimuth_back, colatitude_back = AbstractSphereSubsetDistribution.cart_to_sph(
+            x, y, z, mode="colatitude"
+        )
+        x_back, y_back, z_back = AbstractSphereSubsetDistribution.sph_to_cart(
+            azimuth_back, colatitude_back, mode="colatitude"
+        )
+
+        npt.assert_allclose(
+            column_stack((x_back, y_back, z_back)), cartesian, atol=1e-7
+        )
 
     @parameterized.expand(
         [
