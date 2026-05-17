@@ -5,7 +5,7 @@ import pyrecest.backend
 from parameterized import parameterized
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, linalg, ones, pi, sqrt
+from pyrecest.backend import allclose, array, linalg, ones, pi, sqrt, to_numpy
 from pyrecest.distributions import (
     CustomHypersphericalDistribution,
     VonMisesFisherDistribution,
@@ -24,6 +24,18 @@ vectors_to_test_2d = array(
         -array([1.0, 1.0, 2.0]) / linalg.norm(array([1.0, 1.0, 2.0])),
     ]
 )
+
+
+def _as_float(value) -> float:
+    if isinstance(value, (bool, int, float)):
+        return float(value)
+    try:
+        value_np = to_numpy(value)
+    except AttributeError:
+        return float(value)
+    if hasattr(value_np, "item"):
+        return float(value_np.item())
+    return float(value_np)
 
 
 class TestVonMisesFisherDistribution(unittest.TestCase):
@@ -58,6 +70,52 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
         self.assertTrue(allclose(self.vmf.mu, self.mu))
         self.assertEqual(self.vmf.kappa, self.kappa)
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
+
+    def test_zero_kappa_is_uniform_density(self):
+        vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 0.0)
+        points = array(
+            [
+                [1.0, 0.0, 0.0],
+                [-1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+            ]
+        )
+
+        expected = 1.0 / (4.0 * pi)
+        npt.assert_allclose(to_numpy(vmf.pdf(points)), to_numpy(expected * ones(3)))
+        self.assertAlmostEqual(
+            _as_float(VonMisesFisherDistribution.a_d(3, 0.0)), 0.0, places=12
+        )
+        self.assertAlmostEqual(_as_float(linalg.norm(vmf.mean_resultant_vector())), 0.0)
+
+    def test_from_zero_mean_resultant_vector_returns_uniform(self):
+        vmf = VonMisesFisherDistribution.from_mean_resultant_vector(
+            array([0.0, 0.0, 0.0])
+        )
+
+        self.assertAlmostEqual(_as_float(vmf.kappa), 0.0, places=12)
+        self.assertAlmostEqual(
+            _as_float(vmf.pdf(array([0.0, 0.0, 1.0]))), 1.0 / (4.0 * pi)
+        )
+
+    def test_opposite_equal_vmf_product_is_uniform(self):
+        mu = array([1.0, 0.0, 0.0])
+        lhs = VonMisesFisherDistribution(mu, 7.0)
+        rhs = VonMisesFisherDistribution(-mu, 7.0)
+
+        product = lhs.multiply(rhs)
+
+        self.assertAlmostEqual(_as_float(product.kappa), 0.0, places=12)
+        self.assertAlmostEqual(
+            _as_float(product.pdf(array([0.0, 1.0, 0.0]))),
+            1.0 / (4.0 * pi),
+            places=12,
+        )
+        self.assertAlmostEqual(
+            _as_float(product.pdf(array([0.0, 0.0, 1.0]))),
+            1.0 / (4.0 * pi),
+            places=12,
+        )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
