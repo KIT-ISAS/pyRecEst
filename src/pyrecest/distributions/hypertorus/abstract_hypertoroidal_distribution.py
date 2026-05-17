@@ -134,11 +134,16 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
         return alpha + 1j * beta
 
+    @staticmethod
+    def _entropy_integrand_from_pdf_value(pdf_val):
+        """Compute p * log(p), using the convention 0 * log(0) = 0."""
+        return pdf_val * log(pdf_val + (pdf_val == 0))
+
     def entropy_numerical(self):
         def entropy_fun(*args):
             x = array(args)
             pdf_val = self.pdf(x)
-            return pdf_val * log(pdf_val)
+            return self._entropy_integrand_from_pdf_value(pdf_val)
 
         return -self.integrate_fun_over_domain(entropy_fun, self.dim)
 
