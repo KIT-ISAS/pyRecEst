@@ -120,15 +120,31 @@ def choice(a, n, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def _multivariate_normal(state, size, *args, **kwargs):
+def _shape_from_size(size):
+    """Convert a NumPy-style ``size`` argument to JAX's ``shape`` argument."""
+    if size is None:
+        return None
+    if hasattr(size, "__iter__"):
+        return tuple(int(dim) for dim in size)
+    return (int(size),)
+
+
+def _multivariate_normal(state, mean, cov, size=None, *args, **kwargs):
     state, key = jax.random.split(state)
-    return state, jax.random.multivariate_normal(key, shape=size, *args, **kwargs)
+    if "shape" in kwargs:
+        if size is not None:
+            raise TypeError("Specify only one of 'size' or 'shape'.")
+        size = kwargs.pop("shape")
+    shape = _shape_from_size(size)
+    return state, jax.random.multivariate_normal(
+        key, mean=mean, cov=cov, shape=shape, *args, **kwargs
+    )
 
 
-def multivariate_normal(size, *args, **kwargs):
-    size = size if hasattr(size, "__iter__") else (size,)
+def multivariate_normal(mean, cov, size=None, *args, **kwargs):
+    """Draw samples with NumPy-compatible ``multivariate_normal`` arguments."""
     state, has_state, kwargs = _get_state(**kwargs)
-    state, res = _multivariate_normal(state, size, *args, **kwargs)
+    state, res = _multivariate_normal(state, mean, cov, size, *args, **kwargs)
     return set_state_return(has_state, state, res)
 
 
