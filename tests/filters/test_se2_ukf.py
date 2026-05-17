@@ -23,6 +23,11 @@ def _make_noise(scale=0.01):
     return GaussianDistribution(mu, C)
 
 
+def _normalize_dq_mean(mean):
+    """Normalize the rotation part of a 4-D dual-quaternion mean."""
+    return concatenate([mean[0:2] / linalg.norm(mean[0:2]), mean[2:]])
+
+
 class TestDualQuaternionMultiply(unittest.TestCase):
     def test_identity_left(self):
         """Multiplying by the identity from the left leaves dq unchanged."""
@@ -122,13 +127,38 @@ class TestSE2UKF(unittest.TestCase):
 
         self.filter.predict_identity(motion)
 
-        expected = _dual_quaternion_multiply(
-            array([1.0, 0.0, 0.0, 0.0]),
-            motion_mu,
+        expected = _normalize_dq_mean(
+            _dual_quaternion_multiply(
+                array([1.0, 0.0, 0.0, 0.0]),
+                motion_mu,
+            )
         )
-        expected = concatenate(
-            [expected[0:2] / linalg.norm(expected[0:2]), expected[2:]]
+        npt.assert_allclose(self.filter.filter_state.mu, expected, atol=1e-6)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
+    def test_predict_identity_uses_state_then_increment_order(self):
+        """Prediction uses the documented right-increment order x [⊕] v."""
+        state_theta = pi / 4.0
+        increment_theta = pi / 6.0
+        state_mu = array(
+            [cos(state_theta / 2.0), sin(state_theta / 2.0), 0.4, -0.2]
         )
+        increment_mu = array(
+            [cos(increment_theta / 2.0), sin(increment_theta / 2.0), 0.1, 0.3]
+        )
+        self.filter.filter_state = GaussianDistribution(state_mu, eye(4) * 1e-12)
+        increment = GaussianDistribution(increment_mu, eye(4) * 1e-12)
+
+        self.filter.predict_identity(increment)
+
+        expected = _normalize_dq_mean(_dual_quaternion_multiply(state_mu, increment_mu))
+        reverse_order = _normalize_dq_mean(
+            _dual_quaternion_multiply(increment_mu, state_mu)
+        )
+        self.assertGreater(float(linalg.norm(expected - reverse_order)), 1e-3)
         npt.assert_allclose(self.filter.filter_state.mu, expected, atol=1e-6)
 
     @unittest.skipIf(
