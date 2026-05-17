@@ -183,6 +183,22 @@ class WrappedNormalDistribution(
         wn = vm.to_wn()
         return wn
 
+    def convolve(
+        self, other: "WrappedNormalDistribution"
+    ) -> "WrappedNormalDistribution":
+        """Convolve two 1-D wrapped normal distributions.
+
+        The circular specialization exposes ``sigma`` in its constructor, while the
+        hypertoroidal base class stores the covariance ``C``. Therefore, the
+        covariance sum has to be converted back to a standard deviation before
+        constructing the result.
+        """
+        if not isinstance(other, WrappedNormalDistribution):
+            raise TypeError("other must be a WrappedNormalDistribution")
+        return WrappedNormalDistribution(
+            mod(self.mu + other.mu, 2.0 * pi), sqrt(self.C + other.C)
+        )
+
     def sample(self, n: Union[int, int32, int64]):
         return mod(self.mu + self.sigma * random.normal(size=(n,)), 2.0 * pi)
 
