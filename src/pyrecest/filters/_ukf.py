@@ -47,8 +47,10 @@ class UnscentedKalmanFilter:
     Parameters
     ----------
     model:
-        A :class:`_UKFModel` namedtuple carrying ``dim_x``, ``dim_z``,
-        ``dt``, ``hx``, ``fx``, and ``points``.
+        A :class:`_UKFModel` namedtuple carrying ``dim_x``, optional ``dim_z``,
+        ``dt``, ``hx``, ``fx``, and ``points``. If ``dim_z`` is ``None``, the
+        measurement dimension is inferred from the measurement function at
+        update time.
     """
 
     def __init__(self, model: _UKFModel):
@@ -57,7 +59,7 @@ class UnscentedKalmanFilter:
         self.x = zeros(model.dim_x)
         self.P = eye(model.dim_x)
         self.Q = eye(model.dim_x)
-        self.R = eye(model.dim_z)
+        self.R = None if model.dim_z is None else eye(model.dim_z)
         self._sigmas_f = None  # populated by predict(), cleared after update()
 
     # ------------------------------------------------------------------
@@ -164,15 +166,21 @@ class UnscentedKalmanFilter:
                 f"but hx returns dimension {dim_z}"
             )
 
-        if R is None:
-            R = self.R if self.R.shape == (dim_z, dim_z) else eye(dim_z)
-        R = asarray(R, dtype=float64)
+        using_default_R = R is None
+        if using_default_R:
+            R = eye(dim_z) if self.R is None else asarray(self.R, dtype=float64)
+        else:
+            R = asarray(R, dtype=float64)
         if len(R.shape) == 0 or (len(R.shape) == 1 and R.shape[0] == 1 and dim_z == 1):
             R = reshape(R, (1, 1))
         if R.shape != (dim_z, dim_z):
+            source = (
+                "default measurement noise covariance self.R"
+                if using_default_R
+                else "measurement noise covariance R"
+            )
             raise ValueError(
-                f"measurement noise covariance R has shape {R.shape}, "
-                f"expected {(dim_z, dim_z)}"
+                f"{source} has shape {R.shape}, expected {(dim_z, dim_z)}"
             )
 
         z_pred = einsum("i,ij->j", Wm, sigmas_h)
