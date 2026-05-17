@@ -53,6 +53,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         skipping: Union[int, int32, int64] = 5,
         proposal: Callable | None = None,
         start_point=None,
+        proposal_log_pdf: Callable | None = None,
     ):
         # jscpd:ignore-end
         if proposal is None:
@@ -90,7 +91,12 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             start_point = HyperhemisphericalUniformDistribution(self.dim).sample(1)
 
         return super().sample_metropolis_hastings(
-            n, burn_in, skipping, proposal=proposal, start_point=start_point
+            n,
+            burn_in,
+            skipping,
+            proposal=proposal,
+            start_point=start_point,
+            proposal_log_pdf=proposal_log_pdf,
         )
 
     def mean_direction_numerical(self, integration_boundaries=None):
