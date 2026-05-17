@@ -65,6 +65,15 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             err_msg="ln_pdf does not return correct log probabilities.",
         )
 
+    def test_ln_pdf_single_point_matches_pdf(self):
+        """Single-point ln_pdf should be scalar-like and match log(pdf)."""
+        random.seed(1)
+        for dim in range(2, 5):
+            hud = HypersphericalUniformDistribution(dim)
+            x = random.uniform(size=(dim + 1,))
+            x = x / linalg.norm(x)
+            npt.assert_allclose(hud.ln_pdf(x), log(hud.pdf(x)), atol=1e-12)
+
 
 if __name__ == "__main__":
     unittest.main()
