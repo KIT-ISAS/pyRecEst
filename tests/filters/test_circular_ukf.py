@@ -118,6 +118,33 @@ class CircularUKFTest(unittest.TestCase):
         self.assertLess(float(g10.mu[0]), 2.0 * pi)
         self.assertGreater(float(g7.C[0, 0]), float(g10.C[0, 0]))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_nonlinear_periodic_measurement_uses_predicted_branch(self):
+        prior = GaussianDistribution(array([0.1]), array([[0.7]]))
+        meas_noise = GaussianDistribution(array([0.0]), array([[0.7]]))
+        self.filter.filter_state = prior
+
+        def shifted_periodic_measurement(x):
+            return (x + 4.0) % (2.0 * float(pi))
+
+        z = array([shifted_periodic_measurement(float(prior.mu[0]))])
+        self.filter.update_nonlinear(
+            shifted_periodic_measurement,
+            meas_noise,
+            z,
+            measurement_periodic=True,
+        )
+        posterior = self.filter.filter_state
+        diff = (
+            (float(posterior.mu[0] - prior.mu[0]) + float(pi))
+            % (2.0 * float(pi))
+            - float(pi)
+        )
+        self.assertAlmostEqual(diff, 0.0, places=8)
+
     def test_get_point_estimate(self):
         self.filter.filter_state = self.g
         estimate = self.filter.get_point_estimate()
