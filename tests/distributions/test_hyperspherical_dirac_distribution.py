@@ -7,8 +7,9 @@ import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, linalg, mod, ones, pi, random, sqrt, sum
+from pyrecest.backend import allclose, arctan2, array, linalg, mod, ones, pi, random, sqrt, sum
 from pyrecest.distributions import VonMisesFisherDistribution
+from pyrecest.distributions.circle.circular_dirac_distribution import CircularDiracDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,
 )
@@ -99,6 +100,28 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         v = array([1.0, 0.0, 0.0])
         dot = float(axis @ v)
         assert abs(dot) > 1.0 - 1e-6
+
+    def test_to_circular_dirac_distribution_uses_rowwise_s1_samples(self):
+        d = array(
+            [
+                [1.0, 0.0],
+                [0.0, 1.0],
+                [-1.0, 0.0],
+                [0.0, -1.0],
+            ]
+        )
+        w = array([0.1, 0.2, 0.3, 0.4])
+        dist = HypersphericalDiracDistribution(d, w)
+
+        circular = dist.to_circular_dirac_distribution()
+
+        self.assertIsInstance(circular, CircularDiracDistribution)
+        npt.assert_allclose(circular.d, mod(arctan2(d[:, 1], d[:, 0]), 2 * pi))
+        npt.assert_allclose(circular.w, w)
+
+    def test_to_circular_dirac_distribution_rejects_s2_samples(self):
+        with self.assertRaises(ValueError):
+            self.hdd.to_circular_dirac_distribution()
 
 
 if __name__ == "__main__":
