@@ -11,6 +11,12 @@ from pyrecest.distributions import GaussianDistribution
 from pyrecest.filters.circular_ukf import CircularUKF
 
 
+def _circular_difference(value, reference):
+    return (float(value) - float(reference) + float(pi)) % (
+        2.0 * float(pi)
+    ) - float(pi)
+
+
 class CircularUKFTest(unittest.TestCase):
     def setUp(self):
         self.filter = CircularUKF()
@@ -47,16 +53,37 @@ class CircularUKFTest(unittest.TestCase):
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
+    def test_predict_nonlinear_wraps_sigma_points_before_model(self):
+        prior = GaussianDistribution(array([1e-4]), array([[1.0]]))
+        sys_noise = GaussianDistribution(array([0.0]), array([[1e-12]]))
+        self.filter.filter_state = prior
+        seen_angles = []
+
+        def identity(angle):
+            seen_angles.append(float(angle))
+            self.assertGreaterEqual(float(angle), 0.0)
+            self.assertLess(float(angle), 2.0 * float(pi))
+            return angle
+
+        self.filter.predict_nonlinear(identity, sys_noise)
+        posterior = self.filter.filter_state
+        self.assertTrue(any(angle > 2.0 * float(pi) - 1e-2 for angle in seen_angles))
+        self.assertAlmostEqual(
+            _circular_difference(posterior.mu[0], prior.mu[0]), 0.0, places=8
+        )
+        npt.assert_allclose(posterior.C, prior.C + sys_noise.C, rtol=1e-9, atol=1e-9)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_predict_nonlinear_true_nonlinear(self):
-        g4 = GaussianDistribution(array([0.0]), array([[0.7]]))
+        g4 = GaussianDistribution(array([1.0]), array([[0.7]]))
         self.filter.filter_state = g4
         self.filter.predict_nonlinear(lambda x: x**3, g4)
         g_nonlin = self.filter.filter_state
-        # 0.0 and 2*pi are the same angle; compare via circular distance
-        mu_diff = (float(g_nonlin.mu[0]) - float(g4.mu[0])) % (2.0 * float(pi))
-        if mu_diff > float(pi):
-            mu_diff -= 2.0 * float(pi)
-        self.assertAlmostEqual(mu_diff, 0.0, places=10)
+        self.assertGreaterEqual(float(g_nonlin.mu[0]), 0.0)
+        self.assertLess(float(g_nonlin.mu[0]), 2.0 * float(pi))
         self.assertGreater(float(g_nonlin.C[0, 0]), float(g4.C[0, 0]))
 
     def test_update_identity(self):
@@ -94,14 +121,40 @@ class CircularUKFTest(unittest.TestCase):
         reason="Not supported on this backend",
     )
     def test_update_nonlinear_identity_function(self):
-        g7 = GaussianDistribution(array([0.0]), array([[0.7]]))
+        g7 = GaussianDistribution(array([1.0]), array([[0.7]]))
         self.filter.filter_state = g7
-        z = array([0.4])
+        z = array([1.4])
         self.filter.update_nonlinear(lambda x: x, g7, z)
         g8 = self.filter.filter_state
         self.assertGreater(float(g8.mu[0]), float(g7.mu[0]))
         self.assertLess(float(g8.mu[0]), float(z[0]))
         self.assertGreater(float(g7.C[0, 0]), float(g8.C[0, 0]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_nonlinear_wraps_sigma_points_before_measurement(self):
+        prior = GaussianDistribution(array([1e-4]), array([[1.0]]))
+        meas_noise = GaussianDistribution(array([0.0]), array([[1.0]]))
+        self.filter.filter_state = prior
+        seen_angles = []
+
+        def identity(angle):
+            seen_angles.append(float(angle))
+            self.assertGreaterEqual(float(angle), 0.0)
+            self.assertLess(float(angle), 2.0 * float(pi))
+            return angle
+
+        self.filter.update_nonlinear(
+            identity, meas_noise, prior.mu, measurement_periodic=True
+        )
+        posterior = self.filter.filter_state
+        self.assertTrue(any(angle > 2.0 * float(pi) - 1e-2 for angle in seen_angles))
+        self.assertAlmostEqual(
+            _circular_difference(posterior.mu[0], prior.mu[0]), 0.0, places=8
+        )
+        npt.assert_allclose(posterior.C, prior.C / 2.0, rtol=1e-9, atol=1e-9)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
