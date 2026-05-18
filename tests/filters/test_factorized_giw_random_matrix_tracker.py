@@ -46,17 +46,26 @@ class TestFactorizedGIWRandomMatrixTracker(unittest.TestCase):
         innovation = y_mean.flatten() - predicted_measurement
 
         Y = prior_extent + meas_noise
-        S = measurement_matrix @ tracker.covariance @ measurement_matrix.T + Y / measurements.shape[1]
+        S = (
+            measurement_matrix @ tracker.covariance @ measurement_matrix.T
+            + Y / measurements.shape[1]
+        )
         gain = tracker.covariance @ linalg.solve(S, measurement_matrix).T
         expected_state = tracker.kinematic_state + gain @ innovation
         expected_covariance = tracker.covariance - gain @ S @ gain.T
 
         extent_sqrt = linalg.cholesky(prior_extent)
-        innovation_sqrt = extent_sqrt @ linalg.solve(linalg.cholesky(S), innovation.reshape(-1, 1))
+        innovation_sqrt = extent_sqrt @ linalg.solve(
+            linalg.cholesky(S), innovation.reshape(-1, 1)
+        )
         expected_innovation_extent = innovation_sqrt @ innovation_sqrt.T
         extent_meas_sqrt = linalg.solve(linalg.cholesky(Y).T, extent_sqrt.T).T
-        expected_scatter_extent = extent_meas_sqrt @ measurement_scatter @ extent_meas_sqrt.T
-        expected_scale = prior_scale + expected_innovation_extent + expected_scatter_extent
+        expected_scatter_extent = (
+            extent_meas_sqrt @ measurement_scatter @ extent_meas_sqrt.T
+        )
+        expected_scale = (
+            prior_scale + expected_innovation_extent + expected_scatter_extent
+        )
 
         tracker.update(measurements, measurement_matrix, meas_noise)
 
@@ -82,13 +91,23 @@ class TestFactorizedGIWRandomMatrixTracker(unittest.TestCase):
         tracker.predict(2.0, process_noise, system_matrix=system_matrix)
 
         extent_dimension = 2.0
-        expected_dof = extent_dimension + 1.0 + (prior_dof - extent_dimension - 1.0) / (1.0 + (prior_dof - 2.0 * extent_dimension - 2.0) / transition_dof)
-        expected_scale_factor = 1.0 / (1.0 + (prior_dof - extent_dimension - 1.0) / (transition_dof - extent_dimension - 1.0))
+        expected_dof = (
+            extent_dimension
+            + 1.0
+            + (prior_dof - extent_dimension - 1.0)
+            / (1.0 + (prior_dof - 2.0 * extent_dimension - 2.0) / transition_dof)
+        )
+        expected_scale_factor = 1.0 / (
+            1.0
+            + (prior_dof - extent_dimension - 1.0)
+            / (transition_dof - extent_dimension - 1.0)
+        )
 
         npt.assert_allclose(tracker.kinematic_state, array([2.0, 0.5]))
         npt.assert_allclose(
             tracker.covariance,
-            system_matrix @ array([[0.6, 0.1], [0.1, 0.4]]) @ system_matrix.T + process_noise,
+            system_matrix @ array([[0.6, 0.1], [0.1, 0.4]]) @ system_matrix.T
+            + process_noise,
         )
         npt.assert_allclose(tracker.extent_dof, expected_dof)
         npt.assert_allclose(tracker.extent_scale, expected_scale_factor * prior_scale)

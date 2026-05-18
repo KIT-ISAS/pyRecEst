@@ -43,9 +43,7 @@ class TestVonMisesDistribution(unittest.TestCase):
 
     def test_from_moment_recovers_parameters(self):
         dist = VonMisesDistribution(1.3, 4.0)
-        reconstructed = VonMisesDistribution.from_moment(
-            dist.trigonometric_moment(1)
-        )
+        reconstructed = VonMisesDistribution.from_moment(dist.trigonometric_moment(1))
 
         self.assertAlmostEqual(float(reconstructed.mu), float(dist.mu))
         self.assertAlmostEqual(float(reconstructed.kappa), float(dist.kappa))

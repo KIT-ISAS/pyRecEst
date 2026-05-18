@@ -68,7 +68,11 @@ class AbstractSmoother(ABC):
                     )
                 scalar_matrix = asarray([[values_arr]])
                 return [copy(scalar_matrix) for _ in range(length)]
-            if ndim(values_arr) == 1 and matrix_dim == 1 and values_arr.shape[0] == length:
+            if (
+                ndim(values_arr) == 1
+                and matrix_dim == 1
+                and values_arr.shape[0] == length
+            ):
                 return [asarray([[values_arr[idx]]]) for idx in range(length)]
             if ndim(values_arr) == 2:
                 return [copy(values_arr) for _ in range(length)]
