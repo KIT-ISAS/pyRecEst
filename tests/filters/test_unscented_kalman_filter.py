@@ -74,7 +74,30 @@ class UnscentedKalmanFilterTest(unittest.TestCase):
     )
     def test_update_linear_1d(self):
         kf = UnscentedKalmanFilter(GaussianDistribution(array([0.0]), array([[1.0]])))
-        kf.update_identity(array([3.0]), array([[1.0]]))
+        kf.update_identity(meas_noise=array([[1.0]]), measurement=array([3.0]))
+        npt.assert_allclose(kf.get_point_estimate(), 1.5)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_identity_accepts_canonical_positional_order(self):
+        kf = UnscentedKalmanFilter(GaussianDistribution(array([0.0]), array([[1.0]])))
+
+        kf.update_identity(array([[1.0]]), array([3.0]))
+
+        npt.assert_allclose(kf.get_point_estimate(), 1.5)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_identity_accepts_legacy_positional_order(self):
+        kf = UnscentedKalmanFilter(GaussianDistribution(array([0.0]), array([[1.0]])))
+
+        with self.assertWarns(DeprecationWarning):
+            kf.update_identity(array([3.0]), array([[1.0]]))
+
         npt.assert_allclose(kf.get_point_estimate(), 1.5)
 
     @unittest.skipIf(
@@ -88,7 +111,7 @@ class UnscentedKalmanFilterTest(unittest.TestCase):
         filter_id = copy.deepcopy(filter_add)
         gauss = GaussianDistribution(array([1.0, 0.0]), diag(array([2.0, 1.0])))
         filter_add.update_linear(gauss.mu, eye(2), gauss.C)
-        filter_id.update_identity(gauss.mu, gauss.C)
+        filter_id.update_identity(meas_noise=gauss.C, measurement=gauss.mu)
         self.assertTrue(
             allclose(filter_add.get_point_estimate(), filter_id.get_point_estimate())
         )
