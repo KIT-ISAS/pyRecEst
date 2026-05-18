@@ -47,6 +47,9 @@ class AbstractMixture(AbstractDistributionType):
         if num_distributions != len(weights):
             raise ValueError("Sizes of distributions and weights must be equal")
 
+        if any(bool(weight < 0) for weight in weights):
+            raise ValueError("Mixture weights must be nonnegative")
+
         if not all(dists[0].dim == dist.dim for dist in dists):
             raise ValueError("All distributions must have the same dimension")
 
