@@ -28,15 +28,24 @@ class AbstractHypersphereSubsetGridDistribution(
         if grid.shape[0] != grid_values.shape[0]:
             raise ValueError("Grid size must match number of grid values.")
 
+        # Hypersphere-subset distributions use the intrinsic manifold dimension:
+        # an S^d grid is represented by Cartesian points in R^(d+1).
+        ambient_dim = grid.shape[1]
+        manifold_dim = ambient_dim - 1
+        if manifold_dim < 1:
+            raise ValueError(
+                "Grid points must have at least two coordinates for a hypersphere subset."
+            )
+
         AbstractGridDistribution.__init__(
             self,
             grid_values,
             grid_type="unknown",
             grid=grid,
-            dim=grid.shape[1],
+            dim=ambient_dim,
             enforce_pdf_nonnegative=enforce_pdf_nonnegative,
         )
-        AbstractHypersphereSubsetDistribution.__init__(self, dim=grid.shape[1])
+        AbstractHypersphereSubsetDistribution.__init__(self, dim=manifold_dim)
         self.normalize(warn_unnorm=False)
 
     def mean_direction(self):
