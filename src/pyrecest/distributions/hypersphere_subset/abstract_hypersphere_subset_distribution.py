@@ -66,6 +66,18 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def get_full_integration_boundaries(dim: Union[int, int32, int64]):
         pass
 
+    @staticmethod
+    def _normalize_mean_direction(mu):
+        mu_norm = linalg.norm(mu)
+        if mu_norm < 1e-9:
+            msg = (
+                "Mean direction is undefined because the first moment is "
+                "numerically zero."
+            )
+            warnings.warn(msg)
+            raise ValueError(msg)
+        return mu / mu_norm
+
     def mean_direction_numerical(self, integration_boundaries=None):
         assert pyrecest.backend.__backend_name__ in (
             "numpy",
@@ -117,13 +129,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Unsupported")
 
-        if linalg.norm(mu) < 1e-9:
-            warnings.warn(
-                "Warning: Density may not actually have a mean direction because integral yields a point very close to the origin."
-            )
-
-        mu = mu / linalg.norm(mu)
-        return mu
+        return self._normalize_mean_direction(mu)
 
     def gen_pdf_hyperspherical_coords(self):
         """
