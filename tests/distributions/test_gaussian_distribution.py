@@ -67,6 +67,27 @@ class GaussianDistributionTest(unittest.TestCase):
             ),
         )
 
+    def test_rejects_nonsymmetric_2d_covariance(self):
+        mu = array([0.0, 0.0])
+        C = array([[1.0, 10.0], [0.0, 1.0]])
+
+        with self.assertRaises(AssertionError):
+            GaussianDistribution(mu, C)
+
+    def test_rejects_nonsymmetric_high_dimensional_covariance(self):
+        mu = array([0.0, 0.0, 0.0])
+        C = array([[1.0, 0.0, 0.0], [10.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+
+        with self.assertRaises(AssertionError):
+            GaussianDistribution(mu, C)
+
+    def test_rejects_symmetric_indefinite_covariance(self):
+        mu = array([0.0, 0.0])
+        C = array([[1.0, 0.0], [0.0, -1.0]])
+
+        with self.assertRaises(AssertionError):
+            GaussianDistribution(mu, C)
+
     def test_mode(self):
         mu = array([1.0, 2.0, 3.0])
         C = array([[1.1, 0.4, 0.0], [0.4, 0.9, 0.0], [0.0, 0.0, 1.0]])
