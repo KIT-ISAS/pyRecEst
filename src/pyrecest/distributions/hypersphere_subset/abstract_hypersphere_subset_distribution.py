@@ -392,6 +392,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         ``AbstractHypersphereSubsetDistribution``: the first angle is the
         azimuth and all remaining angles are colatitudes.
         """
+        single_input = getattr(hypersph_coords, "ndim", 0) == 1
         hypersph_coords = atleast_2d(hypersph_coords)
         if mode == "colatitude":
             cart_coords = (
@@ -412,11 +413,12 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
 
-        return cart_coords.squeeze()
+        return cart_coords[0] if single_input else cart_coords
 
     @staticmethod
     def cart_to_hypersph(cart_coords, mode: str = "colatitude"):
         """Inverse of ``hypersph_to_cart`` for the selected convention."""
+        single_input = getattr(cart_coords, "ndim", 0) == 1
         cart_coords = atleast_2d(cart_coords)
         if mode == "colatitude":
             hypersph_coords = (
@@ -437,7 +439,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
 
-        return hypersph_coords.squeeze()
+        return hypersph_coords[0] if single_input else hypersph_coords
 
     @staticmethod
     def _cart_to_hypersph_colatitude(coords):
@@ -450,26 +452,27 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         and ``x1 = cos(azimuth) * ...``. Remaining angles are colatitudes.
         """
         dim = coords.shape[1] - 1
-        angles = empty((coords.shape[0], dim))
 
-        angles[:, 0] = arctan2(coords[:, 0], coords[:, 1])
-        angles[:, 0] = where(angles[:, 0] < 0, angles[:, 0] + 2 * pi, angles[:, 0])
+        azimuth = arctan2(coords[:, 0], coords[:, 1])
+        azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
 
-        if dim > 1:
-            # For colatitude angle k, the corresponding Cartesian component is
-            # coords[:, k + 1], and its radius is the norm of components
-            # coords[:, : k + 2]. This is the reverse of the forward map below.
-            partial_norms = sqrt(cumsum(coords**2, axis=1))
-            divisors = partial_norms[:, 2:]
-            divisors = divisors + (divisors == 0)
+        if dim == 1:
+            return column_stack((azimuth,))
 
-            cos_colatitudes = coords[:, 2:] / divisors
-            # Protect arccos against tiny floating point overshoots.
-            cos_colatitudes = where(cos_colatitudes > 1.0, 1.0, cos_colatitudes)
-            cos_colatitudes = where(cos_colatitudes < -1.0, -1.0, cos_colatitudes)
-            angles[:, 1:] = arccos(cos_colatitudes)
+        # For colatitude angle k, the corresponding Cartesian component is
+        # coords[:, k + 1], and its radius is the norm of components
+        # coords[:, : k + 2]. This is the reverse of the forward map below.
+        partial_norms = sqrt(cumsum(coords**2, axis=1))
+        divisors = partial_norms[:, 2:]
+        divisors = divisors + (divisors == 0)
 
-        return angles
+        cos_colatitudes = coords[:, 2:] / divisors
+        # Protect arccos against tiny floating point overshoots.
+        cos_colatitudes = where(cos_colatitudes > 1.0, 1.0, cos_colatitudes)
+        cos_colatitudes = where(cos_colatitudes < -1.0, -1.0, cos_colatitudes)
+        colatitudes = arccos(cos_colatitudes)
+
+        return column_stack((azimuth, colatitudes))
 
     @staticmethod
     def _hypersph_to_cart_colatitude(r, *angles):
@@ -485,14 +488,13 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         - tuple: Cartesian coordinates (x1, x2, ..., xn).
         """
         ang_mat = column_stack(angles)
-        cart_coords = empty((ang_mat.shape[0], ang_mat.shape[1] + 1))
 
-        cart_coords[:, -1] = cos(ang_mat[:, -1])
+        reversed_components = [cos(ang_mat[:, -1])]
         sin_product = sin(ang_mat[:, -1])
         for i in range(2, ang_mat.shape[1] + 1):
-            cart_coords[:, -i] = sin_product * cos(ang_mat[:, -i])
-            sin_product *= sin(ang_mat[:, -i])
-        cart_coords[:, 0] = sin_product
+            reversed_components.append(sin_product * cos(ang_mat[:, -i]))
+            sin_product = sin_product * sin(ang_mat[:, -i])
+        cart_coords = column_stack([sin_product, *reversed(reversed_components)])
 
         return r * cart_coords
 

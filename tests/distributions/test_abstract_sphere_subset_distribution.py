@@ -85,4 +85,4 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
 
         # The new spherical coordinates should be close to the original ones
         npt.assert_allclose(azimuth_new, array([0, 0, 0]), atol=1e-15)
-        npt.assert_allclose(theta_new, array([pi / 2, pi / 2, pi / 2]), atol=1e-15)
+        npt.assert_allclose(theta_new, theta, atol=1e-15)
