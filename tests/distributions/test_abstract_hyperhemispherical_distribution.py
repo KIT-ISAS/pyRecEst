@@ -31,6 +31,26 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
                 hud = HyperhemisphericalUniformDistribution(dim)
                 self.assertAlmostEqual(hud.get_manifold_size(), expected, delta=1e-16)
 
+    def test_dim_one_integration_boundaries_are_upper_last_coordinate(self):
+        """S1 hyperhemisphere boundaries must select cos(phi) >= 0."""
+        boundaries = HyperhemisphericalUniformDistribution.get_full_integration_boundaries(1)
+
+        self.assertEqual(boundaries.shape, (1, 2))
+        npt.assert_allclose(boundaries, array([[-pi / 2, pi / 2]]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_dim_one_uniform_mean_direction_points_to_upper_last_coordinate(self):
+        """The numerical mean of the uniform upper semicircle is [0, 1]."""
+        hud = HyperhemisphericalUniformDistribution(1)
+
+        with self.assertWarns(UserWarning):
+            mean_direction = hud.mean_direction_numerical()
+
+        npt.assert_allclose(mean_direction, array([0.0, 1.0]), atol=1e-6)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
