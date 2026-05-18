@@ -40,6 +40,10 @@ from .circular_ukf import CircularUKF
 from .ekf_spline_tracker import EKFSplineTracker, EkfSplineTracker
 from .euclidean_box_particle_filter import BoxParticleFilter, EuclideanBoxParticleFilter
 from .euclidean_particle_filter import EuclideanParticleFilter
+from .factorized_giw_random_matrix_tracker import (
+    FactorizedGIWRMTracker,
+    FactorizedGIWRandomMatrixTracker,
+)
 from .fourier_rhm_tracker import FourierRHMTracker
 from .ggiw_tracker import GGIWTracker
 from .global_nearest_neighbor import GlobalNearestNeighbor
@@ -199,6 +203,8 @@ __all__ = [
     "EuclideanBoxParticleFilter",
     "EuclideanFilterMixin",
     "EuclideanParticleFilter",
+    "FactorizedGIWRMTracker",
+    "FactorizedGIWRandomMatrixTracker",
     "FullSCGPTracker",
     "EOTOV0Tracker",
     "EOTOVTracker",

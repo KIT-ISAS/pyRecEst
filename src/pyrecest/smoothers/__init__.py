@@ -11,8 +11,12 @@ from .fixed_lag_mem_qkf_smoother import (
     MEMQKFTrackerState,
 )
 from .fixed_lag_random_matrix_smoother import (
+    FactorizedGIWRandomMatrixTrackerState,
+    FixedLagFactorizedGIWRMSmoother,
+    FixedLagFactorizedGIWRandomMatrixSmoother,
     FixedLagRandomMatrixSmoother,
     FixedLagRMTSmoother,
+    FLGIWRMSmoother,
     FLRMSmoother,
     RandomMatrixTrackerState,
 )
@@ -49,8 +53,12 @@ __all__ = [
     "FullIntervalMEMQKFSmoother",
     "MEMQKFSmootherGain",
     "MEMQKFTrackerState",
+    "FactorizedGIWRandomMatrixTrackerState",
+    "FixedLagFactorizedGIWRMSmoother",
+    "FixedLagFactorizedGIWRandomMatrixSmoother",
     "FixedLagRandomMatrixSmoother",
     "FixedLagRMTSmoother",
+    "FLGIWRMSmoother",
     "FLRMSmoother",
     "RandomMatrixTrackerState",
     "FixedLagVelocityLockedMEMQKFSmoother",
