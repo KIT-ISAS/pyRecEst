@@ -7,6 +7,7 @@ from pyrecest.backend import (
     amax,
     array,
     diag,
+    exp,
     linalg,
     log,
     matmul,
@@ -31,17 +32,20 @@ from ._so3_helpers import (
     quaternion_conjugate,
     quaternion_multiply,
     quaternions_to_rotation_matrices,
+    so3_exp_map_volume_log_jacobian,
 )
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
-from .nonperiodic.gaussian_distribution import GaussianDistribution
 
 
 class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
-    """Gaussian distribution in a tangent chart of SO(3)^K.
+    """Log-Gaussian approximation on Cartesian products of SO(3).
 
     Rotations are represented as scalar-last unit quaternions ``(x, y, z, w)``.
     The mean is stored as a product point with shape ``(K, 4)`` and covariance is
-    a full matrix on the flattened tangent vector in ``R^(3K)``.
+    a full matrix on the flattened tangent vector in ``R^(3K)``.  Density
+    evaluation divides the tangent Gaussian by the product SO(3) exponential-map
+    volume element, so values are densities with respect to the product
+    upper-unit-quaternion/Haar volume measure.
     """
 
     def __init__(self, mu, C, num_rotations=None, check_validity=True):
@@ -287,18 +291,23 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
         return quaternions_to_rotation_matrices(quaternions)
 
     def pdf(self, xs):
-        """Evaluate the tangent Gaussian density at SO(3)^K rotations."""
-        tangent_vectors = self.tangent_vectors(xs)
-        gaussian = GaussianDistribution(zeros(self.dim), self.C, check_validity=False)
-        return gaussian.pdf(tangent_vectors)
+        """Evaluate the SO(3)^K product volume density at rotations."""
+        return exp(self.ln_pdf(xs))
 
     def ln_pdf(self, xs):
-        """Evaluate the natural logarithm of the tangent Gaussian density."""
+        """Evaluate the natural logarithm of the SO(3)^K volume density."""
         residual = self.tangent_vectors(xs)
         precision = linalg.inv(self.C)
         quadratic = sum(residual * matmul(residual, precision), axis=-1)
         log_det = 2.0 * sum(log(diag(linalg.cholesky(self.C))))
-        return -0.5 * (self.dim * log(2.0 * pi) + log_det + quadratic)
+        tangent_log_density = -0.5 * (self.dim * log(2.0 * pi) + log_det + quadratic)
+        tangent_vectors_product = reshape(
+            residual, (residual.shape[0], self.num_rotations, 3)
+        )
+        log_volume_jacobian = sum(
+            so3_exp_map_volume_log_jacobian(tangent_vectors_product), axis=-1
+        )
+        return tangent_log_density - log_volume_jacobian
 
     def tangent_vectors(self, rotations):
         """Return flattened log-map coordinates around the distribution mean."""

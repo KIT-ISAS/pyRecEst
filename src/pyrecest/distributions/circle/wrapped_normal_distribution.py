@@ -112,27 +112,29 @@ class WrappedNormalDistribution(
             nc = 1.0 / (sqrt(2.0 * pi) * self.sigma)
 
             def body_fun(val):
-                i, result = val
+                i, result, _last_increment = val
                 xp = x + 2 * pi * i
                 xm = x - 2 * pi * i
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
-                addendum = exp(tp) + exp(tm)
-                new_result = result + addendum
-                return (i + 1, new_result)
+                increment = exp(tp) + exp(tm)
+                new_result = result + increment
+                return (i + 1, new_result, increment)
 
             def cond_fun(val):
-                i, result = val
-                # Check both convergence and max_iterations
+                i, _result, last_increment = val
                 return logical_and(
-                    any(result - result.at[...].set(0) > 1e-10), i < max_iterations
+                    any(last_increment > 1e-10), i <= max_iterations
                 )
 
             initial_val = (
                 1,
                 exp(x * x * tmp),
-            )  # Initial iteration index set to 1, and initial result based on x
-            _, result = lax.while_loop(cond_fun, body_fun, initial_val)
+                ones(x.shape) * float("inf"),
+            )
+            _, result, _last_increment = lax.while_loop(
+                cond_fun, body_fun, initial_val
+            )
 
             result *= nc
 
