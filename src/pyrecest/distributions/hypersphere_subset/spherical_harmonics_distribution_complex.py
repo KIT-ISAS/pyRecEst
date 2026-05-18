@@ -50,6 +50,11 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         AbstractSphericalHarmonicsDistribution.__init__(self, coeff_mat, transformation)
         self.assert_real = assert_real
 
+    def pdf(self, xs):
+        if not self.assert_real and self.transformation == "identity":
+            return self.value(xs)
+        return super().pdf(xs)
+
     def value(self, xs):
         xs = atleast_2d(xs)
         phi, theta = AbstractSphereSubsetDistribution.cart_to_sph(

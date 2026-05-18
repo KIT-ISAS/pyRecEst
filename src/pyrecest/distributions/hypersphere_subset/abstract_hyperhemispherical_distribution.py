@@ -108,21 +108,22 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         warnings.warn(warning_msg)
 
         if integration_boundaries is not None:
-            return super().mean_direction_numerical(integration_boundaries)
-        if self.dim <= 3:
-            return super().mean_direction_numerical(
+            mu = super().mean_direction_numerical(integration_boundaries)
+        elif self.dim <= 3:
+            mu = super().mean_direction_numerical(
                 self.__class__.get_full_integration_boundaries(self.dim)
             )
+        else:
+            from .hyperhemispherical_uniform_distribution import (
+                HyperhemisphericalUniformDistribution,
+            )
 
-        from .hyperhemispherical_uniform_distribution import (
-            HyperhemisphericalUniformDistribution,
-        )
+            Sd = self.get_manifold_size()
+            n = 10000
+            r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
+            p = self.pdf(r)
+            mu = r @ p / n * Sd
 
-        Sd = self.get_manifold_size()
-        n = 10000
-        r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
-        p = self.pdf(r)
-        mu = r @ p / n * Sd
         return self._normalize_mean_direction(mu)
 
     @staticmethod

@@ -85,6 +85,18 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             x = x / linalg.norm(x)
             npt.assert_allclose(hud.ln_pdf(x), log(hud.pdf(x)), atol=1e-12)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        "Test not supported for this backend",
+    )
+    def test_uniform_mean_direction_is_undefined(self):
+        """The full-sphere uniform distribution has no mean direction."""
+        hud = HypersphericalUniformDistribution(2)
+
+        with self.assertWarnsRegex(UserWarning, "Mean direction is undefined"):
+            with self.assertRaisesRegex(ValueError, "Mean direction is undefined"):
+                hud.mean_direction_numerical()
+
 
 if __name__ == "__main__":
     unittest.main()

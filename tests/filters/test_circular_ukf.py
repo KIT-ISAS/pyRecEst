@@ -122,9 +122,10 @@ class CircularUKFTest(unittest.TestCase):
     )
     def test_update_nonlinear_identity_function(self):
         g7 = GaussianDistribution(array([1.0]), array([[0.7]]))
+        meas_noise = GaussianDistribution(array([0.0]), g7.C)
         self.filter.filter_state = g7
         z = array([1.4])
-        self.filter.update_nonlinear(lambda x: x, g7, z)
+        self.filter.update_nonlinear(lambda x: x, meas_noise, z)
         g8 = self.filter.filter_state
         self.assertGreater(float(g8.mu[0]), float(g7.mu[0]))
         self.assertLess(float(g8.mu[0]), float(z[0]))

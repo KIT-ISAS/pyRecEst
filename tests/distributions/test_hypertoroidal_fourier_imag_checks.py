@@ -28,9 +28,11 @@ class HypertoroidalFourierImaginaryCheckTest(unittest.TestCase):
         coeffs = array([0.2j, 1.0 / (2.0 * pi), 0.0])
         dist = HypertoroidalFourierDistribution(coeffs, transformation="sqrt")
         val = dist.value(array([0.0]))
+        modulus_pdf = backend_abs(val) ** 2
+        real_only_pdf = real(val) ** 2
 
-        npt.assert_allclose(dist.pdf(array([0.0])), backend_abs(val) ** 2)
-        self.assertGreater(float(backend_abs(val) ** 2), float(real(val) ** 2))
+        npt.assert_allclose(dist.pdf(array([0.0])), modulus_pdf)
+        self.assertGreater(float(modulus_pdf[0]), float(real_only_pdf[0]))
 
 
 if __name__ == "__main__":

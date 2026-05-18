@@ -153,9 +153,13 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def mean_numerical(self):
         _quad_opts = {"epsabs": 1.49e-7, "epsrel": 1.49e-7}
         if self.dim == 1:
+
+            def integrand(x):
+                return float(squeeze(x * self.pdf(array(x))))
+
             mu = array(
                 quad(
-                    lambda x: x * self.pdf(array(x)),
+                    integrand,
                     array(-float("inf")),
                     array(float("inf")),
                     **_quad_opts,
@@ -227,11 +231,15 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         _quad_opts = {"epsabs": 1.49e-7, "epsrel": 1.49e-7}
         mu = self.mean()
         if self.dim == 1:
+
+            def integrand(x):
+                return float(squeeze((x - mu) ** 2 * self.pdf(array(x))))
+
             C = array(
                 [
                     [
                         quad(
-                            lambda x: (x - mu) ** 2 * self.pdf(x),
+                            integrand,
                             -float("inf"),
                             float("inf"),
                             **_quad_opts,
@@ -295,7 +303,7 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
     def integrate_fun_over_domain(f, dim, left, right):
         def f_for_nquad(*args):
             # Avoid DeprecationWarning: Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future.
-            return squeeze(f(array(args).reshape(-1, dim)))
+            return float(squeeze(f(array(args).reshape(-1, dim))))
 
         if dim == 1:
             result, _ = quad(f_for_nquad, left, right)

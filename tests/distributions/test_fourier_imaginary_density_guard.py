@@ -1,7 +1,7 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, pi, zeros
+from pyrecest.backend import array, pi
 from pyrecest.distributions.hypertorus.hypertoroidal_fourier_distribution import (
     HypertoroidalFourierDistribution,
 )
@@ -9,9 +9,7 @@ from pyrecest.distributions.hypertorus.hypertoroidal_fourier_distribution import
 
 class FourierImaginaryDensityGuardTest(unittest.TestCase):
     def test_identity_pdf_rejects_negative_imaginary_density_value(self):
-        coeffs = zeros((3,), dtype=complex)
-        coeffs[0] = -0.2j
-        coeffs[1] = 1.0 / (2.0 * pi)
+        coeffs = array([-0.2j, 1.0 / (2.0 * pi), 0.0], dtype=complex)
 
         dist = HypertoroidalFourierDistribution(coeffs, "identity")
 

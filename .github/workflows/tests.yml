@@ -91,6 +91,9 @@ jobs:
           
       - name: Run tests
         run: |
+          if [ "${{ matrix.backend }}" = "jax" ]; then
+            export JAX_ENABLE_X64=True
+          fi
           export PYRECEST_BACKEND=${{ matrix.backend }}
           poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_${{ matrix.backend }}.xml ./tests
         env:

@@ -24,6 +24,21 @@ from scipy.stats import multivariate_normal
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
+def _as_1d_mu(mu):
+    mu = array(mu)
+    if mu.ndim == 0:
+        mu = mu.reshape((1,))
+    assert mu.ndim == 1, f"mu must be one-dimensional, but got shape {mu.shape}"
+    return mu
+
+
+def _as_2d_covariance(C):
+    C = array(C)
+    if C.ndim == 0:
+        C = C.reshape((1, 1))
+    return C
+
+
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self, mu, C):
         """
@@ -33,18 +48,15 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param C: Covariance matrix.
         :raises AssertionError: If C_ is not square, not symmetric, not positive definite, or its dimension does not match with mu_.
         """
-        numel_mu = 1 if mu.ndim == 0 else mu.shape[0]
-        assert (
-            C.ndim == 0 or C.ndim == 2 and C.shape[0] == C.shape[1]
-        ), "C must be of shape (dim, dim)"
-        assert C.ndim == 0 or allclose(C, C.T, atol=1e-8), "C must be symmetric"
-        assert (
-            C.ndim == 0
-            and C > 0.0
-            or len(linalg.cholesky(C)) > 0  # fails if not positiv definite
-        ), "C must be positive definite"
-        assert numel_mu == 1 or mu.shape == (C.shape[1],), "mu must be of shape (dim,)"
-        AbstractHypertoroidalDistribution.__init__(self, numel_mu)
+        mu = _as_1d_mu(mu)
+        C = _as_2d_covariance(C)
+        assert C.ndim == 2 and C.shape[0] == C.shape[1], (
+            "C must be of shape (dim, dim)"
+        )
+        assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
+        assert len(linalg.cholesky(C)) > 0, "C must be positive definite"
+        assert mu.shape == (C.shape[0],), "mu must be of shape (dim,)"
+        AbstractHypertoroidalDistribution.__init__(self, mu.shape[0])
         self.mu = mod(mu, 2.0 * pi)
         self.C = C
 
@@ -58,6 +70,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         Returns:
         HypertoroidalWNDistribution: A new instance of the distribution with the updated mean.
         """
+        mu = _as_1d_mu(mu)
+        assert mu.shape == (self.dim,), "mu must be of shape (dim,)"
         dist = copy.deepcopy(self)
         dist.mu = mod(mu, 2.0 * pi)
         return dist
@@ -129,6 +143,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         Returns:
         HypertoroidalWNDistribution: A new instance of the distribution with the updated mode.
         """
+        m = _as_1d_mu(m)
+        assert m.shape == (self.dim,), "m must be of shape (dim,)"
         dist = copy.deepcopy(self)
         dist.mu = m
         return dist
