@@ -1,7 +1,7 @@
 import unittest
 
 import numpy.testing as npt
-from pyrecest.backend import arange, linspace, pi
+from pyrecest.backend import arange, array, linspace, pi
 from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
 from pyrecest.distributions.circle.circular_grid_distribution import (
     CircularGridDistribution,
@@ -51,6 +51,14 @@ class CircularGridDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             figd.trigonometric_moment(1), dist.trigonometric_moment(1), atol=1e-6
         )
+
+    def test_get_grid_point(self):
+        dist = CircularGridDistribution(arange(10))
+
+        npt.assert_allclose(dist.get_grid_point(3), dist.get_grid()[3])
+
+        indices = array([0, 3, 7])
+        npt.assert_allclose(dist.get_grid_point(indices), dist.get_grid()[indices])
 
 
 if __name__ == "__main__":

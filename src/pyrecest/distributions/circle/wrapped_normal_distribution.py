@@ -132,7 +132,7 @@ class WrappedNormalDistribution(
             initial_val = (
                 1,
                 exp(x * x * tmp),
-            )  # Initial iteration index set to 1, and initial result based on x
+            )
             _, result = lax.while_loop(cond_fun, body_fun, initial_val)
 
             result *= nc
@@ -175,14 +175,37 @@ class WrappedNormalDistribution(
     def multiply(
         self, other: "WrappedNormalDistribution"
     ) -> "WrappedNormalDistribution":
-        return self.multiply_vm(other)
+        """Return a wrapped-normal approximation of the density product.
 
-    def multiply_vm(self, other):
+        Wrapped normal distributions are not closed under pointwise
+        multiplication on the circle. To preserve the existing single-component
+        wrapped-normal API, this method intentionally returns the same
+        von-Mises-based approximation as :meth:`multiply_vm_approximation`.
+        """
+        return self.multiply_vm_approximation(other)
+
+    def multiply_vm_approximation(
+        self, other: "WrappedNormalDistribution"
+    ) -> "WrappedNormalDistribution":
+        """Approximate a product through the von Mises family.
+
+        The two wrapped normals are converted to von Mises distributions with
+        ``kappa = 1 / sigma**2``. Their von Mises product is computed in closed
+        form and then converted back to a wrapped normal by first-moment
+        matching. The returned density is therefore not the exact normalized
+        product of the two wrapped-normal densities.
+        """
+        if not isinstance(other, WrappedNormalDistribution):
+            raise TypeError("other must be a WrappedNormalDistribution")
         vm1 = self.to_vm()
         vm2 = other.to_vm()
         vm = vm1.multiply(vm2)
         wn = vm.to_wn()
         return wn
+
+    def multiply_vm(self, other: "WrappedNormalDistribution"):
+        """Backward-compatible alias for :meth:`multiply_vm_approximation`."""
+        return self.multiply_vm_approximation(other)
 
     def convolve(
         self, other: "WrappedNormalDistribution"
