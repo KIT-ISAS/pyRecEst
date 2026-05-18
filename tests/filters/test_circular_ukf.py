@@ -107,6 +107,22 @@ class CircularUKFTest(unittest.TestCase):
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
+    def test_update_nonlinear_identity_function_nonzero_noise_mean(self):
+        self.filter.filter_state = self.g
+        self.filter.update_nonlinear(
+            lambda x: x,
+            GaussianDistribution(array([2.0]), self.g.C),
+            self.g.mu + array([2.0]),
+        )
+        posterior = self.filter.filter_state
+        self.assertIsInstance(posterior, GaussianDistribution)
+        npt.assert_almost_equal(posterior.mu, self.g.mu, decimal=10)
+        npt.assert_almost_equal(posterior.C, self.g.C / 2.0, decimal=10)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_update_nonlinear_periodic_measurement(self):
         g9 = GaussianDistribution(array([0.1]), array([[0.7]]))
         self.filter.filter_state = g9
@@ -117,6 +133,30 @@ class CircularUKFTest(unittest.TestCase):
         self.assertGreater(float(g10.mu[0]), float(z[0]))
         self.assertLess(float(g10.mu[0]), 2.0 * pi)
         self.assertGreater(float(g7.C[0, 0]), float(g10.C[0, 0]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_nonlinear_periodic_measurement_nonzero_noise_mean(self):
+        prior = GaussianDistribution(array([0.1]), array([[0.7]]))
+        meas_noise = GaussianDistribution(array([4.0]), array([[0.7]]))
+        self.filter.filter_state = prior
+
+        z = array(
+            [
+                (float(prior.mu[0]) + float(meas_noise.mu[0]))
+                % (2.0 * float(pi))
+            ]
+        )
+        self.filter.update_nonlinear(
+            lambda x: x, meas_noise, z, measurement_periodic=True
+        )
+        posterior = self.filter.filter_state
+        diff = (float(posterior.mu[0] - prior.mu[0]) + float(pi)) % (
+            2.0 * float(pi)
+        ) - float(pi)
+        self.assertAlmostEqual(diff, 0.0, places=8)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
