@@ -227,12 +227,18 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         _quad_opts = {"epsabs": 1.49e-7, "epsrel": 1.49e-7}
         mu = self.mean()
         if self.dim == 1:
-            C = quad(
-                lambda x: (x - mu) ** 2 * self.pdf(x),
-                -float("inf"),
-                float("inf"),
-                **_quad_opts,
-            )[0]
+            C = array(
+                [
+                    [
+                        quad(
+                            lambda x: (x - mu) ** 2 * self.pdf(x),
+                            -float("inf"),
+                            float("inf"),
+                            **_quad_opts,
+                        )[0]
+                    ]
+                ]
+            )
         elif self.dim == 2:
             C = empty((2, 2))
 
