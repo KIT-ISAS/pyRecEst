@@ -17,7 +17,9 @@ class FixedLagRandomMatrixSmootherTest(unittest.TestCase):
             RandomMatrixTrackerState(array([0.5]), array([[0.5]]), array([[2.0]]), 2.0),
             RandomMatrixTrackerState(array([1.4]), array([[0.6]]), array([[3.0]]), 3.0),
         ]
-        predicted_states = [RandomMatrixTrackerState(array([0.5]), array([[1.5]]), array([[2.0]]), 2.0)]
+        predicted_states = [
+            RandomMatrixTrackerState(array([0.5]), array([[1.5]]), array([[2.0]]), 2.0)
+        ]
 
         smoothed_states, smoother_gains = smoother.smooth(
             filtered_states=filtered_states,
@@ -35,10 +37,16 @@ class FixedLagRandomMatrixSmootherTest(unittest.TestCase):
     def test_extent_smoothing_uses_future_information_increment(self):
         smoother = FixedLagRandomMatrixSmoother(lag=1, extent_smoothing="information")
         filtered_states = [
-            RandomMatrixTrackerState(array([0.0]), array([[1.0]]), array([[2.0]]), 10.0),
-            RandomMatrixTrackerState(array([0.0]), array([[1.0]]), array([[4.0]]), 13.0),
+            RandomMatrixTrackerState(
+                array([0.0]), array([[1.0]]), array([[2.0]]), 10.0
+            ),
+            RandomMatrixTrackerState(
+                array([0.0]), array([[1.0]]), array([[4.0]]), 13.0
+            ),
         ]
-        predicted_states = [RandomMatrixTrackerState(array([0.0]), array([[1.0]]), array([[2.0]]), 8.0)]
+        predicted_states = [
+            RandomMatrixTrackerState(array([0.0]), array([[1.0]]), array([[2.0]]), 8.0)
+        ]
 
         smoothed_states, _ = smoother.smooth(
             filtered_states=filtered_states,
@@ -93,9 +101,15 @@ class FixedLagRandomMatrixSmootherTest(unittest.TestCase):
 
     def test_append_and_flush_emit_fixed_lag_sequence(self):
         smoother = FixedLagRandomMatrixSmoother(lag=1, extent_smoothing="none")
-        first = RandomMatrixTrackerState(array([0.5]), array([[0.5]]), array([[2.0]]), 2.0)
-        second = RandomMatrixTrackerState(array([1.4]), array([[0.6]]), array([[3.0]]), 3.0)
-        predicted_second = RandomMatrixTrackerState(array([0.5]), array([[1.5]]), array([[2.0]]), 2.0)
+        first = RandomMatrixTrackerState(
+            array([0.5]), array([[0.5]]), array([[2.0]]), 2.0
+        )
+        second = RandomMatrixTrackerState(
+            array([1.4]), array([[0.6]]), array([[3.0]]), 3.0
+        )
+        predicted_second = RandomMatrixTrackerState(
+            array([0.5]), array([[1.5]]), array([[2.0]]), 2.0
+        )
 
         self.assertIsNone(smoother.append(first))
         emitted = smoother.append(second, predicted_second, system_matrix=eye(1))
@@ -108,18 +122,24 @@ class FixedLagRandomMatrixSmootherTest(unittest.TestCase):
 
     def test_lag_zero_returns_filtered_states(self):
         smoother = FixedLagRandomMatrixSmoother(lag=0)
-        filtered_state = RandomMatrixTrackerState(array([1.0]), array([[2.0]]), array([[3.0]]), 4.0)
+        filtered_state = RandomMatrixTrackerState(
+            array([1.0]), array([[2.0]]), array([[3.0]]), 4.0
+        )
 
         smoothed_states, smoother_gains = smoother.smooth([filtered_state])
 
         self.assertEqual(len(smoothed_states), 1)
         self.assertEqual(smoother_gains, [[]])
-        npt.assert_allclose(smoothed_states[0].kinematic_state, filtered_state.kinematic_state)
+        npt.assert_allclose(
+            smoothed_states[0].kinematic_state, filtered_state.kinematic_state
+        )
 
 
 class FixedLagFactorizedGIWRandomMatrixSmootherTest(unittest.TestCase):
     def test_granstrom_recursion_keeps_explicit_giw_parameters(self):
-        smoother = FixedLagFactorizedGIWRandomMatrixSmoother(lag=1, extent_transition_dof=100.0)
+        smoother = FixedLagFactorizedGIWRandomMatrixSmoother(
+            lag=1, extent_transition_dof=100.0
+        )
         filtered_states = [
             FactorizedGIWRandomMatrixTrackerState(
                 array([0.0]),
@@ -152,7 +172,11 @@ class FixedLagFactorizedGIWRandomMatrixSmootherTest(unittest.TestCase):
 
         eta = 1.0 + (24.0 - 18.0 - 9.0) / 100.0
         expected_dof = 20.0 + (24.0 - 18.0 - 18.0 / 100.0) / eta
-        expected_scale = array([[20.0, 0.0], [0.0, 30.0]]) + (array([[12.0, 0.0], [0.0, 19.0]]) - array([[10.0, 0.0], [0.0, 15.0]])) / eta
+        expected_scale = (
+            array([[20.0, 0.0], [0.0, 30.0]])
+            + (array([[12.0, 0.0], [0.0, 19.0]]) - array([[10.0, 0.0], [0.0, 15.0]]))
+            / eta
+        )
 
         npt.assert_allclose(smoothed_states[0].kinematic_state, array([2.0]))
         npt.assert_allclose(smoothed_states[0].covariance, array([[0.75]]))

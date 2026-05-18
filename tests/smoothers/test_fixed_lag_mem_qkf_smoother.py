@@ -10,9 +10,9 @@ from pyrecest.smoothers import (
     FixedLagMEMQKFSmoother,
     FixedLagMemQkfSmoother,
     FLMEMQKFSmoother,
-    FullIntervalMEMQKFSmoother,
     ForwardBackwardForwardBackwardMEMQKFSmoother,
     ForwardBackwardMEMQKFSmoother,
+    FullIntervalMEMQKFSmoother,
     MEMQKFTrackerState,
 )
 

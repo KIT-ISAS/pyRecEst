@@ -7,16 +7,16 @@ from .fixed_lag_mem_qkf_smoother import (
     FixedLagMEMQKFSmoother,
     FixedLagMemQkfSmoother,
     FLMEMQKFSmoother,
-    FullIntervalMEMQKFSmoother,
     ForwardBackwardForwardBackwardMEMQKFSmoother,
     ForwardBackwardMEMQKFSmoother,
+    FullIntervalMEMQKFSmoother,
     MEMQKFSmootherGain,
     MEMQKFTrackerState,
 )
 from .fixed_lag_random_matrix_smoother import (
     FactorizedGIWRandomMatrixTrackerState,
-    FixedLagFactorizedGIWRMSmoother,
     FixedLagFactorizedGIWRandomMatrixSmoother,
+    FixedLagFactorizedGIWRMSmoother,
     FixedLagRandomMatrixSmoother,
     FixedLagRMTSmoother,
     FLGIWRMSmoother,
