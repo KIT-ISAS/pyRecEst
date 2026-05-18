@@ -40,15 +40,6 @@ def _as_2d_covariance(C):
     return C
 
 
-def _validate_series_order(m) -> int:
-    if isinstance(m, bool) or not isinstance(m, Integral):
-        raise ValueError("m must be a non-negative integer")
-    m = int(m)
-    if m < 0:
-        raise ValueError("m must be a non-negative integer")
-    return m
-
-
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self, mu, C):
         """
