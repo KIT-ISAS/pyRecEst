@@ -50,6 +50,26 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
         dist = WrappedCauchyDistribution(self.mu, self.gamma)
         npt.assert_allclose(dist.cdf(array([1.0])), dist.integrate(array([0.0, 1.0])))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_cdf_across_arctan_branch_cut(self):
+        dist = WrappedCauchyDistribution(self.mu, self.gamma)
+        xs = array([pi - 1e-6, pi + 1e-6, 2.0 * pi - 1e-6])
+
+        npt.assert_allclose(dist.cdf(xs), dist.cdf_numerical(xs), atol=1e-8)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_cdf_with_nonzero_mean(self):
+        dist = WrappedCauchyDistribution(array(1.0), array(0.5))
+        xs = array([0.5, 1.0, 2.0, 4.0])
+
+        npt.assert_allclose(dist.cdf(xs), dist.cdf_numerical(xs), atol=1e-8)
+
 
 if __name__ == "__main__":
     unittest.main()
