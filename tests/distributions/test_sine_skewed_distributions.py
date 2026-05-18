@@ -89,6 +89,28 @@ def test_sine_skewed_wrapped_cauchy_initialization():
     assert dist.lambda_ == lambda_
 
 
+def test_sine_skewed_wrapped_normal_rejects_invalid_lambda():
+    mu = array(0.0)
+    sigma = array(1.0)
+
+    with npt.assert_raises(ValueError):
+        SineSkewedWrappedNormalDistribution(mu, sigma, array(1.5))
+
+    with npt.assert_raises(ValueError):
+        SineSkewedWrappedNormalDistribution(mu, sigma, array(-1.5))
+
+
+def test_sine_skewed_wrapped_cauchy_rejects_invalid_lambda():
+    mu = array(pi / 4)
+    gamma = array(0.1)
+
+    with npt.assert_raises(ValueError):
+        SineSkewedWrappedCauchyDistribution(mu, gamma, array(1.5))
+
+    with npt.assert_raises(ValueError):
+        SineSkewedWrappedCauchyDistribution(mu, gamma, array(-1.5))
+
+
 def test_sine_skewed_wrapped_normal_pdf():
     mu = array(0.0)
     sigma = array(1.0)
