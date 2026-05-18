@@ -108,7 +108,7 @@ class AbstractManifoldSpecificDistribution(ABC):
         return self.sample_metropolis_hastings(n)
 
     # jscpd:ignore-start
-    # pylint: disable=too-many-positional-arguments,too-many-locals
+    # pylint: disable=too-many-positional-arguments,too-many-locals,too-many-arguments
     def sample_metropolis_hastings(
         self,
         n: Union[int, int32, int64],

@@ -24,9 +24,9 @@ from pyrecest.filters.kernel_sme_filter import KernelSMEFilter
 class TestKernelSMEFilter(unittest.TestCase):
     measurement_matrix_2DCV = array([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
     gaussians_2DCV = [
-        GaussianDistribution(zeros(4), diag(arange(1, 5))),
-        GaussianDistribution(arange(1, 5), 2 * eye(4)),
-        GaussianDistribution(-arange(1, 5), diag(arange(4, 0, -1))),
+        GaussianDistribution(zeros(4), diag(arange(1.0, 5.0))),
+        GaussianDistribution(arange(1.0, 5.0), 2 * eye(4)),
+        GaussianDistribution(-arange(1.0, 5.0), diag(arange(4.0, 0.0, -1.0))),
     ]
 
     measurement_matrix_3DCV = array(
@@ -37,9 +37,9 @@ class TestKernelSMEFilter(unittest.TestCase):
         ]
     )
     gaussians_3DCV = [
-        GaussianDistribution(zeros(6), diag(arange(1, 7))),
-        GaussianDistribution(arange(1, 7), 2 * eye(6)),
-        GaussianDistribution(-arange(1, 7), diag(arange(6, 0, -1))),
+        GaussianDistribution(zeros(6), diag(arange(1.0, 7.0))),
+        GaussianDistribution(arange(1.0, 7.0), 2 * eye(6)),
+        GaussianDistribution(-arange(1.0, 7.0), diag(arange(6.0, 0.0, -1.0))),
     ]
 
     measurement_matrix_3DCA = array(
@@ -50,9 +50,9 @@ class TestKernelSMEFilter(unittest.TestCase):
         ]
     )
     gaussians_3DCA = [
-        GaussianDistribution(zeros(9), diag(arange(1, 10))),
-        GaussianDistribution(arange(1, 10), 2 * eye(9)),
-        GaussianDistribution(-arange(1, 10), diag(arange(9, 0, -1))),
+        GaussianDistribution(zeros(9), diag(arange(1.0, 10.0))),
+        GaussianDistribution(arange(1.0, 10.0), 2 * eye(9)),
+        GaussianDistribution(-arange(1.0, 10.0), diag(arange(9.0, 0.0, -1.0))),
     ]
 
     scenario_names = ["2DCV", "3DCV", "3DCA"]
