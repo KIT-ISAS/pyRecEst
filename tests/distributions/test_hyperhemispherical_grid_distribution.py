@@ -4,7 +4,7 @@ import warnings
 
 import numpy.testing as npt
 import pyrecest
-from pyrecest.backend import array, eye, sqrt
+from pyrecest.backend import array, eye, mean, sqrt
 from pyrecest.distributions import HypersphericalMixture
 from pyrecest.distributions.hypersphere_subset.bingham_distribution import (
     BinghamDistribution,
@@ -21,6 +21,10 @@ from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution imp
 
 
 class HyperhemisphericalGridDistributionTest(unittest.TestCase):
+    @staticmethod
+    def _normalized_grid_values(grid_distribution, raw_values):
+        return raw_values / (grid_distribution.get_manifold_size() * mean(raw_values))
+
     # ------------------------------------------------------------------ #
     # Warning tests (testWarningAsymm)
     # ------------------------------------------------------------------ #
@@ -96,12 +100,8 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         )
         grid = hhgd.get_grid()
 
-        npt.assert_allclose(
-            hhgd.grid_values,
-            2 * dist.pdf(grid),
-            rtol=1e-12,
-            atol=1e-12,
-        )
+        expected_values = self._normalized_grid_values(hhgd, 2 * dist.pdf(grid))
+        npt.assert_allclose(hhgd.grid_values, expected_values, rtol=1e-12, atol=1e-12)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
@@ -123,12 +123,8 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         )
         grid = hhgd.get_grid()
 
-        npt.assert_allclose(
-            hhgd.grid_values,
-            2 * dist.pdf(grid),
-            rtol=1e-12,
-            atol=1e-12,
-        )
+        expected_values = self._normalized_grid_values(hhgd, 2 * dist.pdf(grid))
+        npt.assert_allclose(hhgd.grid_values, expected_values, rtol=1e-12, atol=1e-12)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
@@ -150,12 +146,8 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         )
         grid = hhgd.get_grid()
 
-        npt.assert_allclose(
-            hhgd.grid_values,
-            2 * dist.pdf(grid),
-            rtol=1e-12,
-            atol=1e-12,
-        )
+        expected_values = self._normalized_grid_values(hhgd, 2 * dist.pdf(grid))
+        npt.assert_allclose(hhgd.grid_values, expected_values, rtol=1e-12, atol=1e-12)
 
     # ------------------------------------------------------------------ #
     # Multiply tests

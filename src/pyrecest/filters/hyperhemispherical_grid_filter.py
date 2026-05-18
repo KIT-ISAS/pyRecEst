@@ -131,8 +131,8 @@ class HyperhemisphericalGridFilter(AbstractGridFilter, HyperhemisphericalFilterM
             System noise distribution with the same ``dim`` as the filter.
         """
         assert (
-            d_sys.dim == self.dim - 1
-        ), f"d_sys.dim ({d_sys.dim}) must equal filter manifold dim ({self.dim - 1})"
+            d_sys.dim == self.dim
+        ), f"d_sys.dim ({d_sys.dim}) must equal filter manifold dim ({self.dim})"
         warnings.warn(
             "PredictIdentity:Inefficient: Using inefficient prediction. Consider "
             "precalculating the SdHalfCondSdHalfGridDistribution and using "
@@ -196,22 +196,22 @@ class HyperhemisphericalGridFilter(AbstractGridFilter, HyperhemisphericalFilterM
         ----------
         meas_noise : AbstractDistribution
             Measurement noise centred at ``[0, …, 0, 1]``.
-        z : array, shape (dim,)
+        z : array, shape (dim + 1,)
             Measurement on the hemisphere.
         """
-        assert z.shape[0] == self.dim
+        assert z.shape[0] == self.filter_state.input_dim
 
         if isinstance(meas_noise, HyperhemisphericalWatsonDistribution):
             meas_noise = meas_noise.set_mode(z)
         elif isinstance(meas_noise, WatsonDistribution):
-            standard_pole = array([*([0.0] * (self.dim - 1)), 1.0])
+            standard_pole = array([*([0.0] * self.dim), 1.0])
             if linalg.norm(meas_noise.mu - standard_pole) > 1e-6:
                 raise ValueError(
                     "UpdateIdentity:UnexpectedMeas: mu needs to be [0;...; 0; 1]."
                 )
             meas_noise = WatsonDistribution(z, meas_noise.kappa)
         elif isinstance(meas_noise, VonMisesFisherDistribution) and z[-1] == 0:
-            standard_pole = array([*([0.0] * (self.dim - 1)), 1.0])
+            standard_pole = array([*([0.0] * self.dim), 1.0])
             if linalg.norm(meas_noise.mu - standard_pole) > 1e-6:
                 raise ValueError(
                     "UpdateIdentity:UnexpectedMeas: mu needs to be [0;...; 0; 1]."

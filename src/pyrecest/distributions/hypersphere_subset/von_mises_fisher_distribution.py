@@ -1,4 +1,5 @@
 import copy
+import math
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -17,7 +18,6 @@ from pyrecest.backend import (
     exp,
     int32,
     int64,
-    isfinite,
     isnan,
     linalg,
     ndim,
@@ -308,7 +308,9 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         corresponds to infinite concentration, which cannot be represented by a
         finite von Mises-Fisher distribution.
         """
-        if not isfinite(x):
+        d = int(d)
+        x = float(x)
+        if not math.isfinite(x):
             raise ValueError("x must be finite.")
         if x < -VonMisesFisherDistribution._KAPPA_EPS:
             raise ValueError("x must be in the interval [0, 1).")
@@ -320,7 +322,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             )
 
         kappa_ = x * (d - x**2) / (1 - x**2)
-        if not isfinite(kappa_) or kappa_ <= 0:
+        if not math.isfinite(kappa_) or kappa_ <= 0:
             raise ValueError(
                 "Initial kappa estimate is not finite. "
                 "x is likely too close to 1 for stable inversion."
@@ -331,8 +333,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
         for _ in range(max_steps):
             kappa_old = kappa_
-            ad_value = VonMisesFisherDistribution.a_d(d, kappa_old)
-            if not isfinite(ad_value):
+            ad_value = float(VonMisesFisherDistribution.a_d(d, kappa_old))
+            if not math.isfinite(ad_value):
                 raise ValueError(
                     f"a_d returned a non-finite value during inversion for d={d}, "
                     f"kappa={kappa_old}, x={x}. x may be too close to 1 for a "
@@ -340,7 +342,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
                 )
 
             denominator = 1 - ad_value**2 - (d - 1) / kappa_old * ad_value
-            if not isfinite(denominator) or denominator == 0:
+            if not math.isfinite(denominator) or denominator == 0:
                 raise ValueError(
                     f"Newton denominator became non-finite or zero during inversion "
                     f"for d={d}, kappa={kappa_old}, x={x}."
@@ -348,13 +350,13 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
             kappa_ = kappa_old - (ad_value - x) / denominator
 
-            if not isfinite(kappa_) or kappa_ < 0:
+            if not math.isfinite(kappa_) or kappa_ < 0:
                 raise ValueError(
                     f"kappa became non-finite or negative during inversion for d={d}, "
                     f"kappa_old={kappa_old}, x={x}."
                 )
 
-            if abs(kappa_ - kappa_old) < epsilon:
+            if math.fabs(kappa_ - kappa_old) < epsilon:
                 break
 
         return kappa_

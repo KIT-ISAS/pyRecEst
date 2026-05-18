@@ -74,7 +74,7 @@ class AbstractGridDistribution(AbstractDistributionType):
 
     def normalize_in_place(self, tol=1e-4, warn_unnorm=True):
         int_val = self.integrate()
-        if abs(int_val) < 1e-200:
+        if float(abs(int_val)) < 1e-200:
             raise ValueError(
                 "Sum of grid values is too close to zero, this usually points to a user error."
             )
