@@ -41,8 +41,8 @@ from .ekf_spline_tracker import EKFSplineTracker, EkfSplineTracker
 from .euclidean_box_particle_filter import BoxParticleFilter, EuclideanBoxParticleFilter
 from .euclidean_particle_filter import EuclideanParticleFilter
 from .factorized_giw_random_matrix_tracker import (
-    FactorizedGIWRMTracker,
     FactorizedGIWRandomMatrixTracker,
+    FactorizedGIWRMTracker,
 )
 from .fourier_rhm_tracker import FourierRHMTracker
 from .ggiw_tracker import GGIWTracker

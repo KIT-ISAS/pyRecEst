@@ -788,16 +788,11 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
                 shape_measurement_covariance
                 + measurement_matrix @ tracker.covariance @ measurement_matrix.T
             )
-        if (
-            self.include_single_measurement_axis_covariance
-            and scan.shape[1] == 1
-        ):
+        if self.include_single_measurement_axis_covariance and scan.shape[1] == 1:
             shape_measurement_covariance = (
                 shape_measurement_covariance + tracker.axis_covariance
             )
-        shape_measurement_covariance = tracker._symmetrize(
-            shape_measurement_covariance
-        )
+        shape_measurement_covariance = tracker._symmetrize(shape_measurement_covariance)
 
         for measurement_index in range(scan.shape[1]):
             tracker._update_single_measurement_qkf(
@@ -1016,9 +1011,9 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
     ) -> tuple[list[MEMQKFTrackerState], list[Any]]:
         n_states = len(conditional_filtered)
         if n_states == 1 or self.shape_smoothing == "none":
-            return [state.copy() for state in conditional_filtered], [
-                None
-            ] * max(n_states - 1, 0)
+            return [state.copy() for state in conditional_filtered], [None] * max(
+                n_states - 1, 0
+            )
 
         smoothed: list[MEMQKFTrackerState | None] = [None] * n_states
         shape_gains: list[Any] = [None] * (n_states - 1)
@@ -1125,7 +1120,9 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
         shape_matrices_list = self._shape_system_matrices(
             shape_system_matrices, len(filt_list) - 1
         )
-        measurement_sets = self._normalize_measurement_sets(measurements, len(filt_list))
+        measurement_sets = self._normalize_measurement_sets(
+            measurements, len(filt_list)
+        )
         measurement_matrices_list = self._normalize_measurement_matrices(
             measurement_matrices, filt_list
         )

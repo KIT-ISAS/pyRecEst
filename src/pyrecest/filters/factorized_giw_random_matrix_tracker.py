@@ -56,10 +56,16 @@ class FactorizedGIWRandomMatrixTracker(AbstractExtendedObjectTracker):
         self.kinematic_state = asarray(kinematic_state).reshape(-1)
         self.covariance = asarray(covariance)
         self.extent_dof = float(extent_dof)
-        self.extent_scale = self._project_symmetric_positive(asarray(extent_scale), minimum_extent_eigenvalue)
+        self.extent_scale = self._project_symmetric_positive(
+            asarray(extent_scale), minimum_extent_eigenvalue
+        )
         self.kinematic_state_to_pos_matrix = kinematic_state_to_pos_matrix
         self.extent_transition_dof = float(extent_transition_dof)
-        self.extent_transition_matrix = eye(self.extent_dimension) if extent_transition_matrix is None else asarray(extent_transition_matrix)
+        self.extent_transition_matrix = (
+            eye(self.extent_dimension)
+            if extent_transition_matrix is None
+            else asarray(extent_transition_matrix)
+        )
         self.measurement_spread_factor = float(measurement_spread_factor)
         self.minimum_extent_eigenvalue = float(minimum_extent_eigenvalue)
         self._validate_parameters()
@@ -98,7 +104,9 @@ class FactorizedGIWRandomMatrixTracker(AbstractExtendedObjectTracker):
         if self.extent_dof <= 2.0 * self.extent_dimension + 2.0:
             raise ValueError("extent_dof must be larger than 2 * extent_dimension + 2.")
         if self.extent_transition_dof <= self.extent_dimension + 1.0:
-            raise ValueError("extent_transition_dof must be larger than extent_dimension + 1.")
+            raise ValueError(
+                "extent_transition_dof must be larger than extent_dimension + 1."
+            )
         if self.measurement_spread_factor < 0.0:
             raise ValueError("measurement_spread_factor must be non-negative.")
         if self.minimum_extent_eigenvalue <= 0.0:
@@ -145,15 +153,33 @@ class FactorizedGIWRandomMatrixTracker(AbstractExtendedObjectTracker):
         self.covariance = self._symmetrize(F @ self.covariance @ F.T + Cw)
 
         extent_dim = self.extent_dimension
-        transition_dof = self.extent_transition_dof if extent_transition_dof is None else float(extent_transition_dof)
+        transition_dof = (
+            self.extent_transition_dof
+            if extent_transition_dof is None
+            else float(extent_transition_dof)
+        )
         if transition_dof <= extent_dim + 1.0:
-            raise ValueError("extent_transition_dof must be larger than extent_dimension + 1.")
-        A = self.extent_transition_matrix if extent_transition_matrix is None else asarray(extent_transition_matrix)
+            raise ValueError(
+                "extent_transition_dof must be larger than extent_dimension + 1."
+            )
+        A = (
+            self.extent_transition_matrix
+            if extent_transition_matrix is None
+            else asarray(extent_transition_matrix)
+        )
 
         prior_dof = self.extent_dof
         dof_excess = prior_dof - 2.0 * float(extent_dim) - 2.0
-        predicted_dof = extent_dim + 1.0 + (prior_dof - extent_dim - 1.0) / (1.0 + dof_excess / transition_dof)
-        scale_factor = 1.0 / (1.0 + (prior_dof - float(extent_dim) - 1.0) / (transition_dof - float(extent_dim) - 1.0))
+        predicted_dof = (
+            extent_dim
+            + 1.0
+            + (prior_dof - extent_dim - 1.0) / (1.0 + dof_excess / transition_dof)
+        )
+        scale_factor = 1.0 / (
+            1.0
+            + (prior_dof - float(extent_dim) - 1.0)
+            / (transition_dof - float(extent_dim) - 1.0)
+        )
         self.extent_scale = self._project_symmetric_positive(
             scale_factor * A @ self.extent_scale @ A.T,
             self.minimum_extent_eigenvalue,
@@ -209,21 +235,21 @@ class FactorizedGIWRandomMatrixTracker(AbstractExtendedObjectTracker):
 
     def plot_point_estimate(self, scaling_factor=1, color=(0, 0.4470, 0.7410)):
         if self.kinematic_state_to_pos_matrix is None:
-            raise ValueError(
-                """No kinematic_state_to_pos_matrix
+            raise ValueError("""No kinematic_state_to_pos_matrix
                              matrix was set, so it is unclear what
                              the individual components of the kinematic
                              state are (position, velocity, etc.).
                              Please set it directly or perform an update step
-                             before plotting."""
-            )
+                             before plotting.""")
         position_estimate = self.kinematic_state_to_pos_matrix @ self.kinematic_state
         plot_ellipsoid(position_estimate, self.extent, scaling_factor, color)
 
     def get_contour_points(self, n):
         assert self.kinematic_state.shape == (2,)
         xs = linspace(0, 2 * pi, n)
-        contour_points = self.kinematic_state[:, None] + self.extent @ array([cos(xs), sin(xs)])
+        contour_points = self.kinematic_state[:, None] + self.extent @ array(
+            [cos(xs), sin(xs)]
+        )
         return contour_points.T
 
 
