@@ -32,6 +32,7 @@ from pyrecest.backend import (
     signal,
     sqrt,
     sum,
+    to_numpy,
     zeros,
 )
 
@@ -260,7 +261,12 @@ class HypertoroidalFourierDistribution(
             slices_old.append(slice(start_old, start_old + overlap))
             slices_new.append(slice(start_new, start_new + overlap))
 
-        coeff_new[tuple(slices_new)] = self.coeff_mat[tuple(slices_old)]
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            coeff_new = coeff_new.at[tuple(slices_new)].set(
+                self.coeff_mat[tuple(slices_old)]
+            )
+        else:
+            coeff_new[tuple(slices_new)] = self.coeff_mat[tuple(slices_old)]
 
         result = copy.deepcopy(self)
         result.coeff_mat = coeff_new
@@ -520,8 +526,19 @@ class HypertoroidalFourierDistribution(
                     "or unsupported for transformation via FFT."
                 )
 
-        # Compute Fourier coefficients via FFT
-        fourier_coefficients = fft.fftshift(fft.fftn(fvals) / math.prod(fvals.shape))
+        # Compute Fourier coefficients via FFT. JAX/XLA only supports FFTs up to
+        # three axes, so fall back to NumPy for higher-dimensional coefficient
+        # construction and convert back to the active backend afterwards.
+        if pyrecest.backend.__backend_name__ == "jax" and ndim(fvals) > 3:
+            import numpy as np  # pylint: disable=import-outside-toplevel
+
+            fourier_coefficients = array(
+                np.fft.fftshift(np.fft.fftn(to_numpy(fvals)) / math.prod(fvals.shape))
+            )
+        else:
+            fourier_coefficients = fft.fftshift(
+                fft.fftn(fvals) / math.prod(fvals.shape)
+            )
 
         # If any axis has even length, pad and symmetrize to get odd sizes
         shape_fc = array(shape(fourier_coefficients), dtype=int)
