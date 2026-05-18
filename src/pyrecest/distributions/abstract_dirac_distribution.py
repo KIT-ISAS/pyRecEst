@@ -14,6 +14,7 @@ from pyrecest.backend import (
     int32,
     int64,
     isclose,
+    isfinite,
     log,
     ones,
     random,
@@ -43,13 +44,31 @@ class AbstractDiracDistribution(AbstractDistributionType):
             self.w = copy.copy(w)
         self.normalize_in_place()
 
+    @staticmethod
+    def _validate_weights(w):
+        """
+        Validate Dirac weights and return their total mass.
+        """
+        if not bool(all(isfinite(w))):
+            raise ValueError("Dirac weights must be finite.")
+
+        if not bool(all(w >= 0)):
+            raise ValueError("Dirac weights must be nonnegative.")
+
+        total_weight = sum(w)
+        if not bool(isfinite(total_weight)) or not bool(total_weight > 0):
+            raise ValueError("Dirac weights must have positive finite total mass.")
+
+        return total_weight
+
     def normalize_in_place(self):
         """
         Normalize the weights in-place to ensure they sum to 1.
         """
-        if not isclose(sum(self.w), 1.0, atol=1e-10):
+        total_weight = self._validate_weights(self.w)
+        if not isclose(total_weight, 1.0, atol=1e-10):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
-            self.w = self.w / sum(self.w)
+            self.w = self.w / total_weight
 
     def normalize(self) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
@@ -76,11 +95,11 @@ class AbstractDiracDistribution(AbstractDistributionType):
         w_new = f(dist.d)
 
         assert w_new.shape == dist.w.shape, "Function returned wrong output dimensions."
-        assert all(w_new >= 0), "All weights should be greater than or equal to 0."
-        assert sum(w_new) > 0, "The sum of all weights should be greater than 0."
+        self._validate_weights(w_new)
 
         dist.w = w_new * dist.w
-        dist.w = dist.w / sum(dist.w)
+        total_weight = self._validate_weights(dist.w)
+        dist.w = dist.w / total_weight
 
         return dist
 
