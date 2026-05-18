@@ -27,6 +27,17 @@ class CustomLinearDistributionTest(unittest.TestCase):
         cld = CustomLinearDistribution.from_distribution(self.gm)
         self.assertAlmostEqual(cld.integrate(), 0.5, delta=1e-8)
 
+    def test_set_mean_shifts_distribution(self):
+        g = GaussianDistribution(array([1.0]), eye(1))
+        cld = CustomLinearDistribution.from_distribution(g)
+        cld._mean_numerical = array([1.0])
+
+        cld.set_mean(array([3.0]))
+
+        npt.assert_allclose(cld.mean(), array([3.0]))
+        npt.assert_allclose(cld.shift_by, array([2.0]))
+        npt.assert_allclose(cld.pdf(array([3.0])), g.pdf(array([1.0])))
+
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):
         x, y = meshgrid(
