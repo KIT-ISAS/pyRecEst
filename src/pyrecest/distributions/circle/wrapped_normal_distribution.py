@@ -54,38 +54,44 @@ class WrappedNormalDistribution(
         """
         mu = array(mu)
         sigma = array(sigma)
-        if ndim(mu) != 0:
+        if ndim(mu) > 1 or (ndim(mu) == 1 and mu.shape[0] != 1):
             raise ValueError(f"mu must be a scalar, but got shape {mu.shape}.")
-        if ndim(sigma) != 0:
+        if ndim(sigma) > 1 or (ndim(sigma) == 1 and sigma.shape[0] != 1):
             raise ValueError(f"sigma must be a scalar, but got shape {sigma.shape}.")
         AbstractCircularDistribution.__init__(self)
-        HypertoroidalWrappedNormalDistribution.__init__(self, mu, sigma**2)
+        HypertoroidalWrappedNormalDistribution.__init__(self, squeeze(mu), squeeze(sigma) ** 2)
 
     @property
     def sigma(self):
-        return sqrt(self.C)
+        return squeeze(sqrt(self.C))
+
+    @property
+    def scalar_mu(self):
+        return squeeze(self.mu)
 
     # pylint: disable=too-many-locals
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
         _ = m
-        if self.sigma <= 0:
-            raise ValueError(f"sigma must be >0, but received {self.sigma}.")
+        sigma = self.sigma
+        mu = self.scalar_mu
+        if sigma <= 0:
+            raise ValueError(f"sigma must be >0, but received {sigma}.")
         xs = array(xs)
         if ndim(xs) == 0:
             xs = array([xs])
         # check if sigma is large and return uniform distribution in this case
-        if self.sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
+        if sigma > self.MAX_SIGMA_BEFORE_UNIFORM:
             return 1.0 / (2.0 * pi) * ones(xs.shape[0])
         x = mod(xs, 2.0 * pi)
         x = where(x < 0, x + 2.0 * pi, x)
-        x -= self.mu
+        x -= mu
         max_iterations = 1000
         if pyrecest.backend.__backend_name__ != "jax":
             n_inputs = xs.shape[0]
             result = zeros(n_inputs)
 
-            tmp = -1.0 / (2.0 * self.sigma**2)
-            nc = 1.0 / sqrt(2.0 * pi) / self.sigma
+            tmp = -1.0 / (2.0 * sigma**2)
+            nc = 1.0 / sqrt(2.0 * pi) / sigma
 
             for i in range(n_inputs):
                 result[i] = squeeze(exp(x[i] * x[i] * tmp))
@@ -108,8 +114,8 @@ class WrappedNormalDistribution(
             from jax import lax  # pylint: disable=import-error
             from jax.numpy import logical_and  # pylint: disable=import-error
 
-            tmp = -1.0 / (2.0 * self.sigma**2)
-            nc = 1.0 / (sqrt(2.0 * pi) * self.sigma)
+            tmp = -1.0 / (2.0 * sigma**2)
+            nc = 1.0 / (sqrt(2.0 * pi) * sigma)
 
             def body_fun(val):
                 i, result, _last_increment = val
@@ -146,6 +152,8 @@ class WrappedNormalDistribution(
         starting_point: float = 0.0,
         n_wraps: Union[int, int32, int64] = 10,
     ):
+        mu = self.scalar_mu
+        sigma = self.sigma
         starting_point = mod(starting_point, 2 * pi)
         xs = mod(xs, 2 * pi)
 
@@ -154,8 +162,8 @@ class WrappedNormalDistribution(
                 1
                 / 2
                 * (
-                    erf((self.mu - from_) / (sqrt(2) * self.sigma))
-                    - erf((self.mu - to) / (sqrt(2) * self.sigma))
+                    erf((mu - from_) / (sqrt(2) * sigma))
+                    - erf((mu - to) / (sqrt(2) * sigma))
                 )
             )
 
@@ -171,7 +179,7 @@ class WrappedNormalDistribution(
         return squeeze(val)
 
     def trigonometric_moment(self, n: Union[int, int32, int64]):
-        return exp(1j * n * self.mu - n**2 * self.sigma**2 / 2)
+        return exp(1j * n * self.scalar_mu - n**2 * self.sigma**2 / 2)
 
     def multiply(
         self, other: "WrappedNormalDistribution"
@@ -221,20 +229,21 @@ class WrappedNormalDistribution(
         if not isinstance(other, WrappedNormalDistribution):
             raise TypeError("other must be a WrappedNormalDistribution")
         return WrappedNormalDistribution(
-            mod(self.mu + other.mu, 2.0 * pi), sqrt(self.C + other.C)
+            mod(self.scalar_mu + other.scalar_mu, 2.0 * pi),
+            sqrt(squeeze(self.C) + squeeze(other.C)),
         )
 
     def sample(self, n: Union[int, int32, int64]):
-        return mod(self.mu + self.sigma * random.normal(size=(n,)), 2.0 * pi)
+        return mod(self.scalar_mu + self.sigma * random.normal(size=(n,)), 2.0 * pi)
 
     def shift(self, shift_by):
         assert shift_by.shape in ((1,), ())
-        return WrappedNormalDistribution(self.mu + shift_by, self.sigma)
+        return WrappedNormalDistribution(self.scalar_mu + squeeze(shift_by), self.sigma)
 
     def to_vm(self) -> VonMisesDistribution:
         # Convert to Von Mises distribution
         kappa = self.sigma_to_kappa(self.sigma)
-        return VonMisesDistribution(self.mu, kappa)
+        return VonMisesDistribution(self.scalar_mu, kappa)
 
     @staticmethod
     def from_moment(m) -> "WrappedNormalDistribution":
