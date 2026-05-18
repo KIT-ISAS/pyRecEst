@@ -30,7 +30,6 @@ class CustomLinearDistributionTest(unittest.TestCase):
     def test_set_mean_shifts_distribution(self):
         g = GaussianDistribution(array([1.0]), eye(1))
         cld = CustomLinearDistribution.from_distribution(g)
-        cld._mean_numerical = array([1.0])
 
         cld.set_mean(array([3.0]))
 
