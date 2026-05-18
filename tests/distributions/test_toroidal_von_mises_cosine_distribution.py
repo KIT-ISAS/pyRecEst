@@ -57,9 +57,9 @@ def _cosine_moment_reference(mu, kappa, kappa3, n_terms=120):
             * iv(order, -kappa3)
         )
 
-    s_sum = s(0) + 2.0 * math.fsum(s(order) for order in terms)
-    s1_sum = s1(0) / 2.0 + math.fsum(s1(order) for order in terms)
-    s2_sum = s2(0) / 2.0 + math.fsum(s2(order) for order in terms)
+    s_sum = math.fsum([s(0), *(2.0 * s(order) for order in terms)])
+    s1_sum = math.fsum([s1(0) / 2.0, *(s1(order) for order in terms)])
+    s2_sum = math.fsum([s2(0) / 2.0, *(s2(order) for order in terms)])
     m1 = s1_sum / s_sum * np.exp(1j * float(mu[0]))
     m2 = s2_sum / s_sum * np.exp(1j * float(mu[1]))
     return np.array([m1, m2])

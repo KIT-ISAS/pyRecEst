@@ -112,27 +112,29 @@ class WrappedNormalDistribution(
             nc = 1.0 / (sqrt(2.0 * pi) * self.sigma)
 
             def body_fun(val):
-                i, result = val
+                i, result, _last_increment = val
                 xp = x + 2 * pi * i
                 xm = x - 2 * pi * i
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
-                addendum = exp(tp) + exp(tm)
-                new_result = result + addendum
-                return (i + 1, new_result)
+                increment = exp(tp) + exp(tm)
+                new_result = result + increment
+                return (i + 1, new_result, increment)
 
             def cond_fun(val):
-                i, result = val
-                # Check both convergence and max_iterations
+                i, _result, last_increment = val
                 return logical_and(
-                    any(result - result.at[...].set(0) > 1e-10), i < max_iterations
+                    any(last_increment > 1e-10), i <= max_iterations
                 )
 
             initial_val = (
                 1,
                 exp(x * x * tmp),
-            )  # Initial iteration index set to 1, and initial result based on x
-            _, result = lax.while_loop(cond_fun, body_fun, initial_val)
+                ones(x.shape) * float("inf"),
+            )
+            _, result, _last_increment = lax.while_loop(
+                cond_fun, body_fun, initial_val
+            )
 
             result *= nc
 
@@ -207,7 +209,7 @@ class WrappedNormalDistribution(
         return self.multiply_vm_approximation(other)
 
     def convolve(
-        self, other: "WrappedNormalDistribution"
+        self, other: HypertoroidalWrappedNormalDistribution
     ) -> "WrappedNormalDistribution":
         """Convolve two 1-D wrapped normal distributions.
 
@@ -224,6 +226,14 @@ class WrappedNormalDistribution(
 
     def sample(self, n: Union[int, int32, int64]):
         return mod(self.mu + self.sigma * random.normal(size=(n,)), 2.0 * pi)
+
+    def to_dirac5(self):
+        from .circular_dirac_distribution import CircularDiracDistribution
+
+        offsets = array([-2.0, -1.0, 0.0, 1.0, 2.0])
+        weights = array([1.0, 2.0, 6.0, 2.0, 1.0]) / 12.0
+        samples = mod(self.mu + self.sigma * offsets, 2.0 * pi)
+        return CircularDiracDistribution(samples, weights)
 
     def shift(self, shift_by):
         assert shift_by.shape in ((1,), ())

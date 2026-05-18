@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import cos, cosh, exp, mod, ndim, pi, sin, sinh
+from pyrecest.backend import array, cos, cosh, exp, mod, ndim, pi, sin, sinh
 from scipy.special import ive  # pylint: disable=no-name-in-module
 
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -134,7 +134,7 @@ class AbstractSineSkewedDistribution(AbstractCircularDistribution):
         """
         AbstractCircularDistribution.__init__(self)
         self.mu = mu
-        self.lambda_ = lambda_
+        self.lambda_ = array(lambda_)
         self.validate_parameters()
 
     def validate_parameters(self):

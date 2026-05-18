@@ -7,7 +7,6 @@ from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
-    abs as backend_abs,
     all,
     any,
     arange,
@@ -17,7 +16,6 @@ from pyrecest.backend import (
     conj,
     exp,
     fft,
-    imag,
     linalg,
     linspace,
     log,
@@ -34,6 +32,7 @@ from pyrecest.backend import (
     signal,
     sqrt,
     sum,
+    to_numpy,
     zeros,
 )
 
@@ -113,7 +112,7 @@ class HypertoroidalFourierDistribution(
         Returns
         -------
         val : array, shape (n_eval,)
-            Complex-valued series evaluation (real up to numerical error).
+            Complex-valued series evaluation.
         """
         xs = array(xs)
 
@@ -156,15 +155,7 @@ class HypertoroidalFourierDistribution(
 
         # Evaluate series: Σ_k C_k exp(i k⋅x)
         mat_curr = exp(1j * mat_curr) * coeff_flat  # broadcast (n_eval, K)
-        p = sum(mat_curr, axis=-1)  # (n_eval,)
-
-        if not all(backend_abs(imag(p)) < 0.1):
-            warnings.warn(
-                "value: imaginary part is not negligible; returning real part.",
-                RuntimeWarning,
-            )
-
-        return real(p)
+        return sum(mat_curr, axis=-1)  # (n_eval,)
 
     def normalize_in_place(self, tol: float = 1e-4, warn_unnorm: bool = True):
         """
@@ -270,7 +261,12 @@ class HypertoroidalFourierDistribution(
             slices_old.append(slice(start_old, start_old + overlap))
             slices_new.append(slice(start_new, start_new + overlap))
 
-        coeff_new[tuple(slices_new)] = self.coeff_mat[tuple(slices_old)]
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            coeff_new = coeff_new.at[tuple(slices_new)].set(
+                self.coeff_mat[tuple(slices_old)]
+            )
+        else:
+            coeff_new[tuple(slices_new)] = self.coeff_mat[tuple(slices_old)]
 
         result = copy.deepcopy(self)
         result.coeff_mat = coeff_new
@@ -530,8 +526,19 @@ class HypertoroidalFourierDistribution(
                     "or unsupported for transformation via FFT."
                 )
 
-        # Compute Fourier coefficients via FFT
-        fourier_coefficients = fft.fftshift(fft.fftn(fvals) / math.prod(fvals.shape))
+        # Compute Fourier coefficients via FFT. JAX/XLA only supports FFTs up to
+        # three axes, so fall back to NumPy for higher-dimensional coefficient
+        # construction and convert back to the active backend afterwards.
+        if pyrecest.backend.__backend_name__ == "jax" and ndim(fvals) > 3:
+            import numpy as np  # pylint: disable=import-outside-toplevel
+
+            fourier_coefficients = array(
+                np.fft.fftshift(np.fft.fftn(to_numpy(fvals)) / math.prod(fvals.shape))
+            )
+        else:
+            fourier_coefficients = fft.fftshift(
+                fft.fftn(fvals) / math.prod(fvals.shape)
+            )
 
         # If any axis has even length, pad and symmetrize to get odd sizes
         shape_fc = array(shape(fourier_coefficients), dtype=int)
