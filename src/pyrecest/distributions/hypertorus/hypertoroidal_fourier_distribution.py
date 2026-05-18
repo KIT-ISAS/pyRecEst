@@ -7,6 +7,7 @@ from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
+    abs as backend_abs,
     all,
     any,
     arange,
@@ -157,7 +158,7 @@ class HypertoroidalFourierDistribution(
         mat_curr = exp(1j * mat_curr) * coeff_flat  # broadcast (n_eval, K)
         p = sum(mat_curr, axis=-1)  # (n_eval,)
 
-        if not all(imag(p) < 0.1):
+        if not all(backend_abs(imag(p)) < 0.1):
             warnings.warn(
                 "value: imaginary part is not negligible; returning real part.",
                 RuntimeWarning,
@@ -172,7 +173,7 @@ class HypertoroidalFourierDistribution(
         if self.transformation == "sqrt":
             # For sqrt-transform, ∫ pdf = (2π)^dim * ||C||^2
             c00 = linalg.norm(reshape(self.coeff_mat, (-1,))) ** 2
-            assert complex(c00).imag <= 0.001, "Center coefficient must be real-valued."
+            assert abs(complex(c00).imag) <= 0.001, "Center coefficient must be real-valued."
             c00 = real(c00)
             factor_for_id = c00 * (2 * pi) ** self.dim
             normalization_factor = sqrt(real(factor_for_id))
@@ -180,7 +181,7 @@ class HypertoroidalFourierDistribution(
             # Center coefficient corresponds to k = 0
             center_indices = tuple(s // 2 for s in self.coeff_mat.shape)
             c00 = self.coeff_mat[center_indices]
-            assert complex(c00).imag <= 0.001, "Center coefficient must be real-valued."
+            assert abs(complex(c00).imag) <= 0.001, "Center coefficient must be real-valued."
             c00 = real(c00)
             factor_for_id = c00 * (2 * pi) ** self.dim
             normalization_factor = factor_for_id
