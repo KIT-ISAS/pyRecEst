@@ -596,12 +596,19 @@ class MEMRBPFTracker(AbstractExtendedObjectTracker):
     def get_point_estimate_shape(self):
         weights = self.weights / backend_sum(self.weights)
         rotations = self._rotation(self.theta)
-        shape_matrices = rotations * self.axis.reshape((self.n_particles, 1, 2))
-        mean_shape_matrix = backend_sum(
-            shape_matrices * weights.reshape((self.n_particles, 1, 1)),
+        # Average physical extents, not signed square-root extent factors.
+        # Ellipse orientations theta and theta + pi encode the same extent, but
+        # their rotation matrices differ by a sign. Averaging the factors first
+        # can therefore collapse identical ellipses to a zero extent.
+        scaled_rotations = rotations * (self.axis**2).reshape(
+            (self.n_particles, 1, 2)
+        )
+        particle_extents = einsum("pab,pcb->pac", scaled_rotations, rotations)
+        extent = backend_sum(
+            particle_extents * weights.reshape((self.n_particles, 1, 1)),
             axis=0,
         )
-        extent = mean_shape_matrix @ mean_shape_matrix.T
+        extent = self._symmetrize(extent)
         eigenvalues, eigenvectors = linalg.eigh(extent)
         major_eigenvalue = maximum(eigenvalues[1], 0.0)
         minor_eigenvalue = maximum(eigenvalues[0], 0.0)
