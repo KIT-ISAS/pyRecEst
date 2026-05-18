@@ -111,22 +111,23 @@ class WrappedNormalDistribution(
             tmp = -1.0 / (2.0 * self.sigma**2)
             nc = 1.0 / (sqrt(2.0 * pi) * self.sigma)
 
-            def body_fun(val):
-                i, result = val
+            def wrapped_addendum(i):
                 xp = x + 2 * pi * i
                 xm = x - 2 * pi * i
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
-                addendum = exp(tp) + exp(tm)
-                new_result = result + addendum
-                return (i + 1, new_result)
+                return exp(tp) + exp(tm)
+
+            def body_fun(val):
+                i, result = val
+                return (i + 1, result + wrapped_addendum(i))
 
             def cond_fun(val):
                 i, result = val
-                # Check both convergence and max_iterations
-                return logical_and(
-                    any(result - result.at[...].set(0) > 1e-10), i < max_iterations
-                )
+                # Continue while the next pair of wrapped terms would change
+                # at least one accumulated density value.
+                new_result = result + wrapped_addendum(i)
+                return logical_and(any(new_result != result), i <= max_iterations)
 
             initial_val = (
                 1,
