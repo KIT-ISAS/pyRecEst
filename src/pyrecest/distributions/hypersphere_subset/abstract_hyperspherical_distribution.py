@@ -270,6 +270,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         else:
             # Compute the log of the surface area directly using properties of log
             log_surface_area = (
-                log(2.0) + ((self.dim + 1) / 2) * log(pi) - gammaln((self.dim + 1) / 2)
+                log(2.0)
+                + ((self.dim + 1) / 2) * log(pi)
+                - gammaln(array((self.dim + 1) / 2))
             )
         return log_surface_area
