@@ -238,6 +238,12 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
 
         z = _measurement_vector(z)
         dim_z = len(z)
+        noise_mean = _measurement_vector(gauss_meas.mu)
+        if len(noise_mean) != dim_z:
+            raise ValueError(
+                "measurement noise mean dimension mismatch: z has dimension "
+                f"{dim_z}, but gauss_meas.mu has dimension {len(noise_mean)}"
+            )
 
         mu0 = float(self._filter_state.mu[0])
         C0 = float(self._filter_state.C[0, 0])
@@ -249,6 +255,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
                     "measurement dimension mismatch: z has dimension "
                     f"{dim_z}, but f(mu) returns dimension {len(z_reference)}"
                 )
+            z_reference = z_reference + noise_mean
             z = _wrap_periodic_measurement_to_reference(z, z_reference)
         else:
             z_reference = None
@@ -268,6 +275,9 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
                     "measurement function must return vectors with consistent "
                     f"dimension; got {len(hx_val)} and expected {dim_z}"
                 )
+            # R_mat describes only the centered covariance of v; include E[v]
+            # in the deterministic measurement model E[z|x] = f(x) + E[v].
+            hx_val = hx_val + noise_mean
             if measurement_periodic:
                 hx_val = _wrap_periodic_measurement_to_reference(hx_val, z_reference)
             return hx_val
