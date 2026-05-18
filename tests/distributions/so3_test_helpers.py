@@ -44,10 +44,16 @@ def assert_matches_z_rotation(test_case, rotation_matrix, angle):
 
 
 def assert_pdf_peak_matches_log_pdf(test_case, dist, covariance, tangent_dim, offset):
-    """Assert that a tangent Gaussian peaks at its mode with matching log density."""
+    """Assert that an SO(3)^K tangent Gaussian peaks at its mode.
+
+    The SO(3) exponential-map volume element has identity limit 1/8 for each
+    rotation component, so Haar-volume densities are 8^K times larger than the
+    corresponding Euclidean tangent density at the mode.
+    """
     mode_pdf = scalar(dist.pdf(dist.mode()))
     offset_pdf = scalar(dist.pdf(offset))
-    expected_mode_pdf = 1.0 / scalar(
+    num_rotations = tangent_dim // 3
+    expected_mode_pdf = (8.0**num_rotations) / scalar(
         sqrt((2.0 * pi) ** tangent_dim * linalg.det(covariance))
     )
 
