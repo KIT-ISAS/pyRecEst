@@ -472,8 +472,8 @@ def get_partition_points_cartesian(
         )
 
         # Convert to hyperspherical 'colatitude' order expected by hypersph_to_cart:
-        #   for dim=2: (colatitude, azimuth)
-        pts_s_hyp = flip(pts_s_leop, axis=0).T  # shape (N, dim)
+        #   for dim=2: (azimuth, colatitude) — first column is azimuth.
+        pts_s_hyp = pts_s_leop.T  # shape (N, dim)
 
         grid_eucl = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
             pts_s_hyp,
@@ -496,7 +496,7 @@ def get_partition_points_cartesian(
 
     # 2) Convert that half to Cartesian using the same 'colatitude' path
     #    as in the asymmetric case (Leopardi → hyperspherical colatitude).
-    pts_s_half_hyp = flip(pts_s_half_leop, axis=0).T  # (N/2, dim)
+    pts_s_half_hyp = pts_s_half_leop.T  # (N/2, dim)
 
     north = AbstractHypersphereSubsetDistribution.hypersph_to_cart(
         pts_s_half_hyp,
@@ -513,8 +513,8 @@ def get_partition_points_cartesian(
     if symmetry_type == "plane":
         # Plane reflection w.r.t. equatorial hyperplane: last coord flips sign
         south = copy.deepcopy(north)
-        # First dim becomes last time when using SymmetricLeopardiSampler
-        south[:, 0] *= -1.0
+        # Last Cartesian coordinate is z (cos(colatitude)), which flips sign
+        south[:, -1] *= -1.0
     elif symmetry_type == "antipodal":
         # Antipodal symmetry: ± pairs
         south = -north

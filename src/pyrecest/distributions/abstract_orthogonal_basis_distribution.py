@@ -77,6 +77,10 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         val = self.value(xs)
         if self.transformation == "sqrt":
+            assert all(backend_abs(imag(val)) <= _REAL_DENSITY_IMAG_TOL), (
+                "Density evaluation has a non-negligible imaginary part. "
+                "Check that the coefficients define a real-valued density."
+            )
             return backend_abs(val) ** 2
 
         if self.transformation == "identity":
