@@ -15,9 +15,9 @@ class HypersphericalDiracDistribution(
     AbstractHypersphereSubsetDiracDistribution, AbstractHypersphericalDistribution
 ):
     def plot(self, *args, **kwargs):
-        if self.dim == 2:
-            p = plt.stem(arctan2(self.d[1, :], self.d[0, :]), self.w, *args, **kwargs)
-        elif self.dim == 3:
+        if self.dim == 1:
+            p = plt.stem(arctan2(self.d[:, 1], self.d[:, 0]), self.w, *args, **kwargs)
+        elif self.dim == 2:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
             p = ax.scatter(
@@ -30,10 +30,11 @@ class HypersphericalDiracDistribution(
         return p
 
     def to_circular_dirac_distribution(self):
-        assert (
-            self.dim == 2
-        ), "Conversion to circular dirac distribution only supported for 2D case."
-        return CircularDiracDistribution(arctan2(self.d[1, :], self.d[0, :]), self.w)
+        if self.dim != 1:
+            raise ValueError(
+                "Conversion to circular Dirac distribution is only supported for S¹."
+            )
+        return CircularDiracDistribution(arctan2(self.d[:, 1], self.d[:, 0]), self.w)
 
     def mean_direction(self):
         mean_res_vec = self.mean_resultant_vector()
