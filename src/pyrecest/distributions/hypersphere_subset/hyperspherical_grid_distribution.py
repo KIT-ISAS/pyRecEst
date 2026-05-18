@@ -55,10 +55,12 @@ class HypersphericalGridDistribution(
                 "(-1 <= coordinates <= 1)."
             )
 
+        manifold_dim = grid.shape[1] - 1
+
         AbstractHypersphereSubsetGridDistribution.__init__(
             self, grid, grid_values_, enforce_pdf_nonnegative
         )
-        AbstractHypersphericalDistribution.__init__(self, grid.shape[1])
+        AbstractHypersphericalDistribution.__init__(self, manifold_dim)
         self.grid_type = grid_type
 
     def get_manifold_size(self):
@@ -93,8 +95,8 @@ class HypersphericalGridDistribution(
         Piecewise-constant interpolated pdf.
 
         xs can be:
-        - shape (dim,)
-        - shape (batch, dim)
+        - shape (input_dim,)
+        - shape (batch, input_dim)
 
         Returns:
         - scalar if input is 1D
@@ -107,13 +109,28 @@ class HypersphericalGridDistribution(
             UserWarning,
         )
 
+        single_input = xs.ndim == 1
+        if single_input:
+            if xs.shape[0] != self.input_dim:
+                raise ValueError(
+                    f"Expected xs of length {self.input_dim}, got {xs.shape[0]}."
+                )
+            xs = xs[None, :]
+        elif xs.ndim == 2:
+            if xs.shape[-1] != self.input_dim:
+                raise ValueError(
+                    f"Expected xs with last dimension {self.input_dim}, got {xs.shape[-1]}."
+                )
+        else:
+            raise ValueError("xs must be 1D or 2D array.")
+
         # scores: (n_grid, batch)
         scores = self.grid @ xs.T
         max_indices = argmax(scores, axis=0)  # (batch,)
 
         vals = self.grid_values[max_indices]  # (batch,)
 
-        return vals
+        return vals[0] if single_input else vals
 
     # ------------------------------------------------------------------
     # Symmetrization & hemisphere operations
@@ -217,24 +234,24 @@ class HypersphericalGridDistribution(
         Return closest grid point(s) in Euclidean distance.
 
         xs can be:
-        - shape (dim,)
-        - shape (batch, dim)
+        - shape (input_dim,)
+        - shape (batch, input_dim)
 
         Returns
         -------
         points : ndarray
-            Shape (dim,) for single query or (batch, dim) for multiple.
+            Shape (input_dim,) for single query or (batch, input_dim) for multiple.
         indices : int or ndarray
             Index/indices of closest grid points.
         """
         if xs.ndim == 1:
-            if xs.shape[0] != self.dim:
+            if xs.shape[0] != self.input_dim:
                 raise ValueError(
-                    f"Expected xs of length {self.dim}, got {xs.shape[0]}."
+                    f"Expected xs of length {self.input_dim}, got {xs.shape[0]}."
                 )
             xs = xs[None, :]  # (1, dim)
         elif xs.ndim == 2:
-            assert xs.shape[-1] == self.dim
+            assert xs.shape[-1] == self.input_dim
         else:
             raise ValueError("xs must be 1D or 2D array.")
 
@@ -286,7 +303,8 @@ class HypersphericalGridDistribution(
             Grid parameter (interpreted as number of points for 'leopardi'
             and total number of points for symmetric schemes).
         dim : int
-            Ambient space dimension (>= 2).
+            Intrinsic manifold dimension of S^dim. Grid points have dim + 1
+            Cartesian coordinates.
         grid_type : str
             Type of grid to use. See `get_grid_hypersphere` for options.
         enforce_pdf_nonnegative : bool
@@ -297,7 +315,7 @@ class HypersphericalGridDistribution(
 
         grid, _ = get_grid_hypersphere(grid_type, no_of_grid_points, dim)
 
-        # Call user pdf with X of shape (batch_dim, space_dim) = (n_points, dim)
+        # Call user pdf with X of shape (batch_dim, space_dim) = (n_points, dim + 1)
         grid_values = fun(grid)
 
         return HypersphericalGridDistribution(
