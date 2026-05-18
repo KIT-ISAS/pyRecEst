@@ -135,6 +135,15 @@ class AbstractSineSkewedDistribution(AbstractCircularDistribution):
         AbstractCircularDistribution.__init__(self)
         self.mu = mu
         self.lambda_ = lambda_
+        self.validate_parameters()
+
+    def validate_parameters(self):
+        """Validate parameters common to first-order sine-skewed distributions."""
+        if ndim(self.lambda_) != 0:
+            raise ValueError("lambda_ must be a scalar")
+
+        if not (-1.0 <= self.lambda_ <= 1.0):
+            raise ValueError("lambda_ must be between -1 and 1 inclusive")
 
     @abstractmethod
     def base_pdf(self, xs):
