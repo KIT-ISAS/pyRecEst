@@ -209,7 +209,7 @@ class WrappedNormalDistribution(
         return self.multiply_vm_approximation(other)
 
     def convolve(
-        self, other: "WrappedNormalDistribution"
+        self, other: HypertoroidalWrappedNormalDistribution
     ) -> "WrappedNormalDistribution":
         """Convolve two 1-D wrapped normal distributions.
 
@@ -226,6 +226,14 @@ class WrappedNormalDistribution(
 
     def sample(self, n: Union[int, int32, int64]):
         return mod(self.mu + self.sigma * random.normal(size=(n,)), 2.0 * pi)
+
+    def to_dirac5(self):
+        from .circular_dirac_distribution import CircularDiracDistribution
+
+        offsets = array([-2.0, -1.0, 0.0, 1.0, 2.0])
+        weights = array([1.0, 2.0, 6.0, 2.0, 1.0]) / 12.0
+        samples = mod(self.mu + self.sigma * offsets, 2.0 * pi)
+        return CircularDiracDistribution(samples, weights)
 
     def shift(self, shift_by):
         assert shift_by.shape in ((1,), ())

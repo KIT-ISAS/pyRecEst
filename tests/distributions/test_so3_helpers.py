@@ -1,9 +1,10 @@
+import math
 import unittest
 
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, pi
+from pyrecest.backend import array, log, pi, sin
 from pyrecest.distributions import SO3TangentGaussianDistribution, so3_helpers
 from pyrecest.distributions._so3_helpers import (
     normalize_quaternions as private_normalize_quaternions,
@@ -11,6 +12,7 @@ from pyrecest.distributions._so3_helpers import (
 from tests.distributions.so3_test_helpers import (
     ATOL,
     assert_matches_z_rotation,
+    scalar,
     z_quaternion,
 )
 
@@ -42,6 +44,15 @@ class SO3HelpersTest(unittest.TestCase):
             SO3TangentGaussianDistribution.exp_map(tangent_vectors, base=base),
             atol=ATOL,
         )
+
+    def test_exp_map_volume_log_jacobian_matches_so3_upper_half_sphere_measure(self):
+        tangent_vectors = array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
+
+        log_jacobians = so3_helpers.so3_exp_map_volume_log_jacobian(tangent_vectors)
+
+        npt.assert_allclose(scalar(log_jacobians[0]), math.log(1.0 / 8.0), atol=ATOL)
+        expected_second = log(sin(0.25) ** 2 / (2.0 * 0.5**2))
+        npt.assert_allclose(log_jacobians[1], expected_second, atol=ATOL)
 
     def test_quaternion_multiply_and_conjugate_cancel_rotation(self):
         rotation = z_quaternion(pi / 2.0)
