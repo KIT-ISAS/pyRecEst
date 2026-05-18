@@ -367,5 +367,6 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
             covariance = self.covariance()
             mean = self.mean()
             plot_ellipsoid(mean, covariance, scaling_factor, color)
+            return
 
         raise ValueError("Dimension currently not supported for plotting the state.")
