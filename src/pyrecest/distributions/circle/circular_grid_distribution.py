@@ -81,6 +81,9 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
     def get_manifold_size(self):
         return 2 * pi
 
+    def get_grid_point(self, indices):
+        return self.grid[indices]
+
     def trigonometric_moment(self, n):
         weights = self.grid_values / sum(self.grid_values)
         grid = self.get_grid()

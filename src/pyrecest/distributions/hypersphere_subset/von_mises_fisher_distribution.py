@@ -17,6 +17,7 @@ from pyrecest.backend import (
     exp,
     int32,
     int64,
+    isfinite,
     isnan,
     linalg,
     ndim,
@@ -300,13 +301,30 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def a_d_inverse(d: Union[int, int32, int64], x: float):
-        """Numerically invert :meth:`a_d` for dimension ``d`` and value ``x``."""
+        """Numerically invert :meth:`a_d` for dimension ``d`` and value ``x``.
+
+        ``x`` is a mean resultant length and therefore must lie in ``[0, 1)``.
+        The boundary value ``x == 1`` is the degenerate point-mass limit and
+        corresponds to infinite concentration, which cannot be represented by a
+        finite von Mises-Fisher distribution.
+        """
+        if not isfinite(x):
+            raise ValueError("x must be finite.")
+        if x < -VonMisesFisherDistribution._KAPPA_EPS:
+            raise ValueError("x must be in the interval [0, 1).")
         if x <= VonMisesFisherDistribution._KAPPA_EPS:
             return 0.0
+        if x >= 1.0:
+            raise ValueError(
+                "x must be smaller than 1; x == 1 corresponds to infinite kappa."
+            )
 
         kappa_ = x * (d - x**2) / (1 - x**2)
-        if isnan(kappa_):
-            print(f"Initial kappa_ is NaN for d={d}, x={x}")
+        if not isfinite(kappa_) or kappa_ <= 0:
+            raise ValueError(
+                "Initial kappa estimate is not finite. "
+                "x is likely too close to 1 for stable inversion."
+            )
 
         max_steps = 20
         epsilon = 1e-7
@@ -314,18 +332,26 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         for _ in range(max_steps):
             kappa_old = kappa_
             ad_value = VonMisesFisherDistribution.a_d(d, kappa_old)
-            if isnan(ad_value):
-                print(
-                    f"a_d returned NaN during iteration for d={d}, kappa_old={kappa_old}"
+            if not isfinite(ad_value):
+                raise ValueError(
+                    f"a_d returned a non-finite value during inversion for d={d}, "
+                    f"kappa={kappa_old}, x={x}. x may be too close to 1 for a "
+                    "stable finite concentration estimate."
                 )
 
-            kappa_ = kappa_old - (ad_value - x) / (
-                1 - ad_value**2 - (d - 1) / kappa_old * ad_value
-            )
+            denominator = 1 - ad_value**2 - (d - 1) / kappa_old * ad_value
+            if not isfinite(denominator) or denominator == 0:
+                raise ValueError(
+                    f"Newton denominator became non-finite or zero during inversion "
+                    f"for d={d}, kappa={kappa_old}, x={x}."
+                )
 
-            if isnan(kappa_):
-                print(
-                    f"kappa_ became NaN during iteration for d={d}, kappa_old={kappa_old}, x={x}"
+            kappa_ = kappa_old - (ad_value - x) / denominator
+
+            if not isfinite(kappa_) or kappa_ < 0:
+                raise ValueError(
+                    f"kappa became non-finite or negative during inversion for d={d}, "
+                    f"kappa_old={kappa_old}, x={x}."
                 )
 
             if abs(kappa_ - kappa_old) < epsilon:

@@ -9,6 +9,8 @@ from pyrecest.backend import all, exp, imag, real
 
 from .abstract_distribution_type import AbstractDistributionType
 
+_REAL_DENSITY_IMAG_TOL = 1e-10
+
 
 class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
     """
@@ -49,6 +51,23 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         result = copy.deepcopy(self)
         return result.normalize_in_place()
 
+    @staticmethod
+    def _discard_negligible_imaginary_part(val):
+        """
+        Return the real part of a numerically real value.
+
+        Non-square-root density representations should evaluate to real-valued
+        densities. Small imaginary parts arise from floating-point roundoff in
+        complex basis evaluations and can be discarded; larger imaginary parts
+        indicate inconsistent coefficients and must not be silently ignored.
+        """
+        if not all(backend_abs(imag(val)) <= _REAL_DENSITY_IMAG_TOL):
+            raise ValueError(
+                "Density evaluation has a non-negligible imaginary part. "
+                "Check that the coefficients define a real-valued density."
+            )
+        return real(val)
+
     def pdf(self, xs):
         """
         Calculates probability density function for the given input.
@@ -58,14 +77,13 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         val = self.value(xs)
         if self.transformation == "sqrt":
-            assert all(backend_abs(imag(val)) < 0.0001)
-            return real(val) ** 2
+            return backend_abs(val) ** 2
 
         if self.transformation == "identity":
-            return val
+            return self._discard_negligible_imaginary_part(val)
 
         if self.transformation == "log":
             warnings.warn("Density may not be normalized")
-            return exp(val)
+            return exp(self._discard_negligible_imaginary_part(val))
 
         raise ValueError("Transformation not recognized or unsupported")

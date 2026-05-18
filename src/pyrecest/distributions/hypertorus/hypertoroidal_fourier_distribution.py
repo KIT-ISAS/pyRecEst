@@ -240,6 +240,8 @@ class HypertoroidalFourierDistribution(
             raise ValueError("truncate: n_coefficients must be positive.")
 
         current_shape = self.coeff_mat.shape
+        n_coefficients_arr = array(n_coefficients)
+        current_shape_arr = array(current_shape)
 
         # Already correct size
         if all(current_shape == n_coefficients):
@@ -248,7 +250,7 @@ class HypertoroidalFourierDistribution(
                 result.normalize_in_place(warn_unnorm=False)
             return result
 
-        if any(array(current_shape) < array(n_coefficients)):
+        if any(current_shape_arr < n_coefficients_arr):
             warnings.warn(
                 "Truncate:TooFewCoefficients: At least in one dimension, "
                 "truncate has to fill up due to too few coefficients.",
@@ -273,9 +275,11 @@ class HypertoroidalFourierDistribution(
         result = copy.deepcopy(self)
         result.coeff_mat = coeff_new
 
+        is_truncating = any(n_coefficients_arr < current_shape_arr)
+
         # Truncation can void normalization for non-identity transformations
         if force_normalization or (
-            self.transformation != "identity" and any(n_coefficients < current_shape)
+            self.transformation != "identity" and is_truncating
         ):
             result.normalize_in_place(warn_unnorm=False)
 
@@ -314,7 +318,7 @@ class HypertoroidalFourierDistribution(
         current_shape = self.coeff_mat.shape
 
         # Convolution in coefficient space (multi-dimensional)
-        if all(n_coefficients <= current_shape):
+        if all(array(n_coefficients) <= array(current_shape)):
             mode = "same"
         else:
             mode = "full"

@@ -48,6 +48,40 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         fx = ones_like(x) / (2.0 * pi)
         self.assertTrue(allclose(wn_large_sigma.pdf(x), fx, rtol=1e-10))
 
+    def test_multiply_uses_explicit_vm_approximation(self):
+        """The product API is a documented VM-based approximation."""
+        first = WrappedNormalDistribution(array(0.0), array(0.5))
+        second = WrappedNormalDistribution(array(3.0), array(0.6))
+
+        multiplied = first.multiply(second)
+        explicit = first.multiply_vm_approximation(second)
+        legacy = first.multiply_vm(second)
+
+        self.assertTrue(allclose(multiplied.mu, explicit.mu, atol=1e-12))
+        self.assertTrue(allclose(multiplied.sigma, explicit.sigma, atol=1e-12))
+        self.assertTrue(allclose(legacy.mu, explicit.mu, atol=1e-12))
+        self.assertTrue(allclose(legacy.sigma, explicit.sigma, atol=1e-12))
+
+    def test_multiply_is_not_treated_as_exact_density_product(self):
+        """A single wrapped normal is not exact product-closed on the circle."""
+        first = WrappedNormalDistribution(array(0.0), array(0.5))
+        second = WrappedNormalDistribution(array(3.0), array(0.6))
+        xs = arange(0, 256) / 256 * 2.0 * pi
+        dx = 2.0 * pi / 256
+
+        product_pdf = first.pdf(xs) * second.pdf(xs)
+        normalized_product_pdf = product_pdf / (sum(product_pdf) * dx)
+        approximate_product_pdf = first.multiply(second).pdf(xs)
+
+        self.assertFalse(
+            allclose(
+                approximate_product_pdf,
+                normalized_product_pdf,
+                atol=0.1,
+                rtol=0.0,
+            )
+        )
+
     def test_convolve_adds_variances(self):
         """Convolution must add wrapped-normal variances, not square them."""
         first = WrappedNormalDistribution(array(0.3), array(2.0))

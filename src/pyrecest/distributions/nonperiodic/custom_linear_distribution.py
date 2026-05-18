@@ -41,7 +41,7 @@ class CustomLinearDistribution(
         return cd
 
     def set_mean(self, new_mean):
-        mean_offset = new_mean - self.mean
+        mean_offset = new_mean - self.mean()
         self.shift_by += mean_offset
         if self._mean_numerical is not None:
             self._mean_numerical += mean_offset
