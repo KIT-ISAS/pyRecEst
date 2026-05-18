@@ -59,3 +59,32 @@ def test_mem_rbpf_original_parameter_constructor_alias():
     assert isinstance(tracker, MemRbpfTracker)
     assert tracker.get_state().shape == (7,)
     assert tracker.get_state_array(with_weight=True).shape == (8, 8)
+
+
+def test_mem_rbpf_shape_estimate_is_invariant_to_pi_shifted_orientation():
+    tracker = MEMRBPFTracker(
+        kinematic_state=array([0.0, 0.0, 0.0, 0.0]),
+        covariance=eye(4),
+        shape_state=array([0.0, 2.0, 1.0]),
+        shape_covariance=diag(array([1e-6, 1e-6, 1e-6])),
+        meas_noise_cov=0.05 * eye(2),
+        sys_noise=0.01 * eye(4),
+        shape_sys_noise=diag(array([0.0, 0.0, 0.0])),
+        n_particles=2,
+        resampling_threshold=0,
+    )
+
+    angle = 0.37
+    tracker.theta = array([angle, angle + np.pi])
+    tracker.axis = array([[2.0, 1.0], [2.0, 1.0]])
+    tracker.weights = array([0.5, 0.5])
+
+    rotation = np.array(
+        [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]
+    )
+    expected_extent = rotation @ np.diag([4.0, 1.0]) @ rotation.T
+
+    assert np.allclose(
+        np.asarray(tracker.get_point_estimate_extent()),
+        expected_extent,
+    )
