@@ -363,3 +363,56 @@ def test_fbfb_mem_qkf_final_backward_pass_smooths_reconditioned_shape():
     assert len(smoother_gains[0]) == 1
     assert smoother_gains[0][0].kinematic is not None
     assert smoother_gains[0][0].shape is not None
+
+
+def test_fbfb_mem_qkf_extra_iterations_refilter_kinematics_with_smoothed_shape():
+    filtered_states = [
+        _state(
+            [0.0, 0.0],
+            0.5 * eye(2),
+            [0.0, 1.0, 1.0],
+            diag(array([0.2, 0.2, 0.2])),
+        ),
+        _state(
+            [2.0, 0.0],
+            0.5 * eye(2),
+            [0.3, 1.4, 1.0],
+            diag(array([0.15, 0.15, 0.15])),
+        ),
+    ]
+    predicted_states = [
+        _state(
+            [0.0, 0.0],
+            eye(2),
+            [0.0, 1.0, 1.0],
+            diag(array([0.4, 0.4, 0.4])),
+        )
+    ]
+    measurements = [array([[2.0], [0.0]]), array([[4.0], [0.0]])]
+    common_kwargs = dict(
+        filtered_states=filtered_states,
+        predicted_states=predicted_states,
+        measurements=measurements,
+        system_matrices=eye(2),
+        shape_system_matrices=eye(3),
+        meas_noise_covs=0.05 * eye(2),
+        initial_shape_state=array([0.0, 1.0, 1.0]),
+        initial_shape_covariance=diag(array([0.2, 0.2, 0.2])),
+    )
+
+    one_pass_states, _ = ForwardBackwardForwardBackwardMEMQKFSmoother(
+        n_iterations=1
+    ).smooth(**common_kwargs)
+    three_pass_states, three_pass_gains = ForwardBackwardForwardBackwardMEMQKFSmoother(
+        n_iterations=3
+    ).smooth(**common_kwargs)
+
+    assert len(three_pass_states) == len(filtered_states)
+    assert len(three_pass_gains[0]) == 1
+    assert not np.allclose(
+        np.asarray(three_pass_states[1].kinematic_state),
+        np.asarray(one_pass_states[1].kinematic_state),
+    )
+    assert abs(float(three_pass_states[1].kinematic_state[0]) - 4.0) < abs(
+        float(one_pass_states[1].kinematic_state[0]) - 4.0
+    )

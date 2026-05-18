@@ -561,26 +561,36 @@ class FixedIntervalMEMQKFSmoother(FixedLagMEMQKFSmoother):
 
 
 class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
-    """Full-interval MEM-QKF smoother with a conditional shape re-forward pass.
+    """Full-interval MEM-QKF smoother with conditional alternating passes.
 
     The pass order is forward-filtered input, backward RTS kinematics,
     forward MEM-QKF shape updates conditioned on the smoothed kinematic centers,
     and a final backward RTS pass for orientation and semi-axis lengths.
+    Setting ``n_iterations > 1`` alternates this with kinematic re-filtering
+    conditioned on the improved shape trajectory before smoothing kinematics
+    and shape again.
 
     If no initial shape prior is supplied, the first scan's original filtered
     shape posterior is kept as the conditional forward pass initial state to
     avoid double-counting the first measurement set. Supplying
     ``initial_shape_state`` and ``initial_shape_covariance`` lets the smoother
-    reprocess every scan.
+    reprocess every scan. Kinematic re-filtering follows the same convention
+    unless ``initial_kinematic_state`` and ``initial_kinematic_covariance`` are
+    supplied to :meth:`smooth`.
     """
 
     def __init__(
         self,
         shape_smoothing: str = "rts",
+        n_iterations: int = 1,
         include_kinematic_covariance: bool = True,
         include_single_measurement_axis_covariance: bool = True,
     ):
         super().__init__(lag=0, shape_smoothing=shape_smoothing)
+        n_iterations = int(n_iterations)
+        if n_iterations < 1:
+            raise ValueError("n_iterations must be at least one.")
+        self.n_iterations = n_iterations
         self.include_kinematic_covariance = bool(include_kinematic_covariance)
         self.include_single_measurement_axis_covariance = bool(
             include_single_measurement_axis_covariance
@@ -680,6 +690,44 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
             )
         return inferred_noises
 
+    def _normalize_kinematic_process_noises(
+        self,
+        kinematic_process_noises,
+        filtered_states: Sequence[MEMQKFTrackerState],
+        predicted_states: Sequence[MEMQKFTrackerState],
+        system_matrices: Sequence,
+    ) -> list[Any]:
+        state_dim = filtered_states[0].kinematic_state.shape[0]
+        if kinematic_process_noises is not None:
+            normalized = self._normalize_optional_matrix_sequence(
+                kinematic_process_noises,
+                len(predicted_states),
+                "kinematic_process_noises",
+            )
+            return [
+                zeros((state_dim, state_dim)) if noise is None else noise
+                for noise in normalized
+            ]
+
+        inferred_noises = []
+        for filtered_state, predicted_state, system_matrix in zip(
+            filtered_states[:-1],
+            predicted_states,
+            system_matrices,
+            strict=False,
+        ):
+            inferred_noise = (
+                predicted_state.covariance
+                - system_matrix @ filtered_state.covariance @ system_matrix.T
+            )
+            inferred_noises.append(
+                self._project_symmetric_covariance(
+                    inferred_noise,
+                    filtered_state.minimum_covariance_eigenvalue,
+                )
+            )
+        return inferred_noises
+
     def _conditional_shape_prediction(
         self,
         previous_state: MEMQKFTrackerState,
@@ -760,6 +808,132 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
                 update_kinematics=False,
             )
         return MEMQKFTrackerState.from_tracker(tracker)
+
+    def _conditional_kinematic_prediction(
+        self,
+        previous_state: MEMQKFTrackerState,
+        reference_state: MEMQKFTrackerState,
+        fixed_shape_state: MEMQKFTrackerState,
+        system_matrix,
+        kinematic_process_noise,
+    ) -> MEMQKFTrackerState:
+        kinematic_state = system_matrix @ previous_state.kinematic_state
+        covariance = (
+            system_matrix @ previous_state.covariance @ system_matrix.T
+            + kinematic_process_noise
+        )
+        return self._postprocess_state(
+            reference_state,
+            kinematic_state,
+            covariance,
+            fixed_shape_state.shape_state,
+            fixed_shape_state.shape_covariance,
+        )
+
+    def _conditioned_kinematic_update(
+        self,
+        prior_state: MEMQKFTrackerState,
+        measurements,
+        measurement_matrix,
+        meas_noise_cov,
+        multiplicative_noise_cov,
+    ) -> MEMQKFTrackerState:
+        tracker = prior_state.to_tracker()
+        scan = tracker._normalize_measurements(measurements)
+        if scan.shape[1] == 0:
+            return MEMQKFTrackerState.from_tracker(tracker)
+
+        measurement_matrix = tracker._get_measurement_matrix(measurement_matrix)
+        meas_noise_cov = tracker._get_update_measurement_noise(meas_noise_cov)
+        multiplicative_noise_cov = tracker._get_multiplicative_noise_cov(
+            multiplicative_noise_cov
+        )
+
+        if tracker.update_mode == "batch":
+            tracker._batch_kinematic_update(
+                scan,
+                measurement_matrix,
+                meas_noise_cov,
+                multiplicative_noise_cov,
+            )
+        else:
+            for measurement_index in range(scan.shape[1]):
+                kinematic_state, covariance = tracker._kinematic_update(
+                    scan[:, measurement_index],
+                    measurement_matrix,
+                    meas_noise_cov,
+                    multiplicative_noise_cov,
+                )
+                tracker.kinematic_state = kinematic_state
+                tracker.covariance = tracker._project_symmetric_covariance(covariance)
+        return MEMQKFTrackerState.from_tracker(tracker)
+
+    def _conditional_kinematic_forward(
+        self,
+        shape_states: Sequence[MEMQKFTrackerState],
+        reference_filtered_states: Sequence[MEMQKFTrackerState],
+        reference_predicted_states: Sequence[MEMQKFTrackerState],
+        measurements: Sequence,
+        measurement_matrices: Sequence,
+        meas_noise_covs: Sequence,
+        multiplicative_noise_covs: Sequence,
+        system_matrices: Sequence,
+        kinematic_process_noises: Sequence,
+        initial_kinematic_state=None,
+        initial_kinematic_covariance=None,
+    ) -> tuple[list[MEMQKFTrackerState], list[MEMQKFTrackerState]]:
+        if (initial_kinematic_state is None) != (initial_kinematic_covariance is None):
+            raise ValueError(
+                "initial_kinematic_state and initial_kinematic_covariance must be provided together."
+            )
+
+        conditional_filtered: list[MEMQKFTrackerState] = []
+        conditional_predicted: list[MEMQKFTrackerState] = []
+        if initial_kinematic_state is None:
+            first_filtered = self._postprocess_state(
+                reference_filtered_states[0],
+                shape_states[0].kinematic_state,
+                shape_states[0].covariance,
+                shape_states[0].shape_state,
+                shape_states[0].shape_covariance,
+            )
+        else:
+            first_prior = self._postprocess_state(
+                reference_filtered_states[0],
+                asarray(initial_kinematic_state),
+                asarray(initial_kinematic_covariance),
+                shape_states[0].shape_state,
+                shape_states[0].shape_covariance,
+            )
+            first_filtered = self._conditioned_kinematic_update(
+                first_prior,
+                measurements[0],
+                measurement_matrices[0],
+                meas_noise_covs[0],
+                multiplicative_noise_covs[0],
+            )
+        conditional_filtered.append(first_filtered)
+
+        for time_idx in range(1, len(shape_states)):
+            predicted_state = self._conditional_kinematic_prediction(
+                conditional_filtered[-1],
+                reference_predicted_states[time_idx - 1],
+                shape_states[time_idx],
+                system_matrices[time_idx - 1],
+                kinematic_process_noises[time_idx - 1],
+            )
+            conditional_predicted.append(predicted_state)
+            conditional_filtered.append(
+                self._conditioned_kinematic_update(
+                    predicted_state,
+                    measurements[time_idx],
+                    measurement_matrices[time_idx],
+                    meas_noise_covs[time_idx],
+                    multiplicative_noise_covs[time_idx],
+                )
+            )
+
+        return conditional_filtered, conditional_predicted
 
     def _conditional_shape_forward(
         self,
@@ -897,9 +1071,13 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
         meas_noise_covs=None,
         measurement_matrices=None,
         multiplicative_noise_covs=None,
+        kinematic_process_noises=None,
         shape_process_noises=None,
+        initial_kinematic_state=None,
+        initial_kinematic_covariance=None,
         initial_shape_state=None,
         initial_shape_covariance=None,
+        n_iterations: int | None = None,
         lag: int | None = None,
     ) -> tuple[list[MEMQKFTrackerState], list[list[MEMQKFSmootherGain]]]:
         """Return full-interval smoothed states after conditional shape re-forwarding."""
@@ -908,6 +1086,11 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
             raise ValueError(
                 "ForwardBackwardForwardBackwardMEMQKFSmoother only supports full-interval smoothing."
             )
+        iteration_count = (
+            self.n_iterations if n_iterations is None else int(n_iterations)
+        )
+        if iteration_count < 1:
+            raise ValueError("n_iterations must be at least one.")
         filt_list = self._normalize_state_sequence(filtered_states)
         if len(filt_list) == 0:
             raise ValueError("At least one filtered state is required.")
@@ -949,32 +1132,61 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
         shape_process_noise_list = self._normalize_shape_process_noises(
             shape_process_noises, filt_list, pred_list, shape_matrices_list
         )
+        kinematic_process_noise_list = self._normalize_kinematic_process_noises(
+            kinematic_process_noises,
+            filt_list,
+            pred_list,
+            system_matrices_list,
+        )
 
         kinematic_smoother = FixedIntervalMEMQKFSmoother(shape_smoothing="none")
-        smoothed_kinematics, kinematic_gains = kinematic_smoother.smooth(
-            filt_list,
-            pred_list,
-            system_matrices=system_matrices_list,
-            shape_system_matrices=shape_matrices_list,
-        )
-        conditional_filtered, conditional_predicted = self._conditional_shape_forward(
-            filt_list,
-            pred_list,
-            smoothed_kinematics,
-            measurement_sets,
-            measurement_matrices_list,
-            meas_noise_covs_list,
-            multiplicative_noise_covs_list,
-            shape_matrices_list,
-            shape_process_noise_list,
-            initial_shape_state=initial_shape_state,
-            initial_shape_covariance=initial_shape_covariance,
-        )
-        smoothed_states, shape_gains = self._shape_backward(
-            conditional_filtered,
-            conditional_predicted,
-            shape_matrices_list,
-        )
+        current_filtered = filt_list
+        current_predicted = pred_list
+        smoothed_states = []
+        kinematic_gains = []
+        shape_gains = []
+        for iteration_index in range(iteration_count):
+            smoothed_kinematics, kinematic_gains = kinematic_smoother.smooth(
+                current_filtered,
+                current_predicted,
+                system_matrices=system_matrices_list,
+                shape_system_matrices=shape_matrices_list,
+            )
+            conditional_filtered, conditional_predicted = (
+                self._conditional_shape_forward(
+                    filt_list,
+                    pred_list,
+                    smoothed_kinematics,
+                    measurement_sets,
+                    measurement_matrices_list,
+                    meas_noise_covs_list,
+                    multiplicative_noise_covs_list,
+                    shape_matrices_list,
+                    shape_process_noise_list,
+                    initial_shape_state=initial_shape_state,
+                    initial_shape_covariance=initial_shape_covariance,
+                )
+            )
+            smoothed_states, shape_gains = self._shape_backward(
+                conditional_filtered,
+                conditional_predicted,
+                shape_matrices_list,
+            )
+            if iteration_index == iteration_count - 1:
+                break
+            current_filtered, current_predicted = self._conditional_kinematic_forward(
+                smoothed_states,
+                filt_list,
+                pred_list,
+                measurement_sets,
+                measurement_matrices_list,
+                meas_noise_covs_list,
+                multiplicative_noise_covs_list,
+                system_matrices_list,
+                kinematic_process_noise_list,
+                initial_kinematic_state=initial_kinematic_state,
+                initial_kinematic_covariance=initial_kinematic_covariance,
+            )
         return smoothed_states, self._combine_gains(
             kinematic_gains, shape_gains, len(filt_list)
         )
