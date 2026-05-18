@@ -6,10 +6,9 @@ https://github.com/oxcsml/geomstats/blob/master/geomstats/_backend/jax/autodiff.
 
 
 import jax.numpy as anp
-from jax import vmap, grad
-from jax import jacfwd
-from jax import value_and_grad as _value_and_grad
 from autograd.extend import defvjp, primitive  # TODO: replace
+from jax import grad, jacfwd
+from jax import value_and_grad as _value_and_grad
 
 
 def detach(x):
@@ -33,7 +32,14 @@ def elementwise_grad(func):
     func : callable
         Function for which the element-wise grad is computed.
     """
-    return vmap(grad(func))(func)  # NOTE: cf https://github.com/google/jax/issues/564
+
+    def _elementwise_grad(*args, **kwargs):
+        def _summed_func(*inner_args):
+            return anp.sum(func(*inner_args, **kwargs))
+
+        return grad(_summed_func)(*args)
+
+    return _elementwise_grad
 
 
 def custom_gradient(*grad_funcs):
@@ -116,14 +122,20 @@ def value_and_grad(func, to_numpy=False):
 
     return aux_value_and_grad
 
-unsupported_functions = [
-    'hessian',
-    'hessian_vec',
-    'jacobian_vec',
-    'jacobian_and_hessian',
-    'value_jacobian_and_hessian',
-    'value_and_jacobian',
-]
-for func_name in unsupported_functions:
-    exec(f"{func_name} = lambda *args, **kwargs: NotImplementedError('This function is not supported in this JAX backend.')")
 
+unsupported_functions = [
+    "hessian",
+    "hessian_vec",
+    "jacobian_vec",
+    "jacobian_and_hessian",
+    "value_jacobian_and_hessian",
+    "value_and_jacobian",
+]
+
+
+def _raise_unsupported(*args, **kwargs):
+    raise NotImplementedError("This function is not supported in this JAX backend.")
+
+
+for func_name in unsupported_functions:
+    globals()[func_name] = _raise_unsupported
