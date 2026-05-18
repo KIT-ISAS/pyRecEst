@@ -11,7 +11,6 @@ from pyrecest.backend import (
     concatenate,
     int32,
     int64,
-    linalg,
     linspace,
     meshgrid,
     ones,
@@ -109,29 +108,22 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
         warnings.warn(warning_msg)
 
         if integration_boundaries is not None:
-            mu = super().mean_direction_numerical(integration_boundaries)
-        elif self.dim <= 3:
-            mu = super().mean_direction_numerical(
+            return super().mean_direction_numerical(integration_boundaries)
+        if self.dim <= 3:
+            return super().mean_direction_numerical(
                 self.__class__.get_full_integration_boundaries(self.dim)
             )
-        else:
-            from .hyperhemispherical_uniform_distribution import (
-                HyperhemisphericalUniformDistribution,
-            )
 
-            Sd = self.get_manifold_size()
-            n = 10000
-            r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
-            p = self.pdf(r)
-            mu = r @ p / n * Sd
+        from .hyperhemispherical_uniform_distribution import (
+            HyperhemisphericalUniformDistribution,
+        )
 
-        if linalg.norm(mu) < 1e-9:
-            warnings.warn(
-                "Density may not have actually have a mean direction because integral yields a point very close to the origin."
-            )
-
-        mu = mu / linalg.norm(mu)
-        return mu
+        Sd = self.get_manifold_size()
+        n = 10000
+        r = HyperhemisphericalUniformDistribution(self.dim).sample(n)
+        p = self.pdf(r)
+        mu = r @ p / n * Sd
+        return self._normalize_mean_direction(mu)
 
     @staticmethod
     def get_full_integration_boundaries(dim: Union[int, int32, int64]):
