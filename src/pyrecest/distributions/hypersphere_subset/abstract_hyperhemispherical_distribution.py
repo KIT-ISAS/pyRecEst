@@ -11,7 +11,6 @@ from pyrecest.backend import (
     concatenate,
     int32,
     int64,
-    linalg,
     linspace,
     meshgrid,
     ones,
@@ -27,7 +26,7 @@ from .abstract_hypersphere_subset_distribution import (
 )
 
 
-class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
+class AbstractHyperhemisphericalDistribution(AbstractHypypersphereSubsetDistribution):
     def mean(self):
         """
         Convenient access to axis to have a consistent interface
@@ -125,13 +124,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             p = self.pdf(r)
             mu = r @ p / n * Sd
 
-        if linalg.norm(mu) < 1e-9:
-            warnings.warn(
-                "Density may not have actually have a mean direction because integral yields a point very close to the origin."
-            )
-
-        mu = mu / linalg.norm(mu)
-        return mu
+        return self._normalize_mean_direction(mu)
 
     @staticmethod
     def get_full_integration_boundaries(dim: Union[int, int32, int64]):
