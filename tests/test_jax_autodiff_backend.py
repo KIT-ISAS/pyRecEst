@@ -3,7 +3,7 @@ import pytest
 jax = pytest.importorskip("jax")
 jnp = pytest.importorskip("jax.numpy")
 
-from pyrecest._backend.jax import autodiff
+from pyrecest._backend.jax import autodiff  # noqa: E402
 
 
 def test_elementwise_grad_vector_output_returns_elementwise_derivative():

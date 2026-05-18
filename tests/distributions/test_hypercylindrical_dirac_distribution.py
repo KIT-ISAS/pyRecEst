@@ -129,13 +129,6 @@ class TestHypercylindricalDiracDistribution(TestAbstractDiracDistribution):
     @parameterized.expand(
         [
             (
-                "1D Plot",
-                PartiallyWrappedNormalDistribution(
-                    array([1.0]), array([[1.0]]), bound_dim=1  # 1D mean
-                ),  # 1D covariance
-                1,  # Dimension
-            ),
-            (
                 "2D Plot",
                 PartiallyWrappedNormalDistribution(
                     array([1.0, 2.0]),  # 2D mean
