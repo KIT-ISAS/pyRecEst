@@ -115,7 +115,7 @@ class FactorizedGIWRandomMatrixTracker(AbstractExtendedObjectTracker):
             return self.extent.flatten()
         return self.extent
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-locals
     def predict(
         self,
         dt,

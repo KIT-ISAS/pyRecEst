@@ -303,6 +303,7 @@ def test_fbfb_mem_qkf_conditions_shape_update_on_smoothed_kinematics():
         + measurement_matrix @ manual_tracker.covariance @ measurement_matrix.T
         + manual_tracker.axis_covariance
     )
+    # pylint: disable-next=protected-access
     manual_tracker._update_single_measurement_qkf(
         measurements[0][:, 0],
         center_estimate,
@@ -389,16 +390,16 @@ def test_fbfb_mem_qkf_extra_iterations_refilter_kinematics_with_smoothed_shape()
         )
     ]
     measurements = [array([[2.0], [0.0]]), array([[4.0], [0.0]])]
-    common_kwargs = dict(
-        filtered_states=filtered_states,
-        predicted_states=predicted_states,
-        measurements=measurements,
-        system_matrices=eye(2),
-        shape_system_matrices=eye(3),
-        meas_noise_covs=0.05 * eye(2),
-        initial_shape_state=array([0.0, 1.0, 1.0]),
-        initial_shape_covariance=diag(array([0.2, 0.2, 0.2])),
-    )
+    common_kwargs = {
+        "filtered_states": filtered_states,
+        "predicted_states": predicted_states,
+        "measurements": measurements,
+        "system_matrices": eye(2),
+        "shape_system_matrices": eye(3),
+        "meas_noise_covs": 0.05 * eye(2),
+        "initial_shape_state": array([0.0, 1.0, 1.0]),
+        "initial_shape_covariance": diag(array([0.2, 0.2, 0.2])),
+    }
 
     one_pass_states, _ = ForwardBackwardForwardBackwardMEMQKFSmoother(
         n_iterations=1

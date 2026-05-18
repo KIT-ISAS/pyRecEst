@@ -728,6 +728,7 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
             )
         return inferred_noises
 
+    # pylint: disable=too-many-positional-arguments
     def _conditional_shape_prediction(
         self,
         previous_state: MEMQKFTrackerState,
@@ -760,6 +761,7 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
             shape_covariance,
         )
 
+    # pylint: disable=protected-access,too-many-positional-arguments
     def _conditioned_shape_update(
         self,
         prior_state: MEMQKFTrackerState,
@@ -809,6 +811,7 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
             )
         return MEMQKFTrackerState.from_tracker(tracker)
 
+    # pylint: disable=too-many-positional-arguments
     def _conditional_kinematic_prediction(
         self,
         previous_state: MEMQKFTrackerState,
@@ -830,6 +833,7 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
             fixed_shape_state.shape_covariance,
         )
 
+    # pylint: disable=protected-access,too-many-positional-arguments
     def _conditioned_kinematic_update(
         self,
         prior_state: MEMQKFTrackerState,
@@ -868,6 +872,7 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
                 tracker.covariance = tracker._project_symmetric_covariance(covariance)
         return MEMQKFTrackerState.from_tracker(tracker)
 
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
     def _conditional_kinematic_forward(
         self,
         shape_states: Sequence[MEMQKFTrackerState],
@@ -935,6 +940,7 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
 
         return conditional_filtered, conditional_predicted
 
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
     def _conditional_shape_forward(
         self,
         filtered_states: Sequence[MEMQKFTrackerState],
@@ -1060,8 +1066,8 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
             combined_gains.append(row)
         return combined_gains
 
-    # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
-    def smooth(
+    # pylint: disable=arguments-renamed,too-many-arguments,too-many-locals,too-many-positional-arguments
+    def smooth(  # type: ignore[override]
         self,
         filtered_states: Sequence,
         predicted_states: Sequence | None = None,
@@ -1142,9 +1148,9 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
         kinematic_smoother = FixedIntervalMEMQKFSmoother(shape_smoothing="none")
         current_filtered = filt_list
         current_predicted = pred_list
-        smoothed_states = []
-        kinematic_gains = []
-        shape_gains = []
+        smoothed_states: list[MEMQKFTrackerState] = []
+        kinematic_gains: list[list[Any]] = []
+        shape_gains: list[Any] = []
         for iteration_index in range(iteration_count):
             smoothed_kinematics, kinematic_gains = kinematic_smoother.smooth(
                 current_filtered,
