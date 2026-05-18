@@ -12,7 +12,6 @@ from pyrecest.backend import (
     cos,
     deg2rad,
     empty,
-    flip,
     linspace,
     pi,
     sin,

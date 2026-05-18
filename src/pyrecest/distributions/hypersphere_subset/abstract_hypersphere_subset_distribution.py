@@ -392,6 +392,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         ``AbstractHypersphereSubsetDistribution``: the first angle is the
         azimuth and all remaining angles are colatitudes.
         """
+        single_input = getattr(hypersph_coords, "ndim", 0) == 1
         hypersph_coords = atleast_2d(hypersph_coords)
         if mode == "colatitude":
             cart_coords = (
@@ -412,11 +413,12 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
 
-        return cart_coords.squeeze()
+        return cart_coords[0] if single_input else cart_coords
 
     @staticmethod
     def cart_to_hypersph(cart_coords, mode: str = "colatitude"):
         """Inverse of ``hypersph_to_cart`` for the selected convention."""
+        single_input = getattr(cart_coords, "ndim", 0) == 1
         cart_coords = atleast_2d(cart_coords)
         if mode == "colatitude":
             hypersph_coords = (
@@ -437,7 +439,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Mode must be 'colatitude', 'elevation' or 'inclination'")
 
-        return hypersph_coords.squeeze()
+        return hypersph_coords[0] if single_input else hypersph_coords
 
     @staticmethod
     def _cart_to_hypersph_colatitude(coords):

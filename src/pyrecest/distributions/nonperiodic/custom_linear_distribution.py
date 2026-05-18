@@ -44,7 +44,7 @@ class CustomLinearDistribution(
         mean_offset = new_mean - self.mean()
         self.shift_by += mean_offset
         if self._mean_numerical is not None:
-            self._mean_numerical += mean_offset
+            self._mean_numerical = self._mean_numerical + mean_offset
 
     def pdf(self, xs):
         assert self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim

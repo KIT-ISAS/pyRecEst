@@ -10,6 +10,7 @@ from pyrecest.backend import (
     cos,
     eye,
     linspace,
+    mean,
     meshgrid,
     pi,
     random,
@@ -39,6 +40,10 @@ from pyrecest.distributions.hypersphere_subset.watson_distribution import (
 
 
 class HypersphericalGridDistributionTest(unittest.TestCase):
+    @staticmethod
+    def _normalized_grid_values(grid_distribution, raw_values):
+        return raw_values / (grid_distribution.get_manifold_size() * mean(raw_values))
+
     # --------------------------------------------------------------
     # Helper: PDF equality on a small cartesian grid (S²)
     # --------------------------------------------------------------
@@ -174,9 +179,10 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         hgd = HypersphericalGridDistribution.from_distribution(dist, 1012, "leopardi")
         # We just check that the grid is consistent with its own pdf:  pdf(grid) ~ grid_values.
         grid = hgd.get_grid()
+        expected_values = self._normalized_grid_values(hgd, dist.pdf(grid))
         npt.assert_allclose(
             hgd.grid_values,
-            dist.pdf(grid),
+            expected_values,
             rtol=1e-6,
             atol=1e-6,
         )

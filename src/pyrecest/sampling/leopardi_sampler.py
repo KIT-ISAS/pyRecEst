@@ -13,7 +13,6 @@ from pyrecest.backend import (
     abs,
     arange,
     array,
-    flip,
     int32,
     linspace,
     max,

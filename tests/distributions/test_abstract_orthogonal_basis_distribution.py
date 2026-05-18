@@ -20,16 +20,16 @@ class DummyOrthogonalBasisDistribution(AbstractOrthogonalBasisDistribution):
 
 
 class AbstractOrthogonalBasisDistributionTest(unittest.TestCase):
-    def test_pdf_rejects_large_negative_imaginary_part(self):
-        dist = DummyOrthogonalBasisDistribution(array([1.0 - 1j]), "sqrt")
+    def test_identity_pdf_rejects_large_negative_imaginary_part(self):
+        dist = DummyOrthogonalBasisDistribution(array([1.0 - 1j]), "identity")
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             dist.pdf(array([0.0]))
 
-    def test_pdf_accepts_small_negative_imaginary_roundoff(self):
-        dist = DummyOrthogonalBasisDistribution(array([2.0 - 1e-8j]), "sqrt")
+    def test_sqrt_pdf_uses_complex_modulus_squared(self):
+        dist = DummyOrthogonalBasisDistribution(array([2.0 - 1j]), "sqrt")
 
-        self.assertAlmostEqual(float(dist.pdf(array([0.0]))[0]), 4.0)
+        self.assertAlmostEqual(float(dist.pdf(array([0.0]))[0]), 5.0)
 
 
 if __name__ == "__main__":
