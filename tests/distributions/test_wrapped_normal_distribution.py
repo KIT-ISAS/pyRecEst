@@ -41,6 +41,19 @@ class WrappedNormalDistributionTest(unittest.TestCase):
             )
         )
 
+    def test_pdf_is_periodic_when_central_term_underflows(self):
+        """The pdf must still add wrapped terms near the 0 / 2π boundary."""
+        wn = WrappedNormalDistribution(array(0.0), array(0.1))
+
+        density_near_left_boundary = wn.pdf(array(0.1))
+        density_near_right_boundary = wn.pdf(array(2.0 * pi - 0.1))
+
+        self.assertTrue(
+            allclose(
+                density_near_right_boundary, density_near_left_boundary, rtol=1e-5
+            )
+        )
+
     def test_pdf_with_large_sigma_is_uniform(self):
         """
         Test that the pdf with large sigma is approximately a uniform distribution.
