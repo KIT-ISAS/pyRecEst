@@ -26,7 +26,7 @@ from .abstract_hypersphere_subset_distribution import (
 )
 
 
-class AbstractHyperhemisphericalDistribution(AbstractHypypersphereSubsetDistribution):
+class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistribution):
     def mean(self):
         """
         Convenient access to axis to have a consistent interface
