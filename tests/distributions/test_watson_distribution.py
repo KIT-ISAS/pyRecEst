@@ -118,6 +118,26 @@ class TestWatsonDistribution(unittest.TestCase):
             err_msg="ln_pdf does not return correct log probabilities.",
         )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        "JAX proposals use an explicit PRNG-key signature",
+    )
+    def test_metropolis_hastings_custom_proposal_uses_default_start_point(self):
+        mu = array([1.0, 0.0, 0.0])
+        dist = WatsonDistribution(mu, 2.0)
+
+        def proposal(_):
+            return array([[1.0, 0.0, 0.0]])
+
+        samples = dist.sample_metropolis_hastings(
+            3,
+            burn_in=0,
+            skipping=1,
+            proposal=proposal,
+        )
+
+        self.assertEqual(samples.shape, (3, 3))
+
     def test_set_mode_returns_new_distribution(self):
         mu = array([0.0, 0.0, 1.0])
         new_mode = array([1.0, 0.0, 0.0])

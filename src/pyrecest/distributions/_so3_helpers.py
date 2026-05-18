@@ -11,6 +11,7 @@ from pyrecest.backend import (
     concatenate,
     cos,
     linalg,
+    log,
     ndim,
     reshape,
     sin,
@@ -72,6 +73,28 @@ def quaternion_multiply(left, right):
     return normalize_quaternions(product)
 
 
+def so3_exp_map_volume_log_jacobian(tangent_vectors):
+    """Return the SO(3) exponential-map volume log-Jacobian.
+
+    For scalar-last unit quaternions with the canonical ``w >= 0`` sign, the
+    principal rotation-vector chart maps the ball ``||v|| <= pi`` to the upper
+    unit-quaternion half sphere.  With ``theta = ||v||``, its volume element is
+
+        dV = sin(theta / 2)^2 / (2 * theta^2) dv,
+
+    with limiting value ``1 / 8`` at the identity.  The returned value is
+    ``log(dV / dv)`` and preserves all leading dimensions of ``tangent_vectors``.
+    """
+    tangent_vectors = array(tangent_vectors, dtype=float)
+    assert tangent_vectors.shape[-1] == 3, "SO(3) tangent vectors must have length 3."
+
+    angles = linalg.norm(tangent_vectors, axis=-1)
+    safe_angles = where(angles > 1e-8, angles, 1.0)
+    direct = 2.0 * (log(sin(0.5 * safe_angles)) - log(safe_angles)) - log(2.0)
+    small_angle_series = -log(8.0) - angles**2 / 12.0 - angles**4 / 1440.0
+    return where(angles > 1e-8, direct, small_angle_series)
+
+
 def exp_map_identity(tangent_vectors):
     """Map SO(3) tangent vectors at identity to scalar-last quaternions."""
     tangent_vectors = array(tangent_vectors, dtype=float)
@@ -109,9 +132,9 @@ def log_map_identity(rotations):
     safe_norm = where(vector_norm_col > 1e-12, vector_norm_col, 1.0)
     scale = where(
         vector_norm_col > 1e-12,
-        reshape(angles, tuple(angles.shape) + (1,)) / safe_norm,
-        2.0,
-    )
+        reshape(angles, tuple(angles.shape) + (1,)),
+        2.0 * safe_norm,
+    ) / safe_norm
     return vector_part * scale
 
 

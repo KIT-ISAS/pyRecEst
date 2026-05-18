@@ -8,17 +8,33 @@ References:
     arXiv preprint: Systems and Control (cs.SY), January 2015.
 """
 
+import math
+
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, atleast_1d, mod, pi, sign
+from pyrecest.backend import (
+    array,
+    asarray,
+    atleast_1d,
+    empty,
+    float64,
+    linalg,
+    mod,
+    pi,
+    reshape,
+    sign,
+    transpose,
+    zeros,
+)
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 
-from ._ukf import UnscentedKalmanFilter, _UKFModel
 from .abstract_filter import AbstractFilter
 from .manifold_mixins import CircularFilterMixin
+
+_TWO_PI = 2.0 * float(pi)
 
 
 def _measurement_vector(value):
@@ -26,32 +42,55 @@ def _measurement_vector(value):
     return atleast_1d(array(value, dtype=float)).flatten()
 
 
+def _wrap_angle_scalar(value):
+    """Map a scalar angle to [0, 2*pi)."""
+    return float(value) % _TWO_PI
+
+
+def _angular_difference_scalar(value, reference):
+    """Return the signed angle from reference to value in [-pi, pi)."""
+    return (float(value) - float(reference) + float(pi)) % _TWO_PI - float(pi)
+
+
+def _periodic_difference(value, reference):
+    """Return element-wise signed periodic differences in [-pi, pi)."""
+    return mod(value - reference + pi, 2.0 * pi) - pi
+
+
 def _wrap_periodic_measurement_to_reference(value, reference):
     """Put periodic measurement components on the branch nearest reference."""
-    return reference + mod(value - reference + pi, 2.0 * pi) - pi
+    return reference + _periodic_difference(value, reference)
 
 
-def _make_ukf(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-    fx, hx, dim_z, x0, P0, Q, R, alpha=1e-3, beta=2.0, kappa=0.0
-):
-    """Helper to build an UnscentedKalmanFilter.
+def _weighted_circular_mean(angles, weights, reference=None):
+    """Local weighted circular mean for sigma points.
 
-    Parameters
-    ----------
-    R:
-        Measurement noise covariance matrix of shape (dim_z, dim_z).
-    alpha, beta, kappa:
-        Sigma-point parameters for :class:`MerweScaledSigmaPoints`.
+    Merwe sigma-point weights can be negative.  A local lift around the central
+    sigma point is therefore more stable than a phasor mean when all sigma
+    points lie inside one local branch, which is the regime assumed by this UKF.
     """
-    points = MerweScaledSigmaPoints(n=1, alpha=alpha, beta=beta, kappa=kappa)
-    ukf = UnscentedKalmanFilter(
-        _UKFModel(dim_x=1, dim_z=dim_z, dt=1.0, hx=hx, fx=fx, points=points)
+    if reference is None:
+        reference = float(angles[0])
+    mean_lifted = float(reference) + math.fsum(
+        float(w) * _angular_difference_scalar(angle, reference)
+        for w, angle in zip(weights, angles)
     )
-    ukf.x = array([x0])
-    ukf.P = array([[P0]])
-    ukf.Q = array([[Q]])
-    ukf.R = R  # R must already be a (dim_z, dim_z) array
-    return ukf
+    return _wrap_angle_scalar(mean_lifted)
+
+
+def _sigma_points_1d(mu, covariance, alpha, beta, kappa):
+    """Return 1-D Merwe sigma points and their weights."""
+    points = MerweScaledSigmaPoints(n=1, alpha=alpha, beta=beta, kappa=kappa)
+    sigmas = points.sigma_points(array([mu]), array([[covariance]])).flatten()
+    return points, sigmas
+
+
+def _positive_variance(value):
+    """Remove tiny negative round-off from scalar covariance updates."""
+    value = float(value)
+    if value <= 0.0 and abs(value) < 1e-12:
+        return 1e-15
+    return value
 
 
 class CircularUKF(AbstractFilter, CircularFilterMixin):
@@ -144,29 +183,24 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         Q_val = float(gauss_sys.C[0, 0])
         noise_mean = float(gauss_sys.mu[0])
 
-        def fx(x, dt):  # pylint: disable=unused-argument
-            return array([f(x.flatten()[0]) + noise_mean])
-
-        def hx(x):
-            return x
-
-        ukf = _make_ukf(
-            fx,
-            hx,
-            dim_z=1,
-            x0=mu0,
-            P0=C0,
-            Q=Q_val,
-            R=array([[C0]]),
-            alpha=self._alpha,
-            beta=self._beta,
-            kappa=self._kappa,
+        points, sigmas = _sigma_points_1d(
+            mu0, C0, self._alpha, self._beta, self._kappa
         )
-        ukf.predict()
+        propagated = [
+            _wrap_angle_scalar(f(_wrap_angle_scalar(sigma)) + noise_mean)
+            for sigma in sigmas
+        ]
 
-        new_mu = mod(array([ukf.x.flatten()[0]]), 2.0 * pi)
-        new_C = array([[ukf.P[0, 0]]])
-        self._filter_state = GaussianDistribution(new_mu, new_C)
+        new_mu_scalar = _weighted_circular_mean(propagated, points.Wm)
+        new_C_scalar = math.fsum(
+            float(w) * _angular_difference_scalar(angle, new_mu_scalar) ** 2
+            for w, angle in zip(points.Wc, propagated)
+        )
+        new_C_scalar = _positive_variance(new_C_scalar + Q_val)
+
+        self._filter_state = GaussianDistribution(
+            array([new_mu_scalar]), array([[new_C_scalar]])
+        )
 
     # ------------------------------------------------------------------
     # Update
@@ -249,7 +283,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         C0 = float(self._filter_state.C[0, 0])
 
         if measurement_periodic:
-            z_reference = _measurement_vector(f(mu0))
+            z_reference = _measurement_vector(f(_wrap_angle_scalar(mu0)))
             if len(z_reference) != dim_z:
                 raise ValueError(
                     "measurement dimension mismatch: z has dimension "
@@ -265,11 +299,13 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         else:
             R_mat = array(gauss_meas.C, dtype=float).reshape(dim_z, dim_z)
 
-        def fx(x, dt):  # pylint: disable=unused-argument
-            return x
-
-        def hx(x):
-            hx_val = _measurement_vector(f(x.flatten()[0]))
+        points, sigmas = _sigma_points_1d(
+            mu0, C0, self._alpha, self._beta, self._kappa
+        )
+        sigmas_x = [_wrap_angle_scalar(sigma) for sigma in sigmas]
+        sigmas_h = empty((len(sigmas_x), dim_z))
+        for i, sigma_x in enumerate(sigmas_x):
+            hx_val = _measurement_vector(f(sigma_x))
             if len(hx_val) != dim_z:
                 raise ValueError(
                     "measurement function must return vectors with consistent "
@@ -280,28 +316,49 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             hx_val = hx_val + noise_mean
             if measurement_periodic:
                 hx_val = _wrap_periodic_measurement_to_reference(hx_val, z_reference)
-            return hx_val
+            sigmas_h[i] = hx_val
 
-        ukf = _make_ukf(
-            fx,
-            hx,
-            dim_z=dim_z,
-            x0=mu0,
-            P0=C0,
-            Q=0.0,
-            R=R_mat,
-            alpha=self._alpha,
-            beta=self._beta,
-            kappa=self._kappa,
-        )
-        # predict() with identity fx and Q=0 populates sigmas_f without
-        # altering the mean or covariance, which is required before update().
-        ukf.predict()
-        ukf.update(z)
+        if measurement_periodic:
+            z_pred_values = []
+            for dim in range(dim_z):
+                z_pred_values.append(
+                    _weighted_circular_mean(
+                        sigmas_h[:, dim], points.Wm, reference=z_reference[dim]
+                    )
+                )
+            z_pred = array(z_pred_values)
+        else:
+            z_pred = asarray(points.Wm @ sigmas_h, dtype=float64)
 
-        new_mu = float(mod(array([ukf.x.flatten()[0]]), 2.0 * pi)[0])
+        Pz = zeros((dim_z, dim_z))
+        Pxz = zeros((1, dim_z))
+        for i, sigma_x in enumerate(sigmas_x):
+            if measurement_periodic:
+                dz = _periodic_difference(sigmas_h[i], z_pred)
+            else:
+                dz = sigmas_h[i] - z_pred
+            dz = reshape(asarray(dz, dtype=float64), (-1,))
+            dz_col = reshape(dz, (-1, 1))
+            dx = _angular_difference_scalar(sigma_x, mu0)
+            Pz = Pz + float(points.Wc[i]) * (dz_col @ transpose(dz_col))
+            Pxz = Pxz + float(points.Wc[i]) * dx * reshape(dz, (1, dim_z))
+        Pz = Pz + R_mat
+
+        # Kalman gain  (solve Pz K^T = Pxz^T  =>  K = (Pz^{-1} Pxz^T)^T)
+        K = transpose(linalg.solve(Pz, transpose(Pxz)))
+
+        if measurement_periodic:
+            innovation = _periodic_difference(z, z_pred)
+        else:
+            innovation = z - z_pred
+        innovation = reshape(asarray(innovation, dtype=float64), (-1,))
+
+        new_mu = _wrap_angle_scalar(mu0 + float((K @ innovation)[0]))
+        new_C = array([[C0]]) - K @ Pz @ transpose(K)
+        new_C = 0.5 * (new_C + transpose(new_C))
+        new_C_scalar = _positive_variance(new_C[0, 0])
         self._filter_state = GaussianDistribution(
-            array([new_mu]), array([[ukf.P[0, 0]]])
+            array([new_mu]), array([[new_C_scalar]])
         )
 
     # ------------------------------------------------------------------
