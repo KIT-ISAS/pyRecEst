@@ -41,6 +41,34 @@ class TestVonMisesDistribution(unittest.TestCase):
         npt.assert_allclose(dist.trigonometric_moment(1), array(0.0 + 0.0j))
         npt.assert_allclose(dist.trigonometric_moment(2), array(0.0 + 0.0j))
 
+    def test_from_moment_recovers_parameters(self):
+        dist = VonMisesDistribution(1.3, 4.0)
+        reconstructed = VonMisesDistribution.from_moment(
+            dist.trigonometric_moment(1)
+        )
+
+        self.assertAlmostEqual(float(reconstructed.mu), float(dist.mu))
+        self.assertAlmostEqual(float(reconstructed.kappa), float(dist.kappa))
+
+    def test_from_zero_moment_returns_uniform_distribution(self):
+        dist = VonMisesDistribution.from_moment(array(0.0 + 0.0j))
+
+        self.assertEqual(dist.mu, 0.0)
+        self.assertEqual(dist.kappa, 0.0)
+
+    def test_from_degenerate_moment_raises(self):
+        with self.assertRaises(ValueError):
+            VonMisesDistribution.from_moment(array(1.0 + 0.0j))
+
+    def test_from_invalid_moment_raises(self):
+        with self.assertRaises(ValueError):
+            VonMisesDistribution.from_moment(array(1.01 + 0.0j))
+
+    def test_besselratio_inverse_rejects_invalid_boundary_values(self):
+        for x in (-0.1, 1.0, 1.01):
+            with self.assertRaises(ValueError):
+                VonMisesDistribution.besselratio_inverse(0, x)
+
     def test_plot(self):
         matplotlib.pyplot.close("all")
         matplotlib.use("Agg")
