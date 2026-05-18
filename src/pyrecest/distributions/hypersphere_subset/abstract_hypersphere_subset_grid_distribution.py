@@ -46,7 +46,7 @@ class AbstractHypersphereSubsetGridDistribution(
             enforce_pdf_nonnegative=enforce_pdf_nonnegative,
         )
         AbstractHypersphereSubsetDistribution.__init__(self, dim=manifold_dim)
-        self.normalize(warn_unnorm=False)
+        self.normalize_in_place(warn_unnorm=False)
 
     def mean_direction(self):
         warnings.warn(
