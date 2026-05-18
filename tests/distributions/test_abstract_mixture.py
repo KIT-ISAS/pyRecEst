@@ -25,6 +25,16 @@ class AbstractMixtureTest(unittest.TestCase):
             self.assertEqual(s.shape, (n, mix.input_dim))
         return s
 
+    def test_negative_weights_rejected(self):
+        vmf = ToroidalWrappedNormalDistribution(array([1.0, 0.0]), eye(2))
+        shifted_vmf = vmf.shift(array([1.0, 1.0]))
+
+        with self.assertRaisesRegex(ValueError, "nonnegative"):
+            HypertoroidalMixture(
+                [vmf, shifted_vmf],
+                array([1.2, -0.2]),
+            )
+
     def test_sample_metropolis_hastings_basics_only_t2(self):
         vmf = ToroidalWrappedNormalDistribution(array([1.0, 0.0]), eye(2))
         mix = HypertoroidalMixture(
