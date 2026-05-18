@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import array, log, max, min, mod, pi
+from pyrecest.backend import array, log, max, maximum, min, minimum, mod, pi
 from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistribution
 
 from .abstract_filter import AbstractFilter
@@ -72,7 +72,7 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
             if likelihood_vals_min == 0 or w_min == 0:
                 raise ZeroDivisionError("Cannot perform division by zero")
 
-            current_lambda = min(
+            current_lambda = minimum(
                 log(tau * w_max / w_min)
                 / log(likelihood_vals_min / likelihood_vals_max),
                 lambda_,
@@ -81,7 +81,8 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
             if current_lambda <= 0:
                 raise ValueError("Progressive update with given threshold impossible")
 
-            current_lambda = MINIMUM_LAMBDA
+            current_lambda = maximum(current_lambda, MINIMUM_LAMBDA)
+            current_lambda = minimum(current_lambda, lambda_)
             wd_new = wd.reweigh(lambda x: likelihood(z, x) ** current_lambda)
             self.filter_state = wd_new.to_wn()
             lambda_ = lambda_ - current_lambda
