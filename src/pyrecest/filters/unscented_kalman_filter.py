@@ -1,5 +1,6 @@
 # pylint: disable=no-name-in-module,no-member,duplicate-code
 from typing import Callable
+import warnings
 
 import pyrecest.backend
 from pyrecest.backend import atleast_1d, zeros
@@ -186,17 +187,58 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         self._filter_state.predict(dt=dt, fx=fx)
         self._predicted = True
 
-    def update_identity(self, meas, meas_cov):
+    def update_identity(
+        self,
+        meas_noise=None,
+        measurement=None,
+        *,
+        meas=None,
+        meas_cov=None,
+    ):
+        """Update with an identity measurement map.
+
+        The canonical API is ``update_identity(meas_noise, measurement)``,
+        matching :class:`KalmanFilter` and particle filters. The old Euclidean
+        UKF spelling ``update_identity(meas, meas_cov)`` is still accepted via
+        keyword aliases, and legacy two-argument positional calls are detected
+        when the arguments' shapes make the old order unambiguous.
+        """
         assert pyrecest.backend.__backend_name__ not in (
             "pytorch",
             "jax",
         ), "Not supported on this backend"
+
+        if meas is not None or meas_cov is not None:
+            if measurement is not None or meas_noise is not None:
+                raise TypeError(
+                    "Use either measurement/meas_noise or meas/meas_cov, not both."
+                )
+            measurement = meas
+            meas_noise = meas_cov
+
+        if measurement is None or meas_noise is None:
+            raise TypeError("update_identity requires meas_noise and measurement.")
+
+        dim_x = self._filter_state.x.shape[0]
+        cov_shape = (dim_x, dim_x)
+        if (
+            getattr(atleast_1d(meas_noise), "shape", None) != cov_shape
+            and getattr(atleast_1d(measurement), "shape", None) == cov_shape
+        ):
+            warnings.warn(
+                "Calling update_identity(measurement, meas_noise) is deprecated; "
+                "use update_identity(meas_noise=..., measurement=...) instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            meas_noise, measurement = measurement, meas_noise
+
         self._ensure_predicted()
 
         def hx(x):
             return x
 
-        self._filter_state.update(z=atleast_1d(meas), R=meas_cov, hx=hx)
+        self._filter_state.update(z=atleast_1d(measurement), R=meas_noise, hx=hx)
         self._predicted = False
 
     def update_linear(self, measurement, measurement_matrix, cov_mat_meas):
