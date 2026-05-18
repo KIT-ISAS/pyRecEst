@@ -14,6 +14,14 @@ class TestEllipsoidalBallUniformDistribution(unittest.TestCase):
         )
         npt.assert_allclose(dist.pdf(array([0.0, 0.0, 0.0])), 1 / 100.53096491)
 
+    def test_mean_and_covariance(self):
+        center = array([2.0, 3.0])
+        shape_matrix = array([[4.0, 3.0], [3.0, 9.0]])
+        dist = EllipsoidalBallUniformDistribution(center, shape_matrix)
+
+        npt.assert_allclose(dist.mean(), center)
+        npt.assert_allclose(dist.covariance(), shape_matrix / (dist.dim + 2))
+
     def test_sampling(self):
         dist = EllipsoidalBallUniformDistribution(
             array([2.0, 3.0]), array([[4.0, 3.0], [3.0, 9.0]])
