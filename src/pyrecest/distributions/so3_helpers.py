@@ -18,6 +18,7 @@ from ._so3_helpers import (
     quaternion_conjugate,
     quaternion_multiply,
     quaternions_to_rotation_matrices,
+    so3_exp_map_volume_log_jacobian,
 )
 
 __all__ = [
@@ -35,6 +36,7 @@ __all__ = [
     "rotate_vectors",
     "rotate_vectors_by_quaternions",
     "rotation_matrices_from_quaternions",
+    "so3_exp_map_volume_log_jacobian",
 ]
 
 

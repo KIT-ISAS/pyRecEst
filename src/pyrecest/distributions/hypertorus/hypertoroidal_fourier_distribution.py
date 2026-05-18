@@ -7,7 +7,6 @@ from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
-    abs as backend_abs,
     all,
     any,
     arange,
@@ -17,7 +16,6 @@ from pyrecest.backend import (
     conj,
     exp,
     fft,
-    imag,
     linalg,
     linspace,
     log,
@@ -113,7 +111,7 @@ class HypertoroidalFourierDistribution(
         Returns
         -------
         val : array, shape (n_eval,)
-            Complex-valued series evaluation (real up to numerical error).
+            Complex-valued series evaluation.
         """
         xs = array(xs)
 
@@ -156,15 +154,7 @@ class HypertoroidalFourierDistribution(
 
         # Evaluate series: Σ_k C_k exp(i k⋅x)
         mat_curr = exp(1j * mat_curr) * coeff_flat  # broadcast (n_eval, K)
-        p = sum(mat_curr, axis=-1)  # (n_eval,)
-
-        if not all(backend_abs(imag(p)) < 0.1):
-            warnings.warn(
-                "value: imaginary part is not negligible; returning real part.",
-                RuntimeWarning,
-            )
-
-        return real(p)
+        return sum(mat_curr, axis=-1)  # (n_eval,)
 
     def normalize_in_place(self, tol: float = 1e-4, warn_unnorm: bool = True):
         """
