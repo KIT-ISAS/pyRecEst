@@ -7,7 +7,6 @@ from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
-    abs as backend_abs,
     all,
     any,
     arange,
@@ -17,7 +16,6 @@ from pyrecest.backend import (
     conj,
     exp,
     fft,
-    imag,
     linalg,
     linspace,
     log,
@@ -113,7 +111,7 @@ class HypertoroidalFourierDistribution(
         Returns
         -------
         val : array, shape (n_eval,)
-            Complex-valued series evaluation (real up to numerical error).
+            Complex-valued series evaluation.
         """
         xs = array(xs)
 
@@ -156,15 +154,7 @@ class HypertoroidalFourierDistribution(
 
         # Evaluate series: Σ_k C_k exp(i k⋅x)
         mat_curr = exp(1j * mat_curr) * coeff_flat  # broadcast (n_eval, K)
-        p = sum(mat_curr, axis=-1)  # (n_eval,)
-
-        if not all(backend_abs(imag(p)) < 0.1):
-            warnings.warn(
-                "value: imaginary part is not negligible; returning real part.",
-                RuntimeWarning,
-            )
-
-        return real(p)
+        return sum(mat_curr, axis=-1)  # (n_eval,)
 
     def normalize_in_place(self, tol: float = 1e-4, warn_unnorm: bool = True):
         """
@@ -240,6 +230,8 @@ class HypertoroidalFourierDistribution(
             raise ValueError("truncate: n_coefficients must be positive.")
 
         current_shape = self.coeff_mat.shape
+        n_coefficients_arr = array(n_coefficients)
+        current_shape_arr = array(current_shape)
 
         # Already correct size
         if all(current_shape == n_coefficients):
@@ -248,7 +240,7 @@ class HypertoroidalFourierDistribution(
                 result.normalize_in_place(warn_unnorm=False)
             return result
 
-        if any(array(current_shape) < array(n_coefficients)):
+        if any(current_shape_arr < n_coefficients_arr):
             warnings.warn(
                 "Truncate:TooFewCoefficients: At least in one dimension, "
                 "truncate has to fill up due to too few coefficients.",
@@ -273,9 +265,11 @@ class HypertoroidalFourierDistribution(
         result = copy.deepcopy(self)
         result.coeff_mat = coeff_new
 
+        is_truncating = any(n_coefficients_arr < current_shape_arr)
+
         # Truncation can void normalization for non-identity transformations
         if force_normalization or (
-            self.transformation != "identity" and any(n_coefficients < current_shape)
+            self.transformation != "identity" and is_truncating
         ):
             result.normalize_in_place(warn_unnorm=False)
 
@@ -314,7 +308,7 @@ class HypertoroidalFourierDistribution(
         current_shape = self.coeff_mat.shape
 
         # Convolution in coefficient space (multi-dimensional)
-        if all(n_coefficients <= current_shape):
+        if all(array(n_coefficients) <= array(current_shape)):
             mode = "same"
         else:
             mode = "full"

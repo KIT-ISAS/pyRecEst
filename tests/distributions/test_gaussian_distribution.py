@@ -32,6 +32,18 @@ class ConstantLinearDistribution(AbstractLinearDistribution):
         return zeros(self.dim)
 
 
+class StandardNormalLinearDistribution(AbstractLinearDistribution):
+    def __init__(self):
+        super().__init__(1)
+
+    def pdf(self, xs):
+        return scipy.stats.norm.pdf(xs)
+
+    def mode(self, starting_point=None):
+        del starting_point
+        return array([0.0])
+
+
 class GaussianDistributionTest(unittest.TestCase):
     def test_gaussian_distribution_1d(self):
         g = GaussianDistribution(array(1.0), array(2.0))
@@ -130,6 +142,22 @@ class GaussianDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             to_numpy(product.C), to_numpy(expected_covariance), atol=1e-10
         )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="Numerical quadrature uses SciPy and is only supported on NumPy.",
+    )
+    def test_1d_numerical_covariance_is_matrix(self):
+        dist = StandardNormalLinearDistribution()
+
+        covariance = dist.covariance_numerical()
+
+        self.assertEqual(covariance.shape, (1, 1))
+        npt.assert_allclose(to_numpy(covariance), [[1.0]], atol=1e-7)
+
+        left, right = dist.get_suggested_integration_limits(scaling_factor=1)
+        npt.assert_allclose(to_numpy(left), [-1.0], atol=1e-7)
+        npt.assert_allclose(to_numpy(right), [1.0], atol=1e-7)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",

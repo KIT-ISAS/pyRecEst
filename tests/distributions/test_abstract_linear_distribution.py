@@ -96,7 +96,14 @@ class TestAbstractLinearDistribution(unittest.TestCase):
 
     def test_plot_state_r2(self):
         gd = GaussianDistribution(array([1.0, 2.0]), array([[1.0, 0.5], [0.5, 1.0]]))
-        gd.plot()
+        gd.plot_state()
+
+    def test_plot_state_r3(self):
+        gd = GaussianDistribution(
+            array([1.0, 2.0, 3.0]),
+            array([[1.0, 0.5, 0.0], [0.5, 1.0, 0.0], [0.0, 0.0, 1.0]]),
+        )
+        gd.plot_state()
 
 
 if __name__ == "__main__":
