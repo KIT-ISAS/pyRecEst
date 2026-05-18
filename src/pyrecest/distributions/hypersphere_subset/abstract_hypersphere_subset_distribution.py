@@ -1,4 +1,3 @@
-import warnings
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import Union
@@ -117,13 +116,13 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         else:
             raise ValueError("Unsupported")
 
-        if linalg.norm(mu) < 1e-9:
-            warnings.warn(
-                "Warning: Density may not actually have a mean direction because integral yields a point very close to the origin."
+        norm_mu = linalg.norm(mu)
+        if norm_mu < 1e-9:
+            raise ValueError(
+                "Mean direction is undefined because the first moment is too close to the origin."
             )
 
-        mu = mu / linalg.norm(mu)
-        return mu
+        return mu / norm_mu
 
     def gen_pdf_hyperspherical_coords(self):
         """
