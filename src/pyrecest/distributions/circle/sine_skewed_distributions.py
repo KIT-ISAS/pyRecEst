@@ -57,7 +57,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
                 1
                 + self.lambda_**4
                 / 8
-                * (3 - 2 * bessel_ratio(2, self.kappa) + bessel_ratio(4, self.kappa))
+                * (3 - 4 * bessel_ratio(2, self.kappa) + bessel_ratio(4, self.kappa))
                 + 3 * self.lambda_**2 * (1 - bessel_ratio(2, self.kappa))
             )
         else:
