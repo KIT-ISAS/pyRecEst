@@ -27,7 +27,7 @@ def plot_ellipsoid(center, shape_matrix, scaling_factor=1, color="blue"):
 
 def plot_ellipsoid_2d(center, shape_matrix, scaling_factor=1, color="blue"):
     xs = linspace(0, 2 * pi, 100)
-    ps = scaling_factor * shape_matrix @ column_stack((cos(xs), sin(xs)))
+    ps = scaling_factor * shape_matrix @ column_stack((cos(xs), sin(xs))).T
     plt.plot(ps[0] + center[0], ps[1] + center[1], color=color)
     plt.show()
 

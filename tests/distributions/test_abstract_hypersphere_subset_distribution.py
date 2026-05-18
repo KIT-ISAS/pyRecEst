@@ -12,7 +12,6 @@ from pyrecest.backend import (
     cos,
     isclose,
     linalg,
-    prod,
     random,
     sin,
     sqrt,

@@ -80,7 +80,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
             if pyrecest.backend.__backend_name__ in ("numpy", "pytorch"):
 
                 def proposal_np(_):
-                    return HypersphericalUniformDistribution(self.dim).sample(1)
+                    return HypersphericalUniformDistribution(self.dim).sample(1)  # pylint: disable=possibly-used-before-assignment
 
                 proposal = proposal_np
             else:
@@ -98,7 +98,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 proposal = proposal_jax
 
         if start_point is None:
-            start_point = HypersphericalUniformDistribution(self.dim).sample(1)
+            start_point = HypersphericalUniformDistribution(self.dim).sample(1)  # pylint: disable=possibly-used-before-assignment
         # Call the sample_metropolis_hastings method of AbstractDistribution
         # pylint: disable=duplicate-code
         return super().sample_metropolis_hastings(
@@ -270,6 +270,8 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         else:
             # Compute the log of the surface area directly using properties of log
             log_surface_area = (
-                log(2.0) + ((self.dim + 1) / 2) * log(pi) - gammaln((self.dim + 1) / 2)
+                log(2.0)
+                + ((self.dim + 1) / 2) * log(pi)
+                - gammaln(array((self.dim + 1) / 2))
             )
         return log_surface_area
