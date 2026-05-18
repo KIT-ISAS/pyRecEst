@@ -1,4 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+import math
+
 from pyrecest.backend import (
     abs,
     arctan2,
@@ -15,8 +17,8 @@ from pyrecest.backend import (
     where,
     zeros_like,
 )
-from scipy.optimize import fsolve
-from scipy.special import iv
+from scipy.optimize import brentq
+from scipy.special import iv, ive
 from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -30,6 +32,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
     Jammalamadaka, S. R., & SenGupta, A. (2001). Topics in Circular
     Statistics. World Scientific.
     """
+
+    _MOMENT_MAGNITUDE_TOL = 1e-12
 
     def __init__(
         self,
@@ -119,13 +123,51 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return r
 
     @staticmethod
-    def besselratio_inverse(v, x):
-        def f(t: float) -> float:
-            return VonMisesDistribution.besselratio(v, t) - x
+    def _as_float_scalar(value, name: str) -> float:
+        try:
+            scalar = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must be a scalar.") from exc
 
-        start = 1.0
-        (kappa,) = fsolve(f, start)
-        return kappa
+        if not math.isfinite(scalar):
+            raise ValueError(f"{name} must be finite.")
+        return scalar
+
+    @staticmethod
+    def _besselratio_scalar(nu, kappa: float) -> float:
+        if kappa == 0.0:
+            return 0.0
+        return float(ive(nu + 1, kappa) / ive(nu, kappa))
+
+    @staticmethod
+    def besselratio_inverse(v, x):
+        x_scalar = VonMisesDistribution._as_float_scalar(x, "Bessel-ratio target")
+        tol = VonMisesDistribution._MOMENT_MAGNITUDE_TOL
+
+        if x_scalar < 0.0:
+            if x_scalar >= -tol:
+                return array(0.0)
+            raise ValueError("Bessel-ratio target must lie in [0, 1).")
+        if x_scalar <= tol:
+            return array(0.0)
+        if x_scalar >= 1.0 - tol:
+            raise ValueError(
+                "Bessel-ratio target must be strictly smaller than 1 for a finite "
+                "von Mises concentration."
+            )
+
+        def residual(kappa: float) -> float:
+            return VonMisesDistribution._besselratio_scalar(v, kappa) - x_scalar
+
+        upper = 1.0
+        while residual(upper) < 0.0:
+            upper *= 2.0
+            if upper > 1e12:
+                raise ValueError(
+                    "Bessel-ratio target is too close to 1 for stable finite inversion."
+                )
+
+        return array(brentq(residual, 0.0, upper, xtol=1e-14, rtol=1e-14, maxiter=100))
 
     def multiply(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
         C = self.kappa * cos(self.mu) + vm2.kappa * cos(vm2.mu)
@@ -182,8 +224,11 @@ class VonMisesDistribution(AbstractCircularDistribution):
         Returns:
             vm (VMDistribution): VM distribution obtained by moment matching.
         """
-        mu_ = mod(arctan2(imag(m), real(m)), 2.0 * pi)
         kappa_ = VonMisesDistribution.besselratio_inverse(0, abs(m))
+        if VonMisesDistribution._as_float_scalar(kappa_, "kappa") == 0.0:
+            mu_ = array(0.0)
+        else:
+            mu_ = mod(arctan2(imag(m), real(m)), 2.0 * pi)
         vm = VonMisesDistribution(mu_, kappa_)
         return vm
 
