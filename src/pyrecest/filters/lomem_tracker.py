@@ -4,20 +4,20 @@ from __future__ import annotations
 # pylint: disable=too-many-instance-attributes,too-many-arguments
 # pylint: disable=too-many-positional-arguments,too-many-locals
 from pyrecest.backend import abs as backend_abs
+from pyrecest.backend import sum as backend_sum
 from pyrecest.backend import (
-    arctan2,
     array,
     concatenate,
     cos,
     diag,
     eye,
+    kron,
     linalg,
     linspace,
     maximum,
     mean,
     pi,
     sin,
-    sqrt,
     zeros,
 )
 
@@ -32,12 +32,12 @@ class LOMEMTracker(AbstractExtendedObjectTracker):
     orthogonal Omicron direction.  The measurement update follows the L:OMEM
     point-object-reduction idea from Tesori, Battistelli, Chisci, and Farina,
     "L:OMEM - A fast filter to track maneuvering extended objects", FUSION
-    2023: a full scan of target-originated points is reduced to one augmented
-    point-object measurement containing centroid, orientation, and axes.
+    2023: a full scan of target-originated points is reduced to one mean
+    measurement and one sample-covariance pseudo-measurement.
 
     This class intentionally keeps the first implementation compact: the
-    prediction is a unicycle-style maneuvering model and the reduced
-    measurement is applied with an EKF correction.
+    prediction is a unicycle-style maneuvering model and the L:OMEM reduced
+    measurement moments are applied with a BLUE/Kalman-style correction.
     """
 
     measurement_dim = 2
@@ -198,12 +198,157 @@ class LOMEMTracker(AbstractExtendedObjectTracker):
         centered = measurements - center.reshape((self.measurement_dim, 1))
         return self._symmetrize(centered @ centered.T / (measurement_count - 1))
 
+    @staticmethod
+    def _covariance_vector(covariance):
+        return array([covariance[0, 0], covariance[1, 1], covariance[1, 0]])
+
+    @staticmethod
+    def _pseudo_measurement_matrices():
+        d_matrix = array(
+            [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+                [0.0, 1.0, 0.0, 0.0],
+            ]
+        )
+        d_tilde_matrix = array(
+            [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+                [0.0, 0.0, 1.0, 0.0],
+            ]
+        )
+        return d_matrix, d_tilde_matrix
+
+    def _multiplicative_error_covariance(self):
+        return float(self.extent_scale) * eye(self.measurement_dim)
+
+    def _shape_matrix(self, shape_state=None):
+        if shape_state is None:
+            shape_state = self.state[3:6]
+        heading = shape_state[0]
+        semi_axis_lambda = shape_state[1]
+        semi_axis_omicron = shape_state[2]
+        return array(
+            [
+                [
+                    semi_axis_lambda * cos(heading),
+                    -semi_axis_omicron * sin(heading),
+                ],
+                [
+                    semi_axis_lambda * sin(heading),
+                    semi_axis_omicron * cos(heading),
+                ],
+            ]
+        )
+
+    def _shape_matrix_row_jacobians(self, shape_state=None):
+        if shape_state is None:
+            shape_state = self.state[3:6]
+        heading = shape_state[0]
+        semi_axis_lambda = shape_state[1]
+        semi_axis_omicron = shape_state[2]
+        jacobian_row_1 = array(
+            [
+                [-semi_axis_lambda * sin(heading), cos(heading), 0.0],
+                [-semi_axis_omicron * cos(heading), 0.0, -sin(heading)],
+            ]
+        )
+        jacobian_row_2 = array(
+            [
+                [semi_axis_lambda * cos(heading), sin(heading), 0.0],
+                [-semi_axis_omicron * sin(heading), 0.0, cos(heading)],
+            ]
+        )
+        return jacobian_row_1, jacobian_row_2
+
+    @staticmethod
+    def _matrix_trace(matrix):
+        return backend_sum(diag(matrix))
+
+    def _first_order_equivalent_noise_covariance(self):
+        shape_covariance = self.covariance[3:6, 3:6]
+        multiplicative_covariance = self._multiplicative_error_covariance()
+        row_jacobians = self._shape_matrix_row_jacobians()
+        first_order_covariance = zeros((self.measurement_dim, self.measurement_dim))
+        for row_index in range(self.measurement_dim):
+            for column_index in range(self.measurement_dim):
+                first_order_covariance[row_index, column_index] = self._matrix_trace(
+                    shape_covariance
+                    @ row_jacobians[column_index].T
+                    @ multiplicative_covariance
+                    @ row_jacobians[row_index]
+                )
+        return self._symmetrize(first_order_covariance)
+
+    def _equivalent_measurement_covariance(self, meas_noise_cov):
+        shape_matrix = self._shape_matrix()
+        multiplicative_covariance = self._multiplicative_error_covariance()
+        zero_order_covariance = (
+            shape_matrix @ multiplicative_covariance @ shape_matrix.T
+        )
+        return self._regularized_covariance(
+            zero_order_covariance
+            + self._first_order_equivalent_noise_covariance()
+            + meas_noise_cov
+        )
+
+    def _shape_pseudo_measurement_jacobian(self):
+        shape_matrix = self._shape_matrix()
+        multiplicative_covariance = self._multiplicative_error_covariance()
+        jacobian_row_1, jacobian_row_2 = self._shape_matrix_row_jacobians()
+        first_row = 2.0 * (
+            shape_matrix[0, :] @ multiplicative_covariance @ jacobian_row_1
+        )
+        second_row = 2.0 * (
+            shape_matrix[1, :] @ multiplicative_covariance @ jacobian_row_2
+        )
+        third_row = (
+            shape_matrix[0, :] @ multiplicative_covariance @ jacobian_row_2
+            + shape_matrix[1, :] @ multiplicative_covariance @ jacobian_row_1
+        )
+        return array([first_row, second_row, third_row])
+
+    def _pseudo_measurement_noise_covariance(
+        self,
+        equivalent_measurement_covariance,
+        measurement_count,
+    ):
+        d_matrix, d_tilde_matrix = self._pseudo_measurement_matrices()
+        covariance = (
+            d_matrix
+            @ kron(
+                equivalent_measurement_covariance,
+                equivalent_measurement_covariance,
+            )
+            @ (d_matrix + d_tilde_matrix).T
+            / measurement_count
+        )
+        return self._regularized_covariance(covariance)
+
+    def _reduced_measurement_noise_covariances(
+        self,
+        equivalent_measurement_covariance,
+        measurement_count,
+    ):
+        mean_noise_covariance = equivalent_measurement_covariance / measurement_count
+        if measurement_count <= 1:
+            return mean_noise_covariance, None
+        pseudo_noise_covariance = self._pseudo_measurement_noise_covariance(
+            equivalent_measurement_covariance,
+            measurement_count,
+        )
+        return mean_noise_covariance, pseudo_noise_covariance
+
     def reduce_measurements(self, measurements, meas_noise_cov=None):
         """Reduce a scan to one L:OMEM augmented point-object measurement.
 
         Returns ``(z, R)``.  For a single detection, ``z`` only contains the
-        centroid and ``R`` is 2x2.  For two or more detections, ``z`` contains
-        ``[center_x, center_y, heading, semi_axis_lambda, semi_axis_omicron]``.
+        centroid and ``R`` is the 2x2 equivalent covariance of the reduced mean
+        measurement.  For two or more detections, ``z`` contains
+        ``[center_x, center_y, covariance_xx, covariance_yy, covariance_xy]``
+        and ``R`` contains the block-diagonal equivalent noise covariance of
+        the mean measurement and the sample-covariance pseudo-measurement.
         """
         measurements = self._normalize_measurements(measurements)
         measurement_count = measurements.shape[1]
@@ -212,39 +357,23 @@ class LOMEMTracker(AbstractExtendedObjectTracker):
 
         meas_noise_cov = self._get_measurement_noise(meas_noise_cov)
         center = mean(measurements, axis=1)
-        scatter = self._measurement_scatter(measurements, center)
-        center_covariance = self._regularized_covariance(
-            (scatter + meas_noise_cov) / measurement_count
+        equivalent_covariance = self._equivalent_measurement_covariance(
+            meas_noise_cov,
+        )
+        mean_noise_covariance, pseudo_noise_covariance = (
+            self._reduced_measurement_noise_covariances(
+                equivalent_covariance,
+                measurement_count,
+            )
         )
         if measurement_count == 1:
-            return center, center_covariance
+            return center, mean_noise_covariance
 
-        eigenvalues, eigenvectors = linalg.eigh(scatter)
-        major_variance = maximum(
-            eigenvalues[1], self.extent_scale * self.minimum_axis_length**2
-        )
-        minor_variance = maximum(
-            eigenvalues[0], self.extent_scale * self.minimum_axis_length**2
-        )
-        heading = arctan2(eigenvectors[1, 1], eigenvectors[0, 1])
-        axes = sqrt(array([major_variance, minor_variance]) / self.extent_scale)
-        z = concatenate([center, array([heading]), axes])
-
-        shape_variance = array(
-            [
-                float(self.orientation_measurement_variance)
-                / max(measurement_count - 1, 1),
-                float(self.axis_measurement_variance_scale)
-                * float(axes[0]) ** 2
-                / max(measurement_count, 1),
-                float(self.axis_measurement_variance_scale)
-                * float(axes[1]) ** 2
-                / max(measurement_count, 1),
-            ]
-        )
+        scatter = self._measurement_scatter(measurements, center)
+        z = concatenate([center, self._covariance_vector(scatter)])
         reduction_covariance = zeros((5, 5))
-        reduction_covariance[:2, :2] = center_covariance
-        reduction_covariance[2:, 2:] = diag(shape_variance)
+        reduction_covariance[:2, :2] = mean_noise_covariance
+        reduction_covariance[2:, 2:] = pseudo_noise_covariance
         return z, self._regularized_covariance(reduction_covariance)
 
     def predict_unicycle(
@@ -325,45 +454,92 @@ class LOMEMTracker(AbstractExtendedObjectTracker):
         return linalg.solve(innovation_covariance.T, cross_covariance.T).T
 
     def update(self, measurements, meas_noise_cov=None, reduction_covariance=None):
-        z, derived_covariance = self.reduce_measurements(
-            measurements,
-            meas_noise_cov=meas_noise_cov,
-        )
-        if z is None:
+        measurements = self._normalize_measurements(measurements)
+        measurement_count = measurements.shape[1]
+        if measurement_count == 0:
             return
-        if reduction_covariance is None:
-            reduction_covariance = derived_covariance
-        else:
-            reduction_covariance = array(reduction_covariance)
 
-        if z.shape[0] == self.measurement_dim:
-            measurement_matrix = zeros((self.measurement_dim, self.state_dim))
-            measurement_matrix[0, 0] = 1.0
-            measurement_matrix[1, 1] = 1.0
-            innovation = z - measurement_matrix @ self.state
+        meas_noise_cov = self._get_measurement_noise(meas_noise_cov)
+        center = mean(measurements, axis=1)
+        equivalent_covariance = self._equivalent_measurement_covariance(
+            meas_noise_cov,
+        )
+        mean_noise_covariance, pseudo_noise_covariance = (
+            self._reduced_measurement_noise_covariances(
+                equivalent_covariance,
+                measurement_count,
+            )
+        )
+
+        if reduction_covariance is not None:
+            reduction_covariance = array(reduction_covariance)
+            if measurement_count == 1:
+                if reduction_covariance.shape != (2, 2):
+                    raise ValueError(
+                        "reduction_covariance must have shape (2, 2) for one "
+                        "measurement"
+                    )
+                mean_noise_covariance = reduction_covariance
+            else:
+                if reduction_covariance.shape != (5, 5):
+                    raise ValueError(
+                        "reduction_covariance must have shape (5, 5) for a "
+                        "reduced L:OMEM measurement"
+                    )
+                mean_noise_covariance = reduction_covariance[:2, :2]
+                pseudo_noise_covariance = reduction_covariance[2:, 2:]
+
+        kinematic_measurement_matrix = zeros((self.measurement_dim, 3))
+        kinematic_measurement_matrix[0, 0] = 1.0
+        kinematic_measurement_matrix[1, 1] = 1.0
+        kinematic_covariance = self.covariance[:3, :3]
+        mean_innovation_covariance = self._regularized_covariance(
+            kinematic_measurement_matrix
+            @ kinematic_covariance
+            @ kinematic_measurement_matrix.T
+            + mean_noise_covariance
+        )
+        mean_cross_covariance = zeros((self.state_dim, self.measurement_dim))
+        mean_cross_covariance[:3, :] = (
+            kinematic_covariance @ kinematic_measurement_matrix.T
+        )
+
+        if measurement_count == 1:
+            innovation = center - self.state[:2]
+            innovation_covariance = mean_innovation_covariance
+            cross_covariance = mean_cross_covariance
         else:
-            measurement_matrix = zeros((5, self.state_dim))
-            measurement_matrix[0, 0] = 1.0
-            measurement_matrix[1, 1] = 1.0
-            measurement_matrix[2, 3] = 1.0
-            measurement_matrix[3, 4] = 1.0
-            measurement_matrix[4, 5] = 1.0
-            innovation = z - measurement_matrix @ self.state
-            innovation = array(
+            scatter = self._measurement_scatter(measurements, center)
+            observed_pseudo_measurement = self._covariance_vector(scatter)
+            predicted_pseudo_measurement = self._covariance_vector(
+                equivalent_covariance,
+            )
+            pseudo_measurement_jacobian = self._shape_pseudo_measurement_jacobian()
+            shape_covariance = self.covariance[3:6, 3:6]
+            pseudo_innovation_covariance = self._regularized_covariance(
+                pseudo_measurement_jacobian
+                @ shape_covariance
+                @ pseudo_measurement_jacobian.T
+                + pseudo_noise_covariance
+            )
+            innovation = concatenate(
                 [
-                    innovation[0],
-                    innovation[1],
-                    self._wrap_half_turn(innovation[2]),
-                    innovation[3],
-                    innovation[4],
+                    center - self.state[:2],
+                    observed_pseudo_measurement - predicted_pseudo_measurement,
                 ]
             )
+            innovation_covariance = zeros((5, 5))
+            innovation_covariance[:2, :2] = mean_innovation_covariance
+            innovation_covariance[2:, 2:] = pseudo_innovation_covariance
+            cross_covariance = zeros((self.state_dim, 5))
+            cross_covariance[:, :2] = mean_cross_covariance
+            cross_covariance[3:6, 2:] = (
+                measurement_count
+                / (measurement_count - 1.0)
+                * shape_covariance
+                @ pseudo_measurement_jacobian.T
+            )
 
-        innovation_covariance = self._regularized_covariance(
-            measurement_matrix @ self.covariance @ measurement_matrix.T
-            + reduction_covariance
-        )
-        cross_covariance = self.covariance @ measurement_matrix.T
         gain = self._gain_from_cross_covariance(
             cross_covariance,
             innovation_covariance,
