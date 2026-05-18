@@ -3,7 +3,7 @@ import warnings
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import argmax, array_equal, sum
+from pyrecest.backend import argmax, array_equal, reshape, sum
 
 from ..abstract_grid_distribution import AbstractGridDistribution
 from .abstract_hyperhemispherical_distribution import (
@@ -60,12 +60,18 @@ class AbstractHypersphereSubsetGridDistribution(
         return mu
 
     def moment(self):
-        weights = self.grid_values / sum(self.grid_values)  # (N,)
+        """Return the normalized second-moment matrix of the grid points.
 
-        weighted_grid = self.get_grid() * weights
+        For equal-area grids, the common quadrature weight cancels when the
+        density values are normalized. The returned matrix is therefore
 
-        C = weighted_grid * (self.get_grid().T @ self.get_grid())
-        return C
+            sum_i w_i x_i x_i.T, where w_i = grid_values_i / sum_j grid_values_j.
+        """
+        grid = self.get_grid()
+        weights = self.grid_values / sum(self.grid_values)
+        weighted_grid = grid * reshape(weights, (-1, 1))
+
+        return grid.T @ weighted_grid
 
     @beartype
     def multiply(
