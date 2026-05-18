@@ -6,6 +6,7 @@ from pyrecest.backend import (
     amax,
     array,
     diag,
+    exp,
     linalg,
     log,
     matmul,
@@ -26,18 +27,25 @@ from ._so3_helpers import (
     quaternion_conjugate,
     quaternion_multiply,
     quaternions_to_rotation_matrices,
+    so3_exp_map_volume_log_jacobian,
 )
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
-from .nonperiodic.gaussian_distribution import GaussianDistribution
 
 
 class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
-    """Gaussian distribution in a local tangent chart of SO(3).
+    """Log-Gaussian approximation on SO(3).
 
     Rotations are represented as scalar-last unit quaternions ``(x, y, z, w)``.
-    The density is evaluated by mapping rotations into the tangent space at the
-    mean via ``log(mean^{-1} * rotation)`` and applying a 3-D Gaussian there.
-    This is a local tangent approximation, not a globally wrapped density.
+    The distribution is parameterized by a Gaussian in the principal tangent
+    chart at ``mu``.  Density evaluation maps rotations into that chart and
+    divides by the SO(3) exponential-map volume element, so ``pdf`` and
+    ``ln_pdf`` are densities with respect to the upper-unit-quaternion/Haar
+    volume measure rather than raw Euclidean log-coordinate densities.
+
+    This remains a local, single-chart approximation: samples whose tangent
+    draws leave the principal ball are mapped through the exponential map and
+    folded by quaternion canonicalization, not represented as an exact globally
+    wrapped Gaussian.
     """
 
     def __init__(self, mu, C, check_validity=True):
@@ -102,19 +110,17 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
         return quaternions_to_rotation_matrices(quaternions)
 
     def pdf(self, xs):
-        """Evaluate the tangent Gaussian density at SO(3) quaternions."""
-        tangent_vectors = self.log_map(xs, base=self.mu)
-        gaussian = GaussianDistribution(zeros(3), self.C, check_validity=False)
-        return gaussian.pdf(tangent_vectors)
+        """Evaluate the SO(3) volume density at quaternions."""
+        return exp(self.ln_pdf(xs))
 
     def ln_pdf(self, xs):
-        """Evaluate the natural logarithm of the tangent Gaussian density."""
+        """Evaluate the natural logarithm of the SO(3) volume density."""
         tangent_vectors = self.log_map(xs, base=self.mu)
-        residual = tangent_vectors
         precision = linalg.inv(self.C)
-        quadratic = sum(residual * matmul(residual, precision), axis=-1)
+        quadratic = sum(tangent_vectors * matmul(tangent_vectors, precision), axis=-1)
         log_det = 2.0 * sum(log(diag(linalg.cholesky(self.C))))
-        return -0.5 * (3.0 * log(2.0 * pi) + log_det + quadratic)
+        tangent_log_density = -0.5 * (3.0 * log(2.0 * pi) + log_det + quadratic)
+        return tangent_log_density - so3_exp_map_volume_log_jacobian(tangent_vectors)
 
     def tangent_vectors(self, rotations):
         """Return log-map coordinates of rotations around the distribution mean."""
