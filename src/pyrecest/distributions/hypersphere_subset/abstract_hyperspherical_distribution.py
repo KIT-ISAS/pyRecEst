@@ -70,12 +70,13 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             : Sampled points.
         """
-        if proposal is None:
-            # For unimodal densities, other proposals may be far better.
+        if proposal is None or start_point is None:
             from .hyperspherical_uniform_distribution import (
                 HypersphericalUniformDistribution,
             )
 
+        if proposal is None:
+            # For unimodal densities, other proposals may be far better.
             if pyrecest.backend.__backend_name__ in ("numpy", "pytorch"):
 
                 def proposal_np(_):
