@@ -5,8 +5,16 @@ from numbers import Integral
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, matvec, ndim, random, reshape
-from scipy.linalg import cholesky
+from pyrecest.backend import (
+    all as backend_all,
+    allclose,
+    linalg,
+    matvec,
+    ndim,
+    random,
+    reshape,
+    transpose,
+)
 
 from .abstract_linear_distribution import AbstractLinearDistribution
 
@@ -46,14 +54,10 @@ class GaussianDistribution(AbstractLinearDistribution):
         self.mu = mu
 
         if check_validity:
-            if self.dim == 1:
-                assert C > 0, "C must be positive definite"
-            elif self.dim == 2:
-                assert (
-                    C[0, 0] > 0.0 and linalg.det(C) > 0.0
-                ), "C must be positive definite"
-            else:
-                cholesky(C)  # Will fail if C is not positive definite
+            assert allclose(C, transpose(C)), "C must be symmetric"
+            assert backend_all(
+                linalg.eigvalsh(C) > 0.0
+            ), "C must be positive definite"
 
         self.C = C
 
