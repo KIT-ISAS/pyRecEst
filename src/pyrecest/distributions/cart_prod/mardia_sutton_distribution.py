@@ -120,13 +120,33 @@ class MardiaSuttonDistribution(AbstractHypercylindricalDistribution):
         return column_stack([s_vm, s_gauss])
 
     def linear_covariance(self, approximate_mean=None):
-        """Return the intrinsic linear variance as a (1, 1) matrix.
+        """Return the marginal linear variance as a (1, 1) matrix.
 
         Returns:
-            C (1, 1): [[sigma^2]]
+            C (1, 1): marginal variance of the linear variable
         """
         _ = approximate_mean
-        return array([[self.sigma**2]])
+
+        kappa = float(self.kappa)
+        bessel_0 = iv(0, kappa)
+        bessel_ratio_1 = iv(1, kappa) / bessel_0
+        bessel_ratio_2 = iv(2, kappa) / bessel_0
+
+        rho_squared = self.rho1**2 + self.rho2**2
+        conditional_variance = self.sigma**2 * (1.0 - rho_squared)
+
+        # The conditional linear mean depends on the von-Mises-distributed angle.
+        # Hence the marginal linear variance is E[Var[X | theta]] plus
+        # Var(E[X | theta]); returning sigma**2 alone ignores the second term.
+        aligned_rho_cos = self.rho1 * cos(self.mu0) + self.rho2 * sin(self.mu0)
+        aligned_rho_sin = -self.rho1 * sin(self.mu0) + self.rho2 * cos(self.mu0)
+        cos_variance = 0.5 * (1.0 + bessel_ratio_2) - bessel_ratio_1**2
+        sin_variance = 0.5 * (1.0 - bessel_ratio_2)
+        conditional_mean_variance = self.sigma**2 * self.kappa * (
+            aligned_rho_cos**2 * cos_variance + aligned_rho_sin**2 * sin_variance
+        )
+
+        return array([[conditional_variance + conditional_mean_variance]])
 
     def marginalize_linear(self):
         """Return the marginal circular distribution.
