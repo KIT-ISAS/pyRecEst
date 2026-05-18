@@ -44,6 +44,13 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         """
         return self.mean_direction()
 
+    def _sample_uniform_hypersphere(self):
+        from .hyperspherical_uniform_distribution import (
+            HypersphericalUniformDistribution,
+        )
+
+        return HypersphericalUniformDistribution(self.dim).sample(1)
+
     # jscpd:ignore-start
     # pylint: disable=too-many-positional-arguments
     def sample_metropolis_hastings(
@@ -70,19 +77,12 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             : Sampled points.
         """
-        if proposal is None or start_point is None:
-            from .hyperspherical_uniform_distribution import (
-                HypersphericalUniformDistribution,
-            )
-
         if proposal is None:
             # For unimodal densities, other proposals may be far better.
             if pyrecest.backend.__backend_name__ in ("numpy", "pytorch"):
 
                 def proposal_np(_):
-                    return HypersphericalUniformDistribution(self.dim).sample(
-                        1
-                    )  # pylint: disable=possibly-used-before-assignment
+                    return self._sample_uniform_hypersphere()
 
                 proposal = proposal_np
             else:
@@ -100,9 +100,7 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 proposal = proposal_jax
 
         if start_point is None:
-            start_point = HypersphericalUniformDistribution(self.dim).sample(
-                1
-            )  # pylint: disable=possibly-used-before-assignment
+            start_point = self._sample_uniform_hypersphere()
         # Call the sample_metropolis_hastings method of AbstractDistribution
         # pylint: disable=duplicate-code
         return super().sample_metropolis_hastings(
