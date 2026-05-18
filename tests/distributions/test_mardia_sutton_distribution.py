@@ -86,8 +86,30 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
         npt.assert_allclose(m, array([self.mu0, self.mu]))
 
     def test_linear_covariance(self):
+        import math
+
+        from scipy.special import iv  # pylint: disable=no-name-in-module
+
+        bessel_ratio_1 = iv(1, self.kappa) / iv(0, self.kappa)
+        bessel_ratio_2 = iv(2, self.kappa) / iv(0, self.kappa)
+
+        rho_squared = self.rho1**2 + self.rho2**2
+        conditional_variance = self.sigma**2 * (1.0 - rho_squared)
+        aligned_rho_cos = self.rho1 * math.cos(self.mu0) + self.rho2 * math.sin(
+            self.mu0
+        )
+        aligned_rho_sin = -self.rho1 * math.sin(self.mu0) + self.rho2 * math.cos(
+            self.mu0
+        )
+        cos_variance = 0.5 * (1.0 + bessel_ratio_2) - bessel_ratio_1**2
+        sin_variance = 0.5 * (1.0 - bessel_ratio_2)
+        conditional_mean_variance = self.sigma**2 * self.kappa * (
+            aligned_rho_cos**2 * cos_variance + aligned_rho_sin**2 * sin_variance
+        )
+        expected = conditional_variance + conditional_mean_variance
+
         C = self.dist.linear_covariance()
-        npt.assert_allclose(C, array([[self.sigma**2]]))
+        npt.assert_allclose(C, array([[expected]]))
 
     def test_marginalize_linear(self):
         vm = self.dist.marginalize_linear()
