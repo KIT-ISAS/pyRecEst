@@ -77,8 +77,7 @@ class TestLOMEMTracker(unittest.TestCase):
         reduced, covariance = self.tracker.reduce_measurements(measurements)
 
         npt.assert_allclose(reduced[:2], array([2.0, 0.0]))
-        npt.assert_allclose(reduced[2], 0.0)
-        self.assertGreater(float(reduced[3]), float(reduced[4]))
+        npt.assert_allclose(reduced[2:], array([2.0, 0.5, 0.0]))
         self.assertEqual(covariance.shape, (5, 5))
         self.assertTrue(all(linalg.eigvalsh(covariance) >= -1e-12))
 
@@ -102,7 +101,32 @@ class TestLOMEMTracker(unittest.TestCase):
 
         self.assertGreater(tracker.state[0], 0.0)
         self.assertGreater(tracker.state[4], 1.0)
-        self.assertGreater(tracker.state[5], 1.0)
+        self.assertLess(tracker.state[5], 1.0)
+        self.assertTrue(all(linalg.eigvalsh(tracker.covariance) > 0.0))
+
+    def test_update_does_not_interpret_sensor_noise_as_extent(self):
+        tracker = LOMEMTracker(
+            array([0.0, 0.0, 0.0, 0.0, 2.5, 1.0]),
+            diag(array([0.1, 0.1, 0.1, 0.1, 1.0, 1.0])),
+            measurement_noise_cov=eye(2),
+        )
+        equivalent_covariance = tracker._equivalent_measurement_covariance(eye(2))
+        x_spread = (2.0 * float(equivalent_covariance[0, 0])) ** 0.5
+        y_spread = (2.0 * float(equivalent_covariance[1, 1])) ** 0.5
+        measurements = array(
+            [
+                [x_spread, 0.0],
+                [-x_spread, 0.0],
+                [0.0, y_spread],
+                [0.0, -y_spread],
+                [0.0, 0.0],
+            ]
+        )
+        prior_shape = tracker.state[3:].copy()
+
+        tracker.update(measurements)
+
+        npt.assert_allclose(tracker.state[3:], prior_shape, atol=1e-12)
         self.assertTrue(all(linalg.eigvalsh(tracker.covariance) > 0.0))
 
     def test_single_measurement_updates_position_only_with_diagonal_prior(self):
