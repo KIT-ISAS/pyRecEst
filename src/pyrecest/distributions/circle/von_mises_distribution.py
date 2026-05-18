@@ -1,4 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+from math import isfinite
+
 from pyrecest.backend import (
     abs,
     arctan2,
@@ -15,8 +17,8 @@ from pyrecest.backend import (
     where,
     zeros_like,
 )
-from scipy.optimize import fsolve
-from scipy.special import iv
+from scipy.optimize import brentq
+from scipy.special import iv, ive
 from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -30,6 +32,9 @@ class VonMisesDistribution(AbstractCircularDistribution):
     Jammalamadaka, S. R., & SenGupta, A. (2001). Topics in Circular
     Statistics. World Scientific.
     """
+
+    _MOMENT_NORM_TOL = 1e-12
+    _BESSEL_RATIO_EDGE_TOL = 1e-9
 
     def __init__(
         self,
@@ -119,13 +124,46 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return r
 
     @staticmethod
-    def besselratio_inverse(v, x):
-        def f(t: float) -> float:
-            return VonMisesDistribution.besselratio(v, t) - x
+    def _besselratio_scalar(v, kappa: float) -> float:
+        if kappa == 0.0:
+            return 0.0
+        return float(ive(v + 1, kappa) / ive(v, kappa))
 
-        start = 1.0
-        (kappa,) = fsolve(f, start)
-        return kappa
+    @staticmethod
+    def besselratio_inverse(v, x):
+        x = float(x)
+        if not isfinite(x):
+            raise ValueError("Bessel-ratio inverse requires a finite value.")
+        if x < 0.0:
+            raise ValueError("Bessel-ratio inverse requires x >= 0.")
+        if x <= VonMisesDistribution._MOMENT_NORM_TOL:
+            return 0.0
+        if x >= 1.0:
+            raise ValueError(
+                "Bessel-ratio inverse is finite only for x < 1; x = 1 is the "
+                "degenerate infinite-concentration limit."
+            )
+        if 1.0 - x <= VonMisesDistribution._BESSEL_RATIO_EDGE_TOL:
+            raise ValueError(
+                "Bessel-ratio inverse is numerically unbounded for x too close "
+                "to 1. No finite, stable von Mises concentration can be inferred."
+            )
+
+        def f(t: float) -> float:
+            return VonMisesDistribution._besselratio_scalar(v, t) - x
+
+        upper = 1.0
+        while True:
+            f_upper = f(upper)
+            if isfinite(f_upper) and f_upper > 0.0:
+                break
+            upper *= 2.0
+            if not isfinite(upper):
+                raise RuntimeError(
+                    "Could not bracket Bessel-ratio inverse for concentration."
+                )
+
+        return brentq(f, 0.0, upper, xtol=1e-12, rtol=1e-12)
 
     def multiply(self, vm2: "VonMisesDistribution") -> "VonMisesDistribution":
         C = self.kappa * cos(self.mu) + vm2.kappa * cos(vm2.mu)
@@ -182,9 +220,28 @@ class VonMisesDistribution(AbstractCircularDistribution):
         Returns:
             vm (VMDistribution): VM distribution obtained by moment matching.
         """
+        moment_abs = float(abs(m))
+        if not isfinite(moment_abs):
+            raise ValueError("First trigonometric moment must be finite.")
+        if moment_abs > 1.0 + VonMisesDistribution._MOMENT_NORM_TOL:
+            raise ValueError(
+                "First trigonometric moment must have magnitude at most 1."
+            )
+
+        # Permit tiny floating-point overshoots, but still reject the degenerate
+        # |m| = 1 limit because it has no finite von Mises concentration.
+        moment_abs = min(moment_abs, 1.0)
+        if moment_abs <= VonMisesDistribution._MOMENT_NORM_TOL:
+            return VonMisesDistribution(0.0, 0.0)
+        if 1.0 - moment_abs <= VonMisesDistribution._BESSEL_RATIO_EDGE_TOL:
+            raise ValueError(
+                "Cannot moment-match |m| close to 1 to a finite von Mises "
+                "distribution; the implied concentration is unbounded."
+            )
+
         mu_ = mod(arctan2(imag(m), real(m)), 2.0 * pi)
-        kappa_ = VonMisesDistribution.besselratio_inverse(0, abs(m))
-        vm = VonMisesDistribution(mu_, kappa_)
+        kappa_ = VonMisesDistribution.besselratio_inverse(0, moment_abs)
+        vm = VonMisesDistribution(mu_, float(kappa_))
         return vm
 
     def __str__(self) -> str:
