@@ -28,7 +28,17 @@ class EllipsoidalBallUniformDistribution(
         return self.dim
 
     def mean(self):
-        raise NotImplementedError()
+        """Return the mean of the uniform distribution on the ellipsoidal ball."""
+        return self.center
+
+    def covariance(self):
+        """Return the covariance matrix of the uniform ellipsoidal ball.
+
+        For a uniform distribution on {center + L u : ||u|| <= 1}, with
+        L @ L.T = shape_matrix and dimension d, Cov[u] = I / (d + 2), hence
+        Cov[center + L u] = shape_matrix / (d + 2).
+        """
+        return self.shape_matrix / (self.dim + 2)
 
     def pdf(self, xs):
         """
