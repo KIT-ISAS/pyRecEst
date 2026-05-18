@@ -91,7 +91,7 @@ def _calculate_F_and_dF_cached(Z_key):
             "dimensions 2, 3, and 4."
         )
 
-    def integrand(u):
+    def integrand_4d(u):
         u_comp = 1 - u
         t01 = 0.5 * (Z[0] - Z[1]) * u
         t23 = 0.5 * (Z[2] - Z[3]) * u_comp
@@ -111,7 +111,7 @@ def _calculate_F_and_dF_cached(Z_key):
         )
         return _np.concatenate((_np.array([exp_factor * base]), dF))
 
-    values, _ = quad_vec(integrand, 0, 1)
+    values, _ = quad_vec(integrand_4d, 0, 1)
     values = 2 * _np.pi**2 * _np.asarray(values, dtype=float)
     return float(values[0]), tuple(float(value) for value in values[1:])
 

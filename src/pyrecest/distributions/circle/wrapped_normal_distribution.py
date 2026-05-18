@@ -209,7 +209,7 @@ class WrappedNormalDistribution(
         return self.multiply_vm_approximation(other)
 
     def convolve(
-        self, other: "WrappedNormalDistribution"
+        self, other: HypertoroidalWrappedNormalDistribution
     ) -> "WrappedNormalDistribution":
         """Convolve two 1-D wrapped normal distributions.
 

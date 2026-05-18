@@ -70,12 +70,11 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             : Sampled points.
         """
-        if proposal is None or start_point is None:
+        if proposal is None:
             from .hyperspherical_uniform_distribution import (
                 HypersphericalUniformDistribution,
             )
 
-        if proposal is None:
             # For unimodal densities, other proposals may be far better.
             if pyrecest.backend.__backend_name__ in ("numpy", "pytorch"):
 
@@ -98,6 +97,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
                 proposal = proposal_jax
 
         if start_point is None:
+            from .hyperspherical_uniform_distribution import (
+                HypersphericalUniformDistribution,
+            )
+
             start_point = HypersphericalUniformDistribution(self.dim).sample(1)
         # Call the sample_metropolis_hastings method of AbstractDistribution
         # pylint: disable=duplicate-code
