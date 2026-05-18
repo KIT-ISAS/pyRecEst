@@ -1,7 +1,5 @@
-from numpy import cos, exp, sin
-
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, zeros
+from pyrecest.backend import array, cos, exp, sin, zeros
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_wrapped_normal_distribution import (
@@ -29,13 +27,12 @@ class ToroidalWrappedNormalDistribution(
         Returns:
             array: The 4D mean.
         """
-        s = self.mu
         mu = array(
             [
-                cos(s[0, :]) * exp(-self.C[0, 0] / 2),
-                sin(s[0, :]) * exp(-self.C[0, 0] / 2),
-                cos(s[1, :]) * exp(-self.C[1, 1] / 2),
-                sin(s[1, :]) * exp(-self.C[1, 1] / 2),
+                cos(self.mu[0]) * exp(-self.C[0, 0] / 2),
+                sin(self.mu[0]) * exp(-self.C[0, 0] / 2),
+                cos(self.mu[1]) * exp(-self.C[1, 1] / 2),
+                sin(self.mu[1]) * exp(-self.C[1, 1] / 2),
             ]
         )
         return mu
@@ -48,80 +45,63 @@ class ToroidalWrappedNormalDistribution(
             array: The 4D covariance.
         """
         C = zeros((4, 4))
-        # jscpd:ignore-start
-        C[0, 0] = (
-            1
-            / 2
-            * (1 - exp(-self.C[0, 0]))
-            * (1 - exp(-self.C[0, 0]) * cos(2 * self.mu[0]))
-        )
-        C[0, 1] = (
-            -1 / 2 * (1 - exp(-self.C[0, 0])) * exp(-self.C[0, 0]) * sin(2 * self.mu[0])
-        )
-        C[1, 0] = C[0, 1]
-        C[1, 1] = (
-            1
-            / 2
-            * (1 - exp(-self.C[0, 0]))
-            * (1 + exp(-self.C[0, 0]) * cos(2 * self.mu[0]))
-        )
+        mu0 = self.mu[0]
+        mu1 = self.mu[1]
+        c00 = self.C[0, 0]
+        c01 = self.C[0, 1]
+        c11 = self.C[1, 1]
+        common_scale = exp(-c00 / 2 - c11 / 2)
 
-        C[2, 2] = (
-            1
-            / 2
-            * (1 - exp(-self.C[1, 1]))
-            * (1 - exp(-self.C[1, 1]) * cos(2 * self.mu[1]))
-        )
-        C[2, 3] = (
-            -1 / 2 * (1 - exp(-self.C[1, 1])) * exp(-self.C[1, 1]) * sin(2 * self.mu[1])
-        )
+        # jscpd:ignore-start
+        C[0, 0] = 1 / 2 * (1 - exp(-c00)) * (1 - exp(-c00) * cos(2 * mu0))
+        C[0, 1] = -1 / 2 * (1 - exp(-c00)) * exp(-c00) * sin(2 * mu0)
+        C[1, 0] = C[0, 1]
+        C[1, 1] = 1 / 2 * (1 - exp(-c00)) * (1 + exp(-c00) * cos(2 * mu0))
+
+        C[2, 2] = 1 / 2 * (1 - exp(-c11)) * (1 - exp(-c11) * cos(2 * mu1))
+        C[2, 3] = -1 / 2 * (1 - exp(-c11)) * exp(-c11) * sin(2 * mu1)
         C[3, 2] = C[2, 3]
-        C[3, 3] = (
-            1
-            / 2
-            * (1 - exp(-self.C[1, 1]))
-            * (1 + exp(-self.C[1, 1]) * cos(2 * self.mu[1]))
-        )
+        C[3, 3] = 1 / 2 * (1 - exp(-c11)) * (1 + exp(-c11) * cos(2 * mu1))
 
         C[0, 2] = (
             1
             / 2
-            * exp(-self.C[0, 0] / 2 - self.C[1, 1] / 2)
+            * common_scale
             * (
-                exp(-self.C[0, 1]) * cos(self.mu[0] + self.mu[1])
-                + exp(self.C[0, 1]) * cos(self.mu[0] - self.mu[1])
-                - 2 * cos(self.mu[0]) * cos(self.mu[1])
+                exp(-c01) * cos(mu0 + mu1)
+                + exp(c01) * cos(mu0 - mu1)
+                - 2 * cos(mu0) * cos(mu1)
             )
         )
         C[0, 3] = (
             1
             / 2
-            * exp(-self.C[0, 0] / 2 - self.C[1, 1] / 2)
+            * common_scale
             * (
-                exp(-self.C[0, 1]) * sin(self.mu[0] + self.mu[1])
-                - exp(self.C[0, 1]) * sin(self.mu[0] - self.mu[1])
-                - 2 * cos(self.mu[0]) * sin(self.mu[1])
+                exp(-c01) * sin(mu0 + mu1)
+                - exp(c01) * sin(mu0 - mu1)
+                - 2 * cos(mu0) * sin(mu1)
             )
         )
 
         C[1, 2] = (
             1
             / 2
-            * exp(-self.C[0, 0] / 2 - self.C[1, 1] / 2)
+            * common_scale
             * (
-                exp(-self.C[0, 1]) * sin(self.mu[0] + self.mu[1])
-                - exp(self.C[0, 1]) * sin(self.mu[0] - self.mu[1])
-                + 2 * sin(self.mu[0]) * cos(self.mu[1])
+                exp(-c01) * sin(mu0 + mu1)
+                + exp(c01) * sin(mu0 - mu1)
+                - 2 * sin(mu0) * cos(mu1)
             )
         )
         C[1, 3] = (
             1
             / 2
-            * exp(-self.C[0, 0] / 2 - self.C[1, 1] / 2)
+            * common_scale
             * (
-                exp(-self.C[0, 1]) * cos(self.mu[0] + self.mu[1])
-                + exp(self.C[0, 1]) * cos(self.mu[0] - self.mu[1])
-                - 2 * sin(self.mu[0]) * sin(self.mu[1])
+                exp(c01) * cos(mu0 - mu1)
+                - exp(-c01) * cos(mu0 + mu1)
+                - 2 * sin(mu0) * sin(mu1)
             )
         )
 
