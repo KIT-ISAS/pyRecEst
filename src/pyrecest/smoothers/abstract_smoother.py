@@ -56,20 +56,24 @@ class AbstractSmoother(ABC):
             default_arr = asarray(default)
             return [copy(default_arr) for _ in range(length)]
 
-        values_arr = asarray(values)
-        if ndim(values_arr) == 0:
-            if matrix_dim != 1:
-                raise ValueError(
-                    f"Scalar input for {name} is only supported in one-dimensional models."
-                )
-            scalar_matrix = asarray([[values_arr]])
-            return [copy(scalar_matrix) for _ in range(length)]
-        if ndim(values_arr) == 1 and matrix_dim == 1 and values_arr.shape[0] == length:
-            return [asarray([[values_arr[idx]]]) for idx in range(length)]
-        if ndim(values_arr) == 2:
-            return [copy(values_arr) for _ in range(length)]
-        if ndim(values_arr) == 3 and values_arr.shape[0] == length:
-            return [copy(values_arr[idx]) for idx in range(length)]
+        try:
+            values_arr = asarray(values)
+        except (TypeError, ValueError):
+            values_arr = None
+        if values_arr is not None:
+            if ndim(values_arr) == 0:
+                if matrix_dim != 1:
+                    raise ValueError(
+                        f"Scalar input for {name} is only supported in one-dimensional models."
+                    )
+                scalar_matrix = asarray([[values_arr]])
+                return [copy(scalar_matrix) for _ in range(length)]
+            if ndim(values_arr) == 1 and matrix_dim == 1 and values_arr.shape[0] == length:
+                return [asarray([[values_arr[idx]]]) for idx in range(length)]
+            if ndim(values_arr) == 2:
+                return [copy(values_arr) for _ in range(length)]
+            if ndim(values_arr) == 3 and values_arr.shape[0] == length:
+                return [copy(values_arr[idx]) for idx in range(length)]
 
         if isinstance(values, (list, tuple)) and len(values) == length:
             normalized_values = []
