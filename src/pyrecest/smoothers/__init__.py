@@ -1,5 +1,6 @@
 from .abstract_smoother import AbstractSmoother
 from .fixed_lag_mem_qkf_smoother import (
+    FBFBMEMQKFSmoother,
     FixedIntervalMEMQKFSmoother,
     FixedIntervalMemQkfSmoother,
     FixedLagFreeMEMQKFSmoother,
@@ -7,12 +8,18 @@ from .fixed_lag_mem_qkf_smoother import (
     FixedLagMemQkfSmoother,
     FLMEMQKFSmoother,
     FullIntervalMEMQKFSmoother,
+    ForwardBackwardForwardBackwardMEMQKFSmoother,
+    ForwardBackwardMEMQKFSmoother,
     MEMQKFSmootherGain,
     MEMQKFTrackerState,
 )
 from .fixed_lag_random_matrix_smoother import (
+    FactorizedGIWRandomMatrixTrackerState,
+    FixedLagFactorizedGIWRMSmoother,
+    FixedLagFactorizedGIWRandomMatrixSmoother,
     FixedLagRandomMatrixSmoother,
     FixedLagRMTSmoother,
+    FLGIWRMSmoother,
     FLRMSmoother,
     RandomMatrixTrackerState,
 )
@@ -40,6 +47,7 @@ from .unscented_rauch_tung_striebel_smoother import (
 
 __all__ = [
     "AbstractSmoother",
+    "FBFBMEMQKFSmoother",
     "FixedIntervalMEMQKFSmoother",
     "FixedIntervalMemQkfSmoother",
     "FixedLagFreeMEMQKFSmoother",
@@ -47,10 +55,16 @@ __all__ = [
     "FixedLagMemQkfSmoother",
     "FLMEMQKFSmoother",
     "FullIntervalMEMQKFSmoother",
+    "ForwardBackwardForwardBackwardMEMQKFSmoother",
+    "ForwardBackwardMEMQKFSmoother",
     "MEMQKFSmootherGain",
     "MEMQKFTrackerState",
+    "FactorizedGIWRandomMatrixTrackerState",
+    "FixedLagFactorizedGIWRMSmoother",
+    "FixedLagFactorizedGIWRandomMatrixSmoother",
     "FixedLagRandomMatrixSmoother",
     "FixedLagRMTSmoother",
+    "FLGIWRMSmoother",
     "FLRMSmoother",
     "RandomMatrixTrackerState",
     "FixedLagVelocityLockedMEMQKFSmoother",
