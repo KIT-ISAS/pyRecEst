@@ -7,7 +7,7 @@ from typing import Any, Sequence
 
 from pyrecest.backend import asarray
 from pyrecest.backend import copy as backend_copy
-from pyrecest.backend import eye, linalg
+from pyrecest.backend import eye, linalg, maximum
 from pyrecest.filters.random_matrix_tracker import RandomMatrixTracker
 
 from .abstract_smoother import AbstractSmoother
@@ -75,20 +75,28 @@ class FixedLagRandomMatrixSmoother(AbstractSmoother):
     """Fixed-lag smoother for ``RandomMatrixTracker`` posterior sequences.
 
     The kinematic state is smoothed with a finite-window RTS recursion. The
-    random-matrix extent is smoothed by an SPD-preserving information-weighted
-    average, where the alpha increase beyond the one-step prediction is used as
-    a proxy for future extent information. Set ``extent_smoothing='none'`` to
-    smooth only the kinematic component.
+    default random-matrix extent smoother follows the constant-extent-dynamics
+    factorized GIW backward recursion of Granstrom and Bramstang, "Bayesian
+    Smoothing for the Extended Object Random Matrix Model", IEEE TSP 2019,
+    Table VII. Since :class:`RandomMatrixTrackerState` stores only the extent
+    mean and an effective information scalar ``alpha``, the implementation
+    reconstructs the inverse-Wishart natural parameter as ``V = alpha * X`` and
+    treats ``alpha`` as ``v - 2d - 2``. Set ``extent_smoothing='information'``
+    for the earlier SPD-preserving alpha-weighted average, or
+    ``extent_smoothing='none'`` to smooth only the kinematic component. Provide
+    ``extent_transition_dof`` to include the paper's finite-transition-dof
+    correction terms; the default omits those corrections.
     """
 
-    _EXTENT_SMOOTHING_MODES = ("information", "none")
+    _EXTENT_SMOOTHING_MODES = ("granstrom", "information", "none")
 
     def __init__(
         self,
         lag: int = 1,
-        extent_smoothing: str = "information",
+        extent_smoothing: str = "granstrom",
         extent_smoothing_factor: float = 1.0,
         minimum_extent_weight: float = 1e-12,
+        extent_transition_dof: float | None = None,
     ):
         lag = int(lag)
         if lag < 0:
@@ -101,11 +109,16 @@ class FixedLagRandomMatrixSmoother(AbstractSmoother):
             raise ValueError("extent_smoothing_factor must be non-negative.")
         if minimum_extent_weight <= 0:
             raise ValueError("minimum_extent_weight must be positive.")
+        if extent_transition_dof is not None and extent_transition_dof <= 0:
+            raise ValueError("extent_transition_dof must be positive or None.")
 
         self.lag = lag
         self.extent_smoothing = extent_smoothing
         self.extent_smoothing_factor = float(extent_smoothing_factor)
         self.minimum_extent_weight = float(minimum_extent_weight)
+        self.extent_transition_dof = (
+            None if extent_transition_dof is None else float(extent_transition_dof)
+        )
         self._filtered_buffer: list[RandomMatrixTrackerState] = []
         self._predicted_buffer: list[RandomMatrixTrackerState] = []
         self._system_matrix_buffer: list[Any] = []
@@ -140,7 +153,16 @@ class FixedLagRandomMatrixSmoother(AbstractSmoother):
     def _positive_extent_weight(self, alpha) -> float:
         return max(float(alpha), self.minimum_extent_weight)
 
-    def _smooth_extent(
+    @classmethod
+    def _project_symmetric_extent(cls, extent, minimum_eigenvalue=1e-12):
+        extent = cls._symmetrize(asarray(extent))
+        eigenvalues, eigenvectors = linalg.eigh(extent)
+        if float(eigenvalues[0]) >= minimum_eigenvalue:
+            return extent
+        eigenvalues = maximum(eigenvalues, minimum_eigenvalue)
+        return cls._symmetrize((eigenvectors * eigenvalues) @ eigenvectors.T)
+
+    def _smooth_extent_information(
         self,
         filtered_state: RandomMatrixTrackerState,
         predicted_state: RandomMatrixTrackerState,
@@ -162,7 +184,76 @@ class FixedLagRandomMatrixSmoother(AbstractSmoother):
             current_weight * filtered_state.extent
             + future_weight * next_smoothed_state.extent
         ) / weight_sum
-        return self._symmetrize(smoothed_extent), weight_sum
+        return self._project_symmetric_extent(
+            smoothed_extent, self.minimum_extent_weight
+        ), weight_sum
+
+    def _smooth_extent_granstrom(
+        self,
+        filtered_state: RandomMatrixTrackerState,
+        predicted_state: RandomMatrixTrackerState,
+        next_smoothed_state: RandomMatrixTrackerState,
+    ) -> tuple[Any, float]:
+        extent_dimension = int(asarray(filtered_state.extent).shape[0])
+        alpha_delta = float(next_smoothed_state.alpha) - float(predicted_state.alpha)
+        gain_denominator = 1.0
+        dof_correction = 0.0
+        if self.extent_transition_dof is not None:
+            # Factorized GIW Table VII with A=I, translated from (v, V) to the
+            # RandomMatrixTrackerState representation (alpha, X).
+            dof_correction = (
+                2.0 * float(extent_dimension + 1) ** 2 / self.extent_transition_dof
+            )
+            gain_denominator = 1.0 + (
+                alpha_delta - 3.0 * float(extent_dimension + 1)
+            ) / self.extent_transition_dof
+            gain_denominator = max(gain_denominator, self.minimum_extent_weight)
+
+        granstrom_gain = self.extent_smoothing_factor / gain_denominator
+        filtered_weight = self._positive_extent_weight(filtered_state.alpha)
+        predicted_weight = self._positive_extent_weight(predicted_state.alpha)
+        next_weight = self._positive_extent_weight(next_smoothed_state.alpha)
+
+        filtered_scale = filtered_weight * filtered_state.extent
+        predicted_scale = predicted_weight * predicted_state.extent
+        next_scale = next_weight * next_smoothed_state.extent
+
+        smoothed_weight = max(
+            filtered_weight + granstrom_gain * (alpha_delta - dof_correction),
+            self.minimum_extent_weight,
+        )
+        smoothed_scale = filtered_scale + granstrom_gain * (
+            next_scale - predicted_scale
+        )
+        smoothed_extent = smoothed_scale / smoothed_weight
+        return (
+            self._project_symmetric_extent(
+                smoothed_extent, self.minimum_extent_weight
+            ),
+            smoothed_weight,
+        )
+
+    def _smooth_extent(
+        self,
+        filtered_state: RandomMatrixTrackerState,
+        predicted_state: RandomMatrixTrackerState,
+        next_smoothed_state: RandomMatrixTrackerState,
+    ) -> tuple[Any, float]:
+        if self.extent_smoothing == "none" or self.extent_smoothing_factor == 0.0:
+            return backend_copy(filtered_state.extent), float(filtered_state.alpha)
+
+        if self.extent_smoothing == "information":
+            return self._smooth_extent_information(
+                filtered_state,
+                predicted_state,
+                next_smoothed_state,
+            )
+
+        return self._smooth_extent_granstrom(
+            filtered_state,
+            predicted_state,
+            next_smoothed_state,
+        )
 
     def _smooth_window(
         self,

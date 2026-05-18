@@ -30,7 +30,9 @@ class FixedLagRandomMatrixSmootherTest(unittest.TestCase):
         npt.assert_allclose(smoothed_states[0].extent, filtered_states[0].extent)
 
     def test_extent_smoothing_uses_future_information_increment(self):
-        smoother = FixedLagRandomMatrixSmoother(lag=1)
+        smoother = FixedLagRandomMatrixSmoother(
+            lag=1, extent_smoothing="information"
+        )
         filtered_states = [
             RandomMatrixTrackerState(
                 array([0.0]), array([[1.0]]), array([[2.0]]), 10.0
@@ -52,6 +54,47 @@ class FixedLagRandomMatrixSmootherTest(unittest.TestCase):
         expected_extent = array([[(10.0 * 2.0 + 5.0 * 4.0) / 15.0]])
         npt.assert_allclose(smoothed_states[0].extent, expected_extent)
         self.assertEqual(smoothed_states[0].alpha, 15.0)
+
+    def test_default_extent_smoothing_uses_granstrom_natural_parameters(self):
+        smoother = FixedLagRandomMatrixSmoother(lag=1)
+        filtered_states = [
+            RandomMatrixTrackerState(
+                array([0.0, 0.0]),
+                eye(2),
+                array([[2.0, 0.0], [0.0, 3.0]]),
+                10.0,
+            ),
+            RandomMatrixTrackerState(
+                array([0.0, 0.0]),
+                eye(2),
+                array([[4.0, 0.0], [0.0, 6.0]]),
+                13.0,
+            ),
+        ]
+        predicted_states = [
+            RandomMatrixTrackerState(
+                array([0.0, 0.0]),
+                eye(2),
+                array([[2.0, 0.0], [0.0, 3.0]]),
+                8.0,
+            )
+        ]
+
+        smoothed_states, _ = smoother.smooth(
+            filtered_states=filtered_states,
+            predicted_states=predicted_states,
+            system_matrices=eye(2),
+        )
+
+        expected_alpha = 15.0
+        expected_extent = array(
+            [
+                [(10.0 * 2.0 + 13.0 * 4.0 - 8.0 * 2.0) / expected_alpha, 0.0],
+                [0.0, (10.0 * 3.0 + 13.0 * 6.0 - 8.0 * 3.0) / expected_alpha],
+            ]
+        )
+        npt.assert_allclose(smoothed_states[0].extent, expected_extent)
+        self.assertEqual(smoothed_states[0].alpha, expected_alpha)
 
     def test_append_and_flush_emit_fixed_lag_sequence(self):
         smoother = FixedLagRandomMatrixSmoother(lag=1, extent_smoothing="none")
