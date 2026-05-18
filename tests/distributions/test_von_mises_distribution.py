@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, linspace
+from pyrecest.backend import abs, allclose, array, linspace
 from pyrecest.distributions import VonMisesDistribution
 
 
@@ -68,6 +68,15 @@ class TestVonMisesDistribution(unittest.TestCase):
         for x in (-0.1, 1.0, 1.01):
             with self.assertRaises(ValueError):
                 VonMisesDistribution.besselratio_inverse(0, x)
+
+    def test_convolution_of_uniform_components_remains_uniform(self):
+        first = VonMisesDistribution(array(0.3), array(0.0))
+        second = VonMisesDistribution(array(0.4), array(2.0))
+
+        convolved = first.convolve(second)
+
+        self.assertTrue(allclose(convolved.kappa, array(0.0), atol=1e-14))
+        self.assertTrue(allclose(abs(convolved.trigonometric_moment(1)), array(0.0)))
 
     def test_plot(self):
         matplotlib.pyplot.close("all")
