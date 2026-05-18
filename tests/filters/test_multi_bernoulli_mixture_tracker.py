@@ -1,0 +1,98 @@
+import unittest
+
+import numpy.testing as npt
+import pyrecest.backend
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array, diag, eye, zeros
+from pyrecest.distributions import GaussianDistribution
+from pyrecest.filters import KalmanFilter
+from pyrecest.filters.multi_bernoulli_mixture_tracker import (
+    MultiBernoulliMixtureTracker,
+    NearestNeighborMultiBernoulliTracker,
+)
+from pyrecest.filters.multi_bernoulli_tracker import (
+    BernoulliComponent,
+    MultiBernoulliTracker,
+)
+
+
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+    reason="Not supported on this backend",
+)
+class MultiBernoulliMixtureTrackerTest(unittest.TestCase):
+    def setUp(self):
+        self.measurement_matrix = array([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]])
+        self.initial_component = BernoulliComponent(
+            0.8,
+            GaussianDistribution(zeros(4), diag(array([1.0, 1.0, 1.0, 1.0]))),
+        )
+        self.tracker_param = {
+            "survival_probability": 0.99,
+            "detection_probability": 0.8,
+            "clutter_intensity": 0.5,
+            "gating_probability": 0.999,
+            "gating_distance_threshold": None,
+            "pruning_threshold": 1e-12,
+            "hypothesis_pruning_threshold": 1e-12,
+            "maximum_number_of_components": None,
+            "maximum_number_of_hypotheses": None,
+            "birth_existence_probability": 0.8,
+            "birth_covariance": None,
+            "measurement_to_state_matrix": None,
+            "measurement_driven_births": False,
+        }
+
+    def test_nearest_neighbor_alias_preserves_existing_tracker(self):
+        self.assertIs(NearestNeighborMultiBernoulliTracker, MultiBernoulliTracker)
+
+    def test_exact_mbm_update_keeps_missed_and_detected_hypotheses(self):
+        tracker = MultiBernoulliMixtureTracker(
+            initial_prior=[self.initial_component],
+            tracker_param=self.tracker_param,
+        )
+
+        measurement = array([[0.0], [0.0]])
+        prior_component = tracker.hypotheses[0].bernoulli_components[0]
+        likelihood, _ = tracker._measurement_likelihood_and_distance(
+            prior_component,
+            measurement[:, 0],
+            self.measurement_matrix,
+            eye(2),
+        )
+        r = prior_component.existence_probability
+        p_d = self.tracker_param["detection_probability"]
+        clutter = self.tracker_param["clutter_intensity"]
+        missed_weight = 1.0 - r * p_d
+        detected_weight = r * p_d * likelihood / clutter
+        missed_existence = r * (1.0 - p_d) / missed_weight
+        expected_existence = (
+            missed_weight * missed_existence + detected_weight
+        ) / (missed_weight + detected_weight)
+
+        tracker.update_linear(measurement, self.measurement_matrix, eye(2))
+
+        self.assertEqual(len(tracker.hypotheses), 2)
+        npt.assert_allclose(sum(tracker.get_mixture_weights()), 1.0)
+        npt.assert_allclose(
+            tracker.get_existence_probabilities()[0],
+            expected_existence,
+        )
+
+    def test_exact_mbm_hypothesis_cap(self):
+        tracker_param = dict(self.tracker_param)
+        tracker_param["maximum_number_of_hypotheses"] = 1
+        tracker = MultiBernoulliMixtureTracker(
+            initial_prior=[self.initial_component],
+            tracker_param=tracker_param,
+        )
+
+        tracker.update_linear(array([[0.0], [0.0]]), self.measurement_matrix, eye(2))
+
+        self.assertEqual(len(tracker.hypotheses), 1)
+        npt.assert_allclose(tracker.get_mixture_weights()[0], 1.0)
+
+
+if __name__ == "__main__":
+    unittest.main()
