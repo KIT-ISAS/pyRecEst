@@ -204,6 +204,31 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
                 rtol=0.1,
             )
 
+    def test_moment_returns_weighted_second_moment_matrix(self):
+        """The grid moment is the normalized weighted scatter matrix."""
+        scale = 1.0 / sqrt(3.0)
+        grid = scale * array(
+            [
+                [1.0, 1.0, 1.0],
+                [1.0, -1.0, -1.0],
+                [-1.0, 1.0, -1.0],
+                [-1.0, -1.0, 1.0],
+            ]
+        )
+        grid_values = array([1.0, 2.0, 3.0, 4.0])
+
+        hgd = HypersphericalGridDistribution(grid, grid_values)
+
+        expected = array(
+            [
+                [1.0 / 3.0, 0.0, -1.0 / 15.0],
+                [0.0, 1.0 / 3.0, -2.0 / 15.0],
+                [-1.0 / 15.0, -2.0 / 15.0, 1.0 / 3.0],
+            ]
+        )
+
+        npt.assert_allclose(hgd.moment(), expected, atol=1e-12, rtol=0)
+
     # --------------------------------------------------------------
     # Multiply tests
     # --------------------------------------------------------------
