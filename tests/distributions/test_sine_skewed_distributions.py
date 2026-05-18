@@ -54,6 +54,20 @@ class TestGeneralizedKSineSkewedVonMisesDistribution(unittest.TestCase):
             new_dist.mu, pi / 2, "Shift method did not update mu correctly."
         )
 
+    @unittest.skipIf(
+        # pylint: disable=no-member
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_pdf_m4_normalizes(self):
+        """Test that the m=4 GSSVM PDF integrates to approximately 1."""
+        dist = GeneralizedKSineSkewedVonMisesDistribution(
+            mu=pi / 3, kappa=5.0, lambda_=0.9, k=1, m=4
+        )
+        integral = dist.integrate_numerically()
+
+        npt.assert_allclose(integral, 1.0, atol=1e-4)
+
 
 def test_sine_skewed_wrapped_normal_initialization():
     mu = array(0.0)
