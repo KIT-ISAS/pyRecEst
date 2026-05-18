@@ -367,6 +367,20 @@ class TestVonMisesFisherDistribution(unittest.TestCase):
     def test_a_d_uses_scaled_bessel_ratio_for_large_kappa(self):
         npt.assert_allclose(VonMisesFisherDistribution.a_d(3, 1000.0), 0.999)
 
+    def test_a_d_inverse_rejects_invalid_mean_resultant_lengths(self):
+        for x in (-1e-6, 1.0, 1.0 + 1e-6, float("nan"), float("inf")):
+            with self.subTest(x=x):
+                with self.assertRaises(ValueError):
+                    VonMisesFisherDistribution.a_d_inverse(3, x)
+
+    def test_from_unit_mean_resultant_vector_rejects_dirac_case(self):
+        # A unit-norm mean resultant vector represents a point mass. It is the
+        # infinite-concentration limit of the vMF family, not a finite vMF.
+        with self.assertRaises(ValueError):
+            VonMisesFisherDistribution.from_mean_resultant_vector(
+                array([1.0, 0.0, 0.0])
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
