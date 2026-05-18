@@ -94,7 +94,7 @@ class HyperhemisphericalGridDistribution(
         def pdf_doubled(x):
             return 2 * hdgd.pdf(x)
 
-        hhgd_interp = CustomHyperhemisphericalDistribution(pdf_doubled, 3)
+        hhgd_interp = CustomHyperhemisphericalDistribution(pdf_doubled, self.dim)
         h = hhgd_interp.plot()
         return h
 
@@ -109,8 +109,8 @@ class HyperhemisphericalGridDistribution(
         Parameters
         ----------
         xs : array_like
-            Either a single point of shape (dim,),
-            or an array of shape (n_points, dim).
+            Either a single point of shape (input_dim,),
+            or an array of shape (n_points, input_dim).
 
         Returns
         -------
@@ -121,16 +121,20 @@ class HyperhemisphericalGridDistribution(
         """
 
         if xs.ndim == 1:
-            if xs.shape[0] != self.dim:
-                raise ValueError(f"xs must have length {self.dim}, got {xs.shape[0]}.")
+            if xs.shape[0] != self.input_dim:
+                raise ValueError(
+                    f"xs must have length {self.input_dim}, got {xs.shape[0]}."
+                )
             xs = xs[None, :]  # (1, dim)
         elif xs.ndim == 2:
-            if xs.shape[1] == self.dim:
+            if xs.shape[1] == self.input_dim:
                 pass  # already (batch, dim)
-            elif xs.shape[0] == self.dim:
+            elif xs.shape[0] == self.input_dim:
                 xs = xs.T  # (batch, dim)
             else:
-                raise ValueError(f"xs must have shape (n, dim) with dim={self.dim}.")
+                raise ValueError(
+                    f"xs must have shape (n, input_dim) with input_dim={self.input_dim}."
+                )
         else:
             raise ValueError("xs must be a 1D or 2D array.")
 
@@ -156,7 +160,7 @@ class HyperhemisphericalGridDistribution(
     def get_manifold_size(self):
         return 0.5 * (
             AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
-                self.grid.shape[1] - 1
+                self.dim
             )
         )
 
@@ -227,13 +231,13 @@ class HyperhemisphericalGridDistribution(
         Parameters
         ----------
         fun : callable
-            A function mapping an array of shape (batch_dim, space_dim)
+            A function mapping an array of shape (batch_dim, dim + 1)
             to a 1-D array of pdf values.  In particular this matches
-            your Python convention `pdf(x)` with x.shape == (batch, dim).
+            your Python convention `pdf(x)` with x.shape == (batch, dim + 1).
         no_of_grid_points : int
             Number of grid points on the hemisphere.
         dim : int, optional
-            Ambient dimension (space_dim). Default is 2 for S².
+            Intrinsic manifold dimension. Default is 2 for S².
         grid_type : {'leopardi_symm', 'healpix'}
 
         Notes
