@@ -110,14 +110,9 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
 
         if integration_boundaries is not None:
             mu = super().mean_direction_numerical(integration_boundaries)
-        elif self.dim == 1:
-            mu = super().mean_direction_numerical([0, pi])
         elif self.dim <= 3:
             mu = super().mean_direction_numerical(
-                [
-                    zeros(self.dim),
-                    [2 * pi, *pi * ones(self.dim - 2), pi / 2],
-                ]
+                self.__class__.get_full_integration_boundaries(self.dim)
             )
         else:
             from .hyperhemispherical_uniform_distribution import (
@@ -141,7 +136,10 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
     @staticmethod
     def get_full_integration_boundaries(dim: Union[int, int32, int64]):
         if dim == 1:
-            integration_boundaries = [0, pi]
+            # For S1, PyRecEst's colatitude convention maps phi to
+            # (sin(phi), cos(phi)). The upper hemisphere is therefore
+            # the connected interval with cos(phi) >= 0.
+            integration_boundaries = array([[-pi / 2, pi / 2]])
         else:
             integration_boundaries = vstack(
                 (

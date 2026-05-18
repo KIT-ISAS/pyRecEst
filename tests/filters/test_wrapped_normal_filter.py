@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy.testing as npt
 
@@ -47,6 +48,39 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.assertIsInstance(wn_identity2, WrappedNormalDistribution)
         self.assertLess(self.wn.mu, wn_identity2.mu)
         self.assertGreater(self.wn.sigma, wn_identity2.sigma)
+
+    def test_update_nonlinear_progressive_uses_adaptive_lambda(self):
+        class FakeDiracDistribution:
+            def __init__(self):
+                self.d = array([0.0, 1.0])
+                self.w = array([1.0, 1.0])
+                self.reweigh_calls = 0
+
+            def reweigh(self, weight_fun):
+                self.reweigh_calls += 1
+
+                # With equal weights, tau=0.02, and likelihood ratio 0.5,
+                # the adaptive exponent is greater than the remaining lambda,
+                # so the method should use the full remaining exponent 1.0.
+                npt.assert_allclose(weight_fun(0.0), 0.5, rtol=1e-12)
+                npt.assert_allclose(weight_fun(1.0), 1.0, rtol=1e-12)
+                return self
+
+            @staticmethod
+            def to_wn():
+                return WrappedNormalDistribution(array(0.0), array(1.0))
+
+        fake_dirac = FakeDiracDistribution()
+
+        def likelihood(_z, x):
+            return 1.0 if x > 0.0 else 0.5
+
+        with patch.object(
+            WrappedNormalDistribution, "to_dirac5", return_value=fake_dirac
+        ):
+            self.wn_filter.update_nonlinear_progressive(likelihood, z=0.0)
+
+        self.assertEqual(fake_dirac.reweigh_calls, 1)
 
 
 if __name__ == "__main__":

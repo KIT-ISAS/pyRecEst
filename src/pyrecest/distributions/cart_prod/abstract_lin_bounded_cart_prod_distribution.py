@@ -27,7 +27,7 @@ class AbstractLinBoundedCartProdDistribution(AbstractCartProdDistribution):
         """
         if not bound_dim >= 1:
             raise ValueError("bound_dim must be a positive integer")
-        if not bound_dim >= 1:
+        if not lin_dim >= 1:
             raise ValueError("lin_dim must be a positive integer")
 
         AbstractCartProdDistribution.__init__(self, bound_dim + lin_dim)

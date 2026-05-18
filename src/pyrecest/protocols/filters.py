@@ -139,15 +139,13 @@ class SupportsIdentityUpdate(Protocol):
 
     def update_identity(
         self,
-        first_arg: ArrayLike,
-        second_arg: ArrayLike,
-        /,
+        meas_noise: ArrayLike,
+        measurement: ArrayLike,
     ) -> Any:
         """Update with an identity measurement map.
 
-        Existing PyRecEst filters use this method name with different positional
-        argument order. The protocol therefore exposes only the shared structural
-        capability.
+        ``meas_noise`` is the measurement-noise model or covariance, and
+        ``measurement`` is the observed value.
         """
         raise NotImplementedError
 

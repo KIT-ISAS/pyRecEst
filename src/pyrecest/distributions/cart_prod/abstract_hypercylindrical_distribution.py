@@ -71,23 +71,30 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
 
     def get_reasonable_integration_boundaries(self, scalingFactor=10):
         """
-        Returns reasonable integration boundaries for the specific distribution
-        based on the mode and covariance.
+        Return reasonable integration boundaries for numerical integration.
+
+        The input dimensions are ordered as bounded dimensions first and linear
+        dimensions second.  SciPy's nquad expects one [lower, upper] interval per
+        input dimension, so the periodic dimensions are integrated over a full
+        period and the linear dimensions are truncated around the mode according
+        to their marginal standard deviations.
         """
-        left = empty((self.bound_dim + self.lin_dim, 1))
-        right = empty((self.bound_dim + self.lin_dim, 1))
         P = self.linear_covariance()
         m = self.mode()
 
-        for i in range(self.bound_dim, self.bound_dim + self.lin_dim):
-            left[i] = m[i] - scalingFactor * sqrt(
-                P[i - self.bound_dim, i - self.bound_dim]
-            )
-            right[i] = m[i] + scalingFactor * sqrt(
-                P[i - self.bound_dim, i - self.bound_dim]
+        integration_boundaries = [[0.0, float(2.0 * pi)] for _ in range(self.bound_dim)]
+
+        for linear_idx in range(self.lin_dim):
+            input_idx = self.bound_dim + linear_idx
+            linear_std = sqrt(P[linear_idx, linear_idx])
+            integration_boundaries.append(
+                [
+                    float(m[input_idx] - scalingFactor * linear_std),
+                    float(m[input_idx] + scalingFactor * linear_std),
+                ]
             )
 
-        return vstack((left, right))
+        return integration_boundaries
 
     def mode(self):
         """Find the mode of the distribution by calling mode_numerical."""

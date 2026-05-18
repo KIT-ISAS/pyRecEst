@@ -4,6 +4,7 @@ from abc import abstractmethod
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import abs as backend_abs
 from pyrecest.backend import all, exp, imag, real
 
 from .abstract_distribution_type import AbstractDistributionType
@@ -57,7 +58,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         """
         val = self.value(xs)
         if self.transformation == "sqrt":
-            assert all(imag(val) < 0.0001)
+            assert all(backend_abs(imag(val)) < 0.0001)
             return real(val) ** 2
 
         if self.transformation == "identity":

@@ -33,6 +33,24 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
         g = PartiallyWrappedNormalDistribution(mu, C, 1)
         npt.assert_allclose(g.mode_numerical(), mu, atol=5e-5)
 
+    def test_get_reasonable_integration_boundaries(self):
+        hwn = PartiallyWrappedNormalDistribution(
+            array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 4.0]]), 1
+        )
+
+        integration_boundaries = hwn.get_reasonable_integration_boundaries(
+            scalingFactor=3
+        )
+
+        self.assertEqual(len(integration_boundaries), hwn.input_dim)
+        npt.assert_allclose(
+            integration_boundaries, array([[0.0, 2.0 * pi], [-4.0, 8.0]])
+        )
+
+    def test_constructor_rejects_zero_linear_dimension(self):
+        with self.assertRaises(ValueError):
+            PartiallyWrappedNormalDistribution(array([1.0]), array([[1.0]]), 1)
+
     def test_linear_mean_numerical(self):
         hwn = PartiallyWrappedNormalDistribution(
             array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 1.0]]), 1
