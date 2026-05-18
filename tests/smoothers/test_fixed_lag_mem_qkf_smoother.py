@@ -3,6 +3,7 @@ import numpy.testing as npt
 from pyrecest.backend import array, diag, eye
 from pyrecest.filters.mem_qkf_tracker import MEMQKFTracker
 from pyrecest.smoothers import (
+    FBFBMEMQKFSmoother,
     FixedIntervalMEMQKFSmoother,
     FixedIntervalMemQkfSmoother,
     FixedLagFreeMEMQKFSmoother,
@@ -10,6 +11,8 @@ from pyrecest.smoothers import (
     FixedLagMemQkfSmoother,
     FLMEMQKFSmoother,
     FullIntervalMEMQKFSmoother,
+    ForwardBackwardForwardBackwardMEMQKFSmoother,
+    ForwardBackwardMEMQKFSmoother,
     MEMQKFTrackerState,
 )
 
@@ -39,6 +42,8 @@ def test_aliases():
     assert FLMEMQKFSmoother is FixedLagMEMQKFSmoother
     assert FixedIntervalMemQkfSmoother is FixedIntervalMEMQKFSmoother
     assert FullIntervalMEMQKFSmoother is FixedIntervalMEMQKFSmoother
+    assert FBFBMEMQKFSmoother is ForwardBackwardForwardBackwardMEMQKFSmoother
+    assert ForwardBackwardMEMQKFSmoother is ForwardBackwardForwardBackwardMEMQKFSmoother
 
 
 def test_lag_one_smooths_kinematics_and_mem_qkf_shape_state():
@@ -241,3 +246,120 @@ def test_fixed_interval_smoother_runs_full_suffix_windows():
     npt.assert_allclose(
         smoothed_states[-1].kinematic_state, filtered_states[-1].kinematic_state
     )
+
+
+def test_fbfb_mem_qkf_conditions_shape_update_on_smoothed_kinematics():
+    smoother = ForwardBackwardForwardBackwardMEMQKFSmoother(shape_smoothing="none")
+    filtered_states = [
+        _state(
+            [0.0, 0.0],
+            0.5 * eye(2),
+            [0.0, 1.0, 1.0],
+            diag(array([0.2, 0.2, 0.2])),
+        ),
+        _state(
+            [2.0, 0.0],
+            0.5 * eye(2),
+            [0.0, 1.0, 1.0],
+            diag(array([0.2, 0.2, 0.2])),
+        ),
+    ]
+    predicted_states = [
+        _state(
+            [0.0, 0.0],
+            eye(2),
+            [0.0, 1.0, 1.0],
+            diag(array([0.4, 0.4, 0.4])),
+        )
+    ]
+    measurements = [
+        array([[2.0], [0.0]]),
+        array([[3.0], [0.0]]),
+    ]
+    meas_noise_cov = 0.05 * eye(2)
+
+    smoothed_states, smoother_gains = smoother.smooth(
+        filtered_states,
+        predicted_states,
+        measurements=measurements,
+        system_matrices=eye(2),
+        shape_system_matrices=eye(3),
+        meas_noise_covs=meas_noise_cov,
+        initial_shape_state=array([0.0, 1.0, 1.0]),
+        initial_shape_covariance=diag(array([0.2, 0.2, 0.2])),
+    )
+
+    manual_prior = MEMQKFTrackerState(
+        array([1.0, 0.0]),
+        0.375 * eye(2),
+        array([0.0, 1.0, 1.0]),
+        diag(array([0.2, 0.2, 0.2])),
+    )
+    manual_tracker = manual_prior.to_tracker()
+    measurement_matrix = eye(2)
+    center_estimate = measurement_matrix @ manual_tracker.kinematic_state
+    shape_measurement_covariance = (
+        meas_noise_cov
+        + measurement_matrix @ manual_tracker.covariance @ measurement_matrix.T
+        + manual_tracker.axis_covariance
+    )
+    manual_tracker._update_single_measurement_qkf(
+        measurements[0][:, 0],
+        center_estimate,
+        measurement_matrix,
+        meas_noise_cov,
+        manual_tracker.multiplicative_noise_cov,
+        shape_measurement_covariance,
+        update_kinematics=False,
+    )
+
+    npt.assert_allclose(smoothed_states[0].kinematic_state, array([1.0, 0.0]))
+    npt.assert_allclose(smoothed_states[0].covariance, 0.375 * eye(2))
+    npt.assert_allclose(smoothed_states[0].shape_state, manual_tracker.shape_state)
+    npt.assert_allclose(
+        smoothed_states[0].shape_covariance, manual_tracker.shape_covariance
+    )
+    assert smoother_gains[0][0].kinematic is not None
+    assert smoother_gains[0][0].shape is None
+
+
+def test_fbfb_mem_qkf_final_backward_pass_smooths_reconditioned_shape():
+    smoother = ForwardBackwardForwardBackwardMEMQKFSmoother()
+    filtered_states = [
+        _state(
+            [0.0, 0.0],
+            0.5 * eye(2),
+            [0.0, 1.0, 1.0],
+            diag(array([0.2, 0.2, 0.2])),
+        ),
+        _state(
+            [2.0, 0.0],
+            0.5 * eye(2),
+            [0.4, 1.5, 1.2],
+            diag(array([0.1, 0.1, 0.1])),
+        ),
+    ]
+    predicted_states = [
+        _state(
+            [0.0, 0.0],
+            eye(2),
+            [0.0, 1.0, 1.0],
+            diag(array([0.5, 0.5, 0.5])),
+        )
+    ]
+
+    smoothed_states, smoother_gains = smoother.smooth(
+        filtered_states,
+        predicted_states,
+        measurements=[array([[2.0], [0.0]]), array([[3.0], [0.0]])],
+        system_matrices=eye(2),
+        shape_system_matrices=eye(3),
+        meas_noise_covs=0.05 * eye(2),
+        initial_shape_state=array([0.0, 1.0, 1.0]),
+        initial_shape_covariance=diag(array([0.2, 0.2, 0.2])),
+    )
+
+    assert len(smoothed_states) == 2
+    assert len(smoother_gains[0]) == 1
+    assert smoother_gains[0][0].kinematic is not None
+    assert smoother_gains[0][0].shape is not None
