@@ -35,8 +35,10 @@ class SphericalGridDistribution(
             enforce_pdf_nonnegative=enforce_pdf_nonnegative,
             grid_type=grid_type,
         )
-        if self.dim != 3:
-            raise AssertionError("SphericalGridDistribution must have dimension 3")
+        if self.dim != 2 or grid.shape[1] != 3:
+            raise AssertionError(
+                "SphericalGridDistribution must represent S^2 with 3D Cartesian grid points"
+            )
 
     # ------------------------------------------------------------------
     # Normalization
@@ -66,12 +68,12 @@ class SphericalGridDistribution(
         Plot interpolated pdf.
 
         use_harmonics = False -> piecewise constant interpolation via self.pdf(..., False).
-        use_harmonics = True  -> spherical harmonics interpolation (currently unsupported).
+        use_harmonics = True -> spherical harmonics interpolation (currently unsupported).
         """
         assert not use_harmonics, "Using spherical harmonics currently unsupported"
         chd = CustomHypersphericalDistribution(
             lambda x: self.pdf(x, use_harmonics=False),
-            3,
+            self.dim,
         )
         return chd.plot()
 
@@ -90,7 +92,21 @@ class SphericalGridDistribution(
             If True: interpolate via spherical harmonics (preferred).
             If False: piecewise constant interpolation on the grid.
         """
-        assert xs.shape[0] != self.input_dim
+        single_input = xs.ndim == 1
+        if single_input:
+            if xs.shape[0] != self.input_dim:
+                raise ValueError(
+                    f"Expected xs of length {self.input_dim}, got {xs.shape[0]}."
+                )
+            xs = xs[None, :]
+        elif xs.ndim == 2:
+            if xs.shape[-1] != self.input_dim:
+                raise ValueError(
+                    f"Expected xs with last dimension {self.input_dim}, got {xs.shape[-1]}."
+                )
+        else:
+            raise ValueError("xs must be 1D or 2D array.")
+
         assert not use_harmonics, "Using spherical harmonics currently unsupported"
 
         dots = self.grid @ xs.T
