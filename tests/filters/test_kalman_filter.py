@@ -31,14 +31,14 @@ class _LinearGaussianMeasurementModel:
 
 class KalmanFilterTest(unittest.TestCase):
     def test_initialization_mean_cov(self):
-        filter_custom = KalmanFilter((array([1]), array([[10000]])))
-        self.assertTrue(allclose(filter_custom.get_point_estimate(), array([1])))
+        filter_custom = KalmanFilter((array([1.0]), array([[10000.0]])))
+        self.assertTrue(allclose(filter_custom.get_point_estimate(), array([1.0])))
 
     def test_initialization_gauss(self):
         filter_custom = KalmanFilter(
-            initial_state=GaussianDistribution(array([4]), array([[10000]]))
+            initial_state=GaussianDistribution(array([4.0]), array([[10000.0]]))
         )
-        self.assertTrue(allclose(filter_custom.get_point_estimate(), array([4])))
+        self.assertTrue(allclose(filter_custom.get_point_estimate(), array([4.0])))
 
     def test_update_with_likelihood_1d(self):
         kf = KalmanFilter((array([0]), array([[1]])))

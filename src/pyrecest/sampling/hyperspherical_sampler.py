@@ -12,7 +12,6 @@ from pyrecest.backend import (
     cos,
     deg2rad,
     empty,
-    flip,
     linspace,
     pi,
     sin,
@@ -207,7 +206,6 @@ class LeopardiSampler(AbstractHypersphericalUniformSampler):
             dim, grid_density_parameter, delete_half=False, symmetry_type="asymm"
         )
 
-        grid_eucl = flip(grid_eucl, axis=1)
         if self.original_code_column_order:
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
 
@@ -236,7 +234,6 @@ class SymmetricLeopardiSampler(AbstractHypersphericalUniformSampler):
             symmetry_type=self.symmetry_type,
         )
 
-        grid_eucl = flip(grid_eucl, axis=1)
         if self.original_code_column_order:
             grid_eucl[:, [0, 1]] = grid_eucl[:, [1, 0]]
 

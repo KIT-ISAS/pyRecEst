@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, exp, sin, zeros
+from pyrecest.backend import array, cos, exp, sin
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_wrapped_normal_distribution import (
@@ -44,7 +44,6 @@ class ToroidalWrappedNormalDistribution(
         Returns:
             array: The 4D covariance.
         """
-        C = zeros((4, 4))
         mu0 = self.mu[0]
         mu1 = self.mu[1]
         c00 = self.C[0, 0]
@@ -53,17 +52,15 @@ class ToroidalWrappedNormalDistribution(
         common_scale = exp(-c00 / 2 - c11 / 2)
 
         # jscpd:ignore-start
-        C[0, 0] = 1 / 2 * (1 - exp(-c00)) * (1 - exp(-c00) * cos(2 * mu0))
-        C[0, 1] = -1 / 2 * (1 - exp(-c00)) * exp(-c00) * sin(2 * mu0)
-        C[1, 0] = C[0, 1]
-        C[1, 1] = 1 / 2 * (1 - exp(-c00)) * (1 + exp(-c00) * cos(2 * mu0))
+        C00 = 1 / 2 * (1 - exp(-c00)) * (1 - exp(-c00) * cos(2 * mu0))
+        C01 = -1 / 2 * (1 - exp(-c00)) * exp(-c00) * sin(2 * mu0)
+        C11 = 1 / 2 * (1 - exp(-c00)) * (1 + exp(-c00) * cos(2 * mu0))
 
-        C[2, 2] = 1 / 2 * (1 - exp(-c11)) * (1 - exp(-c11) * cos(2 * mu1))
-        C[2, 3] = -1 / 2 * (1 - exp(-c11)) * exp(-c11) * sin(2 * mu1)
-        C[3, 2] = C[2, 3]
-        C[3, 3] = 1 / 2 * (1 - exp(-c11)) * (1 + exp(-c11) * cos(2 * mu1))
+        C22 = 1 / 2 * (1 - exp(-c11)) * (1 - exp(-c11) * cos(2 * mu1))
+        C23 = -1 / 2 * (1 - exp(-c11)) * exp(-c11) * sin(2 * mu1)
+        C33 = 1 / 2 * (1 - exp(-c11)) * (1 + exp(-c11) * cos(2 * mu1))
 
-        C[0, 2] = (
+        C02 = (
             1
             / 2
             * common_scale
@@ -73,7 +70,7 @@ class ToroidalWrappedNormalDistribution(
                 - 2 * cos(mu0) * cos(mu1)
             )
         )
-        C[0, 3] = (
+        C03 = (
             1
             / 2
             * common_scale
@@ -84,7 +81,7 @@ class ToroidalWrappedNormalDistribution(
             )
         )
 
-        C[1, 2] = (
+        C12 = (
             1
             / 2
             * common_scale
@@ -94,7 +91,7 @@ class ToroidalWrappedNormalDistribution(
                 - 2 * sin(mu0) * cos(mu1)
             )
         )
-        C[1, 3] = (
+        C13 = (
             1
             / 2
             * common_scale
@@ -105,9 +102,13 @@ class ToroidalWrappedNormalDistribution(
             )
         )
 
-        C[2, 0] = C[0, 2]
-        C[3, 0] = C[0, 3]
-        C[2, 1] = C[1, 2]
-        C[3, 1] = C[1, 3]
+        C = array(
+            [
+                [C00, C01, C02, C03],
+                [C01, C11, C12, C13],
+                [C02, C12, C22, C23],
+                [C03, C13, C23, C33],
+            ]
+        )
         # jscpd:ignore-end
         return C

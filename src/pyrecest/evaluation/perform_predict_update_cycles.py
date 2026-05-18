@@ -39,7 +39,7 @@ def perform_predict_update_cycles(
         perform_cumulative_updates = False
 
     # Start timer
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     # Perform predict and update cycles
     for t in range(scenario_config["n_timesteps"]):
@@ -86,7 +86,7 @@ def perform_predict_update_cycles(
                 raise NotImplementedError("Plotting is not implemented yet.")
 
     # End timer
-    time_elapsed = time.time() - start_time
+    time_elapsed = time.perf_counter() - start_time
 
     # Get the final filter state and estimate
     last_filter_state = filter_obj.filter_state

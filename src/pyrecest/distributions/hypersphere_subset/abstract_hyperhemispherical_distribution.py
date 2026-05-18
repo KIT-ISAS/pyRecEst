@@ -11,7 +11,6 @@ from pyrecest.backend import (
     concatenate,
     int32,
     int64,
-    linalg,
     linspace,
     meshgrid,
     ones,
@@ -125,13 +124,7 @@ class AbstractHyperhemisphericalDistribution(AbstractHypersphereSubsetDistributi
             p = self.pdf(r)
             mu = r @ p / n * Sd
 
-        norm_mu = linalg.norm(mu)
-        if norm_mu < 1e-9:
-            raise ValueError(
-                "Mean direction is undefined because the first moment is too close to the origin."
-            )
-
-        return mu / norm_mu
+        return self._normalize_mean_direction(mu)
 
     @staticmethod
     def get_full_integration_boundaries(dim: Union[int, int32, int64]):

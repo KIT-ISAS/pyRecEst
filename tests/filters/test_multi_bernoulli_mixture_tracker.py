@@ -6,7 +6,6 @@ import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, diag, eye, zeros
 from pyrecest.distributions import GaussianDistribution
-from pyrecest.filters import KalmanFilter
 from pyrecest.filters.multi_bernoulli_mixture_tracker import (
     MultiBernoulliMixtureTracker,
     NearestNeighborMultiBernoulliTracker,
@@ -55,7 +54,7 @@ class MultiBernoulliMixtureTrackerTest(unittest.TestCase):
 
         measurement = array([[0.0], [0.0]])
         prior_component = tracker.hypotheses[0].bernoulli_components[0]
-        likelihood, _ = tracker._measurement_likelihood_and_distance(
+        likelihood, _ = tracker._measurement_likelihood_and_distance(  # pylint: disable=protected-access
             prior_component,
             measurement[:, 0],
             self.measurement_matrix,

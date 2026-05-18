@@ -7,7 +7,7 @@ from scipy.special import iv
 
 from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDistribution
 
-_SERIES_RTOL = 1e-12
+_SERIES_RTOL = 1e-14
 _SERIES_MIN_TERMS = 10
 _SERIES_MAX_TERMS = 10000
 
