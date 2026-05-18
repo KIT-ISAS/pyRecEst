@@ -189,6 +189,25 @@ class HypertoroidalFourierDistributionTest(unittest.TestCase):
         p2 = hfd2.pdf(xvals)
         npt.assert_allclose(p1, p2, atol=1e-8)
 
+    def test_mixed_padding_and_truncation_renormalizes_sqrt_coefficients(self):
+        coeffs = array(
+            [
+                [0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j],
+                [0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j],
+                [0.5j, 0.0j, 0.0j, 0.0j, 1.0 + 0.0j, 0.0j, 0.0j, 0.0j, 0.5j],
+                [0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j],
+                [0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j, 0.0j],
+            ]
+        )
+        hfd = HypertoroidalFourierDistribution(coeffs, "sqrt")
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            hfd_trunc = hfd.truncate((7, 7))
+
+        self.assertEqual(hfd_trunc.coeff_mat.shape, (7, 7))
+        npt.assert_allclose(integrate2d(hfd_trunc, N=20), 1.0, atol=1e-8)
+
     @parameterized.expand(
         [
             ("identity", "identity"),
