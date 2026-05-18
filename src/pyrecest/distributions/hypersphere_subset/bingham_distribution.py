@@ -54,7 +54,42 @@ def _calculate_F_and_dF_cached(Z_key):
         )
         return float(F), tuple(float(value) for value in dF)
 
-    assert Z.shape[0] == 4
+    if Z.shape[0] == 3:
+        # Reduce the S^2 integral to one dimension by integrating out the
+        # azimuth analytically. With u = x_3 and r^2 = 1 - u^2,
+        #
+        #   F = integral exp(sum_i Z_i x_i^2) dS
+        #
+        # and dF_i = integral x_i^2 exp(sum_j Z_j x_j^2) dS. The azimuthal
+        # integrals are expressed using I_0 and I_1.
+        def integrand(u):
+            u_squared = u * u
+            u_comp = 1 - u_squared
+            t01 = 0.5 * (Z[0] - Z[1]) * u_comp
+            b01_0 = iv(0, t01)
+            b01_1 = iv(1, t01)
+            exp_factor = _np.exp(
+                Z[2] * u_squared + 0.5 * (Z[0] + Z[1]) * u_comp
+            )
+
+            return _np.array(
+                [
+                    2 * _np.pi * exp_factor * b01_0,
+                    _np.pi * exp_factor * u_comp * (b01_0 + b01_1),
+                    _np.pi * exp_factor * u_comp * (b01_0 - b01_1),
+                    2 * _np.pi * exp_factor * u_squared * b01_0,
+                ]
+            )
+
+        values, _ = quad_vec(integrand, -1, 1)
+        values = _np.asarray(values, dtype=float)
+        return float(values[0]), tuple(float(value) for value in values[1:])
+
+    if Z.shape[0] != 4:
+        raise NotImplementedError(
+            "Bingham normalizer derivatives are implemented for ambient "
+            "dimensions 2, 3, and 4."
+        )
 
     def integrand(u):
         u_comp = 1 - u
@@ -119,7 +154,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
     @property
     def F(self):
         if self._F is None:
-            if self.Z.shape[0] in (2, 4):
+            if self.Z.shape[0] in (2, 3, 4):
                 self._F = self.calculate_F(self.Z)
             else:
                 # Temporarily set _F to 1 so integrate_numerically can evaluate
@@ -134,7 +169,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
 
     @staticmethod
     def calculate_F(Z):
-        """Uses analytical method. Supports 2-D and 4-D distributions."""
+        """Uses cached special-case formulas for ambient dimensions 2, 3, and 4."""
         return _calculate_F_cached(_cache_key(Z))
 
     def pdf(self, xs):
