@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, mod, pi
+from pyrecest.backend import array, exp, mod, pi
 from pyrecest.distributions import HypertoroidalWNDistribution
 
 
@@ -21,6 +21,16 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
             [0.0499028191873498, 0.425359477472412, 0.0499028191873498]
         )
         npt.assert_allclose(pdf_values, expected_values, rtol=2e-6)
+
+    def test_scalar_parameters_are_stored_as_vector_and_matrix(self):
+        dist = HypertoroidalWNDistribution(array(0.3), array(0.7))
+
+        self.assertEqual(dist.dim, 1)
+        self.assertEqual(dist.mu.shape, (1,))
+        self.assertEqual(dist.C.shape, (1, 1))
+        npt.assert_allclose(dist.mu, array([0.3]))
+        npt.assert_allclose(dist.C, array([[0.7]]))
+        npt.assert_allclose(dist.trigonometric_moment(1), exp(1j * array([0.3]) - 0.7 / 2))
 
     def test_shift_returns_copy_without_mutating_original(self):
         mu = array([1.0, 2.0])
