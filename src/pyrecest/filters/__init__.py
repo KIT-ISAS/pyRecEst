@@ -37,6 +37,10 @@ from .bingham_filter import BinghamFilter
 from .block_particle_filter import BlockParticleFilter
 from .circular_particle_filter import CircularParticleFilter
 from .circular_ukf import CircularUKF
+from .distributed_kalman_filter import (
+    DistributedKalmanFilter,
+    LinearGaussianInformationContribution,
+)
 from .ekf_spline_tracker import EKFSplineTracker, EkfSplineTracker
 from .euclidean_box_particle_filter import BoxParticleFilter, EuclideanBoxParticleFilter
 from .euclidean_particle_filter import EuclideanParticleFilter
@@ -198,6 +202,7 @@ __all__ = [
     "CostThresholdGate",
     "DecorrelatedSCGPTracker",
     "DecorrelatedScGpTracker",
+    "DistributedKalmanFilter",
     "EKFSplineTracker",
     "EkfSplineTracker",
     "EuclideanBoxParticleFilter",
@@ -243,6 +248,7 @@ __all__ = [
     "KalmanFilter",
     "UnscentedKalmanFilter",
     "UKFOnManifolds",
+    "LinearGaussianInformationContribution",
     "KernelSMEFilter",
     "LinBoundedFilterMixin",
     "LinBoundedParticleFilter",

@@ -92,6 +92,8 @@ track-management utilities.
 Common starting points include:
 
 - `KalmanFilter` for linear Gaussian Euclidean state estimation;
+- `DistributedKalmanFilter` for exact information-form fusion of independent
+  local linear-Gaussian measurements across nodes estimating the same state;
 - `AssociationHypothesis`, `NISGate`, `CostThresholdGate`, `TopKGate`,
   and `linear_gaussian_association_hypotheses` for reusable association
   diagnostics, gating, and cost-matrix conversion;
