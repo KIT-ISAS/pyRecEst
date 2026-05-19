@@ -334,16 +334,18 @@ def array_from_sparse(indices, data, target_shape):
     # Convert inputs to JAX arrays if they aren't already
     indices = _jnp.array(indices)
     data = _jnp.array(data)
-    
+
     # Create a dense array of zeros with the appropriate data type
     out = _jnp.zeros(target_shape, dtype=data.dtype)
-    
-    # Compute linear indices from multi-dimensional indices
+
+    # Compute linear indices from multi-dimensional indices and apply them to
+    # the flattened dense array.  Indexing the original n-D array with these
+    # flattened positions would address the first axis instead of the flat
+    # storage order and can therefore put values into the wrong entries or
+    # raise out-of-bounds errors for multidimensional target shapes.
     linear_indices = _jnp.ravel_multi_index(indices.T, target_shape)
-    
-    # Use JAX's indexing to place data into the output array
-    out = out.at[linear_indices].set(data)
-    
+    out = out.reshape(-1).at[linear_indices].set(data).reshape(target_shape)
+
     return out
 
 
@@ -368,11 +370,11 @@ def get_slice(array, start, end):
 
 def as_dtype(array):
     """Change the data type of a given array.
-    
+
     Parameters:
     - array: The array whose data type needs to be changed
     - dtype: The new data type
-    
+
     Returns:
     A new array with the specified data type.
     """
