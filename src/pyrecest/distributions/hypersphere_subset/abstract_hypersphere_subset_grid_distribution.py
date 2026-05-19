@@ -23,7 +23,9 @@ class AbstractHypersphereSubsetGridDistribution(
     AbstractGridDistribution, AbstractHypersphereSubsetDistribution
 ):
 
-    def __init__(self, grid, grid_values, enforce_pdf_nonnegative=True):
+    def __init__(
+        self, grid, grid_values, enforce_pdf_nonnegative=True, quadrature_weights=None
+    ):
         # Check size consistency
         if grid.shape[0] != grid_values.shape[0]:
             raise ValueError("Grid size must match number of grid values.")
@@ -44,6 +46,7 @@ class AbstractHypersphereSubsetGridDistribution(
             grid=grid,
             dim=ambient_dim,
             enforce_pdf_nonnegative=enforce_pdf_nonnegative,
+            quadrature_weights=quadrature_weights,
         )
         AbstractHypersphereSubsetDistribution.__init__(self, dim=manifold_dim)
         self.normalize_in_place(warn_unnorm=False)
@@ -62,13 +65,13 @@ class AbstractHypersphereSubsetGridDistribution(
     def moment(self):
         """Return the normalized second-moment matrix of the grid points.
 
-        For equal-area grids, the common quadrature weight cancels when the
-        density values are normalized. The returned matrix is therefore
-
-            sum_i w_i x_i x_i.T, where w_i = grid_values_i / sum_j grid_values_j.
+        The probability mass represented by grid point i is the density value
+        multiplied by its quadrature/cell weight. For equal-area grids this
+        reduces to the historical grid-value normalization.
         """
         grid = self.get_grid()
-        weights = self.grid_values / sum(self.grid_values)
+        point_masses = self.grid_values * self.get_quadrature_weights()
+        weights = point_masses / sum(point_masses)
         weighted_grid = grid * reshape(weights, (-1, 1))
 
         return grid.T @ weighted_grid

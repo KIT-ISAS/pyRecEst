@@ -235,6 +235,35 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
 
         npt.assert_allclose(hgd.moment(), expected, atol=1e-12, rtol=0)
 
+    def test_custom_quadrature_weights_are_used_for_integral_and_moment(self):
+        """Non-equal-area grid weights must affect normalization and moments."""
+        grid = array(
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+        quadrature_weights = array([1.0, 2.0, 3.0])
+
+        hgd = HypersphericalGridDistribution(
+            grid, array([1.0, 1.0, 1.0]), quadrature_weights=quadrature_weights
+        )
+
+        npt.assert_allclose(hgd.integrate(), 1.0, atol=1e-12, rtol=0)
+        npt.assert_allclose(
+            hgd.moment(),
+            array(
+                [
+                    [1.0 / 6.0, 0.0, 0.0],
+                    [0.0, 2.0 / 6.0, 0.0],
+                    [0.0, 0.0, 3.0 / 6.0],
+                ]
+            ),
+            atol=1e-12,
+            rtol=0,
+        )
+
     # --------------------------------------------------------------
     # Multiply tests
     # --------------------------------------------------------------
@@ -466,6 +495,25 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             f.to_hemisphere()
         self.assertIn("ToHemisphere:AsymmetricGrid", str(cm.exception))
+
+    def test_to_hemisphere_plane_symmetric_grid_raises_value_error(self):
+        """Plane-symmetric grids must not fail with unittest-only assertions."""
+        scale = sqrt(0.5)
+        grid = scale * array(
+            [
+                [1.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
+                [1.0, 0.0, -1.0],
+                [0.0, 1.0, -1.0],
+            ]
+        )
+        grid_values = array([1.0, 1.0, 1.0, 1.0])
+        hgd = HypersphericalGridDistribution(grid, grid_values)
+
+        with self.assertRaises(ValueError) as cm:
+            hgd.to_hemisphere()
+
+        self.assertIn("ToHemisphere:PlaneSymmetricGrid", str(cm.exception))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member

@@ -11,6 +11,12 @@ from pyrecest.distributions import (
 from pyrecest.distributions.hypersphere_subset.hyperhemispherical_grid_distribution import (
     HyperhemisphericalGridDistribution,
 )
+from pyrecest.distributions.hypersphere_subset.hyperspherical_mixture import (
+    HypersphericalMixture,
+)
+from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution import (
+    VonMisesFisherDistribution,
+)
 from pyrecest.distributions.hypersphere_subset.watson_distribution import (
     WatsonDistribution,
 )
@@ -27,6 +33,13 @@ class TestHyperhemisphericalGridFilter(unittest.TestCase):
             array([0.0, 0.0, 1.0]), 5.0
         )
         self.watson_sys = WatsonDistribution(array([0.0, 0.0, 1.0]), 3.0)
+        self.symmetric_vmf_sys = HypersphericalMixture(
+            [
+                VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 3.0),
+                VonMisesFisherDistribution(array([0.0, 0.0, -1.0]), 3.0),
+            ],
+            [0.5, 0.5],
+        )
         self.watson_meas = HyperhemisphericalWatsonDistribution(
             array([0.0, 0.0, 1.0]), 3.0
         )
@@ -140,6 +153,18 @@ class TestHyperhemisphericalGridFilter(unittest.TestCase):
         f_trans = HyperhemisphericalGridFilter.sys_noise_to_transition_density(
             self.watson_sys, self.n_grid
         )
+        self.assertIsInstance(f_trans, SdHalfCondSdHalfGridDistribution)
+        self.assertEqual(f_trans.grid_values.shape, (self.n_grid, self.n_grid))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sys_noise_to_transition_density_symmetric_vmf_mixture(self):
+        f_trans = HyperhemisphericalGridFilter.sys_noise_to_transition_density(
+            self.symmetric_vmf_sys, self.n_grid
+        )
+
         self.assertIsInstance(f_trans, SdHalfCondSdHalfGridDistribution)
         self.assertEqual(f_trans.grid_values.shape, (self.n_grid, self.n_grid))
 

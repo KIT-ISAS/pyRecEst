@@ -33,7 +33,9 @@ class HyperhemisphericalGridDistribution(
     AbstractHypersphereSubsetGridDistribution, AbstractHyperhemisphericalDistribution
 ):
 
-    def __init__(self, grid, grid_values, enforce_pdf_nonnegative=True):
+    def __init__(
+        self, grid, grid_values, enforce_pdf_nonnegative=True, quadrature_weights=None
+    ):
         # Do not test norm precisely, only quick test if any coordinate exceeds 1.
         assert all(
             abs(grid) <= 1 + 1e-12
@@ -42,7 +44,9 @@ class HyperhemisphericalGridDistribution(
             grid[:, -1] >= -1e-12
         ), "Always using upper hemisphere (along last dimension)."
 
-        super().__init__(grid, grid_values, enforce_pdf_nonnegative)
+        super().__init__(
+            grid, grid_values, enforce_pdf_nonnegative, quadrature_weights=quadrature_weights
+        )
 
     # ------------------------------------------------------------------
     # Basic functionality
@@ -80,7 +84,14 @@ class HyperhemisphericalGridDistribution(
 
         grid_full = vstack((self.grid, -self.grid))
         grid_values_ = 0.5 * concatenate((self.grid_values, self.grid_values))
-        hgd = HypersphericalGridDistribution(grid_full, grid_values_)
+        quadrature_weights = None
+        if self.quadrature_weights is not None:
+            quadrature_weights = concatenate(
+                (self.quadrature_weights, self.quadrature_weights)
+            )
+        hgd = HypersphericalGridDistribution(
+            grid_full, grid_values_, quadrature_weights=quadrature_weights
+        )
         return hgd
 
     def plot(self):
@@ -208,9 +219,15 @@ class HyperhemisphericalGridDistribution(
         n_hemi = self.grid.shape[0]
         hemi_grid = hgd_filtered.grid[:n_hemi]
         hemi_values = 2.0 * hgd_filtered.grid_values[:n_hemi]
+        quadrature_weights = None
+        if hgd_filtered.quadrature_weights is not None:
+            quadrature_weights = hgd_filtered.quadrature_weights[:n_hemi]
 
         return HyperhemisphericalGridDistribution(
-            hemi_grid, hemi_values, enforce_pdf_nonnegative=True
+            hemi_grid,
+            hemi_values,
+            enforce_pdf_nonnegative=True,
+            quadrature_weights=quadrature_weights,
         )
 
     # ------------------------------------------------------------------
@@ -238,24 +255,30 @@ class HyperhemisphericalGridDistribution(
             Number of grid points on the hemisphere.
         dim : int, optional
             Intrinsic manifold dimension. Default is 2 for S².
-        grid_type : {'leopardi_symm', 'healpix'}
+        grid_type : {'leopardi_symm'}
 
         Notes
         -----
-        For 'leopardi*' types, the grid is deterministic and only
-        depends on (dim, no_of_grid_points, grid_type). For 'healpix',
-        only dim == 3 is supported and `healpy` must be installed.
+        The grid is deterministic and only depends on
+        (dim, no_of_grid_points, grid_type).
         """
-        assert grid_type in (
-            "leopardi_symm",
-            "healpix",
-        ), "For hyperhemispheres, use one of the symmetric grid types 'leopardi_symm' or 'healpix'."
-        grid, _ = get_grid_hyperhemisphere(grid_type, no_of_grid_points, dim=dim)
+        if grid_type != "leopardi_symm":
+            raise ValueError(
+                "For hyperhemispheres, only grid_type='leopardi_symm' is "
+                "currently supported."
+            )
+        grid, grid_specific_description = get_grid_hyperhemisphere(
+            grid_type, no_of_grid_points, dim=dim
+        )
+        quadrature_weights = grid_specific_description.get("quadrature_weights")
 
         grid_values = fun(grid)
 
         sgd = HyperhemisphericalGridDistribution(
-            grid, grid_values, enforce_pdf_nonnegative=enforce_pdf_nonnegative
+            grid,
+            grid_values,
+            enforce_pdf_nonnegative=enforce_pdf_nonnegative,
+            quadrature_weights=quadrature_weights,
         )
         sgd.grid_type = grid_type
         return sgd

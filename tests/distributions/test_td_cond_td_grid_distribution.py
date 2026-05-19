@@ -74,7 +74,9 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         grid = linspace(0.0, 2.0 * pi - 2.0 * pi / n, n).reshape(-1, 1)
         gv = _make_normalized_grid_values(n)
         td = TdCondTdGridDistribution(grid, gv)
-        self.assertIs(td.normalize(), td)
+        normalized = td.normalize()
+        self.assertIsNot(normalized, td)
+        npt.assert_allclose(normalized.grid_values, td.grid_values)
 
     # -------------------------------------------------------------- multiply
 
@@ -130,6 +132,56 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
         self.assertEqual(td.dim, dim)
         self.assertEqual(asarray(td.grid_values).shape, (n, n))
         self.assertEqual(asarray(td.grid).shape, (n, 1))
+
+    def test_from_function_t2_uses_total_grid_size(self):
+        """from_function should use the generated grid size, not per-axis resolution."""
+        n_per_dim = 3
+        dim = 4  # T2 x T2
+        dim_half = dim // 2
+        n_points = n_per_dim**dim_half
+        uniform_density = 1.0 / ((2.0 * pi) ** dim_half)
+
+        def cond_fun(a, b):  # pylint: disable=unused-argument
+            return ones(asarray(a).shape[0]) * uniform_density
+
+        td = TdCondTdGridDistribution.from_function(
+            cond_fun,
+            n_per_dim,
+            fun_does_cartesian_product=False,
+            grid_type="CartesianProd",
+            dim=dim,
+        )
+
+        self.assertIsInstance(td, TdCondTdGridDistribution)
+        self.assertEqual(td.dim, dim)
+        self.assertEqual(asarray(td.grid).shape, (n_points, dim_half))
+        self.assertEqual(asarray(td.grid_values).shape, (n_points, n_points))
+        npt.assert_allclose(td.grid_values, uniform_density, rtol=1e-12)
+
+    def test_from_function_t2_cartesian_product_uses_total_grid_size(self):
+        """The Cartesian-product callback path must also use total grid size."""
+        n_per_dim = 3
+        dim = 4  # T2 x T2
+        dim_half = dim // 2
+        n_points = n_per_dim**dim_half
+        uniform_density = 1.0 / ((2.0 * pi) ** dim_half)
+
+        def cond_fun_cp(a, b):  # pylint: disable=unused-argument
+            return ones((asarray(a).shape[0], asarray(b).shape[0])) * uniform_density
+
+        td = TdCondTdGridDistribution.from_function(
+            cond_fun_cp,
+            n_per_dim,
+            fun_does_cartesian_product=True,
+            grid_type="CartesianProd",
+            dim=dim,
+        )
+
+        self.assertIsInstance(td, TdCondTdGridDistribution)
+        self.assertEqual(td.dim, dim)
+        self.assertEqual(asarray(td.grid).shape, (n_points, dim_half))
+        self.assertEqual(asarray(td.grid_values).shape, (n_points, n_points))
+        npt.assert_allclose(td.grid_values, uniform_density, rtol=1e-12)
 
     def test_from_function_cartesian_product_flag(self):
         """from_function with fun_does_cartesian_product=True."""

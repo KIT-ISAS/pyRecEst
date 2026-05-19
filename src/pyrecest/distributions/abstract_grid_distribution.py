@@ -6,7 +6,7 @@ from math import prod
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import abs, any, mean
+from pyrecest.backend import abs, any, ones_like, reshape, sum
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -21,6 +21,7 @@ class AbstractGridDistribution(AbstractDistributionType):
         grid=None,
         dim=None,
         enforce_pdf_nonnegative: bool = True,
+        quadrature_weights=None,
     ):
         assert (
             not grid_type == "custom" or grid is not None
@@ -34,6 +35,12 @@ class AbstractGridDistribution(AbstractDistributionType):
         assert (
             grid is None or grid.shape == () or grid.ndim == 1 or grid.shape[1] == dim
         )
+        if quadrature_weights is not None:
+            assert prod(quadrature_weights.shape) == prod(
+                grid_values.shape
+            ), "Quadrature weights must match the number of grid values."
+            quadrature_weights = reshape(quadrature_weights, grid_values.shape)
+
         if grid is None or grid.ndim > 1 and grid.shape[0] < grid.shape[1]:
             warnings.warn(
                 "Warning: Dimension is higher than number of grid points. Verify that this is really intended."
@@ -42,6 +49,7 @@ class AbstractGridDistribution(AbstractDistributionType):
         self.grid_type = grid_type
         self.grid = grid
         self.enforce_pdf_nonnegative = enforce_pdf_nonnegative
+        self.quadrature_weights = quadrature_weights
         # Overwrite with more descriptive parameterization
         self.grid_density_description = {
             "n_grid_values": grid_values.shape[0],
@@ -66,11 +74,28 @@ class AbstractGridDistribution(AbstractDistributionType):
     def get_manifold_size(self):
         pass
 
+    def get_quadrature_weights(self):
+        """Return cell/quadrature weights associated with the grid values.
+
+        If no weights are supplied, fall back to the historical equal-area rule.
+        This keeps equal-area grids unchanged while allowing non-equal-area
+        grids, such as latitude/longitude spherical grids, to normalize and
+        integrate density values with the correct local cell areas.
+        """
+        if self.quadrature_weights is not None:
+            return self.quadrature_weights
+
+        return (
+            self.get_manifold_size()
+            / prod(self.grid_values.shape)
+            * ones_like(self.grid_values)
+        )
+
     def integrate(self, integration_boundaries=None):
         assert (
             integration_boundaries is None
         ), "Custom integration boundaries are currently not supported"
-        return self.get_manifold_size() * mean(self.grid_values)
+        return sum(self.get_quadrature_weights() * self.grid_values)
 
     def normalize_in_place(self, tol=1e-4, warn_unnorm=True):
         int_val = self.integrate()

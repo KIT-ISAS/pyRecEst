@@ -161,11 +161,11 @@ class SdHalfCondSdHalfGridDistribution(AbstractConditionalDistribution):
             get_grid_hyperhemisphere,
         )
 
-        n = no_of_grid_points
         manifold_dim = dim // 2 - 1
-        grid, _ = get_grid_hyperhemisphere(grid_type, n, manifold_dim)
+        grid, _ = get_grid_hyperhemisphere(grid_type, no_of_grid_points, manifold_dim)
+        n_grid_points = grid.shape[0]
 
         grid_values = SdHalfCondSdHalfGridDistribution._evaluate_on_grid(
-            fun, grid, n, fun_does_cartesian_product
+            fun, grid, n_grid_points, fun_does_cartesian_product
         )
         return SdHalfCondSdHalfGridDistribution(grid, grid_values)

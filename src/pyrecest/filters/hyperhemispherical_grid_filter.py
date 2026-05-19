@@ -305,7 +305,7 @@ class HyperhemisphericalGridFilter(AbstractGridFilter, HyperhemisphericalFilterM
             def trans_cp(grid, _grid):
                 dots = grid @ grid.T
                 vmf0 = VonMisesFisherDistribution(grid[0], kappa)
-                return vmf0.norm_const * (exp(kappa * dots) + exp(-kappa * dots))
+                return vmf0.C * (exp(kappa * dots) + exp(-kappa * dots))
 
         else:
             raise ValueError(

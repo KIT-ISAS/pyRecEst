@@ -34,6 +34,38 @@ from .hypertoroidal_sampler import CircularUniformSampler
 from .leopardi_sampler import get_partition_points_cartesian
 
 
+def _latitude_longitude_quadrature_weights(latitudes, n_longitudes):
+    """Return S2 cell areas for a tensor-product longitude/latitude grid.
+
+    The returned order matches ``itertools.product(longitudes, latitudes)``.
+    The latitude array may be increasing or decreasing. The weights sum to
+    4*pi and are non-uniform whenever the latitude spacing induces unequal
+    surface-area bands.
+    """
+    latitudes = array(latitudes)
+    increasing = bool(latitudes[0] < latitudes[-1])
+    latitudes_increasing = latitudes if increasing else latitudes[::-1]
+    n_latitudes = len(latitudes_increasing)
+    delta_longitude = 2 * pi / n_longitudes
+
+    weights_by_latitude = []
+    for i in range(n_latitudes):
+        lower = -pi / 2 if i == 0 else 0.5 * (
+            latitudes_increasing[i - 1] + latitudes_increasing[i]
+        )
+        upper = pi / 2 if i == n_latitudes - 1 else 0.5 * (
+            latitudes_increasing[i] + latitudes_increasing[i + 1]
+        )
+        weights_by_latitude.append(delta_longitude * (sin(upper) - sin(lower)))
+
+    if not increasing:
+        weights_by_latitude = weights_by_latitude[::-1]
+
+    return array(
+        list(itertools.chain.from_iterable([weights_by_latitude for _ in range(n_longitudes)]))
+    )
+
+
 def get_grid_hypersphere(method: str, grid_density_parameter: int, dim: int):
     if method == "healpix":
         assert dim == 2, "HealpixSampler is only implemented for S2 (dim=2)"
@@ -254,7 +286,8 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
 
         # Get the longitudes (phi) and latitudes (theta) directly from the grid
         phi_deg_mat = grid.lons()
-        theta_deg_mat = grid.lats()
+        latitude_deg_mat = grid.lats()
+        theta_deg_mat = 90.0 - latitude_deg_mat
 
         phi_theta_stacked_deg = array(
             list(itertools.product(phi_deg_mat, theta_deg_mat))
@@ -263,12 +296,16 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
 
         phi = phi_theta_stacked_rad[:, 0]
         theta = phi_theta_stacked_rad[:, 1]
+        quadrature_weights = _latitude_longitude_quadrature_weights(
+            deg2rad(latitude_deg_mat), len(phi_deg_mat)
+        )
 
         grid_specific_description = {
             "scheme": "driscoll_healy",
             "l_max": grid_density_parameter,
             "n_lat": grid.nlat,
             "n_lon": grid.nlon,
+            "quadrature_weights": quadrature_weights,
         }
 
         return phi, theta, grid_specific_description

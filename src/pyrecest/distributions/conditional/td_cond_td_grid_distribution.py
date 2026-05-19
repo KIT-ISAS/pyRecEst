@@ -71,6 +71,21 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
                 UserWarning,
             )
 
+    def normalize_in_place(self, tol=0.01, warn_unnorm=True):
+        """Normalize each conditional column over the torus grid."""
+        d = self.dim // 2
+        manifold_size = float((2.0 * pi) ** d)
+        integrals = mean(self.grid_values, 0) * manifold_size
+        if any(integrals <= 0):
+            raise ValueError("Cannot normalize conditional density with nonpositive integral.")
+        if warn_unnorm and any(abs(integrals - 1) > tol):
+            warnings.warn(
+                "Normalization:notNormalized: Normalizing conditional torus grid values.",
+                UserWarning,
+            )
+        self.grid_values = self.grid_values / integrals.reshape((1, -1))
+        return self
+
     # ------------------------------------------------------------------
     # Marginalisation and conditioning
     # ------------------------------------------------------------------
@@ -159,7 +174,7 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
                 with both full grids of shape ``(n_points, d)`` and must
                 return an array of shape ``(n_points, n_points)``.
         no_of_grid_points : int
-            Number of grid points for each torus.
+            Number of grid points per dimension for each torus.
         fun_does_cartesian_product : bool
             See ``fun`` description above.
         grid_type : str
@@ -191,12 +206,13 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
             )
 
         dim_half = dim // 2
-        n = no_of_grid_points
+        n_per_dim = no_of_grid_points
         grid = HypertoroidalGridDistribution.generate_cartesian_product_grid(
-            [n] * dim_half
+            [n_per_dim] * dim_half
         )
+        n_points = grid.shape[0]
 
         grid_values = TdCondTdGridDistribution._evaluate_on_grid(
-            fun, grid, n, fun_does_cartesian_product
+            fun, grid, n_points, fun_does_cartesian_product
         )
         return TdCondTdGridDistribution(grid, grid_values)

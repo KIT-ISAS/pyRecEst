@@ -38,6 +38,7 @@ class HypersphericalGridDistribution(
         grid_values_,
         enforce_pdf_nonnegative=True,
         grid_type="unknown",
+        quadrature_weights=None,
     ):
 
         if grid.ndim != 2:
@@ -58,7 +59,11 @@ class HypersphericalGridDistribution(
         manifold_dim = grid.shape[1] - 1
 
         AbstractHypersphereSubsetGridDistribution.__init__(
-            self, grid, grid_values_, enforce_pdf_nonnegative
+            self,
+            grid,
+            grid_values_,
+            enforce_pdf_nonnegative,
+            quadrature_weights=quadrature_weights,
         )
         AbstractHypersphericalDistribution.__init__(self, manifold_dim)
         self.grid_type = grid_type
@@ -162,11 +167,15 @@ class HypersphericalGridDistribution(
         grid_values_half = 0.5 * (self.grid_values[:half] + self.grid_values[half:])
         new_values = concatenate([grid_values_half, grid_values_half])
 
+        quadrature_weights = None
+        if self.quadrature_weights is not None:
+            quadrature_weights = copy.deepcopy(self.quadrature_weights)
         return HypersphericalGridDistribution(
             copy.deepcopy(self.grid),
             new_values,
             enforce_pdf_nonnegative=True,
             grid_type=self.grid_type,
+            quadrature_weights=quadrature_weights,
         )
 
     def to_hemisphere(self, tol=1e-10):
@@ -187,6 +196,7 @@ class HypersphericalGridDistribution(
         n_half = n // 2
         # Test for antipodal symmetry of the grid
         if not allclose(self.grid[:n_half, :], -self.grid[n_half:, :], atol=1e-12):
+            is_plane_symmetric = True
             # If not, test for plane symmetry
             # For every non-polar point v, there exists a point w with:
             #   w[:-1] ≈ v[:-1]  and  w[-1] ≈ -v[-1]
@@ -202,20 +212,23 @@ class HypersphericalGridDistribution(
                 candidates = self.grid[same_xy, :]
 
                 # Among those, at least one must have opposite z.
-                has_opposite_last_coordinate = any(
-                    isclose(candidates[:, -1], -v[-1], atol=5 * tol)
+                if not any(isclose(candidates[:, -1], -v[-1], atol=5 * tol)):
+                    is_plane_symmetric = False
+                    break
+
+            if is_plane_symmetric:
+                raise ValueError(
+                    "ToHemisphere:PlaneSymmetricGrid: "
+                    "Detected a plane-symmetric grid, but to_hemisphere requires "
+                    "antipodal point pairs. Use grid_type "
+                    "'leopardi_symm_antipodal' when calling from_distribution "
+                    "or from_function."
                 )
-                if not has_opposite_last_coordinate:
-                    raise ValueError(
-                        "ToHemisphere:AsymmetricGrid: "
-                        "Can only use to_hemisphere for antipodally symmetric "
-                        "or plane-symmetric grids."
-                    )
 
             raise ValueError(
                 "ToHemisphere:AsymmetricGrid: "
                 "Can only use to_hemisphere for antipodally symmetric grids. "
-                "Use grid_type 'leopardi_symm_antipodal' or 'leopardi_symm_plane'"
+                "Use grid_type 'leopardi_symm_antipodal' "
                 "when calling from_distribution or from_function."
             )
 
@@ -232,7 +245,12 @@ class HypersphericalGridDistribution(
             )
 
         hemi_grid = self.grid[:n_half]
-        return HyperhemisphericalGridDistribution(hemi_grid, grid_values_hemisphere)
+        quadrature_weights = None
+        if self.quadrature_weights is not None:
+            quadrature_weights = self.quadrature_weights[:n_half]
+        return HyperhemisphericalGridDistribution(
+            hemi_grid, grid_values_hemisphere, quadrature_weights=quadrature_weights
+        )
 
     # ------------------------------------------------------------------
     # Geometry: closest grid point
@@ -321,7 +339,10 @@ class HypersphericalGridDistribution(
         if dim < 2:
             raise ValueError("dim must be >= 2")
 
-        grid, _ = get_grid_hypersphere(grid_type, no_of_grid_points, dim)
+        grid, grid_specific_description = get_grid_hypersphere(
+            grid_type, no_of_grid_points, dim
+        )
+        quadrature_weights = grid_specific_description.get("quadrature_weights")
 
         # Call user pdf with X of shape (batch_dim, space_dim) = (n_points, dim + 1)
         grid_values = fun(grid)
@@ -331,4 +352,5 @@ class HypersphericalGridDistribution(
             grid_values,
             enforce_pdf_nonnegative=enforce_pdf_nonnegative,
             grid_type=grid_type,
+            quadrature_weights=quadrature_weights,
         )
