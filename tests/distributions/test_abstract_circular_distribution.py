@@ -1,3 +1,4 @@
+from math import isfinite
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
@@ -60,6 +61,38 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                             rtol=1e-10,
                         )
                     )
+
+    def test_wrapped_normal_to_vm_matches_first_trigonometric_moment(self):
+        """Wrapped-normal to von-Mises conversion should moment-match."""
+        wn = WrappedNormalDistribution(array(0.4), array(1.3))
+        vm = wn.to_vm()
+
+        self.assertTrue(
+            allclose(
+                vm.trigonometric_moment(1),
+                wn.trigonometric_moment(1),
+                rtol=1e-10,
+                atol=1e-12,
+            )
+        )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="SciPy Bessel functions are used on this code path",
+    )
+    def test_von_mises_large_kappa_stays_finite(self):
+        """Large concentrations should not overflow Bessel/exponential terms."""
+        vm = VonMisesDistribution(array(0.3), array(1000.0))
+
+        self.assertTrue(isfinite(float(vm.pdf(array([0.3]))[0])))
+        self.assertTrue(isfinite(float(vm.entropy())))
+
+        first_moment_norm = float(VonMisesDistribution.besselratio(0, 1000.0))
+        second_ratio = float(VonMisesDistribution.besselratio(1, 1000.0))
+
+        self.assertGreater(first_moment_norm, 0.0)
+        self.assertLess(first_moment_norm, 1.0)
+        self.assertTrue(isfinite(second_ratio))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),

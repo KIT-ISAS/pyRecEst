@@ -18,7 +18,7 @@ from pyrecest.backend import (
     zeros_like,
 )
 from scipy.optimize import brentq
-from scipy.special import iv, ive
+from scipy.special import ive
 from scipy.stats import vonmises
 
 from .abstract_circular_distribution import AbstractCircularDistribution
@@ -35,6 +35,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     _MOMENT_NORM_TOL = 1e-12
     _BESSEL_RATIO_EDGE_TOL = 1e-9
+    _MAX_STABLE_KAPPA = 1.0 / (2.0 * _BESSEL_RATIO_EDGE_TOL)
 
     def __init__(
         self,
@@ -52,13 +53,25 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return self.mu, self.kappa
 
     @property
+    def log_norm_const(self):
+        return self.kappa + log(2.0 * pi * self._scaled_i0(self.kappa))
+
+    @property
     def norm_const(self):
         if self._norm_const is None:
-            self._norm_const = 2.0 * pi * iv(0, self.kappa)
+            self._norm_const = exp(self.log_norm_const)
         return self._norm_const
 
+    @staticmethod
+    def _scaled_i0(kappa):
+        """Return ``exp(-kappa) * I_0(kappa)`` without overflowing."""
+        if float(kappa) > VonMisesDistribution._MAX_STABLE_KAPPA:
+            return 1.0 / sqrt(2.0 * pi * kappa)
+        return ive(0, kappa)
+
     def pdf(self, xs):
-        p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
+        scaled_norm_const = 2.0 * pi * self._scaled_i0(self.kappa)
+        p = exp(self.kappa * (cos(xs - self.mu) - 1.0)) / scaled_norm_const
         return p
 
     def sample(self, n):
@@ -82,7 +95,12 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def besselratio(nu, kappa):
-        return iv(nu + 1, kappa) / iv(nu, kappa)
+        kappa_float = float(kappa)
+        if kappa_float == 0.0:
+            return 0.0
+        if kappa_float > VonMisesDistribution._MAX_STABLE_KAPPA:
+            return 1.0 - (nu + 0.5) / kappa_float
+        return ive(nu + 1, kappa) / ive(nu, kappa)
 
     def cdf(self, xs, starting_point=0):
         """
@@ -125,9 +143,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def _besselratio_scalar(v, kappa: float) -> float:
-        if kappa == 0.0:
-            return 0.0
-        return float(ive(v + 1, kappa) / ive(v, kappa))
+        return float(VonMisesDistribution.besselratio(v, kappa))
 
     @staticmethod
     def besselratio_inverse(v, x):
@@ -181,9 +197,9 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return VonMisesDistribution(mu_, kappa_)
 
     def entropy(self):
-        result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + log(
-            2.0 * pi * iv(0, self.kappa)
-        )
+        result = -self.kappa * VonMisesDistribution.besselratio(
+            0, self.kappa
+        ) + self.log_norm_const
         return result
 
     def trigonometric_moment(self, n: int):

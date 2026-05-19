@@ -1,10 +1,12 @@
 import unittest
+from math import isfinite as math_isfinite
 
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
+    abs,
     allclose,
     arange,
     array,
@@ -15,7 +17,7 @@ from pyrecest.backend import (
     sqrt,
     sum,
 )
-from pyrecest.distributions import WrappedNormalDistribution
+from pyrecest.distributions import VonMisesDistribution, WrappedNormalDistribution
 
 
 class WrappedNormalDistributionTest(unittest.TestCase):
@@ -135,6 +137,49 @@ class WrappedNormalDistributionTest(unittest.TestCase):
                 rtol=0.0,
             )
         )
+
+    def test_to_vm_matches_first_trigonometric_moment(self):
+        dist = WrappedNormalDistribution(1.25, 1.3)
+
+        vm = dist.to_vm()
+
+        npt.assert_allclose(
+            vm.trigonometric_moment(1),
+            dist.trigonometric_moment(1),
+            rtol=1e-12,
+            atol=1e-14,
+        )
+
+    def test_sigma_to_kappa_returns_uniform_for_negligible_moment(self):
+        kappa = WrappedNormalDistribution.sigma_to_kappa(10.0)
+
+        self.assertEqual(kappa, 0.0)
+
+    def test_to_vm_saturates_extremely_concentrated_case_stably(self):
+        dist = WrappedNormalDistribution(0.4, 1e-9)
+
+        vm = dist.to_vm()
+        density_at_mode = vm.pdf(array([dist.scalar_mu]))
+
+        self.assertLessEqual(float(vm.kappa), VonMisesDistribution._MAX_STABLE_KAPPA)
+        self.assertTrue(math_isfinite(float(density_at_mode.squeeze())))
+        self.assertGreater(float(density_at_mode.squeeze()), 0.0)
+
+    def test_sigma_to_kappa_improves_over_small_variance_shortcut(self):
+        sigma = 1.0
+        moment_magnitude = exp(-(sigma**2) / 2.0)
+
+        matched_kappa = WrappedNormalDistribution.sigma_to_kappa(sigma)
+        shortcut_kappa = 1.0 / sigma**2
+
+        matched_error = abs(
+            VonMisesDistribution.besselratio(0, matched_kappa) - moment_magnitude
+        )
+        shortcut_error = abs(
+            VonMisesDistribution.besselratio(0, shortcut_kappa) - moment_magnitude
+        )
+
+        self.assertLess(float(matched_error), float(shortcut_error))
 
     def test_convolve_adds_variances(self):
         """Convolution must add wrapped-normal variances, not square them."""

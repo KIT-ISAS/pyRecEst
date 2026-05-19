@@ -31,6 +31,11 @@ class AbstractOrthogonalBasisDistributionTest(unittest.TestCase):
 
         self.assertAlmostEqual(float(dist.pdf(array([0.0]))[0]), 5.0)
 
+    def test_square_pdf_returns_square_root(self):
+        dist = DummyOrthogonalBasisDistribution(array([4.0]), "square")
+
+        self.assertAlmostEqual(float(dist.pdf(array([0.0]))[0]), 2.0)
+
 
 if __name__ == "__main__":
     unittest.main()

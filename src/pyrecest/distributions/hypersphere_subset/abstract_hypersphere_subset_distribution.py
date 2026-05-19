@@ -17,7 +17,6 @@ from pyrecest.backend import (
     cos,
     cumsum,
     empty,
-    float64,
     full,
     int32,
     int64,
@@ -31,7 +30,7 @@ from pyrecest.backend import (
     where,
     zeros,
 )
-from scipy.integrate import nquad, quad
+from scipy.integrate import nquad
 from scipy.special import gamma
 
 from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
@@ -90,44 +89,20 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
         mu = empty(self.dim + 1)
 
-        if 1 <= self.dim <= 3:
-            for i in range(self.dim + 1):
-
-                def f(x, i=i):
-                    return x[i] * self.pdf(x)
-
-                # pylint: disable=cell-var-from-loop
-                fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
-
-                # Casts the floats to arrays, relevant for operations on torch.tensors
-                # that are not backward compatible
-                def fangles_array(*args):
-                    tensors = [array([arg], dtype=float64) for arg in args]
-                    result = fangles(*tensors)
-                    return result.item()
-
-                if self.dim == 1:
-                    mu[i], _ = quad(
-                        fangles_array,
-                        integration_boundaries[0, 0],
-                        integration_boundaries[0, 1],
-                        epsabs=1e-3,
-                        epsrel=1e-3,
-                    )
-                elif self.dim == 2:
-                    mu[i], _ = nquad(
-                        fangles_array,
-                        integration_boundaries,
-                        opts={"epsabs": 1e-3, "epsrel": 1e-3},
-                    )
-                elif self.dim == 3:
-                    mu[i], _ = nquad(
-                        fangles_array,
-                        integration_boundaries,
-                        opts={"epsabs": 1e-3, "epsrel": 1e-3},
-                    )
-        else:
+        if not 1 <= self.dim <= 3:
             raise ValueError("Unsupported")
+
+        for i in range(self.dim + 1):
+
+            def f(x, i=i):
+                return x[i] * self.pdf(x)
+
+            fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
+            mu[i] = self.__class__.integrate_fun_over_domain_part(
+                fangles,
+                integration_boundaries,
+                opts={"epsabs": 1e-3, "epsrel": 1e-3},
+            )
 
         return self._normalize_mean_direction(mu)
 
@@ -267,6 +242,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def integrate_fun_over_domain_part(
         f_hypersph_coords: Callable,
         integration_boundaries,
+        opts=None,
     ):
         def integrand(*phis):
             dim = len(phis)
@@ -280,7 +256,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             # scipy.integrate.nquad requires a scalar return value.
             return squeeze(result)
 
-        int_result, _ = nquad(integrand, integration_boundaries)
+        int_result, _ = nquad(integrand, integration_boundaries, opts=opts)
 
         return int_result
 

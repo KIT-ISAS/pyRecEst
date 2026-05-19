@@ -5,7 +5,7 @@ from abc import abstractmethod
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import abs as backend_abs
-from pyrecest.backend import all, exp, imag, real
+from pyrecest.backend import all, exp, imag, real, sqrt
 
 from .abstract_distribution_type import AbstractDistributionType
 
@@ -22,7 +22,7 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
         Initialize the distribution.
 
         :param coeff_mat: Coefficient matrix.
-        :param transformation: Transformation function. Possible values are "sqrt", "identity", "log".
+        :param transformation: Transformation function. Possible values are "sqrt", "identity", "square", "log".
         """
         self.transformation = transformation
         self.coeff_mat = coeff_mat
@@ -81,6 +81,9 @@ class AbstractOrthogonalBasisDistribution(AbstractDistributionType):
 
         if self.transformation == "identity":
             return self._discard_negligible_imaginary_part(val)
+
+        if self.transformation == "square":
+            return sqrt(self._discard_negligible_imaginary_part(val))
 
         if self.transformation == "log":
             warnings.warn("Density may not be normalized")

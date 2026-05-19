@@ -202,7 +202,13 @@ class HypersphericalGridDistribution(
                 candidates = self.grid[same_xy, :]
 
                 # Among those, at least one must have opposite z
-                self.assertTrue(any(isclose(candidates[:, -1], -v[-1], atol=5 * tol)))
+                if not any(isclose(candidates[:, -1], -v[-1], atol=5 * tol)):
+                    raise ValueError(
+                        "ToHemisphere:AsymmetricGrid: "
+                        "Can only use to_hemisphere for antipodally symmetric grids. "
+                        "Use grid_type 'leopardi_symm_antipodal' or 'leopardi_symm_plane' "
+                        "when calling from_distribution or from_function."
+                    )
 
             raise ValueError(
                 "ToHemisphere:AsymmetricGrid: "

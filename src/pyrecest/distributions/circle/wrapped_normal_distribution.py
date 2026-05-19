@@ -1,3 +1,4 @@
+from math import exp as math_exp, expm1, isfinite
 from typing import Union
 
 import pyrecest.backend
@@ -199,11 +200,11 @@ class WrappedNormalDistribution(
     ) -> "WrappedNormalDistribution":
         """Approximate a product through the von Mises family.
 
-        The two wrapped normals are converted to von Mises distributions with
-        ``kappa = 1 / sigma**2``. Their von Mises product is computed in closed
-        form and then converted back to a wrapped normal by first-moment
-        matching. The returned density is therefore not the exact normalized
-        product of the two wrapped-normal densities.
+        The two wrapped normals are converted to von Mises distributions by
+        matching their first trigonometric moments. Their von Mises product is
+        computed in closed form and then converted back to a wrapped normal by
+        first-moment matching. The returned density is therefore not the exact
+        normalized product of the two wrapped-normal densities.
         """
         if not isinstance(other, WrappedNormalDistribution):
             raise TypeError("other must be a WrappedNormalDistribution")
@@ -250,9 +251,8 @@ class WrappedNormalDistribution(
         return WrappedNormalDistribution(self.scalar_mu + squeeze(shift_by), self.sigma)
 
     def to_vm(self) -> VonMisesDistribution:
-        # Convert to Von Mises distribution
-        kappa = self.sigma_to_kappa(self.sigma)
-        return VonMisesDistribution(self.scalar_mu, kappa)
+        """Convert to a von Mises distribution by first-moment matching."""
+        return VonMisesDistribution(self.scalar_mu, self.sigma_to_kappa(self.sigma))
 
     @staticmethod
     def from_moment(m) -> "WrappedNormalDistribution":
@@ -262,5 +262,21 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def sigma_to_kappa(sigma):
-        # Approximate conversion from sigma to kappa for a Von Mises distribution
-        return 1.0 / sigma**2
+        """Map wrapped-normal scale to von-Mises concentration."""
+
+        sigma = float(squeeze(sigma))
+        if not isfinite(sigma):
+            raise ValueError("sigma must be finite.")
+        if sigma <= 0.0:
+            raise ValueError("sigma must be positive.")
+
+        log_resultant_length = -0.5 * sigma**2
+        resultant_length = math_exp(log_resultant_length)
+        if resultant_length <= VonMisesDistribution._MOMENT_NORM_TOL:
+            return 0.0
+
+        one_minus_resultant_length = -expm1(log_resultant_length)
+        if one_minus_resultant_length <= VonMisesDistribution._BESSEL_RATIO_EDGE_TOL:
+            return VonMisesDistribution._MAX_STABLE_KAPPA
+
+        return VonMisesDistribution.besselratio_inverse(0, resultant_length)

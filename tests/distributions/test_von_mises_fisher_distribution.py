@@ -256,6 +256,17 @@ class TestVonMisesFisherDistribution(
         vmf = VonMisesFisherDistribution(mu, 1)
         self.assertTrue(allclose(vmf.mean_direction(), mu, atol=1e-13))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        "Test not supported for this backend",
+    )
+    def test_mean_direction_numerical_uses_surface_measure(self):
+        mu = array([1.0, 1.0, 2.0])
+        mu = mu / linalg.norm(mu)
+        vmf = VonMisesFisherDistribution(mu, 10.0)
+
+        npt.assert_allclose(vmf.mean_direction_numerical(), mu, atol=5e-4)
+
     def _test_hellinger_distance_helper(
         self, dist1, dist2, delta=1e-10, numerical_delta=1e-10
     ):

@@ -480,6 +480,30 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
         npt.assert_allclose(grid_back, grid_hgd, atol=1e-12, rtol=0)
         npt.assert_allclose(hgd_back.grid_values, hgd.grid_values, atol=1e-12, rtol=0)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
+    def test_to_hemisphere_asymmetric_grid_raises_value_error(self):
+        """Invalid full-sphere grids must raise the documented ValueError."""
+        scale = 1.0 / sqrt(2.0)
+        grid = scale * array(
+            [
+                [1.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
+                [-1.0, 0.0, 1.0],
+                [0.0, -1.0, 1.0],
+            ]
+        )
+        grid_values = array([1.0, 1.0, 1.0, 1.0])
+
+        hgd = HypersphericalGridDistribution(grid, grid_values)
+
+        with self.assertRaises(ValueError) as cm:
+            hgd.to_hemisphere()
+
+        self.assertIn("ToHemisphere:AsymmetricGrid", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
