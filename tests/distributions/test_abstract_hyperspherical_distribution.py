@@ -7,6 +7,7 @@ import pyrecest.backend
 from pyrecest.backend import array, linalg, log, pi, sqrt
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
+    CustomHypersphericalDistribution,
     HypersphericalUniformDistribution,
     VonMisesFisherDistribution,
 )
@@ -68,6 +69,24 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         kappa = 10.0
         vmf = VonMisesFisherDistribution(mu, kappa)
         self.assertLess(linalg.norm(vmf.mean_direction_numerical() - mu), 1e-6)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_mean_direction_numerical_custom_s2_uses_surface_jacobian(self):
+        """Regression test for omitting the S2 sine Jacobian in mean integration."""
+        slope_x = 0.3
+        slope_z = 0.6
+
+        def pdf(xs):
+            return (1.0 + slope_x * xs[..., 0] + slope_z * xs[..., 2]) / (4.0 * pi)
+
+        dist = CustomHypersphericalDistribution(pdf, dim=2)
+        expected = array([slope_x, 0.0, slope_z])
+        expected = expected / linalg.norm(expected)
+
+        self.assertLess(linalg.norm(dist.mean_direction_numerical() - expected), 1e-6)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
