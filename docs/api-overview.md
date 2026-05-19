@@ -92,6 +92,8 @@ track-management utilities.
 Common starting points include:
 
 - `KalmanFilter` for linear Gaussian Euclidean state estimation;
+- `InformationFormDistributedKalmanNode`, `IDKFNode`, and `IdkfNode` for
+  additive information-vector distributed Kalman filtering;
 - `AssociationHypothesis`, `NISGate`, `CostThresholdGate`, `TopKGate`,
   and `linear_gaussian_association_hypotheses` for reusable association
   diagnostics, gating, and cost-matrix conversion;
@@ -105,6 +107,19 @@ Common starting points include:
   directional estimation;
 - `MultiBernoulliTracker`, `GlobalNearestNeighbor`, `JPDAF`, and
   `TrackManager` for tracking workflows.
+
+The IDKF node stores one additive information-vector contribution per origin
+node and reconstructs the fused Gaussian from the shared information matrix and
+the sum of current contributions. Its prediction input convention follows this
+additive decomposition: `sys_input` is the deterministic input for the local
+node's own contribution, while `input_by_node` supplies known deterministic
+inputs for specific contribution origins. In typical distributed settings there
+is no separately known global deterministic input; unknown remote inputs should
+therefore be omitted or treated as zero via `assume_zero_remote_inputs=True`.
+Passing the same physical input as `sys_input` independently at every node means
+that the input is present in every additive contribution and will be summed after
+fusion. Use `input_by_node` only when contribution-origin-specific inputs are
+known and should explicitly participate in the fused state.
 
 ### `pyrecest.smoothers`
 
