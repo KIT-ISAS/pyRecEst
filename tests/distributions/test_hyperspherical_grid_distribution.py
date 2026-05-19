@@ -449,6 +449,24 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
     # --------------------------------------------------------------
     # Link between full sphere and hemisphere (sanity)
     # --------------------------------------------------------------
+    def test_to_hemisphere_asymmetric_grid_raises_value_error(self):
+        """Invalid non-antipodal grids must not use unittest assertions."""
+        scale = 1.0 / sqrt(2.0)
+        grid = array(
+            [
+                [scale, 0.0, scale],
+                [0.0, scale, scale],
+                [-1.0, 0.0, 0.0],
+                [0.0, -1.0, 0.0],
+            ]
+        )
+        grid_values = array([1.0, 1.0, 1.0, 1.0])
+        f = HypersphericalGridDistribution(grid, grid_values)
+
+        with self.assertRaises(ValueError) as cm:
+            f.to_hemisphere()
+        self.assertIn("ToHemisphere:AsymmetricGrid", str(cm.exception))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on this backend",

@@ -57,9 +57,25 @@ class AbstractConditionalDistribution(ABC):
     # Normalization
     # ------------------------------------------------------------------
 
-    def normalize(self):
-        """No-op – returns ``self`` for compatibility."""
-        return self
+    def normalize_in_place(self, *_args, **_kwargs):
+        """Normalize this conditional distribution in place.
+
+        Conditional grid normalization is manifold- and quadrature-specific:
+        for every fixed conditioning grid point, the conditional density over
+        the first argument must integrate to one. The abstract base class does
+        not know the appropriate integration weights, so subclasses must
+        implement this method instead of silently accepting an unnormalized
+        transition density.
+        """
+        raise NotImplementedError(
+            "Conditional grid normalization is manifold-specific; subclasses "
+            "must implement normalize_in_place()."
+        )
+
+    def normalize(self, *args, **kwargs):
+        """Return a normalized deep copy of this conditional distribution."""
+        result = copy.deepcopy(self)
+        return result.normalize_in_place(*args, **kwargs)
 
     # ------------------------------------------------------------------
     # Arithmetic

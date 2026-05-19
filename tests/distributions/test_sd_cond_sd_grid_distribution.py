@@ -3,7 +3,7 @@ import warnings
 
 import numpy.testing as npt
 import pyrecest
-from pyrecest.backend import array, ones
+from pyrecest.backend import array, mean, ones
 from pyrecest.distributions.conditional.sd_cond_sd_grid_distribution import (
     SdCondSdGridDistribution,
 )
@@ -29,6 +29,26 @@ def _make_uniform_conditional(no_of_grid_points=100, dim=6):
     uniform_val = 1.0 / surface
     grid_values = ones((no_of_grid_points, no_of_grid_points)) * uniform_val
     return SdCondSdGridDistribution(grid, grid_values)
+
+
+def _make_unnormalized_conditional(no_of_grid_points=20, dim=6):
+    """Helper: build an intentionally unnormalised conditional distribution."""
+    from pyrecest.sampling.hyperspherical_sampler import get_grid_hypersphere
+
+    manifold_dim = dim // 2 - 1
+    grid, _ = get_grid_hypersphere("leopardi", no_of_grid_points, manifold_dim)
+    grid_values = ones((no_of_grid_points, no_of_grid_points)) * 2.0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        return SdCondSdGridDistribution(grid, grid_values)
+
+
+def _conditional_column_integrals(sc):
+    """Return the approximate spherical integral of every conditional column."""
+    surface = AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
+        sc.grid.shape[1] - 1
+    )
+    return mean(sc.grid_values, axis=0) * surface
 
 
 class TestSdCondSdGridDistributionInit(unittest.TestCase):
@@ -107,16 +127,36 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
 
 
 class TestSdCondSdGridDistributionNormalize(unittest.TestCase):
-    """normalize() is a no-op and returns self."""
+    """Tests for column-wise conditional normalization."""
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
-    def test_normalize_returns_self(self):
-        sc = _make_uniform_conditional(50)
-        result = sc.normalize()
+    def test_normalize_returns_normalized_copy(self):
+        sc = _make_unnormalized_conditional(20)
+        result = sc.normalize(warn_unnorm=False)
+
+        self.assertIsNot(result, sc)
+        npt.assert_allclose(
+            _conditional_column_integrals(result),
+            ones(20),
+            rtol=1e-10,
+            atol=1e-10,
+        )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_normalize_in_place_returns_self_and_normalizes_columns(self):
+        sc = _make_unnormalized_conditional(20)
+        result = sc.normalize_in_place(warn_unnorm=False)
+
         self.assertIs(result, sc)
+        npt.assert_allclose(
+            _conditional_column_integrals(sc), ones(20), rtol=1e-10, atol=1e-10
+        )
 
 
 class TestSdCondSdGridDistributionMultiply(unittest.TestCase):

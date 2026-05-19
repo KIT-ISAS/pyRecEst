@@ -56,6 +56,16 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :returns: The integral of the PDF.
         """
 
+    @staticmethod
+    def _as_scalar_integral(integral):
+        """Return a scalar from scalar-like integration results."""
+        integral_arr = pyrecest.backend.asarray(integral)
+        if integral_arr.shape == ():
+            return integral_arr.item()
+        if integral_arr.size == 1:
+            return integral_arr.reshape(()).item()
+        raise ValueError("Expected integrate() to return a scalar integral.")
+
     def normalize(self, verify: bool | None = None) -> "AbstractCustomDistribution":
         """
         Normalize the PDF such that its integral is 1.
@@ -68,10 +78,10 @@ class AbstractCustomDistribution(AbstractDistributionType):
         ), "Only supported for numpy backend"
         cd = copy.deepcopy(self)
 
-        integral = self.integrate()
+        integral = self._as_scalar_integral(self.integrate())
         cd.scale_by = cd.scale_by / integral
 
-        if verify and abs(cd.integrate()[0] - 1) > 0.001:
+        if verify and abs(self._as_scalar_integral(cd.integrate()) - 1) > 0.001:
             warnings.warn("Density is not yet properly normalized.", UserWarning)
 
         return cd

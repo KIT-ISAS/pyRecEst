@@ -55,18 +55,27 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
     # Normalization
     # ------------------------------------------------------------------
 
-    def _check_normalization(self, tol=0.01):
-        """Warn if any column is not normalized to 1 over the sphere."""
+    def _conditional_integrals(self):
+        """Approximate one spherical integral for each conditioning column."""
         sphere_surface = (
             AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
                 self.grid.shape[1] - 1
             )
         )
+        return mean(self.grid_values, axis=0) * sphere_surface
+
+    def _check_normalization(self, tol=0.01):
+        """Warn if any column is not normalized to 1 over the sphere."""
         # For each fixed second argument j, the mean over i times the sphere
         # surface area should equal 1.
-        ints = mean(self.grid_values, axis=0) * sphere_surface
+        ints = self._conditional_integrals()
         if any(abs(ints - 1) > tol):
             # Check whether swapping the two arguments would yield normalisation.
+            sphere_surface = (
+                AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
+                    self.grid.shape[1] - 1
+                )
+            )
             ints_swapped = mean(self.grid_values, axis=1) * sphere_surface
             if all(abs(ints_swapped - 1) <= tol):
                 raise ValueError(
@@ -80,6 +89,37 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
                 "No normalisation is performed; you may want to do this manually.",
                 UserWarning,
             )
+
+    def normalize_in_place(self, tol=1e-4, warn_unnorm=True):
+        """Normalize each conditional column in place.
+
+        ``grid_values[:, j]`` represents the density of the first sphere
+        conditioned on ``grid[j]`` on the second sphere. With the equal-weight
+        spherical grid convention used by this class, each column integral is
+        approximated by ``mean(grid_values[:, j]) * surface(S^d)``. Therefore
+        normalization must be column-wise rather than a single global scaling.
+        """
+        ints = self._conditional_integrals()
+        if any(abs(ints) < 1e-200):
+            raise ValueError(
+                "At least one conditional column integrates too close to zero; "
+                "cannot normalize conditional grid distribution."
+            )
+        if any(self.grid_values < 0):
+            warnings.warn(
+                "Warning: There are negative values. This usually points to a "
+                "user error.",
+                UserWarning,
+            )
+        elif warn_unnorm and any(abs(ints - 1) > tol):
+            warnings.warn(
+                "Warning: Conditional grid values apparently do not belong to "
+                "normalized conditional densities. Normalizing each column...",
+                UserWarning,
+            )
+
+        self.grid_values = self.grid_values / ints[None, :]
+        return self
 
     # ------------------------------------------------------------------
     # Marginalisation and conditioning

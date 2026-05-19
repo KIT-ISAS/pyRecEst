@@ -22,13 +22,11 @@ from pyrecest.backend import (
     linalg,
     ndim,
     ones,
-    pi,
     sin,
-    sinh,
     stack,
     zeros,
 )
-from scipy.special import iv, ive
+from scipy.special import ive
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 
@@ -74,15 +72,50 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
         self.mu = mu
         self.kappa = kappa
+        self.log_C = self._log_normalization_constant(self.input_dim, kappa)
+        self.C = exp(self.log_C)
 
-        if kappa <= self._KAPPA_EPS:
-            self.C = 1.0 / self.compute_unit_hypersphere_surface(self.dim)
-        elif self.dim == 2:
-            self.C = kappa / (4 * pi * sinh(kappa))
-        else:
-            self.C = kappa ** ((self.dim + 1) / 2.0 - 1) / (
-                (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, kappa)
+    @staticmethod
+    def _log_unit_hypersphere_surface(input_dim: Union[int, int32, int64]) -> float:
+        """Return log(surface area of S^(input_dim-1))."""
+        input_dim = int(input_dim)
+        return (
+            math.log(2.0)
+            + 0.5 * input_dim * math.log(math.pi)
+            - math.lgamma(0.5 * input_dim)
+        )
+
+    @staticmethod
+    def _log_modified_bessel_first_kind(nu: float, kappa: float) -> float:
+        """Return log(I_nu(kappa)) without overflowing for large kappa."""
+        scaled_value = float(ive(nu, kappa))
+        if scaled_value <= 0.0 or not math.isfinite(scaled_value):
+            raise ValueError(
+                f"Could not evaluate scaled modified Bessel function for "
+                f"nu={nu}, kappa={kappa}."
             )
+        return math.log(scaled_value) + float(kappa)
+
+    @classmethod
+    def _log_normalization_constant(
+        cls, input_dim: Union[int, int32, int64], kappa: float
+    ) -> float:
+        """Return the vMF log-normalization constant stably."""
+        input_dim = int(input_dim)
+        if kappa <= cls._KAPPA_EPS:
+            return -cls._log_unit_hypersphere_surface(input_dim)
+
+        nu = input_dim / 2.0 - 1.0
+        return (
+            nu * math.log(float(kappa))
+            - 0.5 * input_dim * math.log(2.0 * math.pi)
+            - cls._log_modified_bessel_first_kind(nu, kappa)
+        )
+
+    def log_pdf(self, xs):
+        """Evaluate the log-density without forming overflowing products."""
+        assert xs.shape[-1] == self.input_dim
+        return self.log_C + self.kappa * xs @ self.mu
 
     def pdf(self, xs):
         """Evaluate the density at unit vectors.
@@ -93,9 +126,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             Unit-vector evaluation point or batch of points in the embedding
             space.
         """
-        assert xs.shape[-1] == self.input_dim
-
-        return self.C * exp(self.kappa * xs @ self.mu)
+        return exp(self.log_pdf(xs))
 
     def mean_direction(self):
         """Return the unit mean direction with shape ``(d,)``."""
