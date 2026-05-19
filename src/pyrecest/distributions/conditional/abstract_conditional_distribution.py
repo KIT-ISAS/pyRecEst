@@ -4,11 +4,13 @@ from abc import ABC
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
+    abs,
     any,
     arange,
     argmin,
     array_equal,
     linalg,
+    mean,
     meshgrid,
 )
 
@@ -57,9 +59,57 @@ class AbstractConditionalDistribution(ABC):
     # Normalization
     # ------------------------------------------------------------------
 
-    def normalize(self):
-        """No-op – returns ``self`` for compatibility."""
+    def _get_normalization_manifold_size(self):
+        """Return the measure of the conditioned variable's manifold.
+
+        Conditional grid values are stored column-wise as
+        ``grid_values[i, j] = f(grid[i] | grid[j])``.  Normalization therefore
+        integrates each column over the first argument's manifold.  Concrete
+        subclasses provide the manifold measure used by the equal-area grid
+        quadrature rule ``mean(column) * manifold_size``.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} must define the manifold measure used "
+            "to normalize conditional grid columns."
+        )
+
+    def _conditional_integrals(self):
+        """Approximate each conditional column integral."""
+        return mean(self.grid_values, axis=0) * self._get_normalization_manifold_size()
+
+    def normalize_in_place(self, tol=1e-4, warn_unnorm=True):
+        """Normalize every conditional column in place.
+
+        For a conditional density ``f(a | b)``, each fixed-conditioning column
+        must integrate to one over ``a``.  The grid classes use equal-area
+        quadrature, i.e. ``integral_j = mean(grid_values[:, j]) * |M|``.
+        """
+        integrals = self._conditional_integrals()
+        if any(self.grid_values < 0):
+            warnings.warn(
+                "Warning: There are negative values. This usually points to a "
+                "user error.",
+                UserWarning,
+            )
+        if any(abs(integrals) < 1e-200):
+            raise ValueError(
+                "At least one conditional column integral is too close to zero; "
+                "cannot normalize conditional grid distribution."
+            )
+        if warn_unnorm and any(abs(integrals - 1) > tol):
+            warnings.warn(
+                "Warning: Conditional grid columns do not integrate to one. "
+                "Normalizing each column independently...",
+                UserWarning,
+            )
+
+        self.grid_values = self.grid_values / integrals[None, :]
         return self
+
+    def normalize(self, tol=1e-4, warn_unnorm=True):
+        """Return a copy with every conditional column normalized."""
+        result = copy.deepcopy(self)
+        return result.normalize_in_place(tol=tol, warn_unnorm=warn_unnorm)
 
     # ------------------------------------------------------------------
     # Arithmetic

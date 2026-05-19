@@ -69,12 +69,14 @@ class TdCondTdGridDistributionTest(unittest.TestCase):
 
     # -------------------------------------------------------------- normalize
 
-    def test_normalize_returns_self(self):
+    def test_normalize_returns_copy(self):
         n = 4
         grid = linspace(0.0, 2.0 * pi - 2.0 * pi / n, n).reshape(-1, 1)
         gv = _make_normalized_grid_values(n)
         td = TdCondTdGridDistribution(grid, gv)
-        self.assertIs(td.normalize(), td)
+        result = td.normalize()
+        self.assertIsNot(result, td)
+        self.assertIsInstance(result, TdCondTdGridDistribution)
 
     # -------------------------------------------------------------- multiply
 

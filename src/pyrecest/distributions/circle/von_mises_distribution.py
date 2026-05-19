@@ -1,5 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from math import isfinite
+from math import isfinite, log as math_log
 
 from pyrecest.backend import (
     abs,
@@ -8,7 +8,6 @@ from pyrecest.backend import (
     cos,
     exp,
     imag,
-    log,
     mod,
     pi,
     real,
@@ -47,18 +46,54 @@ class VonMisesDistribution(AbstractCircularDistribution):
         self.mu = mu
         self.kappa = kappa
         self._norm_const = norm_const
+        self._log_norm_const = (
+            None if norm_const is None else math_log(float(norm_const))
+        )
 
     def get_params(self):
         return self.mu, self.kappa
 
+    @staticmethod
+    def _log_modified_bessel_i(nu, kappa):
+        """Return log(I_nu(kappa)) without overflowing for large kappa."""
+        kappa = float(kappa)
+        if kappa == 0.0 and nu > 0:
+            return -float("inf")
+
+        scaled_bessel = float(ive(nu, kappa))
+        if scaled_bessel > 0.0:
+            return kappa + math_log(scaled_bessel)
+
+        # Fallback for exotic order/concentration combinations where the
+        # exponentially scaled Bessel function underflows. This preserves the
+        # previous behavior as a last resort instead of silently returning an
+        # incorrect finite value.
+        unscaled_bessel = float(iv(nu, kappa))
+        if unscaled_bessel <= 0.0:
+            return -float("inf")
+        return math_log(unscaled_bessel)
+
+    @property
+    def log_norm_const(self):
+        """Return log(2*pi*I_0(kappa)) in a numerically stable form."""
+        if self._log_norm_const is None:
+            self._log_norm_const = math_log(2.0 * pi) + self._log_modified_bessel_i(
+                0, self.kappa
+            )
+        return self._log_norm_const
+
     @property
     def norm_const(self):
         if self._norm_const is None:
-            self._norm_const = 2.0 * pi * iv(0, self.kappa)
+            self._norm_const = exp(self.log_norm_const)
         return self._norm_const
 
+    def log_pdf(self, xs):
+        """Evaluate the log-density stably, including high concentrations."""
+        return self.kappa * cos(xs - self.mu) - self.log_norm_const
+
     def pdf(self, xs):
-        p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
+        p = exp(self.log_pdf(xs))
         return p
 
     def sample(self, n):
@@ -82,7 +117,10 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def besselratio(nu, kappa):
-        return iv(nu + 1, kappa) / iv(nu, kappa)
+        kappa = float(kappa)
+        if kappa == 0.0:
+            return 0.0
+        return ive(nu + 1, kappa) / ive(nu, kappa)
 
     def cdf(self, xs, starting_point=0):
         """
@@ -181,8 +219,9 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return VonMisesDistribution(mu_, kappa_)
 
     def entropy(self):
-        result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + log(
-            2.0 * pi * iv(0, self.kappa)
+        result = (
+            -self.kappa * VonMisesDistribution.besselratio(0, self.kappa)
+            + self.log_norm_const
         )
         return result
 

@@ -55,13 +55,15 @@ class SdCondSdGridDistribution(AbstractConditionalDistribution):
     # Normalization
     # ------------------------------------------------------------------
 
+    def _get_normalization_manifold_size(self):
+        """Return the surface area of the individual sphere."""
+        return AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
+            self.grid.shape[1] - 1
+        )
+
     def _check_normalization(self, tol=0.01):
         """Warn if any column is not normalized to 1 over the sphere."""
-        sphere_surface = (
-            AbstractHypersphereSubsetDistribution.compute_unit_hypersphere_surface(
-                self.grid.shape[1] - 1
-            )
-        )
+        sphere_surface = self._get_normalization_manifold_size()
         # For each fixed second argument j, the mean over i times the sphere
         # surface area should equal 1.
         ints = mean(self.grid_values, axis=0) * sphere_surface

@@ -107,16 +107,17 @@ class TestSdCondSdGridDistributionInit(unittest.TestCase):
 
 
 class TestSdCondSdGridDistributionNormalize(unittest.TestCase):
-    """normalize() is a no-op and returns self."""
+    """normalize() returns a normalized copy."""
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
-    def test_normalize_returns_self(self):
+    def test_normalize_returns_copy(self):
         sc = _make_uniform_conditional(50)
         result = sc.normalize()
-        self.assertIs(result, sc)
+        self.assertIsNot(result, sc)
+        self.assertIsInstance(result, SdCondSdGridDistribution)
 
 
 class TestSdCondSdGridDistributionMultiply(unittest.TestCase):

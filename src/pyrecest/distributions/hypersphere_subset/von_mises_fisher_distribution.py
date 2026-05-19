@@ -22,9 +22,7 @@ from pyrecest.backend import (
     linalg,
     ndim,
     ones,
-    pi,
     sin,
-    sinh,
     stack,
     zeros,
 )
@@ -74,15 +72,49 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
         self.mu = mu
         self.kappa = kappa
+        self.log_C = self._compute_log_normalization_constant()
+        self.C = exp(self.log_C)
 
+    @staticmethod
+    def _log_sinh(kappa: float) -> float:
+        """Return log(sinh(kappa)) without overflowing for large kappa."""
+        if kappa < 20.0:
+            return math.log(math.sinh(kappa))
+        return kappa - math.log(2.0) + math.log1p(-math.exp(-2.0 * kappa))
+
+    @staticmethod
+    def _log_modified_bessel_i(order: float, kappa: float) -> float:
+        """Return log(I_order(kappa)) using exponentially scaled Bessel values."""
+        if kappa == 0.0 and order > 0.0:
+            return -math.inf
+
+        scaled_bessel = float(ive(order, kappa))
+        if scaled_bessel > 0.0:
+            return kappa + math.log(scaled_bessel)
+
+        # Last-resort compatibility fallback for unusual order/concentration
+        # combinations. The main high-kappa paths should use ive above.
+        unscaled_bessel = float(iv(order, kappa))
+        if unscaled_bessel <= 0.0:
+            return -math.inf
+        return math.log(unscaled_bessel)
+
+    def _compute_log_normalization_constant(self) -> float:
+        """Return the vMF log normalizing constant for the current dimension."""
+        kappa = float(self.kappa)
         if kappa <= self._KAPPA_EPS:
-            self.C = 1.0 / self.compute_unit_hypersphere_surface(self.dim)
-        elif self.dim == 2:
-            self.C = kappa / (4 * pi * sinh(kappa))
-        else:
-            self.C = kappa ** ((self.dim + 1) / 2.0 - 1) / (
-                (2.0 * pi) ** ((self.dim + 1) / 2.0) * iv((self.dim + 1) / 2 - 1, kappa)
-            )
+            return -math.log(float(self.compute_unit_hypersphere_surface(self.dim)))
+
+        if self.dim == 2:
+            return math.log(kappa) - math.log(4.0 * math.pi) - self._log_sinh(kappa)
+
+        input_dim = self.dim + 1
+        order = input_dim / 2.0 - 1.0
+        return (
+            order * math.log(kappa)
+            - input_dim / 2.0 * math.log(2.0 * math.pi)
+            - self._log_modified_bessel_i(order, kappa)
+        )
 
     def pdf(self, xs):
         """Evaluate the density at unit vectors.
@@ -95,7 +127,11 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         """
         assert xs.shape[-1] == self.input_dim
 
-        return self.C * exp(self.kappa * xs @ self.mu)
+        return exp(self.log_pdf(xs))
+
+    def log_pdf(self, xs):
+        """Evaluate the log-density stably, including high concentrations."""
+        return self.log_C + self.kappa * (xs @ self.mu)
 
     def mean_direction(self):
         """Return the unit mean direction with shape ``(d,)``."""

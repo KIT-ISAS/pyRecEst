@@ -56,6 +56,19 @@ class AbstractCustomDistribution(AbstractDistributionType):
         :returns: The integral of the PDF.
         """
 
+    @staticmethod
+    def _integral_value(integral):
+        """Return the scalar integral value from scalar or container outputs."""
+        try:
+            return integral.item()
+        except (AttributeError, ValueError):
+            pass
+
+        try:
+            return integral[0]
+        except (TypeError, IndexError):
+            return integral
+
     def normalize(self, verify: bool | None = None) -> "AbstractCustomDistribution":
         """
         Normalize the PDF such that its integral is 1.
@@ -68,10 +81,10 @@ class AbstractCustomDistribution(AbstractDistributionType):
         ), "Only supported for numpy backend"
         cd = copy.deepcopy(self)
 
-        integral = self.integrate()
+        integral = self._integral_value(self.integrate())
         cd.scale_by = cd.scale_by / integral
 
-        if verify and abs(cd.integrate()[0] - 1) > 0.001:
+        if verify and abs(self._integral_value(cd.integrate()) - 1) > 0.001:
             warnings.warn("Density is not yet properly normalized.", UserWarning)
 
         return cd

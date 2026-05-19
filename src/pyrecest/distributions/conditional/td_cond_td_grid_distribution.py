@@ -48,10 +48,14 @@ class TdCondTdGridDistribution(AbstractConditionalDistribution):
     # Normalization
     # ------------------------------------------------------------------
 
+    def _get_normalization_manifold_size(self):
+        """Return the volume of the individual torus."""
+        d = self.dim // 2
+        return float((2.0 * pi) ** d)
+
     def _check_normalization(self, tol=0.01):
         """Warn if any column is not normalized to 1 over the torus."""
-        d = self.dim // 2
-        manifold_size = float((2.0 * pi) ** d)
+        manifold_size = self._get_normalization_manifold_size()
         # For each fixed second argument j, the mean over i times the torus
         # volume should equal 1.
         ints = mean(self.grid_values, 0) * manifold_size

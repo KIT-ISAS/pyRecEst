@@ -201,8 +201,14 @@ class HypersphericalGridDistribution(
                 same_xy = all(abs(self.grid[:, :-1] - v[None, :-1]) < 5 * tol, axis=1)
                 candidates = self.grid[same_xy, :]
 
-                # Among those, at least one must have opposite z
-                self.assertTrue(any(isclose(candidates[:, -1], -v[-1], atol=5 * tol)))
+                # Among those, at least one must have opposite z. This is
+                # library code, not a unittest.TestCase, so use explicit
+                # validation instead of self.assertTrue(...).
+                if not any(isclose(candidates[:, -1], -v[-1], atol=5 * tol)):
+                    raise ValueError(
+                        "ToHemisphere:AsymmetricGrid: grid is neither "
+                        "antipodally symmetric nor plane-symmetric."
+                    )
 
             raise ValueError(
                 "ToHemisphere:AsymmetricGrid: "
