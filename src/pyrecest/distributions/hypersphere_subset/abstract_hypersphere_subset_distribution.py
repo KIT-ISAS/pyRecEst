@@ -31,7 +31,7 @@ from pyrecest.backend import (
     where,
     zeros,
 )
-from scipy.integrate import nquad, quad
+from scipy.integrate import nquad
 from scipy.special import gamma
 
 from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
@@ -88,46 +88,30 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
                 self.dim
             )
 
-        mu = empty(self.dim + 1)
-
-        if 1 <= self.dim <= 3:
-            for i in range(self.dim + 1):
-
-                def f(x, i=i):
-                    return x[i] * self.pdf(x)
-
-                # pylint: disable=cell-var-from-loop
-                fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
-
-                # Casts the floats to arrays, relevant for operations on torch.tensors
-                # that are not backward compatible
-                def fangles_array(*args):
-                    tensors = [array([arg], dtype=float64) for arg in args]
-                    result = fangles(*tensors)
-                    return result.item()
-
-                if self.dim == 1:
-                    mu[i], _ = quad(
-                        fangles_array,
-                        integration_boundaries[0, 0],
-                        integration_boundaries[0, 1],
-                        epsabs=1e-3,
-                        epsrel=1e-3,
-                    )
-                elif self.dim == 2:
-                    mu[i], _ = nquad(
-                        fangles_array,
-                        integration_boundaries,
-                        opts={"epsabs": 1e-3, "epsrel": 1e-3},
-                    )
-                elif self.dim == 3:
-                    mu[i], _ = nquad(
-                        fangles_array,
-                        integration_boundaries,
-                        opts={"epsabs": 1e-3, "epsrel": 1e-3},
-                    )
-        else:
+        if not 1 <= self.dim <= 3:
             raise ValueError("Unsupported")
+
+        mu = empty(self.dim + 1)
+        for i in range(self.dim + 1):
+
+            def f(x, i=i):
+                return x[i] * self.pdf(x)
+
+            # pylint: disable=cell-var-from-loop
+            fangles = self.gen_fun_hyperspherical_coords(f, self.dim)
+
+            # Casts the floats to arrays, relevant for operations on torch.tensors
+            # that are not backward compatible. The integration helper then
+            # applies the hyperspherical surface-element factors.
+            def fangles_array(*args):
+                tensors = [array([arg], dtype=float64) for arg in args]
+                result = fangles(*tensors)
+                return result.item()
+
+            mu[i] = AbstractHypersphereSubsetDistribution.integrate_fun_over_domain_part(
+                fangles_array,
+                integration_boundaries,
+            )
 
         return self._normalize_mean_direction(mu)
 
