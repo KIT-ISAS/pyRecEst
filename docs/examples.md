@@ -3,7 +3,9 @@
 The source repository includes executable examples in `examples/basic/`.
 
 Run examples from the repository root after installing PyRecEst or after
-installing a development checkout.
+installing a development checkout. The CI package job smoke-runs the core
+Kalman and Gaussian examples from an installed wheel so packaging errors are
+caught outside editable mode.
 
 ## Basic Examples
 

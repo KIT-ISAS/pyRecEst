@@ -40,6 +40,52 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install system build dependencies (when binary not available)
+        run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
+          retry sudo apt-get update
+          retry sudo apt-get install -y \
+            gfortran pkg-config ninja-build \
+            libopenblas-dev liblapack-dev \
+            libfftw3-dev libhealpix-cxx-dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Build distributions and validate local release metadata
+        run: |
+          python -m pip install --upgrade pip build twine
+          python scripts/check_release_consistency.py --local-only
+          python -m build
+          python -m twine check dist/*
+
+      - name: Install built wheel and smoke-run public examples
+        run: |
+          python -m pip install dist/*.whl
+          python - <<'PY'
+          import pyrecest
+          print(f"Installed pyrecest {pyrecest.__version__}")
+          PY
+          python examples/basic/kalman_filter.py
+          python examples/basic/gaussian_multiplication.py
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -82,12 +128,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install poetry
           poetry env use python
-          poetry install --extras "healpy_support"
+          poetry install --with dev --extras "healpy_support"
+          poetry run python -m pip install "pytest-cov>=5,<7"
           
       - name: Install pytorch specific dependencies afterward
         if: ${{ matrix.backend == 'pytorch' }}
         run: |
-          poetry install --extras "healpy_support" --extras "pytorch_support"
+          poetry install --with dev --extras "healpy_support" --extras "pytorch_support"
           
       - name: Run tests
         run: |
@@ -95,7 +142,15 @@ jobs:
             export JAX_ENABLE_X64=True
           fi
           export PYRECEST_BACKEND=${{ matrix.backend }}
-          poetry run python -m pytest --rootdir . -v --strict-config --junitxml=junit_test_results_${{ matrix.backend }}.xml ./tests
+          poetry run python -m pytest \
+            --rootdir . \
+            -v \
+            --strict-config \
+            --junitxml=junit_test_results_${{ matrix.backend }}.xml \
+            --cov=pyrecest \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage_${{ matrix.backend }}_${{ matrix.python-version }}.xml \
+            ./tests
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
@@ -104,6 +159,12 @@ jobs:
         with:
           name: ${{ matrix.backend }}-${{ matrix.python-version }}-test-results
           path: junit_test_results_${{ matrix.backend }}.xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.backend }}-${{ matrix.python-version }}-coverage
+          path: coverage_${{ matrix.backend }}_${{ matrix.python-version }}.xml
 
   publish-results:
     needs: test

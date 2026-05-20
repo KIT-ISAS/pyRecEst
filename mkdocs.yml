@@ -8,6 +8,7 @@ nav:
   - Getting Started: getting-started.md
   - Examples: examples.md
   - Guides:
+      - Choosing an API: choosing-an-api.md
       - Shapes and Conventions: conventions.md
       - Backend Compatibility: backend-compatibility.md
       - Representation Conversion: representation-conversion.md

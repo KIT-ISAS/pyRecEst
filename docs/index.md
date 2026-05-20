@@ -13,6 +13,8 @@ toward a generated documentation site.
 
 - [Getting started](getting-started.md): install PyRecEst, run the examples,
   choose a backend, and set up a development checkout.
+- [Choosing an API](choosing-an-api.md): map common estimation problems to the
+  relevant PyRecEst distributions, filters, trackers, and examples.
 - [API overview](api-overview.md): understand the main packages and where common
   public classes live.
 - [Task tutorials](tutorials/index.md): work through common distribution,

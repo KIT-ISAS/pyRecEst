@@ -25,7 +25,10 @@ After import, the selected backend is available as
 The test workflow runs the suite for the `numpy`, `pytorch`, and `jax` backends
 across supported Python versions. Passing tests do not mean that every public
 API has identical behavior on every backend. Some modules intentionally assert
-or raise when a backend does not support the required operation.
+or raise when a backend does not support the required operation. The declared
+unsupported and partial backend capabilities live in
+`src/pyrecest/_backend/capabilities.py` and are exercised by backend contract
+tests.
 
 Association-hypothesis helpers are currently NumPy/SciPy-oriented utilities.
 They may coerce backend arrays to NumPy arrays and should not be assumed to
