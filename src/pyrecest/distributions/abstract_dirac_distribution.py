@@ -8,6 +8,7 @@ from beartype import beartype
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     all,
+    asarray,
     apply_along_axis,
     arange,
     argmax,
@@ -36,10 +37,12 @@ class AbstractDiracDistribution(AbstractDistributionType):
         :param d: Dirac locations as a numpy array.
         :param w: Weights of Dirac locations as a numpy array. If not provided, defaults to uniform weights.
         """
+        d = asarray(d)
         self.d = copy.copy(d)
         if w is None:
             self.w = ones(d.shape[0]) / d.shape[0]
         else:
+            w = asarray(w)
             if d.shape[0] != w.shape[0]:
                 raise ValueError("Number of Diracs and weights must match.")
             self.w = copy.copy(w)
@@ -116,9 +119,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     def integrate(self, left=None, right=None):
         if left is not None or right is not None:
-            raise NotImplementedError(
-                "Must overwrite in child class to use integral limits"
-            )
+            raise ValueError("Must overwrite in child class to use integral limits")
         return sum(self.w)
 
     def log_likelihood(self, *args):

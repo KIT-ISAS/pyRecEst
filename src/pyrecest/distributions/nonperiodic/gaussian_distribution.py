@@ -53,9 +53,7 @@ class GaussianDistribution(AbstractLinearDistribution):
         if ndim(C) != 2:
             raise ValueError("C must be 2-dimensional")
         AbstractLinearDistribution.__init__(self, dim=mu.shape[0])
-        if not (
-            1 == mu.shape[0] == C.shape[0] or mu.shape[0] == C.shape[0] == C.shape[1]
-        ):
+        if C.shape != (mu.shape[0], mu.shape[0]):
             raise ValueError("Size of C invalid")
         self.mu = mu
 
@@ -95,7 +93,10 @@ class GaussianDistribution(AbstractLinearDistribution):
             Density values with one value per evaluation point.
         """
         xs = asarray(xs)
-        if not (self.dim == 1 and ndim(xs) <= 1 or xs.shape[-1] == self.dim):
+        if not (
+            (self.dim == 1 and ndim(xs) <= 1)
+            or (ndim(xs) >= 1 and xs.shape[-1] == self.dim)
+        ):
             raise ValueError("Dimension incorrect")
         if pyrecest.backend.__backend_name__ == "numpy":
             from scipy.stats import multivariate_normal as mvn

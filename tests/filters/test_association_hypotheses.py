@@ -132,6 +132,25 @@ class AssociationHypothesesTest(unittest.TestCase):
         self.assertEqual(association.unmatched_track_indices, [])
         self.assertEqual(association.unmatched_measurement_indices, [])
 
+    def test_probability_likelihood_gate_rejects_zero_threshold(self):
+        with self.assertRaises(ValueError):
+            ProbabilityThresholdGate(0.0, use_likelihood=True)
+
+    def test_default_hypothesis_assignment_does_not_select_missing_pair(self):
+        hypotheses = [
+            AssociationHypothesis(0, 0, cost=1.0),
+        ]
+
+        association = association_result_from_hypotheses(
+            hypotheses,
+            num_tracks=2,
+            num_measurements=2,
+        )
+
+        self.assertEqual(association.matches, [(0, 0)])
+        self.assertIn(1, association.unmatched_track_indices)
+        self.assertIn(1, association.unmatched_measurement_indices)
+
     def test_linear_gaussian_hypothesis_associator_matches_expected_pairs(self):
         tracks = [
             KalmanFilter((array([0.0]), array([[1.0]]))),
