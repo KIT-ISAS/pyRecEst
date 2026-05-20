@@ -65,6 +65,48 @@ BACKEND_CAPABILITIES: Final = {
 }
 
 
+API_BACKEND_CAPABILITIES: Final = {
+    "KalmanFilter": {
+        "numpy": "supported",
+        "pytorch": "supported",
+        "jax": "supported",
+        "notes": "Linear Gaussian operations are part of the portable baseline.",
+    },
+    "UKFOnManifolds": {
+        "numpy": "supported",
+        "pytorch": "partial",
+        "jax": "unsupported",
+        "notes": "The current implementation documents explicit JAX exclusions for predict/update.",
+    },
+    "SphericalHarmonicsEOTTracker": {
+        "numpy": "supported",
+        "pytorch": "unsupported",
+        "jax": "unsupported",
+        "notes": "Depends on spherical harmonics and SciPy-adjacent functionality.",
+    },
+    "GaussianDistribution": {
+        "numpy": "supported",
+        "pytorch": "supported",
+        "jax": "supported",
+        "notes": "Basic construction, moment access, and portable operations should remain backend portable.",
+    },
+    "LinearDiracDistribution": {
+        "numpy": "supported",
+        "pytorch": "supported",
+        "jax": "supported",
+        "notes": "Used by representation conversion and particle-style workflows.",
+    },
+    "EvaluationUtilities": {
+        "numpy": "supported",
+        "pytorch": "partial",
+        "jax": "partial",
+        "notes": "Some plotting, assignment, and summary operations remain NumPy/SciPy oriented.",
+    },
+}
+
+BACKEND_SUPPORT_LEVELS: Final = ("supported", "partial", "unsupported")
+
+
 def get_unsupported_functions(backend_name: str, module_name: str = "") -> tuple[str, ...]:
     """Return unsupported facade functions for a backend module."""
     backend = BACKEND_CAPABILITIES.get(backend_name, {})
@@ -77,3 +119,14 @@ def get_partial_capabilities(backend_name: str, module_name: str = "") -> dict[s
     backend = BACKEND_CAPABILITIES.get(backend_name, {})
     partial = backend.get("partial", {})
     return dict(partial.get(module_name, {}))
+
+
+
+def get_api_backend_support(api_name: str) -> dict[str, str]:
+    """Return backend support metadata for a public API name."""
+    return dict(API_BACKEND_CAPABILITIES.get(api_name, {}))
+
+
+def iter_api_backend_capabilities() -> tuple[tuple[str, dict[str, str]], ...]:
+    """Return public API backend support rows in a stable order."""
+    return tuple(sorted(API_BACKEND_CAPABILITIES.items()))

@@ -7,6 +7,13 @@ installing a development checkout. The CI package job smoke-runs the core
 Kalman and Gaussian examples from an installed wheel so packaging errors are
 caught outside editable mode.
 
+## Scenario Examples
+
+The `scenarios/` directory contains data-first examples with TOML configuration
+and JSON golden outputs. Use these when you want a reproducible regression case
+rather than an exploratory script. The first scenario is
+`scenarios/linear_gaussian_cv_1d`.
+
 ## Basic Examples
 
 ### Gaussian Multiplication

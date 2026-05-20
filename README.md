@@ -34,6 +34,24 @@ PyRecEst provides tools for:
 
 For more detail, see `docs/choosing-an-api.md` and `docs/backend-compatibility.md`.
 
+## Command Line And Reproducible Scenarios
+
+After installation, use the lightweight CLI to inspect an environment or run a
+reproducible scenario:
+
+```bash
+pyrecest info
+pyrecest backends
+pyrecest run-scenario scenarios/linear_gaussian_cv_1d/config.toml
+```
+
+The same scenario runner is available from a source checkout via
+`scripts/run_scenario.py`. Scenario definitions live in `scenarios/` and include
+TOML configuration plus JSON golden outputs.
+
+The `pyrecest.diagnostics` module defines common diagnostics containers for
+innovation statistics, particle-filter health, and association decisions.
+
 ## Installation
 
 PyRecEst requires Python 3.11 or newer and earlier than Python 3.15.

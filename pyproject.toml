@@ -4,6 +4,7 @@ description = "Framework for recursive Bayesian estimation in Python."
 readme = "README.md"
 authors = ["Florian Pfaff <pfaff@ias.uni-stuttgart.de>"]
 version = "2.2.2"
+include = ["src/pyrecest/py.typed"]
 license = "MIT"
 keywords = [
   "bayesian-filtering",
@@ -51,10 +52,14 @@ jax = { version = ">=0.4.30,<0.11", optional = true }
 jaxlib = { version = ">=0.4.30,<0.11", optional = true }
 autograd = { version = ">=1.7,<2.0", optional = true }
 
+[tool.poetry.scripts]
+pyrecest = "pyrecest.cli:main"
+
 [tool.poetry.extras]
 healpy_support = ["healpy"]
 pytorch_support = ["torch"]
 jax_support = ["jax", "jaxlib", "autograd"]
+all_support = ["healpy", "torch", "jax", "jaxlib", "autograd"]
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.3.2"

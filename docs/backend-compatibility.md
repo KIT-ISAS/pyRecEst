@@ -41,6 +41,14 @@ unless a focused backend test covers the exact helper being used.
 | PyTorch | Tensor workflows and automatic differentiation where the required API is implemented.                                     | Some backend helpers are placeholders or bridge through NumPy/SciPy. `pyrecest.backend.signal.fftconvolve` and `pyrecest.backend.searchsorted` are not implemented.       |
 | JAX     | JAX array and autodiff workflows for APIs that avoid unsupported mutable, assignment-heavy, or SciPy-specific operations. | Several package areas explicitly skip or reject JAX, including some sampling, tracking, assignment, evaluation, point-set registration, and manifold-specific operations. |
 
+## Capability Metadata
+
+Backend limitations are tracked in `src/pyrecest/_backend/capabilities.py`. The
+metadata distinguishes unsupported facade functions from partial support, such
+as PyTorch helpers that bridge through NumPy/SciPy and may not preserve device
+placement or gradient behavior. Public API support rows are documented in
+[Backend API Matrix](backend-api-matrix.md).
+
 ## NumPy Backend
 
 NumPy is the default backend and should be the first choice when:

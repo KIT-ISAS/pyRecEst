@@ -7,3 +7,5 @@ try:
     __version__ = version("pyrecest")
 except PackageNotFoundError:  # pragma: no cover - source tree without install metadata
     __version__ = "0+unknown"
+
+__all__ = ["__version__", "copy"]

@@ -3,13 +3,26 @@
 
 from __future__ import annotations
 
+import argparse
+import json
+from pathlib import Path
 from time import perf_counter
 
-from pyrecest.backend import array, diag
+from pyrecest.backend import array, diag, to_numpy
 from pyrecest.filters import KalmanFilter
 
 
-def run_linear_kalman(iterations: int = 200):
+def _jsonable(value):
+    try:
+        value = to_numpy(value)
+    except Exception:  # pragma: no cover - backend fallback
+        pass
+    if hasattr(value, "tolist"):
+        return value.tolist()
+    return value
+
+
+def run_linear_kalman(iterations: int = 200) -> dict[str, object]:
     """Run a deterministic one-dimensional constant-velocity Kalman scenario."""
     dt = 1.0
     system_matrix = array([[1.0, dt], [0.0, 1.0]])
@@ -26,13 +39,25 @@ def run_linear_kalman(iterations: int = 200):
         kalman_filter.update_linear(measurement, measurement_matrix, measurement_noise_cov)
     elapsed = perf_counter() - start
 
-    return kalman_filter.get_point_estimate(), elapsed
+    return {
+        "name": "linear_kalman",
+        "iterations": iterations,
+        "elapsed_seconds": elapsed,
+        "final_estimate": _jsonable(kalman_filter.get_point_estimate()),
+    }
 
 
 def main() -> None:
-    estimate, elapsed = run_linear_kalman()
-    print(f"linear_kalman_estimate={estimate}")
-    print(f"linear_kalman_elapsed_seconds={elapsed:.6f}")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--iterations", type=int, default=200)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+
+    payload = {"benchmarks": [run_linear_kalman(args.iterations)]}
+    encoded = json.dumps(payload, indent=2, sort_keys=True)
+    print(encoded)
+    if args.output:
+        args.output.write_text(encoded + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
