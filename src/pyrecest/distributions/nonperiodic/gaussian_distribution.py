@@ -8,6 +8,7 @@ import pyrecest.backend
 from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     allclose,
+    asarray,
     linalg,
     matvec,
     ndim,
@@ -42,20 +43,27 @@ class GaussianDistribution(AbstractLinearDistribution):
     """
 
     def __init__(self, mu, C, check_validity=True):
-        assert ndim(mu) <= 1, "mu must be 1-dimensional"
+        mu = asarray(mu)
+        C = asarray(C)
+        if ndim(mu) > 1:
+            raise ValueError("mu must be 1-dimensional")
         if ndim(mu) == 0:
-            mu = mu.reshape((1,))
-            C = C.reshape((1, 1))
-        assert ndim(C) == 2, "C must be 2-dimensional"
+            mu = reshape(mu, (1,))
+            C = reshape(C, (1, 1))
+        if ndim(C) != 2:
+            raise ValueError("C must be 2-dimensional")
         AbstractLinearDistribution.__init__(self, dim=mu.shape[0])
-        assert (
+        if not (
             1 == mu.shape[0] == C.shape[0] or mu.shape[0] == C.shape[0] == C.shape[1]
-        ), "Size of C invalid"
+        ):
+            raise ValueError("Size of C invalid")
         self.mu = mu
 
         if check_validity:
-            assert allclose(C, transpose(C)), "C must be symmetric"
-            assert backend_all(linalg.eigvalsh(C) > 0.0), "C must be positive definite"
+            if not bool(allclose(C, transpose(C))):
+                raise ValueError("C must be symmetric")
+            if not bool(backend_all(linalg.eigvalsh(C) > 0.0)):
+                raise ValueError("C must be positive definite")
 
         self.C = C
 
@@ -86,9 +94,9 @@ class GaussianDistribution(AbstractLinearDistribution):
         array-like
             Density values with one value per evaluation point.
         """
-        assert (
-            self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
-        ), "Dimension incorrect"
+        xs = asarray(xs)
+        if not (self.dim == 1 and ndim(xs) <= 1 or xs.shape[-1] == self.dim):
+            raise ValueError("Dimension incorrect")
         if pyrecest.backend.__backend_name__ == "numpy":
             from scipy.stats import multivariate_normal as mvn
 
@@ -98,7 +106,7 @@ class GaussianDistribution(AbstractLinearDistribution):
             import torch as _torch  # pylint: disable=import-error
 
             distribution = _torch.distributions.MultivariateNormal(self.mu, self.C)
-            if xs.ndim == 1 and self.dim == 1:
+            if ndim(xs) == 1 and self.dim == 1:
                 # For 1-D distributions, we need to reshape the input to a 2-D tensor
                 # to be able to use distribution.log_prob
                 xs = _torch.reshape(xs, (-1, 1))
@@ -109,7 +117,7 @@ class GaussianDistribution(AbstractLinearDistribution):
                 multivariate_normal,
             )
 
-            if xs.ndim == 1 and self.dim == 1:
+            if ndim(xs) == 1 and self.dim == 1:
                 # For 1-D distributions, we need to reshape the input to a 2-D tensor
                 xs = reshape(xs, (-1, 1))
 
@@ -127,7 +135,13 @@ class GaussianDistribution(AbstractLinearDistribution):
         shift_by : array-like, shape (n,) or scalar
             Additive shift for the mean vector.
         """
-        assert shift_by.ndim == 0 and self.dim == 1 or shift_by.shape[0] == self.dim
+        shift_by = asarray(shift_by)
+        if ndim(shift_by) == 0:
+            if self.dim != 1:
+                raise ValueError("scalar shifts are only valid for one-dimensional Gaussians")
+        elif shift_by.shape[0] != self.dim:
+            raise ValueError("shift_by has incompatible shape")
+
         new_gaussian = copy.deepcopy(self)
         new_gaussian.mu = self.mu + shift_by
         return new_gaussian
@@ -167,7 +181,8 @@ class GaussianDistribution(AbstractLinearDistribution):
         GaussianDistribution
             Gaussian proportional to the pointwise product of both densities.
         """
-        assert self.dim == other.dim
+        if self.dim != other.dim:
+            raise ValueError("Gaussian distributions must have the same dimension")
         self_precision = linalg.inv(self.C)
         other_precision = linalg.inv(other.C)
         new_C = linalg.inv(self_precision + other_precision)
@@ -190,7 +205,8 @@ class GaussianDistribution(AbstractLinearDistribution):
         GaussianDistribution
             Gaussian whose mean and covariance are the sums of both operands.
         """
-        assert self.dim == other.dim
+        if self.dim != other.dim:
+            raise ValueError("Gaussian distributions must have the same dimension")
         new_mu = self.mu + other.mu
         new_C = self.C + other.C
         return GaussianDistribution(new_mu, new_C, check_validity=False)
@@ -208,9 +224,10 @@ class GaussianDistribution(AbstractLinearDistribution):
         else:
             dimensions = list(dimensions)
 
-        assert all(
+        if not all(
             isinstance(dim, Integral) and 0 <= dim < self.dim for dim in dimensions
-        ), "Dimensions must be valid zero-based integer indices"
+        ):
+            raise ValueError("Dimensions must be valid zero-based integer indices")
 
         dimensions = [int(dim) for dim in dimensions]
         remaining_dims = [i for i in range(self.dim) if i not in dimensions]

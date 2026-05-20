@@ -40,7 +40,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
         if w is None:
             self.w = ones(d.shape[0]) / d.shape[0]
         else:
-            assert d.shape[0] == w.shape[0], "Number of Diracs and weights must match."
+            if d.shape[0] != w.shape[0]:
+                raise ValueError("Number of Diracs and weights must match.")
             self.w = copy.copy(w)
         self.normalize_in_place()
 
@@ -94,7 +95,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
         dist = copy.deepcopy(self)
         w_new = f(dist.d)
 
-        assert w_new.shape == dist.w.shape, "Function returned wrong output dimensions."
+        if w_new.shape != dist.w.shape:
+            raise ValueError("Function returned wrong output dimensions.")
         self._validate_weights(w_new)
 
         dist.w = w_new * dist.w
@@ -113,9 +115,10 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return -sum(self.w * log(self.w))
 
     def integrate(self, left=None, right=None):
-        assert (
-            left is None and right is None
-        ), "Must overwrite in child class to use integral limits"
+        if left is not None or right is not None:
+            raise NotImplementedError(
+                "Must overwrite in child class to use integral limits"
+            )
         return sum(self.w)
 
     def log_likelihood(self, *args):
@@ -160,6 +163,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     @classmethod
     def from_distribution(cls, distribution, n_particles):
-        assert cls.is_valid_for_conversion(distribution)
+        if not cls.is_valid_for_conversion(distribution):
+            raise ValueError("distribution is not valid for conversion to this Dirac type")
         samples = distribution.sample(n_particles)
         return cls(samples)

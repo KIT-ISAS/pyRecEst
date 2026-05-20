@@ -95,6 +95,19 @@ class SampleableTransitionModelTest(unittest.TestCase):
             )
         )
 
+    def test_sample_next_callback_with_keyword_only_count(self):
+        def sample_next(state, *, n=1):
+            return state + reshape(arange(n), (n, 1))
+
+        model = SampleableTransitionModel(sample_next)
+
+        self.assertTrue(
+            allclose(
+                model.sample_next(array([10.0]), n=3),
+                array([[10.0], [11.0], [12.0]]),
+            )
+        )
+
     def test_unary_sample_next_callback(self):
         def shift_state(state):
             return state + array([1.0])

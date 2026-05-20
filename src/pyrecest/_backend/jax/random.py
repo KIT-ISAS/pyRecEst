@@ -111,7 +111,7 @@ def _choice(state, a, n, *args, **kwargs):
     state, key = jax.random.split(state)
     inds = jax.random.choice(key, a.shape[0], (n,), replace=True, *args, **kwargs)
     choices = a[inds]
-    return state, choices[0] if n == 1 else choices
+    return state, choices
 
 
 def choice(a, n, *args, **kwargs):
