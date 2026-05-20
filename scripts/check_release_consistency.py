@@ -10,6 +10,7 @@ import pathlib
 import sys
 import tomllib
 import urllib.error
+import urllib.parse
 import urllib.request
 
 REPOSITORY = "FlorianPfaff/PyRecEst"
@@ -29,7 +30,8 @@ def _normalise_tag(tag: str) -> str:
 def _load_json(url: str) -> dict:
     headers = {"Accept": "application/json"}
     token = os.environ.get("GITHUB_TOKEN")
-    if token and "api.github.com" in url:
+    parsed_url = urllib.parse.urlparse(url)
+    if token and parsed_url.scheme == "https" and parsed_url.netloc == "api.github.com":
         headers["Authorization"] = f"Bearer {token}"
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=30) as response:
