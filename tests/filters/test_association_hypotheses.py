@@ -7,6 +7,7 @@ from pyrecest.filters import (
     CostThresholdGate,
     KalmanFilter,
     NISGate,
+    ProbabilityThresholdGate,
     TopKGate,
     association_result_from_hypotheses,
     build_linear_gaussian_hypothesis_associator,
@@ -78,6 +79,44 @@ class AssociationHypothesesTest(unittest.TestCase):
             [(hyp.track_index, hyp.measurement_index) for hyp in top_per_track],
             [(0, 0), (1, 1)],
         )
+
+    def test_probability_likelihood_gate_rejects_zero_threshold(self):
+        with self.assertRaises(ValueError):
+            ProbabilityThresholdGate(0.0, use_likelihood=True)
+
+        hypothesis = AssociationHypothesis(0, 0, probability=0.0)
+        self.assertTrue(ProbabilityThresholdGate(0.0).accepts(hypothesis))
+
+    def test_measurement_axis_auto_uses_measurement_dimension(self):
+        state_covariance = array(
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+        measurement_matrix = array(
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+        tracks = [KalmanFilter((array([0.0, 0.0, 0.0]), state_covariance))]
+        measurements = array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+
+        hypotheses = linear_gaussian_association_hypotheses(
+            tracks, measurements, measurement_matrix, state_covariance
+        )
+
+        self.assertEqual(len(hypotheses), 2)
+        self.assertEqual(hypotheses[1].measurement_index, 1)
+        self.assertTrue(allclose(hypotheses[1].innovation, array([1.0, 1.0, 1.0])))
+
+        with self.assertRaises(ValueError):
+            linear_gaussian_association_hypotheses(
+                tracks, state_covariance, measurement_matrix, state_covariance
+            )
 
     def test_hypotheses_solve_global_nearest_neighbor_assignment(self):
         hypotheses = filter_hypotheses(self._simple_hypotheses(), NISGate(1.0))

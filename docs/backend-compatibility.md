@@ -27,6 +27,11 @@ across supported Python versions. Passing tests do not mean that every public
 API has identical behavior on every backend. Some modules intentionally assert
 or raise when a backend does not support the required operation.
 
+Association-hypothesis helpers are currently NumPy/SciPy-oriented utilities.
+They may coerce backend arrays to NumPy arrays and should not be assumed to
+preserve PyTorch device placement, PyTorch gradients, or JAX tracing semantics
+unless a focused backend test covers the exact helper being used.
+
 | Backend | Best fit                                                                                                                  | Main limitations                                                                                                                                                          |
 |---------|---------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | NumPy   | Default backend and broadest compatibility for examples, evaluation, plotting, tracking, and SciPy-based helpers.         | No automatic differentiation through `pyrecest.backend.autodiff`. Autodiff calls raise `AutodiffNotImplementedError`.                                                     |
