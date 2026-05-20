@@ -66,6 +66,8 @@ autopep8 = "^2.3.2"
 pytest = ">=8,<10"
 pytest-cov = ">=5,<8"
 parameterized = ">=0.9,<1.0"
+nox = ">=2024.10,<2027.0"
+pytest-benchmark = ">=4.0,<6.0"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.1"
@@ -85,6 +87,10 @@ filterwarnings = [
     "ignore::DeprecationWarning:mpmath.*",
     "ignore::scipy.optimize.OptimizeWarning",
     "ignore:'return' in a 'finally' block:SyntaxWarning:autograd\\.wrap_util",
+]
+markers = [
+    "numerical_stress: slower numerical stability and ill-conditioning checks",
+    "benchmark: optional performance benchmark tests",
 ]
 [tool.pylint.MAIN]
 py-version = "3.13"

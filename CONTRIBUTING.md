@@ -19,6 +19,28 @@ PYRECEST_BACKEND=pytorch python -m pytest
 PYRECEST_BACKEND=jax JAX_ENABLE_X64=True python -m pytest
 ```
 
+## Nox Sessions
+
+The repository also provides Nox sessions that mirror the main backend and
+documentation workflows:
+
+```bash
+poetry run nox -s tests_numpy
+poetry run nox -s tests_pytorch
+poetry run nox -s tests_jax
+poetry run nox -s docs
+poetry run nox -s numerical_stress
+poetry run nox -s benchmarks
+```
+
+The PyTorch and JAX sessions require the corresponding optional extras. JAX
+sessions set `JAX_ENABLE_X64=True` to match the main CI configuration.
+
+Backend selection is process-global and import-time only. Set
+`PYRECEST_BACKEND` before importing `pyrecest`, and use
+`pyrecest.assert_backend(...)` or `pyrecest.warn_if_backend_env_changed()` in
+scripts where accidental backend changes would be confusing.
+
 ## Before Opening a Pull Request
 
 - Add or update tests for changed behavior.

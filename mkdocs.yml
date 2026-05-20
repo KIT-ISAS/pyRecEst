@@ -15,6 +15,7 @@ nav:
       - Diagnostics: diagnostics.md
       - Shapes and Conventions: conventions.md
       - Backend Compatibility: backend-compatibility.md
+      - Backend Support Matrix: backend-support.md
       - Backend API Matrix: backend-api-matrix.md
       - Performance: performance.md
       - Failure Modes: failure-modes.md
@@ -32,6 +33,7 @@ nav:
       - Overview: tutorials/index.md
       - Use a Distribution: tutorials/use-a-distribution.md
       - Write a Filter Loop: tutorials/write-a-filter-loop.md
+      - Robust Kalman Updates: tutorials/robust-kalman-update.md
       - Run a Tracker: tutorials/run-a-tracker.md
       - Evaluate a Simulation: tutorials/evaluate-a-simulation.md
   - API Overview: api-overview.md

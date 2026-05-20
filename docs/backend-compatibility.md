@@ -18,7 +18,10 @@ PYRECEST_BACKEND=jax python examples/basic/kalman_filter.py
 
 After import, the selected backend is available as
 `pyrecest.backend.__backend_name__` and through
-`pyrecest.backend.get_backend_name()`.
+`pyrecest.backend.get_backend_name()`. Convenience helpers in
+`pyrecest.backend_tools` and at package level expose `get_backend_name()`,
+`is_backend(...)`, `assert_backend(...)`, and
+`warn_if_backend_env_changed()` for backend-sensitive scripts.
 
 ## Support Summary
 
@@ -28,7 +31,8 @@ API has identical behavior on every backend. Some modules intentionally assert
 or raise when a backend does not support the required operation. The declared
 unsupported and partial backend capabilities live in
 `src/pyrecest/_backend/capabilities.py` and are exercised by backend contract
-tests.
+tests. See the [backend support matrix](backend-support.md) for a generated,
+smoke-test-backed snapshot of selected API capabilities.
 
 Association-hypothesis helpers are currently NumPy/SciPy-oriented utilities.
 They may coerce backend arrays to NumPy arrays and should not be assumed to
