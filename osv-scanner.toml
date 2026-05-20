@@ -1,0 +1,7 @@
+[[PackageOverrides]]
+name = "idna"
+version = "3.13"
+ecosystem = "PyPI"
+vulnerability.ignore = true
+effectiveUntil = 2026-06-30
+reason = "Temporary suppression for stale poetry.lock entry; exported requirements are updated to idna 3.15. Regenerate poetry.lock with Poetry to remove this override."
