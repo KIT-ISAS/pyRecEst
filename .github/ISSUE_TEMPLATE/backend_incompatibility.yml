@@ -1,0 +1,41 @@
+name: Backend incompatibility
+description: Report inconsistent NumPy, PyTorch, or JAX behavior.
+title: "Backend: "
+labels: [backend]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Which API behaves differently across backends?
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Affected backend
+      options:
+        - numpy
+        - pytorch
+        - jax
+        - multiple
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Cross-backend reproducer
+      description: Include the commands used to run the same script with each backend.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Observed outputs
+      render: text
+  - type: textarea
+    id: capability
+    attributes:
+      label: Capability matrix expectation
+      description: Mention whether `docs/backend-api-matrix.md` or `pyrecest backends` already documents this limitation.

@@ -41,7 +41,7 @@ reproducible scenario:
 
 ```bash
 pyrecest info
-pyrecest backends
+pyrecest backends --format markdown
 pyrecest run-scenario scenarios/linear_gaussian_cv_1d/config.toml
 ```
 
@@ -68,7 +68,13 @@ Optional backend and domain-specific dependencies can be installed with extras:
 python -m pip install "pyrecest[pytorch_support]"
 python -m pip install "pyrecest[jax_support]"
 python -m pip install "pyrecest[healpy_support]"
+python -m pip install "pyrecest[all_support]"
 ```
+
+Pip normalizes extra names, so the equivalent hyphenated spellings such as
+`pyrecest[pytorch-support]`, `pyrecest[jax-support]`,
+`pyrecest[healpy-support]`, and `pyrecest[all-support]` may also appear in
+package-index metadata.
 
 For development from a source checkout, use Poetry or the provided conda
 environment:
@@ -123,6 +129,12 @@ The `docs/` directory contains the first project documentation pages:
   most common public entry points.
 - [Backend compatibility](docs/backend-compatibility.md) explains the NumPy,
   PyTorch, and JAX support model and known limitations.
+- [Choosing an API](docs/choosing-an-api.md) maps task families to recommended
+  filters, distributions, trackers, and examples.
+- [Distribution taxonomy](docs/distribution-taxonomy.md) summarizes the main
+  representation families by domain and use case.
+- [Error handling](docs/error-handling.md) documents the shared exception types
+  and user-facing diagnostics policy.
 - [API reference](docs/reference/index.md) contains generated package reference
   pages built with MkDocs and mkdocstrings.
 - [Task tutorials](docs/tutorials/index.md) show common distribution, filtering,

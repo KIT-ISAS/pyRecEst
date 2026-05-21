@@ -8,6 +8,13 @@ from pyrecest.backend_tools import (  # noqa: F401
     is_backend,
     warn_if_backend_env_changed,
 )
+from pyrecest.exceptions import (  # noqa: F401
+    BackendNotSupportedError,
+    DimensionMismatchError,
+    NumericalStabilityError,
+    PyRecEstError,
+    ShapeError,
+)
 
 try:
     __version__ = version("pyrecest")
@@ -16,6 +23,11 @@ except PackageNotFoundError:  # pragma: no cover - source tree without install m
 
 __all__ = [
     "__version__",
+    "BackendNotSupportedError",
+    "DimensionMismatchError",
+    "NumericalStabilityError",
+    "PyRecEstError",
+    "ShapeError",
     "assert_backend",
     "copy",
     "get_backend_name",
