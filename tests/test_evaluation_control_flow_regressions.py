@@ -35,6 +35,18 @@ class _LikelihoodRecordingFilter:
         return array([self.applied_likelihood_values[-1][0]])
 
 
+class _PredictOnlyFilter:
+    def __init__(self):
+        self.predicted = False
+
+    @property
+    def filter_state(self):
+        return self
+
+    def get_point_estimate(self):
+        return array([1.0 if self.predicted else 0.0])
+
+
 def _likelihood_test_factory(_filter_config, scenario_config, _precalculated_params):
     filter_obj = _LikelihoodRecordingFilter()
 
@@ -47,6 +59,15 @@ def _likelihood_test_factory(_filter_config, scenario_config, _precalculated_par
         scenario_config.get("likelihood"),
         scenario_config.get("meas_noise"),
     )
+
+
+def _predict_only_test_factory(_filter_config, _scenario_config, _precalculated_params):
+    filter_obj = _PredictOnlyFilter()
+
+    def prediction_routine():
+        filter_obj.predicted = True
+
+    return filter_obj, prediction_routine, None, None
 
 
 class TestEvaluationControlFlowRegressions(unittest.TestCase):
@@ -99,6 +120,30 @@ class TestEvaluationControlFlowRegressions(unittest.TestCase):
 
         self.assertEqual(len(calls), 1)
         npt.assert_allclose(last_estimate, array([3.0]))
+
+    def test_plotting_prediction_guard_uses_n_timesteps_key(self):
+        filter_name = "plotting_timestep_guard_regression"
+        register_filter_factory(filter_name, _predict_only_test_factory)
+        scenario_config = {
+            "n_timesteps": 1,
+            "n_meas_at_individual_time_step": [0],
+            "apply_sys_noise_times": [True],
+            "plot": True,
+            "mtt": False,
+            "eot": False,
+        }
+        groundtruth = np.array([[0.0]])
+        measurements = np.empty(1, dtype=object)
+        measurements[0] = np.empty((0, 1))
+
+        _, _, last_estimate, _ = perform_predict_update_cycles(
+            scenario_config,
+            {"name": filter_name, "parameter": None},
+            groundtruth,
+            measurements,
+        )
+
+        npt.assert_allclose(last_estimate, array([1.0]))
 
     @pytest.mark.skipif(
         IS_JAX_BACKEND, reason="MTT measurement generation is unsupported with JAX."
