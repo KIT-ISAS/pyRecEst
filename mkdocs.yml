@@ -19,6 +19,7 @@ nav:
       - Diagnostics: diagnostics.md
       - Numerical Contracts: numerical-contracts.md
       - Shapes and Conventions: conventions.md
+      - Quality Gates: quality-gates.md
       - Backend Compatibility: backend-compatibility.md
       - Backend Support Matrix: backend-support.md
       - Backend API Matrix: backend-api-matrix.md

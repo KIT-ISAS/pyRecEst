@@ -36,6 +36,18 @@ poetry run nox -s benchmarks
 The PyTorch and JAX sessions require the corresponding optional extras. JAX
 sessions set `JAX_ENABLE_X64=True` to match the main CI configuration.
 
+## Quality Gates
+
+Use CI for the full matrix, but run focused local checks for the changed surface
+area before opening a pull request:
+
+```bash
+python -m compileall -q src scripts tests
+PYTHONPATH=src python scripts/render_backend_api_matrix.py --check docs/backend-api-matrix.md
+PYTHONPATH=src python scripts/check_public_api_registry.py --check docs/public-api-registry.md
+python scripts/check_minimal_imports.py
+```
+
 Backend selection is process-global and import-time only. Set
 `PYRECEST_BACKEND` before importing `pyrecest`, and use
 `pyrecest.assert_backend(...)` or `pyrecest.warn_if_backend_env_changed()` in
@@ -48,6 +60,10 @@ scripts where accidental backend changes would be confusing.
   `src/pyrecest/_backend/capabilities.py` when backend support changes.
 - Run `python scripts/check_release_consistency.py --local-only` after changing
   release metadata, citation metadata, or package metadata.
+- Run `python scripts/render_backend_api_matrix.py --check docs/backend-api-matrix.md`
+  after changing backend capability metadata.
+- Run `python scripts/check_public_api_registry.py --check docs/public-api-registry.md`
+  after adding, removing, stabilizing, deprecating, or reclassifying public APIs.
 - Keep examples executable from the repository root.
 
 ## Adding or Changing Public APIs
@@ -62,6 +78,7 @@ guide page in the same pull request.  Use the following decision order:
 3. Add a focused backend contract test for any promised portable behavior.
 4. Prefer `BackendNotSupportedError`, `ShapeError`, `DimensionMismatchError`, or
    `NumericalStabilityError` for new user-facing failures.
+5. Add or update the matching row in `src/pyrecest/api_registry.py`.
 
 ## Release Metadata
 

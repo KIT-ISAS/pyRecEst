@@ -30,6 +30,7 @@ in CI so the user-facing matrix cannot silently drift from the executable metada
 
 ## Public API Rows
 
+<!-- backend-api-matrix:start -->
 | API                            | NumPy     | PyTorch     | JAX         | Notes                                                                                                                            |
 |--------------------------------|-----------|-------------|-------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `BackendFacade`                | supported | partial     | partial     | Facade names are importable across backends, but some functions are bridged or explicitly unsupported.                           |
@@ -44,10 +45,12 @@ in CI so the user-facing matrix cannot silently drift from the executable metada
 | `SphericalHarmonicsEOTTracker` | supported | unsupported | unsupported | Depends on spherical harmonics and SciPy-adjacent functionality.                                                                 |
 | `UKFOnManifolds`               | supported | partial     | unsupported | The current implementation documents explicit JAX exclusions for predict/update.                                                 |
 | `UnscentedKalmanFilter`        | supported | partial     | partial     | Portable for backend-compatible model functions; advanced paths may still bridge through NumPy/SciPy.                            |
+<!-- backend-api-matrix:end -->
 
 When adding a new public API, add a row to the matrix, update docs if the row is
-user-facing, and add a focused backend test if the API is expected to be
-portable.
+user-facing, add or update the generated table, and add a focused backend test
+if the API is expected to be portable. CI checks that this table still reflects
+`src/pyrecest/_backend/capabilities.py`.
 
 ## Runtime Access
 

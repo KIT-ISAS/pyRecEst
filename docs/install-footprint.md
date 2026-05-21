@@ -44,5 +44,17 @@ Use hyphenated extra names in public installation snippets. Pip normalizes
 underscores and hyphens, but using one public spelling improves searchability and
 matches the form displayed by package indexes.
 
+## Migration Gates
+
+Before moving an existing dependency out of the default installation, add or
+update all of the following in the same pull request:
+
+- an import smoke test for `python -m pip install .` without optional extras;
+- one focused test or example for each API that should require the new extra;
+- an explicit optional-dependency error message for users who call an API
+  without the required extra installed;
+- a documentation row showing the dependency-to-extra mapping;
+- a wheel-install smoke run in CI that exercises the minimal Euclidean baseline.
+
 When an existing required dependency is moved to an extra, update the public API
 registry and add a focused import test for every symbol whose dependency changed.
