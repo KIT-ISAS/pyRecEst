@@ -32,6 +32,8 @@ def check_and_fix_config(simulation_param):
     # Initialize default values if they are not present
     simulation_param.setdefault("use_transition", False)
     simulation_param.setdefault("use_likelihood", False)
+    simulation_param.setdefault("eot", False)
+    simulation_param.setdefault("mtt", False)
     simulation_param.setdefault("n_targets", 1)
     simulation_param.setdefault(
         "apply_sys_noise_times",
