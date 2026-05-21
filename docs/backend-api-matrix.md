@@ -21,12 +21,12 @@ in CI so the user-facing matrix cannot silently drift from the executable metada
 
 ## Support Levels
 
-| Level         | Meaning                                                                                                                     |
-|---------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `supported`   | Intended to preserve backend semantics for the listed API.                                                                  |
-| `bridged`     | Works by crossing into another numerical stack, usually NumPy/SciPy; do not assume device, dtype, or gradient preservation. |
-| `partial`     | Numerically useful, but with documented limitations such as missing modes or mixed native/bridged implementation.           |
-| `unsupported` | Should raise a clear `NotImplementedError` or be documented as unavailable for the backend.                                 |
+| Level         | Meaning                                                                                                                       |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `supported`   | Intended to preserve backend semantics for the listed API.                                                                    |
+| `bridged`     | Works by crossing into another numerical stack, usually NumPy/SciPy; do not assume device, dtype, or gradient preservation.   |
+| `partial`     | Numerically useful, but with documented limitations such as SciPy bridges, CPU copies, or missing gradient/device guarantees. |
+| `unsupported` | Should raise a clear `NotImplementedError` or be documented as unavailable for the backend.                                   |
 
 ## Public API Rows
 

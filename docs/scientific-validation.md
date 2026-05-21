@@ -7,6 +7,10 @@ known statistical diagnostics, and backend-specific numerical behavior.
 This page defines the validation ladder used when adding or changing filters,
 distributions, samplers, trackers, or evaluation helpers.
 
+Scientific regressions are often subtler than import or shape failures. Prefer
+invariant checks over brittle full-trajectory comparisons unless the scenario is
+intentionally deterministic and has a documented golden output.
+
 ## Validation Layers
 
 | Layer | Purpose | Examples |
@@ -18,6 +22,16 @@ distributions, samplers, trackers, or evaluation helpers.
 | Scenario regression checks | Preserve known behavior for complete workflows. | Scenario zoo expected outputs, benchmark regressions, tracker association edge cases. |
 
 ## Core Invariants
+
+| Component | Invariant |
+|-----------|-----------|
+| Probability distributions | Densities integrate or sum to one on their manifold. |
+| Circular and toroidal distributions | Wrapping by the period preserves density. |
+| Hyperspherical distributions | Samples and support points remain unit norm. |
+| Gaussian filters | Covariances stay symmetric positive definite after updates. |
+| Particle filters | Weights remain finite, non-negative, and normalized after resampling. |
+| Representation conversion | Moment-matching routes preserve mean/covariance within tolerance. |
+| Trackers | Cardinality, association, and gating diagnostics remain internally consistent. |
 
 When a change affects a Kalman-style Gaussian estimator, check at least:
 

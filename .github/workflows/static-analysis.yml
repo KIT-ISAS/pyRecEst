@@ -1,5 +1,8 @@
 name: Static analysis
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -8,9 +11,6 @@ on:
     branches:
       - "**"
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -55,9 +55,32 @@ jobs:
       - name: Compile Python files
         run: python -m compileall -q src scripts tests
 
-
       - name: Check generated backend API matrix docs
         run: python scripts/render_backend_api_matrix.py --check docs/backend-api-matrix.md
 
       - name: Check generated public API registry docs
         run: python scripts/check_public_api_registry.py --check docs/public-api-registry.md
+
+  ruff-ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Run targeted Ruff ratchet
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "ruff>=0.11,<0.15"
+          python -m ruff check \
+            src/pyrecest/_backend/capabilities.py \
+            src/pyrecest/cli.py \
+            src/pyrecest/filters/__init__.py \
+            scripts/generate_backend_api_matrix.py \
+            scripts/check_benchmark_results.py \
+            tests/test_backend_capabilities.py \
+            tests/test_filters_lazy_exports.py

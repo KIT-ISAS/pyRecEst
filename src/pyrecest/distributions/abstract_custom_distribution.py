@@ -71,7 +71,11 @@ class AbstractCustomDistribution(AbstractDistributionType):
         integral = self.integrate()
         cd.scale_by = cd.scale_by / integral
 
-        if verify and abs(cd.integrate()[0] - 1) > 0.001:
-            warnings.warn("Density is not yet properly normalized.", UserWarning)
+        if verify:
+            verification_integral = cd.integrate()
+            if isinstance(verification_integral, tuple):
+                verification_integral = verification_integral[0]
+            if abs(float(verification_integral) - 1) > 0.001:
+                warnings.warn("Density is not yet properly normalized.", UserWarning)
 
         return cd
