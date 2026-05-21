@@ -1,334 +1,187 @@
-from ._linear_gaussian import student_t_covariance_scale
-from .abstract_axial_filter import AbstractAxialFilter
-from .abstract_dummy_filter import AbstractDummyFilter
-from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
-from .abstract_filter import AbstractFilter
-from .abstract_grid_filter import AbstractGridFilter
-from .abstract_multiple_extended_object_tracker import (
-    AbstractMultipleExtendedObjectTracker,
-    ExtendedObjectAssociationResult,
-    ExtendedObjectEstimate,
-    MultipleExtendedObjectStepResult,
-)
-from .abstract_multitarget_tracker import AbstractMultitargetTracker
-from .abstract_nearest_neighbor_tracker import AbstractNearestNeighborTracker
-from .abstract_particle_filter import AbstractParticleFilter
-from .abstract_tracker_with_logging import AbstractTrackerWithLogging
-from .association_hypotheses import (
-    AssociationHypothesis,
-    CostThresholdGate,
-    NISGate,
-    ProbabilityThresholdGate,
-    TopKGate,
-    association_result_from_hypotheses,
-    build_linear_gaussian_hypothesis_associator,
-    filter_hypotheses,
-    gate_hypotheses,
-    hypotheses_to_cost_matrix,
-    hypotheses_to_log_likelihood_matrix,
-    hypotheses_to_probability_matrix,
-    hypothesis_cost,
-    infer_hypothesis_shape,
-    linear_gaussian_association_hypotheses,
-    missed_detection_hypothesis,
-)
-from .axial_kalman_filter import AxialKalmanFilter
-from .bingham_filter import BinghamFilter
-from .block_particle_filter import BlockParticleFilter
-from .circular_fourier_filter import CircularFourierFilter
-from .circular_particle_filter import CircularParticleFilter
-from .circular_ukf import CircularUKF
-from .ekf_spline_tracker import EKFSplineTracker, EkfSplineTracker
-from .euclidean_box_particle_filter import BoxParticleFilter, EuclideanBoxParticleFilter
-from .euclidean_particle_filter import EuclideanParticleFilter
-from .factorized_giw_random_matrix_tracker import (
-    FactorizedGIWRandomMatrixTracker,
-    FactorizedGIWRMTracker,
-)
-from .fourier_rhm_tracker import FourierRHMTracker
-from .ggiw_tracker import GGIWTracker
-from .global_nearest_neighbor import GlobalNearestNeighbor
-from .goal_conditioned_replay_imm_filter import GoalConditionedReplayIMMFilter
-from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
-from .goal_conditioned_replay_particle_imm_filter import (
-    GoalConditionedReplayParticleIMMFilter,
-)
-from .gprhm_tracker import (
-    DecorrelatedSCGPTracker,
-    DecorrelatedScGpTracker,
-    FullSCGPTracker,
-    GPRHMTracker,
-    SCGPTracker,
-    ScGpTracker,
-)
-from .hypercylindrical_particle_filter import HypercylindricalParticleFilter
-from .hyperhemisphere_cart_prod_particle_filter import (
-    HyperhemisphereCartProdParticleFilter,
-)
-from .hyperhemispherical_grid_filter import HyperhemisphericalGridFilter
-from .hyperhemispherical_particle_filter import HyperhemisphericalParticleFilter
-from .hyperspherical_dummy_filter import HypersphericalDummyFilter
-from .hyperspherical_particle_filter import HypersphericalParticleFilter
-from .hyperspherical_ukf import HypersphericalUKF
-from .hypertoroidal_dummy_filter import HypertoroidalDummyFilter
-from .hypertoroidal_fourier_filter import HypertoroidalFourierFilter
-from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
-from .interacting_multiple_model_filter import IMM, InteractingMultipleModelFilter
-from .iterated_batch_mem_qkf_tracker import (
-    IteratedBatchMEMQKFTracker,
-    IteratedBatchMemQkfTracker,
-)
-from .joint_probabilistic_data_association_filter import (
-    JPDAF,
-    JointProbabilisticDataAssociationFilter,
-)
-from .kalman_filter import KalmanFilter
-from .kernel_sme_filter import KernelSMEFilter
-from .lin_bounded_particle_filter import LinBoundedParticleFilter
-from .lin_periodic_particle_filter import LinPeriodicParticleFilter
-from .lomem_tracker import LOMEMTracker, LomemTracker
-from .manifold_exponential_moving_average import ManifoldExponentialMovingAverage
-from .manifold_mixins import (
-    AbstractFilterManifoldMixin,
-    AbstractHypersphereSubsetFilter,
-    CircularFilterMixin,
-    EuclideanFilterMixin,
-    HypercylindricalFilterMixin,
-    HyperhemisphericalFilterMixin,
-    HypersphericalFilterMixin,
-    HypertoroidalFilterMixin,
-    LinBoundedFilterMixin,
-    LinPeriodicFilterMixin,
-    SE2FilterMixin,
-    ToroidalFilterMixin,
-)
-from .mem_ekf_star_oa_tracker import (
-    MEMEKFStarOATracker,
-    MemEkfStarOATracker,
-    VelocityAlignedMEMEKFStarTracker,
-    VelocityAlignedMemEkfStarTracker,
-)
-from .mem_ekf_star_tracker import MEMEKFStarTracker, MemEkfStarTracker
-from .mem_ekf_tracker import MEMEKFTracker, MemEkfTracker
-from .mem_qkf_tracker import MEMQKFTracker, MemQkfTracker
-from .mem_soekf_tracker import MEMSOEKFTracker, MemSoekfTracker
-from .mode_rbpf_manifold_ukf_tracker import (
-    ModeRBPFManifoldUKF,
-    ModeRBPFManifoldUKFTracker,
-    ModeRbpfManifoldUkfTracker,
-)
-from .multi_bernoulli_tracker import BernoulliComponent, MultiBernoulliTracker
-from .orientation_vector_eot_tracker import (
-    EOTOV0Tracker,
-    EOTOVTracker,
-    OrientationVectorEOT0Tracker,
-    OrientationVectorEOTTracker,
-)
-from .out_of_sequence import (
-    FixedLagBuffer,
-    MeasurementRecord,
-    MeasurementTimeBuffer,
-    OutOfSequenceKalmanUpdater,
-    OutOfSequenceParticleUpdater,
-    OutOfSequenceResult,
-    TimestampedItem,
-    retrodict_linear_gaussian,
-    retrodict_linear_gaussian_state,
-)
-from .partitioned_so3_product_particle_filter import PartitionedSO3ProductParticleFilter
-from .piecewise_constant_filter import PiecewiseConstantFilter
-from .random_matrix_tracker import RandomMatrixTracker
-from .se2_ukf import SE2UKF
-from .so3_grid_transition import (
-    quaternion_grid_transition_density,
-    so3_right_multiplication_grid_transition,
-)
-from .so3_product_block_particle_filter import SO3ProductBlockParticleFilter
-from .so3_product_particle_filter import SO3ProductParticleFilter
-from .spherical_harmonics_eot_tracker import (
-    SphericalHarmonicsEOTTracker,
-    SphericalHarmonicsExtendedObjectTracker,
-)
-from .state_space_subdivision_filter import StateSpaceSubdivisionFilter
-from .toroidal_particle_filter import ToroidalParticleFilter
-from .toroidal_wrapped_normal_filter import ToroidalWrappedNormalFilter
-from .track_manager import (
-    AssociationResult,
-    Track,
-    TrackManager,
-    TrackManagerStepResult,
-    TrackStatus,
-    build_global_nearest_neighbor_associator,
-    build_kalman_measurement_initiator,
-    build_linear_gaussian_predictor,
-    build_linear_gaussian_updater,
-    solve_global_nearest_neighbor,
-)
-from .ukf_on_manifolds import UKFOnManifolds
-from .unscented_kalman_filter import UnscentedKalmanFilter
-from .vbrm_tracker import VBRMTracker, VbrmTracker
-from .velocity_locked_mem_qkf_tracker import (
-    VelocityLockedMEMQKFTracker,
-    VelocityLockedMemQkfTracker,
-)
-from .von_mises_filter import VonMisesFilter
-from .von_mises_fisher_filter import VonMisesFisherFilter
-from .wrapped_normal_filter import WrappedNormalFilter
+"""Public filter exports.
 
-__all__ = [
-    "AbstractAxialFilter",
-    "AbstractDummyFilter",
-    "AxialKalmanFilter",
-    "AbstractExtendedObjectTracker",
-    "AbstractFilter",
-    "AbstractFilterManifoldMixin",
-    "AbstractGridFilter",
-    "AbstractHypersphereSubsetFilter",
-    "AbstractMultipleExtendedObjectTracker",
-    "AbstractMultitargetTracker",
-    "AbstractNearestNeighborTracker",
-    "AbstractParticleFilter",
-    "AbstractTrackerWithLogging",
-    "AssociationHypothesis",
-    "AssociationResult",
-    "BinghamFilter",
-    "BlockParticleFilter",
-    "BoxParticleFilter",
-    "CircularFilterMixin",
-    "CircularFourierFilter",
-    "CircularParticleFilter",
-    "CircularUKF",
-    "CostThresholdGate",
-    "DecorrelatedSCGPTracker",
-    "DecorrelatedScGpTracker",
-    "EKFSplineTracker",
-    "EkfSplineTracker",
-    "EuclideanBoxParticleFilter",
-    "EuclideanFilterMixin",
-    "EuclideanParticleFilter",
-    "FactorizedGIWRMTracker",
-    "FactorizedGIWRandomMatrixTracker",
-    "FullSCGPTracker",
-    "EOTOV0Tracker",
-    "EOTOVTracker",
-    "ExtendedObjectAssociationResult",
-    "ExtendedObjectEstimate",
-    "FixedLagBuffer",
-    "FourierRHMTracker",
-    "GoalConditionedReplayIMMFilter",
-    "GoalConditionedReplayParticleFilter",
-    "GoalConditionedReplayParticleIMMFilter",
-    "GGIWTracker",
-    "GlobalNearestNeighbor",
-    "JPDAF",
-    "JointProbabilisticDataAssociationFilter",
-    "IMM",
-    "InteractingMultipleModelFilter",
-    "GPRHMTracker",
-    "HypercylindricalFilterMixin",
-    "HypercylindricalParticleFilter",
-    "HyperhemisphereCartProdParticleFilter",
-    "HyperhemisphericalFilterMixin",
-    "HyperhemisphericalGridFilter",
-    "HyperhemisphericalParticleFilter",
-    "HypersphericalDummyFilter",
-    "HypersphericalFilterMixin",
-    "HypersphericalParticleFilter",
-    "HypersphericalUKF",
-    "HypertoroidalDummyFilter",
-    "HypertoroidalFilterMixin",
-    "HypertoroidalFourierFilter",
-    "AbstractParticleFilter",
-    "HypercylindricalParticleFilter",
-    "HypertoroidalParticleFilter",
-    "IteratedBatchMEMQKFTracker",
-    "IteratedBatchMemQkfTracker",
-    "KalmanFilter",
-    "UnscentedKalmanFilter",
-    "UKFOnManifolds",
-    "KernelSMEFilter",
-    "LinBoundedFilterMixin",
-    "LinBoundedParticleFilter",
-    "LinPeriodicFilterMixin",
-    "LOMEMTracker",
-    "LomemTracker",
-    "BernoulliComponent",
-    "ManifoldExponentialMovingAverage",
-    "MeasurementRecord",
-    "MeasurementTimeBuffer",
-    "MultiBernoulliTracker",
-    "MultipleExtendedObjectStepResult",
-    "LinPeriodicParticleFilter",
-    "MEMEKFStarTracker",
-    "MEMEKFStarOATracker",
-    "MEMEKFTracker",
-    "MEMQKFTracker",
-    "MEMSOEKFTracker",
-    "MemEkfStarTracker",
-    "MemEkfStarOATracker",
-    "MemEkfTracker",
-    "MemQkfTracker",
-    "MemSoekfTracker",
-    "ModeRBPFManifoldUKF",
-    "ModeRBPFManifoldUKFTracker",
-    "ModeRbpfManifoldUkfTracker",
-    "NISGate",
-    "OrientationVectorEOT0Tracker",
-    "OrientationVectorEOTTracker",
-    "OutOfSequenceKalmanUpdater",
-    "OutOfSequenceParticleUpdater",
-    "OutOfSequenceResult",
-    "PartitionedSO3ProductParticleFilter",
-    "PiecewiseConstantFilter",
-    "ProbabilityThresholdGate",
-    "RandomMatrixTracker",
-    "SCGPTracker",
-    "ScGpTracker",
-    "TimestampedItem",
-    "TopKGate",
-    "VelocityAlignedMEMEKFStarTracker",
-    "VelocityAlignedMemEkfStarTracker",
-    "VelocityLockedMEMQKFTracker",
-    "VelocityLockedMemQkfTracker",
-    "VBRMTracker",
-    "VbrmTracker",
-    "association_result_from_hypotheses",
-    "build_global_nearest_neighbor_associator",
-    "build_kalman_measurement_initiator",
-    "build_linear_gaussian_hypothesis_associator",
-    "build_linear_gaussian_predictor",
-    "build_linear_gaussian_updater",
-    "filter_hypotheses",
-    "gate_hypotheses",
-    "hypotheses_to_cost_matrix",
-    "hypotheses_to_log_likelihood_matrix",
-    "hypotheses_to_probability_matrix",
-    "hypothesis_cost",
-    "infer_hypothesis_shape",
-    "linear_gaussian_association_hypotheses",
-    "missed_detection_hypothesis",
-    "quaternion_grid_transition_density",
-    "Track",
-    "TrackManager",
-    "TrackManagerStepResult",
-    "TrackStatus",
-    "build_linear_gaussian_updater",
-    "solve_global_nearest_neighbor",
-    "student_t_covariance_scale",
-    "retrodict_linear_gaussian",
-    "retrodict_linear_gaussian_state",
-    "SE2FilterMixin",
-    "SE2UKF",
-    "SO3ProductBlockParticleFilter",
-    "SO3ProductParticleFilter",
-    "so3_right_multiplication_grid_transition",
-    "SphericalHarmonicsEOTTracker",
-    "SphericalHarmonicsExtendedObjectTracker",
-    "StateSpaceSubdivisionFilter",
-    "ToroidalFilterMixin",
-    "ToroidalParticleFilter",
-    "ToroidalWrappedNormalFilter",
-    "VonMisesFilter",
-    "VonMisesFisherFilter",
-    "WrappedNormalFilter",
-]
+The filter namespace is intentionally lazy. Importing ``pyrecest.filters`` or a
+small baseline filter such as :class:`KalmanFilter` should not import advanced
+trackers, plotting helpers, or optional-domain modules. This keeps the public API
+convenient while reducing import-time coupling between the baseline package and
+heavier research features.
+"""
+
+from __future__ import annotations
+
+from importlib import import_module
+from typing import Final
+
+_FILTER_EXPORTS: Final[dict[str, str]] = {
+    "AbstractAxialFilter": ".abstract_axial_filter",
+    "AbstractDummyFilter": ".abstract_dummy_filter",
+    "AxialKalmanFilter": ".axial_kalman_filter",
+    "AbstractExtendedObjectTracker": ".abstract_extended_object_tracker",
+    "AbstractFilter": ".abstract_filter",
+    "AbstractFilterManifoldMixin": ".manifold_mixins",
+    "AbstractGridFilter": ".abstract_grid_filter",
+    "AbstractHypersphereSubsetFilter": ".manifold_mixins",
+    "AbstractMultipleExtendedObjectTracker": ".abstract_multiple_extended_object_tracker",
+    "AbstractMultitargetTracker": ".abstract_multitarget_tracker",
+    "AbstractNearestNeighborTracker": ".abstract_nearest_neighbor_tracker",
+    "AbstractParticleFilter": ".abstract_particle_filter",
+    "AbstractTrackerWithLogging": ".abstract_tracker_with_logging",
+    "AssociationHypothesis": ".association_hypotheses",
+    "AssociationResult": ".track_manager",
+    "BinghamFilter": ".bingham_filter",
+    "BlockParticleFilter": ".block_particle_filter",
+    "BoxParticleFilter": ".euclidean_box_particle_filter",
+    "CircularFilterMixin": ".manifold_mixins",
+    "CircularFourierFilter": ".circular_fourier_filter",
+    "CircularParticleFilter": ".circular_particle_filter",
+    "CircularUKF": ".circular_ukf",
+    "CostThresholdGate": ".association_hypotheses",
+    "DecorrelatedSCGPTracker": ".gprhm_tracker",
+    "DecorrelatedScGpTracker": ".gprhm_tracker",
+    "EKFSplineTracker": ".ekf_spline_tracker",
+    "EkfSplineTracker": ".ekf_spline_tracker",
+    "EuclideanBoxParticleFilter": ".euclidean_box_particle_filter",
+    "EuclideanFilterMixin": ".manifold_mixins",
+    "EuclideanParticleFilter": ".euclidean_particle_filter",
+    "FactorizedGIWRMTracker": ".factorized_giw_random_matrix_tracker",
+    "FactorizedGIWRandomMatrixTracker": ".factorized_giw_random_matrix_tracker",
+    "FullSCGPTracker": ".gprhm_tracker",
+    "EOTOV0Tracker": ".orientation_vector_eot_tracker",
+    "EOTOVTracker": ".orientation_vector_eot_tracker",
+    "ExtendedObjectAssociationResult": ".abstract_multiple_extended_object_tracker",
+    "ExtendedObjectEstimate": ".abstract_multiple_extended_object_tracker",
+    "FixedLagBuffer": ".out_of_sequence",
+    "FourierRHMTracker": ".fourier_rhm_tracker",
+    "GoalConditionedReplayIMMFilter": ".goal_conditioned_replay_imm_filter",
+    "GoalConditionedReplayParticleFilter": ".goal_conditioned_replay_particle_filter",
+    "GoalConditionedReplayParticleIMMFilter": ".goal_conditioned_replay_particle_imm_filter",
+    "GGIWTracker": ".ggiw_tracker",
+    "GlobalNearestNeighbor": ".global_nearest_neighbor",
+    "JPDAF": ".joint_probabilistic_data_association_filter",
+    "JointProbabilisticDataAssociationFilter": ".joint_probabilistic_data_association_filter",
+    "IMM": ".interacting_multiple_model_filter",
+    "InteractingMultipleModelFilter": ".interacting_multiple_model_filter",
+    "GPRHMTracker": ".gprhm_tracker",
+    "HypercylindricalFilterMixin": ".manifold_mixins",
+    "HypercylindricalParticleFilter": ".hypercylindrical_particle_filter",
+    "HyperhemisphereCartProdParticleFilter": ".hyperhemisphere_cart_prod_particle_filter",
+    "HyperhemisphericalFilterMixin": ".manifold_mixins",
+    "HyperhemisphericalGridFilter": ".hyperhemispherical_grid_filter",
+    "HyperhemisphericalParticleFilter": ".hyperhemispherical_particle_filter",
+    "HypersphericalDummyFilter": ".hyperspherical_dummy_filter",
+    "HypersphericalFilterMixin": ".manifold_mixins",
+    "HypersphericalParticleFilter": ".hyperspherical_particle_filter",
+    "HypersphericalUKF": ".hyperspherical_ukf",
+    "HypertoroidalDummyFilter": ".hypertoroidal_dummy_filter",
+    "HypertoroidalFilterMixin": ".manifold_mixins",
+    "HypertoroidalFourierFilter": ".hypertoroidal_fourier_filter",
+    "HypertoroidalParticleFilter": ".hypertoroidal_particle_filter",
+    "IteratedBatchMEMQKFTracker": ".iterated_batch_mem_qkf_tracker",
+    "IteratedBatchMemQkfTracker": ".iterated_batch_mem_qkf_tracker",
+    "KalmanFilter": ".kalman_filter",
+    "UnscentedKalmanFilter": ".unscented_kalman_filter",
+    "UKFOnManifolds": ".ukf_on_manifolds",
+    "KernelSMEFilter": ".kernel_sme_filter",
+    "LinBoundedFilterMixin": ".manifold_mixins",
+    "LinBoundedParticleFilter": ".lin_bounded_particle_filter",
+    "LinPeriodicFilterMixin": ".manifold_mixins",
+    "LOMEMTracker": ".lomem_tracker",
+    "LomemTracker": ".lomem_tracker",
+    "BernoulliComponent": ".multi_bernoulli_tracker",
+    "ManifoldExponentialMovingAverage": ".manifold_exponential_moving_average",
+    "MeasurementRecord": ".out_of_sequence",
+    "MeasurementTimeBuffer": ".out_of_sequence",
+    "MultiBernoulliTracker": ".multi_bernoulli_tracker",
+    "MultipleExtendedObjectStepResult": ".abstract_multiple_extended_object_tracker",
+    "LinPeriodicParticleFilter": ".lin_periodic_particle_filter",
+    "MEMEKFStarTracker": ".mem_ekf_star_tracker",
+    "MEMEKFStarOATracker": ".mem_ekf_star_oa_tracker",
+    "MEMEKFTracker": ".mem_ekf_tracker",
+    "MEMQKFTracker": ".mem_qkf_tracker",
+    "MEMSOEKFTracker": ".mem_soekf_tracker",
+    "MemEkfStarTracker": ".mem_ekf_star_tracker",
+    "MemEkfStarOATracker": ".mem_ekf_star_oa_tracker",
+    "MemEkfTracker": ".mem_ekf_tracker",
+    "MemQkfTracker": ".mem_qkf_tracker",
+    "MemSoekfTracker": ".mem_soekf_tracker",
+    "ModeRBPFManifoldUKF": ".mode_rbpf_manifold_ukf_tracker",
+    "ModeRBPFManifoldUKFTracker": ".mode_rbpf_manifold_ukf_tracker",
+    "ModeRbpfManifoldUkfTracker": ".mode_rbpf_manifold_ukf_tracker",
+    "NISGate": ".association_hypotheses",
+    "OrientationVectorEOT0Tracker": ".orientation_vector_eot_tracker",
+    "OrientationVectorEOTTracker": ".orientation_vector_eot_tracker",
+    "OutOfSequenceKalmanUpdater": ".out_of_sequence",
+    "OutOfSequenceParticleUpdater": ".out_of_sequence",
+    "OutOfSequenceResult": ".out_of_sequence",
+    "PartitionedSO3ProductParticleFilter": ".partitioned_so3_product_particle_filter",
+    "PiecewiseConstantFilter": ".piecewise_constant_filter",
+    "ProbabilityThresholdGate": ".association_hypotheses",
+    "RandomMatrixTracker": ".random_matrix_tracker",
+    "SCGPTracker": ".gprhm_tracker",
+    "ScGpTracker": ".gprhm_tracker",
+    "TimestampedItem": ".out_of_sequence",
+    "TopKGate": ".association_hypotheses",
+    "VelocityAlignedMEMEKFStarTracker": ".mem_ekf_star_oa_tracker",
+    "VelocityAlignedMemEkfStarTracker": ".mem_ekf_star_oa_tracker",
+    "VelocityLockedMEMQKFTracker": ".velocity_locked_mem_qkf_tracker",
+    "VelocityLockedMemQkfTracker": ".velocity_locked_mem_qkf_tracker",
+    "VBRMTracker": ".vbrm_tracker",
+    "VbrmTracker": ".vbrm_tracker",
+    "association_result_from_hypotheses": ".association_hypotheses",
+    "build_global_nearest_neighbor_associator": ".track_manager",
+    "build_kalman_measurement_initiator": ".track_manager",
+    "build_linear_gaussian_hypothesis_associator": ".association_hypotheses",
+    "build_linear_gaussian_predictor": ".track_manager",
+    "build_linear_gaussian_updater": ".track_manager",
+    "filter_hypotheses": ".association_hypotheses",
+    "gate_hypotheses": ".association_hypotheses",
+    "hypotheses_to_cost_matrix": ".association_hypotheses",
+    "hypotheses_to_log_likelihood_matrix": ".association_hypotheses",
+    "hypotheses_to_probability_matrix": ".association_hypotheses",
+    "hypothesis_cost": ".association_hypotheses",
+    "infer_hypothesis_shape": ".association_hypotheses",
+    "linear_gaussian_association_hypotheses": ".association_hypotheses",
+    "missed_detection_hypothesis": ".association_hypotheses",
+    "quaternion_grid_transition_density": ".so3_grid_transition",
+    "Track": ".track_manager",
+    "TrackManager": ".track_manager",
+    "TrackManagerStepResult": ".track_manager",
+    "TrackStatus": ".track_manager",
+    "solve_global_nearest_neighbor": ".track_manager",
+    "student_t_covariance_scale": "._linear_gaussian",
+    "retrodict_linear_gaussian": ".out_of_sequence",
+    "retrodict_linear_gaussian_state": ".out_of_sequence",
+    "SE2FilterMixin": ".manifold_mixins",
+    "SE2UKF": ".se2_ukf",
+    "SO3ProductBlockParticleFilter": ".so3_product_block_particle_filter",
+    "SO3ProductParticleFilter": ".so3_product_particle_filter",
+    "so3_right_multiplication_grid_transition": ".so3_grid_transition",
+    "SphericalHarmonicsEOTTracker": ".spherical_harmonics_eot_tracker",
+    "SphericalHarmonicsExtendedObjectTracker": ".spherical_harmonics_eot_tracker",
+    "StateSpaceSubdivisionFilter": ".state_space_subdivision_filter",
+    "ToroidalFilterMixin": ".manifold_mixins",
+    "ToroidalParticleFilter": ".toroidal_particle_filter",
+    "ToroidalWrappedNormalFilter": ".toroidal_wrapped_normal_filter",
+    "VonMisesFilter": ".von_mises_filter",
+    "VonMisesFisherFilter": ".von_mises_fisher_filter",
+    "WrappedNormalFilter": ".wrapped_normal_filter",
+}
+
+__all__ = tuple(_FILTER_EXPORTS)
+
+
+def __getattr__(name: str):
+    """Resolve public filter symbols lazily on first access."""
+    try:
+        module_name = _FILTER_EXPORTS[name]
+    except KeyError as exc:  # pragma: no cover - normal attribute protocol
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from exc
+
+    module = import_module(module_name, __name__)
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))

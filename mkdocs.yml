@@ -20,6 +20,7 @@ nav:
       - Performance: performance.md
       - Failure Modes: failure-modes.md
       - API Stability: stability-policy.md
+      - Public API Registry: public-api-registry.md
       - Ecosystem Positioning: ecosystem.md
       - Public Identity: public-identity.md
       - Reproducible Experiments: reproducible-experiments.md

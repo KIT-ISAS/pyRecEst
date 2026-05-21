@@ -79,6 +79,19 @@ jobs:
           python -m build
           python -m twine check dist/*
 
+      - name: Smoke-test default wheel in a clean environment
+        run: |
+          python -m venv /tmp/pyrecest-default-wheel
+          /tmp/pyrecest-default-wheel/bin/python -m pip install --upgrade pip
+          /tmp/pyrecest-default-wheel/bin/python -m pip install dist/*.whl
+          /tmp/pyrecest-default-wheel/bin/python - <<'PY'
+          import pyrecest
+          from pyrecest.filters import KalmanFilter
+
+          print(f"Installed pyrecest {pyrecest.__version__}")
+          print(f"Resolved baseline filter {KalmanFilter.__name__}")
+          PY
+
       - name: Install built wheel and smoke-run public examples
         run: |
           python -m pip install dist/*.whl
@@ -90,6 +103,7 @@ jobs:
           python examples/basic/gaussian_multiplication.py
           python scripts/run_scenario.py scenarios/linear_gaussian_cv_1d/config.toml --expected scenarios/linear_gaussian_cv_1d/expected.json
           python benchmarks/basic_regressions.py --output benchmark-results.json
+          python scripts/check_benchmark_results.py benchmark-results.json --max-elapsed-seconds 30
 
       - name: Upload benchmark result artifact
         uses: actions/upload-artifact@v7
