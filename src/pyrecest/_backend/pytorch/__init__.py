@@ -743,9 +743,11 @@ def cumsum(x, axis=None, dtype=None):
 
 
 def cumprod(x, axis=None, dtype=None):
+    if not _torch.is_tensor(x):
+        x = array(x, dtype=dtype)
     if axis is None:
-        axis = 0
-    return _torch.cumprod(x, axis, dtype=dtype)
+        return _torch.cumprod(x.flatten(), dim=0, dtype=dtype)
+    return _torch.cumprod(x, dim=axis, dtype=dtype)
 
 
 def array_from_sparse(indices, data, target_shape):

@@ -373,8 +373,8 @@ def is_array(obj):
     return isinstance(obj, _jnp.ndarray)
 
 
-def get_slice(x, indices):
-    return x[indices]
+def get_slice(array, indices):
+    return array[indices]
 
 
 # Check if dtype is floating-point
@@ -414,6 +414,7 @@ def scatter_add(input, dim, index, src):
 
     if dim == 0:
         return input.at[index].add(src)
+
     if dim == 1:
         if input.ndim < 2:
             raise ValueError("dim=1 scatter_add requires at least two dimensions")
@@ -423,6 +424,7 @@ def scatter_add(input, dim, index, src):
             row_shape = (input.shape[0],) + (1,) * (index.ndim - 1)
             row_indices = _jnp.broadcast_to(_jnp.arange(input.shape[0]).reshape(row_shape), index.shape)
         return input.at[row_indices, index].add(src)
+
     raise NotImplementedError("scatter_add is implemented for dim 0 and dim 1.")
 
 
