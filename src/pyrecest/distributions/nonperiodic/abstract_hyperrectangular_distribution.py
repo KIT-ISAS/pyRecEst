@@ -11,6 +11,8 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
     def __init__(self, bounds):
         bounds = array(bounds)
         if bounds.ndim == 1:
+            if bounds.shape[0] != 2:
+                raise ValueError("one-dimensional bounds must have length 2")
             bounds = reshape(bounds, (1, 2))
         if bounds.ndim != 2 or bounds.shape[1] != 2:
             raise ValueError("bounds must have shape (dim, 2)")
@@ -46,13 +48,10 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
             raise ValueError(f"integration_boundaries must have shape ({self.dim}, 2)")
         left = integration_boundaries[:, 0]
         right = integration_boundaries[:, 1]
-        ranges = [
-            (float(lower), float(upper))
-            for lower, upper in zip(to_numpy(left), to_numpy(right))
-        ]
+        ranges = [(float(lower), float(upper)) for lower, upper in zip(to_numpy(left), to_numpy(right))]
 
         def integrand(*args):
             values = self.pdf(reshape(array(args), (1, self.dim)))
-            return float(to_numpy(values).reshape(-1)[0])
+            return float(to_numpy(array(values)).reshape(-1)[0])
 
         return nquad(integrand, ranges)[0]

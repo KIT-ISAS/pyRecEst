@@ -119,6 +119,66 @@ def benchmarks(session: nox.Session) -> None:
 
 
 @nox.session(python=PYTHON_DEFAULT)
+def lint(session: nox.Session) -> None:
+    """Run focused static checks that are expected to stay clean."""
+    session.install("ruff>=0.8,<1.0")
+    session.run("ruff", "check", ".")
+
+
+@nox.session(python=PYTHON_DEFAULT)
+def package(session: nox.Session) -> None:
+    """Build distributions and validate local release metadata."""
+    session.install("build", "twine")
+    session.run("python", "scripts/check_release_consistency.py", "--local-only")
+    session.run("python", "-m", "build")
+    session.run("sh", "-c", "python -m twine check dist/*", external=True)
+
+
+@nox.session(python=PYTHON_DEFAULT)
+def minimal_install(session: nox.Session) -> None:
+    """Install the default package only and run a public API smoke check."""
+    session.run("python", "-m", "pip", "install", "--upgrade", "pip")
+    session.run("python", "-m", "pip", "install", ".")
+    session.run(
+        "python",
+        "-c",
+        (
+            "import pyrecest; "
+            "from pyrecest.backend import array, diag; "
+            "from pyrecest.filters import KalmanFilter; "
+            "kf = KalmanFilter((array([0.0, 1.0]), diag(array([1.0, 1.0])))); "
+            "print(pyrecest.__version__, kf.get_point_estimate())"
+        ),
+    )
+
+
+@nox.session(python=PYTHON_DEFAULT)
+def benchmark_regressions(session: nox.Session) -> None:
+    """Run deterministic benchmark scenarios and compare numerical outputs."""
+    _poetry_install(session, "--with", "dev")
+    session.env["PYRECEST_BACKEND"] = "numpy"
+    session.run(
+        "poetry",
+        "run",
+        "python",
+        "benchmarks/basic_regressions.py",
+        "--output",
+        "benchmark-results.json",
+        external=True,
+    )
+    session.run(
+        "poetry",
+        "run",
+        "python",
+        "scripts/check_benchmark_results.py",
+        "benchmark-results.json",
+        "--baseline",
+        "benchmarks/baselines/basic_regressions.json",
+        external=True,
+    )
+
+
+@nox.session(python=PYTHON_DEFAULT)
 def typecheck_core(session: nox.Session) -> None:
     """Run a strict typing lane for stable, low-dependency modules."""
     session.install("mypy>=1.12,<2.0")

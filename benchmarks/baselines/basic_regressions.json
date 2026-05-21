@@ -1,0 +1,12 @@
+{
+  "benchmarks": [
+    {
+      "name": "linear_kalman",
+      "iterations": 200,
+      "final_estimate": [
+        200.0,
+        1.0
+      ]
+    }
+  ]
+}

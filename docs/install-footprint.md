@@ -15,6 +15,9 @@ public API. Keep that job green before moving any dependency behind an optional
 extra. It catches accidental import-time coupling such as a Euclidean filter
 requiring a plotting or spherical-harmonics package.
 
+CI includes a default-install smoke test so that the package remains importable
+and basic filtering remains usable without optional backend extras.
+
 Package indexes and installers normalize extra names. The hyphenated forms are
 therefore equivalent in modern pip metadata displays.
 
