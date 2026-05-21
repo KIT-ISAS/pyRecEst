@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "project": "PyRecEst",
+  "project_url": "https://github.com/FlorianPfaff/PyRecEst",
+  "repo": ".",
+  "branches": ["main"],
+  "pythons": ["3.11", "3.12", "3.13"],
+  "benchmark_dir": "benchmarks/asv_benchmarks",
+  "env_dir": ".asv/env",
+  "results_dir": ".asv/results",
+  "html_dir": ".asv/html"
+}
