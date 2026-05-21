@@ -161,7 +161,9 @@ def build_parser() -> argparse.ArgumentParser:
         "run-scenario",
         help="Run a TOML scenario and print a JSON result.",
     )
-    scenario_parser.add_argument("config", type=Path, help="Path to scenario config.toml")
+    scenario_parser.add_argument(
+        "config", type=Path, help="Path to scenario config.toml"
+    )
     scenario_parser.add_argument(
         "--expected",
         type=Path,
@@ -170,7 +172,9 @@ def build_parser() -> argparse.ArgumentParser:
     scenario_parser.add_argument(
         "--tolerance",
         type=float,
-        help=("Tolerance for expected final estimate checks; defaults to expected JSON tolerance or 1e-8"),
+        help=(
+            "Tolerance for expected final estimate checks; defaults to expected JSON tolerance or 1e-8"
+        ),
     )
     scenario_parser.set_defaults(func=_cmd_run_scenario)
 
