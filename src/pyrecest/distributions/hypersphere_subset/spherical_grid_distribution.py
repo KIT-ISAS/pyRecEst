@@ -166,10 +166,14 @@ class SphericalGridDistribution(
                 "not be valid).",
                 UserWarning,
             )
-            a = -6.0
-            b = 36.0 - 8.0 * (4.0 - no_of_grid_points)
-            degree = (-a + sqrt(b)) / 4.0
-            grid = get_grid_hypersphere(
+            degree = int(
+                round(float((-22.0 + sqrt(32.0 * no_of_grid_points + 4.0)) / 16.0))
+            )
+            if degree < 0:
+                raise ValueError(
+                    "no_of_grid_points is too small for a Driscoll-Healy grid"
+                )
+            grid, _ = get_grid_hypersphere(
                 "driscoll_healy", grid_density_parameter=degree, dim=2
             )
         else:
