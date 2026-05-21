@@ -31,17 +31,17 @@ in CI so the user-facing matrix cannot silently drift from the executable metada
 
 | API                            | NumPy     | PyTorch     | JAX         | Notes                                                                                                        |
 |--------------------------------|-----------|-------------|-------------|--------------------------------------------------------------------------------------------------------------|
-| `KalmanFilter`                 | supported | supported   | supported   | Linear Gaussian operations are the portable baseline.                                                        |
-| `UKFOnManifolds`               | supported | partial     | unsupported | JAX exclusions are currently explicit.                                                                       |
+| `KalmanFilter`                 | supported | supported   | supported   | Linear Gaussian operations are part of the portable baseline.                                                |
+| `UKFOnManifolds`               | supported | partial     | unsupported | The current implementation documents explicit JAX exclusions for predict/update.                            |
 | `SphericalHarmonicsEOTTracker` | supported | unsupported | unsupported | Depends on spherical harmonics and SciPy-adjacent functionality.                                             |
-| `GaussianDistribution`         | supported | supported   | supported   | Basic construction and portable operations should stay backend portable.                                     |
-| `LinearDiracDistribution`      | supported | supported   | supported   | Used by conversion and particle-style workflows.                                                             |
+| `GaussianDistribution`         | supported | supported   | supported   | Basic construction, moment access, and portable operations should remain backend portable.                   |
+| `LinearDiracDistribution`      | supported | supported   | supported   | Used by representation conversion and particle-style workflows.                                              |
 | `UnscentedKalmanFilter`        | supported | partial     | partial     | Portable for backend-compatible model functions; advanced paths may still bridge through NumPy/SciPy.        |
 | `EuclideanParticleFilter`      | supported | partial     | partial     | Particle operations are portable where sampling and resampling helpers preserve backend semantics.           |
 | `DistributionConversion`       | supported | partial     | partial     | Euclidean particle/Gaussian conversions are portable; grid, Fourier, and manifold routes are route-specific. |
 | `MultiBernoulliTracker`        | supported | partial     | unsupported | Tracking workflows rely on assignment and measurement-set utilities that are currently NumPy-oriented.       |
 | `PointSetRegistration`         | supported | partial     | unsupported | Registration utilities may copy through NumPy/SciPy and should not be assumed differentiable.                |
-| `EvaluationUtilities`          | supported | partial     | partial     | Plotting, assignment, and summaries remain partly NumPy/SciPy oriented.                                      |
+| `EvaluationUtilities`          | supported | partial     | partial     | Some plotting, assignment, and summary operations remain NumPy/SciPy oriented.                              |
 
 When adding a new public API, add a row to the matrix, update docs if the row is
 user-facing, and add a focused backend test if the API is expected to be
