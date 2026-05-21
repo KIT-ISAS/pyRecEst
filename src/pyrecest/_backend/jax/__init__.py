@@ -121,7 +121,6 @@ from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
     stack,
     std,
     sum,
-    take,
     tan,
     tanh,
     tile,
@@ -217,6 +216,28 @@ def to_ndarray(x, to_ndim, axis=0):
         x = _jnp.expand_dims(x, axis=axis)
 
     return x
+
+
+def take(
+    a,
+    indices,
+    axis=None,
+    out=None,
+    mode=None,
+    unique_indices=False,
+    indices_are_sorted=False,
+    fill_value=None,
+):
+    return _jnp.take(
+        a,
+        _jnp.asarray(indices),
+        axis=axis,
+        out=out,
+        mode=mode,
+        unique_indices=unique_indices,
+        indices_are_sorted=indices_are_sorted,
+        fill_value=fill_value,
+    )
 
 
 def assignment(x, values, indices, axis=0):
