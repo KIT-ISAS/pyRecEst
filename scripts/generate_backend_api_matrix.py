@@ -81,15 +81,18 @@ def render_backend_api_matrix() -> str:
         "",
         "## Public API Rows",
         "",
+        "<!-- backend-api-matrix:start -->",
         *_format_table(["API", "NumPy", "PyTorch", "JAX", "Notes"], api_rows),
+        "<!-- backend-api-matrix:end -->",
     ]
 
     lines.extend(
         [
             "",
             "When adding a new public API, add a row to the matrix, update docs if the row is",
-            "user-facing, and add a focused backend test if the API is expected to be",
-            "portable.",
+            "user-facing, add or update the generated table, and add a focused backend test",
+            "if the API is expected to be portable. CI checks that this table still reflects",
+            "`src/pyrecest/_backend/capabilities.py`.",
             "",
             "## Runtime Access",
             "",

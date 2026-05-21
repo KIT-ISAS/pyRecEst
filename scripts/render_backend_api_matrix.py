@@ -40,23 +40,41 @@ def _load_api_backend_capabilities() -> dict[str, dict[str, str]]:
     return dict(capabilities)
 
 
+def _format_table(headers: list[str], rows: list[list[str]]) -> list[str]:
+    widths = [
+        max(len(row[index]) for row in [headers, *rows])
+        for index in range(len(headers))
+    ]
+    lines = [
+        "| "
+        + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(headers))
+        + " |",
+        "|" + "|".join("-" * (width + 2) for width in widths) + "|",
+    ]
+    lines.extend(
+        "| "
+        + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(row))
+        + " |"
+        for row in rows
+    )
+    return lines
+
+
 def render_markdown(capabilities: dict[str, dict[str, str]] | None = None) -> str:
     if capabilities is None:
         capabilities = _load_api_backend_capabilities()
-    lines = [
-        "| API | NumPy | PyTorch | JAX | Notes |",
-        "|-----|-------|---------|-----|-------|",
-    ]
+    rows = []
     for api_name, row in sorted(capabilities.items()):
-        lines.append(
-            "| `{api}` | {numpy} | {pytorch} | {jax} | {notes} |".format(
-                api=api_name,
-                numpy=row.get("numpy", "unknown"),
-                pytorch=row.get("pytorch", "unknown"),
-                jax=row.get("jax", "unknown"),
-                notes=row.get("notes", ""),
-            )
+        rows.append(
+            [
+                f"`{api_name}`",
+                row.get("numpy", "unknown"),
+                row.get("pytorch", "unknown"),
+                row.get("jax", "unknown"),
+                row.get("notes", ""),
+            ]
         )
+    lines = _format_table(["API", "NumPy", "PyTorch", "JAX", "Notes"], rows)
     return "\n".join(lines) + "\n"
 
 
