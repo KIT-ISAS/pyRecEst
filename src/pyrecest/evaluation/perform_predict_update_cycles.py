@@ -1,9 +1,18 @@
 import time
 import warnings
 
+import numpy as _np
+
 from pyrecest.backend import any, array, atleast_2d, empty_like, squeeze
 
 from .configure_for_filter import configure_for_filter
+
+
+def _empty_estimates_like(groundtruth):
+    """Create an estimate container matching dense or object groundtruth arrays."""
+    if isinstance(groundtruth, _np.ndarray) and groundtruth.dtype == object:
+        return _np.empty_like(groundtruth)
+    return empty_like(groundtruth)
 
 
 def _update_with_likelihood(filter_obj, likelihood_for_filter, measurement):
@@ -52,7 +61,7 @@ def perform_predict_update_cycles(
     cumulated_updates_preferred=None,
 ):
     if extract_all_estimates:
-        all_estimates = empty_like(groundtruth)
+        all_estimates = _empty_estimates_like(groundtruth)
     else:
         all_estimates = None
 
