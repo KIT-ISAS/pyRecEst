@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, diff, prod, reshape
+from pyrecest.backend import array, diff, prod, reshape, to_numpy
 from scipy.integrate import nquad
 
 from ..abstract_bounded_nonperiodic_distribution import (
@@ -46,13 +46,10 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
             raise ValueError(f"integration_boundaries must have shape ({self.dim}, 2)")
         left = integration_boundaries[:, 0]
         right = integration_boundaries[:, 1]
+        ranges = [(float(lower), float(upper)) for lower, upper in zip(to_numpy(left), to_numpy(right))]
 
         def integrand(*args):
-            sample = reshape(array(args), (1, -1))
-            values = self.pdf(sample)
-            if hasattr(values, "__len__"):
-                values = values[0]
-            return float(values)
+            values = self.pdf(reshape(array(args), (1, self.dim)))
+            return float(to_numpy(array(values)).reshape(-1)[0])
 
-        integration_boundaries = [(float(l), float(r)) for l, r in zip(left, right)]
-        return nquad(integrand, integration_boundaries)[0]
+        return nquad(integrand, ranges)[0]

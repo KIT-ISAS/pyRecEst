@@ -13,12 +13,17 @@ nav:
       - CLI: cli.md
       - Installation Footprint: install-footprint.md
       - Scenario Zoo: scenario-zoo.md
+      - Compatibility Dashboard: compatibility-dashboard.md
+      - Flagship Example: flagship-example.md
+      - Change Management: change-management.md
       - Diagnostics: diagnostics.md
+      - Numerical Contracts: numerical-contracts.md
       - Shapes and Conventions: conventions.md
       - Backend Compatibility: backend-compatibility.md
       - Backend Support Matrix: backend-support.md
       - Backend API Matrix: backend-api-matrix.md
       - Performance: performance.md
+      - Release Process: release-process.md
       - Failure Modes: failure-modes.md
       - Error Handling: error-handling.md
       - API Stability: stability-policy.md
