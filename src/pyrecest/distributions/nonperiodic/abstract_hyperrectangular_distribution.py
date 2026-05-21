@@ -9,7 +9,12 @@ from ..abstract_bounded_nonperiodic_distribution import (
 
 class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistribution):
     def __init__(self, bounds):
-        AbstractBoundedNonPeriodicDistribution.__init__(self, bounds.shape[1])
+        bounds = array(bounds)
+        if bounds.ndim == 1:
+            bounds = reshape(bounds, (1, 2))
+        if bounds.ndim != 2 or bounds.shape[1] != 2:
+            raise ValueError("bounds must have shape (dim, 2)")
+        AbstractBoundedNonPeriodicDistribution.__init__(self, int(bounds.shape[0]))
         self.bounds = bounds
 
     def get_manifold_size(self):
@@ -36,8 +41,10 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
         if integration_boundaries is None:
             integration_boundaries = self.bounds
 
-        integration_boundaries = reshape(integration_boundaries, (2, -1))
-        left, right = integration_boundaries
+        integration_boundaries = reshape(array(integration_boundaries), (-1, 2))
+        if integration_boundaries.shape[0] != self.dim:
+            raise ValueError(f"integration_boundaries must have shape ({self.dim}, 2)")
+        left = integration_boundaries[:, 0]
+        right = integration_boundaries[:, 1]
 
-        integration_boundaries = zip(left, right)
-        return nquad(lambda *args: self.pdf(array(args)), integration_boundaries)[0]
+        return nquad(lambda *args: self.pdf(array(args)), list(zip(left, right)))[0]
