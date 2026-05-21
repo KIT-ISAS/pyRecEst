@@ -234,7 +234,7 @@ class OutOfSequenceResult:
     out_of_sequence: bool
     replayed_event_count: int
     accepted: bool = True
-    diagnostics: dict | None = None
+    diagnostics: object | None = None
     filter_state: object = None
 
 
@@ -316,7 +316,7 @@ class _EventReplayMixin:
             replayed_event_count = 0
 
         self._trim_to_lag()
-        diagnostics = captured_result if isinstance(captured_result, dict) else None
+        diagnostics = captured_result if hasattr(captured_result, "get") else None
         accepted = (
             True if diagnostics is None else bool(diagnostics.get("accepted", True))
         )

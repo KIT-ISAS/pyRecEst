@@ -37,6 +37,12 @@ class TestCircularUniformSampler(unittest.TestCase):
         # Check that the grid points are equidistant
         npt.assert_array_almost_equal(std(diff(grid_points)), 0.0)
 
+    def test_get_grid_rejects_nonpositive_density(self):
+        with self.assertRaises(ValueError):
+            self.sampler.get_grid(0)
+        with self.assertRaises(ValueError):
+            self.sampler.get_grid(-1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -76,6 +76,15 @@ mkdocstrings = { version = "^1.0.4", extras = ["python"] }
 [tool.mypy]
 check_untyped_defs = true
 
+[[tool.mypy.overrides]]
+module = [
+  "pyrecest.diagnostics",
+  "pyrecest.reproducibility",
+  "pyrecest.scenarios",
+]
+disallow_untyped_defs = true
+warn_return_any = true
+
 [tool.ruff]
 line-length = 180
 
