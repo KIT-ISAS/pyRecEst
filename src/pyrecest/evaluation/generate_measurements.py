@@ -28,6 +28,21 @@ def _as_shapely_scalar(value):
     return float(np.asarray(value).reshape(-1)[0])
 
 
+def _mtt_state_at(groundtruth, t, target_no, n_targets):
+    """Return one target state from dense or per-step object ground truth."""
+    state_at_t = np.asarray(groundtruth[t])
+    if n_targets == 1 and state_at_t.ndim == 1:
+        if target_no != 0:
+            raise IndexError("target_no out of bounds for single-target ground truth")
+        return state_at_t
+    if state_at_t.ndim != 2:
+        raise ValueError(
+            "MTT groundtruth entries must have shape (n_targets, dim); "
+            f"got {state_at_t.shape}."
+        )
+    return state_at_t[target_no, :]
+
+
 # pylint: disable=too-many-branches,too-many-locals,too-many-statements
 def generate_measurements(groundtruth, simulation_config):
     """
@@ -150,9 +165,15 @@ def generate_measurements(groundtruth, simulation_config):
             for target_no in range(simulation_config["n_targets"]):
                 if n_observations[t, target_no] == 1:
                     meas_no += 1
+                    target_state = _mtt_state_at(
+                        groundtruth,
+                        t,
+                        target_no,
+                        simulation_config["n_targets"],
+                    )
                     measurements[t][meas_no - 1, :] = dot(
                         simulation_config["meas_matrix_for_each_target"],
-                        array(groundtruth[t, target_no, :]),
+                        array(target_state),
                     ) + squeeze(simulation_config["meas_noise"].sample(1))
                 else:
                     if n_observations[t, target_no] != 0:
