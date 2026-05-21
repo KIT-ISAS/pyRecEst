@@ -1,6 +1,33 @@
 from pyrecest.distributions import AbstractManifoldSpecificDistribution
 
 
+def _expand_meas_per_step(simulation_param):
+    if "n_meas_at_individual_time_step" in simulation_param:
+        return
+    if "meas_per_step" not in simulation_param:
+        return
+
+    assert isinstance(
+        simulation_param["meas_per_step"], int
+    ), "meas_per_step must be an integer"
+    assert simulation_param["meas_per_step"] > 0, "meas_per_step must be positive"
+
+    simulation_param["n_meas_at_individual_time_step"] = [
+        simulation_param["meas_per_step"]
+    ] * simulation_param["n_timesteps"]
+    del simulation_param["meas_per_step"]
+
+
+def _validate_measurement_counts(simulation_param):
+    assert all(
+        x > 0 for x in simulation_param["n_meas_at_individual_time_step"]
+    ), "n_meas_at_individual_time_step must contain positive values"
+    assert all(
+        isinstance(x, int)
+        for x in simulation_param["n_meas_at_individual_time_step"]
+    ), "n_meas_at_individual_time_step must contain integer values"
+
+
 def check_and_fix_config(simulation_param):
     # Initialize default values if they are not present
     simulation_param.setdefault("use_transition", False)
@@ -28,17 +55,26 @@ def check_and_fix_config(simulation_param):
         raise ValueError("MTT and EOT cannot be used together at the moment.")
 
     if simulation_param["eot"]:
+        if (
+            "n_meas_at_individual_time_step" in simulation_param
+            and "meas_per_step" in simulation_param
+        ):
+            raise ValueError(
+                "Do not provide n_meas_at_individual_time_step and meas_per_step at the same time."
+            )
+        _expand_meas_per_step(simulation_param)
         assert (
             sum(
                 key in simulation_param
                 for key in [
-                    "meas_per_step",
                     "n_meas_at_individual_time_step",
                     "intensity_lambda",
                 ]
             )
             == 1
-        ), "Must use precisely one parameter to modulate the number of measurements (meas_per_step, n_meas_at_individual_time_step, or lambda_intensity)"
+        ), "Must use precisely one parameter to modulate the number of measurements (n_meas_at_individual_time_step or lambda_intensity)"
+        if "n_meas_at_individual_time_step" in simulation_param:
+            _validate_measurement_counts(simulation_param)
     elif simulation_param["mtt"]:
         assert (
             "n_meas_at_individual_time_step" not in simulation_param
@@ -75,23 +111,8 @@ def check_and_fix_config(simulation_param):
         "n_meas_at_individual_time_step" not in simulation_param
         and "meas_per_step" in simulation_param
     ):
-        assert isinstance(
-            simulation_param["meas_per_step"], int
-        ), "meas_per_step must be an integer"
-        assert simulation_param["meas_per_step"] > 0, "meas_per_step must be positive"
-
-        simulation_param["n_meas_at_individual_time_step"] = [
-            simulation_param["meas_per_step"]
-        ] * simulation_param["n_timesteps"]
-        del simulation_param["meas_per_step"]
-
-        assert all(
-            x > 0 for x in simulation_param["n_meas_at_individual_time_step"]
-        ), "n_meas_at_individual_time_step must contain positive values"
-        assert all(
-            isinstance(x, int)
-            for x in simulation_param["n_meas_at_individual_time_step"]
-        ), "n_meas_at_individual_time_step must contain integer values"
+        _expand_meas_per_step(simulation_param)
+        _validate_measurement_counts(simulation_param)
 
     elif "n_meas_at_individual_time_step" not in simulation_param:
         simulation_param["n_meas_at_individual_time_step"] = [1] * simulation_param[
