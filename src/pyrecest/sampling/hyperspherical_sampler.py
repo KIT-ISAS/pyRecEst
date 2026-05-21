@@ -232,8 +232,10 @@ class SphericalCoordinatesBasedFixedResolutionSampler(
             raise ValueError(
                 "grid_density_parameter must contain exactly two entries"
             ) from exc
-        res_lon = _validate_positive_integral_scalar(res_lon, "res_lon")
-        res_lat = _validate_positive_integral_scalar(res_lat, "res_lat")
+        res_lon = int(res_lon)
+        res_lat = int(res_lat)
+        if res_lon <= 0 or res_lat <= 0:
+            raise ValueError("grid resolution entries must be positive")
         phi_values = linspace(0.0, 2 * pi, num=res_lon, endpoint=False)
         theta_values = linspace(pi / (res_lat + 1), pi, num=res_lat, endpoint=False)
         phi_theta_stacked = array(list(itertools.product(phi_values, theta_values)))
@@ -476,9 +478,9 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         # Step 2: Discretize the unit circle using the circular grid
         circular_sampler = CircularUniformSampler()
         if len(grid_density_parameter) == 2:
-            n_sample_circle = grid_density_parameter[1]
+            n_sample_circle = int(grid_density_parameter[1])
         else:
-            n_sample_circle = int(ceil(grid_density_parameter[0] ** 0.5))
+            n_sample_circle = int(ceil(float(grid_density_parameter[0]) ** 0.5))
         psi_points = circular_sampler.get_grid(n_sample_circle)
 
         # Step 3: Combine the two grids to generate a grid for S3
