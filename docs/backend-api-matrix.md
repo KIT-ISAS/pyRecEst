@@ -6,17 +6,25 @@ PyRecEst has two related backend contracts:
 2. the public API contract for distributions, filters, trackers, and utilities.
 
 The machine-readable source for both contracts is
-`src/pyrecest/_backend/capabilities.py`. Regenerate this page with:
+`src/pyrecest/_backend/capabilities.py`.
+
+To inspect the current matrix from a checkout or installed environment, run:
 
 ```bash
-python scripts/generate_backend_api_matrix.py --output docs/backend-api-matrix.md
+pyrecest backends --format markdown
+python scripts/render_backend_api_matrix.py
+python scripts/check_backend_api_matrix.py
 ```
+
+The documentation table is checked against `src/pyrecest/_backend/capabilities.py`
+in CI so the user-facing matrix cannot silently drift from the executable metadata.
 
 ## Support Levels
 
 | Level         | Meaning                                                                                                                       |
 |---------------|-------------------------------------------------------------------------------------------------------------------------------|
 | `supported`   | Intended to preserve backend semantics for the listed API.                                                                    |
+| `bridged`     | Works by crossing into another numerical stack, usually NumPy/SciPy; do not assume device, dtype, or gradient preservation.   |
 | `partial`     | Numerically useful, but with documented limitations such as SciPy bridges, CPU copies, or missing gradient/device guarantees. |
 | `unsupported` | Should raise a clear `NotImplementedError` or be documented as unavailable for the backend.                                   |
 
@@ -40,3 +48,20 @@ python scripts/generate_backend_api_matrix.py --output docs/backend-api-matrix.m
 When adding a new public API, add a row to the matrix, update docs if the row is
 user-facing, and add a focused backend test if the API is expected to be
 portable.
+
+## Runtime Access
+
+Use the public helper when examples or downstream packages need to inspect
+backend support without duplicating the table:
+
+```python
+from pyrecest import get_backend_support
+
+assert get_backend_support("KalmanFilter", backend="jax") == "supported"
+```
+
+The CLI can also render the matrix:
+
+```bash
+pyrecest backends --format markdown
+```
