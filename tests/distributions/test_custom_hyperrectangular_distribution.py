@@ -1,6 +1,7 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
+import pyrecest.backend as backend
 from pyrecest.backend import allclose, array, column_stack, linspace, meshgrid, ones
 from pyrecest.distributions.custom_hyperrectangular_distribution import (
     CustomHyperrectangularDistribution,
@@ -72,6 +73,15 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
 
         self.assertEqual(dist.dim, 3)
         self.assertTrue(allclose(dist.get_manifold_size(), 24.0))
+
+    def test_normalize_verify_handles_scalar_integral(self):
+        if backend.__backend_name__ != "numpy":  # pylint: disable=no-member
+            self.skipTest("normalize currently supports the NumPy backend only")
+
+        dist = CustomHyperrectangularDistribution(lambda xs: 2.0 * ones(xs.shape[0]), self.bounds)
+        normalized = dist.normalize(verify=True)
+
+        self.assertAlmostEqual(float(normalized.integrate()), 1.0, places=10)
 
 
 if __name__ == "__main__":
