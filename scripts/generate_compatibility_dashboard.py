@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import tomllib
+from pathlib import Path
 
 from pyrecest.backend_support import format_backend_support_markdown
 
@@ -47,7 +47,9 @@ def render_dashboard(root: Path) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd())
-    parser.add_argument("--output", type=Path, default=Path("docs/compatibility-dashboard.md"))
+    parser.add_argument(
+        "--output", type=Path, default=Path("docs/compatibility-dashboard.md")
+    )
     args = parser.parse_args(argv)
 
     text = render_dashboard(args.root)
