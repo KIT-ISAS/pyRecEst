@@ -14,4 +14,6 @@ class KalmanFilterBenchmarks:
         filt = KalmanFilter((array([0.0, 1.0]), diag(array([1.0, 1.0]))))
         for _ in range(100):
             filt.predict_linear(self.system_matrix, self.system_noise_cov)
-            filt.update_linear(self.measurement, self.measurement_matrix, self.measurement_noise_cov)
+            filt.update_linear(
+                self.measurement, self.measurement_matrix, self.measurement_noise_cov
+            )
