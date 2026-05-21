@@ -6,6 +6,25 @@ from pyrecest.backend import any, array, atleast_2d, empty_like, squeeze
 from .configure_for_filter import configure_for_filter
 
 
+def _update_with_likelihood(filter_obj, likelihood_for_filter, measurement):
+    """Apply a measurement-specific likelihood update to a compatible filter."""
+    if likelihood_for_filter is None:
+        raise ValueError(
+            "use_likelihood=True requires scenario_config['likelihood'] to be set."
+        )
+
+    update_likelihood = getattr(filter_obj, "update_nonlinear_using_likelihood", None)
+    if update_likelihood is None:
+        raise NotImplementedError(
+            f"{type(filter_obj).__name__} does not support likelihood-based updates."
+        )
+
+    if hasattr(likelihood_for_filter, "pdf"):
+        update_likelihood(likelihood_for_filter)
+    else:
+        update_likelihood(likelihood_for_filter, measurement=squeeze(measurement))
+
+
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-positional-arguments
 def perform_predict_update_cycles(
     scenario_config,
@@ -22,8 +41,8 @@ def perform_predict_update_cycles(
         all_estimates = None
 
     # Configure filter
-    filter_obj, prediction_routine, _, meas_noise_for_filter = configure_for_filter(
-        filter_config, scenario_config, precalculated_params
+    filter_obj, prediction_routine, likelihood_for_filter, meas_noise_for_filter = (
+        configure_for_filter(filter_config, scenario_config, precalculated_params)
     )
 
     # Check conditions for cumulative updates
@@ -61,7 +80,11 @@ def perform_predict_update_cycles(
             for m in range(n_updates):
                 curr_meas = all_meas_curr_time_step[m, :]
 
-                if not scenario_config.get("use_likelihood", False):
+                if scenario_config.get("use_likelihood", False):
+                    _update_with_likelihood(
+                        filter_obj, likelihood_for_filter, curr_meas
+                    )
+                else:
                     filter_obj.update_identity(
                         meas_noise=meas_noise_for_filter, measurement=squeeze(curr_meas)
                     )
