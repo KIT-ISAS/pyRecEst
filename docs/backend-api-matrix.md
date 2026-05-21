@@ -13,7 +13,11 @@ To inspect the current matrix from a checkout or installed environment, run:
 ```bash
 pyrecest backends --format markdown
 python scripts/render_backend_api_matrix.py
+python scripts/check_backend_api_matrix.py
 ```
+
+The documentation table is checked against `src/pyrecest/_backend/capabilities.py`
+in CI so the user-facing matrix cannot silently drift from the executable metadata.
 
 ## Support Levels
 
