@@ -105,7 +105,10 @@ def perform_predict_update_cycles(
                 prediction_routine(scenario_config["inputs"][:, t])
 
             # If plotting is required
-            if scenario_config.get("plot", False) and t != scenario_config["timesteps"]:
+            if (
+                scenario_config.get("plot", False)
+                and t != scenario_config["n_timesteps"] - 1
+            ):
                 raise NotImplementedError("Plotting is not implemented yet.")
 
     # End timer
