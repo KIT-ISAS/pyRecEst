@@ -86,10 +86,14 @@ jobs:
           import pyrecest
           print(f"Installed pyrecest {pyrecest.__version__}")
           PY
+          python scripts/check_minimal_imports.py
           python examples/basic/kalman_filter.py
           python examples/basic/gaussian_multiplication.py
           python scripts/run_scenario.py scenarios/linear_gaussian_cv_1d/config.toml --expected scenarios/linear_gaussian_cv_1d/expected.json
           python benchmarks/basic_regressions.py --output benchmark-results.json
+          python scripts/check_benchmark_regression.py \
+            benchmark-results.json \
+            benchmarks/baselines/basic_regressions-linux-py313.json
 
       - name: Upload benchmark result artifact
         uses: actions/upload-artifact@v7

@@ -12,6 +12,10 @@ ideas by separating public APIs from experimental APIs.
 | Deprecated       | API still exists but emits `DeprecationWarning` and has a planned removal version.                   |
 | Backend-specific | API is stable only for the backends listed in the backend API matrix.                                |
 
+Tracked user-facing APIs are listed in the [public API registry](public-api-registry.md).
+Keep that registry, backend capability metadata, and deprecation tests in sync
+when API status changes.
+
 ## Deprecations
 
 Use `pyrecest.deprecation.deprecated` for public API transitions:
@@ -29,3 +33,20 @@ Recommended cadence:
 1. introduce the replacement and warning in a minor release;
 2. keep the warning for at least one additional minor release;
 3. remove only in a major release unless the API was explicitly experimental.
+
+## Executable Stability Checks
+
+Public API changes should be visible in tests or generated metadata. For new
+stable, backend-specific, or deprecated APIs, update the relevant rows in the
+backend API matrix and add one of the following:
+
+- a focused behavior test for the stable contract;
+- a backend-contract test that verifies supported, partial, and unsupported
+  backends behave as documented;
+- a deprecation test that asserts `DeprecationWarning` is emitted and that the
+  replacement is named in the warning message;
+- an explicit `experimental` documentation note when the API is not yet covered
+  by the full deprecation cycle.
+
+Treat undocumented package-level exports as accidental until they are covered by
+this policy or moved under an experimental namespace.

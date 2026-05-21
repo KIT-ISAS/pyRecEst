@@ -15,6 +15,7 @@ nav:
       - Scenario Zoo: scenario-zoo.md
       - Diagnostics: diagnostics.md
       - Shapes and Conventions: conventions.md
+      - Quality Gates: quality-gates.md
       - Backend Compatibility: backend-compatibility.md
       - Backend Support Matrix: backend-support.md
       - Backend API Matrix: backend-api-matrix.md
@@ -22,6 +23,7 @@ nav:
       - Failure Modes: failure-modes.md
       - Error Handling: error-handling.md
       - API Stability: stability-policy.md
+      - Public API Registry: public-api-registry.md
       - Ecosystem Positioning: ecosystem.md
       - Public Identity: public-identity.md
       - Reproducible Experiments: reproducible-experiments.md
