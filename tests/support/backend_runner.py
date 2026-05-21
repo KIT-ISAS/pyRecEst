@@ -16,7 +16,9 @@ class BackendRunResult:
     stderr: str
 
 
-def run_backend_code(backend: str, code: str, *, timeout: float = 30.0) -> BackendRunResult:
+def run_backend_code(
+    backend: str, code: str, *, timeout: float = 30.0
+) -> BackendRunResult:
     env = os.environ.copy()
     env["PYRECEST_BACKEND"] = backend
     completed = subprocess.run(

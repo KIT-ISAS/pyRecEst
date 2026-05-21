@@ -150,26 +150,31 @@ API_BACKEND_CAPABILITIES: Final = {
 BACKEND_SUPPORT_LEVELS: Final = ("supported", "bridged", "partial", "unsupported")
 
 
-def get_unsupported_functions(backend_name: str, module_name: str = "") -> tuple[str, ...]:
+def get_unsupported_functions(
+    backend_name: str, module_name: str = ""
+) -> tuple[str, ...]:
     """Return unsupported facade functions for a backend module."""
     backend = BACKEND_CAPABILITIES.get(backend_name, {})
     unsupported = backend.get("unsupported", {})
     return tuple(unsupported.get(module_name, ()))
 
 
-def get_partial_capabilities(backend_name: str, module_name: str = "") -> dict[str, str]:
+def get_partial_capabilities(
+    backend_name: str, module_name: str = ""
+) -> dict[str, str]:
     """Return partial-support notes for a backend module."""
     backend = BACKEND_CAPABILITIES.get(backend_name, {})
     partial = backend.get("partial", {})
     return dict(partial.get(module_name, {}))
 
 
-def get_bridged_capabilities(backend_name: str, module_name: str = "") -> dict[str, str]:
+def get_bridged_capabilities(
+    backend_name: str, module_name: str = ""
+) -> dict[str, str]:
     """Return operations that work by crossing into another numerical stack."""
     backend = BACKEND_CAPABILITIES.get(backend_name, {})
     bridged = backend.get("bridged", {})
     return dict(bridged.get(module_name, {}))
-
 
 
 def get_api_backend_support(api_name: str) -> dict[str, str]:

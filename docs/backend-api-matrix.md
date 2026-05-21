@@ -18,7 +18,7 @@ python scripts/render_backend_api_matrix.py
 ## Support Levels
 
 | Level         | Meaning                                                                                                                     |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------|
 | `supported`   | Intended to preserve backend semantics for the listed API.                                                                  |
 | `bridged`     | Works by crossing into another numerical stack, usually NumPy/SciPy; do not assume device, dtype, or gradient preservation. |
 | `partial`     | Numerically useful, but with documented limitations such as missing modes or mixed native/bridged implementation.           |
