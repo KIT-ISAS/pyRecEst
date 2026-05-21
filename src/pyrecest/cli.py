@@ -40,20 +40,73 @@ def _cmd_info(_args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_backends(_args: argparse.Namespace) -> int:
+def _render_api_backend_matrix(rows: dict[str, dict[str, str]]) -> str:
+    """Render API backend support rows as a Markdown table."""
+    lines = [
+        "| API | NumPy | PyTorch | JAX | Notes |",
+        "|-----|-------|---------|-----|-------|",
+    ]
+    for api_name, row in sorted(rows.items()):
+        lines.append(
+            "| `{api}` | {numpy} | {pytorch} | {jax} | {notes} |".format(
+                api=api_name,
+                numpy=row.get("numpy", "unknown"),
+                pytorch=row.get("pytorch", "unknown"),
+                jax=row.get("jax", "unknown"),
+                notes=row.get("notes", ""),
+            )
+        )
+    return "\n".join(lines)
+
+
+def _cmd_backends(args: argparse.Namespace) -> int:
     from pyrecest._backend.capabilities import (
         API_BACKEND_CAPABILITIES,
         BACKEND_CAPABILITIES,
     )
 
-    print(
-        json.dumps(
-            {"facade": BACKEND_CAPABILITIES, "api": API_BACKEND_CAPABILITIES},
-            indent=2,
-            sort_keys=True,
+    if args.format == "markdown":
+        print(_render_api_backend_matrix(API_BACKEND_CAPABILITIES))
+    else:
+        print(
+            json.dumps(
+                {"facade": BACKEND_CAPABILITIES, "api": API_BACKEND_CAPABILITIES},
+                indent=2,
+                sort_keys=True,
+            )
         )
-    )
     return 0
+
+
+def _max_abs_error(actual: list[float], expected: list[float]) -> float:
+    errors = [abs(float(a) - float(b)) for a, b in zip(actual, expected)]
+    return max(errors) if errors else 0.0
+
+
+def _check_expected_mapping(
+    section_name: str,
+    actual: dict[str, Any],
+    expected: dict[str, Any],
+    *,
+    tolerance: float,
+) -> list[str]:
+    errors: list[str] = []
+    for key, expected_value in expected.items():
+        if key not in actual:
+            errors.append(f"{section_name}.{key} missing from scenario result")
+            continue
+        actual_value = actual[key]
+        if isinstance(expected_value, int | float):
+            delta = abs(float(actual_value) - float(expected_value))
+            if delta > tolerance:
+                errors.append(
+                    f"{section_name}.{key} mismatch: abs_error={delta:.6g} > tolerance={tolerance:.6g}"
+                )
+        elif actual_value != expected_value:
+            errors.append(
+                f"{section_name}.{key} mismatch: expected {expected_value!r}, got {actual_value!r}"
+            )
+    return errors
 
 
 def _cmd_run_scenario(args: argparse.Namespace) -> int:
@@ -69,18 +122,36 @@ def _cmd_run_scenario(args: argparse.Namespace) -> int:
             if args.tolerance is not None
             else float(expected.get("tolerance", 1e-8))
         )
+        failures: list[str] = []
         expected_estimate = expected.get("final_estimate")
         if expected_estimate is not None:
-            errors = [
-                abs(float(a) - float(b))
-                for a, b in zip(result.final_estimate, expected_estimate)
-            ]
-            if errors and max(errors) > tolerance:
-                print(
-                    f"final_estimate mismatch: max_abs_error={max(errors):.6g} > tolerance={tolerance:.6g}",
-                    file=sys.stderr,
+            max_error = _max_abs_error(result.final_estimate, expected_estimate)
+            if max_error > tolerance:
+                failures.append(
+                    f"final_estimate mismatch: max_abs_error={max_error:.6g} > tolerance={tolerance:.6g}"
                 )
-                return 1
+        if isinstance(expected.get("metrics"), dict):
+            failures.extend(
+                _check_expected_mapping(
+                    "metrics",
+                    result.metrics,
+                    expected["metrics"],
+                    tolerance=tolerance,
+                )
+            )
+        if isinstance(expected.get("diagnostics"), dict):
+            failures.extend(
+                _check_expected_mapping(
+                    "diagnostics",
+                    result.diagnostics,
+                    expected["diagnostics"],
+                    tolerance=tolerance,
+                )
+            )
+        if failures:
+            for failure in failures:
+                print(failure, file=sys.stderr)
+            return 1
     return 0
 
 
@@ -97,6 +168,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     backends_parser = subparsers.add_parser(
         "backends", help="Print backend capability metadata as JSON."
+    )
+    backends_parser.add_argument(
+        "--format",
+        choices=("json", "markdown"),
+        default="json",
+        help="Output format.",
     )
     backends_parser.set_defaults(func=_cmd_backends)
 

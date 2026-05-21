@@ -76,6 +76,15 @@ mkdocstrings = { version = "^1.0.4", extras = ["python"] }
 [tool.mypy]
 check_untyped_defs = true
 
+[[tool.mypy.overrides]]
+module = [
+  "pyrecest.diagnostics",
+  "pyrecest.reproducibility",
+  "pyrecest.scenarios",
+]
+disallow_untyped_defs = true
+warn_return_any = true
+
 [tool.ruff]
 line-length = 180
 
@@ -91,6 +100,23 @@ filterwarnings = [
 markers = [
     "numerical_stress: slower numerical stability and ill-conditioning checks",
     "benchmark: optional performance benchmark tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["pyrecest"]
+omit = [
+  "*/tests/*",
+  "*/benchmarks/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
 ]
 [tool.pylint.MAIN]
 py-version = "3.13"

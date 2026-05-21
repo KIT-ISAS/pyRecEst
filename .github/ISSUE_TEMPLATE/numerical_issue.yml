@@ -1,0 +1,48 @@
+name: Numerical issue
+description: Report instability, invalid probabilities, covariance failures, or tolerance-sensitive behavior.
+title: "Numerical: "
+labels: [numerics]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the numerical failure and why it looks incorrect.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Reproducer
+      description: Include seeds, dimensions, inputs, and tolerances.
+      render: python
+    validations:
+      required: true
+  - type: input
+    id: seed
+    attributes:
+      label: Random seed
+      placeholder: "1234 or not applicable"
+  - type: dropdown
+    id: failure-kind
+    attributes:
+      label: Failure kind
+      options:
+        - invalid covariance or matrix factorization
+        - invalid probability or normalization
+        - sampling/resampling instability
+        - backend disagreement
+        - optimization/root-finding failure
+        - other
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Include eigenvalues, traces, condition numbers, NIS values, or particle ESS if relevant.
+      render: text
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Paste `pyrecest info` output if possible.
+      render: json

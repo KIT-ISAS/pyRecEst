@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security-sensitive report
+    url: https://github.com/FlorianPfaff/PyRecEst/security/policy
+    about: Please do not disclose security-sensitive issues in public issues.
+  - name: Documentation
+    url: https://florianpfaff.github.io/PyRecEst/
+    about: Check the public documentation before opening a usage question.
