@@ -53,7 +53,6 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
     if registered_factory is not None:
         return registered_factory(filter_config, scenario_config, precalculated_params)
 
-
     if filter_name == "kf":
         # Implement your KalmanFilter class and its methods
         filter_obj = KalmanFilter(scenario_config["initial_prior"])
@@ -69,7 +68,7 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
 
             def prediction_routine(curr_input):  # type: ignore
                 return filter_obj.predict_identity(
-                    scenario_config["sys_noise"], curr_input
+                    scenario_config["sys_noise"].covariance(), curr_input
                 )
 
     elif filter_name == "twn":
