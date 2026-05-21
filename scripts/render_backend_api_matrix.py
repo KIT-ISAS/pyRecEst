@@ -9,9 +9,28 @@ the CLI and tests: ``pyrecest._backend.capabilities``.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 from pathlib import Path
+from types import ModuleType
 
-from pyrecest._backend.capabilities import API_BACKEND_CAPABILITIES
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _load_capability_module(source_path: Path | None = None) -> ModuleType:
+    """Load backend capability metadata without importing the whole package."""
+    capabilities_path = source_path or _repo_root() / "src" / "pyrecest" / "_backend" / "capabilities.py"
+    spec = importlib.util.spec_from_file_location("_pyrecest_backend_capabilities", capabilities_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot load backend capability metadata from {capabilities_path}")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+API_BACKEND_CAPABILITIES = dict(_load_capability_module().API_BACKEND_CAPABILITIES)
 
 
 def render_markdown() -> str:
