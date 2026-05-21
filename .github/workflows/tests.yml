@@ -20,6 +20,65 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Run focused Ruff checks
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "ruff>=0.8,<1.0"
+          ruff check .
+
+  minimal-install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install system build dependencies (when binary not available)
+        run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
+          retry sudo apt-get update
+          retry sudo apt-get install -y \
+            gfortran pkg-config ninja-build \
+            libopenblas-dev liblapack-dev \
+            libfftw3-dev libhealpix-cxx-dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install default package and run public smoke check
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          python - <<'PY'
+          import pyrecest
+          from pyrecest.backend import array, diag
+          from pyrecest.filters import KalmanFilter
+
+          kf = KalmanFilter((array([0.0, 1.0]), diag(array([1.0, 1.0]))))
+          print(f"Imported pyrecest {pyrecest.__version__}; initial estimate={kf.get_point_estimate()}")
+          PY
+
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -33,13 +92,28 @@ jobs:
 
       - name: Install documentation dependencies
         run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          retry python -m pip install poetry
           poetry env use python
-          poetry install --only docs --no-root
+          retry poetry install --only docs --no-root
 
       - name: Build documentation
         run: poetry run mkdocs build --strict
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+
+      - name: Check backend API matrix documentation
+        run: poetry run python scripts/check_backend_api_matrix.py
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
@@ -74,7 +148,18 @@ jobs:
 
       - name: Build distributions and validate local release metadata
         run: |
-          python -m pip install --upgrade pip build twine
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
+          python -m pip install --upgrade pip
+          retry python -m pip install build twine
           python scripts/check_release_consistency.py --local-only
           python -m build
           python -m twine check dist/*
@@ -90,6 +175,7 @@ jobs:
           python examples/basic/gaussian_multiplication.py
           python scripts/run_scenario.py scenarios/linear_gaussian_cv_1d/config.toml --expected scenarios/linear_gaussian_cv_1d/expected.json
           python benchmarks/basic_regressions.py --output benchmark-results.json
+          python scripts/check_benchmark_results.py benchmark-results.json --baseline benchmarks/baselines/basic_regressions.json
 
       - name: Upload benchmark result artifact
         uses: actions/upload-artifact@v7
@@ -156,18 +242,32 @@ jobs:
 
       - name: Install dependencies
         run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          retry python -m pip install poetry
           poetry env use python
           case "${{ matrix.backend }}" in
             numpy)
-              poetry install --with dev --extras "healpy_support"
+              retry poetry install --with dev --extras "healpy_support"
               ;;
             pytorch)
-              poetry install --with dev --extras "healpy_support pytorch_support"
+              retry poetry install --with dev --extras "healpy_support"
+              retry poetry run python -m pip install \
+                --index-url https://download.pytorch.org/whl/cpu \
+                --extra-index-url https://pypi.org/simple \
+                "torch>=2.4,<3.0"
               ;;
             jax)
-              poetry install --with dev --extras "healpy_support jax_support"
+              retry poetry install --with dev --extras "healpy_support jax_support"
               ;;
             *)
               echo "Unsupported backend: ${{ matrix.backend }}" >&2
@@ -246,18 +346,32 @@ jobs:
 
       - name: Install dependencies
         run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          retry python -m pip install poetry
           poetry env use python
           case "${{ matrix.backend }}" in
             numpy)
-              poetry install --with dev --extras "healpy_support"
+              retry poetry install --with dev --extras "healpy_support"
               ;;
             pytorch)
-              poetry install --with dev --extras "healpy_support pytorch_support"
+              retry poetry install --with dev --extras "healpy_support"
+              retry poetry run python -m pip install \
+                --index-url https://download.pytorch.org/whl/cpu \
+                --extra-index-url https://pypi.org/simple \
+                "torch>=2.4,<3.0"
               ;;
             jax)
-              poetry install --with dev --extras "healpy_support jax_support"
+              retry poetry install --with dev --extras "healpy_support jax_support"
               ;;
             *)
               echo "Unsupported backend: ${{ matrix.backend }}" >&2

@@ -10,3 +10,9 @@ updates:
       - "requirements-min.txt"
       - "requirements-all.txt"
       - "requirements-dev.txt"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

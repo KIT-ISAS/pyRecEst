@@ -32,3 +32,19 @@ Prefer deterministic scenarios where possible. For stochastic scenarios, record
 the seed, generator semantics, number of Monte Carlo runs, and tolerance bands.
 Use backend-portable operations if the scenario is intended to run under NumPy,
 PyTorch, and JAX.
+
+## Target Scenario Set
+
+The zoo should eventually cover at least these regression families:
+
+| Scenario family                  | Purpose                                                                   |
+|----------------------------------|---------------------------------------------------------------------------|
+| Linear Gaussian Kalman filtering | Baseline end-to-end predict/update behavior.                              |
+| Nonlinear UKF                    | Sigma-point and model-object coverage.                                    |
+| Particle filtering               | Resampling, effective sample size, and seeded stochastic tolerance bands. |
+| Directional filtering            | Circular, spherical, or hyperspherical state behavior.                    |
+| Multi-target tracking            | Missed detections, clutter, association, and track lifecycle.             |
+| Backend portability              | One compact scenario that is expected to pass on all supported backends.  |
+
+Keep each scenario small enough to run in CI. Expensive examples should be
+benchmarks or reproducibility artifacts instead.

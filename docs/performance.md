@@ -2,7 +2,14 @@
 
 Benchmarks should report both numerical outputs and timing information. The
 script `benchmarks/basic_regressions.py` emits JSON that can be archived by CI and
-compared across releases.
+compared across releases. The companion script
+`scripts/check_benchmark_results.py` compares deterministic benchmark outputs
+against JSON baselines under `benchmarks/baselines/`.
+
+Baseline checks should start by enforcing numerical outputs only. Runtime
+thresholds can be added later with `max_elapsed_seconds`, `elapsed_seconds` plus
+`--max-runtime-ratio`, or `--warn-only-runtime` when the goal is to collect early
+signals without failing CI on shared-runner noise.
 
 Backend-specific targets should be explicit:
 
@@ -14,3 +21,17 @@ Backend-specific targets should be explicit:
 
 Avoid optimizing a backend-specific path until its dtype, device, and autodiff
 semantics are documented in the capability matrix.
+
+## Historical Benchmarks
+
+Use `asv` for trend tracking across commits and releases:
+
+```bash
+poetry run asv run --quick
+poetry run asv publish
+poetry run asv preview
+```
+
+The lightweight JSON benchmark remains useful for CI smoke checks, while ASV is
+better for longitudinal analysis of algorithmic changes. Add benchmarks for new
+performance-sensitive APIs before optimizing them.
