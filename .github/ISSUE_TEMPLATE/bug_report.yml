@@ -1,6 +1,6 @@
 name: Bug report
-description: Report a correctness, packaging, backend, or documentation bug.
-title: "[Bug]: "
+description: Report incorrect behavior in PyRecEst.
+title: "Bug: "
 labels: [bug]
 body:
   - type: textarea
@@ -14,7 +14,7 @@ body:
     id: reproducer
     attributes:
       label: Minimal reproducer
-      description: Include code, input data shape, backend, and expected behavior.
+      description: Paste the smallest script or test case that demonstrates the issue.
       render: python
     validations:
       required: true
@@ -22,18 +22,34 @@ body:
     id: version
     attributes:
       label: PyRecEst version
-      placeholder: "e.g. 2.2.2"
+      placeholder: "2.2.2"
+    validations:
+      required: true
   - type: dropdown
     id: backend
     attributes:
-      label: Backend
+      label: Active backend
       options:
         - numpy
         - pytorch
         - jax
         - not backend-specific
+        - unknown
+    validations:
+      required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: Python version, OS, dependency versions, and installation method.
+      description: Paste `pyrecest info` output if possible.
+      render: json
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the traceback if there is one.
+      render: text
