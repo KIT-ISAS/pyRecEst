@@ -15,6 +15,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from math import log, pi
 from typing import Any, Literal
+import warnings
 
 import numpy as np
 from scipy.stats import chi2
@@ -26,6 +27,44 @@ from ._linear_gaussian import (
 
 GateMode = Literal["track", "measurement"]
 MeasurementAxis = Literal["auto", "columns", "rows", "sequence"]
+
+ASSOCIATION_BACKEND_BOUNDARY_NOTE = (
+    "Association hypothesis generation and assignment-matrix conversion use "
+    "NumPy/SciPy arrays internally. Non-NumPy backends are accepted only after "
+    "explicit conversion at this boundary."
+)
+
+
+def _active_backend_name() -> str:
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+        return str(getattr(backend, "__backend_name__", "unknown"))
+    except Exception:  # pragma: no cover - defensive during import-time diagnostics
+        return "unknown"
+
+
+def association_backend_support() -> dict[str, str]:
+    """Return explicit backend-boundary metadata for association utilities."""
+    active_backend = _active_backend_name()
+    support = "native" if active_backend == "numpy" else "numpy_scipy_boundary"
+    return {
+        "active_backend": active_backend,
+        "support": support,
+        "notes": ASSOCIATION_BACKEND_BOUNDARY_NOTE,
+    }
+
+
+def validate_association_backend(*, strict: bool = False) -> dict[str, str]:
+    """Validate or document the NumPy/SciPy boundary for association utilities."""
+    support = association_backend_support()
+    if support["support"] == "native":
+        return support
+    message = f"{support['active_backend']} backend crosses a NumPy/SciPy association boundary. {support['notes']}"
+    if strict:
+        raise RuntimeError(message)
+    warnings.warn(message, RuntimeWarning, stacklevel=2)
+    return support
 
 
 @dataclass(frozen=True)
@@ -314,8 +353,10 @@ def linear_gaussian_association_hypotheses(
     measurement_axis: MeasurementAxis = "auto",
     include_rejected: bool = False,
     metadata_builder: Callable[..., dict[str, Any] | None] | None = None,
+    strict_backend: bool = False,
 ) -> list[AssociationHypothesis]:
     """Build Gaussian innovation hypotheses for tracks and measurements."""
+    validate_association_backend(strict=strict_backend)
     measurement_matrix = np.asarray(measurement_matrix, dtype=float)
     if measurement_matrix.ndim != 2:
         raise ValueError("measurement_matrix must be two-dimensional")
@@ -528,6 +569,7 @@ def build_linear_gaussian_hypothesis_associator(
             kwargs.get("meas_noise", meas_noise),
             gates=kwargs.get("gates", gates),
             measurement_axis=effective_measurement_axis,
+            strict_backend=kwargs.get("strict_backend", False),
         )
         num_measurements = len(
             _coerce_measurements(
@@ -688,6 +730,8 @@ __all__ = [
     "AssociationHypothesis",
     "CostThresholdGate",
     "NISGate",
+    "ASSOCIATION_BACKEND_BOUNDARY_NOTE",
+    "association_backend_support",
     "ProbabilityThresholdGate",
     "TopKGate",
     "association_result_from_hypotheses",
@@ -701,4 +745,5 @@ __all__ = [
     "infer_hypothesis_shape",
     "linear_gaussian_association_hypotheses",
     "missed_detection_hypothesis",
+    "validate_association_backend",
 ]

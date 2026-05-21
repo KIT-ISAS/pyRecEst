@@ -1,9 +1,36 @@
+from collections.abc import Callable
+from typing import Any
+
 from pyrecest.filters import (
     EuclideanParticleFilter,
     HypertoroidalParticleFilter,
     KalmanFilter,
     RandomMatrixTracker,
 )
+
+FilterFactory = Callable[
+    [dict[str, Any], dict[str, Any], dict[str, Any] | None],
+    tuple[Any, Callable[..., Any], Any, Any],
+]
+_FILTER_FACTORIES: dict[str, FilterFactory] = {}
+
+
+def register_filter_factory(filter_name: str, factory: FilterFactory) -> FilterFactory:
+    """Register an evaluation-time filter factory.
+
+    This keeps the built-in string dispatch backward-compatible while allowing
+    new filters to be wired into the scenario/evaluation stack without growing
+    the central ``if``/``elif`` chain.
+    """
+    if not filter_name:
+        raise ValueError("filter_name must be a non-empty string")
+    _FILTER_FACTORIES[filter_name] = factory
+    return factory
+
+
+def get_registered_filter_factory(filter_name: str) -> FilterFactory | None:
+    """Return a registered filter factory, if one exists."""
+    return _FILTER_FACTORIES.get(filter_name)
 
 
 # pylint: disable=too-many-branches
@@ -21,6 +48,11 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
 
     # Switch-case based on filter name
     filter_name = filter_config["name"]
+
+    registered_factory = get_registered_filter_factory(filter_name)
+    if registered_factory is not None:
+        return registered_factory(filter_config, scenario_config, precalculated_params)
+
 
     if filter_name == "kf":
         # Implement your KalmanFilter class and its methods
