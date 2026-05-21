@@ -14,3 +14,16 @@ A strong artifact contains:
 
 Start from `reproducibility/templates/paper-artifact/` and keep generated files
 small enough to inspect in a pull request.
+
+
+## Executable Documentation
+
+Treat public documentation as part of the reproducibility surface. Python code
+blocks in README and tutorial pages should either be executable or explicitly
+marked as skipped:
+
+```python
+# pyrecest: skip
+```
+
+Use `scripts/run_doc_examples.py` before release to catch stale snippets.
