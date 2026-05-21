@@ -137,6 +137,7 @@ API_BACKEND_CAPABILITIES: Final = {
 }
 
 BACKEND_SUPPORT_LEVELS: Final = ("supported", "partial", "unsupported")
+REQUIRED_BACKENDS: Final = ("numpy", "pytorch", "jax")
 
 
 def get_unsupported_functions(
@@ -165,3 +166,29 @@ def get_api_backend_support(api_name: str) -> dict[str, str]:
 def iter_api_backend_capabilities() -> tuple[tuple[str, dict[str, str]], ...]:
     """Return public API backend support rows in a stable order."""
     return tuple(sorted(API_BACKEND_CAPABILITIES.items()))
+
+
+def validate_api_backend_capabilities() -> tuple[str, ...]:
+    """Return human-readable validation errors for API capability metadata."""
+    errors: list[str] = []
+    for api_name, row in iter_api_backend_capabilities():
+        if not api_name:
+            errors.append("Capability row has an empty API name.")
+
+        missing_backends = [backend for backend in REQUIRED_BACKENDS if backend not in row]
+        if missing_backends:
+            errors.append(
+                f"{api_name}: missing backend support entries for {', '.join(missing_backends)}."
+            )
+
+        for backend_name in REQUIRED_BACKENDS:
+            support_level = row.get(backend_name)
+            if support_level not in BACKEND_SUPPORT_LEVELS:
+                errors.append(
+                    f"{api_name}: unsupported support level {support_level!r} for {backend_name}."
+                )
+
+        if not row.get("notes"):
+            errors.append(f"{api_name}: missing explanatory notes.")
+
+    return tuple(errors)

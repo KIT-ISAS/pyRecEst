@@ -36,6 +36,24 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
             "PDF calculated values do not match the expected values.",
         )
 
+    def test_one_dimensional_bounds_are_supported(self):
+        cd = CustomHyperrectangularDistribution(lambda _xs: 0.5, array([0.0, 2.0]))
+
+        self.assertEqual(cd.dim, 1)
+        self.assertEqual(tuple(cd.bounds.shape), (1, 2))
+        self.assertAlmostEqual(float(cd.get_manifold_size()), 2.0)
+        self.assertAlmostEqual(cd.integrate(), 1.0)
+
+    def test_bounds_rows_define_integration_intervals(self):
+        cd = CustomHyperrectangularDistribution(
+            lambda _xs: 1.0,
+            array([[0.0, 2.0], [10.0, 13.0], [20.0, 24.0]]),
+        )
+
+        self.assertEqual(cd.dim, 3)
+        self.assertAlmostEqual(float(cd.get_manifold_size()), 24.0)
+        self.assertAlmostEqual(cd.integrate(), 24.0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -347,29 +347,19 @@ def cast(array, dtype):
     return _jnp.asarray(array, dtype=dtype)
 
 
-def ravel_tril_indices(n):
-    return _jnp.tril_indices(n)
+def ravel_tril_indices(n, k=0, m=None):
+    if m is None:
+        m = n
+    rows, cols = _jnp.tril_indices(n, k=k, m=m)
+    return _jnp.ravel_multi_index((rows, cols), (n, m))
 
 
 def is_array(obj):
     return isinstance(obj, _jnp.ndarray)
 
 
-def get_slice(array, start, end):
-    return array[start:end]
-
-
-def as_dtype(array):
-    """Change the data type of a given array.
-
-    Parameters:
-    - array: The array whose data type needs to be changed
-    - dtype: The new data type
-
-    Returns:
-    A new array with the specified data type.
-    """
-    return _jnp.asarray(array, dtype=dtype)
+def get_slice(array, indices):
+    return array[indices]
 
 
 # Check if dtype is floating-point
@@ -392,9 +382,36 @@ def one_hot(indices, depth):
     return _jnp.eye(depth)[indices]
 
 
-# Scatter-add operation
-def scatter_add(array, indices, updates):
-    return _jnp.zeros_like(array).at[indices].add(updates)
+def scatter_add(input, dim, index, src):
+    """Add ``src`` into ``input`` at ``index`` along ``dim``.
+
+    This mirrors the shared backend contract used by the facade instead of
+    JAX's lower-level ``.at`` update signature. Existing input values are
+    preserved, matching NumPy/PyTorch scatter-add behavior.
+    """
+    input = _jnp.asarray(input)
+    index = _jnp.asarray(index)
+    src = _jnp.asarray(src, dtype=input.dtype)
+
+    if dim < 0:
+        dim += input.ndim
+
+    if dim == 0:
+        return input.at[index].add(src)
+
+    if dim == 1:
+        if input.ndim < 2:
+            raise ValueError("dim=1 scatter_add requires at least two dimensions")
+        if index.ndim == 1:
+            row_indices = _jnp.arange(input.shape[0])
+        else:
+            row_shape = (input.shape[0],) + (1,) * (index.ndim - 1)
+            row_indices = _jnp.broadcast_to(
+                _jnp.arange(input.shape[0]).reshape(row_shape), index.shape
+            )
+        return input.at[row_indices, index].add(src)
+
+    raise NotImplementedError("scatter_add is implemented for dim 0 and dim 1.")
 
 
 # Set diagonal elements of a matrix
