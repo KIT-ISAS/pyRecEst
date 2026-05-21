@@ -138,6 +138,7 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
             filter_obj = EuclideanParticleFilter(
                 no_particles, scenario_config["initial_prior"].dim
             )
+            filter_obj.filter_state = scenario_config["initial_prior"]
             if scenario_config.get("inputs") is None:
 
                 def prediction_routine():  # type: ignore[misc]
