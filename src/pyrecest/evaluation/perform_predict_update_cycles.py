@@ -1,9 +1,18 @@
 import time
 import warnings
 
+import numpy as _np
+
 from pyrecest.backend import any, array, atleast_2d, empty_like, squeeze
 
 from .configure_for_filter import configure_for_filter
+
+
+def _empty_estimates_like(groundtruth):
+    """Create an estimate container matching dense or object groundtruth arrays."""
+    if isinstance(groundtruth, _np.ndarray) and groundtruth.dtype == object:
+        return _np.empty_like(groundtruth)
+    return empty_like(groundtruth)
 
 
 def _update_with_likelihood(filter_obj, likelihood_for_filter, measurement):
@@ -25,6 +34,22 @@ def _update_with_likelihood(filter_obj, likelihood_for_filter, measurement):
         update_likelihood(likelihood_for_filter, measurement=squeeze(measurement))
 
 
+def _store_estimate(all_estimates, time_index, estimate):
+    """Store ``estimate`` in dense or object-array estimate containers."""
+    try:
+        all_estimates[time_index, :] = estimate
+    except IndexError:
+        all_estimates[time_index] = estimate
+
+
+def _last_stored_estimate(all_estimates):
+    """Return the final estimate from dense or object-array estimate containers."""
+    try:
+        return all_estimates[-1, :]
+    except IndexError:
+        return all_estimates[-1]
+
+
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-positional-arguments
 def perform_predict_update_cycles(
     scenario_config,
@@ -36,7 +61,7 @@ def perform_predict_update_cycles(
     cumulated_updates_preferred=None,
 ):
     if extract_all_estimates:
-        all_estimates = empty_like(groundtruth)
+        all_estimates = _empty_estimates_like(groundtruth)
     else:
         all_estimates = None
 
@@ -95,7 +120,7 @@ def perform_predict_update_cycles(
 
         # Save results only if required (takes time)
         if extract_all_estimates:
-            all_estimates[t, :] = filter_obj.get_point_estimate()
+            _store_estimate(all_estimates, t, filter_obj.get_point_estimate())
 
         # Predict
         if scenario_config["apply_sys_noise_times"][t]:
@@ -117,7 +142,7 @@ def perform_predict_update_cycles(
     # Get the final filter state and estimate
     last_filter_state = filter_obj.filter_state
     if all_estimates is not None:
-        last_estimate = all_estimates[-1, :]
+        last_estimate = _last_stored_estimate(all_estimates)
     else:
         last_estimate = filter_obj.get_point_estimate()
 
