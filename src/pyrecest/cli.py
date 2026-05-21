@@ -41,7 +41,10 @@ def _cmd_info(_args: argparse.Namespace) -> int:
 
 
 def _cmd_backends(args: argparse.Namespace) -> int:
-    from pyrecest._backend.capabilities import API_BACKEND_CAPABILITIES, BACKEND_CAPABILITIES
+    from pyrecest._backend.capabilities import (
+        API_BACKEND_CAPABILITIES,
+        BACKEND_CAPABILITIES,
+    )
     from pyrecest.backend_support import format_backend_support_markdown
 
     payload = {"facade": BACKEND_CAPABILITIES, "api": API_BACKEND_CAPABILITIES}
@@ -74,13 +77,22 @@ def _cmd_run_scenario(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="pyrecest", description="PyRecEst command line utilities")
+    parser = argparse.ArgumentParser(
+        prog="pyrecest",
+        description="PyRecEst command line utilities",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    info_parser = subparsers.add_parser("info", help="Print version, backend, and dependency information as JSON.")
+    info_parser = subparsers.add_parser(
+        "info",
+        help="Print version, backend, and dependency information as JSON.",
+    )
     info_parser.set_defaults(func=_cmd_info)
 
-    backends_parser = subparsers.add_parser("backends", help="Print backend capability metadata.")
+    backends_parser = subparsers.add_parser(
+        "backends",
+        help="Print backend capability metadata.",
+    )
     backends_parser.add_argument(
         "--format",
         choices=("json", "markdown"),
@@ -89,10 +101,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     backends_parser.set_defaults(func=_cmd_backends)
 
-    scenario_parser = subparsers.add_parser("run-scenario", help="Run a TOML scenario and print a JSON result.")
+    scenario_parser = subparsers.add_parser(
+        "run-scenario",
+        help="Run a TOML scenario and print a JSON result.",
+    )
     scenario_parser.add_argument("config", type=Path, help="Path to scenario config.toml")
-    scenario_parser.add_argument("--expected", type=Path, help="Optional expected-results JSON file")
-    scenario_parser.add_argument("--tolerance", type=float, help="Tolerance for expected final estimate checks; defaults to expected JSON tolerance or 1e-8")
+    scenario_parser.add_argument(
+        "--expected",
+        type=Path,
+        help="Optional expected-results JSON file",
+    )
+    scenario_parser.add_argument(
+        "--tolerance",
+        type=float,
+        help=("Tolerance for expected final estimate checks; defaults to expected JSON tolerance or 1e-8"),
+    )
     scenario_parser.set_defaults(func=_cmd_run_scenario)
 
     return parser

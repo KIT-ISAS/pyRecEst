@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Final
 
+BACKEND_NAMES: Final = ("numpy", "pytorch", "jax")
+
 BACKEND_CAPABILITIES: Final = {
     "numpy": {
         "unsupported": {},
@@ -77,6 +79,24 @@ API_BACKEND_CAPABILITIES: Final = {
         "jax": "supported",
         "notes": "Linear Gaussian operations are part of the portable baseline.",
     },
+    "UnscentedKalmanFilter": {
+        "numpy": "supported",
+        "pytorch": "partial",
+        "jax": "partial",
+        "notes": "Portable for backend-compatible model functions; advanced paths may still bridge through NumPy/SciPy.",
+    },
+    "EuclideanParticleFilter": {
+        "numpy": "supported",
+        "pytorch": "partial",
+        "jax": "partial",
+        "notes": "Particle operations are portable where sampling and resampling helpers preserve backend semantics.",
+    },
+    "DistributionConversion": {
+        "numpy": "supported",
+        "pytorch": "partial",
+        "jax": "partial",
+        "notes": "Euclidean particle/Gaussian conversions are portable; grid, Fourier, and manifold routes are route-specific.",
+    },
     "UKFOnManifolds": {
         "numpy": "supported",
         "pytorch": "partial",
@@ -100,6 +120,18 @@ API_BACKEND_CAPABILITIES: Final = {
         "pytorch": "supported",
         "jax": "supported",
         "notes": "Used by representation conversion and particle-style workflows.",
+    },
+    "MultiBernoulliTracker": {
+        "numpy": "supported",
+        "pytorch": "partial",
+        "jax": "unsupported",
+        "notes": "Tracking workflows rely on assignment and measurement-set utilities that are currently NumPy-oriented.",
+    },
+    "PointSetRegistration": {
+        "numpy": "supported",
+        "pytorch": "partial",
+        "jax": "unsupported",
+        "notes": "Registration utilities may copy through NumPy/SciPy and should not be assumed differentiable.",
     },
     "EvaluationUtilities": {
         "numpy": "supported",

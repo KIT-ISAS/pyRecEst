@@ -9,6 +9,7 @@ nav:
   - Examples: examples.md
   - Guides:
       - Choosing an API: choosing-an-api.md
+      - Distribution Taxonomy: distribution-taxonomy.md
       - CLI: cli.md
       - Installation Footprint: install-footprint.md
       - Scenario Zoo: scenario-zoo.md
@@ -24,6 +25,7 @@ nav:
       - Performance: performance.md
       - Release Process: release-process.md
       - Failure Modes: failure-modes.md
+      - Error Handling: error-handling.md
       - API Stability: stability-policy.md
       - Ecosystem Positioning: ecosystem.md
       - Public Identity: public-identity.md

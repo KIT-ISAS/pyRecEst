@@ -96,6 +96,23 @@ markers = [
     "doc_example: executable documentation examples",
     "validation: closed-form or reference-result algorithm validation tests",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["pyrecest"]
+omit = [
+  "*/tests/*",
+  "*/benchmarks/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
 [tool.pylint.MAIN]
 py-version = "3.13"
 fail-under = 10

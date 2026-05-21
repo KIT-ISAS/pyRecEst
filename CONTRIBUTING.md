@@ -50,6 +50,19 @@ scripts where accidental backend changes would be confusing.
   release metadata, citation metadata, or package metadata.
 - Keep examples executable from the repository root.
 
+## Adding or Changing Public APIs
+
+When adding a distribution, filter, tracker, sampler, or utility that users are
+expected to call directly, update the backend support metadata and the relevant
+guide page in the same pull request.  Use the following decision order:
+
+1. Decide whether the API is backend-portable, partially portable, or explicitly
+   restricted to one backend.
+2. Add or update a row in `src/pyrecest/_backend/capabilities.py`.
+3. Add a focused backend contract test for any promised portable behavior.
+4. Prefer `BackendNotSupportedError`, `ShapeError`, `DimensionMismatchError`, or
+   `NumericalStabilityError` for new user-facing failures.
+
 ## Release Metadata
 
 Version, citation, GitHub release, and PyPI state should agree for public
