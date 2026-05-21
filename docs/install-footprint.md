@@ -10,6 +10,10 @@ python -m pip install "pyrecest[jax_support]"
 python -m pip install "pyrecest[all_support]"
 ```
 
+CI includes a default-install smoke test so that the package remains importable
+and basic filtering remains usable without optional backend extras.
+
+
 Longer term, package footprint can be reduced by making plotting, manifold, and
 heavy spherical-harmonics dependencies optional as well. That split should be
 done only when import paths and tests clearly identify which APIs depend on each
