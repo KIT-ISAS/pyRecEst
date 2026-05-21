@@ -14,6 +14,7 @@ from pyrecest.evaluation import (
     perform_predict_update_cycles,
 )
 from pyrecest.evaluation.configure_for_filter import register_filter_factory
+from pyrecest.filters import EuclideanParticleFilter
 
 IS_JAX_BACKEND = get_backend_name() == "jax"
 
@@ -89,6 +90,28 @@ class TestEvaluationControlFlowRegressions(unittest.TestCase):
 
         npt.assert_allclose(filter_obj.filter_state.mean(), array([2.0]))
         npt.assert_allclose(filter_obj.filter_state.covariance(), 1.5 * eye(1))
+
+    def test_configured_euclidean_pf_initializes_from_prior(self):
+        scenario_config = {
+            "initial_prior": GaussianDistribution(array([5.0, -3.0]), 1.0e-12 * eye(2)),
+            "sys_noise": GaussianDistribution(array([0.0, 0.0]), eye(2)),
+            "meas_noise": GaussianDistribution(array([0.0, 0.0]), eye(2)),
+            "inputs": None,
+            "manifold": "euclidean",
+        }
+
+        filter_obj, prediction_routine, _, _ = configure_for_filter(
+            {"name": "pf", "parameter": 20},
+            scenario_config,
+        )
+
+        self.assertIsInstance(filter_obj, EuclideanParticleFilter)
+        self.assertIsNotNone(prediction_routine)
+        npt.assert_allclose(
+            filter_obj.filter_state.mean(),
+            scenario_config["initial_prior"].mean(),
+            atol=1.0e-4,
+        )
 
     def test_perform_cycles_honors_callable_likelihood_updates(self):
         filter_name = "likelihood_control_flow_regression"
