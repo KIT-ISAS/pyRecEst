@@ -70,20 +70,28 @@ def validate_registry() -> list[str]:
 
 def render_markdown() -> str:
     registry, _ = _load_registry()
-    lines = [
-        "| API | Module | Category | Backend contract | Notes |",
-        "|-----|--------|----------|------------------|-------|",
-    ]
+    headers = ["API", "Module", "Category", "Backend contract", "Notes"]
+    rows = []
     for api_name, row in sorted(registry.items()):
-        lines.append(
-            "| `{api}` | `{module}` | {category} | `{contract}` | {notes} |".format(
-                api=api_name,
-                module=row["module"],
-                category=row["category"],
-                contract=row.get("backend_contract", ""),
-                notes=row.get("notes", ""),
-            )
+        rows.append(
+            [
+                f"`{api_name}`",
+                f"`{row['module']}`",
+                row["category"],
+                f"`{row.get('backend_contract', '')}`",
+                row.get("notes", ""),
+            ]
         )
+
+    widths = [max(len(values[index]) for values in [headers, *rows]) for index in range(len(headers))]
+
+    def format_row(values: list[str]) -> str:
+        cells = [f" {value.ljust(widths[index])} " for index, value in enumerate(values)]
+        return "|" + "|".join(cells) + "|"
+
+    separator = "|" + "|".join("-" * (width + 2) for width in widths) + "|"
+    lines = [format_row(headers), separator]
+    lines.extend(format_row(row) for row in rows)
     return "\n".join(lines) + "\n"
 
 
