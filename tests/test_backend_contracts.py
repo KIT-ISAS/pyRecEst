@@ -62,6 +62,12 @@ def test_default_reductions_reduce_all_elements():
     assert float(_to_python(backend.prod(values))) == 120.0
 
 
+def test_default_cumprod_flattens_all_elements():
+    values = array([[2.0, 3.0], [4.0, 5.0]])
+
+    assert _to_python(backend.cumprod(values)) == [2.0, 6.0, 24.0, 120.0]
+
+
 def test_take_preserves_singleton_dimensions_for_vector_indices():
     values = array(
         [
@@ -125,3 +131,7 @@ def test_scatter_add_preserves_input_values_and_uses_facade_signature():
 
 def test_as_dtype_string_lookup_is_available():
     assert backend.as_dtype("float64") is not None
+
+
+def test_ravel_tril_indices_returns_flat_indices():
+    assert _to_python(backend.ravel_tril_indices(3)) == [0, 3, 4, 6, 7, 8]

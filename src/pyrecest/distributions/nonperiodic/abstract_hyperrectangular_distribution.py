@@ -11,6 +11,8 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
     def __init__(self, bounds):
         bounds = array(bounds)
         if bounds.ndim == 1:
+            if bounds.shape[0] != 2:
+                raise ValueError("one-dimensional bounds must have length 2")
             bounds = reshape(bounds, (1, 2))
         if bounds.ndim != 2 or bounds.shape[1] != 2:
             raise ValueError("bounds must have shape (dim, 2)")

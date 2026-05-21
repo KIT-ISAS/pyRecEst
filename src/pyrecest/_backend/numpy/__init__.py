@@ -206,14 +206,12 @@ def vmap(pyfunc, randomness="error"):
     assert randomness in ("error", "different")
 
     def vmapped_fun(*args):
-        # Check if all arguments have the same first dimension. Use a list
-        # comprehension here instead of a generator because this module imports
+        # Check if all arguments have the same first dimension.  Use a list
+        # comprehension instead of a generator because this module imports
         # numpy.all as ``all``; NumPy treats a bare generator as one truthy
         # object instead of iterating over its yielded booleans.
         if not all([arg.shape[0] == args[0].shape[0] for arg in args]):
-            raise ValueError(
-                "All arguments must have the same size in the first dimension"
-            )
+            raise ValueError("All arguments must have the same size in the first dimension")
 
         # Prepare the output array (assuming the output of pyfunc is a scalar or numpy array)
         first_output = pyfunc(*(arg[0, ...] for arg in args))

@@ -42,6 +42,24 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
     def test_integrate_defaults_to_full_rectangular_bounds(self):
         self.assertAlmostEqual(float(self.hud.integrate()), 1.0, places=10)
 
+    def test_one_dimensional_bounds_are_supported(self):
+        cd = CustomHyperrectangularDistribution(lambda _xs: 0.5, array([0.0, 2.0]))
+
+        self.assertEqual(cd.dim, 1)
+        self.assertEqual(tuple(cd.bounds.shape), (1, 2))
+        self.assertAlmostEqual(float(cd.get_manifold_size()), 2.0)
+        self.assertAlmostEqual(cd.integrate(), 1.0)
+
+    def test_bounds_rows_define_integration_intervals(self):
+        cd = CustomHyperrectangularDistribution(
+            lambda _xs: 1.0,
+            array([[0.0, 2.0], [10.0, 13.0], [20.0, 24.0]]),
+        )
+
+        self.assertEqual(cd.dim, 3)
+        self.assertAlmostEqual(float(cd.get_manifold_size()), 24.0)
+        self.assertAlmostEqual(cd.integrate(), 24.0)
+
     def test_three_dimensional_bounds_set_dim_and_volume(self):
         dist = HyperrectangularUniformDistribution(
             array(
