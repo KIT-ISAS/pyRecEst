@@ -8,7 +8,9 @@ from types import ModuleType
 from pyrecest.exceptions import OptionalDependencyError
 
 
-def require_optional_dependency(package: str, extra: str, *, feature: str | None = None) -> ModuleType:
+def require_optional_dependency(
+    package: str, extra: str, *, feature: str | None = None
+) -> ModuleType:
     """Import an optional dependency or raise a standardized error.
 
     Parameters
@@ -22,7 +24,9 @@ def require_optional_dependency(package: str, extra: str, *, feature: str | None
     """
     try:
         return importlib.import_module(package)
-    except ImportError as exc:  # pragma: no cover - exercised through tests with a missing sentinel package
+    except (
+        ImportError
+    ) as exc:  # pragma: no cover - exercised through tests with a missing sentinel package
         subject = f" for {feature}" if feature else ""
         raise OptionalDependencyError(
             f"Optional dependency {package!r} is required{subject}. "

@@ -9,7 +9,9 @@ from pyrecest._backend.capabilities import (
 )
 
 
-def get_backend_support(api_name: str, *, backend: str | None = None) -> dict[str, str] | str | None:
+def get_backend_support(
+    api_name: str, *, backend: str | None = None
+) -> dict[str, str] | str | None:
     """Return backend support metadata for a public API.
 
     Parameters
@@ -28,7 +30,9 @@ def get_backend_support(api_name: str, *, backend: str | None = None) -> dict[st
     return dict(row)
 
 
-def backend_support(api_name: str, backend: str | None = None) -> dict[str, str] | str | None:
+def backend_support(
+    api_name: str, backend: str | None = None
+) -> dict[str, str] | str | None:
     """Alias for :func:`get_backend_support` for concise user code."""
     return get_backend_support(api_name, backend=backend)
 

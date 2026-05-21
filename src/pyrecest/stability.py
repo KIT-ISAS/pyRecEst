@@ -9,8 +9,16 @@ from typing import Final, Literal, ParamSpec, TypeVar
 P = ParamSpec("P")
 R = TypeVar("R")
 
-StabilityLevel = Literal["stable", "experimental", "deprecated", "backend-specific", "internal"]
-STABILITY_LEVELS: Final = ("stable", "experimental", "deprecated", "backend-specific", "internal")
+StabilityLevel = Literal[
+    "stable", "experimental", "deprecated", "backend-specific", "internal"
+]
+STABILITY_LEVELS: Final = (
+    "stable",
+    "experimental",
+    "deprecated",
+    "backend-specific",
+    "internal",
+)
 
 
 @dataclass(frozen=True)
@@ -30,10 +38,27 @@ class PublicAPIStatus:
 
 
 _PUBLIC_API_STATUS: Final[dict[str, PublicAPIStatus]] = {
-    "KalmanFilter": PublicAPIStatus("KalmanFilter", "stable", since="2.2.0", notes="Core linear Gaussian filter."),
-    "GaussianDistribution": PublicAPIStatus("GaussianDistribution", "stable", since="2.2.0", notes="Core Euclidean distribution."),
-    "pyrecest.backend": PublicAPIStatus("pyrecest.backend", "backend-specific", since="2.2.0", notes="Support depends on the backend capability matrix."),
-    "UKFOnManifolds": PublicAPIStatus("UKFOnManifolds", "backend-specific", since="2.2.0", notes="Backend exclusions are documented in the backend API matrix."),
+    "KalmanFilter": PublicAPIStatus(
+        "KalmanFilter", "stable", since="2.2.0", notes="Core linear Gaussian filter."
+    ),
+    "GaussianDistribution": PublicAPIStatus(
+        "GaussianDistribution",
+        "stable",
+        since="2.2.0",
+        notes="Core Euclidean distribution.",
+    ),
+    "pyrecest.backend": PublicAPIStatus(
+        "pyrecest.backend",
+        "backend-specific",
+        since="2.2.0",
+        notes="Support depends on the backend capability matrix.",
+    ),
+    "UKFOnManifolds": PublicAPIStatus(
+        "UKFOnManifolds",
+        "backend-specific",
+        since="2.2.0",
+        notes="Backend exclusions are documented in the backend API matrix.",
+    ),
 }
 
 
