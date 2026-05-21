@@ -69,6 +69,28 @@ class TestFibonacciGridSampler(unittest.TestCase):
         samples = self.sampler.sample_stochastic(50, 3)
         self.assertEqual(samples.shape, (50, 3))
 
+    def test_sample_stochastic_singleton_is_finite_origin(self):
+        """A singleton moment-matched Gaussian grid should be finite and centered."""
+        samples = self.sampler.sample_stochastic(1, 2)
+        self.assertEqual(samples.shape, (1, 2))
+        self.assertTrue(np.all(np.isfinite(samples)))
+        npt.assert_allclose(samples, np.zeros((1, 2)))
+
+    def test_get_gaussian_samples_singleton_returns_requested_mean(self):
+        """A singleton transformed Gaussian grid should represent the requested mean."""
+        mu = np.array([3.0, -2.0])
+        cov = np.array([[2.0, 0.5], [0.5, 1.0]])
+        samples = self.sampler.get_gaussian_samples(1, 2, covariance=cov, mean=mu)
+        self.assertEqual(samples.shape, (1, 2))
+        self.assertTrue(np.all(np.isfinite(samples)))
+        npt.assert_allclose(samples[0], mu)
+
+    def test_get_uniform_samples_singleton_is_center(self):
+        """A singleton uniform Fibonacci grid should be the center of the unit cube."""
+        samples = self.sampler.get_uniform_samples(1, 3)
+        self.assertEqual(samples.shape, (1, 3))
+        npt.assert_allclose(samples, np.full((1, 3), 0.5))
+
     def test_sample_stochastic_mean_close_to_zero(self):
         """Marginal means of the moment-matched samples should be ~0."""
         samples = self.sampler.sample_stochastic(200, 2)
@@ -109,6 +131,13 @@ class TestFibonacciGridSampler(unittest.TestCase):
         """Requesting zero samples should return an empty (0, dim) array."""
         samples = self.sampler.sample_stochastic(0, 2)
         self.assertEqual(samples.shape, (0, 2))
+
+    def test_invalid_grid_arguments(self):
+        """Fibonacci grid generation should reject invalid dimensions and counts."""
+        with self.assertRaises(ValueError):
+            self.sampler.sample_stochastic(-1, 2)
+        with self.assertRaises(ValueError):
+            self.sampler.sample_stochastic(1, 0)
 
     def test_fibonacci_eigen_d4(self):
         """fibonacci_eigen for D=4 should return orthonormal V."""
