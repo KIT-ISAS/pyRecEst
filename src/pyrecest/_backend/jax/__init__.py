@@ -2,130 +2,67 @@
 based on implementation by Emile Mathieu
 for Riemannian Score-based SDE
 """
-
 import jax.numpy as _jnp
-from jax import vmap
-from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
-    abs,
+from jax.numpy import (
     all,
     allclose,
     amax,
     amin,
-    angle,
     any,
-    apply_along_axis,
-    arange,
-    arccos,
-    arccosh,
-    arcsin,
-    arctan,
-    arctan2,
-    arctanh,
     argmax,
     argmin,
-    argsort,
-    array_equal,
     asarray,
-    atleast_1d,
-    atleast_2d,
     broadcast_arrays,
     broadcast_to,
-    ceil,
     clip,
-    column_stack,
     complex64,
     complex128,
     concatenate,
     conj,
-    copy,
-    cos,
-    cosh,
-    count_nonzero,
-    cov,
     cross,
     cumprod,
     cumsum,
-    deg2rad,
-    diag,
     diag_indices,
     diagonal,
-    diff,
-    divide,
-    dot,
-    dstack,
     einsum,
-    empty,
     empty_like,
     equal,
-    exp,
     expand_dims,
-    eye,
     flip,
     float32,
     float64,
-    floor,
-    full,
-    full_like,
     greater,
     hsplit,
     hstack,
-    imag,
     int32,
     int64,
     isclose,
-    isfinite,
-    isinf,
     isnan,
-    isreal,
     kron,
     less,
     less_equal,
-    linspace,
-    log,
-    log1p,
     logical_and,
     logical_or,
-    matmul,
-    max,
     maximum,
     mean,
     meshgrid,
-    min,
     minimum,
-    mod,
     moveaxis,
-    ndim,
-    nonzero,
-    ones,
     ones_like,
-    outer,
     pad,
-    power,
     prod,
     quantile,
-    rad2deg,
-    real,
     repeat,
     reshape,
-    roll,
-    round,
     searchsorted,
     shape,
-    sign,
-    sin,
-    sinh,
     sort,
     split,
-    sqrt,
-    squeeze,
     stack,
     std,
     sum,
     take,
-    tan,
-    tanh,
     tile,
-    trace,
     transpose,
     tril,
     tril_indices,
@@ -133,13 +70,83 @@ from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
     triu_indices,
     uint8,
     unique,
-    vectorize,
     vstack,
     where,
-    zeros,
     zeros_like,
+    # For pyrecest
+    diag,
+    diff,
+    apply_along_axis,
+    nonzero,
+    column_stack,
+    conj,
+    atleast_1d,
+    atleast_2d,
+    dstack,
+    full,
+    isreal,
+    triu,
+    kron,
+    angle,
+    arctan,
+    cov,
+    count_nonzero,
+    full_like,
+    isinf,
+    isfinite,
+    deg2rad,
+    rad2deg,
+    argsort,
+    max,
+    min,
+    roll,
+    dstack,
+    abs,
+    arange,
+    abs,
+    angle,
+    arange,
+    arccos,
+    arccosh,
+    arcsin,
+    arctan2,
+    arctanh,
+    ceil,
+    copy,
+    cos,
+    cosh,
+    divide,
+    dot,
+    exp,
+    floor,
+    imag,
+    log,
+    matmul,
+    mod,
+    ndim,
+    outer,
+    power,
+    real,
+    sign,
+    sin,
+    sinh,
+    sqrt,
+    squeeze,
+    tan,
+    tanh,
+    trace,
+    vectorize,
+    empty,
+    eye,
+    zeros,
+    linspace,
+    ones,
+    round,
+    array_equal,
+    # For Riemannian score-based SDE
+    log1p,
 )
-
+from jax import vmap
 
 def has_autodiff():
     """If allows for automatic differentiation.
@@ -154,40 +161,43 @@ def has_autodiff():
 def isscalar(x):
     return _jnp.isscalar(x) and not isinstance(x, _jnp.ndarray)
 
+from ._dtype import (
+    set_default_dtype, as_dtype
+)
 
 from jax import device_get as to_numpy
-from jax.numpy import array
-from jax.numpy import asarray as from_numpy
-from jax.numpy import ravel as flatten
-from jax.scipy.integrate import trapezoid
+
+from jax.scipy.special import erf, gamma, polygamma, gammaln
 from jax.scipy.integrate import trapezoid as trapz
-from jax.scipy.special import erf, gamma, gammaln, polygamma
+from jax.scipy.integrate import trapezoid
+
+from jax.numpy import ravel as flatten
+from jax.numpy import asarray as from_numpy
 
 from .._backend_config import jax_atol as atol
 from .._backend_config import jax_rtol as rtol
-from . import fft  # For PyRecEst
-from . import signal  # For PyRecEst
+
+
+from . import autodiff
+from . import linalg
+from . import random
+from . import fft   # For PyRecEst
 from . import spatial  # For PyRecEst
-from . import autodiff, linalg, random
-from ._dtype import as_dtype, set_default_dtype
+from . import signal  # For PyRecEst
+
+from jax.numpy import array
 
 
 def convert_to_wider_dtype(*args, **kwargs):
-    raise NotImplementedError(
-        "The function convert_to_wider_dtype is not supported in this JAX backend."
-    )
+    raise NotImplementedError("The function convert_to_wider_dtype is not supported in this JAX backend.")
 
 
 def get_default_dtype(*args, **kwargs):
-    raise NotImplementedError(
-        "The function get_default_dtype is not supported in this JAX backend."
-    )
+    raise NotImplementedError("The function get_default_dtype is not supported in this JAX backend.")
 
 
 def get_default_cdtype(*args, **kwargs):
-    raise NotImplementedError(
-        "The function get_default_cdtype is not supported in this JAX backend."
-    )
+    raise NotImplementedError("The function get_default_cdtype is not supported in this JAX backend.")
 
 
 def to_ndarray(x, to_ndim, axis=0):
@@ -347,16 +357,19 @@ def cast(array, dtype):
     return _jnp.asarray(array, dtype=dtype)
 
 
-def ravel_tril_indices(n):
-    return _jnp.tril_indices(n)
+def ravel_tril_indices(n, k=0, m=None):
+    if m is None:
+        m = n
+    rows, cols = _jnp.tril_indices(n, k=k, m=m)
+    return _jnp.ravel_multi_index((rows, cols), (n, m))
 
 
 def is_array(obj):
     return isinstance(obj, _jnp.ndarray)
 
 
-def get_slice(array, start, end):
-    return array[start:end]
+def get_slice(array, indices):
+    return array[indices]
 
 
 def as_dtype(array):
@@ -392,9 +405,28 @@ def one_hot(indices, depth):
     return _jnp.eye(depth)[indices]
 
 
-# Scatter-add operation
-def scatter_add(array, indices, updates):
-    return _jnp.zeros_like(array).at[indices].add(updates)
+def scatter_add(input, dim, index, src):
+    """Add ``src`` into ``input`` at ``index`` along ``dim``.
+
+    This mirrors the NumPy/PyTorch backend contract instead of constructing a
+    zero tensor and losing the existing input values.
+    """
+    input = _jnp.asarray(input)
+    index = _jnp.asarray(index)
+    src = _jnp.asarray(src, dtype=input.dtype)
+
+    if dim < 0:
+        dim += input.ndim
+    if dim == 0:
+        return input.at[index].add(src)
+    if dim == 1:
+        if input.ndim < 2:
+            raise ValueError("dim=1 scatter_add requires an array with at least two dimensions")
+        row_indices = _jnp.arange(input.shape[0])
+        while row_indices.ndim < index.ndim:
+            row_indices = _jnp.expand_dims(row_indices, axis=-1)
+        return input.at[row_indices, index].add(src)
+    raise NotImplementedError("scatter_add is implemented only for dim 0 and dim 1 in the JAX backend")
 
 
 # Set diagonal elements of a matrix

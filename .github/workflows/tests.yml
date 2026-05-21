@@ -33,10 +33,20 @@ jobs:
 
       - name: Install documentation dependencies
         run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          retry python -m pip install poetry
           poetry env use python
-          poetry install --only docs --no-root
+          retry poetry install --only docs --no-root
 
       - name: Build documentation
         run: poetry run mkdocs build --strict
@@ -74,7 +84,18 @@ jobs:
 
       - name: Build distributions and validate local release metadata
         run: |
-          python -m pip install --upgrade pip build twine
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
+          python -m pip install --upgrade pip
+          retry python -m pip install build twine
           python scripts/check_release_consistency.py --local-only
           python -m build
           python -m twine check dist/*
@@ -170,18 +191,32 @@ jobs:
 
       - name: Install dependencies
         run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          retry python -m pip install poetry
           poetry env use python
           case "${{ matrix.backend }}" in
             numpy)
-              poetry install --with dev --extras "healpy_support"
+              retry poetry install --with dev --extras "healpy_support"
               ;;
             pytorch)
-              poetry install --with dev --extras "healpy_support pytorch_support"
+              retry poetry install --with dev --extras "healpy_support"
+              retry poetry run python -m pip install \
+                --index-url https://download.pytorch.org/whl/cpu \
+                --extra-index-url https://pypi.org/simple \
+                "torch>=2.4,<3.0"
               ;;
             jax)
-              poetry install --with dev --extras "healpy_support jax_support"
+              retry poetry install --with dev --extras "healpy_support jax_support"
               ;;
             *)
               echo "Unsupported backend: ${{ matrix.backend }}" >&2
@@ -260,18 +295,32 @@ jobs:
 
       - name: Install dependencies
         run: |
+          retry() {
+            for attempt in 1 2 3; do
+              "$@" && return 0
+              echo "Command failed on attempt ${attempt}; retrying..."
+              sleep $((attempt * 20))
+            done
+
+            "$@"
+          }
+
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          retry python -m pip install poetry
           poetry env use python
           case "${{ matrix.backend }}" in
             numpy)
-              poetry install --with dev --extras "healpy_support"
+              retry poetry install --with dev --extras "healpy_support"
               ;;
             pytorch)
-              poetry install --with dev --extras "healpy_support pytorch_support"
+              retry poetry install --with dev --extras "healpy_support"
+              retry poetry run python -m pip install \
+                --index-url https://download.pytorch.org/whl/cpu \
+                --extra-index-url https://pypi.org/simple \
+                "torch>=2.4,<3.0"
               ;;
             jax)
-              poetry install --with dev --extras "healpy_support jax_support"
+              retry poetry install --with dev --extras "healpy_support jax_support"
               ;;
             *)
               echo "Unsupported backend: ${{ matrix.backend }}" >&2
