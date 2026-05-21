@@ -8,6 +8,12 @@ from .generate_groundtruth import generate_groundtruth
 from .generate_measurements import generate_measurements
 
 
+def _seed_simulation_rngs(seed):
+    """Seed all RNGs used by the simulation-generation helpers."""
+    random.seed(seed)
+    np.random.seed(seed)
+
+
 def generate_simulated_scenarios(
     simulation_params,
 ):
@@ -40,7 +46,7 @@ def generate_simulated_scenarios(
     )
 
     for run, seed in enumerate(all_seeds):
-        random.seed(seed)
+        _seed_simulation_rngs(seed)
         groundtruths[run, :] = generate_groundtruth(simulation_params)
         measurements[run, :] = generate_measurements(
             groundtruths[run, :], simulation_params
