@@ -164,6 +164,19 @@ jobs:
           python -m build
           python -m twine check dist/*
 
+      - name: Smoke-test default wheel in a clean environment
+        run: |
+          python -m venv /tmp/pyrecest-default-wheel
+          /tmp/pyrecest-default-wheel/bin/python -m pip install --upgrade pip
+          /tmp/pyrecest-default-wheel/bin/python -m pip install dist/*.whl
+          /tmp/pyrecest-default-wheel/bin/python - <<'PY'
+          import pyrecest
+          from pyrecest.filters import KalmanFilter
+
+          print(f"Installed pyrecest {pyrecest.__version__}")
+          print(f"Resolved baseline filter {KalmanFilter.__name__}")
+          PY
+
       - name: Install built wheel and smoke-run public examples
         run: |
           python -m pip install dist/*.whl
