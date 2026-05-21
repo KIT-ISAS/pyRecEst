@@ -40,19 +40,41 @@ def _cmd_info(_args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_backends(_args: argparse.Namespace) -> int:
+def _render_api_backend_matrix(rows: dict[str, dict[str, str]]) -> str:
+    """Render API backend support rows as a Markdown table."""
+    lines = [
+        "| API | NumPy | PyTorch | JAX | Notes |",
+        "|-----|-------|---------|-----|-------|",
+    ]
+    for api_name, row in sorted(rows.items()):
+        lines.append(
+            "| `{api}` | {numpy} | {pytorch} | {jax} | {notes} |".format(
+                api=api_name,
+                numpy=row.get("numpy", "unknown"),
+                pytorch=row.get("pytorch", "unknown"),
+                jax=row.get("jax", "unknown"),
+                notes=row.get("notes", ""),
+            )
+        )
+    return "\n".join(lines)
+
+
+def _cmd_backends(args: argparse.Namespace) -> int:
     from pyrecest._backend.capabilities import (
         API_BACKEND_CAPABILITIES,
         BACKEND_CAPABILITIES,
     )
 
-    print(
-        json.dumps(
-            {"facade": BACKEND_CAPABILITIES, "api": API_BACKEND_CAPABILITIES},
-            indent=2,
-            sort_keys=True,
+    if args.format == "markdown":
+        print(_render_api_backend_matrix(API_BACKEND_CAPABILITIES))
+    else:
+        print(
+            json.dumps(
+                {"facade": BACKEND_CAPABILITIES, "api": API_BACKEND_CAPABILITIES},
+                indent=2,
+                sort_keys=True,
+            )
         )
-    )
     return 0
 
 
@@ -97,6 +119,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     backends_parser = subparsers.add_parser(
         "backends", help="Print backend capability metadata as JSON."
+    )
+    backends_parser.add_argument(
+        "--format",
+        choices=("json", "markdown"),
+        default="json",
+        help="Output format.",
     )
     backends_parser.set_defaults(func=_cmd_backends)
 

@@ -1,0 +1,60 @@
+name: Post-release install smoke test
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Resolve version
+        id: version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${RELEASE_TAG}"
+          if [ -z "${VERSION}" ]; then
+            VERSION="$(gh release view --repo "${GITHUB_REPOSITORY}" --json tagName --jq '.tagName')"
+          fi
+          if [ -z "${VERSION}" ]; then
+            echo "Could not resolve release tag for post-release smoke test." >&2
+            exit 1
+          fi
+          VERSION="${VERSION#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install released wheel from PyPI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "pyrecest==${{ steps.version.outputs.version }}"
+
+      - name: Import and run minimal Kalman smoke test
+        run: |
+          pyrecest info
+          python - <<'PY'
+          from pyrecest.backend import array, diag
+          from pyrecest.filters import KalmanFilter
+
+          kf = KalmanFilter((array([0.0, 1.0]), diag(array([1.0, 1.0]))))
+          kf.predict_linear(array([[1.0, 1.0], [0.0, 1.0]]), diag(array([0.05, 0.01])))
+          kf.update_linear(array([0.9]), array([[1.0, 0.0]]), array([[0.25]]))
+          estimate = kf.get_point_estimate()
+          print("estimate", estimate)
+          PY
