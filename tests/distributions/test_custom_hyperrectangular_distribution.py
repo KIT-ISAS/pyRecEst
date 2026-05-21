@@ -36,6 +36,27 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
             "PDF calculated values do not match the expected values.",
         )
 
+    def test_manifold_size_uses_one_row_per_dimension(self):
+        self.assertEqual(self.hud.dim, 2)
+        self.assertTrue(allclose(self.hud.get_manifold_size(), 6.0))
+
+    def test_integrate_defaults_to_full_rectangular_bounds(self):
+        self.assertAlmostEqual(float(self.hud.integrate()), 1.0, places=10)
+
+    def test_three_dimensional_bounds_set_dim_and_volume(self):
+        dist = HyperrectangularUniformDistribution(
+            array(
+                [
+                    [0.0, 2.0],
+                    [1.0, 4.0],
+                    [-2.0, 2.0],
+                ]
+            )
+        )
+
+        self.assertEqual(dist.dim, 3)
+        self.assertTrue(allclose(dist.get_manifold_size(), 24.0))
+
 
 if __name__ == "__main__":
     unittest.main()
