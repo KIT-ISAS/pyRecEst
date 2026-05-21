@@ -1,7 +1,6 @@
 import pytest
-
-from pyrecest.backend import allclose
 from examples.basic.gaussian_multiplication import run_example
+from pyrecest.backend import allclose
 
 
 @pytest.mark.validation

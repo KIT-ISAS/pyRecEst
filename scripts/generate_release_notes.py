@@ -53,7 +53,9 @@ def render_release_notes(subjects: list[str]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("revision_range", help="Git revision range, for example v2.2.1..HEAD")
+    parser.add_argument(
+        "revision_range", help="Git revision range, for example v2.2.1..HEAD"
+    )
     parser.add_argument("--output", help="Optional output Markdown path")
     args = parser.parse_args(argv)
 

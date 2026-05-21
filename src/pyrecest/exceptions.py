@@ -105,7 +105,9 @@ class DimensionMismatchError(ShapeError):
             f"{left_name}/{right_name}",
             (left_dim, right_dim),
             expected="matching dimensions",
-            reason=(f"{left_name} has dimension {left_dim}, but {right_name} has dimension {right_dim}"),
+            reason=(
+                f"{left_name} has dimension {left_dim}, but {right_name} has dimension {right_dim}"
+            ),
         )
 
 
@@ -115,7 +117,11 @@ class NumericalStabilityError(ValidationError):
     def __init__(self, operation: str, *, reason: str | None = None) -> None:
         self.operation = operation
         self.reason = reason
-        message = operation if reason is None else f"Numerical stability failure in {operation}: {reason}"
+        message = (
+            operation
+            if reason is None
+            else f"Numerical stability failure in {operation}: {reason}"
+        )
         super().__init__(message)
 
 

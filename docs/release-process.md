@@ -4,13 +4,13 @@ Use release changes as small, reviewable PRs whenever possible.
 
 ## Recommended PR Split
 
-| PR type            | Typical contents                                           |
-|--------------------|------------------------------------------------------------|
-| Packaging          | Version metadata, dependency ranges, wheel/sdist checks.   |
-| Backend contract   | Capability matrix updates, backend-specific tests, docs.   |
-| Numerical behavior | Validation helpers, algorithmic changes, invariant tests.  |
+| PR type            | Typical contents                                             |
+|--------------------|--------------------------------------------------------------|
+| Packaging          | Version metadata, dependency ranges, wheel/sdist checks.     |
+| Backend contract   | Capability matrix updates, backend-specific tests, docs.     |
+| Numerical behavior | Validation helpers, algorithmic changes, invariant tests.    |
 | Documentation      | Tutorials, examples, compatibility dashboard, release notes. |
-| Benchmarks         | ASV or JSON benchmark updates.                             |
+| Benchmarks         | ASV or JSON benchmark updates.                               |
 
 ## Release Notes
 
