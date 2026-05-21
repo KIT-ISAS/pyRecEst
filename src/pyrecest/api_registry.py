@@ -12,6 +12,12 @@ PUBLIC_API_CATEGORIES: Final = (
 )
 
 PUBLIC_API_REGISTRY: Final = {
+    "BackendFacade": {
+        "module": "pyrecest.backend",
+        "category": "backend-specific",
+        "backend_contract": "BackendFacade",
+        "notes": "Facade names are importable across backends, with bridged or unsupported functions documented in the backend matrix.",
+    },
     "KalmanFilter": {
         "module": "pyrecest.filters",
         "category": "stable",

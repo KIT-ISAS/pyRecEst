@@ -14,6 +14,7 @@ PYTHONPATH=src python scripts/check_public_api_registry.py --check docs/public-a
 <!-- public-api-registry:start -->
 | API | Module | Category | Backend contract | Notes |
 |-----|--------|----------|------------------|-------|
+| `BackendFacade` | `pyrecest.backend` | backend-specific | `BackendFacade` | Facade names are importable across backends, with bridged or unsupported functions documented in the backend matrix. |
 | `DistributionConversion` | `pyrecest.distributions.conversion` | backend-specific | `DistributionConversion` | Euclidean Gaussian/particle routes are portable; grid, Fourier, and manifold routes are route-specific. |
 | `EuclideanParticleFilter` | `pyrecest.filters` | backend-specific | `EuclideanParticleFilter` | Particle behavior depends on sampler and resampling support in the active backend. |
 | `EvaluationUtilities` | `pyrecest.evaluation` | backend-specific | `EvaluationUtilities` | Plotting, assignment, summaries, and result helpers are only partly backend-portable. |

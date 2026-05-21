@@ -1,9 +1,9 @@
 """Backend capability declarations used by documentation and tests.
 
 The dynamic backend facade intentionally exposes the same attribute names for
-all backends. Some attributes are partial or explicitly unsupported on a given
-backend. Keeping those declarations in one lightweight module gives tests and
-documentation a single source of truth.
+all backends. Some attributes are native, bridged through NumPy/SciPy, partial, or explicitly
+unsupported on a given backend. Keeping those declarations in one lightweight
+module gives tests and documentation a single source of truth.
 """
 
 from __future__ import annotations
@@ -22,12 +22,16 @@ BACKEND_CAPABILITIES: Final = {
             "": ("searchsorted",),
             "signal": ("fftconvolve",),
         },
-        "partial": {
+        "bridged": {
             "linalg": {
                 "sqrtm": "SciPy bridge; not differentiable through the bridge.",
                 "fractional_matrix_power": "SciPy bridge; not differentiable through the bridge.",
                 "polar": "SciPy bridge; not differentiable through the bridge.",
                 "quadratic_assignment": "SciPy bridge; returns Python indices.",
+            },
+        },
+        "partial": {
+            "linalg": {
                 "solve_sylvester": "Uses native fast paths and falls back to SciPy.",
             },
             "random": {
@@ -58,6 +62,7 @@ BACKEND_CAPABILITIES: Final = {
                 "solve_sylvester",
             ),
         },
+        "bridged": {},
         "partial": {
             "random": {
                 "module": "Global PRNG state is provided for facade compatibility; explicit state passing is preferred for JAX workflows.",
@@ -130,31 +135,41 @@ API_BACKEND_CAPABILITIES: Final = {
     },
     "EvaluationUtilities": {
         "numpy": "supported",
+        "pytorch": "bridged",
+        "jax": "bridged",
+        "notes": "Some plotting, assignment, and summary operations remain NumPy/SciPy oriented and may not preserve device or gradient semantics.",
+    },
+    "BackendFacade": {
+        "numpy": "supported",
         "pytorch": "partial",
         "jax": "partial",
-        "notes": "Some plotting, assignment, and summary operations remain NumPy/SciPy oriented.",
+        "notes": "Facade names are importable across backends, but some functions are bridged or explicitly unsupported.",
     },
 }
 
-BACKEND_SUPPORT_LEVELS: Final = ("supported", "partial", "unsupported")
+BACKEND_SUPPORT_LEVELS: Final = ("supported", "bridged", "partial", "unsupported")
 
 
-def get_unsupported_functions(
-    backend_name: str, module_name: str = ""
-) -> tuple[str, ...]:
+def get_unsupported_functions(backend_name: str, module_name: str = "") -> tuple[str, ...]:
     """Return unsupported facade functions for a backend module."""
     backend = BACKEND_CAPABILITIES.get(backend_name, {})
     unsupported = backend.get("unsupported", {})
     return tuple(unsupported.get(module_name, ()))
 
 
-def get_partial_capabilities(
-    backend_name: str, module_name: str = ""
-) -> dict[str, str]:
+def get_partial_capabilities(backend_name: str, module_name: str = "") -> dict[str, str]:
     """Return partial-support notes for a backend module."""
     backend = BACKEND_CAPABILITIES.get(backend_name, {})
     partial = backend.get("partial", {})
     return dict(partial.get(module_name, {}))
+
+
+def get_bridged_capabilities(backend_name: str, module_name: str = "") -> dict[str, str]:
+    """Return operations that work by crossing into another numerical stack."""
+    backend = BACKEND_CAPABILITIES.get(backend_name, {})
+    bridged = backend.get("bridged", {})
+    return dict(bridged.get(module_name, {}))
+
 
 
 def get_api_backend_support(api_name: str) -> dict[str, str]:
