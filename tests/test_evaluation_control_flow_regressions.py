@@ -146,6 +146,18 @@ class TestEvaluationControlFlowRegressions(unittest.TestCase):
 
         npt.assert_allclose(last_estimate, array([1.0]))
 
+    def test_plain_config_defaults_to_non_mtt_non_eot(self):
+        config = check_and_fix_config(
+            {
+                "n_timesteps": 2,
+                "initial_prior": GaussianDistribution(array([0.0]), eye(1)),
+            }
+        )
+
+        self.assertFalse(config["mtt"])
+        self.assertFalse(config["eot"])
+        self.assertEqual(config["n_meas_at_individual_time_step"], [1, 1])
+
     def test_eot_meas_per_step_is_normalized_to_per_step_counts(self):
         config = check_and_fix_config(
             {
