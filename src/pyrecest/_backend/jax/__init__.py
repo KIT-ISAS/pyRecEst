@@ -121,7 +121,6 @@ from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
     stack,
     std,
     sum,
-    take,
     tan,
     tanh,
     tile,
@@ -173,21 +172,15 @@ from ._dtype import as_dtype, set_default_dtype
 
 
 def convert_to_wider_dtype(*args, **kwargs):
-    raise NotImplementedError(
-        "The function convert_to_wider_dtype is not supported in this JAX backend."
-    )
+    raise NotImplementedError("The function convert_to_wider_dtype is not supported in this JAX backend.")
 
 
 def get_default_dtype(*args, **kwargs):
-    raise NotImplementedError(
-        "The function get_default_dtype is not supported in this JAX backend."
-    )
+    raise NotImplementedError("The function get_default_dtype is not supported in this JAX backend.")
 
 
 def get_default_cdtype(*args, **kwargs):
-    raise NotImplementedError(
-        "The function get_default_cdtype is not supported in this JAX backend."
-    )
+    raise NotImplementedError("The function get_default_cdtype is not supported in this JAX backend.")
 
 
 def to_ndarray(x, to_ndim, axis=0):
@@ -217,6 +210,28 @@ def to_ndarray(x, to_ndim, axis=0):
         x = _jnp.expand_dims(x, axis=axis)
 
     return x
+
+
+def take(
+    a,
+    indices,
+    axis=None,
+    out=None,
+    mode=None,
+    unique_indices=False,
+    indices_are_sorted=False,
+    fill_value=None,
+):
+    return _jnp.take(
+        a,
+        _jnp.asarray(indices),
+        axis=axis,
+        out=out,
+        mode=mode,
+        unique_indices=unique_indices,
+        indices_are_sorted=indices_are_sorted,
+        fill_value=fill_value,
+    )
 
 
 def assignment(x, values, indices, axis=0):
@@ -385,8 +400,9 @@ def one_hot(indices, depth):
 def scatter_add(input, dim, index, src):
     """Add ``src`` into ``input`` at ``index`` along ``dim``.
 
-    This mirrors the NumPy/PyTorch backend contract instead of constructing a
-    zero tensor and losing the existing input values.
+    This mirrors the shared backend contract used by the facade instead of
+    JAX's lower-level ``.at`` update signature. Existing input values are
+    preserved, matching NumPy/PyTorch scatter-add behavior.
     """
     input = _jnp.asarray(input)
     index = _jnp.asarray(index)
@@ -394,20 +410,21 @@ def scatter_add(input, dim, index, src):
 
     if dim < 0:
         dim += input.ndim
+
     if dim == 0:
         return input.at[index].add(src)
+
     if dim == 1:
         if input.ndim < 2:
-            raise ValueError(
-                "dim=1 scatter_add requires an array with at least two dimensions"
-            )
-        row_indices = _jnp.arange(input.shape[0])
-        while row_indices.ndim < index.ndim:
-            row_indices = _jnp.expand_dims(row_indices, axis=-1)
+            raise ValueError("dim=1 scatter_add requires at least two dimensions")
+        if index.ndim == 1:
+            row_indices = _jnp.arange(input.shape[0])
+        else:
+            row_shape = (input.shape[0],) + (1,) * (index.ndim - 1)
+            row_indices = _jnp.broadcast_to(_jnp.arange(input.shape[0]).reshape(row_shape), index.shape)
         return input.at[row_indices, index].add(src)
-    raise NotImplementedError(
-        "scatter_add is implemented only for dim 0 and dim 1 in the JAX backend"
-    )
+
+    raise NotImplementedError("scatter_add is implemented for dim 0 and dim 1.")
 
 
 # Set diagonal elements of a matrix

@@ -172,9 +172,7 @@ def std(
 def cov(input, correction=1, fweights=None, aweights=None, bias=False):
     # for pyrecest
     if not bias:
-        return _torch.cov(
-            input, correction=correction, fweights=fweights, aweights=aweights
-        )
+        return _torch.cov(input, correction=correction, fweights=fweights, aweights=aweights)
     assert fweights is None
 
     if aweights is None:
@@ -191,9 +189,7 @@ def cov(input, correction=1, fweights=None, aweights=None, bias=False):
     deviation_centered = input - means
 
     # Calculate weighted biased covariance
-    cov_matrix = _torch.einsum(
-        "ij,kj,j->ik", deviation_centered, deviation_centered, aweights
-    )
+    cov_matrix = _torch.einsum("ij,kj,j->ik", deviation_centered, deviation_centered, aweights)
 
     return cov_matrix
 
@@ -498,12 +494,7 @@ def linspace(start, stop, num=50, endpoint=True, dtype=None):
     stop = _torch.flatten(stop)
 
     if endpoint:
-        result = _torch.vstack(
-            [
-                _torch.linspace(start=start[i], end=stop[i], steps=num, dtype=dtype)
-                for i in range(start.shape[0])
-            ]
-        ).T
+        result = _torch.vstack([_torch.linspace(start=start[i], end=stop[i], steps=num, dtype=dtype) for i in range(start.shape[0])]).T
     else:
         result = _torch.vstack(
             [
@@ -603,9 +594,10 @@ def set_diag(x, new_diag):
 
 
 def prod(x, axis=None):
+    x = array(x)
     if axis is None:
         return _torch.prod(x)
-    return _torch.prod(x, axis)
+    return _torch.prod(x, dim=axis)
 
 
 def where(condition, x=None, y=None):
@@ -751,9 +743,11 @@ def cumsum(x, axis=None, dtype=None):
 
 
 def cumprod(x, axis=None, dtype=None):
+    if not _torch.is_tensor(x):
+        x = array(x, dtype=dtype)
     if axis is None:
-        axis = 0
-    return _torch.cumprod(x, axis, dtype=dtype)
+        return _torch.cumprod(x.flatten(), dim=0, dtype=dtype)
+    return _torch.cumprod(x, dim=axis, dtype=dtype)
 
 
 def array_from_sparse(indices, data, target_shape):
@@ -854,20 +848,28 @@ def sort(a, axis=-1):
 
 
 def min(a, axis=None):
+    a = array(a)
     if axis is None:
         return _torch.min(a)
-    values, _ = _torch.min(a, dim=axis)
-    return values
+    return _torch.amin(a, dim=axis)
 
 
 amin = min
 
 
 def take(a, indices, axis=0):
+    a = array(a)
     if not _torch.is_tensor(indices):
-        indices = _torch.as_tensor(indices)
+        indices = _torch.as_tensor(indices, dtype=_torch.long, device=a.device)
+    else:
+        indices = indices.to(device=a.device, dtype=_torch.long)
 
-    return _torch.squeeze(_torch.index_select(a, axis, indices))
+    scalar_index = indices.ndim == 0
+    if scalar_index:
+        indices = indices.reshape(1)
+
+    result = _torch.index_select(a, axis, indices)
+    return _torch.squeeze(result, dim=axis) if scalar_index else result
 
 
 def _unnest_iterable(ls):
@@ -882,9 +884,7 @@ def _unnest_iterable(ls):
 
 
 def pad(a, pad_width, mode="constant", constant_values=0.0):
-    return _torch.nn.functional.pad(
-        a, _unnest_iterable(reversed(pad_width)), mode=mode, value=constant_values
-    )
+    return _torch.nn.functional.pad(a, _unnest_iterable(reversed(pad_width)), mode=mode, value=constant_values)
 
 
 def is_array(x):
@@ -927,16 +927,17 @@ def dot(a, b):
 
 
 def cross(a, b):
+    a = array(a)
+    b = array(b)
+    a, b = convert_to_wider_dtype([a, b])
     if a.shape != b.shape:
         a, b = broadcast_arrays(a, b)
-    if a.shape[0] == 3 and b.shape[0] == 3:
-        result = _torch.cross(*convert_to_wider_dtype([a, b]), dim=-1)
-    elif a.shape[0] == 2 and b.shape[0] == 2:
-        result = a[0] * b[1] - a[1] * b[0]
-    else:
-        raise NotImplementedError("Not implemented for this dimension.")
+    if a.shape[-1] == 3 and b.shape[-1] == 3:
+        return _torch.cross(a, b, dim=-1)
+    if a.shape[-1] == 2 and b.shape[-1] == 2:
+        return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
 
-    return result
+    raise NotImplementedError("Not implemented for this dimension.")
 
 
 def gamma(a):
