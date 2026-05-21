@@ -12,6 +12,7 @@ from pyrecest.backend import (
     sqrt,
     transpose,
 )
+from pyrecest.diagnostics import FilterDiagnostics
 
 
 def _as_vector(x, name):
@@ -300,12 +301,14 @@ def linear_gaussian_update(
     updated_covariance = 0.5 * (updated_covariance + transpose(updated_covariance))
 
     if return_diagnostics:
-        diagnostics = {
-            "nis": normalized_innovation_squared(innovation, nominal_innovation_cov),
-            "residual": innovation,
-            "scale": scale,
-            "action": action,
-        }
+        diagnostics = FilterDiagnostics(
+            innovation=innovation,
+            residual=innovation,
+            innovation_covariance=nominal_innovation_cov,
+            nis=normalized_innovation_squared(innovation, nominal_innovation_cov),
+            scale=scale,
+            action=action,
+        )
         return updated_mean, updated_covariance, diagnostics
 
     return updated_mean, updated_covariance
@@ -355,14 +358,16 @@ def linear_gaussian_update_robust(
     )
 
     if not accepted:
-        diagnostics = {
-            "nis": nis,
-            "residual": innovation,
-            "scale": scale,
-            "action": action,
-            "accepted": False,
-            "robust_update": robust_update,
-        }
+        diagnostics = FilterDiagnostics(
+            innovation=innovation,
+            residual=innovation,
+            innovation_covariance=nominal_innovation_cov,
+            nis=nis,
+            scale=scale,
+            action=action,
+            accepted=False,
+            robust_update=robust_update,
+        )
         if return_diagnostics:
             return mean, covariance, diagnostics
         return mean, covariance

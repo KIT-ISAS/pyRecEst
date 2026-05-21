@@ -78,6 +78,37 @@ def _cmd_backends(args: argparse.Namespace) -> int:
     return 0
 
 
+def _max_abs_error(actual: list[float], expected: list[float]) -> float:
+    errors = [abs(float(a) - float(b)) for a, b in zip(actual, expected)]
+    return max(errors) if errors else 0.0
+
+
+def _check_expected_mapping(
+    section_name: str,
+    actual: dict[str, Any],
+    expected: dict[str, Any],
+    *,
+    tolerance: float,
+) -> list[str]:
+    errors: list[str] = []
+    for key, expected_value in expected.items():
+        if key not in actual:
+            errors.append(f"{section_name}.{key} missing from scenario result")
+            continue
+        actual_value = actual[key]
+        if isinstance(expected_value, int | float):
+            delta = abs(float(actual_value) - float(expected_value))
+            if delta > tolerance:
+                errors.append(
+                    f"{section_name}.{key} mismatch: abs_error={delta:.6g} > tolerance={tolerance:.6g}"
+                )
+        elif actual_value != expected_value:
+            errors.append(
+                f"{section_name}.{key} mismatch: expected {expected_value!r}, got {actual_value!r}"
+            )
+    return errors
+
+
 def _cmd_run_scenario(args: argparse.Namespace) -> int:
     from pyrecest.scenarios import run_scenario
 
@@ -91,18 +122,36 @@ def _cmd_run_scenario(args: argparse.Namespace) -> int:
             if args.tolerance is not None
             else float(expected.get("tolerance", 1e-8))
         )
+        failures: list[str] = []
         expected_estimate = expected.get("final_estimate")
         if expected_estimate is not None:
-            errors = [
-                abs(float(a) - float(b))
-                for a, b in zip(result.final_estimate, expected_estimate)
-            ]
-            if errors and max(errors) > tolerance:
-                print(
-                    f"final_estimate mismatch: max_abs_error={max(errors):.6g} > tolerance={tolerance:.6g}",
-                    file=sys.stderr,
+            max_error = _max_abs_error(result.final_estimate, expected_estimate)
+            if max_error > tolerance:
+                failures.append(
+                    f"final_estimate mismatch: max_abs_error={max_error:.6g} > tolerance={tolerance:.6g}"
                 )
-                return 1
+        if isinstance(expected.get("metrics"), dict):
+            failures.extend(
+                _check_expected_mapping(
+                    "metrics",
+                    result.metrics,
+                    expected["metrics"],
+                    tolerance=tolerance,
+                )
+            )
+        if isinstance(expected.get("diagnostics"), dict):
+            failures.extend(
+                _check_expected_mapping(
+                    "diagnostics",
+                    result.diagnostics,
+                    expected["diagnostics"],
+                    tolerance=tolerance,
+                )
+            )
+        if failures:
+            for failure in failures:
+                print(failure, file=sys.stderr)
+            return 1
     return 0
 
 
