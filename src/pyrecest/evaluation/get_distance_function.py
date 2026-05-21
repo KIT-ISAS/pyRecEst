@@ -27,9 +27,18 @@ def available_distance_functions() -> tuple[str, ...]:
     return tuple(sorted(_DISTANCE_FUNCTION_FACTORIES))
 
 
+def _is_hypersphere_symmetric_name(normalized_name: str) -> bool:
+    return (
+        "hyperspheresymmetric" in normalized_name
+        or "hypersphere_symmetric" in normalized_name
+    )
+
+
 def _without_symmetry_suffix(manifold_name: str) -> str:
     return (
         manifold_name.replace("hypersphereSymmetric", "hypersphere")
+        .replace("hypersphere_symmetric", "hypersphere")
+        .replace("_symmetric", "")
         .replace("Symmetric", "")
         .replace("symmetric", "")
         .replace("Symm", "")
@@ -110,7 +119,7 @@ def get_distance_function(
                 AbstractHypertoroidalDistribution.angular_error(xest, xtrue)
             )
 
-    elif "hyperspheresymmetric" in normalized_name:
+    elif _is_hypersphere_symmetric_name(normalized_name):
 
         def distance_function(x1, x2):
             return min(arccos(dot(x1, x2)), arccos(dot(x1, -x2)))
