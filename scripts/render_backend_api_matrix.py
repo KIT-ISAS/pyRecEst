@@ -41,22 +41,12 @@ def _load_api_backend_capabilities() -> dict[str, dict[str, str]]:
 
 
 def _format_table(headers: list[str], rows: list[list[str]]) -> list[str]:
-    widths = [
-        max(len(row[index]) for row in [headers, *rows])
-        for index in range(len(headers))
-    ]
+    widths = [max(len(row[index]) for row in [headers, *rows]) for index in range(len(headers))]
     lines = [
-        "| "
-        + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(headers))
-        + " |",
+        "| " + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(headers)) + " |",
         "|" + "|".join("-" * (width + 2) for width in widths) + "|",
     ]
-    lines.extend(
-        "| "
-        + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(row))
-        + " |"
-        for row in rows
-    )
+    lines.extend("| " + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(row)) + " |" for row in rows)
     return lines
 
 
