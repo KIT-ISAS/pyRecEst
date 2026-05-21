@@ -4,7 +4,7 @@ import warnings
 
 import numpy.testing as npt
 
-# pylint: disable=no-name-in-module,no-member
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import all, array, ones
 from pyrecest.distributions.hypersphere_subset.spherical_grid_distribution import (
     SphericalGridDistribution,
