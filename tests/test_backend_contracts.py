@@ -36,3 +36,92 @@ def test_pytorch_to_numpy_detaches_tensors_requiring_grad():
     converted = backend.to_numpy(tensor)
 
     assert converted.tolist() == [1.0, 2.0]
+
+
+def _to_python(value):
+    value = backend.to_numpy(value)
+    if hasattr(value, "tolist"):
+        return value.tolist()
+    return value
+
+
+def test_numpy_vmap_rejects_mismatched_leading_dimensions():
+    if backend.__backend_name__ != "numpy":
+        pytest.skip("NumPy-specific vmap regression test")
+
+    vmapped = backend.vmap(lambda x, y: x + y)
+
+    with pytest.raises(ValueError, match="same size in the first dimension"):
+        vmapped(array([[1.0], [2.0]]), array([[1.0]]))
+
+
+def test_default_reductions_reduce_all_elements():
+    values = array([[2.0, 3.0], [4.0, 5.0]])
+
+    assert float(_to_python(backend.min(values))) == 2.0
+    assert float(_to_python(backend.prod(values))) == 120.0
+
+
+def test_take_preserves_singleton_dimensions_for_vector_indices():
+    values = array(
+        [
+            [[1.0, 2.0, 3.0]],
+            [[4.0, 5.0, 6.0]],
+        ]
+    )
+
+    result = backend.take(values, [0], axis=0)
+
+    assert result.shape == (1, 1, 3)
+    assert _to_python(result) == [[[1.0, 2.0, 3.0]]]
+
+
+def test_take_removes_axis_for_scalar_indices():
+    values = array(
+        [
+            [[1.0, 2.0, 3.0]],
+            [[4.0, 5.0, 6.0]],
+        ]
+    )
+
+    result = backend.take(values, 0, axis=0)
+
+    assert result.shape == (1, 3)
+    assert _to_python(result) == [[1.0, 2.0, 3.0]]
+
+
+def test_cross_uses_trailing_vector_axis_for_batched_vectors():
+    first = array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+    second = array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+
+    result = backend.cross(first, second)
+
+    assert _to_python(result) == [[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]
+
+
+def test_get_slice_uses_axis_grouped_indices_contract():
+    values = array(
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+        ]
+    )
+
+    result = backend.get_slice(values, ((0, 2), (8, 9)))
+
+    assert _to_python(result) == [8, 29]
+
+
+def test_scatter_add_preserves_input_values_and_uses_facade_signature():
+    values = array([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+    indices = backend.asarray([[0, 2], [1, 2]], dtype=backend.int64)
+    updates = array([[2.0, 3.0], [4.0, 5.0]])
+
+    result = backend.scatter_add(values, 1, indices, updates)
+
+    assert _to_python(result) == [[3.0, 1.0, 4.0], [1.0, 5.0, 6.0]]
+
+
+def test_as_dtype_string_lookup_is_available():
+    assert backend.as_dtype("float64") is not None

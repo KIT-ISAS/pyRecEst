@@ -603,9 +603,10 @@ def set_diag(x, new_diag):
 
 
 def prod(x, axis=None):
+    x = array(x)
     if axis is None:
-        axis = 0
-    return _torch.prod(x, axis)
+        return _torch.prod(x)
+    return _torch.prod(x, dim=axis)
 
 
 def where(condition, x=None, y=None):
@@ -853,19 +854,29 @@ def sort(a, axis=-1):
     return sorted_a
 
 
-def min(a, axis=-1):
-    values, _ = _torch.min(a, dim=axis)
-    return values
+def min(a, axis=None):
+    a = array(a)
+    if axis is None:
+        return _torch.min(a)
+    return _torch.amin(a, dim=axis)
 
 
 amin = min
 
 
 def take(a, indices, axis=0):
+    a = array(a)
     if not _torch.is_tensor(indices):
-        indices = _torch.as_tensor(indices)
+        indices = _torch.as_tensor(indices, dtype=_torch.long, device=a.device)
+    else:
+        indices = indices.to(device=a.device, dtype=_torch.long)
 
-    return _torch.squeeze(_torch.index_select(a, axis, indices))
+    scalar_index = indices.ndim == 0
+    if scalar_index:
+        indices = indices.reshape(1)
+
+    result = _torch.index_select(a, axis, indices)
+    return _torch.squeeze(result, dim=axis) if scalar_index else result
 
 
 def _unnest_iterable(ls):
@@ -925,16 +936,17 @@ def dot(a, b):
 
 
 def cross(a, b):
+    a = array(a)
+    b = array(b)
+    a, b = convert_to_wider_dtype([a, b])
     if a.shape != b.shape:
         a, b = broadcast_arrays(a, b)
-    if a.shape[0] == 3 and b.shape[0] == 3:
-        result = _torch.cross(*convert_to_wider_dtype([a, b]), dim=-1)
-    elif a.shape[0] == 2 and b.shape[0] == 2:
-        result = a[0] * b[1] - a[1] * b[0]
-    else:
-        raise NotImplementedError("Not implemented for this dimension.")
+    if a.shape[-1] == 3 and b.shape[-1] == 3:
+        return _torch.cross(a, b, dim=-1)
+    if a.shape[-1] == 2 and b.shape[-1] == 2:
+        return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
 
-    return result
+    raise NotImplementedError("Not implemented for this dimension.")
 
 
 def gamma(a):
