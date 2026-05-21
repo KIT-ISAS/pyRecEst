@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import math
 import tomllib
-from dataclasses import asdict, dataclass
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +20,7 @@ class ScenarioResult:
     final_estimate: list[float]
     estimates: list[list[float]]
     metrics: dict[str, float]
+    diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -26,11 +29,61 @@ class ScenarioResult:
         return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
 
 
+ScenarioRunner = Callable[[str | Path], ScenarioResult]
+_SCENARIO_RUNNERS: dict[str, ScenarioRunner] = {}
+
+
+def register_scenario_runner(
+    scenario_type: str, runner: ScenarioRunner
+) -> ScenarioRunner:
+    """Register ``runner`` for a TOML ``scenario.type`` value."""
+    if not scenario_type:
+        raise ValueError("scenario_type must be a non-empty string")
+    if scenario_type in _SCENARIO_RUNNERS:
+        raise ValueError(f"Scenario type {scenario_type!r} is already registered")
+    _SCENARIO_RUNNERS[scenario_type] = runner
+    return runner
+
+
+def scenario_runner(scenario_type: str) -> Callable[[ScenarioRunner], ScenarioRunner]:
+    """Decorator form of :func:`register_scenario_runner`."""
+
+    def decorator(runner: ScenarioRunner) -> ScenarioRunner:
+        return register_scenario_runner(scenario_type, runner)
+
+    return decorator
+
+
+def available_scenario_types() -> tuple[str, ...]:
+    """Return registered scenario types in a stable order."""
+    return tuple(sorted(_SCENARIO_RUNNERS))
+
+
 def load_scenario_config(path: str | Path) -> dict[str, Any]:
     """Load a TOML scenario configuration."""
     scenario_path = Path(path)
     with scenario_path.open("rb") as handle:
         return tomllib.load(handle)
+
+
+def _scenario_seed(config: dict[str, Any]) -> int | None:
+    for section_name in ("random", "scenario"):
+        section = config.get(section_name, {})
+        if isinstance(section, dict) and "seed" in section:
+            return int(section["seed"])
+    if "seed" in config:
+        return int(config["seed"])
+    return None
+
+
+def _apply_scenario_seed(config: dict[str, Any]) -> int | None:
+    seed = _scenario_seed(config)
+    if seed is None:
+        return None
+    from pyrecest.reproducibility import seed_all
+
+    seed_all(seed)
+    return seed
 
 
 def _to_float_list(value: Any) -> list[float]:
@@ -43,9 +96,12 @@ def _to_float_list(value: Any) -> list[float]:
 
     if hasattr(value, "tolist"):
         value = value.tolist()
+    if isinstance(value, int | float):
+        return [float(value)]
     return [float(item) for item in value]
 
 
+@scenario_runner("linear_gaussian")
 def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
     """Run a constant-size linear Gaussian Kalman filtering scenario.
 
@@ -58,6 +114,7 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
         raise ValueError(
             "Only scenario.type = 'linear_gaussian' is supported by this runner."
         )
+    seed = _apply_scenario_seed(config)
 
     from pyrecest import backend as be
     from pyrecest.filters import KalmanFilter
@@ -80,13 +137,17 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
     )
 
     estimates: list[list[float]] = []
+    nis_values: list[float] = []
     for scalar_measurement in data["measurements"]:
         kalman_filter.predict_linear(system_matrix, system_noise_cov)
-        kalman_filter.update_linear(
+        diagnostics = kalman_filter.update_linear(
             be.array([float(scalar_measurement)]),
             measurement_matrix,
             measurement_noise_cov,
+            return_diagnostics=True,
         )
+        if diagnostics is not None and diagnostics.get("nis") is not None:
+            nis_values.append(float(diagnostics["nis"]))
         estimates.append(_to_float_list(kalman_filter.get_point_estimate()))
 
     final_estimate = (
@@ -102,6 +163,9 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
             for a, b in zip(final_estimate, expected["final_estimate"])
         ]
         metrics["max_abs_final_estimate_error"] = max(errors) if errors else 0.0
+    if nis_values:
+        metrics["mean_nis"] = sum(nis_values) / len(nis_values)
+        metrics["max_nis"] = max(nis_values)
 
     return ScenarioResult(
         name=config.get("scenario", {}).get("name", Path(path).stem),
@@ -109,6 +173,74 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
         final_estimate=final_estimate,
         estimates=estimates,
         metrics=metrics,
+        diagnostics={"seed": seed, "nis": nis_values},
+    )
+
+
+@scenario_runner("particle_resampling")
+def run_particle_resampling_scenario(path: str | Path) -> ScenarioResult:
+    """Run a deterministic weighted-resampling smoke scenario.
+
+    This compact scenario is useful for CI because it exercises backend random
+    state, particle weights, and serializable diagnostics without depending on a
+    large tracker configuration.
+    """
+    config = load_scenario_config(path)
+    if config.get("scenario", {}).get("type") != "particle_resampling":
+        raise ValueError(
+            "Only scenario.type = 'particle_resampling' is supported by this runner."
+        )
+    seed = _apply_scenario_seed(config)
+
+    from pyrecest import backend as be
+    from pyrecest.diagnostics import ParticleDiagnostics
+
+    data = config["data"]
+    particles = be.asarray(data["particles"], dtype=be.float64)
+    raw_weights = data.get("weights")
+    if raw_weights is None:
+        raw_weights = [
+            1.0 / int(particles.shape[0]) for _ in range(int(particles.shape[0]))
+        ]
+    weights = be.asarray(raw_weights, dtype=be.float64)
+    weights = weights / be.sum(weights)
+    num_samples = int(data.get("num_samples", int(particles.shape[0])))
+
+    indices = be.random.choice(
+        be.arange(int(particles.shape[0])),
+        size=num_samples,
+        replace=True,
+        p=weights,
+    )
+    sampled_particles = particles[indices]
+    sampled_mean = be.sum(sampled_particles, axis=0) / float(num_samples)
+    final_estimate = _to_float_list(sampled_mean)
+
+    weights_py = _to_float_list(weights)
+    diagnostics = ParticleDiagnostics.from_weights(
+        weights_py,
+        resampled=True,
+        resampling_count=1,
+        metadata={
+            "seed": seed,
+            "indices": _to_float_list(indices),
+        },
+    )
+    metrics = {
+        "effective_sample_size": float(diagnostics.effective_sample_size or 0.0),
+        "weight_entropy": float(diagnostics.weight_entropy or 0.0),
+        "max_weight": max(weights_py),
+        "min_weight": min(weights_py),
+        "sample_mean_norm": math.sqrt(sum(value * value for value in final_estimate)),
+    }
+
+    return ScenarioResult(
+        name=config.get("scenario", {}).get("name", Path(path).stem),
+        backend=getattr(be, "__backend_name__", "unknown"),
+        final_estimate=final_estimate,
+        estimates=[_to_float_list(row) for row in sampled_particles],
+        metrics=metrics,
+        diagnostics=diagnostics.to_dict(),
     )
 
 
@@ -116,14 +248,22 @@ def run_scenario(path: str | Path) -> ScenarioResult:
     """Run the scenario described by ``path``."""
     config = load_scenario_config(path)
     scenario_type = config.get("scenario", {}).get("type")
-    if scenario_type == "linear_gaussian":
-        return run_linear_gaussian_scenario(path)
-    raise ValueError(f"Unsupported scenario type: {scenario_type!r}")
+    runner = _SCENARIO_RUNNERS.get(scenario_type)
+    if runner is None:
+        available = ", ".join(available_scenario_types()) or "none"
+        raise ValueError(
+            f"Unsupported scenario type: {scenario_type!r}. Available scenario types: {available}."
+        )
+    return runner(path)
 
 
 __all__ = [
     "ScenarioResult",
+    "available_scenario_types",
     "load_scenario_config",
+    "register_scenario_runner",
     "run_linear_gaussian_scenario",
+    "run_particle_resampling_scenario",
     "run_scenario",
+    "scenario_runner",
 ]
