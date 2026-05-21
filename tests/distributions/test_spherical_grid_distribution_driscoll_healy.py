@@ -32,8 +32,12 @@ class TestSphericalGridDistributionDriscollHealy(unittest.TestCase):
         self.assertEqual(distribution.grid_type, "driscoll_healy")
         self.assertEqual(distribution.grid.shape, (91, 3))
         self.assertEqual(distribution.grid_values.shape, (91,))
-        self.assertTrue(all(distribution.grid_values == 1.0))
-        npt.assert_allclose(distribution.pdf(array([0.0, 0.0, 1.0])), 1.0)
+        self.assertTrue(all(distribution.grid_values == distribution.grid_values[0]))
+        npt.assert_allclose(distribution.integrate(), 1.0)
+        npt.assert_allclose(
+            distribution.pdf(array([0.0, 0.0, 1.0])),
+            distribution.grid_values[0],
+        )
 
 
 if __name__ == "__main__":
