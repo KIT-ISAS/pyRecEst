@@ -89,6 +89,9 @@ warn_return_any = true
 [tool.ruff]
 line-length = 180
 
+[tool.ruff.lint]
+select = ["F821", "F822", "F823"]
+
 [tool.isort]
 profile = "black"
 
