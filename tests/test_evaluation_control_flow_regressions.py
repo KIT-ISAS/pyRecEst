@@ -8,6 +8,7 @@ import pytest
 from pyrecest.backend import array, eye, get_backend_name, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.evaluation import (
+    check_and_fix_config,
     configure_for_filter,
     generate_simulated_scenarios,
     perform_predict_update_cycles,
@@ -144,6 +145,20 @@ class TestEvaluationControlFlowRegressions(unittest.TestCase):
         )
 
         npt.assert_allclose(last_estimate, array([1.0]))
+
+    def test_eot_meas_per_step_is_normalized_to_per_step_counts(self):
+        config = check_and_fix_config(
+            {
+                "mtt": False,
+                "eot": True,
+                "n_timesteps": 3,
+                "meas_per_step": 2,
+                "initial_prior": GaussianDistribution(array([0.0, 0.0]), eye(2)),
+            }
+        )
+
+        self.assertNotIn("meas_per_step", config)
+        self.assertEqual(config["n_meas_at_individual_time_step"], [2, 2, 2])
 
     @pytest.mark.skipif(
         IS_JAX_BACKEND, reason="MTT measurement generation is unsupported with JAX."
