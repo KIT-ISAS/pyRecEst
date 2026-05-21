@@ -35,11 +35,15 @@ def iter_python_blocks(path: Path):
 
 
 def run_block(block: CodeBlock, *, env: dict[str, str]) -> int:
-    with tempfile.NamedTemporaryFile("w", suffix=".py", encoding="utf-8", delete=False) as handle:
+    with tempfile.NamedTemporaryFile(
+        "w", suffix=".py", encoding="utf-8", delete=False
+    ) as handle:
         handle.write(block.code)
         script_path = Path(handle.name)
     try:
-        completed = subprocess.run([sys.executable, str(script_path)], env=env, text=True)
+        completed = subprocess.run(
+            [sys.executable, str(script_path)], env=env, text=True
+        )
         return int(completed.returncode)
     finally:
         script_path.unlink(missing_ok=True)
@@ -48,8 +52,14 @@ def run_block(block: CodeBlock, *, env: dict[str, str]) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="+", type=Path)
-    parser.add_argument("--collect-only", action="store_true", help="List runnable blocks without executing them.")
-    parser.add_argument("--fail-fast", action="store_true", help="Stop at the first failing block.")
+    parser.add_argument(
+        "--collect-only",
+        action="store_true",
+        help="List runnable blocks without executing them.",
+    )
+    parser.add_argument(
+        "--fail-fast", action="store_true", help="Stop at the first failing block."
+    )
     args = parser.parse_args(argv)
 
     env = os.environ.copy()

@@ -18,7 +18,7 @@ python scripts/render_backend_api_matrix.py
 ## Support Levels
 
 | Level         | Meaning                                                                                                                     |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------|
 | `supported`   | Intended to preserve backend semantics for the listed API.                                                                  |
 | `bridged`     | Works by crossing into another numerical stack, usually NumPy/SciPy; do not assume device, dtype, or gradient preservation. |
 | `partial`     | Numerically useful, but with documented limitations such as missing modes or mixed native/bridged implementation.           |
@@ -27,7 +27,7 @@ python scripts/render_backend_api_matrix.py
 ## Public API Rows
 
 | API                            | NumPy     | PyTorch     | JAX         | Notes                                                                                                                            |
-| ------------------------------ | --------- | ----------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+|--------------------------------|-----------|-------------|-------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `BackendFacade`                | supported | partial     | partial     | Facade names are importable across backends, but some functions are bridged or explicitly unsupported.                           |
 | `DistributionConversion`       | supported | partial     | partial     | Euclidean particle/Gaussian conversions are portable; grid, Fourier, and manifold routes are route-specific.                     |
 | `EuclideanParticleFilter`      | supported | partial     | partial     | Particle operations are portable where sampling and resampling helpers preserve backend semantics.                               |
