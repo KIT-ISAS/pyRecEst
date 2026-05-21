@@ -1,0 +1,130 @@
+import unittest
+
+import numpy as np
+import numpy.testing as npt
+import pytest
+
+# pylint: disable=redefined-builtin,no-name-in-module,no-member
+from pyrecest.backend import array, eye, get_backend_name, zeros
+from pyrecest.distributions import GaussianDistribution
+from pyrecest.evaluation import (
+    configure_for_filter,
+    generate_simulated_scenarios,
+    perform_predict_update_cycles,
+)
+from pyrecest.evaluation.configure_for_filter import register_filter_factory
+
+IS_JAX_BACKEND = get_backend_name() == "jax"
+
+
+class _LikelihoodRecordingFilter:
+    def __init__(self):
+        self.applied_likelihood_values = []
+
+    @property
+    def filter_state(self):
+        return self
+
+    def update_nonlinear_using_likelihood(self, likelihood, measurement=None):
+        likelihood_values = likelihood(measurement, array([[0.0]]))
+        self.applied_likelihood_values.append(likelihood_values)
+
+    def get_point_estimate(self):
+        if not self.applied_likelihood_values:
+            return zeros(1)
+        return array([self.applied_likelihood_values[-1][0]])
+
+
+def _likelihood_test_factory(_filter_config, scenario_config, _precalculated_params):
+    filter_obj = _LikelihoodRecordingFilter()
+
+    def prediction_routine():
+        return None
+
+    return (
+        filter_obj,
+        prediction_routine,
+        scenario_config.get("likelihood"),
+        scenario_config.get("meas_noise"),
+    )
+
+
+class TestEvaluationControlFlowRegressions(unittest.TestCase):
+    def test_configured_kf_with_inputs_passes_process_covariance(self):
+        scenario_config = {
+            "initial_prior": GaussianDistribution(array([0.0]), eye(1)),
+            "sys_noise": GaussianDistribution(array([0.0]), 0.5 * eye(1)),
+            "meas_noise": GaussianDistribution(array([0.0]), eye(1)),
+            "inputs": array([[2.0]]),
+        }
+
+        filter_obj, prediction_routine, _, _ = configure_for_filter(
+            {"name": "kf", "parameter": None},
+            scenario_config,
+        )
+
+        prediction_routine(array([2.0]))
+
+        npt.assert_allclose(filter_obj.filter_state.mean(), array([2.0]))
+        npt.assert_allclose(filter_obj.filter_state.covariance(), 1.5 * eye(1))
+
+    def test_perform_cycles_honors_callable_likelihood_updates(self):
+        filter_name = "likelihood_control_flow_regression"
+        register_filter_factory(filter_name, _likelihood_test_factory)
+        calls = []
+
+        def likelihood(measurement, particles):
+            calls.append((measurement, particles))
+            return array([float(measurement) + 1.0])
+
+        scenario_config = {
+            "n_timesteps": 1,
+            "n_meas_at_individual_time_step": [1],
+            "apply_sys_noise_times": [False],
+            "use_likelihood": True,
+            "likelihood": likelihood,
+            "mtt": False,
+            "eot": False,
+        }
+        groundtruth = np.array([[0.0]])
+        measurements = np.empty(1, dtype=object)
+        measurements[0] = np.array([[2.0]])
+
+        _, _, last_estimate, _ = perform_predict_update_cycles(
+            scenario_config,
+            {"name": filter_name, "parameter": None},
+            groundtruth,
+            measurements,
+        )
+
+        self.assertEqual(len(calls), 1)
+        npt.assert_allclose(last_estimate, array([3.0]))
+
+    @pytest.mark.skipif(
+        IS_JAX_BACKEND, reason="MTT measurement generation is unsupported with JAX."
+    )
+    def test_simulated_single_target_mtt_measurements_accept_object_groundtruth(self):
+        simulation_config = {
+            "mtt": True,
+            "eot": False,
+            "all_seeds": [1],
+            "n_timesteps": 2,
+            "n_targets": 1,
+            "initial_prior": GaussianDistribution(array([0.0, 0.0]), eye(2)),
+            "sys_noise": GaussianDistribution(array([0.0, 0.0]), 1.0e-6 * eye(2)),
+            "meas_matrix_for_each_target": eye(2),
+            "meas_noise": GaussianDistribution(array([0.0, 0.0]), 1.0e-6 * eye(2)),
+            "detection_probability": 1,
+            "clutter_rate": 0,
+        }
+
+        groundtruths, measurements = generate_simulated_scenarios(simulation_config)
+
+        self.assertEqual(groundtruths.shape, (1, 2))
+        self.assertEqual(measurements.shape, (1, 2))
+        self.assertEqual(measurements[0, 0].shape, (1, 2))
+        self.assertEqual(measurements[0, 1].shape, (1, 2))
+
+
+if __name__ == "__main__":
+    unittest.main()
