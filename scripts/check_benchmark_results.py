@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -52,10 +53,7 @@ def _compare_nested_numbers(
         if not _is_number(actual):
             return [f"{path}: expected numeric value {expected!r}, got {actual!r}."]
         if not math.isclose(float(actual), float(expected), rel_tol=rtol, abs_tol=atol):
-            return [
-                f"{path}: expected {float(expected)!r}, got {float(actual)!r} "
-                f"with tolerances rtol={rtol}, atol={atol}."
-            ]
+            return [f"{path}: expected {float(expected)!r}, got {float(actual)!r} with tolerances rtol={rtol}, atol={atol}."]
         return []
 
     if isinstance(expected, Sequence) and not isinstance(expected, str):
@@ -96,19 +94,14 @@ def _runtime_errors(
         if not _is_number(elapsed):
             errors.append("elapsed_seconds is missing or not numeric in the result entry.")
         elif float(elapsed) > float(max_elapsed):
-            errors.append(
-                f"elapsed_seconds={float(elapsed):.6g} exceeds max_elapsed_seconds={float(max_elapsed):.6g}."
-            )
+            errors.append(f"elapsed_seconds={float(elapsed):.6g} exceeds max_elapsed_seconds={float(max_elapsed):.6g}.")
 
     baseline_elapsed = baseline_entry.get("elapsed_seconds")
     if max_runtime_ratio is not None and baseline_elapsed is not None:
         if not _is_number(elapsed):
             errors.append("elapsed_seconds is missing or not numeric in the result entry.")
         elif float(elapsed) > float(baseline_elapsed) * max_runtime_ratio:
-            errors.append(
-                f"elapsed_seconds={float(elapsed):.6g} exceeds baseline elapsed_seconds "
-                f"{float(baseline_elapsed):.6g} by more than ratio {max_runtime_ratio:.6g}."
-            )
+            errors.append(f"elapsed_seconds={float(elapsed):.6g} exceeds baseline elapsed_seconds {float(baseline_elapsed):.6g} by more than ratio {max_runtime_ratio:.6g}.")
 
     return errors
 
@@ -135,10 +128,7 @@ def main() -> None:
             continue
 
         if "iterations" in expected_entry and actual_entry.get("iterations") != expected_entry["iterations"]:
-            errors.append(
-                f"{name}: expected iterations={expected_entry['iterations']!r}, "
-                f"got {actual_entry.get('iterations')!r}."
-            )
+            errors.append(f"{name}: expected iterations={expected_entry['iterations']!r}, got {actual_entry.get('iterations')!r}.")
 
         if "final_estimate" in expected_entry:
             errors.extend(
