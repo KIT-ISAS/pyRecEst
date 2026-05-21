@@ -26,15 +26,20 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
 
     def test_pdf_method(self):
         """Test that the pdf method returns correct values."""
-        x_mesh, y_mesh = meshgrid(
-            linspace(1.0, 3.0, 50), linspace(2.0, 5.0, 50), indexing="ij"
-        )
+        x_mesh, y_mesh = meshgrid(linspace(1.0, 3.0, 50), linspace(2.0, 5.0, 50), indexing="ij")
         expected_pdf = 1.0 / 6.0 * ones(50**2)
         calculated_pdf = self.cd.pdf(column_stack((x_mesh.ravel(), y_mesh.ravel())))
         self.assertTrue(
             allclose(calculated_pdf, expected_pdf),
             "PDF calculated values do not match the expected values.",
         )
+
+    def test_manifold_size_uses_one_row_per_dimension(self):
+        self.assertEqual(self.hud.dim, 2)
+        self.assertTrue(allclose(self.hud.get_manifold_size(), 6.0))
+
+    def test_integrate_defaults_to_full_rectangular_bounds(self):
+        self.assertAlmostEqual(float(self.hud.integrate()), 1.0, places=10)
 
     def test_one_dimensional_bounds_are_supported(self):
         cd = CustomHyperrectangularDistribution(lambda _xs: 0.5, array([0.0, 2.0]))
@@ -53,6 +58,20 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
         self.assertEqual(cd.dim, 3)
         self.assertAlmostEqual(float(cd.get_manifold_size()), 24.0)
         self.assertAlmostEqual(cd.integrate(), 24.0)
+
+    def test_three_dimensional_bounds_set_dim_and_volume(self):
+        dist = HyperrectangularUniformDistribution(
+            array(
+                [
+                    [0.0, 2.0],
+                    [1.0, 4.0],
+                    [-2.0, 2.0],
+                ]
+            )
+        )
+
+        self.assertEqual(dist.dim, 3)
+        self.assertTrue(allclose(dist.get_manifold_size(), 24.0))
 
 
 if __name__ == "__main__":
