@@ -1,5 +1,6 @@
 import importlib.util
 import unittest
+from math import ceil
 
 import numpy.testing as npt
 
@@ -191,6 +192,16 @@ class TestHypersphericalSampler(unittest.TestCase):
             f"Expected 4-dimensional-output but got {grid.shape[1]}-dimensional output",
         )
 
+    def test_fibonacci_hopf_sampler_accepts_integer_density(self):
+        sampler = FibonacciHopfSampler()
+        grid_density_parameter = 10
+        grid, grid_description = sampler.get_grid(grid_density_parameter)
+
+        expected_circle_points = ceil(grid_density_parameter**0.5)
+        expected_points = grid_density_parameter * expected_circle_points
+        self.assertEqual(grid.shape, (expected_points, 4))
+        self.assertEqual(grid_description["layer-parameter"], [grid_density_parameter])
+
     @parameterized.expand(
         [
             ("test_2d_12_n_only", 12, 2, (12, 3)),
@@ -297,29 +308,26 @@ class TestHypersphericalSampler(unittest.TestCase):
 
 class TestSphericalCoordinatesBasedFixedResolutionSampler(unittest.TestCase):
     def test_get_grid_spherical_coordinates(self):
-        # Create an instance of the sampler
         sampler = SphericalCoordinatesBasedFixedResolutionSampler()
+        res_lon = 10
+        res_lat = 20
 
-        # Define the resolution parameters for latitude and longitude
-        grid_density_parameter = array(
-            [10, 20]
-        )  # 10 latitude lines, 20 longitude lines
+        phi, theta, _ = sampler.get_grid_spherical_coordinates((res_lon, res_lat))
 
-        # Call the method
-        phi, theta, _ = sampler.get_grid_spherical_coordinates(grid_density_parameter)
-
-        expected_phi = linspace(
-            0.0, 2 * pi, num=grid_density_parameter[0], endpoint=False
-        )
-        expected_theta = linspace(
-            pi / (grid_density_parameter[1] + 1),
+        expected_phi_values = linspace(0.0, 2 * pi, num=res_lon, endpoint=False)
+        expected_theta_values = linspace(
+            pi / (res_lat + 1),
             pi,
-            num=grid_density_parameter[1],
+            num=res_lat,
             endpoint=False,
         )
+        expected_phi = array(
+            [phi_value for phi_value in expected_phi_values for _ in expected_theta_values]
+        )
+        expected_theta = array(
+            [theta_value for _ in expected_phi_values for theta_value in expected_theta_values]
+        )
 
-        # Check if the first and last values of the generated phi and theta are as expected
-        # This assumes that you have access to phi and theta which might not be the case here
         npt.assert_allclose(phi, expected_phi)
         npt.assert_allclose(theta, expected_theta)
 
@@ -327,9 +335,26 @@ class TestSphericalCoordinatesBasedFixedResolutionSampler(unittest.TestCase):
         sampler = SphericalCoordinatesBasedFixedResolutionSampler()
 
         phi, theta, grid_description = sampler.get_grid_spherical_coordinates((10, 20))
-        npt.assert_equal(phi.shape[0], 10)
-        npt.assert_equal(theta.shape[0], 20)
+        npt.assert_equal(phi.shape[0], 200)
+        npt.assert_equal(theta.shape[0], 200)
         self.assertEqual(grid_description, {"res_lat": 20, "res_lon": 10})
+
+    def test_get_grid_returns_full_tensor_product(self):
+        sampler = SphericalCoordinatesBasedFixedResolutionSampler()
+
+        grid, grid_description = sampler.get_grid((4, 3))
+
+        self.assertEqual(grid.shape, (12, 3))
+        self.assertEqual(grid_description, {"res_lat": 3, "res_lon": 4})
+        npt.assert_allclose(linalg.norm(grid, axis=1), 1.0, atol=1e-12)
+
+    def test_get_grid_rejects_nonpositive_resolution(self):
+        sampler = SphericalCoordinatesBasedFixedResolutionSampler()
+
+        with self.assertRaises(ValueError):
+            sampler.get_grid((0, 3))
+        with self.assertRaises(ValueError):
+            sampler.get_grid((4, 0))
 
 
 class TestHopfConversion(unittest.TestCase):
