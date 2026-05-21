@@ -359,19 +359,6 @@ def get_slice(array, start, end):
     return array[start:end]
 
 
-def as_dtype(array):
-    """Change the data type of a given array.
-
-    Parameters:
-    - array: The array whose data type needs to be changed
-    - dtype: The new data type
-
-    Returns:
-    A new array with the specified data type.
-    """
-    return _jnp.asarray(array, dtype=dtype)
-
-
 # Check if dtype is floating-point
 def is_floating(array):
     return _jnp.issubdtype(array.dtype, _jnp.floating)
