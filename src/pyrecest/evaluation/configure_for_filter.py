@@ -33,6 +33,15 @@ def get_registered_filter_factory(filter_name: str) -> FilterFactory | None:
     return _FILTER_FACTORIES.get(filter_name)
 
 
+def _gen_next_state_with_noise_is_vectorized(scenario_config) -> bool:
+    return bool(
+        scenario_config.get(
+            "gen_next_state_with_noise_is_vectorized",
+            scenario_config.get("genNextStateWithNoiseIsVectorized", False),
+        )
+    )
+
+
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
 # pylint: disable=too-many-locals
@@ -110,7 +119,7 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
                     return filter_obj.predict_nonlinear(
                         scenario_config["gen_next_state_with_noise"],
                         None,
-                        scenario_config.get("genNextStateWithNoiseIsVectorized", False),
+                        _gen_next_state_with_noise_is_vectorized(scenario_config),
                     )
 
             elif "sys_noise" in scenario_config:
@@ -138,6 +147,7 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
             filter_obj = EuclideanParticleFilter(
                 no_particles, scenario_config["initial_prior"].dim
             )
+            filter_obj.filter_state = scenario_config["initial_prior"]
             if scenario_config.get("inputs") is None:
 
                 def prediction_routine():  # type: ignore[misc]
