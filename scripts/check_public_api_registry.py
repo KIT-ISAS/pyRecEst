@@ -93,8 +93,7 @@ def check_document(path: Path) -> int:
     if expected in actual:
         return 0
     print(
-        f"{path} does not contain the generated public API registry. "
-        "Run scripts/check_public_api_registry.py and update the table.",
+        f"{path} does not contain the generated public API registry. Run scripts/check_public_api_registry.py and update the table.",
         file=sys.stderr,
     )
     return 1

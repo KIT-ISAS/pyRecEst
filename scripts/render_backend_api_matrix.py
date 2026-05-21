@@ -67,8 +67,7 @@ def check_document(path: Path) -> int:
         return 0
 
     print(
-        f"{path} does not contain the generated backend API matrix. "
-        "Run scripts/render_backend_api_matrix.py and update the table.",
+        f"{path} does not contain the generated backend API matrix. Run scripts/render_backend_api_matrix.py and update the table.",
         file=sys.stderr,
     )
     return 1
