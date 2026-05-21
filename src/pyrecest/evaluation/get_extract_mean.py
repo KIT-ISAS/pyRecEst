@@ -50,15 +50,17 @@ def get_extract_mean(manifold_name, mtt_scenario=False):
     if registered_factory is not None:
         return registered_factory(manifold_name, mtt_scenario)
 
-    if "circle" in manifold_name or "hypertorus" in manifold_name:
+    if "circle" in normalized_name or "hypertorus" in normalized_name:
 
         def extract_mean(filter_state):
             return filter_state.mean_direction()
 
-    elif "hypersphereSymmetric" in manifold_name:
-        extract_mean = "custom"
+    elif "hyperspheresymmetric" in normalized_name:
+        raise NotImplementedError(
+            "Symmetric hypersphere mean extraction needs a custom extractor."
+        )
 
-    elif "hypersphere" in manifold_name:
+    elif "hypersphere" in normalized_name:
 
         def extract_mean(filter_state):
             return filter_state.mean_direction()
@@ -66,32 +68,28 @@ def get_extract_mean(manifold_name, mtt_scenario=False):
     elif "symm" in normalized_name:
         raise NotImplementedError("Symmetric mean extraction needs a custom extractor")
 
-    elif "se2" in manifold_name or "se2linear" in manifold_name:
+    elif "se2bounded" in normalized_name:
         raise NotImplementedError("Not implemented yet")
 
-    elif "se2bounded" in manifold_name:
+    elif "se2" in normalized_name or "se2linear" in normalized_name:
         raise NotImplementedError("Not implemented yet")
 
-    elif "se3" in manifold_name or "se3linear" in manifold_name:
+    elif "se3bounded" in normalized_name:
 
         def extract_mean(filter_state):
             return filter_state.hybrid_mean()
 
-    elif "se3bounded" in manifold_name:
+    elif "se3" in normalized_name or "se3linear" in normalized_name:
 
         def extract_mean(filter_state):
             return filter_state.hybrid_mean()
 
-    elif (
-        "euclidean" in manifold_name or "Euclidean" in manifold_name
-    ) and not mtt_scenario:
+    elif "euclidean" in normalized_name and not mtt_scenario:
 
         def extract_mean(filter_state):
             return _point_estimate_or_mean(filter_state)
 
-    elif (
-        "euclidean" in manifold_name or "Euclidean" in manifold_name
-    ) and mtt_scenario:
+    elif "euclidean" in normalized_name and mtt_scenario:
 
         def extract_mean(filter_state):
             return _extract_mtt_mean(filter_state)
