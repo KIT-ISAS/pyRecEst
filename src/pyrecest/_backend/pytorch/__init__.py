@@ -4,92 +4,89 @@ from collections.abc import Iterable as _Iterable
 
 import numpy as _np
 import torch as _torch
-from torch import (
+from torch import (  # The ones below are for pyrecest; For Riemannian score-based SDE
+    angle,
     arange,
+    arctan,
     argmin,
+    argsort,
     asarray,
+    atleast_1d,
+    atleast_2d,
+)
+from torch import broadcast_tensors as broadcast_arrays
+from torch import (  # The ones below are for pyrecest; For Riemannian score-based SDE
     clip,
+    column_stack,
     complex64,
     complex128,
     conj,
+    count_nonzero,
+    deg2rad,
+    diag,
+    diff,
+    dstack,
     empty,
     empty_like,
+)
+from torch import equal as array_equal  # For PyRecEst
+from torch import (  # The ones below are for pyrecest; For Riemannian score-based SDE
     erf,
     eye,
     flatten,
     float32,
     float64,
+    full,
+    full_like,
     greater,
     hstack,
     int32,
     int64,
+    isfinite,
+    isinf,
     isnan,
+    isreal,
     kron,
     less,
+    log1p,
     logical_or,
     mean,
     meshgrid,
     moveaxis,
+    nonzero,
     ones,
     ones_like,
     polygamma,
     quantile,
+    rad2deg,
+)
+from torch import repeat_interleave as repeat
+from torch import (  # The ones below are for pyrecest; For Riemannian score-based SDE
     reshape,
+    roll,
+    round,
     scatter_add,
     searchsorted,
     stack,
     trapezoid,
+    triu,
     uint8,
+    vmap,
     vstack,
     zeros,
     zeros_like,
-    # The ones below are for pyrecest
-    diag,
-    diff,
-    nonzero,
-    column_stack,
-    conj,
-    atleast_1d,
-    atleast_2d,
-    dstack,
-    full,
-    isreal,
-    triu,
-    kron,
-    angle,
-    arctan,
-    count_nonzero,
-    full_like,
-    isinf,
-    isfinite,
-    deg2rad,
-    rad2deg,
-    argsort,
-    roll,
-    dstack,
-    vmap,
-    round,
-    # For Riemannian score-based SDE
-    log1p,
 )
-from torch import equal as array_equal  # For PyRecEst
-
-from torch import broadcast_tensors as broadcast_arrays
-from torch import repeat_interleave as repeat
-from torch.special import gammaln as _gammaln
 from torch.special import gammaln
+from torch.special import gammaln as _gammaln
 
 from .._backend_config import pytorch_atol as atol
 from .._backend_config import pytorch_rtol as rtol
-from . import (
-    autodiff,  # NOQA
-    linalg,  # NOQA
-    random,  # NOQA
-    # for pyrecest
-    fft,  # NOQA
-    spatial,  # NOQA
-    signal,  # NOQA
-)
+from . import autodiff  # NOQA
+from . import fft  # NOQA
+from . import linalg  # NOQA
+from . import random  # NOQA
+from . import signal  # NOQA
+from . import spatial  # for pyrecest; NOQA
 from ._common import array, cast, from_numpy
 from ._dtype import (
     _add_default_dtype_by_casting,
