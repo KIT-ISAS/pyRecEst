@@ -116,3 +116,16 @@ def benchmarks(session: nox.Session) -> None:
         "./benchmarks",
         external=True,
     )
+
+
+@nox.session(python=PYTHON_DEFAULT)
+def typecheck_core(session: nox.Session) -> None:
+    """Run a strict typing lane for stable, low-dependency modules."""
+    session.install("mypy>=1.12,<2.0")
+    session.env["PYTHONPATH"] = "src"
+    session.run(
+        "mypy",
+        "src/pyrecest/diagnostics.py",
+        "src/pyrecest/reproducibility.py",
+        "src/pyrecest/scenarios.py",
+    )

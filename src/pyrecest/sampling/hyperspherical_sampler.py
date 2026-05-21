@@ -1,5 +1,6 @@
 import itertools
 from abc import abstractmethod
+from math import ceil
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest import backend
@@ -183,8 +184,13 @@ class SphericalCoordinatesBasedFixedResolutionSampler(
             ) from exc
         res_lon = int(res_lon)
         res_lat = int(res_lat)
-        phi = linspace(0.0, 2 * pi, num=res_lon, endpoint=False)
-        theta = linspace(pi / (res_lat + 1), pi, num=res_lat, endpoint=False)
+        if res_lon <= 0 or res_lat <= 0:
+            raise ValueError("grid resolution entries must be positive")
+        phi_values = linspace(0.0, 2 * pi, num=res_lon, endpoint=False)
+        theta_values = linspace(pi / (res_lat + 1), pi, num=res_lat, endpoint=False)
+        phi_theta_stacked = array(list(itertools.product(phi_values, theta_values)))
+        phi = phi_theta_stacked[:, 0]
+        theta = phi_theta_stacked[:, 1]
         return phi, theta, {"res_lat": res_lat, "res_lon": res_lon}
 
 
@@ -418,9 +424,9 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         # Step 2: Discretize the unit circle using the circular grid
         circular_sampler = CircularUniformSampler()
         if len(grid_density_parameter) == 2:
-            n_sample_circle = grid_density_parameter[1]
+            n_sample_circle = int(grid_density_parameter[1])
         else:
-            n_sample_circle = sqrt(grid_density_parameter[0])
+            n_sample_circle = int(ceil(float(grid_density_parameter[0]) ** 0.5))
         psi_points = circular_sampler.get_grid(n_sample_circle)
 
         # Step 3: Combine the two grids to generate a grid for S3

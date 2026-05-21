@@ -7,6 +7,7 @@ from pyrecest.backend import hstack, ndim, ones_like, random, sum, vmap, vstack
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
+from pyrecest.diagnostics import ParticleDiagnostics
 
 from .abstract_filter import AbstractFilter
 
@@ -41,6 +42,7 @@ class AbstractParticleFilter(AbstractFilter):
     ):
         AbstractFilter.__init__(self, initial_filter_state)
         self.resampling_criterion = resampling_criterion
+        self._resampling_count = 0
 
     @property
     def resampling_criterion(self):
@@ -63,6 +65,14 @@ class AbstractParticleFilter(AbstractFilter):
         self.resampling_criterion = criterion
         return self
 
+    def particle_diagnostics(self, *, resampled: bool | None = None):
+        """Return standard health diagnostics for the current particle weights."""
+        return ParticleDiagnostics.from_weights(
+            self.filter_state.w,
+            resampled=resampled,
+            resampling_count=self._resampling_count,
+        )
+
     def should_resample(self) -> bool:
         """Return whether the current weighted particle set should resample.
 
@@ -83,6 +93,7 @@ class AbstractParticleFilter(AbstractFilter):
         self._filter_state.w = (
             ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
         )
+        self._resampling_count += 1
         return self
 
     def resample_if_needed(self) -> bool:
@@ -216,16 +227,17 @@ class AbstractParticleFilter(AbstractFilter):
                 ones_like(self.filter_state.w) / self.filter_state.w.shape[0]
             )
 
-    def update_model(self, measurement_model, measurement=None):
+    def update_model(self, measurement_model, measurement=None, *, return_diagnostics=False):
         """Update using a reusable particle measurement model."""
         if not hasattr(measurement_model, "likelihood"):
             raise TypeError(
                 "Particle-filter measurement models must expose a likelihood callable."
             )
 
-        self.update_nonlinear_using_likelihood(
+        return self.update_nonlinear_using_likelihood(
             measurement_model.likelihood,
             measurement=measurement,
+            return_diagnostics=return_diagnostics,
         )
 
     def update_identity(
@@ -233,6 +245,8 @@ class AbstractParticleFilter(AbstractFilter):
         meas_noise,
         measurement,
         shift_instead_of_add: bool = True,
+        *,
+        return_diagnostics=False,
     ):
         assert (
             measurement is None
@@ -245,9 +259,9 @@ class AbstractParticleFilter(AbstractFilter):
             raise NotImplementedError()
 
         likelihood = meas_noise.set_mode(measurement).pdf
-        self.update_nonlinear_using_likelihood(likelihood)
+        return self.update_nonlinear_using_likelihood(likelihood, return_diagnostics=return_diagnostics)
 
-    def update_nonlinear_using_likelihood(self, likelihood, measurement=None):
+    def update_nonlinear_using_likelihood(self, likelihood, measurement=None, *, return_diagnostics=False):
         if isinstance(likelihood, AbstractManifoldSpecificDistribution):
             likelihood = likelihood.pdf
 
@@ -258,7 +272,13 @@ class AbstractParticleFilter(AbstractFilter):
                 lambda x: likelihood(measurement, x)
             )
 
-        self.resample_if_needed()
+        diagnostics = self.particle_diagnostics(resampled=False)
+        resampled = self.resample_if_needed()
+        diagnostics.resampled = resampled
+        diagnostics.resampling_count = self._resampling_count
+        if return_diagnostics:
+            return diagnostics
+        return None
 
     def association_likelihood(self, likelihood: AbstractManifoldSpecificDistribution):
         likelihood_val = sum(likelihood.pdf(self.filter_state.d) * self.filter_state.w)
