@@ -397,6 +397,7 @@ def one_hot(indices, depth):
     return _jnp.eye(depth)[indices]
 
 
+# Scatter-add operation
 def scatter_add(input, dim, index, src):
     """Add ``src`` into ``input`` at ``index`` along ``dim``.
 
