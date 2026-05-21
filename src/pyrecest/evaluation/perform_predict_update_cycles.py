@@ -68,7 +68,7 @@ def perform_predict_update_cycles(
         if perform_cumulative_updates:
             raise NotImplementedError("Cumulative updates not implemented yet.")
 
-        all_meas_curr_time_step = atleast_2d(measurements[t])
+        all_meas_curr_time_step = atleast_2d(array(measurements[t]))
         n_updates = all_meas_curr_time_step.shape[0]
 
         if scenario_config.get("eot", False):
