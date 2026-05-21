@@ -29,7 +29,7 @@ baseline for plotting, evaluation, and most NumPy workflows.
 Recommended staged shape:
 
 | Extra             | Intended contents                                                     | Migration check                                                        |
-| ----------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+|-------------------|-----------------------------------------------------------------------|------------------------------------------------------------------------|
 | default           | Minimal Euclidean distributions, filters, models, and backend facade. | Default-wheel smoke test passes without optional extras.               |
 | `plot`            | Matplotlib-dependent plotting helpers.                                | Plotting imports are local to plotting methods.                        |
 | `manifolds`       | Domain-specific manifold and spherical-harmonics dependencies.        | Manifold-heavy public APIs have explicit backend/extra docs.           |

@@ -16,7 +16,9 @@ def _load_payload(path: Path) -> dict[str, Any]:
     return payload
 
 
-def validate_payload(payload: dict[str, Any], *, max_elapsed_seconds: float | None) -> None:
+def validate_payload(
+    payload: dict[str, Any], *, max_elapsed_seconds: float | None
+) -> None:
     benchmarks = payload.get("benchmarks")
     if not isinstance(benchmarks, list) or not benchmarks:
         raise ValueError("benchmark payload must contain a non-empty 'benchmarks' list")
@@ -29,7 +31,9 @@ def validate_payload(payload: dict[str, Any], *, max_elapsed_seconds: float | No
             raise ValueError("each benchmark entry must have a non-empty string 'name'")
         elapsed = entry.get("elapsed_seconds")
         if not isinstance(elapsed, int | float) or elapsed < 0:
-            raise ValueError(f"benchmark {name!r} must have a non-negative numeric elapsed_seconds")
+            raise ValueError(
+                f"benchmark {name!r} must have a non-negative numeric elapsed_seconds"
+            )
         if max_elapsed_seconds is not None and elapsed > max_elapsed_seconds:
             raise ValueError(
                 f"benchmark {name!r} elapsed_seconds={elapsed:.6g} exceeds max_elapsed_seconds={max_elapsed_seconds:.6g}"
@@ -44,7 +48,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-elapsed-seconds", type=float, default=None)
     args = parser.parse_args(argv)
 
-    validate_payload(_load_payload(args.path), max_elapsed_seconds=args.max_elapsed_seconds)
+    validate_payload(
+        _load_payload(args.path), max_elapsed_seconds=args.max_elapsed_seconds
+    )
     return 0
 
 

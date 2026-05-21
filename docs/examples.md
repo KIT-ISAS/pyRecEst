@@ -9,15 +9,15 @@ caught outside editable mode.
 
 ## Choose An Example By Task
 
-| Task | Example | Backend notes | Good for |
-|------|---------|---------------|----------|
-| Linear Gaussian filtering | `examples/basic/kalman_filter.py` | Portable baseline. | First smoke test, API familiarization. |
-| Linear Gaussian filtering with reusable model objects | `examples/basic/kalman_filter_with_models.py` | Portable where model-object APIs are supported. | Applications with shared transition/measurement models. |
-| Nonlinear additive-noise filtering | `examples/basic/ukf_with_models.py` | Follows `UnscentedKalmanFilter` backend limitations. | Nonlinear Euclidean examples. |
-| Particle filtering | `examples/basic/particle_filter_with_models.py` | Requires sampleable transition and likelihood models. | Monte Carlo filter loops. |
-| Multi-target tracking with clutter | `examples/basic/multi_target_tracking.py` | NumPy backend. | Missed detections, clutter, and labeled tracks. |
-| Directional distribution algebra | `examples/basic/von_mises_fisher_multiplication.py` | Manifold/domain-specific APIs. | Unit-sphere probability operations. |
-| User-defined protocols | `examples/basic/custom_distribution_protocol.py`, `examples/basic/custom_filter_protocol.py` | Backend-independent protocol shape. | Extending PyRecEst without subclassing. |
+| Task                                                  | Example                                                                                      | Backend notes                                         | Good for                                                |
+|-------------------------------------------------------|----------------------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------------------------|
+| Linear Gaussian filtering                             | `examples/basic/kalman_filter.py`                                                            | Portable baseline.                                    | First smoke test, API familiarization.                  |
+| Linear Gaussian filtering with reusable model objects | `examples/basic/kalman_filter_with_models.py`                                                | Portable where model-object APIs are supported.       | Applications with shared transition/measurement models. |
+| Nonlinear additive-noise filtering                    | `examples/basic/ukf_with_models.py`                                                          | Follows `UnscentedKalmanFilter` backend limitations.  | Nonlinear Euclidean examples.                           |
+| Particle filtering                                    | `examples/basic/particle_filter_with_models.py`                                              | Requires sampleable transition and likelihood models. | Monte Carlo filter loops.                               |
+| Multi-target tracking with clutter                    | `examples/basic/multi_target_tracking.py`                                                    | NumPy backend.                                        | Missed detections, clutter, and labeled tracks.         |
+| Directional distribution algebra                      | `examples/basic/von_mises_fisher_multiplication.py`                                          | Manifold/domain-specific APIs.                        | Unit-sphere probability operations.                     |
+| User-defined protocols                                | `examples/basic/custom_distribution_protocol.py`, `examples/basic/custom_filter_protocol.py` | Backend-independent protocol shape.                   | Extending PyRecEst without subclassing.                 |
 
 ## Scenario Examples
 

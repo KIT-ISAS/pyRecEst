@@ -12,8 +12,43 @@ BACKENDS = ("numpy", "pytorch", "jax")
 BACKEND_LABELS = {"numpy": "NumPy", "pytorch": "PyTorch", "jax": "JAX"}
 
 
+def _format_table(headers: list[str], rows: list[list[str]]) -> list[str]:
+    widths = [max(len(row[index]) for row in [headers, *rows]) for index in range(len(headers))]
+    lines = [
+        "| " + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(headers)) + " |",
+        "|" + "|".join("-" * (width + 2) for width in widths) + "|",
+    ]
+    lines.extend("| " + " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(row)) + " |" for row in rows)
+    return lines
+
+
 def render_backend_api_matrix() -> str:
     """Return the backend API matrix page as Markdown."""
+    support_rows = [
+        ["`supported`", "Intended to preserve backend semantics for the listed API."],
+        [
+            "`partial`",
+            "Numerically useful, but with documented limitations such as SciPy bridges, CPU copies, or missing gradient/device guarantees.",
+        ],
+        [
+            "`unsupported`",
+            "Should raise a clear `NotImplementedError` or be documented as unavailable for the backend.",
+        ],
+    ]
+
+    api_rows = []
+    for api_name, support in iter_api_backend_capabilities():
+        backend_cells = [support.get(backend, "unsupported") for backend in BACKENDS]
+        api_rows.append(
+            [
+                f"`{api_name}`",
+                backend_cells[0],
+                backend_cells[1],
+                backend_cells[2],
+                support.get("notes", ""),
+            ]
+        )
+
     lines = [
         "# Backend API Matrix",
         "",
@@ -31,23 +66,12 @@ def render_backend_api_matrix() -> str:
         "",
         "## Support Levels",
         "",
-        "| Level | Meaning |",
-        "|-------|---------|",
-        "| `supported` | Intended to preserve backend semantics for the listed API. |",
-        "| `partial` | Numerically useful, but with documented limitations such as SciPy bridges, CPU copies, or missing gradient/device guarantees. |",
-        "| `unsupported` | Should raise a clear `NotImplementedError` or be documented as unavailable for the backend. |",
+        *_format_table(["Level", "Meaning"], support_rows),
         "",
         "## Public API Rows",
         "",
-        "| API | NumPy | PyTorch | JAX | Notes |",
-        "|-----|-------|---------|-----|-------|",
+        *_format_table(["API", "NumPy", "PyTorch", "JAX", "Notes"], api_rows),
     ]
-
-    for api_name, support in iter_api_backend_capabilities():
-        backend_cells = [support.get(backend, "unsupported") for backend in BACKENDS]
-        lines.append(
-            f"| `{api_name}` | {backend_cells[0]} | {backend_cells[1]} | {backend_cells[2]} | {support.get('notes', '')} |"
-        )
 
     lines.extend(
         [
