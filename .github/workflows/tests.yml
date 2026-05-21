@@ -112,6 +112,11 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}/src
 
+      - name: Check backend API matrix documentation
+        run: poetry run python scripts/check_backend_api_matrix.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+
   package:
     runs-on: ubuntu-latest
     steps:
