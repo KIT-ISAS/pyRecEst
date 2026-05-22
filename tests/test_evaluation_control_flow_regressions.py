@@ -14,7 +14,7 @@ from pyrecest.evaluation import (
     perform_predict_update_cycles,
 )
 from pyrecest.evaluation.configure_for_filter import register_filter_factory
-from pyrecest.filters import EuclideanParticleFilter
+from pyrecest.filters import EuclideanParticleFilter, HypertoroidalParticleFilter
 
 IS_JAX_BACKEND = get_backend_name() == "jax"
 
@@ -112,6 +112,32 @@ class TestEvaluationControlFlowRegressions(unittest.TestCase):
             scenario_config["initial_prior"].mean(),
             atol=1.0e-4,
         )
+
+    def test_hypertoroidal_pf_accepts_snake_case_vectorized_transition_flag(self):
+        calls = []
+
+        def vectorized_transition(particles):
+            calls.append(particles.shape)
+            if len(particles.shape) != 2:
+                raise AssertionError("transition must receive the full particle matrix")
+            return particles
+
+        scenario_config = {
+            "initial_prior": GaussianDistribution(array([0.0, 0.0]), 1.0e-12 * eye(2)),
+            "gen_next_state_with_noise": vectorized_transition,
+            "gen_next_state_with_noise_is_vectorized": True,
+            "inputs": None,
+            "manifold": "hypertorus",
+        }
+
+        filter_obj, prediction_routine, _, _ = configure_for_filter(
+            {"name": "pf", "parameter": 5},
+            scenario_config,
+        )
+        prediction_routine()
+
+        self.assertIsInstance(filter_obj, HypertoroidalParticleFilter)
+        self.assertEqual(calls, [(5, 2)])
 
     def test_perform_cycles_honors_callable_likelihood_updates(self):
         filter_name = "likelihood_control_flow_regression"
