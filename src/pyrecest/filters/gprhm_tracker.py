@@ -644,10 +644,48 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             )
         return [bool(mask[index]) for index in range(n_measurements)]
 
+    def _normalize_measurement_noise_covariances(
+        self,
+        measurement_noise,
+        n_measurements,
+    ):
+        noise = array(measurement_noise)
+        if noise.ndim == 3:
+            expected_shape = (
+                n_measurements,
+                self.measurement_dim,
+                self.measurement_dim,
+            )
+            if noise.shape != expected_shape:
+                raise ValueError(
+                    f"R must have shape ({self.measurement_dim}, {self.measurement_dim}) "
+                    f"or ({n_measurements}, {self.measurement_dim}, {self.measurement_dim}) "
+                    "for per-measurement covariances"
+                )
+            return stack(
+                [
+                    self._as_covariance_matrix(
+                        noise[index],
+                        self.measurement_dim,
+                        f"R[{index}]",
+                        require_positive_semidefinite=False,
+                    )
+                    for index in range(n_measurements)
+                ]
+            )
+
+        shared_noise = self._as_covariance_matrix(
+            noise,
+            self.measurement_dim,
+            "R",
+            require_positive_semidefinite=False,
+        )
+        return stack([shared_noise for _ in range(n_measurements)])
+
     def _stack_measurement_terms(
         self,
         measurements,
-        measurement_noise,
+        measurement_noises,
         measurement_weights=None,
         active_measurement_mask=None,
     ):
@@ -668,7 +706,10 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             if not active_mask[measurement_index] or weight <= 0.0:
                 continue
             measurement_jacobian, predicted_measurement, noise_covariance = (
-                self._measurement_model_terms(measurement, measurement_noise)
+                self._measurement_model_terms(
+                    measurement,
+                    measurement_noises[measurement_index],
+                )
             )
             active_indices.append(measurement_index)
             measurement_jacobians.append(measurement_jacobian)
@@ -696,8 +737,10 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
     ):
         """Update the tracker with optional per-measurement reliabilities.
 
-        ``measurement_weights`` scales each measurement covariance block as
-        ``R_i / weight_i``. Zero-weight or masked measurements are skipped.
+        ``R`` may be a shared measurement covariance or an array of shape
+        ``(n_measurements, 2, 2)`` with one covariance per measurement.
+        ``measurement_weights`` scales each active measurement covariance block
+        as ``R_i / weight_i``. Zero-weight or masked measurements are skipped.
         ``active_measurement_mask`` can be used to explicitly disable cluttered,
         occluded, or otherwise unsupported measurements.
         """
@@ -706,14 +749,10 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         if sigma_squared_s is not None:
             self.scale_variance = float(sigma_squared_s)
         measurements = self._normalize_measurements(measurements)
-        measurement_noise = self.measurement_noise
-        if R is not None:
-            measurement_noise = self._as_covariance_matrix(
-                R,
-                self.measurement_dim,
-                "R",
-                require_positive_semidefinite=False,
-            )
+        measurement_noises = self._normalize_measurement_noise_covariances(
+            self.measurement_noise if R is None else R,
+            measurements.shape[0],
+        )
 
         (
             measurement_jacobian,
@@ -722,7 +761,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             active_indices,
         ) = self._stack_measurement_terms(
             measurements,
-            measurement_noise,
+            measurement_noises,
             measurement_weights=measurement_weights,
             active_measurement_mask=active_measurement_mask,
         )

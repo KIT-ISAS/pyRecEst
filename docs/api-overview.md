@@ -107,6 +107,9 @@ Common starting points include:
   directional estimation;
 - `MultiBernoulliTracker`, `GlobalNearestNeighbor`, `JPDAF`, and
   `TrackManager` for tracking workflows.
+- `FullSCGPTracker` for star-convex Gaussian-process extended-object tracking,
+  including optional per-measurement covariance, reliability weights, and
+  active-measurement masks.
 
 The IDKF node stores one additive information-vector contribution per origin
 node and reconstructs the fused Gaussian from the shared information matrix and

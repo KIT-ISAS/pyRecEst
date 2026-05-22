@@ -105,6 +105,30 @@ labels, estimates = tracker.get_labeled_point_estimate(number_of_targets=2)
 Here `estimates` has shape `(state_dim, num_targets)`, and the column order
 matches the order of `labels`.
 
+## Reliability-Weighted SCGP Measurements
+
+`FullSCGPTracker.update(...)` accepts one two-dimensional contour measurement
+or a measurement set with one two-dimensional measurement per row. A
+column-oriented `(2, num_measurements)` array is also accepted and transposed
+internally.
+
+For extended-object updates where only some measurements are reliable, pass
+`measurement_weights` and/or `active_measurement_mask`:
+
+```python
+tracker.update(
+    measurements,
+    R=measurement_noise,
+    measurement_weights=array([1.0, 0.25, 0.0]),
+    active_measurement_mask=array([True, True, False]),
+)
+```
+
+Each active measurement covariance block is scaled as `R_i / weight_i`.
+Zero-weight measurements and masked measurements are skipped. `R` may be a
+shared `(2, 2)` covariance matrix or a per-measurement array with shape
+`(num_measurements, 2, 2)`.
+
 ## Distribution Inputs
 
 Many distribution `pdf` methods accept either one point or a batch of points.

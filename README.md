@@ -168,6 +168,8 @@ Install the matching optional extra before using a non-default backend.
 
 - `examples/basic/kalman_filter.py` contains a small executable Kalman filter
   example.
+- `examples/basic/scgp_measurement_reliability.py` demonstrates
+  reliability-weighted measurements for the full SCGP extended-object tracker.
 - `tests/` contains additional usage examples for distributions, filters,
   smoothers, evaluation, sampling, metrics, and tracking utilities.
 

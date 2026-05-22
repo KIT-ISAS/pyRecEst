@@ -87,6 +87,20 @@ python examples/basic/multi_target_tracking.py
 
 This example currently requires the NumPy backend.
 
+### SCGP measurement reliability
+
+`basic/scgp_measurement_reliability.py` runs one full star-convex
+Gaussian-process tracker update with per-measurement reliability weights and an
+active-measurement mask. It demonstrates how to down-weight partially reliable
+extended-object measurements and skip unsupported measurements without changing
+the measurement array.
+
+Run it with:
+
+```bash
+python examples/basic/scgp_measurement_reliability.py
+```
+
 ### von Mises-Fisher multiplication
 
 `basic/von_mises_fisher_multiplication.py` multiplies two von Mises-Fisher
