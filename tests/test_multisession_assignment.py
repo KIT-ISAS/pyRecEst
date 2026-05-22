@@ -84,6 +84,23 @@ class TestMultiSessionAssignment(unittest.TestCase):
         __backend_name__ == "jax",
         reason="Not supported on this backend",
     )
+    def test_gap_penalty_uses_numeric_session_indices_when_sizes_are_inferred(self):
+        result = solve_multisession_assignment(
+            {(0, 2): array([[0.3]], dtype=float)},
+            start_cost=4.0,
+            end_cost=4.0,
+            gap_penalty=0.5,
+        )
+
+        expected_tracks = [((0, 0), (2, 0))]
+        self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
+        self.assertAlmostEqual(result.total_cost, 8.8)
+        self.assertEqual(result.matched_edges, [((0, 0), (2, 0), 0.8)])
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_global_solution_beats_pairwise_greedy_choice(self):
         result = solve_multisession_assignment(
             [
@@ -139,6 +156,38 @@ class TestMultiSessionAssignment(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             solve_multisession_assignment(pairwise_costs)
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_rejects_negative_pairwise_session_indices(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "Session indices must be non-negative",
+        ):
+            solve_multisession_assignment(
+                {(-1, 0): array([[0.1]], dtype=float)},
+                start_cost=1.0,
+                end_cost=1.0,
+            )
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_rejects_negative_explicit_session_indices(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "Session indices must be non-negative",
+        ):
+            solve_multisession_assignment({}, session_sizes={-1: 1})
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "Session indices must be non-negative",
+        ):
+            tracks_to_session_labels([{-1: 0}])
 
     @unittest.skipIf(
         __backend_name__ == "jax",

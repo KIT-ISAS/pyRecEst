@@ -210,7 +210,6 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
     left_nodes, right_nodes, edge_gains, adjusted_costs = _build_candidate_edges(
         normalized_pairwise_costs,
         session_sizes_map,
-        session_positions,
         session_offsets,
         start_cost=start_cost,
         end_cost=end_cost,
@@ -378,6 +377,15 @@ def _validate_scalar_cost(name: str, value: float) -> None:
         raise ValueError(f"{name} must be finite.")
 
 
+def _normalize_session_index(session_idx: Any) -> int:
+    session_idx = int(session_idx)
+    if session_idx < 0:
+        raise ValueError(
+            f"Session indices must be non-negative, got {session_idx}."
+        )
+    return session_idx
+
+
 def _normalize_pairwise_costs(
     pairwise_costs: PairwiseCostsInput,
 ) -> dict[tuple[int, int], Any]:
@@ -388,7 +396,8 @@ def _normalize_pairwise_costs(
                 raise ValueError(
                     "Each pairwise-cost key must contain two session indices."
                 )
-            source_session, target_session = int(key[0]), int(key[1])
+            source_session = _normalize_session_index(key[0])
+            target_session = _normalize_session_index(key[1])
             if source_session >= target_session:
                 raise ValueError(
                     "Pairwise-cost keys must satisfy source_session < target_session."
@@ -414,9 +423,9 @@ def _normalize_session_sizes(
     if session_sizes is None:
         return {}
     if isinstance(session_sizes, Mapping):
-        normalized = {
-            int(session_idx): int(size) for session_idx, size in session_sizes.items()
-        }
+        normalized = {}
+        for session_idx, size in session_sizes.items():
+            normalized[_normalize_session_index(session_idx)] = int(size)
     else:
         normalized = {
             session_idx: int(size) for session_idx, size in enumerate(session_sizes)
@@ -485,7 +494,6 @@ def _build_observation_index(
 def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-locals
     pairwise_costs: Mapping[tuple[int, int], Any],
     session_sizes: Mapping[int, int],
-    session_positions: Mapping[int, int],
     session_offsets: Mapping[int, int],
     *,
     start_cost: float,
@@ -506,9 +514,7 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
                 f"{cost_matrix.shape}, expected {expected_shape}."
             )
 
-        source_position = session_positions[source_session]
-        target_position = session_positions[target_session]
-        gap = target_position - source_position - 1
+        gap = int(target_session) - int(source_session) - 1
         if gap < 0:
             raise ValueError(
                 "Session indices must define a forward-in-time edge ordering."
@@ -722,14 +728,13 @@ def _iter_track_items(track: TrackInput) -> list[Observation]:
     if isinstance(track, Mapping):
         items = list(track.items())
     else:
-        items = [
-            (int(session_idx), int(detection_idx))
-            for session_idx, detection_idx in track
-        ]
-    items.sort(key=lambda item: item[0])
-    return [
-        (int(session_idx), int(detection_idx)) for session_idx, detection_idx in items
+        items = list(track)
+    items = [
+        (_normalize_session_index(session_idx), int(detection_idx))
+        for session_idx, detection_idx in items
     ]
+    items.sort(key=lambda item: item[0])
+    return items
 
 
 __all__ = [
