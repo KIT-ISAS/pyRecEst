@@ -25,14 +25,14 @@ def choice(a, size=None, replace=True, p=None):
     size, num_samples = _choice_size(size)
     if p is not None:
         assert _torch.is_tensor(p), "p must be a tensor"
-        if not replace:
+        if not replace and num_samples > len(a):
             raise ValueError(
-                "Sampling without replacement is not supported with PyTorch when probabilities are given."
+                "Cannot take a larger sample than population when 'replace=False'."
             )
 
         p = _torch.as_tensor(p, dtype=_torch.float32, device=a.device)
         p = p / p.sum()  # Normalize probabilities
-        indices = _torch.multinomial(p, num_samples=num_samples, replacement=True)
+        indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
         if size is not None:
             indices = indices.reshape(size)
     elif replace:
