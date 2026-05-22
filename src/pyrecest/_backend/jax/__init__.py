@@ -442,13 +442,17 @@ def set_diag(matrix, values):
 
 
 # Get lower triangle and flatten to vector
-def tril_to_vec(matrix):
-    return _jnp.tril(matrix).ravel()
+def tril_to_vec(x, k=0):
+    n = x.shape[-1]
+    rows, cols = _jnp.tril_indices(n, k=k)
+    return x[..., rows, cols]
 
 
 # Get upper triangle and flatten to vector
-def triu_to_vec(matrix):
-    return _jnp.triu(matrix).ravel()
+def triu_to_vec(x, k=0):
+    n = x.shape[-1]
+    rows, cols = _jnp.triu_indices(n, k=k)
+    return x[..., rows, cols]
 
 
 # Create diagonal matrix from vector
