@@ -64,7 +64,7 @@ def get_extract_mean(manifold_name, mtt_scenario=False):
 
     elif _is_hypersphere_symmetric_name(normalized_name):
         raise NotImplementedError(
-            "Symmetric hypersphere mean extraction needs an explicit convention."
+            "Symmetric hypersphere mean extraction needs an explicit convention via a custom extractor."
         )
 
     elif "hypersphere" in normalized_name:
