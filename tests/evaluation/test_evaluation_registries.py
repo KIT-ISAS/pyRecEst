@@ -64,3 +64,8 @@ def test_custom_extract_mean_registry():
 def test_symmetric_hypersphere_extract_mean_requires_custom_extractor():
     with pytest.raises(NotImplementedError, match="custom extractor"):
         get_extract_mean("hypersphereSymmetric")
+
+
+def test_underscored_symmetric_hypersphere_extract_mean_requires_convention():
+    with pytest.raises(NotImplementedError, match="explicit convention"):
+        get_extract_mean("hypersphere_symmetric")
