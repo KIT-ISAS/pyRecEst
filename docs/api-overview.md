@@ -97,6 +97,9 @@ Common starting points include:
 - `AssociationHypothesis`, `NISGate`, `CostThresholdGate`, `TopKGate`,
   and `linear_gaussian_association_hypotheses` for reusable association
   diagnostics, gating, and cost-matrix conversion;
+- `solve_viterbi_sequence_association`, `WeightedGaussianHypothesis`,
+  `RollingNISAdaptiveProcessNoise`, and `OnlineTimeOffsetEstimator` for
+  portable sequence association, soft fusion, adaptation, and calibration;
 - `OutOfSequenceKalmanUpdater`, `OutOfSequenceParticleUpdater`,
   `FixedLagBuffer`, and `MeasurementTimeBuffer` for fixed-lag delayed
   measurement handling;
