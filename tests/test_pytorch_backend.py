@@ -69,5 +69,31 @@ class TestPytorchBackendCov(unittest.TestCase):
         self.assertTrue(pytorch_backend.allclose(aweights, original_aweights))
 
 
+@unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
+class TestPytorchBackendLinalg(unittest.TestCase):
+    def test_sqrtm_complex_result_uses_matching_complex_precision(self):
+        dtype_pairs = (
+            (pytorch_backend.float32, pytorch_backend.complex64),
+            (pytorch_backend.float64, pytorch_backend.complex128),
+        )
+
+        for real_dtype, complex_dtype in dtype_pairs:
+            with self.subTest(real_dtype=real_dtype):
+                value = pytorch_backend.array(
+                    [[-1.0, 0.0], [0.0, 1.0]], dtype=real_dtype
+                )
+
+                result = pytorch_backend.linalg.sqrtm(value)
+
+                expected = pytorch_backend.array(
+                    [[0.0 + 1.0j, 0.0 + 0.0j], [0.0 + 0.0j, 1.0 + 0.0j]],
+                    dtype=complex_dtype,
+                )
+                self.assertEqual(result.dtype, complex_dtype)
+                self.assertTrue(
+                    pytorch_backend.allclose(result, expected, atol=1e-6, rtol=1e-6)
+                )
+
+
 if __name__ == "__main__":
     unittest.main()

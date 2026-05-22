@@ -44,6 +44,14 @@ def _torch_as_like(value, like):
     return _torch.from_numpy(_np.asarray(value))
 
 
+_COMPLEX_DTYPE_FOR_TENSOR_DTYPE = {
+    _torch.float32: _np.complex64,
+    _torch.float64: _np.complex128,
+    _torch.complex64: _np.complex64,
+    _torch.complex128: _np.complex128,
+}
+
+
 class _Logm(_torch.autograd.Function):
     """Torch autograd function for matrix logarithm.
 
@@ -87,7 +95,13 @@ def sqrtm(x):
     x_np = _as_numpy_no_grad(x)
     np_sqrtm = _np.vectorize(_scipy.linalg.sqrtm, signature="(n,m)->(n,m)")(x_np)
     if np_sqrtm.dtype.kind == "c":
-        np_sqrtm = np_sqrtm.astype(f"complex{int(np_sqrtm.dtype.name[7:]) // 2}")
+        target_complex_dtype = (
+            _COMPLEX_DTYPE_FOR_TENSOR_DTYPE.get(x.dtype)
+            if isinstance(x, _torch.Tensor)
+            else None
+        )
+        if target_complex_dtype is not None:
+            np_sqrtm = np_sqrtm.astype(target_complex_dtype, copy=False)
 
     return _torch_as_like(np_sqrtm, x)
 
