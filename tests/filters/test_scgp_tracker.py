@@ -28,7 +28,12 @@ class TestSCGPTracker(unittest.TestCase):
         self.kinematic_covariance = 1e-4 * eye(5)
         self.measurement_noise = 0.02 * eye(2)
 
-    def _make_tracker(self, tracker_cls=FullSCGPTracker, shape_state=None):
+    def _make_tracker(
+        self,
+        tracker_cls=FullSCGPTracker,
+        shape_state=None,
+        radial_noise_variance=0.01,
+    ):
         if shape_state is None:
             shape_state = self.shape_state
         return tracker_cls(
@@ -38,7 +43,7 @@ class TestSCGPTracker(unittest.TestCase):
             shape_state=shape_state,
             shape_covariance=self.shape_covariance,
             measurement_noise=self.measurement_noise,
-            radial_noise_variance=0.01,
+            radial_noise_variance=radial_noise_variance,
             extent_forgetting_rate=0.2,
             reference_extent=self.shape_state,
         )
@@ -134,6 +139,50 @@ class TestSCGPTracker(unittest.TestCase):
         self.assertGreater(float(high_weight_delta), float(low_weight_delta))
         npt.assert_allclose(low_weight_tracker.last_measurement_weights, array([0.05]))
 
+    def test_measurement_weight_matches_scaled_measurement_noise(self):
+        weighted_tracker = self._make_tracker(radial_noise_variance=0.0)
+        scaled_noise_tracker = self._make_tracker(radial_noise_variance=0.0)
+        measurement = array([1.4, 0.0])
+        measurement_noise = 0.02 * eye(2)
+        measurement_weight = 0.25
+
+        weighted_tracker.update(
+            measurement,
+            R=measurement_noise,
+            measurement_weights=measurement_weight,
+        )
+        scaled_noise_tracker.update(
+            measurement,
+            R=measurement_noise / measurement_weight,
+        )
+
+        npt.assert_allclose(weighted_tracker.state, scaled_noise_tracker.state)
+        npt.assert_allclose(
+            weighted_tracker.covariance,
+            scaled_noise_tracker.covariance,
+        )
+
+    def test_per_measurement_noise_matches_single_active_measurement_update(self):
+        masked_tracker = self._make_tracker()
+        single_tracker = self._make_tracker()
+        measurements = array([[1.4, 0.2], [0.1, 1.3]])
+        measurement_noises = array([0.02 * eye(2), 0.2 * eye(2)])
+
+        masked_tracker.update(
+            measurements,
+            R=measurement_noises,
+            active_measurement_mask=array([False, True]),
+        )
+        single_tracker.update(measurements[1], R=measurement_noises[1])
+
+        npt.assert_allclose(masked_tracker.state, single_tracker.state, atol=1e-12)
+        npt.assert_allclose(
+            masked_tracker.covariance,
+            single_tracker.covariance,
+            atol=1e-12,
+        )
+        self.assertEqual(masked_tracker.last_active_measurement_indices, [1])
+
     def test_measurement_weights_validate_shape_and_values(self):
         tracker = self._make_tracker()
 
@@ -144,6 +193,11 @@ class TestSCGPTracker(unittest.TestCase):
             )
         with self.assertRaises(ValueError):
             tracker.update(array([1.4, 0.2]), measurement_weights=-1.0)
+        with self.assertRaises(ValueError):
+            tracker.update(
+                array([[1.4, 0.2], [0.1, 1.3]]),
+                R=array([eye(2)]),
+            )
 
     def test_full_tracker_contour_and_bounding_box(self):
         tracker = self._make_tracker()
