@@ -7,6 +7,12 @@ from .association_features import (
     pairwise_feature_tensor,
 )
 from .association_models import LogisticPairwiseAssociationModel
+from .candidate_pruning import (
+    CandidatePruningConfig,
+    candidate_mask_from_costs,
+    candidate_pruning_config_from_mapping,
+    prune_pairwise_cost_matrix,
+)
 from .history_recorder import HistoryRecorder
 from .metrics import (
     anees,
@@ -136,6 +142,10 @@ __all__ = [
     "LogisticPairwiseAssociationModel",
     "NamedPairwiseFeatureSchema",
     "pairwise_feature_tensor",
+    "CandidatePruningConfig",
+    "candidate_mask_from_costs",
+    "candidate_pruning_config_from_mapping",
+    "prune_pairwise_cost_matrix",
     "HistoryRecorder",
     "ThinPlateSplineRegistrationResult",
     "ThinPlateSplineTransform",
