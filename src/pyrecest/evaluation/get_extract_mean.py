@@ -21,6 +21,13 @@ def available_extract_mean_functions() -> tuple[str, ...]:
     return tuple(sorted(_EXTRACT_MEAN_FACTORIES))
 
 
+def _is_hypersphere_symmetric_name(normalized_name: str) -> bool:
+    return (
+        "hyperspheresymmetric" in normalized_name
+        or "hypersphere_symmetric" in normalized_name
+    )
+
+
 def _point_estimate_or_mean(filter_state):
     if hasattr(filter_state, "get_point_estimate"):
         return filter_state.get_point_estimate()
@@ -55,9 +62,9 @@ def get_extract_mean(manifold_name, mtt_scenario=False):
         def extract_mean(filter_state):
             return filter_state.mean_direction()
 
-    elif "hyperspheresymmetric" in normalized_name:
+    elif _is_hypersphere_symmetric_name(normalized_name):
         raise NotImplementedError(
-            "Symmetric hypersphere mean extraction needs a custom extractor."
+            "Symmetric hypersphere mean extraction needs an explicit convention."
         )
 
     elif "hypersphere" in normalized_name:
@@ -66,7 +73,7 @@ def get_extract_mean(manifold_name, mtt_scenario=False):
             return filter_state.mean_direction()
 
     elif "symm" in normalized_name:
-        raise NotImplementedError("Symmetric mean extraction needs a custom extractor")
+        raise NotImplementedError("Symmetric mean extraction needs an explicit convention")
 
     elif "se2bounded" in normalized_name:
         raise NotImplementedError("Not implemented yet")
