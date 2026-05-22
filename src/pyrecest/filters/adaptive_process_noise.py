@@ -115,8 +115,13 @@ def adaptive_scale_from_ratio(ratio: float, config: AdaptiveProcessNoiseConfig |
     return float(np.clip(scale, float(config.min_scale), float(config.max_scale)))
 
 
+RollingNISAdaptiveProcessNoise = RollingNISProcessNoiseAdapter
+adaptive_process_noise_scale_from_nis_ratio = adaptive_scale_from_ratio
+
 __all__ = [
     "AdaptiveProcessNoiseConfig",
+    "RollingNISAdaptiveProcessNoise",
     "RollingNISProcessNoiseAdapter",
+    "adaptive_process_noise_scale_from_nis_ratio",
     "adaptive_scale_from_ratio",
 ]
