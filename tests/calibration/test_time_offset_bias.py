@@ -7,9 +7,11 @@ from pyrecest.calibration.bias import (
     make_bias_training_examples,
 )
 from pyrecest.calibration.time_offset import (
+    aggregate_time_offset_sweeps,
     apply_time_offset,
     fit_time_offset,
     make_offset_grid,
+    nearest_time_indices,
     time_offset_error_summary,
 )
 
@@ -24,6 +26,45 @@ class TimeOffsetCalibrationTest(unittest.TestCase):
         npt.assert_allclose(
             apply_time_offset(np.array([1.0, 2.0]), 0.5), np.array([1.5, 2.5])
         )
+
+    def test_nearest_time_indices_accepts_unsorted_reference_times(self):
+        indices = nearest_time_indices(
+            np.array([10.0, 0.0, 5.0]), np.array([0.2, 7.0, 9.0])
+        )
+
+        npt.assert_array_equal(indices, np.array([1, 2, 0]))
+
+    def test_aggregate_time_offset_sweeps_preserves_rmse_and_max_semantics(self):
+        aggregated = aggregate_time_offset_sweeps(
+            [
+                [
+                    {
+                        "time_offset_s": 0.0,
+                        "count": 1.0,
+                        "mean": 1.0,
+                        "rmse": 3.0,
+                        "p95": 3.0,
+                        "max": 3.0,
+                    }
+                ],
+                [
+                    {
+                        "time_offset_s": 0.0,
+                        "count": 3.0,
+                        "mean": 2.0,
+                        "rmse": 4.0,
+                        "p95": 4.0,
+                        "max": 7.0,
+                    }
+                ],
+            ]
+        )
+
+        self.assertEqual(len(aggregated), 1)
+        self.assertEqual(aggregated[0]["count"], 4.0)
+        self.assertAlmostEqual(aggregated[0]["mean"], 1.75)
+        self.assertAlmostEqual(aggregated[0]["rmse"], np.sqrt(57.0 / 4.0))
+        self.assertEqual(aggregated[0]["max"], 7.0)
 
     def test_fit_time_offset_recovers_known_shift(self):
         reference_times = np.linspace(0.0, 10.0, 101)

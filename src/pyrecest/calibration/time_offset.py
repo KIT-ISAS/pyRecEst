@@ -61,17 +61,21 @@ def apply_time_offset(times_s: np.ndarray, offset_s: float | None) -> np.ndarray
 def nearest_time_indices(
     reference_times_s: np.ndarray, query_times_s: np.ndarray
 ) -> np.ndarray:
-    """Return indices of nearest reference times for each query time."""
+    """Return original indices of nearest reference times for each query time."""
 
     reference = np.asarray(reference_times_s, dtype=float).reshape(-1)
     query = np.asarray(query_times_s, dtype=float).reshape(-1)
     if reference.size == 0:
         raise ValueError("reference_times_s must not be empty")
-    insertion = np.searchsorted(reference, query)
-    right = np.clip(insertion, 0, reference.size - 1)
-    left = np.clip(insertion - 1, 0, reference.size - 1)
-    use_right = np.abs(reference[right] - query) < np.abs(reference[left] - query)
-    return np.where(use_right, right, left)
+    order = np.argsort(reference)
+    sorted_reference = reference[order]
+    insertion = np.searchsorted(sorted_reference, query)
+    right = np.clip(insertion, 0, sorted_reference.size - 1)
+    left = np.clip(insertion - 1, 0, sorted_reference.size - 1)
+    use_right = np.abs(sorted_reference[right] - query) < np.abs(
+        sorted_reference[left] - query
+    )
+    return order[np.where(use_right, right, left)]
 
 
 def interpolate_reference_values(
@@ -227,18 +231,26 @@ def aggregate_time_offset_sweeps(
         )
         total = float(np.sum(counts))
         row = {"time_offset_s": float(offset), "count": total}
-        for key in ("mean", "rmse", "p95", "max", metric):
+        for key in dict.fromkeys(("mean", "rmse", "p95", "max", metric)):
             values = np.array(
                 [float(part.get(key, np.nan)) for part in parts], dtype=float
             )
-            valid = np.isfinite(values) & (counts > 0.0)
-            row[key] = (
-                float(np.average(values[valid], weights=counts[valid]))
-                if valid.any()
-                else float("nan")
-            )
+            row[key] = _aggregate_summary_metric(key, values, counts)
         rows.append(row)
     return rows
+
+
+def _aggregate_summary_metric(
+    key: str, values: np.ndarray, counts: np.ndarray
+) -> float:
+    valid = np.isfinite(values) & (counts > 0.0)
+    if not valid.any():
+        return float("nan")
+    if key == "rmse":
+        return float(np.sqrt(np.average(values[valid] ** 2, weights=counts[valid])))
+    if key == "max":
+        return float(np.max(values[valid]))
+    return float(np.average(values[valid], weights=counts[valid]))
 
 
 def _error_stats(
