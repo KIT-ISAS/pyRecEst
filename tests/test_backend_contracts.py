@@ -135,3 +135,18 @@ def test_as_dtype_string_lookup_is_available():
 
 def test_ravel_tril_indices_returns_flat_indices():
     assert _to_python(backend.ravel_tril_indices(3)) == [0, 3, 4, 6, 7, 8]
+
+
+def test_triangular_matrix_helpers_return_compact_vectors():
+    values = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+    assert _to_python(backend.tril_to_vec(values)) == [1, 4, 5, 7, 8, 9]
+    assert _to_python(backend.triu_to_vec(values)) == [1, 2, 3, 5, 6, 9]
+    assert _to_python(backend.triu_to_vec(values, k=1)) == [2, 3, 6]
+
+
+def test_triangular_matrix_helpers_preserve_batch_dimensions():
+    values = array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+
+    assert _to_python(backend.tril_to_vec(values)) == [[1, 3, 4], [5, 7, 8]]
+    assert _to_python(backend.triu_to_vec(values)) == [[1, 2, 4], [5, 6, 8]]
