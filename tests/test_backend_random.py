@@ -44,6 +44,23 @@ class TestBackendRandom(unittest.TestCase):
         npt.assert_array_less(-1, samples)
         npt.assert_array_less(samples, 5)
 
+        no_replacement = random.choice(5, size=5, replace=False)
+
+        self.assertEqual(tuple(pyrecest.backend.shape(no_replacement)), (5,))
+        self.assertEqual(
+            len(set(pyrecest.backend.to_numpy(no_replacement).tolist())), 5
+        )
+
+    def test_choice_samples_matrix_values_along_requested_axis(self):
+        values = pyrecest.backend.array([[0, 1, 2], [3, 4, 5]])
+
+        sample = random.choice(values, size=2, replace=False, axis=1)
+
+        self.assertEqual(tuple(pyrecest.backend.shape(sample)), (2, 2))
+        sample_np = pyrecest.backend.to_numpy(sample)
+        self.assertTrue(set(sample_np[0].tolist()).issubset({0, 1, 2}))
+        self.assertTrue(set(sample_np[1].tolist()).issubset({3, 4, 5}))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "jax", "JAX-specific RNG state contract"
     )

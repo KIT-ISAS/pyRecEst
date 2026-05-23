@@ -1,5 +1,7 @@
 """Torch based random backend."""
 
+from numbers import Integral as _Integral
+
 import torch as _torch
 from torch import get_rng_state as get_state  # For PyRecEst
 from torch import randint
@@ -20,48 +22,84 @@ def _choice_size(size):
     return size, int(_torch.prod(_torch.tensor(size)).item())
 
 
-def _choice_population(a, p=None):
-    """Normalize NumPy-compatible ``choice`` populations to a tensor."""
-    device = p.device if _torch.is_tensor(p) else None
-    if isinstance(a, int):
-        if a <= 0:
-            raise ValueError("a must be greater than 0 unless no samples are taken")
-        return _torch.arange(a, device=device)
-    if _torch.is_tensor(a):
-        return a
-    return _torch.as_tensor(a, device=device)
+def _integer_population_size(a):
+    if isinstance(a, _Integral):
+        return int(a)
+    if (
+        _torch.is_tensor(a)
+        and a.ndim == 0
+        and not _torch.is_floating_point(a)
+        and not _torch.is_complex(a)
+    ):
+        return int(a.item())
+    return None
 
 
-def choice(a, size=None, replace=True, p=None):
-    a = _choice_population(a, p=p)
-    size, num_samples = _choice_size(size)
+def _choice_indices(population_size, size, num_samples, replace, p, device):
+    if population_size <= 0:
+        if num_samples == 0:
+            return _torch.empty(size or (0,), dtype=_torch.long, device=device)
+        raise ValueError("a must be greater than 0 unless no samples are taken")
+
     if p is not None:
-        if not replace and num_samples > len(a):
+        if not replace and num_samples > population_size:
             raise ValueError(
                 "Cannot take a larger sample than population when 'replace=False'."
             )
 
-        p = _torch.as_tensor(p, dtype=_torch.float32, device=a.device)
+        p = _torch.as_tensor(p, dtype=_torch.float32, device=device)
+        if p.ndim != 1 or p.shape[0] != population_size:
+            raise ValueError("p must be 1-dimensional with one entry per population item")
+
         p = p / p.sum()  # Normalize probabilities
         indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
         if size is None:
-            indices = indices[0]
-        else:
-            indices = indices.reshape(size)
-    elif replace:
-        indices = _torch.randint(0, len(a), size or (), device=a.device)
-    else:
-        if num_samples > len(a):
-            raise ValueError(
-                "Cannot take a larger sample than population when 'replace=False'."
-            )
-        indices = _torch.randperm(len(a), device=a.device)[:num_samples]
-        if size is None:
-            indices = indices[0]
-        else:
-            indices = indices.reshape(size)
+            return indices[0]
+        return indices.reshape(size)
 
-    return a[indices]
+    if replace:
+        return _torch.randint(0, population_size, size or (), device=device)
+
+    if num_samples > population_size:
+        raise ValueError(
+            "Cannot take a larger sample than population when 'replace=False'."
+        )
+
+    indices = _torch.randperm(population_size, device=device)[:num_samples]
+    if size is None:
+        return indices[0]
+    return indices.reshape(size)
+
+
+def _take_choice(a, indices, axis):
+    axis = axis % a.ndim
+    if indices.ndim == 0:
+        return a.select(axis, int(indices.item()))
+
+    flattened_indices = indices.reshape(-1)
+    selected = _torch.index_select(a, dim=axis, index=flattened_indices)
+    return selected.reshape((*a.shape[:axis], *indices.shape, *a.shape[axis + 1 :]))
+
+
+def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
+    del shuffle
+
+    size, num_samples = _choice_size(size)
+    population_size = _integer_population_size(a)
+    if population_size is not None:
+        device = p.device if _torch.is_tensor(p) else None
+        return _choice_indices(population_size, size, num_samples, replace, p, device)
+
+    if not _torch.is_tensor(a):
+        a = _torch.as_tensor(a)
+    if a.ndim == 0:
+        raise ValueError(
+            "a must be a positive integer or an array with at least one dimension"
+        )
+
+    axis = axis % a.ndim
+    indices = _choice_indices(a.shape[axis], size, num_samples, replace, p, a.device)
+    return _take_choice(a, indices, axis)
 
 
 def seed(*args, **kwargs):

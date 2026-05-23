@@ -86,6 +86,17 @@ def test_default_reductions_reduce_all_elements():
     assert float(_to_python(backend.prod(values))) == 120.0
 
 
+def test_prod_accepts_tuple_axis():
+    values = array(
+        [[[2.0, 3.0], [4.0, 5.0]], [[6.0, 7.0], [8.0, 9.0]]]
+    )
+
+    result = backend.prod(values, axis=(0, 2))
+
+    assert result.shape == (2,)
+    assert _to_python(result) == [252.0, 1440.0]
+
+
 def test_default_cumprod_flattens_all_elements():
     values = array([[2.0, 3.0], [4.0, 5.0]])
 
