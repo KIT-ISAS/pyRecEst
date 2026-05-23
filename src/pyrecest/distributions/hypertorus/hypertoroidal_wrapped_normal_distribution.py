@@ -7,7 +7,6 @@ from pyrecest.backend import (
     allclose,
     arange,
     array,
-    atleast_2d,
     exp,
     int32,
     int64,
@@ -37,6 +36,30 @@ def _as_2d_covariance(C):
     if C.ndim == 0:
         C = C.reshape((1, 1))
     return C
+
+
+def _as_2d_points(xs, dim):
+    """Return evaluation points as an ``(n, dim)`` array.
+
+    A one-dimensional wrapped normal is often called with scalar values or with
+    a plain one-dimensional list of sample locations.  Those inputs previously
+    reached ``xs.shape[-1]`` before array coercion and therefore failed with an
+    ``AttributeError`` or ``IndexError`` instead of being evaluated.
+    """
+    xs = array(xs)
+    if xs.ndim == 0:
+        if dim != 1:
+            raise ValueError(f"Scalar evaluation points are only valid for dim=1, got dim={dim}.")
+        return xs.reshape((1, 1))
+    if xs.ndim == 1:
+        if dim == 1:
+            return xs.reshape((-1, 1))
+        if xs.shape[0] != dim:
+            raise ValueError(f"One-dimensional point input must have shape ({dim},), got {xs.shape}.")
+        return xs.reshape((1, dim))
+    if xs.ndim != 2 or xs.shape[-1] != dim:
+        raise ValueError(f"Evaluation points must have shape (n, {dim}), got {xs.shape}.")
+    return xs
 
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
@@ -82,11 +105,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        assert (
-            xs.shape[-1] == self.dim
-        ), "Last dimension of xs must match the distribution dimension"
-        xs = atleast_2d(xs)  # Ensure xs is at least 2-D for approach below
-        xs = (xs + pi) % (2 * pi) - pi
+        xs = _as_2d_points(xs, self.dim)
+        xs = mod(xs + pi, 2 * pi) - pi
 
         # Generate all combinations of offsets for each dimension
         offsets = [arange(-m, m + 1) * 2.0 * pi for _ in range(self.dim)]
@@ -112,6 +132,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :raises AssertionError: If shape of shift_by does not match the dimension of the distribution.
         :return: Shifted distribution.
         """
+        shift_by = _as_1d_mu(shift_by)
         assert shift_by.shape == (self.dim,)
 
         return self.set_mean(self.mu + shift_by)
@@ -144,7 +165,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         m = _as_1d_mu(m)
         assert m.shape == (self.dim,), "m must be of shape (dim,)"
         dist = copy.deepcopy(self)
-        dist.mu = m
+        dist.mu = mod(m, 2.0 * pi)
         return dist
 
     def trigonometric_moment(self, n):
