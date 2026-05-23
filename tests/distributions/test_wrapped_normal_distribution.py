@@ -158,6 +158,16 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(convolved.C, array(13.0), atol=1e-12))
         self.assertTrue(allclose(convolved.sigma, sqrt(array(13.0)), atol=1e-12))
 
+    def test_shift_accepts_scalar_and_singleton_sequence_inputs(self):
+        dist = WrappedNormalDistribution(array(0.3), array(0.4))
+
+        scalar_shifted = dist.shift(0.2)
+        sequence_shifted = dist.shift([0.2])
+
+        self.assertTrue(allclose(scalar_shifted.scalar_mu, array(0.5), atol=1e-12))
+        self.assertTrue(allclose(sequence_shifted.scalar_mu, array(0.5), atol=1e-12))
+        self.assertTrue(allclose(scalar_shifted.sigma, dist.sigma, atol=1e-12))
+
 
 if __name__ == "__main__":
     unittest.main()

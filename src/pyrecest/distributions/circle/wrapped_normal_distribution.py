@@ -120,29 +120,29 @@ class WrappedNormalDistribution(
             tmp = -1.0 / (2.0 * sigma**2)
             nc = 1.0 / (sqrt(2.0 * pi) * sigma)
 
-            def wrapped_addendum(i):
+            def body_fun(val):
+                i, result, _last_increment = val
                 xp = x + 2 * pi * i
                 xm = x - 2 * pi * i
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
-                return exp(tp) + exp(tm)
-
-            def body_fun(val):
-                i, result = val
-                return (i + 1, result + wrapped_addendum(i))
+                increment = exp(tp) + exp(tm)
+                new_result = result + increment
+                return (i + 1, new_result, increment)
 
             def cond_fun(val):
-                i, result = val
-                # Continue while the next pair of wrapped terms would change
-                # at least one accumulated density value.
-                new_result = result + wrapped_addendum(i)
-                return logical_and(any(new_result != result), i <= max_iterations)
+                i, _result, last_increment = val
+                # The accumulated density is positive and may keep changing by
+                # tiny floating-point amounts for a long time. Stop based on the
+                # latest wrapped contribution instead.
+                return logical_and(any(last_increment > 1e-10), i <= max_iterations)
 
             initial_val = (
                 1,
                 exp(x * x * tmp),
+                ones(x.shape) * float("inf"),
             )
-            _, result = lax.while_loop(cond_fun, body_fun, initial_val)
+            _, result, _last_increment = lax.while_loop(cond_fun, body_fun, initial_val)
 
             result *= nc
 
