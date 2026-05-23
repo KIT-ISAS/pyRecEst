@@ -44,6 +44,7 @@ from pyrecest.backend import (
 )
 
 _COST_MODE = Literal["negative_log_probability", "one_minus_probability"]
+_SOLVE_FALLBACK_EXCEPTIONS = (LinAlgError, RuntimeError, ValueError)
 
 
 @dataclass(frozen=True)
@@ -331,6 +332,22 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             else requested_tolerance
         )
 
+    @staticmethod
+    def _solve_newton_step(hessian: Any, gradient: Any) -> Any:
+        """Solve an IRLS Newton system with backend-neutral fallback semantics."""
+        try:
+            step = linalg.solve(hessian, gradient)
+        except _SOLVE_FALLBACK_EXCEPTIONS:
+            step = linalg.pinv(hessian) @ gradient
+
+        if not all(isfinite(step)):
+            step = linalg.pinv(hessian) @ gradient
+        if not all(isfinite(step)):
+            raise FloatingPointError(
+                "Newton step is not finite even after pseudoinverse fallback"
+            )
+        return step
+
     def _store_fitted_parameters(self, parameter_vector: Any) -> None:
         if self.fit_intercept:
             self.intercept_ = float(parameter_vector[0])
@@ -375,10 +392,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             if self.l2_regularization > 0.0:
                 hessian = hessian + self.l2_regularization * diag(regularization_mask)
 
-            try:
-                step = linalg.solve(hessian, gradient)
-            except LinAlgError:
-                step = linalg.pinv(hessian) @ gradient
+            step = self._solve_newton_step(hessian, gradient)
 
             parameter_vector = parameter_vector - step
             self.n_iter_ = iteration
