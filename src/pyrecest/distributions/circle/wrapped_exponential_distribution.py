@@ -2,7 +2,7 @@
 from typing import Union
 
 # pylint: disable=redefined-builtin
-from pyrecest.backend import exp, int32, int64, log, mod, ndim, pi, random
+from pyrecest.backend import asarray, exp, int32, int64, log, mod, ndim, pi, random
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -18,6 +18,7 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
 
     def __init__(self, lambda_):
         AbstractCircularDistribution.__init__(self)
+        lambda_ = asarray(lambda_)
         assert lambda_.shape in ((1,), ())
         assert lambda_ > 0.0
         self.lambda_ = lambda_
