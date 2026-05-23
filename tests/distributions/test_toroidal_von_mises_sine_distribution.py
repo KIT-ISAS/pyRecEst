@@ -85,7 +85,7 @@ class ToroidalVMSineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCase
         npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
-    def test_accepts_python_scalar_coupling_parameter(self):
+    def test_accepts_python_scalar_lambda(self):
         tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, 0.5)
         x = array([1.3, 2.4])
 
