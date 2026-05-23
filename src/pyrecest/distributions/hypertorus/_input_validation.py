@@ -1,0 +1,45 @@
+"""Input-normalization helpers for hypertoroidal distributions."""
+
+# pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import array
+
+
+def as_shift_vector(shift_by, dim: int, *, name: str = "shift_by"):
+    """Return ``shift_by`` as a one-dimensional backend vector of length ``dim``.
+
+    A scalar shift is accepted for one-dimensional hypertoroidal distributions.
+    This keeps public APIs robust for ordinary Python scalar/list inputs before
+    shape validation is performed.
+    """
+    shift_by = array(shift_by)
+    if shift_by.ndim == 0:
+        if dim != 1:
+            raise ValueError(f"{name} must have shape ({dim},), got scalar.")
+        return shift_by.reshape((1,))
+    if shift_by.ndim == 1 and shift_by.shape[0] == dim:
+        return shift_by
+    raise ValueError(f"{name} must have shape ({dim},), got {shift_by.shape}.")
+
+
+def as_hypertoroidal_points(xs, dim: int, *, name: str = "xs"):
+    """Return evaluation points as an array with trailing dimension ``dim``.
+
+    For one-dimensional distributions, a scalar is treated as one query point
+    and a one-dimensional array is treated as a batch of scalar query points.
+    For higher-dimensional distributions, a one-dimensional array of length
+    ``dim`` is treated as a single query point.
+    """
+    xs = array(xs)
+    if xs.ndim == 0:
+        if dim != 1:
+            raise ValueError(f"{name} must have trailing dimension {dim}, got scalar.")
+        return xs.reshape((1, 1))
+    if xs.ndim == 1:
+        if dim == 1:
+            return xs.reshape((-1, 1))
+        if xs.shape[0] == dim:
+            return xs.reshape((1, dim))
+        raise ValueError(f"{name} must have trailing dimension {dim}, got {xs.shape}.")
+    if xs.shape[-1] != dim:
+        raise ValueError(f"{name} must have trailing dimension {dim}, got {xs.shape}.")
+    return xs.reshape((-1, dim))
