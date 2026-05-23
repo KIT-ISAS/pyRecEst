@@ -16,6 +16,11 @@ def _linalg_call_args(name):
     }[name]
 
 
+def _skip_if_linalg_function_unsupported(name):
+    if name in get_unsupported_functions(backend.__backend_name__, "linalg"):
+        pytest.skip(f"{name} is unsupported on the active backend")
+
+
 def test_declared_linalg_unsupported_functions_raise_not_implemented():
     unsupported = get_unsupported_functions(backend.__backend_name__, "linalg")
     if not unsupported:
@@ -24,6 +29,25 @@ def test_declared_linalg_unsupported_functions_raise_not_implemented():
     for name in unsupported:
         with pytest.raises(NotImplementedError):
             getattr(linalg, name)(*_linalg_call_args(name))
+
+
+def test_is_single_matrix_pd_rejects_vector_inputs():
+    _skip_if_linalg_function_unsupported("is_single_matrix_pd")
+
+    assert linalg.is_single_matrix_pd(array([1.0, 2.0])) is False
+
+
+def test_is_single_matrix_pd_rejects_batched_inputs():
+    _skip_if_linalg_function_unsupported("is_single_matrix_pd")
+
+    batched_identity = array(
+        [
+            [[1.0, 0.0], [0.0, 1.0]],
+            [[2.0, 0.0], [0.0, 2.0]],
+        ]
+    )
+
+    assert linalg.is_single_matrix_pd(batched_identity) is False
 
 
 def test_pytorch_to_numpy_detaches_tensors_requiring_grad():
