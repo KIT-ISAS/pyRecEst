@@ -276,9 +276,15 @@ def split(x, indices_or_sections, axis=0):
 
 
 def logical_and(x, y):
-    if _torch.is_tensor(x) or _torch.is_tensor(y):
-        return x * y
-    return x and y
+    device = None
+    if _torch.is_tensor(x):
+        device = x.device
+    elif _torch.is_tensor(y):
+        device = y.device
+    return _torch.logical_and(
+        _torch.as_tensor(x, device=device),
+        _torch.as_tensor(y, device=device),
+    )
 
 
 def _normalize_reduction_axes(axis, ndim_):
@@ -649,6 +655,8 @@ def _is_boolean(x):
     if isinstance(x, bool):
         return True
     if isinstance(x, (tuple, list)):
+        if not x:
+            return False
         return _is_boolean(x[0])
     if _torch.is_tensor(x):
         return x.dtype in [_torch.bool, _torch.uint8]
@@ -661,6 +669,74 @@ def _is_iterable(x):
     if _torch.is_tensor(x):
         return ndim(x) > 0
     return False
+
+
+def _as_assignment_values(values, x):
+    if _torch.is_tensor(values):
+        return values.to(device=x.device, dtype=x.dtype)
+    return _torch.as_tensor(values, dtype=x.dtype, device=x.device)
+
+
+def _assignment_value_length(values):
+    return len(values) if _is_iterable(values) else 1
+
+
+def _is_scalar_index(index):
+    return isinstance(index, (int, _np.integer)) or (
+        _torch.is_tensor(index) and index.ndim == 0
+    )
+
+
+def _assignment_index_length(indices, zip_indices):
+    if zip_indices:
+        return len(indices)
+    if isinstance(indices, tuple) and all(
+        _is_scalar_index(index) for index in indices
+    ):
+        return 1
+    return len(indices) if _is_iterable(indices) else 1
+
+
+def _contains_slice(indices):
+    if isinstance(indices, slice):
+        return True
+    if isinstance(indices, tuple):
+        return _builtins.any(isinstance(index, slice) for index in indices)
+    return False
+
+
+def _as_assignment_index(index, *, device):
+    if _torch.is_tensor(index):
+        if index.dtype in [_torch.bool, _torch.uint8]:
+            return index.to(device=device)
+        return index.to(device=device, dtype=_torch.long)
+    return _torch.as_tensor(index, dtype=_torch.long, device=device)
+
+
+def _normalize_index_put_indices(indices, *, device):
+    index_seq = indices if isinstance(indices, tuple) else (indices,)
+    return tuple(_as_assignment_index(index, device=device) for index in index_seq)
+
+
+def _as_boolean_index(indices, *, device):
+    if _torch.is_tensor(indices):
+        return indices.to(device=device, dtype=_torch.bool)
+    return _torch.as_tensor(indices, dtype=_torch.bool, device=device)
+
+
+def _apply_assignment(x_new, indices, values, *, accumulate):
+    if _contains_slice(indices):
+        if accumulate:
+            x_new[indices] += values
+        else:
+            x_new[indices] = values
+        return x_new
+    x_new.index_put_(
+        _normalize_index_put_indices(indices, device=x_new.device),
+        values,
+        accumulate=accumulate,
+    )
+    return x_new
 
 
 def assignment(x, values, indices, axis=0):
@@ -691,22 +767,26 @@ def assignment(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(x)
+    values = _as_assignment_values(values, x_new)
 
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
     if _is_boolean(indices):
+        indices = _as_boolean_index(indices, device=x_new.device)
         x_new[indices] = values
         return x_new
-    zip_indices = _is_iterable(indices) and _is_iterable(indices[0])
-    len_indices = len(indices) if _is_iterable(indices) else 1
+    zip_indices = (
+        _is_iterable(indices)
+        and len(indices) > 0
+        and _is_iterable(indices[0])
+    )
+    len_indices = _assignment_index_length(indices, zip_indices)
     if zip_indices:
         indices = tuple(zip(*indices))
     if not use_vectorization:
-        if not zip_indices:
-            len_indices = len(indices) if _is_iterable(indices) else 1
-        len_values = len(values) if _is_iterable(values) else 1
+        len_values = _assignment_value_length(values)
         if len_values > 1 and len_values != len_indices:
             raise ValueError("Either one value or as many values as indices")
-        x_new[indices] = values
+        _apply_assignment(x_new, indices, values, accumulate=False)
     else:
         indices = tuple(list(indices[:axis]) + [slice(None)] + list(indices[axis:]))
         x_new[indices] = values
@@ -741,20 +821,25 @@ def assignment_by_sum(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(x)
-    values = array(values)
+    values = _as_assignment_values(values, x_new)
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
     if _is_boolean(indices):
+        indices = _as_boolean_index(indices, device=x_new.device)
         x_new[indices] += values
         return x_new
-    zip_indices = _is_iterable(indices) and _is_iterable(indices[0])
+    zip_indices = (
+        _is_iterable(indices)
+        and len(indices) > 0
+        and _is_iterable(indices[0])
+    )
+    len_indices = _assignment_index_length(indices, zip_indices)
     if zip_indices:
-        indices = list(zip(*indices))
+        indices = tuple(zip(*indices))
     if not use_vectorization:
-        len_indices = len(indices) if _is_iterable(indices) else 1
-        len_values = len(values) if _is_iterable(values) else 1
+        len_values = _assignment_value_length(values)
         if len_values > 1 and len_values != len_indices:
             raise ValueError("Either one value or as many values as indices")
-        x_new[indices] += values
+        _apply_assignment(x_new, indices, values, accumulate=True)
     else:
         indices = tuple(list(indices[:axis]) + [slice(None)] + list(indices[axis:]))
         x_new[indices] += values

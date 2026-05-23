@@ -80,9 +80,21 @@ def normal(loc=0.0, scale=1.0, size=None):
 
 
 def uniform(low=0.0, high=1.0, size=None, dtype=None):
-    if low >= high:
+    device = None
+    if _torch.is_tensor(low):
+        device = low.device
+    elif _torch.is_tensor(high):
+        device = high.device
+
+    low = _torch.as_tensor(low, dtype=dtype, device=device)
+    high = _torch.as_tensor(high, dtype=dtype, device=device)
+    if bool(_torch.any(low >= high)):
         raise ValueError("Upper bound must be higher than lower bound")
-    return (high - low) * rand(size, dtype=dtype) + low
+    if size is None:
+        size = ()
+    elif not hasattr(size, "__iter__"):
+        size = (size,)
+    return (high - low) * _torch.rand(size, dtype=dtype, device=device) + low
 
 
 @_modify_func_default_dtype(copy=False, kw_only=True)
