@@ -11,6 +11,15 @@ def test_backend_support_matrix_has_expected_columns():
         assert capability.jax in {"yes", "no", "partial"}
 
 
+def test_pytorch_weighted_choice_without_replacement_is_marked_supported():
+    row = next(
+        capability
+        for capability in CAPABILITIES
+        if capability.capability == "Weighted choice without replacement"
+    )
+    assert row.pytorch == "yes"
+
+
 def test_backend_support_markdown_table_contains_capabilities():
     table = markdown_table()
     assert "| Area | Capability | NumPy | PyTorch | JAX | Notes |" in table

@@ -85,8 +85,9 @@ the workflow. Keep these caveats in mind:
   assignment, and some Sylvester-equation paths. These helpers may copy data
   between tensor and NumPy representations and should not be assumed to preserve
   PyTorch device placement or gradient behavior like native PyTorch operations.
-- `pyrecest.backend.random.choice` does not support weighted sampling without
-  replacement.
+- `pyrecest.backend.random.choice` supports weighted sampling with and without
+  replacement for one-dimensional probability vectors; verify more specialized
+  forms with focused tests.
 
 When a workflow uses advanced tracking, evaluation, plotting, or SciPy-heavy
 utilities, compare behavior against the NumPy backend before assuming full
