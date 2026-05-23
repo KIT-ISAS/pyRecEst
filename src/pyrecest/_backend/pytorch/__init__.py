@@ -199,6 +199,102 @@ def cov(input, correction=1, fweights=None, aweights=None, bias=False):
     return cov_matrix
 
 
+def _quantile_q(q, x):
+    if _torch.is_tensor(q):
+        return q.to(device=x.device, dtype=x.dtype)
+    if _np.isscalar(q):
+        return float(q)
+    return _torch.as_tensor(q, dtype=x.dtype, device=x.device)
+
+
+def _quantile_q_shape(q):
+    if _torch.is_tensor(q):
+        return tuple(q.shape)
+    return tuple(_np.shape(q))
+
+
+def quantile(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=False,
+    *,
+    interpolation=None,
+):
+    """Return quantiles using NumPy-compatible argument names."""
+    del overwrite_input
+
+    if interpolation is not None:
+        method = interpolation
+
+    x = array(a)
+    if is_complex(x):
+        raise TypeError("a must be an array of real numbers")
+    if not is_floating(x):
+        x = cast(x, dtype=get_default_dtype())
+
+    q_arg = _quantile_q(q, x)
+    q_shape = _quantile_q_shape(q)
+
+    if axis is None or isinstance(axis, (int, _np.integer)):
+        kwargs = {"dim": axis, "keepdim": keepdims, "interpolation": method}
+        if out is not None:
+            kwargs["out"] = out
+        return _torch.quantile(x, q_arg, **kwargs)
+
+    axes = _normalize_reduction_axes(axis, x.ndim)
+    if not axes:
+        result = x
+        if q_shape:
+            result = _torch.broadcast_to(result, q_shape + tuple(x.shape))
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
+    remaining_axes = tuple(dim for dim in range(x.ndim) if dim not in axes)
+    permuted = x.permute(axes + remaining_axes)
+    reduced_size = int(_np.prod([x.shape[dim] for dim in axes]))
+    reduced = permuted.reshape(
+        (reduced_size,) + tuple(x.shape[dim] for dim in remaining_axes)
+    )
+    result = _torch.quantile(reduced, q_arg, dim=0, interpolation=method)
+
+    if keepdims:
+        result = result.reshape(
+            q_shape
+            + tuple(1 if dim in axes else x.shape[dim] for dim in range(x.ndim))
+        )
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def count_nonzero(a, axis=None, keepdims=False):
+    """Count non-zero entries using NumPy-compatible reduction semantics."""
+    x = array(a)
+    if axis is None:
+        result = _torch.count_nonzero(x)
+        if keepdims:
+            return result.reshape((1,) * x.ndim)
+        return result
+
+    counts = (x != 0).to(dtype=_torch.int64)
+    result = _reduce_over_axes(
+        counts, axis, lambda values, one_axis: _torch.sum(values, dim=one_axis)
+    )
+    if keepdims:
+        axes = _normalize_reduction_axes(axis, x.ndim)
+        result = result.reshape(
+            tuple(1 if dim in axes else x.shape[dim] for dim in range(x.ndim))
+        )
+    return result
+
+
 def has_autodiff():
     """If allows for automatic differentiation.
 
