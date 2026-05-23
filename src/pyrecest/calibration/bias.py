@@ -160,6 +160,13 @@ def make_bias_training_examples(
         raise ValueError(
             "measurement_values and reference_values must have the same target dimension"
         )
+    if feature_values is None:
+        features = np.empty((measurements.shape[0], 0), dtype=float)
+    else:
+        features = _as_2d(feature_values, "feature_values")
+        if features.shape[0] != measurements.shape[0]:
+            raise ValueError("feature_values rows must match measurement_values rows")
+
     if reference_times.size == 0:
         return BiasTrainingExamples(
             measured=np.empty((0, measurements.shape[1])),
@@ -168,11 +175,7 @@ def make_bias_training_examples(
             features=np.empty(
                 (
                     0,
-                    (
-                        0
-                        if feature_values is None
-                        else _as_2d(feature_values, "feature_values").shape[1]
-                    ),
+                    features.shape[1],
                 )
             ),
             time_delta_s=np.empty(0),
@@ -189,13 +192,7 @@ def make_bias_training_examples(
         & np.isfinite(references[nearest]).all(axis=1)
         & (delta_s <= float(max_time_delta_s))
     )
-    if feature_values is None:
-        features = np.empty((measurements.shape[0], 0), dtype=float)
-    else:
-        features = _as_2d(feature_values, "feature_values")
-        if features.shape[0] != measurements.shape[0]:
-            raise ValueError("feature_values rows must match measurement_values rows")
-        valid &= np.isfinite(features).all(axis=1)
+    valid &= np.isfinite(features).all(axis=1)
     measured = measurements[valid]
     reference = references[nearest[valid]]
     return BiasTrainingExamples(
@@ -222,6 +219,8 @@ def fit_sensor_bias_correction_from_examples(
         raise ValueError("min_samples must be positive")
     y = _as_2d(examples.residual, "examples.residual")
     x = _as_2d(examples.features, "examples.features")
+    if x.shape[0] != y.shape[0]:
+        raise ValueError("examples.features rows must match examples.residual rows")
     valid = np.isfinite(y).all(axis=1) & np.isfinite(x).all(axis=1)
     y = y[valid]
     x = x[valid]

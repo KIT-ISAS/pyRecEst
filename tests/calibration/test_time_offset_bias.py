@@ -3,7 +3,9 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 from pyrecest.calibration.bias import (
+    BiasTrainingExamples,
     fit_sensor_bias_correction,
+    fit_sensor_bias_correction_from_examples,
     make_bias_training_examples,
 )
 from pyrecest.calibration.time_offset import (
@@ -139,6 +141,36 @@ class BiasCalibrationTest(unittest.TestCase):
         )
 
         npt.assert_allclose(examples.residual, np.array([[1.0], [1.0]]))
+
+    def test_make_bias_training_examples_validates_feature_rows_without_references(
+        self,
+    ):
+        with self.assertRaisesRegex(
+            ValueError,
+            "feature_values rows must match measurement_values rows",
+        ):
+            make_bias_training_examples(
+                np.array([0.0, 1.0]),
+                np.array([[1.0], [2.0]]),
+                np.array([]),
+                np.empty((0, 1)),
+                feature_values=np.array([[0.0]]),
+            )
+
+    def test_fit_sensor_bias_correction_from_examples_rejects_mismatched_rows(self):
+        examples = BiasTrainingExamples(
+            measured=np.zeros((2, 1)),
+            reference=np.zeros((2, 1)),
+            residual=np.zeros((2, 1)),
+            features=np.zeros((1, 1)),
+            time_delta_s=np.zeros(2),
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "examples.features rows must match examples.residual rows",
+        ):
+            fit_sensor_bias_correction_from_examples(examples, min_samples=1)
 
     def test_fit_sensor_bias_correction_subtracts_predicted_bias(self):
         times = np.arange(8.0)
