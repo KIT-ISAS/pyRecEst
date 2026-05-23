@@ -290,6 +290,33 @@ for _module_name, _attributes in BACKEND_ATTRIBUTES.items():
     BACKEND_ATTRIBUTES[_module_name] = _deduplicated_attributes(_attributes)
 
 
+def _quantile_with_numpy_axis(quantile_func, asarray_func):
+    """Return a NumPy-compatible quantile wrapper for stricter backends."""
+
+    @wraps(quantile_func)
+    def quantile(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        method="linear",
+        keepdims=False,
+        *,
+        interpolation=None,
+    ):
+        del overwrite_input
+        if interpolation is not None:
+            method = interpolation
+
+        kwargs = {"dim": axis, "keepdim": keepdims, "interpolation": method}
+        if out is not None:
+            kwargs["out"] = out
+        return quantile_func(asarray_func(a), asarray_func(q), **kwargs)
+
+    return quantile
+
+
 def _meshgrid_with_arraylike_axes(meshgrid_func, asarray_func, atleast_1d_func):
     """Return a NumPy-compatible meshgrid wrapper for stricter backends."""
 
@@ -374,6 +401,15 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                             attribute,
                             getattr(backend, "asarray"),
                             getattr(backend, "atleast_1d"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "quantile"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _quantile_with_numpy_axis(
+                            attribute,
+                            getattr(backend, "asarray"),
                         )
                     setattr(new_submodule, attribute_name, attribute)
 
