@@ -18,6 +18,11 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
         self.kappa = array(1.3)
         self.wl = WrappedLaplaceDistribution(self.lambda_, self.kappa)
 
+    def test_accepts_python_scalar_parameters(self):
+        wl = WrappedLaplaceDistribution(2.0, 1.3)
+
+        npt.assert_allclose(wl.pdf(array(1.0)), self.wl.pdf(array(1.0)), rtol=5e-7)
+
     def test_pdf(self):
         def laplace(x):
             return (
