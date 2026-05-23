@@ -7,7 +7,6 @@ from pyrecest.backend import (
     allclose,
     arange,
     array,
-    atleast_2d,
     concatenate,
     cos,
     diag,
@@ -18,10 +17,10 @@ from pyrecest.backend import (
     linalg,
     meshgrid,
     mod,
-    ndim,
     pi,
     random,
     repeat,
+    reshape,
     sin,
     stack,
     sum,
@@ -37,6 +36,35 @@ from ..nonperiodic.gaussian_distribution import GaussianDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
 
 
+def _as_2d_query_points(xs, dim: int):
+    """Normalize scalar/vector/matrix query inputs to shape ``(n_eval, dim)``."""
+    xs = array(xs)
+    if xs.ndim == 0:
+        if dim != 1:
+            raise ValueError(
+                "Scalar query points are only valid for one-dimensional "
+                f"distributions, got dim={dim}."
+            )
+        return reshape(xs, (1, 1))
+
+    if xs.ndim == 1:
+        if dim == 1:
+            return reshape(xs, (-1, 1))
+        if xs.shape[0] == dim:
+            return reshape(xs, (1, dim))
+        raise ValueError(
+            "Last dimension of xs must match the distribution dimension "
+            f"{dim}, got shape {xs.shape}."
+        )
+
+    if xs.shape[-1] != dim:
+        raise ValueError(
+            "Last dimension of xs must match the distribution dimension "
+            f"{dim}, got shape {xs.shape}."
+        )
+    return reshape(xs, (-1, dim))
+
+
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     """Partially wrapped normal distribution on periodic-linear domains.
 
@@ -49,8 +77,10 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     """
 
     def __init__(self, mu, C, bound_dim: Union[int, int32, int64]):
+        mu = array(mu)
+        C = array(C)
         assert bound_dim >= 0, "bound_dim must be non-negative"
-        assert ndim(mu) == 1, "mu must be a 1-dimensional array"
+        assert mu.ndim == 1, "mu must be a 1-dimensional array"
         assert C.shape == (mu.shape[-1], mu.shape[-1]), "C must match size of mu"
         assert allclose(C, C.T), "C must be symmetric"
         assert (
@@ -67,7 +97,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         self.C = C
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
-        xs = atleast_2d(xs)
+        xs = _as_2d_query_points(xs, self.input_dim)
         condition = (
             arange(xs.shape[1]) < self.bound_dim
         )  # Create a condition based on column indices
@@ -78,15 +108,16 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             xs,  # Keep the original values where the condition is False
         )
 
-        assert xs.shape[-1] == self.input_dim
-
         # generate multiples for wrapping
         multiples = array(range(-m, m + 1)) * 2.0 * pi
 
         # create meshgrid for all combinations of multiples
-        mesh = array(meshgrid(*[multiples] * self.bound_dim, indexing="ij")).reshape(
-            -1, self.bound_dim
-        )
+        if self.bound_dim == 0:
+            mesh = array([[]])
+        else:
+            mesh = array(
+                meshgrid(*[multiples] * self.bound_dim, indexing="ij")
+            ).reshape(-1, self.bound_dim)
 
         # reshape xs for broadcasting: repeat each row mesh.shape[0] times so that
         # every xs[i] is paired with every mesh offset before moving to xs[i+1]
@@ -127,6 +158,8 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
 
         For bounded dimensions, the mean is wrapped into [0, 2*pi) to stay on the manifold.
         """
+        new_mean = array(new_mean)
+        assert new_mean.shape == (self.input_dim,), "new_mean must match distribution dim"
         new_dist = copy.deepcopy(self)
         wrapped_mean = where(
             arange(new_mean.shape[0]) < self.bound_dim, mod(new_mean, 2 * pi), new_mean
@@ -139,7 +172,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
 
     def hybrid_moment(self):
         """
-        Calculates mean of [x1, x2, .., x_lin_dim, cos(x_(linD+1), sin(x_(linD+1)), ..., cos(x_(linD+boundD), sin(x_(lin_dim+bound_dim))]
+        Calculates mean of [x1, x2, .., x_lin_dim, cos(x_(linD+1), sin(x_(linD+1)), ..., cos(x_(lin_dim+boundD), sin(x_(lin_dim+bound_dim))]
         Returns:
             mu (linD+2): expectation value of [x1, x2, .., x_lin_dim, cos(x_(lin_dim+1), sin(x_(lin_dim+1)), ..., cos(x_(lin_dim+bound_dim), sin(x_(lin_dim+bound_dim))]
         """
@@ -160,7 +193,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         return self.mu
 
     def linear_mean(self):
-        return self.mu[-self.lin_dim :]  # noqa: E203
+        return self.mu[self.bound_dim :]  # noqa: E203
 
     def periodic_mean(self):
         return self.mu[: self.bound_dim]
