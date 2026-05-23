@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import all, asarray, exp, isfinite, mod, ndim, pi
+from pyrecest.backend import asarray, exp, mod, ndim, pi
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -27,8 +27,12 @@ class WrappedLaplaceDistribution(AbstractCircularDistribution):
 
     def __init__(self, lambda_, kappa_):
         AbstractCircularDistribution.__init__(self)
-        lambda_ = _validate_positive_scalar(lambda_, "lambda_")
-        kappa_ = _validate_positive_scalar(kappa_, "kappa_")
+        lambda_ = asarray(lambda_)
+        kappa_ = asarray(kappa_)
+        assert lambda_.shape in ((1,), ())
+        assert kappa_.shape in ((1,), ())
+        assert lambda_ > 0.0
+        assert kappa_ > 0.0
         self.lambda_ = lambda_
         self.kappa = kappa_
 
