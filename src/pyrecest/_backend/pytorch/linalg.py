@@ -165,7 +165,7 @@ def solve_sylvester(a, b, q):
 # (TODO) (sait) _torch.linalg.cholesky_ex for even faster way
 def is_single_matrix_pd(mat):
     """Check if 2D square matrix is positive definite."""
-    if mat.shape[0] != mat.shape[1]:
+    if mat.ndim != 2 or mat.shape[0] != mat.shape[1]:
         return False
     if mat.dtype in [_torch.complex64, _torch.complex128]:
         is_hermitian = _torch.all(
