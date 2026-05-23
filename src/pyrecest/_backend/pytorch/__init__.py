@@ -634,7 +634,9 @@ def prod(x, axis=None):
     x = array(x)
     if axis is None:
         return _torch.prod(x)
-    return _torch.prod(x, dim=axis)
+    return _reduce_over_axes(
+        x, axis, lambda values, one_axis: _torch.prod(values, dim=one_axis)
+    )
 
 
 def where(condition, x=None, y=None):
