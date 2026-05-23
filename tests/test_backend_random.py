@@ -28,6 +28,31 @@ class TestBackendRandom(unittest.TestCase):
 
         self.assertEqual(sample.shape, (1, 2))
 
+    @unittest.skipIf(pyrecest.backend.__backend_name__ != "jax", "JAX-specific RNG state contract")
+    def test_jax_multinomial_explicit_state_does_not_mutate_global_state(self):
+        state = random.create_random_state(123)
+        original_global_state = random.get_state()
+
+        state_after, sample = random.multinomial(
+            10, pyrecest.backend.array([0.25, 0.75]), state=state
+        )
+
+        self.assertEqual(sample.shape, (2,))
+        self.assertEqual(int(pyrecest.backend.sum(sample)), 10)
+        npt.assert_array_equal(random.get_state(), original_global_state)
+        self.assertFalse(pyrecest.backend.all(random.get_state() == state_after))
+
+    @unittest.skipIf(pyrecest.backend.__backend_name__ != "jax", "JAX-specific RNG state contract")
+    def test_jax_multinomial_uses_and_advances_global_state(self):
+        random.seed(321)
+        initial_state = random.get_state()
+
+        sample = random.multinomial(8, pyrecest.backend.array([0.5, 0.5]))
+
+        self.assertEqual(sample.shape, (2,))
+        self.assertEqual(int(pyrecest.backend.sum(sample)), 8)
+        self.assertFalse(pyrecest.backend.all(random.get_state() == initial_state))
+
 
 if __name__ == "__main__":
     unittest.main()

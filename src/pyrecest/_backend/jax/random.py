@@ -177,12 +177,19 @@ def multivariate_normal(mean, cov, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def multinomial(n, pvals):
-    """Sample from a multinomial distribution using JAX."""
-    state, has_state, _ = _get_state()
+def _multinomial(state, n, pvals):
     state, key = jax.random.split(state)
-    backend.jax_global_random_state = state
     pvals = _jnp.asarray(pvals, dtype=_jnp.float32)
     pvals = pvals / pvals.sum()
     samples = jax.random.categorical(key, _jnp.log(pvals), shape=(n,))
-    return _jnp.bincount(samples, minlength=len(pvals))
+    return state, _jnp.bincount(samples, minlength=len(pvals))
+
+
+def multinomial(n, pvals, **kwargs):
+    """Sample from a multinomial distribution using the JAX RNG state contract."""
+    state, has_state, kwargs = _get_state(**kwargs)
+    if kwargs:
+        unexpected = ", ".join(sorted(kwargs))
+        raise TypeError(f"Unexpected keyword argument(s): {unexpected}")
+    state, res = _multinomial(state, n, pvals)
+    return set_state_return(has_state, state, res)
