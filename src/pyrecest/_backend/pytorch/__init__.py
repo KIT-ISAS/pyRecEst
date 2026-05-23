@@ -701,7 +701,7 @@ def _contains_slice(indices):
     if isinstance(indices, slice):
         return True
     if isinstance(indices, tuple):
-        return any(isinstance(index, slice) for index in indices)
+        return _builtins.any(isinstance(index, slice) for index in indices)
     return False
 
 
