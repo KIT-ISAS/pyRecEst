@@ -4,6 +4,7 @@ for Riemannian Score-based SDE
 """
 
 import builtins as _builtins
+import numbers as _numbers
 
 import jax.numpy as _jnp
 from jax import vmap
@@ -242,6 +243,77 @@ def take(
     )
 
 
+def _is_boolean_index(indices):
+    if isinstance(indices, (bool, _jnp.bool_)):
+        return True
+    if isinstance(indices, (list, tuple)):
+        return bool(indices) and _is_boolean_index(indices[0])
+    if isinstance(indices, _jnp.ndarray):
+        return indices.dtype in (_jnp.bool_, _jnp.uint8)
+    return False
+
+
+def _is_iterable_index(indices):
+    if isinstance(indices, (list, tuple)):
+        return True
+    if isinstance(indices, _jnp.ndarray):
+        return indices.ndim > 0
+    return False
+
+
+def _is_scalar_index(index):
+    return isinstance(index, _numbers.Integral) or (
+        isinstance(index, _jnp.ndarray) and index.ndim == 0
+    )
+
+
+def _assignment_value_length(values):
+    if isinstance(values, (list, tuple)):
+        return len(values)
+    if isinstance(values, _jnp.ndarray) and values.ndim > 0:
+        return values.shape[0]
+    return 1
+
+
+def _normalize_assignment_index(indices, ndim_x, axis=0):
+    if _is_boolean_index(indices):
+        return _jnp.asarray(indices), False, None
+
+    use_vectorization = _is_iterable_index(indices) and len(indices) < ndim_x
+    zip_indices = (
+        _is_iterable_index(indices)
+        and len(indices) > 0
+        and _is_iterable_index(indices[0])
+    )
+
+    if use_vectorization:
+        normalized = tuple(list(indices[:axis]) + [slice(None)] + list(indices[axis:]))
+        return normalized, True, None
+
+    if zip_indices:
+        normalized = tuple(_jnp.asarray(index_axis) for index_axis in zip(*indices))
+        return normalized, False, len(indices)
+
+    if isinstance(indices, list):
+        return _jnp.asarray(indices), False, len(indices)
+    if isinstance(indices, _jnp.ndarray) and indices.ndim > 0:
+        return indices, False, indices.shape[0]
+    if isinstance(indices, tuple):
+        if all(_is_scalar_index(index) for index in indices):
+            return indices, False, 1
+        if indices and _is_iterable_index(indices[0]):
+            return indices, False, len(indices[0])
+    return indices, False, 1
+
+
+def _validate_assignment_value_count(values, *, use_vectorization, len_indices):
+    if use_vectorization or len_indices is None:
+        return
+    len_values = _assignment_value_length(values)
+    if len_values > 1 and len_values != len_indices:
+        raise ValueError("Either one value or as many values as indices required")
+
+
 def assignment(x, values, indices, axis=0):
     """
     Assign values at given indices of an array using JAX.
@@ -265,20 +337,18 @@ def assignment(x, values, indices, axis=0):
     x_new : JAX array, shape=[dim]
         Copy of x with the values assigned at the given indices.
     """
-    # Ensure indices and values are iterable
-    if isinstance(indices, (int, tuple)):
-        indices = [indices]
-    if not isinstance(values, list):
-        values = [values] * len(indices)
-
-    # Check if we need to raise errors for mismatch in values and indices lengths
-    if len(values) != 1 and len(values) != len(indices):
-        raise ValueError("Either one value or as many values as indices required")
-
-    # Handling assignment with index update
-    x_new = x.at[indices].set(values)
-
-    return x_new
+    x = _jnp.asarray(x)
+    normalized_indices, use_vectorization, len_indices = _normalize_assignment_index(
+        indices,
+        x.ndim,
+        axis=axis,
+    )
+    _validate_assignment_value_count(
+        values,
+        use_vectorization=use_vectorization,
+        len_indices=len_indices,
+    )
+    return x.at[normalized_indices].set(values)
 
 
 def assignment_by_sum(x, values, indices, axis=0):
@@ -308,21 +378,18 @@ def assignment_by_sum(x, values, indices, axis=0):
     If a single value is provided, it is added at all the indices.
     If a list is given, it must have the same length as indices.
     """
-    # Ensure indices and values are iterable
-    if isinstance(indices, (int, tuple)):
-        indices = [indices]
-    if not isinstance(values, list):
-        values = [values] * len(indices)
-
-    # Check if the number of values matches the number of indices, or there's exactly one value
-    if len(values) != 1 and len(values) != len(indices):
-        raise ValueError("Either one value or as many values as indices required")
-
-    # Handling addition with index update
-    for idx, val in zip(indices, values):
-        x = x.at[idx].add(val)
-
-    return x
+    x = _jnp.asarray(x)
+    normalized_indices, use_vectorization, len_indices = _normalize_assignment_index(
+        indices,
+        x.ndim,
+        axis=axis,
+    )
+    _validate_assignment_value_count(
+        values,
+        use_vectorization=use_vectorization,
+        len_indices=len_indices,
+    )
+    return x.at[normalized_indices].add(values)
 
 
 def array_from_sparse(indices, data, target_shape):
