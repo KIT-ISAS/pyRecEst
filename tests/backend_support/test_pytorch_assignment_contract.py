@@ -56,6 +56,8 @@ import pyrecest.backend as backend
 
 vector = backend.zeros(3)
 by_list = backend.assignment(vector, [4.0, 5.0], [0, 2])
+by_slice = backend.assignment(vector, [1.0, 2.0], slice(1, 3))
+by_slice_sum = backend.assignment_by_sum(vector, [1.0, 2.0], slice(1, 3))
 
 matrix = backend.zeros((3, 3))
 by_mask = backend.assignment(
@@ -71,6 +73,8 @@ by_mask = backend.assignment(
 logical = backend.logical_and(backend.asarray([1, 0]), backend.asarray([2, 3]))
 
 assert backend.to_numpy(by_list).tolist() == [4.0, 0.0, 5.0]
+assert backend.to_numpy(by_slice).tolist() == [0.0, 1.0, 2.0]
+assert backend.to_numpy(by_slice_sum).tolist() == [0.0, 1.0, 2.0]
 assert backend.to_numpy(by_mask).tolist() == [
     [1.0, 0.0, 0.0],
     [0.0, 2.0, 0.0],

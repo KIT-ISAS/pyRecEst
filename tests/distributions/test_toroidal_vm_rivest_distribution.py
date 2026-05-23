@@ -36,6 +36,13 @@ class ToroidalVMRivestDistributionTest(unittest.TestCase):
         self.assertEqual(self.dist.alpha, self.alpha)
         self.assertEqual(self.dist.beta, self.beta)
 
+    def test_accepts_python_scalar_correlation_parameters(self):
+        dist = ToroidalVMRivestDistribution(self.mu, self.kappa, 0.5, 0.3)
+        x = array([1.3, 2.4])
+
+        npt.assert_allclose(dist.pdf(x), self.dist.pdf(x), rtol=5e-7)
+        npt.assert_allclose(dist.C, self.dist.C, rtol=5e-7)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
