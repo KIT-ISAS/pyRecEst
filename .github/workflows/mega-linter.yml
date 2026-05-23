@@ -97,6 +97,7 @@ jobs:
           # Validate the checked-out codebase directly on PRs and on main pushes.
           VALIDATE_ALL_CODEBASE: true
           GITHUB_TOKEN: ${{ github.token }}
+          EMAIL_REPORTER_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
 
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
