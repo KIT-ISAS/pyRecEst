@@ -25,6 +25,7 @@ from pyrecest.backend import (
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
+from ._input_validation import as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -33,6 +34,7 @@ class HypertoroidalDiracDistribution(
 ):
     def __init__(self, d, w=None, dim: int | None = None):
         """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
+        d = array(d)
         if dim is None:
             if d.ndim > 1:
                 dim = d.shape[-1]
@@ -175,9 +177,12 @@ class HypertoroidalDiracDistribution(
         )
 
     def shift(self, shift_by) -> "HypertoroidalDiracDistribution":
-        assert shift_by.shape[-1] == self.dim
+        shift_by = as_shift_vector(shift_by, self.dim)
         hd = copy.copy(self)
-        hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2.0 * pi)
+        if self.dim == 1 and self.d.ndim == 1:
+            hd.d = mod(self.d + shift_by[0], 2.0 * pi)
+        else:
+            hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2.0 * pi)
         return hd
 
     def entropy(self):
