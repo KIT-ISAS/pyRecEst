@@ -77,7 +77,7 @@ def qr(*args, **kwargs):
 
 def is_single_matrix_pd(mat):
     """Check if 2D square matrix is positive definite."""
-    if mat.shape[0] != mat.shape[1]:
+    if mat.ndim != 2 or mat.shape[0] != mat.shape[1]:
         return False
     if mat.dtype in [_np.complex64, _np.complex128]:
         if not _is_hermitian(mat):
