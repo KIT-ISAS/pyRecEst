@@ -690,7 +690,7 @@ def _is_scalar_index(index):
 def _assignment_index_length(indices, zip_indices):
     if zip_indices:
         return len(indices)
-    if isinstance(indices, tuple) and all(
+    if isinstance(indices, tuple) and _builtins.all(
         _is_scalar_index(index) for index in indices
     ):
         return 1
@@ -784,7 +784,11 @@ def assignment(x, values, indices, axis=0):
         indices = tuple(zip(*indices))
     if not use_vectorization:
         len_values = _assignment_value_length(values)
-        if len_values > 1 and len_values != len_indices:
+        if (
+            not _contains_slice(indices)
+            and len_values > 1
+            and len_values != len_indices
+        ):
             raise ValueError("Either one value or as many values as indices")
         _apply_assignment(x_new, indices, values, accumulate=False)
     else:
@@ -837,7 +841,11 @@ def assignment_by_sum(x, values, indices, axis=0):
         indices = tuple(zip(*indices))
     if not use_vectorization:
         len_values = _assignment_value_length(values)
-        if len_values > 1 and len_values != len_indices:
+        if (
+            not _contains_slice(indices)
+            and len_values > 1
+            and len_values != len_indices
+        ):
             raise ValueError("Either one value or as many values as indices")
         _apply_assignment(x_new, indices, values, accumulate=True)
     else:
