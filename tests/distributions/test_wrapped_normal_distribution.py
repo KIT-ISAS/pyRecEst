@@ -10,6 +10,7 @@ from pyrecest.backend import (
     array,
     exp,
     isfinite,
+    mod,
     ones_like,
     pi,
     sqrt,
@@ -101,6 +102,16 @@ class WrappedNormalDistributionTest(unittest.TestCase):
 
         self.assertTrue(bool(isfinite(value)))
         self.assertLess(iterations["count"], 10)
+
+    def test_shift_accepts_python_scalar(self):
+        shifted = self.wn.shift(0.25)
+
+        npt.assert_allclose(shifted.mu, array([mod(self.mu + 0.25, 2.0 * pi)]))
+        npt.assert_allclose(self.wn.mu, array([self.mu]))
+
+    def test_shift_rejects_wrong_shape(self):
+        with self.assertRaises(ValueError):
+            self.wn.shift([0.1, 0.2])
 
     def test_multiply_uses_explicit_vm_approximation(self):
         """The product API is a documented VM-based approximation."""

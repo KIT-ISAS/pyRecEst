@@ -47,9 +47,11 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             integration_boundaries, array([[0.0, 2.0 * pi], [-4.0, 8.0]])
         )
 
-    def test_constructor_rejects_zero_linear_dimension(self):
-        with self.assertRaises(ValueError):
-            PartiallyWrappedNormalDistribution(array([1.0]), array([[1.0]]), 1)
+    def test_constructor_accepts_fully_periodic_dimension(self):
+        dist = PartiallyWrappedNormalDistribution(array([1.0]), array([[1.0]]), 1)
+
+        self.assertEqual(dist.bound_dim, 1)
+        self.assertEqual(dist.lin_dim, 0)
 
     def test_linear_mean_numerical(self):
         hwn = PartiallyWrappedNormalDistribution(

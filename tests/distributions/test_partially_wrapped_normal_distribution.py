@@ -4,7 +4,7 @@ import numpy.testing as npt
 import scipy.linalg
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, pi
 from pyrecest.distributions.cart_prod.partially_wrapped_normal_distribution import (
     PartiallyWrappedNormalDistribution,
 )
@@ -30,13 +30,52 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
                 rtol=1e-10,
             )
 
+    def test_accepts_python_sequence_parameters_and_query_points(self):
+        dist = PartiallyWrappedNormalDistribution(
+            [0.0, 1.0], [[1.0, 0.1], [0.1, 2.0]], 0
+        )
+        query_points = [[0.0, 1.0], [1.0, 2.0]]
+
+        npt.assert_allclose(dist.pdf(query_points), dist.pdf(array(query_points)))
+
+    def test_pdf_interprets_one_dimensional_sequences_as_multiple_scalar_points(self):
+        dist = PartiallyWrappedNormalDistribution([0.0], [[1.0]], 1)
+        query_points = [0.1, 0.2, 0.3]
+        expected_points = array([[0.1], [0.2], [0.3]])
+
+        values = dist.pdf(query_points)
+
+        self.assertEqual(values.shape, (3,))
+        npt.assert_allclose(values, dist.pdf(expected_points))
+
+    def test_set_mean_accepts_python_sequence_and_wraps_periodic_part(self):
+        dist = PartiallyWrappedNormalDistribution(
+            [5.0, 1.0], [[2.0, 1.0], [1.0, 1.0]], 1
+        )
+
+        shifted = dist.set_mean([7.0, 3.0])
+
+        npt.assert_allclose(shifted.mu, [7.0 - 2.0 * pi, 3.0])
+        npt.assert_allclose(dist.mu, [5.0, 1.0])
+
+    def test_linear_mean_is_empty_for_fully_periodic_distribution(self):
+        dist = PartiallyWrappedNormalDistribution(
+            [0.0, 1.0], [[1.0, 0.1], [0.1, 2.0]], 2
+        )
+
+        self.assertEqual(dist.linear_mean().shape, (0,))
+        self.assertEqual(dist.linear_covariance().shape, (0, 0))
+
     def test_hybrid_mean_2d(self):
         npt.assert_allclose(self.dist_2d.hybrid_mean(), self.mu)
 
     def test_hybrid_mean_4d(self):
         mu = array([5.0, 1.0, 3.0, 4.0])
         C = array(
-            scipy.linalg.block_diag([[2.0, 1.0], [1.0, 1.0]], [[2.0, 1.0], [1.0, 1.0]])
+            scipy.linalg.block_diag(
+                [[2.0, 1.0], [1.0, 1.0]],
+                [[2.0, 1.0], [1.0, 1.0]],
+            )
         )
         dist = PartiallyWrappedNormalDistribution(mu, C, 2)
         npt.assert_allclose(dist.hybrid_mean(), mu)

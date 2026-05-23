@@ -24,6 +24,7 @@ from pyrecest.backend import (
 )
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
+from ..hypertorus._input_validation import as_shift_vector
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
@@ -246,9 +247,8 @@ class WrappedNormalDistribution(
         return CircularDiracDistribution(samples, weights)
 
     def shift(self, shift_by):
-        shift_by = array(shift_by)
-        assert shift_by.shape in ((1,), ())
-        return WrappedNormalDistribution(self.scalar_mu + squeeze(shift_by), self.sigma)
+        shift_by = as_shift_vector(shift_by, 1)
+        return WrappedNormalDistribution(self.scalar_mu + shift_by[0], self.sigma)
 
     def to_vm(self) -> VonMisesDistribution:
         # Convert to Von Mises distribution

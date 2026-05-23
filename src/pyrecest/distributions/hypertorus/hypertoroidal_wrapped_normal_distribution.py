@@ -15,12 +15,12 @@ from pyrecest.backend import (
     mod,
     pi,
     random,
-    reshape,
     stack,
     zeros,
 )
 from scipy.stats import multivariate_normal
 
+from ._input_validation import as_hypertoroidal_points, as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -37,28 +37,6 @@ def _as_2d_covariance(C):
     if C.ndim == 0:
         C = C.reshape((1, 1))
     return C
-
-
-def _as_2d_query_points(xs, dim: int):
-    """Normalize scalar/vector/matrix query inputs to shape ``(n_eval, dim)``."""
-    xs = array(xs)
-    if xs.ndim == 0:
-        if dim != 1:
-            raise ValueError(
-                f"Scalar query points are only valid for one-dimensional distributions, got dim={dim}."
-            )
-        return reshape(xs, (1, 1))
-
-    if xs.ndim == 1:
-        if dim == 1:
-            return reshape(xs, (-1, 1))
-        if xs.shape[0] == dim:
-            return reshape(xs, (1, dim))
-        raise ValueError(f"Last dimension of xs must match the distribution dimension {dim}, got shape {xs.shape}.")
-
-    if xs.shape[-1] != dim:
-        raise ValueError(f"Last dimension of xs must match the distribution dimension {dim}, got shape {xs.shape}.")
-    return reshape(xs, (-1, dim))
 
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
@@ -104,7 +82,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        xs = _as_2d_query_points(xs, self.dim)
+        xs = as_hypertoroidal_points(xs, self.dim)
         xs = (xs + pi) % (2 * pi) - pi
 
         # Generate all combinations of offsets for each dimension
@@ -131,9 +109,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :raises AssertionError: If shape of shift_by does not match the dimension of the distribution.
         :return: Shifted distribution.
         """
-        shift_by = _as_1d_mu(shift_by)
-        assert shift_by.shape == (self.dim,)
-
+        shift_by = as_shift_vector(shift_by, self.dim)
         return self.set_mean(self.mu + shift_by)
 
     def sample(self, n: Union[int, int32, int64]):
