@@ -120,9 +120,9 @@ def score_false_tracks(
     unreferenced_observations = 0
     total_observations = 0
     for observations in _observations_by_track(predicted):
-        total_observations += len(observations)
         if len(observations) < int(min_length):
             continue
+        total_observations += len(observations)
         evaluated_tracks += 1
         matched = sum(
             1 for observation in observations if observation in reference_lookup
@@ -172,9 +172,9 @@ def score_missed_tracks(
     missed_observations = 0
     total_observations = 0
     for observations in _observations_by_track(reference):
-        total_observations += len(observations)
         if len(observations) < int(min_length):
             continue
+        total_observations += len(observations)
         evaluated_tracks += 1
         recovered = sum(
             1 for observation in observations if observation in predicted_lookup
