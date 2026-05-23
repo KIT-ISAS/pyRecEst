@@ -70,39 +70,6 @@ def _as_2d_query_points(xs, dim: int):
     return reshape(xs, (-1, dim))
 
 
-def _validate_positive_sample_count(n) -> int:
-    count_array = np.asarray(n)
-    if count_array.ndim != 0:
-        raise ValueError("n must be a scalar integer")
-
-    count = count_array.item()
-    if isinstance(count, (bool, np.bool_)):
-        raise ValueError("n must be an integer, not a boolean")
-
-    try:
-        count_int = int(count)
-        count_float = float(count)
-    except (OverflowError, TypeError, ValueError) as exc:
-        raise ValueError("n must be an integer") from exc
-
-    if not np.isfinite(count_float) or not count_float.is_integer():
-        raise ValueError("n must be a finite integer")
-    if count_int <= 0:
-        raise ValueError("n must be positive")
-    return count_int
-
-
-def _validate_bound_dim(bound_dim, total_dim: int) -> int:
-    if isinstance(bound_dim, bool) or not isinstance(bound_dim, Integral):
-        raise ValueError("bound_dim must be a non-negative integer")
-    bound_dim = int(bound_dim)
-    if bound_dim < 0:
-        raise ValueError("bound_dim must be non-negative")
-    if bound_dim > total_dim:
-        raise ValueError("bound_dim must not exceed the distribution dimension")
-    return bound_dim
-
-
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     """Partially wrapped normal distribution on periodic-linear domains.
 
@@ -117,19 +84,14 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     def __init__(self, mu, C, bound_dim: Union[int, int32, int64]):
         mu = array(mu)
         C = array(C)
-        if mu.ndim != 1:
-            raise ValueError("mu must be a 1-dimensional array")
-        bound_dim = _validate_bound_dim(bound_dim, mu.shape[0])
-        if C.shape != (mu.shape[-1], mu.shape[-1]):
-            raise ValueError("C must match size of mu")
-        if not bool(allclose(C, C.T)):
-            raise ValueError("C must be symmetric")
-        try:
-            chol = linalg.cholesky(C)
-        except Exception as exc:
-            raise ValueError("C must be positive definite") from exc
-        if not bool(backend_all(isfinite(chol))):
-            raise ValueError("C must be positive definite")
+        assert bound_dim >= 0, "bound_dim must be non-negative"
+        assert mu.ndim == 1, "mu must be a 1-dimensional array"
+        assert C.shape == (mu.shape[-1], mu.shape[-1]), "C must match size of mu"
+        assert allclose(C, C.T), "C must be symmetric"
+        assert (
+            len(linalg.cholesky(C)) > 0
+        ), "C must be positive definite"  # Will fail if not positive definite
+        assert bound_dim <= mu.shape[0]
         mu = where(arange(mu.shape[0]) < bound_dim, mod(mu, 2 * pi), mu)
 
         AbstractHypercylindricalDistribution.__init__(
@@ -202,8 +164,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         For bounded dimensions, the mean is wrapped into [0, 2*pi) to stay on the manifold.
         """
         new_mean = array(new_mean)
-        if new_mean.shape != (self.input_dim,):
-            raise ValueError("new_mean must match distribution dim")
+        assert new_mean.shape == (self.input_dim,), "new_mean must match distribution dim"
         new_dist = copy.deepcopy(self)
         wrapped_mean = where(
             arange(new_mean.shape[0]) < self.bound_dim, mod(new_mean, 2 * pi), new_mean
