@@ -273,6 +273,12 @@ BACKEND_ATTRIBUTES = {
     ],
 }
 
+OPTIONAL_BACKEND_ATTRIBUTES = {
+    "random": [
+        "create_random_state",
+    ],
+}
+
 
 def _deduplicated_attributes(attributes):
     """Return ``attributes`` with duplicates removed while preserving order."""
@@ -348,6 +354,10 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                         ) from None
                 else:
                     setattr(new_submodule, attribute_name, attribute)
+
+            for attribute_name in OPTIONAL_BACKEND_ATTRIBUTES.get(module_name, []):
+                if hasattr(submodule, attribute_name):
+                    setattr(new_submodule, attribute_name, getattr(submodule, attribute_name))
 
         return new_module
 
