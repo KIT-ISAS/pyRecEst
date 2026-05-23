@@ -57,7 +57,7 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
                 return values_flat[0]
             if values_flat.shape == (point_count,):
                 return values_flat
-        except (TypeError, ValueError):
+        except (RuntimeError, TypeError, ValueError):
             pass
 
         return array([likelihood(z, point) ** power for point in points])
