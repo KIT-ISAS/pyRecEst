@@ -17,6 +17,11 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         self.lambda_ = array(2.0)
         self.we = WrappedExponentialDistribution(self.lambda_)
 
+    def test_accepts_python_scalar_parameter(self):
+        we = WrappedExponentialDistribution(2.0)
+
+        npt.assert_allclose(we.pdf(array(1.0)), self.we.pdf(array(1.0)), rtol=5e-7)
+
     def test_pdf(self):
         def pdftemp(x):
             return sum(
