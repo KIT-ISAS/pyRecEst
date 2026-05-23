@@ -281,21 +281,37 @@ def logical_and(x, y):
     return x and y
 
 
+def _normalize_reduction_axes(axis, ndim_):
+    if isinstance(axis, (int, _np.integer)):
+        axis = (axis,)
+    else:
+        axis = tuple(axis)
+
+    normalized_axes = tuple(one_axis + ndim_ if one_axis < 0 else one_axis for one_axis in axis)
+    if len(set(normalized_axes)) != len(normalized_axes):
+        raise ValueError("duplicate value in 'axis'")
+
+    for one_axis, normalized_axis in zip(axis, normalized_axes):
+        if normalized_axis < 0 or normalized_axis >= ndim_:
+            raise IndexError(f"axis {one_axis} is out of bounds for array of dimension {ndim_}")
+
+    return normalized_axes
+
+
+def _reduce_over_axes(x, axis, reducer):
+    result = x
+    for one_axis in sorted(_normalize_reduction_axes(axis, x.ndim), reverse=True):
+        result = reducer(result, one_axis)
+    return result
+
+
 def any(x, axis=None):
     if not _torch.is_tensor(x):
         x = _torch.tensor(x)
+    x = x.bool()
     if axis is None:
         return _torch.any(x)
-    if isinstance(axis, int):
-        return _torch.any(x.bool(), axis)
-    if len(axis) == 1:
-        return _torch.any(x, *axis)
-    axis = list(axis)
-    for i_axis, one_axis in enumerate(axis):
-        if one_axis < 0:
-            axis[i_axis] = ndim(x) + one_axis
-    new_axis = tuple(k - 1 if k >= 0 else k for k in axis[1:])
-    return any(_torch.any(x.bool(), axis[0]), new_axis)
+    return _reduce_over_axes(x, axis, lambda values, one_axis: _torch.any(values, dim=one_axis))
 
 
 def flip(x, axis):
@@ -314,18 +330,10 @@ def concatenate(seq, axis=0, out=None):
 def all(x, axis=None):
     if not _torch.is_tensor(x):
         x = _torch.tensor(x)
+    x = x.bool()
     if axis is None:
-        return x.bool().all()
-    if isinstance(axis, int):
-        return _torch.all(x.bool(), axis)
-    if len(axis) == 1:
-        return _torch.all(x, *axis)
-    axis = list(axis)
-    for i_axis, one_axis in enumerate(axis):
-        if one_axis < 0:
-            axis[i_axis] = ndim(x) + one_axis
-    new_axis = tuple(k - 1 if k >= 0 else k for k in axis[1:])
-    return all(_torch.all(x.bool(), axis[0]), new_axis)
+        return _torch.all(x)
+    return _reduce_over_axes(x, axis, lambda values, one_axis: _torch.all(values, dim=one_axis))
 
 
 def get_slice(x, indices):
@@ -397,9 +405,12 @@ def shape(val):
 
 
 def max(a, axis=None):
+    a = array(a)
     if axis is None:
-        return _torch.max(array(a))
-    return _torch.max(array(a), dim=axis).values
+        return _torch.max(a)
+    return _reduce_over_axes(
+        a, axis, lambda values, one_axis: _torch.max(values, dim=one_axis).values
+    )
 
 
 amax = max
