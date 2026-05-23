@@ -85,6 +85,11 @@ class ToroidalVMSineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCase
         npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
 
+    def test_accepts_python_scalar_lambda(self):
+        tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, 0.5)
+
+        npt.assert_allclose(tvm.pdf(array([3.0, 2.0])), self.tvm.pdf(array([3.0, 2.0])))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "numpy",
         reason="Regression test uses NumPy/scipy scalar semantics",
