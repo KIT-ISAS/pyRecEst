@@ -130,7 +130,11 @@ def time_offset_error_summary(
     measurement_values = np.asarray(measurement_values, dtype=float)
     if measurement_values.ndim == 1:
         measurement_values = measurement_values.reshape(-1, 1)
+    elif measurement_values.ndim != 2:
+        raise ValueError("measurement_values must be one- or two-dimensional")
     query_times = apply_time_offset(measurement_times_s, offset_s)
+    if query_times.size != measurement_values.shape[0]:
+        raise ValueError("measurement_times_s length must match measurement_values rows")
     reference_at_query, valid = interpolate_reference_values(
         reference_times_s,
         reference_values,
