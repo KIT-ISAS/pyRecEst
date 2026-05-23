@@ -92,9 +92,11 @@ jobs:
           # All available variables are described in documentation
           # https://megalinter.io/latest/configuration/#shared-variables
           # ADD YOUR CUSTOM ENV VARIABLES HERE OR DEFINE THEM IN A FILE .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY
-          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Validates all source when push on main, else just the git diff with main.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EMAIL_REPORTER_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          # Diff mode currently fails in the MegaLinter container before any linter
+          # runs because its internal fetch cannot reuse checkout credentials.
+          # Validate the checked-out codebase directly on PRs and on main pushes.
+          VALIDATE_ALL_CODEBASE: true
+          GITHUB_TOKEN: ${{ github.token }}
 
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
