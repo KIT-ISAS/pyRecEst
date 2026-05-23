@@ -214,8 +214,10 @@ def to_ndarray(x, to_ndim, axis=0):
     if not isinstance(x, _jnp.ndarray):
         x = _jnp.array(x)
 
-    # Check if we need to add a dimension
-    if x.ndim == to_ndim - 1:
+    if x.ndim > to_ndim:
+        raise ValueError("The ndim cannot be adapted properly.")
+
+    while x.ndim < to_ndim:
         x = _jnp.expand_dims(x, axis=axis)
 
     return x
