@@ -1,12 +1,17 @@
+import math
 import unittest
 from unittest.mock import patch
 
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, random
 from pyrecest.distributions import WrappedNormalDistribution
 from pyrecest.filters.wrapped_normal_filter import WrappedNormalFilter
+
+
+def _scalar_only_likelihood(z, x):
+    return math.exp(math.cos(float(z) - float(x)))
 
 
 class WrappedNormalFilterTest(unittest.TestCase):
@@ -48,6 +53,23 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.assertIsInstance(wn_identity2, WrappedNormalDistribution)
         self.assertLess(self.wn.mu, wn_identity2.mu)
         self.assertGreater(self.wn.sigma, wn_identity2.sigma)
+
+    def test_update_nonlinear_particle_accepts_scalar_likelihood_callback(self):
+        random.seed(0)
+        self.wn_filter.filter_state = WrappedNormalDistribution(array(0.0), array(0.5))
+
+        self.wn_filter.update_nonlinear_particle(_scalar_only_likelihood, 0.1)
+
+        self.assertIsInstance(self.wn_filter.filter_state, WrappedNormalDistribution)
+        self.assertTrue(math.isfinite(float(self.wn_filter.filter_state.sigma)))
+
+    def test_update_nonlinear_progressive_accepts_scalar_likelihood_callback(self):
+        self.wn_filter.filter_state = WrappedNormalDistribution(array(0.0), array(0.5))
+
+        self.wn_filter.update_nonlinear_progressive(_scalar_only_likelihood, 0.1)
+
+        self.assertIsInstance(self.wn_filter.filter_state, WrappedNormalDistribution)
+        self.assertTrue(math.isfinite(float(self.wn_filter.filter_state.sigma)))
 
     def test_update_nonlinear_progressive_uses_adaptive_lambda(self):
         class FakeDiracDistribution:
