@@ -28,6 +28,22 @@ class TestBackendRandom(unittest.TestCase):
 
         self.assertEqual(sample.shape, (1, 2))
 
+    def test_choice_accepts_python_list_population(self):
+        samples = random.choice([10, 20, 30], size=(32,))
+
+        self.assertEqual(samples.shape, (32,))
+        npt.assert_array_less(9, samples)
+        npt.assert_array_less(samples, 31)
+        for sample in pyrecest.backend.to_numpy(samples).tolist():
+            self.assertIn(sample, (10, 20, 30))
+
+    def test_choice_accepts_integer_population(self):
+        samples = random.choice(5, size=(32,))
+
+        self.assertEqual(samples.shape, (32,))
+        npt.assert_array_less(-1, samples)
+        npt.assert_array_less(samples, 5)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "jax", "JAX-specific RNG state contract"
     )

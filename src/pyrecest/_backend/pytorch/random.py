@@ -20,11 +20,22 @@ def _choice_size(size):
     return size, int(_torch.prod(_torch.tensor(size)).item())
 
 
+def _choice_population(a, p=None):
+    """Normalize NumPy-compatible ``choice`` populations to a tensor."""
+    device = p.device if _torch.is_tensor(p) else None
+    if isinstance(a, int):
+        if a <= 0:
+            raise ValueError("a must be greater than 0 unless no samples are taken")
+        return _torch.arange(a, device=device)
+    if _torch.is_tensor(a):
+        return a
+    return _torch.as_tensor(a, device=device)
+
+
 def choice(a, size=None, replace=True, p=None):
-    assert _torch.is_tensor(a), "a must be a tensor"
+    a = _choice_population(a, p=p)
     size, num_samples = _choice_size(size)
     if p is not None:
-        assert _torch.is_tensor(p), "p must be a tensor"
         if not replace and num_samples > len(a):
             raise ValueError(
                 "Cannot take a larger sample than population when 'replace=False'."
