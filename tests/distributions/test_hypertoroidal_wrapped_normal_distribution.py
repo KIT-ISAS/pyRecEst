@@ -141,7 +141,9 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         npt.assert_allclose(dist.mu, mu)
 
     def test_set_mode_wraps_to_fundamental_domain(self):
-        dist = HypertoroidalWNDistribution(array([0.3, 0.4]), array([[0.7, 0.0], [0.0, 0.5]]))
+        dist = HypertoroidalWNDistribution(
+            array([0.3, 0.4]), array([[0.7, 0.0], [0.0, 0.5]])
+        )
 
         updated = dist.set_mode(array([2.0 * pi + 0.1, -0.2]))
 
