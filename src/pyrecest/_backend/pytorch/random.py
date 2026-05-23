@@ -22,6 +22,38 @@ def _choice_size(size):
     return size, int(_torch.prod(_torch.tensor(size)).item())
 
 
+def _normal_size(size):
+    if size is None:
+        return None
+    if not hasattr(size, "__iter__"):
+        return (size,)
+    return tuple(int(dim) for dim in size)
+
+
+def _normal_device(*values):
+    for value in values:
+        if _torch.is_tensor(value):
+            return value.device
+    return None
+
+
+def _is_array_parameter(value):
+    return _torch.is_tensor(value) or isinstance(value, (list, tuple)) or (
+        not isinstance(value, (str, bytes)) and hasattr(value, "__array__")
+    )
+
+
+def _normal_array_parameters(loc, scale):
+    device = _normal_device(loc, scale)
+    loc = _torch.as_tensor(loc, device=device)
+    scale = _torch.as_tensor(scale, device=device)
+    dtype = _torch.promote_types(
+        _torch.result_type(loc, scale),
+        _torch.get_default_dtype(),
+    )
+    return loc.to(dtype=dtype), scale.to(dtype=dtype)
+
+
 def _integer_population_size(a):
     if isinstance(a, _Integral):
         return int(a)
@@ -126,11 +158,18 @@ def multinomial(n, pvals):
 
 @_allow_complex_dtype
 def normal(loc=0.0, scale=1.0, size=None):
+    size = _normal_size(size)
+    if not (_is_array_parameter(loc) or _is_array_parameter(scale)):
+        return _torch.normal(mean=loc, std=scale, size=size or ())
+
+    loc, scale = _normal_array_parameters(loc, scale)
     if size is None:
-        size = ()
-    elif not hasattr(size, "__iter__"):
-        size = (size,)
-    return _torch.normal(mean=loc, std=scale, size=size)
+        return _torch.normal(mean=loc, std=scale)
+
+    if bool(_torch.any(scale < 0)):
+        raise ValueError("scale must be non-negative")
+    dtype = _torch.result_type(loc, scale)
+    return _torch.empty(size, dtype=dtype, device=loc.device).normal_() * scale + loc
 
 
 def uniform(low=0.0, high=1.0, size=None, dtype=None):
