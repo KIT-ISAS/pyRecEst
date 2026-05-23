@@ -70,6 +70,49 @@ class TestPytorchBackendCov(unittest.TestCase):
 
 
 @unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
+class TestPytorchBackendReductions(unittest.TestCase):
+    def test_max_accepts_tuple_axis_in_any_order(self):
+        values = pytorch_backend.array(list(range(24))).reshape(2, 3, 4)
+
+        for axis in ((2, 0), (-1, 0)):
+            with self.subTest(axis=axis):
+                result = pytorch_backend.max(values, axis=axis)
+
+                self.assertEqual(tuple(result.shape), (3,))
+                self.assertEqual(result.tolist(), [15, 19, 23])
+
+    def test_any_accepts_tuple_axis_in_any_order(self):
+        values = pytorch_backend.array(
+            [
+                [[False, False], [True, False], [False, False]],
+                [[False, True], [False, False], [False, False]],
+            ]
+        )
+
+        for axis in ((2, 0), (-1, 0)):
+            with self.subTest(axis=axis):
+                result = pytorch_backend.any(values, axis=axis)
+
+                self.assertEqual(tuple(result.shape), (3,))
+                self.assertEqual(result.tolist(), [True, True, False])
+
+    def test_all_accepts_tuple_axis_in_any_order(self):
+        values = pytorch_backend.array(
+            [
+                [[True, True], [False, True], [True, True]],
+                [[True, False], [True, True], [True, True]],
+            ]
+        )
+
+        for axis in ((2, 0), (-1, 0)):
+            with self.subTest(axis=axis):
+                result = pytorch_backend.all(values, axis=axis)
+
+                self.assertEqual(tuple(result.shape), (3,))
+                self.assertEqual(result.tolist(), [False, False, True])
+
+
+@unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
 class TestPytorchBackendRandom(unittest.TestCase):
     def test_choice_accepts_weighted_sampling_without_replacement(self):
         values = pytorch_backend.array([0, 1, 2, 3])
