@@ -51,7 +51,10 @@ def _choice_indices(population_size, size, num_samples, replace, p, device):
         if p.ndim != 1 or p.shape[0] != population_size:
             raise ValueError("p must be 1-dimensional with one entry per population item")
 
-        p = p / p.sum()  # Normalize probabilities
+        p_sum = p.sum()
+        if not bool(_torch.isfinite(p_sum)) or bool(p_sum <= 0):
+            raise ValueError("probabilities do not sum to a positive value")
+        p = p / p_sum
         indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
         if size is None:
             return indices[0]

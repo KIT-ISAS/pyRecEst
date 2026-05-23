@@ -51,6 +51,20 @@ class TestBackendRandom(unittest.TestCase):
             len(set(pyrecest.backend.to_numpy(no_replacement).tolist())), 5
         )
 
+    def test_choice_accepts_python_probability_sequence(self):
+        values = pyrecest.backend.array([10, 20, 30])
+
+        samples = random.choice(values, size=(32,), p=[0.2, 0.3, 0.5])
+
+        self.assertEqual(samples.shape, (32,))
+        for sample in pyrecest.backend.to_numpy(samples).tolist():
+            self.assertIn(sample, (10, 20, 30))
+
+    def test_choice_accepts_zero_sized_integer_population_sample(self):
+        samples = random.choice(0, size=(0,))
+
+        self.assertEqual(samples.shape, (0,))
+
     def test_choice_samples_matrix_values_along_requested_axis(self):
         values = pyrecest.backend.array([[0, 1, 2], [3, 4, 5]])
 
