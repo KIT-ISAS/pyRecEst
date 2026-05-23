@@ -15,6 +15,7 @@ from pyrecest.backend import (
     mod,
     pi,
     random,
+    reshape,
     stack,
     zeros,
 )
@@ -38,28 +39,26 @@ def _as_2d_covariance(C):
     return C
 
 
-def _as_2d_points(xs, dim):
-    """Return evaluation points as an ``(n, dim)`` array.
-
-    A one-dimensional wrapped normal is often called with scalar values or with
-    a plain one-dimensional list of sample locations.  Those inputs previously
-    reached ``xs.shape[-1]`` before array coercion and therefore failed with an
-    ``AttributeError`` or ``IndexError`` instead of being evaluated.
-    """
+def _as_2d_query_points(xs, dim: int):
+    """Normalize scalar/vector/matrix query inputs to shape ``(n_eval, dim)``."""
     xs = array(xs)
     if xs.ndim == 0:
         if dim != 1:
-            raise ValueError(f"Scalar evaluation points are only valid for dim=1, got dim={dim}.")
-        return xs.reshape((1, 1))
+            raise ValueError(
+                f"Scalar query points are only valid for one-dimensional distributions, got dim={dim}."
+            )
+        return reshape(xs, (1, 1))
+
     if xs.ndim == 1:
         if dim == 1:
-            return xs.reshape((-1, 1))
-        if xs.shape[0] != dim:
-            raise ValueError(f"One-dimensional point input must have shape ({dim},), got {xs.shape}.")
-        return xs.reshape((1, dim))
-    if xs.ndim != 2 or xs.shape[-1] != dim:
-        raise ValueError(f"Evaluation points must have shape (n, {dim}), got {xs.shape}.")
-    return xs
+            return reshape(xs, (-1, 1))
+        if xs.shape[0] == dim:
+            return reshape(xs, (1, dim))
+        raise ValueError(f"Last dimension of xs must match the distribution dimension {dim}, got shape {xs.shape}.")
+
+    if xs.shape[-1] != dim:
+        raise ValueError(f"Last dimension of xs must match the distribution dimension {dim}, got shape {xs.shape}.")
+    return reshape(xs, (-1, dim))
 
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
@@ -105,8 +104,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        xs = _as_2d_points(xs, self.dim)
-        xs = mod(xs + pi, 2 * pi) - pi
+        xs = _as_2d_query_points(xs, self.dim)
+        xs = (xs + pi) % (2 * pi) - pi
 
         # Generate all combinations of offsets for each dimension
         offsets = [arange(-m, m + 1) * 2.0 * pi for _ in range(self.dim)]
