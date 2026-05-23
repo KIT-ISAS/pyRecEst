@@ -60,19 +60,7 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         self.assertEqual(values.shape, (3,))
         npt.assert_allclose(values, dist.pdf(expected_points))
 
-    def test_scalar_parameters_are_stored_as_vector_and_matrix(self):
-        dist = HypertoroidalWNDistribution(array(0.3), array(0.7))
-
-        self.assertEqual(dist.dim, 1)
-        self.assertEqual(dist.mu.shape, (1,))
-        self.assertEqual(dist.C.shape, (1, 1))
-        npt.assert_allclose(dist.mu, array([0.3]))
-        npt.assert_allclose(dist.C, array([[0.7]]))
-        npt.assert_allclose(
-            dist.trigonometric_moment(1), exp(1j * array([0.3]) - 0.7 / 2)
-        )
-
-    def test_scalar_pdf_accepts_scalar_and_plain_sequence_inputs(self):
+    def test_scalar_pdf_accepts_scalar_and_sequence_inputs(self):
         dist = HypertoroidalWNDistribution(0.3, 0.7)
 
         scalar_pdf = dist.pdf(0.2)
@@ -85,15 +73,25 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         npt.assert_allclose(scalar_pdf, matrix_pdf[:1])
 
     def test_vector_pdf_accepts_single_point_sequence(self):
-        dist = HypertoroidalWNDistribution(
-            array([0.3, 0.4]), array([[0.7, 0.0], [0.0, 0.5]])
-        )
+        dist = HypertoroidalWNDistribution(array([0.3, 0.4]), array([[0.7, 0.0], [0.0, 0.5]]))
 
         one_point_pdf = dist.pdf([0.2, 0.5])
         matrix_pdf = dist.pdf(array([[0.2, 0.5]]))
 
         self.assertEqual(one_point_pdf.shape, (1,))
         npt.assert_allclose(one_point_pdf, matrix_pdf)
+
+    def test_scalar_parameters_are_stored_as_vector_and_matrix(self):
+        dist = HypertoroidalWNDistribution(array(0.3), array(0.7))
+
+        self.assertEqual(dist.dim, 1)
+        self.assertEqual(dist.mu.shape, (1,))
+        self.assertEqual(dist.C.shape, (1, 1))
+        npt.assert_allclose(dist.mu, array([0.3]))
+        npt.assert_allclose(dist.C, array([[0.7]]))
+        npt.assert_allclose(
+            dist.trigonometric_moment(1), exp(1j * array([0.3]) - 0.7 / 2)
+        )
 
     def test_shift_accepts_scalar_for_one_dimensional_distribution(self):
         dist = HypertoroidalWNDistribution(0.3, 0.7)
@@ -125,13 +123,22 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         npt.assert_allclose(shifted.mu, mod(mu + shift_by, 2.0 * pi))
         npt.assert_allclose(shifted.C, dist.C)
 
-    def test_scalar_shift_accepts_python_scalar(self):
-        dist = HypertoroidalWNDistribution(0.3, 0.7)
+    def test_shift_accepts_plain_python_scalars_and_sequences(self):
+        scalar_dist = HypertoroidalWNDistribution(0.3, 0.7)
 
-        shifted = dist.shift(0.5)
+        scalar_shifted = scalar_dist.shift(0.5)
 
-        npt.assert_allclose(shifted.mu, array([0.8]))
-        npt.assert_allclose(dist.mu, array([0.3]))
+        npt.assert_allclose(scalar_shifted.mu, array([0.8]))
+        npt.assert_allclose(scalar_dist.mu, array([0.3]))
+
+        mu = array([1.0, 2.0])
+        C = array([[0.5, 0.1], [0.1, 0.6]])
+        dist = HypertoroidalWNDistribution(mu, C)
+
+        shifted = dist.shift([0.25, -0.5])
+
+        npt.assert_allclose(shifted.mu, mod(mu + array([0.25, -0.5]), 2.0 * pi))
+        npt.assert_allclose(dist.mu, mu)
 
     def test_set_mode_wraps_to_fundamental_domain(self):
         dist = HypertoroidalWNDistribution(
@@ -142,17 +149,6 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
 
         npt.assert_allclose(updated.mu, mod(array([0.1, -0.2]), 2.0 * pi))
         npt.assert_allclose(dist.mu, array([0.3, 0.4]))
-
-    def test_shift_accepts_plain_python_sequences(self):
-        mu = array([1.0, 2.0])
-        C = array([[0.5, 0.1], [0.1, 0.6]])
-        dist = HypertoroidalWNDistribution(mu, C)
-
-        shifted = dist.shift([0.25, -0.5])
-
-        npt.assert_allclose(shifted.mu, mod(mu + array([0.25, -0.5]), 2.0 * pi))
-        npt.assert_allclose(dist.mu, mu)
-
 
 if __name__ == "__main__":
     unittest.main()
