@@ -301,6 +301,27 @@ def _meshgrid_with_arraylike_axes(meshgrid_func, asarray_func, atleast_1d_func):
     return meshgrid
 
 
+def _mean_with_numpy_signature(mean_func, asarray_func, reshape_func):
+    """Return a NumPy-compatible mean wrapper for stricter backends."""
+
+    @wraps(mean_func)
+    def mean(a, axis=None, dtype=None, out=None, keepdims=False):
+        a = asarray_func(a, dtype=dtype) if dtype is not None else asarray_func(a)
+        if axis is None:
+            result = mean_func(a)
+            if keepdims:
+                result = reshape_func(result, (1,) * a.ndim)
+        else:
+            result = mean_func(a, dim=axis, keepdim=keepdims)
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return mean
+
+
 class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """
     Meta path finder and loader for dynamically creating backend modules.
@@ -365,6 +386,16 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                             f"attribute '{attribute_name}'."
                         ) from None
                 else:
+                    if (
+                        module_name == ""
+                        and attribute_name == "mean"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _mean_with_numpy_signature(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                        )
                     if (
                         module_name == ""
                         and attribute_name == "meshgrid"
