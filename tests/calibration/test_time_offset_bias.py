@@ -102,6 +102,32 @@ class TimeOffsetCalibrationTest(unittest.TestCase):
 
         self.assertEqual(summary["count"], 0.0)
 
+    def test_time_offset_summary_rejects_mismatched_measurement_lengths(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "measurement_times_s length must match measurement_values rows",
+        ):
+            time_offset_error_summary(
+                np.array([0.0, 1.0]),
+                np.array([[0.0]]),
+                np.array([0.0, 1.0]),
+                np.array([[0.0], [1.0]]),
+                0.0,
+            )
+
+    def test_time_offset_summary_rejects_higher_rank_measurements(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "measurement_values must be one- or two-dimensional",
+        ):
+            time_offset_error_summary(
+                np.array([0.0]),
+                np.zeros((1, 1, 1)),
+                np.array([0.0, 1.0]),
+                np.array([[0.0], [1.0]]),
+                0.0,
+            )
+
 
 class BiasCalibrationTest(unittest.TestCase):
     def test_make_bias_training_examples_uses_nearest_reference(self):
