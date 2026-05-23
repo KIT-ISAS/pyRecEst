@@ -117,7 +117,8 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
 
     The preferred contract is ``randint(low, high=None, size=None, ...)``, which
     matches NumPy and the other PyRecEst backends. The older JAX-backend-only
-    forms ``randint(shape, minval=..., maxval=...)`` and
+    forms ``randint(shape, minval=..., maxval=...)``,
+    ``randint(size=shape, minval=..., maxval=...)``, and
     ``randint(shape, minval, maxval)`` are still accepted for compatibility.
     """
     legacy_minval = kwargs.pop("minval", None)
@@ -131,12 +132,15 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
                 "Specify either NumPy-style 'low, high' or legacy "
                 "'minval, maxval', not both."
             )
-        if size is not None:
-            raise TypeError(
-                "Specify the legacy output shape as the first positional "
-                "argument or use NumPy-style 'size=', not both."
-            )
-        size = low
+        if low is not None:
+            if size is not None:
+                raise TypeError(
+                    "Specify the legacy output shape either as the first "
+                    "positional argument or 'size=', not both."
+                )
+            size = low
+        elif size is None:
+            raise TypeError("randint() missing required argument 'size'")
         low = legacy_minval
         high = legacy_maxval
     elif _looks_like_shape_sequence(low) and high is not None and size is not None:
