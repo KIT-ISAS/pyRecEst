@@ -65,6 +65,12 @@ def _looks_like_shape(value):
     )
 
 
+def _looks_like_shape_sequence(value):
+    return isinstance(value, (list, tuple)) and all(
+        isinstance(dim, (int, _np.integer)) for dim in value
+    )
+
+
 def set_state_return(has_state, state, res):
     if has_state:
         return state, res
@@ -94,14 +100,60 @@ def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def _randint(state, size, *args, **kwargs):
+def _randint(state, size, low, high, *args, **kwargs):
     state, key = jax.random.split(state)
-    return state, jax.random.randint(key, size, *args, **kwargs)
+    return state, jax.random.randint(
+        key,
+        _shape_from_size(size),
+        low,
+        high,
+        *args,
+        **kwargs,
+    )
 
 
-def randint(size, *args, **kwargs):
+def randint(low=None, high=None, size=None, *args, **kwargs):
+    """Draw integer samples using NumPy-compatible arguments.
+
+    The preferred contract is ``randint(low, high=None, size=None, ...)``, which
+    matches NumPy and the other PyRecEst backends. The older JAX-backend-only
+    forms ``randint(shape, minval=..., maxval=...)``,
+    ``randint(size=shape, minval=..., maxval=...)``, and
+    ``randint(shape, minval, maxval)`` are still accepted for compatibility.
+    """
+    legacy_minval = kwargs.pop("minval", None)
+    legacy_maxval = kwargs.pop("maxval", None)
+
+    if legacy_minval is not None or legacy_maxval is not None:
+        if legacy_minval is None or legacy_maxval is None:
+            raise TypeError("Specify both 'minval' and 'maxval'.")
+        if high is not None:
+            raise TypeError(
+                "Specify either NumPy-style 'low, high' or legacy "
+                "'minval, maxval', not both."
+            )
+        if low is not None:
+            if size is not None:
+                raise TypeError(
+                    "Specify the legacy output shape either as the first "
+                    "positional argument or 'size=', not both."
+                )
+            size = low
+        elif size is None:
+            raise TypeError("randint() missing required argument 'size'")
+        low = legacy_minval
+        high = legacy_maxval
+    elif _looks_like_shape_sequence(low) and high is not None and size is not None:
+        # Legacy positional form: randint(shape, minval, maxval)
+        size, low, high = low, high, size
+    elif high is None:
+        if low is None:
+            raise TypeError("randint() missing required argument 'high'")
+        high = low
+        low = 0
+
     state, has_state, kwargs = _get_state(**kwargs)
-    state, res = _randint(state, _shape_from_size(size), *args, **kwargs)
+    state, res = _randint(state, size, low, high, *args, **kwargs)
     return set_state_return(has_state, state, res)
 
 
