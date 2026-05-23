@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy.testing as npt
 
@@ -125,6 +126,39 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
         self.assertTrue(all(isfinite(probabilities)))
         self.assertGreater(mean(probabilities[:80]), 0.9)
         self.assertLess(mean(probabilities[80:]), 0.1)
+
+    def test_fit_uses_pinv_fallback_for_backend_runtime_solve_errors(self):
+        model = LogisticPairwiseAssociationModel(
+            class_weight="balanced", max_iterations=3
+        )
+
+        with patch(
+            "pyrecest.utils.association_models.linalg.solve",
+            side_effect=RuntimeError("singular linear system"),
+        ):
+            model.fit(self.training_features, self.training_labels)
+
+        probabilities = model.predict_match_probability(self.training_features)
+        self.assertGreater(model.n_iter_, 0)
+        self.assertTrue(all(isfinite(probabilities)))
+
+    def test_fit_uses_pinv_fallback_for_nonfinite_backend_solve_results(self):
+        model = LogisticPairwiseAssociationModel(
+            class_weight="balanced", max_iterations=3
+        )
+
+        def nonfinite_solve(_hessian, gradient):
+            return zeros(gradient.shape) + float("nan")
+
+        with patch(
+            "pyrecest.utils.association_models.linalg.solve",
+            side_effect=nonfinite_solve,
+        ):
+            model.fit(self.training_features, self.training_labels)
+
+        probabilities = model.predict_match_probability(self.training_features)
+        self.assertGreater(model.n_iter_, 0)
+        self.assertTrue(all(isfinite(probabilities)))
 
     def test_invalid_labels_raise(self):
         model = LogisticPairwiseAssociationModel()
