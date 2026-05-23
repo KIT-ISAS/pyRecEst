@@ -111,6 +111,20 @@ class TestPytorchBackendReductions(unittest.TestCase):
                 self.assertEqual(tuple(result.shape), (3,))
                 self.assertEqual(result.tolist(), [False, False, True])
 
+    def test_where_promotes_scalar_to_tensor_dtype(self):
+        mask = pytorch_backend.array([True, False])
+        fallback = pytorch_backend.array([2.0, 3.0], dtype=pytorch_backend.float64)
+
+        result = pytorch_backend.where(mask, 1.0, fallback)
+
+        self.assertEqual(result.dtype, pytorch_backend.float64)
+        self.assertTrue(
+            pytorch_backend.allclose(
+                result,
+                pytorch_backend.array([1.0, 3.0], dtype=pytorch_backend.float64),
+            )
+        )
+
 
 @unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
 class TestPytorchBackendRandom(unittest.TestCase):
@@ -136,6 +150,14 @@ class TestPytorchBackendRandom(unittest.TestCase):
 
 @unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
 class TestPytorchBackendLinalg(unittest.TestCase):
+    def test_matrix_rank_respects_numpy_style_tolerances(self):
+        value = pytorch_backend.diag(pytorch_backend.array([1.0, 1e-5]))
+
+        self.assertEqual(int(pytorch_backend.linalg.matrix_rank(value, tol=1e-4)), 1)
+        self.assertEqual(
+            int(pytorch_backend.linalg.matrix_rank(value, rtol=1e-4)), 1
+        )
+
     def test_sqrtm_complex_result_uses_matching_complex_precision(self):
         dtype_pairs = (
             (pytorch_backend.float32, pytorch_backend.complex64),
