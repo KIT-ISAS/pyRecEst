@@ -14,6 +14,7 @@ from pyrecest.backend import (
     any,
     arange,
     array,
+    asarray,
     column_stack,
     concatenate,
     cos,
@@ -186,6 +187,7 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
         dist : CustomHypertoroidalDistribution
             The distribution after conditioning.
         """
+        input_lin = asarray(input_lin)
         assert (
             input_lin.ndim == 0
             and self.lin_dim == 1
@@ -229,11 +231,13 @@ class AbstractHypercylindricalDistribution(AbstractLinPeriodicCartProdDistributi
             dist: CustomLinearDistribution
                 CustomLinearDistribution instance
         """
+        input_periodic = asarray(input_periodic)
         assert (
             input_periodic.ndim == 0
-            or input_periodic.shape[0] == self.bound_dim
-            and ndim(input_periodic) == 2
-        ), "Input should be of size (lin_dim,)."
+            and self.bound_dim == 1
+            or ndim(input_periodic) == 1
+            and input_periodic.shape[0] == self.bound_dim
+        ), "Input should be a scalar for bound_dim == 1 or of size (bound_dim,)."
 
         input_periodic = mod(input_periodic, 2.0 * pi)
 
