@@ -59,7 +59,9 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
         npt.assert_allclose(dist.mu, [5.0, 1.0])
 
     def test_linear_mean_is_empty_for_fully_periodic_distribution(self):
-        dist = PartiallyWrappedNormalDistribution([0.0, 1.0], [[1.0, 0.1], [0.1, 2.0]], 2)
+        dist = PartiallyWrappedNormalDistribution(
+            [0.0, 1.0], [[1.0, 0.1], [0.1, 2.0]], 2
+        )
 
         self.assertEqual(dist.linear_mean().shape, (0,))
         self.assertEqual(dist.linear_covariance().shape, (0, 0))
@@ -70,7 +72,10 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
     def test_hybrid_mean_4d(self):
         mu = array([5.0, 1.0, 3.0, 4.0])
         C = array(
-            scipy.linalg.block_diag([[2.0, 1.0], [1.0, 1.0]], [[2.0, 1.0], [1.0, 1.0]])
+            scipy.linalg.block_diag(
+                [[2.0, 1.0], [1.0, 1.0]],
+                [[2.0, 1.0], [1.0, 1.0]],
+            )
         )
         dist = PartiallyWrappedNormalDistribution(mu, C, 2)
         npt.assert_allclose(dist.hybrid_mean(), mu)
