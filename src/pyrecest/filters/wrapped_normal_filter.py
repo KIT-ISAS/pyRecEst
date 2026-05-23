@@ -49,7 +49,13 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
         try:
             values = array(likelihood(z, points) ** power)
             values_flat = values.reshape((-1,))
-            if values_flat.shape == (points.shape[0],):
+            try:
+                point_count = points.shape[0]
+            except (AttributeError, IndexError):
+                point_count = None
+            if point_count is None:
+                return values_flat[0]
+            if values_flat.shape == (point_count,):
                 return values_flat
         except (TypeError, ValueError):
             pass
