@@ -351,8 +351,10 @@ def _mean_with_numpy_signature(mean_func, asarray_func, reshape_func):
 
 def _is_empty_assignment_index(indices):
     """Return whether ``indices`` selects no elements for assignment helpers."""
-    if isinstance(indices, (list, tuple)):
+    if isinstance(indices, list):
         return len(indices) == 0
+    if isinstance(indices, tuple):
+        return False
 
     ndim = getattr(indices, "ndim", None)
     shape = getattr(indices, "shape", None)
