@@ -111,6 +111,32 @@ class TestPytorchBackendReductions(unittest.TestCase):
                 self.assertEqual(tuple(result.shape), (3,))
                 self.assertEqual(result.tolist(), [False, False, True])
 
+    def test_quantile_accepts_numpy_style_method_axis_and_keepdims(self):
+        values = pytorch_backend.array(
+            list(range(24)), dtype=pytorch_backend.float64
+        ).reshape(2, 3, 4)
+
+        result = pytorch_backend.quantile(
+            values, [0.25, 0.5], axis=(0, 2), keepdims=True, method="linear"
+        )
+
+        expected = pytorch_backend.array(
+            [[[[1.75], [5.75], [9.75]]], [[[7.5], [11.5], [15.5]]]],
+            dtype=pytorch_backend.float64,
+        )
+        self.assertEqual(tuple(result.shape), (2, 1, 3, 1))
+        self.assertTrue(pytorch_backend.allclose(result, expected))
+
+    def test_count_nonzero_accepts_numpy_style_axis_and_keepdims(self):
+        values = pytorch_backend.array(
+            [[[0, 1], [2, 0]], [[3, 4], [0, 0]]], dtype=pytorch_backend.int64
+        )
+
+        result = pytorch_backend.count_nonzero(values, axis=(0, 2), keepdims=True)
+
+        self.assertEqual(tuple(result.shape), (1, 2, 1))
+        self.assertEqual(result.tolist(), [[[3], [1]]])
+
     def test_where_promotes_scalar_to_tensor_dtype(self):
         mask = pytorch_backend.array([True, False])
         fallback = pytorch_backend.array([2.0, 3.0], dtype=pytorch_backend.float64)
@@ -124,7 +150,6 @@ class TestPytorchBackendReductions(unittest.TestCase):
                 pytorch_backend.array([1.0, 3.0], dtype=pytorch_backend.float64),
             )
         )
-
 
 @unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
 class TestPytorchBackendRandom(unittest.TestCase):
