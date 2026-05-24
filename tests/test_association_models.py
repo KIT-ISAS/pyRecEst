@@ -1,8 +1,10 @@
 import unittest
+from unittest.mock import patch
 
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
+import pyrecest.utils.association_models as association_models
 from pyrecest.backend import (
     all,
     argmax,
@@ -16,6 +18,7 @@ from pyrecest.backend import (
     min,
     ones,
     random,
+    to_numpy,
     vstack,
     zeros,
 )
@@ -125,6 +128,57 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
         self.assertTrue(all(isfinite(probabilities)))
         self.assertGreater(mean(probabilities[:80]), 0.9)
         self.assertLess(mean(probabilities[80:]), 0.1)
+
+    def test_newton_step_falls_back_after_backend_runtime_error(self):
+        original_linalg = association_models.linalg
+
+        class RuntimeErrorSolveLinalg:
+            @staticmethod
+            def solve(hessian, gradient):
+                del hessian, gradient
+                raise RuntimeError("singular backend solve")
+
+            @staticmethod
+            def pinv(hessian):
+                return original_linalg.pinv(hessian)
+
+        model = LogisticPairwiseAssociationModel(
+            class_weight=None,
+            l2_regularization=0.0,
+            max_iterations=4,
+        )
+        features = array([[0.0], [0.0], [1.0], [1.0]])
+        labels = array([0, 0, 1, 1])
+
+        with patch.object(association_models, "linalg", RuntimeErrorSolveLinalg()):
+            model.fit(features, labels)
+
+        probabilities = model.predict_match_probability(features)
+        self.assertTrue(all(isfinite(probabilities)))
+
+    def test_newton_step_falls_back_when_backend_solve_returns_nonfinite(self):
+        original_linalg = association_models.linalg
+
+        class NonFiniteSolveLinalg:
+            @staticmethod
+            def solve(hessian, gradient):
+                del hessian, gradient
+                return array([float("inf"), 0.0])
+
+            @staticmethod
+            def pinv(hessian):
+                return original_linalg.pinv(hessian)
+
+        hessian = array([[2.0, 0.0], [0.0, 2.0]])
+        gradient = array([2.0, 4.0])
+
+        with patch.object(association_models, "linalg", NonFiniteSolveLinalg()):
+            step = LogisticPairwiseAssociationModel._solve_newton_step(
+                hessian,
+                gradient,
+            )
+
+        npt.assert_allclose(to_numpy(step), [1.0, 2.0])
 
     def test_invalid_labels_raise(self):
         model = LogisticPairwiseAssociationModel()
