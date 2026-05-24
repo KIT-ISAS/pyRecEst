@@ -170,6 +170,13 @@ class MEMRBPFFFBSiSmoother(AbstractSmoother):
         self.angle_wrap_terms = int(angle_wrap_terms)
         self.axis_floor = float(axis_floor)
 
+    @staticmethod
+    def _uniform_weights_from_theta(theta):
+        theta = np.asarray(theta).reshape(-1)
+        if theta.size == 0:
+            raise ValueError("tuple records must contain at least one theta particle")
+        return np.full(theta.shape, 1.0 / theta.size, dtype=float)
+
     @classmethod
     def _as_record(cls, record) -> MEMRBPFForwardRecord:
         if isinstance(record, MEMRBPFForwardRecord):
@@ -178,10 +185,22 @@ class MEMRBPFFFBSiSmoother(AbstractSmoother):
             return MEMRBPFForwardRecord.from_tracker(record)
         if isinstance(record, Mapping):
             return MEMRBPFForwardRecord.from_mapping(record)
-        if isinstance(record, tuple) and len(record) in (5, 6):
-            kwargs = {} if len(record) == 5 else dict(record[5])
+        if isinstance(record, tuple) and len(record) in (5, 6, 7):
+            kwargs = {}
+            weights = None
+            if len(record) == 5:
+                weights = cls._uniform_weights_from_theta(record[2])
+            elif len(record) == 6:
+                if isinstance(record[5], Mapping):
+                    kwargs = dict(record[5])
+                    weights = cls._uniform_weights_from_theta(record[2])
+                else:
+                    weights = record[5]
+            else:
+                weights = record[5]
+                kwargs = dict(record[6])
             return MEMRBPFForwardRecord(
-                record[0], record[1], record[2], record[3], record[4], **kwargs
+                record[0], record[1], record[2], record[3], record[4], weights, **kwargs
             )
         raise ValueError(
             "record must be a MEMRBPFForwardRecord, MEMRBPFTracker, mapping, or tuple"
