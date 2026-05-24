@@ -120,6 +120,8 @@ def rand(size=None, dtype=None):
 
 
 def multinomial(n, pvals):
+    device = pvals.device if _torch.is_tensor(pvals) else None
+    pvals = _torch.as_tensor(pvals, dtype=_torch.float32, device=device)
     pvals = pvals / pvals.sum()
     return _torch.multinomial(pvals, n, replacement=True).bincount(minlength=len(pvals))
 

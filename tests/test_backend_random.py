@@ -70,6 +70,12 @@ class TestBackendRandom(unittest.TestCase):
         self.assertTrue(set(sample_np[0].tolist()).issubset({0, 1, 2}))
         self.assertTrue(set(sample_np[1].tolist()).issubset({3, 4, 5}))
 
+    def test_multinomial_accepts_python_probability_sequence(self):
+        sample = random.multinomial(12, [0.25, 0.75])
+
+        self.assertEqual(sample.shape, (2,))
+        self.assertEqual(int(pyrecest.backend.sum(sample)), 12)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "jax", "JAX-specific RNG state contract"
     )
