@@ -349,6 +349,28 @@ def _mean_with_numpy_signature(mean_func, asarray_func, reshape_func):
     return mean
 
 
+def _is_empty_assignment_index(indices):
+    """Return whether ``indices`` selects no elements for assignment helpers."""
+    if isinstance(indices, (list, tuple)):
+        return len(indices) == 0
+
+    ndim = getattr(indices, "ndim", None)
+    shape = getattr(indices, "shape", None)
+    return ndim is not None and ndim > 0 and shape is not None and shape[0] == 0
+
+
+def _assignment_with_empty_indices_noop(assignment_func, copy_func):
+    """Return an assignment wrapper that treats empty indices as a no-op."""
+
+    @wraps(assignment_func)
+    def assignment(x, values, indices, axis=0):
+        if _is_empty_assignment_index(indices):
+            return copy_func(x)
+        return assignment_func(x, values, indices, axis=axis)
+
+    return assignment
+
+
 class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """
     Meta path finder and loader for dynamically creating backend modules.
@@ -441,6 +463,14 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                         attribute = _quantile_with_numpy_axis(
                             attribute,
                             getattr(backend, "asarray"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name in {"assignment", "assignment_by_sum"}
+                    ):
+                        attribute = _assignment_with_empty_indices_noop(
+                            attribute,
+                            getattr(backend, "copy"),
                         )
                     setattr(new_submodule, attribute_name, attribute)
 
