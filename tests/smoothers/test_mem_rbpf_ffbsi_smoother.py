@@ -181,3 +181,48 @@ def test_smooth_accepts_mapping_records():
 
     assert result.states.shape == (1, 4)
     assert np.all(np.isfinite(result.states))
+
+
+def test_smooth_accepts_legacy_five_tuple_records_with_uniform_weights():
+    axis_cov = np.repeat(np.eye(2)[np.newaxis, :, :] * 0.2, 2, axis=0)
+    tuple_record = (
+        np.array([0.0]),
+        np.array([[1.0]]),
+        np.array([0.0, 0.2]),
+        np.array([[2.0, 1.0], [1.8, 0.8]]),
+        axis_cov,
+    )
+
+    normalized = MEMRBPFFFBSiSmoother._as_record(tuple_record)
+    npt.assert_allclose(normalized.weights, np.array([0.5, 0.5]))
+
+    result = MEMRBPFFFBSiSmoother(n_trajectories=4, sample_axis=False).smooth(
+        [tuple_record], rng=2, full_axis_lengths=False
+    )
+
+    assert result.states.shape == (1, 4)
+    assert np.all(np.isfinite(result.states))
+
+
+def test_smooth_accepts_tuple_records_with_weights_and_kwargs():
+    axis_cov = np.repeat(np.eye(2)[np.newaxis, :, :] * 0.2, 2, axis=0)
+    tuple_record = (
+        np.array([0.0]),
+        np.array([[1.0]]),
+        np.array([0.0, 0.2]),
+        np.array([[2.0, 1.0], [1.8, 0.8]]),
+        axis_cov,
+        np.array([0.8, 0.2]),
+        {"orientation_process_variance": 0.05},
+    )
+
+    normalized = MEMRBPFFFBSiSmoother._as_record(tuple_record)
+    npt.assert_allclose(normalized.weights, np.array([0.8, 0.2]))
+    assert normalized.orientation_process_variance == 0.05
+
+    result = MEMRBPFFFBSiSmoother(n_trajectories=4, sample_axis=False).smooth(
+        [tuple_record], rng=2, full_axis_lengths=False
+    )
+
+    assert result.states.shape == (1, 4)
+    assert np.all(np.isfinite(result.states))
