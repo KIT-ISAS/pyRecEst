@@ -27,6 +27,15 @@ class BackendContractTest(unittest.TestCase):
         self.assertEqual(to_numpy(first).dtype, np.dtype("bool"))
         self.assertEqual(to_numpy(second).dtype, np.dtype("bool"))
 
+    def test_assignment_with_empty_indices_is_a_noop(self):
+        original = array([1.0, 2.0, 3.0])
+
+        assigned = backend.assignment(original, 99.0, [])
+        added = backend.assignment_by_sum(original, 99.0, [])
+
+        npt.assert_allclose(to_numpy(assigned), [1.0, 2.0, 3.0])
+        npt.assert_allclose(to_numpy(added), [1.0, 2.0, 3.0])
+
     def test_choice_supports_numpy_like_size_replace_and_probabilities(self):
         values = array([0, 1, 2, 3])
         weights = array([0.1, 0.2, 0.3, 0.4])
