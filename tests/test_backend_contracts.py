@@ -162,6 +162,39 @@ def test_scatter_add_preserves_input_values_and_uses_facade_signature():
     assert _to_python(result) == [[3.0, 1.0, 4.0], [1.0, 5.0, 6.0]]
 
 
+def test_split_integer_sections_reject_uneven_division():
+    values = array([0, 1, 2, 3, 4])
+
+    with pytest.raises(ValueError, match="equal division"):
+        backend.split(values, 2)
+
+
+def test_hsplit_splits_along_second_axis_for_high_rank_arrays():
+    values = backend.reshape(backend.arange(24), (2, 3, 4))
+
+    result = backend.hsplit(values, 3)
+
+    assert [part.shape for part in result] == [(2, 1, 4), (2, 1, 4), (2, 1, 4)]
+    assert [_to_python(part) for part in result] == [
+        [[[0, 1, 2, 3]], [[12, 13, 14, 15]]],
+        [[[4, 5, 6, 7]], [[16, 17, 18, 19]]],
+        [[[8, 9, 10, 11]], [[20, 21, 22, 23]]],
+    ]
+
+
+def test_hsplit_accepts_cut_indices():
+    values = backend.reshape(backend.arange(12), (2, 3, 2))
+
+    result = backend.hsplit(values, [1, 2])
+
+    assert [part.shape for part in result] == [(2, 1, 2), (2, 1, 2), (2, 1, 2)]
+    assert [_to_python(part) for part in result] == [
+        [[[0, 1]], [[6, 7]]],
+        [[[2, 3]], [[8, 9]]],
+        [[[4, 5]], [[10, 11]]],
+    ]
+
+
 def test_as_dtype_string_lookup_is_available():
     assert backend.as_dtype("float64") is not None
 
