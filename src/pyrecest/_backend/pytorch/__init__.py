@@ -262,17 +262,46 @@ def less_equal(x, y, **kwargs):
     return _torch.le(x, y, **kwargs)
 
 
+def _slice_along_axis(x, start, stop, axis):
+    index = [slice(None)] * x.ndim
+    index[axis] = slice(start, stop)
+    return x[tuple(index)]
+
+
 def split(x, indices_or_sections, axis=0):
-    if isinstance(indices_or_sections, int):
-        indices_or_sections = x.shape[axis] // indices_or_sections
-        return _torch.split(x, indices_or_sections, dim=axis)
-    indices_or_sections = _np.asarray(indices_or_sections)
-    intervals_length = indices_or_sections[1:] - indices_or_sections[:-1]
-    last_interval_length = x.shape[axis] - indices_or_sections[-1]
-    if last_interval_length > 0:
-        intervals_length = _np.append(intervals_length, last_interval_length)
-    intervals_length = _np.insert(intervals_length, 0, indices_or_sections[0])
-    return _torch.split(x, tuple(intervals_length), dim=axis)
+    if not _torch.is_tensor(x):
+        x = array(x)
+
+    axis_length = x.shape[axis]
+    if isinstance(indices_or_sections, (int, _np.integer)):
+        n_sections = int(indices_or_sections)
+        if n_sections <= 0:
+            raise ValueError("number sections must be larger than 0")
+        if axis_length % n_sections != 0:
+            raise ValueError("array split does not result in an equal division")
+
+        section_length = axis_length // n_sections
+        return tuple(
+            _slice_along_axis(
+                x,
+                section_index * section_length,
+                (section_index + 1) * section_length,
+                axis,
+            )
+            for section_index in range(n_sections)
+        )
+
+    cut_indices = _np.asarray(indices_or_sections)
+    if cut_indices.ndim == 0:
+        return split(x, int(cut_indices), axis=axis)
+    if cut_indices.ndim != 1:
+        raise ValueError("indices_or_sections must be a 1-D sequence")
+
+    bounds = [None, *(int(index) for index in cut_indices.tolist()), None]
+    return tuple(
+        _slice_along_axis(x, start, stop, axis)
+        for start, stop in zip(bounds, bounds[1:])
+    )
 
 
 def logical_and(x, y):
@@ -593,10 +622,9 @@ def ndim(x):
     return x.dim()
 
 
-def hsplit(x, indices_or_section):
-    if isinstance(indices_or_section, int):
-        indices_or_section = x.shape[-1] // indices_or_section
-    return _torch.split(x, indices_or_section, dim=-1)
+def hsplit(x, indices_or_sections):
+    axis = 0 if ndim(x) == 1 else 1
+    return split(x, indices_or_sections, axis=axis)
 
 
 def diagonal(x, offset=0, axis1=0, axis2=1):
