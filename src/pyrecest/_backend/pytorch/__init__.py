@@ -222,11 +222,21 @@ def quantile(
     method="linear",
     keepdims=False,
     *,
+    dim=None,
+    keepdim=None,
     interpolation=None,
 ):
     """Return quantiles using NumPy-compatible argument names."""
     del overwrite_input
 
+    if dim is not None:
+        if axis is not None and axis != dim:
+            raise TypeError("quantile() got both 'axis' and 'dim'")
+        axis = dim
+    if keepdim is not None:
+        if keepdims is not False and keepdims != keepdim:
+            raise TypeError("quantile() got both 'keepdims' and 'keepdim'")
+        keepdims = keepdim
     if interpolation is not None:
         method = interpolation
 
@@ -736,16 +746,28 @@ def prod(x, axis=None):
 
 
 def where(condition, x=None, y=None):
+    device = next(
+        (value.device for value in (x, y, condition) if _torch.is_tensor(value)),
+        None,
+    )
     if not _torch.is_tensor(condition):
-        condition = array(condition)
+        condition = _torch.as_tensor(condition, dtype=_torch.bool, device=device)
+    else:
+        condition = condition.to(device=device, dtype=_torch.bool)
 
     if x is None and y is None:
         return _torch.where(condition)
     if not _torch.is_tensor(x):
-        x = _torch.tensor(x)
+        x = _torch.as_tensor(x, device=device)
+    elif device is not None:
+        x = x.to(device=device)
     if not _torch.is_tensor(y):
-        y = _torch.tensor(y)
-    y = cast(y, x.dtype)
+        y = _torch.as_tensor(y, device=device)
+    elif device is not None:
+        y = y.to(device=device)
+    result_dtype = _torch.result_type(x, y)
+    x = x.to(dtype=result_dtype)
+    y = y.to(dtype=result_dtype)
     return _torch.where(condition, x, y)
 
 

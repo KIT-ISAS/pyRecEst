@@ -8,7 +8,7 @@ conservative and does not prove full mathematical or numerical parity.
 |----------------|---------------------------------------------|:-----:|:-------:|:-------:|------------------------------------------------------------------------------|
 | backend.random | Seeded scalar/vector normal sampling        |  yes  |   yes   |   yes   | JAX uses a process-global PRNG key unless explicit state is passed.          |
 | backend.random | Weighted choice with replacement            |  yes  |   yes   | partial | JAX support depends on argument form and should be covered by focused tests. |
-| backend.random | Weighted choice without replacement         |  yes  |   no    | partial | PyTorch backend intentionally rejects weighted sampling without replacement. |
+| backend.random | Weighted choice without replacement         |  yes  |   yes   | partial | PyTorch support is smoke-tested with probability vectors via torch.multinomial. |
 | distributions  | GaussianDistribution.pdf / ln_pdf           |  yes  |   yes   |   yes   | Smoke-tested with reference values.                                          |
 | filters        | KalmanFilter.predict_linear / update_linear |  yes  |   yes   |   yes   | Backend-portable linear algebra path.                                        |
 | filters        | UKFOnManifolds.predict / update             |  yes  |   yes   |   no    | JAX is explicitly rejected by this API.                                      |

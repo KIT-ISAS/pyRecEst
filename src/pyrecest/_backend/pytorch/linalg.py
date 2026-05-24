@@ -117,8 +117,16 @@ def norm(x, ord=None, axis=None, keepdims=False):
     return _torch.linalg.norm(x, ord=ord, dim=axis, keepdim=keepdims)
 
 
-def matrix_rank(a, hermitian=False, **_unused_kwargs):
-    return _torch.linalg.matrix_rank(a, hermitian=hermitian)
+def matrix_rank(a, tol=None, hermitian=False, *, rtol=None, atol=None, **kwargs):
+    if kwargs:
+        unexpected = ", ".join(sorted(kwargs))
+        raise TypeError(f"matrix_rank() got unexpected keyword argument(s): {unexpected}")
+    if tol is not None:
+        if atol is not None:
+            raise TypeError("matrix_rank() got both 'tol' and 'atol'")
+        atol = tol
+
+    return _torch.linalg.matrix_rank(a, atol=atol, rtol=rtol, hermitian=hermitian)
 
 
 def quadratic_assignment(a, b, options):

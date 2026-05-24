@@ -92,7 +92,6 @@ from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
     max,
     maximum,
     mean,
-    meshgrid,
     min,
     minimum,
     mod,
@@ -155,6 +154,19 @@ def has_autodiff():
 
 def isscalar(x):
     return _jnp.isscalar(x) and not isinstance(x, _jnp.ndarray)
+
+
+def meshgrid(*xi, copy=True, sparse=False, indexing="xy"):
+    """Return coordinate matrices with NumPy-style axis coercion.
+
+    The PyRecEst backend contract follows NumPy semantics: callers may pass
+    lists, ranges, and scalar axes. JAX's native ``meshgrid`` requires array or
+    scalar arguments and then rejects 0-D array axes. Coercing every axis to at
+    least one-dimensional JAX arrays preserves NumPy-compatible behavior while
+    keeping the returned arrays in the JAX backend.
+    """
+    axes = tuple(_jnp.atleast_1d(_jnp.asarray(axis)) for axis in xi)
+    return _jnp.meshgrid(*axes, copy=copy, sparse=sparse, indexing=indexing)
 
 
 from jax import device_get as to_numpy
