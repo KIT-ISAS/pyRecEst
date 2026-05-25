@@ -9,6 +9,7 @@ from pyrecest.calibration.bias import (
     make_bias_training_examples,
 )
 from pyrecest.calibration.time_offset import (
+    TimeOffsetFitResult,
     aggregate_time_offset_sweeps,
     apply_time_offset,
     fit_time_offset,
@@ -92,6 +93,21 @@ class TimeOffsetCalibrationTest(unittest.TestCase):
 
         self.assertAlmostEqual(result.best_offset_s, true_offset, places=9)
         self.assertEqual(result.summary()["best_count"], len(measurement_times))
+
+    def test_fit_result_summary_uses_best_nonempty_offset_row(self):
+        result = TimeOffsetFitResult(
+            best_offset_s=0.5,
+            metric="rmse",
+            offsets_s=np.array([0.0, 0.5]),
+            metric_values=np.array([0.0, 1.25]),
+            counts=np.array([0, 7]),
+        )
+
+        summary = result.summary()
+
+        self.assertEqual(summary["best_offset_s"], 0.5)
+        self.assertEqual(summary["best_metric_value"], 1.25)
+        self.assertEqual(summary["best_count"], 7)
 
     def test_time_offset_summary_reports_empty_when_no_overlap(self):
         summary = time_offset_error_summary(
