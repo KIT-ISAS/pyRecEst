@@ -12,6 +12,11 @@ from torch.distributions.multivariate_normal import (
 
 from ._dtype import _allow_complex_dtype, _modify_func_default_dtype
 
+_COMPLEX_TO_FLOAT_DTYPE = {
+    _torch.complex64: _torch.float32,
+    _torch.complex128: _torch.float64,
+}
+
 
 def _choice_size(size):
     if size is None:
@@ -38,10 +43,8 @@ def _normal_device(*values):
 
 
 def _is_array_parameter(value):
-    return (
-        _torch.is_tensor(value)
-        or isinstance(value, (list, tuple))
-        or (not isinstance(value, (str, bytes)) and hasattr(value, "__array__"))
+    return _torch.is_tensor(value) or isinstance(value, (list, tuple)) or (
+        not isinstance(value, (str, bytes)) and hasattr(value, "__array__")
     )
 
 
@@ -194,11 +197,37 @@ def uniform(low=0.0, high=1.0, size=None, dtype=None):
     return (high - low) * _torch.rand(size, dtype=dtype, device=device) + low
 
 
+def _tensor_device(*values):
+    for value in values:
+        if _torch.is_tensor(value):
+            return value.device
+    return None
+
+
+def _floating_distribution_dtype(*values):
+    for value in values:
+        if not _torch.is_tensor(value):
+            continue
+        if value.dtype.is_floating_point:
+            return value.dtype
+        if value.dtype.is_complex:
+            return _COMPLEX_TO_FLOAT_DTYPE[value.dtype]
+    return _torch.get_default_dtype()
+
+
+def _normal_sample_size(size):
+    if size is None:
+        return ()
+    if not hasattr(size, "__iter__"):
+        return (size,)
+    return tuple(size)
+
+
 @_modify_func_default_dtype(copy=False, kw_only=True)
 @_allow_complex_dtype
 def multivariate_normal(mean, cov, size=None):
-    if size is None:
-        size = ()
-    elif not hasattr(size, "__iter__"):
-        size = (size,)
-    return _MultivariateNormal(mean, cov).sample(size)
+    device = _tensor_device(mean, cov)
+    dtype = _floating_distribution_dtype(mean, cov)
+    mean = _torch.as_tensor(mean, dtype=dtype, device=device)
+    cov = _torch.as_tensor(cov, dtype=mean.dtype, device=mean.device)
+    return _MultivariateNormal(mean, cov).sample(_normal_sample_size(size))
