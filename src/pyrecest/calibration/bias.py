@@ -167,7 +167,8 @@ def make_bias_training_examples(
         if features.shape[0] != measurements.shape[0]:
             raise ValueError("feature_values rows must match measurement_values rows")
 
-    if reference_times.size == 0:
+    finite_reference = np.isfinite(reference_times) & np.isfinite(references).all(axis=1)
+    if not finite_reference.any():
         return BiasTrainingExamples(
             measured=np.empty((0, measurements.shape[1])),
             reference=np.empty((0, measurements.shape[1])),
@@ -181,6 +182,8 @@ def make_bias_training_examples(
             time_delta_s=np.empty(0),
         )
 
+    reference_times = reference_times[finite_reference]
+    references = references[finite_reference]
     order = np.argsort(reference_times)
     reference_times = reference_times[order]
     references = references[order]
@@ -189,7 +192,6 @@ def make_bias_training_examples(
     valid = (
         np.isfinite(measurement_times)
         & np.isfinite(measurements).all(axis=1)
-        & np.isfinite(references[nearest]).all(axis=1)
         & (delta_s <= float(max_time_delta_s))
     )
     valid &= np.isfinite(features).all(axis=1)
