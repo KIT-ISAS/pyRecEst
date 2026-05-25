@@ -68,21 +68,6 @@ def _best_metric_index(
     return int(candidates[int(np.nanargmin(values[candidates]))])
 
 
-def _as_finite_float(value: Any, name: str) -> float:
-    """Return ``value`` as a finite scalar float."""
-
-    arr = np.asarray(value)
-    if arr.ndim != 0 or arr.dtype == np.bool_:
-        raise ValueError(f"{name} must be a finite scalar")
-    try:
-        result = float(arr.item())
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError(f"{name} must be a finite scalar") from exc
-    if not np.isfinite(result):
-        raise ValueError(f"{name} must be a finite scalar")
-    return result
-
-
 def make_offset_grid(min_s: float, max_s: float, step_s: float) -> np.ndarray:
     """Return an inclusive offset grid rounded to nanosecond precision."""
 
