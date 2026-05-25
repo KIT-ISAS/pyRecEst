@@ -87,8 +87,8 @@ class FibonacciRejectionSampler(AbstractEuclideanSampler):
 
     @staticmethod
     def _validate_rejection_args(n_candidates, dim, max_density, bounding_box):
-        n_candidates = int(n_candidates)
-        dim = int(dim)
+        n_candidates = _validate_integral_argument(n_candidates, "n_candidates")
+        dim = _validate_integral_argument(dim, "dim")
         max_density = float(max_density)
 
         if n_candidates < 0:
@@ -175,8 +175,8 @@ class _QMCProposalGridSampler(AbstractEuclideanSampler):
 
     @staticmethod
     def _validate_grid_args(n_samples: int, dim: int):
-        n_samples = int(n_samples)
-        dim = int(dim)
+        n_samples = _validate_integral_argument(n_samples, "n_samples")
+        dim = _validate_integral_argument(dim, "dim")
         if n_samples < 0:
             raise ValueError("n_samples must be nonnegative")
         if dim < 1:
@@ -208,6 +208,27 @@ def _is_prime(n):
         if n % i == 0:
             return False
     return True
+
+
+def _validate_integral_argument(value, name: str) -> int:
+    """Return a scalar integer argument without silently truncating floats."""
+    try:
+        array_value = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+    if array_value.ndim != 0:
+        raise ValueError(f"{name} must be a scalar integer")
+    if np.issubdtype(array_value.dtype, np.bool_):
+        raise ValueError(f"{name} must be an integer")
+    if np.issubdtype(array_value.dtype, np.integer):
+        return int(array_value)
+    if np.issubdtype(array_value.dtype, np.floating):
+        float_value = float(array_value)
+        if np.isfinite(float_value) and float_value.is_integer():
+            return int(float_value)
+
+    raise ValueError(f"{name} must be an integer")
 
 
 def _validate_gaussian_transform_args(d, covariance, mean):
@@ -393,8 +414,8 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         xy_gauss : np.ndarray of shape (d, n_points)
             Gaussian grid on R^d with the given covariance and mean.
         """
-        d = int(d)
-        n_points = int(n_points)
+        d = _validate_integral_argument(d, "d")
+        n_points = _validate_integral_argument(n_points, "n_points")
         if d < 1:
             raise ValueError("d must be positive")
         if n_points < 0:
