@@ -349,6 +349,27 @@ def _mean_with_numpy_signature(mean_func, asarray_func, reshape_func):
     return mean
 
 
+def _sum_with_numpy_signature(sum_func, asarray_func, reshape_func):
+    """Return a NumPy-compatible sum wrapper for stricter backends."""
+
+    @wraps(sum_func)
+    def sum(a, axis=None, dtype=None, out=None, keepdims=False):
+        a = asarray_func(a)
+        if axis is None:
+            result = sum_func(a, dtype=dtype)
+            if keepdims:
+                result = reshape_func(result, (1,) * a.ndim)
+        else:
+            result = sum_func(a, axis=axis, keepdims=keepdims, dtype=dtype)
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return sum
+
+
 def _is_empty_assignment_index(indices):
     """Return whether ``indices`` selects no elements for assignment helpers."""
     if isinstance(indices, list):
@@ -443,6 +464,16 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                         and backend_name == "pytorch"
                     ):
                         attribute = _mean_with_numpy_signature(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "sum"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _sum_with_numpy_signature(
                             attribute,
                             getattr(backend, "asarray"),
                             getattr(backend, "reshape"),
