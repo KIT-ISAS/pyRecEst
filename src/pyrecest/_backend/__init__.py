@@ -215,6 +215,7 @@ BACKEND_ATTRIBUTES = {
         "jacobian_vec",
         "jacobian_and_hessian",
         "value_and_grad",
+        "value_jacobian_and_hessian",
         "value_and_jacobian",
         "value_jacobian_and_hessian",
     ],
@@ -328,12 +329,26 @@ def _meshgrid_with_arraylike_axes(meshgrid_func, asarray_func, atleast_1d_func):
     return meshgrid
 
 
-def _mean_with_numpy_signature(mean_func, asarray_func, reshape_func):
+def _mean_with_numpy_signature(
+    mean_func,
+    asarray_func,
+    reshape_func,
+    cast_func,
+    get_default_dtype_func,
+    is_complex_func,
+    is_floating_func,
+):
     """Return a NumPy-compatible mean wrapper for stricter backends."""
 
     @wraps(mean_func)
     def mean(a, axis=None, dtype=None, out=None, keepdims=False):
-        a = asarray_func(a, dtype=dtype) if dtype is not None else asarray_func(a)
+        if dtype is not None:
+            a = asarray_func(a, dtype=dtype)
+        else:
+            a = asarray_func(a)
+            if not is_floating_func(a) and not is_complex_func(a):
+                a = cast_func(a, dtype=get_default_dtype_func())
+
         if axis is None:
             result = mean_func(a)
             if keepdims:
@@ -614,6 +629,10 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                             attribute,
                             getattr(backend, "asarray"),
                             getattr(backend, "reshape"),
+                            getattr(backend, "cast"),
+                            getattr(backend, "get_default_dtype"),
+                            getattr(backend, "is_complex"),
+                            getattr(backend, "is_floating"),
                         )
                     if (
                         module_name == ""
