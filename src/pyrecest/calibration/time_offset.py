@@ -94,15 +94,34 @@ def _validate_max_time_delta(max_time_delta_s: float | None) -> None:
         raise ValueError("max_time_delta_s must be nonnegative")
 
 
+def _finite_reference_rows(
+    reference_times_s: np.ndarray,
+    reference_values: np.ndarray | None = None,
+) -> np.ndarray:
+    """Return a mask selecting reference rows that are usable for matching."""
+
+    reference_times = np.asarray(reference_times_s, dtype=float).reshape(-1)
+    finite = np.isfinite(reference_times)
+    if reference_values is not None:
+        values = np.asarray(reference_values, dtype=float)
+        if values.ndim == 1:
+            values = values.reshape(-1, 1)
+        finite &= np.isfinite(values).all(axis=1)
+    return finite
+
+
 def nearest_time_indices(
     reference_times_s: np.ndarray, query_times_s: np.ndarray
 ) -> np.ndarray:
-    """Return original indices of nearest reference times for each query time."""
+    """Return original indices of nearest finite reference times for each query time."""
 
     reference = np.asarray(reference_times_s, dtype=float).reshape(-1)
     query = np.asarray(query_times_s, dtype=float).reshape(-1)
-    if reference.size == 0:
-        raise ValueError("reference_times_s must not be empty")
+    finite_reference = _finite_reference_rows(reference)
+    if not finite_reference.any():
+        raise ValueError("reference_times_s must contain at least one finite value")
+    original_indices = np.flatnonzero(finite_reference)
+    reference = reference[finite_reference]
     order = np.argsort(reference)
     sorted_reference = reference[order]
     insertion = np.searchsorted(sorted_reference, query)
@@ -111,7 +130,7 @@ def nearest_time_indices(
     use_right = np.abs(sorted_reference[right] - query) < np.abs(
         sorted_reference[left] - query
     )
-    return order[np.where(use_right, right, left)]
+    return original_indices[order[np.where(use_right, right, left)]]
 
 
 def interpolate_reference_values(
@@ -133,8 +152,11 @@ def interpolate_reference_values(
         reference_values = reference_values.reshape(-1, 1)
     if reference_times.size != reference_values.shape[0]:
         raise ValueError("reference_times_s length must match reference_values rows")
-    if reference_times.size < 2:
-        raise ValueError("at least two reference times are required for interpolation")
+    finite_reference = _finite_reference_rows(reference_times, reference_values)
+    if np.count_nonzero(finite_reference) < 2:
+        raise ValueError("at least two finite reference rows are required for interpolation")
+    reference_times = reference_times[finite_reference]
+    reference_values = reference_values[finite_reference]
     order = np.argsort(reference_times)
     reference_times = reference_times[order]
     reference_values = reference_values[order]
@@ -145,7 +167,11 @@ def interpolate_reference_values(
             for dim in range(reference_values.shape[1])
         ]
     )
-    valid = (query_times >= reference_times[0]) & (query_times <= reference_times[-1])
+    valid = (
+        np.isfinite(query_times)
+        & (query_times >= reference_times[0])
+        & (query_times <= reference_times[-1])
+    )
     if max_time_delta_s is not None:
         nearest = nearest_time_indices(reference_times, query_times)
         valid &= np.abs(reference_times[nearest] - query_times) <= float(

@@ -38,6 +38,13 @@ class TimeOffsetCalibrationTest(unittest.TestCase):
 
         npt.assert_array_equal(indices, np.array([1, 2, 0]))
 
+    def test_nearest_time_indices_ignores_nonfinite_reference_times(self):
+        indices = nearest_time_indices(
+            np.array([np.nan, 10.0, 0.0]), np.array([0.2, 9.0])
+        )
+
+        npt.assert_array_equal(indices, np.array([2, 1]))
+
     def test_aggregate_time_offset_sweeps_preserves_rmse_and_max_semantics(self):
         aggregated = aggregate_time_offset_sweeps(
             [
@@ -133,6 +140,27 @@ class TimeOffsetCalibrationTest(unittest.TestCase):
                 max_time_delta_s=-1.0,
             )
 
+    def test_interpolation_skips_nonfinite_reference_rows(self):
+        interpolated, valid = interpolate_reference_values(
+            np.array([0.0, 1.0, 2.0, np.nan, 3.0]),
+            np.array([[0.0], [np.nan], [2.0], [99.0], [3.0]]),
+            np.array([0.5, 1.5, 2.5]),
+        )
+
+        npt.assert_allclose(interpolated, np.array([[0.5], [1.5], [2.5]]))
+        npt.assert_array_equal(valid, np.array([True, True, True]))
+
+    def test_interpolation_rejects_without_two_finite_reference_rows(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "at least two finite reference rows are required for interpolation",
+        ):
+            interpolate_reference_values(
+                np.array([0.0, 1.0]),
+                np.array([[0.0], [np.nan]]),
+                np.array([0.5]),
+            )
+
     def test_interpolation_rejects_scalar_reference_values(self):
         with self.assertRaisesRegex(
             ValueError,
@@ -192,6 +220,34 @@ class BiasCalibrationTest(unittest.TestCase):
         )
 
         npt.assert_allclose(examples.residual, np.array([[1.0], [1.0]]))
+
+    def test_make_bias_training_examples_skips_nonfinite_reference_rows(self):
+        examples = make_bias_training_examples(
+            np.array([0.0, 1.0, 2.0]),
+            np.array([[1.0], [3.0], [5.0]]),
+            np.array([0.0, 1.0, 2.0, np.nan]),
+            np.array([[0.0], [np.nan], [4.0], [99.0]]),
+            max_time_delta_s=0.25,
+        )
+
+        npt.assert_allclose(examples.measured, np.array([[1.0], [5.0]]))
+        npt.assert_allclose(examples.reference, np.array([[0.0], [4.0]]))
+        npt.assert_allclose(examples.residual, np.array([[1.0], [1.0]]))
+        npt.assert_allclose(examples.time_delta_s, np.array([0.0, 0.0]))
+
+    def test_make_bias_training_examples_returns_empty_without_finite_reference_rows(
+        self,
+    ):
+        examples = make_bias_training_examples(
+            np.array([0.0, 1.0]),
+            np.array([[1.0], [2.0]]),
+            np.array([np.nan, 1.0]),
+            np.array([[0.0], [np.nan]]),
+            feature_values=np.array([[1.0], [2.0]]),
+        )
+
+        self.assertEqual(examples.measured.shape, (0, 1))
+        self.assertEqual(examples.features.shape, (0, 1))
 
     def test_make_bias_training_examples_validates_feature_rows_without_references(
         self,
