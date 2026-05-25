@@ -349,6 +349,61 @@ def _mean_with_numpy_signature(mean_func, asarray_func, reshape_func):
     return mean
 
 
+def _normalize_reduction_axes(axis, ndim):
+    """Return normalized reduction axes for NumPy-style ``axis`` arguments."""
+    if isinstance(axis, int):
+        axes = (axis,)
+    else:
+        axes = tuple(axis)
+
+    normalized_axes = tuple(axis_index + ndim if axis_index < 0 else axis_index for axis_index in axes)
+    if len(set(normalized_axes)) != len(normalized_axes):
+        raise ValueError("duplicate value in 'axis'")
+
+    for original_axis, normalized_axis in zip(axes, normalized_axes):
+        if normalized_axis < 0 or normalized_axis >= ndim:
+            raise IndexError(
+                f"axis {original_axis} is out of bounds for array of dimension {ndim}"
+            )
+
+    return normalized_axes
+
+
+def _reduced_keepdims_shape(shape, axes):
+    """Return the shape produced by a keepdims reduction over ``axes``."""
+    return tuple(1 if dim in axes else dim_size for dim, dim_size in enumerate(shape))
+
+
+def _reduction_with_numpy_keepdims(
+    reduction_func,
+    asarray_func,
+    reshape_func,
+    *,
+    cast_func=None,
+):
+    """Return a reduction wrapper accepting NumPy's ``keepdims`` keyword."""
+
+    @wraps(reduction_func)
+    def reduction(a, axis=None, dtype=None, out=None, keepdims=False):
+        a = asarray_func(a)
+        if dtype is not None:
+            if cast_func is None:
+                raise TypeError("dtype is not supported for this reduction")
+            a = cast_func(a, dtype=dtype)
+
+        axes = tuple(range(a.ndim)) if axis is None else _normalize_reduction_axes(axis, a.ndim)
+        result = a if axis is not None and not axes else reduction_func(a, axis=axis)
+        if keepdims:
+            result = reshape_func(result, _reduced_keepdims_shape(tuple(a.shape), axes))
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return reduction
+
+
 def _is_empty_assignment_index(indices):
     """Return whether ``indices`` selects no elements for assignment helpers."""
     if isinstance(indices, list):
@@ -446,6 +501,27 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                             attribute,
                             getattr(backend, "asarray"),
                             getattr(backend, "reshape"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name in {"all", "amax", "amin", "any", "max", "min"}
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _reduction_with_numpy_keepdims(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "prod"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _reduction_with_numpy_keepdims(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                            cast_func=getattr(backend, "cast"),
                         )
                     if (
                         module_name == ""
