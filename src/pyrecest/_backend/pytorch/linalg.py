@@ -17,7 +17,6 @@ from torch.linalg import matrix_exp as expm
 from torch.linalg import (
     matrix_power,
     qr,
-    solve,
 )
 
 from .._backend_config import np_atol as atol
@@ -74,6 +73,16 @@ def _common_linalg_dtype(*tensors):
     if dtype.is_floating_point or dtype.is_complex:
         return dtype
     return get_default_dtype()
+
+
+def solve(a, b, *, left=True, out=None):
+    """Solve a linear system using PyRecEst-compatible input coercion."""
+    a = _as_linalg_tensor(a)
+    b = _as_linalg_tensor(b)
+    common_dtype = _common_linalg_dtype(a, b)
+    a = a.to(dtype=common_dtype)
+    b = b.to(dtype=common_dtype)
+    return _torch.linalg.solve(a, b, left=left, out=out)
 
 
 class _Logm(_torch.autograd.Function):
