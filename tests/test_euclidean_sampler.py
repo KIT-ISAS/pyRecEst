@@ -127,6 +127,39 @@ class TestFibonacciGridSampler(unittest.TestCase):
         samples = self.sampler.get_gaussian_samples(200, 2, mean=mu)
         npt.assert_allclose(samples.mean(axis=0), mu, atol=0.5)
 
+    def test_get_gaussian_samples_rejects_invalid_covariance(self):
+        """Invalid covariance matrices should fail before producing NaN samples."""
+        invalid_covariances = [
+            np.array([[1.0, 2.0], [2.0, 1.0]]),
+            np.array([[1.0, np.nan], [np.nan, 1.0]]),
+            np.array([[1.0, 0.2], [0.1, 1.0]]),
+            np.array([1.0, 2.0]),
+        ]
+        for covariance in invalid_covariances:
+            with self.subTest(covariance=covariance):
+                with self.assertRaises(ValueError):
+                    self.sampler.get_gaussian_samples(
+                        10, 2, covariance=covariance, mean=np.zeros(2)
+                    )
+
+    def test_get_gaussian_samples_accepts_semidefinite_covariance(self):
+        """Positive-semidefinite covariances are valid Gaussian transforms."""
+        covariance = np.array([[1.0, 1.0], [1.0, 1.0]])
+        samples = self.sampler.get_gaussian_samples(
+            20, 2, covariance=covariance, mean=np.zeros(2)
+        )
+
+        self.assertEqual(samples.shape, (20, 2))
+        self.assertTrue(np.all(np.isfinite(samples)))
+        npt.assert_allclose(samples[:, 0], samples[:, 1], atol=1e-12)
+
+    def test_get_gaussian_samples_rejects_invalid_mean(self):
+        """The Gaussian transform mean must match the requested dimension."""
+        with self.assertRaises(ValueError):
+            self.sampler.get_gaussian_samples(10, 2, mean=np.array([1.0, 2.0, 3.0]))
+        with self.assertRaises(ValueError):
+            self.sampler.get_gaussian_samples(10, 2, mean=np.array([1.0, np.nan]))
+
     def test_zero_samples(self):
         """Requesting zero samples should return an empty (0, dim) array."""
         samples = self.sampler.sample_stochastic(0, 2)
