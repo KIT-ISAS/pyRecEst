@@ -1,7 +1,6 @@
 """Pytorch based computation backend."""
 
 import builtins as _builtins
-from collections.abc import Iterable as _Iterable
 
 import numpy as _np
 import torch as _torch
@@ -1124,35 +1123,83 @@ def min(a, axis=None):
 amin = min
 
 
-def take(a, indices, axis=0):
+def _normalize_take_axis(axis, ndim_):
+    if axis is None:
+        return None
+    axis = int(axis)
+    if axis < 0:
+        axis += ndim_
+    if axis < 0 or axis >= ndim_:
+        raise IndexError(f"axis {axis} is out of bounds for array of dimension {ndim_}")
+    return axis
+
+
+def _normalize_take_indices(indices, axis_size, mode):
+    if mode is None:
+        mode = "raise"
+    if mode == "raise":
+        if _torch.any((indices >= axis_size) | (indices < -axis_size)):
+            raise IndexError("index out of bounds")
+        return _torch.remainder(indices, axis_size)
+    if mode == "wrap":
+        if axis_size == 0 and indices.numel():
+            raise IndexError("cannot do a non-empty take from an empty axis")
+        return _torch.remainder(indices, axis_size) if axis_size else indices
+    if mode == "clip":
+        if axis_size == 0 and indices.numel():
+            raise IndexError("cannot do a non-empty take from an empty axis")
+        return _torch.clamp(indices, 0, axis_size - 1) if axis_size else indices
+    raise ValueError("mode must be one of 'raise', 'wrap', or 'clip'")
+
+
+def take(a, indices, axis=None, out=None, mode=None):
     a = array(a)
+    axis = _normalize_take_axis(axis, a.ndim)
+    if axis is None:
+        a = _torch.flatten(a)
+        axis = 0
+
     if not _torch.is_tensor(indices):
         indices = _torch.as_tensor(indices, dtype=_torch.long, device=a.device)
     else:
         indices = indices.to(device=a.device, dtype=_torch.long)
 
     scalar_index = indices.ndim == 0
+    indices_shape = tuple(indices.shape)
+    flat_indices = indices.reshape(-1)
+    flat_indices = _normalize_take_indices(flat_indices, a.shape[axis], mode)
+
+    result = _torch.index_select(a, axis, flat_indices)
     if scalar_index:
-        indices = indices.reshape(1)
-
-    result = _torch.index_select(a, axis, indices)
-    return _torch.squeeze(result, dim=axis) if scalar_index else result
-
-
-def _unnest_iterable(ls):
-    out = []
-    if isinstance(ls, _Iterable):
-        for inner_ls in ls:
-            out.extend(_unnest_iterable(inner_ls))
+        result = _torch.squeeze(result, dim=axis)
     else:
-        out.append(ls)
+        result = result.reshape(
+            tuple(a.shape[:axis]) + indices_shape + tuple(a.shape[axis + 1 :])
+        )
 
-    return out
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def _torch_pad_width(pad_width, ndim_):
+    try:
+        pad_pairs = _np.broadcast_to(_np.asarray(pad_width), (ndim_, 2))
+    except ValueError as exc:
+        raise ValueError(f"pad_width must be broadcastable to shape ({ndim_}, 2)") from exc
+
+    if _np.any(pad_pairs < 0):
+        raise ValueError("index can't contain negative values")
+
+    return [int(value) for pair in reversed(pad_pairs.tolist()) for value in pair]
 
 
 def pad(a, pad_width, mode="constant", constant_values=0.0):
+    a = array(a)
+    torch_pad_width = _torch_pad_width(pad_width, a.ndim)
     return _torch.nn.functional.pad(
-        a, _unnest_iterable(reversed(pad_width)), mode=mode, value=constant_values
+        a, torch_pad_width, mode=mode, value=constant_values
     )
 
 
