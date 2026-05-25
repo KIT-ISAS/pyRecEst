@@ -296,6 +296,29 @@ class TopKGate:
         return self.filter(hypotheses)
 
 
+def _merge_active_gate_results(
+    hypotheses: Sequence[AssociationHypothesis],
+    gated_active: Sequence[AssociationHypothesis],
+) -> list[AssociationHypothesis]:
+    """Merge active gate output while preserving prior rejections."""
+    gated_active = list(gated_active)
+    active_count = sum(1 for hypothesis in hypotheses if hypothesis.accepted)
+    if len(gated_active) != active_count:
+        return [
+            *gated_active,
+            *(hypothesis for hypothesis in hypotheses if not hypothesis.accepted),
+        ]
+
+    gated_iter = iter(gated_active)
+    result = []
+    for hypothesis in hypotheses:
+        if hypothesis.accepted:
+            result.append(next(gated_iter))
+        else:
+            result.append(hypothesis)
+    return result
+
+
 def gate_hypotheses(
     hypotheses: Sequence[AssociationHypothesis],
     gate,
@@ -303,15 +326,24 @@ def gate_hypotheses(
     reject_reason: str | None = None,
 ) -> list[AssociationHypothesis]:
     """Apply one gate to hypotheses and preserve rejected diagnostics."""
+    active_hypotheses = [hypothesis for hypothesis in hypotheses if hypothesis.accepted]
+    if not active_hypotheses:
+        return list(hypotheses)
+
     if isinstance(gate, TopKGate):
-        return gate.filter(hypotheses)
+        return _merge_active_gate_results(
+            hypotheses, gate.filter(active_hypotheses)
+        )
     if hasattr(gate, "filter"):
-        filtered = gate.filter(hypotheses)
+        filtered = gate.filter(active_hypotheses)
         if filtered is not None:
-            return list(filtered)
+            return _merge_active_gate_results(hypotheses, filtered)
 
     result = []
     for hypothesis in hypotheses:
+        if not hypothesis.accepted:
+            result.append(hypothesis)
+            continue
         accepted = bool(
             gate(hypothesis) if callable(gate) else gate.accepts(hypothesis)
         )
