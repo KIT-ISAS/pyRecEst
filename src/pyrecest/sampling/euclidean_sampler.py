@@ -210,6 +210,35 @@ def _is_prime(n):
     return True
 
 
+def _validate_gaussian_transform_args(d, covariance, mean):
+    if covariance is None:
+        covariance = np.eye(d)
+    else:
+        covariance = np.asarray(covariance, dtype=float)
+
+    if covariance.shape != (d, d):
+        raise ValueError("covariance must have shape (dim, dim)")
+    if not np.all(np.isfinite(covariance)):
+        raise ValueError("covariance must be finite")
+    if not np.allclose(covariance, covariance.T):
+        raise ValueError("covariance must be symmetric")
+
+    covariance_scale = max(1.0, float(np.max(np.abs(covariance))))
+    tolerance = 100.0 * np.finfo(float).eps * covariance_scale
+    if np.min(np.linalg.eigvalsh(covariance)) < -tolerance:
+        raise ValueError("covariance must be positive semidefinite")
+
+    if mean is None:
+        mean = np.zeros(d)
+    mean = np.asarray(mean, dtype=float).ravel()
+    if mean.shape != (d,):
+        raise ValueError("mean must have shape (dim,)")
+    if not np.all(np.isfinite(mean)):
+        raise ValueError("mean must be finite")
+
+    return covariance, mean
+
+
 def _fibonacci_eigen(d):  # pylint: disable=too-many-locals
     """Compute the eigenvector basis V and eigenvalues R of the Fibonacci matrix.
 
@@ -371,11 +400,7 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         if n_points < 0:
             raise ValueError("n_points must be nonnegative")
 
-        if covariance is None:
-            covariance = np.eye(d)
-        if mean is None:
-            mean = np.zeros(d)
-        mean = np.asarray(mean, dtype=float).ravel()
+        covariance, mean = _validate_gaussian_transform_args(d, covariance, mean)
 
         if n_points == 0:
             empty_arr = np.empty((d, 0))
@@ -482,6 +507,7 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
 
         # Transform to a Gaussian with the requested covariance and mean
         C_vals, C_vecs = np.linalg.eigh(covariance)
+        C_vals = np.maximum(C_vals, 0.0)
         xy_gauss = C_vecs @ np.diag(np.sqrt(C_vals)) @ xy_stdMM + mean.reshape(-1, 1)
 
         return xy_equal, xy_stdMM, xy_gauss
