@@ -423,6 +423,52 @@ def _sum_with_numpy_signature(sum_func, asarray_func, reshape_func):
     return sum
 
 
+def _arg_reduction_with_numpy_signature(arg_func, asarray_func, reshape_func):
+    """Return a NumPy-compatible argmin/argmax wrapper for stricter backends."""
+
+    @wraps(arg_func)
+    def arg_reduction(
+        a,
+        axis=None,
+        out=None,
+        keepdims=False,
+        *,
+        dim=None,
+        keepdim=None,
+    ):
+        if dim is not None:
+            if axis is not None and axis != dim:
+                raise TypeError(f"{arg_func.__name__}() got both 'axis' and 'dim'")
+            axis = dim
+        if keepdim is not None:
+            if keepdims is not False and keepdims != keepdim:
+                raise TypeError(f"{arg_func.__name__}() got both 'keepdims' and 'keepdim'")
+            keepdims = keepdim
+
+        a = asarray_func(a)
+        try:
+            import torch as _torch
+        except ModuleNotFoundError:  # pragma: no cover - only relevant for PyTorch
+            pass
+        else:
+            if _torch.is_tensor(a) and a.dtype == _torch.bool:
+                a = a.to(dtype=_torch.uint8)
+
+        if axis is None:
+            result = arg_func(a)
+            if keepdims:
+                result = reshape_func(result, (1,) * a.ndim)
+        else:
+            result = arg_func(a, dim=axis, keepdim=keepdims)
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return arg_reduction
+
+
 def _is_empty_assignment_index(indices):
     """Return whether ``indices`` selects no elements for assignment helpers."""
     if isinstance(indices, list):
@@ -527,6 +573,12 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                             getattr(backend, "asarray"),
                             getattr(backend, "reshape"),
                             cast_func=getattr(backend, "cast"),
+                        )
+                    if module_name == "" and attribute_name in {"argmax", "argmin"} and backend_name == "pytorch":
+                        attribute = _arg_reduction_with_numpy_signature(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
                         )
                     if module_name == "" and attribute_name == "meshgrid" and backend_name in {"jax", "pytorch"}:
                         attribute = _meshgrid_with_arraylike_axes(
