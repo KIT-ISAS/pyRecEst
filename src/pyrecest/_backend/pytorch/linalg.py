@@ -58,33 +58,12 @@ _COMPLEX_DTYPE_FOR_TENSOR_DTYPE = {
 }
 
 
-def _default_linalg_dtype():
-    dtype = get_default_dtype()
-    if dtype in (_torch.float32, _torch.float64):
-        return dtype
-    if dtype == _np.dtype("float32"):
-        return _torch.float32
-    if dtype == _np.dtype("float64"):
-        return _torch.float64
-    return _torch.float64
-
-
 def _as_linalg_tensor(value):
     """Convert array-like values to a floating/complex tensor for torch.linalg."""
     tensor = array(value)
     if not is_floating(tensor) and not is_complex(tensor):
-        tensor = cast(tensor, dtype=_default_linalg_dtype())
+        tensor = cast(tensor, dtype=get_default_dtype())
     return tensor
-
-
-def _common_linalg_dtype(*tensors):
-    """Return a common floating/complex dtype for torch.linalg operations."""
-    dtype = tensors[0].dtype
-    for tensor in tensors[1:]:
-        dtype = _torch.promote_types(dtype, tensor.dtype)
-    if dtype.is_floating_point or dtype.is_complex:
-        return dtype
-    return _default_linalg_dtype()
 
 
 class _Logm(_torch.autograd.Function):
@@ -179,13 +158,8 @@ def solve_sylvester(a, b, q):
     a = _as_linalg_tensor(a)
     b = _as_linalg_tensor(b)
     q = _as_linalg_tensor(q)
-    common_dtype = _common_linalg_dtype(a, b, q)
-    a = a.to(dtype=common_dtype)
-    b = b.to(dtype=common_dtype)
-    q = q.to(dtype=common_dtype)
-    is_real_shared_symmetric_factor = (
-        not is_complex(a)
-        and a.shape == b.shape
+    if (
+        a.shape == b.shape
         and _torch.all(a == b)
         and _torch.all(_torch.abs(a - a.transpose(-2, -1)) < 1e-6)
     )
