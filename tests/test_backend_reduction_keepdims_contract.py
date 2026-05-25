@@ -16,21 +16,11 @@ def _to_python(value):
 def test_reductions_accept_keepdims_keyword():
     values = backend.array([[[0, 1], [2, 0]], [[3, 4], [0, 0]]])
 
-    assert _to_python(backend.any(values, axis=(0, 2), keepdims=True)) == [
-        [[True], [True]]
-    ]
-    assert _to_python(backend.all(values > -1, axis=(0, 2), keepdims=True)) == [
-        [[True], [True]]
-    ]
-    assert _to_python(backend.max(values, axis=(0, 2), keepdims=True)) == [
-        [[4], [2]]
-    ]
-    assert _to_python(backend.min(values, axis=(0, 2), keepdims=True)) == [
-        [[0], [0]]
-    ]
-    assert _to_python(backend.prod(values + 1, axis=(0, 2), keepdims=True)) == [
-        [[20], [3]]
-    ]
+    assert _to_python(backend.any(values, axis=(0, 2), keepdims=True)) == [[[True], [True]]]
+    assert _to_python(backend.all(values > -1, axis=(0, 2), keepdims=True)) == [[[True], [True]]]
+    assert _to_python(backend.max(values, axis=(0, 2), keepdims=True)) == [[[4], [2]]]
+    assert _to_python(backend.min(values, axis=(0, 2), keepdims=True)) == [[[0], [0]]]
+    assert _to_python(backend.prod(values + 1, axis=(0, 2), keepdims=True)) == [[[40], [3]]]
 
 
 @pytest.mark.backend_portable
@@ -48,7 +38,7 @@ assert backend.to_numpy(backend.any(values, axis=(0, 2), keepdims=True)).tolist(
 assert backend.to_numpy(backend.all(values > -1, axis=(0, 2), keepdims=True)).tolist() == [[[True], [True]]]
 assert backend.to_numpy(backend.max(values, axis=(0, 2), keepdims=True)).tolist() == [[[4], [2]]]
 assert backend.to_numpy(backend.min(values, axis=(0, 2), keepdims=True)).tolist() == [[[0], [0]]]
-assert backend.to_numpy(backend.prod(values + 1, axis=(0, 2), keepdims=True)).tolist() == [[[20], [3]]]
+assert backend.to_numpy(backend.prod(values + 1, axis=(0, 2), keepdims=True)).tolist() == [[[40], [3]]]
 print("ok")
 """,
     )
