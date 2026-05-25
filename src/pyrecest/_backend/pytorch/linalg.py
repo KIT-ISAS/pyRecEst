@@ -66,6 +66,16 @@ def _as_linalg_tensor(value):
     return tensor
 
 
+def _common_linalg_dtype(*tensors):
+    """Return a common floating/complex dtype for torch.linalg operations."""
+    dtype = tensors[0].dtype
+    for tensor in tensors[1:]:
+        dtype = _torch.promote_types(dtype, tensor.dtype)
+    if dtype.is_floating_point or dtype.is_complex:
+        return dtype
+    return get_default_dtype()
+
+
 class _Logm(_torch.autograd.Function):
     """Torch autograd function for matrix logarithm.
 
@@ -160,6 +170,10 @@ def solve_sylvester(a, b, q):
     a = _as_linalg_tensor(a)
     b = _as_linalg_tensor(b)
     q = _as_linalg_tensor(q)
+    common_dtype = _common_linalg_dtype(a, b, q)
+    a = a.to(dtype=common_dtype)
+    b = b.to(dtype=common_dtype)
+    q = q.to(dtype=common_dtype)
     if (
         a.shape == b.shape
         and _torch.all(a == b)
