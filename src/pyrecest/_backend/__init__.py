@@ -396,15 +396,16 @@ def _std_with_numpy_input(
             a = cast_func(a, dtype=dtype)
         elif not is_floating_func(a) and not is_complex_func(a):
             a = cast_func(a, dtype=get_default_dtype_func())
-        return std_func(
-            a,
-            axis=axis,
-            dtype=None,
-            out=out,
-            ddof=ddof,
-            keepdims=keepdims,
-            correction=correction,
-        )
+        kwargs = {
+            "axis": axis,
+            "dtype": None,
+            "out": out,
+            "ddof": ddof,
+            "keepdims": keepdims,
+        }
+        if correction != 0:
+            kwargs["correction"] = correction
+        return std_func(a, **kwargs)
 
     return std
 
@@ -568,13 +569,18 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                     if (
                         module_name == ""
                         and attribute_name == "std"
-                        and backend_name == "pytorch"
+                        and backend_name in {"pytorch", "jax"}
                     ):
+                        get_default_dtype = (
+                            (lambda: getattr(backend, "asarray")(0.0).dtype)
+                            if backend_name == "jax"
+                            else getattr(backend, "get_default_dtype")
+                        )
                         attribute = _std_with_numpy_input(
                             attribute,
                             getattr(backend, "asarray"),
                             getattr(backend, "cast"),
-                            getattr(backend, "get_default_dtype"),
+                            get_default_dtype,
                             getattr(backend, "is_complex"),
                             getattr(backend, "is_floating"),
                         )
