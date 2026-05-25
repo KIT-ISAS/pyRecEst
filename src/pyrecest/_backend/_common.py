@@ -7,6 +7,13 @@ def comb(n, k):
     return _math.factorial(n) // _math.factorial(k) // _math.factorial(n - k)
 
 
+def outer(a, b):
+    """Return a batched outer product for array/tensor backends."""
+    a_expanded = a[..., :, None]
+    b_expanded = b[..., None, :]
+    return a_expanded * b_expanded
+
+
 def size(x, axis=None):
     """Return the total number of elements or the length of a given axis."""
     if hasattr(x, "numel"):
