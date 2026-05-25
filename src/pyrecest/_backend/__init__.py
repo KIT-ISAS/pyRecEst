@@ -659,17 +659,6 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                         )
                     if (
                         module_name == ""
-                        and attribute_name == "prod"
-                        and backend_name == "pytorch"
-                    ):
-                        attribute = _reduction_with_numpy_keepdims(
-                            attribute,
-                            getattr(backend, "asarray"),
-                            getattr(backend, "reshape"),
-                            cast_func=getattr(backend, "cast"),
-                        )
-                    if (
-                        module_name == ""
                         and attribute_name == "std"
                         and backend_name in {"pytorch", "jax"}
                     ):
