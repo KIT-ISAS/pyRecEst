@@ -205,6 +205,16 @@ class TestPytorchBackendLinalg(unittest.TestCase):
                     pytorch_backend.allclose(result, expected, atol=1e-6, rtol=1e-6)
                 )
 
+    def test_solve_sylvester_accepts_python_sequence_inputs(self):
+        result = pytorch_backend.linalg.solve_sylvester(
+            [[2, 0], [0, 3]],
+            [[5, 0], [0, 7]],
+            [[14, 18], [24, 30]],
+        )
+
+        expected = pytorch_backend.array([[2.0, 2.0], [3.0, 3.0]])
+        self.assertTrue(pytorch_backend.allclose(result, expected))
+
 
 if __name__ == "__main__":
     unittest.main()
