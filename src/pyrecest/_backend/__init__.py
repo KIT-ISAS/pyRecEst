@@ -370,6 +370,45 @@ def _sum_with_numpy_signature(sum_func, asarray_func, reshape_func):
     return sum
 
 
+def _std_with_numpy_input(
+    std_func,
+    asarray_func,
+    cast_func,
+    get_default_dtype_func,
+    is_complex_func,
+    is_floating_func,
+):
+    """Return a NumPy-compatible std wrapper for stricter backends."""
+
+    @wraps(std_func)
+    def std(
+        a,
+        axis=None,
+        dtype=None,
+        out=None,
+        ddof=0,
+        keepdims=False,
+        *,
+        correction=0,
+    ):
+        a = asarray_func(a)
+        if dtype is not None:
+            a = cast_func(a, dtype=dtype)
+        elif not is_floating_func(a) and not is_complex_func(a):
+            a = cast_func(a, dtype=get_default_dtype_func())
+        return std_func(
+            a,
+            axis=axis,
+            dtype=None,
+            out=out,
+            ddof=ddof,
+            keepdims=keepdims,
+            correction=correction,
+        )
+
+    return std
+
+
 def _arg_reduction_with_numpy_signature(arg_func, asarray_func, reshape_func):
     """Return a NumPy-compatible argmin/argmax wrapper for stricter backends."""
 
@@ -525,6 +564,19 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                             attribute,
                             getattr(backend, "asarray"),
                             getattr(backend, "reshape"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "std"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _std_with_numpy_input(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "cast"),
+                            getattr(backend, "get_default_dtype"),
+                            getattr(backend, "is_complex"),
+                            getattr(backend, "is_floating"),
                         )
                     if (
                         module_name == ""
