@@ -129,6 +129,86 @@ def test_take_removes_axis_for_scalar_indices():
     assert _to_python(result) == [[1.0, 2.0, 3.0]]
 
 
+def test_take_defaults_to_flattened_input():
+    values = array([[0, 1, 2], [3, 4, 5]])
+
+    result = backend.take(values, [[0, 2], [5, 1]])
+
+    assert result.shape == (2, 2)
+    assert _to_python(result) == [[0, 2], [5, 1]]
+
+
+def test_take_preserves_multidimensional_index_shape():
+    values = array([[0, 1, 2], [3, 4, 5]])
+
+    result = backend.take(values, [[0, 2], [1, 0]], axis=1)
+
+    assert result.shape == (2, 2, 2)
+    assert _to_python(result) == [[[0, 2], [1, 0]], [[3, 5], [4, 3]]]
+
+
+def test_take_wraps_negative_indices_in_raise_mode():
+    values = array([[0, 1, 2], [3, 4, 5]])
+
+    result = backend.take(values, [-1, 0], axis=1)
+
+    assert result.shape == (2, 2)
+    assert _to_python(result) == [[2, 0], [5, 3]]
+
+
+def test_pytorch_take_raises_for_out_of_bounds_indices():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific take bounds regression test")
+
+    values = array([0, 1, 2])
+
+    with pytest.raises(IndexError):
+        backend.take(values, [3])
+
+
+def test_pad_accepts_scalar_pad_width():
+    result = backend.pad(array([1, 2, 3]), 1)
+
+    assert result.shape == (5,)
+    assert _to_python(result) == [0, 1, 2, 3, 0]
+
+
+def test_pad_treats_length_two_pad_width_as_before_after_for_each_axis():
+    result = backend.pad(array([1, 2, 3]), (1, 2))
+
+    assert result.shape == (6,)
+    assert _to_python(result) == [0, 1, 2, 3, 0, 0]
+
+
+def test_pad_broadcasts_single_axis_pair_to_all_axes():
+    result = backend.pad(array([[1, 2], [3, 4]]), ((1, 2),))
+
+    assert result.shape == (5, 5)
+    assert _to_python(result) == [
+        [0, 0, 0, 0, 0],
+        [0, 1, 2, 0, 0],
+        [0, 3, 4, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+    ]
+
+
+def test_pad_uses_per_axis_pad_pairs_in_numpy_order():
+    result = backend.pad(array([[1, 2], [3, 4]]), ((1, 0), (0, 2)))
+
+    assert result.shape == (3, 4)
+    assert _to_python(result) == [
+        [0, 0, 0, 0],
+        [1, 2, 0, 0],
+        [3, 4, 0, 0],
+    ]
+
+
+def test_pad_rejects_negative_widths():
+    with pytest.raises(ValueError):
+        backend.pad(array([1, 2, 3]), (-1, 0))
+
+
 def test_cross_uses_trailing_vector_axis_for_batched_vectors():
     first = array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
     second = array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
