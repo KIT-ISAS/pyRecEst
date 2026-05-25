@@ -33,9 +33,13 @@ def _coerce_non_assignment_costs(costs, size: int, name: str):
     if costs is None:
         return _zeros(size, dtype=float)
 
-    costs = _asarray(costs, dtype=float).reshape(-1)
+    costs_array = _asarray(costs, dtype=float)
+    if costs_array.ndim == 0:
+        return _full((size,), float(costs_array), dtype=float)
+
+    costs = costs_array.reshape(-1)
     if costs.shape[0] != size:
-        raise ValueError(f"{name} must have length {size}")
+        raise ValueError(f"{name} must be scalar or have length {size}")
     return costs
 
 

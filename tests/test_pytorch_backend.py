@@ -182,6 +182,30 @@ class TestPytorchBackendLinalg(unittest.TestCase):
         self.assertEqual(int(pytorch_backend.linalg.matrix_rank(value, tol=1e-4)), 1)
         self.assertEqual(int(pytorch_backend.linalg.matrix_rank(value, rtol=1e-4)), 1)
 
+    def test_linalg_norm_accepts_python_sequence(self):
+        result = pytorch_backend.linalg.norm([[3, 4]])
+
+        self.assertEqual(result.dtype, pytorch_backend.float64)
+        self.assertAlmostEqual(float(result), 5.0)
+
+    def test_matrix_rank_accepts_integer_python_sequence(self):
+        result = pytorch_backend.linalg.matrix_rank([[1, 0], [0, 0]])
+
+        self.assertEqual(int(result), 1)
+
+    def test_svd_accepts_integer_python_sequence(self):
+        u, singular_values, vh = pytorch_backend.linalg.svd([[1, 0], [0, 0]])
+
+        self.assertEqual(u.dtype, pytorch_backend.float64)
+        self.assertEqual(singular_values.dtype, pytorch_backend.float64)
+        self.assertEqual(vh.dtype, pytorch_backend.float64)
+        self.assertTrue(
+            pytorch_backend.allclose(
+                singular_values,
+                pytorch_backend.array([1.0, 0.0], dtype=pytorch_backend.float64),
+            )
+        )
+
     def test_sqrtm_complex_result_uses_matching_complex_precision(self):
         dtype_pairs = (
             (pytorch_backend.float32, pytorch_backend.complex64),
