@@ -160,6 +160,24 @@ class MurtyAssignmentTest(unittest.TestCase):
         npt.assert_array_equal(solutions[0]["unassigned_cols"], np.array([], dtype=int))
         self.assertAlmostEqual(solutions[0]["cost"], 3.0)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_scalar_non_assignment_costs_are_broadcast(self):
+        solutions = murty_k_best_assignments(
+            np.array([[1.0, 100.0], [100.0, 1.0]]),
+            k=1,
+            row_non_assignment_costs=5.0,
+            col_non_assignment_costs=np.array(6.0),
+        )
+
+        self.assertEqual(len(solutions), 1)
+        npt.assert_array_equal(solutions[0]["assignment"], np.array([0, 1]))
+        npt.assert_array_equal(solutions[0]["unassigned_rows"], np.array([], dtype=int))
+        npt.assert_array_equal(solutions[0]["unassigned_cols"], np.array([], dtype=int))
+        self.assertAlmostEqual(solutions[0]["cost"], 2.0)
+
     def test_non_positive_k_returns_empty_list(self):
         self.assertEqual(murty_k_best_assignments(np.eye(2), k=0), [])
 
