@@ -22,7 +22,13 @@ from torch.linalg import (
 
 from .._backend_config import np_atol as atol
 from ..numpy import linalg as _gsnplinalg
-from ._dtype import _cast_out_to_input_dtype
+from ._common import array, cast
+from ._dtype import (
+    _cast_out_to_input_dtype,
+    get_default_dtype,
+    is_complex,
+    is_floating,
+)
 
 
 def _as_numpy_no_grad(value):
@@ -50,6 +56,14 @@ _COMPLEX_DTYPE_FOR_TENSOR_DTYPE = {
     _torch.complex64: _np.complex64,
     _torch.complex128: _np.complex128,
 }
+
+
+def _as_linalg_tensor(value):
+    """Convert array-like values to a floating/complex tensor for torch.linalg."""
+    tensor = array(value)
+    if not is_floating(tensor) and not is_complex(tensor):
+        tensor = cast(tensor, dtype=get_default_dtype())
+    return tensor
 
 
 class _Logm(_torch.autograd.Function):
@@ -107,6 +121,7 @@ def sqrtm(x):
 
 
 def svd(x, full_matrices=True, compute_uv=True):
+    x = _as_linalg_tensor(x)
     if compute_uv:
         return _torch.linalg.svd(x, full_matrices=full_matrices)
 
@@ -114,6 +129,7 @@ def svd(x, full_matrices=True, compute_uv=True):
 
 
 def norm(x, ord=None, axis=None, keepdims=False):
+    x = _as_linalg_tensor(x)
     return _torch.linalg.norm(x, ord=ord, dim=axis, keepdim=keepdims)
 
 
@@ -128,6 +144,7 @@ def matrix_rank(a, tol=None, hermitian=False, *, rtol=None, atol=None, **kwargs)
             raise TypeError("matrix_rank() got both 'tol' and 'atol'")
         atol = tol
 
+    a = _as_linalg_tensor(a)
     return _torch.linalg.matrix_rank(a, atol=atol, rtol=rtol, hermitian=hermitian)
 
 
@@ -140,6 +157,9 @@ def quadratic_assignment(a, b, options):
 
 
 def solve_sylvester(a, b, q):
+    a = _as_linalg_tensor(a)
+    b = _as_linalg_tensor(b)
+    q = _as_linalg_tensor(q)
     if (
         a.shape == b.shape
         and _torch.all(a == b)
@@ -175,6 +195,7 @@ def solve_sylvester(a, b, q):
 # (TODO) (sait) _torch.linalg.cholesky_ex for even faster way
 def is_single_matrix_pd(mat):
     """Check if 2D square matrix is positive definite."""
+    mat = _as_linalg_tensor(mat)
     if mat.ndim != 2 or mat.shape[0] != mat.shape[1]:
         return False
     if mat.dtype in [_torch.complex64, _torch.complex128]:
@@ -208,6 +229,7 @@ def fractional_matrix_power(A, t):
 
 def polar(a, *args, **kwargs):
     """Polar decomposition of a matrix."""
+    a = _as_linalg_tensor(a)
     func = _np.vectorize(
         _scipy.linalg.polar, signature="(n,n)->(n,n),(n,n)", excluded=["side"]
     )
