@@ -80,10 +80,7 @@ class AssociationHypothesesTest(unittest.TestCase):
             [(0, 0), (1, 1)],
         )
 
-    def test_probability_likelihood_gate_rejects_zero_threshold(self):
-        with self.assertRaises(ValueError):
-            ProbabilityThresholdGate(0.0, use_likelihood=True)
-
+    def test_probability_gate_accepts_zero_probability_at_zero_threshold(self):
         hypothesis = AssociationHypothesis(0, 0, probability=0.0)
         self.assertTrue(ProbabilityThresholdGate(0.0).accepts(hypothesis))
 
@@ -132,7 +129,7 @@ class AssociationHypothesesTest(unittest.TestCase):
         self.assertEqual(association.unmatched_track_indices, [])
         self.assertEqual(association.unmatched_measurement_indices, [])
 
-    def test_probability_likelihood_gate_rejects_zero_threshold(self):
+    def test_likelihood_gate_rejects_zero_threshold(self):
         with self.assertRaises(ValueError):
             ProbabilityThresholdGate(0.0, use_likelihood=True)
 
