@@ -89,6 +89,11 @@ def apply_time_offset(times_s: np.ndarray, offset_s: float | None) -> np.ndarray
     return np.asarray(times_s, dtype=float) + offset
 
 
+def _validate_max_time_delta(max_time_delta_s: float | None) -> None:
+    if max_time_delta_s is not None and float(max_time_delta_s) < 0.0:
+        raise ValueError("max_time_delta_s must be nonnegative")
+
+
 def nearest_time_indices(
     reference_times_s: np.ndarray, query_times_s: np.ndarray
 ) -> np.ndarray:
@@ -118,6 +123,7 @@ def interpolate_reference_values(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Interpolate reference values at query times and return a validity mask."""
 
+    _validate_max_time_delta(max_time_delta_s)
     reference_times = np.asarray(reference_times_s, dtype=float).reshape(-1)
     reference_values = np.asarray(reference_values, dtype=float)
     query_times = np.asarray(query_times_s, dtype=float).reshape(-1)

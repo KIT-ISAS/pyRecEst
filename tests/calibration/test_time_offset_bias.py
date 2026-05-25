@@ -13,6 +13,7 @@ from pyrecest.calibration.time_offset import (
     aggregate_time_offset_sweeps,
     apply_time_offset,
     fit_time_offset,
+    interpolate_reference_values,
     make_offset_grid,
     nearest_time_indices,
     time_offset_error_summary,
@@ -119,6 +120,18 @@ class TimeOffsetCalibrationTest(unittest.TestCase):
         )
 
         self.assertEqual(summary["count"], 0.0)
+
+    def test_interpolation_rejects_negative_max_time_delta(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "max_time_delta_s must be nonnegative",
+        ):
+            interpolate_reference_values(
+                np.array([0.0, 1.0]),
+                np.array([[0.0], [1.0]]),
+                np.array([0.5]),
+                max_time_delta_s=-1.0,
+            )
 
     def test_time_offset_summary_rejects_mismatched_measurement_lengths(self):
         with self.assertRaisesRegex(
