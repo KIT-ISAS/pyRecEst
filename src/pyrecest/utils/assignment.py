@@ -35,7 +35,7 @@ def _coerce_non_assignment_costs(costs, size: int, name: str):
 
     costs_array = _asarray(costs, dtype=float)
     if costs_array.ndim == 0:
-        return _full(size, float(costs_array), dtype=float)
+        return _full((size,), float(costs_array), dtype=float)
 
     costs = costs_array.reshape(-1)
     if costs.shape[0] != size:
