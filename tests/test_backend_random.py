@@ -70,6 +70,13 @@ class TestBackendRandom(unittest.TestCase):
         self.assertTrue(set(sample_np[0].tolist()).issubset({0, 1, 2}))
         self.assertTrue(set(sample_np[1].tolist()).issubset({3, 4, 5}))
 
+    def test_multivariate_normal_accepts_python_sequences(self):
+        samples = random.multivariate_normal(
+            [0.0, 0.0], [[1.0, 0.0], [0.0, 1.0]], size=(6,)
+        )
+
+        self.assertEqual(tuple(pyrecest.backend.shape(samples)), (6, 2))
+
     def test_multinomial_accepts_python_probability_sequence(self):
         sample = random.multinomial(12, [0.25, 0.75])
 
