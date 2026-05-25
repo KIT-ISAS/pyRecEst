@@ -29,12 +29,43 @@ class TimeOffsetFitResult:
             "best_offset_s": self.best_offset_s,
             "evaluated_offsets": int(len(self.offsets_s)),
         }
-        if self.best_offset_s is not None and len(self.metric_values):
-            best_index = int(np.nanargmin(self.metric_values))
+        best_index = _best_metric_index(
+            self.offsets_s,
+            self.metric_values,
+            self.counts,
+            self.best_offset_s,
+        )
+        if best_index is not None:
             out["best_metric_value"] = float(self.metric_values[best_index])
             out["best_count"] = int(self.counts[best_index])
         out.update(dict(self.metadata))
         return out
+
+
+def _best_metric_index(
+    offsets_s: np.ndarray,
+    metric_values: np.ndarray,
+    counts: np.ndarray,
+    best_offset_s: float | None,
+) -> int | None:
+    """Return the finite, non-empty row corresponding to ``best_offset_s``."""
+
+    if best_offset_s is None:
+        return None
+    offsets = np.asarray(offsets_s, dtype=float).reshape(-1)
+    values = np.asarray(metric_values, dtype=float).reshape(-1)
+    counts = np.asarray(counts, dtype=float).reshape(-1)
+    if not (offsets.size == values.size == counts.size):
+        return None
+    finite = np.isfinite(values) & (counts > 0.0)
+    if not finite.any():
+        return None
+    matching = finite & np.isclose(offsets, float(best_offset_s), rtol=0.0, atol=1e-12)
+    if matching.any():
+        candidates = np.flatnonzero(matching)
+        return int(candidates[int(np.nanargmin(values[candidates]))])
+    candidates = np.flatnonzero(finite)
+    return int(candidates[int(np.nanargmin(values[candidates]))])
 
 
 def make_offset_grid(min_s: float, max_s: float, step_s: float) -> np.ndarray:
