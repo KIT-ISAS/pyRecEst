@@ -44,6 +44,26 @@ def _torch_as_like(value, like):
     return _torch.from_numpy(_np.asarray(value))
 
 
+def _common_linalg_dtype(*tensors):
+    """Return a floating/complex dtype accepted by torch.linalg routines."""
+    dtype = tensors[0].dtype
+    for tensor in tensors[1:]:
+        dtype = _torch.promote_types(dtype, tensor.dtype)
+    if not (dtype.is_floating_point or dtype.is_complex):
+        return _torch.get_default_dtype()
+    return dtype
+
+
+def _as_linalg_tensor(value, *, device=None):
+    """Convert array-like linalg input to a tensor without forcing dtype yet."""
+    if isinstance(value, _torch.Tensor):
+        tensor = value
+        if device is not None and tensor.device != device:
+            tensor = tensor.to(device=device)
+        return tensor
+    return _torch.as_tensor(value, device=device)
+
+
 _COMPLEX_DTYPE_FOR_TENSOR_DTYPE = {
     _torch.float32: _np.complex64,
     _torch.float64: _np.complex128,
@@ -140,6 +160,18 @@ def quadratic_assignment(a, b, options):
 
 
 def solve_sylvester(a, b, q):
+    device = next(
+        (value.device for value in (a, b, q) if isinstance(value, _torch.Tensor)),
+        None,
+    )
+    a = _as_linalg_tensor(a, device=device)
+    b = _as_linalg_tensor(b, device=device)
+    q = _as_linalg_tensor(q, device=device)
+    common_dtype = _common_linalg_dtype(a, b, q)
+    a = a.to(dtype=common_dtype)
+    b = b.to(dtype=common_dtype)
+    q = q.to(dtype=common_dtype)
+
     if (
         a.shape == b.shape
         and _torch.all(a == b)
