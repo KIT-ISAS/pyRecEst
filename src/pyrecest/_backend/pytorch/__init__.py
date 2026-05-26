@@ -997,7 +997,9 @@ def assignment_by_sum(x, values, indices, axis=0):
 
 
 def copy(x):
-    return x.clone()
+    if _torch.is_tensor(x):
+        return x.clone()
+    return _np.copy(x)
 
 
 def cumsum(x, axis=None, dtype=None):
