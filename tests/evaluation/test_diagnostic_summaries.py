@@ -1,5 +1,8 @@
+import json
 import math
 import unittest
+
+import numpy as np
 
 from pyrecest.evaluation.diagnostic_summaries import (
     build_diagnostic_summary,
@@ -79,6 +82,32 @@ class DiagnosticSummariesTest(unittest.TestCase):
         self.assertEqual(summary["schema_version"], 1)
         self.assertEqual(len(summary["top_residuals"]), 2)
         self.assertEqual(summary["covariance_inflation"]["count"], 2)
+
+    def test_summary_records_are_recursively_json_serializable(self):
+        records = [
+            {
+                "time_s": 0.0,
+                "track_id": "A",
+                "residual_norm": 1.0,
+                "covariance_scale": 2.0,
+                "error": 1.0,
+                "nested": {
+                    "np_int": np.int64(3),
+                    "np_bool": np.bool_(True),
+                    "np_nan": np.float64(np.nan),
+                    "items": (np.float32(1.5), np.array([np.int64(2), np.inf])),
+                },
+            }
+        ]
+
+        summary = build_diagnostic_summary(records, top_n=1)
+
+        json.dumps(summary, allow_nan=False)
+        nested = summary["top_residuals"][0]["nested"]
+        self.assertEqual(nested["np_int"], 3)
+        self.assertIs(nested["np_bool"], True)
+        self.assertIsNone(nested["np_nan"])
+        self.assertEqual(nested["items"], [1.5, [2, None]])
 
 
 if __name__ == "__main__":
