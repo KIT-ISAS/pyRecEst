@@ -59,6 +59,13 @@ def normalize_log_weights(log_weights: list[float] | np.ndarray) -> np.ndarray:
     values = np.asarray(log_weights, dtype=float).reshape(-1)
     if values.size == 0:
         raise ValueError("log_weights must not be empty")
+
+    positive_infinite = np.isposinf(values)
+    if np.any(positive_infinite):
+        weights = np.zeros(values.size, dtype=float)
+        weights[positive_infinite] = 1.0 / np.count_nonzero(positive_infinite)
+        return weights
+
     maximum = float(np.max(values))
     if not np.isfinite(maximum):
         return np.full(values.size, 1.0 / values.size)
