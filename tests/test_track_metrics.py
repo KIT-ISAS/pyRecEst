@@ -88,6 +88,31 @@ class TestTrackMetrics(unittest.TestCase):
         self.assertEqual(scores["missed_reference_observations"], 1)
         npt.assert_allclose(scores["missed_reference_observation_rate"], 1.0 / 3.0)
 
+    def test_min_length_accepts_integer_like_values(self):
+        false_scores = score_false_tracks(
+            self.predicted, self.reference, min_length=np.asarray(2)
+        )
+        missed_scores = score_missed_tracks(
+            self.predicted, self.reference, min_length=np.float64(2.0)
+        )
+
+        self.assertEqual(false_scores["false_track_evaluated_tracks"], 2)
+        self.assertEqual(missed_scores["missed_track_evaluated_reference_tracks"], 2)
+
+    def test_min_length_rejects_non_integral_and_boolean_values(self):
+        invalid_values = [0, -1, 1.5, np.inf, True, np.asarray(1.5), np.asarray(True)]
+
+        for invalid in invalid_values:
+            with self.subTest(invalid=invalid):
+                with self.assertRaises((TypeError, ValueError)):
+                    score_false_tracks(
+                        self.predicted, self.reference, min_length=invalid
+                    )
+                with self.assertRaises((TypeError, ValueError)):
+                    score_missed_tracks(
+                        self.predicted, self.reference, min_length=invalid
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
