@@ -1,8 +1,13 @@
+import importlib.util
+import os
+import subprocess
+import sys
 import unittest
 import warnings
 
 import matplotlib
 import numpy.testing as npt
+import pytest
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, random
@@ -53,6 +58,32 @@ class TestAbstractDiracDistribution(unittest.TestCase):
             mode = dist.mode()
 
         npt.assert_allclose(mode, array([1.0, 2.0]))
+
+    def test_apply_function_non_vectorized_maps_complete_diracs(self):
+        dist = LinearDiracDistribution(
+            array(
+                [
+                    [0.0, 1.0],
+                    [2.0, 3.0],
+                ]
+            ),
+            array([0.5, 0.5]),
+        )
+
+        mapped = dist.apply_function(
+            lambda point: array([point[1], point[0] + point[1]]),
+            function_is_vectorized=False,
+        )
+
+        npt.assert_allclose(
+            mapped.d,
+            array(
+                [
+                    [1.0, 1.0],
+                    [3.0, 5.0],
+                ]
+            ),
+        )
 
     def test_rejects_negative_weights(self):
         with self.assertRaisesRegex(ValueError, "nonnegative"):
@@ -157,3 +188,35 @@ class TestAbstractDiracDistribution(unittest.TestCase):
             ddist.plot()
         except (ValueError, RuntimeError) as e:
             self.fail(f"{name}: Plotting failed for dimension {dim} with error: {e}")
+
+
+@pytest.mark.backend_portable
+def test_pytorch_non_vectorized_dirac_transform_maps_particles_not_coordinates():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("torch is not installed")
+
+    env = os.environ.copy()
+    env["PYRECEST_BACKEND"] = "pytorch"
+    src_path = os.path.abspath("src")
+    env["PYTHONPATH"] = (
+        src_path
+        if not env.get("PYTHONPATH")
+        else os.pathsep.join([src_path, env["PYTHONPATH"]])
+    )
+
+    code = """
+import numpy.testing as npt
+from pyrecest.backend import array, to_numpy
+from pyrecest.distributions import LinearDiracDistribution
+
+dist = LinearDiracDistribution(
+    array([[0.0, 1.0], [2.0, 3.0]]),
+    array([0.5, 0.5]),
+)
+mapped = dist.apply_function(
+    lambda point: array([point[1], point[0] + point[1]]),
+    function_is_vectorized=False,
+)
+npt.assert_allclose(to_numpy(mapped.d), [[1.0, 1.0], [3.0, 5.0]])
+"""
+    subprocess.run([sys.executable, "-c", code], check=True, env=env)
