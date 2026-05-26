@@ -144,8 +144,10 @@ def make_bias_training_examples(
 ) -> BiasTrainingExamples:
     """Match measurements to nearest reference values and compute residual bias."""
 
-    if max_time_delta_s < 0.0:
-        raise ValueError("max_time_delta_s must be nonnegative")
+    max_time_delta_s = _as_nonnegative_finite_float(
+        max_time_delta_s,
+        "max_time_delta_s",
+    )
     measurement_times = np.asarray(measurement_times_s, dtype=float).reshape(-1)
     measurements = _as_2d(measurement_values, "measurement_values")
     reference_times = np.asarray(reference_times_s, dtype=float).reshape(-1)
@@ -190,7 +192,7 @@ def make_bias_training_examples(
         np.isfinite(measurement_times)
         & np.isfinite(measurements).all(axis=1)
         & np.isfinite(references[nearest]).all(axis=1)
-        & (delta_s <= float(max_time_delta_s))
+        & (delta_s <= max_time_delta_s)
     )
     valid &= np.isfinite(features).all(axis=1)
     measured = measurements[valid]
@@ -213,10 +215,8 @@ def fit_sensor_bias_correction_from_examples(
 ) -> SensorBiasCorrectionModel:
     """Fit a ridge-linear bias model from prepared examples."""
 
-    if ridge_alpha < 0.0:
-        raise ValueError("ridge_alpha must be nonnegative")
-    if min_samples < 1:
-        raise ValueError("min_samples must be positive")
+    ridge_alpha = _as_nonnegative_finite_float(ridge_alpha, "ridge_alpha")
+    min_samples = _as_positive_integer(min_samples, "min_samples")
     y = _as_2d(examples.residual, "examples.residual")
     x = _as_2d(examples.features, "examples.features")
     if x.shape[0] != y.shape[0]:
@@ -226,7 +226,7 @@ def fit_sensor_bias_correction_from_examples(
     x = x[valid]
     if y.shape[0] == 0:
         raise ValueError("no finite bias training examples")
-    if x.shape[0] < int(min_samples):
+    if x.shape[0] < min_samples:
         x = np.empty((y.shape[0], 0), dtype=float)
 
     feature_mean = _nanmean_or_zero(x)
@@ -236,7 +236,7 @@ def fit_sensor_bias_correction_from_examples(
     )
     standardized = (x - feature_mean) / feature_scale if x.shape[1] else x
     design = np.column_stack([np.ones(y.shape[0]), standardized])
-    regularizer = np.eye(design.shape[1]) * float(ridge_alpha)
+    regularizer = np.eye(design.shape[1]) * ridge_alpha
     regularizer[0, 0] = 0.0
     lhs = design.T @ design + regularizer
     rhs = design.T @ y
@@ -255,7 +255,7 @@ def fit_sensor_bias_correction_from_examples(
         feature_scale=feature_scale,
         residual_std=residual_std,
         training_count=int(y.shape[0]),
-        ridge_alpha=float(ridge_alpha),
+        ridge_alpha=ridge_alpha,
         metadata={} if metadata is None else dict(metadata),
     )
 
@@ -297,6 +297,20 @@ def _as_2d(values: np.ndarray, name: str) -> np.ndarray:
     if out.ndim != 2:
         raise ValueError(f"{name} must be one- or two-dimensional")
     return out
+
+
+def _as_nonnegative_finite_float(value: float, name: str) -> float:
+    out = float(value)
+    if not np.isfinite(out) or out < 0.0:
+        raise ValueError(f"{name} must be nonnegative")
+    return out
+
+
+def _as_positive_integer(value: int, name: str) -> int:
+    out = float(value)
+    if not np.isfinite(out) or not out.is_integer() or out < 1.0:
+        raise ValueError(f"{name} must be positive")
+    return int(out)
 
 
 def _nanmean_or_zero(values: np.ndarray) -> np.ndarray:
