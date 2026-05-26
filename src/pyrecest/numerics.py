@@ -67,6 +67,9 @@ def nearest_symmetric_psd(matrix, *, min_eigenvalue: float = 0.0):
     should not silently replace validation in algorithms where invalid covariance
     matrices indicate a modeling error.
     """
+    if not np.isfinite(min_eigenvalue) or min_eigenvalue < 0.0:
+        raise ValueError("min_eigenvalue must be finite and nonnegative.")
+
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ShapeError(f"Expected a square matrix, got shape {arr.shape}.")
@@ -84,6 +87,11 @@ def jittered_cholesky(matrix, *, initial_jitter: float = 1e-12, max_attempts: in
     jitter. It raises :class:`NumericalStabilityError` if no factorization is
     found within ``max_attempts``.
     """
+    if not np.isfinite(initial_jitter) or initial_jitter <= 0.0:
+        raise ValueError("initial_jitter must be finite and positive.")
+    if not isinstance(max_attempts, (int, np.integer)) or max_attempts < 0:
+        raise ValueError("max_attempts must be a nonnegative integer.")
+
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ShapeError(f"Expected a square matrix, got shape {arr.shape}.")
