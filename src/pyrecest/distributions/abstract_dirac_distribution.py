@@ -8,7 +8,6 @@ from beartype import beartype
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     all,
-    apply_along_axis,
     arange,
     argmax,
     asarray,
@@ -19,6 +18,7 @@ from pyrecest.backend import (
     log,
     ones,
     random,
+    stack,
     sum,
 )
 
@@ -91,7 +91,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         if function_is_vectorized:
             dist.d = f(dist.d)
         else:
-            dist.d = apply_along_axis(f, 1, dist.d)
+            dist.d = stack([asarray(f(point)) for point in dist.d])
         return dist
 
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
