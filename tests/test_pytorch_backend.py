@@ -153,6 +153,31 @@ class TestPytorchBackendReductions(unittest.TestCase):
 
 
 @unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
+class TestPytorchBackendCopy(unittest.TestCase):
+    def test_copy_accepts_python_scalar(self):
+        copied = pytorch_backend.copy(1.5)
+
+        self.assertEqual(copied.shape, ())
+        self.assertEqual(float(copied), 1.5)
+
+    def test_copy_accepts_python_sequence_without_aliasing(self):
+        values = [[1.0, 2.0], [3.0, 4.0]]
+
+        copied = pytorch_backend.copy(values)
+        values[0][0] = 99.0
+
+        self.assertEqual(copied.tolist(), [[1.0, 2.0], [3.0, 4.0]])
+
+    def test_copy_clones_tensor(self):
+        values = pytorch_backend.array([1.0, 2.0])
+
+        copied = pytorch_backend.copy(values)
+        values[0] = 99.0
+
+        self.assertEqual(copied.tolist(), [1.0, 2.0])
+
+
+@unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
 class TestPytorchBackendRandom(unittest.TestCase):
     def test_choice_accepts_weighted_sampling_without_replacement(self):
         values = pytorch_backend.array([0, 1, 2, 3])
