@@ -30,6 +30,13 @@ def _from_numpy_array(value: np.ndarray):
         return value
 
 
+def _validate_nonnegative_finite(name: str, value: float) -> float:
+    value = float(value)
+    if not np.isfinite(value) or value < 0.0:
+        raise ValueError(f"{name} must be finite and non-negative.")
+    return value
+
+
 def symmetrize_matrix(matrix):
     """Return ``0.5 * (matrix + matrix.T)`` in the active backend representation."""
     arr = _to_numpy_array(matrix)
@@ -40,6 +47,7 @@ def symmetrize_matrix(matrix):
 
 def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
     """Return whether a matrix is symmetric within an absolute tolerance."""
+    atol = _validate_nonnegative_finite("atol", atol)
     arr = _to_numpy_array(matrix)
     return bool(
         arr.ndim == 2
@@ -50,6 +58,7 @@ def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
 
 def is_positive_semidefinite(matrix, *, atol: float = 1e-10) -> bool:
     """Return whether a symmetric matrix is positive semidefinite within tolerance."""
+    atol = _validate_nonnegative_finite("atol", atol)
     arr = _to_numpy_array(matrix)
     if (
         arr.ndim != 2
@@ -105,6 +114,7 @@ def assert_covariance_matrix(
     matrix, *, name: str = "covariance", dim: int | None = None, atol: float = 1e-10
 ):
     """Validate a covariance matrix and return it in the active backend representation."""
+    atol = _validate_nonnegative_finite("atol", atol)
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ShapeError(f"{name} must be a square matrix, got shape {arr.shape}.")
