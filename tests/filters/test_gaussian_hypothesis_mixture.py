@@ -14,6 +14,32 @@ class GaussianHypothesisMixtureTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(weights, np.array([0.5, 0.5])))
 
+    def test_positive_infinite_log_weights_dominate(self):
+        weights = normalize_log_weights(np.array([0.0, np.inf, -np.inf]))
+
+        self.assertTrue(np.allclose(weights, np.array([0.0, 1.0, 0.0])))
+
+    def test_multiple_positive_infinite_log_weights_share_mass(self):
+        weights = normalize_log_weights(np.array([np.inf, 5.0, np.inf]))
+
+        self.assertTrue(np.allclose(weights, np.array([0.5, 0.0, 0.5])))
+
+    def test_moment_matching_respects_dominant_infinite_weight(self):
+        mean, covariance, weights = moment_match_gaussian_hypotheses(
+            [
+                WeightedGaussianHypothesis(
+                    np.array([0.0]), np.array([[1.0]]), log_weight=0.0
+                ),
+                WeightedGaussianHypothesis(
+                    np.array([3.0]), np.array([[2.0]]), log_weight=np.inf
+                ),
+            ]
+        )
+
+        self.assertTrue(np.allclose(weights, np.array([0.0, 1.0])))
+        self.assertTrue(np.allclose(mean, np.array([3.0])))
+        self.assertTrue(np.allclose(covariance, np.array([[2.0]])))
+
     def test_moment_matching_includes_between_hypothesis_spread(self):
         mean, covariance, weights = moment_match_gaussian_hypotheses(
             [
