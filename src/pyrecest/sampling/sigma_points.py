@@ -3,7 +3,7 @@ Sigma-point sampling schemes for unscented transforms.
 """
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import asarray, float64, full, hstack, linalg, reshape, stack
+from pyrecest.backend import asarray, concatenate, float64, full, linalg, reshape, stack
 
 
 class MerweScaledSigmaPoints:
@@ -33,19 +33,19 @@ class MerweScaledSigmaPoints:
         lam = self.alpha**2 * (n + self.kappa) - n
         scale = n + lam
 
-        self.Wm = hstack(
+        self.Wm = concatenate(
             [
                 asarray([lam / scale], dtype=float64),
-                full((2 * n,), 0.5 / scale, dtype=float64),
+                full(2 * n, 0.5 / scale, dtype=float64),
             ]
         )
-        self.Wc = hstack(
+        self.Wc = concatenate(
             [
                 asarray(
                     [lam / scale + (1.0 - self.alpha**2 + self.beta)],
                     dtype=float64,
                 ),
-                full((2 * n,), 0.5 / scale, dtype=float64),
+                full(2 * n, 0.5 / scale, dtype=float64),
             ]
         )
 
@@ -92,16 +92,16 @@ class JulierSigmaPoints:
         n = self.n
         k = n + self.kappa
 
-        self.Wm = hstack(
+        self.Wm = concatenate(
             [
                 asarray([self.kappa / k], dtype=float64),
-                full((2 * n,), 0.5 / k, dtype=float64),
+                full(2 * n, 0.5 / k, dtype=float64),
             ]
         )
-        self.Wc = hstack(
+        self.Wc = concatenate(
             [
                 asarray([self.kappa / k], dtype=float64),
-                full((2 * n,), 0.5 / k, dtype=float64),
+                full(2 * n, 0.5 / k, dtype=float64),
             ]
         )
 
