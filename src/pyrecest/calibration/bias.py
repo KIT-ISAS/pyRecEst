@@ -94,6 +94,10 @@ class SensorBiasCorrectionModel:
         if values.shape[1] != self.target_dim:
             raise ValueError("measurements have incompatible target dimension")
         bias = self.predict(features, n_rows=values.shape[0])
+        if bias.shape != values.shape:
+            raise ValueError(
+                "features must produce one predicted bias row per measurement"
+            )
         corrected = values.copy()
         valid = np.isfinite(values).all(axis=1) & np.isfinite(bias).all(axis=1)
         corrected[valid] = values[valid] - bias[valid]
