@@ -29,7 +29,7 @@ from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 points = MerweScaledSigmaPoints(2, alpha=0.5, beta=2.0, kappa=0.0)
 sigmas = points.sigma_points(backend.asarray([0.0, 0.0]), backend.eye(2))
 assert sigmas.shape == (5, 2)
-assert backend.isclose(backend.sum(points.Wm), 1.0)
+assert bool(backend.to_numpy(backend.isclose(backend.sum(points.Wm), 1.0)))
 
 initial = GaussianDistribution(backend.asarray([0.0, 0.0]), backend.eye(2))
 ukf = UnscentedKalmanFilter(initial)
@@ -37,6 +37,6 @@ ukf.predict_identity(0.1 * backend.eye(2))
 ukf.update_identity(0.1 * backend.eye(2), backend.asarray([1.0, -1.0]))
 estimate = ukf.get_point_estimate()
 assert estimate.shape == (2,)
-assert backend.all(backend.isfinite(estimate))
+assert bool(backend.to_numpy(backend.all(backend.isfinite(estimate))))
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
