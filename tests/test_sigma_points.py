@@ -2,14 +2,13 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
-import pyrecest.backend
-from pyrecest.backend import __backend_name__
+from pyrecest.backend import __backend_name__, asarray, to_numpy
 from pyrecest.sampling import JulierSigmaPoints, MerweScaledSigmaPoints
 
 
 @unittest.skipIf(
-    __backend_name__ in ("pytorch", "jax"),
-    reason="Sigma-point tests use NumPy assertions",
+    __backend_name__ == "pytorch",
+    reason="Sigma-point tests use NumPy assertions and the PyTorch backend is unsupported",
 )
 class TestSigmaPoints(unittest.TestCase):
     def test_merwe_scaled_sigma_points_match_moments(self):
@@ -17,39 +16,28 @@ class TestSigmaPoints(unittest.TestCase):
         covariance = np.array([[2.0, 0.4], [0.4, 1.0]])
         points = MerweScaledSigmaPoints(n=2, alpha=0.5, beta=2.0, kappa=0.0)
 
-        sigmas = points.sigma_points(mean, covariance)
+        sigmas = points.sigma_points(asarray(mean), asarray(covariance))
         weighted_mean = points.Wm @ sigmas
         deviations = sigmas - weighted_mean
         weighted_covariance = deviations.T @ (deviations * points.Wc[:, None])
 
         self.assertEqual(sigmas.shape, (5, 2))
-        npt.assert_allclose(weighted_mean, mean)
-        npt.assert_allclose(weighted_covariance, covariance)
-
-    def test_sigma_points_reject_jax_backend_with_not_implemented_error(self):
-        old_backend_name = pyrecest.backend.__backend_name__
-        pyrecest.backend.__backend_name__ = "jax"
-        try:
-            with self.assertRaises(NotImplementedError):
-                MerweScaledSigmaPoints(n=2, alpha=0.5, beta=2.0, kappa=0.0)
-            with self.assertRaises(NotImplementedError):
-                JulierSigmaPoints(n=2, kappa=1.0)
-        finally:
-            pyrecest.backend.__backend_name__ = old_backend_name
+        npt.assert_allclose(to_numpy(weighted_mean), mean)
+        npt.assert_allclose(to_numpy(weighted_covariance), covariance)
 
     def test_julier_sigma_points_match_moments(self):
         mean = np.array([0.5, 1.5])
         covariance = np.array([[1.5, 0.2], [0.2, 0.5]])
         points = JulierSigmaPoints(n=2, kappa=1.0)
 
-        sigmas = points.sigma_points(mean, covariance)
+        sigmas = points.sigma_points(asarray(mean), asarray(covariance))
         weighted_mean = points.Wm @ sigmas
         deviations = sigmas - weighted_mean
         weighted_covariance = deviations.T @ (deviations * points.Wc[:, None])
 
         self.assertEqual(sigmas.shape, (5, 2))
-        npt.assert_allclose(weighted_mean, mean)
-        npt.assert_allclose(weighted_covariance, covariance)
+        npt.assert_allclose(to_numpy(weighted_mean), mean)
+        npt.assert_allclose(to_numpy(weighted_covariance), covariance)
 
 
 if __name__ == "__main__":
