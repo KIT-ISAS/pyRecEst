@@ -2,12 +2,8 @@
 Sigma-point sampling schemes for unscented transforms.
 """
 
-import pyrecest.backend
-
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import asarray
-from pyrecest.backend import copy as backend_copy
-from pyrecest.backend import empty, float64, full, linalg, reshape
+from pyrecest.backend import asarray, concatenate, float64, full, linalg, reshape, stack
 
 
 class MerweScaledSigmaPoints:
@@ -26,10 +22,6 @@ class MerweScaledSigmaPoints:
     """
 
     def __init__(self, n: int, alpha: float, beta: float, kappa: float):
-        if pyrecest.backend.__backend_name__ == "jax":
-            raise NotImplementedError(
-                "MerweScaledSigmaPoints is not supported on the JAX backend"
-            )
         self.n = n
         self.alpha = alpha
         self.beta = beta
@@ -39,12 +31,23 @@ class MerweScaledSigmaPoints:
     def _compute_weights(self):
         n = self.n
         lam = self.alpha**2 * (n + self.kappa) - n
+        scale = n + lam
 
-        self.Wm = full(2 * n + 1, 0.5 / (n + lam))
-        self.Wm[0] = lam / (n + lam)
-
-        self.Wc = backend_copy(self.Wm)
-        self.Wc[0] = lam / (n + lam) + (1.0 - self.alpha**2 + self.beta)
+        self.Wm = concatenate(
+            [
+                asarray([lam / scale], dtype=float64),
+                full(2 * n, 0.5 / scale, dtype=float64),
+            ]
+        )
+        self.Wc = concatenate(
+            [
+                asarray(
+                    [lam / scale + (1.0 - self.alpha**2 + self.beta)],
+                    dtype=float64,
+                ),
+                full(2 * n, 0.5 / scale, dtype=float64),
+            ]
+        )
 
     def sigma_points(self, x, P):
         """Return ``(2n+1, n)`` sigma-point matrix.
@@ -64,12 +67,9 @@ class MerweScaledSigmaPoints:
 
         U = linalg.cholesky((n + lam) * P)  # lower-triangular
 
-        sigmas = empty((2 * n + 1, n))
-        sigmas[0] = x
-        for i in range(n):
-            sigmas[i + 1] = x + U[:, i]
-            sigmas[n + i + 1] = x - U[:, i]
-        return sigmas
+        positive = [x + U[:, i] for i in range(n)]
+        negative = [x - U[:, i] for i in range(n)]
+        return stack([x, *positive, *negative])
 
 
 class JulierSigmaPoints:
@@ -84,10 +84,6 @@ class JulierSigmaPoints:
     """
 
     def __init__(self, n: int, kappa: float = 0.0):
-        if pyrecest.backend.__backend_name__ == "jax":
-            raise NotImplementedError(
-                "JulierSigmaPoints is not supported on the JAX backend"
-            )
         self.n = n
         self.kappa = kappa
         self._compute_weights()
@@ -96,10 +92,18 @@ class JulierSigmaPoints:
         n = self.n
         k = n + self.kappa
 
-        self.Wm = full(2 * n + 1, 0.5 / k)
-        self.Wm[0] = self.kappa / k
-
-        self.Wc = backend_copy(self.Wm)
+        self.Wm = concatenate(
+            [
+                asarray([self.kappa / k], dtype=float64),
+                full(2 * n, 0.5 / k, dtype=float64),
+            ]
+        )
+        self.Wc = concatenate(
+            [
+                asarray([self.kappa / k], dtype=float64),
+                full(2 * n, 0.5 / k, dtype=float64),
+            ]
+        )
 
     def sigma_points(self, x, P):
         """Return ``(2n+1, n)`` sigma-point matrix.
@@ -119,9 +123,6 @@ class JulierSigmaPoints:
 
         U = linalg.cholesky(k * P)  # lower-triangular
 
-        sigmas = empty((2 * n + 1, n))
-        sigmas[0] = x
-        for i in range(n):
-            sigmas[i + 1] = x + U[:, i]
-            sigmas[n + i + 1] = x - U[:, i]
-        return sigmas
+        positive = [x + U[:, i] for i in range(n)]
+        negative = [x - U[:, i] for i in range(n)]
+        return stack([x, *positive, *negative])
