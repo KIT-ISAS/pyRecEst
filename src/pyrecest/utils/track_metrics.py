@@ -107,8 +107,7 @@ def score_false_tracks(
     predicted_track_matrix: Any, reference_track_matrix: Any, *, min_length: int = 1
 ) -> dict[str, float | int]:
     """Return metrics for predicted tracks that contain no reference observation."""
-    if int(min_length) <= 0:
-        raise ValueError("min_length must be positive")
+    min_length_int = _positive_integer(min_length, "min_length")
     predicted, reference = _normalized_pair(
         predicted_track_matrix, reference_track_matrix
     )
@@ -120,7 +119,7 @@ def score_false_tracks(
     unreferenced_observations = 0
     total_observations = 0
     for observations in _observations_by_track(predicted):
-        if len(observations) < int(min_length):
+        if len(observations) < min_length_int:
             continue
         total_observations += len(observations)
         evaluated_tracks += 1
@@ -159,8 +158,7 @@ def score_missed_tracks(
     predicted_track_matrix: Any, reference_track_matrix: Any, *, min_length: int = 1
 ) -> dict[str, float | int]:
     """Return metrics for reference tracks with no predicted observation support."""
-    if int(min_length) <= 0:
-        raise ValueError("min_length must be positive")
+    min_length_int = _positive_integer(min_length, "min_length")
     predicted, reference = _normalized_pair(
         predicted_track_matrix, reference_track_matrix
     )
@@ -172,7 +170,7 @@ def score_missed_tracks(
     missed_observations = 0
     total_observations = 0
     for observations in _observations_by_track(reference):
-        if len(observations) < int(min_length):
+        if len(observations) < min_length_int:
             continue
         total_observations += len(observations)
         evaluated_tracks += 1
@@ -202,9 +200,9 @@ def missed_track_rate(
 ) -> float:
     """Return the fraction of evaluated reference tracks that are missed."""
     return float(
-        score_missed_tracks(
-            predicted_track_matrix, reference_track_matrix, min_length=min_length
-        )["missed_track_rate"]
+        score_missed_tracks(predicted_track_matrix, reference_track_matrix, min_length=min_length)[
+            "missed_track_rate"
+        ]
     )
 
 
@@ -331,6 +329,24 @@ def _session_times(
             "session_times must have length equal to the number of sessions"
         )
     return times
+
+
+def _positive_integer(value: Any, name: str) -> int:
+    if isinstance(value, (bool, np.bool_)):
+        raise TypeError(f"{name} must be a positive integer, not a boolean")
+    if isinstance(value, (int, np.integer)):
+        parsed = int(value)
+    elif isinstance(value, (float, np.floating)):
+        if not np.isfinite(value) or not float(value).is_integer():
+            raise ValueError(f"{name} must be a positive integer")
+        parsed = int(value)
+    elif isinstance(value, np.ndarray) and value.shape == ():
+        return _positive_integer(value.item(), name)
+    else:
+        raise TypeError(f"{name} must be a positive integer")
+    if parsed <= 0:
+        raise ValueError(f"{name} must be positive")
+    return parsed
 
 
 def _zero_ratio(numerator: float, denominator: float) -> float:
