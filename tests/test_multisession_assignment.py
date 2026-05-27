@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import patch
 
 import numpy as np
-
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
     array,
