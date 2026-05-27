@@ -1,6 +1,7 @@
 import copy
 import warnings
 from collections.abc import Callable
+from numbers import Integral
 from typing import Union
 
 from beartype import beartype
@@ -109,7 +110,9 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     def sample(self, n: Union[int, int32, int64]):
-        indices = random.choice(arange(self.d.shape[0]), n, p=self.w)
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        indices = random.choice(arange(self.d.shape[0]), int(n), p=self.w)
         samples = self.d[indices]
         return samples
 
