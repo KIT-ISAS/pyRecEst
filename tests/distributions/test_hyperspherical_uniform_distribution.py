@@ -3,6 +3,7 @@
 # pylint: disable=no-name-in-module,no-member
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 from pyrecest.backend import linalg, log, ones, random
@@ -51,6 +52,22 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             samples = hud.sample(n)
             self.assertEqual(samples.shape, (n, hud.dim + 1))
             npt.assert_allclose(linalg.norm(samples, axis=1), ones(n), rtol=5e-7)
+
+    def test_sample_accepts_numpy_integer_count(self):
+        hud = HypersphericalUniformDistribution(2)
+
+        samples = hud.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4, hud.dim + 1))
+        npt.assert_allclose(linalg.norm(samples, axis=1), ones(4), rtol=5e-7)
+
+    def test_sample_rejects_invalid_count(self):
+        hud = HypersphericalUniformDistribution(2)
+
+        for n in (0, -1, 2.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    hud.sample(n)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
