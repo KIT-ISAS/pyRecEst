@@ -284,6 +284,6 @@ def _reconstruct_path(
 
 def _validate_cost(value: object, name: str) -> float:
     cost = float(value)
-    if np.isnan(cost):
-        raise ValueError(f"{name} must not be NaN")
+    if not np.isfinite(cost):
+        raise ValueError(f"{name} must be finite")
     return cost
