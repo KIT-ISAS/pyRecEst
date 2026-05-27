@@ -167,6 +167,35 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
                 self.training_features, zeros(self.training_labels.shape, dtype=int) + 2
             )
 
+    def test_nonfinite_sample_weights_raise(self):
+        for invalid_weight in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_weight=invalid_weight):
+                sample_weight = ones(self.training_labels.shape)
+                if hasattr(sample_weight, "at"):
+                    sample_weight = sample_weight.at[0].set(invalid_weight)
+                else:
+                    sample_weight[0] = invalid_weight
+                model = LogisticPairwiseAssociationModel()
+
+                with self.assertRaisesRegex(ValueError, "sample_weight must be finite"):
+                    model.fit(
+                        self.training_features,
+                        self.training_labels,
+                        sample_weight=sample_weight,
+                    )
+
+    def test_nonfinite_class_weights_raise(self):
+        for invalid_weight in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_weight=invalid_weight):
+                model = LogisticPairwiseAssociationModel(
+                    class_weight={0: 1.0, 1: invalid_weight}
+                )
+
+                with self.assertRaisesRegex(
+                    ValueError, "class weights must be finite and positive"
+                ):
+                    model.fit(self.training_features, self.training_labels)
+
     def test_pairwise_feature_tensor_stacks_named_components_and_sanitizes(self):
         components = {
             "distance": array([[0.0, float("inf")], [float("nan"), -float("inf")]]),

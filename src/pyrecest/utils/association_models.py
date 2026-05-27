@@ -230,8 +230,13 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
             )
         negative_weight = float(self.class_weight[0])
         positive_weight = float(self.class_weight[1])
-        if negative_weight <= 0.0 or positive_weight <= 0.0:
-            raise ValueError("class weights must be positive")
+        if (
+            not _numpy.isfinite(negative_weight)
+            or not _numpy.isfinite(positive_weight)
+            or negative_weight <= 0.0
+            or positive_weight <= 0.0
+        ):
+            raise ValueError("class weights must be finite and positive")
         return _BinaryClassWeights(negative=negative_weight, positive=positive_weight)
 
     @staticmethod
@@ -242,6 +247,8 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         flattened_sample_weight = asarray(sample_weight, dtype=float64).reshape(-1)
         if flattened_sample_weight.shape[0] != labels.shape[0]:
             raise ValueError("sample_weight must match the number of flattened labels")
+        if not all(isfinite(flattened_sample_weight)):
+            raise ValueError("sample_weight must be finite")
         return flattened_sample_weight
 
     def _build_effective_sample_weights(
