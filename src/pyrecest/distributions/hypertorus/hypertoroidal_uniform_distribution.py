@@ -1,10 +1,34 @@
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
+import numpy as np
+
 from pyrecest.backend import int32, int64, log, ndim, ones, pi, prod, random, zeros
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
 
 
 class HypertoroidalUniformDistribution(
@@ -68,6 +92,7 @@ class HypertoroidalUniformDistribution(
         :param n: Sample size
         :returns: Sample of size n
         """
+        n = _validate_positive_sample_count(n)
         return 2.0 * pi * random.uniform(size=(n, self.dim))
 
     def get_manifold_size(self):

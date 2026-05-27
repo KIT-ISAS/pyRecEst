@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -112,3 +113,18 @@ class CircularUniformDistributionTest(unittest.TestCase):
         n = 10
         s = cu.sample(n)
         npt.assert_allclose(s.shape[0], n)
+
+    def test_sampling_accepts_numpy_integer_count(self):
+        cu = CircularUniformDistribution()
+
+        samples = cu.sample(np.int64(4))
+
+        npt.assert_allclose(samples.shape[0], 4)
+
+    def test_sampling_rejects_invalid_count(self):
+        cu = CircularUniformDistribution()
+
+        for n in (0, -1, 2.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    cu.sample(n)
