@@ -33,6 +33,18 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.weights, ones(5) / 5)
         npt.assert_allclose(filt.effective_sample_size(), 5.0)
 
+    def test_rejects_noninteger_dimensions(self):
+        invalid_kwargs = [
+            {"n_particles": 1.5, "num_rotations": 1},
+            {"n_particles": True, "num_rotations": 1},
+            {"n_particles": 1, "num_rotations": 1.5},
+            {"n_particles": 1, "num_rotations": True},
+        ]
+
+        for kwargs in invalid_kwargs:
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                SO3ProductParticleFilter(**kwargs)
+
     def test_set_particles_normalizes_and_canonicalizes(self):
         filt = SO3ProductParticleFilter(n_particles=2, num_rotations=2)
         particles = array(

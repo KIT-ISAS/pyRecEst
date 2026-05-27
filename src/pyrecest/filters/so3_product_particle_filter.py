@@ -2,6 +2,7 @@
 
 import math
 from collections.abc import Callable
+from operator import index as operator_index
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -38,6 +39,18 @@ from .hyperhemisphere_cart_prod_particle_filter import (
 )
 
 
+def _validate_positive_integer(name: str, value) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer.")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer.") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be positive.")
+    return value
+
+
 class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
     """Particle filter for states on ``SO(3)^K``.
 
@@ -54,12 +67,10 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         initial_particles=None,
         weights=None,
     ) -> None:
-        if n_particles <= 0:
-            raise ValueError("n_particles must be positive.")
-        if num_rotations <= 0:
-            raise ValueError("num_rotations must be positive.")
+        n_particles = _validate_positive_integer("n_particles", n_particles)
+        num_rotations = _validate_positive_integer("num_rotations", num_rotations)
 
-        self.num_rotations = int(num_rotations)
+        self.num_rotations = num_rotations
         super().__init__(
             n_particles=n_particles,
             dim_hemisphere=3,
@@ -680,6 +691,7 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         covariance_diagonal,
     ):
         """Create a filter by sampling tangent noise around ``mean``."""
+        n_particles = _validate_positive_integer("n_particles", n_particles)
         mean = SO3ProductParticleFilter._as_product_point(
             mean, num_rotations=len(covariance_diagonal) // 3
         )
