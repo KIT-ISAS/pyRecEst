@@ -95,6 +95,42 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
 
         self.assertEqual(result.estimates.shape, (2, 1, 4))
 
+    def test_confidence_can_drive_noise_mapping(self):
+        measurements = stack(
+            [
+                stack([z_quaternion(0.0), x_quaternion(0.0)], axis=0),
+                stack([z_quaternion(0.2), x_quaternion(0.1)], axis=0),
+            ],
+            axis=0,
+        )
+        confidence = array([[1.0, 0.2], [0.8, 0.1]])
+        initial_particles = stack([measurements[0] for _ in range(5)], axis=0)
+
+        result = run_so3_product_sequence_filter(
+            measurements,
+            noise_std=0.1,
+            max_noise_std=0.5,
+            confidence=confidence,
+            num_particles=5,
+            initial_particles=initial_particles,
+            resample_threshold=0.0,
+        )
+
+        self.assertEqual(result.estimates.shape, measurements.shape)
+        self.assertEqual(result.metadata["particle_spread_unit"], "rad")
+
+    def test_validates_noise_and_proposal_parameters(self):
+        measurements = stack([stack([z_quaternion(0.0)], axis=0)], axis=0)
+
+        with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(measurements, noise_std=-0.1)
+        with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(measurements, noise_std=0.1, max_noise_std=-0.5)
+        with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(measurements, noise_std=0.1, initial_noise_std=-0.01)
+        with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(measurements, noise_std=0.1, proposal_gain=-0.2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -220,11 +220,29 @@ def _particle_spread(filter_state, estimate) -> float:
 
 def _threshold_value(resample_threshold: float, num_particles: int) -> float:
     threshold = float(resample_threshold)
+    if not np.isfinite(threshold):
+        raise ValueError("resample_threshold must be finite.")
     if threshold <= 0.0:
         return 0.0
     if threshold <= 1.0:
         return threshold * num_particles
     return threshold
+
+
+def _validate_nonnegative_finite(name: str, value: float) -> float:
+    value = float(value)
+    if not np.isfinite(value) or value < 0.0:
+        raise ValueError(f"{name} must be nonnegative and finite.")
+    return value
+
+
+def _validate_positive_finite(name: str, value: float | None) -> float | None:
+    if value is None:
+        return None
+    value = float(value)
+    if not np.isfinite(value) or value <= 0.0:
+        raise ValueError(f"{name} must be positive and finite.")
+    return value
 
 
 def _resample_if_needed(
@@ -357,6 +375,13 @@ def run_so3_product_sequence_filter(
     n_steps, num_rotations = int(measurements.shape[0]), int(measurements.shape[1])
     if int(num_particles) <= 0:
         raise ValueError("num_particles must be positive.")
+    noise_std = _validate_positive_finite("noise_std", noise_std)
+    max_noise_std = _validate_positive_finite("max_noise_std", max_noise_std)
+    if initial_noise_std is not None:
+        initial_noise_std = _validate_nonnegative_finite(
+            "initial_noise_std", initial_noise_std
+        )
+    proposal_gain = _validate_nonnegative_finite("proposal_gain", proposal_gain)
     if noise_std is None and component_noise_std is None and max_noise_std is None:
         raise ValueError(
             "noise_std, component_noise_std, or max_noise_std is required."
