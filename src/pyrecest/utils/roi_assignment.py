@@ -9,6 +9,7 @@ boolean masks or as sparse pixel lists such as Suite2p ``stat.npy`` entries with
 
 from __future__ import annotations
 
+import math
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -307,8 +308,12 @@ def pairwise_iou_masks(
     """Compute a dense pairwise IoU matrix for two ROI collections."""
 
     _backend_not_supported("pairwise_iou_masks")
-    if centroid_distance_threshold is not None and centroid_distance_threshold < 0:
-        raise ValueError("centroid_distance_threshold must be non-negative.")
+    if centroid_distance_threshold is not None:
+        centroid_distance_threshold = float(centroid_distance_threshold)
+        if centroid_distance_threshold < 0.0 or math.isnan(
+            centroid_distance_threshold
+        ):
+            raise ValueError("centroid_distance_threshold must be non-negative.")
 
     prepared_reference = _prepare_rois(reference_rois)
     prepared_query = _prepare_rois(query_rois)
@@ -504,6 +509,9 @@ def assign_by_similarity_matrix(
     similarities = asarray(similarity_matrix, dtype=float64)
     if similarities.ndim != 2:
         raise ValueError("similarity_matrix must be two-dimensional.")
+    min_similarity = float(min_similarity)
+    if not math.isfinite(min_similarity):
+        raise ValueError("min_similarity must be finite.")
 
     n_rows, n_cols = similarities.shape
     if n_rows == 0:
@@ -542,7 +550,7 @@ def assign_by_similarity_matrix(
         raise ValueError("num_dummy must be non-negative.")
 
     max_similarity = float(amax(similarities[finite_mask]))
-    threshold_cost = max_similarity - float(min_similarity)
+    threshold_cost = max_similarity - min_similarity
     dummy_penalty = max(
         1e-12,
         sys.float_info.epsilon * max(1.0, abs(max_similarity), abs(min_similarity)),
