@@ -294,14 +294,14 @@ jobs:
           metadata_dir = pathlib.Path("release-metadata")
           distribution_name = re.sub(r"[^\w\d.]+", "_", package_name).lower()
           expected_sdist = f"{distribution_name}-{package_version}.tar.gz"
-          expected_wheel_prefix = f"{distribution_name}-{package_version}-"
+          expected_wheel = f"{distribution_name}-{package_version}-py3-none-any.whl"
           wanted = []
 
           for asset in release["assets"]:
               name = asset["name"]
               if (
                   name == expected_sdist
-                  or (name.startswith(expected_wheel_prefix) and name.endswith(".whl"))
+                  or name == expected_wheel
                   or name == "SHA256SUMS.txt"
               ):
                   wanted.append(asset)
