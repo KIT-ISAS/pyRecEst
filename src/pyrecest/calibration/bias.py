@@ -11,6 +11,12 @@ import numpy as np
 from .time_offset import nearest_time_indices
 
 
+_FEATURE_ROW_COUNT_ERROR = (
+    "features rows must match requested row count; "
+    "features must produce one predicted bias row per measurement"
+)
+
+
 @dataclass(frozen=True)
 class BiasTrainingExamples:
     """Matched measurement/reference pairs used for bias fitting."""
@@ -95,7 +101,14 @@ class SensorBiasCorrectionModel:
         values = _as_2d(measurements, "measurements")
         if values.shape[1] != self.target_dim:
             raise ValueError("measurements have incompatible target dimension")
-        bias = self.predict(features, n_rows=values.shape[0])
+        try:
+            bias = self.predict(features, n_rows=values.shape[0])
+        except ValueError as exc:
+            if str(exc) == "features rows must match requested row count":
+                raise ValueError(_FEATURE_ROW_COUNT_ERROR) from exc
+            raise
+        if bias.shape != values.shape:
+            raise ValueError(_FEATURE_ROW_COUNT_ERROR)
         corrected = values.copy()
         valid = np.isfinite(values).all(axis=1) & np.isfinite(bias).all(axis=1)
         corrected[valid] = values[valid] - bias[valid]
