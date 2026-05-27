@@ -245,6 +245,35 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.weights, ones(3) / 3)
         npt.assert_allclose(linalg.norm(filt.particles, axis=-1), ones((3, 1)))
 
+    def test_from_covariance_diagonal_initializes_particles(self):
+        random.seed(0)
+        filt = SO3ProductParticleFilter.from_covariance_diagonal(
+            4,
+            array([z_quaternion(0.0), x_quaternion(0.0)]),
+            array([0.01, 0.01, 0.01, 0.02, 0.02, 0.02]),
+        )
+
+        self.assertEqual(filt.particles.shape, (4, 2, 4))
+        npt.assert_allclose(linalg.norm(filt.particles, axis=-1), ones((4, 2)))
+
+    def test_from_covariance_diagonal_validates_diagonal(self):
+        mean = array([z_quaternion(0.0)])
+        invalid_diagonals = [
+            array([]),
+            array([0.01, 0.01]),
+            array([[0.01, 0.01, 0.01]]),
+            array([0.01, float("nan"), 0.01]),
+            array([0.01, -0.01, 0.01]),
+        ]
+
+        for covariance_diagonal in invalid_diagonals:
+            with self.subTest(
+                covariance_diagonal=covariance_diagonal
+            ), self.assertRaises(ValueError):
+                SO3ProductParticleFilter.from_covariance_diagonal(
+                    2, mean, covariance_diagonal
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

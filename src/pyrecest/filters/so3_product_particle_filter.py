@@ -51,6 +51,19 @@ def _validate_positive_integer(name: str, value) -> int:
     return value
 
 
+def _as_covariance_diagonal(covariance_diagonal):
+    covariance_diagonal = array(covariance_diagonal, dtype=float)
+    if ndim(covariance_diagonal) != 1:
+        raise ValueError("covariance_diagonal must be one-dimensional.")
+    if covariance_diagonal.shape[0] == 0 or covariance_diagonal.shape[0] % 3 != 0:
+        raise ValueError("covariance_diagonal length must be a positive multiple of 3.")
+    if not all(isfinite(covariance_diagonal)):
+        raise ValueError("covariance_diagonal values must be finite.")
+    if not all(covariance_diagonal >= 0.0):
+        raise ValueError("covariance_diagonal values must be nonnegative.")
+    return covariance_diagonal
+
+
 class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
     """Particle filter for states on ``SO(3)^K``.
 
@@ -692,11 +705,12 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
     ):
         """Create a filter by sampling tangent noise around ``mean``."""
         n_particles = _validate_positive_integer("n_particles", n_particles)
+        covariance_diagonal = _as_covariance_diagonal(covariance_diagonal)
         mean = SO3ProductParticleFilter._as_product_point(
-            mean, num_rotations=len(covariance_diagonal) // 3
+            mean, num_rotations=covariance_diagonal.shape[0] // 3
         )
         num_rotations = mean.shape[0]
-        covariance = diag(array(covariance_diagonal, dtype=float))
+        covariance = diag(covariance_diagonal)
         tangent_noise = SO3ProductParticleFilter._sample_tangent_noise(
             covariance, n_particles, num_rotations
         )
