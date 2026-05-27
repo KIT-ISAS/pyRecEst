@@ -140,6 +140,31 @@ class TimeOffsetCalibrationTest(unittest.TestCase):
                 max_time_delta_s=-1.0,
             )
 
+    def test_interpolation_rejects_nan_max_time_delta(self):
+        for max_time_delta_s in (np.nan, -np.inf):
+            with self.subTest(max_time_delta_s=max_time_delta_s):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "max_time_delta_s must be nonnegative",
+                ):
+                    interpolate_reference_values(
+                        np.array([0.0, 1.0]),
+                        np.array([[0.0], [1.0]]),
+                        np.array([0.5]),
+                        max_time_delta_s=max_time_delta_s,
+                    )
+
+    def test_interpolation_accepts_infinite_max_time_delta_as_unbounded(self):
+        interpolated, valid = interpolate_reference_values(
+            np.array([0.0, 10.0]),
+            np.array([[0.0], [10.0]]),
+            np.array([5.0]),
+            max_time_delta_s=np.inf,
+        )
+
+        npt.assert_allclose(interpolated, np.array([[5.0]]))
+        npt.assert_array_equal(valid, np.array([True]))
+
     def test_interpolation_skips_nonfinite_reference_rows(self):
         interpolated, valid = interpolate_reference_values(
             np.array([0.0, 1.0, 2.0, np.nan, 3.0]),
@@ -234,6 +259,32 @@ class BiasCalibrationTest(unittest.TestCase):
         npt.assert_allclose(examples.reference, np.array([[0.0], [4.0]]))
         npt.assert_allclose(examples.residual, np.array([[1.0], [1.0]]))
         npt.assert_allclose(examples.time_delta_s, np.array([0.0, 0.0]))
+
+    def test_make_bias_training_examples_rejects_nan_max_time_delta(self):
+        for max_time_delta_s in (np.nan, -np.inf):
+            with self.subTest(max_time_delta_s=max_time_delta_s):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "max_time_delta_s must be nonnegative",
+                ):
+                    make_bias_training_examples(
+                        np.array([0.0]),
+                        np.array([[1.0]]),
+                        np.array([0.0]),
+                        np.array([[0.0]]),
+                        max_time_delta_s=max_time_delta_s,
+                    )
+
+    def test_make_bias_training_examples_accepts_infinite_max_time_delta(self):
+        examples = make_bias_training_examples(
+            np.array([5.0]),
+            np.array([[8.0]]),
+            np.array([0.0]),
+            np.array([[1.0]]),
+            max_time_delta_s=np.inf,
+        )
+
+        npt.assert_allclose(examples.residual, np.array([[7.0]]))
 
     def test_make_bias_training_examples_returns_empty_without_finite_reference_rows(
         self,

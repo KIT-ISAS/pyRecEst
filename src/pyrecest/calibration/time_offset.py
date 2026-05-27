@@ -90,7 +90,10 @@ def apply_time_offset(times_s: np.ndarray, offset_s: float | None) -> np.ndarray
 
 
 def _validate_max_time_delta(max_time_delta_s: float | None) -> None:
-    if max_time_delta_s is not None and float(max_time_delta_s) < 0.0:
+    if max_time_delta_s is None:
+        return
+    max_time_delta = float(max_time_delta_s)
+    if max_time_delta < 0.0 or np.isnan(max_time_delta):
         raise ValueError("max_time_delta_s must be nonnegative")
 
 
