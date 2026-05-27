@@ -2,6 +2,7 @@ import unittest
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -75,6 +76,21 @@ class TestVonMisesDistribution(unittest.TestCase):
 
         self.assertTrue(allclose(convolved.kappa, array(0.0), atol=1e-14))
         self.assertTrue(allclose(abs(convolved.trigonometric_moment(1)), array(0.0)))
+
+    def test_sample_accepts_integer_like_count(self):
+        dist = VonMisesDistribution(array(0.3), array(1.0))
+
+        samples = dist.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4,))
+
+    def test_sample_rejects_invalid_count(self):
+        dist = VonMisesDistribution(array(0.3), array(1.0))
+
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    dist.sample(n)
 
     def test_plot(self):
         matplotlib.pyplot.close("all")
