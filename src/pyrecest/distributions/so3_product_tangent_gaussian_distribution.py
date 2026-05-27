@@ -1,6 +1,8 @@
 """Tangent-space Gaussian distribution on Cartesian products of SO(3)."""
 
 # pylint: disable=no-name-in-module,no-member
+import numpy as np
+
 from pyrecest.backend import (
     abs,
     all,
@@ -35,6 +37,28 @@ from ._so3_helpers import (
     so3_exp_map_volume_log_jacobian,
 )
 from .abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
 
 
 class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
@@ -322,6 +346,7 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
 
     def sample_tangent(self, n):
         """Draw tangent-space Gaussian samples with shape ``(n, 3 * K)``."""
+        n = _validate_positive_sample_count(n)
         samples = random.multivariate_normal(mean=zeros(self.dim), cov=self.C, size=n)
         if ndim(samples) == 1:
             return reshape(samples, (1, self.dim))

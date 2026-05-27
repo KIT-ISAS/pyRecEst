@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -87,6 +88,31 @@ class SO3ProductTangentGaussianDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             linalg.norm(single_sample, axis=-1), ones((1, 2)), atol=ATOL
         )
+
+    def test_sampling_accepts_integer_like_count(self):
+        dist = SO3ProductTangentGaussianDistribution.from_covariance_diagonal(
+            array([z_quaternion(0.0), x_quaternion(0.0)]),
+            array([0.01, 0.01, 0.01, 0.02, 0.02, 0.02]),
+        )
+
+        samples = dist.sample(np.array(3.0))
+        tangent_samples = dist.sample_tangent(np.int64(3))
+
+        self.assertEqual(samples.shape, (3, 2, 4))
+        self.assertEqual(tangent_samples.shape, (3, 6))
+
+    def test_sampling_rejects_invalid_count(self):
+        dist = SO3ProductTangentGaussianDistribution.from_covariance_diagonal(
+            array([z_quaternion(0.0), x_quaternion(0.0)]),
+            array([0.01, 0.01, 0.01, 0.02, 0.02, 0.02]),
+        )
+
+        for n in (0, -1, 2.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    dist.sample(n)
+                with self.assertRaises(ValueError):
+                    dist.sample_tangent(n)
 
     def test_geodesic_distance_component_and_sum(self):
         identity_product = array([z_quaternion(0.0), x_quaternion(0.0)])
