@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -127,6 +128,25 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         random.seed(42)
         S = self.cB2.sample(50)
         self.assertEqual(S.shape, (2, 50))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_accepts_integer_like_count(self):
+        """Scalar integer-like counts should be normalized before sampling."""
+        S = self.cB2.sample(np.array(4.0))
+        self.assertEqual(S.shape, (2, 4))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        """Invalid counts should fail before backend random shape handling."""
+        for invalid_n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=invalid_n), self.assertRaises(ValueError):
+                self.cB2.sample(invalid_n)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
