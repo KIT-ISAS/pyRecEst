@@ -173,17 +173,15 @@ class TrackManager(
             log_prior_estimates=log_prior_estimates,
             log_posterior_estimates=log_posterior_estimates,
         )
-        if n_init < 1:
-            raise ValueError("n_init must be at least 1")
-        if max_misses < 0:
-            raise ValueError("max_misses must be non-negative")
+        n_init = _as_positive_integer(n_init, "n_init")
+        max_misses = _as_nonnegative_integer(max_misses, "max_misses")
 
         self.predictor = predictor
         self.updater = updater
         self.initiator = initiator
         self.associator = associator
-        self.n_init = int(n_init)
-        self.max_misses = int(max_misses)
+        self.n_init = n_init
+        self.max_misses = max_misses
         self.allow_births = bool(allow_births)
         self.confirm_condition = confirm_condition
         self.delete_condition = delete_condition
@@ -620,8 +618,11 @@ class TrackManager(
         matches: List[Tuple[int, int]] = []
 
         for track_index, measurement_index in association.matches:
-            track_index = int(track_index)
-            measurement_index = int(measurement_index)
+            track_index = _as_nonnegative_integer(track_index, "Track index")
+            measurement_index = _as_nonnegative_integer(
+                measurement_index,
+                "Measurement index",
+            )
             if track_index < 0 or track_index >= num_tracks:
                 raise ValueError("Track index in association is out of range")
             if measurement_index < 0 or measurement_index >= num_measurements:
@@ -642,7 +643,10 @@ class TrackManager(
             )
         else:
             unmatched_track_indices = sorted(
-                {int(index) for index in association.unmatched_track_indices}
+                {
+                    _as_nonnegative_integer(index, "Unmatched track index")
+                    for index in association.unmatched_track_indices
+                }
             )
 
         if association.unmatched_measurement_indices is None:
@@ -651,7 +655,10 @@ class TrackManager(
             )
         else:
             unmatched_measurement_indices = sorted(
-                {int(index) for index in association.unmatched_measurement_indices}
+                {
+                    _as_nonnegative_integer(index, "Unmatched measurement index")
+                    for index in association.unmatched_measurement_indices
+                }
             )
 
         if used_track_indices.intersection(unmatched_track_indices):
@@ -977,6 +984,37 @@ def _coerce_cost_vector(cost: Any, length: int, name: str) -> np.ndarray:
     if vector.size != length:
         raise ValueError(f"{name} must be scalar or have length {length}")
     return vector
+
+
+def _as_nonnegative_integer(value: Any, name: str) -> int:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a non-negative integer")
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a non-negative integer")
+    if isinstance(scalar, (int, np.integer)):
+        integer_value = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"{name} must be a non-negative integer") from exc
+        if not np.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(f"{name} must be a non-negative integer")
+        integer_value = int(scalar_float)
+
+    if integer_value < 0:
+        raise ValueError(f"{name} must be a non-negative integer")
+    return integer_value
+
+
+def _as_positive_integer(value: Any, name: str) -> int:
+    integer_value = _as_nonnegative_integer(value, name)
+    if integer_value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return integer_value
 
 
 # pylint: disable=duplicate-code
