@@ -131,6 +131,8 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         weights = array(weights, dtype=float)
         if ndim(weights) != 1:
             weights = reshape(weights, (-1,))
+        if not all(isfinite(weights)):
+            raise ValueError("Particle weights must be finite.")
         if not all(weights >= 0.0):
             raise ValueError("Particle weights must be nonnegative.")
         weight_sum = sum(weights)

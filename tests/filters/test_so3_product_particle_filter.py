@@ -49,6 +49,18 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         self.assertGreaterEqual(float(filt.particles[1, 1, -1]), 0.0)
         npt.assert_allclose(filt.weights, array([0.25, 0.75]))
 
+    def test_rejects_nonfinite_particle_weights(self):
+        with self.assertRaises(ValueError):
+            SO3ProductParticleFilter(
+                n_particles=2,
+                num_rotations=1,
+                weights=array([1.0, float("inf")]),
+            )
+
+        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+        with self.assertRaises(ValueError):
+            filt.set_particles(filt.particles, weights=array([1.0, float("inf")]))
+
     def test_predict_with_tangent_delta_rotates_each_component(self):
         filt = SO3ProductParticleFilter(n_particles=3, num_rotations=2)
         tangent_delta = array([0.0, 0.0, pi / 2.0, pi / 4.0, 0.0, 0.0])
