@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -54,6 +55,19 @@ class TestCircularMixture(unittest.TestCase):
         samples = mixture.sample(5)
 
         self.assertEqual(samples.shape, (5,))
+
+    def test_sample_accepts_integer_like_count(self):
+        mixture = CircularMixture([self.dist1], array([1.0]))
+
+        samples = mixture.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4,))
+
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    self.mixture.sample(n)
 
     def test_init_accepts_list_weights_and_keeps_parent_normalization(self):
         with self.assertWarns(UserWarning):

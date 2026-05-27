@@ -1,4 +1,5 @@
 import collections
+from numbers import Integral
 import warnings
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -102,6 +103,10 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
         Returning a flat vector here preserves that circular API and avoids
         assigning ``(k,)`` component samples into ``(k, 1)`` slices.
         """
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        n = int(n)
+
         occurrences = random.multinomial(n, self.w)
         samples = []
 
