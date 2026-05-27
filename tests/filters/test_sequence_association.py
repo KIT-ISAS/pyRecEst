@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 from pyrecest.filters import (
     SequenceAssociationNode,
     solve_top_k_viterbi_sequence_associations,
@@ -86,6 +88,22 @@ class SequenceAssociationTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             SequenceAssociationNode(0, None)
+
+    def test_validation_rejects_nonfinite_unary_costs(self):
+        for invalid_cost in (np.nan, np.inf, -np.inf):
+            with self.subTest(invalid_cost=invalid_cost):
+                with self.assertRaises(ValueError):
+                    _node(0, 0, "A", invalid_cost)
+
+    def test_validation_rejects_nonfinite_transition_costs(self):
+        frames = [[_node(0, 0, "A", 0.0)], [_node(1, 0, "A", 0.0)]]
+
+        for invalid_cost in (np.nan, np.inf, -np.inf):
+            with self.subTest(invalid_cost=invalid_cost):
+                with self.assertRaises(ValueError):
+                    solve_viterbi_sequence_association(
+                        frames, lambda _a, _b, _c: invalid_cost
+                    )
 
 
 if __name__ == "__main__":
