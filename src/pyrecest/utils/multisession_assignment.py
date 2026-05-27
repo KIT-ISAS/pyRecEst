@@ -26,6 +26,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
+
 from pyrecest.backend import (
     __backend_name__,
     arange,
@@ -378,11 +380,59 @@ def _validate_scalar_cost(name: str, value: float) -> None:
         raise ValueError(f"{name} must be finite.")
 
 
+def _normalize_nonnegative_integer(
+    value: Any,
+    name: str,
+    *,
+    negative_message: str | None = None,
+) -> int:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a non-negative integer.")
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a non-negative integer.")
+    if isinstance(scalar, (int, np.integer)):
+        integer_value = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"{name} must be a non-negative integer.") from exc
+        if not math.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(f"{name} must be a non-negative integer.")
+        integer_value = int(scalar_float)
+
+    if integer_value < 0:
+        if negative_message is not None:
+            raise ValueError(negative_message.format(value=integer_value))
+        raise ValueError(f"{name} must be a non-negative integer.")
+    return integer_value
+
+
 def _normalize_session_index(session_idx: Any) -> int:
-    session_idx = int(session_idx)
-    if session_idx < 0:
-        raise ValueError(f"Session indices must be non-negative, got {session_idx}.")
-    return session_idx
+    return _normalize_nonnegative_integer(
+        session_idx,
+        "Session indices",
+        negative_message="Session indices must be non-negative, got {value}.",
+    )
+
+
+def _normalize_detection_index(detection_idx: Any) -> int:
+    return _normalize_nonnegative_integer(
+        detection_idx,
+        "Detection indices",
+        negative_message="Detection indices must be non-negative, got {value}.",
+    )
+
+
+def _normalize_session_size(size: Any, session_idx: int) -> int:
+    return _normalize_nonnegative_integer(
+        size,
+        f"Session {session_idx} detection count",
+        negative_message=f"Session {session_idx} has a negative detection count.",
+    )
 
 
 def _normalize_pairwise_costs(
@@ -424,14 +474,16 @@ def _normalize_session_sizes(
     if isinstance(session_sizes, Mapping):
         normalized = {}
         for session_idx, size in session_sizes.items():
-            normalized[_normalize_session_index(session_idx)] = int(size)
+            normalized_session_idx = _normalize_session_index(session_idx)
+            normalized[normalized_session_idx] = _normalize_session_size(
+                size,
+                normalized_session_idx,
+            )
     else:
         normalized = {
-            session_idx: int(size) for session_idx, size in enumerate(session_sizes)
+            session_idx: _normalize_session_size(size, session_idx)
+            for session_idx, size in enumerate(session_sizes)
         }
-    for session_idx, size in normalized.items():
-        if size < 0:
-            raise ValueError(f"Session {session_idx} has a negative detection count.")
     return normalized
 
 
@@ -729,7 +781,10 @@ def _iter_track_items(track: TrackInput) -> list[Observation]:
     else:
         items = list(track)
     items = [
-        (_normalize_session_index(session_idx), int(detection_idx))
+        (
+            _normalize_session_index(session_idx),
+            _normalize_detection_index(detection_idx),
+        )
         for session_idx, detection_idx in items
     ]
     items.sort(key=lambda item: item[0])
