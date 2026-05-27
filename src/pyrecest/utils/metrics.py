@@ -224,16 +224,17 @@ def chi_square_confidence_bounds(
     degrees_of_freedom: int, *, n_samples: int = 1, confidence: float = 0.95
 ) -> tuple[float, float]:
     """Return two-sided chi-square bounds for an averaged NEES/NIS statistic."""
-    if int(degrees_of_freedom) <= 0:
-        raise ValueError("degrees_of_freedom must be positive")
-    if int(n_samples) <= 0:
-        raise ValueError("n_samples must be positive")
+    degrees_of_freedom = _as_positive_int(
+        degrees_of_freedom,
+        "degrees_of_freedom",
+    )
+    n_samples = _as_positive_int(n_samples, "n_samples")
     if not 0.0 < float(confidence) < 1.0:
         raise ValueError("confidence must be in the open interval (0, 1)")
     alpha = 1.0 - float(confidence)
-    aggregate_dof = int(degrees_of_freedom) * int(n_samples)
-    lower = chi2.ppf(alpha / 2.0, aggregate_dof) / float(n_samples)
-    upper = chi2.ppf(1.0 - alpha / 2.0, aggregate_dof) / float(n_samples)
+    aggregate_dof = degrees_of_freedom * n_samples
+    lower = chi2.ppf(alpha / 2.0, aggregate_dof) / n_samples
+    upper = chi2.ppf(1.0 - alpha / 2.0, aggregate_dof) / n_samples
     return float(lower), float(upper)
 
 
@@ -578,6 +579,26 @@ def _as_covariance_stack(
             raise ValueError(f"{name} must have shape ({n_samples}, {dim}, {dim})")
         return covariance_array
     raise ValueError(f"{name} must have shape (dim, dim) or (n, dim, dim)")
+
+
+def _as_positive_int(value: Any, name: str) -> int:
+    array = np.asarray(value)
+    if array.ndim != 0 or array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a positive integer")
+    scalar = array.item()
+    if isinstance(scalar, (int, np.integer)) and not isinstance(scalar, bool):
+        result = int(scalar)
+    elif (
+        isinstance(scalar, (float, np.floating))
+        and np.isfinite(scalar)
+        and float(scalar).is_integer()
+    ):
+        result = int(scalar)
+    else:
+        raise ValueError(f"{name} must be a positive integer")
+    if result <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return result
 
 
 def _quadratic_forms(vectors: np.ndarray, matrices: np.ndarray) -> np.ndarray:
