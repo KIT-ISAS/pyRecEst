@@ -246,6 +246,85 @@ class TestSensorModelCatalog(unittest.TestCase):
                 array([[0.0, 0.0], [1.0, 0.0]]),
             )
 
+    def test_sensor_models_validate_state_index_parameters(self):
+        state = array([3.0, 4.0, 1.0, 2.0])
+        invalid_position_indices = (
+            (0.5, 1),
+            (True, 1),
+            (-1, 1),
+            (0, 4),
+            (0, 1, 2),
+            (0, 0),
+        )
+        for indices in invalid_position_indices:
+            with self.subTest(indices=indices):
+                with self.assertRaisesRegex(ValueError, "position_indices"):
+                    range_bearing_measurement(state, position_indices=indices)
+
+        with self.assertRaisesRegex(ValueError, "velocity_indices"):
+            radar_range_bearing_doppler_measurement(
+                state,
+                velocity_indices=(2.5, 3),
+            )
+
+        with self.assertRaisesRegex(ValueError, "position_indices"):
+            camera_projection_measurement(
+                array([2.0, 4.0, 2.0]),
+                position_indices=(0, 1, True),
+            )
+
+    def test_tdoa_fdoa_validate_reference_sensor_and_speed(self):
+        state = array([0.0, 4.0, 0.0, 1.0])
+        sensors = array([[0.0, 0.0], [3.0, 0.0]])
+
+        for propagation_speed in (0.0, np.nan, np.inf, True):
+            with self.subTest(propagation_speed=propagation_speed):
+                with self.assertRaisesRegex(ValueError, "propagation_speed"):
+                    tdoa_measurement(
+                        state,
+                        sensors,
+                        propagation_speed=propagation_speed,
+                    )
+                with self.assertRaisesRegex(ValueError, "propagation_speed"):
+                    fdoa_measurement(
+                        state,
+                        sensors,
+                        propagation_speed=propagation_speed,
+                    )
+
+        for reference_sensor in (1.5, True, -1, 2, np.array([0])):
+            with self.subTest(reference_sensor=reference_sensor):
+                with self.assertRaisesRegex(ValueError, "reference_sensor"):
+                    tdoa_measurement(
+                        state,
+                        sensors,
+                        reference_sensor=reference_sensor,
+                    )
+                with self.assertRaisesRegex(ValueError, "reference_sensor"):
+                    fdoa_measurement(
+                        state,
+                        sensors,
+                        reference_sensor=reference_sensor,
+                    )
+
+        with self.assertRaisesRegex(ValueError, "sensor_velocities"):
+            fdoa_measurement(
+                state,
+                sensors,
+                sensor_velocities=array([[0.0, 0.0]]),
+            )
+
+    def test_camera_projection_rejects_zero_projection_scale(self):
+        with self.assertRaisesRegex(ValueError, "camera depth"):
+            camera_projection_measurement(array([2.0, 4.0, 0.0]))
+
+        camera_matrix = array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]])
+        with self.assertRaisesRegex(ValueError, "homogeneous camera scale"):
+            camera_projection_measurement(
+                array([2.0, 4.0, 2.0]),
+                camera_matrix=camera_matrix,
+            )
+
     def test_radar_tdoa_fdoa_and_camera_measurements(self):
         radar_state = array([3.0, 4.0, 3.0, 4.0])
         npt.assert_allclose(
