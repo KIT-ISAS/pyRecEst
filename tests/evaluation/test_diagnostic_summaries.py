@@ -1,6 +1,8 @@
 import math
 import unittest
 
+import numpy as np
+
 from pyrecest.evaluation.diagnostic_summaries import (
     build_diagnostic_summary,
     covariance_inflation_summary,
@@ -79,6 +81,38 @@ class DiagnosticSummariesTest(unittest.TestCase):
         self.assertEqual(summary["schema_version"], 1)
         self.assertEqual(len(summary["top_residuals"]), 2)
         self.assertEqual(summary["covariance_inflation"]["count"], 2)
+
+    def test_summary_rejects_invalid_top_n(self):
+        for top_n in (0, 1.5, math.nan, math.inf, True, np.array([1])):
+            with self.subTest(top_n=top_n):
+                with self.assertRaisesRegex(ValueError, "top_n"):
+                    build_diagnostic_summary(self.records, top_n=top_n)
+                with self.assertRaisesRegex(ValueError, "top_n"):
+                    top_residuals(self.records, top_n=top_n)
+                with self.assertRaisesRegex(ValueError, "top_n"):
+                    track_switch_summary(self.records, top_n=top_n)
+                with self.assertRaisesRegex(ValueError, "top_n"):
+                    covariance_inflation_summary(self.records, top_n=top_n)
+                with self.assertRaisesRegex(ValueError, "top_n"):
+                    worst_time_windows(self.records, top_n=top_n)
+
+    def test_summary_rejects_invalid_window_s(self):
+        for window_s in (0.0, -1.0, math.nan, math.inf, True, np.array([1.0])):
+            with self.subTest(window_s=window_s):
+                with self.assertRaisesRegex(ValueError, "window_s"):
+                    build_diagnostic_summary(self.records, window_s=window_s)
+                with self.assertRaisesRegex(ValueError, "window_s"):
+                    worst_time_windows(self.records, window_s=window_s)
+
+    def test_summary_normalizes_numeric_scalar_parameters(self):
+        summary = build_diagnostic_summary(
+            self.records,
+            top_n=np.array(2.0),
+            window_s=np.array(5.0),
+        )
+
+        self.assertEqual(summary["top_n"], 2)
+        self.assertEqual(summary["window_s"], 5.0)
 
 
 if __name__ == "__main__":

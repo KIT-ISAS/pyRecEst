@@ -12,6 +12,33 @@ import numpy as np
 Record = Mapping[str, Any]
 
 
+def _as_scalar_float(value: Any, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a scalar number")
+    try:
+        scalar = float(value_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a scalar number") from exc
+    if not math.isfinite(scalar):
+        raise ValueError(f"{name} must be finite")
+    return scalar
+
+
+def _as_positive_float(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if scalar <= 0.0:
+        raise ValueError(f"{name} must be positive")
+    return scalar
+
+
+def _as_positive_integer(value: Any, name: str) -> int:
+    scalar = _as_scalar_float(value, name)
+    if scalar < 1.0 or not scalar.is_integer():
+        raise ValueError(f"{name} must be a positive integer")
+    return int(scalar)
+
+
 def build_diagnostic_summary(
     records: Sequence[Record],
     *,
@@ -26,14 +53,12 @@ def build_diagnostic_summary(
 ) -> dict[str, Any]:
     """Build a JSON-serializable diagnostic summary from mapping records."""
 
-    if top_n < 1:
-        raise ValueError("top_n must be positive")
-    if window_s <= 0.0:
-        raise ValueError("window_s must be positive")
+    top_n = _as_positive_integer(top_n, "top_n")
+    window_s = _as_positive_float(window_s, "window_s")
     return {
         "schema_version": 1,
-        "top_n": int(top_n),
-        "window_s": float(window_s),
+        "top_n": top_n,
+        "window_s": window_s,
         "top_residuals": top_residuals(records, residual_key=residual_key, top_n=top_n),
         "track_switches": track_switch_summary(
             records, time_key=time_key, track_id_key=track_id_key, top_n=top_n
@@ -65,6 +90,7 @@ def top_residuals(
 ) -> list[dict[str, Any]]:
     """Return records with the largest finite residual values."""
 
+    top_n = _as_positive_integer(top_n, "top_n")
     scored = []
     for index, record in enumerate(records):
         value = _optional_float(record.get(residual_key))
@@ -83,6 +109,7 @@ def track_switch_summary(
 ) -> dict[str, Any]:
     """Summarize changes in finite track id over time."""
 
+    top_n = _as_positive_integer(top_n, "top_n")
     ordered = _sort_by_time(records, time_key)
     finite: list[tuple[Any, Record]] = []
     for record in ordered:
@@ -133,6 +160,7 @@ def covariance_inflation_summary(
 ) -> dict[str, Any]:
     """Summarize updates whose covariance scale is greater than one."""
 
+    top_n = _as_positive_integer(top_n, "top_n")
     inflated: list[tuple[float, Record]] = []
     by_source: Counter[str] = Counter()
     for record in records:
@@ -174,8 +202,8 @@ def worst_time_windows(
 ) -> list[dict[str, Any]]:
     """Return windows with the largest RMSE for a supplied scalar error key."""
 
-    if window_s <= 0.0:
-        raise ValueError("window_s must be positive")
+    top_n = _as_positive_integer(top_n, "top_n")
+    window_s = _as_positive_float(window_s, "window_s")
     grouped: dict[float, list[Record]] = {}
     for record in records:
         time_value = _optional_float(record.get(time_key))
