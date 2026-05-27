@@ -260,17 +260,22 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           RELEASE_TAG: ${{ needs.resolve.outputs.release_tag }}
+          PACKAGE_NAME: ${{ needs.resolve.outputs.package_name }}
+          PACKAGE_VERSION: ${{ needs.resolve.outputs.version }}
         run: |
           python - <<'PY'
           import json
           import os
           import pathlib
+          import re
           import urllib.parse
           import urllib.request
 
           owner = os.environ["OWNER"]
           repo = os.environ["REPO"]
           release_tag = os.environ["RELEASE_TAG"]
+          package_name = os.environ["PACKAGE_NAME"]
+          package_version = os.environ["PACKAGE_VERSION"]
           token = os.environ["GITHUB_TOKEN"]
           encoded_release_tag = urllib.parse.quote(release_tag, safe="")
 
@@ -287,12 +292,31 @@ jobs:
 
           dist_dir = pathlib.Path("dist")
           metadata_dir = pathlib.Path("release-metadata")
+          distribution_name = re.sub(r"[^\w\d.]+", "_", package_name).lower()
+          expected_sdist = f"{distribution_name}-{package_version}.tar.gz"
+          expected_wheel_prefix = f"{distribution_name}-{package_version}-"
           wanted = []
 
           for asset in release["assets"]:
               name = asset["name"]
-              if name.endswith(".whl") or name.endswith(".tar.gz") or name == "SHA256SUMS.txt":
+              if (
+                  name == expected_sdist
+                  or (name.startswith(expected_wheel_prefix) and name.endswith(".whl"))
+                  or name == "SHA256SUMS.txt"
+              ):
                   wanted.append(asset)
+
+          unexpected_distribution_assets = sorted(
+              asset["name"]
+              for asset in release["assets"]
+              if (asset["name"].endswith(".whl") or asset["name"].endswith(".tar.gz"))
+              and asset not in wanted
+          )
+          if unexpected_distribution_assets:
+              raise SystemExit(
+                  f"Unexpected distribution assets on release {release_tag}: "
+                  f"{unexpected_distribution_assets}"
+              )
 
           wheel_assets = [asset for asset in wanted if asset["name"].endswith(".whl")]
           sdist_assets = [asset for asset in wanted if asset["name"].endswith(".tar.gz")]
