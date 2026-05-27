@@ -298,16 +298,40 @@ class SO3ProductSequenceFilterRunner:
         confidence_exponent: float = 1.0,
         outlier_prob: float = 0.0,
     ) -> None:
+        if transition_callback is not None and not callable(transition_callback):
+            raise ValueError("transition_callback must be callable or None.")
+        num_particles = int(num_particles)
+        if num_particles <= 0:
+            raise ValueError("num_particles must be positive.")
+        noise_std = _validate_positive_finite("noise_std", noise_std)
+        max_noise_std = _validate_positive_finite("max_noise_std", max_noise_std)
+        if max_noise_std is not None and noise_std is None:
+            raise ValueError("noise_std is required when max_noise_std is used.")
+        if max_noise_std is not None and max_noise_std < noise_std:
+            raise ValueError(
+                "max_noise_std must be greater than or equal to noise_std."
+            )
+        _threshold_value(resample_threshold, num_particles)
+        proposal_gain = _validate_nonnegative_finite("proposal_gain", proposal_gain)
+        if initial_noise_std is not None:
+            initial_noise_std = _validate_nonnegative_finite(
+                "initial_noise_std", initial_noise_std
+            )
+        confidence_exponent = _validate_positive_finite(
+            "confidence_exponent", confidence_exponent
+        )
+        outlier_prob = _validate_probability("outlier_prob", outlier_prob)
+
         self.transition_callback = transition_callback
         self.noise_std = noise_std
-        self.num_particles = int(num_particles)
+        self.num_particles = num_particles
         self.resample_threshold = float(resample_threshold)
         self.partition = partition
-        self.proposal_gain = float(proposal_gain)
+        self.proposal_gain = proposal_gain
         self.initial_noise_std = initial_noise_std
         self.max_noise_std = max_noise_std
-        self.confidence_exponent = float(confidence_exponent)
-        self.outlier_prob = float(outlier_prob)
+        self.confidence_exponent = confidence_exponent
+        self.outlier_prob = outlier_prob
 
     def run(
         self,

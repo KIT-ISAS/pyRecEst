@@ -4,7 +4,7 @@ import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import array, cos, ones, sin, stack, to_numpy
 from pyrecest.diagnostics import ParticleFilterResult
-from pyrecest.filters import run_so3_product_sequence_filter
+from pyrecest.filters import SO3ProductSequenceFilterRunner, run_so3_product_sequence_filter
 
 
 def z_quaternion(angle):
@@ -95,6 +95,28 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
 
         self.assertEqual(result.estimates.shape, (2, 1, 4))
 
+    def test_runner_accepts_component_noise_at_run_time(self):
+        measurements = stack(
+            [
+                stack([z_quaternion(0.0)], axis=0),
+                stack([z_quaternion(0.1)], axis=0),
+            ],
+            axis=0,
+        )
+        initial_particles = stack([measurements[0] for _ in range(4)], axis=0)
+        runner = SO3ProductSequenceFilterRunner(
+            num_particles=4,
+            resample_threshold=0.0,
+        )
+
+        result = runner.run(
+            measurements,
+            component_noise_std=0.3,
+            initial_particles=initial_particles,
+        )
+
+        self.assertEqual(result.estimates.shape, (2, 1, 4))
+
     def test_confidence_can_drive_noise_mapping(self):
         measurements = stack(
             [
@@ -142,6 +164,24 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
             run_so3_product_sequence_filter(
                 measurements, noise_std=0.1, transition_callback="not-callable"
             )
+
+    def test_runner_validates_configuration_at_construction(self):
+        invalid_kwargs = [
+            {"noise_std": 0.1, "num_particles": 0},
+            {"noise_std": 0.1, "resample_threshold": -0.5},
+            {"noise_std": 0.1, "proposal_gain": -0.2},
+            {"noise_std": 0.1, "initial_noise_std": -0.01},
+            {"noise_std": 0.1, "max_noise_std": -0.5},
+            {"noise_std": 0.5, "max_noise_std": 0.1},
+            {"noise_std": 0.1, "confidence_exponent": 0.0},
+            {"noise_std": 0.1, "outlier_prob": 1.5},
+            {"noise_std": 0.1, "transition_callback": "not-callable"},
+            {"max_noise_std": 0.5},
+        ]
+
+        for kwargs in invalid_kwargs:
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                SO3ProductSequenceFilterRunner(**kwargs)
 
 
 if __name__ == "__main__":
