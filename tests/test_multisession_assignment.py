@@ -3,13 +3,19 @@
 import unittest
 from unittest.mock import patch
 
+import numpy as np
+
 from pyrecest.backend import (  # pylint: disable=no-name-in-module
     __backend_name__,
     array,
     array_equal,
 )
 from pyrecest.utils import multisession_assignment as multisession_assignment_module
-from pyrecest.utils import solve_multisession_assignment, tracks_to_session_labels
+from pyrecest.utils import (
+    solve_multisession_assignment,
+    solve_multisession_assignment_from_similarity,
+    tracks_to_session_labels,
+)
 
 
 class TestMultiSessionAssignment(unittest.TestCase):
@@ -96,6 +102,44 @@ class TestMultiSessionAssignment(unittest.TestCase):
         self.assertEqual(self._canonical_tracks(result.tracks), expected_tracks)
         self.assertAlmostEqual(result.total_cost, 8.8)
         self.assertEqual(result.matched_edges, [((0, 0), (2, 0), 0.8)])
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_similarity_wrapper_accepts_scalar_integer_like_max_gap(self):
+        result = solve_multisession_assignment_from_similarity(
+            {(0, 2): array([[0.9]], dtype=float)},
+            session_sizes=[1, 0, 1],
+            max_gap=np.array(1.0),
+            start_cost=1.0,
+            end_cost=1.0,
+        )
+
+        self.assertEqual(
+            self._canonical_tracks(result.tracks),
+            [((0, 0), (2, 0))],
+        )
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_similarity_wrapper_rejects_invalid_max_gap(self):
+        pairwise_scores = {(0, 2): array([[0.9]], dtype=float)}
+
+        invalid_max_gaps = (True, 1.5, np.nan, np.inf, -1, np.array([1]))
+        for max_gap in invalid_max_gaps:
+            with self.subTest(max_gap=max_gap):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "max_gap must be a non-negative integer",
+                ):
+                    solve_multisession_assignment_from_similarity(
+                        pairwise_scores,
+                        session_sizes=[1, 0, 1],
+                        max_gap=max_gap,
+                    )
 
     @unittest.skipIf(
         __backend_name__ == "jax",
