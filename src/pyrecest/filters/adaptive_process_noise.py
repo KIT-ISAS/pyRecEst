@@ -26,16 +26,54 @@ class AdaptiveProcessNoiseConfig:
     scale_gain: float = 0.5
 
     def __post_init__(self) -> None:
-        if self.base_scale <= 0.0:
+        base_scale = _normalize_finite_scalar(self.base_scale, "base_scale")
+        min_scale = _normalize_finite_scalar(self.min_scale, "min_scale")
+        max_scale = _normalize_finite_scalar(self.max_scale, "max_scale")
+        ewma_alpha = _normalize_finite_scalar(self.ewma_alpha, "ewma_alpha")
+        high_nis_ratio = _normalize_finite_scalar(
+            self.high_nis_ratio,
+            "high_nis_ratio",
+        )
+        low_nis_ratio = _normalize_finite_scalar(
+            self.low_nis_ratio,
+            "low_nis_ratio",
+        )
+        scale_gain = _normalize_finite_scalar(self.scale_gain, "scale_gain")
+
+        if base_scale <= 0.0:
             raise ValueError("base_scale must be positive")
-        if self.min_scale <= 0.0 or self.max_scale < self.min_scale:
+        if min_scale <= 0.0 or max_scale < min_scale:
             raise ValueError("scale bounds must be positive and ordered")
-        if not 0.0 < self.ewma_alpha <= 1.0:
+        if not 0.0 < ewma_alpha <= 1.0:
             raise ValueError("ewma_alpha must be in (0, 1]")
-        if self.high_nis_ratio < self.low_nis_ratio:
+        if high_nis_ratio < low_nis_ratio:
             raise ValueError("high_nis_ratio must be at least low_nis_ratio")
-        if self.scale_gain < 0.0:
+        if scale_gain < 0.0:
             raise ValueError("scale_gain must be nonnegative")
+
+        object.__setattr__(self, "base_scale", base_scale)
+        object.__setattr__(self, "min_scale", min_scale)
+        object.__setattr__(self, "max_scale", max_scale)
+        object.__setattr__(self, "ewma_alpha", ewma_alpha)
+        object.__setattr__(self, "high_nis_ratio", high_nis_ratio)
+        object.__setattr__(self, "low_nis_ratio", low_nis_ratio)
+        object.__setattr__(self, "scale_gain", scale_gain)
+
+
+def _normalize_finite_scalar(value: float, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a finite scalar")
+    value_scalar = value_array.item()
+    if isinstance(value_scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a finite scalar")
+    try:
+        value_float = float(value_scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite scalar") from exc
+    if not np.isfinite(value_float):
+        raise ValueError(f"{name} must be a finite scalar")
+    return value_float
 
 
 @dataclass
