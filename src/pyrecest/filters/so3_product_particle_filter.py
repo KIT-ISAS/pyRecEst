@@ -13,6 +13,7 @@ from pyrecest.backend import (
     isfinite,
     isnan,
     log,
+    linalg,
     max,
     maximum,
     ndim,
@@ -112,7 +113,13 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
                 "(n, 4K), or (n, K, 4)."
             )
 
-        normalized = normalize_quaternions(reshape(particles, (-1, 4)))
+        flat_particles = reshape(particles, (-1, 4))
+        if not all(isfinite(flat_particles)):
+            raise ValueError("SO(3)^K particles must be finite.")
+        if not all(linalg.norm(flat_particles, axis=-1) > 0.0):
+            raise ValueError("SO(3)^K particles must be nonzero.")
+
+        normalized = normalize_quaternions(flat_particles)
         return reshape(normalized, particles.shape)
 
     @staticmethod
