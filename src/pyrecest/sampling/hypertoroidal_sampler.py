@@ -1,6 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
 import numpy as np
-
 from pyrecest.backend import linspace, pi
 from pyrecest.distributions import CircularUniformDistribution
 
