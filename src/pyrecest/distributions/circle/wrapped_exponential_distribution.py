@@ -1,4 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=redefined-builtin
@@ -33,6 +34,9 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
         return 1.0 / (1.0 - 1j * n / self.lambda_)
 
     def sample(self, n: Union[int, int32, int64]):
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        n = int(n)
         # Use inverse CDF method: X = -ln(U)/lambda ~ Exp(lambda), then wrap
         u = random.uniform(size=(n,))
         return mod(-log(u) / self.lambda_, 2.0 * pi)
