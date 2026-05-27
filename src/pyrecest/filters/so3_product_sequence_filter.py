@@ -245,6 +245,13 @@ def _validate_positive_finite(name: str, value: float | None) -> float | None:
     return value
 
 
+def _validate_probability(name: str, value: float) -> float:
+    value = float(value)
+    if not np.isfinite(value) or value < 0.0 or value > 1.0:
+        raise ValueError(f"{name} must be a finite probability in [0, 1].")
+    return value
+
+
 def _resample_if_needed(
     filter_state, ess, threshold: float, is_block_filter: bool
 ) -> bool:
@@ -373,10 +380,16 @@ def run_so3_product_sequence_filter(
     """
     measurements = _as_measurement_sequence(measurements)
     n_steps, num_rotations = int(measurements.shape[0]), int(measurements.shape[1])
+    if transition_callback is not None and not callable(transition_callback):
+        raise ValueError("transition_callback must be callable or None.")
     if int(num_particles) <= 0:
         raise ValueError("num_particles must be positive.")
     noise_std = _validate_positive_finite("noise_std", noise_std)
     max_noise_std = _validate_positive_finite("max_noise_std", max_noise_std)
+    confidence_exponent = _validate_positive_finite(
+        "confidence_exponent", confidence_exponent
+    )
+    outlier_prob = _validate_probability("outlier_prob", outlier_prob)
     if initial_noise_std is not None:
         initial_noise_std = _validate_nonnegative_finite(
             "initial_noise_std", initial_noise_std
