@@ -121,7 +121,9 @@ class SensorBiasCorrectionModel:
             bias = self.predict(features, n_rows=values.shape[0])
         except ValueError as exc:
             if str(exc) == "features rows must match requested row count":
-                raise ValueError(_FEATURE_ROW_COUNT_ERROR) from exc
+                raise ValueError(
+                    "features must produce one predicted bias row per measurement"
+                ) from exc
             raise
         if bias.shape != values.shape:
             raise ValueError(_FEATURE_ROW_COUNT_ERROR)
