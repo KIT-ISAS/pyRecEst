@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -121,6 +122,25 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         self.assertEqual(len(samples), 100)
         self.assertTrue(all(samples >= 0.0))
         self.assertTrue(all(samples < 2.0 * pi))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_accepts_integer_like_count(self):
+        samples = self.dist.sample(np.array(4.0))
+
+        self.assertEqual(samples.shape, (4,))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    self.dist.sample(n)
 
 
 if __name__ == "__main__":
