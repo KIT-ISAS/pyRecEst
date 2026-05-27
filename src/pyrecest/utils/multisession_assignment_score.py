@@ -7,7 +7,6 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
-
 from pyrecest.backend import (
     __backend_name__,
 )

@@ -3,7 +3,6 @@
 import unittest
 
 import numpy as np
-
 from pyrecest.backend import __backend_name__, array
 from pyrecest.utils import solve_multisession_assignment, tracks_to_session_labels
 
