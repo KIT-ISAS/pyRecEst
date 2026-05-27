@@ -31,6 +31,23 @@ class TestModelValidation(unittest.TestCase):
 
         self.assertEqual(state.shape, (1,))
 
+    def test_validate_expected_dimensions_reject_boolean_values(self):
+        invalid_calls = [
+            lambda: validate_state_vector(array([1.0]), state_dim=True),
+            lambda: validate_measurement_vector(array([1.0]), meas_dim=True),
+            lambda: validate_covariance_matrix(eye(1), dim=True),
+            lambda: validate_noise_covariance(array(0.5), dim=True, allow_scalar=True),
+            lambda: validate_transition_matrix(zeros((1, 1)), state_dim=True),
+            lambda: validate_transition_matrix(zeros((1, 1)), pred_dim=True),
+            lambda: validate_measurement_matrix(zeros((1, 1)), state_dim=True),
+            lambda: validate_measurement_matrix(zeros((1, 1)), meas_dim=True),
+        ]
+
+        for call in invalid_calls:
+            with self.subTest(call=call):
+                with self.assertRaisesRegex(TypeError, "integer or None"):
+                    call()
+
     def test_validate_measurement_vector_accepts_expected_shape(self):
         measurement = validate_measurement_vector(array([1.0]), meas_dim=1)
 
@@ -89,6 +106,13 @@ class TestModelValidation(unittest.TestCase):
             dim = 4
 
         self.assertEqual(infer_state_dim_from_distribution(DistributionWithDim()), 4)
+
+    def test_infer_state_dim_rejects_boolean_dim_attribute(self):
+        class DistributionWithBooleanDim:
+            dim = True
+
+        with self.assertRaisesRegex(ValueError, "Could not infer"):
+            infer_state_dim_from_distribution(DistributionWithBooleanDim())
 
     def test_infer_state_dim_from_mean_attribute(self):
         class DistributionWithMean:
