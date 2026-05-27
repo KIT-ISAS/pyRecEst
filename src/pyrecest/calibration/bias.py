@@ -158,7 +158,8 @@ def make_bias_training_examples(
 ) -> BiasTrainingExamples:
     """Match measurements to nearest reference values and compute residual bias."""
 
-    if max_time_delta_s < 0.0:
+    max_time_delta = float(max_time_delta_s)
+    if max_time_delta < 0.0 or np.isnan(max_time_delta):
         raise ValueError("max_time_delta_s must be nonnegative")
     measurement_times = np.asarray(measurement_times_s, dtype=float).reshape(-1)
     measurements = _as_2d(measurement_values, "measurement_values")
@@ -208,7 +209,7 @@ def make_bias_training_examples(
     valid = (
         np.isfinite(measurement_times)
         & np.isfinite(measurements).all(axis=1)
-        & (delta_s <= float(max_time_delta_s))
+        & (delta_s <= max_time_delta)
     )
     valid &= np.isfinite(features).all(axis=1)
     measured = measurements[valid]
