@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -157,6 +158,17 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(convolved.mu, array(0.7), atol=1e-12))
         self.assertTrue(allclose(convolved.C, array(13.0), atol=1e-12))
         self.assertTrue(allclose(convolved.sigma, sqrt(array(13.0)), atol=1e-12))
+
+    def test_sample_accepts_integer_like_count(self):
+        samples = self.wn.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4,))
+
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    self.wn.sample(n)
 
     def test_shift_accepts_scalar_and_singleton_sequence_inputs(self):
         dist = WrappedNormalDistribution(array(0.3), array(0.4))
