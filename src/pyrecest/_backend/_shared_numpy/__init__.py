@@ -363,10 +363,11 @@ def ravel_tril_indices(n, k=0, m=None):
 
 
 def matmul(*args, **kwargs):
-    for arg in args:
+    converted_args = tuple(arg if is_array(arg) else array(arg) for arg in args)
+    for arg in converted_args:
         if arg.ndim == 1:
             raise ValueError("ndims must be >=2")
-    return _np.matmul(*args, **kwargs)
+    return _np.matmul(*converted_args, **kwargs)
 
 
 def outer(a, b):

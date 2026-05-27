@@ -496,6 +496,19 @@ def dot(a, b):
     return _jnp.einsum("...i,...i->...", a, b)
 
 
+def matmul(x, y, out=None):
+    x = _jnp.asarray(x)
+    y = _jnp.asarray(y)
+    for array_ in [x, y]:
+        if array_.ndim == 1:
+            raise ValueError("ndims must be >=2")
+
+    result = _jnp.matmul(x, y)
+    if out is None:
+        return result
+    return result
+
+
 def outer(a, b):
     a = _jnp.asarray(a)
     b = _jnp.asarray(b)
