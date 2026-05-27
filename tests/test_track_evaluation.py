@@ -24,21 +24,30 @@ from pyrecest.utils.track_evaluation import (
 class TestTrackEvaluation(unittest.TestCase):
     def test_normalize_track_matrix_parses_common_missing_values(self):
         matrix = normalize_track_matrix(
-            [[0, "1", None, -1, np.nan, "", b"2", 3.0, 4.5, "None", "null"]]
+            [
+                [
+                    0,
+                    "1",
+                    None,
+                    -1,
+                    np.nan,
+                    np.inf,
+                    -np.inf,
+                    "",
+                    b"2",
+                    3.0,
+                    4.5,
+                    "None",
+                    "null",
+                ]
+            ]
         )
 
-        self.assertEqual(matrix.shape, (1, 11))
-        self.assertEqual(matrix[0, 0], 0)
-        self.assertEqual(matrix[0, 1], 1)
-        self.assertIsNone(matrix[0, 2])
-        self.assertIsNone(matrix[0, 3])
-        self.assertIsNone(matrix[0, 4])
-        self.assertIsNone(matrix[0, 5])
-        self.assertEqual(matrix[0, 6], 2)
-        self.assertEqual(matrix[0, 7], 3)
-        self.assertIsNone(matrix[0, 8])
-        self.assertIsNone(matrix[0, 9])
-        self.assertIsNone(matrix[0, 10])
+        self.assertEqual(matrix.shape, (1, 13))
+        self.assertEqual(
+            matrix.tolist(),
+            [[0, 1, None, None, None, None, None, None, 2, 3, None, None, None]],
+        )
 
     def test_track_lengths_and_complete_tracks(self):
         tracks = [[0, 1, 2], [3, None, 4], [None, 5, 6]]

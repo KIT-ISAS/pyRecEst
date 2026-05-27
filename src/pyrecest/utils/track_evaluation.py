@@ -385,7 +385,7 @@ def _optional_int_candidate(value: Any) -> Any:
     if isinstance(value, str):
         stripped = value.strip()
         return _MISSING if stripped.casefold() in _MISSING_STRINGS else stripped
-    if isinstance(value, (float, np.floating)) and bool(np.isnan(value)):
+    if isinstance(value, (float, np.floating)) and not np.isfinite(value):
         return _MISSING
     return value
 
