@@ -310,9 +310,7 @@ def pairwise_iou_masks(
     _backend_not_supported("pairwise_iou_masks")
     if centroid_distance_threshold is not None:
         centroid_distance_threshold = float(centroid_distance_threshold)
-        if centroid_distance_threshold < 0.0 or math.isnan(
-            centroid_distance_threshold
-        ):
+        if centroid_distance_threshold < 0.0 or math.isnan(centroid_distance_threshold):
             raise ValueError("centroid_distance_threshold must be non-negative.")
 
     prepared_reference = _prepare_rois(reference_rois)
