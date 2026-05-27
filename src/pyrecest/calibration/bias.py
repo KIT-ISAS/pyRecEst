@@ -16,6 +16,12 @@ _FEATURE_ROW_COUNT_ERROR = (
 )
 
 
+_FEATURE_ROW_COUNT_ERROR = (
+    "features rows must match requested row count; "
+    "features must produce one predicted bias row per measurement"
+)
+
+
 @dataclass(frozen=True)
 class BiasTrainingExamples:
     """Matched measurement/reference pairs used for bias fitting."""
