@@ -153,6 +153,13 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, max_noise_std=-0.5)
         with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(
+                measurements,
+                noise_std=0.1,
+                component_noise_std=0.1,
+                max_noise_std=0.5,
+            )
+        with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.5, max_noise_std=0.1)
         with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, initial_noise_std=-0.01)
@@ -188,6 +195,13 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
         for kwargs in invalid_kwargs:
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 SO3ProductSequenceFilterRunner(**kwargs)
+
+    def test_runner_rejects_conflicting_runtime_noise_modes(self):
+        measurements = stack([stack([z_quaternion(0.0)], axis=0)], axis=0)
+        runner = SO3ProductSequenceFilterRunner(noise_std=0.1, max_noise_std=0.5)
+
+        with self.assertRaises(ValueError):
+            runner.run(measurements, component_noise_std=0.1)
 
 
 if __name__ == "__main__":
