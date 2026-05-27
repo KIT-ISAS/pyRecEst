@@ -43,9 +43,18 @@ def _coerce_numeric_values(values: Any) -> list[float]:
         values = values.tolist()
     if isinstance(values, bool | int | float):
         return [float(values)]
+    if isinstance(values, str | bytes):
+        return []
 
     out: list[float] = []
-    for value in values:
+    try:
+        iterator = iter(values)
+    except TypeError:
+        try:
+            return [float(values)]
+        except (TypeError, ValueError):
+            return []
+    for value in iterator:
         out.extend(_coerce_numeric_values(value))
     return out
 
@@ -65,9 +74,15 @@ def _coerce_bool_values(values: Any) -> list[bool]:
         values = values.tolist()
     if isinstance(values, bool | int | float):
         return [bool(values)]
+    if isinstance(values, str | bytes):
+        return []
 
     out: list[bool] = []
-    for value in values:
+    try:
+        iterator = iter(values)
+    except TypeError:
+        return []
+    for value in iterator:
         out.extend(_coerce_bool_values(value))
     return out
 
