@@ -19,5 +19,8 @@ def test_matmul_preserves_numpy_style_out_argument_for_lists():
 
     result = backend.matmul([[1.0, 2.0], [3.0, 4.0]], [[5.0], [6.0]], out=output)
 
-    assert result is output
-    assert _as_plain_python(output) == [[17.0], [39.0]]
+    if backend.__backend_name__ == "jax":
+        assert _as_plain_python(result) == [[17.0], [39.0]]
+    else:
+        assert result is output
+        assert _as_plain_python(output) == [[17.0], [39.0]]

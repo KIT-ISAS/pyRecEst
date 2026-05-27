@@ -318,6 +318,8 @@ def isscalar(x):
 
 
 def matmul(x, y, out=None):
+    x = array(x)
+    y = array(y)
     for array_ in [x, y]:
         if array_.ndim == 1:
             raise ValueError("ndims must be >=2")
