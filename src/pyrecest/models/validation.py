@@ -38,7 +38,7 @@ def _validate_expected_dim(
 ) -> None:
     if expected_dim is None:
         return
-    if not isinstance(expected_dim, Integral):
+    if isinstance(expected_dim, bool) or not isinstance(expected_dim, Integral):
         raise TypeError(f"{dim_name} must be an integer or None.")
     if int(expected_dim) <= 0:
         raise ValueError(f"{dim_name} must be positive.")
@@ -255,6 +255,8 @@ def _maybe_call(value: Any, *, allow_methods: bool) -> Any:
 
 
 def _positive_int_or_none(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
     if isinstance(value, Integral) and int(value) > 0:
         return int(value)
     return None
