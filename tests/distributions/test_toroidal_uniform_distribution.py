@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
@@ -78,6 +79,17 @@ class TestToroidalUniformDistribution(unittest.TestCase):
         self.assertEqual(s.shape, (n, 2))
         self.assertTrue(all(s >= 0))
         self.assertTrue(all(s < 2 * pi))
+
+    def test_sampling_accepts_numpy_integer_count(self):
+        samples = self.tud.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4, 2))
+
+    def test_sampling_rejects_invalid_count(self):
+        for n in (0, -1, 2.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    self.tud.sample(n)
 
 
 if __name__ == "__main__":
