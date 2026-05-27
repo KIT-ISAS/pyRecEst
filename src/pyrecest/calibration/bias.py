@@ -82,6 +82,8 @@ class SensorBiasCorrectionModel:
         x = _as_2d(features, "features")
         if x.shape[1] != self.feature_dim:
             raise ValueError("features have incompatible feature dimension")
+        if n_rows is not None and x.shape[0] != int(n_rows):
+            raise ValueError("features rows must match requested row count")
         standardized = (x - self.feature_mean) / self.feature_scale
         return self.intercept.reshape(1, -1) + standardized @ self.coefficients
 

@@ -300,6 +300,48 @@ class BiasCalibrationTest(unittest.TestCase):
         npt.assert_allclose(corrected, reference, atol=1e-10)
         self.assertEqual(model.training_count, len(times))
 
+    def test_apply_rejects_feature_row_count_that_differs_from_measurements(self):
+        times = np.arange(8.0)
+        reference = times.reshape(-1, 1)
+        feature = times.reshape(-1, 1)
+        measurements = reference + 1.0 + 0.1 * feature
+        model = fit_sensor_bias_correction(
+            times,
+            measurements,
+            times,
+            reference,
+            feature_values=feature,
+            ridge_alpha=0.0,
+            min_samples=2,
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "features rows must match requested row count",
+        ):
+            model.apply(measurements, feature[:1])
+
+    def test_predict_rejects_explicit_row_count_mismatch(self):
+        times = np.arange(8.0)
+        reference = times.reshape(-1, 1)
+        feature = times.reshape(-1, 1)
+        measurements = reference + 1.0 + 0.1 * feature
+        model = fit_sensor_bias_correction(
+            times,
+            measurements,
+            times,
+            reference,
+            feature_values=feature,
+            ridge_alpha=0.0,
+            min_samples=2,
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "features rows must match requested row count",
+        ):
+            model.predict(feature[:1], n_rows=measurements.shape[0])
+
     def test_constant_bias_model_when_features_are_unavailable(self):
         times = np.arange(5.0)
         reference = times.reshape(-1, 1)
