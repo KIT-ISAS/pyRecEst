@@ -335,12 +335,29 @@ jobs:
           checksum_path = pathlib.Path("release-metadata/SHA256SUMS.txt")
           for line in checksum_path.read_text(encoding="utf-8").splitlines():
               digest, filename = line.split(maxsplit=1)
+              if "/" in filename or "\\" in filename:
+                  raise SystemExit(f"Unexpected path in SHA256SUMS.txt: {filename}")
+              if filename in hashes:
+                  raise SystemExit(f"Duplicate distribution file listed in SHA256SUMS.txt: {filename}")
               hashes[filename] = digest
+
+          distribution_files = {
+              path.name
+              for path in dist_dir.iterdir()
+              if path.suffix == ".whl" or path.name.endswith(".tar.gz")
+          }
+          checksum_files = set(hashes)
+          if checksum_files != distribution_files:
+              missing = sorted(distribution_files - checksum_files)
+              extra = sorted(checksum_files - distribution_files)
+              raise SystemExit(
+                  "SHA256SUMS.txt does not match downloaded distributions. "
+                  f"Missing checksums: {missing or 'none'}; "
+                  f"unexpected checksums: {extra or 'none'}"
+              )
 
           for filename, expected_digest in hashes.items():
               path = dist_dir / filename
-              if not path.exists():
-                  raise SystemExit(f"Missing distribution file listed in SHA256SUMS.txt: {filename}")
               actual_digest = hashlib.sha256(path.read_bytes()).hexdigest()
               if actual_digest != expected_digest:
                   raise SystemExit(f"Hash mismatch for {filename}: expected {expected_digest}, got {actual_digest}")
