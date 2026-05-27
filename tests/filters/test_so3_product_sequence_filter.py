@@ -130,6 +130,8 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, initial_noise_std=-0.01)
         with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, proposal_gain=-0.2)
+        with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(measurements, noise_std=0.1, resample_threshold=-0.5)
 
 
 if __name__ == "__main__":

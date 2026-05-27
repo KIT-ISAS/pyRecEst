@@ -220,9 +220,9 @@ def _particle_spread(filter_state, estimate) -> float:
 
 def _threshold_value(resample_threshold: float, num_particles: int) -> float:
     threshold = float(resample_threshold)
-    if not np.isfinite(threshold):
-        raise ValueError("resample_threshold must be finite.")
-    if threshold <= 0.0:
+    if not np.isfinite(threshold) or threshold < 0.0:
+        raise ValueError("resample_threshold must be nonnegative and finite.")
+    if threshold == 0.0:
         return 0.0
     if threshold <= 1.0:
         return threshold * num_particles
