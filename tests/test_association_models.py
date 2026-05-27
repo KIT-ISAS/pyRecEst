@@ -171,7 +171,10 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
         for invalid_weight in (float("nan"), float("inf"), -float("inf")):
             with self.subTest(invalid_weight=invalid_weight):
                 sample_weight = ones(self.training_labels.shape)
-                sample_weight[0] = invalid_weight
+                if hasattr(sample_weight, "at"):
+                    sample_weight = sample_weight.at[0].set(invalid_weight)
+                else:
+                    sample_weight[0] = invalid_weight
                 model = LogisticPairwiseAssociationModel()
 
                 with self.assertRaisesRegex(ValueError, "sample_weight must be finite"):
