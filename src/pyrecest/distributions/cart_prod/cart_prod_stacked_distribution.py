@@ -25,11 +25,14 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
 
     def shift(self, shift_by):
         assert len(shift_by) == self.dim, "Incorrect number of offsets"
-        shifted_dists = [
-            dist.shift(shift_by[curr_dim : curr_dim + dist.dim])  # noqa: E203
-            for curr_dim, dist in enumerate(self.dists)
-        ]
-        return CartProdStackedDistribution(shifted_dists)
+        shifted_dists = []
+        curr_dim = 0
+        for dist in self.dists:
+            shifted_dists.append(
+                dist.shift(shift_by[curr_dim : curr_dim + dist.dim])  # noqa: E203
+            )
+            curr_dim += dist.dim
+        return self.__class__(shifted_dists)
 
     def set_mode(self, new_mode):
         new_dists = []
@@ -39,7 +42,7 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
                 dist.set_mode(new_mode[curr_ind : curr_ind + dist.dim])  # noqa: E203
             )
             curr_ind += dist.dim
-        return CartProdStackedDistribution(new_dists)
+        return self.__class__(new_dists)
 
     def hybrid_mean(self):
         return concatenate([dist.mean() for dist in self.dists])
