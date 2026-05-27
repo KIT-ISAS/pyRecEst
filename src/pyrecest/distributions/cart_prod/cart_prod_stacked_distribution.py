@@ -1,6 +1,6 @@
 # pylint: disable=no-name-in-module,no-member
 from beartype import beartype
-from pyrecest.backend import concatenate, empty, hstack, prod
+from pyrecest.backend import concatenate, hstack, prod, stack
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
 
@@ -16,12 +16,17 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         return hstack([dist.sample(n) for dist in self.dists])
 
     def pdf(self, xs):
-        ps = empty((len(self.dists), xs.shape[1]))
+        ps = []
         next_dim = 0
-        for i, dist in enumerate(self.dists):
-            ps[i, :] = dist.pdf(xs[next_dim : next_dim + dist.dim, :])  # noqa: E203
-            next_dim += dist.dim
-        return prod(ps, axis=0)
+        for dist in self.dists:
+            next_input_dim = next_dim + dist.input_dim
+            if xs.ndim == 1:
+                xs_curr = xs[next_dim:next_input_dim]
+            else:
+                xs_curr = xs[:, next_dim:next_input_dim]
+            ps.append(dist.pdf(xs_curr))
+            next_dim = next_input_dim
+        return prod(stack(ps), axis=0)
 
     def shift(self, shift_by):
         assert len(shift_by) == self.dim, "Incorrect number of offsets"

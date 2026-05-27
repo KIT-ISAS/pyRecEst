@@ -17,6 +17,35 @@ class ConcreteCartProdStackedDistribution(CartProdStackedDistribution):
 
 
 class TestCartProdStackedDistribution(unittest.TestCase):
+    def test_pdf_slices_component_columns_for_batched_samples(self):
+        dist = ConcreteCartProdStackedDistribution(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([0.0, 0.0, 0.0]), eye(3)),
+            ]
+        )
+        xs = array([[1.0, 2.0, 3.0, 4.0, 5.0], [0.5, 1.5, 2.5, 3.5, 4.5]])
+
+        pdf_values = dist.pdf(xs)
+        expected = dist.dists[0].pdf(xs[:, :2]) * dist.dists[1].pdf(xs[:, 2:])
+
+        self.assertEqual(pdf_values.shape, (2,))
+        self.assertTrue(allclose(pdf_values, expected))
+
+    def test_pdf_slices_component_entries_for_single_sample(self):
+        dist = ConcreteCartProdStackedDistribution(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([0.0, 0.0, 0.0]), eye(3)),
+            ]
+        )
+        x = array([1.0, 2.0, 3.0, 4.0, 5.0])
+
+        pdf_value = dist.pdf(x)
+        expected = dist.dists[0].pdf(x[:2]) * dist.dists[1].pdf(x[2:])
+
+        self.assertTrue(allclose(pdf_value, expected))
+
     def test_shift_uses_cumulative_component_dimensions(self):
         dist = ConcreteCartProdStackedDistribution(
             [
