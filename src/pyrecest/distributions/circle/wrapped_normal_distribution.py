@@ -1,3 +1,4 @@
+from numbers import Integral
 from typing import Union
 
 import pyrecest.backend
@@ -236,6 +237,9 @@ class WrappedNormalDistribution(
         )
 
     def sample(self, n: Union[int, int32, int64]):
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        n = int(n)
         return mod(self.scalar_mu + self.sigma * random.normal(size=(n,)), 2.0 * pi)
 
     def to_dirac5(self):
