@@ -14,6 +14,8 @@ from pyrecest.models import (
     continuous_to_discrete_lti,
     coordinated_turn_transition,
     fdoa_measurement,
+    integrated_white_noise_covariance,
+    kinematic_transition_matrix,
     nearly_constant_speed_transition,
     radar_range_bearing_doppler_measurement,
     range_bearing_jacobian,
@@ -22,6 +24,8 @@ from pyrecest.models import (
     se2_unicycle_transition,
     se3_pose_twist_transition,
     singer_model,
+    singer_process_noise_covariance,
+    singer_transition_matrix,
     tdoa_measurement,
     white_noise_acceleration_covariance,
 )
@@ -69,6 +73,51 @@ class TestMotionModelCatalog(unittest.TestCase):
             ca_transition, np.array([[1.0, 2.0, 2.0], [0.0, 1.0, 2.0], [0.0, 0.0, 1.0]])
         )
 
+    def test_kinematic_models_validate_integer_parameters(self):
+        invalid_cases = [
+            {"spatial_dim": 0, "message": "spatial_dim"},
+            {"spatial_dim": 1.5, "message": "spatial_dim"},
+            {"spatial_dim": True, "message": "spatial_dim"},
+            {"spatial_dim": np.array([2]), "message": "spatial_dim"},
+            {"derivative_order": -1, "message": "derivative_order"},
+            {"derivative_order": 1.5, "message": "derivative_order"},
+            {"derivative_order": True, "message": "derivative_order"},
+        ]
+
+        for case in invalid_cases:
+            kwargs = dict(case)
+            message = kwargs.pop("message")
+            with self.subTest(case=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    kinematic_transition_matrix(1.0, **kwargs)
+
+        transition = kinematic_transition_matrix(
+            1.0,
+            spatial_dim=np.array(1.0),
+            derivative_order=np.array(1.0),
+        )
+        npt.assert_allclose(transition, np.array([[1.0, 1.0], [0.0, 1.0]]))
+
+    def test_process_noise_rejects_invalid_parameters(self):
+        invalid_cases = [
+            {"dt": -1.0, "message": "dt"},
+            {"dt": np.nan, "message": "dt"},
+            {"spatial_dim": 1.5, "message": "spatial_dim"},
+            {"derivative_order": 1.5, "message": "derivative_order"},
+            {"spectral_density": -1.0, "message": "spectral_density"},
+            {"spectral_density": np.nan, "message": "spectral_density"},
+            {"spectral_density": True, "message": "spectral_density"},
+            {"spectral_density": np.array([1.0, np.nan]), "message": "spectral_density"},
+        ]
+
+        for case in invalid_cases:
+            kwargs = {"dt": 1.0}
+            kwargs.update(case)
+            message = kwargs.pop("message")
+            with self.subTest(case=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    integrated_white_noise_covariance(**kwargs)
+
     def test_continuous_to_discrete_lti(self):
         transition, covariance = continuous_to_discrete_lti(
             np.array([[0.0, 1.0], [0.0, 0.0]]),
@@ -81,10 +130,63 @@ class TestMotionModelCatalog(unittest.TestCase):
             covariance, np.array([[2.0 / 3.0, 1.0], [1.0, 2.0]]), atol=1e-12
         )
 
+    def test_continuous_to_discrete_lti_rejects_nonfinite_inputs(self):
+        with self.assertRaisesRegex(ValueError, "dt"):
+            continuous_to_discrete_lti(np.eye(2), dt=np.nan)
+
+        with self.assertRaisesRegex(ValueError, "continuous_matrix"):
+            continuous_to_discrete_lti(np.array([[0.0, np.nan], [0.0, 0.0]]))
+
+        with self.assertRaisesRegex(ValueError, "noise_input_matrix"):
+            continuous_to_discrete_lti(
+                np.eye(2),
+                np.array([[0.0], [np.nan]]),
+                np.eye(1),
+            )
+
+        with self.assertRaisesRegex(ValueError, "continuous_noise_covariance"):
+            continuous_to_discrete_lti(
+                np.eye(2),
+                np.array([[0.0], [1.0]]),
+                np.array([[np.inf]]),
+            )
+
     def test_singer_model_shapes(self):
         model = singer_model(1.0, spatial_dim=2, tau=5.0, acceleration_variance=0.5)
         self.assertEqual(tuple(model.matrix.shape), (6, 6))
         self.assertEqual(tuple(model.noise_cov.shape), (6, 6))
+
+    def test_singer_models_validate_parameters(self):
+        invalid_transition_cases = [
+            {"dt": np.nan, "message": "dt"},
+            {"spatial_dim": 1.5, "message": "spatial_dim"},
+            {"tau": 0.0, "message": "tau"},
+            {"tau": np.nan, "message": "tau"},
+        ]
+        for case in invalid_transition_cases:
+            kwargs = {"dt": 1.0}
+            kwargs.update(case)
+            message = kwargs.pop("message")
+            with self.subTest(case=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    singer_transition_matrix(**kwargs)
+
+        invalid_noise_cases = [
+            {"dt": -1.0, "message": "dt"},
+            {"acceleration_variance": -1.0, "message": "acceleration_variance"},
+            {"acceleration_variance": np.nan, "message": "acceleration_variance"},
+            {
+                "acceleration_variance": np.array([1.0, np.inf]),
+                "message": "acceleration_variance",
+            },
+        ]
+        for case in invalid_noise_cases:
+            kwargs = {"dt": 1.0}
+            kwargs.update(case)
+            message = kwargs.pop("message")
+            with self.subTest(case=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    singer_process_noise_covariance(**kwargs)
 
     def test_nonlinear_motion_transitions(self):
         npt.assert_allclose(
