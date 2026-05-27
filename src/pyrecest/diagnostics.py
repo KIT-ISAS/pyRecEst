@@ -108,6 +108,16 @@ def _finite_last(values: list[float]) -> float | None:
     return None
 
 
+def _normalized_nonnegative_weights(values: list[float]) -> list[float]:
+    finite_nonnegative = [
+        value if isfinite(value) and value > 0.0 else 0.0 for value in values
+    ]
+    total = sum(finite_nonnegative)
+    if total <= 0.0:
+        return [0.0 for _ in finite_nonnegative]
+    return [value / total for value in finite_nonnegative]
+
+
 class _DiagnosticsMappingMixin:
     """Small mapping compatibility layer for legacy diagnostics dictionaries."""
 
@@ -187,11 +197,7 @@ class ParticleDiagnostics(_DiagnosticsMappingMixin):
     ) -> "ParticleDiagnostics":
         """Build particle diagnostics from normalized or unnormalized weights."""
         values = _coerce_weight_values(weights)
-        total = sum(values)
-        if total <= 0.0:
-            normalized = [0.0 for _ in values]
-        else:
-            normalized = [max(0.0, value / total) for value in values]
+        normalized = _normalized_nonnegative_weights(values)
         squared_sum = sum(weight * weight for weight in normalized)
         effective_sample_size = 1.0 / squared_sum if squared_sum > 0.0 else 0.0
         entropy = -sum(weight * log(weight) for weight in normalized if weight > 0.0)
