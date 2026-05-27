@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from pyrecest.filters.adaptive_process_noise import (
     AdaptiveProcessNoiseConfig,
     RollingNISProcessNoiseAdapter,
@@ -63,5 +62,7 @@ def test_config_rejects_nonfinite_or_nonscalar_values():
         "scale_gain",
     ):
         for value in invalid_values:
-            with pytest.raises(ValueError, match=f"{field_name} must be a finite scalar"):
+            with pytest.raises(
+                ValueError, match=f"{field_name} must be a finite scalar"
+            ):
                 AdaptiveProcessNoiseConfig(**{field_name: value})
