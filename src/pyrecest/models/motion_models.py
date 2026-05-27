@@ -201,7 +201,9 @@ def integrated_white_noise_covariance(
                 covariance[
                     _state_index(derivative_row, axis, spatial_dim),
                     _state_index(derivative_col, axis, spatial_dim),
-                ] = float(density) * coefficient
+                ] = (
+                    float(density) * coefficient
+                )
     return asarray(covariance)
 
 

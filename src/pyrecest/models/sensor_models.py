@@ -74,8 +74,7 @@ def _normalize_indices(
     if len(values) != expected_length:
         raise ValueError(f"{name} must contain {expected_length} indices")
     normalized = tuple(
-        _as_integer(index, f"{name}[{axis}]")
-        for axis, index in enumerate(values)
+        _as_integer(index, f"{name}[{axis}]") for axis, index in enumerate(values)
     )
     if len(set(normalized)) != len(normalized):
         raise ValueError(f"{name} entries must be distinct")
@@ -268,7 +267,9 @@ def fdoa_measurement(
         sensor_velocities = zeros(tuple(sensors.shape))
     sensor_velocities = asarray(sensor_velocities)
     if tuple(sensor_velocities.shape) != tuple(sensors.shape):
-        raise ValueError("sensor_velocities must have the same shape as sensor_positions")
+        raise ValueError(
+            "sensor_velocities must have the same shape as sensor_positions"
+        )
     reference_sensor = _normalize_reference_sensor(
         reference_sensor,
         int(sensors.shape[0]),

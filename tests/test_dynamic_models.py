@@ -107,7 +107,10 @@ class TestMotionModelCatalog(unittest.TestCase):
             {"spectral_density": -1.0, "message": "spectral_density"},
             {"spectral_density": np.nan, "message": "spectral_density"},
             {"spectral_density": True, "message": "spectral_density"},
-            {"spectral_density": np.array([1.0, np.nan]), "message": "spectral_density"},
+            {
+                "spectral_density": np.array([1.0, np.nan]),
+                "message": "spectral_density",
+            },
         ]
 
         for case in invalid_cases:
