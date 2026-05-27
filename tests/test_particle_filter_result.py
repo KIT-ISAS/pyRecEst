@@ -1,5 +1,6 @@
 import unittest
 
+from pyrecest.backend import array
 from pyrecest.diagnostics import ParticleFilterResult
 
 
@@ -17,6 +18,27 @@ class ParticleFilterResultTest(unittest.TestCase):
         self.assertEqual(result.resampling_flags, [False, True])
         result["source"] = "test"
         self.assertEqual(result.metadata["source"], "test")
+
+    def test_summary_statistics_flatten_backend_arrays(self):
+        result = ParticleFilterResult(
+            estimates=[],
+            effective_sample_size=array([3.0, 4.0, 5.0]),
+            resampled=array([False, True, True]),
+            particle_spread=array([0.3, 0.2, 0.1]),
+            block_effective_sample_size=array([[3.0, 2.0], [4.0, 1.0]]),
+        )
+
+        summary = result.summary_statistics()
+
+        self.assertEqual(result.resampling_count, 2)
+        self.assertAlmostEqual(result.resampling_fraction, 2.0 / 3.0)
+        self.assertAlmostEqual(summary["mean_effective_sample_size"], 4.0)
+        self.assertAlmostEqual(summary["min_effective_sample_size"], 3.0)
+        self.assertAlmostEqual(summary["final_effective_sample_size"], 5.0)
+        self.assertAlmostEqual(summary["mean_particle_spread"], 0.2)
+        self.assertAlmostEqual(summary["final_particle_spread"], 0.1)
+        self.assertAlmostEqual(summary["mean_block_effective_sample_size"], 2.5)
+        self.assertAlmostEqual(summary["min_block_effective_sample_size"], 1.0)
 
 
 if __name__ == "__main__":
