@@ -232,10 +232,8 @@ def fit_sensor_bias_correction_from_examples(
 ) -> SensorBiasCorrectionModel:
     """Fit a ridge-linear bias model from prepared examples."""
 
-    if ridge_alpha < 0.0:
-        raise ValueError("ridge_alpha must be nonnegative")
-    if min_samples < 1:
-        raise ValueError("min_samples must be positive")
+    ridge_alpha = _as_nonnegative_finite_float(ridge_alpha, "ridge_alpha")
+    min_samples = _as_positive_int(min_samples, "min_samples")
     y = _as_2d(examples.residual, "examples.residual")
     x = _as_2d(examples.features, "examples.features")
     if x.shape[0] != y.shape[0]:
@@ -245,7 +243,7 @@ def fit_sensor_bias_correction_from_examples(
     x = x[valid]
     if y.shape[0] == 0:
         raise ValueError("no finite bias training examples")
-    if x.shape[0] < int(min_samples):
+    if x.shape[0] < min_samples:
         x = np.empty((y.shape[0], 0), dtype=float)
 
     feature_mean = _nanmean_or_zero(x)
@@ -255,7 +253,7 @@ def fit_sensor_bias_correction_from_examples(
     )
     standardized = (x - feature_mean) / feature_scale if x.shape[1] else x
     design = np.column_stack([np.ones(y.shape[0]), standardized])
-    regularizer = np.eye(design.shape[1]) * float(ridge_alpha)
+    regularizer = np.eye(design.shape[1]) * ridge_alpha
     regularizer[0, 0] = 0.0
     lhs = design.T @ design + regularizer
     rhs = design.T @ y
@@ -274,7 +272,7 @@ def fit_sensor_bias_correction_from_examples(
         feature_scale=feature_scale,
         residual_std=residual_std,
         training_count=int(y.shape[0]),
-        ridge_alpha=float(ridge_alpha),
+        ridge_alpha=ridge_alpha,
         metadata={} if metadata is None else dict(metadata),
     )
 
@@ -335,6 +333,29 @@ def _as_nonnegative_int(value: Any, name: str) -> int:
         raise ValueError(f"{name} must be a nonnegative integer")
     if result < 0:
         raise ValueError(f"{name} must be a nonnegative integer")
+    return result
+
+
+def _as_positive_int(value: Any, name: str) -> int:
+    result = _as_nonnegative_int(value, name)
+    if result <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return result
+
+
+def _as_nonnegative_finite_float(value: Any, name: str) -> float:
+    arr = np.asarray(value)
+    if arr.ndim != 0 or arr.dtype == np.bool_:
+        raise ValueError(f"{name} must be a nonnegative finite scalar")
+    scalar = arr.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a nonnegative finite scalar")
+    try:
+        result = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a nonnegative finite scalar") from exc
+    if not np.isfinite(result) or result < 0.0:
+        raise ValueError(f"{name} must be a nonnegative finite scalar")
     return result
 
 

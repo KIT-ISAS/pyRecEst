@@ -330,6 +330,59 @@ class BiasCalibrationTest(unittest.TestCase):
         ):
             fit_sensor_bias_correction_from_examples(examples, min_samples=1)
 
+    def test_fit_sensor_bias_correction_rejects_invalid_fit_parameters(self):
+        examples = BiasTrainingExamples(
+            measured=np.array([[1.0], [2.0]]),
+            reference=np.array([[0.0], [0.0]]),
+            residual=np.array([[1.0], [2.0]]),
+            features=np.array([[0.0], [1.0]]),
+            time_delta_s=np.array([0.0, 0.0]),
+        )
+
+        invalid_ridge_alpha_values = (np.nan, np.inf, -1.0, True, np.array([0.0]))
+        for ridge_alpha in invalid_ridge_alpha_values:
+            with self.subTest(ridge_alpha=ridge_alpha):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "ridge_alpha must be a nonnegative finite scalar",
+                ):
+                    fit_sensor_bias_correction_from_examples(
+                        examples,
+                        ridge_alpha=ridge_alpha,
+                        min_samples=1,
+                    )
+
+        invalid_min_samples_values = (0, 1.5, np.nan, np.inf, False, np.array([1]))
+        for min_samples in invalid_min_samples_values:
+            with self.subTest(min_samples=min_samples):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "min_samples must be",
+                ):
+                    fit_sensor_bias_correction_from_examples(
+                        examples,
+                        ridge_alpha=0.0,
+                        min_samples=min_samples,
+                    )
+
+    def test_fit_sensor_bias_correction_accepts_integer_like_min_samples(self):
+        examples = BiasTrainingExamples(
+            measured=np.array([[1.0], [2.0]]),
+            reference=np.array([[0.0], [0.0]]),
+            residual=np.array([[1.0], [2.0]]),
+            features=np.array([[0.0], [1.0]]),
+            time_delta_s=np.array([0.0, 0.0]),
+        )
+
+        model = fit_sensor_bias_correction_from_examples(
+            examples,
+            ridge_alpha=np.array(0.0),
+            min_samples=np.array(2.0),
+        )
+
+        self.assertEqual(model.feature_dim, 1)
+        self.assertEqual(model.ridge_alpha, 0.0)
+
     def test_fit_sensor_bias_correction_subtracts_predicted_bias(self):
         times = np.arange(8.0)
         reference = np.column_stack([times, -times])
