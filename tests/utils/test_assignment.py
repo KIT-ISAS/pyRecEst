@@ -178,6 +178,31 @@ class MurtyAssignmentTest(unittest.TestCase):
         npt.assert_array_equal(solutions[0]["unassigned_cols"], np.array([], dtype=int))
         self.assertAlmostEqual(solutions[0]["cost"], 2.0)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_nonfinite_non_assignment_costs_are_rejected(self):
+        cost_matrix = np.array([[1.0]])
+
+        for invalid_cost in (np.nan, np.inf, -np.inf):
+            with self.subTest(kind="row", invalid_cost=invalid_cost):
+                with self.assertRaisesRegex(
+                    ValueError, "row_non_assignment_costs must be finite"
+                ):
+                    murty_k_best_assignments(
+                        cost_matrix,
+                        row_non_assignment_costs=invalid_cost,
+                    )
+            with self.subTest(kind="column", invalid_cost=invalid_cost):
+                with self.assertRaisesRegex(
+                    ValueError, "col_non_assignment_costs must be finite"
+                ):
+                    murty_k_best_assignments(
+                        cost_matrix,
+                        col_non_assignment_costs=np.array([invalid_cost]),
+                    )
+
     def test_non_positive_k_returns_empty_list(self):
         self.assertEqual(murty_k_best_assignments(np.eye(2), k=0), [])
 
