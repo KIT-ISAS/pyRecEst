@@ -401,6 +401,8 @@ def run_so3_product_sequence_filter(
         )
     if max_noise_std is not None and noise_std is None:
         raise ValueError("noise_std is required when max_noise_std is used.")
+    if max_noise_std is not None and max_noise_std < noise_std:
+        raise ValueError("max_noise_std must be greater than or equal to noise_std.")
 
     rng = np.random.default_rng() if rng is None else rng
     mask = _as_mask(mask, n_steps, num_rotations)

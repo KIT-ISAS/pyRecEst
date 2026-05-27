@@ -127,6 +127,8 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, max_noise_std=-0.5)
         with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(measurements, noise_std=0.5, max_noise_std=0.1)
+        with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, initial_noise_std=-0.01)
         with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, proposal_gain=-0.2)
