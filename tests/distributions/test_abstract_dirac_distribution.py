@@ -41,6 +41,17 @@ class TestAbstractDiracDistribution(unittest.TestCase):
             ),
         )
 
+    def test_sample_rejects_invalid_count(self):
+        dist = LinearDiracDistribution(
+            array([[0.0], [1.0]]),
+            array([0.25, 0.75]),
+        )
+
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    dist.sample(n)
+
     def test_mode_returns_highest_weighted_dirac(self):
         dist = LinearDiracDistribution(
             array(
