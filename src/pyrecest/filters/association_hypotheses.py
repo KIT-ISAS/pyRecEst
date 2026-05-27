@@ -148,6 +148,40 @@ def hypothesis_cost(
     return float(missing_cost)
 
 
+def _as_scalar_float(value: Any, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a scalar number")
+    try:
+        scalar = float(value_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a scalar number") from exc
+    if np.isnan(scalar):
+        raise ValueError(f"{name} must not be NaN")
+    return scalar
+
+
+def _as_finite_scalar(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if not np.isfinite(scalar):
+        raise ValueError(f"{name} must be finite")
+    return scalar
+
+
+def _as_nonnegative_scalar(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if scalar < 0.0:
+        raise ValueError(f"{name} must be nonnegative")
+    return scalar
+
+
+def _as_positive_integer(value: Any, name: str) -> int:
+    scalar = _as_finite_scalar(value, name)
+    if scalar <= 0.0 or not scalar.is_integer():
+        raise ValueError(f"{name} must be a positive integer")
+    return int(scalar)
+
+
 class NISGate:
     """Gate association hypotheses by normalized innovation squared."""
 
@@ -163,10 +197,12 @@ class NISGate:
                 raise ValueError(
                     "Either threshold or both measurement_dim and confidence must be provided."
                 )
-            threshold = chi2.ppf(float(confidence), int(measurement_dim))
-        self.threshold = float(threshold)
-        if self.threshold < 0.0:
-            raise ValueError("threshold must be nonnegative")
+            confidence = _as_finite_scalar(confidence, "confidence")
+            if not 0.0 < confidence < 1.0:
+                raise ValueError("confidence must be in (0, 1)")
+            measurement_dim = _as_positive_integer(measurement_dim, "measurement_dim")
+            threshold = chi2.ppf(confidence, measurement_dim)
+        self.threshold = _as_nonnegative_scalar(threshold, "threshold")
 
     def accepts(self, hypothesis: AssociationHypothesis) -> bool:
         """Return whether ``hypothesis`` is accepted by the NIS threshold."""
@@ -184,7 +220,7 @@ class CostThresholdGate:
     """Gate hypotheses by maximum minimization cost."""
 
     def __init__(self, threshold: float, *, missing_cost: float = np.inf):
-        self.threshold = float(threshold)
+        self.threshold = _as_scalar_float(threshold, "threshold")
         self.missing_cost = float(missing_cost)
 
     def accepts(self, hypothesis: AssociationHypothesis) -> bool:
@@ -203,7 +239,7 @@ class ProbabilityThresholdGate:
     """Gate hypotheses by minimum probability or likelihood."""
 
     def __init__(self, threshold: float, *, use_likelihood: bool = False):
-        self.threshold = float(threshold)
+        self.threshold = _as_scalar_float(threshold, "threshold")
         self.use_likelihood = bool(use_likelihood)
         if self.use_likelihood:
             if self.threshold <= 0.0:
@@ -232,9 +268,7 @@ class TopKGate:
     def __init__(
         self, k: int, *, mode: GateMode = "track", missing_cost: float = np.inf
     ):
-        self.k = int(k)
-        if self.k <= 0:
-            raise ValueError("k must be positive")
+        self.k = _as_positive_integer(k, "k")
         if mode not in ("track", "measurement"):
             raise ValueError("mode must be 'track' or 'measurement'")
         self.mode = mode

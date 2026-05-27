@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array
 from pyrecest.filters import (
@@ -60,6 +62,32 @@ class AssociationHypothesesTest(unittest.TestCase):
         self.assertEqual(cost_matrix[1, 0], 99.0)
         self.assertAlmostEqual(cost_matrix[1, 1], 0.5)
 
+    def test_nis_gate_rejects_invalid_threshold(self):
+        for threshold in (np.nan, True, np.array([1.0])):
+            with self.subTest(threshold=threshold):
+                with self.assertRaisesRegex(ValueError, "threshold"):
+                    NISGate(threshold=threshold)
+
+    def test_nis_gate_validates_confidence_and_measurement_dimension(self):
+        invalid_cases = [
+            {"measurement_dim": 1, "confidence": np.nan, "message": "confidence"},
+            {"measurement_dim": 1, "confidence": 1.0, "message": "confidence"},
+            {"measurement_dim": True, "confidence": 0.95, "message": "measurement_dim"},
+            {"measurement_dim": 1.5, "confidence": 0.95, "message": "measurement_dim"},
+            {
+                "measurement_dim": np.array([1]),
+                "confidence": 0.95,
+                "message": "measurement_dim",
+            },
+        ]
+        for case in invalid_cases:
+            with self.subTest(case=case):
+                with self.assertRaisesRegex(ValueError, case["message"]):
+                    NISGate(
+                        measurement_dim=case["measurement_dim"],
+                        confidence=case["confidence"],
+                    )
+
     def test_cost_threshold_and_top_k_gates_are_generic(self):
         hypotheses = [
             AssociationHypothesis(0, 0, cost=1.0),
@@ -79,6 +107,26 @@ class AssociationHypothesesTest(unittest.TestCase):
             [(hyp.track_index, hyp.measurement_index) for hyp in top_per_track],
             [(0, 0), (1, 1)],
         )
+
+    def test_cost_and_probability_gates_reject_nan_thresholds(self):
+        for gate_factory in (CostThresholdGate, ProbabilityThresholdGate):
+            with self.subTest(gate_factory=gate_factory):
+                with self.assertRaisesRegex(ValueError, "threshold"):
+                    gate_factory(np.nan)
+
+        with self.assertRaisesRegex(ValueError, "threshold"):
+            ProbabilityThresholdGate(np.nan, use_likelihood=True)
+
+    def test_top_k_gate_rejects_invalid_k(self):
+        for k in (True, 1.5, np.nan, np.inf, np.array([1])):
+            with self.subTest(k=k):
+                with self.assertRaisesRegex(ValueError, "k must"):
+                    TopKGate(k)
+
+    def test_top_k_gate_accepts_integer_scalar_k(self):
+        gate = TopKGate(np.array(2.0))
+
+        self.assertEqual(gate.k, 2)
 
     def test_probability_likelihood_gate_rejects_zero_threshold(self):
         with self.assertRaises(ValueError):
