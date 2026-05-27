@@ -106,6 +106,18 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         self.assertEqual(filt.particles.shape, (4, 2, 4))
         npt.assert_allclose(linalg.norm(filt.particles, axis=-1), ones((4, 2)))
 
+    def test_rejects_invalid_tangent_noise_covariance(self):
+        filt = SO3ProductParticleFilter(n_particles=4, num_rotations=1)
+        invalid_covariances = [
+            diag(array([0.01, float("nan"), 0.01])),
+            array([[1.0, 0.1, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
+            diag(array([0.01, -0.01, 0.01])),
+        ]
+
+        for covariance in invalid_covariances:
+            with self.subTest(covariance=covariance), self.assertRaises(ValueError):
+                filt.predict_identity(covariance)
+
     def test_update_with_geodesic_likelihood_prefers_matching_particle(self):
         filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
         filt.set_particles(

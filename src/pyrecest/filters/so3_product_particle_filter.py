@@ -4,6 +4,8 @@ import math
 from collections.abc import Callable
 from operator import index as operator_index
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     all,
@@ -62,6 +64,19 @@ def _as_covariance_diagonal(covariance_diagonal):
     if not all(covariance_diagonal >= 0.0):
         raise ValueError("covariance_diagonal values must be nonnegative.")
     return covariance_diagonal
+
+
+def _validate_covariance_matrix(name: str, covariance):
+    if not all(isfinite(covariance)):
+        raise ValueError(f"{name} values must be finite.")
+    covariance_np = to_numpy(covariance)
+    matrices = covariance_np.reshape((-1,) + covariance_np.shape[-2:])
+    for matrix in matrices:
+        if not np.allclose(matrix, matrix.T, rtol=1e-8, atol=1e-10):
+            raise ValueError(f"{name} must be symmetric.")
+        if np.min(np.linalg.eigvalsh(matrix)) < -1e-10:
+            raise ValueError(f"{name} must be positive semidefinite.")
+    return covariance
 
 
 class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
@@ -337,6 +352,9 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         covariance = array(covariance, dtype=float)
         if ndim(covariance) == 2:
             if covariance.shape == (3, 3):
+                covariance = _validate_covariance_matrix(
+                    "tangent_noise_covariance", covariance
+                )
                 components = [
                     random.multivariate_normal(
                         mean=zeros(3), cov=covariance, size=n_particles
@@ -345,11 +363,17 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
                 ]
                 return stack(components, axis=1)
             if covariance.shape == (3 * num_rotations, 3 * num_rotations):
+                covariance = _validate_covariance_matrix(
+                    "tangent_noise_covariance", covariance
+                )
                 samples = random.multivariate_normal(
                     mean=zeros(3 * num_rotations), cov=covariance, size=n_particles
                 )
                 return reshape(samples, (n_particles, num_rotations, 3))
         elif ndim(covariance) == 3 and covariance.shape == (num_rotations, 3, 3):
+            covariance = _validate_covariance_matrix(
+                "tangent_noise_covariance", covariance
+            )
             components = [
                 random.multivariate_normal(
                     mean=zeros(3), cov=covariance[i], size=n_particles
