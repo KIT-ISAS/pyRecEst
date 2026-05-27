@@ -9,6 +9,56 @@ from typing import Any
 import numpy as np
 
 
+def _as_scalar_float(value: Any, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a scalar number")
+    try:
+        scalar = float(value_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a scalar number") from exc
+    if not np.isfinite(scalar):
+        raise ValueError(f"{name} must be finite")
+    return scalar
+
+
+def _as_nonnegative_float(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if scalar < 0.0:
+        raise ValueError(f"{name} must be nonnegative")
+    return scalar
+
+
+def _as_positive_float(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if scalar <= 0.0:
+        raise ValueError(f"{name} must be positive")
+    return scalar
+
+
+def _as_integer(value: Any, name: str) -> int:
+    scalar = _as_scalar_float(value, name)
+    if not scalar.is_integer():
+        raise ValueError(f"{name} must be an integer")
+    return int(scalar)
+
+
+def _as_optional_positive_integer(value: Any | None, name: str) -> int | None:
+    if value is None:
+        return None
+    integer = _as_integer(value, name)
+    if integer < 1:
+        raise ValueError(f"{name} must be positive or None")
+    return integer
+
+
+def _as_nonnegative_integer(value: Any, name: str) -> int:
+    integer = _as_integer(value, name)
+    if integer < 0:
+        raise ValueError(f"{name} must be nonnegative")
+    return integer
+
+
 @dataclass(frozen=True)
 class TrackletAssociationCandidate:
     """One association candidate for one scan/frame.
@@ -60,18 +110,30 @@ class TrackletViterbiConfig:
     max_candidates_per_track_id: int = 1
 
     def __post_init__(self) -> None:
-        if (
-            self.max_candidates_per_frame is not None
-            and self.max_candidates_per_frame < 1
-        ):
-            raise ValueError("max_candidates_per_frame must be positive or None")
-        if (
-            self.max_candidate_pool_per_frame is not None
-            and self.max_candidate_pool_per_frame < 1
-        ):
-            raise ValueError("max_candidate_pool_per_frame must be positive or None")
-        if self.max_candidates_per_track_id < 0:
-            raise ValueError("max_candidates_per_track_id must be nonnegative")
+        object.__setattr__(
+            self,
+            "max_candidates_per_frame",
+            _as_optional_positive_integer(
+                self.max_candidates_per_frame,
+                "max_candidates_per_frame",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "max_candidate_pool_per_frame",
+            _as_optional_positive_integer(
+                self.max_candidate_pool_per_frame,
+                "max_candidate_pool_per_frame",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "max_candidates_per_track_id",
+            _as_nonnegative_integer(
+                self.max_candidates_per_track_id,
+                "max_candidates_per_track_id",
+            ),
+        )
         for name in (
             "missed_detection_cost",
             "consecutive_miss_cost",
@@ -80,17 +142,34 @@ class TrackletViterbiConfig:
             "motion_weight",
             "max_speed_penalty",
         ):
-            if float(getattr(self, name)) < 0.0:
-                raise ValueError(f"{name} must be nonnegative")
-        if self.transition_position_std <= 0.0:
-            raise ValueError("transition_position_std must be positive")
-        if (
-            self.transition_velocity_std is not None
-            and self.transition_velocity_std <= 0.0
-        ):
-            raise ValueError("transition_velocity_std must be positive or None")
-        if self.max_speed is not None and self.max_speed <= 0.0:
-            raise ValueError("max_speed must be positive or None")
+            object.__setattr__(
+                self,
+                name,
+                _as_nonnegative_float(getattr(self, name), name),
+            )
+        object.__setattr__(
+            self,
+            "transition_position_std",
+            _as_positive_float(
+                self.transition_position_std,
+                "transition_position_std",
+            ),
+        )
+        if self.transition_velocity_std is not None:
+            object.__setattr__(
+                self,
+                "transition_velocity_std",
+                _as_positive_float(
+                    self.transition_velocity_std,
+                    "transition_velocity_std",
+                ),
+            )
+        if self.max_speed is not None:
+            object.__setattr__(
+                self,
+                "max_speed",
+                _as_positive_float(self.max_speed, "max_speed"),
+            )
 
 
 @dataclass(frozen=True)
