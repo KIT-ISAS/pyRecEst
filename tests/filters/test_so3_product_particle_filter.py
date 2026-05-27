@@ -190,6 +190,21 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         self.assertGreater(float(filt.weights[0]), 0.999)
         npt.assert_allclose(float(filt.weights[2]), 0.0, atol=ATOL)
 
+    def test_update_validates_ess_threshold(self):
+        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+        log_likelihood = array([0.0, -1.0])
+
+        for ess_threshold in [-0.1, float("nan"), float("inf")]:
+            with self.subTest(ess_threshold=ess_threshold), self.assertRaises(
+                ValueError
+            ):
+                filt.update_with_log_likelihood(
+                    log_likelihood,
+                    resample=False,
+                    ess_threshold=ess_threshold,
+                )
+        npt.assert_allclose(filt.weights, ones(2) / 2)
+
     def test_confidence_to_noise_std_maps_confidence_to_scale(self):
         sigma = SO3ProductParticleFilter.confidence_to_noise_std(
             array([1.0, 0.5, 0.0]),

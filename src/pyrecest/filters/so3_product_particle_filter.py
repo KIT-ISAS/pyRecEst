@@ -79,6 +79,15 @@ def _validate_covariance_matrix(name: str, covariance):
     return covariance
 
 
+def _resampling_threshold(ess_threshold, n_particles: int) -> float:
+    if ess_threshold is None:
+        return n_particles / 2.0
+    threshold = float(ess_threshold)
+    if not math.isfinite(threshold) or threshold < 0.0:
+        raise ValueError("ess_threshold must be nonnegative and finite.")
+    return threshold
+
+
 class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
     """Particle filter for states on ``SO(3)^K``.
 
@@ -554,12 +563,12 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         log_likelihood_values = array(log_likelihood_values, dtype=float)
         if log_likelihood_values.shape != self.weights.shape:
             raise ValueError("log_likelihood must return one value per particle.")
+        threshold = _resampling_threshold(ess_threshold, self.n_particles)
 
         self.filter_state.w = self._normalize_log_weights(
             log(self.weights) + log_likelihood_values
         )
         ess = self.effective_sample_size()
-        threshold = self.n_particles / 2.0 if ess_threshold is None else ess_threshold
         if resample and ess < threshold:
             self.resample_systematic()
         return ess
