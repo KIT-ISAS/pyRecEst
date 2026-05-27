@@ -171,7 +171,9 @@ class TestSimilarityAssignment(unittest.TestCase):
 
         for min_similarity in (float("nan"), float("inf"), -float("inf")):
             with self.subTest(min_similarity=min_similarity):
-                with self.assertRaisesRegex(ValueError, "min_similarity must be finite"):
+                with self.assertRaisesRegex(
+                    ValueError, "min_similarity must be finite"
+                ):
                     assign_by_similarity_matrix(
                         similarity_matrix,
                         min_similarity=min_similarity,
