@@ -31,9 +31,40 @@ def _from_numpy_array(value: np.ndarray):
 
 
 def _validate_nonnegative_finite(name: str, value: float) -> float:
-    value = float(value)
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a scalar number.") from exc
+    if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
+        raise ValueError(f"{name} must be a scalar number.")
+    try:
+        value = float(value_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a scalar number.") from exc
     if not np.isfinite(value) or value < 0.0:
         raise ValueError(f"{name} must be finite and non-negative.")
+    return value
+
+
+def _validate_positive_finite(name: str, value: float) -> float:
+    value = _validate_nonnegative_finite(name, value)
+    if value <= 0.0:
+        raise ValueError(f"{name} must be finite and positive.")
+    return value
+
+
+def _validate_nonnegative_integer(name: str, value: int) -> int:
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a nonnegative integer.") from exc
+    if value_array.shape != () or not np.issubdtype(value_array.dtype, np.integer):
+        raise ValueError(f"{name} must be a nonnegative integer.")
+    if np.issubdtype(value_array.dtype, np.bool_):
+        raise ValueError(f"{name} must be a nonnegative integer.")
+    value = int(value_array.item())
+    if value < 0:
+        raise ValueError(f"{name} must be a nonnegative integer.")
     return value
 
 
@@ -76,8 +107,7 @@ def nearest_symmetric_psd(matrix, *, min_eigenvalue: float = 0.0):
     should not silently replace validation in algorithms where invalid covariance
     matrices indicate a modeling error.
     """
-    if not np.isfinite(min_eigenvalue) or min_eigenvalue < 0.0:
-        raise ValueError("min_eigenvalue must be finite and nonnegative.")
+    min_eigenvalue = _validate_nonnegative_finite("min_eigenvalue", min_eigenvalue)
 
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
@@ -96,10 +126,8 @@ def jittered_cholesky(matrix, *, initial_jitter: float = 1e-12, max_attempts: in
     jitter. It raises :class:`NumericalStabilityError` if no factorization is
     found within ``max_attempts``.
     """
-    if not np.isfinite(initial_jitter) or initial_jitter <= 0.0:
-        raise ValueError("initial_jitter must be finite and positive.")
-    if not isinstance(max_attempts, (int, np.integer)) or max_attempts < 0:
-        raise ValueError("max_attempts must be a nonnegative integer.")
+    initial_jitter = _validate_positive_finite("initial_jitter", initial_jitter)
+    max_attempts = _validate_nonnegative_integer("max_attempts", max_attempts)
 
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
