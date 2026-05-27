@@ -2,6 +2,7 @@ import importlib.util
 import unittest
 from math import ceil
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module
@@ -202,6 +203,31 @@ class TestHypersphericalSampler(unittest.TestCase):
         self.assertEqual(grid.shape, (expected_points, 4))
         self.assertEqual(grid_description["layer-parameter"], [grid_density_parameter])
 
+    def test_fibonacci_hopf_sampler_accepts_integer_like_density(self):
+        sampler = FibonacciHopfSampler()
+        grid, grid_description = sampler.get_grid((np.array(4.0), np.array(3.0)))
+
+        self.assertEqual(grid.shape, (12, 4))
+        self.assertEqual(grid_description["layer-parameter"], [4, 3])
+
+    def test_fibonacci_hopf_sampler_rejects_invalid_density(self):
+        sampler = FibonacciHopfSampler()
+
+        invalid_density_parameters = (
+            0,
+            -3,
+            2.5,
+            True,
+            [],
+            [4, 2.5],
+            [4, True],
+            [4, 2, 1],
+        )
+        for grid_density_parameter in invalid_density_parameters:
+            with self.subTest(grid_density_parameter=grid_density_parameter):
+                with self.assertRaises(ValueError):
+                    sampler.get_grid(grid_density_parameter)
+
     @parameterized.expand(
         [
             ("test_2d_12_n_only", 12, 2, (12, 3)),
@@ -363,6 +389,33 @@ class TestSphericalCoordinatesBasedFixedResolutionSampler(unittest.TestCase):
             sampler.get_grid((0, 3))
         with self.assertRaises(ValueError):
             sampler.get_grid((4, 0))
+
+    def test_get_grid_rejects_noninteger_resolution(self):
+        sampler = SphericalCoordinatesBasedFixedResolutionSampler()
+
+        invalid_density_parameters = ((2.5, 3), (4, 3.5), (True, 3), ([4], 3))
+        for grid_density_parameter in invalid_density_parameters:
+            with self.subTest(grid_density_parameter=grid_density_parameter):
+                with self.assertRaises(ValueError):
+                    sampler.get_grid(grid_density_parameter)
+
+
+class TestSphericalFibonacciSampler(unittest.TestCase):
+    def test_get_grid_accepts_integer_like_density(self):
+        sampler = SphericalFibonacciSampler()
+
+        grid, grid_description = sampler.get_grid(np.array(5.0))
+
+        self.assertEqual(grid.shape, (5, 3))
+        self.assertEqual(grid_description["n_samples"], 5)
+
+    def test_get_grid_rejects_invalid_density(self):
+        sampler = SphericalFibonacciSampler()
+
+        for grid_density_parameter in (0, -1, 2.5, True, [3]):
+            with self.subTest(grid_density_parameter=grid_density_parameter):
+                with self.assertRaises(ValueError):
+                    sampler.get_grid(grid_density_parameter)
 
 
 class TestHopfConversion(unittest.TestCase):
