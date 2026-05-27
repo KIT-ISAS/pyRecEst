@@ -147,6 +147,10 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=-0.1)
         with self.assertRaises(ValueError):
+            run_so3_product_sequence_filter(
+                measurements, noise_std=0.1, num_particles=1.5
+            )
+        with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.1, max_noise_std=-0.5)
         with self.assertRaises(ValueError):
             run_so3_product_sequence_filter(measurements, noise_std=0.5, max_noise_std=0.1)
@@ -168,6 +172,8 @@ class SO3ProductSequenceFilterTest(unittest.TestCase):
     def test_runner_validates_configuration_at_construction(self):
         invalid_kwargs = [
             {"noise_std": 0.1, "num_particles": 0},
+            {"noise_std": 0.1, "num_particles": 1.5},
+            {"noise_std": 0.1, "num_particles": True},
             {"noise_std": 0.1, "resample_threshold": -0.5},
             {"noise_std": 0.1, "proposal_gain": -0.2},
             {"noise_std": 0.1, "initial_noise_std": -0.01},

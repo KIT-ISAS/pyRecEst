@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from operator import index as operator_index
 from typing import Any
 
 import numpy as np
@@ -229,6 +230,18 @@ def _threshold_value(resample_threshold: float, num_particles: int) -> float:
     return threshold
 
 
+def _validate_positive_integer(name: str, value) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer.")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer.") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be positive.")
+    return value
+
+
 def _validate_nonnegative_finite(name: str, value: float) -> float:
     value = float(value)
     if not np.isfinite(value) or value < 0.0:
@@ -300,9 +313,7 @@ class SO3ProductSequenceFilterRunner:
     ) -> None:
         if transition_callback is not None and not callable(transition_callback):
             raise ValueError("transition_callback must be callable or None.")
-        num_particles = int(num_particles)
-        if num_particles <= 0:
-            raise ValueError("num_particles must be positive.")
+        num_particles = _validate_positive_integer("num_particles", num_particles)
         noise_std = _validate_positive_finite("noise_std", noise_std)
         max_noise_std = _validate_positive_finite("max_noise_std", max_noise_std)
         if max_noise_std is not None and noise_std is None:
@@ -406,8 +417,7 @@ def run_so3_product_sequence_filter(
     n_steps, num_rotations = int(measurements.shape[0]), int(measurements.shape[1])
     if transition_callback is not None and not callable(transition_callback):
         raise ValueError("transition_callback must be callable or None.")
-    if int(num_particles) <= 0:
-        raise ValueError("num_particles must be positive.")
+    num_particles = _validate_positive_integer("num_particles", num_particles)
     noise_std = _validate_positive_finite("noise_std", noise_std)
     max_noise_std = _validate_positive_finite("max_noise_std", max_noise_std)
     confidence_exponent = _validate_positive_finite(
@@ -438,7 +448,7 @@ def run_so3_product_sequence_filter(
     filter_state, resolved_partition, is_block_filter = _make_filter_state(
         measurements,
         mask,
-        int(num_particles),
+        num_particles,
         noise_std,
         partition,
         initial_particles,
@@ -451,7 +461,7 @@ def run_so3_product_sequence_filter(
     resampling_flags = []
     particle_spread = []
     block_ess_history = []
-    threshold = _threshold_value(resample_threshold, int(num_particles))
+    threshold = _threshold_value(resample_threshold, num_particles)
 
     for time_index in range(n_steps):
         if time_index > 0 and transition_callback is not None:
@@ -498,7 +508,7 @@ def run_so3_product_sequence_filter(
         resampling_flags.append(bool(resampled))
 
     metadata = {
-        "num_particles": int(num_particles),
+        "num_particles": num_particles,
         "partition": resolved_partition,
         "particle_spread_unit": "rad",
     }
