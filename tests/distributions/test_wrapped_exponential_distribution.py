@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -84,6 +85,17 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         self.assertEqual(s.shape, (n,))
         self.assertTrue((s >= 0).all())
         self.assertTrue((s < 2.0 * pi).all())
+
+    def test_sample_accepts_integer_like_count(self):
+        samples = self.we.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4,))
+
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    self.we.sample(n)
 
 
 if __name__ == "__main__":
