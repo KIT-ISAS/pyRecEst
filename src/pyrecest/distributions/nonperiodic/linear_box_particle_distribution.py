@@ -2,6 +2,7 @@
 
 import copy
 import warnings
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
@@ -168,7 +169,7 @@ class LinearBoxParticleDistribution(AbstractLinearDistribution):
 
     def sample(self, n: Union[int, int32, int64]):
         """Draw point samples from the represented box mixture."""
-        n = int(n)
+        n = self._validate_particle_count(n)
         indices = random.choice(arange(self.w.shape[0]), n, p=self.w)
         lower = self.lower[indices]
         upper = self.upper[indices]
@@ -295,16 +296,27 @@ class LinearBoxParticleDistribution(AbstractLinearDistribution):
                 "LinearBoxParticleDistribution.from_distribution requires "
                 "n_particles, n_samples, or n."
             )
-        particle_counts = [int(value) for value in specified_counts]
+        particle_counts = [
+            LinearBoxParticleDistribution._validate_particle_count(value)
+            for value in specified_counts
+        ]
         if len(set(particle_counts)) != 1:
             raise ValueError(
                 "n_particles, n_samples, and n must agree when more than one "
                 "particle-count alias is supplied."
             )
         particle_count = particle_counts[0]
-        if particle_count <= 0:
-            raise ValueError("Number of particles must be positive.")
         return particle_count
+
+    @staticmethod
+    def _validate_particle_count(value):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, Integral)
+            or int(value) <= 0
+        ):
+            raise ValueError("Number of particles must be a positive integer.")
+        return int(value)
 
     @staticmethod
     def _coerce_half_width(box_half_width, dim):
