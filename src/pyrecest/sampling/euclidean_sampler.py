@@ -16,6 +16,12 @@ class AbstractEuclideanSampler(AbstractSampler):
 
 class GaussianSampler(AbstractEuclideanSampler):
     def sample_stochastic(self, n_samples: int, dim: int):
+        n_samples = _validate_integral_argument(n_samples, "n_samples")
+        dim = _validate_integral_argument(dim, "dim")
+        if n_samples < 0:
+            raise ValueError("n_samples must be nonnegative")
+        if dim < 1:
+            raise ValueError("dim must be positive")
         return GaussianDistribution(zeros(dim), eye(dim)).sample(n_samples)
 
 
@@ -89,15 +95,14 @@ class FibonacciRejectionSampler(AbstractEuclideanSampler):
     def _validate_rejection_args(n_candidates, dim, max_density, bounding_box):
         n_candidates = _validate_integral_argument(n_candidates, "n_candidates")
         dim = _validate_integral_argument(dim, "dim")
-        max_density = float(max_density)
+        max_density = _validate_positive_finite_scalar_argument(
+            max_density, "max_density"
+        )
 
         if n_candidates < 0:
             raise ValueError("n_candidates must be nonnegative")
         if dim < 1:
             raise ValueError("dim must be positive")
-        if not np.isfinite(max_density) or max_density <= 0:
-            raise ValueError("max_density must be positive and finite")
-
         if bounding_box is None:
             bounding_box = np.column_stack((np.zeros(dim), np.ones(dim)))
         else:
@@ -229,6 +234,26 @@ def _validate_integral_argument(value, name: str) -> int:
             return int(float_value)
 
     raise ValueError(f"{name} must be an integer")
+
+
+def _validate_positive_finite_scalar_argument(value, name: str) -> float:
+    """Return a positive finite scalar float without accepting bools or vectors."""
+    try:
+        array_value = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive finite scalar") from exc
+
+    if array_value.ndim != 0:
+        raise ValueError(f"{name} must be a positive finite scalar")
+    if np.issubdtype(array_value.dtype, np.bool_):
+        raise ValueError(f"{name} must be a positive finite scalar")
+    try:
+        float_value = float(array_value.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a positive finite scalar") from exc
+    if not np.isfinite(float_value) or float_value <= 0.0:
+        raise ValueError(f"{name} must be a positive finite scalar")
+    return float_value
 
 
 def _validate_gaussian_transform_args(d, covariance, mean):

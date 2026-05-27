@@ -54,6 +54,29 @@ class TestGaussianSampler(unittest.TestCase):
             _, p_value = shapiro(self.samples[:, i])
             self.assertGreater(p_value, 0.05)
 
+    def test_sample_stochastic_validates_integer_arguments(self):
+        invalid_cases = (
+            {"n_samples": -1, "dim": 2, "message": "n_samples"},
+            {"n_samples": 1.5, "dim": 2, "message": "n_samples"},
+            {"n_samples": True, "dim": 2, "message": "n_samples"},
+            {"n_samples": np.array([2]), "dim": 2, "message": "n_samples"},
+            {"n_samples": 2, "dim": 0, "message": "dim"},
+            {"n_samples": 2, "dim": 1.5, "message": "dim"},
+            {"n_samples": 2, "dim": True, "message": "dim"},
+        )
+
+        for case in invalid_cases:
+            kwargs = dict(case)
+            message = kwargs.pop("message")
+            with self.subTest(case=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    self.sampler.sample_stochastic(**kwargs)
+
+    def test_sample_stochastic_accepts_integer_like_scalar_arguments(self):
+        samples = self.sampler.sample_stochastic(np.float64(3.0), np.array(2))
+
+        self.assertEqual(samples.shape, (3, 2))
+
 
 class TestFibonacciGridSampler(unittest.TestCase):
     def setUp(self):
@@ -295,6 +318,18 @@ class TestFibonacciRejectionSampler(unittest.TestCase):
                 dim=1,
                 max_density=0.5,
             )
+
+    def test_rejection_sampler_rejects_invalid_max_density(self):
+        invalid_values = (0.0, -1.0, np.nan, np.inf, True, np.array([1.0]))
+        for max_density in invalid_values:
+            with self.subTest(max_density=max_density):
+                with self.assertRaisesRegex(ValueError, "max_density"):
+                    self.sampler.sample_rejection(
+                        lambda xs: np.ones(xs.shape[0]),
+                        n_candidates=4,
+                        dim=1,
+                        max_density=max_density,
+                    )
 
     def test_invalid_bounding_box(self):
         """Bounding boxes need one lower and one upper value per dimension."""
