@@ -222,6 +222,14 @@ class SO3ProductDiracDistributionTest(unittest.TestCase):
         npt.assert_allclose(linalg.norm(single_sample, axis=-1), ones((1, 2)))
         npt.assert_allclose(sum(dist.w), 1.0)
 
+    def test_sampling_rejects_invalid_count(self):
+        dist = SO3ProductDiracDistribution(array([[self.identity, self.z_ninety]]))
+
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    dist.sample(n)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,6 +2,7 @@
 
 # pylint: disable=no-name-in-module,no-member,arguments-renamed
 from math import prod
+from numbers import Integral
 
 from pyrecest.backend import (
     abs,
@@ -155,9 +156,12 @@ class SO3ProductDiracDistribution(HyperhemisphereCartProdDiracDistribution):
         return self.as_flat_array()
 
     def sample(self, n):
-        indices = random.choice(arange(self.d.shape[0]), n, p=self.w)
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        sample_count = int(n)
+        indices = random.choice(arange(self.d.shape[0]), sample_count, p=self.w)
         samples = self.d[indices]
-        if int(n) == 1 and samples.shape == (self.num_rotations, 4):
+        if sample_count == 1 and samples.shape == (self.num_rotations, 4):
             return reshape(samples, (1, self.num_rotations, 4))
         return samples
 
