@@ -48,6 +48,71 @@ __all__ = [
 ]
 
 
+def _as_scalar_float(value: Any, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
+        raise ValueError(f"{name} must be a scalar number")
+    try:
+        scalar = float(value_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a scalar number") from exc
+    if not np.isfinite(scalar):
+        raise ValueError(f"{name} must be finite")
+    return scalar
+
+
+def _as_nonnegative_float(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if scalar < 0.0:
+        raise ValueError(f"{name} must be nonnegative")
+    return scalar
+
+
+def _as_positive_float(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if scalar <= 0.0:
+        raise ValueError(f"{name} must be positive")
+    return scalar
+
+
+def _as_integer(value: Any, name: str) -> int:
+    scalar = _as_scalar_float(value, name)
+    if not scalar.is_integer():
+        raise ValueError(f"{name} must be an integer")
+    return int(scalar)
+
+
+def _as_positive_integer(value: Any, name: str) -> int:
+    integer = _as_integer(value, name)
+    if integer <= 0:
+        raise ValueError(f"{name} must be positive")
+    return integer
+
+
+def _as_nonnegative_integer(value: Any, name: str) -> int:
+    integer = _as_integer(value, name)
+    if integer < 0:
+        raise ValueError(f"{name} must be non-negative")
+    return integer
+
+
+def _as_nonnegative_vector(value: Any, length: int, name: str) -> np.ndarray:
+    raw_value_array = np.asarray(value)
+    if np.issubdtype(raw_value_array.dtype, np.bool_):
+        raise ValueError(f"{name} must be numeric")
+    try:
+        value_array = np.asarray(value, dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be numeric") from exc
+    if value_array.shape == ():
+        return np.repeat(_as_nonnegative_float(value_array, name), length)
+    if value_array.shape != (length,):
+        raise ValueError(f"{name} must be scalar or have shape (spatial_dim,)")
+    if not np.all(np.isfinite(value_array)) or np.any(value_array < 0.0):
+        raise ValueError(f"{name} must be finite and nonnegative")
+    return value_array
+
+
 def kinematic_transition_matrix(
     dt: float, spatial_dim: int = 2, derivative_order: int = 1
 ):
@@ -60,22 +125,20 @@ def kinematic_transition_matrix(
     ``[x, y, vx, vy]`` for 2D constant velocity and
     ``[x, y, vx, vy, ax, ay]`` for 2D constant acceleration.
     """
-    if int(spatial_dim) <= 0:
-        raise ValueError("spatial_dim must be positive")
-    if int(derivative_order) < 0:
-        raise ValueError("derivative_order must be non-negative")
-    dt = float(dt)
-    block_size = int(derivative_order) + 1
-    size = int(spatial_dim) * block_size
+    dt = _as_scalar_float(dt, "dt")
+    spatial_dim = _as_positive_integer(spatial_dim, "spatial_dim")
+    derivative_order = _as_nonnegative_integer(derivative_order, "derivative_order")
+    block_size = derivative_order + 1
+    size = spatial_dim * block_size
     matrix = np.eye(size, dtype=float)
     for derivative_row in range(block_size):
         for derivative_col in range(derivative_row + 1, block_size):
             power = derivative_col - derivative_row
             coefficient = dt**power / float(factorial(power))
-            for axis in range(int(spatial_dim)):
+            for axis in range(spatial_dim):
                 matrix[
-                    _state_index(derivative_row, axis, int(spatial_dim)),
-                    _state_index(derivative_col, axis, int(spatial_dim)),
+                    _state_index(derivative_row, axis, spatial_dim),
+                    _state_index(derivative_col, axis, spatial_dim),
                 ] = coefficient
     return asarray(matrix)
 
@@ -113,21 +176,17 @@ def integrated_white_noise_covariance(
     ``derivative_order=2`` is the white-noise-jerk covariance for a
     constant-acceleration state.
     """
-    if int(spatial_dim) <= 0:
-        raise ValueError("spatial_dim must be positive")
-    if int(derivative_order) < 0:
-        raise ValueError("derivative_order must be non-negative")
-    dt = float(dt)
-    block_size = int(derivative_order) + 1
-    spectral_density_array = np.asarray(spectral_density, dtype=float)
-    if spectral_density_array.ndim == 0:
-        densities = np.repeat(float(spectral_density_array), int(spatial_dim))
-    elif spectral_density_array.shape == (int(spatial_dim),):
-        densities = spectral_density_array
-    else:
-        raise ValueError("spectral_density must be scalar or have shape (spatial_dim,)")
+    dt = _as_nonnegative_float(dt, "dt")
+    spatial_dim = _as_positive_integer(spatial_dim, "spatial_dim")
+    derivative_order = _as_nonnegative_integer(derivative_order, "derivative_order")
+    block_size = derivative_order + 1
+    densities = _as_nonnegative_vector(
+        spectral_density,
+        spatial_dim,
+        "spectral_density",
+    )
 
-    size = int(spatial_dim) * block_size
+    size = spatial_dim * block_size
     covariance = np.zeros((size, size), dtype=float)
     for derivative_row in range(block_size):
         for derivative_col in range(block_size):
@@ -140,11 +199,9 @@ def integrated_white_noise_covariance(
             coefficient = dt**exponent / float(denominator)
             for axis, density in enumerate(densities):
                 covariance[
-                    _state_index(derivative_row, axis, int(spatial_dim)),
-                    _state_index(derivative_col, axis, int(spatial_dim)),
-                ] = (
-                    float(density) * coefficient
-                )
+                    _state_index(derivative_row, axis, spatial_dim),
+                    _state_index(derivative_col, axis, spatial_dim),
+                ] = float(density) * coefficient
     return asarray(covariance)
 
 
@@ -238,8 +295,11 @@ def continuous_to_discrete_lti(
         or continuous_matrix_np.shape[0] != continuous_matrix_np.shape[1]
     ):
         raise ValueError("continuous_matrix must be square")
+    if not np.all(np.isfinite(continuous_matrix_np)):
+        raise ValueError("continuous_matrix must contain only finite values")
     dim = continuous_matrix_np.shape[0]
-    transition = expm(continuous_matrix_np * float(dt))
+    dt = _as_scalar_float(dt, "dt")
+    transition = expm(continuous_matrix_np * dt)
 
     if noise_input_matrix is None and continuous_noise_covariance is None:
         return asarray(transition), zeros((dim, dim))
@@ -252,19 +312,23 @@ def continuous_to_discrete_lti(
     continuous_noise_np = np.asarray(continuous_noise_covariance, dtype=float)
     if noise_input_np.ndim != 2 or noise_input_np.shape[0] != dim:
         raise ValueError("noise_input_matrix has incompatible shape")
+    if not np.all(np.isfinite(noise_input_np)):
+        raise ValueError("noise_input_matrix must contain only finite values")
     if (
         continuous_noise_np.ndim != 2
         or continuous_noise_np.shape[0] != continuous_noise_np.shape[1]
         or continuous_noise_np.shape[0] != noise_input_np.shape[1]
     ):
         raise ValueError("continuous_noise_covariance has incompatible shape")
+    if not np.all(np.isfinite(continuous_noise_np)):
+        raise ValueError("continuous_noise_covariance must contain only finite values")
 
     spectral = noise_input_np @ continuous_noise_np @ noise_input_np.T
     van_loan = np.zeros((2 * dim, 2 * dim), dtype=float)
     van_loan[:dim, :dim] = -continuous_matrix_np
     van_loan[:dim, dim:] = spectral
     van_loan[dim:, dim:] = continuous_matrix_np.T
-    van_loan_exp = expm(van_loan * float(dt))
+    van_loan_exp = expm(van_loan * dt)
     transition_from_van_loan = van_loan_exp[dim:, dim:].T
     process_noise = transition_from_van_loan @ van_loan_exp[:dim, dim:]
     return asarray(transition), asarray(0.5 * (process_noise + process_noise.T))
@@ -272,25 +336,26 @@ def continuous_to_discrete_lti(
 
 def singer_transition_matrix(dt: float, spatial_dim: int = 2, tau: float = 20.0):
     """Return a Singer acceleration transition matrix for ``[p, v, a]`` states."""
-    if float(tau) <= 0.0:
-        raise ValueError("tau must be positive")
-    alpha = 1.0 / float(tau)
-    decay = np.exp(-alpha * float(dt))
+    dt = _as_scalar_float(dt, "dt")
+    spatial_dim = _as_positive_integer(spatial_dim, "spatial_dim")
+    tau = _as_positive_float(tau, "tau")
+    alpha = 1.0 / tau
+    decay = np.exp(-alpha * dt)
     block = np.array(
         [
-            [1.0, float(dt), float(dt) / alpha - (1.0 - decay) / alpha**2],
+            [1.0, dt, dt / alpha - (1.0 - decay) / alpha**2],
             [0.0, 1.0, (1.0 - decay) / alpha],
             [0.0, 0.0, decay],
         ],
         dtype=float,
     )
-    matrix = np.zeros((3 * int(spatial_dim), 3 * int(spatial_dim)), dtype=float)
+    matrix = np.zeros((3 * spatial_dim, 3 * spatial_dim), dtype=float)
     for row_derivative in range(3):
         for col_derivative in range(3):
-            for axis in range(int(spatial_dim)):
+            for axis in range(spatial_dim):
                 matrix[
-                    _state_index(row_derivative, axis, int(spatial_dim)),
-                    _state_index(col_derivative, axis, int(spatial_dim)),
+                    _state_index(row_derivative, axis, spatial_dim),
+                    _state_index(col_derivative, axis, spatial_dim),
                 ] = block[row_derivative, col_derivative]
     return asarray(matrix)
 
@@ -302,25 +367,22 @@ def singer_process_noise_covariance(
     acceleration_variance: float | np.ndarray = 1.0,
 ):
     """Return Singer process noise covariance via Van Loan discretization."""
-    if float(tau) <= 0.0:
-        raise ValueError("tau must be positive")
-    alpha = 1.0 / float(tau)
-    acceleration_variance_array = np.asarray(acceleration_variance, dtype=float)
-    if acceleration_variance_array.ndim == 0:
-        variances = np.repeat(float(acceleration_variance_array), int(spatial_dim))
-    elif acceleration_variance_array.shape == (int(spatial_dim),):
-        variances = acceleration_variance_array
-    else:
-        raise ValueError(
-            "acceleration_variance must be scalar or have shape (spatial_dim,)"
-        )
+    dt = _as_nonnegative_float(dt, "dt")
+    spatial_dim = _as_positive_integer(spatial_dim, "spatial_dim")
+    tau = _as_positive_float(tau, "tau")
+    alpha = 1.0 / tau
+    variances = _as_nonnegative_vector(
+        acceleration_variance,
+        spatial_dim,
+        "acceleration_variance",
+    )
 
     continuous_block = np.array(
         [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, -alpha]],
         dtype=float,
     )
     noise_input = np.array([[0.0], [0.0], [1.0]], dtype=float)
-    covariance = np.zeros((3 * int(spatial_dim), 3 * int(spatial_dim)), dtype=float)
+    covariance = np.zeros((3 * spatial_dim, 3 * spatial_dim), dtype=float)
     for axis, variance in enumerate(variances):
         _, q_block = continuous_to_discrete_lti(
             continuous_block,
@@ -332,8 +394,8 @@ def singer_process_noise_covariance(
         for row_derivative in range(3):
             for col_derivative in range(3):
                 covariance[
-                    _state_index(row_derivative, axis, int(spatial_dim)),
-                    _state_index(col_derivative, axis, int(spatial_dim)),
+                    _state_index(row_derivative, axis, spatial_dim),
+                    _state_index(col_derivative, axis, spatial_dim),
                 ] = q_block_np[row_derivative, col_derivative]
     return asarray(covariance)
 
