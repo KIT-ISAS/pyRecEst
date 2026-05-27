@@ -4,7 +4,6 @@ from math import ceil
 
 # pylint: disable=no-name-in-module,no-member
 import numpy as np
-
 from pyrecest import backend
 from pyrecest.backend import (
     arange,
@@ -80,9 +79,7 @@ def _normalize_fibonacci_hopf_grid_density_parameter(grid_density_parameter):
         )
 
     return [
-        _validate_positive_integral_scalar(
-            value, f"grid_density_parameter[{index}]"
-        )
+        _validate_positive_integral_scalar(value, f"grid_density_parameter[{index}]")
         for index, value in enumerate(grid_density_values)
     ]
 

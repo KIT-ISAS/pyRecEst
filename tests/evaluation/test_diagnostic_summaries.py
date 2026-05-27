@@ -2,7 +2,6 @@ import math
 import unittest
 
 import numpy as np
-
 from pyrecest.evaluation.diagnostic_summaries import (
     build_diagnostic_summary,
     covariance_inflation_summary,
