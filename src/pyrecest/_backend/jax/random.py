@@ -50,17 +50,32 @@ def _get_state(**kwargs):
     return state, has_state, kwargs
 
 
+def _looks_like_integer_dimension(value):
+    return isinstance(value, (int, _np.integer)) and not isinstance(value, (bool, _np.bool_))
+
+
+def _size_type_error():
+    return TypeError("size must be None, an integer, or a sequence of integers")
+
+
+def _integer_dimension(value):
+    if not _looks_like_integer_dimension(value):
+        raise _size_type_error()
+    value = int(value)
+    if value < 0:
+        raise ValueError("size dimensions must be non-negative")
+    return value
+
+
 def _shape_from_size(size):
     """Convert a NumPy-style ``size`` argument to JAX's shape argument."""
     if size is None:
         return ()
-    if hasattr(size, "__iter__"):
-        return tuple(int(dim) for dim in size)
-    return (int(size),)
-
-
-def _looks_like_integer_dimension(value):
-    return isinstance(value, (int, _np.integer))
+    if _looks_like_integer_dimension(size):
+        return (_integer_dimension(size),)
+    if isinstance(size, (str, bytes)) or not hasattr(size, "__iter__"):
+        raise _size_type_error()
+    return tuple(_integer_dimension(dim) for dim in size)
 
 
 def _looks_like_shape(value):
