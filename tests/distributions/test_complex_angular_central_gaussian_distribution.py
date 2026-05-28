@@ -47,6 +47,16 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
         with self.assertRaises(AssertionError):
             ComplexAngularCentralGaussianDistribution(C_bad)
 
+    def test_constructor_rejects_non_positive_definite_matrix(self):
+        """Hermitian parameter matrices must be positive definite."""
+        invalid_matrices = [
+            array([[1.0 + 0j, 0.0 + 0j], [0.0 + 0j, 0.0 + 0j]]),
+            array([[1.0 + 0j, 0.0 + 0j], [0.0 + 0j, -1.0 + 0j]]),
+        ]
+        for C_bad in invalid_matrices:
+            with self.subTest(C=C_bad), self.assertRaises(AssertionError):
+                ComplexAngularCentralGaussianDistribution(C_bad)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on JAX backend",

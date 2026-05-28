@@ -2,6 +2,7 @@
 import numpy as np
 from pyrecest.backend import (
     abs,
+    all as backend_all,
     allclose,
     array,
     complex128,
@@ -18,6 +19,14 @@ from pyrecest.backend import (
     sum,
     transpose,
 )
+
+def _to_python_bool(value):
+    """Convert scalar backend boolean values to Python ``bool``."""
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
 
 
 def _validate_positive_sample_count(n) -> int:
@@ -61,7 +70,12 @@ class ComplexAngularCentralGaussianDistribution:
         C : array-like of shape (d, d)
             Hermitian positive definite parameter matrix.
         """
-        assert allclose(C, conj(transpose(C))), "C must be Hermitian"
+        C = array(C)
+        assert C.ndim == 2 and C.shape[0] == C.shape[1], "C must be a square matrix"
+        assert _to_python_bool(allclose(C, conj(transpose(C)))), "C must be Hermitian"
+        assert _to_python_bool(
+            backend_all(linalg.eigvalsh(C) > 0.0)
+        ), "C must be positive definite"
         self.C = C
         self.dim = C.shape[0]
 
