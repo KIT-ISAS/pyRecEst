@@ -52,6 +52,12 @@ class WrappedNormalDistributionTest(unittest.TestCase):
             )
         )
 
+    def test_constructor_rejects_invalid_sigma(self):
+        for sigma in (-1.0, 0.0, float("nan"), float("inf")):
+            with self.subTest(sigma=sigma):
+                with self.assertRaisesRegex(ValueError, "positive finite scalar"):
+                    WrappedNormalDistribution(array(0.0), array(sigma))
+
     def test_pdf_is_periodic_when_central_term_underflows(self):
         """The pdf must still add wrapped terms near the 0 / 2π boundary."""
         wn = WrappedNormalDistribution(array(0.0), array(0.1))

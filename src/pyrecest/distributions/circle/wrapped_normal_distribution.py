@@ -62,9 +62,12 @@ class WrappedNormalDistribution(
             raise ValueError(f"mu must be a scalar, but got shape {mu.shape}.")
         if ndim(sigma) > 1 or (ndim(sigma) == 1 and sigma.shape[0] != 1):
             raise ValueError(f"sigma must be a scalar, but got shape {sigma.shape}.")
+        sigma_scalar = squeeze(sigma)
+        if not bool(isfinite(sigma_scalar)) or not bool(sigma_scalar > 0):
+            raise ValueError(f"sigma must be a positive finite scalar, got {sigma}.")
         AbstractCircularDistribution.__init__(self)
         HypertoroidalWrappedNormalDistribution.__init__(
-            self, squeeze(mu), squeeze(sigma) ** 2
+            self, squeeze(mu), sigma_scalar**2
         )
 
     @property
