@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from pyrecest.scenarios import available_scenario_types, run_scenario
 
 

@@ -1,7 +1,6 @@
 from math import isclose, log
 
 import pytest
-
 from pyrecest.diagnostics import (
     AssociationDiagnostics,
     FilterDiagnostics,

@@ -2,7 +2,9 @@
 import numpy as np
 from pyrecest.backend import (
     abs,
-    all as backend_all,
+)
+from pyrecest.backend import all as backend_all
+from pyrecest.backend import (
     allclose,
     array,
     complex128,
@@ -19,6 +21,7 @@ from pyrecest.backend import (
     sum,
     transpose,
 )
+
 
 def _to_python_bool(value):
     """Convert scalar backend boolean values to Python ``bool``."""

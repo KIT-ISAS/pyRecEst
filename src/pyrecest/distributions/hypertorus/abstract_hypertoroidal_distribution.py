@@ -11,7 +11,9 @@ import pyrecest.backend
 from pyrecest.backend import (
     abs,
     angle,
-    any as backend_any,
+)
+from pyrecest.backend import any as backend_any
+from pyrecest.backend import (
     arange,
     array,
     atleast_2d,
