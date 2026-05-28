@@ -15,6 +15,34 @@ class TestEllipsoidalBallUniformDistribution(unittest.TestCase):
         )
         npt.assert_allclose(dist.pdf(array([0.0, 0.0, 0.0])), 1 / 100.53096491)
 
+    def test_pdf_accepts_scalar_and_list_inputs_for_one_dimensional_ball(self):
+        dist = EllipsoidalBallUniformDistribution(array([0.0]), diag(array([1.0])))
+
+        scalar_pdf = dist.pdf(0.0)
+        list_pdf = dist.pdf([0.0, 0.5, 2.0])
+        array_pdf = dist.pdf(array([0.0, 0.5, 2.0]))
+
+        npt.assert_allclose(scalar_pdf, array_pdf[0])
+        npt.assert_allclose(list_pdf, array_pdf)
+        npt.assert_allclose(array_pdf[-1], 0.0)
+
+    def test_pdf_accepts_list_inputs_for_multidimensional_ball(self):
+        dist = EllipsoidalBallUniformDistribution(array([0.0, 0.0]), diag(array([1.0, 1.0])))
+
+        single_pdf = dist.pdf([0.0, 0.0])
+        batch_pdf = dist.pdf([[0.0, 0.0], [2.0, 0.0]])
+        array_pdf = dist.pdf(array([[0.0, 0.0], [2.0, 0.0]]))
+
+        npt.assert_allclose(single_pdf, array_pdf[0])
+        npt.assert_allclose(batch_pdf, array_pdf)
+        npt.assert_allclose(batch_pdf[-1], 0.0)
+
+    def test_pdf_rejects_wrong_point_dimension(self):
+        dist = EllipsoidalBallUniformDistribution(array([0.0, 0.0]), diag(array([1.0, 1.0])))
+
+        with self.assertRaisesRegex(ValueError, "Point dimension"):
+            dist.pdf([0.0, 0.0, 0.0])
+
     def test_mean_and_covariance(self):
         center = array([2.0, 3.0])
         shape_matrix = array([[4.0, 3.0], [3.0, 9.0]])
