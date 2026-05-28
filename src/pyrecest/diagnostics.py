@@ -32,6 +32,15 @@ def _coerce_numeric_values(values: Any) -> list[float]:
     """Return a flat list of finite-compatible numeric values."""
     if values is None:
         return []
+    if isinstance(values, bool | int | float):
+        return [float(values)]
+    if isinstance(values, str | bytes):
+        return []
+    if isinstance(values, list | tuple):
+        out: list[float] = []
+        for value in values:
+            out.extend(_coerce_numeric_values(value))
+        return out
     try:
         from pyrecest.backend import to_numpy
 
@@ -63,6 +72,15 @@ def _coerce_bool_values(values: Any) -> list[bool]:
     """Return a flat list of Boolean values."""
     if values is None:
         return []
+    if isinstance(values, bool | int | float):
+        return [bool(values)]
+    if isinstance(values, str | bytes):
+        return []
+    if isinstance(values, list | tuple):
+        out: list[bool] = []
+        for value in values:
+            out.extend(_coerce_bool_values(value))
+        return out
     try:
         from pyrecest.backend import to_numpy
 
