@@ -39,12 +39,13 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
         dist2 = MardiaSuttonDistribution(
             self.mu,
             self.mu0 + 2.0 * float(pi),
-            self.kappa,
+            np.int64(1),
             self.rho1,
             self.rho2,
             self.sigma,
         )
         npt.assert_allclose(dist2.mu0, self.dist.mu0, atol=1e-10)
+        npt.assert_allclose(dist2.kappa, 1.0)
 
     def test_pdf_positive(self):
         xs = array([[0.0, 0.0], [1.0, 2.0], [3.0, -1.0]])
@@ -143,20 +144,28 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
                     self.dist.sample(n)
 
     def test_invalid_kappa(self):
-        with self.assertRaises(AssertionError):
-            MardiaSuttonDistribution(
-                self.mu, self.mu0, 0.0, self.rho1, self.rho2, self.sigma
-            )
+        for kappa in (True, 0.0, -1.0, float("nan"), float("inf")):
+            with self.subTest(kappa=kappa), self.assertRaisesRegex(
+                ValueError, "kappa"
+            ):
+                MardiaSuttonDistribution(
+                    self.mu, self.mu0, kappa, self.rho1, self.rho2, self.sigma
+                )
 
     def test_invalid_rho(self):
-        with self.assertRaises(AssertionError):
-            MardiaSuttonDistribution(
-                self.mu, self.mu0, self.kappa, 0.8, 0.8, self.sigma
-            )
+        for rho1, rho2 in ((0.8, 0.8), (float("nan"), 0.0), (float("inf"), 0.0)):
+            with self.subTest(rho1=rho1, rho2=rho2), self.assertRaisesRegex(
+                ValueError, "rho"
+            ):
+                MardiaSuttonDistribution(
+                    self.mu, self.mu0, self.kappa, rho1, rho2, self.sigma
+                )
 
     def test_invalid_sigma(self):
-        for sigma in (0.0, -1.0, float("nan"), float("inf")):
-            with self.subTest(sigma=sigma), self.assertRaises(AssertionError):
+        for sigma in (True, 0.0, -1.0, float("nan"), float("inf")):
+            with self.subTest(sigma=sigma), self.assertRaisesRegex(
+                ValueError, "sigma"
+            ):
                 MardiaSuttonDistribution(
                     self.mu, self.mu0, self.kappa, self.rho1, self.rho2, sigma
                 )
