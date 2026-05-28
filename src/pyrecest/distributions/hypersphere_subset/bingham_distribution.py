@@ -36,6 +36,28 @@ def _cache_key(values):
     return tuple(float(value) for value in _as_numpy_vector(values))
 
 
+def _validate_positive_sample_count(n) -> int:
+    count_array = _np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, _np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not _np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
+
+
 @lru_cache(maxsize=4096)
 def _calculate_F_and_dF_cached(Z_key):
     Z = _np.asarray(Z_key, dtype=float)
@@ -223,6 +245,7 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         return BinghamDistribution(Z_, M_)
 
     def sample(self, n):
+        n = _validate_positive_sample_count(n)
         return self.sample_metropolis_hastings(n)
 
     @property
