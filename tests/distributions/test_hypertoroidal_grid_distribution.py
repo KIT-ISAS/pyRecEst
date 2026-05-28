@@ -142,9 +142,7 @@ class HypertoroidalGridDistributionTest(unittest.TestCase):
         for n_grid_points in invalid_resolutions:
             with self.subTest(n_grid_points=n_grid_points):
                 with self.assertRaisesRegex(ValueError, "positive integers"):
-                    HypertoroidalGridDistribution.from_distribution(
-                        dist, n_grid_points
-                    )
+                    HypertoroidalGridDistribution.from_distribution(dist, n_grid_points)
 
     def test_from_function_3D(self):
         random.seed(0)
