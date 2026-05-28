@@ -1,7 +1,7 @@
 import copy
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, reshape, zeros
+from pyrecest.backend import array, ndim, reshape, zeros
 
 from ..abstract_custom_nonperiodic_distribution import (
     AbstractCustomNonPeriodicDistribution,
@@ -47,6 +47,7 @@ class CustomLinearDistribution(
             self._mean_numerical = new_mean
 
     def pdf(self, xs):
+        xs = array(xs)
         assert self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
         p = self.scale_by * self.f(
             # To ensure 2-d for broadcasting
