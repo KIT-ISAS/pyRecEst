@@ -37,6 +37,16 @@ class CustomLinearDistributionTest(unittest.TestCase):
         npt.assert_allclose(cld.shift_by, array([2.0]))
         npt.assert_allclose(cld.pdf(array([3.0])), g.pdf(array([1.0])))
 
+    def test_pdf_accepts_scalar_input_for_univariate_distribution(self):
+        cld = CustomLinearDistribution(lambda xs: xs[:, 0] ** 2, 1)
+
+        npt.assert_allclose(cld.pdf(2.0), array([4.0]))
+
+    def test_pdf_accepts_list_input_for_multivariate_distribution(self):
+        cld = CustomLinearDistribution(lambda xs: xs[:, 0] + 2.0 * xs[:, 1], 2)
+
+        npt.assert_allclose(cld.pdf([1.0, 3.0]), array([7.0]))
+
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):
         x, y = meshgrid(
