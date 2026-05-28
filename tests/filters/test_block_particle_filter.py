@@ -75,6 +75,22 @@ class BlockParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.block_weights, ones((2, 2)) / 2)
         npt.assert_allclose(filt.weights, ones(2) / 2)
 
+    def test_rejects_nonfinite_weights(self):
+        particles = array([[0.0, 10.0], [1.0, 11.0]])
+
+        with self.assertRaises(ValueError):
+            DummyBlockParticleFilter(
+                particles,
+                partition="singleton",
+                weights=array([1.0, float("inf")]),
+            )
+        with self.assertRaises(ValueError):
+            DummyBlockParticleFilter(
+                particles,
+                partition="singleton",
+                block_weights=array([[1.0, float("inf")], [1.0, 0.0]]),
+            )
+
     def test_global_log_likelihood_updates_all_blocks(self):
         filt = DummyBlockParticleFilter(
             array([[0.0, 10.0], [1.0, 11.0]]),
