@@ -1,12 +1,23 @@
 import copy
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ndim, reshape, zeros
+from pyrecest.backend import array, ndim, reshape, zeros
 
 from ..abstract_custom_nonperiodic_distribution import (
     AbstractCustomNonPeriodicDistribution,
 )
 from .abstract_linear_distribution import AbstractLinearDistribution
+
+
+def _as_shift_vector(shift_by, dim: int, *, name: str = "shift_by"):
+    shift_by = array(shift_by)
+    if shift_by.ndim == 0:
+        if dim != 1:
+            raise ValueError(f"{name} must have shape ({dim},), got scalar.")
+        return reshape(shift_by, (1,))
+    if shift_by.ndim == 1 and shift_by.shape[0] == dim:
+        return shift_by
+    raise ValueError(f"{name} must have shape ({dim},), got {shift_by.shape}.")
 
 
 class CustomLinearDistribution(
@@ -30,24 +41,31 @@ class CustomLinearDistribution(
         AbstractLinearDistribution.__init__(self, dim=dim)
         AbstractCustomNonPeriodicDistribution.__init__(self, f, scale_by=scale_by)
         if shift_by is not None:
-            self.shift_by = shift_by
+            self.shift_by = _as_shift_vector(shift_by, dim)
         else:
             self.shift_by = zeros(dim)
 
     def shift(self, shift_by):
-        assert self.dim == 1 or self.dim == shift_by.shape[0] and shift_by.ndim == 1
+        shift_by = _as_shift_vector(shift_by, self.dim)
         cd = copy.deepcopy(self)
         cd.shift_by = self.shift_by + shift_by
         return cd
 
     def set_mean(self, new_mean):
+        new_mean = _as_shift_vector(new_mean, self.dim, name="new_mean")
         mean_offset = new_mean - self.mean()
         self.shift_by = self.shift_by + mean_offset
         if self._mean_numerical is not None:
             self._mean_numerical = new_mean
 
     def pdf(self, xs):
-        assert self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
+        xs = array(xs)
+        if xs.ndim == 0 and self.dim != 1:
+            raise ValueError(f"xs must have trailing dimension {self.dim}")
+        if xs.ndim != 0 and not (
+            self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
+        ):
+            raise ValueError(f"xs must have trailing dimension {self.dim}")
         p = self.scale_by * self.f(
             # To ensure 2-d for broadcasting
             reshape(xs, (-1, self.dim))

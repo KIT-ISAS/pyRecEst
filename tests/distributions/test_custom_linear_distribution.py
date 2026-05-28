@@ -37,6 +37,39 @@ class CustomLinearDistributionTest(unittest.TestCase):
         npt.assert_allclose(cld.shift_by, array([2.0]))
         npt.assert_allclose(cld.pdf(array([3.0])), g.pdf(array([1.0])))
 
+    def test_pdf_accepts_scalar_and_list_inputs(self):
+        cld = CustomLinearDistribution(
+            lambda xs: xs[:, 0] * 0.0 + 1.0, 1, shift_by=[0.2]
+        )
+
+        scalar_pdf = cld.pdf(0.3)
+        list_pdf = cld.pdf([0.3, 0.4])
+        array_pdf = cld.pdf(array([0.3, 0.4]))
+
+        self.assertEqual(scalar_pdf.shape, (1,))
+        npt.assert_allclose(list_pdf, array_pdf)
+
+    def test_pdf_accepts_multidimensional_list_inputs(self):
+        cld = CustomLinearDistribution(
+            lambda xs: xs[:, 0], 2, shift_by=[0.2, -0.1]
+        )
+
+        list_pdf = cld.pdf([[1.0, 2.0], [3.0, 4.0]])
+        array_pdf = cld.pdf(array([[1.0, 2.0], [3.0, 4.0]]))
+
+        npt.assert_allclose(list_pdf, array_pdf)
+
+    def test_constructor_rejects_wrong_shift_shape(self):
+        with self.assertRaisesRegex(ValueError, "shift_by"):
+            CustomLinearDistribution(lambda xs: xs[:, 0], 2, shift_by=[0.2])
+
+    def test_shift_accepts_list_offset(self):
+        cld = CustomLinearDistribution(lambda xs: xs[:, 0], 2)
+
+        shifted = cld.shift([0.2, -0.1])
+
+        npt.assert_allclose(shifted.shift_by, array([0.2, -0.1]))
+
     @staticmethod
     def verify_pdf_equal(dist1, dist2, tol):
         x, y = meshgrid(
