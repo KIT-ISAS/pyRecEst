@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, concatenate, diag, linalg, sum, tile
@@ -38,7 +40,17 @@ class SE3DiracDistributionTest(unittest.TestCase):
                 ),
             ]
         )
-        SE3DiracDistribution.from_distribution(cpsd, 100)
+        ddist = SE3DiracDistribution.from_distribution(cpsd, np.int64(3))
+        self.assertEqual(ddist.d.shape, (3, 7))
+        self.assertEqual(ddist.w.shape, (3,))
+
+        for n_particles in (True, 1.5, 0, -1):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    SE3DiracDistribution.from_distribution(cpsd, n_particles)
+
+        with self.assertRaises(TypeError):
+            SE3DiracDistribution.from_distribution("not a distribution", 3)
 
 
 if __name__ == "__main__":
