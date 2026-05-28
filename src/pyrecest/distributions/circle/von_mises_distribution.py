@@ -68,9 +68,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
             raise ValueError("n must be a positive integer.")
         n = int(n)
         return mod(
-            array(
-                vonmises.rvs(kappa=float(self.kappa), loc=float(self.mu), size=n)
-            ),
+            array(vonmises.rvs(kappa=float(self.kappa), loc=float(self.mu), size=n)),
             2.0 * pi,
         )
 

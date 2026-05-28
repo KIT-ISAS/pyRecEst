@@ -3,6 +3,7 @@ import copy
 import warnings
 from typing import Union
 
+import numpy as np
 import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -24,6 +25,28 @@ from .abstract_distribution_type import AbstractDistributionType
 from .abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
 )
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
 
 
 class AbstractMixture(AbstractDistributionType):
@@ -99,6 +122,7 @@ class AbstractMixture(AbstractDistributionType):
         return pyrecest.backend.atleast_2d(samples)
 
     def sample(self, n: Union[int, int32, int64]):
+        n = _validate_positive_sample_count(n)
         occurrences = random.multinomial(n, self.w)
         if pyrecest.backend.__backend_name__ == "jax":
             samples = []

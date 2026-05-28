@@ -1,6 +1,8 @@
 import copy
 from typing import Union
 
+import numpy as np
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -63,6 +65,28 @@ def _as_2d_query_points(xs, dim: int):
             f"{dim}, got shape {xs.shape}."
         )
     return reshape(xs, (-1, dim))
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
 
 
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
@@ -206,7 +230,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         Parameters:
             n (int): number of points to sample
         """
-        assert n > 0, "n must be positive"
+        n = _validate_positive_sample_count(n)
         s = random.multivariate_normal(mean=self.mu, cov=self.C, size=(n,))
         wrapped_values = mod(s[:, : self.bound_dim], 2.0 * pi)
         unbounded_values = s[:, self.bound_dim :]  # noqa: E203

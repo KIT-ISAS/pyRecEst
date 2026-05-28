@@ -217,7 +217,6 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             First row is periodic (angle), remaining rows are linear.
         """
         n = _validate_positive_sample_count(n)
-
         s_gauss = random.multivariate_normal(
             mean=self.mu, cov=self.P, size=n
         ).T  # (linD, n)
