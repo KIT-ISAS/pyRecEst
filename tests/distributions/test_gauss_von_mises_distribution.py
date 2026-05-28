@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 from pyrecest import backend
 from pyrecest.backend import (
     all,
@@ -104,6 +105,25 @@ class GaussVonMisesDistributionTest(unittest.TestCase):
             2.0 * float(pi),
         ) - float(pi)
         self.assertTrue(allclose(angle_error, zeros(expected_n - 3), atol=1e-10))
+
+    @unittest.skipIf(
+        backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_sample_accepts_integer_like_count(self):
+        """Scalar integer-like counts should be normalized before sampling."""
+        samples = self.g.sample(np.array(4.0))
+        self.assertEqual(samples.shape, (self.g.lin_dim + self.g.bound_dim, 4))
+
+    @unittest.skipIf(
+        backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        """Invalid counts should fail before backend random shape handling."""
+        for invalid_n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=invalid_n), self.assertRaises(ValueError):
+                self.g.sample(invalid_n)
 
     def test_hybrid_moment(self):
         hm = self.g.hybrid_moment()
