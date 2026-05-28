@@ -114,6 +114,19 @@ class HypersphericalDiracDistributionTest(unittest.TestCase):
         dot = float(axis @ v)
         assert abs(dot) > 1.0 - 1e-6
 
+    def test_mean_direction_rejects_symmetric_zero_resultant(self):
+        d = array(
+            [
+                [1.0, 0.0, 0.0],
+                [-1.0, 0.0, 0.0],
+            ]
+        )
+        dist = HypersphericalDiracDistribution(d, array([0.5, 0.5]))
+
+        with self.assertWarnsRegex(UserWarning, "Mean direction is undefined"):
+            with self.assertRaisesRegex(ValueError, "Mean direction is undefined"):
+                dist.mean_direction()
+
     def test_to_circular_dirac_distribution_uses_rowwise_s1_samples(self):
         d = array(
             [

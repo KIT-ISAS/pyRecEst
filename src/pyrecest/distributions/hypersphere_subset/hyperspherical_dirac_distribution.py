@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arctan2, linalg, reshape, sum
+from pyrecest.backend import arctan2, reshape, sum
 
 from ..circle.circular_dirac_distribution import CircularDiracDistribution
 from .abstract_hypersphere_subset_dirac_distribution import (
@@ -38,8 +38,7 @@ class HypersphericalDiracDistribution(
 
     def mean_direction(self):
         mean_res_vec = self.mean_resultant_vector()
-        mu = mean_res_vec / linalg.norm(mean_res_vec)
-        return mu
+        return self._normalize_mean_direction(mean_res_vec)
 
     def mean_resultant_vector(self):
         return sum(self.d * reshape(self.w, (-1, 1)), axis=0)
