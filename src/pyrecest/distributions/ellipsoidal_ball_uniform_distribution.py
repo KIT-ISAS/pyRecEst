@@ -50,7 +50,7 @@ class EllipsoidalBallUniformDistribution(
         :returns: PDF values at given points.
         """
         xs = array(xs)
-        if xs.ndim == 0 or xs.shape[-1] != self.dim:
+        if xs.ndim not in (1, 2) or xs.shape[-1] != self.dim:
             raise ShapeError(
                 "xs",
                 xs.shape,
