@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from numbers import Integral
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, cos, cosh, exp, mod, ndim, pi, sin, sinh
@@ -8,6 +9,12 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 from .von_mises_distribution import VonMisesDistribution
 from .wrapped_cauchy_distribution import WrappedCauchyDistribution
 from .wrapped_normal_distribution import WrappedNormalDistribution
+
+
+def _validate_sine_power(value, name):
+    if isinstance(value, bool) or not isinstance(value, Integral) or int(value) < 1:
+        raise ValueError(f"{name} must be a positive integer")
+    return int(value)
 
 
 class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
@@ -34,8 +41,9 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
         self.validate_parameters()
 
     def validate_parameters(self):
-        assert -1.0 <= self.lambda_ and self.lambda_ <= 1.0
-        assert isinstance(self.m, int) and self.m >= 1
+        if not (-1.0 <= self.lambda_ <= 1.0):
+            raise ValueError("lambda_ must be between -1 and 1 inclusive")
+        self.m = _validate_sine_power(self.m, "m")
 
     def pdf(self, xs):
         # Evaluate the von Mises distribution and multiply by (1 + lambda_ * sin(xa - mu))
@@ -216,9 +224,11 @@ class GeneralizedKSineSkewedWrappedCauchyDistribution(AbstractCircularDistributi
         self.validate_parameters()
 
     def validate_parameters(self):
-        assert self.gamma > 0
-        assert -1.0 <= self.lambda_ and self.lambda_ <= 1.0
-        assert isinstance(self.m, int) and self.m >= 1
+        if self.gamma <= 0:
+            raise ValueError("gamma must be positive")
+        if not (-1.0 <= self.lambda_ <= 1.0):
+            raise ValueError("lambda_ must be between -1 and 1 inclusive")
+        self.m = _validate_sine_power(self.m, "m")
 
     def pdf(self, xs):
         assert self.k == 1, "Currently, only k=1 is supported"
