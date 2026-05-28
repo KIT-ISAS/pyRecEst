@@ -129,6 +129,25 @@ class TestSE2BinghamDistribution(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on JAX backend",
     )
+    def test_sample_accepts_integer_like_count(self):
+        samples = self.dist.sample(np.array(4.0))
+
+        self.assertEqual(samples.shape, (4, 4))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    self.dist.sample(n)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
     def test_fit_returns_instance(self):
         """fit() should return a valid SE2BinghamDistribution."""
         samples = self.dist.sample(500)
