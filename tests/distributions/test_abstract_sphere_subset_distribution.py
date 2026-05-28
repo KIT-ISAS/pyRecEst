@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import unittest
 
 import numpy.testing as npt
@@ -37,6 +38,25 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         npt.assert_allclose(x_new, x, atol=1e-7)
         npt.assert_allclose(y_new, y, atol=1e-7)
         npt.assert_allclose(z_new, z, atol=1e-7)
+
+    @parameterized.expand(
+        [
+            ("inclination_north", "inclination", 1.0 + 1e-12, 0.0),
+            ("inclination_south", "inclination", -1.0 - 1e-12, pi),
+            ("elevation_north", "elevation", 1.0 + 1e-12, pi / 2),
+            ("elevation_south", "elevation", -1.0 - 1e-12, -pi / 2),
+        ]
+    )
+    def test_cart_to_sph_clips_roundoff_at_poles(
+        self, _case, mode, z_value, expected_theta
+    ):
+        x = array([0.0])
+        y = array([0.0])
+        z = array([z_value])
+
+        _, theta = AbstractSphereSubsetDistribution.cart_to_sph(x, y, z, mode=mode)
+
+        npt.assert_allclose(theta, array([expected_theta]), atol=1e-12)
 
     @parameterized.expand(
         [

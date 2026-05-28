@@ -3,6 +3,7 @@ from pyrecest.backend import (
     arccos,
     arctan2,
     atleast_2d,
+    clip,
     column_stack,
     cos,
     ndim,
@@ -151,7 +152,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
         azimuth = arctan2(y, x)
         azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
-        colatitude = arccos(z)
+        colatitude = arccos(clip(z, -1.0, 1.0))
         return azimuth, colatitude
 
     @staticmethod
@@ -159,5 +160,5 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
         azimuth = arctan2(y, x)
         azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
-        elevation = pi / 2 - arccos(z)  # elevation is π/2 - colatitude
+        elevation = pi / 2 - arccos(clip(z, -1.0, 1.0))
         return azimuth, elevation
