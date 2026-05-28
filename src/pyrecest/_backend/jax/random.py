@@ -94,8 +94,8 @@ def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
     state, has_state, kwargs = _get_state(**kwargs)
     low = _jnp.asarray(low)
     high = _jnp.asarray(high)
-    if bool(_jnp.any(low >= high)):
-        raise ValueError("Upper bound must be higher than lower bound")
+    if bool(_jnp.any(low > high)):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
     state, res = _rand(state, size, *args, minval=low, maxval=high, **kwargs)
     return set_state_return(has_state, state, res)
 
