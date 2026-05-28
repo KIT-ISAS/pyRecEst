@@ -11,6 +11,21 @@ from pyrecest.filters.euclidean_box_particle_filter import EuclideanBoxParticleF
 
 
 class EuclideanBoxParticleFilterTest(unittest.TestCase):
+    def test_constructor_rejects_invalid_particle_count_and_dimension(self):
+        invalid_arguments = (
+            ("bool-n-particles", True, 1, "n_particles"),
+            ("fractional-n-particles", 1.5, 1, "n_particles"),
+            ("zero-n-particles", 0, 1, "n_particles"),
+            ("bool-dim", 1, True, "dim"),
+            ("fractional-dim", 1, 1.5, "dim"),
+            ("zero-dim", 1, 0, "dim"),
+        )
+
+        for name, n_particles, dim, message in invalid_arguments:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, message):
+                    EuclideanBoxParticleFilter(n_particles, dim)
+
     def test_identity_box_update_uses_contracted_volume_ratio(self):
         pf = EuclideanBoxParticleFilter(2, 1)
         pf.filter_state = LinearBoxParticleDistribution(
