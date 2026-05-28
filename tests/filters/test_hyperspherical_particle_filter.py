@@ -74,3 +74,14 @@ class HypersphericalParticleFilterTest(unittest.TestCase):
         est = hpf.get_point_estimate()
         npt.assert_allclose(linalg.norm(est), 1, atol=1e-10)
         self.assertFalse(allclose(est, vmf_init_mean, atol=1e-2))
+
+    def test_get_estimate_mean_rejects_zero_resultant(self):
+        hpf = HypersphericalParticleFilter(2, 3)
+        hpf.filter_state = HypersphericalDiracDistribution(
+            array([[1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]]),
+            array([0.5, 0.5]),
+        )
+
+        with self.assertWarnsRegex(UserWarning, "Mean direction is undefined"):
+            with self.assertRaisesRegex(ValueError, "Mean direction is undefined"):
+                hpf.get_estimate_mean()

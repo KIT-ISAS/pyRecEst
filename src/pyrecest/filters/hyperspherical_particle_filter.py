@@ -1,7 +1,7 @@
 import copy
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import eye, linalg, sum, tile
+from pyrecest.backend import eye, tile
 from pyrecest.distributions import AbstractHypersphericalDistribution
 from pyrecest.distributions.hypersphere_subset.hyperspherical_dirac_distribution import (
     HypersphericalDiracDistribution,
@@ -57,10 +57,4 @@ class HypersphericalParticleFilter(AbstractParticleFilter, HypersphericalFilterM
             self.filter_state = self.filter_state.reweigh(lambda x: likelihood(z, x))
 
     def get_estimate_mean(self):
-        vec_sum = sum(
-            self.filter_state.d
-            * tile(self.filter_state.w, (self.filter_state.input_dim, 1)).T,
-            axis=0,
-        )
-        mean = vec_sum / linalg.norm(vec_sum)
-        return mean
+        return self.filter_state.mean_direction()
