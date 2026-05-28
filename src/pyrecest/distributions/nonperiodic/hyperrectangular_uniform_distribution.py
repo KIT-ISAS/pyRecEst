@@ -39,7 +39,9 @@ class HyperrectangularUniformDistribution(
                 return reshape(xs, (-1, 1)), False
             if xs.shape[0] == self.dim:
                 return reshape(xs, (1, self.dim)), True
-            raise ValueError(f"Point dimension {xs.shape[0]} does not match dim {self.dim}")
+            raise ValueError(
+                f"Point dimension {xs.shape[0]} does not match dim {self.dim}"
+            )
         if xs.ndim != 2 or xs.shape[1] != self.dim:
             raise ValueError(f"xs must have shape (n, {self.dim})")
         return xs, False

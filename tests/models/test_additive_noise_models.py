@@ -215,13 +215,9 @@ class AdditiveNoiseMeasurementModelTest(unittest.TestCase):
 
         state = array([3.0])
 
-        assert_backend_allclose(
-            self, model.measurement_function(state), array([6.5])
-        )
+        assert_backend_allclose(self, model.measurement_function(state), array([6.5]))
         assert_backend_allclose(self, model.jacobian(state), array([[2.5]]))
-        assert_backend_allclose(
-            self, model.jacobian(state, scale=4.0), array([[4.5]])
-        )
+        assert_backend_allclose(self, model.jacobian(state, scale=4.0), array([[4.5]]))
         self.assertEqual(calls, [(2.0, 0.5), (4.0, 0.5)])
 
     def test_measurement_jacobian_ignores_function_args_it_does_not_accept(self):

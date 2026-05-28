@@ -444,9 +444,7 @@ class TestHopfConversion(unittest.TestCase):
     def test_quaternion_to_hopf_clips_theta_roundoff(self):
         quaternion = array([[1.0 + 1e-12, 0.0, 0.0, 0.0]])
 
-        theta, _, _ = AbstractHopfBasedS3Sampler.quaternion_to_hopf_yershova(
-            quaternion
-        )
+        theta, _, _ = AbstractHopfBasedS3Sampler.quaternion_to_hopf_yershova(quaternion)
 
         npt.assert_allclose(theta, array([0.0]), atol=1e-12)
 

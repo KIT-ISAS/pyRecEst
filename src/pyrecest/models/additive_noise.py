@@ -101,7 +101,9 @@ def _dt_call_mode(function: Callable[..., Any]) -> str | None:
     return "positional" if len(positional) >= 2 else None
 
 
-def _supported_kwargs(function: Callable[..., Any], kwargs: dict[str, Any]) -> dict[str, Any]:
+def _supported_kwargs(
+    function: Callable[..., Any], kwargs: dict[str, Any]
+) -> dict[str, Any]:
     """Return kwargs accepted by ``function``, preserving opaque callables."""
     if not kwargs:
         return {}
@@ -111,7 +113,9 @@ def _supported_kwargs(function: Callable[..., Any], kwargs: dict[str, Any]) -> d
         return kwargs
 
     parameters = signature.parameters
-    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in parameters.values()):
+    if any(
+        param.kind == inspect.Parameter.VAR_KEYWORD for param in parameters.values()
+    ):
         return kwargs
     return {key: value for key, value in kwargs.items() if key in parameters}
 
@@ -377,9 +381,7 @@ class AdditiveNoiseMeasurementModel:
         jacobian = self._jacobian
         if jacobian is None:
             raise NotImplementedError("No measurement Jacobian callback was supplied")
-        return _call_measurement_jacobian(
-            jacobian, state, self.function_args, kwargs
-        )
+        return _call_measurement_jacobian(jacobian, state, self.function_args, kwargs)
 
     def has_jacobian(self):
         """Return whether this model can provide measurement Jacobians."""
