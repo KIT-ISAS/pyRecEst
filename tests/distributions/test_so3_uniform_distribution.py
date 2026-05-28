@@ -45,6 +45,19 @@ class SO3UniformDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.ln_pdf(rotations), log(expected_pdf), atol=ATOL)
         self.assertAlmostEqual(dist.get_manifold_size(), math.pi**2, places=12)
 
+    def test_pdf_rejects_nonfinite_quaternions(self):
+        dist = SO3UniformDistribution()
+        invalid_rotations = [
+            array([math.inf, 0.0, 0.0, 1.0]),
+            array([math.nan, 0.0, 0.0, 1.0]),
+            array([[0.0, 0.0, 0.0, 1.0], [0.0, math.inf, 0.0, 1.0]]),
+        ]
+
+        for rotation in invalid_rotations:
+            with self.subTest(rotation=rotation):
+                with self.assertRaises(AssertionError):
+                    dist.pdf(rotation)
+
     def test_sample_returns_canonical_unit_quaternions(self):
         dist = SO3UniformDistribution()
 
