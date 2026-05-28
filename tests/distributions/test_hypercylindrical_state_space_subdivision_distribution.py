@@ -1,6 +1,7 @@
 import unittest
 from math import pi
 
+import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import __backend_name__ as backend_name
 from pyrecest.backend import all as backend_all
@@ -141,6 +142,57 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
         hcrbd = HypercylindricalStateSpaceSubdivisionDistribution(gd, lin_dists)
         samples = hcrbd.sample(50)
         self.assertEqual(array(samples).shape, (50, 2))
+
+    @unittest.skipIf(
+        backend_name != "numpy",
+        reason="Not supported on this backend",
+    )
+    def test_sample_accepts_integer_like_count(self):
+        from pyrecest.distributions.circle.circular_uniform_distribution import (
+            CircularUniformDistribution,
+        )
+        from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (
+            HypertoroidalGridDistribution,
+        )
+
+        n_grid = 10
+        gd = HypertoroidalGridDistribution.from_distribution(
+            CircularUniformDistribution(), (n_grid,)
+        )
+        lin_dists = [
+            GaussianDistribution(array([0.0]), array([[1.0]])) for _ in range(n_grid)
+        ]
+        hcrbd = HypercylindricalStateSpaceSubdivisionDistribution(gd, lin_dists)
+
+        samples = hcrbd.sample(np.array(4.0))
+
+        self.assertEqual(array(samples).shape, (4, 2))
+
+    @unittest.skipIf(
+        backend_name != "numpy",
+        reason="Not supported on this backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        from pyrecest.distributions.circle.circular_uniform_distribution import (
+            CircularUniformDistribution,
+        )
+        from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (
+            HypertoroidalGridDistribution,
+        )
+
+        n_grid = 10
+        gd = HypertoroidalGridDistribution.from_distribution(
+            CircularUniformDistribution(), (n_grid,)
+        )
+        lin_dists = [
+            GaussianDistribution(array([0.0]), array([[1.0]])) for _ in range(n_grid)
+        ]
+        hcrbd = HypercylindricalStateSpaceSubdivisionDistribution(gd, lin_dists)
+
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    hcrbd.sample(n)
 
     @unittest.skipIf(
         backend_name != "numpy",
