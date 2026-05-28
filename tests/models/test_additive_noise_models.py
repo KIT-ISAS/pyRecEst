@@ -89,6 +89,50 @@ class AdditiveNoiseTransitionModelTest(unittest.TestCase):
         assert_backend_allclose(self, likelihood, array(7.0))
         assert_backend_allclose(self, noise.last_pdf_arg, array([1.5]))
 
+    def test_transition_jacobian_receives_dt_and_function_arguments(self):
+        calls = []
+
+        def transition_function(x, dt, scale):
+            return array([x[0] + dt * scale * x[1], x[1]])
+
+        def jacobian(_x, dt, scale):
+            calls.append((dt, scale))
+            return array([[1.0, dt * scale], [0.0, 1.0]])
+
+        model = AdditiveNoiseTransitionModel(
+            transition_function,
+            jacobian=jacobian,
+            dt=0.5,
+            function_args={"scale": 4.0},
+        )
+
+        state = array([1.0, 2.0])
+
+        assert_backend_allclose(
+            self, model.transition_function(state), array([5.0, 2.0])
+        )
+        assert_backend_allclose(
+            self, model.jacobian(state), array([[1.0, 2.0], [0.0, 1.0]])
+        )
+        assert_backend_allclose(
+            self,
+            model.jacobian(state, dt=0.25, scale=8.0),
+            array([[1.0, 2.0], [0.0, 1.0]]),
+        )
+        self.assertEqual(calls, [(0.5, 4.0), (0.25, 8.0)])
+
+    def test_transition_jacobian_ignores_function_args_it_does_not_accept(self):
+        model = AdditiveNoiseTransitionModel(
+            lambda x, scale: x * scale,
+            jacobian=lambda _x: eye(2),
+            function_args={"scale": 2.0},
+        )
+
+        assert_backend_allclose(
+            self, model.transition_function(array([1.0, 2.0])), array([2.0, 4.0])
+        )
+        assert_backend_allclose(self, model.jacobian(array([1.0, 2.0])), eye(2))
+
     def test_explicit_noise_statistics_work_without_distribution(self):
         model = AdditiveNoiseTransitionModel(
             lambda x: x,
@@ -152,6 +196,45 @@ class AdditiveNoiseMeasurementModelTest(unittest.TestCase):
             self, model.measurement_residual(array([5.0]), array([2.0])), array([1.0])
         )
         assert_backend_allclose(self, noise.last_pdf_arg, array([1.0]))
+
+    def test_measurement_jacobian_receives_function_arguments(self):
+        calls = []
+
+        def measurement_function(x, scale, offset):
+            return array([scale * x[0] + offset])
+
+        def jacobian(_x, scale, offset):
+            calls.append((scale, offset))
+            return array([[scale + offset]])
+
+        model = AdditiveNoiseMeasurementModel(
+            measurement_function,
+            jacobian=jacobian,
+            function_args={"scale": 2.0, "offset": 0.5},
+        )
+
+        state = array([3.0])
+
+        assert_backend_allclose(
+            self, model.measurement_function(state), array([6.5])
+        )
+        assert_backend_allclose(self, model.jacobian(state), array([[2.5]]))
+        assert_backend_allclose(
+            self, model.jacobian(state, scale=4.0), array([[4.5]])
+        )
+        self.assertEqual(calls, [(2.0, 0.5), (4.0, 0.5)])
+
+    def test_measurement_jacobian_ignores_function_args_it_does_not_accept(self):
+        model = AdditiveNoiseMeasurementModel(
+            lambda x, scale: x * scale,
+            jacobian=lambda _x: array([[1.0]]),
+            function_args={"scale": 2.0},
+        )
+
+        assert_backend_allclose(
+            self, model.measurement_function(array([3.0])), array([6.0])
+        )
+        assert_backend_allclose(self, model.jacobian(array([3.0])), array([[1.0]]))
 
     def test_missing_measurement_capabilities_raise(self):
         model = AdditiveNoiseMeasurementModel(lambda x: x)
