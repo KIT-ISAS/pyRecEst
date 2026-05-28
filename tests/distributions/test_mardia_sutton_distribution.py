@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -129,6 +130,17 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
         s = self.dist.sample(n)
         self.assertTrue((s[:, 0] >= 0).all())
         self.assertTrue((s[:, 0] < 2.0 * float(pi)).all())
+
+    def test_sample_accepts_integer_like_count(self):
+        s = self.dist.sample(np.array(4.0))
+
+        self.assertEqual(s.shape, (4, 2))
+
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    self.dist.sample(n)
 
     def test_invalid_kappa(self):
         with self.assertRaises(AssertionError):
