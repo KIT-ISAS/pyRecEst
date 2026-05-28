@@ -16,6 +16,9 @@ from pyrecest.distributions import (
     ToroidalDiracDistribution,
     VonMisesDistribution,
 )
+from pyrecest.distributions.circle.circular_dirac_distribution import (
+    CircularDiracDistribution,
+)
 
 from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 
@@ -70,6 +73,17 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         npt.assert_almost_equal(m[1], m2, decimal=10)
         npt.assert_almost_equal(m[0], sum(self.w * exp(1j * self.d[:, 0])), decimal=10)
         npt.assert_almost_equal(m[1], sum(self.w * exp(1j * self.d[:, 1])), decimal=10)
+
+    def test_mean_direction_rejects_zero_resultant_moment(self):
+        circular = CircularDiracDistribution(array([0.0, pi]), array([0.5, 0.5]))
+        hypertoroidal = HypertoroidalDiracDistribution(
+            array([[0.0, 0.0], [pi, 0.0]]), array([0.5, 0.5])
+        )
+
+        for dist in (circular, hypertoroidal):
+            with self.subTest(distribution=dist.__class__.__name__):
+                with self.assertRaisesRegex(ValueError, "undefined"):
+                    dist.mean_direction()
 
     def test_sample(self):
         n_samples = 5
