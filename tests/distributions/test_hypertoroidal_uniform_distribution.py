@@ -67,7 +67,9 @@ def test_validation_survives_optimized_python():
 
     code = """
 from pyrecest.backend import array
-from pyrecest.distributions.hypertorus.hypertoroidal_uniform_distribution import HypertoroidalUniformDistribution
+from pyrecest.distributions.hypertorus.hypertoroidal_uniform_distribution import (
+    HypertoroidalUniformDistribution,
+)
 from pyrecest.exceptions import ShapeError
 
 dist = HypertoroidalUniformDistribution(2)
