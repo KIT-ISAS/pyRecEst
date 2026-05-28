@@ -7,8 +7,8 @@ dependency on pandas, plotting libraries, or backend-specific array types.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from math import log
+from dataclasses import asdict, dataclass, field, fields
+from math import isfinite, log
 from typing import Any
 
 
@@ -18,7 +18,7 @@ def _coerce_weight_values(weights: Any) -> list[float]:
         from pyrecest.backend import to_numpy
 
         weights = to_numpy(weights)
-    except Exception:  # pragma: no cover - best-effort fallback for foreign arrays
+    except Exception:  # pragma: no cover  # pylint: disable=broad-exception-caught
         pass
 
     if hasattr(weights, "tolist"):
@@ -76,7 +76,7 @@ class FilterDiagnostics(_DiagnosticsMappingMixin):
 
     @classmethod
     def from_mapping(cls, mapping: dict[str, Any]) -> "FilterDiagnostics":
-        known = {field_name for field_name in cls.__dataclass_fields__}
+        known = {dataclass_field.name for dataclass_field in fields(cls)}
         values = {key: value for key, value in mapping.items() if key in known}
         metadata = dict(mapping.get("metadata", {}))
         metadata.update(
@@ -107,6 +107,8 @@ class ParticleDiagnostics(_DiagnosticsMappingMixin):
     ) -> "ParticleDiagnostics":
         """Build particle diagnostics from normalized or unnormalized weights."""
         values = _coerce_weight_values(weights)
+        if any(not isfinite(value) for value in values):
+            raise ValueError("Particle weights must be finite.")
         nonnegative_values = [max(0.0, value) for value in values]
         total = sum(nonnegative_values)
         if total <= 0.0:
