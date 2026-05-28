@@ -1,5 +1,5 @@
 import unittest
-from math import sqrt
+from math import inf, nan, sqrt
 
 import numpy.testing as npt
 import pyrecest.backend
@@ -96,6 +96,18 @@ class SO3ProductDiracDistributionTest(unittest.TestCase):
 
         self.assertEqual(dist.d.shape, (1, 2, 4))
         npt.assert_allclose(dist.as_quaternions()[0], locations)
+
+    def test_constructor_rejects_nonfinite_quaternions(self):
+        invalid_locations = [
+            array([[[inf, 0.0, 0.0, 1.0]]]),
+            array([[[nan, 0.0, 0.0, 1.0]]]),
+            array([[[0.0, 0.0, 0.0, 1.0], [0.0, inf, 0.0, 1.0]]]),
+        ]
+
+        for locations in invalid_locations:
+            with self.subTest(locations=locations):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    SO3ProductDiracDistribution(locations)
 
     def test_marginalize_rotations(self):
         dist = SO3ProductDiracDistribution(

@@ -12,6 +12,7 @@ from pyrecest.backend import (
     array,
     asarray,
     clip,
+    isfinite,
     linalg,
     ndim,
     pi,
@@ -103,6 +104,10 @@ class SO3ProductDiracDistribution(HyperhemisphereCartProdDiracDistribution):
     @staticmethod
     def _normalize_quaternions(quaternions):
         norms = linalg.norm(quaternions, axis=-1)
+        if not all(isfinite(quaternions)):
+            raise ValueError("SO(3) quaternions must be finite.")
+        if not all(isfinite(norms)):
+            raise ValueError("SO(3) quaternion norms must be finite.")
         if not all(norms > 0.0):
             raise ValueError("SO(3) quaternions must be nonzero.")
         return quaternions / reshape(norms, tuple(norms.shape) + (1,))
