@@ -1,4 +1,5 @@
 import copy
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -113,12 +114,18 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         return self.set_mean(self.mu + shift_by)
 
     def sample(self, n: Union[int, int32, int64]):
-        if n <= 0:
-            raise ValueError("n must be a positive integer")
+        n = self._validate_sample_count(n)
 
         s = random.multivariate_normal(self.mu, self.C, (n,))
         s = mod(s, 2.0 * pi)  # wrap the samples
         return s
+
+    @staticmethod
+    def _validate_sample_count(n):
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer")
+        return int(n)
+
 
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
         assert self.dim == other.dim, "Dimensions of the two distributions must match"

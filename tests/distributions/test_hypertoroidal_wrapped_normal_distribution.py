@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -94,6 +95,19 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         npt.assert_allclose(
             dist.trigonometric_moment(1), exp(1j * array([0.3]) - 0.7 / 2)
         )
+
+    def test_sample_validates_count(self):
+        dist = HypertoroidalWNDistribution([1.0, 2.0], [[0.5, 0.1], [0.1, 0.6]])
+
+        samples = dist.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4, 2))
+        npt.assert_allclose(samples, mod(samples, 2.0 * pi))
+
+        for n in (True, 1.5, 0, -1):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    dist.sample(n)
 
     def test_shift_accepts_scalar_for_one_dimensional_distribution(self):
         dist = HypertoroidalWNDistribution(0.3, 0.7)
