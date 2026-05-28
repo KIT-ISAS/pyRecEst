@@ -3,7 +3,18 @@ import inspect
 from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import hstack, ndim, ones_like, random, sum, vmap, vstack
+from pyrecest.backend import (
+    all,
+    array,
+    hstack,
+    isfinite,
+    ndim,
+    ones_like,
+    random,
+    sum,
+    vmap,
+    vstack,
+)
 from pyrecest.diagnostics import ParticleDiagnostics
 from pyrecest.distributions.abstract_manifold_specific_distribution import (
     AbstractManifoldSpecificDistribution,
@@ -194,11 +205,19 @@ class AbstractParticleFilter(AbstractFilter):
         self._filter_state.d = updated_particles
 
     def predict_nonlinear_nonadditive(self, f, samples, weights):
+        weights = array(weights, dtype=float)
         assert (
             samples.shape[0] == weights.shape[0]
         ), "samples and weights must match in size"
 
-        weights = weights / sum(weights)
+        if not bool(all(isfinite(weights))):
+            raise ValueError("Noise weights must be finite.")
+        if not bool(all(weights >= 0.0)):
+            raise ValueError("Noise weights must be nonnegative.")
+        weight_sum = sum(weights)
+        if not bool(isfinite(weight_sum)) or not bool(weight_sum > 0.0):
+            raise ValueError("Noise weights must have positive finite total mass.")
+        weights = weights / weight_sum
         n_particles = self.filter_state.w.shape[0]
         noise_samples = random.choice(samples, n_particles, p=weights)
 
