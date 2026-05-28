@@ -118,6 +118,29 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         self.assertLessEqual(delta2, delta1)
         self.assertLessEqual(delta3, delta2)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_calculate_parameters_numerically_accepts_integer_like_count(self):
+        weights = PiecewiseConstantDistribution.calculate_parameters_numerically(
+            lambda _xs: array([1.0 / (2.0 * pi)]), np.array(4.0)
+        )
+
+        npt.assert_allclose(weights, array([0.25, 0.25, 0.25, 0.25]), rtol=1e-12)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_calculate_parameters_numerically_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True, [3], float("nan"), float("inf")):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    PiecewiseConstantDistribution.calculate_parameters_numerically(
+                        lambda _xs: array([1.0 / (2.0 * pi)]), n
+                    )
+
     def test_entropy(self):
         """Verify analytical entropy against the direct formula."""
         w = self.dist.w
