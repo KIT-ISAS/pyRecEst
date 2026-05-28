@@ -136,6 +136,14 @@ class AbstractCircularDistributionTest(unittest.TestCase):
             )
         )
 
+    def test_custom_circular_pdf_accepts_list_inputs(self):
+        dist = CustomCircularDistribution(cos, shift_by=0.2)
+
+        list_pdf = dist.pdf([0.1, 0.2])
+        array_pdf = dist.pdf(array([0.1, 0.2]))
+
+        self.assertTrue(allclose(list_pdf, array_pdf, rtol=1e-12))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
