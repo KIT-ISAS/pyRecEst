@@ -159,6 +159,24 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(convolved.C, array(13.0), atol=1e-12))
         self.assertTrue(allclose(convolved.sigma, sqrt(array(13.0)), atol=1e-12))
 
+    def test_from_moment_recovers_parameters(self):
+        reconstructed = WrappedNormalDistribution.from_moment(
+            self.wn.trigonometric_moment(1)
+        )
+
+        self.assertTrue(allclose(reconstructed.scalar_mu, self.mu, atol=1e-12))
+        self.assertTrue(allclose(reconstructed.sigma, self.sigma, atol=1e-12))
+
+    def test_from_moment_rejects_invalid_magnitudes(self):
+        for moment in (
+            array(1.0 + 0.0j),
+            array(1.0 + 1e-13 + 0.0j),
+            array(1.01 + 0.0j),
+        ):
+            with self.subTest(moment=moment):
+                with self.assertRaisesRegex(ValueError, "First trigonometric moment"):
+                    WrappedNormalDistribution.from_moment(moment)
+
     def test_sample_accepts_integer_like_count(self):
         samples = self.wn.sample(np.int64(4))
 
