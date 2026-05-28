@@ -58,6 +58,24 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
         npt.assert_allclose(est, self.prior.mu + mean(samples, axis=0), atol=0.1)
 
+    def test_predict_nonlinear_nonadditive_rejects_invalid_weights(self):
+        samples = array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+
+        def f(x, w):
+            return x + w
+
+        invalid_cases = (
+            (array([float("nan"), 1.0]), "finite"),
+            (array([float("inf"), 1.0]), "finite"),
+            (array([-float("inf"), 1.0]), "finite"),
+            (array([-1.0, 2.0]), "nonnegative"),
+            (array([0.0, 0.0]), "positive finite total mass"),
+        )
+        for weights, message in invalid_cases:
+            with self.subTest(weights=weights):
+                with self.assertRaisesRegex(ValueError, message):
+                    self.pf.predict_nonlinear_nonadditive(f, samples, weights)
+
     def test_predict_update_cycle_3d_forced_particle_pos_no_pred(self):
         force_first_particle_pos = array([1.1, 2.0, 3.0])
         self.pf.filter_state.d = vstack(
