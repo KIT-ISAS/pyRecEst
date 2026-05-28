@@ -16,6 +16,16 @@ class TestBackendRandom(unittest.TestCase):
         npt.assert_array_less(-1, samples)
         npt.assert_array_less(samples, 5)
 
+    def test_uniform_allows_degenerate_interval(self):
+        samples = random.uniform(2.5, 2.5, size=(4,))
+
+        self.assertEqual(tuple(pyrecest.backend.shape(samples)), (4,))
+        npt.assert_allclose(pyrecest.backend.to_numpy(samples), [2.5, 2.5, 2.5, 2.5])
+
+    def test_uniform_rejects_descending_interval(self):
+        with self.assertRaises(ValueError):
+            random.uniform(2.0, 1.0, size=(3,))
+
     def test_choice_single_sample_preserves_sample_axis(self):
         values = pyrecest.backend.array([[0, 1], [2, 3], [4, 5]])
 
