@@ -266,7 +266,7 @@ class ConversionTest(unittest.TestCase):
         self.assertIsInstance(particles, LinearDiracDistribution)
         self.assertEqual(particles.d.shape[0], 25)
 
-    def test_linear_dirac_rejects_conflicting_particle_count_aliases(self):
+    def test_linear_dirac_rejects_invalid_particle_count_aliases(self):
         gaussian = GaussianDistribution(array([0.0, 0.0]), eye(2))
 
         with self.assertRaises(ConversionError):
@@ -276,6 +276,22 @@ class ConversionTest(unittest.TestCase):
                 n_particles=5,
                 n_samples=6,
             )
+
+        invalid_alias_values = (
+            ("n_particles", 0),
+            ("n_samples", -1),
+            ("n", 1.5),
+            ("n_particles", True),
+        )
+
+        for alias, value in invalid_alias_values:
+            with self.subTest(alias=alias, value=value):
+                with self.assertRaisesRegex(ConversionError, "positive integer"):
+                    convert_distribution(
+                        gaussian,
+                        LinearDiracDistribution,
+                        **{alias: value},
+                    )
 
     def test_linear_dirac_set_mean_uses_current_mean_method(self):
         particles = LinearDiracDistribution(
