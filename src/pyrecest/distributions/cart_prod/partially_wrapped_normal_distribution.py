@@ -6,6 +6,7 @@ import numpy as np
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     allclose,
     arange,
@@ -17,6 +18,7 @@ from pyrecest.backend import (
     hstack,
     int32,
     int64,
+    isfinite,
     linalg,
     meshgrid,
     mod,
@@ -123,9 +125,11 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         if not bool(allclose(C, C.T)):
             raise ValueError("C must be symmetric")
         try:
-            linalg.cholesky(C)
+            chol = linalg.cholesky(C)
         except Exception as exc:
             raise ValueError("C must be positive definite") from exc
+        if not bool(backend_all(isfinite(chol))):
+            raise ValueError("C must be positive definite")
         mu = where(arange(mu.shape[0]) < bound_dim, mod(mu, 2 * pi), mu)
 
         AbstractHypercylindricalDistribution.__init__(

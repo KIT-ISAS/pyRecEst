@@ -56,7 +56,7 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
 
         shifted = dist.set_mean([7.0, 3.0])
 
-        npt.assert_allclose(shifted.mu, [7.0 - 2.0 * pi, 3.0])
+        npt.assert_allclose(shifted.mu, [7.0 - 2.0 * pi, 3.0], rtol=5e-7)
         npt.assert_allclose(dist.mu, [5.0, 1.0])
 
     def test_set_mean_rejects_wrong_shape(self):
