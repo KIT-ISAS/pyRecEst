@@ -1,7 +1,7 @@
 import unittest
 
 # pylint: disable=no-name-in-module,no-member
-import pyrecest.backend as backend
+from pyrecest import backend
 from pyrecest.backend import allclose, array, column_stack, linspace, meshgrid, ones
 from pyrecest.distributions.custom_hyperrectangular_distribution import (
     CustomHyperrectangularDistribution,
@@ -51,6 +51,19 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
         self.assertEqual(tuple(cd.bounds.shape), (1, 2))
         self.assertAlmostEqual(float(cd.get_manifold_size()), 2.0)
         self.assertAlmostEqual(cd.integrate(), 1.0)
+
+    def test_bounds_must_be_finite_and_strictly_increasing(self):
+        invalid_bounds = [
+            array([2.0, 1.0]),
+            array([1.0, 1.0]),
+            array([0.0, float("nan")]),
+            array([0.0, float("inf")]),
+        ]
+
+        for bounds in invalid_bounds:
+            with self.subTest(bounds=bounds):
+                with self.assertRaises(ValueError):
+                    HyperrectangularUniformDistribution(bounds)
 
     def test_bounds_rows_define_integration_intervals(self):
         cd = CustomHyperrectangularDistribution(

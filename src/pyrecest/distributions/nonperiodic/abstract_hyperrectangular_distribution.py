@@ -1,5 +1,6 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, diff, prod, reshape, to_numpy
+from pyrecest.backend import all as backend_all
+from pyrecest.backend import array, diff, isfinite, prod, reshape, to_numpy
 from scipy.integrate import nquad
 
 from ..abstract_bounded_nonperiodic_distribution import (
@@ -16,6 +17,11 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
             bounds = reshape(bounds, (1, 2))
         if bounds.ndim != 2 or bounds.shape[1] != 2:
             raise ValueError("bounds must have shape (dim, 2)")
+        if not bool(backend_all(isfinite(bounds))):
+            raise ValueError("bounds must contain only finite values")
+        widths = diff(bounds, axis=1)
+        if not bool(backend_all(widths > 0.0)):
+            raise ValueError("bounds must be strictly increasing in every dimension")
         AbstractBoundedNonPeriodicDistribution.__init__(self, int(bounds.shape[0]))
         self.bounds = bounds
 
