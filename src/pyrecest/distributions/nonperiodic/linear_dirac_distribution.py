@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import cov, ones, reshape
-from pyrecest.backend import sum as backend_sum
+from pyrecest.backend import asarray, cov, ones, reshape
 from pyrecest.backend import zeros
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
@@ -107,12 +106,21 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
 
     @staticmethod
     def weighted_samples_to_mean_and_cov(samples, weights=None):
+        samples = asarray(samples)
         sample_matrix = reshape(samples, (-1, 1)) if samples.ndim == 1 else samples
+        if sample_matrix.ndim != 2:
+            raise ValueError("samples must be a 1D or 2D array")
+        if sample_matrix.shape[0] == 0:
+            raise ValueError("samples must contain at least one sample")
 
         if weights is None:
             weights = ones(sample_matrix.shape[0]) / sample_matrix.shape[0]
         else:
-            weights = weights / backend_sum(weights)
+            weights = reshape(asarray(weights), (-1,))
+            if weights.shape[0] != sample_matrix.shape[0]:
+                raise ValueError("Number of weights and samples must match")
+            total_weight = AbstractDiracDistribution._validate_weights(weights)
+            weights = weights / total_weight
 
         mean = weights @ sample_matrix
         deviation = sample_matrix - mean

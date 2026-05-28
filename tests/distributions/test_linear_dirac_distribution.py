@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -32,6 +33,22 @@ class LinearDiracDistributionTest(TestAbstractDiracDistribution):
         ddist = LinearDiracDistribution(gd.sample(15000))
         self.assertTrue(allclose(ddist.mean(), gd.mean(), atol=0.05))
         self.assertTrue(allclose(ddist.covariance(), gd.covariance(), atol=0.05))
+
+    def test_weighted_samples_to_mean_and_cov_rejects_invalid_weights(self):
+        samples = array([[0.0], [2.0]])
+        invalid_weights = (
+            ("nan", array([1.0, np.nan]), "finite"),
+            ("inf", array([1.0, np.inf]), "finite"),
+            ("negative", array([1.5, -0.5]), "nonnegative"),
+            ("zero-mass", array([0.0, 0.0]), "positive finite total mass"),
+        )
+
+        for name, weights, message in invalid_weights:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, message):
+                    LinearDiracDistribution.weighted_samples_to_mean_and_cov(
+                        samples, weights
+                    )
 
     @parameterized.expand(
         [
