@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, eye, random
 from pyrecest.distributions import (
@@ -222,12 +224,21 @@ class ConversionTest(unittest.TestCase):
         mean = array([[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]])
         distribution = SO3ProductTangentGaussianDistribution(mean, 0.01 * eye(6))
 
-        particles = convert_distribution(distribution, "particles", n_particles=8)
+        particles = convert_distribution(
+            distribution, "particles", n_particles=np.int64(8)
+        )
 
         self.assertIsInstance(particles, SO3ProductDiracDistribution)
         self.assertEqual(particles.d.shape, (8, 2, 4))
         self.assertEqual(particles.num_rotations, 2)
         self.assertTrue(particles.is_valid())
+
+        for n_particles in (True, 1.5, 0, -1, None):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    convert_distribution(
+                        distribution, "particles", n_particles=n_particles
+                    )
 
     def test_so3_product_dirac_to_tangent_gaussian_alias(self):
         mean = array([[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]])
