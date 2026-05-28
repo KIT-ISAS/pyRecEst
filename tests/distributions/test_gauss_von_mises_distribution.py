@@ -5,6 +5,7 @@ from pyrecest import backend
 from pyrecest.backend import (
     all,
     allclose,
+    array,
     cos,
     exp,
     linalg,
@@ -80,6 +81,57 @@ class GaussVonMisesDistributionTest(unittest.TestCase):
         self.assertIsInstance(gauss, GaussianDistribution)
         self.assertTrue(allclose(gauss.mu, self.g.mode()))
         self.assertTrue(allclose(gauss.C[1:, 1:], self.g.P, atol=1e-10))
+
+    def test_constructor_accepts_numpy_scalar_kappa(self):
+        dist = GaussVonMisesDistribution(2, 1.3, 3, 0, 0.001, np.int64(1))
+
+        self.assertEqual(dist.kappa, 1.0)
+
+    def test_constructor_rejects_invalid_kappa(self):
+        for kappa in (True, 0.0, -1.0, float("nan"), float("inf")):
+            with self.subTest(kappa=kappa), self.assertRaisesRegex(
+                ValueError, "kappa"
+            ):
+                GaussVonMisesDistribution(2, 1.3, 3, 0, 0.001, kappa)
+
+    def test_constructor_rejects_invalid_matrix_parameters(self):
+        valid_mu = array([0.0, 0.0])
+        valid_p = np.eye(2)
+        valid_beta = array([0.0, 0.0])
+        valid_gamma = np.zeros((2, 2))
+
+        invalid_parameters = [
+            (
+                "P and mu",
+                (valid_mu, np.eye(1), 3, valid_beta, valid_gamma, 0.7),
+            ),
+            (
+                "P must be symmetric",
+                (valid_mu, array([[1.0, 2.0], [0.0, 1.0]]), 3, valid_beta, valid_gamma, 0.7),
+            ),
+            (
+                "positive definite",
+                (valid_mu, array([[1.0, 2.0], [2.0, 1.0]]), 3, valid_beta, valid_gamma, 0.7),
+            ),
+            (
+                "beta",
+                (valid_mu, valid_p, 3, array([0.0]), valid_gamma, 0.7),
+            ),
+            (
+                "Gamma and mu",
+                (valid_mu, valid_p, 3, valid_beta, np.zeros((1, 1)), 0.7),
+            ),
+            (
+                "Gamma must be symmetric",
+                (valid_mu, valid_p, 3, valid_beta, array([[0.0, 1.0], [0.0, 0.0]]), 0.7),
+            ),
+        ]
+
+        for message, args in invalid_parameters:
+            with self.subTest(message=message), self.assertRaisesRegex(
+                ValueError, message
+            ):
+                GaussVonMisesDistribution(*args)
 
     @unittest.skipIf(
         backend.__backend_name__ == "jax",
