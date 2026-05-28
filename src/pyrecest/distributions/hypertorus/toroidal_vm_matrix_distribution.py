@@ -19,6 +19,7 @@ from scipy.integrate import dblquad
 from scipy.special import iv
 
 from ..circle.custom_circular_distribution import CustomCircularDistribution
+from ._input_validation import as_shift_vector
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 
 _2pi = 2.0 * pi
@@ -42,6 +43,9 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
 
     def __init__(self, mu, kappa, A):
         AbstractToroidalDistribution.__init__(self)
+        mu = array(mu)
+        kappa = array(kappa)
+        A = array(A)
         assert mu.shape == (2,)
         assert kappa.shape == (2,)
         assert A.shape == (2, 2)
@@ -68,7 +72,17 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
             self.C = self._norm_const_approx()
 
     def pdf(self, xs):
-        assert xs.shape[-1] == 2
+        xs = array(xs)
+        if xs.ndim == 1:
+            if xs.shape[0] != self.dim:
+                raise ValueError(
+                    f"xs must have trailing dimension {self.dim}, got {xs.shape}."
+                )
+            xs = xs.reshape((1, self.dim))
+        elif xs.ndim == 0 or xs.shape[-1] != self.dim:
+            raise ValueError(
+                f"xs must have trailing dimension {self.dim}, got {xs.shape}."
+            )
         x1_mm = xs[..., 0] - self.mu[0]
         x2_mm = xs[..., 1] - self.mu[1]
         exponent = (
@@ -328,7 +342,7 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
 
     def shift(self, shift_by):
         """Return a copy of this distribution shifted by shift_by."""
-        assert shift_by.shape == (2,)
+        shift_by = as_shift_vector(shift_by, self.dim)
         result = copy.copy(self)
         result.mu = mod(self.mu + shift_by, _2pi)
         return result
