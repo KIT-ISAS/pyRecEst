@@ -250,10 +250,13 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
                 "calculate_parameters_numerically is not supported on the JAX backend."
             )
 
+        def _evaluate_pdf(x):
+            return float(array(pdf_func(array([x]))).reshape(-1)[0])
+
         n = _validate_positive_sample_count(n)
         w = zeros(n)
         for j in range(1, n + 1):
             left = PiecewiseConstantDistribution.left_border(j, n)
             r = PiecewiseConstantDistribution.right_border(j, n)
-            w[j - 1] = quad(lambda x: float(pdf_func(array([x]))), left, r)[0]
+            w[j - 1] = quad(_evaluate_pdf, left, r)[0]
         return w
