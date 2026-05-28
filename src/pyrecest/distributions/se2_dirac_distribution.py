@@ -1,4 +1,6 @@
 # pylint: disable=no-name-in-module,no-member
+from numbers import Integral
+
 from pyrecest.backend import ones
 
 from .abstract_se2_distribution import AbstractSE2Distribution
@@ -94,17 +96,25 @@ class SE2DiracDistribution(HypercylindricalDiracDistribution, AbstractSE2Distrib
             AbstractHypercylindricalDistribution,
         )
 
-        assert isinstance(
-            distribution, AbstractHypercylindricalDistribution
-        ), "distribution must be an instance of AbstractHypercylindricalDistribution"
-        assert (
-            distribution.bound_dim == 1 and distribution.lin_dim == 2
-        ), "distribution must have bound_dim=1 and lin_dim=2"
-        assert (
-            isinstance(n_particles, int) and n_particles > 0
-        ), "n_particles must be a positive integer"
+        if not isinstance(distribution, AbstractHypercylindricalDistribution):
+            raise TypeError(
+                "distribution must be an instance of AbstractHypercylindricalDistribution"
+            )
+        if distribution.bound_dim != 1 or distribution.lin_dim != 2:
+            raise ValueError("distribution must have bound_dim=1 and lin_dim=2")
+        n_particles = SE2DiracDistribution._validate_particle_count(n_particles)
 
         return SE2DiracDistribution(
             distribution.sample(n_particles),
             ones(n_particles) / n_particles,
         )
+
+    @staticmethod
+    def _validate_particle_count(n_particles):
+        if (
+            isinstance(n_particles, bool)
+            or not isinstance(n_particles, Integral)
+            or int(n_particles) <= 0
+        ):
+            raise ValueError("n_particles must be a positive integer")
+        return int(n_particles)
