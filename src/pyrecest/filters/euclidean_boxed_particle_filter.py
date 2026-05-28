@@ -18,6 +18,7 @@ from pyrecest.backend import (
     array,
     int32,
     int64,
+    isfinite,
     logical_and,
     ones,
     random,
@@ -208,6 +209,8 @@ class EuclideanBoxedParticleFilter(EuclideanParticleFilter):
         weight_update = where(
             inside, self.filter_state.w, zeros_like(self.filter_state.w)
         )
+        if not bool(any(inside)):
+            raise ValueError("No particle lies inside the requested box")
 
         if likelihood is not None:
             if isinstance(likelihood, AbstractManifoldSpecificDistribution):
@@ -217,10 +220,8 @@ class EuclideanBoxedParticleFilter(EuclideanParticleFilter):
                 raise ValueError("likelihood must return one value per particle")
             weight_update = weight_update * likelihood_values
 
-        if bool(sum(weight_update) <= 0):
-            raise ValueError("No particle lies inside the requested box")
         new_state = copy.deepcopy(self.filter_state)
-        new_state.w = weight_update / sum(weight_update)
+        new_state.w = self._normalize_weight_update(weight_update)
         self._filter_state = new_state
         self.resample_if_needed()
         return self
@@ -439,6 +440,19 @@ class EuclideanBoxedParticleFilter(EuclideanParticleFilter):
                 "proposal_distribution must be callable or expose a sample(n) method"
             )
         return self._coerce_points(samples)
+
+    @staticmethod
+    def _normalize_weight_update(weight_update):
+        if not bool(all(isfinite(weight_update))):
+            raise ValueError("Particle weight updates must be finite")
+        if not bool(all(weight_update >= 0)):
+            raise ValueError("Particle weight updates must be nonnegative")
+        total_weight = sum(weight_update)
+        if not bool(isfinite(total_weight)) or not bool(total_weight > 0):
+            raise ValueError(
+                "Particle weight updates must have positive finite total mass"
+            )
+        return weight_update / total_weight
 
     def _coerce_points(self, points):
         points = array(points)
