@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member,duplicate-code
@@ -61,11 +62,9 @@ class TestSE2DiracDistribution(unittest.TestCase):
         npt.assert_allclose(C, C.T, atol=1e-7)
 
     def test_covariance_4d_positive_semidefinite(self):
-        import numpy as _np  # pylint: disable=import-outside-toplevel
-
-        C = _np.array(self.dist.covariance_4d())
-        eigvals = _np.linalg.eigvalsh(C)
-        self.assertTrue(_np.all(eigvals >= -1e-12))
+        C = np.array(self.dist.covariance_4d())
+        eigvals = np.linalg.eigvalsh(C)
+        self.assertTrue(np.all(eigvals >= -1e-12))
 
     def test_mean_delegates_to_hybrid_mean(self):
         npt.assert_array_equal(self.dist.mean(), self.dist.hybrid_mean())
@@ -84,15 +83,23 @@ class TestSE2DiracDistribution(unittest.TestCase):
         npt.assert_allclose(ddist.hybrid_mean(), pwn.hybrid_mean(), atol=0.05)
 
     def test_from_distribution_type_error(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             SE2DiracDistribution.from_distribution("not_a_distribution", 10)
 
     def test_from_distribution_particles_error(self):
         mu = array([1.0, 2.0, 3.0])
         C = array([[0.5, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
         pwn = PartiallyWrappedNormalDistribution(mu, C, bound_dim=1)
-        with self.assertRaises(AssertionError):
-            SE2DiracDistribution.from_distribution(pwn, 0)
+
+        ddist = SE2DiracDistribution.from_distribution(pwn, np.int64(3))
+
+        self.assertEqual(ddist.d.shape, (3, 3))
+        self.assertEqual(ddist.w.shape, (3,))
+
+        for n_particles in (True, 1.5, 0, -1):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    SE2DiracDistribution.from_distribution(pwn, n_particles)
 
     def test_marginalize_linear(self):
         from pyrecest.distributions.hypertorus.hypertoroidal_dirac_distribution import (  # pylint: disable=import-outside-toplevel
