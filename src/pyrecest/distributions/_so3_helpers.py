@@ -10,6 +10,7 @@ from pyrecest.backend import (
     clip,
     concatenate,
     cos,
+    isfinite,
     linalg,
     log,
     ndim,
@@ -43,6 +44,8 @@ def normalize_quaternions(quaternions):
         assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
 
     norms = linalg.norm(quaternions, axis=-1)
+    assert all(isfinite(quaternions)), "SO(3) quaternions must be finite."
+    assert all(isfinite(norms)), "SO(3) quaternion norms must be finite."
     assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
 
     normalized = quaternions / reshape(norms, tuple(norms.shape) + (1,))
