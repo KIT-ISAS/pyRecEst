@@ -119,6 +119,28 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
 
         npt.assert_allclose(log_likelihood_filter.weights, likelihood_filter.weights)
 
+    def test_update_with_likelihood_accepts_direct_values(self):
+        callable_filter = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+        direct_filter = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+        likelihood_values = array([0.25, 1.0])
+
+        callable_filter.update_with_likelihood(
+            lambda _: likelihood_values, resample=False
+        )
+        direct_filter.update_with_likelihood(likelihood_values, resample=False)
+
+        npt.assert_allclose(direct_filter.weights, callable_filter.weights)
+
+    def test_update_with_likelihood_rejects_nonfinite_values(self):
+        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+
+        for invalid_value in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_value=invalid_value):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    filt.update_with_likelihood(
+                        array([1.0, invalid_value]), resample=False
+                    )
+
     def test_update_with_log_likelihood_is_underflow_safe(self):
         filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
 
