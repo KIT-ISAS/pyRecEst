@@ -72,6 +72,21 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
 
         npt.assert_allclose(p1, p2, atol=tol, rtol=0.1)
 
+    def test_mean_direction_rejects_symmetric_zero_resultant(self):
+        grid = array(
+            [
+                [1.0, 0.0, 0.0],
+                [-1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, -1.0, 0.0],
+            ]
+        )
+        dist = HypersphericalGridDistribution(grid, array([1.0, 1.0, 1.0, 1.0]))
+
+        with self.assertWarnsRegex(UserWarning, "Mean direction is undefined"):
+            with self.assertRaisesRegex(ValueError, "Mean direction is undefined"):
+                dist.mean_direction()
+
     # --------------------------------------------------------------
     # Approximation tests
     # --------------------------------------------------------------
