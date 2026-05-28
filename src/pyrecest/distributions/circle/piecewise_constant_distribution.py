@@ -250,7 +250,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
                 "calculate_parameters_numerically is not supported on the JAX backend."
             )
 
-        assert n >= 1
+        n = _validate_positive_sample_count(n)
         w = zeros(n)
         for j in range(1, n + 1):
             left = PiecewiseConstantDistribution.left_border(j, n)
