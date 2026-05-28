@@ -88,6 +88,17 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
             rtol=5e-7,
         )
 
+    def test_sample_accepts_integer_like_count(self):
+        samples = self.dist_2d.sample(array(4))
+
+        self.assertEqual(samples.shape, (4, 2))
+
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    self.dist_2d.sample(n)
+
 
 if __name__ == "__main__":
     unittest.main()
