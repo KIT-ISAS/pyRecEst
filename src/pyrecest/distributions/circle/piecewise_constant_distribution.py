@@ -89,9 +89,13 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         p : ndarray, shape (n,)
             Pdf values at each point.
         """
-        assert xs.ndim == 1
+        xs = array(xs, dtype=float)
+        if xs.ndim == 0:
+            xs = xs.reshape((1,))
+        if xs.ndim != 1:
+            raise ValueError("xs must be a scalar or one-dimensional array")
         n_intervals = len(self.w)
-        xs_mod = array(mod(xs, 2.0 * pi), dtype=float)
+        xs_mod = mod(xs, 2.0 * pi)
         idx = array(
             [
                 min(int(floor(x / (2.0 * pi) * n_intervals)), n_intervals - 1)

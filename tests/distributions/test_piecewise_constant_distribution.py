@@ -31,6 +31,19 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
             self.dist.pdf(array([10.9])), array([4 * self.normal]), rtol=1e-10
         )
 
+    def test_pdf_accepts_scalar_and_list_inputs(self):
+        scalar_pdf = self.dist.pdf(0.0)
+        list_pdf = self.dist.pdf([0.0, 4.2])
+        array_pdf = self.dist.pdf(array([0.0, 4.2]))
+
+        self.assertEqual(scalar_pdf.shape, (1,))
+        npt.assert_allclose(scalar_pdf, array([1 * self.normal]), rtol=1e-10)
+        npt.assert_allclose(list_pdf, array_pdf, rtol=1e-10)
+
+    def test_pdf_rejects_matrix_input(self):
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            self.dist.pdf(array([[0.0, 1.0]]))
+
     def test_constructor_rejects_invalid_weights(self):
         for invalid_weights, message in [
             (array([1.0, -0.5, 1.0]), "nonnegative"),
