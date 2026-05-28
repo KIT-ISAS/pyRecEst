@@ -1,5 +1,6 @@
 import copy
 from collections.abc import Callable
+from numbers import Integral
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -73,13 +74,24 @@ class HypertoroidalDiracDistribution(
 
         if n_particles is None:
             raise ValueError("n_particles is required for sampling-based conversion.")
-        if n_particles <= 0:
-            raise ValueError("n_particles must be a positive integer.")
+        n_particles = HypertoroidalDiracDistribution._validate_particle_count(
+            n_particles
+        )
         return HypertoroidalDiracDistribution(
             distribution.sample(n_particles),
             ones(n_particles) / n_particles,
             dim=distribution.dim,
         )
+
+    @staticmethod
+    def _validate_particle_count(n_particles):
+        if (
+            isinstance(n_particles, bool)
+            or not isinstance(n_particles, Integral)
+            or int(n_particles) <= 0
+        ):
+            raise ValueError("n_particles must be a positive integer.")
+        return int(n_particles)
 
     def plot(self, resolution=128, **kwargs):
         _ = resolution
