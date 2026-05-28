@@ -214,7 +214,7 @@ def update_position_grid_likelihood(
 def effective_sample_size_fraction(weights) -> float:
     """Return ESS divided by the number of weights."""
 
-    weights = np.asarray(weights, dtype=float)
+    weights = _coerce_particle_weights(weights)
     if weights.size == 0:
         return 0.0
     total = float(np.sum(weights))
@@ -276,7 +276,7 @@ def particle_position_log_posterior(
 
     bin_centers = _coerce_bin_centers(bin_centers)
     positions = _coerce_positions(positions, bin_centers.shape[1], "positions")
-    weights = np.asarray(weights, dtype=float)
+    weights = _coerce_particle_weights(weights)
     if weights.shape != (positions.shape[0],):
         raise ValueError("weights must contain one entry per position particle")
     total = float(np.sum(weights))
@@ -296,6 +296,15 @@ def particle_position_log_posterior(
     positive = masses > 0.0
     log_posterior[positive] = np.log(masses[positive])
     return log_posterior - float(logsumexp(log_posterior))
+
+
+def _coerce_particle_weights(weights) -> np.ndarray:
+    weights = np.asarray(weights, dtype=float)
+    if not np.all(np.isfinite(weights)):
+        raise ValueError("particle weights must be finite")
+    if np.any(weights < 0.0):
+        raise ValueError("particle weights must be nonnegative")
+    return weights
 
 
 def _coerce_bin_centers(bin_centers) -> np.ndarray:
