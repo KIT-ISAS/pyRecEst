@@ -2,6 +2,7 @@ import numpy as np
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     allclose,
     arccos,
@@ -16,6 +17,7 @@ from pyrecest.backend import (
     full,
     hstack,
     imag,
+    isfinite,
     linalg,
     mod,
     pi,
@@ -107,6 +109,8 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
             cholesky_factor = linalg.cholesky(P)
         except Exception as exc:
             raise ValueError("P must be positive definite") from exc
+        if not bool(backend_all(isfinite(cholesky_factor))):
+            raise ValueError("P must be positive definite")
 
         if beta.shape != (n,):
             raise ValueError("size of beta must match size of mu")
