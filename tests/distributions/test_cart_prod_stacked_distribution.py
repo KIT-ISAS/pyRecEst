@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 from pyrecest.backend import allclose, array, eye
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.cart_prod.cart_prod_stacked_distribution import (
@@ -17,6 +18,43 @@ class ConcreteCartProdStackedDistribution(CartProdStackedDistribution):
 
 
 class TestCartProdStackedDistribution(unittest.TestCase):
+    def test_sample_returns_concatenated_component_samples(self):
+        dist = ConcreteCartProdStackedDistribution(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([0.0, 0.0, 0.0]), eye(3)),
+            ]
+        )
+
+        samples = dist.sample(5)
+
+        self.assertEqual(samples.shape, (5, 5))
+
+    def test_sample_accepts_integer_like_count(self):
+        dist = ConcreteCartProdStackedDistribution(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([0.0, 0.0, 0.0]), eye(3)),
+            ]
+        )
+
+        samples = dist.sample(np.array(4.0))
+
+        self.assertEqual(samples.shape, (4, 5))
+
+    def test_sample_rejects_invalid_count(self):
+        dist = ConcreteCartProdStackedDistribution(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([0.0, 0.0, 0.0]), eye(3)),
+            ]
+        )
+
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    dist.sample(n)
+
     def test_pdf_slices_component_columns_for_batched_samples(self):
         dist = ConcreteCartProdStackedDistribution(
             [

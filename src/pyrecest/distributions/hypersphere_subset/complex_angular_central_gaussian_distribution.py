@@ -1,4 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+import numpy as np
 from pyrecest.backend import (
     abs,
     all as backend_all,
@@ -19,7 +20,6 @@ from pyrecest.backend import (
     transpose,
 )
 
-
 def _to_python_bool(value):
     """Convert scalar backend boolean values to Python ``bool``."""
     if isinstance(value, bool):
@@ -27,6 +27,28 @@ def _to_python_bool(value):
     if hasattr(value, "item"):
         return bool(value.item())
     return bool(value)
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
 
 
 class ComplexAngularCentralGaussianDistribution:
@@ -101,6 +123,8 @@ class ComplexAngularCentralGaussianDistribution:
         Z : array-like of shape (n, d)
             Complex unit vectors sampled from the distribution.
         """
+        n = _validate_positive_sample_count(n)
+
         # Lower Cholesky factor: C = L @ L^H
         L = linalg.cholesky(self.C)
         a = random.normal(size=(n, self.dim))
