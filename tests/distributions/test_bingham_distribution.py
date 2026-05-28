@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -74,6 +75,25 @@ class TestBinghamDistribution(unittest.TestCase):
         samples, weights = self.bd.sample_deterministic()
         self.assertEqual(samples.shape, (3, 6))
         npt.assert_allclose(to_numpy(weights).sum(), 1.0, rtol=0, atol=1e-7)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_sample_accepts_integer_like_count(self):
+        """Scalar integer-like counts should be normalized before sampling."""
+        samples = self.bd.sample(np.array(4.0))
+        self.assertEqual(samples.shape, (4, 3))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        """Invalid counts should fail before Metropolis-Hastings allocation."""
+        for invalid_n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=invalid_n), self.assertRaises(ValueError):
+                self.bd.sample(invalid_n)
 
 
 if __name__ == "__main__":
