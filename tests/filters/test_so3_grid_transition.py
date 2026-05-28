@@ -171,6 +171,32 @@ class TestSO3GridTransition(unittest.TestCase):
                 1.0,
             )
 
+    def test_rejects_nonfinite_inputs(self):
+        for invalid_kappa in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_kappa=invalid_kappa):
+                with self.assertRaisesRegex(ValueError, "kappa"):
+                    so3_right_multiplication_grid_transition(
+                        self.grid,
+                        array([0.0, 0.0, 0.0]),
+                        invalid_kappa,
+                    )
+
+        invalid_grid = array(self.grid)
+        invalid_grid[0, 0] = float("nan")
+        with self.assertRaisesRegex(ValueError, "grid quaternions"):
+            so3_right_multiplication_grid_transition(
+                invalid_grid,
+                array([0.0, 0.0, 0.0]),
+                1.0,
+            )
+
+        with self.assertRaisesRegex(ValueError, "orientation_increment"):
+            so3_right_multiplication_grid_transition(
+                self.grid,
+                array([float("inf"), 0.0, 0.0]),
+                1.0,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
