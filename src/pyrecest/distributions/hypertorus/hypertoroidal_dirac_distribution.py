@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
+    abs,
+    any as backend_any,
     arctan2,
     array,
     atleast_1d,
@@ -106,6 +108,8 @@ class HypertoroidalDiracDistribution(
         :return: Mean direction
         """
         a = self.trigonometric_moment(1)
+        if bool(backend_any(abs(a) < 1e-12)):
+            raise ValueError("Mean direction is undefined for zero resultant moments.")
         m = mod(arctan2(imag(a), real(a)), 2.0 * pi)
         return m
 
