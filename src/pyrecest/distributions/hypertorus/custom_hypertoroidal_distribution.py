@@ -1,8 +1,9 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import mod, pi, zeros
+from pyrecest.backend import array, mod, pi, zeros
 
 from ..abstract_custom_distribution import AbstractCustomDistribution
 from ..circle.custom_circular_distribution import CustomCircularDistribution
+from ._input_validation import as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -24,9 +25,10 @@ class CustomHypertoroidalDistribution(
         if shift_by is None:
             self.shift_by = zeros(dim)
         else:
-            self.shift_by = shift_by
+            self.shift_by = as_shift_vector(shift_by, dim)
 
     def pdf(self, xs):
+        xs = array(xs)
         return AbstractCustomDistribution.pdf(self, mod(xs + self.shift_by, 2 * pi))
 
     def to_custom_circular(self):
