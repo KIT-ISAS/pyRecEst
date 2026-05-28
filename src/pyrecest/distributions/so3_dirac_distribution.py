@@ -1,6 +1,8 @@
 """Dirac distribution on SO(3)."""
 
 # pylint: disable=no-name-in-module,no-member
+from numbers import Integral
+
 from pyrecest.backend import (
     abs,
     all,
@@ -97,10 +99,18 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
     @classmethod
     def from_distribution(cls, distribution, n_particles=None):
         """Create an SO(3) Dirac distribution by sampling another distribution."""
-        assert (
-            isinstance(n_particles, int) and n_particles > 0
-        ), "n_particles must be a positive integer"
+        n_particles = cls._validate_particle_count(n_particles)
         return cls(distribution.sample(n_particles))
+
+    @staticmethod
+    def _validate_particle_count(n_particles):
+        if (
+            isinstance(n_particles, bool)
+            or not isinstance(n_particles, Integral)
+            or int(n_particles) <= 0
+        ):
+            raise ValueError("n_particles must be a positive integer")
+        return int(n_particles)
 
     def angular_error_mean(self, rotation):
         """Return the weighted mean angular error to ``rotation`` in radians."""

@@ -1,11 +1,12 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, cos, eye, linalg, pi, sin, sqrt, stack
-from pyrecest.distributions import SO3DiracDistribution
+from pyrecest.distributions import SO3DiracDistribution, SO3UniformDistribution
 from pyrecest.distributions.hypersphere_subset.hyperhemispherical_dirac_distribution import (
     HyperhemisphericalDiracDistribution,
 )
@@ -48,6 +49,20 @@ class SO3DiracDistributionTest(unittest.TestCase):
         dist = SO3DiracDistribution.from_rotation_matrices(rotations)
 
         npt.assert_allclose(dist.as_rotation_matrices(), rotations, atol=ATOL)
+
+    def test_from_distribution_validates_particle_count(self):
+        source = SO3UniformDistribution()
+
+        dist = SO3DiracDistribution.from_distribution(source, np.int64(3))
+
+        self.assertEqual(dist.d.shape, (3, 4))
+        self.assertEqual(dist.w.shape, (3,))
+        self.assertTrue(dist.is_valid())
+
+        for n_particles in (True, 1.5, 0, -1, None):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    SO3DiracDistribution.from_distribution(source, n_particles)
 
     def test_geodesic_distance_respects_antipodal_equivalence(self):
         identity = array([0.0, 0.0, 0.0, 1.0])
