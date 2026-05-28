@@ -11,6 +11,7 @@ import pyrecest.backend
 from pyrecest.backend import (
     abs,
     angle,
+    any as backend_any,
     arange,
     array,
     atleast_2d,
@@ -244,6 +245,8 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
 
     def mean_direction(self):
         a = self.trigonometric_moment(1)
+        if bool(backend_any(abs(a) < 1e-12)):
+            raise ValueError("Mean direction is undefined for zero resultant moments.")
         m = mod(angle(a), 2.0 * pi)
         return m
 
