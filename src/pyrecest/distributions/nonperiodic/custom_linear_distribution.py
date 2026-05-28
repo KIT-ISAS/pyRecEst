@@ -60,12 +60,7 @@ class CustomLinearDistribution(
 
     def pdf(self, xs):
         xs = array(xs)
-        if xs.ndim == 0 and self.dim != 1:
-            raise ValueError(f"xs must have trailing dimension {self.dim}")
-        if xs.ndim != 0 and not (
-            self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
-        ):
-            raise ValueError(f"xs must have trailing dimension {self.dim}")
+        assert self.dim == 1 and xs.ndim <= 1 or xs.shape[-1] == self.dim
         p = self.scale_by * self.f(
             # To ensure 2-d for broadcasting
             reshape(xs, (-1, self.dim))
