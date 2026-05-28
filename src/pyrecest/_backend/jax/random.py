@@ -59,15 +59,19 @@ def _shape_from_size(size):
     return (int(size),)
 
 
+def _looks_like_integer_dimension(value):
+    return isinstance(value, (int, _np.integer))
+
+
 def _looks_like_shape(value):
-    return isinstance(value, int) or (
-        isinstance(value, tuple) and all(isinstance(dim, int) for dim in value)
+    return _looks_like_integer_dimension(value) or (
+        isinstance(value, tuple) and all(_looks_like_integer_dimension(dim) for dim in value)
     )
 
 
 def _looks_like_shape_sequence(value):
     return isinstance(value, (list, tuple)) and all(
-        isinstance(dim, (int, _np.integer)) for dim in value
+        _looks_like_integer_dimension(dim) for dim in value
     )
 
 
