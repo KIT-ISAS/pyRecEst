@@ -36,6 +36,14 @@ class ToroidalVMRivestDistributionTest(unittest.TestCase):
         self.assertEqual(self.dist.alpha, self.alpha)
         self.assertEqual(self.dist.beta, self.beta)
 
+    def test_accepts_list_parameters(self):
+        dist = ToroidalVMRivestDistribution([1.0, 2.0], [0.7, 1.4], 0.5, 0.3)
+
+        npt.assert_allclose(dist.mu, self.mu)
+        npt.assert_allclose(dist.kappa, self.kappa)
+        npt.assert_allclose(dist.alpha, self.alpha)
+        npt.assert_allclose(dist.beta, self.beta)
+
     def test_accepts_python_scalar_correlation_parameters(self):
         dist = ToroidalVMRivestDistribution(self.mu, self.kappa, 0.5, 0.3)
         x = array([1.3, 2.4])
@@ -80,6 +88,10 @@ class ToroidalVMRivestDistributionTest(unittest.TestCase):
         self.assertEqual(shifted.alpha, self.dist.alpha)
         self.assertEqual(shifted.beta, self.dist.beta)
 
+    def test_shift_accepts_list_input(self):
+        shifted = self.dist.shift([0.5, 1.0])
+        npt.assert_allclose(shifted.mu, self.dist.shift(array([0.5, 1.0])).mu)
+
     # jscpd:ignore-start
     # pylint: disable=R0801
     def _unnormalized_pdf(self, xs):
@@ -114,6 +126,16 @@ class ToroidalVMRivestDistributionTest(unittest.TestCase):
 
         expected = pdf(x)
         npt.assert_allclose(self.dist.pdf(x), expected)
+
+    def test_pdf_accepts_list_inputs(self):
+        x = [[1.0, 2.0], [1.3, 2.4]]
+
+        npt.assert_allclose(self.dist.pdf(x), self.dist.pdf(array(x)))
+        npt.assert_allclose(self.dist.pdf([1.3, 2.4]), self.dist.pdf(array([1.3, 2.4])))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        with self.assertRaises(ValueError):
+            self.dist.pdf([1.0, 2.0, 3.0])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
