@@ -10,6 +10,7 @@ from pyrecest.backend import (
     array,
     asarray,
     clip,
+    isfinite,
     linalg,
     ndim,
     spatial,
@@ -51,15 +52,17 @@ class SO3DiracDistribution(HyperhemisphericalDiracDistribution):
         cls._require_rotation_method("from_matrix")
         rotation_matrices = asarray(rotation_matrices)
         if ndim(rotation_matrices) == 2:
-            assert rotation_matrices.shape == (
-                3,
-                3,
-            ), "A single rotation matrix must have shape (3, 3)."
+            if rotation_matrices.shape != (3, 3):
+                raise ValueError("A single rotation matrix must have shape (3, 3).")
+        elif ndim(rotation_matrices) >= 3:
+            if rotation_matrices.shape[-2:] != (3, 3):
+                raise ValueError("Rotation matrices must have shape (..., 3, 3).")
         else:
-            assert rotation_matrices.shape[-2:] == (
-                3,
-                3,
-            ), "Rotation matrices must have shape (..., 3, 3)."
+            raise ValueError(
+                "Rotation matrices must have shape (3, 3) or (..., 3, 3)."
+            )
+        if not bool(all(isfinite(rotation_matrices))):
+            raise ValueError("Rotation matrices must be finite.")
 
         quaternions = spatial.Rotation.from_matrix(rotation_matrices).as_quat()
         return cls(quaternions, w=w)

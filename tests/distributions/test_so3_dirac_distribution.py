@@ -50,6 +50,31 @@ class SO3DiracDistributionTest(unittest.TestCase):
 
         npt.assert_allclose(dist.as_rotation_matrices(), rotations, atol=ATOL)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Rotation matrix conversion is not supported on the PyTorch backend.",
+    )
+    def test_from_rotation_matrices_rejects_invalid_inputs(self):
+        invalid_cases = [
+            (array([1.0, 0.0, 0.0]), "shape"),
+            (array([[1.0, 0.0], [0.0, 1.0]]), "shape"),
+            (
+                array(
+                    [
+                        [1.0, 0.0, 0.0],
+                        [0.0, float("nan"), 0.0],
+                        [0.0, 0.0, 1.0],
+                    ]
+                ),
+                "finite",
+            ),
+        ]
+
+        for rotation_matrices, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    SO3DiracDistribution.from_rotation_matrices(rotation_matrices)
+
     def test_from_distribution_validates_particle_count(self):
         source = SO3UniformDistribution()
 
