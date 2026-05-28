@@ -1,9 +1,22 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, diag, exp, linalg, ones, pi, random, sin, stack
+from pyrecest.backend import (
+    array,
+    cos,
+    diag,
+    exp,
+    linalg,
+    ones,
+    pi,
+    random,
+    sin,
+    stack,
+    to_numpy,
+)
 from pyrecest.filters import (
     HyperhemisphereCartProdParticleFilter,
     SO3ProductParticleFilter,
@@ -146,6 +159,28 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         )
 
         npt.assert_allclose(filt.weights, array([0.5, 0.5]), atol=ATOL)
+
+    def test_masked_component_stays_finite_with_tiny_noise(self):
+        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=2)
+        filt.set_particles(
+            stack(
+                [
+                    stack([z_quaternion(0.0), z_quaternion(pi)], axis=0),
+                    stack([z_quaternion(0.0), z_quaternion(-pi / 2.0)], axis=0),
+                ],
+                axis=0,
+            )
+        )
+
+        log_likelihoods = filt.component_geodesic_log_likelihood(
+            stack([z_quaternion(0.0), z_quaternion(0.0)], axis=0),
+            noise_std=1e-300,
+            mask=array([1.0, 0.0]),
+        )
+
+        log_likelihoods_np = to_numpy(log_likelihoods)
+        self.assertTrue(np.isfinite(log_likelihoods_np).all())
+        npt.assert_allclose(log_likelihoods[:, 1], array([0.0, 0.0]), atol=ATOL)
 
     def test_log_likelihood_update_supports_zero_likelihoods(self):
         filt = SO3ProductParticleFilter(n_particles=3, num_rotations=1)
