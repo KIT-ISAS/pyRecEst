@@ -52,6 +52,39 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
         self.assertAlmostEqual(float(cd.get_manifold_size()), 2.0)
         self.assertAlmostEqual(cd.integrate(), 1.0)
 
+    def test_pdf_accepts_scalar_and_list_inputs_for_one_dimensional_bounds(self):
+        cd = CustomHyperrectangularDistribution(
+            lambda xs: xs[:, 0] * 0.0 + 0.5, array([0.0, 2.0])
+        )
+
+        scalar_pdf = cd.pdf(0.5)
+        list_pdf = cd.pdf([0.5, 1.5])
+        array_pdf = cd.pdf(array([0.5, 1.5]))
+
+        self.assertEqual(scalar_pdf.shape, (1,))
+        self.assertTrue(allclose(list_pdf, array_pdf))
+
+    def test_pdf_accepts_list_inputs_for_multidimensional_bounds(self):
+        cd = CustomHyperrectangularDistribution(
+            lambda xs: xs[:, 0] * 0.0 + 1.0,
+            array([[0.0, 1.0], [10.0, 12.0]]),
+        )
+
+        single_pdf = cd.pdf([0.5, 11.0])
+        batch_pdf = cd.pdf([[0.5, 11.0], [1.5, 11.0]])
+        array_pdf = cd.pdf(array([[0.5, 11.0], [1.5, 11.0]]))
+
+        self.assertEqual(single_pdf.shape, (1,))
+        self.assertTrue(allclose(batch_pdf, array_pdf))
+
+    def test_pdf_rejects_wrong_point_dimension(self):
+        cd = CustomHyperrectangularDistribution(
+            lambda xs: xs[:, 0], array([[0.0, 1.0], [10.0, 12.0]])
+        )
+
+        with self.assertRaisesRegex(ValueError, "Point dimension"):
+            cd.pdf([0.5, 11.0, 3.0])
+
     def test_bounds_must_be_finite_and_strictly_increasing(self):
         invalid_bounds = [
             array([2.0, 1.0]),
