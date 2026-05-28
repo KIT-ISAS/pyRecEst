@@ -31,6 +31,18 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
             self.dist.pdf(array([10.9])), array([4 * self.normal]), rtol=1e-10
         )
 
+    def test_constructor_rejects_invalid_weights(self):
+        for invalid_weights, message in [
+            (array([1.0, -0.5, 1.0]), "nonnegative"),
+            (array([0.0, 0.0]), "positive total mass"),
+            (array([float("nan"), 1.0]), "finite"),
+            (array([float("inf"), 1.0]), "finite"),
+        ]:
+            with self.subTest(weights=invalid_weights), self.assertRaisesRegex(
+                ValueError, message
+            ):
+                PiecewiseConstantDistribution(invalid_weights)
+
     def test_integral_normalized(self):
         """Verify the distribution integrates to 1 via the exact sum."""
         n = len(self.dist.w)

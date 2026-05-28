@@ -6,6 +6,7 @@ from pyrecest.backend import (
     array,
     exp,
     floor,
+    isfinite,
     log,
     mean,
     mod,
@@ -64,7 +65,16 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         AbstractCircularDistribution.__init__(self)
         w = array(w, dtype=float).ravel()
         assert w.ndim == 1 and w.shape[0] > 0
-        self.w = w / (mean(w) * 2.0 * pi)
+        if any(not bool(isfinite(weight)) for weight in w):
+            raise ValueError("Weights must be finite")
+        if any(bool(weight < 0.0) for weight in w):
+            raise ValueError("Weights must be nonnegative")
+
+        mean_weight = mean(w)
+        if not bool(mean_weight > 0.0):
+            raise ValueError("Weights must have positive total mass")
+
+        self.w = w / (mean_weight * 2.0 * pi)
 
     def pdf(self, xs):
         """Evaluate the pdf at each point in xs.
