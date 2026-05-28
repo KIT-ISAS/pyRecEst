@@ -40,6 +40,15 @@ def _as_2d_covariance(C):
     return C
 
 
+def _validate_series_order(m) -> int:
+    if isinstance(m, bool) or not isinstance(m, Integral):
+        raise ValueError("m must be a non-negative integer")
+    m = int(m)
+    if m < 0:
+        raise ValueError("m must be a non-negative integer")
+    return m
+
+
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
     def __init__(self, mu, C):
         """
@@ -83,6 +92,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
+        m = _validate_series_order(m)
         xs = as_hypertoroidal_points(xs, self.dim)
         xs = (xs + pi) % (2 * pi) - pi
 

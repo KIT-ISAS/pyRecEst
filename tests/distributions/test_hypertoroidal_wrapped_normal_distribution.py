@@ -73,6 +73,22 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         npt.assert_allclose(list_pdf, matrix_pdf)
         npt.assert_allclose(scalar_pdf, matrix_pdf[:1])
 
+    def test_pdf_accepts_numpy_integer_series_order(self):
+        dist = HypertoroidalWNDistribution(0.3, 0.7)
+
+        values = dist.pdf(0.2, m=np.int64(2))
+
+        self.assertEqual(values.shape, (1,))
+        self.assertGreater(float(values[0]), 0.0)
+
+    def test_pdf_rejects_invalid_series_order(self):
+        dist = HypertoroidalWNDistribution(0.3, 0.7)
+
+        for m in (True, -1, 1.5, [1]):
+            with self.subTest(m=m):
+                with self.assertRaisesRegex(ValueError, "non-negative integer"):
+                    dist.pdf(0.2, m=m)
+
     def test_vector_pdf_accepts_single_point_sequence(self):
         dist = HypertoroidalWNDistribution(
             array([0.3, 0.4]), array([[0.7, 0.0], [0.0, 0.5]])
