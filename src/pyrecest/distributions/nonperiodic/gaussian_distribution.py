@@ -8,7 +8,6 @@ import pyrecest.backend
 from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     allclose,
-    asarray,
     exp,
     eye,
     linalg,
@@ -296,7 +295,7 @@ class GaussianDistribution(AbstractLinearDistribution):
 
     def sample(self, n):
         """Draw ``n`` random samples with shape ``(n, dim)``."""
-        if not isinstance(n, Integral) or int(n) <= 0:
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
             raise ValueError("n must be a positive integer.")
         return random.multivariate_normal(mean=self.mu, cov=self.C, size=int(n))
 
