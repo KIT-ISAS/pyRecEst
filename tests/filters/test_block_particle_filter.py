@@ -86,6 +86,22 @@ class BlockParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.block_weights, array([[1.0, 0.0], [1.0, 0.0]]))
         npt.assert_allclose(filt.weights, array([1.0, 0.0]))
 
+    def test_rejects_nonfinite_weights(self):
+        for invalid_weight in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_weight=invalid_weight):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    DummyBlockParticleFilter(
+                        array([[0.0, 10.0], [1.0, 11.0]]),
+                        weights=array([invalid_weight, 1.0]),
+                    )
+
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    DummyBlockParticleFilter(
+                        array([[0.0, 10.0], [1.0, 11.0]]),
+                        partition="singleton",
+                        block_weights=array([[1.0, invalid_weight], [1.0, 1.0]]),
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
