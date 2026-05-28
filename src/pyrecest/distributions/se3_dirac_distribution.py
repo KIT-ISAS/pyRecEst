@@ -1,4 +1,6 @@
 # pylint: disable=no-name-in-module,no-member
+from numbers import Integral
+
 from pyrecest.backend import ones
 
 from .abstract_se3_distribution import AbstractSE3Distribution
@@ -34,15 +36,25 @@ class SE3DiracDistribution(
 
     @staticmethod
     def from_distribution(distribution, n_particles):
-        assert isinstance(
-            distribution, AbstractSE3Distribution
-        ), "dist must be an instance of AbstractSE3Distribution"
-        assert (
-            isinstance(n_particles, int) and n_particles > 0
-        ), "n_particles must be a positive integer"
+        if not isinstance(distribution, AbstractSE3Distribution):
+            raise TypeError(
+                "distribution must be an instance of AbstractSE3Distribution"
+            )
+
+        n_particles = SE3DiracDistribution._validate_particle_count(n_particles)
 
         ddist = SE3DiracDistribution(
             distribution.sample(n_particles),
             1 / n_particles * ones(n_particles),
         )
         return ddist
+
+    @staticmethod
+    def _validate_particle_count(n_particles):
+        if (
+            isinstance(n_particles, bool)
+            or not isinstance(n_particles, Integral)
+            or int(n_particles) <= 0
+        ):
+            raise ValueError("n_particles must be a positive integer")
+        return int(n_particles)
