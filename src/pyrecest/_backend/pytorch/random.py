@@ -4,7 +4,6 @@ from numbers import Integral as _Integral
 
 import torch as _torch
 from torch import get_rng_state as get_state  # For PyRecEst
-from torch import randint
 from torch import set_rng_state as set_state  # For PyRecEst
 from torch.distributions.multivariate_normal import (
     MultivariateNormal as _MultivariateNormal,
@@ -25,6 +24,22 @@ def _choice_size(size):
         size = (size,)
     size = tuple(int(dim) for dim in size)
     return size, int(_torch.prod(_torch.tensor(size)).item())
+
+
+def _randint_size(size):
+    if size is None:
+        return ()
+    if not hasattr(size, "__iter__") or isinstance(size, (str, bytes)):
+        return (size,)
+    return tuple(size)
+
+
+def randint(low, high=None, size=None, *args, **kwargs):
+    if high is None:
+        if low is None:
+            raise TypeError("randint() missing required argument 'high'")
+        return _torch.randint(low, _randint_size(size), *args, **kwargs)
+    return _torch.randint(low, high, _randint_size(size), *args, **kwargs)
 
 
 def _normal_size(size):
