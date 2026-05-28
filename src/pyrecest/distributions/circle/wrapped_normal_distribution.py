@@ -1,3 +1,4 @@
+from math import isfinite
 from numbers import Integral
 from typing import Union
 
@@ -45,6 +46,7 @@ class WrappedNormalDistribution(
     """
 
     MAX_SIGMA_BEFORE_UNIFORM = 10
+    _MOMENT_NORM_TOL = 1e-12
 
     def __init__(
         self,
@@ -261,8 +263,24 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def from_moment(m) -> "WrappedNormalDistribution":
-        mu = mod(angle(m.squeeze()), 2.0 * pi)
-        sigma = sqrt(-2 * log(abs(m.squeeze())))
+        moment = m.squeeze()
+        moment_abs = float(abs(moment))
+        if not isfinite(moment_abs):
+            raise ValueError("First trigonometric moment must be finite.")
+        if moment_abs > 1.0 + WrappedNormalDistribution._MOMENT_NORM_TOL:
+            raise ValueError(
+                "First trigonometric moment must have magnitude at most 1."
+            )
+
+        moment_abs = min(moment_abs, 1.0)
+        if moment_abs == 1.0:
+            raise ValueError(
+                "First trigonometric moment with |m| = 1 cannot be moment-matched "
+                "to a wrapped normal with positive variance."
+            )
+
+        mu = mod(angle(moment), 2.0 * pi)
+        sigma = sqrt(-2 * log(moment_abs))
         return WrappedNormalDistribution(mu, sigma)
 
     @staticmethod
