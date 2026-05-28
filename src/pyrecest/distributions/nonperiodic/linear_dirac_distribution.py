@@ -1,3 +1,5 @@
+from numbers import Integral
+
 import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
@@ -92,17 +94,29 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
                 "n_particles, n_samples, or n."
             )
 
-        particle_counts = [int(value) for value in specified_counts]
+        particle_counts = [
+            LinearDiracDistribution._validate_particle_count(value)
+            for value in specified_counts
+        ]
         if len(set(particle_counts)) != 1:
             raise ConversionError(
                 "n_particles, n_samples, and n must agree when more than one "
                 "particle-count alias is supplied."
             )
 
-        particle_count = particle_counts[0]
-        if particle_count <= 0:
-            raise ConversionError("Number of particles must be positive.")
-        return particle_count
+        return particle_counts[0]
+
+    @staticmethod
+    def _validate_particle_count(value):
+        from ..conversion import ConversionError
+
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, Integral)
+            or int(value) <= 0
+        ):
+            raise ConversionError("Number of particles must be a positive integer.")
+        return int(value)
 
     @staticmethod
     def weighted_samples_to_mean_and_cov(samples, weights=None):
