@@ -1,6 +1,7 @@
 import copy
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -53,17 +54,27 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         npt.assert_allclose(dist.d, array([0.1, 0.2, 0.3]))
 
     def test_from_distribution_sampling_1d(self):
-        n_particles = 5
+        n_particles = np.int64(5)
         vm = VonMisesDistribution(array(0.2), array(1.5))
 
         wd = HypertoroidalDiracDistribution.from_distribution(vm, n_particles)
 
         self.assertIsInstance(wd, HypertoroidalDiracDistribution)
         self.assertEqual(wd.dim, 1)
-        self.assertEqual(wd.d.shape, (n_particles,))
-        self.assertEqual(wd.w.shape, (n_particles,))
-        npt.assert_array_almost_equal(wd.w, array([1.0 / n_particles] * n_particles))
+        self.assertEqual(wd.d.shape, (int(n_particles),))
+        self.assertEqual(wd.w.shape, (int(n_particles),))
+        npt.assert_array_almost_equal(
+            wd.w, array([1.0 / n_particles] * int(n_particles))
+        )
         npt.assert_array_almost_equal(wd.d, mod(wd.d, 2.0 * pi))
+
+    def test_from_distribution_rejects_invalid_particle_counts(self):
+        vm = VonMisesDistribution(array(0.2), array(1.5))
+
+        for n_particles in (True, 1.5, 0, -1):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    HypertoroidalDiracDistribution.from_distribution(vm, n_particles)
 
     def test_trigonometric_moment(self):
         m = self.twd.trigonometric_moment(1)
