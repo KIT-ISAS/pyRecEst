@@ -58,6 +58,25 @@ def _validate_positive_sample_count(n) -> int:
     return count_int
 
 
+def _validate_positive_finite_scalar(value, name: str) -> float:
+    scalar_array = np.asarray(value)
+    if scalar_array.shape != ():
+        raise ValueError(f"{name} must be a scalar")
+
+    scalar = scalar_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a positive finite scalar")
+
+    try:
+        scalar_float = float(scalar)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive finite scalar") from exc
+
+    if not np.isfinite(scalar_float) or scalar_float <= 0.0:
+        raise ValueError(f"{name} must be a positive finite scalar")
+    return scalar_float
+
+
 class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
     """Gauss von Mises Distribution on R^linD x S^1.
 
@@ -80,14 +99,22 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         n = mu.shape[0]
 
         # Validate parameters
-        assert P.shape == (n, n), "P and mu must have matching size"
-        assert allclose(P, P.T), "P must be symmetric"
-        linalg.cholesky(P)  # raises if not positive definite
+        if P.shape != (n, n):
+            raise ValueError("P and mu must have matching size")
+        if not bool(allclose(P, P.T)):
+            raise ValueError("P must be symmetric")
+        try:
+            cholesky_factor = linalg.cholesky(P)
+        except Exception as exc:
+            raise ValueError("P must be positive definite") from exc
 
-        assert beta.shape == (n,), "size of beta must match size of mu"
-        assert Gamma.shape == (n, n), "Gamma and mu must have matching size"
-        assert allclose(Gamma, Gamma.T), "Gamma must be symmetric"
-        assert float(kappa) > 0, "kappa has to be a positive scalar"
+        if beta.shape != (n,):
+            raise ValueError("size of beta must match size of mu")
+        if Gamma.shape != (n, n):
+            raise ValueError("Gamma and mu must have matching size")
+        if not bool(allclose(Gamma, Gamma.T)):
+            raise ValueError("Gamma must be symmetric")
+        kappa = _validate_positive_finite_scalar(kappa, "kappa")
 
         AbstractHypercylindricalDistribution.__init__(self, bound_dim=1, lin_dim=n)
 
@@ -98,7 +125,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         self.Gamma = array(Gamma)
         self.kappa = float(kappa)
         # Lower triangular Cholesky factor of P
-        self.A = linalg.cholesky(P)
+        self.A = cholesky_factor
 
     def get_theta(self, xa):
         """Compute the angle offset theta for each column of xa (linear part).
