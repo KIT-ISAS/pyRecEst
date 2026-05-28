@@ -1,4 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
+import math
+
 import numpy as np
 from pyrecest.backend import (
     array,
@@ -62,6 +64,10 @@ class MardiaSuttonDistribution(AbstractHypercylindricalDistribution):
         """
         AbstractHypercylindricalDistribution.__init__(self, bound_dim=1, lin_dim=1)
         assert kappa > 0, "kappa must be a positive scalar"
+        sigma_float = float(sigma)
+        assert (
+            math.isfinite(sigma_float) and sigma_float > 0.0
+        ), "sigma must be a positive finite scalar"
         assert (
             float(sqrt(rho1**2 + rho2**2)) < 1.0
         ), "sqrt(rho1^2 + rho2^2) must be strictly less than 1"
@@ -71,7 +77,7 @@ class MardiaSuttonDistribution(AbstractHypercylindricalDistribution):
         self.kappa = kappa
         self.rho1 = rho1
         self.rho2 = rho2
-        self.sigma = sigma
+        self.sigma = sigma_float
 
     def get_mu_sigma(self, xa_circular):
         """Compute the conditional mean and std of the linear variable given circular values.
