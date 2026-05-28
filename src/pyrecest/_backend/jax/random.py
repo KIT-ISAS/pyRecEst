@@ -59,15 +59,19 @@ def _shape_from_size(size):
     return (int(size),)
 
 
+def _looks_like_integer_dimension(value):
+    return isinstance(value, (int, _np.integer))
+
+
 def _looks_like_shape(value):
-    return isinstance(value, int) or (
-        isinstance(value, tuple) and all(isinstance(dim, int) for dim in value)
+    return _looks_like_integer_dimension(value) or (
+        isinstance(value, tuple) and all(_looks_like_integer_dimension(dim) for dim in value)
     )
 
 
 def _looks_like_shape_sequence(value):
     return isinstance(value, (list, tuple)) and all(
-        isinstance(dim, (int, _np.integer)) for dim in value
+        _looks_like_integer_dimension(dim) for dim in value
     )
 
 
@@ -94,8 +98,8 @@ def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
     state, has_state, kwargs = _get_state(**kwargs)
     low = _jnp.asarray(low)
     high = _jnp.asarray(high)
-    if bool(_jnp.any(low >= high)):
-        raise ValueError("Upper bound must be higher than lower bound")
+    if bool(_jnp.any(low > high)):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
     state, res = _rand(state, size, *args, minval=low, maxval=high, **kwargs)
     return set_state_return(has_state, state, res)
 

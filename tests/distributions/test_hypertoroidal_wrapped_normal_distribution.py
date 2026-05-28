@@ -96,7 +96,7 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
             dist.trigonometric_moment(1), exp(1j * array([0.3]) - 0.7 / 2)
         )
 
-    def test_sample_validates_count(self):
+    def test_sample_validates_count_before_backend_call(self):
         dist = HypertoroidalWNDistribution([1.0, 2.0], [[0.5, 0.1], [0.1, 0.6]])
 
         samples = dist.sample(np.int64(4))

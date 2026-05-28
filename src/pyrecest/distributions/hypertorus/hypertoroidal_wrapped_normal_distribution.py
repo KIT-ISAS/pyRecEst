@@ -126,7 +126,6 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
             raise ValueError("n must be a positive integer")
         return int(n)
 
-
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
         assert self.dim == other.dim, "Dimensions of the two distributions must match"
         mu_ = (self.mu + other.mu) % (2.0 * pi)

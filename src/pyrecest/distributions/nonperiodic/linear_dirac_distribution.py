@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import asarray, cov, ones, reshape
-from pyrecest.backend import zeros
+from pyrecest.backend import asarray, cov, ones, reshape, zeros
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_linear_distribution import AbstractLinearDistribution

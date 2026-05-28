@@ -32,11 +32,15 @@ from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 
 def _normalize_hypertoroidal_resolution(value, dim: int, name: str) -> tuple[int, ...]:
     """Normalize scalar or per-dimension hypertoroidal resolutions."""
+    if isinstance(value, bool):
+        raise ValueError(f"{name} entries must be positive integers.")
     if isinstance(value, Integral):
         resolution = (int(value),) * dim
     else:
         try:
-            resolution = tuple(int(v) for v in value)
+            resolution = tuple(
+                _validate_hypertoroidal_resolution_entry(v, name) for v in value
+            )
         except TypeError as exc:
             raise TypeError(
                 f"{name} must be an integer or a sequence of integers."
@@ -50,6 +54,12 @@ def _normalize_hypertoroidal_resolution(value, dim: int, name: str) -> tuple[int
     if builtins.any(v <= 0 for v in resolution):
         raise ValueError(f"{name} entries must be positive integers.")
     return resolution
+
+
+def _validate_hypertoroidal_resolution_entry(value, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} entries must be positive integers.")
+    return int(value)
 
 
 class HypertoroidalGridDistribution(
