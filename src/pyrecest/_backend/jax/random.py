@@ -6,6 +6,7 @@ who says he was in inspired by https://github.com/wesselb/lab/blob/master/lab/ja
 """
 
 import sys
+from numbers import Integral as _Integral
 
 import jax
 import jax.numpy as _jnp
@@ -50,17 +51,33 @@ def _get_state(**kwargs):
     return state, has_state, kwargs
 
 
+def _shape_dimension_from_size(dim, name="size"):
+    if isinstance(dim, (bool, _np.bool_)):
+        raise TypeError(f"{name} entries must be integers, not booleans")
+    if not isinstance(dim, _Integral):
+        raise TypeError(f"{name} must be None, an integer, or a tuple/list of integers")
+
+    dim = int(dim)
+    if dim < 0:
+        raise ValueError(f"{name} entries must be non-negative")
+    return dim
+
+
 def _shape_from_size(size):
     """Convert a NumPy-style ``size`` argument to JAX's shape argument."""
     if size is None:
         return ()
-    if hasattr(size, "__iter__"):
-        return tuple(int(dim) for dim in size)
-    return (int(size),)
+    if isinstance(size, (bool, _np.bool_)):
+        raise TypeError("size must be an integer or a tuple/list of integers, not boolean")
+    if isinstance(size, _Integral):
+        return (_shape_dimension_from_size(size),)
+    if isinstance(size, (tuple, list)):
+        return tuple(_shape_dimension_from_size(dim) for dim in size)
+    raise TypeError("size must be None, an integer, or a tuple/list of integers")
 
 
 def _looks_like_integer_dimension(value):
-    return isinstance(value, (int, _np.integer))
+    return isinstance(value, _Integral) and not isinstance(value, (bool, _np.bool_))
 
 
 def _looks_like_shape(value):
