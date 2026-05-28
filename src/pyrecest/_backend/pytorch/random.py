@@ -190,8 +190,8 @@ def uniform(low=0.0, high=1.0, size=None, dtype=None):
 
     low = _torch.as_tensor(low, dtype=dtype, device=device)
     high = _torch.as_tensor(high, dtype=dtype, device=device)
-    if bool(_torch.any(low >= high)):
-        raise ValueError("Upper bound must be higher than lower bound")
+    if bool(_torch.any(low > high)):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
     if size is None:
         size = ()
     elif not hasattr(size, "__iter__"):
