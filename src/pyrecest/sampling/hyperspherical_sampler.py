@@ -10,6 +10,7 @@ from pyrecest.backend import (
     arccos,
     arctan2,
     array,
+    clip,
     column_stack,
     cos,
     deg2rad,
@@ -393,7 +394,7 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
 
     @staticmethod
     def quaternion_to_hopf_yershova(q):
-        θ = 2 * arccos(sqrt(q[:, 0] ** 2 + q[:, 1] ** 2))
+        θ = 2 * arccos(clip(sqrt(q[:, 0] ** 2 + q[:, 1] ** 2), 0.0, 1.0))
         ϕ = arctan2(q[:, 3], q[:, 2]) - arctan2(q[:, 1], q[:, 0])
         ψ = 2 * arctan2(q[:, 1], q[:, 0])
         return θ, ϕ, ψ
