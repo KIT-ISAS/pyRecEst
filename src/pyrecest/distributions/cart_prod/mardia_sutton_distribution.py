@@ -42,6 +42,25 @@ def _validate_positive_sample_count(n) -> int:
     return count_int
 
 
+def _validate_positive_finite_scalar(value, name: str) -> float:
+    scalar_array = np.asarray(value)
+    if scalar_array.shape != ():
+        raise ValueError(f"{name} must be a scalar")
+
+    scalar = scalar_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a positive finite scalar")
+
+    try:
+        scalar_float = float(scalar)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive finite scalar") from exc
+
+    if not math.isfinite(scalar_float) or scalar_float <= 0.0:
+        raise ValueError(f"{name} must be a positive finite scalar")
+    return scalar_float
+
+
 class MardiaSuttonDistribution(AbstractHypercylindricalDistribution):
     """Gauss-von Mises distribution for cylindrical data (1 circular + 1 linear dimension).
 
@@ -63,18 +82,15 @@ class MardiaSuttonDistribution(AbstractHypercylindricalDistribution):
             sigma (positive scalar): linear standard deviation
         """
         AbstractHypercylindricalDistribution.__init__(self, bound_dim=1, lin_dim=1)
-        assert kappa > 0, "kappa must be a positive scalar"
-        sigma_float = float(sigma)
-        assert (
-            math.isfinite(sigma_float) and sigma_float > 0.0
-        ), "sigma must be a positive finite scalar"
-        assert (
-            float(sqrt(rho1**2 + rho2**2)) < 1.0
-        ), "sqrt(rho1^2 + rho2^2) must be strictly less than 1"
+        kappa_float = _validate_positive_finite_scalar(kappa, "kappa")
+        sigma_float = _validate_positive_finite_scalar(sigma, "sigma")
+        rho_norm = float(sqrt(rho1**2 + rho2**2))
+        if not math.isfinite(rho_norm) or rho_norm >= 1.0:
+            raise ValueError("sqrt(rho1^2 + rho2^2) must be strictly less than 1")
 
         self.mu = mu
         self.mu0 = mod(mu0, 2.0 * pi)
-        self.kappa = kappa
+        self.kappa = kappa_float
         self.rho1 = rho1
         self.rho2 = rho2
         self.sigma = sigma_float
