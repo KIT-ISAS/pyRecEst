@@ -17,6 +17,7 @@ from pyrecest.backend import (
     int32,
     int64,
     isclose,
+    isfinite,
     logical_and,
     maximum,
     minimum,
@@ -68,8 +69,6 @@ class LinearBoxParticleDistribution(AbstractLinearDistribution):
                 weights = reshape(weights, (-1,))
             if weights.shape[0] != n_boxes:
                 raise ValueError("Number of weights and boxes must match")
-            if bool(any(weights < 0)):
-                raise ValueError("Weights must be nonnegative")
             self.w = copy.copy(weights)
         self.normalize_in_place()
 
@@ -114,9 +113,7 @@ class LinearBoxParticleDistribution(AbstractLinearDistribution):
 
     def normalize_in_place(self):
         """Normalize weights in-place."""
-        total_weight = sum(self.w)
-        if bool(total_weight <= 0):
-            raise ValueError("At least one box particle must have positive weight")
+        total_weight = self._validate_weights(self.w, "Weights")
         if not bool(isclose(total_weight, 1.0, atol=1e-10)):
             warnings.warn("Weights are not normalized.", RuntimeWarning)
             self.w = self.w / total_weight
@@ -217,15 +214,15 @@ class LinearBoxParticleDistribution(AbstractLinearDistribution):
     def reweigh(self, f):
         """Return a copy with weights multiplied by ``f`` evaluated at centers."""
         dist = copy.deepcopy(self)
-        weights_update = f(dist.centers())
+        weights_update = array(f(dist.centers()))
         if weights_update.shape != dist.w.shape:
             raise ValueError("Function returned wrong output dimensions")
-        if bool(any(weights_update < 0)):
-            raise ValueError("All weight updates must be nonnegative")
+        self._validate_weights(weights_update, "Weight updates")
         new_weights = dist.w * weights_update
-        if bool(sum(new_weights) <= 0):
-            raise ValueError("The sum of all weights must be positive")
-        dist.w = new_weights / sum(new_weights)
+        total_weight = self._validate_weights(
+            new_weights, "Updated box particle weights"
+        )
+        dist.w = new_weights / total_weight
         return dist
 
     def integrate(self, left=None, right=None):
@@ -317,6 +314,17 @@ class LinearBoxParticleDistribution(AbstractLinearDistribution):
         ):
             raise ValueError("Number of particles must be a positive integer.")
         return int(value)
+
+    @staticmethod
+    def _validate_weights(weights, name):
+        if not bool(all(isfinite(weights))):
+            raise ValueError(f"{name} must be finite")
+        if bool(any(weights < 0)):
+            raise ValueError(f"{name} must be nonnegative")
+        total_weight = sum(weights)
+        if not bool(isfinite(total_weight)) or not bool(total_weight > 0):
+            raise ValueError(f"{name} must have positive finite total mass")
+        return total_weight
 
     @staticmethod
     def _coerce_half_width(box_half_width, dim):
