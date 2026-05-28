@@ -24,6 +24,17 @@ from pyrecest.distributions.circle.circular_dirac_distribution import (
 from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 
 
+class LenientHypertoroidalDistribution(AbstractHypertoroidalDistribution):
+    def __init__(self):
+        super().__init__(1)
+
+    def pdf(self, xs):
+        return zeros_like(xs)
+
+    def sample(self, n):
+        return array([0.0] * int(n))
+
+
 class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
     def setUp(self):
         self.d = array(
@@ -68,13 +79,20 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         )
         npt.assert_array_almost_equal(wd.d, mod(wd.d, 2.0 * pi))
 
-    def test_from_distribution_rejects_invalid_particle_counts(self):
-        vm = VonMisesDistribution(array(0.2), array(1.5))
+    def test_from_distribution_validates_sampling_particle_count(self):
+        dist = LenientHypertoroidalDistribution()
+
+        wd = HypertoroidalDiracDistribution.from_distribution(dist, np.int64(3))
+
+        self.assertEqual(wd.d.shape, (3,))
+        self.assertEqual(wd.w.shape, (3,))
 
         for n_particles in (True, 1.5, 0, -1):
             with self.subTest(n_particles=n_particles):
                 with self.assertRaisesRegex(ValueError, "positive integer"):
-                    HypertoroidalDiracDistribution.from_distribution(vm, n_particles)
+                    HypertoroidalDiracDistribution.from_distribution(
+                        dist, n_particles
+                    )
 
     def test_trigonometric_moment(self):
         m = self.twd.trigonometric_moment(1)

@@ -9,8 +9,17 @@ rand = _modify_func_default_dtype(
     copy=False, kw_only=True, target=_allow_complex_dtype(target=_np.random.rand)
 )
 
+
+def _uniform(low=0.0, high=1.0, size=None):
+    low_array = _np.asarray(low)
+    high_array = _np.asarray(high)
+    if _np.any(low_array > high_array):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
+    return _np.random.uniform(low, high, size)
+
+
 uniform = _modify_func_default_dtype(
-    copy=False, kw_only=True, target=_allow_complex_dtype(target=_np.random.uniform)
+    copy=False, kw_only=True, target=_allow_complex_dtype(target=_uniform)
 )
 
 
