@@ -146,7 +146,6 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
             raise NotImplementedError("sample is not supported on the JAX backend.")
         n = _validate_positive_sample_count(n)
-
         num_intervals = len(self.w)
         interval_width = 2.0 * pi / num_intervals
         # Each interval has probability w[j] * interval_width, which sums to 1 by

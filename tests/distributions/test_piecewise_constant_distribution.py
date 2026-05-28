@@ -129,6 +129,7 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
     )
     def test_sample_accepts_integer_like_count(self):
         samples = self.dist.sample(np.array(4.0))
+
         self.assertEqual(samples.shape, (4,))
 
     @unittest.skipIf(
@@ -136,9 +137,10 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         reason="Not supported on JAX backend",
     )
     def test_sample_rejects_invalid_count(self):
-        for invalid_n in (0, -1, 1.5, True, [3]):
-            with self.subTest(n=invalid_n), self.assertRaises(ValueError):
-                self.dist.sample(invalid_n)
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    self.dist.sample(n)
 
 
 if __name__ == "__main__":
