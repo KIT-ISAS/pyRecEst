@@ -2,7 +2,8 @@ from numbers import Integral
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import int32, int64, linalg, random, where, zeros
+from pyrecest.backend import array, int32, int64, linalg, random, where, zeros
+from pyrecest.exceptions import ShapeError
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -48,7 +49,13 @@ class EllipsoidalBallUniformDistribution(
         :param xs: Points at which to compute the PDF.
         :returns: PDF values at given points.
         """
-        assert xs.shape[-1] == self.dim
+        xs = array(xs)
+        if xs.ndim not in (1, 2) or xs.shape[-1] != self.dim:
+            raise ShapeError(
+                "xs",
+                xs.shape,
+                expected=f"({self.dim},) or (n, {self.dim})",
+            )
 
         reciprocal_volume = 1 / self.get_manifold_size()
 
