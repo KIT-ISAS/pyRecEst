@@ -113,11 +113,12 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
         )
 
     def test_sample_validates_count_before_backend_call(self):
-        dist = HypertoroidalWNDistribution([0.0, 0.0], [[1.0, 0.0], [0.0, 1.0]])
+        dist = HypertoroidalWNDistribution([1.0, 2.0], [[0.5, 0.1], [0.1, 0.6]])
 
-        samples = dist.sample(np.int64(3))
+        samples = dist.sample(np.int64(4))
 
-        self.assertEqual(samples.shape, (3, 2))
+        self.assertEqual(samples.shape, (4, 2))
+        npt.assert_allclose(samples, mod(samples, 2.0 * pi))
 
         for n in (True, 1.5, 0, -1):
             with self.subTest(n=n):
