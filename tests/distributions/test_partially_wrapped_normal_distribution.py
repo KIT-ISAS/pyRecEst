@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import scipy.linalg
 
@@ -58,13 +59,38 @@ class TestPartiallyWrappedNormalDistribution(unittest.TestCase):
         npt.assert_allclose(shifted.mu, [7.0 - 2.0 * pi, 3.0])
         npt.assert_allclose(dist.mu, [5.0, 1.0])
 
+    def test_set_mean_rejects_wrong_shape(self):
+        with self.assertRaisesRegex(ValueError, "new_mean"):
+            self.dist_2d.set_mean([1.0])
+
     def test_linear_mean_is_empty_for_fully_periodic_distribution(self):
         dist = PartiallyWrappedNormalDistribution(
-            [0.0, 1.0], [[1.0, 0.1], [0.1, 2.0]], 2
+            [0.0, 1.0], [[1.0, 0.1], [0.1, 2.0]], np.int64(2)
         )
 
         self.assertEqual(dist.linear_mean().shape, (0,))
         self.assertEqual(dist.linear_covariance().shape, (0, 0))
+
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_parameters = [
+            ("bound_dim", ([0.0, 1.0], [[1.0, 0.0], [0.0, 1.0]], True)),
+            ("bound_dim", ([0.0, 1.0], [[1.0, 0.0], [0.0, 1.0]], 1.5)),
+            ("bound_dim", ([0.0, 1.0], [[1.0, 0.0], [0.0, 1.0]], -1)),
+            ("bound_dim", ([0.0, 1.0], [[1.0, 0.0], [0.0, 1.0]], 3)),
+            ("mu", ([[0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]], 1)),
+            ("C must match", ([0.0, 1.0], [[1.0]], 1)),
+            ("C must be symmetric", ([0.0, 1.0], [[1.0, 2.0], [0.0, 1.0]], 1)),
+            (
+                "positive definite",
+                ([0.0, 1.0], [[1.0, 2.0], [2.0, 1.0]], 1),
+            ),
+        ]
+
+        for message, args in invalid_parameters:
+            with self.subTest(message=message), self.assertRaisesRegex(
+                ValueError, message
+            ):
+                PartiallyWrappedNormalDistribution(*args)
 
     def test_hybrid_mean_2d(self):
         npt.assert_allclose(self.dist_2d.hybrid_mean(), self.mu)
