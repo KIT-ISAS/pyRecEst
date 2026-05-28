@@ -2,7 +2,19 @@ from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
 import numpy as np
-from pyrecest.backend import int32, int64, log, ndim, ones, pi, prod, random, zeros
+from pyrecest.backend import (
+    asarray,
+    int32,
+    int64,
+    log,
+    ndim,
+    ones,
+    pi,
+    prod,
+    random,
+    zeros,
+)
+from pyrecest.exceptions import ShapeError
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
@@ -30,6 +42,53 @@ def _validate_positive_sample_count(n) -> int:
     return count_int
 
 
+def _validate_pdf_inputs(xs, dim: int):
+    xs = asarray(xs)
+    if xs.ndim == 0:
+        if dim != 1:
+            raise ShapeError(
+                "xs",
+                xs.shape,
+                expected=f"({dim},) or (n, {dim})",
+                reason="scalar inputs are only valid for one-dimensional distributions",
+            )
+        return xs, 1
+
+    if xs.ndim == 1:
+        if dim == 1:
+            return xs, xs.shape[0]
+        if xs.shape[0] != dim:
+            raise ShapeError("xs", xs.shape, expected=f"({dim},) or (n, {dim})")
+        return xs, 1
+
+    if xs.shape[-1] != dim:
+        raise ShapeError("xs", xs.shape, expected=f"last axis of length {dim}")
+    return xs, xs.shape[0]
+
+
+def _validate_vector(name: str, value, dim: int):
+    value = asarray(value)
+    if value.shape != (dim,):
+        raise ShapeError(name, value.shape, expected=f"({dim},)")
+    return value
+
+
+def _validate_boundary(name: str, value, dim: int):
+    value = asarray(value)
+    if ndim(value) == 0:
+        if dim != 1:
+            raise ShapeError(
+                name,
+                value.shape,
+                expected=f"({dim},)",
+                reason="scalar boundaries are only valid for one-dimensional distributions",
+            )
+        return value
+    if value.shape != (dim,):
+        raise ShapeError(name, value.shape, expected=f"({dim},)")
+    return value
+
+
 class HypertoroidalUniformDistribution(
     AbstractUniformDistribution, AbstractHypertoroidalDistribution
 ):
@@ -40,16 +99,7 @@ class HypertoroidalUniformDistribution(
         :param xs: Values at which to evaluate the PDF
         :returns: PDF evaluated at xs
         """
-        if xs.ndim == 0:
-            assert self.dim == 1
-            n_inputs = 1
-        elif xs.ndim == 1 and self.dim == 1:
-            n_inputs = xs.shape[0]
-        elif xs.ndim == 1:
-            assert self.dim == xs.shape[0]
-            n_inputs = 1
-        else:
-            n_inputs = xs.shape[0]
+        _, n_inputs = _validate_pdf_inputs(xs, self.dim)
 
         return 1.0 / self.get_manifold_size() * ones(n_inputs)
 
@@ -105,7 +155,7 @@ class HypertoroidalUniformDistribution(
         :param shift_by: Angles to shift by
         :returns: Shifted distribution
         """
-        assert shift_by.shape == (self.dim,)
+        _validate_vector("shift_by", shift_by, self.dim)
         return self
 
     def integrate(self, integration_boundaries=None) -> float:
@@ -121,8 +171,8 @@ class HypertoroidalUniformDistribution(
             right = 2.0 * pi * ones((self.dim,))
         else:
             left, right = integration_boundaries
-        assert ndim(left) == 0 and self.dim == 1 or left.shape == (self.dim,)
-        assert ndim(right) == 0 and self.dim == 1 or right.shape == (self.dim,)
+        left = _validate_boundary("left", left, self.dim)
+        right = _validate_boundary("right", right, self.dim)
 
         volume = prod(right - left)
         return 1.0 / (2.0 * pi) ** self.dim * volume
