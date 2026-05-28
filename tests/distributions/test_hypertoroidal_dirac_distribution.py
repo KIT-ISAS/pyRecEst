@@ -88,9 +88,7 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         for n_particles in (True, 1.5, 0, -1):
             with self.subTest(n_particles=n_particles):
                 with self.assertRaisesRegex(ValueError, "positive integer"):
-                    HypertoroidalDiracDistribution.from_distribution(
-                        dist, n_particles
-                    )
+                    HypertoroidalDiracDistribution.from_distribution(dist, n_particles)
 
     def test_trigonometric_moment(self):
         m = self.twd.trigonometric_moment(1)
