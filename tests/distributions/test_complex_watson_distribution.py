@@ -1,6 +1,7 @@
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 import unittest
 
+import numpy as np
 import pyrecest.backend
 from pyrecest.backend import (
     all,
@@ -157,6 +158,27 @@ class TestComplexWatsonDistribution(unittest.TestCase):
         cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
         samples = cw.sample(50)
         self.assertEqual(samples.shape, (50, 2))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_accepts_integer_like_count(self):
+        """Scalar integer-like counts should be normalized before sampling."""
+        cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
+        samples = cw.sample(np.array(4.0))
+        self.assertEqual(samples.shape, (4, 2))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        """Invalid counts should fail before backend random shape handling."""
+        cw = ComplexWatsonDistribution(self.mu2, self.kappa2)
+        for invalid_n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=invalid_n), self.assertRaises(ValueError):
+                cw.sample(invalid_n)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
