@@ -110,6 +110,18 @@ def _as_vector(value, length: int, name: str):
     return vector
 
 
+def _as_sensor_positions(value, position_dim: int = 2):
+    sensors = asarray(value)
+    sensor_shape = tuple(sensors.shape)
+    if len(sensor_shape) != 2 or sensor_shape[1] != position_dim:
+        raise ValueError(
+            f"sensor_positions must have shape (n_sensors, {position_dim})"
+        )
+    if sensor_shape[0] < 2:
+        raise ValueError("sensor_positions must contain at least two sensors")
+    return sensors
+
+
 def _validate_positive_range_squared(range_sq, name="range"):
     range_sq_value = _as_scalar_float(range_sq, name)
     if range_sq_value <= 0.0:
@@ -232,7 +244,7 @@ def tdoa_measurement(
     """Return TDOA range-difference measurements relative to one sensor."""
     propagation_speed = _as_positive_float(propagation_speed, "propagation_speed")
     position = _select(state, position_indices, 2, "position_indices")
-    sensors = asarray(sensor_positions)
+    sensors = _as_sensor_positions(sensor_positions)
     reference_sensor = _normalize_reference_sensor(
         reference_sensor,
         int(sensors.shape[0]),
@@ -262,7 +274,7 @@ def fdoa_measurement(
     propagation_speed = _as_positive_float(propagation_speed, "propagation_speed")
     position = _select(state, position_indices, 2, "position_indices")
     velocity = _select(state, velocity_indices, 2, "velocity_indices")
-    sensors = asarray(sensor_positions)
+    sensors = _as_sensor_positions(sensor_positions)
     if sensor_velocities is None:
         sensor_velocities = zeros(tuple(sensors.shape))
     sensor_velocities = asarray(sensor_velocities)

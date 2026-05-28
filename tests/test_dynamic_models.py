@@ -75,18 +75,16 @@ class TestMotionModelCatalog(unittest.TestCase):
 
     def test_kinematic_models_validate_integer_parameters(self):
         invalid_cases = [
-            {"spatial_dim": 0, "message": "spatial_dim"},
-            {"spatial_dim": 1.5, "message": "spatial_dim"},
-            {"spatial_dim": True, "message": "spatial_dim"},
-            {"spatial_dim": np.array([2]), "message": "spatial_dim"},
-            {"derivative_order": -1, "message": "derivative_order"},
-            {"derivative_order": 1.5, "message": "derivative_order"},
-            {"derivative_order": True, "message": "derivative_order"},
+            ({"spatial_dim": 0}, "spatial_dim"),
+            ({"spatial_dim": 1.5}, "spatial_dim"),
+            ({"spatial_dim": True}, "spatial_dim"),
+            ({"spatial_dim": np.array([2])}, "spatial_dim"),
+            ({"derivative_order": -1}, "derivative_order"),
+            ({"derivative_order": 1.5}, "derivative_order"),
+            ({"derivative_order": True}, "derivative_order"),
         ]
 
-        for case in invalid_cases:
-            kwargs = dict(case)
-            message = kwargs.pop("message")
+        for kwargs, message in invalid_cases:
             with self.subTest(case=kwargs):
                 with self.assertRaisesRegex(ValueError, message):
                     kinematic_transition_matrix(1.0, **kwargs)
@@ -309,6 +307,18 @@ class TestSensorModelCatalog(unittest.TestCase):
                         sensors,
                         reference_sensor=reference_sensor,
                     )
+
+        invalid_sensor_positions = (
+            array([0.0, 0.0]),
+            array([[0.0, 0.0]]),
+            array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
+        )
+        for sensor_positions in invalid_sensor_positions:
+            with self.subTest(sensor_positions=sensor_positions):
+                with self.assertRaisesRegex(ValueError, "sensor_positions"):
+                    tdoa_measurement(state, sensor_positions)
+                with self.assertRaisesRegex(ValueError, "sensor_positions"):
+                    fdoa_measurement(state, sensor_positions)
 
         with self.assertRaisesRegex(ValueError, "sensor_velocities"):
             fdoa_measurement(
