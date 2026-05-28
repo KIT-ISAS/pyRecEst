@@ -72,6 +72,21 @@ class TestRandomMatrixTracker(unittest.TestCase):
         )
         npt.assert_array_almost_equal(self.tracker.extent, expected_extent, decimal=5)
 
+    def test_predict_accepts_scalar_process_noise(self):
+        dt = 0.1
+        tau = 1.0
+        system_matrix = eye(2)
+
+        self.tracker.predict(dt, 0.05, tau, system_matrix)
+
+        expected_covariance = self.initial_covariance + 0.05 * eye(2)
+        npt.assert_array_almost_equal(
+            self.tracker.kinematic_state, self.initial_state, decimal=5
+        )
+        npt.assert_array_almost_equal(
+            self.tracker.covariance, expected_covariance, decimal=5
+        )
+
     @parameterized.expand(
         [
             (

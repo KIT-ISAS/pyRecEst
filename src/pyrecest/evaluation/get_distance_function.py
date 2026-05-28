@@ -5,7 +5,7 @@ from math import pi
 from typing import Any
 
 import numpy as np
-from pyrecest.backend import arccos, asarray, dot, linalg, to_numpy
+from pyrecest.backend import arccos, asarray, clip, dot, linalg, to_numpy
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 from scipy.optimize import linear_sum_assignment
 
@@ -99,6 +99,10 @@ def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
     return matched_cost + float(cutoff_distance) * missed_count
 
 
+def _angular_distance_from_inner_product(inner_product):
+    return arccos(clip(inner_product, -1.0, 1.0))
+
+
 def get_distance_function(
     manifold_name, additional_params=None, nSymm=None, symmetryOffsets=None
 ):
@@ -122,12 +126,15 @@ def get_distance_function(
     elif _is_hypersphere_symmetric_name(normalized_name):
 
         def distance_function(x1, x2):
-            return min(arccos(dot(x1, x2)), arccos(dot(x1, -x2)))
+            return min(
+                _angular_distance_from_inner_product(dot(x1, x2)),
+                _angular_distance_from_inner_product(dot(x1, -x2)),
+            )
 
     elif "hypersphere" in normalized_name:
 
         def distance_function(x1, x2):
-            return arccos(dot(x1, x2))
+            return _angular_distance_from_inner_product(dot(x1, x2))
 
     elif "se2bounded" in normalized_name:
 
@@ -144,7 +151,10 @@ def get_distance_function(
     elif "se3bounded" in normalized_name:
 
         def distance_function(x1, x2):
-            return min(arccos(dot(x1[:4], x2[:4])), arccos(dot(x1[:4], -x2[:4])))
+            return min(
+                _angular_distance_from_inner_product(dot(x1[:4], x2[:4])),
+                _angular_distance_from_inner_product(dot(x1[:4], -x2[:4])),
+            )
 
     elif "se3" in normalized_name or "se3linear" in normalized_name:
 

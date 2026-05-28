@@ -81,12 +81,10 @@ def chi_square_gate_threshold(
 
     if probability is None:
         return None
-    probability = float(probability)
-    measurement_dim = int(measurement_dim)
+    probability = _as_finite_scalar(probability, "probability")
+    measurement_dim = _as_positive_integer(measurement_dim, "measurement_dim")
     if not 0.0 < probability < 1.0:
         raise ValueError("probability must be in (0, 1)")
-    if measurement_dim <= 0:
-        raise ValueError("measurement_dim must be positive")
     return float(chi2.ppf(probability, measurement_dim))
 
 
@@ -118,6 +116,11 @@ def student_t_covariance_scale(
 ) -> float:
     """Return Student-t covariance inflation from NIS."""
 
+    nis = _as_nonnegative_scalar(nis, "nis")
+    measurement_dim = _as_positive_integer(measurement_dim, "measurement_dim")
+    dof = _as_finite_scalar(degrees_of_freedom, "degrees_of_freedom")
+    if dof <= 2.0:
+        raise ValueError("degrees_of_freedom must be greater than 2")
     if _student_t_covariance_scale is not None:
         return float(
             np.asarray(
@@ -129,12 +132,6 @@ def student_t_covariance_scale(
                 dtype=float,
             )
         )
-    measurement_dim = int(measurement_dim)
-    dof = float(degrees_of_freedom)
-    if measurement_dim <= 0:
-        raise ValueError("measurement_dim must be positive")
-    if dof <= 2.0:
-        raise ValueError("degrees_of_freedom must be greater than 2")
     return float(max(1.0, (dof + float(nis)) / (dof + measurement_dim)))
 
 
@@ -143,15 +140,14 @@ def huber_covariance_scale(
 ) -> float:
     """Return multivariate Huber covariance inflation from NIS."""
 
+    nis = _as_nonnegative_scalar(nis, "nis")
+    threshold = _as_positive_scalar(threshold, "threshold")
     if _huber_covariance_scale is not None:
         return float(
             np.asarray(
                 _huber_covariance_scale(nis, huber_threshold=threshold), dtype=float
             )
         )
-    threshold = float(threshold)
-    if threshold <= 0.0:
-        raise ValueError("threshold must be positive")
     return float(max(1.0, np.sqrt(float(nis)) / threshold))
 
 
@@ -170,10 +166,15 @@ def robust_update_covariance_scale(
     mode = None if robust_update in (None, "none") else str(robust_update)
     if mode is None:
         return 1.0, None
+    nis = _as_nonnegative_scalar(nis, "nis")
     if mode == "nis-inflate":
-        if gate_threshold is None or float(nis) <= float(gate_threshold):
+        inflation_alpha = _as_positive_scalar(inflation_alpha, "inflation_alpha")
+        if gate_threshold is None:
             return 1.0, None
-        scale = max(1.0, (float(nis) / float(gate_threshold)) ** float(inflation_alpha))
+        gate_threshold = _as_positive_scalar(gate_threshold, "gate_threshold")
+        if nis <= gate_threshold:
+            return 1.0, None
+        scale = max(1.0, (nis / gate_threshold) ** inflation_alpha)
         return float(scale), "inflated"
     if mode == "student-t":
         scale = student_t_covariance_scale(nis, measurement_dim, student_t_dof)
@@ -211,9 +212,7 @@ def plan_linear_measurement_update(
     inflation.  ``nis`` is always computed against the nominal covariance.
     """
 
-    alpha = float(inflation_alpha)
-    if alpha <= 0.0:
-        raise ValueError("inflation_alpha must be positive")
+    alpha = _as_positive_scalar(inflation_alpha, "inflation_alpha")
 
     vector = np.asarray(measurement_vector, dtype=float).reshape(-1)
     measurement_dim = vector.size
@@ -246,9 +245,11 @@ def plan_linear_measurement_update(
         measurement_dim,
         "safety_gate",
     )
-    residual_threshold = None if max_residual_norm is None else float(max_residual_norm)
-    if residual_threshold is not None and residual_threshold <= 0.0:
-        raise ValueError("max_residual_norm must be positive or None")
+    residual_threshold = (
+        None
+        if max_residual_norm is None
+        else _as_positive_scalar(max_residual_norm, "max_residual_norm")
+    )
 
     residual = vector - observation @ state_mean
     nominal_innovation_covariance = (
@@ -337,7 +338,7 @@ def gate_threshold_for_measurement(
     source = str(measurement.source)
     if gate_thresholds_by_source and source in gate_thresholds_by_source:
         value = gate_thresholds_by_source[source]
-        return None if value is None else float(value)
+        return None if value is None else _as_positive_scalar(value, "gate_threshold")
     if gate_probabilities_by_source and source in gate_probabilities_by_source:
         probability = gate_probabilities_by_source[source]
         vector = np.asarray(measurement.vector).reshape(-1)
@@ -377,15 +378,49 @@ def _resolve_threshold(
     name: str,
 ) -> float | None:
     if threshold is not None:
-        value = float(threshold)
-        if value <= 0.0:
-            raise ValueError(f"{name}_threshold must be positive or None")
-        return value
+        return _as_positive_scalar(threshold, f"{name}_threshold")
     return chi_square_gate_threshold(probability, measurement_dim)
 
 
 def _symmetrized(matrix: np.ndarray) -> np.ndarray:
     return 0.5 * (matrix + matrix.T)
+
+
+def _as_finite_scalar(value: Any, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a finite scalar")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a finite scalar")
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite scalar") from exc
+    if not np.isfinite(parsed):
+        raise ValueError(f"{name} must be a finite scalar")
+    return parsed
+
+
+def _as_positive_scalar(value: Any, name: str) -> float:
+    parsed = _as_finite_scalar(value, name)
+    if parsed <= 0.0:
+        raise ValueError(f"{name} must be positive")
+    return parsed
+
+
+def _as_nonnegative_scalar(value: Any, name: str) -> float:
+    parsed = _as_finite_scalar(value, name)
+    if parsed < 0.0:
+        raise ValueError(f"{name} must be nonnegative")
+    return parsed
+
+
+def _as_positive_integer(value: Any, name: str) -> int:
+    parsed = _as_nonnegative_scalar(value, name)
+    if parsed <= 0.0 or not parsed.is_integer():
+        raise ValueError(f"{name} must be a positive integer")
+    return int(parsed)
 
 
 __all__ = [

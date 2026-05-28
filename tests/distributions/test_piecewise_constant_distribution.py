@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -29,6 +30,31 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             self.dist.pdf(array([10.9])), array([4 * self.normal]), rtol=1e-10
         )
+
+    def test_pdf_accepts_scalar_and_list_inputs(self):
+        scalar_pdf = self.dist.pdf(0.0)
+        list_pdf = self.dist.pdf([0.0, 4.2])
+        array_pdf = self.dist.pdf(array([0.0, 4.2]))
+
+        self.assertEqual(scalar_pdf.shape, (1,))
+        npt.assert_allclose(scalar_pdf, array([1 * self.normal]), rtol=1e-10)
+        npt.assert_allclose(list_pdf, array_pdf, rtol=1e-10)
+
+    def test_pdf_rejects_matrix_input(self):
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            self.dist.pdf(array([[0.0, 1.0]]))
+
+    def test_constructor_rejects_invalid_weights(self):
+        for invalid_weights, message in [
+            (array([1.0, -0.5, 1.0]), "nonnegative"),
+            (array([0.0, 0.0]), "positive total mass"),
+            (array([float("nan"), 1.0]), "finite"),
+            (array([float("inf"), 1.0]), "finite"),
+        ]:
+            with self.subTest(weights=invalid_weights), self.assertRaisesRegex(
+                ValueError, message
+            ):
+                PiecewiseConstantDistribution(invalid_weights)
 
     def test_integral_normalized(self):
         """Verify the distribution integrates to 1 via the exact sum."""
@@ -105,6 +131,29 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         self.assertLessEqual(delta2, delta1)
         self.assertLessEqual(delta3, delta2)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_calculate_parameters_numerically_accepts_integer_like_count(self):
+        weights = PiecewiseConstantDistribution.calculate_parameters_numerically(
+            lambda _xs: array([1.0 / (2.0 * pi)]), np.array(4.0)
+        )
+
+        npt.assert_allclose(weights, array([0.25, 0.25, 0.25, 0.25]), rtol=1e-12)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_calculate_parameters_numerically_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True, [3], float("nan"), float("inf")):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    PiecewiseConstantDistribution.calculate_parameters_numerically(
+                        lambda _xs: array([1.0 / (2.0 * pi)]), n
+                    )
+
     def test_entropy(self):
         """Verify analytical entropy against the direct formula."""
         w = self.dist.w
@@ -121,6 +170,25 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         self.assertEqual(len(samples), 100)
         self.assertTrue(all(samples >= 0.0))
         self.assertTrue(all(samples < 2.0 * pi))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_accepts_integer_like_count(self):
+        samples = self.dist.sample(np.array(4.0))
+
+        self.assertEqual(samples.shape, (4,))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    self.dist.sample(n)
 
 
 if __name__ == "__main__":

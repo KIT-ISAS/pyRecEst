@@ -62,16 +62,23 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.weights, array([0.25, 0.75]))
 
     def test_rejects_nonfinite_particle_weights(self):
-        with self.assertRaises(ValueError):
-            SO3ProductParticleFilter(
-                n_particles=2,
-                num_rotations=1,
-                weights=array([1.0, float("inf")]),
-            )
+        particles = array([[[0.0, 0.0, 0.0, 1.0]], [z_quaternion(pi / 2.0)]])
 
-        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
-        with self.assertRaises(ValueError):
-            filt.set_particles(filt.particles, weights=array([1.0, float("inf")]))
+        for invalid_weight in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_weight=invalid_weight):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    SO3ProductParticleFilter(
+                        n_particles=2,
+                        num_rotations=1,
+                        weights=array([invalid_weight, 1.0]),
+                    )
+
+                filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    filt.set_particles(
+                        particles,
+                        weights=array([1.0, invalid_weight]),
+                    )
 
     def test_rejects_invalid_particle_quaternions(self):
         with self.assertRaises(ValueError):

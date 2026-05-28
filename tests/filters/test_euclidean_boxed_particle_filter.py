@@ -83,6 +83,40 @@ class EuclideanBoxedParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(to_numpy(pf.filter_state.d), [[0.0], [1.0], [3.0]])
         npt.assert_allclose(to_numpy(pf.filter_state.w), [0.4, 0.6, 0.0])
 
+    def test_reweight_constraint_rejects_invalid_likelihood_weights(self):
+        invalid_likelihoods = (
+            ("nan", lambda _particles: array([1.0, np.nan, 1.0]), "finite"),
+            ("inf", lambda _particles: array([1.0, np.inf, 1.0]), "finite"),
+            (
+                "negative",
+                lambda _particles: array([1.0, -0.5, 1.0]),
+                "nonnegative",
+            ),
+            (
+                "zero-mass",
+                lambda _particles: array([0.0, 0.0, 0.0]),
+                "positive finite total mass",
+            ),
+        )
+
+        for name, likelihood, message in invalid_likelihoods:
+            with self.subTest(name=name):
+                pf = EuclideanBoxedParticleFilter(3, 1)
+                pf.filter_state = LinearDiracDistribution(
+                    array([[0.0], [1.0], [2.0]]),
+                    array([1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0]),
+                )
+
+                with self.assertRaisesRegex(ValueError, message):
+                    pf.reweight_by_box(
+                        array([0.0]), array([2.0]), likelihood=likelihood
+                    )
+
+                npt.assert_allclose(
+                    to_numpy(pf.filter_state.w),
+                    [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+                )
+
     def test_upsample_generation_accepts_proposal_samples_in_box(self):
         proposal = DeterministicProposal()
         pf = EuclideanBoxedParticleFilter(3, 1)

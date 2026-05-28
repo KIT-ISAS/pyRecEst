@@ -3,6 +3,9 @@ based on implementation by Emile Mathieu
 for Riemannian Score-based SDE
 """
 
+import builtins as _builtins
+import numbers as _numbers
+
 import jax.numpy as _jnp
 from jax import vmap
 from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
@@ -89,7 +92,6 @@ from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
     max,
     maximum,
     mean,
-    meshgrid,
     min,
     minimum,
     mod,
@@ -154,6 +156,19 @@ def isscalar(x):
     return _jnp.isscalar(x) and not isinstance(x, _jnp.ndarray)
 
 
+def meshgrid(*xi, copy=True, sparse=False, indexing="xy"):
+    """Return coordinate matrices with NumPy-style axis coercion.
+
+    The PyRecEst backend contract follows NumPy semantics: callers may pass
+    lists, ranges, and scalar axes. JAX's native ``meshgrid`` requires array or
+    scalar arguments and then rejects 0-D array axes. Coercing every axis to at
+    least one-dimensional JAX arrays preserves NumPy-compatible behavior while
+    keeping the returned arrays in the JAX backend.
+    """
+    axes = tuple(_jnp.atleast_1d(_jnp.asarray(axis)) for axis in xi)
+    return _jnp.meshgrid(*axes, copy=copy, sparse=sparse, indexing=indexing)
+
+
 from jax import device_get as to_numpy
 from jax.numpy import array
 from jax.numpy import asarray as from_numpy
@@ -211,8 +226,10 @@ def to_ndarray(x, to_ndim, axis=0):
     if not isinstance(x, _jnp.ndarray):
         x = _jnp.array(x)
 
-    # Check if we need to add a dimension
-    if x.ndim == to_ndim - 1:
+    if x.ndim > to_ndim:
+        raise ValueError("The ndim cannot be adapted properly.")
+
+    while x.ndim < to_ndim:
         x = _jnp.expand_dims(x, axis=axis)
 
     return x
@@ -240,6 +257,77 @@ def take(
     )
 
 
+def _is_boolean_index(indices):
+    if isinstance(indices, (bool, _jnp.bool_)):
+        return True
+    if isinstance(indices, (list, tuple)):
+        return bool(indices) and _is_boolean_index(indices[0])
+    if isinstance(indices, _jnp.ndarray):
+        return indices.dtype in (_jnp.bool_, _jnp.uint8)
+    return False
+
+
+def _is_iterable_index(indices):
+    if isinstance(indices, (list, tuple)):
+        return True
+    if isinstance(indices, _jnp.ndarray):
+        return indices.ndim > 0
+    return False
+
+
+def _is_scalar_index(index):
+    return isinstance(index, _numbers.Integral) or (
+        isinstance(index, _jnp.ndarray) and index.ndim == 0
+    )
+
+
+def _assignment_value_length(values):
+    if isinstance(values, (list, tuple)):
+        return len(values)
+    if isinstance(values, _jnp.ndarray) and values.ndim > 0:
+        return values.shape[0]
+    return 1
+
+
+def _normalize_assignment_index(indices, ndim_x, axis=0):
+    if _is_boolean_index(indices):
+        return _jnp.asarray(indices), False, None
+
+    use_vectorization = _is_iterable_index(indices) and len(indices) < ndim_x
+    zip_indices = (
+        _is_iterable_index(indices)
+        and len(indices) > 0
+        and _is_iterable_index(indices[0])
+    )
+
+    if use_vectorization:
+        normalized = tuple(list(indices[:axis]) + [slice(None)] + list(indices[axis:]))
+        return normalized, True, None
+
+    if zip_indices:
+        normalized = tuple(_jnp.asarray(index_axis) for index_axis in zip(*indices))
+        return normalized, False, len(indices)
+
+    if isinstance(indices, list):
+        return _jnp.asarray(indices), False, len(indices)
+    if isinstance(indices, _jnp.ndarray) and indices.ndim > 0:
+        return indices, False, indices.shape[0]
+    if isinstance(indices, tuple):
+        if _builtins.all(_is_scalar_index(index) for index in indices):
+            return indices, False, 1
+        if indices and _is_iterable_index(indices[0]):
+            return indices, False, len(indices[0])
+    return indices, False, 1
+
+
+def _validate_assignment_value_count(values, *, use_vectorization, len_indices):
+    if use_vectorization or len_indices is None:
+        return
+    len_values = _assignment_value_length(values)
+    if len_values > 1 and len_values != len_indices:
+        raise ValueError("Either one value or as many values as indices required")
+
+
 def assignment(x, values, indices, axis=0):
     """
     Assign values at given indices of an array using JAX.
@@ -263,20 +351,18 @@ def assignment(x, values, indices, axis=0):
     x_new : JAX array, shape=[dim]
         Copy of x with the values assigned at the given indices.
     """
-    # Ensure indices and values are iterable
-    if isinstance(indices, (int, tuple)):
-        indices = [indices]
-    if not isinstance(values, list):
-        values = [values] * len(indices)
-
-    # Check if we need to raise errors for mismatch in values and indices lengths
-    if len(values) != 1 and len(values) != len(indices):
-        raise ValueError("Either one value or as many values as indices required")
-
-    # Handling assignment with index update
-    x_new = x.at[indices].set(values)
-
-    return x_new
+    x = _jnp.asarray(x)
+    normalized_indices, use_vectorization, len_indices = _normalize_assignment_index(
+        indices,
+        x.ndim,
+        axis=axis,
+    )
+    _validate_assignment_value_count(
+        values,
+        use_vectorization=use_vectorization,
+        len_indices=len_indices,
+    )
+    return x.at[normalized_indices].set(values)
 
 
 def assignment_by_sum(x, values, indices, axis=0):
@@ -306,21 +392,18 @@ def assignment_by_sum(x, values, indices, axis=0):
     If a single value is provided, it is added at all the indices.
     If a list is given, it must have the same length as indices.
     """
-    # Ensure indices and values are iterable
-    if isinstance(indices, (int, tuple)):
-        indices = [indices]
-    if not isinstance(values, list):
-        values = [values] * len(indices)
-
-    # Check if the number of values matches the number of indices, or there's exactly one value
-    if len(values) != 1 and len(values) != len(indices):
-        raise ValueError("Either one value or as many values as indices required")
-
-    # Handling addition with index update
-    for idx, val in zip(indices, values):
-        x = x.at[idx].add(val)
-
-    return x
+    x = _jnp.asarray(x)
+    normalized_indices, use_vectorization, len_indices = _normalize_assignment_index(
+        indices,
+        x.ndim,
+        axis=axis,
+    )
+    _validate_assignment_value_count(
+        values,
+        use_vectorization=use_vectorization,
+        len_indices=len_indices,
+    )
+    return x.at[normalized_indices].add(values)
 
 
 def array_from_sparse(indices, data, target_shape):
@@ -393,9 +476,62 @@ def is_bool(array):
     return _jnp.issubdtype(array.dtype, _jnp.bool_)
 
 
+def divide(a, b, ignore_div_zero=False):
+    if ignore_div_zero is False:
+        return _jnp.divide(a, b)
+
+    a_arr, b_arr = _jnp.asarray(a), _jnp.asarray(b)
+    quotient = _jnp.divide(a_arr, b_arr)
+    return _jnp.where(b_arr != 0, quotient, _jnp.zeros_like(quotient))
+
+
+def dot(a, b):
+    a = _jnp.asarray(a)
+    b = _jnp.asarray(b)
+
+    if b.ndim == 1:
+        return _jnp.einsum("...i,i->...", a, b)
+    if a.ndim == 1:
+        return _jnp.einsum("i,...i->...", a, b)
+    return _jnp.einsum("...i,...i->...", a, b)
+
+
+def matmul(x, y, out=None):
+    x = _jnp.asarray(x)
+    y = _jnp.asarray(y)
+    for array_ in [x, y]:
+        if array_.ndim == 1:
+            raise ValueError("ndims must be >=2")
+
+    result = _jnp.matmul(x, y)
+    if out is None:
+        return result
+    return result
+
+
+def outer(a, b):
+    a = _jnp.asarray(a)
+    b = _jnp.asarray(b)
+
+    if a.ndim > 1 and b.ndim > 1:
+        return _jnp.einsum("...i,...j->...ij", a, b)
+    if a.ndim == 1 and b.ndim > 1:
+        return _jnp.einsum("i,...j->...ij", a, b)
+    if a.ndim > 1 and b.ndim == 1:
+        return _jnp.einsum("...i,j->...ij", a, b)
+    return _jnp.multiply.outer(a, b)
+
+
 # Matrix-vector multiplication
 def matvec(matrix, vector):
-    return _jnp.dot(matrix, vector)
+    matrix = _jnp.asarray(matrix)
+    vector = _jnp.asarray(vector)
+
+    if vector.ndim == 1:
+        return _jnp.matmul(matrix, vector)
+    if matrix.ndim == 2:
+        return _jnp.matmul(matrix, vector.T).T
+    return _jnp.einsum("...ij,...j->...i", matrix, vector)
 
 
 # One-hot encoding
@@ -436,29 +572,47 @@ def scatter_add(input, dim, index, src):
     raise NotImplementedError("scatter_add is implemented for dim 0 and dim 1.")
 
 
-# Set diagonal elements of a matrix
 def set_diag(matrix, values):
-    return matrix.at[_jnp.diag_indices_from(matrix)].set(values)
+    matrix = _jnp.asarray(matrix)
+    values = _jnp.asarray(values, dtype=matrix.dtype)
+    diag_len = _builtins.min(matrix.shape[-2], matrix.shape[-1])
+    diag_indices = _jnp.arange(diag_len)
+    return matrix.at[..., diag_indices, diag_indices].set(values)
 
 
 # Get lower triangle and flatten to vector
-def tril_to_vec(matrix):
-    return _jnp.tril(matrix).ravel()
+def tril_to_vec(x, k=0):
+    n = x.shape[-1]
+    rows, cols = _jnp.tril_indices(n, k=k)
+    return x[..., rows, cols]
 
 
 # Get upper triangle and flatten to vector
-def triu_to_vec(matrix):
-    return _jnp.triu(matrix).ravel()
+def triu_to_vec(x, k=0):
+    n = x.shape[-1]
+    rows, cols = _jnp.triu_indices(n, k=k)
+    return x[..., rows, cols]
 
 
-# Create diagonal matrix from vector
 def vec_to_diag(vector):
-    return _jnp.diag(vector)
+    vector = _jnp.asarray(vector)
+    return vector[..., :, None] * _jnp.eye(vector.shape[-1], dtype=vector.dtype)
 
 
-# Create matrix from diagonal, upper triangular, and lower triangular parts
-def mat_from_diag_triu_tril(diag, triu, tril):
-    matrix = _jnp.diag(diag)
-    matrix = matrix.at[_jnp.triu_indices_from(matrix, k=1)].set(triu)
-    matrix = matrix.at[_jnp.tril_indices_from(matrix, k=-1)].set(tril)
+def mat_from_diag_triu_tril(diag, tri_upp, tri_low):
+    diag = _jnp.asarray(diag)
+    tri_upp = _jnp.asarray(tri_upp)
+    tri_low = _jnp.asarray(tri_low)
+    dtype = _jnp.result_type(diag, tri_upp, tri_low)
+    diag = diag.astype(dtype)
+    tri_upp = tri_upp.astype(dtype)
+    tri_low = tri_low.astype(dtype)
+
+    n = diag.shape[-1]
+    i = _jnp.arange(n)
+    j, k = _jnp.triu_indices(n, k=1)
+    matrix = _jnp.zeros(diag.shape + (n,), dtype=dtype)
+    matrix = matrix.at[..., i, i].set(diag)
+    matrix = matrix.at[..., j, k].set(tri_upp)
+    matrix = matrix.at[..., k, j].set(tri_low)
     return matrix

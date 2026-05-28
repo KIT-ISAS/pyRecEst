@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import unittest
 
 import numpy.testing as npt
@@ -37,6 +38,25 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         npt.assert_allclose(x_new, x, atol=1e-7)
         npt.assert_allclose(y_new, y, atol=1e-7)
         npt.assert_allclose(z_new, z, atol=1e-7)
+
+    @parameterized.expand(
+        [
+            ("inclination_north", "inclination", 1.0 + 1e-12, 0.0),
+            ("inclination_south", "inclination", -1.0 - 1e-12, pi),
+            ("elevation_north", "elevation", 1.0 + 1e-12, pi / 2),
+            ("elevation_south", "elevation", -1.0 - 1e-12, -pi / 2),
+        ]
+    )
+    def test_cart_to_sph_clips_roundoff_at_poles(
+        self, _case, mode, z_value, expected_theta
+    ):
+        x = array([0.0])
+        y = array([0.0])
+        z = array([z_value])
+
+        _, theta = AbstractSphereSubsetDistribution.cart_to_sph(x, y, z, mode=mode)
+
+        npt.assert_allclose(theta, array([expected_theta]), atol=1e-12)
 
     @parameterized.expand(
         [
@@ -86,3 +106,39 @@ class TestAbstractSphereSubsetDistribution(unittest.TestCase):
         # The new spherical coordinates should be close to the original ones
         npt.assert_allclose(azimuth_new, array([0, 0, 0]), atol=1e-15)
         npt.assert_allclose(theta_new, theta, atol=1e-15)
+
+    def test_cart_to_sph_rejects_matrix_z_in_inclination_mode(self):
+        x = array([1.0, 0.0])
+        y = array([0.0, 1.0])
+        z = array([[0.0, 0.0]])
+
+        with self.assertRaises(AssertionError):
+            AbstractSphereSubsetDistribution.cart_to_sph(x, y, z)
+
+    def test_inclination_helpers_reject_matrix_inputs(self):
+        azimuth = array([0.0, 0.5])
+        colatitude = array([[0.1, 0.2]])
+        x = array([1.0, 0.0])
+        y = array([0.0, 1.0])
+        z = array([[0.0, 0.0]])
+
+        with self.assertRaises(AssertionError):
+            AbstractSphereSubsetDistribution._sph_to_cart_inclination(
+                azimuth, colatitude
+            )
+        with self.assertRaises(AssertionError):
+            AbstractSphereSubsetDistribution._cart_to_sph_inclination(x, y, z)
+
+    def test_elevation_map_to_inclination_matches_direct_formula(self):
+        azimuth = array([0.25, 1.25, 2.25])
+        elevation = array([-0.4, 0.0, 0.4])
+
+        direct = AbstractSphereSubsetDistribution._sph_to_cart_elevation(
+            azimuth, elevation
+        )
+        mapped = AbstractSphereSubsetDistribution._sph_to_cart_elevation(
+            azimuth, elevation, map_to_inclination=True
+        )
+
+        for direct_component, mapped_component in zip(direct, mapped):
+            npt.assert_allclose(mapped_component, direct_component, atol=1e-12)

@@ -3,6 +3,7 @@ from pyrecest.backend import (
     arccos,
     arctan2,
     atleast_2d,
+    clip,
     column_stack,
     cos,
     ndim,
@@ -82,7 +83,9 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         Returns:
             tuple: Spherical coordinates.
         """
-        assert ndim(x) == 1 and ndim(y) == 1 and ndim(z), "Inputs must be 1-dimensional"
+        assert (
+            ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
+        ), "Inputs must be 1-dimensional"
         if mode == "inclination":
             phi, theta = AbstractSphereSubsetDistribution._cart_to_sph_inclination(
                 x, y, z
@@ -108,8 +111,8 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
     def _sph_to_cart_inclination(theta_inc, phi_az_right) -> tuple:
         # Conversion for the (r, θ_inc, φ_az,right) convention. Used by many textbooks.
         # Downside is that it does not generalize well to higher dimensions.
-        assert ndim(theta_inc) == 1 and ndim(
-            phi_az_right
+        assert (
+            ndim(theta_inc) == 1 and ndim(phi_az_right) == 1
         ), "Inputs must be 1-dimensional"
         x = sin(phi_az_right) * cos(theta_inc)
         y = sin(phi_az_right) * sin(theta_inc)
@@ -136,7 +139,7 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         if map_to_inclination:
             inclination = pi / 2 - elevation
             return AbstractSphereSubsetDistribution._sph_to_cart_inclination(
-                inclination, elevation
+                azimuth, inclination
             )
 
         x = cos(elevation) * cos(azimuth)
@@ -146,10 +149,10 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
 
     @staticmethod
     def _cart_to_sph_inclination(x, y, z) -> tuple:
-        assert ndim(x) == 1 and ndim(y) == 1 and ndim(z)
+        assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
         azimuth = arctan2(y, x)
         azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
-        colatitude = arccos(z)
+        colatitude = arccos(clip(z, -1.0, 1.0))
         return azimuth, colatitude
 
     @staticmethod
@@ -157,5 +160,5 @@ class AbstractSphereSubsetDistribution(AbstractHypersphereSubsetDistribution):
         assert ndim(x) == 1 and ndim(y) == 1 and ndim(z) == 1
         azimuth = arctan2(y, x)
         azimuth = where(azimuth < 0, azimuth + 2 * pi, azimuth)
-        elevation = pi / 2 - arccos(z)  # elevation is π/2 - colatitude
+        elevation = pi / 2 - arccos(clip(z, -1.0, 1.0))
         return azimuth, elevation

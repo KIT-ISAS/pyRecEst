@@ -80,6 +80,15 @@ class ToroidalVMCosineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCa
         npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.kappa3, self.kappa3)
 
+    def test_accepts_python_scalar_coupling_parameter(self):
+        tvm = ToroidalVonMisesCosineDistribution(self.mu, self.kappa, 0.5)
+        x = array([1.3, 2.4])
+
+        npt.assert_allclose(tvm.pdf(x), self.tvm.pdf(x), rtol=5e-7)
+        npt.assert_allclose(
+            tvm.trigonometric_moment(1), self.tvm.trigonometric_moment(1), rtol=5e-7
+        )
+
     def _unnormalized_pdf(self, xs):
         return exp(
             self.kappa[0] * cos(xs[..., 0] - self.mu[0])

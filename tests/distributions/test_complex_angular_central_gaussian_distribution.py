@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -45,6 +46,16 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
         C_bad = array([[1.0 + 0j, 2.0 + 1.0j], [0.0 + 0j, 1.0 + 0j]])
         with self.assertRaises(AssertionError):
             ComplexAngularCentralGaussianDistribution(C_bad)
+
+    def test_constructor_rejects_non_positive_definite_matrix(self):
+        """Hermitian parameter matrices must be positive definite."""
+        invalid_matrices = [
+            array([[1.0 + 0j, 0.0 + 0j], [0.0 + 0j, 0.0 + 0j]]),
+            array([[1.0 + 0j, 0.0 + 0j], [0.0 + 0j, -1.0 + 0j]]),
+        ]
+        for C_bad in invalid_matrices:
+            with self.subTest(C=C_bad), self.assertRaises(AssertionError):
+                ComplexAngularCentralGaussianDistribution(C_bad)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -133,6 +144,25 @@ class TestComplexAngularCentralGaussianDistribution(unittest.TestCase):
         Z = self.dist_identity_2d.sample(n)
         self.assertEqual(Z.shape[0], n)
         self.assertEqual(Z.shape[1], 2)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )  # pylint: disable=no-member
+    def test_sample_accepts_integer_like_count(self):
+        """Scalar integer-like counts should be normalized before sampling."""
+        Z = self.dist_identity_2d.sample(np.array(4.0))
+        self.assertEqual(Z.shape, (4, 2))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )  # pylint: disable=no-member
+    def test_sample_rejects_invalid_count(self):
+        """Invalid counts should fail before backend random shape handling."""
+        for invalid_n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=invalid_n), self.assertRaises(ValueError):
+                self.dist_identity_2d.sample(invalid_n)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",

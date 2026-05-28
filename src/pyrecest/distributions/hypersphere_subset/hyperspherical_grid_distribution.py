@@ -74,18 +74,7 @@ class HypersphericalGridDistribution(
         Mean direction on the hypersphere.
         """
         mu = (self.grid.T @ self.grid_values).reshape((-1,))  # (dim,)
-        norm_mu = linalg.norm(mu)
-
-        if norm_mu < 1e-8:
-            warnings.warn(
-                "Density may not actually have a mean direction because "
-                "formula yields a point very close to the origin.",
-                UserWarning,
-            )
-            if norm_mu == 0.0:
-                return mu
-
-        return mu / norm_mu
+        return self._normalize_mean_direction(mu)
 
     # ------------------------------------------------------------------
     # PDF (nearest-neighbour / piecewise constant interpolation)

@@ -2,6 +2,8 @@ import types
 import unittest
 
 import numpy as np
+
+# pylint: disable=no-name-in-module
 from pyrecest.filters import (
     adaptive_position_proposal_probability,
     build_replay_grid_likelihood_lookup,
@@ -87,6 +89,12 @@ class TestReplayGridLikelihood(unittest.TestCase):
         self.assertAlmostEqual(probability, 0.5)
         self.assertAlmostEqual(ess_fraction, 0.25)
 
+    def test_effective_sample_size_rejects_invalid_weights(self):
+        for weights in ([1.0, -0.1], [1.0, np.nan], [1.0, np.inf]):
+            with self.subTest(weights=weights):
+                with self.assertRaisesRegex(ValueError, "particle weights"):
+                    effective_sample_size_fraction(weights)
+
     def test_update_position_grid_likelihood_interpolates_particle_positions(self):
         centers = np.array(
             [
@@ -140,6 +148,14 @@ class TestReplayGridLikelihood(unittest.TestCase):
         log_posterior = particle_position_log_posterior(positions, weights, bin_centers)
 
         self.assertTrue(np.allclose(np.exp(log_posterior), [0.5, 0.5]))
+
+    def test_particle_position_log_posterior_rejects_negative_weights(self):
+        positions = np.asarray([[0.0, 0.0], [1.0, 0.0]])
+        weights = np.asarray([-0.25, 1.25])
+        bin_centers = np.asarray([[0.0, 0.0], [1.0, 0.0]])
+
+        with self.assertRaisesRegex(ValueError, "particle weights must be nonnegative"):
+            particle_position_log_posterior(positions, weights, bin_centers)
 
 
 class _DummyFilter:

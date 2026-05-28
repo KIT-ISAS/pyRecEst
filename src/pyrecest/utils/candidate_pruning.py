@@ -37,9 +37,7 @@ class CandidatePruningConfig:
             value = getattr(self, name)
             if value is None:
                 continue
-            parsed = int(value)
-            if parsed <= 0:
-                raise ValueError(f"{name} must be positive or None")
+            parsed = _normalize_positive_integer(value, name)
             object.__setattr__(self, name, parsed)
 
         if self.probability_threshold is not None:
@@ -76,6 +74,31 @@ def candidate_pruning_config_from_mapping(
     if isinstance(value, CandidatePruningConfig):
         return value
     return CandidatePruningConfig(**dict(value))
+
+
+def _normalize_positive_integer(value: Any, name: str) -> int:
+    value_array = np.asarray(value)
+    message = f"{name} must be a positive integer or None"
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    if isinstance(scalar, (int, np.integer)):
+        parsed = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(message) from exc
+        if not np.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(message)
+        parsed = int(scalar_float)
+
+    if parsed <= 0:
+        raise ValueError(message)
+    return parsed
 
 
 def candidate_mask_from_costs(

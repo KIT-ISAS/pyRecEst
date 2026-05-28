@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -20,6 +21,25 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         self.pf = EuclideanParticleFilter(n_particles=1000, dim=3)
         self.forced_mean = array([1.0, 2.0, 3.0])
         self.pf.filter_state = self.prior
+
+    def test_constructor_validates_particle_count_and_dimension(self):
+        valid = EuclideanParticleFilter(n_particles=np.int64(3), dim=np.int64(2))
+
+        self.assertEqual(valid.filter_state.d.shape, (3, 2))
+
+        invalid_arguments = (
+            ("bool-n-particles", True, 1, "n_particles"),
+            ("fractional-n-particles", 1.5, 1, "n_particles"),
+            ("zero-n-particles", 0, 1, "n_particles"),
+            ("bool-dim", 1, True, "dim"),
+            ("fractional-dim", 1, 1.5, "dim"),
+            ("zero-dim", 1, 0, "dim"),
+        )
+
+        for name, n_particles, dim, message in invalid_arguments:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, message):
+                    EuclideanParticleFilter(n_particles, dim)
 
     def test_prediction_accepts_in_place_set_mean_noise(self):
         pf = EuclideanParticleFilter(n_particles=3, dim=3)
@@ -57,6 +77,24 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         est = self.pf.get_point_estimate()
         self.assertEqual(self.pf.get_point_estimate().shape, (3,))
         npt.assert_allclose(est, self.prior.mu + mean(samples, axis=0), atol=0.1)
+
+    def test_predict_nonlinear_nonadditive_rejects_invalid_weights(self):
+        samples = array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+
+        def f(x, w):
+            return x + w
+
+        invalid_cases = (
+            (array([float("nan"), 1.0]), "finite"),
+            (array([float("inf"), 1.0]), "finite"),
+            (array([-float("inf"), 1.0]), "finite"),
+            (array([-1.0, 2.0]), "nonnegative"),
+            (array([0.0, 0.0]), "positive finite total mass"),
+        )
+        for weights, message in invalid_cases:
+            with self.subTest(weights=weights):
+                with self.assertRaisesRegex(ValueError, message):
+                    self.pf.predict_nonlinear_nonadditive(f, samples, weights)
 
     def test_predict_update_cycle_3d_forced_particle_pos_no_pred(self):
         force_first_particle_pos = array([1.1, 2.0, 3.0])

@@ -1,4 +1,5 @@
 import copy
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -7,7 +8,6 @@ from pyrecest.backend import (
     allclose,
     arange,
     array,
-    atleast_2d,
     exp,
     int32,
     int64,
@@ -21,6 +21,7 @@ from pyrecest.backend import (
 )
 from scipy.stats import multivariate_normal
 
+from ._input_validation import as_hypertoroidal_points, as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -37,6 +38,15 @@ def _as_2d_covariance(C):
     if C.ndim == 0:
         C = C.reshape((1, 1))
     return C
+
+
+def _validate_series_order(m) -> int:
+    if isinstance(m, bool) or not isinstance(m, Integral):
+        raise ValueError("m must be a non-negative integer")
+    m = int(m)
+    if m < 0:
+        raise ValueError("m must be a non-negative integer")
+    return m
 
 
 class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
@@ -82,10 +92,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param m: Controls the number of terms in the Fourier series approximation.
         :return: PDF values at xs.
         """
-        assert (
-            xs.shape[-1] == self.dim
-        ), "Last dimension of xs must match the distribution dimension"
-        xs = atleast_2d(xs)  # Ensure xs is at least 2-D for approach below
+        m = _validate_series_order(m)
+        xs = as_hypertoroidal_points(xs, self.dim)
         xs = (xs + pi) % (2 * pi) - pi
 
         # Generate all combinations of offsets for each dimension
@@ -112,17 +120,21 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :raises AssertionError: If shape of shift_by does not match the dimension of the distribution.
         :return: Shifted distribution.
         """
-        assert shift_by.shape == (self.dim,)
-
+        shift_by = as_shift_vector(shift_by, self.dim)
         return self.set_mean(self.mu + shift_by)
 
     def sample(self, n: Union[int, int32, int64]):
-        if n <= 0:
-            raise ValueError("n must be a positive integer")
+        n = self._validate_sample_count(n)
 
         s = random.multivariate_normal(self.mu, self.C, (n,))
         s = mod(s, 2.0 * pi)  # wrap the samples
         return s
+
+    @staticmethod
+    def _validate_sample_count(n):
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer")
+        return int(n)
 
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
         assert self.dim == other.dim, "Dimensions of the two distributions must match"
@@ -144,7 +156,7 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         m = _as_1d_mu(m)
         assert m.shape == (self.dim,), "m must be of shape (dim,)"
         dist = copy.deepcopy(self)
-        dist.mu = m
+        dist.mu = mod(m, 2.0 * pi)
         return dist
 
     def trigonometric_moment(self, n):

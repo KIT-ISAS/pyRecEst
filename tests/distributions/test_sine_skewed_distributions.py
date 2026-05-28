@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 from pyrecest.backend import array, pi
@@ -17,22 +18,24 @@ class TestGeneralizedKSineSkewedVonMisesDistribution(unittest.TestCase):
         # Test with valid parameters
         try:
             GeneralizedKSineSkewedVonMisesDistribution(
-                mu=pi, kappa=1, lambda_=0.5, k=1, m=1
+                mu=pi, kappa=1, lambda_=0.5, k=1, m=np.int64(1)
             )
         except NotImplementedError as e:
             self.fail(f"Initialization with valid parameters failed: {e}")
 
         # Test with invalid lambda_
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             GeneralizedKSineSkewedVonMisesDistribution(
                 mu=pi, kappa=1, lambda_=1.5, k=1, m=1
             )
 
         # Test with invalid m
-        with self.assertRaises(AssertionError):
-            GeneralizedKSineSkewedVonMisesDistribution(
-                mu=pi, kappa=1, lambda_=0.5, k=1, m=0
-            )
+        for m in (True, 1.5, 0, -1):
+            with self.subTest(m=m):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    GeneralizedKSineSkewedVonMisesDistribution(
+                        mu=pi, kappa=1, lambda_=0.5, k=1, m=m
+                    )
 
     def test_pdf(self):
         """Test the pdf method for expected behavior."""
@@ -151,21 +154,24 @@ def test_sine_skewed_effect():
 class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
     def test_initialization(self):
         """Test initialization with valid and invalid parameters."""
-        GeneralizedKSineSkewedWrappedCauchyDistribution(
-            mu=pi, gamma=0.5, lambda_=0.5, k=1, m=1
+        dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
+            mu=pi, gamma=0.5, lambda_=0.5, k=1, m=np.int64(1)
         )
+        self.assertEqual(dist.m, 1)
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             GeneralizedKSineSkewedWrappedCauchyDistribution(
                 mu=pi, gamma=0.5, lambda_=1.5, k=1, m=1
             )
 
-        with self.assertRaises(AssertionError):
-            GeneralizedKSineSkewedWrappedCauchyDistribution(
-                mu=pi, gamma=0.5, lambda_=0.5, k=1, m=0
-            )
+        for m in (True, 1.5, 0, -1):
+            with self.subTest(m=m):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    GeneralizedKSineSkewedWrappedCauchyDistribution(
+                        mu=pi, gamma=0.5, lambda_=0.5, k=1, m=m
+                    )
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             GeneralizedKSineSkewedWrappedCauchyDistribution(
                 mu=pi, gamma=-0.1, lambda_=0.5, k=1, m=1
             )

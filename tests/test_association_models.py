@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy.testing as npt
 
@@ -126,12 +127,74 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
         self.assertGreater(mean(probabilities[:80]), 0.9)
         self.assertLess(mean(probabilities[80:]), 0.1)
 
+    def test_fit_uses_pinv_fallback_for_backend_runtime_solve_errors(self):
+        model = LogisticPairwiseAssociationModel(
+            class_weight="balanced", max_iterations=3
+        )
+
+        with patch(
+            "pyrecest.utils.association_models.linalg.solve",
+            side_effect=RuntimeError("singular linear system"),
+        ):
+            model.fit(self.training_features, self.training_labels)
+
+        probabilities = model.predict_match_probability(self.training_features)
+        self.assertGreater(model.n_iter_, 0)
+        self.assertTrue(all(isfinite(probabilities)))
+
+    def test_fit_uses_pinv_fallback_for_nonfinite_backend_solve_results(self):
+        model = LogisticPairwiseAssociationModel(
+            class_weight="balanced", max_iterations=3
+        )
+
+        def nonfinite_solve(_hessian, gradient):
+            return zeros(gradient.shape) + float("nan")
+
+        with patch(
+            "pyrecest.utils.association_models.linalg.solve",
+            side_effect=nonfinite_solve,
+        ):
+            model.fit(self.training_features, self.training_labels)
+
+        probabilities = model.predict_match_probability(self.training_features)
+        self.assertGreater(model.n_iter_, 0)
+        self.assertTrue(all(isfinite(probabilities)))
+
     def test_invalid_labels_raise(self):
         model = LogisticPairwiseAssociationModel()
         with self.assertRaises(ValueError):
             model.fit(
                 self.training_features, zeros(self.training_labels.shape, dtype=int) + 2
             )
+
+    def test_nonfinite_sample_weights_raise(self):
+        for invalid_weight in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_weight=invalid_weight):
+                sample_weight = ones(self.training_labels.shape)
+                if hasattr(sample_weight, "at"):
+                    sample_weight = sample_weight.at[0].set(invalid_weight)
+                else:
+                    sample_weight[0] = invalid_weight
+                model = LogisticPairwiseAssociationModel()
+
+                with self.assertRaisesRegex(ValueError, "sample_weight must be finite"):
+                    model.fit(
+                        self.training_features,
+                        self.training_labels,
+                        sample_weight=sample_weight,
+                    )
+
+    def test_nonfinite_class_weights_raise(self):
+        for invalid_weight in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_weight=invalid_weight):
+                model = LogisticPairwiseAssociationModel(
+                    class_weight={0: 1.0, 1: invalid_weight}
+                )
+
+                with self.assertRaisesRegex(
+                    ValueError, "class weights must be finite and positive"
+                ):
+                    model.fit(self.training_features, self.training_labels)
 
     def test_pairwise_feature_tensor_stacks_named_components_and_sanitizes(self):
         components = {

@@ -18,12 +18,13 @@ from .._backend_config import np_rtol as rtol  # noqa: F401
 from ._dispatch import numpy as _np
 
 _DTYPES = {
-    _np.dtype("int32"): 0,
-    _np.dtype("int64"): 1,
-    _np.dtype("float32"): 2,
-    _np.dtype("float64"): 3,
-    _np.dtype("complex64"): 4,
-    _np.dtype("complex128"): 5,
+    _np.dtype("bool"): 0,
+    _np.dtype("int32"): 1,
+    _np.dtype("int64"): 2,
+    _np.dtype("float32"): 3,
+    _np.dtype("float64"): 4,
+    _np.dtype("complex64"): 5,
+    _np.dtype("complex128"): 6,
 }
 
 _COMPLEX_DTYPES = [
@@ -99,12 +100,27 @@ def to_ndarray(x, to_ndim, axis=0, dtype=None):
 
 
 def _get_wider_dtype(tensor_list):
-    dtype_list = [_DTYPES.get(x.dtype, -1) for x in tensor_list]
-    if len(dtype_list) == 1:
-        return dtype_list[0], True
+    if len(tensor_list) == 0:
+        return None, True
 
-    wider_dtype_index = max(dtype_list)
-    wider_dtype = list(_DTYPES.keys())[wider_dtype_index]
+    dtypes = [_np.dtype(x.dtype) for x in tensor_list]
+    if all(dtype == dtypes[0] for dtype in dtypes[1:]):
+        return dtypes[0], True
+
+    dtype_ranks = [_DTYPES.get(dtype) for dtype in dtypes]
+    if any(rank is None for rank in dtype_ranks):
+        try:
+            return _np.result_type(*dtypes), False
+        except AttributeError as exc:
+            raise TypeError(
+                "Cannot determine a common dtype for unsupported dtype(s): "
+                f"{', '.join(str(dtype) for dtype in dtypes)}"
+            ) from exc
+
+    wider_dtype_rank = max(dtype_ranks)
+    wider_dtype = next(
+        dtype for dtype, rank in _DTYPES.items() if rank == wider_dtype_rank
+    )
 
     return wider_dtype, False
 

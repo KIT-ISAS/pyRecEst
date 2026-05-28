@@ -34,9 +34,6 @@ BACKEND_CAPABILITIES: Final = {
             "linalg": {
                 "solve_sylvester": "Uses native fast paths and falls back to SciPy.",
             },
-            "random": {
-                "choice": "Weighted sampling without replacement is not supported.",
-            },
         },
     },
     "jax": {
@@ -56,7 +53,6 @@ BACKEND_CAPABILITIES: Final = {
             ),
             "linalg": (
                 "fractional_matrix_power",
-                "is_single_matrix_pd",
                 "logm",
                 "quadratic_assignment",
                 "solve_sylvester",

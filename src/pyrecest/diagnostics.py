@@ -7,7 +7,7 @@ dependency on pandas, plotting libraries, or backend-specific array types.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from math import isfinite, log
 from typing import Any
 
@@ -18,7 +18,7 @@ def _coerce_weight_values(weights: Any) -> list[float]:
         from pyrecest.backend import to_numpy
 
         weights = to_numpy(weights)
-    except Exception:  # pragma: no cover - best-effort fallback for foreign arrays
+    except Exception:  # pragma: no cover  # pylint: disable=broad-exception-caught
         pass
 
     if hasattr(weights, "tolist"):
@@ -109,13 +109,13 @@ def _finite_last(values: list[float]) -> float | None:
 
 
 def _normalized_nonnegative_weights(values: list[float]) -> list[float]:
-    finite_nonnegative = [
-        value if isfinite(value) and value > 0.0 else 0.0 for value in values
-    ]
-    total = sum(finite_nonnegative)
+    if any(not isfinite(value) for value in values):
+        raise ValueError("Particle weights must be finite.")
+    nonnegative_values = [max(0.0, value) for value in values]
+    total = sum(nonnegative_values)
     if total <= 0.0:
-        return [0.0 for _ in finite_nonnegative]
-    return [value / total for value in finite_nonnegative]
+        return [0.0 for _ in nonnegative_values]
+    return [value / total for value in nonnegative_values]
 
 
 class _DiagnosticsMappingMixin:
@@ -166,7 +166,7 @@ class FilterDiagnostics(_DiagnosticsMappingMixin):
 
     @classmethod
     def from_mapping(cls, mapping: dict[str, Any]) -> "FilterDiagnostics":
-        known = {field_name for field_name in cls.__dataclass_fields__}
+        known = {dataclass_field.name for dataclass_field in fields(cls)}
         values = {key: value for key, value in mapping.items() if key in known}
         metadata = dict(mapping.get("metadata", {}))
         metadata.update(

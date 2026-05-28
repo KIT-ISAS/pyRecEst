@@ -1,13 +1,16 @@
 import copy
+from numbers import Integral
 from typing import Union
+
+import numpy as np
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     allclose,
     arange,
     array,
-    atleast_2d,
     concatenate,
     cos,
     diag,
@@ -15,13 +18,14 @@ from pyrecest.backend import (
     hstack,
     int32,
     int64,
+    isfinite,
     linalg,
     meshgrid,
     mod,
-    ndim,
     pi,
     random,
     repeat,
+    reshape,
     sin,
     stack,
     sum,
@@ -37,6 +41,68 @@ from ..nonperiodic.gaussian_distribution import GaussianDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
 
 
+def _as_2d_query_points(xs, dim: int):
+    """Normalize scalar/vector/matrix query inputs to shape ``(n_eval, dim)``."""
+    xs = array(xs)
+    if xs.ndim == 0:
+        if dim != 1:
+            raise ValueError(
+                "Scalar query points are only valid for one-dimensional "
+                f"distributions, got dim={dim}."
+            )
+        return reshape(xs, (1, 1))
+
+    if xs.ndim == 1:
+        if dim == 1:
+            return reshape(xs, (-1, 1))
+        if xs.shape[0] == dim:
+            return reshape(xs, (1, dim))
+        raise ValueError(
+            "Last dimension of xs must match the distribution dimension "
+            f"{dim}, got shape {xs.shape}."
+        )
+
+    if xs.shape[-1] != dim:
+        raise ValueError(
+            "Last dimension of xs must match the distribution dimension "
+            f"{dim}, got shape {xs.shape}."
+        )
+    return reshape(xs, (-1, dim))
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
+
+
+def _validate_bound_dim(bound_dim, total_dim: int) -> int:
+    if isinstance(bound_dim, bool) or not isinstance(bound_dim, Integral):
+        raise ValueError("bound_dim must be a non-negative integer")
+    bound_dim = int(bound_dim)
+    if bound_dim < 0:
+        raise ValueError("bound_dim must be non-negative")
+    if bound_dim > total_dim:
+        raise ValueError("bound_dim must not exceed the distribution dimension")
+    return bound_dim
+
+
 class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     """Partially wrapped normal distribution on periodic-linear domains.
 
@@ -49,14 +115,21 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
     """
 
     def __init__(self, mu, C, bound_dim: Union[int, int32, int64]):
-        assert bound_dim >= 0, "bound_dim must be non-negative"
-        assert ndim(mu) == 1, "mu must be a 1-dimensional array"
-        assert C.shape == (mu.shape[-1], mu.shape[-1]), "C must match size of mu"
-        assert allclose(C, C.T), "C must be symmetric"
-        assert (
-            len(linalg.cholesky(C)) > 0
-        ), "C must be positive definite"  # Will fail if not positive definite
-        assert bound_dim <= mu.shape[0]
+        mu = array(mu)
+        C = array(C)
+        if mu.ndim != 1:
+            raise ValueError("mu must be a 1-dimensional array")
+        bound_dim = _validate_bound_dim(bound_dim, mu.shape[0])
+        if C.shape != (mu.shape[-1], mu.shape[-1]):
+            raise ValueError("C must match size of mu")
+        if not bool(allclose(C, C.T)):
+            raise ValueError("C must be symmetric")
+        try:
+            chol = linalg.cholesky(C)
+        except Exception as exc:
+            raise ValueError("C must be positive definite") from exc
+        if not bool(backend_all(isfinite(chol))):
+            raise ValueError("C must be positive definite")
         mu = where(arange(mu.shape[0]) < bound_dim, mod(mu, 2 * pi), mu)
 
         AbstractHypercylindricalDistribution.__init__(
@@ -67,7 +140,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         self.C = C
 
     def pdf(self, xs, m: Union[int, int32, int64] = 3):
-        xs = atleast_2d(xs)
+        xs = _as_2d_query_points(xs, self.input_dim)
         condition = (
             arange(xs.shape[1]) < self.bound_dim
         )  # Create a condition based on column indices
@@ -78,15 +151,16 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
             xs,  # Keep the original values where the condition is False
         )
 
-        assert xs.shape[-1] == self.input_dim
-
         # generate multiples for wrapping
         multiples = array(range(-m, m + 1)) * 2.0 * pi
 
         # create meshgrid for all combinations of multiples
-        mesh = array(meshgrid(*[multiples] * self.bound_dim, indexing="ij")).reshape(
-            -1, self.bound_dim
-        )
+        if self.bound_dim == 0:
+            mesh = array([[]])
+        else:
+            mesh = array(
+                meshgrid(*[multiples] * self.bound_dim, indexing="ij")
+            ).reshape(-1, self.bound_dim)
 
         # reshape xs for broadcasting: repeat each row mesh.shape[0] times so that
         # every xs[i] is paired with every mesh offset before moving to xs[i+1]
@@ -127,6 +201,9 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
 
         For bounded dimensions, the mean is wrapped into [0, 2*pi) to stay on the manifold.
         """
+        new_mean = array(new_mean)
+        if new_mean.shape != (self.input_dim,):
+            raise ValueError("new_mean must match distribution dim")
         new_dist = copy.deepcopy(self)
         wrapped_mean = where(
             arange(new_mean.shape[0]) < self.bound_dim, mod(new_mean, 2 * pi), new_mean
@@ -139,7 +216,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
 
     def hybrid_moment(self):
         """
-        Calculates mean of [x1, x2, .., x_lin_dim, cos(x_(linD+1), sin(x_(linD+1)), ..., cos(x_(linD+boundD), sin(x_(lin_dim+bound_dim))]
+        Calculates mean of [x1, x2, .., x_lin_dim, cos(x_(linD+1), sin(x_(linD+1)), ..., cos(x_(lin_dim+boundD), sin(x_(lin_dim+bound_dim))]
         Returns:
             mu (linD+2): expectation value of [x1, x2, .., x_lin_dim, cos(x_(lin_dim+1), sin(x_(lin_dim+1)), ..., cos(x_(lin_dim+bound_dim), sin(x_(lin_dim+bound_dim))]
         """
@@ -160,7 +237,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         return self.mu
 
     def linear_mean(self):
-        return self.mu[-self.lin_dim :]  # noqa: E203
+        return self.mu[self.bound_dim :]  # noqa: E203
 
     def periodic_mean(self):
         return self.mu[: self.bound_dim]
@@ -171,7 +248,7 @@ class PartiallyWrappedNormalDistribution(AbstractHypercylindricalDistribution):
         Parameters:
             n (int): number of points to sample
         """
-        assert n > 0, "n must be positive"
+        n = _validate_positive_sample_count(n)
         s = random.multivariate_normal(mean=self.mu, cov=self.C, size=(n,))
         wrapped_values = mod(s[:, : self.bound_dim], 2.0 * pi)
         unbounded_values = s[:, self.bound_dim :]  # noqa: E203

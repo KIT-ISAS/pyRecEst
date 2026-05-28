@@ -16,6 +16,11 @@ def _linalg_call_args(name):
     }[name]
 
 
+def _skip_if_linalg_function_unsupported(name):
+    if name in get_unsupported_functions(backend.__backend_name__, "linalg"):
+        pytest.skip(f"{name} is unsupported on the active backend")
+
+
 def test_declared_linalg_unsupported_functions_raise_not_implemented():
     unsupported = get_unsupported_functions(backend.__backend_name__, "linalg")
     if not unsupported:
@@ -24,6 +29,25 @@ def test_declared_linalg_unsupported_functions_raise_not_implemented():
     for name in unsupported:
         with pytest.raises(NotImplementedError):
             getattr(linalg, name)(*_linalg_call_args(name))
+
+
+def test_is_single_matrix_pd_rejects_vector_inputs():
+    _skip_if_linalg_function_unsupported("is_single_matrix_pd")
+
+    assert linalg.is_single_matrix_pd(array([1.0, 2.0])) is False
+
+
+def test_is_single_matrix_pd_rejects_batched_inputs():
+    _skip_if_linalg_function_unsupported("is_single_matrix_pd")
+
+    batched_identity = array(
+        [
+            [[1.0, 0.0], [0.0, 1.0]],
+            [[2.0, 0.0], [0.0, 2.0]],
+        ]
+    )
+
+    assert linalg.is_single_matrix_pd(batched_identity) is False
 
 
 def test_pytorch_to_numpy_detaches_tensors_requiring_grad():
@@ -62,6 +86,15 @@ def test_default_reductions_reduce_all_elements():
     assert float(_to_python(backend.prod(values))) == 120.0
 
 
+def test_prod_accepts_tuple_axis():
+    values = array([[[2.0, 3.0], [4.0, 5.0]], [[6.0, 7.0], [8.0, 9.0]]])
+
+    result = backend.prod(values, axis=(0, 2))
+
+    assert result.shape == (2,)
+    assert _to_python(result) == [252.0, 1440.0]
+
+
 def test_default_cumprod_flattens_all_elements():
     values = array([[2.0, 3.0], [4.0, 5.0]])
 
@@ -94,6 +127,86 @@ def test_take_removes_axis_for_scalar_indices():
 
     assert result.shape == (1, 3)
     assert _to_python(result) == [[1.0, 2.0, 3.0]]
+
+
+def test_take_defaults_to_flattened_input():
+    values = array([[0, 1, 2], [3, 4, 5]])
+
+    result = backend.take(values, [[0, 2], [5, 1]])
+
+    assert result.shape == (2, 2)
+    assert _to_python(result) == [[0, 2], [5, 1]]
+
+
+def test_take_preserves_multidimensional_index_shape():
+    values = array([[0, 1, 2], [3, 4, 5]])
+
+    result = backend.take(values, [[0, 2], [1, 0]], axis=1)
+
+    assert result.shape == (2, 2, 2)
+    assert _to_python(result) == [[[0, 2], [1, 0]], [[3, 5], [4, 3]]]
+
+
+def test_take_wraps_negative_indices_in_raise_mode():
+    values = array([[0, 1, 2], [3, 4, 5]])
+
+    result = backend.take(values, [-1, 0], axis=1)
+
+    assert result.shape == (2, 2)
+    assert _to_python(result) == [[2, 0], [5, 3]]
+
+
+def test_pytorch_take_raises_for_out_of_bounds_indices():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific take bounds regression test")
+
+    values = array([0, 1, 2])
+
+    with pytest.raises(IndexError):
+        backend.take(values, [3])
+
+
+def test_pad_accepts_scalar_pad_width():
+    result = backend.pad(array([1, 2, 3]), 1)
+
+    assert result.shape == (5,)
+    assert _to_python(result) == [0, 1, 2, 3, 0]
+
+
+def test_pad_treats_length_two_pad_width_as_before_after_for_each_axis():
+    result = backend.pad(array([1, 2, 3]), (1, 2))
+
+    assert result.shape == (6,)
+    assert _to_python(result) == [0, 1, 2, 3, 0, 0]
+
+
+def test_pad_broadcasts_single_axis_pair_to_all_axes():
+    result = backend.pad(array([[1, 2], [3, 4]]), ((1, 2),))
+
+    assert result.shape == (5, 5)
+    assert _to_python(result) == [
+        [0, 0, 0, 0, 0],
+        [0, 1, 2, 0, 0],
+        [0, 3, 4, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+    ]
+
+
+def test_pad_uses_per_axis_pad_pairs_in_numpy_order():
+    result = backend.pad(array([[1, 2], [3, 4]]), ((1, 0), (0, 2)))
+
+    assert result.shape == (3, 4)
+    assert _to_python(result) == [
+        [0, 0, 0, 0],
+        [1, 2, 0, 0],
+        [3, 4, 0, 0],
+    ]
+
+
+def test_pad_rejects_negative_widths():
+    with pytest.raises(ValueError):
+        backend.pad(array([1, 2, 3]), (-1, 0))
 
 
 def test_cross_uses_trailing_vector_axis_for_batched_vectors():
@@ -129,9 +242,192 @@ def test_scatter_add_preserves_input_values_and_uses_facade_signature():
     assert _to_python(result) == [[3.0, 1.0, 4.0], [1.0, 5.0, 6.0]]
 
 
+def test_split_integer_sections_reject_uneven_division():
+    values = array([0, 1, 2, 3, 4])
+
+    with pytest.raises(ValueError, match="equal division"):
+        backend.split(values, 2)
+
+
+def test_hsplit_splits_along_second_axis_for_high_rank_arrays():
+    values = backend.reshape(backend.arange(24), (2, 3, 4))
+
+    result = backend.hsplit(values, 3)
+
+    assert [part.shape for part in result] == [(2, 1, 4), (2, 1, 4), (2, 1, 4)]
+    assert [_to_python(part) for part in result] == [
+        [[[0, 1, 2, 3]], [[12, 13, 14, 15]]],
+        [[[4, 5, 6, 7]], [[16, 17, 18, 19]]],
+        [[[8, 9, 10, 11]], [[20, 21, 22, 23]]],
+    ]
+
+
+def test_hsplit_accepts_cut_indices():
+    values = backend.reshape(backend.arange(12), (2, 3, 2))
+
+    result = backend.hsplit(values, [1, 2])
+
+    assert [part.shape for part in result] == [(2, 1, 2), (2, 1, 2), (2, 1, 2)]
+    assert [_to_python(part) for part in result] == [
+        [[[0, 1]], [[6, 7]]],
+        [[[2, 3]], [[8, 9]]],
+        [[[4, 5]], [[10, 11]]],
+    ]
+
+
 def test_as_dtype_string_lookup_is_available():
     assert backend.as_dtype("float64") is not None
 
 
 def test_ravel_tril_indices_returns_flat_indices():
     assert _to_python(backend.ravel_tril_indices(3)) == [0, 3, 4, 6, 7, 8]
+
+
+def test_triangular_matrix_helpers_return_compact_vectors():
+    values = array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+    assert _to_python(backend.tril_to_vec(values)) == [1, 4, 5, 7, 8, 9]
+    assert _to_python(backend.triu_to_vec(values)) == [1, 2, 3, 5, 6, 9]
+    assert _to_python(backend.triu_to_vec(values, k=1)) == [2, 3, 6]
+
+
+def test_triangular_matrix_helpers_preserve_batch_dimensions():
+    values = array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+
+    assert _to_python(backend.tril_to_vec(values)) == [[1, 3, 4], [5, 7, 8]]
+    assert _to_python(backend.triu_to_vec(values)) == [[1, 2, 4], [5, 6, 8]]
+
+
+def test_divide_ignore_div_zero_accepts_scalars_and_integer_inputs():
+    assert _to_python(backend.divide(array([1.0, 2.0]), 0.0, ignore_div_zero=True)) == [
+        0.0,
+        0.0,
+    ]
+    assert _to_python(backend.divide(1.0, array([0.0, 2.0]), ignore_div_zero=True)) == [
+        0.0,
+        0.5,
+    ]
+
+    numerator = backend.asarray([1, 2], dtype=backend.int32)
+    denominator = backend.asarray([1, 0], dtype=backend.int32)
+
+    assert _to_python(backend.divide(numerator, denominator, ignore_div_zero=True)) == [
+        1.0,
+        0.0,
+    ]
+
+
+def test_vec_to_diag_preserves_leading_singleton_batch_dimension():
+    result = backend.vec_to_diag(array([[1.0, 2.0]]))
+
+    assert result.shape == (1, 2, 2)
+    assert _to_python(result) == [[[1.0, 0.0], [0.0, 2.0]]]
+
+
+def test_tril_and_triu_to_vec_skip_masked_entries():
+    values = array([[1.0, 2.0], [3.0, 4.0]])
+
+    assert _to_python(backend.tril_to_vec(values)) == [1.0, 3.0, 4.0]
+    assert _to_python(backend.triu_to_vec(values)) == [1.0, 2.0, 4.0]
+
+
+def test_set_diag_preserves_leading_batch_dimensions():
+    result = backend.set_diag(backend.zeros((1, 2, 2)), array([[1.0, 2.0]]))
+
+    assert result.shape == (1, 2, 2)
+    assert _to_python(result) == [[[1.0, 0.0], [0.0, 2.0]]]
+
+
+def test_set_diag_accepts_rectangular_matrices():
+    result = backend.set_diag(backend.ones((2, 3)), array([5.0, 6.0]))
+
+    assert result.shape == (2, 3)
+    assert _to_python(result) == [[5.0, 1.0, 1.0], [1.0, 6.0, 1.0]]
+
+
+def test_batched_mat_from_diag_triu_tril_preserves_leading_dimensions():
+    result = backend.mat_from_diag_triu_tril(
+        array([[1.0, 2.0], [5.0, 6.0]]),
+        array([[3.0], [7.0]]),
+        array([[4.0], [8.0]]),
+    )
+
+    assert result.shape == (2, 2, 2)
+    assert _to_python(result) == [
+        [[1.0, 3.0], [4.0, 2.0]],
+        [[5.0, 7.0], [8.0, 6.0]],
+    ]
+
+
+def test_batched_matvec_pairs_leading_dimensions():
+    matrix = array([[[1.0, 0.0], [0.0, 1.0]], [[2.0, 0.0], [0.0, 3.0]]])
+    vector = array([[1.0, 2.0], [3.0, 4.0]])
+
+    result = backend.matvec(matrix, vector)
+
+    assert result.shape == (2, 2)
+    assert _to_python(result) == [[1.0, 2.0], [6.0, 12.0]]
+
+
+def test_batched_dot_uses_last_axis_inner_product():
+    first = array([[1.0, 2.0], [3.0, 4.0]])
+    second = array([[5.0, 6.0], [7.0, 8.0]])
+
+    result = backend.dot(first, second)
+
+    assert result.shape == (2,)
+    assert _to_python(result) == [17.0, 53.0]
+
+
+def test_batched_dot_accepts_high_rank_right_operand():
+    first = array([1.0, 2.0])
+    second = array(
+        [
+            [[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]],
+            [[6.0, 7.0], [8.0, 9.0], [10.0, 11.0]],
+        ]
+    )
+
+    result = backend.dot(first, second)
+
+    assert result.shape == (2, 3)
+    assert _to_python(result) == [[2.0, 8.0, 14.0], [20.0, 26.0, 32.0]]
+
+
+def test_batched_outer_pairs_leading_dimensions():
+    first = array([[1.0, 2.0], [3.0, 4.0]])
+    second = array([[5.0, 6.0], [7.0, 8.0]])
+
+    result = backend.outer(first, second)
+
+    assert result.shape == (2, 2, 2)
+    assert _to_python(result) == [
+        [[5.0, 6.0], [10.0, 12.0]],
+        [[21.0, 24.0], [28.0, 32.0]],
+    ]
+
+
+def test_outer_accepts_high_rank_right_operand():
+    first = array([1.0, 2.0])
+    second = array(
+        [
+            [[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]],
+            [[6.0, 7.0], [8.0, 9.0], [10.0, 11.0]],
+        ]
+    )
+
+    result = backend.outer(first, second)
+
+    assert result.shape == (2, 3, 2, 2)
+    assert _to_python(result) == [
+        [
+            [[0.0, 1.0], [0.0, 2.0]],
+            [[2.0, 3.0], [4.0, 6.0]],
+            [[4.0, 5.0], [8.0, 10.0]],
+        ],
+        [
+            [[6.0, 7.0], [12.0, 14.0]],
+            [[8.0, 9.0], [16.0, 18.0]],
+            [[10.0, 11.0], [20.0, 22.0]],
+        ],
+    ]

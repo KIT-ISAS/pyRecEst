@@ -1,3 +1,5 @@
+import numpy as np
+import pytest
 from pyrecest.filters.tracklet_viterbi import (
     TrackletAssociationCandidate,
     TrackletViterbiConfig,
@@ -7,6 +9,42 @@ from pyrecest.filters.tracklet_viterbi import (
     solve_tracklet_viterbi,
     track_support_cost,
 )
+
+
+def test_config_validates_candidate_limits():
+    for name in ("max_candidates_per_frame", "max_candidate_pool_per_frame"):
+        for value in (0, 1.5, np.nan, True, np.array([1])):
+            with pytest.raises(ValueError, match=name):
+                TrackletViterbiConfig(**{name: value})
+
+    for value in (-1, 1.5, np.nan, True, np.array([1])):
+        with pytest.raises(ValueError, match="max_candidates_per_track_id"):
+            TrackletViterbiConfig(max_candidates_per_track_id=value)
+
+
+def test_config_normalizes_integer_like_candidate_limits():
+    config = TrackletViterbiConfig(
+        max_candidates_per_frame=np.array(2.0),
+        max_candidate_pool_per_frame=3.0,
+        max_candidates_per_track_id=np.int64(1),
+    )
+
+    assert config.max_candidates_per_frame == 2
+    assert config.max_candidate_pool_per_frame == 3
+    assert config.max_candidates_per_track_id == 1
+
+
+def test_config_rejects_nonfinite_float_parameters():
+    invalid_cases = {
+        "missed_detection_cost": np.nan,
+        "max_speed_penalty": np.inf,
+        "transition_position_std": np.nan,
+        "transition_velocity_std": np.inf,
+        "max_speed": np.nan,
+    }
+    for name, value in invalid_cases.items():
+        with pytest.raises(ValueError, match=name):
+            TrackletViterbiConfig(**{name: value})
 
 
 def test_switch_cost_prefers_coherent_tracklet():
@@ -51,6 +89,21 @@ def test_fixed_lag_solver_uses_prefix_memory():
         config=TrackletViterbiConfig(switch_cost=10.0, missed_detection_cost=100.0),
     )
     assert [candidate.candidate_id for candidate in result.path] == ["a0", "a1"]
+
+
+def test_fixed_lag_total_cost_scores_committed_path_once():
+    frames = [
+        [TrackletAssociationCandidate("a0", unary_cost=1.0, time_s=0.0)],
+        [TrackletAssociationCandidate("a1", unary_cost=2.0, time_s=1.0)],
+    ]
+    result = solve_fixed_lag_tracklet_viterbi(
+        frames,
+        lag_s=10.0,
+        config=TrackletViterbiConfig(missed_detection_cost=100.0),
+    )
+
+    assert [candidate.candidate_id for candidate in result.path] == ["a0", "a1"]
+    assert result.total_cost == 3.0
 
 
 def test_retention_keeps_track_representative_outside_top_k():

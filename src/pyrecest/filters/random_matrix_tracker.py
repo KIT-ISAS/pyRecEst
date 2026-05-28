@@ -1,6 +1,7 @@
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
     array,
+    asarray,
     concatenate,
     cos,
     exp,
@@ -60,6 +61,7 @@ class RandomMatrixTracker(AbstractExtendedObjectTracker):
         x_rows = self.kinematic_state.shape[0]
         y_rows = x_rows // 2
 
+        Cw = asarray(Cw)
         if Cw.shape in ((), (1,)):
             Cw = Cw * eye(x_rows)
 

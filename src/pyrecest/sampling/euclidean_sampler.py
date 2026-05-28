@@ -16,6 +16,12 @@ class AbstractEuclideanSampler(AbstractSampler):
 
 class GaussianSampler(AbstractEuclideanSampler):
     def sample_stochastic(self, n_samples: int, dim: int):
+        n_samples = _validate_integral_argument(n_samples, "n_samples")
+        dim = _validate_integral_argument(dim, "dim")
+        if n_samples < 0:
+            raise ValueError("n_samples must be nonnegative")
+        if dim < 1:
+            raise ValueError("dim must be positive")
         return GaussianDistribution(zeros(dim), eye(dim)).sample(n_samples)
 
 
@@ -87,17 +93,16 @@ class FibonacciRejectionSampler(AbstractEuclideanSampler):
 
     @staticmethod
     def _validate_rejection_args(n_candidates, dim, max_density, bounding_box):
-        n_candidates = int(n_candidates)
-        dim = int(dim)
-        max_density = float(max_density)
+        n_candidates = _validate_integral_argument(n_candidates, "n_candidates")
+        dim = _validate_integral_argument(dim, "dim")
+        max_density = _validate_positive_finite_scalar_argument(
+            max_density, "max_density"
+        )
 
         if n_candidates < 0:
             raise ValueError("n_candidates must be nonnegative")
         if dim < 1:
             raise ValueError("dim must be positive")
-        if not np.isfinite(max_density) or max_density <= 0:
-            raise ValueError("max_density must be positive and finite")
-
         if bounding_box is None:
             bounding_box = np.column_stack((np.zeros(dim), np.ones(dim)))
         else:
@@ -175,8 +180,8 @@ class _QMCProposalGridSampler(AbstractEuclideanSampler):
 
     @staticmethod
     def _validate_grid_args(n_samples: int, dim: int):
-        n_samples = int(n_samples)
-        dim = int(dim)
+        n_samples = _validate_integral_argument(n_samples, "n_samples")
+        dim = _validate_integral_argument(dim, "dim")
         if n_samples < 0:
             raise ValueError("n_samples must be nonnegative")
         if dim < 1:
@@ -208,6 +213,76 @@ def _is_prime(n):
         if n % i == 0:
             return False
     return True
+
+
+def _validate_integral_argument(value, name: str) -> int:
+    """Return a scalar integer argument without silently truncating floats."""
+    try:
+        array_value = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+    if array_value.ndim != 0:
+        raise ValueError(f"{name} must be a scalar integer")
+    if np.issubdtype(array_value.dtype, np.bool_):
+        raise ValueError(f"{name} must be an integer")
+    if np.issubdtype(array_value.dtype, np.integer):
+        return int(array_value)
+    if np.issubdtype(array_value.dtype, np.floating):
+        float_value = float(array_value)
+        if np.isfinite(float_value) and float_value.is_integer():
+            return int(float_value)
+
+    raise ValueError(f"{name} must be an integer")
+
+
+def _validate_positive_finite_scalar_argument(value, name: str) -> float:
+    """Return a positive finite scalar float without accepting bools or vectors."""
+    try:
+        array_value = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive finite scalar") from exc
+
+    if array_value.ndim != 0:
+        raise ValueError(f"{name} must be a positive finite scalar")
+    if np.issubdtype(array_value.dtype, np.bool_):
+        raise ValueError(f"{name} must be a positive finite scalar")
+    try:
+        float_value = float(array_value.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a positive finite scalar") from exc
+    if not np.isfinite(float_value) or float_value <= 0.0:
+        raise ValueError(f"{name} must be a positive finite scalar")
+    return float_value
+
+
+def _validate_gaussian_transform_args(d, covariance, mean):
+    if covariance is None:
+        covariance = np.eye(d)
+    else:
+        covariance = np.asarray(covariance, dtype=float)
+
+    if covariance.shape != (d, d):
+        raise ValueError("covariance must have shape (dim, dim)")
+    if not np.all(np.isfinite(covariance)):
+        raise ValueError("covariance must be finite")
+    if not np.allclose(covariance, covariance.T):
+        raise ValueError("covariance must be symmetric")
+
+    covariance_scale = max(1.0, float(np.max(np.abs(covariance))))
+    tolerance = 100.0 * np.finfo(float).eps * covariance_scale
+    if np.min(np.linalg.eigvalsh(covariance)) < -tolerance:
+        raise ValueError("covariance must be positive semidefinite")
+
+    if mean is None:
+        mean = np.zeros(d)
+    mean = np.asarray(mean, dtype=float).ravel()
+    if mean.shape != (d,):
+        raise ValueError("mean must have shape (dim,)")
+    if not np.all(np.isfinite(mean)):
+        raise ValueError("mean must be finite")
+
+    return covariance, mean
 
 
 def _fibonacci_eigen(d):  # pylint: disable=too-many-locals
@@ -364,18 +439,14 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         xy_gauss : np.ndarray of shape (d, n_points)
             Gaussian grid on R^d with the given covariance and mean.
         """
-        d = int(d)
-        n_points = int(n_points)
+        d = _validate_integral_argument(d, "d")
+        n_points = _validate_integral_argument(n_points, "n_points")
         if d < 1:
             raise ValueError("d must be positive")
         if n_points < 0:
             raise ValueError("n_points must be nonnegative")
 
-        if covariance is None:
-            covariance = np.eye(d)
-        if mean is None:
-            mean = np.zeros(d)
-        mean = np.asarray(mean, dtype=float).ravel()
+        covariance, mean = _validate_gaussian_transform_args(d, covariance, mean)
 
         if n_points == 0:
             empty_arr = np.empty((d, 0))
@@ -482,6 +553,7 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
 
         # Transform to a Gaussian with the requested covariance and mean
         C_vals, C_vecs = np.linalg.eigh(covariance)
+        C_vals = np.maximum(C_vals, 0.0)
         xy_gauss = C_vecs @ np.diag(np.sqrt(C_vals)) @ xy_stdMM + mean.reshape(-1, 1)
 
         return xy_equal, xy_stdMM, xy_gauss

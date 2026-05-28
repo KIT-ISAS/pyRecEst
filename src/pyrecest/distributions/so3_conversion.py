@@ -1,6 +1,8 @@
 """Conversion registrations for SO(3) distribution representations."""
 
 # pylint: disable=no-name-in-module,no-member
+from numbers import Integral
+
 from pyrecest.backend import array, diag, matmul, reshape, sum, transpose
 
 from .conversion import register_conversion
@@ -14,9 +16,18 @@ from .so3_tangent_gaussian_distribution import SO3TangentGaussianDistribution
 
 def _sample_so3_product_dirac(distribution, n_particles):
     """Create an SO(3)^K Dirac approximation by sampling a source distribution."""
-    if not isinstance(n_particles, int) or n_particles <= 0:
-        raise ValueError("n_particles must be a positive integer")
+    n_particles = _validate_particle_count(n_particles)
     return SO3ProductDiracDistribution(distribution.sample(n_particles))
+
+
+def _validate_particle_count(n_particles):
+    if (
+        isinstance(n_particles, bool)
+        or not isinstance(n_particles, Integral)
+        or int(n_particles) <= 0
+    ):
+        raise ValueError("n_particles must be a positive integer")
+    return int(n_particles)
 
 
 def _so3_tangent_gaussian_from_dirac(

@@ -26,6 +26,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
 from pyrecest.backend import (
     __backend_name__,
     arange,
@@ -210,7 +211,6 @@ def solve_multisession_assignment(  # pylint: disable=too-many-locals
     left_nodes, right_nodes, edge_gains, adjusted_costs = _build_candidate_edges(
         normalized_pairwise_costs,
         session_sizes_map,
-        session_positions,
         session_offsets,
         start_cost=start_cost,
         end_cost=end_cost,
@@ -320,6 +320,7 @@ def tracks_to_session_labels(
     inferred_sizes, max_session_index = _validate_track_session_sizes(
         tracks,
         session_sizes,
+        require_unique_sessions=True,
     )
 
     labels = [
@@ -378,6 +379,61 @@ def _validate_scalar_cost(name: str, value: float) -> None:
         raise ValueError(f"{name} must be finite.")
 
 
+def _normalize_nonnegative_integer(
+    value: Any,
+    name: str,
+    *,
+    negative_message: str | None = None,
+) -> int:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a non-negative integer.")
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a non-negative integer.")
+    if isinstance(scalar, (int, np.integer)):
+        integer_value = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"{name} must be a non-negative integer.") from exc
+        if not math.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(f"{name} must be a non-negative integer.")
+        integer_value = int(scalar_float)
+
+    if integer_value < 0:
+        if negative_message is not None:
+            raise ValueError(negative_message.format(value=integer_value))
+        raise ValueError(f"{name} must be a non-negative integer.")
+    return integer_value
+
+
+def _normalize_session_index(session_idx: Any) -> int:
+    return _normalize_nonnegative_integer(
+        session_idx,
+        "Session indices",
+        negative_message="Session indices must be non-negative, got {value}.",
+    )
+
+
+def _normalize_detection_index(detection_idx: Any) -> int:
+    return _normalize_nonnegative_integer(
+        detection_idx,
+        "Detection indices",
+        negative_message="Detection indices must be non-negative, got {value}.",
+    )
+
+
+def _normalize_session_size(size: Any, session_idx: int) -> int:
+    return _normalize_nonnegative_integer(
+        size,
+        f"Session {session_idx} detection count",
+        negative_message=f"Session {session_idx} has a negative detection count.",
+    )
+
+
 def _normalize_pairwise_costs(
     pairwise_costs: PairwiseCostsInput,
 ) -> dict[tuple[int, int], Any]:
@@ -388,7 +444,8 @@ def _normalize_pairwise_costs(
                 raise ValueError(
                     "Each pairwise-cost key must contain two session indices."
                 )
-            source_session, target_session = int(key[0]), int(key[1])
+            source_session = _normalize_session_index(key[0])
+            target_session = _normalize_session_index(key[1])
             if source_session >= target_session:
                 raise ValueError(
                     "Pairwise-cost keys must satisfy source_session < target_session."
@@ -414,16 +471,18 @@ def _normalize_session_sizes(
     if session_sizes is None:
         return {}
     if isinstance(session_sizes, Mapping):
-        normalized = {
-            int(session_idx): int(size) for session_idx, size in session_sizes.items()
-        }
+        normalized = {}
+        for session_idx, size in session_sizes.items():
+            normalized_session_idx = _normalize_session_index(session_idx)
+            normalized[normalized_session_idx] = _normalize_session_size(
+                size,
+                normalized_session_idx,
+            )
     else:
         normalized = {
-            session_idx: int(size) for session_idx, size in enumerate(session_sizes)
+            session_idx: _normalize_session_size(size, session_idx)
+            for session_idx, size in enumerate(session_sizes)
         }
-    for session_idx, size in normalized.items():
-        if size < 0:
-            raise ValueError(f"Session {session_idx} has a negative detection count.")
     return normalized
 
 
@@ -485,7 +544,6 @@ def _build_observation_index(
 def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-locals
     pairwise_costs: Mapping[tuple[int, int], Any],
     session_sizes: Mapping[int, int],
-    session_positions: Mapping[int, int],
     session_offsets: Mapping[int, int],
     *,
     start_cost: float,
@@ -506,9 +564,7 @@ def _build_candidate_edges(  # pylint: disable=too-many-arguments,too-many-local
                 f"{cost_matrix.shape}, expected {expected_shape}."
             )
 
-        source_position = session_positions[source_session]
-        target_position = session_positions[target_session]
-        gap = target_position - source_position - 1
+        gap = int(target_session) - int(source_session) - 1
         if gap < 0:
             raise ValueError(
                 "Session indices must define a forward-in-time edge ordering."
@@ -722,14 +778,16 @@ def _iter_track_items(track: TrackInput) -> list[Observation]:
     if isinstance(track, Mapping):
         items = list(track.items())
     else:
-        items = [
-            (int(session_idx), int(detection_idx))
-            for session_idx, detection_idx in track
-        ]
-    items.sort(key=lambda item: item[0])
-    return [
-        (int(session_idx), int(detection_idx)) for session_idx, detection_idx in items
+        items = list(track)
+    items = [
+        (
+            _normalize_session_index(session_idx),
+            _normalize_detection_index(detection_idx),
+        )
+        for session_idx, detection_idx in items
     ]
+    items.sort(key=lambda item: item[0])
+    return items
 
 
 __all__ = [

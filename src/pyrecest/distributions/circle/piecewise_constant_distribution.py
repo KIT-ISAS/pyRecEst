@@ -1,10 +1,12 @@
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
+import numpy as np
 import pyrecest.backend
 from pyrecest.backend import (
     arange,
     array,
     exp,
     floor,
+    isfinite,
     log,
     mean,
     mod,
@@ -15,6 +17,28 @@ from pyrecest.backend import (
 )
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
 
 
 class PiecewiseConstantDistribution(AbstractCircularDistribution):
@@ -41,7 +65,16 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         AbstractCircularDistribution.__init__(self)
         w = array(w, dtype=float).ravel()
         assert w.ndim == 1 and w.shape[0] > 0
-        self.w = w / (mean(w) * 2.0 * pi)
+        if any(not bool(isfinite(weight)) for weight in w):
+            raise ValueError("Weights must be finite")
+        if any(bool(weight < 0.0) for weight in w):
+            raise ValueError("Weights must be nonnegative")
+
+        mean_weight = mean(w)
+        if not bool(mean_weight > 0.0):
+            raise ValueError("Weights must have positive total mass")
+
+        self.w = w / (mean_weight * 2.0 * pi)
 
     def pdf(self, xs):
         """Evaluate the pdf at each point in xs.
@@ -56,9 +89,13 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         p : ndarray, shape (n,)
             Pdf values at each point.
         """
-        assert xs.ndim == 1
+        xs = array(xs, dtype=float)
+        if xs.ndim == 0:
+            xs = xs.reshape((1,))
+        if xs.ndim != 1:
+            raise ValueError("xs must be a scalar or one-dimensional array")
         n_intervals = len(self.w)
-        xs_mod = array(mod(xs, 2.0 * pi), dtype=float)
+        xs_mod = mod(xs, 2.0 * pi)
         idx = array(
             [
                 min(int(floor(x / (2.0 * pi) * n_intervals)), n_intervals - 1)
@@ -122,6 +159,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         """
         if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
             raise NotImplementedError("sample is not supported on the JAX backend.")
+        n = _validate_positive_sample_count(n)
         num_intervals = len(self.w)
         interval_width = 2.0 * pi / num_intervals
         # Each interval has probability w[j] * interval_width, which sums to 1 by
@@ -216,10 +254,13 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
                 "calculate_parameters_numerically is not supported on the JAX backend."
             )
 
-        assert n >= 1
+        def _evaluate_pdf(x):
+            return float(array(pdf_func(array([x]))).reshape(-1)[0])
+
+        n = _validate_positive_sample_count(n)
         w = zeros(n)
         for j in range(1, n + 1):
             left = PiecewiseConstantDistribution.left_border(j, n)
             r = PiecewiseConstantDistribution.right_border(j, n)
-            w[j - 1] = quad(lambda x: float(pdf_func(array([x]))), left, r)[0]
+            w[j - 1] = quad(_evaluate_pdf, left, r)[0]
         return w

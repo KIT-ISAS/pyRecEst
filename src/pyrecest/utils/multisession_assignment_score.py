@@ -6,6 +6,7 @@ import math
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
 from pyrecest.backend import (
     __backend_name__,
 )
@@ -36,6 +37,33 @@ from .multisession_assignment import (
 
 def _default_score_to_cost(scores: Any) -> Any:
     return -asarray(scores, dtype=float)
+
+
+def _normalize_max_gap(max_gap: Any) -> int:
+    max_gap_array = np.asarray(max_gap)
+    if max_gap_array.shape != () or max_gap_array.dtype == np.bool_:
+        raise ValueError("max_gap must be a non-negative integer.")
+
+    max_gap_value = max_gap_array.item()
+    if isinstance(max_gap_value, (bool, np.bool_)):
+        raise ValueError("max_gap must be a non-negative integer.")
+
+    if isinstance(max_gap_value, (int, np.integer)):
+        if max_gap_value < 0:
+            raise ValueError("max_gap must be a non-negative integer.")
+        return int(max_gap_value)
+
+    try:
+        max_gap_float = float(max_gap_value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("max_gap must be a non-negative integer.") from exc
+    if (
+        not math.isfinite(max_gap_float)
+        or max_gap_float < 0
+        or not max_gap_float.is_integer()
+    ):
+        raise ValueError("max_gap must be a non-negative integer.")
+    return int(max_gap_float)
 
 
 def tracks_to_index_matrix(
@@ -77,12 +105,7 @@ def solve_multisession_assignment_from_similarity(  # pylint: disable=R0913,R091
     if min_score is not None and not math.isfinite(min_score):
         raise ValueError("min_score must be finite.")
     if max_gap is not None:
-        original_max_gap = max_gap
-        max_gap = int(max_gap)
-        if max_gap != original_max_gap:
-            raise ValueError("max_gap must be an integer.")
-        if max_gap < 0:
-            raise ValueError("max_gap must be non-negative.")
+        max_gap = _normalize_max_gap(max_gap)
 
     normalized_pairwise_scores = _normalize_pairwise_costs(pairwise_scores)
     normalized_session_sizes = _normalize_session_sizes(session_sizes)

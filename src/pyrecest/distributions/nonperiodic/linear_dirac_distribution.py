@@ -1,12 +1,12 @@
+from numbers import Integral
+
 import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import cov, ones, reshape
-from pyrecest.backend import sum as backend_sum
-from pyrecest.backend import zeros
+from pyrecest.backend import asarray, cov, ones, reshape, zeros
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from .abstract_linear_distribution import AbstractLinearDistribution
@@ -93,26 +93,47 @@ class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribut
                 "n_particles, n_samples, or n."
             )
 
-        particle_counts = [int(value) for value in specified_counts]
+        particle_counts = [
+            LinearDiracDistribution._validate_particle_count(value)
+            for value in specified_counts
+        ]
         if len(set(particle_counts)) != 1:
             raise ConversionError(
                 "n_particles, n_samples, and n must agree when more than one "
                 "particle-count alias is supplied."
             )
 
-        particle_count = particle_counts[0]
-        if particle_count <= 0:
-            raise ConversionError("Number of particles must be positive.")
-        return particle_count
+        return particle_counts[0]
+
+    @staticmethod
+    def _validate_particle_count(value):
+        from ..conversion import ConversionError
+
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, Integral)
+            or int(value) <= 0
+        ):
+            raise ConversionError("Number of particles must be a positive integer.")
+        return int(value)
 
     @staticmethod
     def weighted_samples_to_mean_and_cov(samples, weights=None):
+        samples = asarray(samples)
         sample_matrix = reshape(samples, (-1, 1)) if samples.ndim == 1 else samples
+        if sample_matrix.ndim != 2:
+            raise ValueError("samples must be a 1D or 2D array")
+        if sample_matrix.shape[0] == 0:
+            raise ValueError("samples must contain at least one sample")
 
         if weights is None:
             weights = ones(sample_matrix.shape[0]) / sample_matrix.shape[0]
         else:
-            weights = weights / backend_sum(weights)
+            weights = reshape(asarray(weights), (-1,))
+            if weights.shape[0] != sample_matrix.shape[0]:
+                raise ValueError("Number of weights and samples must match")
+            total_weight = AbstractDiracDistribution._validate_weights(weights)
+            weights = weights / total_weight
 
         mean = weights @ sample_matrix
         deviation = sample_matrix - mean

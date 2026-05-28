@@ -4,7 +4,7 @@ import matplotlib
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, pi
+from pyrecest.backend import array, ones, pi
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
@@ -12,6 +12,17 @@ from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution impo
 
 matplotlib.pyplot.close("all")
 matplotlib.use("Agg")
+
+
+class ZeroMomentHypertoroidalDistribution(AbstractHypertoroidalDistribution):
+    def __init__(self):
+        super().__init__(dim=2)
+
+    def pdf(self, xs):
+        return ones(xs.shape[0])
+
+    def trigonometric_moment(self, _):
+        return array([0.0 + 0.0j, 1.0 + 0.0j])
 
 
 class TestAbstractHypertoroidalDistribution(unittest.TestCase):
@@ -29,6 +40,12 @@ class TestAbstractHypertoroidalDistribution(unittest.TestCase):
             pi / 2,
             rtol=2e-07,
         )
+
+    def test_mean_direction_rejects_zero_resultant_moment(self):
+        dist = ZeroMomentHypertoroidalDistribution()
+
+        with self.assertRaisesRegex(ValueError, "undefined"):
+            dist.mean_direction()
 
     def test_plot_2d(self):
         mu = array([0.0, 1.0])

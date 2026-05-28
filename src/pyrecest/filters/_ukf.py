@@ -10,13 +10,12 @@ from copy import deepcopy
 from pyrecest.backend import (
     asarray,
     einsum,
-    empty,
-    empty_like,
     expand_dims,
     eye,
     float64,
     linalg,
     reshape,
+    stack,
     transpose,
     zeros,
 )
@@ -85,11 +84,12 @@ class UnscentedKalmanFilter:
         sigmas = points.sigma_points(self.x, self.P)
         n_sigmas = sigmas.shape[0]
 
-        sigmas_f = empty_like(sigmas)
-        for i in range(n_sigmas):
-            sigmas_f[i] = reshape(
-                asarray(fx(sigmas[i], dt, **fx_args), dtype=float64), (-1,)
-            )
+        sigmas_f = stack(
+            [
+                reshape(asarray(fx(sigmas[i], dt, **fx_args), dtype=float64), (-1,))
+                for i in range(n_sigmas)
+            ]
+        )
 
         Wm = points.Wm
         Wc = points.Wc
@@ -144,19 +144,18 @@ class UnscentedKalmanFilter:
         Wm = self._model.points.Wm
         Wc = self._model.points.Wc
 
-        sigmas_h = None
-        dim_z = None
-        for i in range(sigmas_f.shape[0]):
-            sigma_h = reshape(asarray(hx(sigmas_f[i], **hx_args), dtype=float64), (-1,))
-            if sigmas_h is None:
-                dim_z = sigma_h.shape[0]
-                sigmas_h = empty((sigmas_f.shape[0], dim_z))
-            elif sigma_h.shape[0] != dim_z:
+        sigma_rows = [
+            reshape(asarray(hx(sigmas_f[i], **hx_args), dtype=float64), (-1,))
+            for i in range(sigmas_f.shape[0])
+        ]
+        dim_z = sigma_rows[0].shape[0]
+        for sigma_h in sigma_rows[1:]:
+            if sigma_h.shape[0] != dim_z:
                 raise ValueError(
                     "measurement function must return vectors with consistent "
                     f"dimension; got {sigma_h.shape[0]} and expected {dim_z}"
                 )
-            sigmas_h[i] = sigma_h
+        sigmas_h = stack(sigma_rows)
 
         if z.shape[0] != dim_z:
             raise ValueError(

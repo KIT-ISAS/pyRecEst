@@ -1,5 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from math import isfinite
+from numbers import Integral
 
 from pyrecest.backend import (
     abs,
@@ -63,10 +64,11 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     def sample(self, n):
         """Draw samples from the von Mises distribution."""
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        n = int(n)
         return mod(
-            array(
-                vonmises.rvs(kappa=float(self.kappa), loc=float(self.mu), size=int(n))
-            ),
+            array(vonmises.rvs(kappa=float(self.kappa), loc=float(self.mu), size=n)),
             2.0 * pi,
         )
 

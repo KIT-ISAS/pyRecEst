@@ -30,6 +30,44 @@ def _from_numpy_array(value: np.ndarray):
         return value
 
 
+def _validate_nonnegative_finite(name: str, value: float) -> float:
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a scalar number.") from exc
+    if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
+        raise ValueError(f"{name} must be a scalar number.")
+    try:
+        value = float(value_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a scalar number.") from exc
+    if not np.isfinite(value) or value < 0.0:
+        raise ValueError(f"{name} must be finite and non-negative.")
+    return value
+
+
+def _validate_positive_finite(name: str, value: float) -> float:
+    value = _validate_nonnegative_finite(name, value)
+    if value <= 0.0:
+        raise ValueError(f"{name} must be finite and positive.")
+    return value
+
+
+def _validate_nonnegative_integer(name: str, value: int) -> int:
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a nonnegative integer.") from exc
+    if value_array.shape != () or not np.issubdtype(value_array.dtype, np.integer):
+        raise ValueError(f"{name} must be a nonnegative integer.")
+    if np.issubdtype(value_array.dtype, np.bool_):
+        raise ValueError(f"{name} must be a nonnegative integer.")
+    value = int(value_array.item())
+    if value < 0:
+        raise ValueError(f"{name} must be a nonnegative integer.")
+    return value
+
+
 def symmetrize_matrix(matrix):
     """Return ``0.5 * (matrix + matrix.T)`` in the active backend representation."""
     arr = _to_numpy_array(matrix)
@@ -40,6 +78,7 @@ def symmetrize_matrix(matrix):
 
 def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
     """Return whether a matrix is symmetric within an absolute tolerance."""
+    atol = _validate_nonnegative_finite("atol", atol)
     arr = _to_numpy_array(matrix)
     return bool(
         arr.ndim == 2
@@ -50,6 +89,7 @@ def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
 
 def is_positive_semidefinite(matrix, *, atol: float = 1e-10) -> bool:
     """Return whether a symmetric matrix is positive semidefinite within tolerance."""
+    atol = _validate_nonnegative_finite("atol", atol)
     arr = _to_numpy_array(matrix)
     if (
         arr.ndim != 2
@@ -67,6 +107,8 @@ def nearest_symmetric_psd(matrix, *, min_eigenvalue: float = 0.0):
     should not silently replace validation in algorithms where invalid covariance
     matrices indicate a modeling error.
     """
+    min_eigenvalue = _validate_nonnegative_finite("min_eigenvalue", min_eigenvalue)
+
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ShapeError(f"Expected a square matrix, got shape {arr.shape}.")
@@ -84,6 +126,9 @@ def jittered_cholesky(matrix, *, initial_jitter: float = 1e-12, max_attempts: in
     jitter. It raises :class:`NumericalStabilityError` if no factorization is
     found within ``max_attempts``.
     """
+    initial_jitter = _validate_positive_finite("initial_jitter", initial_jitter)
+    max_attempts = _validate_nonnegative_integer("max_attempts", max_attempts)
+
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ShapeError(f"Expected a square matrix, got shape {arr.shape}.")
@@ -105,6 +150,7 @@ def assert_covariance_matrix(
     matrix, *, name: str = "covariance", dim: int | None = None, atol: float = 1e-10
 ):
     """Validate a covariance matrix and return it in the active backend representation."""
+    atol = _validate_nonnegative_finite("atol", atol)
     arr = _to_numpy_array(matrix)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ShapeError(f"{name} must be a square matrix, got shape {arr.shape}.")

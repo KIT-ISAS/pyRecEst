@@ -9,6 +9,7 @@ from pyrecest.evaluation.eot_shape_database import Cross, Star
 from pyrecest.utils.metrics import (
     anees,
     anis,
+    chi_square_confidence_bounds,
     consistency_fraction,
     eot_shape_iou,
     extent_error,
@@ -118,6 +119,29 @@ class TestANEES(unittest.TestCase):
             consistency_fraction([lower - 1.0, 2.0, upper + 1.0], lower, upper),
             1.0 / 3.0,
         )
+
+    def test_chi_square_bounds_reject_noninteger_dimensions(self):
+        invalid_values = (1.5, np.nan, np.inf, True, np.array([2]))
+
+        for value in invalid_values:
+            with self.subTest(parameter="degrees_of_freedom", value=value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "degrees_of_freedom must be a positive integer",
+                ):
+                    chi_square_confidence_bounds(value)
+            with self.subTest(parameter="n_samples", value=value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "n_samples must be a positive integer",
+                ):
+                    chi_square_confidence_bounds(2, n_samples=value)
+
+    def test_chi_square_bounds_accept_integer_like_scalars(self):
+        direct = chi_square_confidence_bounds(2, n_samples=3)
+        integer_like = chi_square_confidence_bounds(np.array(2.0), n_samples=3.0)
+
+        self.assertEqual(direct, integer_like)
 
 
 class TestSetDistances(unittest.TestCase):

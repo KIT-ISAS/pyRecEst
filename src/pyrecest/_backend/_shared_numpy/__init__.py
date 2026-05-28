@@ -255,7 +255,9 @@ def set_diag(x, new_diag):
     1-D array, but modifies x instead of creating a copy.
     """
     arr_shape = x.shape
-    x[..., range(arr_shape[-2]), range(arr_shape[-1])] = new_diag
+    diag_len = min(arr_shape[-2], arr_shape[-1])
+    diag_indices = range(diag_len)
+    x[..., diag_indices, diag_indices] = new_diag
     return x
 
 
@@ -291,7 +293,7 @@ def array_from_sparse(indices, data, target_shape):
 def vec_to_diag(vec):
     """Convert vector to diagonal matrix."""
     d = vec.shape[-1]
-    return _np.squeeze(vec[..., None, :] * eye(d, dtype=vec.dtype)[None, :, :])
+    return vec[..., :, None] * eye(d, dtype=vec.dtype)
 
 
 def tril_to_vec(x, k=0):
@@ -338,8 +340,17 @@ def divide(a, b, ignore_div_zero=False):
     if ignore_div_zero is False:
         return _np.divide(a, b)
 
-    wider_dtype, _ = _get_wider_dtype([a, b])
-    return _np.divide(a, b, out=zeros(a.shape, dtype=wider_dtype), where=b != 0)
+    a_arr, b_arr = _np.asarray(a), _np.asarray(b)
+    a_arr, b_arr = _np.broadcast_arrays(a_arr, b_arr)
+    result_dtype = _np.result_type(a_arr, b_arr)
+    if result_dtype.kind in "biu":
+        result_dtype = get_default_dtype()
+    return _np.divide(
+        a_arr,
+        b_arr,
+        out=zeros(a_arr.shape, dtype=result_dtype),
+        where=b_arr != 0,
+    )
 
 
 def ravel_tril_indices(n, k=0, m=None):
@@ -352,21 +363,22 @@ def ravel_tril_indices(n, k=0, m=None):
 
 
 def matmul(*args, **kwargs):
-    for arg in args:
+    converted_args = tuple(arg if is_array(arg) else array(arg) for arg in args)
+    for arg in converted_args:
         if arg.ndim == 1:
             raise ValueError("ndims must be >=2")
-    return _np.matmul(*args, **kwargs)
+    return _np.matmul(*converted_args, **kwargs)
 
 
 def outer(a, b):
     if a.ndim > 1 and b.ndim > 1:
         return _np.einsum("...i,...j->...ij", a, b)
 
-    out = _np.multiply.outer(a, b)
-    if b.ndim > 1:
-        out = out.swapaxes(0, -2)
-
-    return out
+    if a.ndim == 1 and b.ndim > 1:
+        return _np.einsum("i,...j->...ij", a, b)
+    if a.ndim > 1 and b.ndim == 1:
+        return _np.einsum("...i,j->...ij", a, b)
+    return _np.multiply.outer(a, b)
 
 
 def matvec(A, b):
@@ -379,10 +391,10 @@ def matvec(A, b):
 
 def dot(a, b):
     if b.ndim == 1:
-        return _np.dot(a, b)
+        return _np.einsum("...i,i->...", a, b)
 
     if a.ndim == 1:
-        return _np.dot(a, b.T)
+        return _np.einsum("i,...i->...", a, b)
 
     return _np.einsum("...i,...i->...", a, b)
 

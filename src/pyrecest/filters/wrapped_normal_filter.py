@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from functools import partial
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, log, max, maximum, min, minimum, mod, pi
@@ -38,11 +37,38 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
         wn_meas_shifted = WrappedNormalDistribution(mu_w_new, wn_meas.sigma)
         self.filter_state = self.filter_state.multiply_vm_approximation(wn_meas_shifted)
 
+    @staticmethod
+    def _evaluate_likelihood_values(likelihood: Callable, z, points, *, power=1.0):
+        """Evaluate a likelihood callback for each Dirac support point.
+
+        Historically, wrapped-normal updates accepted callbacks with the scalar
+        signature ``likelihood(z, x)``.  Some callbacks also support vectorized
+        evaluation over all support points; keep that fast path when it returns
+        one value per point, and otherwise fall back to pointwise evaluation.
+        """
+        try:
+            values = array(likelihood(z, points) ** power)
+            values_flat = values.reshape((-1,))
+            try:
+                point_count = points.shape[0]
+            except (AttributeError, IndexError):
+                point_count = None
+            if point_count is None:
+                return values_flat[0]
+            if values_flat.shape == (point_count,):
+                return values_flat
+        except (RuntimeError, TypeError, ValueError):
+            pass
+
+        return array([likelihood(z, point) ** power for point in points])
+
     def update_nonlinear_particle(self, likelihood, z):
         n = 100
         samples = self.filter_state.sample(n)
         wd = CircularDiracDistribution(samples)
-        wd_new = wd.reweigh(partial(likelihood, z))
+        wd_new = wd.reweigh(
+            lambda points: self._evaluate_likelihood_values(likelihood, z, points)
+        )
         self.filter_state = wd_new.to_wn()
 
     def update_nonlinear_progressive(
@@ -57,7 +83,7 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
 
         while lambda_ > 0:
             wd = self.filter_state.to_dirac5()
-            likelihood_vals = array([likelihood(z, x) for x in wd.d])
+            likelihood_vals = self._evaluate_likelihood_values(likelihood, z, wd.d)
             likelihood_vals_min = min(likelihood_vals)
             likelihood_vals_max = max(likelihood_vals)
 
@@ -83,7 +109,11 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
 
             current_lambda = maximum(current_lambda, MINIMUM_LAMBDA)
             current_lambda = minimum(current_lambda, lambda_)
-            wd_new = wd.reweigh(lambda x: likelihood(z, x) ** current_lambda)
+            wd_new = wd.reweigh(
+                lambda points, power=current_lambda: self._evaluate_likelihood_values(
+                    likelihood, z, points, power=power
+                )
+            )
             self.filter_state = wd_new.to_wn()
             lambda_ = lambda_ - current_lambda
             steps += 1

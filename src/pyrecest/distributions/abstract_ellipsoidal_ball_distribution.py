@@ -1,5 +1,14 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import linalg, pi, sqrt
+from pyrecest.backend import all as backend_all
+from pyrecest.backend import (
+    allclose,
+    array,
+    isfinite,
+    linalg,
+    pi,
+    sqrt,
+    transpose,
+)
 from scipy.special import gamma
 
 from .abstract_bounded_nonperiodic_distribution import (
@@ -19,11 +28,31 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         :param center: The center of the ellipsoidal ball.
         :param shape_matrix: The shape matrix of the ellipsoidal ball.
         """
+        center = array(center)
+        shape_matrix = array(shape_matrix)
+
+        assert center.ndim == 1, "center must be a 1-dimensional array"
         AbstractBoundedNonPeriodicDistribution.__init__(self, center.shape[-1])
+        assert shape_matrix.ndim == 2, "shape_matrix must be a 2-dimensional array"
+        assert shape_matrix.shape == (
+            self.dim,
+            self.dim,
+        ), "shape_matrix must match the center dimension"
+        assert bool(
+            backend_all(isfinite(center))
+        ), "center must contain only finite values"
+        assert bool(
+            backend_all(isfinite(shape_matrix))
+        ), "shape_matrix must contain only finite values"
+        assert allclose(
+            shape_matrix, transpose(shape_matrix)
+        ), "shape_matrix must be symmetric"
+        assert bool(
+            backend_all(linalg.eigvalsh(shape_matrix) > 0.0)
+        ), "shape_matrix must be positive definite"
+
         self.center = center
         self.shape_matrix = shape_matrix
-        assert center.ndim == 1 and shape_matrix.ndim == 2
-        assert shape_matrix.shape[0] == self.dim and shape_matrix.shape[1] == self.dim
 
     def get_manifold_size(self):
         """

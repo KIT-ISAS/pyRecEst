@@ -2,6 +2,7 @@
 
 # pylint: disable=no-name-in-module,no-member,arguments-renamed
 from math import prod
+from numbers import Integral
 
 from pyrecest.backend import (
     abs,
@@ -11,6 +12,7 @@ from pyrecest.backend import (
     array,
     asarray,
     clip,
+    isfinite,
     linalg,
     ndim,
     pi,
@@ -102,6 +104,10 @@ class SO3ProductDiracDistribution(HyperhemisphereCartProdDiracDistribution):
     @staticmethod
     def _normalize_quaternions(quaternions):
         norms = linalg.norm(quaternions, axis=-1)
+        if not all(isfinite(quaternions)):
+            raise ValueError("SO(3) quaternions must be finite.")
+        if not all(isfinite(norms)):
+            raise ValueError("SO(3) quaternion norms must be finite.")
         if not all(norms > 0.0):
             raise ValueError("SO(3) quaternions must be nonzero.")
         return quaternions / reshape(norms, tuple(norms.shape) + (1,))
@@ -155,9 +161,12 @@ class SO3ProductDiracDistribution(HyperhemisphereCartProdDiracDistribution):
         return self.as_flat_array()
 
     def sample(self, n):
-        indices = random.choice(arange(self.d.shape[0]), n, p=self.w)
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        sample_count = int(n)
+        indices = random.choice(arange(self.d.shape[0]), sample_count, p=self.w)
         samples = self.d[indices]
-        if int(n) == 1 and samples.shape == (self.num_rotations, 4):
+        if sample_count == 1 and samples.shape == (self.num_rotations, 4):
             return reshape(samples, (1, self.num_rotations, 4))
         return samples
 

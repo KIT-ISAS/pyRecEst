@@ -91,7 +91,7 @@ def _to_float_list(value: Any) -> list[float]:
         from pyrecest.backend import to_numpy
 
         value = to_numpy(value)
-    except Exception:  # pragma: no cover - fallback for backend-specific values
+    except Exception:  # pragma: no cover  # pylint: disable=broad-exception-caught
         pass
 
     if hasattr(value, "tolist"):
@@ -99,6 +99,32 @@ def _to_float_list(value: Any) -> list[float]:
     if isinstance(value, int | float):
         return [float(value)]
     return [float(item) for item in value]
+
+
+def _normalized_particle_weights(raw_weights: Any, particle_count: int, backend):
+    if particle_count <= 0:
+        raise ValueError("particle_resampling scenarios require at least one particle")
+
+    if raw_weights is None:
+        weight_values = [1.0 for _ in range(particle_count)]
+    else:
+        weight_values = _to_float_list(raw_weights)
+
+    if len(weight_values) != particle_count:
+        raise ValueError("weights must contain one entry per particle")
+    if any(not math.isfinite(weight) for weight in weight_values):
+        raise ValueError("weights must be finite")
+    if any(weight < 0.0 for weight in weight_values):
+        raise ValueError("weights must be nonnegative")
+
+    weight_total = sum(weight_values)
+    if weight_total <= 0.0:
+        raise ValueError("weights must have positive total mass")
+
+    return backend.asarray(
+        [weight / weight_total for weight in weight_values],
+        dtype=backend.float64,
+    )
 
 
 @scenario_runner("linear_gaussian")
@@ -117,7 +143,7 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
     seed = _apply_scenario_seed(config)
 
     from pyrecest import backend as be
-    from pyrecest.filters import KalmanFilter
+    from pyrecest.filters.kalman_filter import KalmanFilter
 
     model = config["model"]
     measurement = config["measurement"]
@@ -197,13 +223,11 @@ def run_particle_resampling_scenario(path: str | Path) -> ScenarioResult:
 
     data = config["data"]
     particles = be.asarray(data["particles"], dtype=be.float64)
-    raw_weights = data.get("weights")
-    if raw_weights is None:
-        raw_weights = [
-            1.0 / int(particles.shape[0]) for _ in range(int(particles.shape[0]))
-        ]
-    weights = be.asarray(raw_weights, dtype=be.float64)
-    weights = weights / be.sum(weights)
+    weights = _normalized_particle_weights(
+        data.get("weights"),
+        int(particles.shape[0]),
+        be,
+    )
     num_samples = int(data.get("num_samples", int(particles.shape[0])))
 
     indices = be.random.choice(

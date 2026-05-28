@@ -62,6 +62,72 @@ class TestTrackMetrics(unittest.TestCase):
         self.assertEqual(scores["false_tracks"], 1)
         npt.assert_allclose(scores["observation_weighted_track_purity"], 6.0 / 7.0)
 
+    def test_min_length_limits_false_track_observation_rate_denominator(self):
+        predicted = [
+            [99, None, None],
+            [10, 11, None],
+        ]
+        reference = [[10, 10, None]]
+
+        scores = score_false_tracks(predicted, reference, min_length=2)
+
+        self.assertEqual(scores["false_track_evaluated_tracks"], 1)
+        self.assertEqual(scores["unreferenced_predicted_observations"], 1)
+        npt.assert_allclose(scores["unreferenced_predicted_observation_rate"], 0.5)
+
+    def test_min_length_limits_missed_track_observation_rate_denominator(self):
+        predicted = [[10, 10, None]]
+        reference = [
+            [99, None, None],
+            [10, 10, 10],
+        ]
+
+        scores = score_missed_tracks(predicted, reference, min_length=2)
+
+        self.assertEqual(scores["missed_track_evaluated_reference_tracks"], 1)
+        self.assertEqual(scores["missed_reference_observations"], 1)
+        npt.assert_allclose(scores["missed_reference_observation_rate"], 1.0 / 3.0)
+
+    def test_min_length_rejects_noninteger_values(self):
+        invalid_values = (0, -1, 1.5, np.nan, np.inf, True, np.array([1]))
+
+        for min_length in invalid_values:
+            with self.subTest(function="score_false_tracks", min_length=min_length):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "min_length must be a positive integer",
+                ):
+                    score_false_tracks(
+                        self.predicted,
+                        self.reference,
+                        min_length=min_length,
+                    )
+            with self.subTest(function="score_missed_tracks", min_length=min_length):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "min_length must be a positive integer",
+                ):
+                    score_missed_tracks(
+                        self.predicted,
+                        self.reference,
+                        min_length=min_length,
+                    )
+
+    def test_min_length_accepts_integer_like_scalars(self):
+        false_scores = score_false_tracks(
+            self.predicted,
+            self.reference,
+            min_length=np.array(2.0),
+        )
+        missed_scores = score_missed_tracks(
+            self.predicted,
+            self.reference,
+            min_length=2.0,
+        )
+
+        self.assertEqual(false_scores["false_track_evaluated_tracks"], 2)
+        self.assertEqual(missed_scores["missed_track_evaluated_reference_tracks"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()

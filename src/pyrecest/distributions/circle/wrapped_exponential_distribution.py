@@ -1,8 +1,9 @@
 # pylint: disable=no-name-in-module,no-member
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=redefined-builtin
-from pyrecest.backend import exp, int32, int64, log, mod, ndim, pi, random
+from pyrecest.backend import asarray, exp, int32, int64, log, mod, ndim, pi, random
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -18,6 +19,7 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
 
     def __init__(self, lambda_):
         AbstractCircularDistribution.__init__(self)
+        lambda_ = asarray(lambda_)
         assert lambda_.shape in ((1,), ())
         assert lambda_ > 0.0
         self.lambda_ = lambda_
@@ -32,6 +34,9 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
         return 1.0 / (1.0 - 1j * n / self.lambda_)
 
     def sample(self, n: Union[int, int32, int64]):
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        n = int(n)
         # Use inverse CDF method: X = -ln(U)/lambda ~ Exp(lambda), then wrap
         u = random.uniform(size=(n,))
         return mod(-log(u) / self.lambda_, 2.0 * pi)

@@ -1,6 +1,7 @@
 import copy
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -16,8 +17,22 @@ from pyrecest.distributions import (
     ToroidalDiracDistribution,
     VonMisesDistribution,
 )
+from pyrecest.distributions.circle.circular_dirac_distribution import (
+    CircularDiracDistribution,
+)
 
 from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
+
+
+class LenientHypertoroidalDistribution(AbstractHypertoroidalDistribution):
+    def __init__(self):
+        super().__init__(1)
+
+    def pdf(self, xs):
+        return zeros_like(xs)
+
+    def sample(self, n):
+        return array([0.0] * int(n))
 
 
 class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
@@ -33,18 +48,49 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         npt.assert_array_almost_equal(self.twd.d, self.d)
         npt.assert_array_almost_equal(self.twd.w, self.w)
 
+    def test_init_accepts_python_lists_when_dimension_is_inferable(self):
+        d = [[0.1, 0.2], [0.3, 0.4]]
+        w = [0.25, 0.75]
+
+        dist = HypertoroidalDiracDistribution(d, w)
+
+        self.assertEqual(dist.dim, 2)
+        npt.assert_allclose(dist.d, array(d))
+        npt.assert_allclose(dist.w, array(w))
+
+    def test_init_accepts_one_dimensional_python_list_with_explicit_dim(self):
+        dist = HypertoroidalDiracDistribution([0.1, 0.2, 0.3], dim=1)
+
+        self.assertEqual(dist.dim, 1)
+        npt.assert_allclose(dist.d, array([0.1, 0.2, 0.3]))
+
     def test_from_distribution_sampling_1d(self):
-        n_particles = 5
+        n_particles = np.int64(5)
         vm = VonMisesDistribution(array(0.2), array(1.5))
 
         wd = HypertoroidalDiracDistribution.from_distribution(vm, n_particles)
 
         self.assertIsInstance(wd, HypertoroidalDiracDistribution)
         self.assertEqual(wd.dim, 1)
-        self.assertEqual(wd.d.shape, (n_particles,))
-        self.assertEqual(wd.w.shape, (n_particles,))
-        npt.assert_array_almost_equal(wd.w, array([1.0 / n_particles] * n_particles))
+        self.assertEqual(wd.d.shape, (int(n_particles),))
+        self.assertEqual(wd.w.shape, (int(n_particles),))
+        npt.assert_array_almost_equal(
+            wd.w, array([1.0 / n_particles] * int(n_particles))
+        )
         npt.assert_array_almost_equal(wd.d, mod(wd.d, 2.0 * pi))
+
+    def test_from_distribution_validates_sampling_particle_count(self):
+        dist = LenientHypertoroidalDistribution()
+
+        wd = HypertoroidalDiracDistribution.from_distribution(dist, np.int64(3))
+
+        self.assertEqual(wd.d.shape, (3,))
+        self.assertEqual(wd.w.shape, (3,))
+
+        for n_particles in (True, 1.5, 0, -1):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    HypertoroidalDiracDistribution.from_distribution(dist, n_particles)
 
     def test_trigonometric_moment(self):
         m = self.twd.trigonometric_moment(1)
@@ -54,6 +100,17 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
         npt.assert_almost_equal(m[1], m2, decimal=10)
         npt.assert_almost_equal(m[0], sum(self.w * exp(1j * self.d[:, 0])), decimal=10)
         npt.assert_almost_equal(m[1], sum(self.w * exp(1j * self.d[:, 1])), decimal=10)
+
+    def test_mean_direction_rejects_zero_resultant_moment(self):
+        circular = CircularDiracDistribution(array([0.0, pi]), array([0.5, 0.5]))
+        hypertoroidal = HypertoroidalDiracDistribution(
+            array([[0.0, 0.0], [pi, 0.0]]), array([0.5, 0.5])
+        )
+
+        for dist in (circular, hypertoroidal):
+            with self.subTest(distribution=dist.__class__.__name__):
+                with self.assertRaisesRegex(ValueError, "undefined"):
+                    dist.mean_direction()
 
     def test_sample(self):
         n_samples = 5
@@ -107,6 +164,26 @@ class TestHypertoroidalDiracDistribution(TestAbstractDiracDistribution):
             zeros_like(twd.d),
             atol=1e-6,
         )
+
+    def test_shift_accepts_python_list(self):
+        shifted = self.twd.shift([1.0, -3.0, 6.0])
+
+        npt.assert_allclose(
+            AbstractHypertoroidalDistribution.angular_error(
+                self.twd.d,
+                shifted.d - array([1.0, -3.0, 6.0]),
+            ),
+            zeros_like(self.twd.d),
+            atol=1e-6,
+        )
+
+    def test_shift_accepts_scalar_for_one_dimensional_distribution(self):
+        dist = HypertoroidalDiracDistribution([0.1, 0.2, 0.3], dim=1)
+
+        shifted = dist.shift(0.25)
+
+        self.assertEqual(shifted.dim, 1)
+        npt.assert_allclose(shifted.d, mod(array([0.35, 0.45, 0.55]), 2.0 * pi))
 
     @staticmethod
     def get_pseudorandom_hypertoroidal_wd(dim=2):

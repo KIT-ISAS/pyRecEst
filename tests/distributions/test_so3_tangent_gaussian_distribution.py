@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -48,6 +49,29 @@ class SO3TangentGaussianDistributionTest(unittest.TestCase):
 
         self.assertEqual(samples.shape, (8, 4))
         npt.assert_allclose(linalg.norm(samples, None, -1), ones(8), atol=ATOL)
+
+    def test_sampling_accepts_integer_like_count(self):
+        dist = SO3TangentGaussianDistribution.from_covariance_diagonal(
+            array([0.0, 0.0, 0.0, 1.0]), array([0.01, 0.01, 0.01])
+        )
+
+        samples = dist.sample(np.array(3.0))
+        tangent_samples = dist.sample_tangent(np.int64(3))
+
+        self.assertEqual(samples.shape, (3, 4))
+        self.assertEqual(tangent_samples.shape, (3, 3))
+
+    def test_sampling_rejects_invalid_count(self):
+        dist = SO3TangentGaussianDistribution.from_covariance_diagonal(
+            array([0.0, 0.0, 0.0, 1.0]), array([0.01, 0.01, 0.01])
+        )
+
+        for n in (0, -1, 2.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    dist.sample(n)
+                with self.assertRaises(ValueError):
+                    dist.sample_tangent(n)
 
     def test_geodesic_distance_respects_antipodal_equivalence(self):
         identity = array([0.0, 0.0, 0.0, 1.0])

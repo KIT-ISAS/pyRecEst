@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -22,6 +23,20 @@ class TestEllipsoidalBallUniformDistribution(unittest.TestCase):
         npt.assert_allclose(dist.mean(), center)
         npt.assert_allclose(dist.covariance(), shape_matrix / (dist.dim + 2))
 
+    def test_rejects_invalid_shape_matrix(self):
+        center = array([0.0, 0.0])
+        invalid_shape_matrices = [
+            array([[1.0, 2.0], [0.0, 1.0]]),
+            array([[1.0, 0.0], [0.0, 0.0]]),
+            array([[1.0, 0.0], [0.0, -1.0]]),
+            array([[1.0, 0.0], [0.0, float("nan")]]),
+        ]
+
+        for shape_matrix in invalid_shape_matrices:
+            with self.subTest(shape_matrix=shape_matrix):
+                with self.assertRaises(AssertionError):
+                    EllipsoidalBallUniformDistribution(center, shape_matrix)
+
     def test_sampling(self):
         dist = EllipsoidalBallUniformDistribution(
             array([2.0, 3.0]), array([[4.0, 3.0], [3.0, 9.0]])
@@ -31,6 +46,25 @@ class TestEllipsoidalBallUniformDistribution(unittest.TestCase):
         self.assertEqual(samples.shape[0], 10.0)
         p = dist.pdf(samples)
         self.assertTrue(all(p == p[0]))
+
+    def test_sampling_accepts_integer_like_count(self):
+        dist = EllipsoidalBallUniformDistribution(
+            array([2.0, 3.0]), array([[4.0, 3.0], [3.0, 9.0]])
+        )
+
+        samples = dist.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4, dist.dim))
+
+    def test_sampling_rejects_invalid_count(self):
+        dist = EllipsoidalBallUniformDistribution(
+            array([2.0, 3.0]), array([[4.0, 3.0], [3.0, 9.0]])
+        )
+
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    dist.sample(n)
 
 
 if __name__ == "__main__":

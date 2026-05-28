@@ -1,3 +1,5 @@
+from math import isfinite
+from numbers import Integral
 from typing import Union
 
 import pyrecest.backend
@@ -24,6 +26,7 @@ from pyrecest.backend import (
 )
 from scipy.special import erf  # pylint: disable=no-name-in-module
 
+from ..hypertorus._input_validation import as_shift_vector
 from ..hypertorus.hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
@@ -43,6 +46,7 @@ class WrappedNormalDistribution(
     """
 
     MAX_SIGMA_BEFORE_UNIFORM = 10
+    _MOMENT_NORM_TOL = 1e-12
 
     def __init__(
         self,
@@ -58,9 +62,12 @@ class WrappedNormalDistribution(
             raise ValueError(f"mu must be a scalar, but got shape {mu.shape}.")
         if ndim(sigma) > 1 or (ndim(sigma) == 1 and sigma.shape[0] != 1):
             raise ValueError(f"sigma must be a scalar, but got shape {sigma.shape}.")
+        sigma_scalar = squeeze(sigma)
+        if not bool(isfinite(sigma_scalar)) or not bool(sigma_scalar > 0):
+            raise ValueError(f"sigma must be a positive finite scalar, got {sigma}.")
         AbstractCircularDistribution.__init__(self)
         HypertoroidalWrappedNormalDistribution.__init__(
-            self, squeeze(mu), squeeze(sigma) ** 2
+            self, squeeze(mu), sigma_scalar**2
         )
 
     @property
@@ -119,29 +126,29 @@ class WrappedNormalDistribution(
             tmp = -1.0 / (2.0 * sigma**2)
             nc = 1.0 / (sqrt(2.0 * pi) * sigma)
 
-            def wrapped_addendum(i):
+            def body_fun(val):
+                i, result, _last_increment = val
                 xp = x + 2 * pi * i
                 xm = x - 2 * pi * i
                 tp = xp * xp * tmp
                 tm = xm * xm * tmp
-                return exp(tp) + exp(tm)
-
-            def body_fun(val):
-                i, result = val
-                return (i + 1, result + wrapped_addendum(i))
+                increment = exp(tp) + exp(tm)
+                new_result = result + increment
+                return (i + 1, new_result, increment)
 
             def cond_fun(val):
-                i, result = val
-                # Continue while the next pair of wrapped terms would change
-                # at least one accumulated density value.
-                new_result = result + wrapped_addendum(i)
-                return logical_and(any(new_result != result), i <= max_iterations)
+                i, _result, last_increment = val
+                # The accumulated density is positive and may keep changing by
+                # tiny floating-point amounts for a long time. Stop based on the
+                # latest wrapped contribution instead.
+                return logical_and(any(last_increment > 1e-10), i <= max_iterations)
 
             initial_val = (
                 1,
                 exp(x * x * tmp),
+                ones(x.shape) * float("inf"),
             )
-            _, result = lax.while_loop(cond_fun, body_fun, initial_val)
+            _, result, _last_increment = lax.while_loop(cond_fun, body_fun, initial_val)
 
             result *= nc
 
@@ -235,6 +242,9 @@ class WrappedNormalDistribution(
         )
 
     def sample(self, n: Union[int, int32, int64]):
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        n = int(n)
         return mod(self.scalar_mu + self.sigma * random.normal(size=(n,)), 2.0 * pi)
 
     def to_dirac5(self):
@@ -246,8 +256,8 @@ class WrappedNormalDistribution(
         return CircularDiracDistribution(samples, weights)
 
     def shift(self, shift_by):
-        assert shift_by.shape in ((1,), ())
-        return WrappedNormalDistribution(self.scalar_mu + squeeze(shift_by), self.sigma)
+        shift_by = as_shift_vector(shift_by, 1)
+        return WrappedNormalDistribution(self.scalar_mu + shift_by[0], self.sigma)
 
     def to_vm(self) -> VonMisesDistribution:
         # Convert to Von Mises distribution
@@ -256,8 +266,24 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def from_moment(m) -> "WrappedNormalDistribution":
-        mu = mod(angle(m.squeeze()), 2.0 * pi)
-        sigma = sqrt(-2 * log(abs(m.squeeze())))
+        moment = m.squeeze()
+        moment_abs = float(abs(moment))
+        if not isfinite(moment_abs):
+            raise ValueError("First trigonometric moment must be finite.")
+        if moment_abs > 1.0 + WrappedNormalDistribution._MOMENT_NORM_TOL:
+            raise ValueError(
+                "First trigonometric moment must have magnitude at most 1."
+            )
+
+        moment_abs = min(moment_abs, 1.0)
+        if moment_abs == 1.0:
+            raise ValueError(
+                "First trigonometric moment with |m| = 1 cannot be moment-matched "
+                "to a wrapped normal with positive variance."
+            )
+
+        mu = mod(angle(moment), 2.0 * pi)
+        sigma = sqrt(-2 * log(moment_abs))
         return WrappedNormalDistribution(mu, sigma)
 
     @staticmethod

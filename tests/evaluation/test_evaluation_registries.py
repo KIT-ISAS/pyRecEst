@@ -35,6 +35,23 @@ def test_underscored_symmetric_hypersphere_distance_is_antipodal_invariant():
     )
 
 
+def test_angular_distances_clip_inner_product_roundoff():
+    cases = (
+        ("hypersphere", array([1.0, 0.0]), array([1.0 + 1e-12, 0.0])),
+        ("hypersphere_symmetric", array([1.0, 0.0]), array([1.0 + 1e-12, 0.0])),
+        (
+            "se3bounded",
+            array([1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0]),
+            array([1.0 + 1e-12, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0]),
+        ),
+    )
+
+    for manifold_name, estimate, truth in cases:
+        distance = get_distance_function(manifold_name)
+
+        assert _as_float(distance(estimate, truth)) == pytest.approx(0.0)
+
+
 def test_se2bounded_distance_uses_angular_component_before_linear_dispatch():
     distance = get_distance_function("se2bounded")
 

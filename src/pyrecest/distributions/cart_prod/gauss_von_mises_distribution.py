@@ -1,6 +1,8 @@
+import numpy as np
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     allclose,
     arccos,
@@ -15,6 +17,7 @@ from pyrecest.backend import (
     full,
     hstack,
     imag,
+    isfinite,
     linalg,
     mod,
     pi,
@@ -33,6 +36,47 @@ from scipy.stats import vonmises as _vonmises
 
 from ..nonperiodic.gaussian_distribution import GaussianDistribution
 from .abstract_hypercylindrical_distribution import AbstractHypercylindricalDistribution
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
+
+
+def _validate_positive_finite_scalar(value, name: str) -> float:
+    scalar_array = np.asarray(value)
+    if scalar_array.shape != ():
+        raise ValueError(f"{name} must be a scalar")
+
+    scalar = scalar_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a positive finite scalar")
+
+    try:
+        scalar_float = float(scalar)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive finite scalar") from exc
+
+    if not np.isfinite(scalar_float) or scalar_float <= 0.0:
+        raise ValueError(f"{name} must be a positive finite scalar")
+    return scalar_float
 
 
 class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
@@ -57,14 +101,24 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         n = mu.shape[0]
 
         # Validate parameters
-        assert P.shape == (n, n), "P and mu must have matching size"
-        assert allclose(P, P.T), "P must be symmetric"
-        linalg.cholesky(P)  # raises if not positive definite
+        if P.shape != (n, n):
+            raise ValueError("P and mu must have matching size")
+        if not bool(allclose(P, P.T)):
+            raise ValueError("P must be symmetric")
+        try:
+            cholesky_factor = linalg.cholesky(P)
+        except Exception as exc:
+            raise ValueError("P must be positive definite") from exc
+        if not bool(backend_all(isfinite(cholesky_factor))):
+            raise ValueError("P must be positive definite")
 
-        assert beta.shape == (n,), "size of beta must match size of mu"
-        assert Gamma.shape == (n, n), "Gamma and mu must have matching size"
-        assert allclose(Gamma, Gamma.T), "Gamma must be symmetric"
-        assert float(kappa) > 0, "kappa has to be a positive scalar"
+        if beta.shape != (n,):
+            raise ValueError("size of beta must match size of mu")
+        if Gamma.shape != (n, n):
+            raise ValueError("Gamma and mu must have matching size")
+        if not bool(allclose(Gamma, Gamma.T)):
+            raise ValueError("Gamma must be symmetric")
+        kappa = _validate_positive_finite_scalar(kappa, "kappa")
 
         AbstractHypercylindricalDistribution.__init__(self, bound_dim=1, lin_dim=n)
 
@@ -75,7 +129,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         self.Gamma = array(Gamma)
         self.kappa = float(kappa)
         # Lower triangular Cholesky factor of P
-        self.A = linalg.cholesky(P)
+        self.A = cholesky_factor
 
     def get_theta(self, xa):
         """Compute the angle offset theta for each column of xa (linear part).
@@ -193,6 +247,7 @@ class GaussVonMisesDistribution(AbstractHypercylindricalDistribution):
         s : array of shape (lin_dim + 1, n)
             First row is periodic (angle), remaining rows are linear.
         """
+        n = _validate_positive_sample_count(n)
         s_gauss = random.multivariate_normal(
             mean=self.mu, cov=self.P, size=n
         ).T  # (linD, n)

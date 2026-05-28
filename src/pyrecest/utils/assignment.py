@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from heapq import heappop, heappush
+from math import isfinite as _is_scalar_finite
 
 import pyrecest.backend
 from pyrecest.backend import abs as _abs
@@ -33,9 +34,18 @@ def _coerce_non_assignment_costs(costs, size: int, name: str):
     if costs is None:
         return _zeros(size, dtype=float)
 
-    costs = _asarray(costs, dtype=float).reshape(-1)
+    costs_array = _asarray(costs, dtype=float)
+    if costs_array.ndim == 0:
+        cost = float(costs_array)
+        if not _is_scalar_finite(cost):
+            raise ValueError(f"{name} must be finite")
+        return _full((size,), cost, dtype=float)
+
+    costs = costs_array.reshape(-1)
     if costs.shape[0] != size:
-        raise ValueError(f"{name} must have length {size}")
+        raise ValueError(f"{name} must be scalar or have length {size}")
+    if _any(~_isfinite(costs)):
+        raise ValueError(f"{name} must be finite")
     return costs
 
 

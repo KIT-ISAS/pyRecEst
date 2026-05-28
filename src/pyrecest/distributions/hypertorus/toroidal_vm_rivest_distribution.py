@@ -1,5 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import all, array, cos, exp, mod, pi, sin, sqrt
+from pyrecest.backend import all, array, asarray, cos, exp, mod, pi, sin, sqrt
 from scipy.special import iv
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
@@ -19,6 +19,8 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
         AbstractToroidalDistribution.__init__(self)
         assert mu.shape == (2,)
         assert kappa.shape == (2,)
+        alpha = asarray(alpha)
+        beta = asarray(beta)
         assert alpha.shape == ()
         assert beta.shape == ()
         assert all(kappa >= 0.0)

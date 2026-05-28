@@ -25,17 +25,15 @@ def test_particle_diagnostics_from_weights_computes_health_metrics():
     assert diagnostics["resampled"] is False
 
 
-def test_particle_diagnostics_ignore_negative_and_nonfinite_weights():
-    diagnostics = ParticleDiagnostics.from_weights(
-        [float("nan"), -1.0, 1.0, float("inf"), 3.0]
-    )
+def test_particle_diagnostics_clips_negative_weights():
+    diagnostics = ParticleDiagnostics.from_weights([-1.0, 1.0, 3.0])
 
     assert abs(diagnostics.effective_sample_size - 1.6) < 1e-12
     assert diagnostics.weight_entropy > 0.0
 
 
 def test_particle_diagnostics_handles_empty_effective_support():
-    diagnostics = ParticleDiagnostics.from_weights([-1.0, float("nan")])
+    diagnostics = ParticleDiagnostics.from_weights([-1.0, 0.0])
 
     assert diagnostics.effective_sample_size == 0.0
     assert diagnostics.weight_entropy == 0.0

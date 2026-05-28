@@ -37,6 +37,7 @@ class CustomCircularDistribution(
         Returns:
             : The value of the pdf at xs.
         """
+        xs = array(xs)
         return AbstractCustomDistribution.pdf(self, mod(xs + self.shift_by, 2 * pi))
 
     def integrate(self, integration_boundaries=None) -> float:

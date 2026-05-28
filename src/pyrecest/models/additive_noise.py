@@ -101,6 +101,25 @@ def _dt_call_mode(function: Callable[..., Any]) -> str | None:
     return "positional" if len(positional) >= 2 else None
 
 
+def _supported_kwargs(
+    function: Callable[..., Any], kwargs: dict[str, Any]
+) -> dict[str, Any]:
+    """Return kwargs accepted by ``function``, preserving opaque callables."""
+    if not kwargs:
+        return {}
+    try:
+        signature = inspect.signature(function)
+    except (TypeError, ValueError):
+        return kwargs
+
+    parameters = signature.parameters
+    if any(
+        param.kind == inspect.Parameter.VAR_KEYWORD for param in parameters.values()
+    ):
+        return kwargs
+    return {key: value for key, value in kwargs.items() if key in parameters}
+
+
 def _call_transition_function(
     function: Callable[..., Any],
     state: Any,
@@ -121,6 +140,26 @@ def _call_transition_function(
     return function(state, **call_kwargs)
 
 
+def _call_transition_jacobian(
+    function: Callable[..., Any],
+    state: Any,
+    dt: Any,
+    function_args: dict[str, Any],
+    kwargs: dict[str, Any],
+) -> Any:
+    """Call a transition Jacobian with arguments it explicitly accepts."""
+    call_kwargs = _supported_kwargs(function, {**function_args, **kwargs})
+    if dt is None:
+        return function(state, **call_kwargs)
+
+    dt_mode = _dt_call_mode(function)
+    if dt_mode == "keyword" and "dt" not in call_kwargs:
+        return function(state, dt=dt, **call_kwargs)
+    if dt_mode == "positional":
+        return function(state, dt, **call_kwargs)
+    return function(state, **call_kwargs)
+
+
 def _call_measurement_function(
     function: Callable[..., Any],
     state: Any,
@@ -129,6 +168,16 @@ def _call_measurement_function(
 ) -> Any:
     """Call a measurement function with default and per-call arguments."""
     return function(state, **{**function_args, **kwargs})
+
+
+def _call_measurement_jacobian(
+    function: Callable[..., Any],
+    state: Any,
+    function_args: dict[str, Any],
+    kwargs: dict[str, Any],
+) -> Any:
+    """Call a measurement Jacobian with arguments it explicitly accepts."""
+    return function(state, **_supported_kwargs(function, {**function_args, **kwargs}))
 
 
 class AdditiveNoiseTransitionModel:
@@ -225,12 +274,15 @@ class AdditiveNoiseTransitionModel:
         noise_mean = self.noise_mean
         return propagated if noise_mean is None else propagated + noise_mean
 
-    def jacobian(self, state):
+    def jacobian(self, state, dt=None, **kwargs):
         """Return the transition Jacobian evaluated at ``state``."""
         jacobian = self._jacobian
         if jacobian is None:
             raise NotImplementedError("No transition Jacobian callback was supplied")
-        return jacobian(state)
+        effective_dt = self.dt if dt is None else dt
+        return _call_transition_jacobian(
+            jacobian, state, effective_dt, self.function_args, kwargs
+        )
 
     def has_jacobian(self):
         """Return whether this model can provide transition Jacobians."""
@@ -324,12 +376,12 @@ class AdditiveNoiseMeasurementModel:
             else _distribution_covariance(self.noise_distribution)
         )
 
-    def jacobian(self, state):
+    def jacobian(self, state, **kwargs):
         """Return the measurement Jacobian evaluated at ``state``."""
         jacobian = self._jacobian
         if jacobian is None:
             raise NotImplementedError("No measurement Jacobian callback was supplied")
-        return jacobian(state)
+        return _call_measurement_jacobian(jacobian, state, self.function_args, kwargs)
 
     def has_jacobian(self):
         """Return whether this model can provide measurement Jacobians."""

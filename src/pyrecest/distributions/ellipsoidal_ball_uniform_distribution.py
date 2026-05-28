@@ -1,3 +1,4 @@
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -80,6 +81,9 @@ class EllipsoidalBallUniformDistribution(
         :param n: Number of samples to generate.
         :returns: Generated samples.
         """
+        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
+            raise ValueError("n must be a positive integer.")
+        n = int(n)
         random_points = random.normal(size=(n, self.dim))
         random_points /= linalg.norm(random_points, axis=1).reshape(-1, 1)
 

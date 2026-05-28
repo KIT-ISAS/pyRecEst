@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member,too-many-arguments,too-many-positional-arguments
 from pyrecest.backend import arctan2, asarray, matvec, sqrt, stack
 from pyrecest.backend import sum as _sum
@@ -32,9 +34,71 @@ def _state_vector(state):
     return asarray(state)
 
 
-def _select(state, indices: Sequence[int]):
+def _as_scalar_float(value: Any, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
+        raise ValueError(f"{name} must be a scalar number")
+    try:
+        scalar = float(value_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a scalar number") from exc
+    if not np.isfinite(scalar):
+        raise ValueError(f"{name} must be finite")
+    return scalar
+
+
+def _as_positive_float(value: Any, name: str) -> float:
+    scalar = _as_scalar_float(value, name)
+    if scalar <= 0.0:
+        raise ValueError(f"{name} must be positive")
+    return scalar
+
+
+def _as_integer(value: Any, name: str) -> int:
+    scalar = _as_scalar_float(value, name)
+    if not scalar.is_integer():
+        raise ValueError(f"{name} must be an integer")
+    return int(scalar)
+
+
+def _normalize_indices(
+    indices: Sequence[int],
+    state_dim: int,
+    expected_length: int,
+    name: str,
+) -> tuple[int, ...]:
+    try:
+        values = tuple(indices)
+    except TypeError as exc:
+        raise ValueError(f"{name} must contain {expected_length} indices") from exc
+    if len(values) != expected_length:
+        raise ValueError(f"{name} must contain {expected_length} indices")
+    normalized = tuple(
+        _as_integer(index, f"{name}[{axis}]") for axis, index in enumerate(values)
+    )
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f"{name} entries must be distinct")
+    if any(index < 0 or index >= state_dim for index in normalized):
+        raise ValueError(f"{name} entries must be valid state indices")
+    return normalized
+
+
+def _select(state, indices: Sequence[int], expected_length: int, name: str):
     state = _state_vector(state)
-    return stack([state[int(index)] for index in indices])
+    normalized_indices = _normalize_indices(
+        indices,
+        int(state.shape[0]),
+        expected_length,
+        name,
+    )
+    return stack([state[index] for index in normalized_indices])
+
+
+def _normalize_reference_sensor(reference_sensor: int, sensor_count: int) -> int:
+    reference_sensor = _as_integer(reference_sensor, "reference_sensor")
+    if reference_sensor < 0 or reference_sensor >= sensor_count:
+        raise ValueError("reference_sensor must be a valid sensor index")
+    return reference_sensor
 
 
 def _as_vector(value, length: int, name: str):
@@ -46,17 +110,37 @@ def _as_vector(value, length: int, name: str):
     return vector
 
 
+def _as_sensor_positions(value, position_dim: int = 2):
+    sensors = asarray(value)
+    sensor_shape = tuple(sensors.shape)
+    if len(sensor_shape) != 2 or sensor_shape[1] != position_dim:
+        raise ValueError(
+            f"sensor_positions must have shape (n_sensors, {position_dim})"
+        )
+    if sensor_shape[0] < 2:
+        raise ValueError("sensor_positions must contain at least two sensors")
+    return sensors
+
+
 def _validate_positive_range_squared(range_sq, name="range"):
-    if float(range_sq) <= 0.0:
+    range_sq_value = _as_scalar_float(range_sq, name)
+    if range_sq_value <= 0.0:
         raise ValueError(f"{name} is undefined for zero distance to the sensor")
     return range_sq
+
+
+def _validate_nonzero_scalar(value, name: str):
+    scalar = _as_scalar_float(value, name)
+    if scalar == 0.0:
+        raise ValueError(f"{name} must be nonzero")
+    return value
 
 
 def range_bearing_measurement(
     state, sensor_position: Any | None = None, position_indices: Sequence[int] = (0, 1)
 ):
     """Return 2D range-bearing measurement ``[range, bearing]``."""
-    position = _select(state, position_indices)
+    position = _select(state, position_indices, 2, "position_indices")
     sensor_position = _as_vector(sensor_position, 2, "sensor_position")
     relative = position - sensor_position
     range_sq = relative[0] * relative[0] + relative[1] * relative[1]
@@ -90,7 +174,13 @@ def range_bearing_jacobian(
     ``position_indices``.
     """
     state = _state_vector(state)
-    position = _select(state, position_indices)
+    position_indices = _normalize_indices(
+        position_indices,
+        int(state.shape[0]),
+        2,
+        "position_indices",
+    )
+    position = stack([state[index] for index in position_indices])
     sensor_position = _as_vector(sensor_position, 2, "sensor_position")
     dx = position[0] - sensor_position[0]
     dy = position[1] - sensor_position[1]
@@ -98,8 +188,8 @@ def range_bearing_jacobian(
     _validate_positive_range_squared(range_sq, "range_bearing_jacobian")
     range_value = sqrt(range_sq)
     state_dim = int(state.shape[0])
-    x_index = int(position_indices[0])
-    y_index = int(position_indices[1])
+    x_index = position_indices[0]
+    y_index = position_indices[1]
     zero = range_value * 0.0
     range_entries = []
     bearing_entries = []
@@ -124,8 +214,8 @@ def radar_range_bearing_doppler_measurement(
     velocity_indices: Sequence[int] = (2, 3),
 ):
     """Return 2D radar ``[range, bearing, range_rate]`` measurement."""
-    position = _select(state, position_indices)
-    velocity = _select(state, velocity_indices)
+    position = _select(state, position_indices, 2, "position_indices")
+    velocity = _select(state, velocity_indices, 2, "velocity_indices")
     sensor_position = _as_vector(sensor_position, 2, "sensor_position")
     sensor_velocity = _as_vector(sensor_velocity, 2, "sensor_velocity")
     relative_position = position - sensor_position
@@ -152,11 +242,13 @@ def tdoa_measurement(
     position_indices: Sequence[int] = (0, 1),
 ):
     """Return TDOA range-difference measurements relative to one sensor."""
-    if float(propagation_speed) <= 0.0:
-        raise ValueError("propagation_speed must be positive")
-    position = _select(state, position_indices)
-    sensors = asarray(sensor_positions)
-    reference_sensor = int(reference_sensor)
+    propagation_speed = _as_positive_float(propagation_speed, "propagation_speed")
+    position = _select(state, position_indices, 2, "position_indices")
+    sensors = _as_sensor_positions(sensor_positions)
+    reference_sensor = _normalize_reference_sensor(
+        reference_sensor,
+        int(sensors.shape[0]),
+    )
     reference_relative = position - sensors[reference_sensor]
     reference_range = sqrt(_sum(reference_relative * reference_relative))
     measurements = []
@@ -165,7 +257,7 @@ def tdoa_measurement(
             continue
         relative = position - sensors[sensor_idx]
         sensor_range = sqrt(_sum(relative * relative))
-        measurements.append((sensor_range - reference_range) / float(propagation_speed))
+        measurements.append((sensor_range - reference_range) / propagation_speed)
     return stack(measurements)
 
 
@@ -179,15 +271,21 @@ def fdoa_measurement(
     velocity_indices: Sequence[int] = (2, 3),
 ):
     """Return FDOA range-rate-difference measurements relative to one sensor."""
-    if float(propagation_speed) <= 0.0:
-        raise ValueError("propagation_speed must be positive")
-    position = _select(state, position_indices)
-    velocity = _select(state, velocity_indices)
-    sensors = asarray(sensor_positions)
+    propagation_speed = _as_positive_float(propagation_speed, "propagation_speed")
+    position = _select(state, position_indices, 2, "position_indices")
+    velocity = _select(state, velocity_indices, 2, "velocity_indices")
+    sensors = _as_sensor_positions(sensor_positions)
     if sensor_velocities is None:
         sensor_velocities = zeros(tuple(sensors.shape))
     sensor_velocities = asarray(sensor_velocities)
-    reference_sensor = int(reference_sensor)
+    if tuple(sensor_velocities.shape) != tuple(sensors.shape):
+        raise ValueError(
+            "sensor_velocities must have the same shape as sensor_positions"
+        )
+    reference_sensor = _normalize_reference_sensor(
+        reference_sensor,
+        int(sensors.shape[0]),
+    )
     reference_rate = _range_rate(
         position,
         velocity,
@@ -201,7 +299,7 @@ def fdoa_measurement(
         rate = _range_rate(
             position, velocity, sensors[sensor_idx], sensor_velocities[sensor_idx]
         )
-        measurements.append((rate - reference_rate) / float(propagation_speed))
+        measurements.append((rate - reference_rate) / propagation_speed)
     return stack(measurements)
 
 
@@ -219,11 +317,12 @@ def camera_projection_measurement(
     ``camera_matrix`` is omitted, normalized image coordinates ``[x/z, y/z]``
     are returned.
     """
-    position = _select(state, position_indices)
+    position = _select(state, position_indices, 3, "position_indices")
     rotation = asarray(rotation) if rotation is not None else None
     translation = _as_vector(translation, 3, "translation")
     camera_position = position if rotation is None else matvec(rotation, position)
     camera_position = camera_position + translation
+    _validate_nonzero_scalar(camera_position[2], "camera depth")
     normalized = stack(
         [
             camera_position[0] / camera_position[2],
@@ -234,6 +333,7 @@ def camera_projection_measurement(
     if camera_matrix is None:
         return stack([normalized[0], normalized[1]])
     homogeneous = matvec(asarray(camera_matrix), normalized)
+    _validate_nonzero_scalar(homogeneous[2], "homogeneous camera scale")
     return stack([homogeneous[0] / homogeneous[2], homogeneous[1] / homogeneous[2]])
 
 

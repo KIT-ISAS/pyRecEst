@@ -107,8 +107,7 @@ def score_false_tracks(
     predicted_track_matrix: Any, reference_track_matrix: Any, *, min_length: int = 1
 ) -> dict[str, float | int]:
     """Return metrics for predicted tracks that contain no reference observation."""
-    if int(min_length) <= 0:
-        raise ValueError("min_length must be positive")
+    min_length = _as_positive_int(min_length, "min_length")
     predicted, reference = _normalized_pair(
         predicted_track_matrix, reference_track_matrix
     )
@@ -120,9 +119,9 @@ def score_false_tracks(
     unreferenced_observations = 0
     total_observations = 0
     for observations in _observations_by_track(predicted):
-        total_observations += len(observations)
-        if len(observations) < int(min_length):
+        if len(observations) < min_length:
             continue
+        total_observations += len(observations)
         evaluated_tracks += 1
         matched = sum(
             1 for observation in observations if observation in reference_lookup
@@ -159,8 +158,7 @@ def score_missed_tracks(
     predicted_track_matrix: Any, reference_track_matrix: Any, *, min_length: int = 1
 ) -> dict[str, float | int]:
     """Return metrics for reference tracks with no predicted observation support."""
-    if int(min_length) <= 0:
-        raise ValueError("min_length must be positive")
+    min_length = _as_positive_int(min_length, "min_length")
     predicted, reference = _normalized_pair(
         predicted_track_matrix, reference_track_matrix
     )
@@ -172,9 +170,9 @@ def score_missed_tracks(
     missed_observations = 0
     total_observations = 0
     for observations in _observations_by_track(reference):
-        total_observations += len(observations)
-        if len(observations) < int(min_length):
+        if len(observations) < min_length:
             continue
+        total_observations += len(observations)
         evaluated_tracks += 1
         recovered = sum(
             1 for observation in observations if observation in predicted_lookup
@@ -331,6 +329,26 @@ def _session_times(
             "session_times must have length equal to the number of sessions"
         )
     return times
+
+
+def _as_positive_int(value: Any, name: str) -> int:
+    array = np.asarray(value)
+    if array.ndim != 0 or array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a positive integer")
+    scalar = array.item()
+    if isinstance(scalar, (int, np.integer)) and not isinstance(scalar, bool):
+        result = int(scalar)
+    elif (
+        isinstance(scalar, (float, np.floating))
+        and np.isfinite(scalar)
+        and float(scalar).is_integer()
+    ):
+        result = int(scalar)
+    else:
+        raise ValueError(f"{name} must be a positive integer")
+    if result <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return result
 
 
 def _zero_ratio(numerator: float, denominator: float) -> float:

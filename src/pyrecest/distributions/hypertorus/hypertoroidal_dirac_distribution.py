@@ -1,11 +1,16 @@
 import copy
 from collections.abc import Callable
+from numbers import Integral
 from typing import Union
 
 import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import (
+    abs,
+)
+from pyrecest.backend import any as backend_any
 from pyrecest.backend import (
     arctan2,
     array,
@@ -25,6 +30,7 @@ from pyrecest.backend import (
 
 from ..abstract_dirac_distribution import AbstractDiracDistribution
 from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
+from ._input_validation import as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -33,6 +39,7 @@ class HypertoroidalDiracDistribution(
 ):
     def __init__(self, d, w=None, dim: int | None = None):
         """Can set dim manually to tell apart number of samples vs dimension for 1-D arrays."""
+        d = array(d)
         if dim is None:
             if d.ndim > 1:
                 dim = d.shape[-1]
@@ -69,13 +76,24 @@ class HypertoroidalDiracDistribution(
 
         if n_particles is None:
             raise ValueError("n_particles is required for sampling-based conversion.")
-        if n_particles <= 0:
-            raise ValueError("n_particles must be a positive integer.")
+        n_particles = HypertoroidalDiracDistribution._validate_particle_count(
+            n_particles
+        )
         return HypertoroidalDiracDistribution(
             distribution.sample(n_particles),
             ones(n_particles) / n_particles,
             dim=distribution.dim,
         )
+
+    @staticmethod
+    def _validate_particle_count(n_particles):
+        if (
+            isinstance(n_particles, bool)
+            or not isinstance(n_particles, Integral)
+            or int(n_particles) <= 0
+        ):
+            raise ValueError("n_particles must be a positive integer.")
+        return int(n_particles)
 
     def plot(self, resolution=128, **kwargs):
         _ = resolution
@@ -104,6 +122,8 @@ class HypertoroidalDiracDistribution(
         :return: Mean direction
         """
         a = self.trigonometric_moment(1)
+        if bool(backend_any(abs(a) < 1e-12)):
+            raise ValueError("Mean direction is undefined for zero resultant moments.")
         m = mod(arctan2(imag(a), real(a)), 2.0 * pi)
         return m
 
@@ -175,9 +195,12 @@ class HypertoroidalDiracDistribution(
         )
 
     def shift(self, shift_by) -> "HypertoroidalDiracDistribution":
-        assert shift_by.shape[-1] == self.dim
+        shift_by = as_shift_vector(shift_by, self.dim)
         hd = copy.copy(self)
-        hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2.0 * pi)
+        if self.dim == 1 and self.d.ndim == 1:
+            hd.d = mod(self.d + shift_by[0], 2.0 * pi)
+        else:
+            hd.d = mod(self.d + reshape(shift_by, (1, -1)), 2.0 * pi)
         return hd
 
     def entropy(self):

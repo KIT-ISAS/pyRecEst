@@ -10,6 +10,7 @@ import logging
 import os
 import sys
 import types
+from functools import wraps
 
 import pyrecest._backend._common as common
 
@@ -214,6 +215,7 @@ BACKEND_ATTRIBUTES = {
         "jacobian_vec",
         "jacobian_and_hessian",
         "value_and_grad",
+        "value_jacobian_and_hessian",
         "value_and_jacobian",
         "value_jacobian_and_hessian",
     ],
@@ -273,6 +275,12 @@ BACKEND_ATTRIBUTES = {
     ],
 }
 
+OPTIONAL_BACKEND_ATTRIBUTES = {
+    "random": [
+        "create_random_state",
+    ],
+}
+
 
 def _deduplicated_attributes(attributes):
     """Return ``attributes`` with duplicates removed while preserving order."""
@@ -281,6 +289,273 @@ def _deduplicated_attributes(attributes):
 
 for _module_name, _attributes in BACKEND_ATTRIBUTES.items():
     BACKEND_ATTRIBUTES[_module_name] = _deduplicated_attributes(_attributes)
+
+
+def _quantile_with_numpy_axis(quantile_func, asarray_func):
+    """Return a NumPy-compatible quantile wrapper for stricter backends."""
+
+    @wraps(quantile_func)
+    def quantile(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        method="linear",
+        keepdims=False,
+        *,
+        interpolation=None,
+    ):
+        del overwrite_input
+        if interpolation is not None:
+            method = interpolation
+
+        kwargs = {"dim": axis, "keepdim": keepdims, "interpolation": method}
+        if out is not None:
+            kwargs["out"] = out
+        return quantile_func(asarray_func(a), asarray_func(q), **kwargs)
+
+    return quantile
+
+
+def _meshgrid_with_arraylike_axes(meshgrid_func, asarray_func, atleast_1d_func):
+    """Return a NumPy-compatible meshgrid wrapper for stricter backends."""
+
+    @wraps(meshgrid_func)
+    def meshgrid(*axes, **kwargs):
+        coerced_axes = [atleast_1d_func(asarray_func(axis)) for axis in axes]
+        return meshgrid_func(*coerced_axes, **kwargs)
+
+    return meshgrid
+
+
+def _mean_with_numpy_signature(
+    mean_func,
+    asarray_func,
+    reshape_func,
+    cast_func,
+    get_default_dtype_func,
+    is_complex_func,
+    is_floating_func,
+):
+    """Return a NumPy-compatible mean wrapper for stricter backends."""
+
+    @wraps(mean_func)
+    def mean(a, axis=None, dtype=None, out=None, keepdims=False):
+        if dtype is not None:
+            a = asarray_func(a, dtype=dtype)
+        else:
+            a = asarray_func(a)
+            if not is_floating_func(a) and not is_complex_func(a):
+                a = cast_func(a, dtype=get_default_dtype_func())
+
+        if axis is None:
+            result = mean_func(a)
+            if keepdims:
+                result = reshape_func(result, (1,) * a.ndim)
+        else:
+            result = mean_func(a, dim=axis, keepdim=keepdims)
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return mean
+
+
+def _normalize_reduction_axes(axis, ndim):
+    """Return normalized reduction axes for NumPy-style ``axis`` arguments."""
+    if isinstance(axis, int):
+        axes = (axis,)
+    else:
+        axes = tuple(axis)
+
+    normalized_axes = tuple(
+        axis_index + ndim if axis_index < 0 else axis_index for axis_index in axes
+    )
+    if len(set(normalized_axes)) != len(normalized_axes):
+        raise ValueError("duplicate value in 'axis'")
+
+    for original_axis, normalized_axis in zip(axes, normalized_axes):
+        if normalized_axis < 0 or normalized_axis >= ndim:
+            raise IndexError(
+                f"axis {original_axis} is out of bounds for array of dimension {ndim}"
+            )
+
+    return normalized_axes
+
+
+def _reduced_keepdims_shape(shape, axes):
+    """Return the shape produced by a keepdims reduction over ``axes``."""
+    return tuple(1 if dim in axes else dim_size for dim, dim_size in enumerate(shape))
+
+
+def _reduction_with_numpy_keepdims(
+    reduction_func,
+    asarray_func,
+    reshape_func,
+    *,
+    cast_func=None,
+):
+    """Return a reduction wrapper accepting NumPy's ``keepdims`` keyword."""
+
+    @wraps(reduction_func)
+    def reduction(a, axis=None, dtype=None, out=None, keepdims=False):
+        a = asarray_func(a)
+        if dtype is not None:
+            if cast_func is None:
+                raise TypeError("dtype is not supported for this reduction")
+            a = cast_func(a, dtype=dtype)
+
+        axes = (
+            tuple(range(a.ndim))
+            if axis is None
+            else _normalize_reduction_axes(axis, a.ndim)
+        )
+        result = a if axis is not None and not axes else reduction_func(a, axis=axis)
+        if keepdims:
+            result = reshape_func(result, _reduced_keepdims_shape(tuple(a.shape), axes))
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return reduction
+
+
+def _sum_with_numpy_signature(sum_func, asarray_func, reshape_func):
+    """Return a NumPy-compatible sum wrapper for stricter backends."""
+
+    @wraps(sum_func)
+    def sum(a, axis=None, dtype=None, out=None, keepdims=False):
+        a = asarray_func(a)
+        if axis is None:
+            result = sum_func(a, dtype=dtype)
+            if keepdims:
+                result = reshape_func(result, (1,) * a.ndim)
+        else:
+            result = sum_func(a, axis=axis, keepdims=keepdims, dtype=dtype)
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return sum
+
+
+def _std_with_numpy_input(
+    std_func,
+    asarray_func,
+    cast_func,
+    get_default_dtype_func,
+    is_complex_func,
+    is_floating_func,
+):
+    """Return a NumPy-compatible std wrapper for stricter backends."""
+
+    @wraps(std_func)
+    def std(
+        a,
+        axis=None,
+        dtype=None,
+        out=None,
+        ddof=0,
+        keepdims=False,
+        *,
+        correction=0,
+    ):
+        a = asarray_func(a)
+        if dtype is not None:
+            a = cast_func(a, dtype=dtype)
+        elif not is_floating_func(a) and not is_complex_func(a):
+            a = cast_func(a, dtype=get_default_dtype_func())
+        kwargs = {
+            "axis": axis,
+            "dtype": None,
+            "out": out,
+            "ddof": ddof,
+            "keepdims": keepdims,
+        }
+        if correction != 0:
+            kwargs["correction"] = correction
+        return std_func(a, **kwargs)
+
+    return std
+
+
+def _arg_reduction_with_numpy_signature(arg_func, asarray_func, reshape_func):
+    """Return a NumPy-compatible argmin/argmax wrapper for stricter backends."""
+
+    @wraps(arg_func)
+    def arg_reduction(
+        a,
+        axis=None,
+        out=None,
+        keepdims=False,
+        *,
+        dim=None,
+        keepdim=None,
+    ):
+        if dim is not None:
+            if axis is not None and axis != dim:
+                raise TypeError(f"{arg_func.__name__}() got both 'axis' and 'dim'")
+            axis = dim
+        if keepdim is not None:
+            if keepdims is not False and keepdims != keepdim:
+                raise TypeError(
+                    f"{arg_func.__name__}() got both 'keepdims' and 'keepdim'"
+                )
+            keepdims = keepdim
+
+        a = asarray_func(a)
+        try:
+            import torch as _torch
+        except ModuleNotFoundError:  # pragma: no cover - only relevant for PyTorch
+            pass
+        else:
+            if _torch.is_tensor(a) and a.dtype == _torch.bool:
+                a = a.to(dtype=_torch.uint8)
+
+        if axis is None:
+            result = arg_func(a)
+            if keepdims:
+                result = reshape_func(result, (1,) * a.ndim)
+        else:
+            result = arg_func(a, dim=axis, keepdim=keepdims)
+
+        if out is not None:
+            out[...] = result
+            return out
+        return result
+
+    return arg_reduction
+
+
+def _is_empty_assignment_index(indices):
+    """Return whether ``indices`` selects no elements for assignment helpers."""
+    if isinstance(indices, list):
+        return len(indices) == 0
+    if isinstance(indices, tuple):
+        return False
+
+    ndim = getattr(indices, "ndim", None)
+    shape = getattr(indices, "shape", None)
+    return ndim is not None and ndim > 0 and shape is not None and shape[0] == 0
+
+
+def _assignment_with_empty_indices_noop(assignment_func, copy_func):
+    """Return an assignment wrapper that treats empty indices as a no-op."""
+
+    @wraps(assignment_func)
+    def assignment(x, values, indices, axis=0):
+        if _is_empty_assignment_index(indices):
+            return copy_func(x)
+        return assignment_func(x, values, indices, axis=axis)
+
+    return assignment
 
 
 class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
@@ -338,16 +613,123 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                 except AttributeError:
                     if module_name:
                         raise RuntimeError(
-                            f"Module '{module_name}' of backend '{backend_name}' "
-                            f"does not define the required attribute '{attribute_name}'."
+                            f"Module '{module_name}' of backend '{backend_name}' does not define the required attribute '{attribute_name}'."
                         ) from None
                     else:
                         raise RuntimeError(
-                            f"Backend '{backend_name}' does not define the required "
-                            f"attribute '{attribute_name}'."
+                            f"Backend '{backend_name}' does not define the required attribute '{attribute_name}'."
                         ) from None
                 else:
+                    if (
+                        module_name == ""
+                        and attribute_name == "mean"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _mean_with_numpy_signature(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                            getattr(backend, "cast"),
+                            getattr(backend, "get_default_dtype"),
+                            getattr(backend, "is_complex"),
+                            getattr(backend, "is_floating"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name
+                        in {"all", "amax", "amin", "any", "max", "min"}
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _reduction_with_numpy_keepdims(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "sum"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _sum_with_numpy_signature(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "prod"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _reduction_with_numpy_keepdims(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                            cast_func=getattr(backend, "cast"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "std"
+                        and backend_name in {"pytorch", "jax"}
+                    ):
+                        get_default_dtype = (
+                            (lambda: getattr(backend, "asarray")(0.0).dtype)
+                            if backend_name == "jax"
+                            else getattr(backend, "get_default_dtype")
+                        )
+                        attribute = _std_with_numpy_input(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "cast"),
+                            get_default_dtype,
+                            getattr(backend, "is_complex"),
+                            getattr(backend, "is_floating"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name in {"argmax", "argmin"}
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _arg_reduction_with_numpy_signature(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "reshape"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "meshgrid"
+                        and backend_name in {"jax", "pytorch"}
+                    ):
+                        attribute = _meshgrid_with_arraylike_axes(
+                            attribute,
+                            getattr(backend, "asarray"),
+                            getattr(backend, "atleast_1d"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "quantile"
+                        and backend_name == "pytorch"
+                    ):
+                        attribute = _quantile_with_numpy_axis(
+                            attribute,
+                            getattr(backend, "asarray"),
+                        )
+                    if module_name == "" and attribute_name in {
+                        "assignment",
+                        "assignment_by_sum",
+                    }:
+                        attribute = _assignment_with_empty_indices_noop(
+                            attribute,
+                            getattr(backend, "copy"),
+                        )
                     setattr(new_submodule, attribute_name, attribute)
+
+            for attribute_name in OPTIONAL_BACKEND_ATTRIBUTES.get(module_name, []):
+                if hasattr(submodule, attribute_name):
+                    setattr(
+                        new_submodule,
+                        attribute_name,
+                        getattr(submodule, attribute_name),
+                    )
 
         return new_module
 

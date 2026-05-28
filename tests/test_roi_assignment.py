@@ -162,6 +162,23 @@ class TestSimilarityAssignment(unittest.TestCase):
         npt.assert_array_equal(result.matched_row_indices, array([0]))
         npt.assert_array_equal(result.unmatched_row_indices, array([1]))
 
+    @unittest.skipIf(
+        backend.__backend_name__ == "jax",
+        reason="Not supported on the jax backend",
+    )
+    def test_assignment_rejects_nonfinite_min_similarity(self):
+        similarity_matrix = array([[1.0]])
+
+        for min_similarity in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(min_similarity=min_similarity):
+                with self.assertRaisesRegex(
+                    ValueError, "min_similarity must be finite"
+                ):
+                    assign_by_similarity_matrix(
+                        similarity_matrix,
+                        min_similarity=min_similarity,
+                    )
+
 
 class TestRoiAssociation(unittest.TestCase):
     @unittest.skipIf(
@@ -267,6 +284,19 @@ class TestRoiAssociation(unittest.TestCase):
         )
         npt.assert_array_equal(result.assignment, array([-1]))
         self.assertGreater(result.centroid_distance_matrix[0, 0], 1.0)
+
+    @unittest.skipIf(
+        backend.__backend_name__ == "jax",
+        reason="Not supported on the jax backend",
+    )
+    def test_pairwise_iou_masks_rejects_nan_centroid_threshold(self):
+        roi = array([[1]], dtype=bool)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "centroid_distance_threshold must be non-negative",
+        ):
+            pairwise_iou_masks([roi], [roi], centroid_distance_threshold=float("nan"))
 
     @unittest.skipIf(
         backend.__backend_name__ == "jax",

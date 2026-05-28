@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend as backend
 from pyrecest._backend import BACKEND_ATTRIBUTES
@@ -14,6 +15,26 @@ class BackendContractTest(unittest.TestCase):
                     {name for name in attributes if attributes.count(name) > 1}
                 )
                 self.assertEqual(duplicates, [])
+
+    def test_convert_to_wider_dtype_preserves_matching_boolean_dtype(self):
+        if backend.__backend_name__ not in {"autograd", "numpy"}:
+            self.skipTest("shared NumPy dtype promotion regression test")
+
+        first, second = backend.convert_to_wider_dtype(
+            [array([True, False]), array([False, True])]
+        )
+
+        self.assertEqual(to_numpy(first).dtype, np.dtype("bool"))
+        self.assertEqual(to_numpy(second).dtype, np.dtype("bool"))
+
+    def test_assignment_with_empty_indices_is_a_noop(self):
+        original = array([1.0, 2.0, 3.0])
+
+        assigned = backend.assignment(original, 99.0, [])
+        added = backend.assignment_by_sum(original, 99.0, [])
+
+        npt.assert_allclose(to_numpy(assigned), [1.0, 2.0, 3.0])
+        npt.assert_allclose(to_numpy(added), [1.0, 2.0, 3.0])
 
     def test_choice_supports_numpy_like_size_replace_and_probabilities(self):
         values = array([0, 1, 2, 3])

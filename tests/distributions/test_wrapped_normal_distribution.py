@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -10,6 +11,7 @@ from pyrecest.backend import (
     array,
     exp,
     isfinite,
+    mod,
     ones_like,
     pi,
     sqrt,
@@ -49,6 +51,12 @@ class WrappedNormalDistributionTest(unittest.TestCase):
                 rtol=1e-7,
             )
         )
+
+    def test_constructor_rejects_invalid_sigma(self):
+        for sigma in (-1.0, 0.0, float("nan"), float("inf")):
+            with self.subTest(sigma=sigma):
+                with self.assertRaisesRegex(ValueError, "positive finite scalar"):
+                    WrappedNormalDistribution(array(0.0), array(sigma))
 
     def test_pdf_is_periodic_when_central_term_underflows(self):
         """The pdf must still add wrapped terms near the 0 / 2π boundary."""
@@ -102,6 +110,16 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.assertTrue(bool(isfinite(value)))
         self.assertLess(iterations["count"], 10)
 
+    def test_shift_accepts_python_scalar(self):
+        shifted = self.wn.shift(0.25)
+
+        npt.assert_allclose(shifted.mu, array([mod(self.mu + 0.25, 2.0 * pi)]))
+        npt.assert_allclose(self.wn.mu, array([self.mu]))
+
+    def test_shift_rejects_wrong_shape(self):
+        with self.assertRaises(ValueError):
+            self.wn.shift([0.1, 0.2])
+
     def test_multiply_uses_explicit_vm_approximation(self):
         """The product API is a documented VM-based approximation."""
         first = WrappedNormalDistribution(array(0.0), array(0.5))
@@ -146,6 +164,45 @@ class WrappedNormalDistributionTest(unittest.TestCase):
         self.assertTrue(allclose(convolved.mu, array(0.7), atol=1e-12))
         self.assertTrue(allclose(convolved.C, array(13.0), atol=1e-12))
         self.assertTrue(allclose(convolved.sigma, sqrt(array(13.0)), atol=1e-12))
+
+    def test_from_moment_recovers_parameters(self):
+        reconstructed = WrappedNormalDistribution.from_moment(
+            self.wn.trigonometric_moment(1)
+        )
+
+        self.assertTrue(allclose(reconstructed.scalar_mu, self.mu, atol=1e-12))
+        self.assertTrue(allclose(reconstructed.sigma, self.sigma, atol=1e-12))
+
+    def test_from_moment_rejects_invalid_magnitudes(self):
+        for moment in (
+            array(1.0 + 0.0j),
+            array(1.0 + 1e-13 + 0.0j),
+            array(1.01 + 0.0j),
+        ):
+            with self.subTest(moment=moment):
+                with self.assertRaisesRegex(ValueError, "First trigonometric moment"):
+                    WrappedNormalDistribution.from_moment(moment)
+
+    def test_sample_accepts_integer_like_count(self):
+        samples = self.wn.sample(np.int64(4))
+
+        self.assertEqual(samples.shape, (4,))
+
+    def test_sample_rejects_invalid_count(self):
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    self.wn.sample(n)
+
+    def test_shift_accepts_scalar_and_singleton_sequence_inputs(self):
+        dist = WrappedNormalDistribution(array(0.3), array(0.4))
+
+        scalar_shifted = dist.shift(0.2)
+        sequence_shifted = dist.shift([0.2])
+
+        self.assertTrue(allclose(scalar_shifted.scalar_mu, array(0.5), atol=1e-12))
+        self.assertTrue(allclose(sequence_shifted.scalar_mu, array(0.5), atol=1e-12))
+        self.assertTrue(allclose(scalar_shifted.sigma, dist.sigma, atol=1e-12))
 
 
 if __name__ == "__main__":

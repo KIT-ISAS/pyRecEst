@@ -1,3 +1,6 @@
+from math import isclose, log
+
+import pytest
 from pyrecest.diagnostics import (
     AssociationDiagnostics,
     FilterDiagnostics,
@@ -13,3 +16,16 @@ def test_diagnostics_are_dict_serializable_containers():
     assert filter_diag.to_dict()["nis"] == 1.5
     assert particle_diag.to_dict()["resampled"] is True
     assert association_diag.to_dict()["selected_assignments"] == [(0, 1)]
+
+
+def test_particle_diagnostics_clips_negative_weights_before_normalizing():
+    diagnostics = ParticleDiagnostics.from_weights([2.0, -1.0, 2.0])
+
+    assert isclose(diagnostics.effective_sample_size, 2.0)
+    assert isclose(diagnostics.weight_entropy, log(2.0))
+
+
+def test_particle_diagnostics_rejects_nonfinite_weights():
+    for weights in ([float("nan"), 1.0], [float("inf"), 1.0]):
+        with pytest.raises(ValueError, match="Particle weights must be finite"):
+            ParticleDiagnostics.from_weights(weights)

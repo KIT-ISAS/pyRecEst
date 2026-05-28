@@ -1,6 +1,7 @@
 import unittest
 from warnings import catch_warnings, simplefilter
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -99,6 +100,33 @@ class LinearMixtureTest(unittest.TestCase):
         samples = lm.sample(5)
 
         self.assertEqual(samples.shape, (5, 1))
+
+    def test_sample_accepts_integer_like_count(self):
+        mixture = GaussianMixture(
+            [
+                GaussianDistribution(array([0.0, 0.0]), diag(array([1.0, 1.0]))),
+                GaussianDistribution(array([1.0, 1.0]), diag(array([1.0, 1.0]))),
+            ],
+            array([0.25, 0.75]),
+        )
+
+        samples = mixture.sample(np.array(4.0))
+
+        self.assertEqual(samples.shape, (4, 2))
+
+    def test_sample_rejects_invalid_count(self):
+        mixture = GaussianMixture(
+            [
+                GaussianDistribution(array([0.0, 0.0]), diag(array([1.0, 1.0]))),
+                GaussianDistribution(array([1.0, 1.0]), diag(array([1.0, 1.0]))),
+            ],
+            array([0.25, 0.75]),
+        )
+
+        for n in (0, -1, 1.5, True, [3]):
+            with self.subTest(n=n):
+                with self.assertRaises(ValueError):
+                    mixture.sample(n)
 
 
 if __name__ == "__main__":

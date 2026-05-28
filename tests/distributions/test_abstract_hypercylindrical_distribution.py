@@ -47,9 +47,11 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             integration_boundaries, array([[0.0, 2.0 * pi], [-4.0, 8.0]])
         )
 
-    def test_constructor_rejects_zero_linear_dimension(self):
-        with self.assertRaises(ValueError):
-            PartiallyWrappedNormalDistribution(array([1.0]), array([[1.0]]), 1)
+    def test_constructor_accepts_fully_periodic_dimension(self):
+        dist = PartiallyWrappedNormalDistribution(array([1.0]), array([[1.0]]), 1)
+
+        self.assertEqual(dist.bound_dim, 1)
+        self.assertEqual(dist.lin_dim, 0)
 
     def test_linear_mean_numerical(self):
         hwn = PartiallyWrappedNormalDistribution(
@@ -83,6 +85,50 @@ class AbstractHypercylindricalDistributionTest(unittest.TestCase):
             ),
             zeros(10),
             atol=1e-10,
+        )
+
+    def test_condition_on_periodic_accepts_periodic_vectors(self):
+        hwn = PartiallyWrappedNormalDistribution(
+            array([1.0, 2.0, 3.0]),
+            array([[2.0, 0.3, 0.1], [0.3, 1.5, 0.2], [0.1, 0.2, 1.0]]),
+            2,
+        )
+        input_periodic = array([1.5, 2.5])
+        input_linear = arange(-2, 3)
+
+        dist_cond = hwn.condition_on_periodic(input_periodic, normalize=False)
+
+        npt.assert_allclose(
+            dist_cond.pdf(input_linear),
+            hwn.pdf(
+                column_stack(
+                    [
+                        input_periodic[0] * ones(input_linear.shape[0]),
+                        input_periodic[1] * ones(input_linear.shape[0]),
+                        input_linear,
+                    ]
+                )
+            ),
+        )
+
+    def test_condition_helpers_accept_python_lists(self):
+        hwn = PartiallyWrappedNormalDistribution(
+            array([1.0, 2.0]), array([[2.0, 0.3], [0.3, 1.0]]), 1
+        )
+        input_periodic = [1.5]
+        input_linear = [2.5]
+        query_points = arange(-2, 3)
+
+        periodic_cond = hwn.condition_on_periodic(input_periodic, normalize=False)
+        linear_cond = hwn.condition_on_linear(input_linear, normalize=False)
+
+        npt.assert_allclose(
+            periodic_cond.pdf(query_points),
+            hwn.pdf(column_stack([input_periodic[0] * ones(5), query_points])),
+        )
+        npt.assert_allclose(
+            linear_cond.pdf(query_points),
+            hwn.pdf(column_stack([query_points, input_linear[0] * ones(5)])),
         )
 
     @unittest.skipIf(

@@ -10,6 +10,11 @@ import numpy as np
 
 from .time_offset import nearest_time_indices
 
+_FEATURE_ROW_COUNT_ERROR = (
+    "features rows must match requested row count; "
+    "features must produce one predicted bias row per measurement"
+)
+
 
 @dataclass(frozen=True)
 class BiasTrainingExamples:
@@ -75,13 +80,15 @@ class SensorBiasCorrectionModel:
         """Predict residual bias for feature rows."""
 
         if self.feature_dim == 0:
-            rows = 1 if n_rows is None else int(n_rows)
+            rows = 1 if n_rows is None else _as_nonnegative_int(n_rows, "n_rows")
             return np.repeat(self.intercept.reshape(1, -1), rows, axis=0)
         if features is None:
             raise ValueError("features are required for a nonconstant bias model")
         x = _as_2d(features, "features")
         if x.shape[1] != self.feature_dim:
             raise ValueError("features have incompatible feature dimension")
+        if n_rows is not None and x.shape[0] != _as_nonnegative_int(n_rows, "n_rows"):
+            raise ValueError("features rows must match requested row count")
         standardized = (x - self.feature_mean) / self.feature_scale
         return self.intercept.reshape(1, -1) + standardized @ self.coefficients
 
@@ -93,7 +100,14 @@ class SensorBiasCorrectionModel:
         values = _as_2d(measurements, "measurements")
         if values.shape[1] != self.target_dim:
             raise ValueError("measurements have incompatible target dimension")
-        bias = self.predict(features, n_rows=values.shape[0])
+        try:
+            bias = self.predict(features, n_rows=values.shape[0])
+        except ValueError as exc:
+            if str(exc) == "features rows must match requested row count":
+                raise ValueError(_FEATURE_ROW_COUNT_ERROR) from exc
+            raise
+        if bias.shape != values.shape:
+            raise ValueError(_FEATURE_ROW_COUNT_ERROR)
         corrected = values.copy()
         valid = np.isfinite(values).all(axis=1) & np.isfinite(bias).all(axis=1)
         corrected[valid] = values[valid] - bias[valid]
@@ -144,7 +158,8 @@ def make_bias_training_examples(
 ) -> BiasTrainingExamples:
     """Match measurements to nearest reference values and compute residual bias."""
 
-    if max_time_delta_s < 0.0:
+    max_time_delta = float(max_time_delta_s)
+    if max_time_delta < 0.0 or np.isnan(max_time_delta):
         raise ValueError("max_time_delta_s must be nonnegative")
     measurement_times = np.asarray(measurement_times_s, dtype=float).reshape(-1)
     measurements = _as_2d(measurement_values, "measurement_values")
@@ -160,7 +175,17 @@ def make_bias_training_examples(
         raise ValueError(
             "measurement_values and reference_values must have the same target dimension"
         )
-    if reference_times.size == 0:
+    if feature_values is None:
+        features = np.empty((measurements.shape[0], 0), dtype=float)
+    else:
+        features = _as_2d(feature_values, "feature_values")
+        if features.shape[0] != measurements.shape[0]:
+            raise ValueError("feature_values rows must match measurement_values rows")
+
+    finite_reference = np.isfinite(reference_times) & np.isfinite(references).all(
+        axis=1
+    )
+    if not finite_reference.any():
         return BiasTrainingExamples(
             measured=np.empty((0, measurements.shape[1])),
             reference=np.empty((0, measurements.shape[1])),
@@ -168,16 +193,14 @@ def make_bias_training_examples(
             features=np.empty(
                 (
                     0,
-                    (
-                        0
-                        if feature_values is None
-                        else _as_2d(feature_values, "feature_values").shape[1]
-                    ),
+                    features.shape[1],
                 )
             ),
             time_delta_s=np.empty(0),
         )
 
+    reference_times = reference_times[finite_reference]
+    references = references[finite_reference]
     order = np.argsort(reference_times)
     reference_times = reference_times[order]
     references = references[order]
@@ -186,16 +209,9 @@ def make_bias_training_examples(
     valid = (
         np.isfinite(measurement_times)
         & np.isfinite(measurements).all(axis=1)
-        & np.isfinite(references[nearest]).all(axis=1)
-        & (delta_s <= float(max_time_delta_s))
+        & (delta_s <= max_time_delta)
     )
-    if feature_values is None:
-        features = np.empty((measurements.shape[0], 0), dtype=float)
-    else:
-        features = _as_2d(feature_values, "feature_values")
-        if features.shape[0] != measurements.shape[0]:
-            raise ValueError("feature_values rows must match measurement_values rows")
-        valid &= np.isfinite(features).all(axis=1)
+    valid &= np.isfinite(features).all(axis=1)
     measured = measurements[valid]
     reference = references[nearest[valid]]
     return BiasTrainingExamples(
@@ -216,18 +232,18 @@ def fit_sensor_bias_correction_from_examples(
 ) -> SensorBiasCorrectionModel:
     """Fit a ridge-linear bias model from prepared examples."""
 
-    if ridge_alpha < 0.0:
-        raise ValueError("ridge_alpha must be nonnegative")
-    if min_samples < 1:
-        raise ValueError("min_samples must be positive")
+    ridge_alpha = _as_nonnegative_finite_float(ridge_alpha, "ridge_alpha")
+    min_samples = _as_positive_int(min_samples, "min_samples")
     y = _as_2d(examples.residual, "examples.residual")
     x = _as_2d(examples.features, "examples.features")
+    if x.shape[0] != y.shape[0]:
+        raise ValueError("examples.features rows must match examples.residual rows")
     valid = np.isfinite(y).all(axis=1) & np.isfinite(x).all(axis=1)
     y = y[valid]
     x = x[valid]
     if y.shape[0] == 0:
         raise ValueError("no finite bias training examples")
-    if x.shape[0] < int(min_samples):
+    if x.shape[0] < min_samples:
         x = np.empty((y.shape[0], 0), dtype=float)
 
     feature_mean = _nanmean_or_zero(x)
@@ -237,7 +253,7 @@ def fit_sensor_bias_correction_from_examples(
     )
     standardized = (x - feature_mean) / feature_scale if x.shape[1] else x
     design = np.column_stack([np.ones(y.shape[0]), standardized])
-    regularizer = np.eye(design.shape[1]) * float(ridge_alpha)
+    regularizer = np.eye(design.shape[1]) * ridge_alpha
     regularizer[0, 0] = 0.0
     lhs = design.T @ design + regularizer
     rhs = design.T @ y
@@ -256,7 +272,7 @@ def fit_sensor_bias_correction_from_examples(
         feature_scale=feature_scale,
         residual_std=residual_std,
         training_count=int(y.shape[0]),
-        ridge_alpha=float(ridge_alpha),
+        ridge_alpha=ridge_alpha,
         metadata={} if metadata is None else dict(metadata),
     )
 
@@ -298,6 +314,49 @@ def _as_2d(values: np.ndarray, name: str) -> np.ndarray:
     if out.ndim != 2:
         raise ValueError(f"{name} must be one- or two-dimensional")
     return out
+
+
+def _as_nonnegative_int(value: Any, name: str) -> int:
+    arr = np.asarray(value)
+    if arr.ndim != 0 or arr.dtype == np.bool_:
+        raise ValueError(f"{name} must be a nonnegative integer")
+    scalar = arr.item()
+    if isinstance(scalar, (int, np.integer)) and not isinstance(scalar, bool):
+        result = int(scalar)
+    elif (
+        isinstance(scalar, (float, np.floating))
+        and np.isfinite(scalar)
+        and float(scalar).is_integer()
+    ):
+        result = int(scalar)
+    else:
+        raise ValueError(f"{name} must be a nonnegative integer")
+    if result < 0:
+        raise ValueError(f"{name} must be a nonnegative integer")
+    return result
+
+
+def _as_positive_int(value: Any, name: str) -> int:
+    result = _as_nonnegative_int(value, name)
+    if result <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return result
+
+
+def _as_nonnegative_finite_float(value: Any, name: str) -> float:
+    arr = np.asarray(value)
+    if arr.ndim != 0 or arr.dtype == np.bool_:
+        raise ValueError(f"{name} must be a nonnegative finite scalar")
+    scalar = arr.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a nonnegative finite scalar")
+    try:
+        result = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a nonnegative finite scalar") from exc
+    if not np.isfinite(result) or result < 0.0:
+        raise ValueError(f"{name} must be a nonnegative finite scalar")
+    return result
 
 
 def _nanmean_or_zero(values: np.ndarray) -> np.ndarray:

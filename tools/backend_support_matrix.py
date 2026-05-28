@@ -38,9 +38,9 @@ CAPABILITIES: tuple[BackendCapability, ...] = (
         "backend.random",
         "Weighted choice without replacement",
         "yes",
-        "no",
+        "yes",
         "partial",
-        "PyTorch backend intentionally rejects weighted sampling without replacement.",
+        "PyTorch support is smoke-tested with probability vectors via torch.multinomial.",
     ),
     BackendCapability(
         "distributions",

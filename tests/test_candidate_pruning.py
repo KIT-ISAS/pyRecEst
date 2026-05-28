@@ -82,7 +82,7 @@ class TestCandidatePruning(unittest.TestCase):
         npt.assert_array_equal(mask, np.array([[True, True], [True, False]]))
 
     def test_mapping_config_normalization_and_validation(self):
-        cfg = candidate_pruning_config_from_mapping({"row_top_k": 2})
+        cfg = candidate_pruning_config_from_mapping({"row_top_k": np.array(2.0)})
         self.assertIsInstance(cfg, CandidatePruningConfig)
         self.assertEqual(cfg.row_top_k, 2)
 
@@ -98,6 +98,18 @@ class TestCandidatePruning(unittest.TestCase):
                 probability_matrix=np.array([[0.5, 0.5]]),
                 config=CandidatePruningConfig(probability_threshold=0.4),
             )
+
+    def test_top_k_rejects_non_integer_values(self):
+        invalid_top_k_values = (True, 1.5, np.nan, np.inf, np.array([1]))
+
+        for field_name in ("row_top_k", "column_top_k"):
+            for value in invalid_top_k_values:
+                with self.subTest(field_name=field_name, value=value):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        f"{field_name} must be a positive integer or None",
+                    ):
+                        CandidatePruningConfig(**{field_name: value})
 
 
 if __name__ == "__main__":

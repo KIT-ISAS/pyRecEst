@@ -79,6 +79,14 @@ class GaussianDistributionTest(unittest.TestCase):
             ),
         )
 
+    def test_sample_rejects_invalid_count(self):
+        g = GaussianDistribution(array([1.0, 2.0, 3.0]), diag(array([1.0, 1.0, 1.0])))
+
+        for n in (0, -1, 1.5, True):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    g.sample(n)
+
     def test_rejects_nonsymmetric_2d_covariance(self):
         mu = array([0.0, 0.0])
         C = array([[1.0, 10.0], [0.0, 1.0]])

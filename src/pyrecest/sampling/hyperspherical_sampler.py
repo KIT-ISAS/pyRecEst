@@ -3,12 +3,14 @@ from abc import abstractmethod
 from math import ceil
 
 # pylint: disable=no-name-in-module,no-member
+import numpy as np
 from pyrecest import backend
 from pyrecest.backend import (
     arange,
     arccos,
     arctan2,
     array,
+    clip,
     column_stack,
     cos,
     deg2rad,
@@ -33,6 +35,54 @@ from ..distributions.hypersphere_subset.hyperspherical_uniform_distribution impo
 from .abstract_sampler import AbstractSampler
 from .hypertoroidal_sampler import CircularUniformSampler
 from .leopardi_sampler import get_partition_points_cartesian
+
+
+def _validate_positive_integral_scalar(value, name: str) -> int:
+    scalar = np.asarray(value)
+    if scalar.ndim != 0:
+        raise ValueError(f"{name} must be a scalar integer")
+
+    scalar_value = scalar.item()
+    if isinstance(scalar_value, (bool, np.bool_)):
+        raise ValueError(f"{name} must be an integer, not a boolean")
+
+    try:
+        integer_value = int(scalar_value)
+        float_value = float(scalar_value)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+    if not np.isfinite(float_value) or not float_value.is_integer():
+        raise ValueError(f"{name} must be a finite integer")
+    if integer_value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return integer_value
+
+
+def _normalize_fibonacci_hopf_grid_density_parameter(grid_density_parameter):
+    if np.asarray(grid_density_parameter).ndim == 0:
+        return [
+            _validate_positive_integral_scalar(
+                grid_density_parameter, "grid_density_parameter"
+            )
+        ]
+
+    try:
+        grid_density_values = list(grid_density_parameter)
+    except TypeError as exc:
+        raise ValueError(
+            "grid_density_parameter must be a scalar or contain one or two entries"
+        ) from exc
+
+    if len(grid_density_values) not in (1, 2):
+        raise ValueError(
+            "grid_density_parameter must be a scalar or contain one or two entries"
+        )
+
+    return [
+        _validate_positive_integral_scalar(value, f"grid_density_parameter[{index}]")
+        for index, value in enumerate(grid_density_values)
+    ]
 
 
 def _validate_grid_dim(name: str, dim: int, expected_dim: int) -> None:
@@ -182,10 +232,8 @@ class SphericalCoordinatesBasedFixedResolutionSampler(
             raise ValueError(
                 "grid_density_parameter must contain exactly two entries"
             ) from exc
-        res_lon = int(res_lon)
-        res_lat = int(res_lat)
-        if res_lon <= 0 or res_lat <= 0:
-            raise ValueError("grid resolution entries must be positive")
+        res_lon = _validate_positive_integral_scalar(res_lon, "res_lon")
+        res_lat = _validate_positive_integral_scalar(res_lat, "res_lat")
         phi_values = linspace(0.0, 2 * pi, num=res_lon, endpoint=False)
         theta_values = linspace(pi / (res_lat + 1), pi, num=res_lat, endpoint=False)
         phi_theta_stacked = array(list(itertools.product(phi_values, theta_values)))
@@ -300,12 +348,15 @@ class DriscollHealySampler(AbstractSphericalCoordinatesBasedSampler):
 
 class SphericalFibonacciSampler(AbstractSphericalCoordinatesBasedSampler):
     def get_grid_spherical_coordinates(self, grid_density_parameter: int):
-        indices = arange(0, grid_density_parameter, dtype=float) + 0.5
+        n_samples = _validate_positive_integral_scalar(
+            grid_density_parameter, "grid_density_parameter"
+        )
+        indices = arange(0, n_samples, dtype=float) + 0.5
         phi = pi * (1 + 5**0.5) * indices
-        theta = arccos(1 - 2 * indices / grid_density_parameter)
+        theta = arccos(1 - 2 * indices / n_samples)
         grid_specific_description = {
             "scheme": "spherical_fibonacci",
-            "n_samples": grid_density_parameter,
+            "n_samples": n_samples,
         }
         return phi, theta, grid_specific_description
 
@@ -343,7 +394,7 @@ class AbstractHopfBasedS3Sampler(AbstractHypersphericalUniformSampler):
 
     @staticmethod
     def quaternion_to_hopf_yershova(q):
-        θ = 2 * arccos(sqrt(q[:, 0] ** 2 + q[:, 1] ** 2))
+        θ = 2 * arccos(clip(sqrt(q[:, 0] ** 2 + q[:, 1] ** 2), 0.0, 1.0))
         ϕ = arctan2(q[:, 3], q[:, 2]) - arctan2(q[:, 1], q[:, 0])
         ψ = 2 * arctan2(q[:, 1], q[:, 0])
         return θ, ϕ, ψ
@@ -409,8 +460,9 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         First parameter is the number of points on the sphere, second parameter is the number of points on the circle.
         """
         _validate_grid_dim("FibonacciHopfSampler", dim, 3)
-        if isinstance(grid_density_parameter, int):
-            grid_density_parameter = [grid_density_parameter]
+        grid_density_parameter = _normalize_fibonacci_hopf_grid_density_parameter(
+            grid_density_parameter
+        )
 
         s3_points_list = []
 
@@ -424,9 +476,9 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         # Step 2: Discretize the unit circle using the circular grid
         circular_sampler = CircularUniformSampler()
         if len(grid_density_parameter) == 2:
-            n_sample_circle = int(grid_density_parameter[1])
+            n_sample_circle = grid_density_parameter[1]
         else:
-            n_sample_circle = int(ceil(float(grid_density_parameter[0]) ** 0.5))
+            n_sample_circle = int(ceil(grid_density_parameter[0] ** 0.5))
         psi_points = circular_sampler.get_grid(n_sample_circle)
 
         # Step 3: Combine the two grids to generate a grid for S3

@@ -1,6 +1,6 @@
 """Pytorch based computation backend."""
 
-from collections.abc import Iterable as _Iterable
+import builtins as _builtins
 
 import numpy as _np
 import torch as _torch
@@ -198,6 +198,111 @@ def cov(input, correction=1, fweights=None, aweights=None, bias=False):
     return cov_matrix
 
 
+def _quantile_q(q, x):
+    if _torch.is_tensor(q):
+        return q.to(device=x.device, dtype=x.dtype)
+    if _np.isscalar(q):
+        return float(q)
+    return _torch.as_tensor(q, dtype=x.dtype, device=x.device)
+
+
+def _quantile_q_shape(q):
+    if _torch.is_tensor(q):
+        return tuple(q.shape)
+    return tuple(_np.shape(q))
+
+
+def quantile(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=False,
+    *,
+    dim=None,
+    keepdim=None,
+    interpolation=None,
+):
+    """Return quantiles using NumPy-compatible argument names."""
+    del overwrite_input
+
+    if dim is not None:
+        if axis is not None and axis != dim:
+            raise TypeError("quantile() got both 'axis' and 'dim'")
+        axis = dim
+    if keepdim is not None:
+        if keepdims is not False and keepdims != keepdim:
+            raise TypeError("quantile() got both 'keepdims' and 'keepdim'")
+        keepdims = keepdim
+    if interpolation is not None:
+        method = interpolation
+
+    x = array(a)
+    if is_complex(x):
+        raise TypeError("a must be an array of real numbers")
+    if not is_floating(x):
+        x = cast(x, dtype=get_default_dtype())
+
+    q_arg = _quantile_q(q, x)
+    q_shape = _quantile_q_shape(q)
+
+    if axis is None or isinstance(axis, (int, _np.integer)):
+        kwargs = {"dim": axis, "keepdim": keepdims, "interpolation": method}
+        if out is not None:
+            kwargs["out"] = out
+        return _torch.quantile(x, q_arg, **kwargs)
+
+    axes = _normalize_reduction_axes(axis, x.ndim)
+    if not axes:
+        result = x
+        if q_shape:
+            result = _torch.broadcast_to(result, q_shape + tuple(x.shape))
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
+    remaining_axes = tuple(dim for dim in range(x.ndim) if dim not in axes)
+    permuted = x.permute(axes + remaining_axes)
+    reduced_size = int(_np.prod([x.shape[dim] for dim in axes]))
+    reduced = permuted.reshape(
+        (reduced_size,) + tuple(x.shape[dim] for dim in remaining_axes)
+    )
+    result = _torch.quantile(reduced, q_arg, dim=0, interpolation=method)
+
+    if keepdims:
+        result = result.reshape(
+            q_shape + tuple(1 if dim in axes else x.shape[dim] for dim in range(x.ndim))
+        )
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def count_nonzero(a, axis=None, keepdims=False):
+    """Count non-zero entries using NumPy-compatible reduction semantics."""
+    x = array(a)
+    if axis is None:
+        result = _torch.count_nonzero(x)
+        if keepdims:
+            return result.reshape((1,) * x.ndim)
+        return result
+
+    counts = (x != 0).to(dtype=_torch.int64)
+    result = _reduce_over_axes(
+        counts, axis, lambda values, one_axis: _torch.sum(values, dim=one_axis)
+    )
+    if keepdims:
+        axes = _normalize_reduction_axes(axis, x.ndim)
+        result = result.reshape(
+            tuple(1 if dim in axes else x.shape[dim] for dim in range(x.ndim))
+        )
+    return result
+
+
 def has_autodiff():
     """If allows for automatic differentiation.
 
@@ -213,6 +318,8 @@ def isscalar(x):
 
 
 def matmul(x, y, out=None):
+    x = array(x)
+    y = array(y)
     for array_ in [x, y]:
         if array_.ndim == 1:
             raise ValueError("ndims must be >=2")
@@ -261,40 +368,97 @@ def less_equal(x, y, **kwargs):
     return _torch.le(x, y, **kwargs)
 
 
+def _slice_along_axis(x, start, stop, axis):
+    index = [slice(None)] * x.ndim
+    index[axis] = slice(start, stop)
+    return x[tuple(index)]
+
+
 def split(x, indices_or_sections, axis=0):
-    if isinstance(indices_or_sections, int):
-        indices_or_sections = x.shape[axis] // indices_or_sections
-        return _torch.split(x, indices_or_sections, dim=axis)
-    indices_or_sections = _np.asarray(indices_or_sections)
-    intervals_length = indices_or_sections[1:] - indices_or_sections[:-1]
-    last_interval_length = x.shape[axis] - indices_or_sections[-1]
-    if last_interval_length > 0:
-        intervals_length = _np.append(intervals_length, last_interval_length)
-    intervals_length = _np.insert(intervals_length, 0, indices_or_sections[0])
-    return _torch.split(x, tuple(intervals_length), dim=axis)
+    if not _torch.is_tensor(x):
+        x = array(x)
+
+    axis_length = x.shape[axis]
+    if isinstance(indices_or_sections, (int, _np.integer)):
+        n_sections = int(indices_or_sections)
+        if n_sections <= 0:
+            raise ValueError("number sections must be larger than 0")
+        if axis_length % n_sections != 0:
+            raise ValueError("array split does not result in an equal division")
+
+        section_length = axis_length // n_sections
+        return tuple(
+            _slice_along_axis(
+                x,
+                section_index * section_length,
+                (section_index + 1) * section_length,
+                axis,
+            )
+            for section_index in range(n_sections)
+        )
+
+    cut_indices = _np.asarray(indices_or_sections)
+    if cut_indices.ndim == 0:
+        return split(x, int(cut_indices), axis=axis)
+    if cut_indices.ndim != 1:
+        raise ValueError("indices_or_sections must be a 1-D sequence")
+
+    bounds = [None, *(int(index) for index in cut_indices.tolist()), None]
+    return tuple(
+        _slice_along_axis(x, start, stop, axis)
+        for start, stop in zip(bounds, bounds[1:])
+    )
 
 
 def logical_and(x, y):
-    if _torch.is_tensor(x) or _torch.is_tensor(y):
-        return x * y
-    return x and y
+    device = None
+    if _torch.is_tensor(x):
+        device = x.device
+    elif _torch.is_tensor(y):
+        device = y.device
+    return _torch.logical_and(
+        _torch.as_tensor(x, device=device),
+        _torch.as_tensor(y, device=device),
+    )
+
+
+def _normalize_reduction_axes(axis, ndim_):
+    if isinstance(axis, (int, _np.integer)):
+        axis = (axis,)
+    else:
+        axis = tuple(axis)
+
+    normalized_axes = tuple(
+        one_axis + ndim_ if one_axis < 0 else one_axis for one_axis in axis
+    )
+    if len(set(normalized_axes)) != len(normalized_axes):
+        raise ValueError("duplicate value in 'axis'")
+
+    for one_axis, normalized_axis in zip(axis, normalized_axes):
+        if normalized_axis < 0 or normalized_axis >= ndim_:
+            raise IndexError(
+                f"axis {one_axis} is out of bounds for array of dimension {ndim_}"
+            )
+
+    return normalized_axes
+
+
+def _reduce_over_axes(x, axis, reducer):
+    result = x
+    for one_axis in sorted(_normalize_reduction_axes(axis, x.ndim), reverse=True):
+        result = reducer(result, one_axis)
+    return result
 
 
 def any(x, axis=None):
     if not _torch.is_tensor(x):
         x = _torch.tensor(x)
+    x = x.bool()
     if axis is None:
         return _torch.any(x)
-    if isinstance(axis, int):
-        return _torch.any(x.bool(), axis)
-    if len(axis) == 1:
-        return _torch.any(x, *axis)
-    axis = list(axis)
-    for i_axis, one_axis in enumerate(axis):
-        if one_axis < 0:
-            axis[i_axis] = ndim(x) + one_axis
-    new_axis = tuple(k - 1 if k >= 0 else k for k in axis[1:])
-    return any(_torch.any(x.bool(), axis[0]), new_axis)
+    return _reduce_over_axes(
+        x, axis, lambda values, one_axis: _torch.any(values, dim=one_axis)
+    )
 
 
 def flip(x, axis):
@@ -313,18 +477,12 @@ def concatenate(seq, axis=0, out=None):
 def all(x, axis=None):
     if not _torch.is_tensor(x):
         x = _torch.tensor(x)
+    x = x.bool()
     if axis is None:
-        return x.bool().all()
-    if isinstance(axis, int):
-        return _torch.all(x.bool(), axis)
-    if len(axis) == 1:
-        return _torch.all(x, *axis)
-    axis = list(axis)
-    for i_axis, one_axis in enumerate(axis):
-        if one_axis < 0:
-            axis[i_axis] = ndim(x) + one_axis
-    new_axis = tuple(k - 1 if k >= 0 else k for k in axis[1:])
-    return all(_torch.all(x.bool(), axis[0]), new_axis)
+        return _torch.all(x)
+    return _reduce_over_axes(
+        x, axis, lambda values, one_axis: _torch.all(values, dim=one_axis)
+    )
 
 
 def get_slice(x, indices):
@@ -396,9 +554,12 @@ def shape(val):
 
 
 def max(a, axis=None):
+    a = array(a)
     if axis is None:
-        return _torch.max(array(a))
-    return _torch.max(array(a), dim=axis).values
+        return _torch.max(a)
+    return _reduce_over_axes(
+        a, axis, lambda values, one_axis: _torch.max(values, dim=one_axis).values
+    )
 
 
 amax = max
@@ -567,10 +728,9 @@ def ndim(x):
     return x.dim()
 
 
-def hsplit(x, indices_or_section):
-    if isinstance(indices_or_section, int):
-        indices_or_section = x.shape[-1] // indices_or_section
-    return _torch.split(x, indices_or_section, dim=-1)
+def hsplit(x, indices_or_sections):
+    axis = 0 if ndim(x) == 1 else 1
+    return split(x, indices_or_sections, axis=axis)
 
 
 def diagonal(x, offset=0, axis1=0, axis2=1):
@@ -596,30 +756,46 @@ def set_diag(x, new_diag):
     This mimics tensorflow.linalg.set_diag(x, new_diag), when new_diag is a
     1-D array, but modifies x instead of creating a copy.
     """
-    arr_shape = x.shape
-    off_diag = (1 - _torch.eye(arr_shape[-1])) * x
-    diag = _torch.einsum("ij,...i->...ij", _torch.eye(new_diag.shape[-1]), new_diag)
-    return diag + off_diag
+    diag_len = _builtins.min(x.shape[-2], x.shape[-1])
+    result = x.clone()
+    diag_indices = _torch.arange(diag_len, device=x.device)
+    values = _torch.as_tensor(new_diag, dtype=x.dtype, device=x.device)
+    result[..., diag_indices, diag_indices] = values
+    return result
 
 
 def prod(x, axis=None):
     x = array(x)
     if axis is None:
         return _torch.prod(x)
-    return _torch.prod(x, dim=axis)
+    return _reduce_over_axes(
+        x, axis, lambda values, one_axis: _torch.prod(values, dim=one_axis)
+    )
 
 
 def where(condition, x=None, y=None):
+    device = next(
+        (value.device for value in (x, y, condition) if _torch.is_tensor(value)),
+        None,
+    )
     if not _torch.is_tensor(condition):
-        condition = array(condition)
+        condition = _torch.as_tensor(condition, dtype=_torch.bool, device=device)
+    else:
+        condition = condition.to(device=device, dtype=_torch.bool)
 
     if x is None and y is None:
         return _torch.where(condition)
     if not _torch.is_tensor(x):
-        x = _torch.tensor(x)
+        x = _torch.as_tensor(x, device=device)
+    elif device is not None:
+        x = x.to(device=device)
     if not _torch.is_tensor(y):
-        y = _torch.tensor(y)
-    y = cast(y, x.dtype)
+        y = _torch.as_tensor(y, device=device)
+    elif device is not None:
+        y = y.to(device=device)
+    result_dtype = _torch.result_type(x, y)
+    x = x.to(dtype=result_dtype)
+    y = y.to(dtype=result_dtype)
     return _torch.where(condition, x, y)
 
 
@@ -627,6 +803,8 @@ def _is_boolean(x):
     if isinstance(x, bool):
         return True
     if isinstance(x, (tuple, list)):
+        if not x:
+            return False
         return _is_boolean(x[0])
     if _torch.is_tensor(x):
         return x.dtype in [_torch.bool, _torch.uint8]
@@ -639,6 +817,74 @@ def _is_iterable(x):
     if _torch.is_tensor(x):
         return ndim(x) > 0
     return False
+
+
+def _as_assignment_values(values, x):
+    if _torch.is_tensor(values):
+        return values.to(device=x.device, dtype=x.dtype)
+    return _torch.as_tensor(values, dtype=x.dtype, device=x.device)
+
+
+def _assignment_value_length(values):
+    return len(values) if _is_iterable(values) else 1
+
+
+def _is_scalar_index(index):
+    return isinstance(index, (int, _np.integer)) or (
+        _torch.is_tensor(index) and index.ndim == 0
+    )
+
+
+def _assignment_index_length(indices, zip_indices):
+    if zip_indices:
+        return len(indices)
+    if isinstance(indices, tuple) and _builtins.all(
+        _is_scalar_index(index) for index in indices
+    ):
+        return 1
+    return len(indices) if _is_iterable(indices) else 1
+
+
+def _contains_slice(indices):
+    if isinstance(indices, slice):
+        return True
+    if isinstance(indices, tuple):
+        return _builtins.any(isinstance(index, slice) for index in indices)
+    return False
+
+
+def _as_assignment_index(index, *, device):
+    if _torch.is_tensor(index):
+        if index.dtype in [_torch.bool, _torch.uint8]:
+            return index.to(device=device)
+        return index.to(device=device, dtype=_torch.long)
+    return _torch.as_tensor(index, dtype=_torch.long, device=device)
+
+
+def _normalize_index_put_indices(indices, *, device):
+    index_seq = indices if isinstance(indices, tuple) else (indices,)
+    return tuple(_as_assignment_index(index, device=device) for index in index_seq)
+
+
+def _as_boolean_index(indices, *, device):
+    if _torch.is_tensor(indices):
+        return indices.to(device=device, dtype=_torch.bool)
+    return _torch.as_tensor(indices, dtype=_torch.bool, device=device)
+
+
+def _apply_assignment(x_new, indices, values, *, accumulate):
+    if _contains_slice(indices):
+        if accumulate:
+            x_new[indices] += values
+        else:
+            x_new[indices] = values
+        return x_new
+    x_new.index_put_(
+        _normalize_index_put_indices(indices, device=x_new.device),
+        values,
+        accumulate=accumulate,
+    )
+    return x_new
 
 
 def assignment(x, values, indices, axis=0):
@@ -669,22 +915,28 @@ def assignment(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(x)
+    values = _as_assignment_values(values, x_new)
 
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
     if _is_boolean(indices):
+        indices = _as_boolean_index(indices, device=x_new.device)
         x_new[indices] = values
         return x_new
-    zip_indices = _is_iterable(indices) and _is_iterable(indices[0])
-    len_indices = len(indices) if _is_iterable(indices) else 1
+    zip_indices = (
+        _is_iterable(indices) and len(indices) > 0 and _is_iterable(indices[0])
+    )
+    len_indices = _assignment_index_length(indices, zip_indices)
     if zip_indices:
         indices = tuple(zip(*indices))
     if not use_vectorization:
-        if not zip_indices:
-            len_indices = len(indices) if _is_iterable(indices) else 1
-        len_values = len(values) if _is_iterable(values) else 1
-        if len_values > 1 and len_values != len_indices:
+        len_values = _assignment_value_length(values)
+        if (
+            not _contains_slice(indices)
+            and len_values > 1
+            and len_values != len_indices
+        ):
             raise ValueError("Either one value or as many values as indices")
-        x_new[indices] = values
+        _apply_assignment(x_new, indices, values, accumulate=False)
     else:
         indices = tuple(list(indices[:axis]) + [slice(None)] + list(indices[axis:]))
         x_new[indices] = values
@@ -719,20 +971,27 @@ def assignment_by_sum(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(x)
-    values = array(values)
+    values = _as_assignment_values(values, x_new)
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
     if _is_boolean(indices):
+        indices = _as_boolean_index(indices, device=x_new.device)
         x_new[indices] += values
         return x_new
-    zip_indices = _is_iterable(indices) and _is_iterable(indices[0])
+    zip_indices = (
+        _is_iterable(indices) and len(indices) > 0 and _is_iterable(indices[0])
+    )
+    len_indices = _assignment_index_length(indices, zip_indices)
     if zip_indices:
-        indices = list(zip(*indices))
+        indices = tuple(zip(*indices))
     if not use_vectorization:
-        len_indices = len(indices) if _is_iterable(indices) else 1
-        len_values = len(values) if _is_iterable(values) else 1
-        if len_values > 1 and len_values != len_indices:
+        len_values = _assignment_value_length(values)
+        if (
+            not _contains_slice(indices)
+            and len_values > 1
+            and len_values != len_indices
+        ):
             raise ValueError("Either one value or as many values as indices")
-        x_new[indices] += values
+        _apply_assignment(x_new, indices, values, accumulate=True)
     else:
         indices = tuple(list(indices[:axis]) + [slice(None)] + list(indices[axis:]))
         x_new[indices] += values
@@ -740,7 +999,9 @@ def assignment_by_sum(x, values, indices, axis=0):
 
 
 def copy(x):
-    return x.clone()
+    if _torch.is_tensor(x):
+        return x.clone()
+    return _np.copy(x)
 
 
 def cumsum(x, axis=None, dtype=None):
@@ -866,35 +1127,85 @@ def min(a, axis=None):
 amin = min
 
 
-def take(a, indices, axis=0):
+def _normalize_take_axis(axis, ndim_):
+    if axis is None:
+        return None
+    axis = int(axis)
+    if axis < 0:
+        axis += ndim_
+    if axis < 0 or axis >= ndim_:
+        raise IndexError(f"axis {axis} is out of bounds for array of dimension {ndim_}")
+    return axis
+
+
+def _normalize_take_indices(indices, axis_size, mode):
+    if mode is None:
+        mode = "raise"
+    if mode == "raise":
+        if _torch.any((indices >= axis_size) | (indices < -axis_size)):
+            raise IndexError("index out of bounds")
+        return _torch.remainder(indices, axis_size)
+    if mode == "wrap":
+        if axis_size == 0 and indices.numel():
+            raise IndexError("cannot do a non-empty take from an empty axis")
+        return _torch.remainder(indices, axis_size) if axis_size else indices
+    if mode == "clip":
+        if axis_size == 0 and indices.numel():
+            raise IndexError("cannot do a non-empty take from an empty axis")
+        return _torch.clamp(indices, 0, axis_size - 1) if axis_size else indices
+    raise ValueError("mode must be one of 'raise', 'wrap', or 'clip'")
+
+
+def take(a, indices, axis=None, out=None, mode=None):
     a = array(a)
+    axis = _normalize_take_axis(axis, a.ndim)
+    if axis is None:
+        a = _torch.flatten(a)
+        axis = 0
+
     if not _torch.is_tensor(indices):
         indices = _torch.as_tensor(indices, dtype=_torch.long, device=a.device)
     else:
         indices = indices.to(device=a.device, dtype=_torch.long)
 
     scalar_index = indices.ndim == 0
+    indices_shape = tuple(indices.shape)
+    flat_indices = indices.reshape(-1)
+    flat_indices = _normalize_take_indices(flat_indices, a.shape[axis], mode)
+
+    result = _torch.index_select(a, axis, flat_indices)
     if scalar_index:
-        indices = indices.reshape(1)
-
-    result = _torch.index_select(a, axis, indices)
-    return _torch.squeeze(result, dim=axis) if scalar_index else result
-
-
-def _unnest_iterable(ls):
-    out = []
-    if isinstance(ls, _Iterable):
-        for inner_ls in ls:
-            out.extend(_unnest_iterable(inner_ls))
+        result = _torch.squeeze(result, dim=axis)
     else:
-        out.append(ls)
+        result = result.reshape(
+            tuple(a.shape[:axis]) + indices_shape + tuple(a.shape[axis + 1 :])
+        )
 
-    return out
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def _torch_pad_width(pad_width, ndim_):
+    try:
+        pad_pairs = _np.broadcast_to(_np.asarray(pad_width), (ndim_, 2))
+    except ValueError as exc:
+        raise ValueError(
+            f"pad_width must be broadcastable to shape ({ndim_}, 2)"
+        ) from exc
+
+    if _np.any(pad_pairs < 0):
+        raise ValueError("index can't contain negative values")
+
+    return [int(value) for pair in reversed(pad_pairs.tolist()) for value in pair]
 
 
 def pad(a, pad_width, mode="constant", constant_values=0.0):
+    a = array(a)
+    torch_pad_width = _torch_pad_width(pad_width, a.ndim)
     return _torch.nn.functional.pad(
-        a, _unnest_iterable(reversed(pad_width)), mode=mode, value=constant_values
+        a, torch_pad_width, mode=mode, value=constant_values
     )
 
 
@@ -929,10 +1240,10 @@ def dot(a, b):
         return _torch.dot(a, b)
 
     if b.ndim == 1:
-        return _torch.tensordot(a, b, dims=1)
+        return _torch.einsum("...i,i->...", a, b)
 
     if a.ndim == 1:
-        return _torch.tensordot(a, b.T, dims=1)
+        return _torch.einsum("i,...i->...", a, b)
 
     return _torch.einsum("...i,...i->...", a, b)
 

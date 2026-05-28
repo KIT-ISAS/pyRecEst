@@ -1,8 +1,30 @@
 # pylint: disable=no-name-in-module,no-member
-from beartype import beartype
-from pyrecest.backend import concatenate, empty, hstack, prod
+import numpy as np
+from pyrecest.backend import concatenate, hstack, prod, stack
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
+
+
+def _validate_positive_sample_count(n) -> int:
+    count_array = np.asarray(n)
+    if count_array.ndim != 0:
+        raise ValueError("n must be a scalar integer")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n must be an integer, not a boolean")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n must be an integer") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n must be a finite integer")
+    if count_int <= 0:
+        raise ValueError("n must be positive")
+    return count_int
 
 
 class CartProdStackedDistribution(AbstractCartProdDistribution):
@@ -10,26 +32,33 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         self.dists = dists
         AbstractCartProdDistribution.__init__(self, sum(dist.dim for dist in dists))
 
-    @beartype
     def sample(self, n: int):
-        assert n > 0, "n must be positive"
+        n = _validate_positive_sample_count(n)
         return hstack([dist.sample(n) for dist in self.dists])
 
     def pdf(self, xs):
-        ps = empty((len(self.dists), xs.shape[1]))
+        ps = []
         next_dim = 0
-        for i, dist in enumerate(self.dists):
-            ps[i, :] = dist.pdf(xs[next_dim : next_dim + dist.dim, :])  # noqa: E203
-            next_dim += dist.dim
-        return prod(ps, axis=0)
+        for dist in self.dists:
+            next_input_dim = next_dim + dist.input_dim
+            if xs.ndim == 1:
+                xs_curr = xs[next_dim:next_input_dim]
+            else:
+                xs_curr = xs[:, next_dim:next_input_dim]
+            ps.append(dist.pdf(xs_curr))
+            next_dim = next_input_dim
+        return prod(stack(ps), axis=0)
 
     def shift(self, shift_by):
         assert len(shift_by) == self.dim, "Incorrect number of offsets"
-        shifted_dists = [
-            dist.shift(shift_by[curr_dim : curr_dim + dist.dim])  # noqa: E203
-            for curr_dim, dist in enumerate(self.dists)
-        ]
-        return CartProdStackedDistribution(shifted_dists)
+        shifted_dists = []
+        curr_dim = 0
+        for dist in self.dists:
+            shifted_dists.append(
+                dist.shift(shift_by[curr_dim : curr_dim + dist.dim])  # noqa: E203
+            )
+            curr_dim += dist.dim
+        return self.__class__(shifted_dists)
 
     def set_mode(self, new_mode):
         new_dists = []
@@ -39,7 +68,7 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
                 dist.set_mode(new_mode[curr_ind : curr_ind + dist.dim])  # noqa: E203
             )
             curr_ind += dist.dim
-        return CartProdStackedDistribution(new_dists)
+        return self.__class__(new_dists)
 
     def hybrid_mean(self):
         return concatenate([dist.mean() for dist in self.dists])

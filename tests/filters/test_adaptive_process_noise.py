@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from pyrecest.filters.adaptive_process_noise import (
     AdaptiveProcessNoiseConfig,
     RollingNISProcessNoiseAdapter,
@@ -26,3 +27,42 @@ def test_rolling_adapter_updates_source_ratio_and_scales_covariance():
     assert np.isclose(ratio, 3.0)
     scaled = adapter.scaled_covariance(np.eye(2), {"radar": 1.0})
     assert np.allclose(scaled, np.eye(2) * adapter.scale({"radar": 1.0}))
+
+
+def test_config_normalizes_scalar_numeric_values():
+    config = AdaptiveProcessNoiseConfig(
+        base_scale=np.array(1.25),
+        min_scale=np.array(0.5),
+        max_scale=np.array(2.5),
+        ewma_alpha=np.array(0.25),
+        high_nis_ratio=np.array(1.5),
+        low_nis_ratio=np.array(0.5),
+        scale_gain=np.array(0.75),
+    )
+
+    assert config.base_scale == 1.25
+    assert config.min_scale == 0.5
+    assert config.max_scale == 2.5
+    assert config.ewma_alpha == 0.25
+    assert config.high_nis_ratio == 1.5
+    assert config.low_nis_ratio == 0.5
+    assert config.scale_gain == 0.75
+
+
+def test_config_rejects_nonfinite_or_nonscalar_values():
+    invalid_values = (np.nan, np.inf, -np.inf, True, np.array([1.0]))
+
+    for field_name in (
+        "base_scale",
+        "min_scale",
+        "max_scale",
+        "ewma_alpha",
+        "high_nis_ratio",
+        "low_nis_ratio",
+        "scale_gain",
+    ):
+        for value in invalid_values:
+            with pytest.raises(
+                ValueError, match=f"{field_name} must be a finite scalar"
+            ):
+                AdaptiveProcessNoiseConfig(**{field_name: value})

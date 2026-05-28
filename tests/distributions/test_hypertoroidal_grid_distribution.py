@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -119,6 +120,29 @@ class HypertoroidalGridDistributionTest(unittest.TestCase):
             max(hgd.get_grid(), 0), array([30 / 31 * 2 * pi, 30 / 31 * 2 * pi])
         )
         self.assertEqual(hgd.grid_type, "cartesian_prod")
+
+    def test_from_distribution_rejects_invalid_grid_resolution_counts(self):
+        dist = HypertoroidalWrappedNormalDistribution(
+            array([0.0, 0.0]), array([[1.0, 0.0], [0.0, 1.0]])
+        )
+
+        valid = HypertoroidalGridDistribution.from_distribution(
+            dist, (np.int64(3), np.int64(4))
+        )
+
+        self.assertEqual(valid.grid_values.shape, (3, 4))
+
+        invalid_resolutions = (
+            True,
+            (True, 3),
+            (1.5, 3),
+            (0, 3),
+            (3, -1),
+        )
+        for n_grid_points in invalid_resolutions:
+            with self.subTest(n_grid_points=n_grid_points):
+                with self.assertRaisesRegex(ValueError, "positive integers"):
+                    HypertoroidalGridDistribution.from_distribution(dist, n_grid_points)
 
     def test_from_function_3D(self):
         random.seed(0)

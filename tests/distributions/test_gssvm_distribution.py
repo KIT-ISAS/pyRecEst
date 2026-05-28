@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import array, pi
 from pyrecest.distributions.circle.sine_skewed_distributions import (
@@ -11,7 +12,7 @@ from pyrecest.distributions.circle.sine_skewed_distributions import (
 class TestGSSVMDistribution(unittest.TestCase):
     def test_initialization(self):
         """Test initialization with valid and invalid parameters."""
-        dist = GSSVMDistribution(mu=pi, kappa=1.0, lambda_=0.5, n=1)
+        dist = GSSVMDistribution(mu=pi, kappa=1.0, lambda_=0.5, n=np.int64(1))
         npt.assert_allclose(dist.mu, pi, rtol=5e-7)
         npt.assert_allclose(dist.kappa, 1.0, rtol=1e-7)
         npt.assert_allclose(dist.lambda_, 0.5, rtol=1e-7)
@@ -20,13 +21,15 @@ class TestGSSVMDistribution(unittest.TestCase):
 
     def test_invalid_lambda(self):
         """lambda_ must be in [-1, 1]."""
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             GSSVMDistribution(mu=0.0, kappa=1.0, lambda_=1.5, n=1)
 
     def test_invalid_n_zero(self):
         """n must be a positive integer."""
-        with self.assertRaises(AssertionError):
-            GSSVMDistribution(mu=0.0, kappa=1.0, lambda_=0.5, n=0)
+        for n in (True, 1.5, 0, -1):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    GSSVMDistribution(mu=0.0, kappa=1.0, lambda_=0.5, n=n)
 
     def test_n_maps_to_m(self):
         """n property must equal the internal m parameter."""

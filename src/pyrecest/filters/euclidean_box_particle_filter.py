@@ -4,6 +4,7 @@ import copy
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from itertools import product
+from numbers import Integral
 from typing import Union
 
 import numpy as _np
@@ -65,12 +66,8 @@ class EuclideanBoxParticleFilter(AbstractParticleFilter, EuclideanFilterMixin):
         resampling_criterion: Callable | None = None,
         split_resampled_boxes: bool = True,
     ):
-        n_particles = int(n_particles)
-        dim = int(dim)
-        if n_particles <= 0:
-            raise ValueError("n_particles must be a positive integer")
-        if dim <= 0:
-            raise ValueError("dim must be a positive integer")
+        n_particles = self._validate_positive_int(n_particles, "n_particles")
+        dim = self._validate_positive_int(dim, "dim")
 
         self.default_box_half_width = LinearBoxParticleDistribution._coerce_half_width(
             box_half_width, dim
@@ -468,6 +465,16 @@ class EuclideanBoxParticleFilter(AbstractParticleFilter, EuclideanFilterMixin):
         if value.shape[0] != dim:
             raise ValueError(f"{name} must have dimension {dim}")
         return value
+
+    @staticmethod
+    def _validate_positive_int(value, name: str):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, Integral)
+            or int(value) <= 0
+        ):
+            raise ValueError(f"{name} must be a positive integer")
+        return int(value)
 
 
 BoxParticleFilter = EuclideanBoxParticleFilter

@@ -2,7 +2,7 @@
 import math
 
 import numpy as np
-from pyrecest.backend import cos, mod, pi
+from pyrecest.backend import asarray, cos, mod, pi
 from scipy.special import iv
 
 from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDistribution
@@ -60,6 +60,7 @@ class ToroidalVonMisesCosineDistribution(AbstractToroidalBivarVMDistribution):
 
     def __init__(self, mu, kappa, kappa3):
         AbstractToroidalBivarVMDistribution.__init__(self, mu, kappa)
+        kappa3 = asarray(kappa3)
         assert kappa3.shape == ()
         self.kappa3 = kappa3
         self.C = 1.0 / self.norm_const
