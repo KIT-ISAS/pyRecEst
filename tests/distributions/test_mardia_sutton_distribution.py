@@ -145,9 +145,7 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
 
     def test_invalid_kappa(self):
         for kappa in (True, 0.0, -1.0, float("nan"), float("inf")):
-            with self.subTest(kappa=kappa), self.assertRaisesRegex(
-                ValueError, "kappa"
-            ):
+            with self.subTest(kappa=kappa), self.assertRaisesRegex(ValueError, "kappa"):
                 MardiaSuttonDistribution(
                     self.mu, self.mu0, kappa, self.rho1, self.rho2, self.sigma
                 )
@@ -163,9 +161,7 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
 
     def test_invalid_sigma(self):
         for sigma in (True, 0.0, -1.0, float("nan"), float("inf")):
-            with self.subTest(sigma=sigma), self.assertRaisesRegex(
-                ValueError, "sigma"
-            ):
+            with self.subTest(sigma=sigma), self.assertRaisesRegex(ValueError, "sigma"):
                 MardiaSuttonDistribution(
                     self.mu, self.mu0, self.kappa, self.rho1, self.rho2, sigma
                 )
