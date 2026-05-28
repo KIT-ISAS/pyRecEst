@@ -39,6 +39,40 @@ class SO3ProductTangentGaussianDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.get_manifold_size(), pi**4, atol=ATOL)
         self.assertTrue(dist.is_valid())
 
+    def test_constructor_rejects_invalid_covariance(self):
+        mean = array([z_quaternion(0.0), x_quaternion(0.0)])
+
+        invalid_cases = [
+            (diag(array([0.1, 0.2, 0.3])), "shape"),
+            (
+                diag(
+                    array(
+                        [0.1, 0.2, 0.3, float("nan"), 0.5, 0.6]
+                    )
+                ),
+                "finite",
+            ),
+            (
+                array(
+                    [
+                        [0.1, 0.2, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.2, 0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.3, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.4, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 0.5, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.6],
+                    ]
+                ),
+                "symmetric",
+            ),
+            (diag(array([0.1, 0.2, 0.3, 0.0, 0.5, 0.6])), "positive definite"),
+        ]
+
+        for covariance, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    SO3ProductTangentGaussianDistribution(mean, covariance)
+
     def test_exp_log_roundtrip_with_base_product_rotation(self):
         base = array(
             [
