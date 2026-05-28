@@ -5,6 +5,7 @@ import numpy as np
 from pyrecest.backend import asarray, cos, mod, pi
 from scipy.special import iv
 
+from ._input_validation import as_shift_vector
 from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDistribution
 
 _SERIES_RTOL = 1e-14
@@ -114,7 +115,7 @@ class ToroidalVonMisesCosineDistribution(AbstractToroidalBivarVMDistribution):
         return self.trigonometric_moment_numerical(n)
 
     def shift(self, shift_by):
-        assert shift_by.shape == (self.dim,)
+        shift_by = as_shift_vector(shift_by, self.dim)
         tvm = ToroidalVonMisesCosineDistribution(
             mod(self.mu + shift_by, 2.0 * pi), self.kappa, self.kappa3
         )
