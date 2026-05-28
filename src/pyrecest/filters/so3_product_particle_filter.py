@@ -295,6 +295,8 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
             )
         if tangent_vectors.shape[0] != n_particles:
             raise ValueError("Tangent vector batch size must match particle count.")
+        if not all(isfinite(tangent_vectors)):
+            raise ValueError("SO(3)^K tangent vectors must be finite.")
 
         return tangent_vectors
 
