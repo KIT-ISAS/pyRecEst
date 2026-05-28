@@ -65,7 +65,8 @@ def _looks_like_integer_dimension(value):
 
 def _looks_like_shape(value):
     return _looks_like_integer_dimension(value) or (
-        isinstance(value, tuple) and all(_looks_like_integer_dimension(dim) for dim in value)
+        isinstance(value, tuple)
+        and all(_looks_like_integer_dimension(dim) for dim in value)
     )
 
 
