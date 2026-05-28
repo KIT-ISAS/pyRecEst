@@ -142,6 +142,13 @@ class TestMardiaSuttonDistribution(unittest.TestCase):
                 self.mu, self.mu0, self.kappa, 0.8, 0.8, self.sigma
             )
 
+    def test_invalid_sigma(self):
+        for sigma in (0.0, -1.0, float("nan"), float("inf")):
+            with self.subTest(sigma=sigma), self.assertRaises(AssertionError):
+                MardiaSuttonDistribution(
+                    self.mu, self.mu0, self.kappa, self.rho1, self.rho2, sigma
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
