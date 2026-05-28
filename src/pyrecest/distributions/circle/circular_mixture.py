@@ -1,6 +1,6 @@
 import collections
-from numbers import Integral
 import warnings
+from numbers import Integral
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
