@@ -1,5 +1,6 @@
 import copy
 from collections.abc import Callable
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
@@ -23,10 +24,8 @@ class EuclideanParticleFilter(AbstractParticleFilter, EuclideanFilterMixin):
         n_particles: Union[int, int32, int64],
         dim: Union[int, int32, int64],
     ):
-        if not (isinstance(n_particles, int) and n_particles > 0):
-            raise ValueError("n_particles must be a positive integer")
-        if not (isinstance(dim, int) and dim > 0):
-            raise ValueError("dim must be a positive integer")
+        n_particles = self._validate_positive_int(n_particles, "n_particles")
+        dim = self._validate_positive_int(dim, "dim")
 
         initial_distribution = LinearDiracDistribution(zeros((n_particles, dim)))
         EuclideanFilterMixin.__init__(self)
@@ -67,3 +66,13 @@ class EuclideanParticleFilter(AbstractParticleFilter, EuclideanFilterMixin):
         AbstractParticleFilter.predict_nonlinear(
             self, f, noise_distribution, function_is_vectorized, shift_instead_of_add
         )
+
+    @staticmethod
+    def _validate_positive_int(value, name: str):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, Integral)
+            or int(value) <= 0
+        ):
+            raise ValueError(f"{name} must be a positive integer")
+        return int(value)
