@@ -9,6 +9,7 @@ from pyrecest.backend import (
     sqrt,
     transpose,
 )
+from pyrecest.exceptions import ShapeError, ValidationError
 from scipy.special import gamma
 
 from .abstract_bounded_nonperiodic_distribution import (
@@ -31,25 +32,30 @@ class AbstractEllipsoidalBallDistribution(AbstractBoundedNonPeriodicDistribution
         center = array(center)
         shape_matrix = array(shape_matrix)
 
-        assert center.ndim == 1, "center must be a 1-dimensional array"
+        if center.ndim != 1:
+            raise ShapeError("center", center.shape, expected="(dim,)")
         AbstractBoundedNonPeriodicDistribution.__init__(self, center.shape[-1])
-        assert shape_matrix.ndim == 2, "shape_matrix must be a 2-dimensional array"
-        assert shape_matrix.shape == (
-            self.dim,
-            self.dim,
-        ), "shape_matrix must match the center dimension"
-        assert bool(
-            backend_all(isfinite(center))
-        ), "center must contain only finite values"
-        assert bool(
-            backend_all(isfinite(shape_matrix))
-        ), "shape_matrix must contain only finite values"
-        assert allclose(
-            shape_matrix, transpose(shape_matrix)
-        ), "shape_matrix must be symmetric"
-        assert bool(
-            backend_all(linalg.eigvalsh(shape_matrix) > 0.0)
-        ), "shape_matrix must be positive definite"
+        if shape_matrix.ndim != 2:
+            raise ShapeError(
+                "shape_matrix",
+                shape_matrix.shape,
+                expected=f"({self.dim}, {self.dim})",
+            )
+        if shape_matrix.shape != (self.dim, self.dim):
+            raise ShapeError(
+                "shape_matrix",
+                shape_matrix.shape,
+                expected=f"({self.dim}, {self.dim})",
+                reason="shape_matrix must match the center dimension",
+            )
+        if not bool(backend_all(isfinite(center))):
+            raise ValidationError("center must contain only finite values")
+        if not bool(backend_all(isfinite(shape_matrix))):
+            raise ValidationError("shape_matrix must contain only finite values")
+        if not bool(allclose(shape_matrix, transpose(shape_matrix))):
+            raise ValidationError("shape_matrix must be symmetric")
+        if not bool(backend_all(linalg.eigvalsh(shape_matrix) > 0.0)):
+            raise ValidationError("shape_matrix must be positive definite")
 
         self.center = center
         self.shape_matrix = shape_matrix
