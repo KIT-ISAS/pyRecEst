@@ -37,3 +37,13 @@ class ToroidalWrappedNormalFilterTest(unittest.TestCase):
             dist_result.mu, mod(self.twn.mu + self.twn.mu, 2 * pi)
         )
         npt.assert_array_almost_equal(dist_result.C, self.twn.C + self.twn.C)
+
+    def test_predict_identity_rejects_invalid_noise_explicitly(self):
+        curr_filter = ToroidalWrappedNormalFilter()
+        curr_filter.filter_state = self.twn
+
+        with self.assertRaisesRegex(ValueError, "ToroidalWrappedNormalDistribution"):
+            curr_filter.predict_identity(object())
+
+        npt.assert_array_almost_equal(curr_filter.filter_state.mu, self.twn.mu)
+        npt.assert_array_almost_equal(curr_filter.filter_state.C, self.twn.C)
