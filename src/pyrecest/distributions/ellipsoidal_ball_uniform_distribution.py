@@ -3,6 +3,7 @@ from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import array, int32, int64, linalg, random, reshape, where, zeros
+from pyrecest.exceptions import ShapeError
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
 from .abstract_uniform_distribution import AbstractUniformDistribution
@@ -73,18 +74,29 @@ class EllipsoidalBallUniformDistribution(
         xs = array(xs)
         if xs.ndim == 0:
             if self.dim != 1:
-                raise ValueError("Scalar points are only valid for dim == 1")
+                raise ShapeError(
+                    "xs",
+                    xs.shape,
+                    expected=f"({self.dim},) or (n, {self.dim})",
+                    reason="scalar points are only valid for dim == 1",
+                )
             return reshape(xs, (1, 1)), True
         if xs.ndim == 1:
             if self.dim == 1:
                 return reshape(xs, (-1, 1)), False
             if xs.shape[0] == self.dim:
                 return reshape(xs, (1, self.dim)), True
-            raise ValueError(
-                f"Point dimension {xs.shape[0]} does not match dim {self.dim}"
+            raise ShapeError(
+                "xs",
+                xs.shape,
+                expected=f"({self.dim},) or (n, {self.dim})",
             )
         if xs.ndim != 2 or xs.shape[1] != self.dim:
-            raise ValueError(f"xs must have shape (n, {self.dim})")
+            raise ShapeError(
+                "xs",
+                xs.shape,
+                expected=f"({self.dim},) or (n, {self.dim})",
+            )
         return xs, False
 
     def sample(self, n: Union[int, int32, int64]):

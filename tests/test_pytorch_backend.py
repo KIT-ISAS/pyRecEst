@@ -179,6 +179,20 @@ class TestPytorchBackendCopy(unittest.TestCase):
 
 @unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
 class TestPytorchBackendRandom(unittest.TestCase):
+    def test_randint_matches_numpy_scalar_contract(self):
+        sample = pytorch_backend.random.randint(0, 5)
+
+        self.assertEqual(sample.shape, ())
+        self.assertGreaterEqual(int(sample), 0)
+        self.assertLess(int(sample), 5)
+
+    def test_randint_accepts_numpy_style_integer_size(self):
+        samples = pytorch_backend.random.randint(0, 5, size=4)
+
+        self.assertEqual(tuple(samples.shape), (4,))
+        self.assertTrue(pytorch_backend.all(samples >= 0))
+        self.assertTrue(pytorch_backend.all(samples < 5))
+
     def test_choice_accepts_weighted_sampling_without_replacement(self):
         values = pytorch_backend.array([0, 1, 2, 3])
         probabilities = pytorch_backend.array([0.1, 0.2, 0.3, 0.4])

@@ -94,6 +94,26 @@ class TestBackendRandom(unittest.TestCase):
         self.assertEqual(int(pyrecest.backend.sum(sample)), 12)
 
     @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "jax", "JAX-specific size validation"
+    )
+    def test_jax_random_rejects_invalid_size_arguments(self):
+        invalid_sizes = (True, (2, True), 1.5, (2, 1.5), "3", -1, (2, -1))
+        random_calls = (
+            lambda size: random.rand(size=size),
+            lambda size: random.uniform(size=size),
+            lambda size: random.randint(0, 5, size=size),
+            lambda size: random.normal(size=size),
+            lambda size: random.choice(5, size=size),
+            lambda size: random.multivariate_normal([0.0], [[1.0]], size=size),
+        )
+
+        for invalid_size in invalid_sizes:
+            for random_call in random_calls:
+                with self.subTest(size=invalid_size, random_call=random_call):
+                    with self.assertRaises((TypeError, ValueError)):
+                        random_call(invalid_size)
+
+    @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "jax", "JAX-specific RNG state contract"
     )
     def test_jax_multinomial_explicit_state_does_not_mutate_global_state(self):
