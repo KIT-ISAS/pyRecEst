@@ -478,6 +478,40 @@ class HypertoroidalFourierDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(integrate2d(hfd_conv_id), 1.0, places=5)
         self.assertAlmostEqual(integrate2d(hfd_conv_sqrt), 1.0, places=5)
 
+    def test_shift_accepts_scalar_and_list_inputs(self):
+        hfd_1d = HypertoroidalFourierDistribution(
+            array([0.0, 1.0 / sqrt(2 * pi), 0.0]), "sqrt"
+        )
+        npt.assert_allclose(
+            hfd_1d.shift(0.5).coeff_mat,
+            hfd_1d.shift(array([0.5])).coeff_mat,
+        )
+        npt.assert_allclose(
+            hfd_1d.shift([0.5]).coeff_mat,
+            hfd_1d.shift(array([0.5])).coeff_mat,
+        )
+
+        coeffs_2d = array(
+            [
+                [0.0, 0.0, 0.0],
+                [0.0, 1.0 / (sqrt(2 * pi) ** 2), 0.0],
+                [0.0, 0.0, 0.0],
+            ]
+        )
+        hfd_2d = HypertoroidalFourierDistribution(coeffs_2d, "sqrt")
+        npt.assert_allclose(
+            hfd_2d.shift([0.5, 1.0]).coeff_mat,
+            hfd_2d.shift(array([0.5, 1.0])).coeff_mat,
+        )
+
+    def test_shift_rejects_wrong_dimension(self):
+        hfd = HypertoroidalFourierDistribution(
+            array([0.0, 1.0 / sqrt(2 * pi), 0.0]), "sqrt"
+        )
+
+        with self.assertRaises(ValueError):
+            hfd.shift([0.5, 1.0])
+
     # pylint: disable=too-many-locals
     def test_shift(self):
         C_list = [

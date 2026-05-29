@@ -37,6 +37,7 @@ from pyrecest.backend import (
 )
 
 from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDistribution
+from ._input_validation import as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 from .hypertoroidal_uniform_distribution import HypertoroidalUniformDistribution
 
@@ -720,11 +721,7 @@ class HypertoroidalFourierDistribution(
         shift_by : array_like, shape (dim,)
             Shift in radians for each angular dimension.
         """
-        assert ndim(shift_by) <= 1
-        if shift_by.shape[0] != self.dim:
-            raise ValueError(
-                f"shift: expected {self.dim} shift angles, got {shift_by.shape[0]}"
-            )
+        shift_by = as_shift_vector(shift_by, self.dim)
 
         # All angles are zero, return unchanged copy
         if all(shift_by == 0):
