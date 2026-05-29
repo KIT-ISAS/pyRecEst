@@ -3,9 +3,32 @@ from numbers import Integral
 from typing import Union
 
 # pylint: disable=redefined-builtin
-from pyrecest.backend import asarray, exp, int32, int64, log, mod, ndim, pi, random
+from pyrecest.backend import (
+    all,
+    asarray,
+    exp,
+    int32,
+    int64,
+    isfinite,
+    log,
+    mod,
+    ndim,
+    pi,
+    random,
+)
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+
+
+def _validate_positive_scalar(value, name):
+    value = asarray(value)
+    if value.shape not in ((), (1,)):
+        raise ValueError(f"{name} must be a positive scalar.")
+    if not bool(all(isfinite(value))):
+        raise ValueError(f"{name} must be finite.")
+    if not bool(all(value > 0.0)):
+        raise ValueError(f"{name} must be positive.")
+    return value
 
 
 class WrappedExponentialDistribution(AbstractCircularDistribution):
@@ -19,15 +42,14 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
 
     def __init__(self, lambda_):
         AbstractCircularDistribution.__init__(self)
-        lambda_ = asarray(lambda_)
-        assert lambda_.shape in ((1,), ())
-        assert lambda_ > 0.0
+        lambda_ = _validate_positive_scalar(lambda_, "lambda_")
         self.lambda_ = lambda_
         self._normalization_const = 1.0 / (1.0 - exp(-2.0 * pi * lambda_))
 
     def pdf(self, xs):
         xs = asarray(xs)
-        assert ndim(xs) <= 1
+        if ndim(xs) > 1:
+            raise ValueError("xs must be a scalar or one-dimensional array.")
         xs = mod(xs, 2.0 * pi)
         return self.lambda_ * exp(-self.lambda_ * xs) * self._normalization_const
 
