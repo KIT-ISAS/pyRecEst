@@ -2,7 +2,7 @@ import unittest
 import warnings
 
 import pyrecest.backend
-from pyrecest.backend import allclose, array
+from pyrecest.backend import allclose, array, ones
 from pyrecest.distributions import HyperhemisphericalWatsonDistribution
 from pyrecest.distributions.hypersphere_subset.watson_distribution import (
     WatsonDistribution,
@@ -21,9 +21,7 @@ class TestGridFilterModelAdapters(unittest.TestCase):
     def setUp(self):
         self.n_grid = 50
         self.dim = 2
-        self.initial_distribution = HyperhemisphericalWatsonDistribution(
-            array([0.0, 0.0, 1.0]), 5.0
-        )
+        self.initial_distribution = HyperhemisphericalWatsonDistribution(array([0.0, 0.0, 1.0]), 5.0)
         self.measurement = array([0.0, 0.0, 1.0])
         self.system_noise = WatsonDistribution(array([0.0, 0.0, 1.0]), 3.0)
 
@@ -46,9 +44,7 @@ class TestGridFilterModelAdapters(unittest.TestCase):
             return HyperhemisphericalWatsonDistribution(measurement, 2.0).pdf(grid)
 
         reference_filter.update_nonlinear(likelihood, self.measurement)
-        model_filter.update_model(
-            GridLikelihoodMeasurementModel(likelihood), self.measurement
-        )
+        model_filter.update_model(GridLikelihoodMeasurementModel(likelihood), self.measurement)
 
         self.assertTrue(
             bool(
@@ -63,14 +59,39 @@ class TestGridFilterModelAdapters(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
+    def test_update_nonlinear_accepts_scalar_likelihood(self):
+        filter_instance = self._initialized_filter()
+        expected_grid_values = array(filter_instance.filter_state.grid_values)
+
+        filter_instance.update_nonlinear(lambda _measurement, _grid: 1.0, self.measurement)
+
+        self.assertTrue(bool(allclose(filter_instance.filter_state.grid_values, expected_grid_values)))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_update_nonlinear_rejects_wrong_likelihood_shape(self):
+        filter_instance = self._initialized_filter()
+        original_grid_values = array(filter_instance.filter_state.grid_values)
+        bad_likelihood_values = ones((filter_instance.filter_state.grid_values.shape[0], 1))
+
+        with self.assertRaisesRegex(ValueError, "one value per grid point"):
+            filter_instance.update_nonlinear(
+                lambda _measurement, _grid: bad_likelihood_values,
+                self.measurement,
+            )
+
+        self.assertTrue(bool(allclose(filter_instance.filter_state.grid_values, original_grid_values)))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_predict_model_matches_transition_density_prediction(self):
         reference_filter = self._initialized_filter()
         model_filter = self._initialized_filter()
-        transition_density = (
-            HyperhemisphericalGridFilter.sys_noise_to_transition_density(
-                self.system_noise, self.n_grid
-            )
-        )
+        transition_density = HyperhemisphericalGridFilter.sys_noise_to_transition_density(self.system_noise, self.n_grid)
 
         reference_filter.predict_nonlinear_via_transition_density(transition_density)
         model_filter.predict_model(GridTransitionDensityModel(transition_density))
@@ -92,11 +113,7 @@ class TestGridFilterModelAdapters(unittest.TestCase):
         reference_filter = self._initialized_filter()
         model_filter = self._initialized_filter()
 
-        transition_density = (
-            HyperhemisphericalGridFilter.sys_noise_to_transition_density(
-                self.system_noise, self.n_grid
-            )
-        )
+        transition_density = HyperhemisphericalGridFilter.sys_noise_to_transition_density(self.system_noise, self.n_grid)
         reference_filter.predict_nonlinear_via_transition_density(transition_density)
 
         def transition_density_factory(filter_instance):
@@ -105,9 +122,7 @@ class TestGridFilterModelAdapters(unittest.TestCase):
                 filter_instance.filter_state.grid_values.shape[0],
             )
 
-        model_filter.predict_model(
-            GridTransitionDensityFactoryModel(transition_density_factory)
-        )
+        model_filter.predict_model(GridTransitionDensityFactoryModel(transition_density_factory))
 
         self.assertTrue(
             bool(
