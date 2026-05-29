@@ -67,13 +67,12 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         :return: The shifted distribution.
         :rtype: CustomHypertoroidalDistribution
 
-        :raises AssertionError: If the shift vector is not of the same dimension as the distribution.
+        :raises ValueError: If the shift vector is not of the same dimension as the distribution.
         """
         from .custom_hypertoroidal_distribution import CustomHypertoroidalDistribution
+        from ._input_validation import as_shift_vector
 
-        assert shift_by.shape == (
-            self.dim,
-        ), "Shift vector must be of the same dimension as the distribution."
+        shift_by = as_shift_vector(shift_by, self.dim)
 
         # Define the shifted PDF. A positive shift moves mass forward on the
         # hypertorus, hence the shifted density evaluates the original density
