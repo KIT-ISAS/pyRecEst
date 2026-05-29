@@ -1,4 +1,5 @@
 import copy
+import math
 import warnings
 
 # pylint: disable=no-name-in-module,no-member
@@ -33,9 +34,9 @@ def _validate_von_mises_distribution(distribution, role):
 
     mu = _to_python_float(distribution.mu, f"{role} mean")
     kappa = _to_python_float(distribution.kappa, f"{role} concentration")
-    if not _to_python_bool(isfinite(mu)):
+    if not math.isfinite(mu):
         raise ValueError(f"{role} mean must be finite.")
-    if not _to_python_bool(isfinite(kappa)):
+    if not math.isfinite(kappa):
         raise ValueError(f"{role} concentration must be finite.")
     if kappa < 0.0:
         raise ValueError(f"{role} concentration must be nonnegative.")
