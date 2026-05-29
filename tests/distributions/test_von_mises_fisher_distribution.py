@@ -73,6 +73,11 @@ class TestVonMisesFisherDistribution(
         self.assertEqual(self.vmf.kappa, self.kappa)
         self.assertEqual(self.vmf.dim + 1, len(self.mu))
 
+    def test_constructor_accepts_list_mu(self):
+        vmf = VonMisesFisherDistribution([float(v) for v in self.mu], self.kappa)
+
+        npt.assert_allclose(vmf.mu, self.mu)
+
     def test_zero_kappa_is_uniform_density(self):
         vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 0.0)
         points = array(
@@ -99,6 +104,15 @@ class TestVonMisesFisherDistribution(
         npt.assert_allclose(self.vmf.mu, self.mu)
         npt.assert_allclose(shifted.mu, new_mu)
 
+    def test_set_mean_accepts_list_input(self):
+        new_mu = [0.0, 0.0, 1.0]
+
+        shifted = self.vmf.set_mean(new_mu)
+
+        self.assertIsNot(shifted, self.vmf)
+        npt.assert_allclose(self.vmf.mu, self.mu)
+        npt.assert_allclose(shifted.mu, array(new_mu))
+
     def test_set_mode_returns_new_distribution(self):
         new_mu = array([0.0, 0.0, 1.0])
 
@@ -107,6 +121,15 @@ class TestVonMisesFisherDistribution(
         self.assertIsNot(shifted, self.vmf)
         npt.assert_allclose(self.vmf.mu, self.mu)
         npt.assert_allclose(shifted.mu, new_mu)
+
+    def test_set_mode_accepts_list_input(self):
+        new_mu = [0.0, 0.0, 1.0]
+
+        shifted = self.vmf.set_mode(new_mu)
+
+        self.assertIsNot(shifted, self.vmf)
+        npt.assert_allclose(self.vmf.mu, self.mu)
+        npt.assert_allclose(shifted.mu, array(new_mu))
 
     def test_from_zero_mean_resultant_vector_returns_uniform(self):
         vmf = VonMisesFisherDistribution.from_mean_resultant_vector(
@@ -117,6 +140,12 @@ class TestVonMisesFisherDistribution(
         self.assertAlmostEqual(
             _as_float(vmf.pdf(array([0.0, 0.0, 1.0]))), 1.0 / (4.0 * pi)
         )
+
+    def test_from_mean_resultant_vector_accepts_list_input(self):
+        vmf = VonMisesFisherDistribution.from_mean_resultant_vector([0.2, 0.0, 0.0])
+
+        npt.assert_allclose(vmf.mu, array([1.0, 0.0, 0.0]))
+        self.assertGreater(_as_float(vmf.kappa), 0.0)
 
     def test_opposite_equal_vmf_product_is_uniform(self):
         mu = array([1.0, 0.0, 0.0])
@@ -210,6 +239,19 @@ class TestVonMisesFisherDistribution(
                 ],
             ),
         )
+
+    def test_pdf_accepts_list_inputs(self):
+        x = [
+            [float(v) for v in vectors_to_test_2d[0]],
+            [float(v) for v in vectors_to_test_2d[1]],
+        ]
+
+        npt.assert_allclose(self.vmf.pdf(x), self.vmf.pdf(array(x)))
+        npt.assert_allclose(self.vmf.pdf(x[0]), self.vmf.pdf(array(x[0])))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        with self.assertRaises(ValueError):
+            self.vmf.pdf([1.0, 0.0])
 
     def test_pdf_3d(self):
         mu = array([1.0, 1.0, 2.0, -3.0])
