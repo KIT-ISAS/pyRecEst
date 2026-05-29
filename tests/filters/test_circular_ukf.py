@@ -27,6 +27,24 @@ class CircularUKFTest(unittest.TestCase):
         npt.assert_equal(self.g.mu, g1.mu)
         npt.assert_equal(self.g.C, g1.C)
 
+    def test_filter_state_validation_errors_are_explicit(self):
+        with self.assertRaisesRegex(ValueError, "GaussianDistribution"):
+            self.filter.filter_state = object()
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            self.filter.filter_state = GaussianDistribution(array([0.0, 1.0]), array([[1.0, 0.0], [0.0, 1.0]]))
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.filter_state = GaussianDistribution(
+                array([float("nan")]), array([[1.0]]), check_validity=False
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.filter_state = GaussianDistribution(
+                array([0.0]), array([[float("inf")]]), check_validity=False
+            )
+        with self.assertRaisesRegex(ValueError, "positive"):
+            self.filter.filter_state = GaussianDistribution(
+                array([0.0]), array([[-1.0]]), check_validity=False
+            )
+
     def test_predict_identity(self):
         self.filter.filter_state = self.g
         self.filter.predict_identity(self.g)
@@ -34,6 +52,15 @@ class CircularUKFTest(unittest.TestCase):
         self.assertIsInstance(g_identity, GaussianDistribution)
         npt.assert_almost_equal(g_identity.mu, self.g.mu + self.g.mu)
         npt.assert_almost_equal(g_identity.C, self.g.C + self.g.C)
+
+    def test_predict_identity_rejects_invalid_noise(self):
+        self.filter.filter_state = self.g
+        with self.assertRaisesRegex(ValueError, "system noise"):
+            self.filter.predict_identity(object())
+        with self.assertRaisesRegex(ValueError, "positive"):
+            self.filter.predict_identity(
+                GaussianDistribution(array([0.0]), array([[-1.0]]), check_validity=False)
+            )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
@@ -94,6 +121,22 @@ class CircularUKFTest(unittest.TestCase):
         npt.assert_almost_equal(g_identity.mu, self.g.mu)
         npt.assert_almost_equal(g_identity.C, self.g.C / 2.0)
 
+    def test_update_identity_rejects_invalid_inputs(self):
+        self.filter.filter_state = self.g
+        with self.assertRaisesRegex(ValueError, "measurement noise"):
+            self.filter.update_identity(object(), self.g.mu)
+        with self.assertRaisesRegex(ValueError, "positive"):
+            self.filter.update_identity(
+                GaussianDistribution(array([0.0]), array([[-1.0]]), check_validity=False),
+                self.g.mu,
+            )
+        with self.assertRaisesRegex(ValueError, "scalar"):
+            self.filter.update_identity(GaussianDistribution(array([0.0]), self.g.C), [1.0, 2.0])
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.update_identity(
+                GaussianDistribution(array([0.0]), self.g.C), float("nan")
+            )
+
     def test_update_identity_nonzero_noise_mean(self):
         self.filter.filter_state = self.g
         self.filter.update_identity(
@@ -128,6 +171,23 @@ class CircularUKFTest(unittest.TestCase):
         self.assertGreater(float(g8.mu[0]), float(g7.mu[0]))
         self.assertLess(float(g8.mu[0]), float(z[0]))
         self.assertGreater(float(g7.C[0, 0]), float(g8.C[0, 0]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_nonlinear_rejects_invalid_inputs(self):
+        self.filter.filter_state = self.g
+        with self.assertRaisesRegex(ValueError, "measurement function"):
+            self.filter.update_nonlinear(object(), self.g, self.g.mu)
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.update_nonlinear(lambda x: x, self.g, [float("nan")])
+        with self.assertRaisesRegex(ValueError, "covariance"):
+            self.filter.update_nonlinear(
+                lambda x: x,
+                GaussianDistribution(array([0.0]), array([[float("inf")]]), check_validity=False),
+                self.g.mu,
+            )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
