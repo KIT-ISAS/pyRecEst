@@ -636,7 +636,12 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
             ],
             axis=1,
         )
-        clean_log_likelihood = -0.5 * (distances / sigma) ** 2
+        active_distances = where(
+            component_weights > 0.0,
+            distances,
+            zeros(distances.shape),
+        )
+        clean_log_likelihood = -0.5 * (active_distances / sigma) ** 2
         if eps > 0.0:
             clean_probability = eps if eps < 1.0 - 1e-12 else 1.0 - 1e-12
             outlier_probability = eps if eps > 1e-12 else 1e-12
@@ -646,7 +651,12 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
             clean_log_likelihood = normalizer + log(
                 exp(clean_term - normalizer) + exp(outlier_term - normalizer)
             )
-        return component_weights * clean_log_likelihood
+        active_log_likelihood = where(
+            component_weights > 0.0,
+            clean_log_likelihood,
+            zeros(clean_log_likelihood.shape),
+        )
+        return component_weights * active_log_likelihood
 
     def geodesic_log_likelihood(
         self,
