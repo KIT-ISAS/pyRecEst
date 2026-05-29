@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
-from pyrecest.backend import arange, array, cos, exp, sum
+from pyrecest.backend import arange, array, atleast_1d, cos, exp, sum
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -53,7 +53,7 @@ class GvMDistribution(AbstractCircularDistribution):
         p : array, shape (n,)
             Unnormalized pdf values.
         """
-        xs = array(xs)
+        xs = atleast_1d(array(xs))
         # j = [1, 2, ..., k], shape (k,)
         j = arange(1, self.mu.shape[0] + 1, dtype=float)
         # Broadcast: (k, 1) * ((1, n) - (k, 1)) → (k, n)
