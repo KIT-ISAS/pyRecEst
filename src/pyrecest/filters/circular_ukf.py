@@ -15,11 +15,13 @@ import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
+    all as backend_all,
     array,
     asarray,
     atleast_1d,
     empty,
     float64,
+    isfinite,
     linalg,
     mod,
     pi,
@@ -37,9 +39,69 @@ from .manifold_mixins import CircularFilterMixin
 _TWO_PI = 2.0 * float(pi)
 
 
+def _to_python_bool(value):
+    """Convert scalar backend booleans to Python bools for validation."""
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
+def _as_circular_gaussian(distribution, role):
+    """Return a validated 1-D Gaussian for circular UKF state/noise."""
+    if not isinstance(distribution, GaussianDistribution):
+        try:
+            distribution = GaussianDistribution.from_distribution(distribution)
+        except Exception as exc:  # pragma: no cover - backend-specific failures
+            raise ValueError(f"{role} must be convertible to GaussianDistribution.") from exc
+
+    mu = asarray(distribution.mu)
+    covariance = asarray(distribution.C)
+    if distribution.dim != 1 or mu.shape != (1,):
+        raise ValueError(f"{role} mean must be one-dimensional.")
+    if covariance.shape != (1, 1):
+        raise ValueError(f"{role} covariance must have shape (1, 1).")
+    if not _to_python_bool(backend_all(isfinite(mu))):
+        raise ValueError(f"{role} mean must be finite.")
+    if not _to_python_bool(backend_all(isfinite(covariance))):
+        raise ValueError(f"{role} covariance must be finite.")
+    if float(covariance[0, 0]) <= 0.0:
+        raise ValueError(f"{role} covariance must be positive.")
+    return distribution
+
+
+def _validate_backend_supported(operation):
+    if pyrecest.backend.__backend_name__ in ("pytorch", "jax"):
+        raise NotImplementedError(f"{operation} is not supported on this backend.")
+
+
+def _validate_circular_scalar_measurement(z):
+    measurement = array(z, dtype=float)
+    if measurement.shape not in ((), (1,)):
+        raise ValueError("measurement z must be scalar.")
+    measurement = measurement[0] if measurement.shape == (1,) else measurement
+    if not _to_python_bool(isfinite(measurement)):
+        raise ValueError("measurement z must be finite.")
+    return float(measurement)
+
+
 def _measurement_vector(value):
     """Convert a scalar or vector-valued measurement to a flat 1-D array."""
-    return atleast_1d(array(value, dtype=float)).flatten()
+    measurement = atleast_1d(array(value, dtype=float)).flatten()
+    if measurement.shape[0] == 0:
+        raise ValueError("measurement vector must not be empty.")
+    if not _to_python_bool(backend_all(isfinite(measurement))):
+        raise ValueError("measurement vector must be finite.")
+    return measurement
+
+
+def _validate_measurement_noise_vector(noise_mean, dim_z):
+    if len(noise_mean) != dim_z:
+        raise ValueError(
+            "measurement noise mean dimension mismatch: z has dimension "
+            f"{dim_z}, but gauss_meas.mu has dimension {len(noise_mean)}"
+        )
 
 
 def _wrap_angle_scalar(value):
@@ -130,9 +192,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
 
     @filter_state.setter
     def filter_state(self, new_state):
-        if not isinstance(new_state, GaussianDistribution):
-            new_state = GaussianDistribution.from_distribution(new_state)
-        assert new_state.dim == 1, "CircularUKF only supports 1-D state"
+        new_state = _as_circular_gaussian(new_state, "filter_state")
         self._filter_state = new_state
 
     # ------------------------------------------------------------------
@@ -151,8 +211,7 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
             Distribution of additive system noise (converted to
             :class:`GaussianDistribution` if necessary).
         """
-        if not isinstance(gauss_sys, GaussianDistribution):
-            gauss_sys = GaussianDistribution.from_distribution(gauss_sys)
+        gauss_sys = _as_circular_gaussian(gauss_sys, "system noise")
         new_mu = mod(self._filter_state.mu + gauss_sys.mu, 2.0 * pi)
         new_C = self._filter_state.C + gauss_sys.C
         self._filter_state = GaussianDistribution(new_mu, new_C)
@@ -170,13 +229,10 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         gauss_sys:
             Distribution of additive system noise.
         """
-        if not isinstance(gauss_sys, GaussianDistribution):
-            gauss_sys = GaussianDistribution.from_distribution(gauss_sys)
-
-        assert pyrecest.backend.__backend_name__ not in (
-            "pytorch",
-            "jax",
-        ), "Not supported on this backend"
+        gauss_sys = _as_circular_gaussian(gauss_sys, "system noise")
+        if not callable(f):
+            raise ValueError("system function must be callable.")
+        _validate_backend_supported("CircularUKF.predict_nonlinear")
 
         mu0 = float(self._filter_state.mu[0])
         C0 = float(self._filter_state.C[0, 0])
@@ -217,10 +273,9 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         z:
             Scalar measurement in [0, 2*pi).
         """
-        if not isinstance(gauss_meas, GaussianDistribution):
-            gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
+        gauss_meas = _as_circular_gaussian(gauss_meas, "measurement noise")
 
-        z_val = float(array(z).flatten()[0])
+        z_val = _validate_circular_scalar_measurement(z)
         # Shift measurement by noise mean
         z_val = float(mod(array([z_val - float(gauss_meas.mu[0])]), 2.0 * pi)[0])
 
@@ -260,22 +315,23 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
         measurement_periodic:
             Whether the measurement is a periodic quantity.
         """
+        if not callable(f):
+            raise ValueError("measurement function must be callable.")
         if not isinstance(gauss_meas, GaussianDistribution):
-            gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
-
-        assert pyrecest.backend.__backend_name__ not in (
-            "pytorch",
-            "jax",
-        ), "Not supported on this backend"
+            try:
+                gauss_meas = GaussianDistribution.from_distribution(gauss_meas)
+            except Exception as exc:  # pragma: no cover - backend-specific failures
+                raise ValueError(
+                    "measurement noise must be convertible to GaussianDistribution."
+                ) from exc
+        _validate_backend_supported("CircularUKF.update_nonlinear")
 
         z = _measurement_vector(z)
         dim_z = len(z)
         noise_mean = _measurement_vector(gauss_meas.mu)
-        if len(noise_mean) != dim_z:
-            raise ValueError(
-                "measurement noise mean dimension mismatch: z has dimension "
-                f"{dim_z}, but gauss_meas.mu has dimension {len(noise_mean)}"
-            )
+        _validate_measurement_noise_vector(noise_mean, dim_z)
+        if not _to_python_bool(backend_all(isfinite(gauss_meas.C))):
+            raise ValueError("measurement noise covariance must be finite.")
 
         mu0 = float(self._filter_state.mu[0])
         C0 = float(self._filter_state.C[0, 0])
