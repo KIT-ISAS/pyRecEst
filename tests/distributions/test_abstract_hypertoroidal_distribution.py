@@ -1,3 +1,4 @@
+import inspect
 import unittest
 
 import matplotlib
@@ -46,6 +47,13 @@ class TestAbstractHypertoroidalDistribution(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "undefined"):
             dist.mean_direction()
+
+    def test_setup_axis_circular_does_not_capture_axes_at_import(self):
+        signature = inspect.signature(
+            AbstractHypertoroidalDistribution.setup_axis_circular
+        )
+
+        self.assertIsNone(signature.parameters["ax"].default)
 
     def test_plot_2d(self):
         mu = array([0.0, 1.0])
