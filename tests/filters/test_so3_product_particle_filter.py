@@ -78,6 +78,14 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.particles[0], expected, atol=ATOL)
         npt.assert_allclose(filt.particles[1], expected, atol=ATOL)
 
+    def test_rejects_nonfinite_tangent_delta(self):
+        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+
+        for invalid_value in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(invalid_value=invalid_value):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    filt.predict_with_tangent_delta(array([invalid_value, 0.0, 0.0]))
+
     def test_predict_identity_with_full_tangent_noise_covariance(self):
         random.seed(0)
         filt = SO3ProductParticleFilter(n_particles=4, num_rotations=2)
