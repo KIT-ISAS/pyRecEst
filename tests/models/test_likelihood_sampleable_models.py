@@ -189,6 +189,34 @@ class DensityTransitionModelTest(unittest.TestCase):
             allclose(model.sample_next(array([4.0]), n=2), array([[4.0], [5.0]]))
         )
 
+    def test_optional_sampler_with_keyword_only_count(self):
+        def sample_next(state, *, n=1):
+            return state + reshape(arange(n), (n, 1))
+
+        model = DensityTransitionModel(
+            lambda state_next, state_previous: exp(
+                -0.5 * (state_next - state_previous) ** 2
+            ),
+            sample_next=sample_next,
+        )
+
+        self.assertTrue(
+            allclose(model.sample_next(array([4.0]), n=2), array([[4.0], [5.0]]))
+        )
+
+    def test_optional_unary_sampler(self):
+        def sample_next(state):
+            return state + array([1.0])
+
+        model = DensityTransitionModel(
+            lambda state_next, state_previous: exp(
+                -0.5 * (state_next - state_previous) ** 2
+            ),
+            sample_next=sample_next,
+        )
+
+        self.assertTrue(allclose(model.sample_next(array([4.0])), array([5.0])))
+
     def test_missing_sampler_raises(self):
         model = DensityTransitionModel(
             lambda state_next, state_previous: state_next + state_previous
