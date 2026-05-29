@@ -33,6 +33,18 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.weights, ones(5) / 5)
         npt.assert_allclose(filt.effective_sample_size(), 5.0)
 
+    def test_rejects_noninteger_dimensions(self):
+        invalid_kwargs = [
+            {"n_particles": 1.5, "num_rotations": 1},
+            {"n_particles": True, "num_rotations": 1},
+            {"n_particles": 1, "num_rotations": 1.5},
+            {"n_particles": 1, "num_rotations": True},
+        ]
+
+        for kwargs in invalid_kwargs:
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                SO3ProductParticleFilter(**kwargs)
+
     def test_set_particles_normalizes_and_canonicalizes(self):
         filt = SO3ProductParticleFilter(n_particles=2, num_rotations=2)
         particles = array(
@@ -49,7 +61,7 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         self.assertGreaterEqual(float(filt.particles[1, 1, -1]), 0.0)
         npt.assert_allclose(filt.weights, array([0.25, 0.75]))
 
-    def test_rejects_nonfinite_weights(self):
+    def test_rejects_nonfinite_particle_weights(self):
         particles = array([[[0.0, 0.0, 0.0, 1.0]], [z_quaternion(pi / 2.0)]])
 
         for invalid_weight in (float("nan"), float("inf"), -float("inf")):
@@ -67,6 +79,20 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
                         particles,
                         weights=array([1.0, invalid_weight]),
                     )
+
+    def test_rejects_invalid_particle_quaternions(self):
+        with self.assertRaises(ValueError):
+            SO3ProductParticleFilter(
+                n_particles=1,
+                num_rotations=1,
+                initial_particles=array([[[float("nan"), 0.0, 0.0, 1.0]]]),
+            )
+
+        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+        with self.assertRaises(ValueError):
+            filt.set_particles(
+                array([[[0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0, 1.0]]])
+            )
 
     def test_predict_with_tangent_delta_rotates_each_component(self):
         filt = SO3ProductParticleFilter(n_particles=3, num_rotations=2)
@@ -94,6 +120,18 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
 
         self.assertEqual(filt.particles.shape, (4, 2, 4))
         npt.assert_allclose(linalg.norm(filt.particles, axis=-1), ones((4, 2)))
+
+    def test_rejects_invalid_tangent_noise_covariance(self):
+        filt = SO3ProductParticleFilter(n_particles=4, num_rotations=1)
+        invalid_covariances = [
+            diag(array([0.01, float("nan"), 0.01])),
+            array([[1.0, 0.1, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
+            diag(array([0.01, -0.01, 0.01])),
+        ]
+
+        for covariance in invalid_covariances:
+            with self.subTest(covariance=covariance), self.assertRaises(ValueError):
+                filt.predict_identity(covariance)
 
     def test_update_with_geodesic_likelihood_prefers_matching_particle(self):
         filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
@@ -189,6 +227,21 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         self.assertGreater(float(filt.weights[0]), 0.999)
         npt.assert_allclose(float(filt.weights[2]), 0.0, atol=ATOL)
 
+    def test_update_validates_ess_threshold(self):
+        filt = SO3ProductParticleFilter(n_particles=2, num_rotations=1)
+        log_likelihood = array([0.0, -1.0])
+
+        for ess_threshold in [-0.1, float("nan"), float("inf")]:
+            with self.subTest(ess_threshold=ess_threshold), self.assertRaises(
+                ValueError
+            ):
+                filt.update_with_log_likelihood(
+                    log_likelihood,
+                    resample=False,
+                    ess_threshold=ess_threshold,
+                )
+        npt.assert_allclose(filt.weights, ones(2) / 2)
+
     def test_confidence_to_noise_std_maps_confidence_to_scale(self):
         sigma = SO3ProductParticleFilter.confidence_to_noise_std(
             array([1.0, 0.5, 0.0]),
@@ -255,6 +308,35 @@ class SO3ProductParticleFilterTest(unittest.TestCase):
         self.assertEqual(filt.particles.shape, (3, 1, 4))
         npt.assert_allclose(filt.weights, ones(3) / 3)
         npt.assert_allclose(linalg.norm(filt.particles, axis=-1), ones((3, 1)))
+
+    def test_from_covariance_diagonal_initializes_particles(self):
+        random.seed(0)
+        filt = SO3ProductParticleFilter.from_covariance_diagonal(
+            4,
+            array([z_quaternion(0.0), x_quaternion(0.0)]),
+            array([0.01, 0.01, 0.01, 0.02, 0.02, 0.02]),
+        )
+
+        self.assertEqual(filt.particles.shape, (4, 2, 4))
+        npt.assert_allclose(linalg.norm(filt.particles, axis=-1), ones((4, 2)))
+
+    def test_from_covariance_diagonal_validates_diagonal(self):
+        mean = array([z_quaternion(0.0)])
+        invalid_diagonals = [
+            array([]),
+            array([0.01, 0.01]),
+            array([[0.01, 0.01, 0.01]]),
+            array([0.01, float("nan"), 0.01]),
+            array([0.01, -0.01, 0.01]),
+        ]
+
+        for covariance_diagonal in invalid_diagonals:
+            with self.subTest(
+                covariance_diagonal=covariance_diagonal
+            ), self.assertRaises(ValueError):
+                SO3ProductParticleFilter.from_covariance_diagonal(
+                    2, mean, covariance_diagonal
+                )
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-from pyrecest.backend import array, cos, pi, sin, stack, to_numpy
+from pyrecest.backend import array, cos, pi, sin, stack
 from pyrecest.filters import run_so3_product_sequence_filter
 
 
@@ -28,7 +28,8 @@ def identity_transition(particles, time_index, rng):
     return particles
 
 
-def main() -> None:
+def run_example():
+    """Run the SO(3)^K sequence-filtering example."""
     n_steps = 12
     measurements = stack(
         [
@@ -66,10 +67,15 @@ def main() -> None:
         proposal_gain=0.1,
         rng=np.random.default_rng(0),
     )
+    return result, result.summary_statistics()
+
+
+def main() -> None:
+    result, summary = run_example()
 
     print("estimate shape:", result.estimates.shape)
-    print("mean ESS:", float(np.mean(to_numpy(result.effective_sample_size))))
-    print("resampled frames:", np.flatnonzero(to_numpy(result.resampled)).tolist())
+    print("mean ESS:", summary["mean_effective_sample_size"])
+    print("resampling count:", summary["resampling_count"])
 
 
 if __name__ == "__main__":

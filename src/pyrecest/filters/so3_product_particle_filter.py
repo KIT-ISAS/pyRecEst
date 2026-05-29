@@ -2,6 +2,9 @@
 
 import math
 from collections.abc import Callable
+from operator import index as operator_index
+
+import numpy as np
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
@@ -13,6 +16,7 @@ from pyrecest.backend import (
     isfinite,
     isnan,
     log,
+    linalg,
     max,
     maximum,
     ndim,
@@ -37,6 +41,53 @@ from .hyperhemisphere_cart_prod_particle_filter import (
 )
 
 
+def _validate_positive_integer(name: str, value) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer.")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer.") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be positive.")
+    return value
+
+
+def _as_covariance_diagonal(covariance_diagonal):
+    covariance_diagonal = array(covariance_diagonal, dtype=float)
+    if ndim(covariance_diagonal) != 1:
+        raise ValueError("covariance_diagonal must be one-dimensional.")
+    if covariance_diagonal.shape[0] == 0 or covariance_diagonal.shape[0] % 3 != 0:
+        raise ValueError("covariance_diagonal length must be a positive multiple of 3.")
+    if not all(isfinite(covariance_diagonal)):
+        raise ValueError("covariance_diagonal values must be finite.")
+    if not all(covariance_diagonal >= 0.0):
+        raise ValueError("covariance_diagonal values must be nonnegative.")
+    return covariance_diagonal
+
+
+def _validate_covariance_matrix(name: str, covariance):
+    if not all(isfinite(covariance)):
+        raise ValueError(f"{name} values must be finite.")
+    covariance_np = to_numpy(covariance)
+    matrices = covariance_np.reshape((-1,) + covariance_np.shape[-2:])
+    for matrix in matrices:
+        if not np.allclose(matrix, matrix.T, rtol=1e-8, atol=1e-10):
+            raise ValueError(f"{name} must be symmetric.")
+        if np.min(np.linalg.eigvalsh(matrix)) < -1e-10:
+            raise ValueError(f"{name} must be positive semidefinite.")
+    return covariance
+
+
+def _resampling_threshold(ess_threshold, n_particles: int) -> float:
+    if ess_threshold is None:
+        return n_particles / 2.0
+    threshold = float(ess_threshold)
+    if not math.isfinite(threshold) or threshold < 0.0:
+        raise ValueError("ess_threshold must be nonnegative and finite.")
+    return threshold
+
+
 class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
     """Particle filter for states on ``SO(3)^K``.
 
@@ -53,12 +104,10 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         initial_particles=None,
         weights=None,
     ) -> None:
-        if n_particles <= 0:
-            raise ValueError("n_particles must be positive.")
-        if num_rotations <= 0:
-            raise ValueError("num_rotations must be positive.")
+        n_particles = _validate_positive_integer("n_particles", n_particles)
+        num_rotations = _validate_positive_integer("num_rotations", num_rotations)
 
-        self.num_rotations = int(num_rotations)
+        self.num_rotations = num_rotations
         super().__init__(
             n_particles=n_particles,
             dim_hemisphere=3,
@@ -112,7 +161,13 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
                 "(n, 4K), or (n, K, 4)."
             )
 
-        normalized = normalize_quaternions(reshape(particles, (-1, 4)))
+        flat_particles = reshape(particles, (-1, 4))
+        if not all(isfinite(flat_particles)):
+            raise ValueError("SO(3)^K particles must be finite.")
+        if not all(linalg.norm(flat_particles, axis=-1) > 0.0):
+            raise ValueError("SO(3)^K particles must be nonzero.")
+
+        normalized = normalize_quaternions(flat_particles)
         return reshape(normalized, particles.shape)
 
     @staticmethod
@@ -308,6 +363,9 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         covariance = array(covariance, dtype=float)
         if ndim(covariance) == 2:
             if covariance.shape == (3, 3):
+                covariance = _validate_covariance_matrix(
+                    "tangent_noise_covariance", covariance
+                )
                 components = [
                     random.multivariate_normal(
                         mean=zeros(3), cov=covariance, size=n_particles
@@ -316,11 +374,17 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
                 ]
                 return stack(components, axis=1)
             if covariance.shape == (3 * num_rotations, 3 * num_rotations):
+                covariance = _validate_covariance_matrix(
+                    "tangent_noise_covariance", covariance
+                )
                 samples = random.multivariate_normal(
                     mean=zeros(3 * num_rotations), cov=covariance, size=n_particles
                 )
                 return reshape(samples, (n_particles, num_rotations, 3))
         elif ndim(covariance) == 3 and covariance.shape == (num_rotations, 3, 3):
+            covariance = _validate_covariance_matrix(
+                "tangent_noise_covariance", covariance
+            )
             components = [
                 random.multivariate_normal(
                     mean=zeros(3), cov=covariance[i], size=n_particles
@@ -506,12 +570,12 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         log_likelihood_values = array(log_likelihood_values, dtype=float)
         if log_likelihood_values.shape != self.weights.shape:
             raise ValueError("log_likelihood must return one value per particle.")
+        threshold = _resampling_threshold(ess_threshold, self.n_particles)
 
         self.filter_state.w = self._normalize_log_weights(
             log(self.weights) + log_likelihood_values
         )
         ess = self.effective_sample_size()
-        threshold = self.n_particles / 2.0 if ess_threshold is None else ess_threshold
         if resample and ess < threshold:
             self.resample_systematic()
         return ess
@@ -680,11 +744,13 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         covariance_diagonal,
     ):
         """Create a filter by sampling tangent noise around ``mean``."""
+        n_particles = _validate_positive_integer("n_particles", n_particles)
+        covariance_diagonal = _as_covariance_diagonal(covariance_diagonal)
         mean = SO3ProductParticleFilter._as_product_point(
-            mean, num_rotations=len(covariance_diagonal) // 3
+            mean, num_rotations=covariance_diagonal.shape[0] // 3
         )
         num_rotations = mean.shape[0]
-        covariance = diag(array(covariance_diagonal, dtype=float))
+        covariance = diag(covariance_diagonal)
         tangent_noise = SO3ProductParticleFilter._sample_tangent_noise(
             covariance, n_particles, num_rotations
         )

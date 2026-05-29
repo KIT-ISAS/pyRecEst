@@ -75,17 +75,6 @@ class BlockParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.block_weights, ones((2, 2)) / 2)
         npt.assert_allclose(filt.weights, ones(2) / 2)
 
-    def test_global_log_likelihood_updates_all_blocks(self):
-        filt = DummyBlockParticleFilter(
-            array([[0.0, 10.0], [1.0, 11.0]]),
-            partition="singleton",
-        )
-
-        filt.update_with_log_likelihood(array([0.0, -float("inf")]), resample=False)
-
-        npt.assert_allclose(filt.block_weights, array([[1.0, 0.0], [1.0, 0.0]]))
-        npt.assert_allclose(filt.weights, array([1.0, 0.0]))
-
     def test_rejects_nonfinite_weights(self):
         for invalid_weight in (float("nan"), float("inf"), -float("inf")):
             with self.subTest(invalid_weight=invalid_weight):
@@ -101,6 +90,58 @@ class BlockParticleFilterTest(unittest.TestCase):
                         partition="singleton",
                         block_weights=array([[1.0, invalid_weight], [1.0, 1.0]]),
                     )
+
+    def test_global_log_likelihood_updates_all_blocks(self):
+        filt = DummyBlockParticleFilter(
+            array([[0.0, 10.0], [1.0, 11.0]]),
+            partition="singleton",
+        )
+
+        filt.update_with_log_likelihood(array([0.0, -float("inf")]), resample=False)
+
+        npt.assert_allclose(filt.block_weights, array([[1.0, 0.0], [1.0, 0.0]]))
+        npt.assert_allclose(filt.weights, array([1.0, 0.0]))
+
+    def test_update_validates_ess_thresholds_before_mutating(self):
+        initial_block_weights = array([[0.5, 0.5], [0.5, 0.5]])
+        initial_weights = array([0.5, 0.5])
+        invalid_thresholds = [
+            -0.1,
+            float("nan"),
+            float("inf"),
+            array([0.5, -0.1]),
+            array([0.5, float("nan")]),
+        ]
+
+        for ess_threshold in invalid_thresholds:
+            filt = DummyBlockParticleFilter(
+                array([[0.0, 10.0], [1.0, 11.0]]),
+                partition="singleton",
+            )
+            with self.subTest(ess_threshold=ess_threshold), self.assertRaises(
+                ValueError
+            ):
+                filt.update_with_log_likelihood(
+                    array([0.0, -1.0]),
+                    ess_threshold=ess_threshold,
+                    resample=False,
+                )
+            npt.assert_allclose(filt.block_weights, initial_block_weights)
+            npt.assert_allclose(filt.weights, initial_weights)
+
+    def test_update_accepts_scalar_and_per_block_ess_thresholds(self):
+        filt = DummyBlockParticleFilter(
+            array([[0.0, 10.0], [1.0, 11.0]]),
+            partition="singleton",
+        )
+
+        filt.update_with_log_likelihood(
+            array([0.0, -1.0]),
+            ess_threshold=array([0.0, 0.0]),
+            resample=True,
+        )
+
+        npt.assert_allclose(filt.block_weights, array([[0.73105858, 0.26894142]] * 2))
 
 
 if __name__ == "__main__":

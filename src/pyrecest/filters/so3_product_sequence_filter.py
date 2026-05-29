@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from operator import index as operator_index
 from typing import Any
 
 import numpy as np
@@ -220,11 +221,48 @@ def _particle_spread(filter_state, estimate) -> float:
 
 def _threshold_value(resample_threshold: float, num_particles: int) -> float:
     threshold = float(resample_threshold)
-    if threshold <= 0.0:
+    if not np.isfinite(threshold) or threshold < 0.0:
+        raise ValueError("resample_threshold must be nonnegative and finite.")
+    if threshold == 0.0:
         return 0.0
     if threshold <= 1.0:
         return threshold * num_particles
     return threshold
+
+
+def _validate_positive_integer(name: str, value) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer.")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer.") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be positive.")
+    return value
+
+
+def _validate_nonnegative_finite(name: str, value: float) -> float:
+    value = float(value)
+    if not np.isfinite(value) or value < 0.0:
+        raise ValueError(f"{name} must be nonnegative and finite.")
+    return value
+
+
+def _validate_positive_finite(name: str, value: float | None) -> float | None:
+    if value is None:
+        return None
+    value = float(value)
+    if not np.isfinite(value) or value <= 0.0:
+        raise ValueError(f"{name} must be positive and finite.")
+    return value
+
+
+def _validate_probability(name: str, value: float) -> float:
+    value = float(value)
+    if not np.isfinite(value) or value < 0.0 or value > 1.0:
+        raise ValueError(f"{name} must be a finite probability in [0, 1].")
+    return value
 
 
 def _resample_if_needed(
@@ -273,16 +311,38 @@ class SO3ProductSequenceFilterRunner:
         confidence_exponent: float = 1.0,
         outlier_prob: float = 0.0,
     ) -> None:
+        if transition_callback is not None and not callable(transition_callback):
+            raise ValueError("transition_callback must be callable or None.")
+        num_particles = _validate_positive_integer("num_particles", num_particles)
+        noise_std = _validate_positive_finite("noise_std", noise_std)
+        max_noise_std = _validate_positive_finite("max_noise_std", max_noise_std)
+        if max_noise_std is not None and noise_std is None:
+            raise ValueError("noise_std is required when max_noise_std is used.")
+        if max_noise_std is not None and max_noise_std < noise_std:
+            raise ValueError(
+                "max_noise_std must be greater than or equal to noise_std."
+            )
+        _threshold_value(resample_threshold, num_particles)
+        proposal_gain = _validate_nonnegative_finite("proposal_gain", proposal_gain)
+        if initial_noise_std is not None:
+            initial_noise_std = _validate_nonnegative_finite(
+                "initial_noise_std", initial_noise_std
+            )
+        confidence_exponent = _validate_positive_finite(
+            "confidence_exponent", confidence_exponent
+        )
+        outlier_prob = _validate_probability("outlier_prob", outlier_prob)
+
         self.transition_callback = transition_callback
         self.noise_std = noise_std
-        self.num_particles = int(num_particles)
+        self.num_particles = num_particles
         self.resample_threshold = float(resample_threshold)
         self.partition = partition
-        self.proposal_gain = float(proposal_gain)
+        self.proposal_gain = proposal_gain
         self.initial_noise_std = initial_noise_std
         self.max_noise_std = max_noise_std
-        self.confidence_exponent = float(confidence_exponent)
-        self.outlier_prob = float(outlier_prob)
+        self.confidence_exponent = confidence_exponent
+        self.outlier_prob = outlier_prob
 
     def run(
         self,
@@ -355,14 +415,30 @@ def run_so3_product_sequence_filter(
     """
     measurements = _as_measurement_sequence(measurements)
     n_steps, num_rotations = int(measurements.shape[0]), int(measurements.shape[1])
-    if int(num_particles) <= 0:
-        raise ValueError("num_particles must be positive.")
+    if transition_callback is not None and not callable(transition_callback):
+        raise ValueError("transition_callback must be callable or None.")
+    num_particles = _validate_positive_integer("num_particles", num_particles)
+    noise_std = _validate_positive_finite("noise_std", noise_std)
+    max_noise_std = _validate_positive_finite("max_noise_std", max_noise_std)
+    confidence_exponent = _validate_positive_finite(
+        "confidence_exponent", confidence_exponent
+    )
+    outlier_prob = _validate_probability("outlier_prob", outlier_prob)
+    if initial_noise_std is not None:
+        initial_noise_std = _validate_nonnegative_finite(
+            "initial_noise_std", initial_noise_std
+        )
+    proposal_gain = _validate_nonnegative_finite("proposal_gain", proposal_gain)
+    if component_noise_std is not None and max_noise_std is not None:
+        raise ValueError("component_noise_std and max_noise_std are mutually exclusive.")
     if noise_std is None and component_noise_std is None and max_noise_std is None:
         raise ValueError(
             "noise_std, component_noise_std, or max_noise_std is required."
         )
     if max_noise_std is not None and noise_std is None:
         raise ValueError("noise_std is required when max_noise_std is used.")
+    if max_noise_std is not None and max_noise_std < noise_std:
+        raise ValueError("max_noise_std must be greater than or equal to noise_std.")
 
     rng = np.random.default_rng() if rng is None else rng
     mask = _as_mask(mask, n_steps, num_rotations)
@@ -374,7 +450,7 @@ def run_so3_product_sequence_filter(
     filter_state, resolved_partition, is_block_filter = _make_filter_state(
         measurements,
         mask,
-        int(num_particles),
+        num_particles,
         noise_std,
         partition,
         initial_particles,
@@ -387,7 +463,7 @@ def run_so3_product_sequence_filter(
     resampling_flags = []
     particle_spread = []
     block_ess_history = []
-    threshold = _threshold_value(resample_threshold, int(num_particles))
+    threshold = _threshold_value(resample_threshold, num_particles)
 
     for time_index in range(n_steps):
         if time_index > 0 and transition_callback is not None:
@@ -434,7 +510,7 @@ def run_so3_product_sequence_filter(
         resampling_flags.append(bool(resampled))
 
     metadata = {
-        "num_particles": int(num_particles),
+        "num_particles": num_particles,
         "partition": resolved_partition,
         "particle_spread_unit": "rad",
     }

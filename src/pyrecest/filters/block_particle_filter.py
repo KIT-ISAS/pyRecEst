@@ -460,7 +460,10 @@ class BlockParticleFilter:
     def _resampling_thresholds(self, ess_threshold):
         if ess_threshold is None:
             return [self.n_particles / 2.0 for _ in range(self.n_blocks)]
-        values = to_numpy(array(ess_threshold, dtype=float)).reshape(-1)
+        threshold_values = array(ess_threshold, dtype=float)
+        if not all(isfinite(threshold_values)) or any(threshold_values < 0.0):
+            raise ValueError("ess_threshold values must be nonnegative and finite.")
+        values = to_numpy(threshold_values).reshape(-1)
         if values.shape[0] == 1:
             return [float(values[0]) for _ in range(self.n_blocks)]
         if values.shape[0] != self.n_blocks:
@@ -489,6 +492,7 @@ class BlockParticleFilter:
                 "block log-likelihoods must have shape "
                 f"({self.n_blocks}, {self.n_particles})."
             )
+        thresholds = self._resampling_thresholds(ess_threshold)
         self._block_weights = stack(
             [
                 self._normalize_log_weights(log(self._block_weights[i]) + values[i])
@@ -499,7 +503,6 @@ class BlockParticleFilter:
         self._sync_global_weights()
         ess = self.block_effective_sample_size()
         if resample:
-            thresholds = self._resampling_thresholds(ess_threshold)
             to_resample = [
                 i
                 for i, value in enumerate(to_numpy(ess).reshape(-1))
