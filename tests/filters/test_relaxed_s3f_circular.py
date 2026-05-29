@@ -22,6 +22,8 @@ from pyrecest.distributions.nonperiodic.gaussian_distribution import (
     GaussianDistribution,
 )
 from pyrecest.filters.relaxed_s3f_circular import (
+    circular_weighted_mean,
+    grid_probability_masses,
     predict_circular_relaxed,
     rotate_body_increment,
     uniform_circular_cell_statistics,
@@ -101,6 +103,49 @@ class RelaxedS3FCircularTest(unittest.TestCase):
 
         self.assertLess(fine_mean_gap, coarse_mean_gap / 20.0)
         self.assertLess(fine_cov_norm, coarse_cov_norm / 20.0)
+
+    def test_validation_errors_are_explicit(self):
+        for n_cells in (0, 2.5, True, [8], float("nan")):
+            with self.subTest(n_cells=n_cells):
+                with self.assertRaisesRegex(ValueError, "n_cells"):
+                    uniform_circular_cell_statistics(n_cells, array([0.4, 0.1]))
+
+        with self.assertRaisesRegex(ValueError, "body_increment"):
+            uniform_circular_cell_statistics(8, array([0.4]))
+        with self.assertRaisesRegex(ValueError, "body_increment"):
+            uniform_circular_cell_statistics(8, array([0.4, float("nan")]))
+        with self.assertRaisesRegex(ValueError, "grid"):
+            uniform_circular_cell_statistics(8, array([0.4, 0.1]), grid=array([0.0]))
+        with self.assertRaisesRegex(ValueError, "grid"):
+            uniform_circular_cell_statistics(
+                2, array([0.4, 0.1]), grid=array([0.0, float("inf")])
+            )
+        with self.assertRaisesRegex(ValueError, "process_noise_cov"):
+            predict_circular_relaxed(
+                _make_filter(8),
+                array([0.4, 0.1]),
+                process_noise_cov=array([[float("nan"), 0.0], [0.0, 1.0]]),
+            )
+        with self.assertRaisesRegex(ValueError, "process_noise_cov"):
+            predict_circular_relaxed(
+                _make_filter(8),
+                array([0.4, 0.1]),
+                process_noise_cov=array([[float("inf"), 0.0], [0.0, 1.0]]),
+            )
+
+    def test_grid_probability_masses_reject_invalid_values(self):
+        invalid_cases = [
+            (array([1.0, float("nan")]), "finite"),
+            (array([1.0, -0.5]), "nonnegative"),
+            (array([0.0, 0.0]), "positive total mass"),
+        ]
+
+        for values, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    grid_probability_masses(values)
+                with self.assertRaisesRegex(ValueError, message):
+                    circular_weighted_mean(array([0.0, 1.0]), values)
 
 
 def _make_filter(n_cells: int) -> StateSpaceSubdivisionFilter:
