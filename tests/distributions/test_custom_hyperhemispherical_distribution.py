@@ -6,7 +6,7 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, pi
+from pyrecest.backend import array, ones, pi
 from pyrecest.distributions import (
     CustomHyperhemisphericalDistribution,
     HypersphericalUniformDistribution,
@@ -14,6 +14,21 @@ from pyrecest.distributions import (
 
 
 class CustomHyperhemisphericalDistributionTest(unittest.TestCase):
+    def test_pdf_accepts_list_inputs(self):
+        dist = CustomHyperhemisphericalDistribution(
+            lambda xs: ones(xs.shape[:-1]), 2
+        )
+        points = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+
+        npt.assert_allclose(dist.pdf(points[0]), dist.pdf(array(points[0])))
+        npt.assert_allclose(dist.pdf(points), dist.pdf(array(points)))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        dist = CustomHyperhemisphericalDistribution(lambda xs: 1.0, 2)
+
+        with self.assertRaises(ValueError):
+            dist.pdf([1.0, 0.0])
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Numerical integration is only supported for the NumPy backend",
