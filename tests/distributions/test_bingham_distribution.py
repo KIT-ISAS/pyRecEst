@@ -20,6 +20,20 @@ class TestBinghamDistribution(unittest.TestCase):
         Z = array([-5.0, -3.0, 0.0])
         self.bd = BinghamDistribution(Z, M)
 
+    def test_constructor_accepts_list_inputs(self):
+        """Z and M can be supplied as ordinary Python lists."""
+        M = [
+            [1 / 3, 2 / 3, -2 / 3],
+            [-2 / 3, 2 / 3, 1 / 3],
+            [2 / 3, 1 / 3, 2 / 3],
+        ]
+        Z = [-5.0, -3.0, 0.0]
+
+        bd = BinghamDistribution(Z, M)
+
+        npt.assert_allclose(bd.Z, array(Z))
+        npt.assert_allclose(bd.M, array(M))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
@@ -42,6 +56,24 @@ class TestBinghamDistribution(unittest.TestCase):
             expected_values,
             err_msg="Expected and computed pdf values do not match.",
         )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_pdf_accepts_list_inputs(self):
+        """PDF evaluation points can be supplied as ordinary Python lists."""
+        x = [
+            [float(v) for v in vectors_to_test_2d[0]],
+            [float(v) for v in vectors_to_test_2d[1]],
+        ]
+
+        npt.assert_allclose(self.bd.pdf(x), self.bd.pdf(array(x)))
+        npt.assert_allclose(self.bd.pdf(x[0]), self.bd.pdf(array(x[0])))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        with self.assertRaises(ValueError):
+            self.bd.pdf([1.0, 0.0])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
