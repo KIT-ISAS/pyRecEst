@@ -1,5 +1,7 @@
 """Transition-density helpers for grid filters on SO(3)."""
 
+import math
+
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
     abs,
@@ -8,6 +10,7 @@ from pyrecest.backend import (
     array,
     clip,
     exp,
+    isfinite,
     linalg,
     ndim,
     reshape,
@@ -73,8 +76,9 @@ def so3_right_multiplication_grid_transition(
     ``mean(grid_values[:, j]) * manifold_size == 1`` for every column.
     """
 
-    if kappa <= 0.0:
-        raise ValueError("kappa must be positive.")
+    kappa = float(kappa)
+    if not math.isfinite(kappa) or kappa <= 0.0:
+        raise ValueError("kappa must be positive and finite.")
 
     quaternion_grid = _as_quaternion_grid(grid)
     delta_quaternion = _as_so3_increment(orientation_increment)
@@ -130,6 +134,8 @@ def _as_quaternion_grid(grid):
         )
     if quaternion_grid.shape[0] == 0:
         raise ValueError("grid must contain at least one quaternion.")
+    if not all(isfinite(quaternion_grid)):
+        raise ValueError("grid quaternions must be finite.")
     if not all(linalg.norm(quaternion_grid, axis=1) > 0.0):
         raise ValueError("grid quaternions must be nonzero.")
 
@@ -138,6 +144,8 @@ def _as_quaternion_grid(grid):
 
 def _as_so3_increment(orientation_increment):
     values = array(orientation_increment, dtype=float)
+    if not all(isfinite(values)):
+        raise ValueError("orientation_increment must be finite.")
     if ndim(values) == 1:
         if values.shape[0] == 3:
             return exp_map_identity(values)[0]
