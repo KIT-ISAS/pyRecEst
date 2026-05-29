@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import column_stack, cos, int32, int64, pi, sin
+from pyrecest.backend import asarray, column_stack, cos, int32, int64, pi, sin
 
 from ..hypertorus.hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
 from ..nonperiodic.linear_dirac_distribution import LinearDiracDistribution
@@ -18,6 +18,7 @@ class HypercylindricalDiracDistribution(
     LinBoundedCartProdDiracDistribution, AbstractHypercylindricalDistribution
 ):
     def __init__(self, bound_dim: Union[int, int32, int64], d, w=None):
+        d = asarray(d)
         AbstractHypercylindricalDistribution.__init__(
             self, bound_dim, d.shape[-1] - bound_dim
         )

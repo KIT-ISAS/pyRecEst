@@ -55,6 +55,16 @@ class TestHypercylindricalDiracDistribution(TestAbstractDiracDistribution):
         clin = self.pwd.linear_covariance()
         assert clin.shape == (self.pwd.lin_dim, self.pwd.lin_dim)
 
+    def test_constructor_accepts_list_inputs(self):
+        dist = HypercylindricalDiracDistribution(
+            1, [[0.1, 1.0], [0.2, 2.0]], [0.25, 0.75]
+        )
+
+        npt.assert_allclose(dist.d, array([[0.1, 1.0], [0.2, 2.0]]))
+        npt.assert_allclose(dist.w, array([0.25, 0.75]))
+        self.assertEqual(dist.bound_dim, 1)
+        self.assertEqual(dist.lin_dim, 1)
+
     def test_apply_function_identity(self):
         same = self.pwd.apply_function(lambda x: x)
         npt.assert_array_equal(self.pwd.d, same.d)
