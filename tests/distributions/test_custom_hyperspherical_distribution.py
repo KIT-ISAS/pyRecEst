@@ -3,7 +3,7 @@ import unittest
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, linalg, random
+from pyrecest.backend import allclose, array, linalg, ones, random
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperspherical_distribution import (
     CustomHypersphericalDistribution,
@@ -35,6 +35,21 @@ class CustomHypersphericalDistributionTest(unittest.TestCase):
             ),
             "PDF values do not match.",
         )
+
+    def test_pdf_accepts_list_inputs(self):
+        dist = CustomHypersphericalDistribution(
+            lambda xs: ones(xs.shape[:-1]), dim=2
+        )
+        points = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+
+        self.assertTrue(allclose(dist.pdf(points[0]), dist.pdf(array(points[0]))))
+        self.assertTrue(allclose(dist.pdf(points), dist.pdf(array(points))))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        dist = CustomHypersphericalDistribution(lambda xs: 1.0, dim=2)
+
+        with self.assertRaises(ValueError):
+            dist.pdf([1.0, 0.0])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
