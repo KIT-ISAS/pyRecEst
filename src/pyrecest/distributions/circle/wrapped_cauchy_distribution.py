@@ -1,5 +1,17 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import arctan2, array, cos, cosh, exp, mod, pi, sin, sinh, tanh
+from pyrecest.backend import (
+    arctan2,
+    array,
+    atleast_1d,
+    cos,
+    cosh,
+    exp,
+    mod,
+    pi,
+    sin,
+    sinh,
+    tanh,
+)
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
@@ -20,7 +32,7 @@ class WrappedCauchyDistribution(AbstractCircularDistribution):
         self.gamma = gamma
 
     def pdf(self, xs):
-        xs = array(xs)
+        xs = atleast_1d(array(xs))
         assert xs.ndim == 1
         xs_centered = mod(xs - self.mu, 2 * pi)
         return 1 / (2 * pi) * sinh(self.gamma) / (cosh(self.gamma) - cos(xs_centered))
@@ -39,7 +51,7 @@ class WrappedCauchyDistribution(AbstractCircularDistribution):
         def coth(x):
             return 1 / tanh(x)
 
-        xs = array(xs)
+        xs = atleast_1d(array(xs))
         assert xs.ndim == 1
 
         def primitive(angles):
