@@ -1,4 +1,6 @@
 # pylint: disable=no-name-in-module,no-member
+from math import isfinite as python_isfinite
+
 from pyrecest.backend import (
     all as backend_all,
     allclose,
@@ -44,7 +46,7 @@ def _validate_vmf_distribution(distribution, role):
         raise ValueError(f"{role} mean direction must be normalized.")
 
     kappa = _to_python_float(distribution.kappa)
-    if not _to_python_bool(isfinite(kappa)):
+    if not python_isfinite(kappa):
         raise ValueError(f"{role} concentration must be finite.")
     if kappa < 0.0:
         raise ValueError(f"{role} concentration must be nonnegative.")
