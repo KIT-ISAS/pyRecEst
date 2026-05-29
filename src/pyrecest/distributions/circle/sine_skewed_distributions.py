@@ -17,6 +17,13 @@ def _validate_sine_power(value, name):
     return int(value)
 
 
+def _validate_scalar_angle(value):
+    angle = array(value)
+    if ndim(angle) != 0:
+        raise ValueError("angle must be a scalar")
+    return angle
+
+
 class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
     """
     See Bekker, A., Nakhaei Rad, N., Arashi, M., Ley, C. (2020). Generalized Skew-Symmetric Circular and
@@ -74,8 +81,7 @@ class GeneralizedKSineSkewedVonMisesDistribution(AbstractCircularDistribution):
         return norm_const * vm_pdf * skew_factor
 
     def shift(self, shift_by):
-        if ndim(shift_by) != 0:
-            raise ValueError("angle must be a scalar")
+        shift_by = _validate_scalar_angle(shift_by)
         new_dist = GeneralizedKSineSkewedVonMisesDistribution(
             self.mu + shift_by, self.kappa, self.lambda_, self.k, self.m
         )
@@ -109,8 +115,7 @@ class GSSVMDistribution(GeneralizedKSineSkewedVonMisesDistribution):
         return self.m
 
     def shift(self, shift_by):
-        if ndim(shift_by) != 0:
-            raise ValueError("angle must be a scalar")
+        shift_by = _validate_scalar_angle(shift_by)
         return GSSVMDistribution(self.mu + shift_by, self.kappa, self.lambda_, self.n)
 
 
@@ -258,8 +263,7 @@ class GeneralizedKSineSkewedWrappedCauchyDistribution(AbstractCircularDistributi
         return norm_const * wc_pdf_vals * skew_factor
 
     def shift(self, shift_by):
-        if ndim(shift_by) != 0:
-            raise ValueError("angle must be a scalar")
+        shift_by = _validate_scalar_angle(shift_by)
         return GeneralizedKSineSkewedWrappedCauchyDistribution(
             self.mu + shift_by, self.gamma, self.lambda_, self.k, self.m
         )
