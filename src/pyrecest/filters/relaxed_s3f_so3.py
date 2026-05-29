@@ -17,13 +17,16 @@ from functools import lru_cache
 from math import ceil, pi, sqrt
 from typing import Any
 
+import numpy as np
 from pyrecest.backend import abs as backend_abs
 from pyrecest.backend import (
+    all,
     arccos,
     array,
     asarray,
     clip,
     einsum,
+    isfinite,
     linspace,
     mean,
     stack,
@@ -122,8 +125,7 @@ def s3r3_cell_statistics(
             f"Unknown S3R3 cell-statistics method {method!r}; expected one of "
             f"{SUPPORTED_S3R3_CELL_METHODS}."
         )
-    if cell_sample_count <= 0:
-        raise ValueError("cell_sample_count must be positive.")
+    cell_sample_count = _validate_positive_cell_sample_count(cell_sample_count)
 
     grid_array = _as_quaternion_grid(grid)
     increment = _as_body_increment(body_increment)
@@ -200,6 +202,16 @@ def predict_s3r3_relaxed(
     if grid.shape[0] != n_cells:
         raise ValueError("grid size must match the number of linear distributions.")
 
+    q_base = (
+        zeros((3, 3), dtype=float)
+        if process_noise_cov is None
+        else asarray(process_noise_cov, dtype=float)
+    )
+    if q_base.shape != (3, 3):
+        raise ValueError("process_noise_cov must have shape (3, 3).")
+    if not bool(all(isfinite(q_base))):
+        raise ValueError("process_noise_cov must be finite.")
+
     stats = s3r3_cell_statistics(
         grid,
         body_increment,
@@ -215,14 +227,6 @@ def predict_s3r3_relaxed(
     else:
         displacements = stats.mean_displacements
         covariance_inflations = stats.covariance_inflations
-
-    q_base = (
-        zeros((3, 3), dtype=float)
-        if process_noise_cov is None
-        else asarray(process_noise_cov, dtype=float)
-    )
-    if q_base.shape != (3, 3):
-        raise ValueError("process_noise_cov must have shape (3, 3).")
 
     covariance_matrices = stack(
         [q_base + covariance_inflations[idx] for idx in range(n_cells)],
@@ -331,8 +335,41 @@ def _tangent_cell_offsets(cell_radius: float, sample_count: int) -> Any:
     return array(offsets[:sample_count], dtype=float)
 
 
+def _validate_positive_cell_sample_count(cell_sample_count: Any) -> int:
+    count_array = np.asarray(cell_sample_count)
+    if count_array.ndim != 0:
+        raise ValueError("cell_sample_count must be a scalar integer.")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("cell_sample_count must be an integer, not a boolean.")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("cell_sample_count must be an integer.") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("cell_sample_count must be a finite integer.")
+    if count_int <= 0:
+        raise ValueError("cell_sample_count must be positive.")
+    return count_int
+
+
 def _as_quaternion_grid(grid: Any) -> Any:
-    grid = normalize_quaternions(asarray(grid, dtype=float))
+    grid = asarray(grid, dtype=float)
+    if len(grid.shape) == 1:
+        if grid.shape[0] != 4:
+            raise ValueError("grid must have shape (n_cells, 4).")
+    elif len(grid.shape) == 2:
+        if grid.shape[1] != 4:
+            raise ValueError("grid must have shape (n_cells, 4).")
+    else:
+        raise ValueError("grid must have shape (n_cells, 4).")
+    if not bool(all(isfinite(grid))):
+        raise ValueError("grid must be finite.")
+    grid = normalize_quaternions(grid)
     if len(grid.shape) != 2 or grid.shape[1] != 4:
         raise ValueError("grid must have shape (n_cells, 4).")
     return grid
@@ -342,6 +379,8 @@ def _as_body_increment(body_increment: Any) -> Any:
     increment = asarray(body_increment, dtype=float).reshape(-1)
     if increment.shape != (3,):
         raise ValueError("body_increment must be a 3-D vector.")
+    if not bool(all(isfinite(increment))):
+        raise ValueError("body_increment must be finite.")
     return increment
 
 

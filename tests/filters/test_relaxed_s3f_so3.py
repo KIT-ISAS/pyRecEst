@@ -139,17 +139,51 @@ class RelaxedS3FSO3Test(unittest.TestCase):
             s3r3_cell_statistics(
                 _small_quaternion_grid(), array([0.4, 0.1, 0.2]), method="exact_voronoi"
             )
-        with self.assertRaisesRegex(ValueError, "cell_sample_count"):
-            s3r3_cell_statistics(
-                _small_quaternion_grid(), array([0.4, 0.1, 0.2]), cell_sample_count=0
-            )
+        for cell_sample_count in (0, 2.5, True, [27], float("nan")):
+            with self.subTest(cell_sample_count=cell_sample_count):
+                with self.assertRaisesRegex(ValueError, "cell_sample_count"):
+                    s3r3_cell_statistics(
+                        _small_quaternion_grid(),
+                        array([0.4, 0.1, 0.2]),
+                        cell_sample_count=cell_sample_count,
+                    )
         with self.assertRaisesRegex(ValueError, "body_increment"):
             s3r3_cell_statistics(
                 _small_quaternion_grid(), array([0.4, 0.1]), cell_sample_count=27
             )
+        with self.assertRaisesRegex(ValueError, "body_increment"):
+            s3r3_cell_statistics(
+                _small_quaternion_grid(),
+                array([0.4, float("nan"), 0.2]),
+                cell_sample_count=27,
+            )
+        with self.assertRaisesRegex(ValueError, "grid"):
+            s3r3_cell_statistics(
+                array([[0.0, 0.0, float("inf"), 1.0]]),
+                array([0.4, 0.1, 0.2]),
+                cell_sample_count=27,
+            )
         with self.assertRaisesRegex(ValueError, "variant"):
             predict_s3r3_relaxed(
                 _make_filter(), array([0.4, 0.1, 0.2]), variant="r2_only"
+            )
+        with self.assertRaisesRegex(ValueError, "process_noise_cov"):
+            predict_s3r3_relaxed(
+                _make_filter(),
+                array([0.4, 0.1, 0.2]),
+                process_noise_cov=array([[float("nan"), 0.0, 0.0], [0.0, 1.0, 0.0]]),
+            )
+        with self.assertRaisesRegex(ValueError, "process_noise_cov"):
+            predict_s3r3_relaxed(
+                _make_filter(),
+                array([0.4, 0.1, 0.2]),
+                process_noise_cov=array(
+                    [
+                        [float("inf"), 0.0, 0.0],
+                        [0.0, 1.0, 0.0],
+                        [0.0, 0.0, 1.0],
+                    ]
+                ),
             )
 
 
