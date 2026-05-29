@@ -43,6 +43,21 @@ class AbstractCircularDistributionTest(unittest.TestCase):
                 )
 
     @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_cdf_numerical_accepts_scalar_and_list_inputs(self):
+        dist = WrappedNormalDistribution(array(0.3), array(0.8))
+        xs = [0.5, 1.0]
+
+        self.assertTrue(
+            allclose(dist.cdf_numerical(0.5), dist.cdf_numerical(array([0.5])))
+        )
+        self.assertTrue(
+            allclose(dist.cdf_numerical(xs), dist.cdf_numerical(array(xs)))
+        )
+
+    @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on jax backend",
     )
