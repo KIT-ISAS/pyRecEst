@@ -114,6 +114,80 @@ class TestAxialKalmanFilter4D(unittest.TestCase):
         est = self.filter.get_point_estimate()
         npt.assert_allclose(linalg.norm(est), 1.0, atol=1e-6)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Not supported on this backend",  # pylint: disable=no-member
+    )
+    def test_update_identity_accepts_array_like_measurement(self):
+        self.filter.filter_state = GaussianDistribution(self.mu, self.C)
+
+        self.filter.update_identity(
+            GaussianDistribution(array([1.0, 0.0, 0.0, 0.0]), self.C),
+            [1.0, 0.0, 0.0, 0.0],
+        )
+
+        npt.assert_allclose(linalg.norm(self.filter.get_point_estimate()), 1.0)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "pytorch",
+        reason="Not supported on this backend",  # pylint: disable=no-member
+    )
+    def test_validation_errors_are_explicit(self):
+        with self.assertRaisesRegex(ValueError, "GaussianDistribution"):
+            self.filter.filter_state = object()
+        with self.assertRaisesRegex(ValueError, "length 2 or 4"):
+            self.filter.filter_state = GaussianDistribution(
+                array([1.0, 0.0, 0.0]), eye(3)
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.filter_state = GaussianDistribution(
+                array([float("nan"), 0.0, 0.0, 1.0]),
+                eye(4),
+                check_validity=False,
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.filter_state = GaussianDistribution(
+                array([1.0, 0.0, 0.0, 0.0]),
+                array(
+                    [
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.0, float("inf"), 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ]
+                ),
+                check_validity=False,
+            )
+        with self.assertRaisesRegex(ValueError, "unit vector"):
+            self.filter.filter_state = GaussianDistribution(
+                array([2.0, 0.0, 0.0, 0.0]), eye(4), check_validity=False
+            )
+
+        self.filter.filter_state = GaussianDistribution(self.mu, self.C)
+        with self.assertRaisesRegex(ValueError, "system noise"):
+            self.filter.predict_identity(
+                GaussianDistribution(array([1.0, 0.0]), eye(2))
+            )
+        with self.assertRaisesRegex(ValueError, "measurement noise"):
+            self.filter.update_identity(
+                GaussianDistribution(array([1.0, 0.0]), eye(2)),
+                self.mu,
+            )
+        with self.assertRaisesRegex(ValueError, "measurement"):
+            self.filter.update_identity(
+                GaussianDistribution(self.mu, self.C), [1.0, 0.0]
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.update_identity(
+                GaussianDistribution(self.mu, self.C),
+                [float("nan"), 0.0, 0.0, 1.0],
+            )
+        with self.assertRaisesRegex(ValueError, "unit vector"):
+            self.filter.update_identity(
+                GaussianDistribution(self.mu, self.C),
+                [2.0, 0.0, 0.0, 0.0],
+            )
+
 
 class TestAxialKalmanFilter2D(unittest.TestCase):
     def setUp(self):
