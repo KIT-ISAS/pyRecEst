@@ -36,6 +36,11 @@ class TestGvMDistribution(unittest.TestCase):
         xs = linspace(0.0, 2.0 * pi, 50)
         self.assertTrue((gvm.pdf(xs) >= 0).all())
 
+    def test_pdf_accepts_scalar_input(self):
+        gvm = GvMDistribution(array([1.0]), array([2.0]))
+
+        npt.assert_allclose(gvm.pdf(0.5), gvm.pdf(array([0.5])))
+
     def test_pdf_integrates_to_one(self):
         """PDF should integrate to 1 over [0, 2*pi]."""
         from scipy.integrate import quad
