@@ -41,6 +41,38 @@ class TestHyperhemisphericalUniformDistribution(unittest.TestCase):
             allclose(hhud.pdf(points), ones(points.shape[0]) / (2 * pi), atol=1e-6)
         )
 
+    def test_pdf_accepts_list_inputs(self):
+        hhud = HyperhemisphericalUniformDistribution(2)
+        points = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+
+        npt.assert_allclose(
+            to_numpy(hhud.pdf(points)),
+            to_numpy(hhud.pdf(array(points))),
+        )
+        npt.assert_allclose(
+            to_numpy(hhud.pdf(points[0])),
+            to_numpy(hhud.pdf(array(points[0]))),
+        )
+
+    def test_pdf_rejects_wrong_dimension(self):
+        hhud = HyperhemisphericalUniformDistribution(2)
+
+        with self.assertRaises(ValueError):
+            hhud.pdf([1.0, 0.0])
+
+    def test_ln_pdf_accepts_list_inputs(self):
+        hhud = HyperhemisphericalUniformDistribution(2)
+        points = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+
+        npt.assert_allclose(
+            to_numpy(hhud.ln_pdf(points)),
+            to_numpy(hhud.ln_pdf(array(points))),
+        )
+        npt.assert_allclose(
+            to_numpy(hhud.ln_pdf(points[0])),
+            to_numpy(hhud.ln_pdf(array(points[0]))),
+        )
+
     def test_pdf_3d(self):
         hhud = HyperhemisphericalUniformDistribution(3)
 
