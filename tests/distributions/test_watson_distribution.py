@@ -38,6 +38,13 @@ class TestWatsonDistribution(unittest.TestCase):
         self.assertEqual(w.kappa, kappa)
         self.assertEqual(w.input_dim, mu.shape[0])
 
+    def test_constructor_accepts_list_mu(self):
+        mu = array([1.0, 2.0, 3.0])
+        mu = mu / linalg.norm(mu)
+        w = WatsonDistribution([float(v) for v in mu], 2.0)
+
+        npt.assert_allclose(w.mu, mu)
+
     def test_pdf(self):
         mu = array([1.0, 2.0, 3.0])
         mu = mu / linalg.norm(mu)
@@ -57,6 +64,21 @@ class TestWatsonDistribution(unittest.TestCase):
 
         pdf_values = w.pdf(self.xs)
         npt.assert_array_almost_equal(pdf_values, expected_pdf_values, decimal=5)
+
+    def test_pdf_accepts_list_inputs(self):
+        mu = array([1.0, 2.0, 3.0])
+        mu = mu / linalg.norm(mu)
+        w = WatsonDistribution(mu, 2.0)
+        xs = [[float(v) for v in self.xs[0]], [float(v) for v in self.xs[1]]]
+
+        npt.assert_allclose(w.pdf(xs), w.pdf(array(xs)))
+        npt.assert_allclose(w.pdf(xs[0]), w.pdf(array(xs[0])))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        dist = WatsonDistribution(array([1.0, 0.0, 0.0]), 2.0)
+
+        with self.assertRaises(ValueError):
+            dist.pdf([1.0, 0.0])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -118,6 +140,12 @@ class TestWatsonDistribution(unittest.TestCase):
             err_msg="ln_pdf does not return correct log probabilities.",
         )
 
+    def test_ln_pdf_rejects_wrong_dimension(self):
+        dist = WatsonDistribution(array([1.0, 0.0, 0.0]), 2.0)
+
+        with self.assertRaises(ValueError):
+            dist.ln_pdf([1.0, 0.0])
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         "JAX proposals use an explicit PRNG-key signature",
@@ -155,6 +183,17 @@ class TestWatsonDistribution(unittest.TestCase):
         dist = WatsonDistribution(mu, 2.0)
 
         shifted = dist.shift(new_mode)
+
+        self.assertIsNot(shifted, dist)
+        npt.assert_allclose(dist.mu, mu)
+        npt.assert_allclose(shifted.mu, new_mode)
+
+    def test_shift_accepts_list_mode(self):
+        mu = array([0.0, 0.0, 1.0])
+        new_mode = array([1.0, 0.0, 0.0])
+        dist = WatsonDistribution([0.0, 0.0, 1.0], 2.0)
+
+        shifted = dist.shift([1.0, 0.0, 0.0])
 
         self.assertIsNot(shifted, dist)
         npt.assert_allclose(dist.mu, mu)

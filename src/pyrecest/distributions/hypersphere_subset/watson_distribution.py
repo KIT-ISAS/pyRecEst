@@ -36,9 +36,10 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             mu (): The mean direction of the distribution.
             kappa (float): The concentration parameter of the distribution.
         """
-        AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
+        mu = array(mu)
         assert mu.ndim == 1, "mu must be a 1-D vector"
         assert abs(linalg.norm(mu) - 1.0) < self.EPSILON, "mu is unnormalized"
+        AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
 
         self.mu = mu
         self.kappa = kappa
@@ -79,11 +80,20 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         Returns:
             np.generic: The value of the pdf at xs.
         """
-        assert xs.shape[-1] == self.input_dim, "Last dimension of xs must be dim + 1"
+        xs = array(xs)
+        if xs.ndim == 0 or xs.shape[-1] != self.input_dim:
+            raise ValueError(
+                f"xs must have trailing dimension {self.input_dim}, got {xs.shape}."
+            )
         p = self.norm_const * exp(self.kappa * (xs @ self.mu) ** 2)
         return p
 
     def ln_pdf(self, xs):
+        xs = array(xs)
+        if xs.ndim == 0 or xs.shape[-1] != self.input_dim:
+            raise ValueError(
+                f"xs must have trailing dimension {self.input_dim}, got {xs.shape}."
+            )
         return self.ln_norm_const + self.kappa * (xs @ self.mu) ** 2
 
     def to_bingham(self) -> BinghamDistribution:
@@ -113,6 +123,7 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         return self.mode_numerical()
 
     def set_mode(self, new_mode):
+        new_mode = array(new_mode)
         assert new_mode.shape == self.mu.shape
         dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mode)
