@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, diag, isfinite, pi
+from pyrecest.backend import array, diag, eye, isfinite, pi
 from pyrecest.distributions import SO3BinghamDistribution
 from pyrecest.distributions.hypersphere_subset.hyperhemispherical_bingham_distribution import (
     HyperhemisphericalBinghamDistribution,
@@ -34,6 +34,53 @@ class SO3BinghamDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             dist.distFullSphere.Z, array([-5.0, -5.0, -5.0, 0.0]), atol=ATOL
         )
+
+    def test_constructor_rejects_invalid_parameters(self):
+        valid_z = array([-1.0, -1.0, -1.0, 0.0])
+        valid_m = eye(4)
+        invalid_cases = [
+            (array([0.0, 0.0, 0.0]), valid_m, "shape"),
+            (valid_z, eye(3), "shape"),
+            (array([-1.0, -1.0, float("nan"), 0.0]), valid_m, "finite"),
+            (
+                valid_z,
+                diag(array([1.0, 1.0, 1.0, float("inf")])),
+                "finite",
+            ),
+            (array([-1.0, 0.0, -0.5, 0.0]), valid_m, "ascending"),
+            (array([-1.0, -1.0, -1.0, 1.0]), valid_m, "zero"),
+            (valid_z, diag(array([1.0, 1.0, 1.0, 2.0])), "orthogonal"),
+        ]
+
+        for z, m, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    SO3BinghamDistribution(z, m)
+
+    def test_factories_reject_invalid_parameters(self):
+        for concentration in (-1.0, float("inf"), float("nan")):
+            with self.subTest(concentration=concentration):
+                with self.assertRaisesRegex(ValueError, "finite and nonnegative"):
+                    SO3BinghamDistribution.from_mode_and_concentration(
+                        array([0.0, 0.0, 0.0, 1.0]), concentration
+                    )
+
+        with self.assertRaisesRegex(ValueError, "shape"):
+            SO3BinghamDistribution.calculate_normalization_constant(
+                array([0.0, 0.0, 0.0])
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            SO3BinghamDistribution.calculate_normalization_constant(
+                array([0.0, 0.0, float("nan"), 0.0])
+            )
+        with self.assertRaisesRegex(ValueError, "shape"):
+            SO3BinghamDistribution.from_concentration_matrix(eye(3))
+        with self.assertRaisesRegex(ValueError, "finite"):
+            SO3BinghamDistribution.from_concentration_matrix(
+                diag(array([0.0, 0.0, float("inf"), 0.0]))
+            )
+        with self.assertRaisesRegex(ValueError, "BinghamDistribution"):
+            SO3BinghamDistribution.from_bingham_distribution(object())
 
     def test_pdf_is_antipodally_symmetric_and_peaks_at_mode(self):
         dist = SO3BinghamDistribution.from_mode_and_concentration(
@@ -98,6 +145,11 @@ class SO3BinghamDistributionTest(unittest.TestCase):
         npt.assert_allclose(
             product.distFullSphere.Z, array([-5.0, -5.0, -5.0, 0.0]), atol=ATOL
         )
+
+        with self.assertRaisesRegex(ValueError, "SO3BinghamDistribution"):
+            first.multiply(object())
+        with self.assertRaisesRegex(ValueError, "SO3BinghamDistribution"):
+            first.compose(object())
 
 
 if __name__ == "__main__":
