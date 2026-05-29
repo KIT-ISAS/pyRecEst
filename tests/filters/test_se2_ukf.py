@@ -89,8 +89,65 @@ class TestSE2UKF(unittest.TestCase):
     def test_set_state_unnormalised_raises(self):
         mu = array([1.0, 1.0, 0.0, 0.0])  # not unit-norm in first 2 entries
         C = eye(4) * 0.1
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             self.filter.filter_state = GaussianDistribution(mu, C)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
+    def test_set_state_validation_errors_are_explicit(self):
+        with self.assertRaisesRegex(ValueError, "GaussianDistribution"):
+            self.filter.filter_state = object()
+        with self.assertRaisesRegex(ValueError, "4-D vector"):
+            self.filter.filter_state = GaussianDistribution(
+                array([1.0, 0.0, 0.0]), eye(3)
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.filter_state = GaussianDistribution(
+                array([float("nan"), 0.0, 0.0, 1.0]),
+                eye(4),
+                check_validity=False,
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.filter_state = GaussianDistribution(
+                array([1.0, 0.0, 0.0, 0.0]),
+                array(
+                    [
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.0, float("inf"), 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ]
+                ),
+                check_validity=False,
+            )
+        with self.assertRaisesRegex(ValueError, "symmetric"):
+            self.filter.filter_state = GaussianDistribution(
+                array([1.0, 0.0, 0.0, 0.0]),
+                array(
+                    [
+                        [1.0, 0.5, 0.0, 0.0],
+                        [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ]
+                ),
+                check_validity=False,
+            )
+        with self.assertRaisesRegex(ValueError, "positive definite"):
+            self.filter.filter_state = GaussianDistribution(
+                array([1.0, 0.0, 0.0, 0.0]),
+                array(
+                    [
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, -1.0],
+                    ]
+                ),
+                check_validity=False,
+            )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -101,6 +158,19 @@ class TestSE2UKF(unittest.TestCase):
         noise = _make_noise()
         self.filter.predict_identity(noise)
         self.assertIsInstance(self.filter.filter_state, GaussianDistribution)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
+    def test_predict_identity_rejects_invalid_noise(self):
+        self.filter.filter_state = _make_identity_state()
+        with self.assertRaisesRegex(ValueError, "system noise"):
+            self.filter.predict_identity(object())
+        with self.assertRaisesRegex(ValueError, "system noise"):
+            self.filter.predict_identity(
+                GaussianDistribution(array([2.0, 0.0, 0.0, 0.0]), eye(4))
+            )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -213,6 +283,34 @@ class TestSE2UKF(unittest.TestCase):
         z = array([1.0, 0.0, 0.0, 0.0])
         self.filter.update_identity(_make_noise(), z)
         self.assertIsInstance(self.filter.filter_state, GaussianDistribution)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
+    def test_update_identity_accepts_array_like_measurement(self):
+        self.filter.filter_state = _make_identity_state()
+
+        self.filter.update_identity(_make_noise(), [1.0, 0.0, 0.0, 0.0])
+
+        npt.assert_allclose(linalg.norm(self.filter.filter_state.mu[0:2]), 1.0)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on JAX backend",
+    )
+    def test_update_identity_rejects_invalid_inputs(self):
+        self.filter.filter_state = _make_identity_state()
+        with self.assertRaisesRegex(ValueError, "measurement noise"):
+            self.filter.update_identity(object(), [1.0, 0.0, 0.0, 0.0])
+        with self.assertRaisesRegex(ValueError, "4-D vector"):
+            self.filter.update_identity(_make_noise(), [1.0, 0.0, 0.0])
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.update_identity(
+                _make_noise(), [float("nan"), 0.0, 0.0, 0.0]
+            )
+        with self.assertRaisesRegex(ValueError, "normalised"):
+            self.filter.update_identity(_make_noise(), [2.0, 0.0, 0.0, 0.0])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
