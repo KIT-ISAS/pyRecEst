@@ -43,6 +43,14 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
         for x in [0.0, 1.0, 2.0, 3.0, 4.0]:
             npt.assert_allclose(self.wl.pdf(array(x)), pdftemp(array(x)), rtol=1e-6)
 
+    def test_pdf_accepts_scalar_and_list_inputs(self):
+        npt.assert_allclose(self.wl.pdf(1.0), self.wl.pdf(array(1.0)), rtol=1e-6)
+        npt.assert_allclose(
+            self.wl.pdf([0.0, 1.0, 2.0]),
+            self.wl.pdf(array([0.0, 1.0, 2.0])),
+            rtol=1e-6,
+        )
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
