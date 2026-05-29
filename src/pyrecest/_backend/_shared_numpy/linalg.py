@@ -121,20 +121,20 @@ def solve(a, b):
     ----------
     a : array-like, shape=[..., M, M]
         Coefficient matrix.
-    b : array-like, shape=[..., M]
-        Ordinate or "dependent variable" values".
+    b : array-like, shape=[..., M] or [..., M, K]
+        Ordinate or "dependent variable" values.
 
     Returns
     -------
-    x : array-like, shape=[..., M]
+    x : array-like, shape=[..., M] or [..., M, K]
         Solution to the system a x = b.
     """
-    batch_shape = a.shape[:-2]
-    if batch_shape:
+    vector_rhs = b.ndim == a.ndim - 1
+    if vector_rhs:
         b = _np.expand_dims(b, axis=-1)
 
     res = _np.linalg.solve(a, b)
-    if batch_shape:
+    if vector_rhs:
         return res[..., 0]
 
     return res
