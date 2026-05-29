@@ -2,6 +2,7 @@
 from pyrecest.backend import all, array, asarray, cos, exp, mod, pi, sin, sqrt
 from scipy.special import iv
 
+from ._input_validation import as_shift_vector
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 
 
@@ -17,6 +18,8 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
 
     def __init__(self, mu, kappa, alpha, beta):
         AbstractToroidalDistribution.__init__(self)
+        mu = array(mu)
+        kappa = array(kappa)
         assert mu.shape == (2,)
         assert kappa.shape == (2,)
         alpha = asarray(alpha)
@@ -48,7 +51,11 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
         return 4.0 * pi**2 * total
 
     def pdf(self, xs):
-        assert xs.shape[-1] == 2
+        xs = array(xs)
+        if xs.ndim == 0 or xs.shape[-1] != self.dim:
+            raise ValueError(
+                f"xs must have trailing dimension {self.dim}, got {xs.shape}."
+            )
         p = self.C * exp(
             self.kappa[0] * cos(xs[..., 0] - self.mu[0])
             + self.kappa[1] * cos(xs[..., 1] - self.mu[1])
@@ -139,7 +146,7 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
         return e_sin_a_sin_b / sqrt(e_sin_a_sq * e_sin_b_sq)
 
     def shift(self, shift_by):
-        assert shift_by.shape == (self.dim,)
+        shift_by = as_shift_vector(shift_by, self.dim)
         return ToroidalVMRivestDistribution(
             mod(self.mu + shift_by, 2.0 * pi),
             self.kappa,
