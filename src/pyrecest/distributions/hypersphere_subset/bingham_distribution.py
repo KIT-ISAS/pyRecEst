@@ -154,6 +154,8 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
     """
 
     def __init__(self, Z, M):
+        Z = array(Z)
+        M = array(M)
         AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
         assert M.shape[1] == self.input_dim, "M is not square"
@@ -193,7 +195,11 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         return _calculate_F_cached(_cache_key(Z))
 
     def pdf(self, xs):
-        assert xs.shape[-1] == self.dim + 1
+        xs = array(xs)
+        if xs.ndim == 0 or xs.shape[-1] != self.input_dim:
+            raise ValueError(
+                f"xs must have trailing dimension {self.input_dim}, got {xs.shape}."
+            )
 
         C = self.M @ diag(self.Z) @ self.M.T
         p = 1 / self.F * exp(sum(xs * (xs @ C), axis=-1))
