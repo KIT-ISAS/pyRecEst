@@ -36,6 +36,12 @@ class CircularUniformDistributionTest(unittest.TestCase):
         x = array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
         npt.assert_allclose(cu.cdf(x), cu.cdf_numerical(x))
 
+    def test_cdf_accepts_list_inputs(self):
+        cu = CircularUniformDistribution()
+        x = [1.0, 2.0, 3.0]
+
+        npt.assert_allclose(cu.cdf(x), cu.cdf(array(x)))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",

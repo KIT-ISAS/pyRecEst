@@ -1,4 +1,4 @@
-from pyrecest.backend import pi, where
+from pyrecest.backend import array, pi, where
 
 from ..hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
@@ -41,6 +41,7 @@ class CircularUniformDistribution(
             cdf evaluated at columns of xa
         """
 
+        xa = array(xa)
         val = (xa - starting_point) / (2 * pi)
         val = where(val < 0, val + 1, val)
 
