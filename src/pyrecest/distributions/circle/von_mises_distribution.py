@@ -59,6 +59,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return self._norm_const
 
     def pdf(self, xs):
+        xs = array(xs)
         p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
 
@@ -101,6 +102,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         val : (n)
             cdf evaluated at columns of xs
         """
+        xs = array(xs)
         assert xs.ndim <= 1
 
         r = zeros_like(xs)

@@ -6,6 +6,7 @@ import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
+import pyrecest.backend
 from pyrecest.backend import abs, allclose, array, linspace
 from pyrecest.distributions import VonMisesDistribution
 
@@ -34,6 +35,23 @@ class TestVonMisesDistribution(unittest.TestCase):
                 ],
             ),
         )
+
+    def test_pdf_accepts_list_inputs(self):
+        dist = VonMisesDistribution(0.3, 1.2)
+        xs = [0.5, 1.0]
+
+        npt.assert_allclose(dist.pdf(xs), dist.pdf(array(xs)))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_cdf_accepts_scalar_and_list_inputs(self):
+        dist = VonMisesDistribution(0.3, 1.2)
+        xs = [0.5, 1.0]
+
+        npt.assert_allclose(dist.cdf(0.5), dist.cdf(array(0.5)))
+        npt.assert_allclose(dist.cdf(xs), dist.cdf(array(xs)))
 
     def test_uniform_trigonometric_moments(self):
         dist = VonMisesDistribution(2, 0)
