@@ -61,6 +61,23 @@ class TestSE3LinVelCartProdStackedDistribution(unittest.TestCase):
         pdf_values = cpd.pdf(ones((100, 10)))
         self.assertTrue(allclose(diff(pdf_values), zeros(99)))
 
+    def test_pdf_accepts_list_inputs(self):
+        cpd = SE3LinVelCartProdStackedDistribution(
+            [
+                HyperhemisphericalUniformDistribution(3),
+                GaussianDistribution(
+                    array([1.0, 2.0, 0.0, -2.0, -1.0, 3.0]),
+                    diag(array([3.0, 2.0, 3.0, 3.0, 4.0, 5.0])),
+                ),
+            ]
+        )
+        points = [
+            [1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, -2.0, -1.0, 3.0],
+            [0.0, 1.0, 0.0, 0.0, 2.0, 3.0, 1.0, -1.0, 0.0, 4.0],
+        ]
+
+        self.assertTrue(allclose(cpd.pdf(points), cpd.pdf(array(points))))
+
     def test_mode(self):
         mu = array([2.0, 1.0, 3.0, 1.0])
         watson = HyperhemisphericalWatsonDistribution(mu / linalg.norm(mu), 2)
