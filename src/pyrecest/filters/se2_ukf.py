@@ -17,13 +17,17 @@ Reference:
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
+    all as backend_all,
+    allclose,
     array,
     asarray,
     column_stack,
     concatenate,
     isclose,
+    isfinite,
     linalg,
     mean,
+    transpose,
     vstack,
     zeros,
 )
@@ -31,6 +35,57 @@ from pyrecest.distributions import GaussianDistribution
 
 from .abstract_filter import AbstractFilter
 from .manifold_mixins import SE2FilterMixin
+
+
+def _to_python_bool(value):
+    """Convert scalar backend booleans to Python bools for validation."""
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
+def _validate_se2_gaussian(distribution, role):
+    if not isinstance(distribution, GaussianDistribution):
+        raise ValueError(f"{role} must be a GaussianDistribution.")
+
+    mu = asarray(distribution.mu)
+    covariance = asarray(distribution.C)
+    if mu.shape != (4,):
+        raise ValueError(f"{role} mean must be a 4-D vector.")
+    if covariance.shape != (4, 4):
+        raise ValueError(f"{role} covariance must be 4x4.")
+    if not _to_python_bool(backend_all(isfinite(mu))):
+        raise ValueError(f"{role} mean must be finite.")
+    if not _to_python_bool(backend_all(isfinite(covariance))):
+        raise ValueError(f"{role} covariance must be finite.")
+
+    rotation_norm = linalg.norm(mu[0:2])
+    if not _to_python_bool(isfinite(rotation_norm)):
+        raise ValueError(f"{role} rotation part must have a finite norm.")
+    if not _to_python_bool(isclose(rotation_norm, 1.0)):
+        raise ValueError(f"{role} rotation part must be normalised.")
+    if not _to_python_bool(allclose(covariance, transpose(covariance))):
+        raise ValueError(f"{role} covariance must be symmetric.")
+    if not _to_python_bool(backend_all(linalg.eigvalsh(covariance) > 0.0)):
+        raise ValueError(f"{role} covariance must be positive definite.")
+    return mu, covariance
+
+
+def _validate_se2_measurement(z):
+    measurement = asarray(z).ravel()
+    if measurement.shape != (4,):
+        raise ValueError("measurement z must be a 4-D vector.")
+    if not _to_python_bool(backend_all(isfinite(measurement))):
+        raise ValueError("measurement z must be finite.")
+
+    rotation_norm = linalg.norm(measurement[0:2])
+    if not _to_python_bool(isfinite(rotation_norm)):
+        raise ValueError("measurement z rotation part must have a finite norm.")
+    if not _to_python_bool(isclose(rotation_norm, 1.0)):
+        raise ValueError("measurement z rotation part must be normalised.")
+    return measurement
 
 
 def _dual_quaternion_multiply(dq1, dq2):
@@ -117,18 +172,7 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
 
     @filter_state.setter
     def filter_state(self, new_state: GaussianDistribution):
-        assert isinstance(
-            new_state, GaussianDistribution
-        ), "filter_state must be a GaussianDistribution"
-        mu = asarray(new_state.mu)
-        assert mu.shape == (4,), "Mean must be a 4-D vector."
-        assert isclose(
-            linalg.norm(mu[0:2]), 1.0
-        ), "First two entries of the mean must be normalised."
-        assert asarray(new_state.C).shape == (
-            4,
-            4,
-        ), "Covariance must be 4×4."
+        _validate_se2_gaussian(new_state, "filter_state")
         self._filter_state = new_state
 
     # ------------------------------------------------------------------
@@ -153,14 +197,7 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
             two entries normalised) and a 4×4 covariance.
         """
         # pylint: disable=too-many-locals
-        assert isinstance(gauss_sys, GaussianDistribution)
-        mu_sys = asarray(gauss_sys.mu)
-        C_sys = asarray(gauss_sys.C)
-        assert mu_sys.shape == (4,), "System noise mean must be 4-D."
-        assert C_sys.shape == (4, 4), "System noise covariance must be 4×4."
-        assert isclose(
-            linalg.norm(mu_sys[0:2]), 1.0
-        ), "First two entries of the system noise mean must be normalised."
+        mu_sys, C_sys = _validate_se2_gaussian(gauss_sys, "system noise")
 
         mu = asarray(self._filter_state.mu)
         C = asarray(self._filter_state.C)
@@ -241,17 +278,8 @@ class SE2UKF(AbstractFilter, SE2FilterMixin):
             Measurement in dual-quaternion representation.
         """
         # pylint: disable=too-many-locals
-        assert isinstance(gauss_meas, GaussianDistribution)
-        mu_meas = asarray(gauss_meas.mu)
-        C_meas = asarray(gauss_meas.C)
-        assert mu_meas.shape == (4,), "Measurement noise mean must be 4-D."
-        assert C_meas.shape == (4, 4), "Measurement noise covariance must be 4×4."
-        assert isclose(
-            linalg.norm(mu_meas[0:2]), 1.0
-        ), "First two entries of the measurement noise mean must be normalised."
-
-        z = asarray(z).ravel()
-        assert z.shape == (4,), "Measurement z must be a 4-D vector."
+        mu_meas, C_meas = _validate_se2_gaussian(gauss_meas, "measurement noise")
+        z = _validate_se2_measurement(z)
 
         mu = asarray(self._filter_state.mu)
         C = asarray(self._filter_state.C)
