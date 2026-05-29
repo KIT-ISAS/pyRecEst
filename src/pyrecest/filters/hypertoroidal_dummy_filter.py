@@ -1,3 +1,5 @@
+from numbers import Integral
+
 from pyrecest.distributions.hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
 )
@@ -19,7 +21,11 @@ class HypertoroidalDummyFilter(AbstractDummyFilter, HypertoroidalFilterMixin):
         Parameters:
             dim (int >= 1): Manifold dimension of the hypertorus (e.g. 1 for T^1).
         """
-        assert dim >= 1, "dim must be at least 1"
+        if isinstance(dim, bool) or not isinstance(dim, Integral):
+            raise ValueError("dim must be an integer at least 1.")
+        dim = int(dim)
+        if dim < 1:
+            raise ValueError("dim must be an integer at least 1.")
         HypertoroidalFilterMixin.__init__(self)
         AbstractDummyFilter.__init__(self, HypertoroidalUniformDistribution(dim))
 

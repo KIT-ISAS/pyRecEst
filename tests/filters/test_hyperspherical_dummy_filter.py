@@ -22,9 +22,11 @@ class HypersphericalDummyFilterTest(unittest.TestCase):
     def test_dim_s3(self):
         self.assertEqual(self.filter_s3.dim, 3)
 
-    def test_assert_dim_too_small(self):
-        with self.assertRaises(AssertionError):
-            HypersphericalDummyFilter(1)
+    def test_invalid_dim_raises_explicit_error(self):
+        for invalid_dim in (1, 2.5, True):
+            with self.subTest(invalid_dim=invalid_dim):
+                with self.assertRaisesRegex(ValueError, "integer at least 2"):
+                    HypersphericalDummyFilter(invalid_dim)
 
     def test_filter_state_is_uniform(self):
         self.assertIsInstance(
@@ -74,6 +76,14 @@ class HypersphericalDummyFilterTest(unittest.TestCase):
         original_state = self.filter_s2.filter_state
         new_dist = HypersphericalUniformDistribution(2)
         self.filter_s2.set_state(new_dist)
+        self.assertIs(self.filter_s2.filter_state, original_state)
+
+    def test_set_state_rejects_invalid_dimension_explicitly(self):
+        original_state = self.filter_s2.filter_state
+
+        with self.assertRaisesRegex(ValueError, "dimension 2"):
+            self.filter_s2.set_state(HypersphericalUniformDistribution(3))
+
         self.assertIs(self.filter_s2.filter_state, original_state)
 
     def test_get_estimate_returns_distribution(self):
