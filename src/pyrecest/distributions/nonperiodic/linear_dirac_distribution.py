@@ -14,6 +14,7 @@ from .abstract_linear_distribution import AbstractLinearDistribution
 
 class LinearDiracDistribution(AbstractDiracDistribution, AbstractLinearDistribution):
     def __init__(self, d, w=None):
+        d = asarray(d)
         dim = d.shape[1] if d.ndim > 1 else 1
         AbstractLinearDistribution.__init__(self, dim)
         AbstractDiracDistribution.__init__(self, d, w)

@@ -19,6 +19,18 @@ from .test_abstract_dirac_distribution import TestAbstractDiracDistribution
 
 
 class LinearDiracDistributionTest(TestAbstractDiracDistribution):
+    def test_constructor_accepts_list_inputs(self):
+        one_dimensional = LinearDiracDistribution([1.0, 2.0, 3.0])
+        multidimensional = LinearDiracDistribution(
+            [[1.0, 2.0], [3.0, 4.0]], [0.25, 0.75]
+        )
+
+        self.assertEqual(one_dimensional.dim, 1)
+        npt.assert_allclose(one_dimensional.d, array([1.0, 2.0, 3.0]))
+        self.assertEqual(multidimensional.dim, 2)
+        npt.assert_allclose(multidimensional.d, array([[1.0, 2.0], [3.0, 4.0]]))
+        npt.assert_allclose(multidimensional.w, array([0.25, 0.75]))
+
     def test_from_distribution(self):
         random.seed(0)
         C = wishart.rvs(3, eye(3))
