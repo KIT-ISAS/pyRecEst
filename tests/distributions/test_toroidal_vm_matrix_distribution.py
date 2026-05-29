@@ -25,11 +25,32 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         npt.assert_allclose(self.tvm.kappa, self.kappa, atol=1e-10)
         npt.assert_allclose(self.tvm.A, self.A, atol=1e-10)
 
+    def test_constructor_accepts_list_inputs(self):
+        tvm = ToroidalVMMatrixDistribution(
+            [1.0, 2.0], [0.5, 0.7], [[0.3, 0.1], [-0.2, 0.4]]
+        )
+        npt.assert_allclose(tvm.mu, self.mu, atol=1e-10)
+        npt.assert_allclose(tvm.kappa, self.kappa, atol=1e-10)
+        npt.assert_allclose(tvm.A, self.A, atol=1e-10)
+
     def test_pdf_positive(self):
         xs = array([[0.5, 1.0], [1.0, 2.0], [3.0, 4.0]])
         vals = self.tvm.pdf(xs)
         for v in vals.ravel():
             self.assertGreater(float(v), 0.0)
+
+    def test_pdf_accepts_list_inputs(self):
+        array_vals = self.tvm.pdf(array([[0.5, 1.0], [1.0, 2.0]]))
+        list_vals = self.tvm.pdf([[0.5, 1.0], [1.0, 2.0]])
+        npt.assert_allclose(list_vals, array_vals, atol=1e-10)
+
+        single_val = self.tvm.pdf([1.0, 2.0])
+        self.assertEqual(single_val.shape, (1,))
+        npt.assert_allclose(single_val, self.tvm.pdf(array([[1.0, 2.0]])), atol=1e-10)
+
+    def test_pdf_rejects_wrong_dimension(self):
+        with self.assertRaises(ValueError):
+            self.tvm.pdf([1.0, 2.0, 3.0])
 
     def test_mu_wrapped(self):
         mu_unwrapped = array([1.0 + 2 * float(pi), 2.0])
@@ -90,6 +111,11 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         # A and kappa unchanged
         npt.assert_allclose(shifted.kappa, self.tvm.kappa, atol=1e-10)
         npt.assert_allclose(shifted.A, self.tvm.A, atol=1e-10)
+
+    def test_shift_accepts_list_input(self):
+        shifted = self.tvm.shift([0.5, -0.3])
+        expected_mu = mod(self.mu + array([0.5, -0.3]), 2.0 * float(pi))
+        npt.assert_allclose(shifted.mu, expected_mu, atol=1e-10)
 
     def test_shift_does_not_modify_original(self):
         original_mu = array(self.tvm.mu)
