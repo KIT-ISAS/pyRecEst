@@ -89,6 +89,17 @@ class TestCircularFourierDistribution(unittest.TestCase):
         fd_real = fd.to_real_fd()
         npt.assert_array_almost_equal(dist.pdf(xs), fd_real.pdf(xs))
 
+    def test_pdf_accepts_scalar_and_list_inputs(self):
+        fd = CircularFourierDistribution(
+            c=array([1.0]),
+            n=1,
+            transformation="identity",
+            multiplied_by_n=False,
+        )
+
+        npt.assert_allclose(fd.pdf(0.5), fd.pdf(array([0.5])))
+        npt.assert_allclose(fd.pdf([0.5, 1.0]), fd.pdf(array([0.5, 1.0])))
+
     def test_even_number_of_grid_values_is_rejected(self):
         dist = VonMisesDistribution(2.5, 1.5)
 

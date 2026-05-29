@@ -128,6 +128,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         return fdNew
 
     def pdf(self, xs):
+        xs = array(xs)
         assert xs.ndim <= 2, "xs should have at most 2 dimensions."
         xs = xs.reshape(-1, 1)
         a, b = self.get_a_b()
