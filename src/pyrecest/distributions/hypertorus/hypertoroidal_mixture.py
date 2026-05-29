@@ -6,6 +6,7 @@ from typing import Union
 from pyrecest.backend import complex128, int32, int64, zeros
 
 from ..abstract_mixture import AbstractMixture
+from ._input_validation import as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 
 
@@ -51,7 +52,7 @@ class HypertoroidalMixture(AbstractMixture, AbstractHypertoroidalDistribution):
         :param shift_by: angles to shift by
         :returns: shifted distribution
         """
-        assert shift_by.shape == (self.dim,)
+        shift_by = as_shift_vector(shift_by, self.dim)
         hd_shifted = copy.deepcopy(self)
         hd_shifted.dists = [dist.shift(shift_by) for dist in hd_shifted.dists]
         return hd_shifted

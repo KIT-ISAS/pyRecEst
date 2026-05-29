@@ -13,6 +13,9 @@ from pyrecest.distributions.hypersphere_subset.hyperspherical_mixture import (
     HypersphericalMixture,
 )
 from pyrecest.distributions.hypertorus.hypertoroidal_mixture import HypertoroidalMixture
+from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution import (
+    HypertoroidalWrappedNormalDistribution,
+)
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )
@@ -55,6 +58,37 @@ class AbstractMixtureTest(unittest.TestCase):
             [vmf, vmf.shift(array([1.0, 1.0]))], array([0.5, 0.5])
         )
         self._test_sample(mix, 10)
+
+    def test_hypertoroidal_mixture_shift_accepts_list_input(self):
+        vmf = ToroidalWrappedNormalDistribution(array([1.0, 0.0]), eye(2))
+        mix = HypertoroidalMixture(
+            [vmf, vmf.shift(array([1.0, 1.0]))], array([0.5, 0.5])
+        )
+
+        shifted_list = mix.shift([0.5, 1.0])
+        shifted_array = mix.shift(array([0.5, 1.0]))
+
+        for dist_list, dist_array in zip(shifted_list.dists, shifted_array.dists):
+            self.assertTrue(allclose(dist_list.mu, dist_array.mu))
+
+    def test_hypertoroidal_mixture_shift_accepts_scalar_for_one_dimensional_mix(self):
+        hwn = HypertoroidalWrappedNormalDistribution(array([1.0]), array([[1.0]]))
+        mix = HypertoroidalMixture([hwn, hwn.shift(1.0)], array([0.5, 0.5]))
+
+        shifted_scalar = mix.shift(0.5)
+        shifted_array = mix.shift(array([0.5]))
+
+        for dist_scalar, dist_array in zip(shifted_scalar.dists, shifted_array.dists):
+            self.assertTrue(allclose(dist_scalar.mu, dist_array.mu))
+
+    def test_hypertoroidal_mixture_shift_rejects_wrong_dimension(self):
+        vmf = ToroidalWrappedNormalDistribution(array([1.0, 0.0]), eye(2))
+        mix = HypertoroidalMixture(
+            [vmf, vmf.shift(array([1.0, 1.0]))], array([0.5, 0.5])
+        )
+
+        with self.assertRaises(ValueError):
+            mix.shift([0.5])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch",),
