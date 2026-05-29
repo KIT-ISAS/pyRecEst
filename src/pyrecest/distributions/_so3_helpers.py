@@ -38,15 +38,22 @@ def normalize_quaternions(quaternions):
     """Return canonical scalar-last unit quaternions."""
     quaternions = array(quaternions, dtype=float)
     if ndim(quaternions) == 1:
-        assert quaternions.shape[0] == 4, "SO(3) quaternions must have length 4."
+        if quaternions.shape[0] != 4:
+            raise ValueError("SO(3) quaternions must have length 4.")
         quaternions = reshape(quaternions, (1, 4))
+    elif ndim(quaternions) >= 2:
+        if quaternions.shape[-1] != 4:
+            raise ValueError("SO(3) quaternions must have length 4.")
     else:
-        assert quaternions.shape[-1] == 4, "SO(3) quaternions must have length 4."
+        raise ValueError("SO(3) quaternions must have length 4.")
 
     norms = linalg.norm(quaternions, axis=-1)
-    assert all(isfinite(quaternions)), "SO(3) quaternions must be finite."
-    assert all(isfinite(norms)), "SO(3) quaternion norms must be finite."
-    assert all(norms > 0.0), "SO(3) quaternions must be nonzero."
+    if not bool(all(isfinite(quaternions))):
+        raise ValueError("SO(3) quaternions must be finite.")
+    if not bool(all(isfinite(norms))):
+        raise ValueError("SO(3) quaternion norms must be finite.")
+    if not bool(all(norms > 0.0)):
+        raise ValueError("SO(3) quaternions must be nonzero.")
 
     normalized = quaternions / reshape(norms, tuple(norms.shape) + (1,))
     return where(normalized[..., -1:] < 0.0, -normalized, normalized)
