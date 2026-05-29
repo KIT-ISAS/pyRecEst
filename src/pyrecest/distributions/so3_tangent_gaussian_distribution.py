@@ -4,10 +4,13 @@
 import numpy as np
 from pyrecest.backend import (
     abs,
+    all,
+    allclose,
     amax,
     array,
     diag,
     exp,
+    isfinite,
     linalg,
     log,
     matmul,
@@ -55,6 +58,14 @@ def _validate_positive_sample_count(n) -> int:
     return count_int
 
 
+def _to_python_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
 class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
     """Log-Gaussian approximation on SO(3).
 
@@ -76,9 +87,15 @@ class SO3TangentGaussianDistribution(AbstractBoundedDomainDistribution):
         self.mu = self._normalize_quaternions(mu)[0]
 
         C = array(C, dtype=float)
-        assert ndim(C) == 2 and C.shape == (3, 3), "C must have shape (3, 3)."
+        if ndim(C) != 2 or C.shape != (3, 3):
+            raise ValueError("C must have shape (3, 3).")
         if check_validity:
-            linalg.cholesky(C)
+            if not _to_python_bool(all(isfinite(C))):
+                raise ValueError("C must contain only finite values.")
+            if not _to_python_bool(allclose(C, transpose(C))):
+                raise ValueError("C must be symmetric.")
+            if not _to_python_bool(all(linalg.eigvalsh(C) > 0.0)):
+                raise ValueError("C must be positive definite.")
         self.C = C
 
     @property

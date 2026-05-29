@@ -23,6 +23,21 @@ class SO3TangentGaussianDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.covariance(), covariance, atol=ATOL)
         self.assertTrue(dist.is_valid())
 
+    def test_constructor_rejects_invalid_covariance(self):
+        mean = array([0.0, 0.0, 0.0, 1.0])
+
+        invalid_cases = [
+            (array([0.1, 0.2, 0.3]), "shape"),
+            (array([[0.1, 0.0, 0.0], [0.0, float("nan"), 0.0], [0.0, 0.0, 0.3]]), "finite"),
+            (array([[0.1, 0.2, 0.0], [0.0, 0.2, 0.0], [0.0, 0.0, 0.3]]), "symmetric"),
+            (diag(array([0.1, 0.0, 0.3])), "positive definite"),
+        ]
+
+        for covariance, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    SO3TangentGaussianDistribution(mean, covariance)
+
     def test_exp_log_roundtrip_with_base_rotation(self):
         base = z_quaternion(pi / 3.0)
         tangent_vectors = array([[0.1, -0.2, 0.05], [0.0, 0.0, 0.0]])
