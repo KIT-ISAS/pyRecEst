@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, cos, linspace, log, mod, pi, sin
+from pyrecest.backend import array, atleast_1d, cos, linspace, log, mod, pi, sin
 
 from ..hypertorus.abstract_hypertoroidal_distribution import (
     AbstractHypertoroidalDistribution,
@@ -23,6 +23,7 @@ class AbstractCircularDistribution(AbstractHypertoroidalDistribution):
         Returns:
             : The computed CDF as a numpy array.
         """
+        xs = atleast_1d(array(xs))
         assert xs.ndim == 1, "xs must be a 1D array"
 
         return array([self._cdf_numerical_single(x, starting_point) for x in xs])
