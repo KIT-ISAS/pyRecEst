@@ -84,6 +84,36 @@ class TestAbstractLinearDistribution(unittest.TestCase):
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
     )
+    def test_mode_numerical_accepts_scalar_starting_point_for_1d(self):
+        g = GaussianDistribution(array([1.0]), array([[0.7]]))
+
+        npt.assert_allclose(g.mode_numerical(0.0), array([1.0]), atol=2e-4)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_mode_numerical_accepts_list_starting_point(self):
+        mu = array([5.0, 10.0])
+        C = array([[2.0, 1.0], [1.0, 1.0]])
+        g = GaussianDistribution(mu, C)
+
+        npt.assert_allclose(g.mode_numerical([5.0, 10.0]), mu, atol=2e-4)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_mode_numerical_rejects_non_vector_starting_point(self):
+        g = GaussianDistribution(array([1.0, 2.0]), array([[1.0, 0.0], [0.0, 1.0]]))
+
+        with self.assertRaisesRegex(ValueError, "1D array"):
+            g.mode_numerical([[1.0, 2.0]])
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
     def test_mode_numerical_gaussian_3D(self):
         npt.assert_allclose(self.g_3D.mode_numerical(), self.mu_3D, atol=5e-4)
 
