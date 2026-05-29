@@ -1,6 +1,6 @@
 # pylint: disable=no-name-in-module,no-member
 import numpy as np
-from pyrecest.backend import asarray, concatenate, hstack, prod, stack
+from pyrecest.backend import asarray, concatenate, hstack, prod, reshape, stack
 
 from .abstract_cart_prod_distribution import AbstractCartProdDistribution
 
@@ -46,7 +46,10 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
                 xs_curr = xs[next_dim:next_input_dim]
             else:
                 xs_curr = xs[:, next_dim:next_input_dim]
-            ps.append(dist.pdf(xs_curr))
+            pdf_value = asarray(dist.pdf(xs_curr))
+            if xs.ndim == 1:
+                pdf_value = reshape(pdf_value, ())
+            ps.append(pdf_value)
             next_dim = next_input_dim
         return prod(stack(ps), axis=0)
 
