@@ -1,5 +1,5 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import ones
+from pyrecest.backend import array, ones
 
 from ..abstract_uniform_distribution import AbstractUniformDistribution
 from .abstract_hypersphere_subset_distribution import (
@@ -24,6 +24,7 @@ class AbstractHypersphereSubsetUniformDistribution(
         Returns:
             : Probability density at the given data points.
         """
+        xs = array(xs)
         if xs.shape[-1] != self.input_dim:
             raise ValueError("Invalid shape of input data points.")
         manifold_size = self.get_manifold_size()

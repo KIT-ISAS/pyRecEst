@@ -3,6 +3,7 @@ from typing import Union
 # pylint: disable=no-name-in-module,no-member
 import numpy as np
 from pyrecest.backend import (
+    array,
     cos,
     empty,
     int32,
@@ -54,6 +55,9 @@ class HypersphericalUniformDistribution(
         return AbstractHypersphereSubsetUniformDistribution.pdf(self, xs)
 
     def ln_pdf(self, xs):
+        xs = array(xs)
+        if xs.shape[-1] != self.input_dim:
+            raise ValueError("Invalid shape of input data points.")
         log_density = -self.get_ln_manifold_size()
         return log_density * ones(xs.shape[0]) if xs.ndim > 1 else log_density
 

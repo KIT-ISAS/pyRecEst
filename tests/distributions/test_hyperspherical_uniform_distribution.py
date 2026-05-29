@@ -1,12 +1,13 @@
 """Test for uniform distribution on the hypersphere"""
 
 # pylint: disable=no-name-in-module,no-member
+import math
 import unittest
 
 import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
-from pyrecest.backend import linalg, log, ones, random
+from pyrecest.backend import array, linalg, log, ones, random
 from pyrecest.distributions import (
     AbstractHypersphericalDistribution,
     HypersphericalUniformDistribution,
@@ -44,6 +45,19 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
                 ),
                 atol=1e-10,
             )
+
+    def test_pdf_accepts_list_inputs(self):
+        hud = HypersphericalUniformDistribution(2)
+        points = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+
+        npt.assert_allclose(hud.pdf(points), hud.pdf(array(points)))
+        npt.assert_allclose(hud.pdf(points[0]), hud.pdf(array(points[0])))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        hud = HypersphericalUniformDistribution(2)
+
+        with self.assertRaises(ValueError):
+            hud.pdf([1.0, 0.0])
 
     def test_sample(self):
         for dim in range(2, 5):
@@ -92,6 +106,22 @@ class HypersphericalUniformDistributionTest(unittest.TestCase):
             decimal=10,
             err_msg="ln_pdf does not return correct log probabilities.",
         )
+
+    def test_ln_pdf_accepts_list_inputs(self):
+        hud = HypersphericalUniformDistribution(2)
+        points = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+
+        npt.assert_allclose(hud.ln_pdf(points), log(hud.pdf(array(points))))
+        npt.assert_allclose(
+            float(hud.ln_pdf(points[0])),
+            math.log(float(hud.pdf(array(points[0])))),
+        )
+
+    def test_ln_pdf_rejects_wrong_dimension(self):
+        hud = HypersphericalUniformDistribution(2)
+
+        with self.assertRaises(ValueError):
+            hud.ln_pdf([1.0, 0.0])
 
     def test_ln_pdf_single_point_matches_pdf(self):
         """Single-point ln_pdf should be scalar-like and match log(pdf)."""
