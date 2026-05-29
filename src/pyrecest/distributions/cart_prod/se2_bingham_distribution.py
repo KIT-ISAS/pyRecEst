@@ -94,6 +94,7 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
             C3 is None
         ), "Either both C2 and C3 must be provided, or neither."
 
+        C = array(C, dtype=float)
         if C2 is None:
             assert C.shape == (4, 4), "C must be 4x4 when C2 and C3 are not provided."
             assert allclose(C, C.T, atol=1e-6), "Full C matrix must be symmetric."
@@ -102,6 +103,8 @@ class SE2BinghamDistribution(AbstractSE2Distribution):
             self.C2 = C[2:, :2]
             self.C3 = C[2:, 2:]
         else:
+            C2 = array(C2, dtype=float)
+            C3 = array(C3, dtype=float)
             assert C.shape == (2, 2), "C1 must be 2x2."
             assert C2.shape == (2, 2), "C2 must be 2x2."
             assert C3.shape == (2, 2), "C3 must be 2x2."
