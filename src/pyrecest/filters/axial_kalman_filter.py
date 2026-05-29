@@ -2,7 +2,7 @@
 import copy
 
 # pylint: disable=redefined-builtin
-from pyrecest.backend import abs, concatenate, dot, eye, linalg
+from pyrecest.backend import abs, all, asarray, concatenate, dot, eye, isfinite, linalg
 from pyrecest.distributions import GaussianDistribution
 
 from .abstract_axial_filter import AbstractAxialFilter
@@ -42,13 +42,37 @@ class AxialKalmanFilter(AbstractAxialFilter):
 
     @filter_state.setter
     def filter_state(self, new_state):
-        assert isinstance(
-            new_state, GaussianDistribution
-        ), "filter_state must be a GaussianDistribution"
-        assert new_state.mu.shape[0] in (2, 4), "Only 2D and 4D states are supported"
-        assert abs(linalg.norm(new_state.mu) - 1) < 1e-5, "mean must be a unit vector"
+        self._validate_axial_gaussian(new_state, "filter_state")
         self._filter_state = copy.deepcopy(new_state)
         self._set_composition_operator()
+
+    @staticmethod
+    def _validate_axial_gaussian(distribution, name):
+        if not isinstance(distribution, GaussianDistribution):
+            raise ValueError(f"{name} must be a GaussianDistribution.")
+        if distribution.mu.shape[0] not in (2, 4):
+            raise ValueError(f"{name} mean must have length 2 or 4.")
+        if not bool(all(isfinite(distribution.mu))):
+            raise ValueError(f"{name} mean must be finite.")
+        if not bool(all(isfinite(distribution.C))):
+            raise ValueError(f"{name} covariance must be finite.")
+        if not bool(abs(linalg.norm(distribution.mu) - 1.0) < 1e-5):
+            raise ValueError(f"{name} mean must be a unit vector.")
+
+    def _validate_noise(self, noise, name):
+        self._validate_axial_gaussian(noise, name)
+        if noise.mu.shape != self._filter_state.mu.shape:
+            raise ValueError(f"{name} mean shape must match the filter state.")
+
+    def _as_measurement(self, z):
+        measurement = asarray(z, dtype=float)
+        if measurement.shape != self._filter_state.mu.shape:
+            raise ValueError("measurement must have the same shape as the filter state.")
+        if not bool(all(isfinite(measurement))):
+            raise ValueError("measurement must be finite.")
+        if not bool(abs(linalg.norm(measurement) - 1.0) < 1e-5):
+            raise ValueError("measurement must be a unit vector.")
+        return measurement
 
     def predict_identity(self, gauss_w):
         """Predict assuming identity system model with noise gauss_w.
@@ -59,10 +83,7 @@ class AxialKalmanFilter(AbstractAxialFilter):
         Parameters:
             gauss_w (GaussianDistribution): system noise with unit vector mean
         """
-        assert isinstance(gauss_w, GaussianDistribution)
-        assert (
-            abs(linalg.norm(gauss_w.mu) - 1) < 1e-5
-        ), "noise mean must be a unit vector"
+        self._validate_noise(gauss_w, "system noise")
         mu_new = self.composition_operator(self._filter_state.mu, gauss_w.mu)
         C_new = self._filter_state.C + gauss_w.C
         self._filter_state = GaussianDistribution(mu_new, C_new, check_validity=False)
@@ -77,13 +98,8 @@ class AxialKalmanFilter(AbstractAxialFilter):
             gauss_v (GaussianDistribution): measurement noise with unit vector mean
             z (array): measurement as a unit vector of shape (2,) or (4,)
         """
-        assert isinstance(gauss_v, GaussianDistribution)
-        assert (
-            abs(linalg.norm(gauss_v.mu) - 1) < 1e-5
-        ), "noise mean must be a unit vector"
-        assert gauss_v.mu.shape[0] == self._filter_state.mu.shape[0]
-        assert z.shape == self._filter_state.mu.shape
-        assert abs(linalg.norm(z) - 1) < 1e-5, "measurement must be a unit vector"
+        self._validate_noise(gauss_v, "measurement noise")
+        z = self._as_measurement(z)
 
         # Conjugate of noise mean: negate all but the first component
         mu_v_conj = concatenate([gauss_v.mu[:1], -gauss_v.mu[1:]])
