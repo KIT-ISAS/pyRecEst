@@ -5,6 +5,7 @@ import numpy.testing as npt
 import pyrecest.backend
 from pyrecest.backend import array, pi
 from pyrecest.distributions.circle.sine_skewed_distributions import (
+    GSSVMDistribution,
     GeneralizedKSineSkewedVonMisesDistribution,
     GeneralizedKSineSkewedWrappedCauchyDistribution,
     SineSkewedWrappedCauchyDistribution,
@@ -56,6 +57,30 @@ class TestGeneralizedKSineSkewedVonMisesDistribution(unittest.TestCase):
         self.assertEqual(
             new_dist.mu, pi / 2, "Shift method did not update mu correctly."
         )
+
+    def test_shift_accepts_python_scalar(self):
+        dist = GeneralizedKSineSkewedVonMisesDistribution(
+            mu=0, kappa=1, lambda_=0.5, k=1, m=1
+        )
+
+        new_dist = dist.shift(0.25)
+
+        npt.assert_allclose(float(new_dist.mu), 0.25, atol=1e-12)
+
+    def test_shift_rejects_non_scalar(self):
+        dist = GeneralizedKSineSkewedVonMisesDistribution(
+            mu=0, kappa=1, lambda_=0.5, k=1, m=1
+        )
+
+        with self.assertRaisesRegex(ValueError, "angle must be a scalar"):
+            dist.shift([0.25])
+
+    def test_gssvm_shift_accepts_python_scalar(self):
+        dist = GSSVMDistribution(mu=0, kappa=1, lambda_=0.5, n=1)
+
+        new_dist = dist.shift(0.25)
+
+        npt.assert_allclose(float(new_dist.mu), 0.25, atol=1e-12)
 
     @unittest.skipIf(
         # pylint: disable=no-member
@@ -249,6 +274,23 @@ class TestGeneralizedKSineSkewedWrappedCauchyDistribution(unittest.TestCase):
         new_dist = dist.shift(array(pi / 2))
 
         npt.assert_allclose(float(new_dist.mu), pi / 2, atol=1e-10)
+
+    def test_shift_accepts_python_scalar(self):
+        dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
+            mu=0, gamma=0.5, lambda_=0.4, k=1, m=1
+        )
+
+        new_dist = dist.shift(0.25)
+
+        npt.assert_allclose(float(new_dist.mu), 0.25, atol=1e-12)
+
+    def test_shift_rejects_non_scalar(self):
+        dist = GeneralizedKSineSkewedWrappedCauchyDistribution(
+            mu=0, gamma=0.5, lambda_=0.4, k=1, m=1
+        )
+
+        with self.assertRaisesRegex(ValueError, "angle must be a scalar"):
+            dist.shift([0.25])
 
 
 if __name__ == "__main__":
