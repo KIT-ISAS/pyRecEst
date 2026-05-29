@@ -2,12 +2,73 @@
 import copy
 
 import pyrecest.backend
-from pyrecest.backend import array, diag
+from pyrecest.backend import (
+    all as backend_all,
+    allclose,
+    array,
+    asarray,
+    diag,
+    eye,
+    isclose,
+    isfinite,
+    linalg,
+)
 from pyrecest.distributions.hypersphere_subset.bingham_distribution import (
     BinghamDistribution,
 )
 
 from .abstract_filter import AbstractFilter
+
+
+def _to_python_bool(value):
+    """Convert scalar backend booleans to Python bools for validation."""
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
+def _validate_bingham_distribution(distribution, role):
+    if not isinstance(distribution, BinghamDistribution):
+        raise ValueError(f"{role} must be a BinghamDistribution.")
+    if distribution.dim not in (1, 3):
+        raise ValueError(f"{role} must be a 2D or 4D Bingham distribution.")
+
+    input_dim = distribution.dim + 1
+    Z = asarray(distribution.Z)
+    M = asarray(distribution.M)
+    if Z.shape != (input_dim,):
+        raise ValueError(f"{role} Z must have shape ({input_dim},).")
+    if M.shape != (input_dim, input_dim):
+        raise ValueError(f"{role} M must have shape ({input_dim}, {input_dim}).")
+    if not _to_python_bool(backend_all(isfinite(Z))):
+        raise ValueError(f"{role} Z must be finite.")
+    if not _to_python_bool(backend_all(isfinite(M))):
+        raise ValueError(f"{role} M must be finite.")
+    if not _to_python_bool(isclose(Z[-1], 0.0)):
+        raise ValueError(f"{role} last concentration must be zero.")
+    if not _to_python_bool(backend_all(Z[:-1] <= Z[1:])):
+        raise ValueError(f"{role} concentrations must be sorted ascending.")
+    if not _to_python_bool(allclose(M @ M.T, eye(input_dim), atol=1e-3)):
+        raise ValueError(f"{role} M must be orthogonal.")
+
+
+def _validate_compatible_bingham(distribution, reference, role):
+    _validate_bingham_distribution(distribution, role)
+    if distribution.dim != reference.dim:
+        raise ValueError(f"{role} dimension must match the filter state dimension.")
+
+
+def _validate_bingham_measurement(z, input_dim):
+    measurement = asarray(z).ravel()
+    if measurement.shape != (input_dim,):
+        raise ValueError(f"measurement z must have shape ({input_dim},).")
+    if not _to_python_bool(backend_all(isfinite(measurement))):
+        raise ValueError("measurement z must be finite.")
+    if not _to_python_bool(isclose(linalg.norm(measurement), 1.0)):
+        raise ValueError("measurement z must be a unit vector.")
+    return measurement
 
 
 class BinghamFilter(AbstractFilter):
@@ -26,9 +87,8 @@ class BinghamFilter(AbstractFilter):
     """
 
     def __init__(self):
-        assert (
-            pyrecest.backend.__backend_name__ != "jax"
-        ), "BinghamFilter is not supported on the JAX backend"
+        if pyrecest.backend.__backend_name__ == "jax":
+            raise NotImplementedError("BinghamFilter is not supported on the JAX backend")
         # Default 4-D identity initial state (uniform on S^3, suitable for quaternion orientation)
         initial_state = BinghamDistribution(
             array([-1.0, -1.0, -1.0, 0.0]),
@@ -44,13 +104,7 @@ class BinghamFilter(AbstractFilter):
 
     @filter_state.setter
     def filter_state(self, new_state):
-        assert isinstance(
-            new_state, BinghamDistribution
-        ), "filter_state must be a BinghamDistribution"
-        assert new_state.dim in (
-            1,
-            3,
-        ), "Only 2D and 4D Bingham distributions are supported"
+        _validate_bingham_distribution(new_state, "filter_state")
         self._filter_state = copy.deepcopy(new_state)
 
     def predict_identity(self, bw):
@@ -62,7 +116,7 @@ class BinghamFilter(AbstractFilter):
         Parameters:
             bw (BinghamDistribution): noise distribution
         """
-        assert isinstance(bw, BinghamDistribution)
+        _validate_compatible_bingham(bw, self.filter_state, "system noise")
         self.filter_state = self.filter_state.compose(bw)
 
     def predict_nonlinear(self, a, bw):
@@ -74,7 +128,9 @@ class BinghamFilter(AbstractFilter):
             a (callable): nonlinear system function mapping R^n -> R^n
             bw (BinghamDistribution): noise distribution
         """
-        assert isinstance(bw, BinghamDistribution)
+        if not callable(a):
+            raise ValueError("system function must be callable.")
+        _validate_compatible_bingham(bw, self.filter_state, "system noise")
 
         samples, weights = self.filter_state.sample_deterministic(0.5)
 
@@ -98,9 +154,8 @@ class BinghamFilter(AbstractFilter):
             bv (BinghamDistribution): measurement noise distribution
             z (numpy.ndarray): measurement as a unit vector of shape (dim+1,)
         """
-        assert isinstance(bv, BinghamDistribution)
-        assert bv.dim == self.filter_state.dim
-        assert z.shape == (self.filter_state.input_dim,)
+        _validate_compatible_bingham(bv, self.filter_state, "measurement noise")
+        z = _validate_bingham_measurement(z, self.filter_state.input_dim)
 
         bv = copy.deepcopy(bv)
         n = bv.input_dim
