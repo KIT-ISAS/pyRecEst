@@ -1,6 +1,8 @@
 """Bingham distribution on SO(3)."""
 
 # pylint: disable=no-name-in-module,no-member
+from math import isfinite as scalar_isfinite
+
 from pyrecest.backend import (
     abs,
     all,
@@ -11,6 +13,7 @@ from pyrecest.backend import (
     diag,
     dot,
     eye,
+    isfinite,
     linalg,
     log,
     ndim,
@@ -43,17 +46,36 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
     def __init__(self, Z, M):
         Z = array(Z, dtype=float)
         M = array(M, dtype=float)
-        assert ndim(Z) == 1 and Z.shape[0] == 4, "Z must have shape (4,)."
-        assert M.shape == (4, 4), "M must have shape (4, 4)."
+        self._validate_parameters(Z, M)
 
         super().__init__(Z, M)
         self.distFullSphere.F = array(self.calculate_normalization_constant(Z))
 
     @staticmethod
+    def _validate_parameters(Z, M):
+        if ndim(Z) != 1 or Z.shape[0] != 4:
+            raise ValueError("Z must have shape (4,).")
+        if M.shape != (4, 4):
+            raise ValueError("M must have shape (4, 4).")
+        if not bool(all(isfinite(Z))):
+            raise ValueError("Z must be finite.")
+        if not bool(all(isfinite(M))):
+            raise ValueError("M must be finite.")
+        if not bool(abs(Z[-1]) <= 1e-12):
+            raise ValueError("The last entry of Z must be zero.")
+        if not bool(all(Z[:-1] <= Z[1:])):
+            raise ValueError("Values in Z must be ascending.")
+        if not bool(amax(abs(M @ transpose(M) - eye(4))) < 0.001):
+            raise ValueError("M must be orthogonal.")
+
+    @staticmethod
     def calculate_normalization_constant(Z):
         """Return the 4-D Bingham normalizing constant."""
         Z = array(Z, dtype=float)
-        assert Z.shape == (4,), "Z must have shape (4,)."
+        if Z.shape != (4,):
+            raise ValueError("Z must have shape (4,).")
+        if not bool(all(isfinite(Z))):
+            raise ValueError("Z must be finite.")
         return BinghamDistribution.calculate_F(Z)
 
     @staticmethod
@@ -98,7 +120,9 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
     @classmethod
     def from_mode_and_concentration(cls, mode, concentration):
         """Create an isotropic Bingham distribution around ``mode``."""
-        assert concentration >= 0.0, "concentration must be nonnegative."
+        concentration = float(concentration)
+        if not scalar_isfinite(concentration) or concentration < 0.0:
+            raise ValueError("concentration must be finite and nonnegative.")
         Z = array([-concentration, -concentration, -concentration, 0.0])
         M = cls._orthogonal_completion(mode)
         return cls(Z, M)
@@ -107,10 +131,10 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
     def from_concentration_matrix(cls, concentration_matrix):
         """Create from a symmetric 4-by-4 exponent matrix."""
         concentration_matrix = array(concentration_matrix, dtype=float)
-        assert concentration_matrix.shape == (
-            4,
-            4,
-        ), "concentration_matrix must have shape (4, 4)."
+        if concentration_matrix.shape != (4, 4):
+            raise ValueError("concentration_matrix must have shape (4, 4).")
+        if not bool(all(isfinite(concentration_matrix))):
+            raise ValueError("concentration_matrix must be finite.")
         concentration_matrix = 0.5 * (
             concentration_matrix + transpose(concentration_matrix)
         )
@@ -126,10 +150,10 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
     @classmethod
     def from_bingham_distribution(cls, distribution):
         """Create from a 4-D hyperspherical Bingham distribution."""
-        assert isinstance(
-            distribution, BinghamDistribution
-        ), "distribution must be a BinghamDistribution."
-        assert distribution.input_dim == 4, "distribution must be 4-D."
+        if not isinstance(distribution, BinghamDistribution):
+            raise ValueError("distribution must be a BinghamDistribution.")
+        if distribution.input_dim != 4:
+            raise ValueError("distribution must be 4-D.")
         return cls(distribution.Z, distribution.M)
 
     def pdf(self, xs):
@@ -190,17 +214,15 @@ class SO3BinghamDistribution(HyperhemisphericalBinghamDistribution):
 
     def multiply(self, B2):
         """Multiply two SO(3) Bingham densities."""
-        assert isinstance(
-            B2, SO3BinghamDistribution
-        ), "B2 must be an SO3BinghamDistribution."
+        if not isinstance(B2, SO3BinghamDistribution):
+            raise ValueError("B2 must be an SO3BinghamDistribution.")
         product = self.distFullSphere.multiply(B2.distFullSphere)
         return SO3BinghamDistribution(product.Z, product.M)
 
     def compose(self, B2):
         """Approximate the distribution of the composed rotation ``self * other``."""
-        assert isinstance(
-            B2, SO3BinghamDistribution
-        ), "B2 must be an SO3BinghamDistribution."
+        if not isinstance(B2, SO3BinghamDistribution):
+            raise ValueError("B2 must be an SO3BinghamDistribution.")
 
         weights = B2.moment_weights()
         first_moment = self.moment()
