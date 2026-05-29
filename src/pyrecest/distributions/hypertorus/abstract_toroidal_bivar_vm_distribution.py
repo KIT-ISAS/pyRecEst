@@ -1,5 +1,5 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import all, cos, exp, mod, pi
+from pyrecest.backend import all, array, cos, exp, mod, pi
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 
@@ -16,6 +16,8 @@ class AbstractToroidalBivarVMDistribution(AbstractToroidalDistribution):
 
     def __init__(self, mu, kappa):
         AbstractToroidalDistribution.__init__(self)
+        mu = array(mu)
+        kappa = array(kappa)
         assert mu.shape == (2,)
         assert kappa.shape == (2,)
         assert all(kappa >= 0.0)
@@ -27,7 +29,11 @@ class AbstractToroidalBivarVMDistribution(AbstractToroidalDistribution):
         raise NotImplementedError
 
     def pdf(self, xs):
-        assert xs.shape[-1] == 2
+        xs = array(xs)
+        if xs.ndim == 0 or xs.shape[-1] != self.dim:
+            raise ValueError(
+                f"xs must have trailing dimension {self.dim}, got {xs.shape}."
+            )
         return self.C * exp(
             self.kappa[0] * cos(xs[..., 0] - self.mu[0])
             + self.kappa[1] * cos(xs[..., 1] - self.mu[1])

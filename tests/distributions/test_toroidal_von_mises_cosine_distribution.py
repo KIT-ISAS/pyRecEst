@@ -80,6 +80,13 @@ class ToroidalVMCosineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCa
         npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.kappa3, self.kappa3)
 
+    def test_accepts_list_parameters(self):
+        tvm = ToroidalVonMisesCosineDistribution([1.0, 2.0], [0.7, 1.4], 0.5)
+
+        npt.assert_allclose(tvm.mu, self.mu)
+        npt.assert_allclose(tvm.kappa, self.kappa)
+        npt.assert_allclose(tvm.kappa3, self.kappa3)
+
     def test_accepts_python_scalar_coupling_parameter(self):
         tvm = ToroidalVonMisesCosineDistribution(self.mu, self.kappa, 0.5)
         x = array([1.3, 2.4])
@@ -145,6 +152,10 @@ class ToroidalVMCosineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCa
             atol=1e-10,
             rtol=1e-6,
         )
+
+    def test_shift_accepts_list_input(self):
+        shifted = self.tvm.shift([4.0, 2.0])
+        npt.assert_allclose(shifted.mu, self.tvm.shift(array([4.0, 2.0])).mu)
 
 
 if __name__ == "__main__":

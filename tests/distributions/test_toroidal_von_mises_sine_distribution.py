@@ -68,6 +68,16 @@ class ToroidalBivarVMTestMixin:
 
         npt.assert_allclose(self.tvm.pdf(x), expected)
 
+    def test_pdf_accepts_list_inputs(self):
+        x = [[1.0, 2.0], [1.3, 2.4]]
+
+        npt.assert_allclose(self.tvm.pdf(x), self.tvm.pdf(array(x)))
+        npt.assert_allclose(self.tvm.pdf([1.3, 2.4]), self.tvm.pdf(array([1.3, 2.4])))
+
+    def test_pdf_rejects_wrong_dimension(self):
+        with self.assertRaises(ValueError):
+            self.tvm.pdf([1.0, 2.0, 3.0])
+
 
 class ToroidalVMSineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCase):
     def setUp(self):
@@ -84,6 +94,13 @@ class ToroidalVMSineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCase
         npt.assert_allclose(self.tvm.mu, self.mu)
         npt.assert_allclose(self.tvm.kappa, self.kappa)
         self.assertEqual(self.tvm.lambda_, self.lambda_)
+
+    def test_accepts_list_parameters(self):
+        tvm = ToroidalVonMisesSineDistribution([1.0, 2.0], [0.7, 1.4], 0.5)
+
+        npt.assert_allclose(tvm.mu, self.mu)
+        npt.assert_allclose(tvm.kappa, self.kappa)
+        npt.assert_allclose(tvm.lambda_, self.lambda_)
 
     def test_accepts_python_scalar_lambda(self):
         tvm = ToroidalVonMisesSineDistribution(self.mu, self.kappa, 0.5)
