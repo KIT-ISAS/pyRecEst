@@ -33,6 +33,7 @@ class WrappedLaplaceDistribution(AbstractCircularDistribution):
         )
 
     def pdf(self, xs):
+        xs = asarray(xs)
         assert ndim(xs) <= 1
         xs = mod(xs, 2.0 * pi)
         p = (

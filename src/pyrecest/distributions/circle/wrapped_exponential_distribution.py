@@ -26,6 +26,7 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
         self._normalization_const = 1.0 / (1.0 - exp(-2.0 * pi * lambda_))
 
     def pdf(self, xs):
+        xs = asarray(xs)
         assert ndim(xs) <= 1
         xs = mod(xs, 2.0 * pi)
         return self.lambda_ * exp(-self.lambda_ * xs) * self._normalization_const

@@ -34,6 +34,14 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         for x in [0.0, 1.0, 2.0, 3.0, 4.0]:
             npt.assert_allclose(self.we.pdf(array(x)), pdftemp(array(x)), rtol=5e-7)
 
+    def test_pdf_accepts_scalar_and_list_inputs(self):
+        npt.assert_allclose(self.we.pdf(1.0), self.we.pdf(array(1.0)), rtol=5e-7)
+        npt.assert_allclose(
+            self.we.pdf([0.0, 1.0, 2.0]),
+            self.we.pdf(array([0.0, 1.0, 2.0])),
+            rtol=5e-7,
+        )
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
