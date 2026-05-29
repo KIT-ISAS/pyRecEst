@@ -5,10 +5,12 @@ import numpy as np
 from pyrecest.backend import (
     abs,
     all,
+    allclose,
     amax,
     array,
     diag,
     exp,
+    isfinite,
     linalg,
     log,
     matmul,
@@ -60,6 +62,14 @@ def _validate_positive_sample_count(n) -> int:
     return count_int
 
 
+def _to_python_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
 class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
     """Log-Gaussian approximation on Cartesian products of SO(3).
 
@@ -81,9 +91,15 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
 
         C = array(C, dtype=float)
         expected_shape = (self.dim, self.dim)
-        assert C.shape == expected_shape, f"C must have shape {expected_shape}."
+        if C.shape != expected_shape:
+            raise ValueError(f"C must have shape {expected_shape}.")
         if check_validity:
-            linalg.cholesky(C)
+            if not _to_python_bool(all(isfinite(C))):
+                raise ValueError("C must contain only finite values.")
+            if not _to_python_bool(allclose(C, transpose(C))):
+                raise ValueError("C must be symmetric.")
+            if not _to_python_bool(all(linalg.eigvalsh(C) > 0.0)):
+                raise ValueError("C must be positive definite.")
         self.C = C
 
     @property
