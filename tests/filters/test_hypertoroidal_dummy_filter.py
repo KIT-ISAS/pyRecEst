@@ -22,9 +22,11 @@ class HypertoroidalDummyFilterTest(unittest.TestCase):
     def test_dim_t2(self):
         self.assertEqual(self.filter_t2.dim, 2)
 
-    def test_assert_dim_too_small(self):
-        with self.assertRaises(AssertionError):
-            HypertoroidalDummyFilter(0)
+    def test_invalid_dim_raises_explicit_error(self):
+        for invalid_dim in (0, 1.5, True):
+            with self.subTest(invalid_dim=invalid_dim):
+                with self.assertRaisesRegex(ValueError, "integer at least 1"):
+                    HypertoroidalDummyFilter(invalid_dim)
 
     def test_filter_state_is_uniform(self):
         self.assertIsInstance(
@@ -72,6 +74,14 @@ class HypertoroidalDummyFilterTest(unittest.TestCase):
         original_state = self.filter_t2.filter_state
         new_dist = HypertoroidalUniformDistribution(2)
         self.filter_t2.set_state(new_dist)
+        self.assertIs(self.filter_t2.filter_state, original_state)
+
+    def test_set_state_rejects_invalid_dimension_explicitly(self):
+        original_state = self.filter_t2.filter_state
+
+        with self.assertRaisesRegex(ValueError, "dimension 2"):
+            self.filter_t2.set_state(HypertoroidalUniformDistribution(1))
+
         self.assertIs(self.filter_t2.filter_state, original_state)
 
     def test_get_estimate_returns_distribution(self):
