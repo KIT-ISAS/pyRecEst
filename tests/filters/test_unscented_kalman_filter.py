@@ -1,5 +1,6 @@
 import copy
 import unittest
+from unittest.mock import patch
 
 import numpy.testing as npt
 
@@ -67,6 +68,19 @@ class UnscentedKalmanFilterTest(unittest.TestCase):
             kf._filter_state.update(  # pylint: disable=protected-access
                 z=array([1.0]), hx=hx
             )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_unsupported_pytorch_backend_raises_not_implemented(self):
+        kf = UnscentedKalmanFilter(
+            GaussianDistribution(array([0.0]), array([[1.0]]))
+        )
+
+        with patch.object(pyrecest.backend, "__backend_name__", "pytorch"):
+            with self.assertRaisesRegex(NotImplementedError, "PyTorch backend"):
+                kf.predict_identity(array([[1.0]]))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
