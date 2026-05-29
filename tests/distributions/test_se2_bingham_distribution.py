@@ -23,6 +23,19 @@ class TestSE2BinghamDistribution(unittest.TestCase):
         dist = SE2BinghamDistribution(self.C1, self.C2, self.C3)
         self.assertIsInstance(dist, SE2BinghamDistribution)
 
+    def test_constructor_accepts_list_parts(self):
+        """Distribution can be constructed from array-like C1, C2, C3."""
+        dist = SE2BinghamDistribution(
+            [[-3.0, 0.5], [0.5, -1.0]],
+            [[0.1, 0.2], [-0.1, 0.3]],
+            [[-2.0, 0.1], [0.1, -1.5]],
+        )
+
+        self.assertIsInstance(dist, SE2BinghamDistribution)
+        npt.assert_array_almost_equal(dist.C1, self.C1)
+        npt.assert_array_almost_equal(dist.C2, self.C2)
+        npt.assert_array_almost_equal(dist.C3, self.C3)
+
     def test_constructor_from_full_matrix(self):
         """Distribution can be constructed from the full 4x4 matrix."""
         C_full = self.dist.C
@@ -31,6 +44,15 @@ class TestSE2BinghamDistribution(unittest.TestCase):
         npt.assert_array_almost_equal(dist2.C1, self.dist.C1)
         npt.assert_array_almost_equal(dist2.C2, self.dist.C2)
         npt.assert_array_almost_equal(dist2.C3, self.dist.C3)
+
+    def test_constructor_accepts_list_full_matrix(self):
+        """Distribution can be constructed from an array-like full matrix."""
+        dist = SE2BinghamDistribution(np.asarray(self.dist.C).tolist())
+
+        self.assertIsInstance(dist, SE2BinghamDistribution)
+        npt.assert_array_almost_equal(dist.C1, self.dist.C1)
+        npt.assert_array_almost_equal(dist.C2, self.dist.C2)
+        npt.assert_array_almost_equal(dist.C3, self.dist.C3)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
