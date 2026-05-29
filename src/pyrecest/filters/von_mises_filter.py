@@ -1,11 +1,54 @@
+import copy
 import warnings
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, mod, pi
+from pyrecest.backend import array, isfinite, mod, pi
 from pyrecest.distributions import VonMisesDistribution
 
 from .abstract_filter import AbstractFilter
 from .manifold_mixins import CircularFilterMixin
+
+
+def _to_python_bool(value):
+    """Convert scalar backend booleans to Python bools for validation."""
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
+def _to_python_float(value, name):
+    try:
+        if hasattr(value, "item"):
+            return float(value.item())
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be scalar.") from exc
+
+
+def _validate_von_mises_distribution(distribution, role):
+    if not isinstance(distribution, VonMisesDistribution):
+        raise ValueError(f"{role} must be a VonMisesDistribution.")
+
+    mu = _to_python_float(distribution.mu, f"{role} mean")
+    kappa = _to_python_float(distribution.kappa, f"{role} concentration")
+    if not _to_python_bool(isfinite(mu)):
+        raise ValueError(f"{role} mean must be finite.")
+    if not _to_python_bool(isfinite(kappa)):
+        raise ValueError(f"{role} concentration must be finite.")
+    if kappa < 0.0:
+        raise ValueError(f"{role} concentration must be nonnegative.")
+
+
+def _validate_circular_measurement(z):
+    measurement = array(z)
+    if measurement.shape not in ((), (1,)):
+        raise ValueError("measurement z must be scalar.")
+    measurement = measurement[0] if measurement.shape == (1,) else measurement
+    if not _to_python_bool(isfinite(measurement)):
+        raise ValueError("measurement z must be finite.")
+    return measurement
 
 
 class VonMisesFilter(AbstractFilter, CircularFilterMixin):
@@ -28,6 +71,15 @@ class VonMisesFilter(AbstractFilter, CircularFilterMixin):
         CircularFilterMixin.__init__(self)
         AbstractFilter.__init__(self, VonMisesDistribution(0, 1))
 
+    @property
+    def filter_state(self):
+        return self._filter_state
+
+    @filter_state.setter
+    def filter_state(self, new_state):
+        _validate_von_mises_distribution(new_state, "filter_state")
+        self._filter_state = copy.deepcopy(new_state)
+
     def predict_identity(self, vmSys: VonMisesDistribution):
         """
         Predicts assuming identity system model, i.e.,
@@ -37,6 +89,7 @@ class VonMisesFilter(AbstractFilter, CircularFilterMixin):
         Parameters:
         vmSys (VMDistribution) : distribution of additive noise
         """
+        _validate_von_mises_distribution(vmSys, "system noise")
         self.filter_state = self.filter_state.convolve(vmSys)
 
     def update_identity(self, vmMeas: VonMisesDistribution, z=0.0):
@@ -49,10 +102,10 @@ class VonMisesFilter(AbstractFilter, CircularFilterMixin):
         vmMeas (VMDistribution) : distribution of additive noise
         z : measurement in [0, 2pi)
         """
-        z = array(z)
-        assert z.shape in ((), (1,)), "z must be a scalar"
-        z = z[0] if z.shape == (1,) else z
-        if vmMeas.mu != 0.0:
+        _validate_von_mises_distribution(vmMeas, "measurement noise")
+        z = _validate_circular_measurement(z)
+        measurement_noise_mean = _to_python_float(vmMeas.mu, "measurement noise mean")
+        if measurement_noise_mean != 0.0:
             warning_message = (
                 "The measurement noise is not centered at 0.0. "
                 "This may lead to unexpected results because the "
