@@ -1,14 +1,19 @@
+import copy
 import unittest
 
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 import pyrecest.backend
-from pyrecest.backend import abs, all, array, cos, linalg, sin
+from pyrecest.backend import abs, all, array, cos, eye, linalg, sin
 from pyrecest.distributions.hypersphere_subset.bingham_distribution import (
     BinghamDistribution,
 )
 from pyrecest.filters.bingham_filter import BinghamFilter
+
+
+def _make_s2_bingham():
+    return BinghamDistribution(array([-5.0, -3.0, 0.0]), eye(3))
 
 
 class TestBinghamFilter2D(unittest.TestCase):
@@ -37,6 +42,26 @@ class TestBinghamFilter2D(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
+    def test_set_state_validation_errors_are_explicit(self):
+        with self.assertRaisesRegex(ValueError, "BinghamDistribution"):
+            self.filter.filter_state = object()
+        with self.assertRaisesRegex(ValueError, "2D or 4D"):
+            self.filter.filter_state = _make_s2_bingham()
+
+        bad_z = copy.deepcopy(self.B)
+        bad_z.Z = array([-5.0, float("nan")])
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.filter_state = bad_z
+
+        bad_m = copy.deepcopy(self.B)
+        bad_m.M = array([[1.0, 0.0], [1.0, 0.0]])
+        with self.assertRaisesRegex(ValueError, "orthogonal"):
+            self.filter.filter_state = bad_m
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_predict_identity(self):
         self.filter.filter_state = self.B
         self.filter.predict_identity(self.Bnoise)
@@ -51,6 +76,19 @@ class TestBinghamFilter2D(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
+    def test_predict_rejects_invalid_noise(self):
+        self.filter.filter_state = self.B
+        with self.assertRaisesRegex(ValueError, "system noise"):
+            self.filter.predict_identity(object())
+        with self.assertRaisesRegex(ValueError, "2D or 4D"):
+            self.filter.predict_identity(_make_s2_bingham())
+        with self.assertRaisesRegex(ValueError, "system function"):
+            self.filter.predict_nonlinear(object(), self.Bnoise)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_update_identity_at_mode(self):
         self.filter.filter_state = self.B
         self.filter.update_identity(self.Bnoise, self.B.mode())
@@ -60,6 +98,34 @@ class TestBinghamFilter2D(unittest.TestCase):
         npt.assert_allclose(abs(self.B.mode()), abs(B3.mode()), atol=1e-5)
         # Update at mode should make distribution sharper (Z values more negative)
         self.assertTrue(all(B3.Z <= self.B.Z))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_update_identity_accepts_array_like_measurement(self):
+        self.filter.filter_state = self.B
+
+        self.filter.update_identity(self.Bnoise, [1.0, 0.0])
+
+        self.assertIsInstance(self.filter.filter_state, BinghamDistribution)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_update_identity_rejects_invalid_inputs(self):
+        self.filter.filter_state = self.B
+        with self.assertRaisesRegex(ValueError, "measurement noise"):
+            self.filter.update_identity(object(), [1.0, 0.0])
+        with self.assertRaisesRegex(ValueError, "2D or 4D"):
+            self.filter.update_identity(_make_s2_bingham(), [1.0, 0.0])
+        with self.assertRaisesRegex(ValueError, "shape"):
+            self.filter.update_identity(self.Bnoise, [1.0, 0.0, 0.0])
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter.update_identity(self.Bnoise, [float("nan"), 0.0])
+        with self.assertRaisesRegex(ValueError, "unit vector"):
+            self.filter.update_identity(self.Bnoise, [2.0, 0.0])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
