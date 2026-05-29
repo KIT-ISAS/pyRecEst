@@ -467,13 +467,18 @@ class SO3ProductParticleFilter(HyperhemisphereCartProdParticleFilter):
         ess_threshold=None,
     ):
         """Update weights from a likelihood evaluated on product particles."""
-        if measurement is None:
-            likelihood_values = likelihood(self.particles)
+        if callable(likelihood):
+            if measurement is None:
+                likelihood_values = likelihood(self.particles)
+            else:
+                likelihood_values = likelihood(measurement, self.particles)
         else:
-            likelihood_values = likelihood(measurement, self.particles)
+            likelihood_values = likelihood
         likelihood_values = array(likelihood_values, dtype=float)
         if likelihood_values.shape != self.weights.shape:
             raise ValueError("likelihood must return one value per particle.")
+        if not all(isfinite(likelihood_values)):
+            raise ValueError("likelihood values must be finite.")
         if not all(likelihood_values >= 0.0):
             raise ValueError("likelihood values must be nonnegative.")
 
