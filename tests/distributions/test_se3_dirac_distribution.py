@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+import numpy.testing as npt
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
@@ -30,6 +31,19 @@ class SE3DiracDistributionTest(unittest.TestCase):
         w = array([1.0, 2.0, 3.0, 1.0, 2.0, 3.0])
         w = w / sum(w)
         SE3DiracDistribution(concatenate((dSph, dLin), axis=-1), w)
+
+    def test_constructor_accepts_list_inputs(self):
+        particles = [
+            [1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0],
+            [0.0, 1.0, 0.0, 0.0, 4.0, 5.0, 6.0],
+        ]
+        weights = [0.25, 0.75]
+
+        dist = SE3DiracDistribution(particles, weights)
+
+        npt.assert_allclose(dist.d, array(particles))
+        npt.assert_allclose(dist.w, array(weights))
+        self.assertEqual(dist.d.shape, (2, 7))
 
     def test_from_distribution(self):
         cpsd = SE3CartProdStackedDistribution(
