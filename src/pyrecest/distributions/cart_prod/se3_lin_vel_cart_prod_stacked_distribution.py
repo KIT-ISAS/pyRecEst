@@ -1,4 +1,4 @@
-from pyrecest.backend import prod, stack
+from pyrecest.backend import asarray, prod, stack
 
 from ..hypersphere_subset.abstract_hyperhemispherical_distribution import (
     AbstractHyperhemisphericalDistribution,
@@ -39,6 +39,7 @@ class SE3LinVelCartProdStackedDistribution(CartProdStackedDistribution):
         return self.dists[0]
 
     def pdf(self, xs):
+        xs = asarray(xs)
         ps = []
         next_dim = 0
         for dist in self.dists:
