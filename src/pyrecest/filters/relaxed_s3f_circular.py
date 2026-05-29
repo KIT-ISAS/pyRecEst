@@ -16,14 +16,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
 from pyrecest.backend import abs as backend_abs
 from pyrecest.backend import angle as backend_angle
 from pyrecest.backend import (
+    all,
     array,
     asarray,
     column_stack,
     cos,
     exp,
+    isfinite,
     linspace,
     mod,
     pi,
@@ -91,9 +94,7 @@ def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
     piecewise-constant marginal used by the S3F pilot.
     """
 
-    if n_cells <= 0:
-        raise ValueError("n_cells must be positive.")
-
+    n_cells = _validate_positive_cell_count(n_cells)
     u = _as_body_increment(body_increment)
     centers = (
         linspace(0.0, 2.0 * pi, n_cells, endpoint=False)
@@ -102,6 +103,8 @@ def uniform_circular_cell_statistics(  # pylint: disable=too-many-locals
     )
     if centers.shape[0] != n_cells:
         raise ValueError("grid must contain exactly n_cells entries.")
+    if not bool(all(isfinite(centers))):
+        raise ValueError("grid must be finite.")
 
     width = 2.0 * pi / n_cells
     half_width = 0.5 * width
@@ -202,6 +205,8 @@ def predict_circular_relaxed(
     )
     if q_base.shape != (2, 2):
         raise ValueError("process_noise_cov must have shape (2, 2).")
+    if not bool(all(isfinite(q_base))):
+        raise ValueError("process_noise_cov must be finite.")
 
     covariance_matrices = stack(
         [q_base + covariance_inflations[idx] for idx in range(n_cells)],
@@ -219,6 +224,10 @@ def grid_probability_masses(grid_values: Any) -> Any:
     """Convert equal-cell grid density values to normalized cell masses."""
 
     values = asarray(grid_values, dtype=float).reshape(-1)
+    if not bool(all(isfinite(values))):
+        raise ValueError("grid values must be finite.")
+    if not bool(all(values >= 0.0)):
+        raise ValueError("grid values must be nonnegative.")
     total = backend_sum(values)
     if float(total) <= 0.0:
         raise ValueError("grid values must have positive total mass.")
@@ -246,8 +255,32 @@ def _safe_sinc(x: float) -> float:
     return float(sin(x) / x)
 
 
+def _validate_positive_cell_count(n_cells: Any) -> int:
+    count_array = np.asarray(n_cells)
+    if count_array.ndim != 0:
+        raise ValueError("n_cells must be a scalar integer.")
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError("n_cells must be an integer, not a boolean.")
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError("n_cells must be an integer.") from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError("n_cells must be a finite integer.")
+    if count_int <= 0:
+        raise ValueError("n_cells must be positive.")
+    return count_int
+
+
 def _as_body_increment(body_increment: Any) -> Any:
     u = asarray(body_increment, dtype=float).reshape(-1)
     if u.shape != (2,):
         raise ValueError("body_increment must be a 2-D vector.")
+    if not bool(all(isfinite(u))):
+        raise ValueError("body_increment must be finite.")
     return u
