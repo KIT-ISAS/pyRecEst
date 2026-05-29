@@ -48,6 +48,12 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
 
         npt.assert_allclose(dist.pdf(xs), dist.pdf(array(xs)))
 
+    def test_pdf_accepts_scalar_inputs(self):
+        dist = WrappedCauchyDistribution(self.mu, self.gamma)
+
+        npt.assert_allclose(dist.pdf(0.5), dist.pdf(array([0.5])))
+        npt.assert_allclose(dist.pdf(array(0.5)), dist.pdf(array([0.5])))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
@@ -85,6 +91,18 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
         xs = [0.5, 1.0, 2.0]
 
         npt.assert_allclose(dist.cdf(xs), dist.cdf(array(xs)), atol=1e-8)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_cdf_accepts_scalar_inputs(self):
+        dist = WrappedCauchyDistribution(self.mu, self.gamma)
+
+        npt.assert_allclose(dist.cdf(0.5), dist.cdf(array([0.5])), atol=1e-8)
+        npt.assert_allclose(
+            dist.cdf(array(0.5)), dist.cdf(array([0.5])), atol=1e-8
+        )
 
 
 if __name__ == "__main__":
