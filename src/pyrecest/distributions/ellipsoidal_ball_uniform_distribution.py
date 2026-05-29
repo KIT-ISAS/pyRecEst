@@ -2,7 +2,7 @@ from numbers import Integral
 from typing import Union
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, int32, int64, linalg, random, where, zeros
+from pyrecest.backend import array, int32, int64, linalg, random, reshape, where, zeros
 from pyrecest.exceptions import ShapeError
 
 from .abstract_ellipsoidal_ball_distribution import AbstractEllipsoidalBallDistribution
@@ -49,20 +49,9 @@ class EllipsoidalBallUniformDistribution(
         :param xs: Points at which to compute the PDF.
         :returns: PDF values at given points.
         """
-        xs = array(xs)
-        if xs.ndim not in (1, 2) or xs.shape[-1] != self.dim:
-            raise ShapeError(
-                "xs",
-                xs.shape,
-                expected=f"({self.dim},) or (n, {self.dim})",
-            )
+        xs, single = self._coerce_points(xs)
 
         reciprocal_volume = 1 / self.get_manifold_size()
-
-        # Make xs always 2D for uniform handling
-        single = xs.ndim == 1
-        if single:
-            xs = xs[None, :]
 
         # (n, dim)
         diff = xs - self.center[None, :]
@@ -80,6 +69,35 @@ class EllipsoidalBallUniformDistribution(
         pdf_values = where(inside, reciprocal_volume, zeros(quad.shape[0]))
 
         return pdf_values[0] if single else pdf_values
+
+    def _coerce_points(self, xs):
+        xs = array(xs)
+        if xs.ndim == 0:
+            if self.dim != 1:
+                raise ShapeError(
+                    "xs",
+                    xs.shape,
+                    expected=f"({self.dim},) or (n, {self.dim})",
+                    reason="scalar points are only valid for dim == 1",
+                )
+            return reshape(xs, (1, 1)), True
+        if xs.ndim == 1:
+            if self.dim == 1:
+                return reshape(xs, (-1, 1)), False
+            if xs.shape[0] == self.dim:
+                return reshape(xs, (1, self.dim)), True
+            raise ShapeError(
+                "xs",
+                xs.shape,
+                expected=f"({self.dim},) or (n, {self.dim})",
+            )
+        if xs.ndim != 2 or xs.shape[1] != self.dim:
+            raise ShapeError(
+                "xs",
+                xs.shape,
+                expected=f"({self.dim},) or (n, {self.dim})",
+            )
+        return xs, False
 
     def sample(self, n: Union[int, int32, int64]):
         """
