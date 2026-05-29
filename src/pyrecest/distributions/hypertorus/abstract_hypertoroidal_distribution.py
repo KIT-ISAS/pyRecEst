@@ -315,7 +315,9 @@ class AbstractHypertoroidalDistribution(AbstractPeriodicDistribution):
         return s
 
     @staticmethod
-    def setup_axis_circular(axis_name: str = "x", ax=plt.gca()) -> None:
+    def setup_axis_circular(axis_name: str = "x", ax=None) -> None:
+        if ax is None:
+            ax = plt.gca()
         ticks = [0.0, pi, 2.0 * pi]
         tick_labels = ["0", r"$\pi$", r"$2\pi$"]
         if axis_name == "x":
