@@ -104,6 +104,14 @@ class HistoryRecorderTest(unittest.TestCase):
             filter_obj.history["point_estimate"], array([[1.0, 3.0], [2.0, 4.0]])
         )
 
+    def test_filter_state_rejects_wrong_type_with_explicit_error(self):
+        filter_obj = _DummyFilter(_DummyBelief([1.0, 2.0]))
+
+        with self.assertRaisesRegex(ValueError, "expected _DummyBelief"):
+            filter_obj.filter_state = {"mean": [3.0, 4.0]}
+
+        npt.assert_array_equal(filter_obj.filter_state.mean(), array([1.0, 2.0]))
+
     def test_multitarget_tracker_logging_is_mirrored_in_history(self):
         tracker = _DummyMultitargetTracker()
         tracker.estimate = array([1.0, 2.0])

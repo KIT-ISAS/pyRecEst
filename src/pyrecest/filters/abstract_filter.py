@@ -20,9 +20,16 @@ class AbstractFilter(ABC):
 
     @filter_state.setter
     def filter_state(self, new_state):
-        assert self._filter_state is None or isinstance(
-            new_state, type(self.filter_state)
-        ), "New distribution has to be of the same class as (or inherit from) the previous density."
+        if self._filter_state is not None and not isinstance(
+            new_state, type(self._filter_state)
+        ):
+            expected = type(self._filter_state).__name__
+            actual = type(new_state).__name__
+            raise ValueError(
+                "New distribution has to be of the same class as "
+                "(or inherit from) the previous density: "
+                f"expected {expected}, got {actual}."
+            )
         self._filter_state = copy.deepcopy(new_state)
 
     def get_point_estimate(self):
