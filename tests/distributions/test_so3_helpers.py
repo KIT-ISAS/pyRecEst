@@ -31,6 +31,23 @@ class SO3HelpersTest(unittest.TestCase):
             atol=ATOL,
         )
 
+    def test_normalize_quaternions_rejects_invalid_inputs(self):
+        invalid_cases = [
+            (array(1.0), "length 4"),
+            (array([1.0, 0.0, 0.0]), "length 4"),
+            (array([[1.0, 0.0, 0.0]]), "length 4"),
+            (array([math.inf, 0.0, 0.0, 1.0]), "finite"),
+            (array([math.nan, 0.0, 0.0, 1.0]), "finite"),
+            (array([0.0, 0.0, 0.0, 0.0]), "nonzero"),
+        ]
+
+        for quaternions, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    so3_helpers.normalize_quaternions(quaternions)
+                with self.assertRaisesRegex(ValueError, message):
+                    private_normalize_quaternions(quaternions)
+
     def test_exp_log_roundtrip_with_base_rotation(self):
         base = z_quaternion(pi / 3.0)
         tangent_vectors = array([[0.1, -0.2, 0.05], [0.0, 0.0, 0.0]])

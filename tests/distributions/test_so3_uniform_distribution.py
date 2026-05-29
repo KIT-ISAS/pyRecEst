@@ -55,7 +55,7 @@ class SO3UniformDistributionTest(unittest.TestCase):
 
         for rotation in invalid_rotations:
             with self.subTest(rotation=rotation):
-                with self.assertRaises(AssertionError):
+                with self.assertRaisesRegex(ValueError, "finite"):
                     dist.pdf(rotation)
 
     def test_sample_returns_canonical_unit_quaternions(self):
