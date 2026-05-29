@@ -205,6 +205,9 @@ class DensityTransitionModel:
 
         self._transition_density = transition_density
         self._sample_next = sample_next
+        self._sample_next_count_call_mode = (
+            _sample_count_call_mode(sample_next) if sample_next is not None else None
+        )
         self.name = name
 
     @property
@@ -223,7 +226,11 @@ class DensityTransitionModel:
 
         if self._sample_next is None:
             raise NotImplementedError("No sample_next callback was provided.")
-        return self._sample_next(state, n)
+        if self._sample_next_count_call_mode == "positional":
+            return self._sample_next(state, n)
+        if self._sample_next_count_call_mode == "keyword":
+            return self._sample_next(state, n=n)
+        return self._sample_next(state)
 
 
 __all__ = [
