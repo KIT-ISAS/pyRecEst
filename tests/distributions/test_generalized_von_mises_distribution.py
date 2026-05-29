@@ -14,12 +14,21 @@ class TestGvMDistribution(unittest.TestCase):
         self.assertEqual(dist.kappa.shape, (1,))
 
     def test_init_invalid_kappa(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaisesRegex(ValueError, "kappa"):
             GvMDistribution(array([2.0]), array([-1.0]))
 
     def test_init_shape_mismatch(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaisesRegex(ValueError, "same shape"):
             GvMDistribution(array([1.0, 2.0]), array([1.0]))
+
+    def test_init_rejects_nonfinite_parameters(self):
+        for mu, kappa, pattern in (
+            (array([float("nan")]), array([1.0]), "mu"),
+            (array([1.0]), array([float("inf")]), "kappa"),
+        ):
+            with self.subTest(mu=mu, kappa=kappa):
+                with self.assertRaisesRegex(ValueError, pattern):
+                    GvMDistribution(mu, kappa)
 
     def test_pdf_order1_matches_von_mises(self):
         """Order-1 GvM with a single mu and kappa should match the von Mises PDF."""
@@ -40,6 +49,12 @@ class TestGvMDistribution(unittest.TestCase):
         gvm = GvMDistribution(array([1.0]), array([2.0]))
 
         npt.assert_allclose(gvm.pdf(0.5), gvm.pdf(array([0.5])))
+
+    def test_pdf_rejects_matrix_input(self):
+        gvm = GvMDistribution(array([1.0]), array([2.0]))
+
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            gvm.pdf(array([[0.5, 1.0]]))
 
     def test_pdf_integrates_to_one(self):
         """PDF should integrate to 1 over [0, 2*pi]."""

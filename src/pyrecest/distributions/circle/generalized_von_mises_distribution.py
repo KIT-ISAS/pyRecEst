@@ -1,7 +1,32 @@
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
-from pyrecest.backend import arange, array, atleast_1d, cos, exp, sum
+from pyrecest.backend import all, arange, array, atleast_1d, cos, exp, isfinite, sum
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+
+
+def _validate_parameters(mu, kappa):
+    mu = array(mu, dtype=float)
+    kappa = array(kappa, dtype=float)
+    if mu.ndim != 1:
+        raise ValueError("mu must be a one-dimensional array.")
+    if kappa.ndim != 1:
+        raise ValueError("kappa must be a one-dimensional array.")
+    if mu.shape != kappa.shape:
+        raise ValueError("mu and kappa must have the same shape.")
+    if not bool(all(isfinite(mu))):
+        raise ValueError("mu must be finite.")
+    if not bool(all(isfinite(kappa))):
+        raise ValueError("kappa must be finite.")
+    if not bool(all(kappa > 0.0)):
+        raise ValueError("all kappa values must be positive.")
+    return mu, kappa
+
+
+def _as_1d_input(xs):
+    xs = atleast_1d(array(xs))
+    if xs.ndim != 1:
+        raise ValueError("xs must be a scalar or one-dimensional array.")
+    return xs
 
 
 class GvMDistribution(AbstractCircularDistribution):
@@ -21,11 +46,7 @@ class GvMDistribution(AbstractCircularDistribution):
     """
 
     def __init__(self, mu, kappa):
-        mu = array(mu, dtype=float)
-        kappa = array(kappa, dtype=float)
-        assert mu.ndim == 1, "mu must be a 1D array"
-        assert mu.shape == kappa.shape, "mu and kappa must have the same shape"
-        assert (kappa > 0).all(), "all kappa values must be positive"
+        mu, kappa = _validate_parameters(mu, kappa)
         AbstractCircularDistribution.__init__(self)
         self.mu = mu
         self.kappa = kappa
@@ -34,9 +55,7 @@ class GvMDistribution(AbstractCircularDistribution):
     @property
     def norm_const(self):
         if self._norm_const is None:
-            self._norm_const = self.integrate_fun_over_domain(
-                lambda *args: self.pdf_unnormalized(array(args)), self.dim
-            )
+            self._norm_const = self.integrate_fun_over_domain(lambda *args: self.pdf_unnormalized(array(args)), self.dim)
         return self._norm_const
 
     def pdf_unnormalized(self, xs):
@@ -53,7 +72,7 @@ class GvMDistribution(AbstractCircularDistribution):
         p : array, shape (n,)
             Unnormalized pdf values.
         """
-        xs = atleast_1d(array(xs))
+        xs = _as_1d_input(xs)
         # j = [1, 2, ..., k], shape (k,)
         j = arange(1, self.mu.shape[0] + 1, dtype=float)
         # Broadcast: (k, 1) * ((1, n) - (k, 1)) → (k, n)
