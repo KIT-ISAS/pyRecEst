@@ -63,7 +63,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             mass around ``mu``. ``kappa == 0`` is the uniform distribution on the
             hypersphere.
         """
-        AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
+        mu = array(mu)
         epsilon = 1e-6
         assert mu.ndim == 1, "mu must be a vector"
         assert (
@@ -71,6 +71,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         ), "mu must be at least two-dimensional for the circular case"
         assert kappa >= 0, "kappa must be a nonnegative scalar"
         assert abs(linalg.norm(mu) - 1.0) < epsilon, "mu must be a normalized"
+        AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
 
         self.mu = mu
         self.kappa = kappa
@@ -93,7 +94,11 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             Unit-vector evaluation point or batch of points in the embedding
             space.
         """
-        assert xs.shape[-1] == self.input_dim
+        xs = array(xs)
+        if xs.ndim == 0 or xs.shape[-1] != self.input_dim:
+            raise ValueError(
+                f"xs must have trailing dimension {self.input_dim}, got {xs.shape}."
+            )
 
         return self.C * exp(self.kappa * xs @ self.mu)
 
@@ -218,6 +223,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             inverted to estimate ``kappa``. A zero vector represents the uniform
             distribution and therefore receives an arbitrary stored direction.
         """
+        m = array(m)
         assert ndim(m) == 1, "mu must be a vector"
         assert len(m) >= 2, "mu must be at least 2 for the circular case"
 
@@ -239,6 +245,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     def set_mean(self, new_mean):
         """Replace the mean direction and return the distribution."""
+        new_mean = array(new_mean)
         assert new_mean.shape == self.mu.shape
         dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mean)
@@ -246,6 +253,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     def set_mode(self, new_mode):
         """Replace the modal direction and return the distribution."""
+        new_mode = array(new_mode)
         assert new_mode.shape == self.mu.shape
         dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mode)
