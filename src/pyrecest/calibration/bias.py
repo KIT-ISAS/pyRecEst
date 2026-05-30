@@ -80,7 +80,18 @@ class SensorBiasCorrectionModel:
         """Predict residual bias for feature rows."""
 
         if self.feature_dim == 0:
-            rows = 1 if n_rows is None else _as_nonnegative_int(n_rows, "n_rows")
+            if features is None:
+                rows = 1 if n_rows is None else _as_nonnegative_int(n_rows, "n_rows")
+            else:
+                x = _as_2d(features, "features")
+                if x.shape[1] != 0:
+                    raise ValueError("features have incompatible feature dimension")
+                if n_rows is None:
+                    rows = x.shape[0]
+                else:
+                    rows = _as_nonnegative_int(n_rows, "n_rows")
+                    if x.shape[0] != rows:
+                        raise ValueError("features rows must match requested row count")
             return np.repeat(self.intercept.reshape(1, -1), rows, axis=0)
         if features is None:
             raise ValueError("features are required for a nonconstant bias model")

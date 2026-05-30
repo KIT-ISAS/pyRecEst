@@ -48,6 +48,29 @@ def test_constant_bias_predict_accepts_integer_like_n_rows():
     np.testing.assert_allclose(prediction, np.array([[2.0], [2.0]]))
 
 
+def test_constant_bias_predict_uses_zero_feature_row_count():
+    model = _constant_bias_model()
+
+    prediction = model.predict(np.empty((3, 0)))
+
+    assert prediction.shape == (3, 1)
+    np.testing.assert_allclose(prediction, np.full((3, 1), 2.0))
+
+
+def test_constant_bias_predict_rejects_mismatched_zero_feature_row_count():
+    model = _constant_bias_model()
+
+    with pytest.raises(ValueError, match="features rows must match requested row count"):
+        model.predict(np.empty((3, 0)), n_rows=2)
+
+
+def test_constant_bias_predict_rejects_nonzero_feature_columns():
+    model = _constant_bias_model()
+
+    with pytest.raises(ValueError, match="features have incompatible feature dimension"):
+        model.predict(np.ones((3, 1)))
+
+
 @pytest.mark.parametrize("n_rows", [0.5, np.nan, np.inf, False])
 def test_feature_bias_predict_validates_explicit_n_rows_before_row_comparison(n_rows):
     model = _feature_bias_model()
