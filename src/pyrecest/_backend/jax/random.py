@@ -80,6 +80,17 @@ def _shape_from_size(size):
     return tuple(_integer_dimension(dim) for dim in size)
 
 
+def _broadcast_shape_from_values(*values):
+    return _np.broadcast_shapes(*(tuple(value.shape) for value in values))
+
+
+def _bounded_sampler_shape(size, *parameters):
+    """Return the NumPy-compatible output shape for bounded random samplers."""
+    if size is not None:
+        return _shape_from_size(size)
+    return _broadcast_shape_from_values(*parameters)
+
+
 def _looks_like_shape(value):
     return _looks_like_integer_dimension(value) or (
         isinstance(value, tuple)
@@ -113,12 +124,13 @@ def rand(size=None, *args, **kwargs):
 
 
 def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
-    state, has_state, kwargs = _get_state(**kwargs)
     low = _jnp.asarray(low)
     high = _jnp.asarray(high)
+    shape = _bounded_sampler_shape(size, low, high)
     if bool(_jnp.any(low > high)):
         raise ValueError("Upper bound must be greater than or equal to lower bound")
-    state, res = _rand(state, size, *args, minval=low, maxval=high, **kwargs)
+    state, has_state, kwargs = _get_state(**kwargs)
+    state, res = _rand(state, shape, *args, minval=low, maxval=high, **kwargs)
     return set_state_return(has_state, state, res)
 
 
@@ -174,8 +186,11 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
         high = low
         low = 0
 
+    low = _jnp.asarray(low)
+    high = _jnp.asarray(high)
+    shape = _bounded_sampler_shape(size, low, high)
     state, has_state, kwargs = _get_state(**kwargs)
-    state, res = _randint(state, size, low, high, *args, **kwargs)
+    state, res = _randint(state, shape, low, high, *args, **kwargs)
     return set_state_return(has_state, state, res)
 
 
