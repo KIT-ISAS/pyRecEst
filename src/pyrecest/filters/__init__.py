@@ -146,6 +146,7 @@ _FILTER_EXPORTS: Final[dict[str, str]] = {
     "OutOfSequenceParticleUpdater": ".out_of_sequence",
     "OutOfSequenceResult": ".out_of_sequence",
     "PartitionedSO3ProductBlockParticleFilter": ".so3_product_block_particle_filter",
+    "PartitionedSO3ProductParticleFilter": ".partitioned_so3_product_particle_filter",
     "PiecewiseConstantFilter": ".piecewise_constant_filter",
     "ProbabilityThresholdGate": ".association_hypotheses",
     "RandomMatrixTracker": ".random_matrix_tracker",
