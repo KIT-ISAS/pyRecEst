@@ -43,6 +43,12 @@ def _sample_count_call_mode(callback: Callable[..., Any]) -> str | None:
     except (TypeError, ValueError):
         return "positional"
 
+    for parameter in parameters:
+        if parameter.name == "n":
+            if parameter.kind is Parameter.KEYWORD_ONLY:
+                return "keyword"
+            return "positional"
+
     if any(parameter.kind is Parameter.VAR_POSITIONAL for parameter in parameters):
         return "positional"
 
@@ -54,12 +60,6 @@ def _sample_count_call_mode(callback: Callable[..., Any]) -> str | None:
     ]
     if len(positional_parameters) >= 2:
         return "positional"
-
-    for parameter in parameters:
-        if parameter.name == "n":
-            if parameter.kind is Parameter.KEYWORD_ONLY:
-                return "keyword"
-            return "positional"
 
     if any(parameter.kind is Parameter.VAR_KEYWORD for parameter in parameters):
         return "keyword"

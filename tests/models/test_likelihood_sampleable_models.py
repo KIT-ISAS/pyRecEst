@@ -108,6 +108,23 @@ class SampleableTransitionModelTest(unittest.TestCase):
             )
         )
 
+    def test_sample_next_callback_with_varargs_and_keyword_only_count(self):
+        calls = []
+
+        def sample_next(state, *args, n=1):
+            calls.append(args)
+            return state + reshape(arange(n), (n, 1))
+
+        model = SampleableTransitionModel(sample_next)
+
+        self.assertTrue(
+            allclose(
+                model.sample_next(array([10.0]), n=3),
+                array([[10.0], [11.0], [12.0]]),
+            )
+        )
+        self.assertEqual(calls, [()])
+
     def test_unary_sample_next_callback(self):
         def shift_state(state):
             return state + array([1.0])
@@ -203,6 +220,25 @@ class DensityTransitionModelTest(unittest.TestCase):
         self.assertTrue(
             allclose(model.sample_next(array([4.0]), n=2), array([[4.0], [5.0]]))
         )
+
+    def test_optional_sampler_with_varargs_and_keyword_only_count(self):
+        calls = []
+
+        def sample_next(state, *args, n=1):
+            calls.append(args)
+            return state + reshape(arange(n), (n, 1))
+
+        model = DensityTransitionModel(
+            lambda state_next, state_previous: exp(
+                -0.5 * (state_next - state_previous) ** 2
+            ),
+            sample_next=sample_next,
+        )
+
+        self.assertTrue(
+            allclose(model.sample_next(array([4.0]), n=2), array([[4.0], [5.0]]))
+        )
+        self.assertEqual(calls, [()])
 
     def test_optional_unary_sampler(self):
         def sample_next(state):
