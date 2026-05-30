@@ -103,6 +103,7 @@ def generate_measurements(groundtruth, simulation_config):
                     translate(shape, xoff=x, yoff=y),
                     angle=angle,
                     origin="centroid",
+                    use_radians=True,
                 )
             else:
                 raise ValueError(
