@@ -27,6 +27,34 @@ def test_multivariate_normal_accepts_shape_keyword():
         random.multivariate_normal(mean, cov, size=(1,), shape=(2,))
 
 
+def test_uniform_accepts_numpy_broadcasted_bounds_without_explicit_size():
+    random.seed(0)
+
+    samples = random.uniform(jnp.array([0.0, 10.0]), jnp.array([1.0, 11.0]))
+
+    assert samples.shape == (2,)
+    assert jnp.all(samples >= jnp.array([0.0, 10.0]))
+    assert jnp.all(samples <= jnp.array([1.0, 11.0]))
+
+
+def test_randint_accepts_numpy_broadcasted_bounds_without_explicit_size():
+    random.seed(0)
+
+    samples = random.randint(jnp.array([0, 10]), jnp.array([3, 13]))
+
+    assert samples.shape == (2,)
+    assert jnp.all(samples >= jnp.array([0, 10]))
+    assert jnp.all(samples < jnp.array([3, 13]))
+
+
+def test_uniform_and_randint_reject_incompatible_bounds_without_explicit_size():
+    with pytest.raises(ValueError):
+        random.uniform(jnp.zeros((2,)), jnp.ones((3,)))
+
+    with pytest.raises(ValueError):
+        random.randint(jnp.zeros((2,), dtype=jnp.int32), jnp.ones((3,), dtype=jnp.int32))
+
+
 def _size_aware_samplers():
     values = jnp.array([0, 1, 2])
     mean = jnp.array([0.0])
