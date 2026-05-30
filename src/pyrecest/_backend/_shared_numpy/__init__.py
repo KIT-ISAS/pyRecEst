@@ -99,6 +99,10 @@ def one_hot(labels, num_classes):
     return eye(num_classes, dtype=_np.dtype("uint8"))[labels]
 
 
+def _is_empty_index_sequence(indices):
+    return _is_iterable(indices) and len(indices) == 0
+
+
 def assignment(x, values, indices, axis=0):
     """Assign values at given indices of an array.
 
@@ -127,6 +131,9 @@ def assignment(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(x)
+
+    if _is_empty_index_sequence(indices):
+        return x_new
 
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
     if _is_boolean(indices):
@@ -177,6 +184,9 @@ def assignment_by_sum(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(x)
+
+    if _is_empty_index_sequence(indices):
+        return x_new
 
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
     if _is_boolean(indices):

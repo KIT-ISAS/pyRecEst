@@ -137,6 +137,8 @@ def _is_boolean(x):
     if isinstance(x, bool):
         return True
     if isinstance(x, (tuple, list)):
+        if not x:
+            return False
         return _is_boolean(x[0])
     if isinstance(x, _np.ndarray):
         return x.dtype == bool
