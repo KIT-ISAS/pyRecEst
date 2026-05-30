@@ -138,12 +138,14 @@ _FILTER_EXPORTS: Final[dict[str, str]] = {
     "ModeRBPFManifoldUKFTracker": ".mode_rbpf_manifold_ukf_tracker",
     "ModeRbpfManifoldUkfTracker": ".mode_rbpf_manifold_ukf_tracker",
     "NISGate": ".association_hypotheses",
+    "OrientationAwareVBRMTracker": ".vbrm_o_tracker",
+    "OrientationAwareVbrmTracker": ".vbrm_o_tracker",
     "OrientationVectorEOT0Tracker": ".orientation_vector_eot_tracker",
     "OrientationVectorEOTTracker": ".orientation_vector_eot_tracker",
     "OutOfSequenceKalmanUpdater": ".out_of_sequence",
     "OutOfSequenceParticleUpdater": ".out_of_sequence",
     "OutOfSequenceResult": ".out_of_sequence",
-    "PartitionedSO3ProductParticleFilter": ".partitioned_so3_product_particle_filter",
+    "PartitionedSO3ProductBlockParticleFilter": ".so3_product_block_particle_filter",
     "PiecewiseConstantFilter": ".piecewise_constant_filter",
     "ProbabilityThresholdGate": ".association_hypotheses",
     "RandomMatrixTracker": ".random_matrix_tracker",
@@ -155,7 +157,9 @@ _FILTER_EXPORTS: Final[dict[str, str]] = {
     "VelocityAlignedMemEkfStarTracker": ".mem_ekf_star_oa_tracker",
     "VelocityLockedMEMQKFTracker": ".velocity_locked_mem_qkf_tracker",
     "VelocityLockedMemQkfTracker": ".velocity_locked_mem_qkf_tracker",
+    "VBRMOTracker": ".vbrm_o_tracker",
     "VBRMTracker": ".vbrm_tracker",
+    "VbrmOTracker": ".vbrm_o_tracker",
     "VbrmTracker": ".vbrm_tracker",
     "association_result_from_hypotheses": ".association_hypotheses",
     "adaptive_position_proposal_probability": ".replay_grid_likelihood",
@@ -218,12 +222,11 @@ def __getattr__(name: str):
         module_name = _FILTER_EXPORTS[name]
     except KeyError as exc:  # pragma: no cover - normal attribute protocol
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from exc
-
     module = import_module(module_name, __name__)
     value = getattr(module, name)
     globals()[name] = value
     return value
 
-
-def __dir__() -> list[str]:
-    return sorted(set(globals()) | set(__all__))
+def __dir__():
+    """List lazily exported filter symbols for interactive use."""
+    return sorted(set(globals()) | set(_FILTER_EXPORTS))
