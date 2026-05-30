@@ -145,6 +145,7 @@ _FILTER_EXPORTS: Final[dict[str, str]] = {
     "OutOfSequenceKalmanUpdater": ".out_of_sequence",
     "OutOfSequenceParticleUpdater": ".out_of_sequence",
     "OutOfSequenceResult": ".out_of_sequence",
+    "PartitionedSO3ProductParticleFilter": ".partitioned_so3_product_particle_filter",
     "PiecewiseConstantFilter": ".piecewise_constant_filter",
     "ProbabilityThresholdGate": ".association_hypotheses",
     "RandomMatrixTracker": ".random_matrix_tracker",
