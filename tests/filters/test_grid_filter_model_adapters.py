@@ -2,7 +2,7 @@ import unittest
 import warnings
 
 import pyrecest.backend
-from pyrecest.backend import allclose, array
+from pyrecest.backend import allclose, array, ones
 from pyrecest.distributions import HyperhemisphericalWatsonDistribution
 from pyrecest.distributions.hypersphere_subset.watson_distribution import (
     WatsonDistribution,
@@ -56,6 +56,47 @@ class TestGridFilterModelAdapters(unittest.TestCase):
                     reference_filter.filter_state.grid_values,
                     model_filter.filter_state.grid_values,
                 )
+            )
+        )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_update_nonlinear_accepts_scalar_likelihood(self):
+        filter_instance = self._initialized_filter()
+        expected_grid_values = array(filter_instance.filter_state.grid_values)
+
+        filter_instance.update_nonlinear(
+            lambda _measurement, _grid: 1.0, self.measurement
+        )
+
+        self.assertTrue(
+            bool(
+                allclose(filter_instance.filter_state.grid_values, expected_grid_values)
+            )
+        )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_update_nonlinear_rejects_wrong_likelihood_shape(self):
+        filter_instance = self._initialized_filter()
+        original_grid_values = array(filter_instance.filter_state.grid_values)
+        bad_likelihood_values = ones(
+            (filter_instance.filter_state.grid_values.shape[0], 1)
+        )
+
+        with self.assertRaisesRegex(ValueError, "one value per grid point"):
+            filter_instance.update_nonlinear(
+                lambda _measurement, _grid: bad_likelihood_values,
+                self.measurement,
+            )
+
+        self.assertTrue(
+            bool(
+                allclose(filter_instance.filter_state.grid_values, original_grid_values)
             )
         )
 

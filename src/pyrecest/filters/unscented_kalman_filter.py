@@ -14,10 +14,11 @@ from .abstract_filter import AbstractFilter
 from .manifold_mixins import EuclideanFilterMixin
 
 
-def _assert_supported_backend():
-    assert (
-        pyrecest.backend.__backend_name__ != "pytorch"
-    ), "Not supported on this backend"
+def _validate_supported_backend():
+    if pyrecest.backend.__backend_name__ == "pytorch":
+        raise NotImplementedError(
+            "UnscentedKalmanFilter is not supported on the PyTorch backend."
+        )
 
 
 class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
@@ -96,13 +97,13 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         :param fx: Function with signature fx(x, dt, **fx_args)
         :param sys_noise_cov: Process noise matrix Q
         """
-        _assert_supported_backend()
+        _validate_supported_backend()
         self._filter_state.Q = sys_noise_cov
         self._filter_state.predict(dt=dt, fx=fx, **fx_args)
         self._predicted = True
 
     def update_nonlinear(self, measurement, hx, cov_mat_meas, **hx_args):
-        _assert_supported_backend()
+        _validate_supported_backend()
         self._ensure_predicted()
         self._filter_state.update(z=measurement, hx=hx, R=cov_mat_meas, **hx_args)
         self._predicted = False
@@ -155,7 +156,7 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         )
 
     def predict_identity(self, sys_noise_cov, dt=None):
-        _assert_supported_backend()
+        _validate_supported_backend()
         self._filter_state.Q = sys_noise_cov
 
         def fx(x, _):
@@ -165,7 +166,7 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         self._predicted = True
 
     def predict_linear(self, system_matrix, sys_noise_cov, sys_input=None, dt=None):
-        _assert_supported_backend()
+        _validate_supported_backend()
         self._filter_state.Q = sys_noise_cov
 
         if sys_input is None:
@@ -197,7 +198,7 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         keyword aliases, and legacy two-argument positional calls are detected
         when the argument shapes make the old order unambiguous.
         """
-        _assert_supported_backend()
+        _validate_supported_backend()
 
         if meas is not None or meas_cov is not None:
             if measurement is not None or meas_noise is not None:
@@ -232,7 +233,7 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         self._predicted = False
 
     def update_linear(self, measurement, measurement_matrix, cov_mat_meas):
-        _assert_supported_backend()
+        _validate_supported_backend()
         self._ensure_predicted()
 
         def hx(x):

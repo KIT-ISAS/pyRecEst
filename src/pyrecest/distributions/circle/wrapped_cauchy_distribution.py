@@ -1,11 +1,13 @@
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
+    all,
     arctan2,
     array,
     atleast_1d,
     cos,
     cosh,
     exp,
+    isfinite,
     mod,
     pi,
     sin,
@@ -14,6 +16,24 @@ from pyrecest.backend import (
 )
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+
+
+def _validate_positive_scalar(value, name):
+    value = array(value)
+    if value.shape not in ((), (1,)):
+        raise ValueError(f"{name} must be a positive scalar.")
+    if not bool(all(isfinite(value))):
+        raise ValueError(f"{name} must be finite.")
+    if not bool(all(value > 0.0)):
+        raise ValueError(f"{name} must be positive.")
+    return value
+
+
+def _as_1d_input(xs):
+    xs = atleast_1d(array(xs))
+    if xs.ndim != 1:
+        raise ValueError("xs must be a one-dimensional array.")
+    return xs
 
 
 class WrappedCauchyDistribution(AbstractCircularDistribution):
@@ -28,12 +48,10 @@ class WrappedCauchyDistribution(AbstractCircularDistribution):
     def __init__(self, mu, gamma):
         AbstractCircularDistribution.__init__(self)
         self.mu = mod(mu, 2 * pi)
-        assert gamma > 0
-        self.gamma = gamma
+        self.gamma = _validate_positive_scalar(gamma, "gamma")
 
     def pdf(self, xs):
-        xs = atleast_1d(array(xs))
-        assert xs.ndim == 1
+        xs = _as_1d_input(xs)
         xs_centered = mod(xs - self.mu, 2 * pi)
         return 1 / (2 * pi) * sinh(self.gamma) / (cosh(self.gamma) - cos(xs_centered))
 
@@ -51,8 +69,7 @@ class WrappedCauchyDistribution(AbstractCircularDistribution):
         def coth(x):
             return 1 / tanh(x)
 
-        xs = atleast_1d(array(xs))
-        assert xs.ndim == 1
+        xs = _as_1d_input(xs)
 
         def primitive(angles):
             angles = array(angles)

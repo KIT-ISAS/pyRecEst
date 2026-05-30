@@ -84,6 +84,19 @@ class TestCartProdStackedDistribution(unittest.TestCase):
 
         self.assertTrue(allclose(pdf_value, expected))
 
+    def test_pdf_accepts_list_inputs(self):
+        dist = ConcreteCartProdStackedDistribution(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([0.0]), eye(1)),
+            ]
+        )
+        single = [1.0, 2.0, 3.0]
+        batched = [[1.0, 2.0, 3.0], [0.0, 0.0, 0.0]]
+
+        self.assertTrue(allclose(dist.pdf(single), dist.pdf(array(single))))
+        self.assertTrue(allclose(dist.pdf(batched), dist.pdf(array(batched))))
+
     def test_shift_uses_cumulative_component_dimensions(self):
         dist = ConcreteCartProdStackedDistribution(
             [

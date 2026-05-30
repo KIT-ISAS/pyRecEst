@@ -51,6 +51,22 @@ class WrappedLaplaceDistributionTest(unittest.TestCase):
             rtol=1e-6,
         )
 
+    def test_rejects_invalid_lambda(self):
+        for lambda_ in (0.0, -0.5, float("inf"), array([1.0, 2.0])):
+            with self.subTest(lambda_=lambda_):
+                with self.assertRaisesRegex(ValueError, "lambda_"):
+                    WrappedLaplaceDistribution(lambda_, self.kappa)
+
+    def test_rejects_invalid_kappa(self):
+        for kappa in (0.0, -0.5, float("inf"), array([1.0, 2.0])):
+            with self.subTest(kappa=kappa):
+                with self.assertRaisesRegex(ValueError, "kappa_"):
+                    WrappedLaplaceDistribution(self.lambda_, kappa)
+
+    def test_pdf_rejects_matrix_inputs(self):
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            self.wl.pdf(array([[0.0, 1.0]]))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",

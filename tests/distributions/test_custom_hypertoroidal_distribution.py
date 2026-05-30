@@ -3,7 +3,7 @@ import unittest
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, cos
 from pyrecest.distributions import (
     CustomHypertoroidalDistribution,
     CustomToroidalDistribution,
@@ -35,6 +35,28 @@ class CustomHypertoroidalDistributionTest(unittest.TestCase):
     def test_constructor_rejects_wrong_shift_shape(self):
         with self.assertRaisesRegex(ValueError, "shift_by"):
             CustomHypertoroidalDistribution(lambda xs: xs, 2, shift_by=[0.1])
+
+    def test_shift_accepts_scalar_for_one_dimension(self):
+        dist = CustomHypertoroidalDistribution(cos, 1)
+
+        shifted = dist.shift(0.1)
+
+        npt.assert_allclose(shifted.pdf(array([0.3])), dist.pdf(array([0.2])))
+
+    def test_shift_accepts_list_vector(self):
+        dist = CustomHypertoroidalDistribution(lambda xs: xs[:, 0] + xs[:, 1], 2)
+
+        shifted = dist.shift([0.1, 0.2])
+
+        npt.assert_allclose(
+            shifted.pdf(array([[0.4, 0.6]])), dist.pdf(array([[0.3, 0.4]]))
+        )
+
+    def test_shift_rejects_wrong_shape(self):
+        dist = CustomHypertoroidalDistribution(lambda xs: xs[:, 0], 2)
+
+        with self.assertRaisesRegex(ValueError, "shift_by"):
+            dist.shift([0.1])
 
     def test_to_custom_circular_preserves_scale_and_shift(self):
         dist = CustomHypertoroidalDistribution(

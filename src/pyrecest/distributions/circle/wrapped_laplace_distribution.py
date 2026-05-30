@@ -1,7 +1,18 @@
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import asarray, exp, mod, ndim, pi
+from pyrecest.backend import all, asarray, exp, isfinite, mod, ndim, pi
 
 from .abstract_circular_distribution import AbstractCircularDistribution
+
+
+def _validate_positive_scalar(value, name):
+    value = asarray(value)
+    if value.shape not in ((), (1,)):
+        raise ValueError(f"{name} must be a positive scalar.")
+    if not bool(all(isfinite(value))):
+        raise ValueError(f"{name} must be finite.")
+    if not bool(all(value > 0.0)):
+        raise ValueError(f"{name} must be positive.")
+    return value
 
 
 class WrappedLaplaceDistribution(AbstractCircularDistribution):
@@ -16,12 +27,8 @@ class WrappedLaplaceDistribution(AbstractCircularDistribution):
 
     def __init__(self, lambda_, kappa_):
         AbstractCircularDistribution.__init__(self)
-        lambda_ = asarray(lambda_)
-        kappa_ = asarray(kappa_)
-        assert lambda_.shape in ((1,), ())
-        assert kappa_.shape in ((1,), ())
-        assert lambda_ > 0.0
-        assert kappa_ > 0.0
+        lambda_ = _validate_positive_scalar(lambda_, "lambda_")
+        kappa_ = _validate_positive_scalar(kappa_, "kappa_")
         self.lambda_ = lambda_
         self.kappa = kappa_
 
@@ -34,7 +41,8 @@ class WrappedLaplaceDistribution(AbstractCircularDistribution):
 
     def pdf(self, xs):
         xs = asarray(xs)
-        assert ndim(xs) <= 1
+        if ndim(xs) > 1:
+            raise ValueError("xs must be a scalar or one-dimensional array.")
         xs = mod(xs, 2.0 * pi)
         p = (
             self.lambda_

@@ -54,6 +54,24 @@ class WrappedCauchyDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.pdf(0.5), dist.pdf(array([0.5])))
         npt.assert_allclose(dist.pdf(array(0.5)), dist.pdf(array([0.5])))
 
+    def test_rejects_invalid_gamma(self):
+        for gamma in (0.0, -0.5, float("inf"), array([0.5, 1.0])):
+            with self.subTest(gamma=gamma):
+                with self.assertRaisesRegex(ValueError, "gamma"):
+                    WrappedCauchyDistribution(self.mu, gamma)
+
+    def test_pdf_rejects_matrix_inputs(self):
+        dist = WrappedCauchyDistribution(self.mu, self.gamma)
+
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            dist.pdf(array([[0.1, 0.2]]))
+
+    def test_cdf_rejects_matrix_inputs(self):
+        dist = WrappedCauchyDistribution(self.mu, self.gamma)
+
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            dist.cdf(array([[0.1, 0.2]]))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",

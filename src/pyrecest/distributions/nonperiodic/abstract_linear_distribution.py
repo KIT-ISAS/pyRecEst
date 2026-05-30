@@ -20,7 +20,6 @@ from pyrecest.backend import (
     int64,
     linspace,
     meshgrid,
-    ndim,
     ones,
     random,
     reshape,
@@ -83,10 +82,14 @@ class AbstractLinearDistribution(AbstractManifoldSpecificDistribution):
         def neg_pdf(x):
             return -self.pdf(x)
 
-        assert ndim(starting_point) <= 1, "Starting point must be a 1D array"
-        starting_point = atleast_1d(
-            starting_point
-        )  # Avoid numpy warning "DeprecationWarning: Use of `minimize` with `x0.ndim != 1` is deprecated"
+        starting_point = atleast_1d(array(starting_point))
+        if starting_point.ndim != 1:
+            raise ValueError("Starting point must be a 1D array")
+        if starting_point.shape[0] != self.dim:
+            raise ValueError(
+                f"Starting point must have dimension {self.dim}, "
+                f"got {starting_point.shape[0]}"
+            )
 
         result = minimize(neg_pdf, starting_point, method="L-BFGS-B")
         return result.x
