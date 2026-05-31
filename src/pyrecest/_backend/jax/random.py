@@ -204,8 +204,9 @@ def _normal(state, loc=0.0, scale=1.0, size=None, *args, **kwargs):
     scale = _jnp.asarray(scale)
     if bool(_jnp.any(scale < 0)):
         raise ValueError("scale must be non-negative")
+    sample_shape = _bounded_sampler_shape(size, loc, scale)
     state, key = jax.random.split(state)
-    samples = jax.random.normal(key, _shape_from_size(size), *args, **kwargs)
+    samples = jax.random.normal(key, sample_shape, *args, **kwargs)
     return state, loc + scale * samples
 
 
