@@ -12,7 +12,7 @@ from __future__ import annotations
 import importlib
 from types import ModuleType
 
-SUPPORTED_BACKENDS: tuple[str, ...] = ("numpy", "pytorch", "jax")
+SUPPORTED_BACKENDS: tuple[str, ...] = ("numpy", "pytorch", "jax", "autograd")
 
 
 def get_backend(name: str) -> ModuleType:
