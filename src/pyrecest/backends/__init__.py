@@ -12,7 +12,7 @@ from __future__ import annotations
 import importlib
 from types import ModuleType
 
-SUPPORTED_BACKENDS: tuple[str, ...] = ("numpy", "pytorch", "jax")
+SUPPORTED_BACKENDS: tuple[str, ...] = ("numpy", "pytorch", "jax", "autograd")
 
 
 def get_backend(name: str) -> ModuleType:
@@ -21,13 +21,13 @@ def get_backend(name: str) -> ModuleType:
     Parameters
     ----------
     name:
-        One of ``"numpy"``, ``"pytorch"``, or ``"jax"``.
+        One of ``"numpy"``, ``"pytorch"``, ``"jax"``, or ``"autograd"``.
     """
     normalized = name.lower().strip()
     if normalized not in SUPPORTED_BACKENDS:
         supported = ", ".join(SUPPORTED_BACKENDS)
-        raise ValueError(f"Unknown backend '{name}'. Supported backends: {supported}.")
-    return importlib.import_module(f"pyrecest._backend.{normalized}")
+        raise ValueError("Unknown backend " + repr(name) + ". Supported backends: " + supported + ".")
+    return importlib.import_module("pyrecest._backend." + normalized)
 
 
 __all__ = ["SUPPORTED_BACKENDS", "get_backend"]
