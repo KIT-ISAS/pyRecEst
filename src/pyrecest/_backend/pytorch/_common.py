@@ -5,6 +5,8 @@ import torch as _torch
 def from_numpy(x):
     if _torch.is_tensor(x):
         return x
+    if isinstance(x, _np.ndarray) and any(stride < 0 for stride in x.strides):
+        x = x.copy()
     return _torch.from_numpy(x)
 
 
