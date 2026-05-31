@@ -14,12 +14,16 @@ def _transpose(array):
     return _np.transpose(array, axes=axes)
 
 
+def _adjoint(array):
+    return _np.conj(_transpose(array))
+
+
 def _is_symmetric(x, tol=atol):
     return (_np.abs(x - _transpose(x)) < tol).all()
 
 
 def _is_hermitian(x, tol=atol):
-    return (_np.abs(x - _np.conj(_transpose(x))) < tol).all()
+    return (_np.abs(x - _adjoint(x)) < tol).all()
 
 
 _diag_vec = _np.vectorize(_np.diag, signature="(n)->(n,n)")
@@ -48,12 +52,13 @@ def logm(x):
 
 def solve_sylvester(a, b, q, tol=atol):
     if a.shape == b.shape:
-        if _np.all(_np.isclose(a, b)) and _np.all(_np.abs(a - _transpose(a)) < tol):
+        if _np.all(_np.isclose(a, b)) and _is_hermitian(a, tol=tol):
             eigvals, eigvecs = _np.linalg.eigh(a)
             if _np.all(eigvals >= tol):
-                tilde_q = _transpose(eigvecs) @ q @ eigvecs
+                adjoint_eigvecs = _adjoint(eigvecs)
+                tilde_q = adjoint_eigvecs @ q @ eigvecs
                 tilde_x = tilde_q / (eigvals[..., :, None] + eigvals[..., None, :])
-                return eigvecs @ tilde_x @ _transpose(eigvecs)
+                return eigvecs @ tilde_x @ adjoint_eigvecs
 
     return _np.vectorize(
         _scipy.linalg.solve_sylvester, signature="(m,m),(n,n),(m,n)->(m,n)"
