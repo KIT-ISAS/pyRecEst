@@ -174,11 +174,13 @@ def solve_sylvester(a, b, q):
     a = a.to(dtype=common_dtype)
     b = b.to(dtype=common_dtype)
     q = q.to(dtype=common_dtype)
-    if (
-        a.shape == b.shape
+    is_real_shared_symmetric_factor = (
+        not is_complex(a)
+        and a.shape == b.shape
         and _torch.all(a == b)
         and _torch.all(_torch.abs(a - a.transpose(-2, -1)) < 1e-6)
-    ):
+    )
+    if is_real_shared_symmetric_factor:
         eigvals, eigvecs = eigh(a)
         if _torch.all(eigvals >= 1e-6):
             tilde_q = eigvecs.transpose(-2, -1) @ q @ eigvecs

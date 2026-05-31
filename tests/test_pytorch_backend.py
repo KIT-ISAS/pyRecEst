@@ -264,6 +264,21 @@ class TestPytorchBackendLinalg(unittest.TestCase):
         self.assertEqual(result.dtype, pytorch_backend.float64)
         self.assertTrue(pytorch_backend.allclose(result, expected))
 
+    def test_solve_sylvester_complex_symmetric_uses_general_solver(self):
+        a = pytorch_backend.array(
+            [[2.0 + 0.0j, 0.0 + 1.0j], [0.0 + 1.0j, 3.0 + 0.0j]],
+            dtype=pytorch_backend.complex128,
+        )
+        q = pytorch_backend.array(
+            [[1.0 + 2.0j, 0.5 - 0.25j], [-1.0 + 0.75j, 2.0 - 1.0j]],
+            dtype=pytorch_backend.complex128,
+        )
+
+        result = pytorch_backend.linalg.solve_sylvester(a, a, q)
+
+        residual = a @ result + result @ a
+        self.assertTrue(pytorch_backend.allclose(residual, q, atol=1e-10, rtol=1e-10))
+
     def test_sqrtm_complex_result_uses_matching_complex_precision(self):
         dtype_pairs = (
             (pytorch_backend.float32, pytorch_backend.complex64),
