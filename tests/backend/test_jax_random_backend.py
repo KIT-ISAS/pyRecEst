@@ -99,3 +99,19 @@ def test_normal_bool_location_is_not_interpreted_as_legacy_shape():
     random.seed(0)
 
     assert random.normal(True).shape == ()
+
+
+def test_normal_integer_tuple_location_with_array_scale_is_not_legacy_shape():
+    random.seed(0)
+
+    sample = random.normal((1, 2), scale=jnp.ones(2))
+
+    assert sample.shape == (2,)
+
+
+def test_normal_rejects_negative_scale():
+    with pytest.raises(ValueError, match="non-negative"):
+        random.normal(scale=-1.0)
+
+    with pytest.raises(ValueError, match="non-negative"):
+        random.normal(scale=jnp.array([1.0, -0.1]))
