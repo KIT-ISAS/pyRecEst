@@ -44,4 +44,5 @@ def test_pytorch_solve_sylvester_handles_complex_hermitian_general_path():
     x = pytorch_backend.linalg.solve_sylvester(a, a, q)
 
     residual = a @ x + x @ a - q
-    assert float(pytorch_backend.to_numpy(pytorch_backend.linalg.norm(residual))) < 1e-12
+    residual_norm = pytorch_backend.linalg.norm(residual)
+    assert float(pytorch_backend.to_numpy(residual_norm)) < 1e-12
