@@ -68,17 +68,35 @@ def _best_metric_index(
     return int(candidates[int(np.nanargmin(values[candidates]))])
 
 
+def _as_finite_float(value: Any, name: str) -> float:
+    """Return ``value`` as a finite scalar float."""
+
+    arr = np.asarray(value)
+    if arr.ndim != 0 or arr.dtype == np.bool_:
+        raise ValueError(f"{name} must be a finite scalar")
+    try:
+        result = float(arr.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite scalar") from exc
+    if not np.isfinite(result):
+        raise ValueError(f"{name} must be a finite scalar")
+    return result
+
+
 def make_offset_grid(min_s: float, max_s: float, step_s: float) -> np.ndarray:
     """Return an inclusive offset grid rounded to nanosecond precision."""
 
+    min_s = _as_finite_float(min_s, "min_s")
+    max_s = _as_finite_float(max_s, "max_s")
+    step_s = _as_finite_float(step_s, "step_s")
     if step_s <= 0.0:
         raise ValueError("step_s must be positive")
     if max_s < min_s:
         raise ValueError("max_s must be greater than or equal to min_s")
-    count = int(np.floor((float(max_s) - float(min_s)) / float(step_s))) + 1
-    offsets = float(min_s) + np.arange(count, dtype=float) * float(step_s)
-    if offsets.size == 0 or offsets[-1] < float(max_s) - 1.0e-12:
-        offsets = np.append(offsets, float(max_s))
+    count = int(np.floor((max_s - min_s) / step_s)) + 1
+    offsets = min_s + np.arange(count, dtype=float) * step_s
+    if offsets.size == 0 or offsets[-1] < max_s - 1.0e-12:
+        offsets = np.append(offsets, max_s)
     return np.round(offsets, decimals=9)
 
 
