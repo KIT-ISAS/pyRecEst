@@ -109,6 +109,15 @@ def test_normal_integer_tuple_location_with_array_scale_is_not_legacy_shape():
     assert sample.shape == (2,)
 
 
+def test_normal_accepts_numpy_broadcasted_parameters_without_explicit_size():
+    random.seed(0)
+
+    sample = random.normal(jnp.array([0.0, 0.0]), jnp.ones(2))
+
+    assert sample.shape == (2,)
+    assert sample[0] != sample[1]
+
+
 def test_normal_rejects_negative_scale():
     with pytest.raises(ValueError, match="non-negative"):
         random.normal(scale=-1.0)
