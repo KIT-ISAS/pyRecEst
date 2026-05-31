@@ -98,6 +98,11 @@ def _looks_like_shape(value):
     )
 
 
+def _is_default_normal_scale(value):
+    scale = _np.asarray(value)
+    return scale.ndim == 0 and bool(scale == 1.0)
+
+
 def _looks_like_shape_sequence(value):
     return isinstance(value, (list, tuple)) and all(
         _looks_like_integer_dimension(dim) for dim in value
@@ -195,6 +200,10 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
 
 
 def _normal(state, loc=0.0, scale=1.0, size=None, *args, **kwargs):
+    loc = _jnp.asarray(loc)
+    scale = _jnp.asarray(scale)
+    if bool(_jnp.any(scale < 0)):
+        raise ValueError("scale must be non-negative")
     state, key = jax.random.split(state)
     samples = jax.random.normal(key, _shape_from_size(size), *args, **kwargs)
     return state, loc + scale * samples
@@ -206,7 +215,7 @@ def normal(loc=0.0, scale=1.0, size=None, *args, **kwargs):
     The legacy JAX-backend call form ``normal(size)`` is still accepted when the
     first positional argument looks like a shape and ``size`` is omitted.
     """
-    if size is None and _looks_like_shape(loc) and scale == 1.0:
+    if size is None and _looks_like_shape(loc) and _is_default_normal_scale(scale):
         size = loc
         loc = 0.0
 
