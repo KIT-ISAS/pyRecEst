@@ -1,9 +1,5 @@
 import jax.numpy as _jnp
-from pyrecest._backend._dtype_utils import (
-    _pre_set_default_dtype,
-    get_default_cdtype,
-    get_default_dtype,
-)
+from pyrecest._backend._dtype_utils import _pre_set_default_dtype
 
 # Mapping of string dtype representations to JAX dtypes
 MAP_DTYPE = {
