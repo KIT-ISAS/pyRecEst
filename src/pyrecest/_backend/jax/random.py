@@ -1,8 +1,7 @@
 """
 Jax-based random backend.
-Based on random.py by emilemathieu on
-https://github.com/oxcsml/geomstats/blob/master/geomstats/_backend/jax/random.py
-who says he was in inspired by https://github.com/wesselb/lab/blob/master/lab/jax/random.py
+Based on random.py by emilemathieu
+for Riemannian Score-based SDE
 """
 
 import sys
@@ -280,19 +279,31 @@ def multivariate_normal(mean, cov, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def _multinomial(state, n, pvals):
+def _multinomial(state, n, pvals, size=None):
     state, key = jax.random.split(state)
+    n = _integer_dimension(n)
     pvals = _jnp.asarray(pvals, dtype=_jnp.float32)
-    pvals = pvals / pvals.sum()
-    samples = jax.random.categorical(key, _jnp.log(pvals), shape=(n,))
-    return state, _jnp.bincount(samples, minlength=len(pvals))
+    if pvals.ndim != 1:
+        raise ValueError("pvals must be a one-dimensional probability vector")
+    pvals_sum = pvals.sum()
+    if bool(_jnp.any(pvals < 0)) or not bool(_jnp.isfinite(pvals_sum)) or bool(
+        pvals_sum <= 0
+    ):
+        raise ValueError("pvals must be non-negative and sum to a positive finite value")
+    pvals = pvals / pvals_sum
+    sample_shape = _shape_from_size(size)
+    samples = jax.random.categorical(key, _jnp.log(pvals), shape=(*sample_shape, n))
+    counts = _jnp.sum(
+        jax.nn.one_hot(samples, pvals.shape[0], dtype=_jnp.int32), axis=-2
+    )
+    return state, counts
 
 
-def multinomial(n, pvals, **kwargs):
+def multinomial(n, pvals, size=None, **kwargs):
     """Sample from a multinomial distribution using the JAX RNG state contract."""
     state, has_state, kwargs = _get_state(**kwargs)
     if kwargs:
         unexpected = ", ".join(sorted(kwargs))
         raise TypeError(f"Unexpected keyword argument(s): {unexpected}")
-    state, res = _multinomial(state, n, pvals)
+    state, res = _multinomial(state, n, pvals, size=size)
     return set_state_return(has_state, state, res)
