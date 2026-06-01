@@ -193,6 +193,28 @@ class TestPytorchBackendRandom(unittest.TestCase):
         self.assertTrue(pytorch_backend.all(samples >= 0))
         self.assertTrue(pytorch_backend.all(samples < 5))
 
+    def test_uniform_accepts_broadcasted_array_bounds_without_explicit_size(self):
+        pytorch_backend.random.seed(0)
+
+        samples = pytorch_backend.random.uniform(
+            pytorch_backend.array([0.0, 10.0]), pytorch_backend.array([1.0, 11.0])
+        )
+
+        self.assertEqual(tuple(samples.shape), (2,))
+        self.assertTrue(
+            pytorch_backend.all(samples >= pytorch_backend.array([0.0, 10.0]))
+        )
+        self.assertTrue(
+            pytorch_backend.all(samples <= pytorch_backend.array([1.0, 11.0]))
+        )
+        self.assertNotEqual(float(samples[0] - 0.0), float(samples[1] - 10.0))
+
+    def test_uniform_rejects_incompatible_array_bounds_without_explicit_size(self):
+        with self.assertRaises(ValueError):
+            pytorch_backend.random.uniform(
+                pytorch_backend.zeros((2,)), pytorch_backend.ones((3,))
+            )
+
     def test_choice_accepts_weighted_sampling_without_replacement(self):
         values = pytorch_backend.array([0, 1, 2, 3])
         probabilities = pytorch_backend.array([0.1, 0.2, 0.3, 0.4])
