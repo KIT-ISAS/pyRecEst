@@ -196,6 +196,18 @@ def normal(loc=0.0, scale=1.0, size=None):
     return _torch.empty(size, dtype=dtype, device=loc.device).normal_() * scale + loc
 
 
+def _uniform_size(size, low, high):
+    if size is not None:
+        if not hasattr(size, "__iter__") or isinstance(size, (str, bytes)):
+            return (size,)
+        return tuple(int(dim) for dim in size)
+
+    try:
+        return tuple(_torch.broadcast_shapes(low.shape, high.shape))
+    except RuntimeError as exc:
+        raise ValueError("low and high could not be broadcast together") from exc
+
+
 def uniform(low=0.0, high=1.0, size=None, dtype=None):
     device = None
     if _torch.is_tensor(low):
@@ -205,12 +217,9 @@ def uniform(low=0.0, high=1.0, size=None, dtype=None):
 
     low = _torch.as_tensor(low, dtype=dtype, device=device)
     high = _torch.as_tensor(high, dtype=dtype, device=device)
+    size = _uniform_size(size, low, high)
     if bool(_torch.any(low > high)):
         raise ValueError("Upper bound must be greater than or equal to lower bound")
-    if size is None:
-        size = ()
-    elif not hasattr(size, "__iter__"):
-        size = (size,)
     return (high - low) * _torch.rand(size, dtype=dtype, device=device) + low
 
 
