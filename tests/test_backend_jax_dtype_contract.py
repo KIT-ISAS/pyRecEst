@@ -24,9 +24,9 @@ def test_jax_set_default_dtype_sets_and_returns_dtype():
 import pyrecest.backend as backend
 result = backend.set_default_dtype('float32')
 assert not callable(result)
-assert str(result).endswith('float32')
+assert result == backend.float32
 result = backend.set_default_dtype('float64')
 assert not callable(result)
-assert str(result).endswith('float64')
+assert result == backend.float64
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
