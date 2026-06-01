@@ -280,19 +280,38 @@ def multivariate_normal(mean, cov, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def _multinomial(state, n, pvals):
+def _multinomial(state, n, pvals, size=None):
+    if not _looks_like_integer_dimension(n):
+        raise TypeError("n must be a non-negative integer")
+    n = int(n)
+    if n < 0:
+        raise ValueError("n must be non-negative")
+
     state, key = jax.random.split(state)
+    sample_shape = _shape_from_size(size)
     pvals = _jnp.asarray(pvals, dtype=_jnp.float32)
-    pvals = pvals / pvals.sum()
-    samples = jax.random.categorical(key, _jnp.log(pvals), shape=(n,))
-    return state, _jnp.bincount(samples, minlength=len(pvals))
+    if pvals.ndim != 1:
+        raise ValueError("pvals must be 1-dimensional")
+    if pvals.shape[0] == 0:
+        raise ValueError("pvals must contain at least one probability")
+
+    p_sum = pvals.sum()
+    if bool(_jnp.any(pvals < 0)) or not bool(_jnp.isfinite(p_sum)) or bool(p_sum <= 0):
+        raise ValueError("probabilities do not sum to a positive value")
+    pvals = pvals / p_sum
+
+    samples = jax.random.categorical(key, _jnp.log(pvals), shape=(*sample_shape, n))
+    counts = _jnp.sum(
+        jax.nn.one_hot(samples, pvals.shape[0], dtype=_jnp.int32), axis=-2
+    )
+    return state, counts
 
 
-def multinomial(n, pvals, **kwargs):
-    """Sample from a multinomial distribution using the JAX RNG state contract."""
+def multinomial(n, pvals, size=None, **kwargs):
+    """Sample from a multinomial distribution using NumPy-compatible arguments."""
     state, has_state, kwargs = _get_state(**kwargs)
     if kwargs:
         unexpected = ", ".join(sorted(kwargs))
         raise TypeError(f"Unexpected keyword argument(s): {unexpected}")
-    state, res = _multinomial(state, n, pvals)
+    state, res = _multinomial(state, n, pvals, size=size)
     return set_state_return(has_state, state, res)
