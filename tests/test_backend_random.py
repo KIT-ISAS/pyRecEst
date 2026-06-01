@@ -94,6 +94,18 @@ class TestBackendRandom(unittest.TestCase):
         self.assertEqual(int(pyrecest.backend.sum(sample)), 12)
 
     @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "jax", "JAX-specific multinomial size support"
+    )
+    def test_jax_multinomial_accepts_size_argument(self):
+        samples = random.multinomial(5, [0.25, 0.75], size=(2, 3))
+
+        self.assertEqual(tuple(pyrecest.backend.shape(samples)), (2, 3, 2))
+        npt.assert_array_equal(
+            pyrecest.backend.to_numpy(pyrecest.backend.sum(samples, axis=-1)),
+            [[5, 5, 5], [5, 5, 5]],
+        )
+
+    @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "jax", "JAX-specific size validation"
     )
     def test_jax_random_rejects_invalid_size_arguments(self):
@@ -105,6 +117,7 @@ class TestBackendRandom(unittest.TestCase):
             lambda size: random.normal(size=size),
             lambda size: random.choice(5, size=size),
             lambda size: random.multivariate_normal([0.0], [[1.0]], size=size),
+            lambda size: random.multinomial(5, [0.5, 0.5], size=size),
         )
 
         for invalid_size in invalid_sizes:
@@ -112,6 +125,15 @@ class TestBackendRandom(unittest.TestCase):
                 with self.subTest(size=invalid_size, random_call=random_call):
                     with self.assertRaises((TypeError, ValueError)):
                         random_call(invalid_size)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "jax", "JAX-specific multinomial validation"
+    )
+    def test_jax_multinomial_rejects_invalid_trial_count(self):
+        for invalid_n in (True, 1.5, -1):
+            with self.subTest(n=invalid_n):
+                with self.assertRaises((TypeError, ValueError)):
+                    random.multinomial(invalid_n, [0.5, 0.5])
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "jax", "JAX-specific RNG state contract"
