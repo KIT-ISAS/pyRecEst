@@ -5,8 +5,23 @@ _modify_func_default_dtype = _common._modify_func_default_dtype
 _allow_complex_dtype = _common._allow_complex_dtype
 
 
+def _rand(*dims, size=None):
+    """Draw uniform samples while accepting the backend ``size=`` contract.
+
+    ``numpy.random.rand`` only accepts legacy positional dimensions, whereas the
+    PyRecEst random backend exposes ``rand(size=...)`` like the JAX and PyTorch
+    implementations.  Use ``numpy.random.random`` internally so keyword and
+    tuple sizes work without dropping support for NumPy's positional form.
+    """
+    if dims:
+        if size is not None:
+            raise TypeError("Specify either positional dimensions or size, not both.")
+        size = dims[0] if len(dims) == 1 else dims
+    return _np.random.random(size)
+
+
 rand = _modify_func_default_dtype(
-    copy=False, kw_only=True, target=_allow_complex_dtype(target=_np.random.rand)
+    copy=False, kw_only=True, target=_allow_complex_dtype(target=_rand)
 )
 
 
