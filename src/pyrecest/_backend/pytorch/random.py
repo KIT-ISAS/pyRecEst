@@ -1,5 +1,6 @@
 """Torch based random backend."""
 
+from math import prod as _prod
 from numbers import Integral as _Integral
 
 import torch as _torch
@@ -17,21 +18,42 @@ _COMPLEX_TO_FLOAT_DTYPE = {
 }
 
 
+def _size_type_error():
+    return TypeError("size must be None, an integer, or a sequence of integers")
+
+
+def _looks_like_integer_dimension(value):
+    return isinstance(value, _Integral) and not isinstance(value, bool)
+
+
+def _integer_dimension(value):
+    if not _looks_like_integer_dimension(value):
+        raise _size_type_error()
+    value = int(value)
+    if value < 0:
+        raise ValueError("size dimensions must be non-negative")
+    return value
+
+
+def _shape_from_size(size):
+    if size is None:
+        return ()
+    if _looks_like_integer_dimension(size):
+        return (_integer_dimension(size),)
+    if isinstance(size, (str, bytes)) or not hasattr(size, "__iter__"):
+        raise _size_type_error()
+    return tuple(_integer_dimension(dim) for dim in size)
+
+
 def _choice_size(size):
     if size is None:
         return None, 1
-    if not hasattr(size, "__iter__"):
-        size = (size,)
-    size = tuple(int(dim) for dim in size)
-    return size, int(_torch.prod(_torch.tensor(size)).item())
+    size = _shape_from_size(size)
+    return size, _prod(size) if size else 1
 
 
 def _randint_size(size):
-    if size is None:
-        return ()
-    if not hasattr(size, "__iter__") or isinstance(size, (str, bytes)):
-        return (size,)
-    return tuple(size)
+    return _shape_from_size(size)
 
 
 def randint(low, high=None, size=None, *args, **kwargs):
@@ -45,9 +67,7 @@ def randint(low, high=None, size=None, *args, **kwargs):
 def _normal_size(size):
     if size is None:
         return None
-    if not hasattr(size, "__iter__"):
-        return (size,)
-    return tuple(int(dim) for dim in size)
+    return _shape_from_size(size)
 
 
 def _normal_device(*values):
@@ -166,11 +186,7 @@ def seed(*args, **kwargs):
 
 
 def rand(size=None, dtype=None):
-    if size is None:
-        size = ()
-    elif not hasattr(size, "__iter__"):
-        size = (size,)
-    return _torch.rand(size, dtype=dtype)
+    return _torch.rand(_shape_from_size(size), dtype=dtype)
 
 
 def multinomial(n, pvals):
@@ -198,9 +214,7 @@ def normal(loc=0.0, scale=1.0, size=None):
 
 def _uniform_size(size, low, high):
     if size is not None:
-        if not hasattr(size, "__iter__") or isinstance(size, (str, bytes)):
-            return (size,)
-        return tuple(int(dim) for dim in size)
+        return _shape_from_size(size)
 
     try:
         return tuple(_torch.broadcast_shapes(low.shape, high.shape))
@@ -242,11 +256,7 @@ def _floating_distribution_dtype(*values):
 
 
 def _normal_sample_size(size):
-    if size is None:
-        return ()
-    if not hasattr(size, "__iter__"):
-        return (size,)
-    return tuple(size)
+    return _shape_from_size(size)
 
 
 @_modify_func_default_dtype(copy=False, kw_only=True)
