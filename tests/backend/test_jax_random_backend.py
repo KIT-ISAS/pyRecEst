@@ -68,6 +68,7 @@ def _size_aware_samplers():
         lambda size: random.randint(0, 3, size=size),
         lambda size: random.choice(values, size=size),
         lambda size: random.multivariate_normal(mean, cov, size=size),
+        lambda size: random.multinomial(3, [0.25, 0.75], size=size),
     )
 
 
@@ -124,3 +125,24 @@ def test_normal_rejects_negative_scale():
 
     with pytest.raises(ValueError, match="non-negative"):
         random.normal(scale=jnp.array([1.0, -0.1]))
+
+
+def test_multinomial_accepts_numpy_size_argument():
+    random.seed(0)
+
+    samples = random.multinomial(12, jnp.array([0.25, 0.75]), size=(2, 3))
+
+    assert samples.shape == (2, 3, 2)
+    assert jnp.all(jnp.sum(samples, axis=-1) == 12)
+
+
+def test_multinomial_explicit_state_with_size_does_not_mutate_global_state():
+    state = random.create_random_state(123)
+    original_global_state = random.get_state()
+
+    state_after, samples = random.multinomial(5, [0.25, 0.75], size=4, state=state)
+
+    assert samples.shape == (4, 2)
+    assert jnp.all(jnp.sum(samples, axis=-1) == 5)
+    assert jnp.array_equal(random.get_state(), original_global_state)
+    assert not jnp.array_equal(state, state_after)
