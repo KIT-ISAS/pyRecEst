@@ -27,6 +27,18 @@ def test_multivariate_normal_accepts_shape_keyword():
         random.multivariate_normal(mean, cov, size=(1,), shape=(2,))
 
 
+def test_rand_accepts_numpy_positional_dimensions():
+    random.seed(0)
+
+    assert random.rand(2, 3).shape == (2, 3)
+    assert random.rand(4).shape == (4,)
+
+
+def test_rand_rejects_ambiguous_positional_and_size_arguments():
+    with pytest.raises(TypeError, match="positional dimensions or size"):
+        random.rand(2, size=(3,))
+
+
 def test_uniform_accepts_numpy_broadcasted_bounds_without_explicit_size():
     random.seed(0)
 

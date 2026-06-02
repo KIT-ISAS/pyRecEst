@@ -80,6 +80,15 @@ def _shape_from_size(size):
     return tuple(_integer_dimension(dim) for dim in size)
 
 
+def _shape_from_rand_args(dims, size):
+    """Convert NumPy-style ``rand`` dimensions and ``size=`` to a shape."""
+    if dims:
+        if size is not None:
+            raise TypeError("Specify either positional dimensions or size, not both.")
+        size = dims[0] if len(dims) == 1 else dims
+    return _shape_from_size(size)
+
+
 def _broadcast_shape_from_values(*values):
     return _np.broadcast_shapes(*(tuple(value.shape) for value in values))
 
@@ -122,9 +131,9 @@ def _rand(state, size, *args, **kwargs):
     return state, jax.random.uniform(key, _shape_from_size(size), *args, **kwargs)
 
 
-def rand(size=None, *args, **kwargs):
+def rand(*dims, size=None, **kwargs):
     state, has_state, kwargs = _get_state(**kwargs)
-    state, res = _rand(state, size, *args, **kwargs)
+    state, res = _rand(state, _shape_from_rand_args(dims, size), **kwargs)
     return set_state_return(has_state, state, res)
 
 
