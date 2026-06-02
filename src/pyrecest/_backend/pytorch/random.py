@@ -189,11 +189,44 @@ def rand(size=None, dtype=None):
     return _torch.rand(_shape_from_size(size), dtype=dtype)
 
 
-def multinomial(n, pvals):
+def _multinomial_sample_count(sample_shape):
+    return _prod(sample_shape) if sample_shape else 1
+
+
+def multinomial(n, pvals, size=None):
+    if not _looks_like_integer_dimension(n):
+        raise TypeError("n must be a non-negative integer")
+    n = int(n)
+    if n < 0:
+        raise ValueError("n must be non-negative")
+
+    sample_shape = _shape_from_size(size)
     device = pvals.device if _torch.is_tensor(pvals) else None
     pvals = _torch.as_tensor(pvals, dtype=_torch.float32, device=device)
-    pvals = pvals / pvals.sum()
-    return _torch.multinomial(pvals, n, replacement=True).bincount(minlength=len(pvals))
+    if pvals.ndim != 1:
+        raise ValueError("pvals must be 1-dimensional")
+    if pvals.numel() == 0:
+        raise ValueError("pvals must contain at least one probability")
+
+    p_sum = pvals.sum()
+    if (
+        bool(_torch.any(pvals < 0))
+        or not bool(_torch.isfinite(p_sum))
+        or bool(p_sum <= 0)
+    ):
+        raise ValueError("probabilities do not sum to a positive value")
+    pvals = pvals / p_sum
+
+    output_shape = (*sample_shape, pvals.shape[0])
+    sample_count = _multinomial_sample_count(sample_shape)
+    if n == 0 or sample_count == 0:
+        return _torch.zeros(output_shape, dtype=_torch.long, device=pvals.device)
+
+    samples = _torch.multinomial(pvals.expand(sample_count, -1), n, replacement=True)
+    counts = _torch.nn.functional.one_hot(samples, num_classes=pvals.shape[0]).sum(
+        dim=-2
+    )
+    return counts.reshape(output_shape)
 
 
 @_allow_complex_dtype
