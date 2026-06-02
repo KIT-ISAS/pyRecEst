@@ -40,6 +40,18 @@ def test_size_arguments_reject_negative_dimensions(bad_size):
             sampler(bad_size)
 
 
+def test_rand_accepts_numpy_positional_dimensions():
+    random.seed(0)
+
+    assert random.rand(2, 3).shape == (2, 3)
+    assert random.rand(4).shape == (4,)
+
+
+def test_rand_rejects_ambiguous_positional_and_size_arguments():
+    with pytest.raises(TypeError, match="positional dimensions or size"):
+        random.rand(2, size=(3,))
+
+
 def test_scalar_and_empty_tuple_sizes_keep_scalar_shape():
     assert random.rand().shape == ()
     assert random.rand(size=()).shape == ()
