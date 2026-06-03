@@ -136,7 +136,11 @@ def sparse_second_order_grid_evidence(
         int(value) for value in np.asarray(initial_edge_counts, dtype=int).ravel()
     ]
     transition_rows: list[SparseTransitionRows] = []
-    row_cache = transition_row_cache if transition_row_cache is not None else SparseTransitionRowCache()
+    row_cache = (
+        transition_row_cache
+        if transition_row_cache is not None
+        else SparseTransitionRowCache()
+    )
     cache_hits = 0
     cache_misses = 0
     logp = float(np.log(first_scale) + offsets[0] + offsets[1])
@@ -276,6 +280,7 @@ def _advance_sparse_pair_alpha(
             if cache_key_builder is None
             else cache_key_builder(int(src_prev), int(src_curr), int(transition_index))
         )
+
         def build_row() -> tuple[np.ndarray, np.ndarray]:
             dst, weights = transition_row_builder(
                 int(src_prev), int(src_curr), int(transition_index)
