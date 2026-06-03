@@ -1219,6 +1219,8 @@ def outer(a, b):
 
 
 def matvec(A, b):
+    A = array(A)
+    b = array(b)
     A, b = convert_to_wider_dtype([A, b])
 
     if A.ndim == 2 and b.ndim == 1:
@@ -1234,6 +1236,8 @@ def matvec(A, b):
 
 
 def dot(a, b):
+    a = array(a)
+    b = array(b)
     a, b = convert_to_wider_dtype([a, b])
 
     if a.ndim == 1 and b.ndim == 1:
