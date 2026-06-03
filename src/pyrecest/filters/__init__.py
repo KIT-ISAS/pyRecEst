@@ -57,6 +57,8 @@ _FILTER_EXPORTS: Final[dict[str, str]] = {
     "mode_transition_matrix": ".discrete_state",
     "probabilities_to_log_probabilities": ".discrete_state",
     "scaled_emissions": ".discrete_state",
+    "SparseTransitionRowCache": ".sparse_transition_cache",
+    "cached_sparse_transition_rows": ".sparse_transition_cache",
     "sparse_gaussian_transition_matrix": ".discrete_state",
     "sticky_mode_transition_matrix": ".discrete_state",
     "uniform_log_probabilities": ".discrete_state",

@@ -16,6 +16,7 @@ from typing import Any
 import numpy as np
 
 from .discrete_state import probabilities_to_log_probabilities, scaled_emissions
+from .sparse_transition_cache import SparseTransitionRowCache
 
 SparseTransitionRows = list[tuple[np.ndarray, np.ndarray]]
 SparsePairInitializer = Callable[
@@ -68,6 +69,7 @@ def sparse_second_order_grid_evidence(
     transition_row_builder: SparsePairTransitionRowBuilder,
     *,
     transition_cache_key_builder: SparsePairTransitionCacheKeyBuilder | None = None,
+    transition_row_cache: SparseTransitionRowCache | None = None,
     return_smoothed: bool = True,
     return_pair_lattice: bool = False,
 ) -> SparseSecondOrderGridResult:
@@ -90,6 +92,9 @@ def sparse_second_order_grid_evidence(
     transition_cache_key_builder:
         Optional callable used to share transition rows across repeated pair
         states.  Return ``None`` to skip caching for a row.
+    transition_row_cache:
+        Optional reusable cache instance. When omitted, a fresh cache is used
+        for this call.
     return_smoothed:
         If true, compute fixed-interval smoothed single-state marginals.
     return_pair_lattice:
@@ -131,7 +136,7 @@ def sparse_second_order_grid_evidence(
         int(value) for value in np.asarray(initial_edge_counts, dtype=int).ravel()
     ]
     transition_rows: list[SparseTransitionRows] = []
-    row_cache: dict[Hashable, tuple[np.ndarray, np.ndarray]] = {}
+    row_cache = transition_row_cache if transition_row_cache is not None else SparseTransitionRowCache()
     cache_hits = 0
     cache_misses = 0
     logp = float(np.log(first_scale) + offsets[0] + offsets[1])
@@ -216,7 +221,7 @@ def sparse_second_order_grid_evidence(
         "max_pair_count": int(pair_counts.max()),
         "mean_outgoing_count": float(np.mean(edge_counts)) if edge_counts else 0.0,
         "max_outgoing_count": int(np.max(edge_counts)) if edge_counts else 0,
-        "transition_row_cache_entries": int(len(row_cache)),
+        "transition_row_cache_entries": int(row_cache.entries),
         "transition_row_cache_hits": int(cache_hits),
         "transition_row_cache_misses": int(cache_misses),
         "backward_transition_rows": backward_label,
@@ -245,7 +250,7 @@ def _advance_sparse_pair_alpha(
     transition_index: int,
     transition_row_builder: SparsePairTransitionRowBuilder,
     cache_key_builder: SparsePairTransitionCacheKeyBuilder | None,
-    row_cache: dict[Hashable, tuple[np.ndarray, np.ndarray]],
+    row_cache: SparseTransitionRowCache[Hashable],
     store_transition_rows: bool,
 ) -> tuple[
     np.ndarray, np.ndarray, np.ndarray, list[int], SparseTransitionRows, int, int
@@ -271,8 +276,7 @@ def _advance_sparse_pair_alpha(
             if cache_key_builder is None
             else cache_key_builder(int(src_prev), int(src_curr), int(transition_index))
         )
-        cached = None if cache_key is None else row_cache.get(cache_key)
-        if cached is None:
+        def build_row() -> tuple[np.ndarray, np.ndarray]:
             dst, weights = transition_row_builder(
                 int(src_prev), int(src_curr), int(transition_index)
             )
@@ -295,12 +299,17 @@ def _advance_sparse_pair_alpha(
                 raise ValueError("transition row must contain positive mass")
             if not np.isclose(total, 1.0):
                 weights = weights / total
-            if cache_key is not None:
-                row_cache[cache_key] = (dst, weights)
+            return dst, weights
+
+        if cache_key is None:
+            dst, weights = build_row()
             cache_misses += 1
         else:
-            dst, weights = cached
-            cache_hits += 1
+            previous_hits = row_cache.hits
+            previous_misses = row_cache.misses
+            dst, weights = row_cache.get_or_build(cache_key, build_row)
+            cache_hits += int(row_cache.hits - previous_hits)
+            cache_misses += int(row_cache.misses - previous_misses)
 
         if store_transition_rows:
             transition_rows.append((dst, weights))
