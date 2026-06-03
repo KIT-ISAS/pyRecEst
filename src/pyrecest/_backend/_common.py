@@ -1,10 +1,11 @@
 import math as _math
 
+import numpy as _np
 from numpy import pi
 
 
 def comb(n, k):
-    return _math.factorial(n) // _math.factorial(k) // _math.factorial(n - k)
+    return _math.comb(n, k)
 
 
 def size(x, axis=None):
@@ -16,9 +17,7 @@ def size(x, axis=None):
 
     shape = getattr(x, "shape", None)
     if shape is None:
-        if axis is not None:
-            raise ValueError("axis is only supported for array-like inputs")
-        return 1
+        shape = _np.shape(x)
 
     if axis is not None:
         return shape[axis]
