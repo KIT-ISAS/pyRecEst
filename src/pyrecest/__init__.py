@@ -23,6 +23,10 @@ from pyrecest.exceptions import (  # noqa: F401
     ShapeError,
     ValidationError,
 )
+from pyrecest.evidence import (  # noqa: F401
+    EvidenceComputationMode,
+    resolve_evidence_computation_mode,
+)
 from pyrecest.stability import (  # noqa: F401
     get_public_api_status,
     iter_public_api_status,
@@ -38,6 +42,7 @@ __all__ = [
     "BackendNotSupportedError",
     "BackendSupportError",
     "DimensionMismatchError",
+    "EvidenceComputationMode",
     "NumericalStabilityError",
     "OptionalDependencyError",
     "PyRecEstError",
@@ -55,4 +60,5 @@ __all__ = [
     "iter_public_api_status",
     "stability",
     "warn_if_backend_env_changed",
+    "resolve_evidence_computation_mode",
 ]

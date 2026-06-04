@@ -65,6 +65,15 @@ from .pairwise_covariance_features import (
     pairwise_covariance_shape_components,
     pairwise_mahalanobis_distances,
 )
+from .track_edit_whatif import (
+    TrackEdit,
+    TrackEditApplication,
+    TrackEditDelta,
+    apply_track_edit,
+    rank_track_edits_by_delta,
+    score_track_edit_delta,
+    score_track_edits,
+)
 from .track_evaluation import (
     complete_track_set,
     normalize_track_matrix,
@@ -138,6 +147,13 @@ __all__ = [
     "score_track_purity",
     "track_latencies",
     "track_purity",
+    "TrackEdit",
+    "TrackEditApplication",
+    "TrackEditDelta",
+    "apply_track_edit",
+    "rank_track_edits_by_delta",
+    "score_track_edit_delta",
+    "score_track_edits",
     "CalibratedPairwiseAssociationModel",
     "LogisticPairwiseAssociationModel",
     "NamedPairwiseFeatureSchema",
