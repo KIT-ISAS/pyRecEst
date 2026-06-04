@@ -38,6 +38,12 @@ from .mem_rbpf_ffbsi_smoother import (
     RBFFBSiSmoother,
 )
 from .rauch_tung_striebel_smoother import RauchTungStriebelSmoother, RTSSmoother
+from .record_smoother import (
+    RecordSmootherConfig,
+    fixed_lag_smooth_records,
+    rts_smooth_records,
+    smooth_records,
+)
 from .sliding_window_manifold_mean_smoother import SlidingWindowManifoldMeanSmoother
 from .so3_chordal_mean_smoother import SO3ChordalMeanSmoother, SO3CMSmoother
 from .so3_tangent_savitzky_golay_smoother import (
@@ -83,6 +89,10 @@ __all__ = [
     "RBFFBSiSmoother",
     "RauchTungStriebelSmoother",
     "RTSSmoother",
+    "RecordSmootherConfig",
+    "fixed_lag_smooth_records",
+    "rts_smooth_records",
+    "smooth_records",
     "SlidingWindowManifoldMeanSmoother",
     "SO3ChordalMeanSmoother",
     "SO3CMSmoother",
