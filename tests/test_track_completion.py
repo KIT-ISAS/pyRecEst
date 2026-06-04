@@ -82,9 +82,10 @@ class TestTrackCompletion(unittest.TestCase):
 
     def test_custom_candidate_sessions_allow_skip_completion(self) -> None:
         tracks = [[7, None, None]]
+        calls: list[tuple[int, int, str]] = []
 
         def candidate_sessions(session: int, observation: int, direction: str):
-            self.assertEqual((session, observation, direction), (0, 7, "suffix"))
+            calls.append((session, observation, direction))
             return [2]
 
         def provider(session: int, observation: int, target_session: int):
@@ -102,6 +103,8 @@ class TestTrackCompletion(unittest.TestCase):
         self.assertEqual(len(paths), 1)
         self.assertEqual(path_sessions(paths[0]), (0, 2))
         self.assertEqual(path_observations(paths[0]), (7, 9))
+        self.assertEqual(calls[0], (0, 7, "suffix"))
+        self.assertEqual(calls[1], (2, 9, "suffix"))
 
 
 if __name__ == "__main__":

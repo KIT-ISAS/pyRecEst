@@ -20,7 +20,6 @@ BACKEND_CAPABILITIES: Final = {
     "pytorch": {
         "unsupported": {
             "": ("searchsorted",),
-            "signal": ("fftconvolve",),
         },
         "bridged": {
             "linalg": {
