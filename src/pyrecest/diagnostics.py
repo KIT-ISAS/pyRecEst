@@ -7,9 +7,20 @@ dependency on pandas, plotting libraries, or backend-specific array types.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, fields
 from math import isfinite, log
-from typing import Any
+from typing import Any, Literal
+
+EvidenceSupportType = Literal[
+    "exact_full_grid",
+    "exact_sparse",
+    "truncated_lower_bound",
+    "approximate_particle",
+    "unknown",
+]
+
+_EVIDENCE_SUPPORT_TYPES = set(EvidenceSupportType.__args__)
 
 
 def _coerce_weight_values(weights: Any) -> list[float]:
@@ -165,6 +176,162 @@ class _DiagnosticsMappingMixin:
         return self.to_dict().items()
 
 
+@dataclass(frozen=True, slots=True)
+class EvidenceSupport:
+    """Comparability metadata for a reported log evidence or score.
+
+    Recursive-estimation benchmarks often mix exact marginal likelihoods,
+    evidence lower bounds, finite-support exact computations, particle
+    approximations, and heuristic scores.  This lightweight container records
+    how a reported evidence value was produced so downstream tables can avoid
+    normalizing or ranking incomparable rows as if they were exact evidences.
+
+    Parameters
+    ----------
+    support_type:
+        Coarse evidence-support class.  The values are deliberately generic and
+        not tied to a particular application domain.
+    comparable:
+        ``True`` only when the evidence is intended to be directly comparable to
+        exact evidence values for the same data and support definition.
+    lower_bound:
+        ``True`` when the reported value is a lower bound or truncation-based
+        audit value rather than the exact marginal likelihood.
+    diagnostics:
+        Optional algorithm-specific metadata such as support size, retained mass,
+        particle count, or the reason a value is not comparable.
+    """
+
+    support_type: EvidenceSupportType = "unknown"
+    comparable: bool = False
+    lower_bound: bool = False
+    diagnostics: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.support_type not in _EVIDENCE_SUPPORT_TYPES:
+            raise ValueError(
+                f"unsupported evidence support type {self.support_type!r}; "
+                f"expected one of {sorted(_EVIDENCE_SUPPORT_TYPES)}"
+            )
+        if not isinstance(self.diagnostics, dict):
+            object.__setattr__(self, "diagnostics", dict(self.diagnostics))
+        if self.support_type == "truncated_lower_bound" and not self.lower_bound:
+            object.__setattr__(self, "lower_bound", True)
+
+    @property
+    def headline_comparable(self) -> bool:
+        """Return whether the value is safe for headline exact-evidence rankings."""
+
+        return bool(self.comparable and not self.lower_bound)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a plain dictionary suitable for JSON or dataframe rows."""
+
+        return {
+            "support_type": self.support_type,
+            "comparable": bool(self.comparable),
+            "lower_bound": bool(self.lower_bound),
+            "headline_comparable": self.headline_comparable,
+            "diagnostics": dict(self.diagnostics),
+        }
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.to_dict()
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return self.to_dict()[key]
+        except KeyError as exc:
+            raise KeyError(key) from exc
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.to_dict().get(key, default)
+
+    def items(self) -> Any:
+        return self.to_dict().items()
+
+    @classmethod
+    def from_mapping(cls, mapping: Mapping[str, Any]) -> "EvidenceSupport":
+        """Build support metadata from a mapping, preserving unknown keys."""
+
+        known = {"support_type", "comparable", "lower_bound", "diagnostics"}
+        diagnostics = dict(mapping.get("diagnostics", {}))
+        diagnostics.update({key: value for key, value in mapping.items() if key not in known})
+        return cls(
+            support_type=mapping.get("support_type", "unknown"),
+            comparable=bool(mapping.get("comparable", False)),
+            lower_bound=bool(mapping.get("lower_bound", False)),
+            diagnostics=diagnostics,
+        )
+
+    @classmethod
+    def exact_full_grid(cls, diagnostics: Mapping[str, Any] | None = None) -> "EvidenceSupport":
+        """Evidence computed exactly over the complete declared finite grid."""
+
+        return cls(
+            support_type="exact_full_grid",
+            comparable=True,
+            lower_bound=False,
+            diagnostics={} if diagnostics is None else dict(diagnostics),
+        )
+
+    @classmethod
+    def exact_sparse(cls, diagnostics: Mapping[str, Any] | None = None) -> "EvidenceSupport":
+        """Evidence computed exactly over a declared sparse finite support."""
+
+        return cls(
+            support_type="exact_sparse",
+            comparable=True,
+            lower_bound=False,
+            diagnostics={} if diagnostics is None else dict(diagnostics),
+        )
+
+    @classmethod
+    def truncated_lower_bound(cls, diagnostics: Mapping[str, Any] | None = None) -> "EvidenceSupport":
+        """Evidence lower bound from a truncated/candidate-pruned support."""
+
+        return cls(
+            support_type="truncated_lower_bound",
+            comparable=False,
+            lower_bound=True,
+            diagnostics={} if diagnostics is None else dict(diagnostics),
+        )
+
+    @classmethod
+    def approximate_particle(cls, diagnostics: Mapping[str, Any] | None = None) -> "EvidenceSupport":
+        """Monte Carlo or particle approximation to evidence."""
+
+        return cls(
+            support_type="approximate_particle",
+            comparable=False,
+            lower_bound=False,
+            diagnostics={} if diagnostics is None else dict(diagnostics),
+        )
+
+    @classmethod
+    def unknown(cls, diagnostics: Mapping[str, Any] | None = None) -> "EvidenceSupport":
+        """Unknown or not-yet-declared evidence-support semantics."""
+
+        return cls(
+            support_type="unknown",
+            comparable=False,
+            lower_bound=False,
+            diagnostics={} if diagnostics is None else dict(diagnostics),
+        )
+
+
+def coerce_evidence_support(value: Any) -> EvidenceSupport:
+    """Coerce a mapping, string, or :class:`EvidenceSupport` into metadata."""
+
+    if isinstance(value, EvidenceSupport):
+        return value
+    if isinstance(value, str):
+        return EvidenceSupport(support_type=value)
+    if isinstance(value, Mapping):
+        return EvidenceSupport.from_mapping(value)
+    return EvidenceSupport.unknown({"raw_value": repr(value)})
+
+
 @dataclass(slots=True)
 class FilterDiagnostics(_DiagnosticsMappingMixin):
     """Diagnostics commonly emitted by single-target Bayesian filters."""
@@ -308,7 +475,10 @@ class AssociationDiagnostics(_DiagnosticsMappingMixin):
 
 __all__ = [
     "AssociationDiagnostics",
+    "EvidenceSupport",
+    "EvidenceSupportType",
     "FilterDiagnostics",
     "ParticleDiagnostics",
     "ParticleFilterResult",
+    "coerce_evidence_support",
 ]
