@@ -69,3 +69,21 @@ __all__ += [
     "sort_tracklets",
     "tracklet_paths_to_dicts",
 ]
+
+from .measurement_reliability import (
+    MeasurementReliabilityConfig,
+    MeasurementReliabilityResult,
+    ReliabilityWeightedMeasurement,
+    apply_measurement_reliability,
+    reliability_to_covariance_scale,
+    scale_covariance_by_reliability,
+)
+
+__all__ += [
+    "MeasurementReliabilityConfig",
+    "MeasurementReliabilityResult",
+    "ReliabilityWeightedMeasurement",
+    "apply_measurement_reliability",
+    "reliability_to_covariance_scale",
+    "scale_covariance_by_reliability",
+]
