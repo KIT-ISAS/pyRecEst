@@ -15,6 +15,20 @@ from .perform_predict_update_cycles import perform_predict_update_cycles
 from .plot_results import plot_results
 from .simulation_database import simulation_database
 from .summarize_filter_results import summarize_filter_results
+from .model_comparison import (
+    add_evidence_margin_columns,
+    classify_evidence_margin,
+    cluster_bootstrap_margin_summary,
+    evidence_margin_table,
+    grouped_claim_gate_summary,
+    grouped_paired_model_margin_summary,
+    infer_paired_model_group_cols,
+    leave_one_group_out_summary,
+    paired_model_margin_decisions,
+    paired_model_margin_summary,
+    paired_model_margin_threshold_sweep,
+    select_paired_model_margin_threshold,
+)
 
 __all__ = [
     "generate_groundtruth",
@@ -34,4 +48,16 @@ __all__ = [
     "evaluate_for_file",
     "evaluate_for_simulation_config",
     "evaluate_for_variables",
+    "add_evidence_margin_columns",
+    "classify_evidence_margin",
+    "cluster_bootstrap_margin_summary",
+    "evidence_margin_table",
+    "grouped_claim_gate_summary",
+    "grouped_paired_model_margin_summary",
+    "infer_paired_model_group_cols",
+    "leave_one_group_out_summary",
+    "paired_model_margin_decisions",
+    "paired_model_margin_summary",
+    "paired_model_margin_threshold_sweep",
+    "select_paired_model_margin_threshold",
 ]
