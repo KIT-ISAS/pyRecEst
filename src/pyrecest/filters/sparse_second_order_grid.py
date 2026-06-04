@@ -15,6 +15,7 @@ from typing import Any
 
 import numpy as np
 
+from pyrecest.evidence import EvidenceComputationMode, resolve_evidence_computation_mode
 from .discrete_state import probabilities_to_log_probabilities, scaled_emissions
 from .sparse_transition_cache import SparseTransitionRowCache
 
@@ -70,7 +71,8 @@ def sparse_second_order_grid_evidence(
     *,
     transition_cache_key_builder: SparsePairTransitionCacheKeyBuilder | None = None,
     transition_row_cache: SparseTransitionRowCache | None = None,
-    return_smoothed: bool = True,
+    return_smoothed: bool | None = True,
+    evidence_mode: EvidenceComputationMode | str | None = None,
     return_pair_lattice: bool = False,
 ) -> SparseSecondOrderGridResult:
     """Compute exact evidence for a sparse second-order grid HMM.
@@ -96,7 +98,11 @@ def sparse_second_order_grid_evidence(
         Optional reusable cache instance. When omitted, a fresh cache is used
         for this call.
     return_smoothed:
-        If true, compute fixed-interval smoothed single-state marginals.
+        Compatibility flag.  If true, compute fixed-interval smoothed
+        single-state marginals.  Ignored when ``evidence_mode`` is supplied.
+    evidence_mode:
+        Optional explicit computation mode; use ``"evidence_only"`` to skip
+        backward smoothing while keeping the same log evidence.
     return_pair_lattice:
         If true, retain the normalized pair filtering lattice in the result.
     """
@@ -107,6 +113,10 @@ def sparse_second_order_grid_evidence(
         raise ValueError(
             "sparse second-order evidence requires at least two time steps"
         )
+    mode = resolve_evidence_computation_mode(
+        evidence_mode, return_smoothed=return_smoothed
+    )
+    return_smoothed = mode.return_smoothed
 
     prev, curr, alpha, initial_edge_counts = initial_pair_initializer(scaled)
     prev = np.asarray(prev, dtype=int)
@@ -226,6 +236,9 @@ def sparse_second_order_grid_evidence(
         "transition_row_cache_misses": int(cache_misses),
         "backward_transition_rows": backward_label,
     }
+    diagnostics.update(mode.to_diagnostics())
+    diagnostics["smoothed_posterior_returned"] = int(smoothed_log is not None)
+    diagnostics["terminal_posterior_returned"] = 1
 
     return SparseSecondOrderGridResult(
         log_marginal_likelihood=float(logp),
