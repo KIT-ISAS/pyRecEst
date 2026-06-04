@@ -87,3 +87,33 @@ __all__ += [
     "reliability_to_covariance_scale",
     "scale_covariance_by_reliability",
 ]
+
+from .innovation_diagnostics import (
+    InnovationDiagnostic,
+    InnovationSummary,
+    chi_square_gate_threshold,
+    diagnostic_from_record,
+    diagnostics_from_records,
+    diagnostics_to_dicts,
+    innovation_diagnostic,
+    innovation_gate_threshold,
+    linear_innovation_diagnostic,
+    normalized_innovation_squared,
+    summaries_to_dicts,
+    summarize_innovation_diagnostics,
+)
+
+__all__ += [
+    "InnovationDiagnostic",
+    "InnovationSummary",
+    "chi_square_gate_threshold",
+    "diagnostic_from_record",
+    "diagnostics_from_records",
+    "diagnostics_to_dicts",
+    "innovation_diagnostic",
+    "innovation_gate_threshold",
+    "linear_innovation_diagnostic",
+    "normalized_innovation_squared",
+    "summaries_to_dicts",
+    "summarize_innovation_diagnostics",
+]
