@@ -307,16 +307,24 @@ class GaussianDistribution(AbstractLinearDistribution):
         distributions must expose mean and covariance information compatible
         with :class:`GaussianDistribution`.
         """
+        from .conversion import ConversionError
         from .gaussian_mixture import GaussianMixture
 
         if isinstance(distribution, GaussianMixture):
             gaussian = distribution.to_gaussian(check_validity=check_validity)
         else:
-            mean = distribution.mean
+            try:
+                mean = distribution.mean
+                covariance = distribution.covariance
+            except AttributeError as exc:
+                raise ConversionError(
+                    "GaussianDistribution.from_distribution requires the source "
+                    "distribution to expose mean() and covariance()."
+                ) from exc
+
             if callable(mean):
                 mean = mean()
 
-            covariance = distribution.covariance
             if callable(covariance):
                 covariance = covariance()
 
