@@ -186,6 +186,8 @@ Common starting points include:
 - `HistoryRecorder`;
 - `solve_multisession_assignment`;
 - `normalize_track_matrix`;
+- `enumerate_fragment_completion_paths` for generic suffix/prefix completion
+  candidates over track matrices;
 - `score_track_links`;
 - `track_error_ledger`;
 - `estimate_thin_plate_spline`.

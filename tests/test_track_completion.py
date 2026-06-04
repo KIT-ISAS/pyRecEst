@@ -1,0 +1,108 @@
+"""Tests for generic track-fragment completion utilities."""
+
+from __future__ import annotations
+
+import unittest
+
+from pyrecest.utils.track_completion import (
+    CompletionCandidate,
+    enumerate_fragment_completion_paths,
+    path_observations,
+    path_sessions,
+)
+
+
+class TestTrackCompletion(unittest.TestCase):
+    def test_enumerates_suffix_paths_with_scores_and_payloads(self) -> None:
+        tracks = [[0, 1, None, None], [4, None, None, None]]
+
+        def provider(session: int, observation: int, target_session: int):
+            if (session, observation, target_session) == (1, 1, 2):
+                return [CompletionCandidate(2, score=0.5, payload="first")]
+            if (session, observation, target_session) == (2, 2, 3):
+                return [CompletionCandidate(3, score=0.25, payload="second")]
+            return []
+
+        paths = enumerate_fragment_completion_paths(
+            tracks,
+            max_path_length=2,
+            direction="suffix",
+            candidate_provider=provider,
+        )
+
+        self.assertEqual(len(paths), 2)
+        self.assertEqual(path_sessions(paths[0]), (1, 2))
+        self.assertEqual(path_observations(paths[0]), (1, 2))
+        self.assertEqual(paths[0].score, 0.5)
+        self.assertEqual(paths[0].steps[0].payload, "first")
+        self.assertEqual(path_sessions(paths[1]), (1, 2, 3))
+        self.assertEqual(path_observations(paths[1]), (1, 2, 3))
+        self.assertEqual(paths[1].score, 0.75)
+
+    def test_rejects_duplicate_targets_by_default(self) -> None:
+        tracks = [[0, 1, None], [None, None, 8]]
+
+        def provider(session: int, observation: int, target_session: int):
+            del session, observation, target_session
+            return [8]
+
+        paths = enumerate_fragment_completion_paths(
+            tracks,
+            direction="suffix",
+            candidate_provider=provider,
+        )
+        self.assertEqual(paths, [])
+
+        allowed = enumerate_fragment_completion_paths(
+            tracks,
+            direction="suffix",
+            candidate_provider=provider,
+            allow_duplicate_target=True,
+        )
+        self.assertEqual(len(allowed), 1)
+
+    def test_enumerates_prefix_paths(self) -> None:
+        tracks = [[None, 5, 6]]
+
+        def provider(session: int, observation: int, target_session: int):
+            if (session, observation, target_session) == (1, 5, 0):
+                return [CompletionCandidate(4, score=1.5)]
+            return []
+
+        paths = enumerate_fragment_completion_paths(
+            tracks,
+            direction="prefix",
+            candidate_provider=provider,
+        )
+
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(path_sessions(paths[0]), (0, 1))
+        self.assertEqual(path_observations(paths[0]), (4, 5))
+        self.assertEqual(paths[0].score, 1.5)
+
+    def test_custom_candidate_sessions_allow_skip_completion(self) -> None:
+        tracks = [[7, None, None]]
+
+        def candidate_sessions(session: int, observation: int, direction: str):
+            self.assertEqual((session, observation, direction), (0, 7, "suffix"))
+            return [2]
+
+        def provider(session: int, observation: int, target_session: int):
+            if (session, observation, target_session) == (0, 7, 2):
+                return [9]
+            return []
+
+        paths = enumerate_fragment_completion_paths(
+            tracks,
+            direction="suffix",
+            candidate_provider=provider,
+            candidate_session_provider=candidate_sessions,
+        )
+
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(path_sessions(paths[0]), (0, 2))
+        self.assertEqual(path_observations(paths[0]), (7, 9))
+
+
+if __name__ == "__main__":
+    unittest.main()
