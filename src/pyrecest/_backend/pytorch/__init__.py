@@ -1,6 +1,7 @@
 """Pytorch based computation backend."""
 
 import builtins as _builtins
+from operator import index as _operator_index
 
 import numpy as _np
 import torch as _torch
@@ -524,27 +525,50 @@ def allclose(a, b, atol=atol, rtol=rtol):
 
 
 def apply_along_axis(func, axis, tensor):
-    # Create a list to hold the output results
+    """Apply ``func`` to 1-D slices along ``axis`` with NumPy semantics."""
+    if not _torch.is_tensor(tensor):
+        tensor = array(tensor)
+
+    (axis,) = _normalize_reduction_axes(axis, tensor.ndim)
+    iteration_shape = tuple(tensor.shape[:axis]) + tuple(tensor.shape[axis + 1 :])
+
+    # Move the target axis to the end so each row of ``flat_slices`` is one
+    # NumPy-style 1-D slice.  The remaining dimensions keep their original
+    # order and are restored below.
+    moved = _torch.movedim(tensor, axis, -1)
+    num_slices = int(_np.prod(iteration_shape, dtype=int)) if iteration_shape else 1
+    if num_slices == 0:
+        raise ValueError("Cannot apply_along_axis when any iteration dimensions are 0")
+    flat_slices = moved.reshape((num_slices, moved.shape[-1]))
+
     output_list = []
-
-    # Loop through the tensor along the specified axis
-    for index in range(tensor.shape[axis]):
-        # Create a slice object that selects `index` along the specified axis
-        slice_obj = [slice(None)] * tensor.ndim
-        slice_obj[axis] = index
-
-        # Extract the slice and apply the function
-        tensor_slice = tensor[slice_obj]
-        result_slice = func(tensor_slice)
-
-        # Convert the result to a tensor and append to the list
-        result_tensor = array(result_slice)
+    for tensor_slice in flat_slices:
+        result_tensor = array(func(tensor_slice))
+        if _torch.is_tensor(result_tensor) and result_tensor.device != tensor.device:
+            result_tensor = result_tensor.to(device=tensor.device)
         output_list.append(result_tensor)
 
-    # Stack the output tensors along the same axis
-    output_tensor = stack(output_list, dim=axis)
+    stacked = stack(output_list, dim=0)
+    result_shape = tuple(stacked.shape[1:])
+    output = stacked.reshape(iteration_shape + result_shape)
 
-    return output_tensor
+    if result_shape:
+        prefix_ndim = axis
+        suffix_ndim = tensor.ndim - axis - 1
+        result_ndim = len(result_shape)
+        permutation = (
+            tuple(range(prefix_ndim))
+            + tuple(
+                range(
+                    prefix_ndim + suffix_ndim,
+                    prefix_ndim + suffix_ndim + result_ndim,
+                )
+            )
+            + tuple(range(prefix_ndim, prefix_ndim + suffix_ndim))
+        )
+        output = output.permute(permutation)
+
+    return output
 
 
 def shape(val):
@@ -643,42 +667,55 @@ def trace(x):
 
 
 def linspace(start, stop, num=50, endpoint=True, dtype=None):
-    start_is_array = _torch.is_tensor(start)
-    stop_is_array = _torch.is_tensor(stop)
+    num = _operator_index(num)
+    if num < 0:
+        raise ValueError("num must be non-negative")
 
-    if not (start_is_array or stop_is_array) and endpoint:
-        return _torch.linspace(start=start, end=stop, steps=num, dtype=dtype)
+    device = next(
+        (value.device for value in (start, stop) if _torch.is_tensor(value)),
+        None,
+    )
 
-    if not start_is_array:
-        start = _torch.tensor(start)
-    if not stop_is_array:
-        stop = _torch.tensor(stop)
+    if not _torch.is_tensor(start):
+        start = _torch.as_tensor(start, dtype=dtype, device=device)
+    elif dtype is not None or (device is not None and start.device != device):
+        start = start.to(
+            dtype=dtype if dtype is not None else start.dtype, device=device
+        )
+
+    if not _torch.is_tensor(stop):
+        stop = _torch.as_tensor(stop, dtype=dtype, device=device)
+    elif dtype is not None or (device is not None and stop.device != device):
+        stop = stop.to(
+            dtype=dtype if dtype is not None else stop.dtype, device=device
+        )
+
+    result_dtype = dtype if dtype is not None else _torch.result_type(start, stop)
+    if dtype is None and not (result_dtype.is_floating_point or result_dtype.is_complex):
+        result_dtype = get_default_dtype()
+
+    start = start.to(dtype=result_dtype)
+    stop = stop.to(dtype=result_dtype)
     start, stop = _torch.broadcast_tensors(start, stop)
-    result_shape = (num, *start.shape)
-    start = _torch.flatten(start)
-    stop = _torch.flatten(stop)
 
-    if endpoint:
-        result = _torch.vstack(
-            [
-                _torch.linspace(start=start[i], end=stop[i], steps=num, dtype=dtype)
-                for i in range(start.shape[0])
-            ]
-        ).T
-    else:
-        result = _torch.vstack(
-            [
-                _torch.arange(
-                    start=start[i],
-                    end=stop[i],
-                    step=(stop[i] - start[i]) / num,
-                    dtype=dtype,
-                )
-                for i in range(start.shape[0])
-            ]
-        ).T
+    fraction_dtype = result_dtype
+    if result_dtype == complex64:
+        fraction_dtype = float32
+    elif result_dtype == complex128:
+        fraction_dtype = float64
+    elif not result_dtype.is_floating_point:
+        fraction_dtype = get_default_dtype()
 
-    return _torch.reshape(result, result_shape)
+    fractions = _torch.arange(num, dtype=fraction_dtype, device=start.device)
+    denominator = num - 1 if endpoint and num > 1 else num
+    if denominator > 0:
+        fractions = fractions / denominator
+    fractions = fractions.reshape((num,) + (1,) * start.ndim)
+
+    result = start + (stop - start) * fractions
+    if result.dtype != result_dtype:
+        result = result.to(dtype=result_dtype)
+    return result
 
 
 def equal(a, b, **kwargs):
