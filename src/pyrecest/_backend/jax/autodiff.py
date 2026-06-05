@@ -4,10 +4,10 @@ Based on autodiff.py by emilemathieu on
 https://github.com/oxcsml/geomstats/blob/master/geomstats/_backend/jax/autodiff.py
 """
 
+import jax
 import jax.numpy as anp
-from autograd.extend import defvjp, primitive  # TODO: replace
 from jax import grad, jacfwd
-from jax import value_and_grad as _value_and_grad
+from jax import value_and_grad as _jax_value_and_grad
 
 
 def detach(x):
@@ -51,6 +51,14 @@ def custom_gradient(*grad_funcs):
     """
 
     def decorator(func):
+        try:
+            from autograd.extend import defvjp, primitive  # TODO: replace
+        except ModuleNotFoundError as exc:
+            raise ModuleNotFoundError(
+                "custom_gradient in the JAX backend requires the optional "
+                "'autograd' dependency."
+            ) from exc
+
         wrapped_function = primitive(func)
 
         def wrapped_grad_func(i, ans, *args, **kwargs):
@@ -97,27 +105,28 @@ def jacobian(func):
     return jacfwd(func)
 
 
-def value_and_grad(func, to_numpy=False):
-    """Wrap autograd value_and_grad function."""
+def value_and_grad(func, argnums=0, point_ndims=1, to_numpy=False):
+    """Wrap JAX ``value_and_grad`` with the shared autodiff backend contract.
 
-    def aux_value_and_grad(*args):
-        n_args = len(args)
-        value = func(*args)
+    The autograd and PyTorch backends expose ``argnums`` and accept keyword
+    arguments when evaluating the wrapped function.  JAX already supports those
+    semantics natively; this wrapper forwards them and preserves the historical
+    ``to_numpy`` argument for callers that used the JAX-only signature.
+    """
+    if isinstance(argnums, bool):
+        to_numpy = bool(argnums)
+        argnums = 0
+    del point_ndims  # JAX value_and_grad is scalar-output only.
 
-        all_grads = []
-        for i in range(n_args):
+    def aux_value_and_grad(*args, **kwargs):
+        def func_with_kwargs(*inner_args):
+            return func(*inner_args, **kwargs)
 
-            def func_of_ith(*args):
-                reorg_args = args[1 : i + 1] + (args[0],) + args[i + 1 :]
-                return func(*reorg_args)
-
-            new_args = (args[i],) + args[:i] + args[i + 1 :]
-            _, grad_i = _value_and_grad(func_of_ith)(*new_args)
-            all_grads.append(grad_i)
-
-        if n_args == 1:
-            return value, all_grads[0]
-        return value, tuple(all_grads)
+        value, grads = _jax_value_and_grad(func_with_kwargs, argnums=argnums)(*args)
+        if to_numpy:
+            value = jax.device_get(value)
+            grads = jax.tree_util.tree_map(jax.device_get, grads)
+        return value, grads
 
     return aux_value_and_grad
 

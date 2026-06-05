@@ -22,6 +22,24 @@ def test_elementwise_grad_scalar_output_returns_regular_gradient():
     assert jnp.allclose(result, jnp.array([2.0, 4.0, -6.0]))
 
 
+def test_value_and_grad_respects_argnums_contract():
+    value_grad_fn = autodiff.value_and_grad(lambda x, y: jnp.sum(x * y), argnums=1)
+
+    value, grad = value_grad_fn(jnp.array([1.0, 2.0]), jnp.array([3.0, 4.0]))
+
+    assert jnp.allclose(value, 11.0)
+    assert jnp.allclose(grad, jnp.array([1.0, 2.0]))
+
+
+def test_value_and_grad_accepts_keyword_arguments():
+    value_grad_fn = autodiff.value_and_grad(lambda x, *, scale: jnp.sum(scale * x**2))
+
+    value, grad = value_grad_fn(jnp.array([1.0, -2.0]), scale=3.0)
+
+    assert jnp.allclose(value, 15.0)
+    assert jnp.allclose(grad, jnp.array([6.0, -12.0]))
+
+
 @pytest.mark.parametrize(
     "function_name",
     [
