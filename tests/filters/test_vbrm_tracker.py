@@ -50,6 +50,38 @@ class TestVBRMTracker(unittest.TestCase):
         )
         self.assertEqual(self.tracker.get_point_estimate().shape[0], 7)
 
+    def test_get_state_and_cov_returns_public_shape_covariance(self):
+        state, covariance = self.tracker.get_state_and_cov(
+            minimum_covariance_eigenvalue=1e-9
+        )
+
+        npt.assert_allclose(state, array([0.0, 0.0, 1.0, -1.0, 0.0, 4.0, 2.0]))
+        self.assertEqual(covariance.shape, (7, 7))
+        npt.assert_allclose(covariance[:4, :4], self.covariance)
+        self.assertAlmostEqual(float(covariance[4, 4]), self.orientation_variance)
+        self.assertGreater(float(covariance[5, 5]), 0.0)
+        self.assertGreater(float(covariance[6, 6]), 0.0)
+        self.assertTrue(all(linalg.eigvalsh(covariance) > 0.0))
+
+    def test_axis_covariance_falls_back_for_invalid_inverse_gamma_shapes(self):
+        tracker = VBRMTracker(
+            self.kinematic_state,
+            self.covariance,
+            self.shape_state,
+            self.orientation_variance,
+            inverse_gamma_shape=10.0,
+            measurement_noise_cov=self.measurement_noise_cov,
+            measurement_matrix=self.measurement_matrix,
+        )
+        tracker.alpha = array([5.0])
+
+        axis_covariance = tracker._public_axis_covariance_from_inverse_gamma(
+            array([4.0, 2.0]),
+            minimum_covariance_eigenvalue=1e-8,
+        )
+
+        npt.assert_allclose(axis_covariance, 1e-8 * eye(2))
+
     def test_extent_respects_orientation(self):
         tracker = VBRMTracker(
             self.kinematic_state,
