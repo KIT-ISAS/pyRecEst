@@ -12,14 +12,17 @@ from pyrecest.backend import (
     diagonal,
     exp,
     eye,
+    isfinite,
     linalg,
     linspace,
+    maximum,
     mean,
     pi,
     sin,
     sqrt,
     stack,
     trace,
+    where,
     zeros,
 )
 
@@ -122,6 +125,13 @@ class VBRMTracker(AbstractExtendedObjectTracker):
     @staticmethod
     def _symmetrize(matrix):
         return 0.5 * (matrix + matrix.T)
+
+    @classmethod
+    def _project_symmetric_covariance(cls, covariance, minimum_eigenvalue=0.0):
+        covariance = cls._symmetrize(covariance)
+        eigenvalues, eigenvectors = linalg.eigh(covariance)
+        eigenvalues = maximum(eigenvalues, float(minimum_eigenvalue))
+        return cls._symmetrize((eigenvectors * eigenvalues) @ eigenvectors.T)
 
     @staticmethod
     def _validate_positive_definite(matrix, name):
@@ -292,6 +302,47 @@ class VBRMTracker(AbstractExtendedObjectTracker):
     def get_point_estimate(self):
         return concatenate([self.kinematic_state, self.get_point_estimate_shape()])
 
+    def get_state(self, full_axes=True):
+        """Return kinematics and shape in a public EOT state convention."""
+
+        return concatenate(
+            [self.kinematic_state, self.get_point_estimate_shape(full_axes=full_axes)]
+        )
+
+    def get_state_and_cov(
+        self,
+        full_axes=True,
+        minimum_axis_length=1e-9,
+        minimum_extent_eigenvalue=1e-9,
+        minimum_covariance_eigenvalue=0.0,
+    ):
+        """Return public VBRM state and covariance.
+
+        VBRM stores axis uncertainty through inverse-gamma parameters over the
+        principal extent variances.  This method converts those moments to the
+        reported axis-length convention with a first-order delta method.
+        """
+
+        state = self.get_state(full_axes=full_axes)
+        orientation_covariance = array(
+            [[maximum(self.orientation_variance, minimum_covariance_eigenvalue)]]
+        )
+        axis_covariance = self._public_axis_covariance_from_inverse_gamma(
+            state[-2:],
+            full_axes=full_axes,
+            minimum_axis_length=minimum_axis_length,
+            minimum_extent_eigenvalue=minimum_extent_eigenvalue,
+            minimum_covariance_eigenvalue=minimum_covariance_eigenvalue,
+        )
+        covariance = linalg.block_diag(
+            self._project_symmetric_covariance(
+                self.covariance,
+                minimum_covariance_eigenvalue,
+            ),
+            linalg.block_diag(orientation_covariance, axis_covariance),
+        )
+        return state, self._project_symmetric_covariance(covariance, minimum_covariance_eigenvalue)
+
     def get_point_estimate_kinematics(self):
         return self.kinematic_state
 
@@ -311,6 +362,48 @@ class VBRMTracker(AbstractExtendedObjectTracker):
     def get_inverse_gamma_parameters(self):
         """Return copies of the internal inverse-gamma shape and scale vectors."""
         return copy(self.alpha), copy(self.beta)
+
+    def _public_axis_covariance_from_inverse_gamma(
+        self,
+        axes,
+        full_axes=True,
+        minimum_axis_length=1e-9,
+        minimum_extent_eigenvalue=1e-9,
+        minimum_covariance_eigenvalue=0.0,
+    ):
+        """Approximate reported-axis covariance from inverse-gamma moments."""
+
+        floor = max(float(minimum_covariance_eigenvalue), 1e-12)
+        axes = array(axes).reshape(2)
+        axis_floor = 2.0 * float(minimum_axis_length) if full_axes else float(minimum_axis_length)
+        axes = maximum(axes, axis_floor)
+        semi_axes = 0.5 * axes if full_axes else axes
+        semi_axes = maximum(semi_axes, float(minimum_axis_length))
+        mean_extent_variance = maximum(
+            semi_axes**2,
+            float(minimum_extent_eigenvalue),
+        )
+
+        try:
+            alpha = array(self.alpha).reshape(-1)[:2]
+            beta = array(self.beta).reshape(-1)[:2]
+        except (AttributeError, ValueError, TypeError):
+            return floor * eye(2)
+        if alpha.shape != (2,) or beta.shape != (2,):
+            return floor * eye(2)
+
+        alpha_minus_one = maximum(alpha - 1.0, 1e-12)
+        alpha_minus_two = maximum(alpha - 2.0, 1e-12)
+        beta = maximum(beta, 0.0)
+        extent_variance = beta * beta / (
+            alpha_minus_one * alpha_minus_one * alpha_minus_two
+        )
+        axis_variance = extent_variance / mean_extent_variance
+        if not full_axes:
+            axis_variance = 0.25 * axis_variance
+        axis_variance = where(isfinite(axis_variance), axis_variance, floor)
+        axis_variance = maximum(axis_variance, floor)
+        return diag(axis_variance)
 
     def predict_linear(
         self,

@@ -6,6 +6,7 @@ from typing import Any
 from pyrecest.backend import abs as backend_abs
 from pyrecest.backend import (
     array,
+    concatenate,
     cos,
     diag,
     eye,
@@ -301,6 +302,40 @@ class MEMQKFTracker(MEMEKFTracker):
             self.store_posterior_estimates()
         if self.log_posterior_extents:
             self.store_posterior_extents()
+
+    def get_state(self, full_axis_lengths=True):
+        """Return the public MEM-QKF state vector.
+
+        The internal shape state stores semi-axis lengths.  With
+        ``full_axis_lengths=True`` this method returns the common EOT public
+        convention ``[kinematics..., orientation, length, width]``.
+        """
+
+        shape_state = self.shape_state
+        if full_axis_lengths:
+            shape_state = array(
+                [shape_state[0], 2.0 * shape_state[1], 2.0 * shape_state[2]]
+            )
+        return concatenate([self.kinematic_state, shape_state])
+
+    def get_state_and_cov(self, full_axis_lengths=True):
+        """Return the public MEM-QKF state and matching covariance.
+
+        The returned covariance uses the same axis-length convention as the
+        returned state.  Therefore, when full axis lengths are requested, the
+        two semi-axis covariance entries are scaled by a factor of four and
+        their cross-covariance by the corresponding linear transform.
+        """
+
+        shape_transform = eye(3)
+        if full_axis_lengths:
+            shape_transform = diag(array([1.0, 2.0, 2.0]))
+        shape_covariance = shape_transform @ self.shape_covariance @ shape_transform.T
+        covariance = linalg.block_diag(
+            self._project_symmetric_covariance(self.covariance),
+            self._project_symmetric_covariance(shape_covariance),
+        )
+        return self.get_state(full_axis_lengths=full_axis_lengths), self._project_symmetric_covariance(covariance)
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def _update_single_measurement_qkf(

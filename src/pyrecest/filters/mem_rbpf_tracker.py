@@ -3,6 +3,7 @@ from __future__ import annotations
 from numbers import Integral
 
 from pyrecest import backend
+from pyrecest.backend import abs as backend_abs
 from pyrecest.backend import any as backend_any
 from pyrecest.backend import (
     arange,
@@ -640,6 +641,97 @@ class MEMRBPFTracker(AbstractExtendedObjectTracker):
         if full_axis_lengths:
             return concatenate([state[:-2], 2.0 * state[-2:]])
         return state
+
+    def get_state_and_cov(self, full_axis_lengths=True):
+        """Return the public RBPF state and its mixture covariance.
+
+        The state follows :meth:`get_state`.  The covariance combines the
+        shared kinematic covariance, per-particle conditional semi-axis
+        covariance, and weighted particle spread.  Orientation differences are
+        treated as axial because ``theta`` and ``theta + pi`` encode the same
+        ellipse.
+        """
+
+        state = self.get_state(full_axis_lengths=full_axis_lengths)
+        particle_states = self._particle_public_states(
+            full_axis_lengths=full_axis_lengths
+        )
+        n_particles = int(particle_states.shape[0])
+        weights = self._normalized_particle_weights(n_particles=n_particles)
+        axis_covariances = self._particle_public_axis_covariances(
+            n_particles,
+            full_axis_lengths=full_axis_lengths,
+        )
+
+        covariance = zeros((state.shape[0], state.shape[0]))
+        kinematic_covariance = self._regularize_public_covariance(self.covariance)
+        angle_index = self.state_dim
+        axis_start = self.state_dim + 1
+        for particle_index in range(n_particles):
+            delta = copy(particle_states[particle_index] - state)
+            delta[angle_index] = self._ellipse_angle_delta(
+                state[angle_index],
+                particle_states[particle_index, angle_index],
+            )
+
+            conditional_covariance = zeros((state.shape[0], state.shape[0]))
+            conditional_covariance[: self.state_dim, : self.state_dim] = (
+                kinematic_covariance
+            )
+            conditional_covariance[axis_start:, axis_start:] = axis_covariances[
+                particle_index
+            ]
+            covariance = covariance + weights[particle_index] * (
+                conditional_covariance + delta.reshape((-1, 1)) @ delta.reshape((1, -1))
+            )
+        return state, self._regularize_public_covariance(covariance)
+
+    def _particle_public_states(self, full_axis_lengths=True):
+        theta = self.theta.reshape((-1,))
+        n_particles = int(theta.shape[0])
+        kinematic_rows = ones((n_particles, self.state_dim)) * self.kinematic_state
+        axis = backend_abs(self.axis.reshape((n_particles, 2)))
+        if full_axis_lengths:
+            axis = 2.0 * axis
+        return concatenate([kinematic_rows, theta.reshape((n_particles, 1)), axis], axis=1)
+
+    def _particle_public_axis_covariances(self, n_particles, full_axis_lengths=True):
+        covariances = self.axis_covariances
+        if covariances.shape != (n_particles, 2, 2):
+            return zeros((n_particles, 2, 2))
+        scale = 4.0 if full_axis_lengths else 1.0
+        public_covariances = scale * covariances
+        return stack(
+            [
+                self._regularize_public_covariance(public_covariances[index])
+                for index in range(n_particles)
+            ]
+        )
+
+    def _normalized_particle_weights(self, n_particles=None):
+        weights = self.weights.reshape((-1,))
+        if n_particles is not None:
+            weights = weights[: int(n_particles)]
+        if int(weights.shape[0]) == 0:
+            raise ValueError("MEMRBPFTracker has no particles")
+        weights = where(isfinite(weights) & (weights > 0.0), weights, 0.0)
+        total = float(backend_sum(weights))
+        if total <= 0.0:
+            return full(weights.shape, 1.0 / int(weights.shape[0]))
+        return weights / total
+
+    @classmethod
+    def _regularize_public_covariance(cls, covariance):
+        covariance = cls._symmetrize(covariance)
+        if int(covariance.shape[0]) == 0:
+            return covariance
+        eigenvalues, eigenvectors = linalg.eigh(covariance)
+        eigenvalues = maximum(eigenvalues, 0.0)
+        return cls._symmetrize((eigenvectors * eigenvalues) @ eigenvectors.T)
+
+    @staticmethod
+    def _ellipse_angle_delta(reference, theta):
+        return 0.5 * arctan2(sin(2.0 * (theta - reference)), cos(2.0 * (theta - reference)))
 
     def get_state_array(self, with_weight=False, full_axis_lengths=False):
         kinematic_rows = ones((self.n_particles, self.state_dim)) * self.kinematic_state
