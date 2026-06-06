@@ -32,6 +32,16 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         self.dists = dists
         AbstractCartProdDistribution.__init__(self, sum(dist.dim for dist in dists))
 
+    @property
+    def input_dim(self) -> int:
+        return sum(dist.input_dim for dist in self.dists)
+
+    def get_manifold_size(self) -> float:
+        size = 1.0
+        for dist in self.dists:
+            size *= float(dist.get_manifold_size())
+        return size
+
     def sample(self, n: int):
         n = _validate_positive_sample_count(n)
         return hstack([dist.sample(n) for dist in self.dists])
@@ -68,10 +78,9 @@ class CartProdStackedDistribution(AbstractCartProdDistribution):
         new_dists = []
         curr_ind = 0
         for dist in self.dists:
-            new_dists.append(
-                dist.set_mode(new_mode[curr_ind : curr_ind + dist.dim])  # noqa: E203
-            )
-            curr_ind += dist.dim
+            next_ind = curr_ind + dist.input_dim
+            new_dists.append(dist.set_mode(new_mode[curr_ind:next_ind]))
+            curr_ind = next_ind
         return self.__class__(new_dists)
 
     def hybrid_mean(self):
