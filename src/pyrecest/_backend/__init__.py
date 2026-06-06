@@ -546,13 +546,13 @@ def _is_empty_assignment_index(indices):
     return ndim is not None and ndim > 0 and shape is not None and shape[0] == 0
 
 
-def _assignment_with_empty_indices_noop(assignment_func, copy_func):
+def _assignment_with_empty_indices_noop(assignment_func, copy_func, array_func):
     """Return an assignment wrapper that treats empty indices as a no-op."""
 
     @wraps(assignment_func)
     def assignment(x, values, indices, axis=0):
         if _is_empty_assignment_index(indices):
-            return copy_func(x)
+            return copy_func(array_func(x))
         return assignment_func(x, values, indices, axis=axis)
 
     return assignment
@@ -720,6 +720,7 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                         attribute = _assignment_with_empty_indices_noop(
                             attribute,
                             getattr(backend, "copy"),
+                            getattr(backend, "array"),
                         )
                     setattr(new_submodule, attribute_name, attribute)
 

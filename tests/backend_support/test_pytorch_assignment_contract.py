@@ -58,6 +58,15 @@ vector = backend.zeros(3)
 by_list = backend.assignment(vector, [4.0, 5.0], [0, 2])
 by_slice = backend.assignment(vector, [1.0, 2.0], slice(1, 3))
 by_slice_sum = backend.assignment_by_sum(vector, [1.0, 2.0], slice(1, 3))
+by_array_like = backend.assignment(
+    [[0.0, 0.0], [0.0, 0.0]],
+    [4.0, 5.0],
+    [(0, 1), (1, 0)],
+)
+by_array_like_sum = backend.assignment_by_sum(
+    [0.0, 0.0, 0.0], [2.0, 3.0], [0, 2]
+)
+empty_array_like = backend.assignment([1.0, 2.0, 3.0], 99.0, [])
 
 matrix = backend.zeros((3, 3))
 by_mask = backend.assignment(
@@ -75,6 +84,9 @@ logical = backend.logical_and(backend.asarray([1, 0]), backend.asarray([2, 3]))
 assert backend.to_numpy(by_list).tolist() == [4.0, 0.0, 5.0]
 assert backend.to_numpy(by_slice).tolist() == [0.0, 1.0, 2.0]
 assert backend.to_numpy(by_slice_sum).tolist() == [0.0, 1.0, 2.0]
+assert backend.to_numpy(by_array_like).tolist() == [[0.0, 4.0], [5.0, 0.0]]
+assert backend.to_numpy(by_array_like_sum).tolist() == [2.0, 0.0, 3.0]
+assert backend.to_numpy(empty_array_like).tolist() == [1.0, 2.0, 3.0]
 assert backend.to_numpy(by_mask).tolist() == [
     [1.0, 0.0, 0.0],
     [0.0, 2.0, 0.0],

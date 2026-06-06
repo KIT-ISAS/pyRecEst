@@ -36,6 +36,32 @@ class BackendContractTest(unittest.TestCase):
         npt.assert_allclose(to_numpy(assigned), [1.0, 2.0, 3.0])
         npt.assert_allclose(to_numpy(added), [1.0, 2.0, 3.0])
 
+    def test_assignment_accepts_array_like_inputs(self):
+        assigned = backend.assignment(
+            [[0.0, 0.0], [0.0, 0.0]],
+            [4.0, 5.0],
+            [(0, 1), (1, 0)],
+        )
+        added = backend.assignment_by_sum([0.0, 0.0, 0.0], [2.0, 3.0], [0, 2])
+
+        npt.assert_allclose(to_numpy(assigned), [[0.0, 4.0], [5.0, 0.0]])
+        npt.assert_allclose(to_numpy(added), [2.0, 0.0, 3.0])
+
+    def test_assignment_empty_indices_coerces_array_like_inputs(self):
+        assigned = backend.assignment([1.0, 2.0, 3.0], 99.0, [])
+        added = backend.assignment_by_sum([1.0, 2.0, 3.0], 99.0, [])
+
+        self.assertEqual(tuple(shape(assigned)), (3,))
+        self.assertEqual(tuple(shape(added)), (3,))
+        npt.assert_allclose(to_numpy(assigned), [1.0, 2.0, 3.0])
+        npt.assert_allclose(to_numpy(added), [1.0, 2.0, 3.0])
+
+    def test_mat_from_diag_triu_tril_accepts_array_like_inputs(self):
+        result = backend.mat_from_diag_triu_tril([1.0, 2.0], [3.0], [4.0])
+
+        self.assertEqual(tuple(shape(result)), (2, 2))
+        npt.assert_allclose(to_numpy(result), [[1.0, 3.0], [4.0, 2.0]])
+
     def test_atleast_helpers_accept_scalar_inputs(self):
         npt.assert_allclose(to_numpy(backend.atleast_1d(5.0)), np.array([5.0]))
         npt.assert_allclose(to_numpy(backend.atleast_2d(5.0)), np.array([[5.0]]))
