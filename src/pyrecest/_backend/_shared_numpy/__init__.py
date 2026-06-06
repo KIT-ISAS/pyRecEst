@@ -381,6 +381,9 @@ def matmul(*args, **kwargs):
 
 
 def outer(a, b):
+    a = a if is_array(a) else array(a)
+    b = b if is_array(b) else array(b)
+
     if a.ndim > 1 and b.ndim > 1:
         return _np.einsum("...i,...j->...ij", a, b)
 
@@ -392,6 +395,9 @@ def outer(a, b):
 
 
 def matvec(A, b):
+    A = A if is_array(A) else array(A)
+    b = b if is_array(b) else array(b)
+
     if b.ndim == 1:
         return _np.matmul(A, b)
     if A.ndim == 2:

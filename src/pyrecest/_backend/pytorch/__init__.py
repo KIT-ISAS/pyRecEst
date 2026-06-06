@@ -1366,7 +1366,13 @@ def is_array(x):
 
 
 def outer(a, b):
+    a = array(a)
+    b = array(b)
+    a, b = convert_to_wider_dtype([a, b])
+
     # TODO: improve for torch > 1.9 (dims=0 fails in 1.9)
+    if a.ndim == 0 or b.ndim == 0:
+        return _torch.multiply(a, b)
     return _torch.einsum("...i,...j->...ij", a, b)
 
 
