@@ -28,7 +28,12 @@ assert backend.diag(backend.array([1.0, 2.0])).shape == (2, 2)
 assert backend.random.get_state() is not None
 assert backend.fft.rfft(backend.array([1.0, 0.0])).shape == (2,)
 assert backend.dot([1.0, 2.0], [3.0, 4.0]) == 11.0
-assert backend.outer([1.0, 2.0], [3.0, 4.0]).tolist() == [[3.0, 4.0], [6.0, 8.0]]
-assert backend.outer(2.0, backend.array([1.0, 2.0])).tolist() == [2.0, 4.0]
+assert backend.to_numpy(backend.outer([1.0, 2.0], [3.0, 4.0])).tolist() == [[3.0, 4.0], [6.0, 8.0]]
+assert backend.to_numpy(backend.outer(2.0, backend.array([1.0, 2.0]))).tolist() == [2.0, 4.0]
+from autograd import grad
+
+def _outer_sum(x):
+    return backend.sum(backend.outer(x, backend.array([2.0, 3.0])))
+assert backend.to_numpy(grad(_outer_sum)(backend.array([1.0, 2.0]))).tolist() == [5.0, 5.0]
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
