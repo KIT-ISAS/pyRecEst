@@ -137,3 +137,31 @@ __all__ += [
     "hypothesis_to_dict",
     "select_residual_hypothesis",
 ]
+
+from .ellipse_geometry import (
+    canonicalize_ellipse_axes,
+    canonicalize_ellipse_shape,
+    ellipse_angle_delta,
+    ellipse_extent_matrix,
+    ellipse_shape_canonicalization_transform,
+    extent_matrix_from_shape,
+    project_symmetric_covariance,
+    rotation_matrix_2d,
+    shape_from_extent_matrix,
+    symmetrize,
+    wrap_ellipse_angle_to_reference,
+)
+
+__all__ += [
+    "canonicalize_ellipse_axes",
+    "canonicalize_ellipse_shape",
+    "ellipse_angle_delta",
+    "ellipse_extent_matrix",
+    "ellipse_shape_canonicalization_transform",
+    "extent_matrix_from_shape",
+    "project_symmetric_covariance",
+    "rotation_matrix_2d",
+    "shape_from_extent_matrix",
+    "symmetrize",
+    "wrap_ellipse_angle_to_reference",
+]
