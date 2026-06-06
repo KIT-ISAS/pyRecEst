@@ -117,3 +117,23 @@ __all__ += [
     "summaries_to_dicts",
     "summarize_innovation_diagnostics",
 ]
+
+from .residual_hypothesis_mht import (
+    ResidualEditCandidate,
+    ResidualHypothesis,
+    ResidualMHTConfig,
+    enumerate_residual_hypotheses,
+    hypotheses_to_dicts,
+    hypothesis_to_dict,
+    select_residual_hypothesis,
+)
+
+__all__ += [
+    "ResidualEditCandidate",
+    "ResidualHypothesis",
+    "ResidualMHTConfig",
+    "enumerate_residual_hypotheses",
+    "hypotheses_to_dicts",
+    "hypothesis_to_dict",
+    "select_residual_hypothesis",
+]
