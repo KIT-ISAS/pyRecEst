@@ -10,6 +10,7 @@ import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, diag, eye
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.filters.kalman_filter import KalmanFilter
 from pyrecest.filters.unscented_kalman_filter import UnscentedKalmanFilter
 from pyrecest.models import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
 
@@ -182,6 +183,43 @@ class UnscentedKalmanFilterTest(unittest.TestCase):
             diag(array([1.0, 2.0])), diag(array([2.0, 1.0])), array([2.0, -2.0])
         )
         self.assertTrue(allclose(kf.get_point_estimate(), array([2.0, 2.0])))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_linear_predict_update_with_process_noise_matches_kalman_filter(self):
+        initial_state = GaussianDistribution(
+            array([0.5, -0.25]),
+            array([[1.2, 0.3], [0.3, 0.8]]),
+        )
+        system_matrix = array([[1.0, 0.2], [-0.1, 0.9]])
+        sys_noise_cov = array([[0.4, 0.05], [0.05, 0.2]])
+        sys_input = array([0.1, -0.2])
+        measurement_matrix = array([[1.0, -0.3]])
+        meas_noise = array([[0.7]])
+        measurement = array([1.1])
+
+        linear = KalmanFilter(initial_state)
+        unscented = UnscentedKalmanFilter(initial_state, dim_z=1)
+
+        linear.predict_linear(system_matrix, sys_noise_cov, sys_input)
+        unscented.predict_linear(system_matrix, sys_noise_cov, sys_input)
+        linear.update_linear(measurement, measurement_matrix, meas_noise)
+        unscented.update_linear(measurement, measurement_matrix, meas_noise)
+
+        npt.assert_allclose(
+            unscented.get_point_estimate(),
+            linear.get_point_estimate(),
+            rtol=1e-10,
+            atol=1e-10,
+        )
+        npt.assert_allclose(
+            unscented.filter_state.covariance(),
+            linear.filter_state.covariance(),
+            rtol=1e-10,
+            atol=1e-10,
+        )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),

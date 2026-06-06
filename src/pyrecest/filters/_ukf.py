@@ -105,7 +105,11 @@ class UnscentedKalmanFilter:
 
         self.x = x_pred
         self.P = P_pred
-        self._sigmas_f = sigmas_f  # store for update()
+        # ``sigmas_f`` represents only the deterministic transition.  Process
+        # noise is added analytically above, so regenerate the cached sigma
+        # points from the complete predicted covariance before the measurement
+        # update; otherwise additive process noise is ignored in Pz and Pxz.
+        self._sigmas_f = points.sigma_points(self.x, self.P)
 
     def _innovation_matrices(  # pylint: disable=too-many-positional-arguments
         self, sigmas_f, sigmas_h, z_pred, R, Wc
