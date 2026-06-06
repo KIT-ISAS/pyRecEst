@@ -235,6 +235,9 @@ def copy(x):
 
 
 def outer(a, b):
+    a = a if is_array(a) else array(a)
+    b = b if is_array(b) else array(b)
+
     if a.ndim > 1 and b.ndim > 1:
         return _np.einsum("...i,...j->...ij", a, b)
 

@@ -489,6 +489,8 @@ def dot(a, b):
     a = _jnp.asarray(a)
     b = _jnp.asarray(b)
 
+    if a.ndim == 0 or b.ndim == 0:
+        return _jnp.multiply(a, b)
     if b.ndim == 1:
         return _jnp.einsum("...i,i->...", a, b)
     if a.ndim == 1:
