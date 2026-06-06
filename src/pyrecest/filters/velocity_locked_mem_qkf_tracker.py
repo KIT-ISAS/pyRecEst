@@ -155,6 +155,10 @@ class VelocityLockedMEMQKFTracker(MEMQKFTracker):
         multiplicative_noise_cov=None,
     ):
         """Update and use heading-locked orientation for moving targets."""
+        measurements = self._normalize_measurements(measurements)
+        if measurements.shape[1] == 0:
+            return
+
         self._lock_orientation_to_velocity_if_moving()
         super().update(
             measurements,
