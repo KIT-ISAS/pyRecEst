@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 from pyrecest.backend import allclose, array, eye
-from pyrecest.distributions import GaussianDistribution
+from pyrecest.distributions import GaussianDistribution, VonMisesFisherDistribution
 from pyrecest.distributions.cart_prod.cart_prod_stacked_distribution import (
     CartProdStackedDistribution,
 )
@@ -18,6 +18,18 @@ class ConcreteCartProdStackedDistribution(CartProdStackedDistribution):
 
 
 class TestCartProdStackedDistribution(unittest.TestCase):
+    def test_base_class_is_instantiable_and_reports_geometry(self):
+        dist = CartProdStackedDistribution(
+            [
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                GaussianDistribution(array([0.0, 0.0, 0.0]), eye(3)),
+            ]
+        )
+
+        self.assertEqual(dist.dim, 5)
+        self.assertEqual(dist.input_dim, 5)
+        self.assertEqual(dist.get_manifold_size(), float("inf"))
+
     def test_sample_returns_concatenated_component_samples(self):
         dist = ConcreteCartProdStackedDistribution(
             [
@@ -96,6 +108,19 @@ class TestCartProdStackedDistribution(unittest.TestCase):
 
         self.assertTrue(allclose(dist.pdf(single), dist.pdf(array(single))))
         self.assertTrue(allclose(dist.pdf(batched), dist.pdf(array(batched))))
+
+    def test_set_mode_uses_component_input_dimensions(self):
+        dist = CartProdStackedDistribution(
+            [
+                GaussianDistribution(array([1.0]), eye(1)),
+                VonMisesFisherDistribution(array([0.0, 0.0, 1.0]), 2.0),
+            ]
+        )
+
+        shifted = dist.set_mode(array([2.0, 1.0, 0.0, 0.0]))
+
+        self.assertTrue(allclose(shifted.dists[0].mu, array([2.0])))
+        self.assertTrue(allclose(shifted.dists[1].mu, array([1.0, 0.0, 0.0])))
 
     def test_shift_uses_cumulative_component_dimensions(self):
         dist = ConcreteCartProdStackedDistribution(

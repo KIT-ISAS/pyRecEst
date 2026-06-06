@@ -130,12 +130,12 @@ def assignment(x, values, indices, axis=0):
     If a single value is provided, it is assigned at all the indices.
     If a list is given, it must have the same length as indices.
     """
-    x_new = copy(x)
+    x_new = copy(array(x))
 
     if _is_empty_index_sequence(indices):
         return x_new
 
-    use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
+    use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x_new)
     if _is_boolean(indices):
         x_new[indices] = values
         return x_new
@@ -183,12 +183,12 @@ def assignment_by_sum(x, values, indices, axis=0):
     If a single value is provided, it is assigned at all the indices.
     If a list is given, it must have the same length as indices.
     """
-    x_new = copy(x)
+    x_new = copy(array(x))
 
     if _is_empty_index_sequence(indices):
         return x_new
 
-    use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x)
+    use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x_new)
     if _is_boolean(indices):
         x_new[indices] += values
         return x_new
@@ -334,6 +334,9 @@ def mat_from_diag_triu_tril(diag, tri_upp, tri_low):
     -------
     mat : array_like, shape=[..., n, n]
     """
+    diag = array(diag)
+    tri_upp = array(tri_upp)
+    tri_low = array(tri_low)
     diag, tri_upp, tri_low = convert_to_wider_dtype([diag, tri_upp, tri_low])
 
     n = diag.shape[-1]
