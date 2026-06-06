@@ -439,6 +439,15 @@ def test_batched_matvec_pairs_leading_dimensions():
     assert _to_python(result) == [[1.0, 2.0], [6.0, 12.0]]
 
 
+def test_matvec_accepts_array_like_inputs():
+    result = backend.matvec(
+        [[1.0, 2.0], [3.0, 4.0]],
+        [5.0, 6.0],
+    )
+
+    assert _to_python(result) == [17.0, 39.0]
+
+
 def test_batched_dot_uses_last_axis_inner_product():
     first = array([[1.0, 2.0], [3.0, 4.0]])
     second = array([[5.0, 6.0], [7.0, 8.0]])
@@ -447,6 +456,17 @@ def test_batched_dot_uses_last_axis_inner_product():
 
     assert result.shape == (2,)
     assert _to_python(result) == [17.0, 53.0]
+
+
+def test_dot_accepts_scalar_operands():
+    assert _to_python(backend.dot(2.0, 3.0)) == 6.0
+    assert _to_python(backend.dot(2.0, array([1.0, 2.0]))) == [2.0, 4.0]
+    assert _to_python(backend.dot(array([1.0, 2.0]), 3.0)) == [3.0, 6.0]
+    assert _to_python(backend.dot(array(2.0), array(3.0))) == 6.0
+
+
+def test_dot_accepts_array_like_inputs():
+    assert _to_python(backend.dot([1.0, 2.0], [3.0, 4.0])) == 11.0
 
 
 def test_batched_dot_accepts_high_rank_right_operand():
@@ -475,6 +495,17 @@ def test_batched_outer_pairs_leading_dimensions():
         [[5.0, 6.0], [10.0, 12.0]],
         [[21.0, 24.0], [28.0, 32.0]],
     ]
+
+
+def test_outer_accepts_array_like_inputs():
+    result = backend.outer([1.0, 2.0], [3.0, 4.0])
+
+    assert _to_python(result) == [[3.0, 4.0], [6.0, 8.0]]
+
+
+def test_outer_accepts_scalar_operands():
+    assert _to_python(backend.outer(2.0, array([1.0, 2.0]))) == [2.0, 4.0]
+    assert _to_python(backend.outer(array([1.0, 2.0]), 3.0)) == [3.0, 6.0]
 
 
 def test_outer_accepts_high_rank_right_operand():
