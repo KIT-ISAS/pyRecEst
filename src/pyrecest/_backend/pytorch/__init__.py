@@ -54,7 +54,6 @@ from torch import (  # The ones below are for pyrecest; For Riemannian score-bas
     mean,
     meshgrid,
     moveaxis,
-    nonzero,
     ones,
     ones_like,
     polygamma,
@@ -318,13 +317,16 @@ def isscalar(x):
     return _np.isscalar(x)
 
 
+def nonzero(x):
+    """Return index arrays for non-zero elements using the NumPy contract."""
+    if not _torch.is_tensor(x):
+        x = _torch.as_tensor(x)
+    return _torch.nonzero(x, as_tuple=True)
+
+
 def matmul(x, y, out=None):
     x = array(x)
     y = array(y)
-    for array_ in [x, y]:
-        if array_.ndim == 1:
-            raise ValueError("ndims must be >=2")
-
     x, y = convert_to_wider_dtype([x, y])
     return _torch.matmul(x, y, out=out)
 
@@ -333,7 +335,7 @@ def to_numpy(x):
     """Convert a tensor to a NumPy array without preserving autograd state."""
     if not _torch.is_tensor(x):
         return _np.asarray(x)
-    return x.detach().cpu().numpy()
+    return x.detach().resolve_conj().resolve_neg().cpu().numpy()
 
 
 def one_hot(labels, num_classes):
@@ -742,13 +744,15 @@ def triu(mat, k=0):
 def tril_indices(n, k=0, m=None):
     if m is None:
         m = n
-    return _torch.tril_indices(row=n, col=m, offset=k)
+    indices = _torch.tril_indices(row=n, col=m, offset=k)
+    return indices[0], indices[1]
 
 
 def triu_indices(n, k=0, m=None):
     if m is None:
         m = n
-    return _torch.triu_indices(row=n, col=m, offset=k)
+    indices = _torch.triu_indices(row=n, col=m, offset=k)
+    return indices[0], indices[1]
 
 
 def tile(x, y):

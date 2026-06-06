@@ -62,11 +62,30 @@ def test_pytorch_to_numpy_detaches_tensors_requiring_grad():
     assert converted.tolist() == [1.0, 2.0]
 
 
+def test_pytorch_to_numpy_resolves_conjugate_views():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific conjugate-view conversion")
+
+    values = backend.conj(array([1.0 + 2.0j, 3.0 - 4.0j]))
+    converted = backend.to_numpy(values)
+
+    assert converted.tolist() == [1.0 - 2.0j, 3.0 + 4.0j]
+
+
 def _to_python(value):
     value = backend.to_numpy(value)
     if hasattr(value, "tolist"):
         return value.tolist()
     return value
+
+
+def test_nonzero_returns_numpy_style_coordinate_tuple():
+    result = backend.nonzero(array([[0, 1], [2, 0]]))
+
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert _to_python(result[0]) == [0, 1]
+    assert _to_python(result[1]) == [1, 0]
 
 
 def test_numpy_vmap_rejects_mismatched_leading_dimensions():
@@ -281,6 +300,23 @@ def test_as_dtype_string_lookup_is_available():
 
 def test_ravel_tril_indices_returns_flat_indices():
     assert _to_python(backend.ravel_tril_indices(3)) == [0, 3, 4, 6, 7, 8]
+
+
+def test_triangular_index_helpers_return_coordinate_tuples():
+    tril = backend.tril_indices(3)
+    triu = backend.triu_indices(3)
+
+    assert isinstance(tril, tuple)
+    assert isinstance(triu, tuple)
+    assert len(tril) == 2
+    assert len(triu) == 2
+
+    tril_rows, tril_cols = tril
+    triu_rows, triu_cols = triu
+    assert _to_python(tril_rows) == [0, 1, 1, 2, 2, 2]
+    assert _to_python(tril_cols) == [0, 0, 1, 0, 1, 2]
+    assert _to_python(triu_rows) == [0, 0, 0, 1, 1, 2]
+    assert _to_python(triu_cols) == [0, 1, 2, 1, 2, 2]
 
 
 def test_triangular_matrix_helpers_return_compact_vectors():
