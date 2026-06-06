@@ -12,8 +12,6 @@ from torch import (  # The ones below are for pyrecest; For Riemannian score-bas
     argmin,
     argsort,
     asarray,
-    atleast_1d,
-    atleast_2d,
 )
 from torch import broadcast_tensors as broadcast_arrays
 from torch import (  # The ones below are for pyrecest; For Riemannian score-based SDE
@@ -52,7 +50,6 @@ from torch import (  # The ones below are for pyrecest; For Riemannian score-bas
     log1p,
     logical_or,
     mean,
-    meshgrid,
     moveaxis,
     nonzero,
     ones,
@@ -757,8 +754,32 @@ def tile(x, y):
     return x.repeat(y)
 
 
+def atleast_1d(*arys):
+    result = tuple(_torch.atleast_1d(array(ary)) for ary in arys)
+    return result[0] if len(result) == 1 else result
+
+
+def atleast_2d(*arys):
+    result = tuple(_torch.atleast_2d(array(ary)) for ary in arys)
+    return result[0] if len(result) == 1 else result
+
+
 def expand_dims(x, axis=0):
-    return _torch.unsqueeze(x, dim=axis)
+    x = array(x)
+    if isinstance(axis, (int, _np.integer)):
+        axes = (axis,)
+    else:
+        axes = tuple(axis)
+    output_ndim = x.ndim + len(axes)
+    for one_axis in sorted(_normalize_reduction_axes(axes, output_ndim)):
+        x = _torch.unsqueeze(x, dim=one_axis)
+    return x
+
+
+def meshgrid(*arrays, indexing="xy"):
+    return _torch.meshgrid(
+        *tuple(array(one_array) for one_array in arrays), indexing=indexing
+    )
 
 
 def ndim(x):
@@ -1289,18 +1310,71 @@ def dot(a, b):
     return _torch.einsum("...i,...i->...", a, b)
 
 
-def cross(a, b):
+def _normalize_cross_axis(axis, ndim_, name):
+    axis = _operator_index(axis)
+    if axis < 0:
+        axis += ndim_
+    if axis < 0 or axis >= ndim_:
+        raise IndexError(
+            f"{name} {axis} is out of bounds for array of dimension {ndim_}"
+        )
+    return axis
+
+
+def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
+    if axis is not None:
+        axisa = axis
+        axisb = axis
+        axisc = axis
+
     a = array(a)
     b = array(b)
     a, b = convert_to_wider_dtype([a, b])
-    if a.shape != b.shape:
-        a, b = broadcast_arrays(a, b)
-    if a.shape[-1] == 3 and b.shape[-1] == 3:
-        return _torch.cross(a, b, dim=-1)
-    if a.shape[-1] == 2 and b.shape[-1] == 2:
-        return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
 
-    raise NotImplementedError("Not implemented for this dimension.")
+    axisa = _normalize_cross_axis(axisa, a.ndim, "axisa")
+    axisb = _normalize_cross_axis(axisb, b.ndim, "axisb")
+    a = _torch.movedim(a, axisa, -1)
+    b = _torch.movedim(b, axisb, -1)
+
+    a_dim = a.shape[-1]
+    b_dim = b.shape[-1]
+    if a_dim not in (2, 3) or b_dim not in (2, 3):
+        raise ValueError(
+            "incompatible dimensions for cross product "
+            "(dimension must be 2 or 3)"
+        )
+
+    leading_shape = _np.broadcast_shapes(tuple(a.shape[:-1]), tuple(b.shape[:-1]))
+    if tuple(a.shape[:-1]) != leading_shape:
+        a = _torch.broadcast_to(a, leading_shape + (a_dim,))
+    if tuple(b.shape[:-1]) != leading_shape:
+        b = _torch.broadcast_to(b, leading_shape + (b_dim,))
+
+    if a_dim == 2 and b_dim == 2:
+        return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
+    if a_dim == 3 and b_dim == 3:
+        result = _torch.cross(a, b, dim=-1)
+    elif a_dim == 2:
+        result = stack(
+            [
+                a[..., 1] * b[..., 2],
+                -a[..., 0] * b[..., 2],
+                a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0],
+            ],
+            dim=-1,
+        )
+    else:
+        result = stack(
+            [
+                -a[..., 2] * b[..., 1],
+                a[..., 2] * b[..., 0],
+                a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0],
+            ],
+            dim=-1,
+        )
+
+    axisc = _normalize_cross_axis(axisc, result.ndim, "axisc")
+    return _torch.movedim(result, -1, axisc)
 
 
 def gamma(a):

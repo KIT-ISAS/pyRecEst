@@ -36,6 +36,59 @@ class BackendContractTest(unittest.TestCase):
         npt.assert_allclose(to_numpy(assigned), [1.0, 2.0, 3.0])
         npt.assert_allclose(to_numpy(added), [1.0, 2.0, 3.0])
 
+    def test_atleast_helpers_accept_scalar_inputs(self):
+        npt.assert_allclose(to_numpy(backend.atleast_1d(5.0)), np.array([5.0]))
+        npt.assert_allclose(to_numpy(backend.atleast_2d(5.0)), np.array([[5.0]]))
+
+    def test_expand_dims_accepts_tuple_axis(self):
+        values = array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+        expanded = backend.expand_dims(values, axis=(0, 2))
+
+        self.assertEqual(tuple(shape(expanded)), (1, 2, 1, 3))
+        npt.assert_allclose(
+            to_numpy(expanded), np.expand_dims(to_numpy(values), axis=(0, 2))
+        )
+
+    def test_meshgrid_uses_numpy_default_xy_indexing(self):
+        first, second = backend.meshgrid(array([1, 2]), array([3, 4]))
+
+        npt.assert_array_equal(to_numpy(first), np.array([[1, 2], [1, 2]]))
+        npt.assert_array_equal(to_numpy(second), np.array([[3, 3], [4, 4]]))
+
+    def test_cross_accepts_numpy_axis_keyword(self):
+        first = array([[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]])
+        second = array([[0.0, 1.0], [1.0, 0.0], [0.0, 0.0]])
+
+        result = backend.cross(first, second, axis=0)
+
+        npt.assert_allclose(
+            to_numpy(result),
+            np.array([[0.0, 0.0], [0.0, 0.0], [1.0, -1.0]]),
+        )
+
+    def test_cross_accepts_numpy_axis_triplet_keywords(self):
+        first_np = np.array(
+            [
+                [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+                [[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]],
+            ]
+        )
+        second_np = np.array(
+            [
+                [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+                [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            ]
+        )
+
+        result = backend.cross(
+            array(first_np), array(second_np), axisa=2, axisb=2, axisc=0
+        )
+
+        npt.assert_allclose(
+            to_numpy(result), np.moveaxis(np.cross(first_np, second_np), -1, 0)
+        )
+
     def test_choice_supports_numpy_like_size_replace_and_probabilities(self):
         values = array([0, 1, 2, 3])
         weights = array([0.1, 0.2, 0.3, 0.4])
