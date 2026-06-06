@@ -1398,6 +1398,9 @@ def dot(a, b):
     b = array(b)
     a, b = convert_to_wider_dtype([a, b])
 
+    if a.ndim == 0 or b.ndim == 0:
+        return _torch.multiply(a, b)
+
     if a.ndim == 1 and b.ndim == 1:
         return _torch.dot(a, b)
 
