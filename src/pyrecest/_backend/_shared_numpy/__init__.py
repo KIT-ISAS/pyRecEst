@@ -400,6 +400,11 @@ def matvec(A, b):
 
 
 def dot(a, b):
+    a = a if is_array(a) else array(a)
+    b = b if is_array(b) else array(b)
+    if a.ndim == 0 or b.ndim == 0:
+        return _np.multiply(a, b)
+
     if b.ndim == 1:
         return _np.einsum("...i,i->...", a, b)
 
