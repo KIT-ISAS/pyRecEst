@@ -499,10 +499,6 @@ def dot(a, b):
 def matmul(x, y, out=None):
     x = _jnp.asarray(x)
     y = _jnp.asarray(y)
-    for array_ in [x, y]:
-        if array_.ndim == 1:
-            raise ValueError("ndims must be >=2")
-
     result = _jnp.matmul(x, y)
     if out is None:
         return result
