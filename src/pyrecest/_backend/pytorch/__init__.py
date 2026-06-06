@@ -49,7 +49,6 @@ from torch import (  # The ones below are for pyrecest; For Riemannian score-bas
     less,
     log1p,
     logical_or,
-    mean,
     moveaxis,
     ones,
     ones_like,
@@ -142,6 +141,63 @@ mod = _box_binary_scalar(target=_torch.remainder, box_x2=False)
 power = _box_binary_scalar(target=_torch.pow, box_x2=False)
 
 
+def _resolve_reduction_axis(axis, dim, func_name):
+    if dim is not None:
+        if axis is not None and axis != dim:
+            raise TypeError(f"{func_name}() got both 'axis' and 'dim'")
+        axis = dim
+    return axis
+
+
+def _resolve_keepdims(keepdims, keepdim, func_name):
+    if keepdim is not None:
+        if keepdims not in (False, None) and keepdims != keepdim:
+            raise TypeError(f"{func_name}() got both 'keepdims' and 'keepdim'")
+        keepdims = keepdim
+    return keepdims
+
+
+def _is_empty_reduction_axis(axis):
+    if axis is None or isinstance(axis, (int, _np.integer)):
+        return False
+    return len(tuple(axis)) == 0
+
+
+def _as_floating_reduction_input(values, dtype=None):
+    values = array(values)
+    if dtype is not None:
+        return cast(values, dtype=dtype)
+    if is_floating(values) or is_complex(values):
+        return values
+    return cast(values, dtype=get_default_dtype())
+
+
+def _std_result_dtype(values):
+    if values.dtype == complex64:
+        return float32
+    if values.dtype == complex128:
+        return float64
+    return values.dtype
+
+
+def mean(a, axis=None, dtype=None, out=None, keepdims=False, *, dim=None, keepdim=None):
+    axis = _resolve_reduction_axis(axis, dim, "mean")
+    keepdims = _resolve_keepdims(keepdims, keepdim, "mean")
+    values = _as_floating_reduction_input(a, dtype=dtype)
+
+    if _is_empty_reduction_axis(axis):
+        result = values.clone()
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
+    kwargs = {"dim": axis, "keepdim": keepdims}
+    if out is not None:
+        kwargs["out"] = out
+    return _torch.mean(values, **kwargs)
+
+
 def std(
     a,
     axis=None,
@@ -151,13 +207,27 @@ def std(
     keepdims=False,
     *,
     correction=0,
+    dim=None,
+    keepdim=None,
 ):
+    axis = _resolve_reduction_axis(axis, dim, "std")
+    keepdims = _resolve_keepdims(keepdims, keepdim, "std")
     if ddof != 0 and correction != 0:
         raise ValueError("ddof and correction cannot both be nonzero")
     if correction == 0:
         correction = ddof
-    if dtype is not None:
-        a = cast(a, dtype=dtype)
+    a = _as_floating_reduction_input(a, dtype=dtype)
+
+    if _is_empty_reduction_axis(axis):
+        result_dtype = _std_result_dtype(a)
+        if correction > 0:
+            result = _torch.full_like(a, _np.nan, dtype=result_dtype)
+        else:
+            result = _torch.zeros_like(a, dtype=result_dtype)
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
 
     kwargs = {"dim": axis, "correction": correction, "keepdim": keepdims}
     if out is not None:
@@ -623,14 +693,31 @@ def isclose(x, y, rtol=rtol, atol=atol):
     return _torch.isclose(x, y, atol=atol, rtol=rtol)
 
 
-def sum(x, axis=None, keepdims=None, dtype=None):
+def sum(x, axis=None, keepdims=None, dtype=None, out=None, *, dim=None, keepdim=None):
+    axis = _resolve_reduction_axis(axis, dim, "sum")
+    keepdims = _resolve_keepdims(keepdims, keepdim, "sum")
+    x = array(x)
+
+    if _is_empty_reduction_axis(axis):
+        result = cast(x, dtype=dtype) if dtype is not None else x.clone()
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
     if axis is None:
-        if keepdims is None:
-            return _torch.sum(x, dtype=dtype)
-        return _torch.sum(x, keepdim=keepdims, dtype=dtype)
-    if keepdims is None:
-        return _torch.sum(x, dim=axis, dtype=dtype)
-    return _torch.sum(x, dim=axis, keepdim=keepdims, dtype=dtype)
+        result = _torch.sum(x, dtype=dtype)
+        if keepdims:
+            result = result.reshape((1,) * x.ndim)
+    elif keepdims is None:
+        result = _torch.sum(x, dim=axis, dtype=dtype)
+    else:
+        result = _torch.sum(x, dim=axis, keepdim=keepdims, dtype=dtype)
+
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
 
 
 def einsum(equation, *inputs):
