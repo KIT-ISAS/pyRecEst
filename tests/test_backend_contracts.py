@@ -105,6 +105,40 @@ def test_default_reductions_reduce_all_elements():
     assert float(_to_python(backend.prod(values))) == 120.0
 
 
+def test_mean_accepts_numpy_axis_keyword_and_integer_inputs():
+    values = array([[1, 2], [3, 4]])
+
+    axis_result = backend.mean(values, axis=0)
+    keepdims_result = backend.mean(values, axis=1, keepdims=True)
+
+    assert _to_python(axis_result) == [2.0, 3.0]
+    assert _to_python(keepdims_result) == [[1.5], [3.5]]
+
+
+def test_sum_keepdims_without_axis_matches_numpy_contract():
+    values = array([[1.0, 2.0], [3.0, 4.0]])
+
+    result = backend.sum(values, keepdims=True)
+
+    assert result.shape == (1, 1)
+    assert _to_python(result) == [[10.0]]
+
+
+def test_empty_axis_tuple_reductions_match_numpy_contract():
+    values = array([[1.0, 2.0], [3.0, 4.0]])
+
+    summed = backend.sum(values, axis=())
+    averaged = backend.mean(values, axis=())
+    standardized = backend.std(values, axis=())
+
+    assert summed.shape == values.shape
+    assert averaged.shape == values.shape
+    assert standardized.shape == values.shape
+    assert _to_python(summed) == [[1.0, 2.0], [3.0, 4.0]]
+    assert _to_python(averaged) == [[1.0, 2.0], [3.0, 4.0]]
+    assert _to_python(standardized) == [[0.0, 0.0], [0.0, 0.0]]
+
+
 def test_prod_accepts_tuple_axis():
     values = array([[[2.0, 3.0], [4.0, 5.0]], [[6.0, 7.0], [8.0, 9.0]]])
 
