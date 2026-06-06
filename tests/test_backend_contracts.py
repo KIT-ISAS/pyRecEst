@@ -449,6 +449,13 @@ def test_batched_dot_uses_last_axis_inner_product():
     assert _to_python(result) == [17.0, 53.0]
 
 
+def test_dot_accepts_scalar_operands():
+    assert _to_python(backend.dot(2.0, 3.0)) == 6.0
+    assert _to_python(backend.dot(2.0, array([1.0, 2.0]))) == [2.0, 4.0]
+    assert _to_python(backend.dot(array([1.0, 2.0]), 3.0)) == [3.0, 6.0]
+    assert _to_python(backend.dot(array(2.0), array(3.0))) == 6.0
+
+
 def test_batched_dot_accepts_high_rank_right_operand():
     first = array([1.0, 2.0])
     second = array(
