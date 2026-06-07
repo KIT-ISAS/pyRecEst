@@ -53,6 +53,20 @@ class TestMEMQKFTracker(unittest.TestCase):
         )
         self.assertEqual(self.tracker.get_point_estimate().shape[0], 7)
 
+    def test_get_state_and_cov_returns_public_full_axis_covariance(self):
+        state, covariance = self.tracker.get_state_and_cov()
+
+        npt.assert_allclose(state, array([0.0, 0.0, 1.0, -1.0, 0.0, 4.0, 2.0]))
+        self.assertEqual(covariance.shape, (7, 7))
+        npt.assert_allclose(covariance[:4, :4], self.covariance)
+        npt.assert_allclose(covariance[4:, 4:], diag(array([0.01, 0.4, 0.8])))
+
+        semi_axis_state, semi_axis_covariance = self.tracker.get_state_and_cov(
+            full_axis_lengths=False
+        )
+        npt.assert_allclose(semi_axis_state, self.tracker.get_point_estimate())
+        npt.assert_allclose(semi_axis_covariance[4:, 4:], self.shape_covariance)
+
     def test_rejects_unknown_update_mode(self):
         with self.assertRaises(ValueError):
             MEMQKFTracker(
