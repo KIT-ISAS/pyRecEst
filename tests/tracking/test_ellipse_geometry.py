@@ -93,7 +93,7 @@ def test_extent_matrix_is_invariant_to_axis_swap_representation() -> None:
     axes = np.array([3.0, 1.0])
 
     extent = ellipse_extent_matrix(theta, axes)
-    swapped_extent = ellipse_extent_matrix(theta + np.pi / 2.0, axes[::-1])
+    swapped_extent = ellipse_extent_matrix(theta + np.pi / 2.0, axes[::-1].copy())
 
     npt.assert_allclose(extent, swapped_extent, atol=1e-12)
 
@@ -102,4 +102,3 @@ def test_shape_from_extent_matrix_orders_axes_and_respects_reference() -> None:
     extent = ellipse_extent_matrix(np.pi - 0.2, np.array([4.0, 1.5]))
 
     shape = shape_from_extent_matrix(extent, reference_orientation=-0.2)
-
