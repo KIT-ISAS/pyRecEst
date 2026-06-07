@@ -4,6 +4,9 @@ Based on autodiff.py by emilemathieu on
 https://github.com/oxcsml/geomstats/blob/master/geomstats/_backend/jax/autodiff.py
 """
 
+import functools
+import inspect
+
 import jax
 import jax.numpy as anp
 from jax import grad, jacfwd
@@ -41,6 +44,19 @@ def elementwise_grad(func):
     return _elementwise_grad
 
 
+def _apply_custom_gradient(cotangent, grads):
+    """Apply a user-supplied Jacobian/VJP factor to an upstream cotangent."""
+    if isinstance(grads, float):
+        return cotangent * grads
+
+    ndim = getattr(grads, "ndim", None)
+    if ndim == 2:
+        return cotangent[..., None] * grads
+    if ndim == 3:
+        return cotangent[..., None, None] * grads
+    return cotangent * grads
+
+
 def custom_gradient(*grad_funcs):
     """Decorate a function to define its custom gradient(s).
 
@@ -49,51 +65,61 @@ def custom_gradient(*grad_funcs):
     *grad_funcs : callables
         Custom gradient functions.
     """
+    if len(grad_funcs) > 3:
+        raise NotImplementedError(
+            "custom_gradient is not yet implemented for more than 3 gradients."
+        )
+    if len(grad_funcs) == 0:
+        raise NotImplementedError("custom_gradient requires at least one gradient.")
 
     def decorator(func):
-        try:
-            from autograd.extend import defvjp, primitive  # TODO: replace
-        except ModuleNotFoundError as exc:
-            raise ModuleNotFoundError(
-                "custom_gradient in the JAX backend requires the optional "
-                "'autograd' dependency."
-            ) from exc
+        signature = inspect.signature(func)
+        parameters = tuple(signature.parameters.values())
 
-        wrapped_function = primitive(func)
+        def bind_values(*args, **kwargs):
+            bound = signature.bind(*args, **kwargs)
+            bound.apply_defaults()
+            return tuple(bound.arguments[param.name] for param in parameters)
 
-        def wrapped_grad_func(i, ans, *args, **kwargs):
-            grads = grad_funcs[i](*args, **kwargs)
-            if isinstance(grads, float):
-                return lambda g: g * grads
-            if grads.ndim == 2:
-                return lambda g: g[..., None] * grads
-            if grads.ndim == 3:
-                return lambda g: g[..., None, None] * grads
-            return lambda g: g * grads
+        def call_with_bound_values(callable_, values):
+            positional_args = []
+            keyword_args = {}
+            for param, value in zip(parameters, values, strict=True):
+                if param.kind in (
+                    inspect.Parameter.POSITIONAL_ONLY,
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                ):
+                    positional_args.append(value)
+                elif param.kind == inspect.Parameter.VAR_POSITIONAL:
+                    positional_args.extend(value)
+                elif param.kind == inspect.Parameter.KEYWORD_ONLY:
+                    keyword_args[param.name] = value
+                elif param.kind == inspect.Parameter.VAR_KEYWORD:
+                    keyword_args.update(value)
+            return callable_(*positional_args, **keyword_args)
 
-        if len(grad_funcs) == 1:
-            defvjp(
-                wrapped_function,
-                lambda ans, *args, **kwargs: wrapped_grad_func(0, ans, *args, **kwargs),
-            )
-        elif len(grad_funcs) == 2:
+        @jax.custom_vjp
+        def custom_vjp_call(*values):
+            return call_with_bound_values(func, values)
 
-            defvjp(
-                wrapped_function,
-                lambda ans, *args, **kwargs: wrapped_grad_func(0, ans, *args, **kwargs),
-                lambda ans, *args, **kwargs: wrapped_grad_func(1, ans, *args, **kwargs),
-            )
-        elif len(grad_funcs) == 3:
-            defvjp(
-                wrapped_function,
-                lambda ans, *args, **kwargs: wrapped_grad_func(0, ans, *args, **kwargs),
-                lambda ans, *args, **kwargs: wrapped_grad_func(1, ans, *args, **kwargs),
-                lambda ans, *args, **kwargs: wrapped_grad_func(2, ans, *args, **kwargs),
-            )
-        else:
-            raise NotImplementedError(
-                "custom_gradient is not yet implemented " "for more than 3 gradients."
-            )
+        def forward(*values):
+            return call_with_bound_values(func, values), values
+
+        def backward(values, cotangent):
+            gradients = []
+            for arg_index in range(len(values)):
+                if arg_index < len(grad_funcs):
+                    grads = call_with_bound_values(grad_funcs[arg_index], values)
+                    gradients.append(_apply_custom_gradient(cotangent, grads))
+                else:
+                    gradients.append(None)
+            return tuple(gradients)
+
+        custom_vjp_call.defvjp(forward, backward)
+
+        @functools.wraps(func)
+        def wrapped_function(*args, **kwargs):
+            return custom_vjp_call(*bind_values(*args, **kwargs))
 
         return wrapped_function
 
