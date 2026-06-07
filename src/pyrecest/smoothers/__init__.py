@@ -1,4 +1,5 @@
 from .abstract_smoother import AbstractSmoother
+from .delayed_output import DelayedStateOutput, DelayedStateOutputMixin
 from .fixed_lag_mem_qkf_smoother import (
     FBFBMEMQKFSmoother,
     FixedIntervalMEMQKFSmoother,
@@ -57,6 +58,8 @@ from .unscented_rauch_tung_striebel_smoother import (
 
 __all__ = [
     "AbstractSmoother",
+    "DelayedStateOutput",
+    "DelayedStateOutputMixin",
     "FBFBMEMQKFSmoother",
     "FixedIntervalMEMQKFSmoother",
     "FixedIntervalMemQkfSmoother",
