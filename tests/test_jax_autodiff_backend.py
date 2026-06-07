@@ -40,6 +40,33 @@ def test_value_and_grad_accepts_keyword_arguments():
     assert jnp.allclose(grad, jnp.array([6.0, -12.0]))
 
 
+def test_custom_gradient_overrides_jax_default_derivative():
+    @autodiff.custom_gradient(lambda x: 3.0 * jnp.ones_like(x))
+    def squared(x):
+        return x**2
+
+    result = jax.grad(lambda x: jnp.sum(squared(x)))(jnp.array([2.0, 3.0]))
+
+    assert jnp.allclose(result, jnp.array([3.0, 3.0]))
+
+
+def test_custom_gradient_supports_multiple_arguments_and_keyword_calls():
+    @autodiff.custom_gradient(
+        lambda x, *, scale=1.0: scale * jnp.ones_like(x),
+        lambda x, *, scale=1.0: -jnp.ones_like(scale),
+    )
+    def scaled_square(x, *, scale=1.0):
+        return scale * jnp.sum(x**2)
+
+    grad_x, grad_scale = jax.grad(
+        lambda x, scale: scaled_square(x, scale=scale),
+        argnums=(0, 1),
+    )(jnp.array([2.0, 3.0]), 5.0)
+
+    assert jnp.allclose(grad_x, jnp.array([5.0, 5.0]))
+    assert jnp.allclose(grad_scale, -1.0)
+
+
 @pytest.mark.parametrize(
     "function_name",
     [
