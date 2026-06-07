@@ -79,6 +79,18 @@ def _to_python(value):
     return value
 
 
+def test_array_like_sequence_helpers_accept_python_lists():
+    assert _to_python(backend.concatenate(([1, 2], [3, 4]), axis=0)) == [1, 2, 3, 4]
+    assert _to_python(backend.stack(([1, 2], [3, 4]), axis=0)) == [[1, 2], [3, 4]]
+    assert _to_python(backend.flip([1, 2, 3], axis=0)) == [3, 2, 1]
+    assert _to_python(backend.sort([3, 1, 2])) == [1, 2, 3]
+    assert _to_python(backend.unique([2, 1, 2, 1])) == [1, 2]
+
+
+def test_divide_accepts_array_like_inputs():
+    assert _to_python(backend.divide([2.0, 4.0], [1.0, 2.0])) == [2.0, 2.0]
+
+
 def test_nonzero_returns_numpy_style_coordinate_tuple():
     result = backend.nonzero(array([[0, 1], [2, 0]]))
 
@@ -113,6 +125,21 @@ def test_mean_accepts_numpy_axis_keyword_and_integer_inputs():
 
     assert _to_python(axis_result) == [2.0, 3.0]
     assert _to_python(keepdims_result) == [[1.5], [3.5]]
+
+
+def test_arg_reductions_accept_numpy_axis_keepdims_and_array_like_inputs():
+    values = [[1.0, 4.0, 2.0], [3.0, 0.0, 5.0]]
+
+    assert _to_python(backend.argmax(values, axis=1)) == [1, 2]
+    assert _to_python(backend.argmin(values, axis=0)) == [0, 1, 0]
+    assert _to_python(backend.argmax(values, axis=1, keepdims=True)) == [[1], [2]]
+
+
+def test_arg_reductions_support_boolean_inputs():
+    values = array([[False, True], [False, False]])
+
+    assert _to_python(backend.argmax(values, axis=1)) == [1, 0]
+    assert _to_python(backend.argmin(values, axis=1)) == [0, 0]
 
 
 def test_sum_keepdims_without_axis_matches_numpy_contract():

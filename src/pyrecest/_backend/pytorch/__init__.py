@@ -411,10 +411,46 @@ def one_hot(labels, num_classes):
     return _torch.nn.functional.one_hot(labels, num_classes).type(_torch.uint8)
 
 
-def argmax(a, **kwargs):
+def _arg_reduction(
+    a,
+    np_func,
+    torch_func,
+    func_name,
+    axis=None,
+    out=None,
+    keepdims=False,
+    *,
+    dim=None,
+    keepdim=None,
+):
+    axis = _resolve_reduction_axis(axis, dim, func_name)
+    keepdims = _resolve_keepdims(keepdims, keepdim, func_name)
+    a = array(a)
+
     if a.dtype == _torch.bool:
-        return _torch.as_tensor(_np.argmax(a.data.numpy(), **kwargs))
-    return _torch.argmax(a, **kwargs)
+        result = _torch.as_tensor(
+            np_func(to_numpy(a), axis=axis, keepdims=bool(keepdims)),
+            device=a.device,
+        )
+    elif axis is None:
+        result = torch_func(a)
+        if keepdims:
+            result = result.reshape((1,) * a.ndim)
+    else:
+        result = torch_func(a, dim=axis, keepdim=bool(keepdims))
+
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def argmax(a, axis=None, out=None, keepdims=False, *, dim=None, keepdim=None):
+    return _arg_reduction(a, _np.argmax, _torch.argmax, "argmax", axis, out, keepdims, dim=dim, keepdim=keepdim)
+
+
+def argmin(a, axis=None, out=None, keepdims=False, *, dim=None, keepdim=None):
+    return _arg_reduction(a, _np.argmin, _torch.argmin, "argmin", axis, out, keepdims, dim=dim, keepdim=keepdim)
 
 
 def convert_to_wider_dtype(tensor_list):
@@ -532,6 +568,7 @@ def any(x, axis=None):
 
 
 def flip(x, axis):
+    x = array(x)
     if isinstance(axis, int):
         axis = [axis]
     if axis is None:
@@ -540,7 +577,7 @@ def flip(x, axis):
 
 
 def concatenate(seq, axis=0, out=None):
-    seq = convert_to_wider_dtype(seq)
+    seq = _tensor_sequence(seq)
     return _torch.cat(seq, dim=axis, out=out)
 
 
@@ -1201,6 +1238,22 @@ def vectorize(x, pyfunc, multiple_args=False, **kwargs):
     return stack(list(map(pyfunc, x)))
 
 
+def _tensor_sequence(seq):
+    tensors = [array(item) for item in seq]
+    if not tensors:
+        return tensors
+    return convert_to_wider_dtype(tensors)
+
+
+def stack(seq, axis=0, out=None, *, dim=None):
+    if dim is not None:
+        if axis not in (0, dim):
+            raise TypeError("stack() got both 'axis' and 'dim'")
+        axis = dim
+
+    return _torch.stack(_tensor_sequence(seq), dim=axis, out=out)
+
+
 def vec_to_diag(vec):
     return _torch.diag_embed(vec, offset=0)
 
@@ -1249,6 +1302,9 @@ def mat_from_diag_triu_tril(diag, tri_upp, tri_low):
 
 
 def divide(a, b, ignore_div_zero=False):
+    a = array(a)
+    b = array(b)
+    a, b = convert_to_wider_dtype([a, b])
     if ignore_div_zero is False:
         return _torch.divide(a, b)
     quo = _torch.divide(a, b)
@@ -1265,6 +1321,7 @@ def ravel_tril_indices(n, k=0, m=None):
 
 
 def sort(a, axis=-1):
+    a = array(a)
     sorted_a, _ = _torch.sort(a, dim=axis)
     return sorted_a
 
@@ -1492,4 +1549,4 @@ def imag(a):
 
 
 def unique(ar, axis=None):
-    return _torch.unique(ar, dim=axis)
+    return _torch.unique(array(ar), dim=axis)
