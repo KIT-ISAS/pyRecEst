@@ -186,6 +186,44 @@ from . import autodiff, linalg, random
 from ._dtype import as_dtype, set_default_dtype
 
 
+def _asarray_sequence(seq):
+    return tuple(_jnp.asarray(item) for item in seq)
+
+
+def concatenate(seq, axis=0, dtype=None):
+    return _jnp.concatenate(_asarray_sequence(seq), axis=axis, dtype=dtype)
+
+
+def stack(seq, axis=0, dtype=None):
+    return _jnp.stack(_asarray_sequence(seq), axis=axis, dtype=dtype)
+
+
+def flip(m, axis=None):
+    return _jnp.flip(_jnp.asarray(m), axis=axis)
+
+
+def sort(a, axis=-1, **kwargs):
+    return _jnp.sort(_jnp.asarray(a), axis=axis, **kwargs)
+
+
+def unique(ar, *args, **kwargs):
+    return _jnp.unique(_jnp.asarray(ar), *args, **kwargs)
+
+
+def argmax(a, axis=None, out=None, keepdims=False, **kwargs):
+    result = _jnp.argmax(_jnp.asarray(a), axis=axis, keepdims=keepdims, **kwargs)
+    if out is not None:
+        return out.at[...].set(result)
+    return result
+
+
+def argmin(a, axis=None, out=None, keepdims=False, **kwargs):
+    result = _jnp.argmin(_jnp.asarray(a), axis=axis, keepdims=keepdims, **kwargs)
+    if out is not None:
+        return out.at[...].set(result)
+    return result
+
+
 def convert_to_wider_dtype(*args, **kwargs):
     raise NotImplementedError(
         "The function convert_to_wider_dtype is not supported in this JAX backend."
@@ -477,10 +515,10 @@ def is_bool(array):
 
 
 def divide(a, b, ignore_div_zero=False):
-    if ignore_div_zero is False:
-        return _jnp.divide(a, b)
-
     a_arr, b_arr = _jnp.asarray(a), _jnp.asarray(b)
+    if ignore_div_zero is False:
+        return _jnp.divide(a_arr, b_arr)
+
     quotient = _jnp.divide(a_arr, b_arr)
     return _jnp.where(b_arr != 0, quotient, _jnp.zeros_like(quotient))
 
