@@ -414,6 +414,21 @@ def test_divide_ignore_div_zero_accepts_scalars_and_integer_inputs():
     ]
 
 
+def test_pytorch_divide_ignore_div_zero_only_masks_zero_denominators():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific divide regression test")
+
+    masked = backend.divide([1.0, 2.0], [0.0, 4.0], ignore_div_zero=True)
+    assert _to_python(masked) == [0.0, 0.5]
+
+    overflow = backend.divide(
+        backend.asarray([1e308], dtype=backend.float64),
+        backend.asarray([1e-308], dtype=backend.float64),
+        ignore_div_zero=True,
+    )
+    assert _to_python(backend.isinf(overflow)) == [True]
+
+
 def test_vec_to_diag_preserves_leading_singleton_batch_dimension():
     result = backend.vec_to_diag(array([[1.0, 2.0]]))
 
