@@ -29,6 +29,7 @@ from pyrecest.backend import (
 )
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
+from .update_diagnostics import MeasurementUpdateDiagnostics
 
 
 def pol2cart(phi, r=1.0):
@@ -311,6 +312,9 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         self.last_quadratic_form = None
         self.last_active_measurement_indices = None
         self.last_measurement_weights = None
+        self.last_update_diagnostics = MeasurementUpdateDiagnostics(
+            skipped_reason="not_updated",
+        )
 
     @staticmethod
     def _symmetrize(matrix):
@@ -767,6 +771,11 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         )
         if not active_indices:
             self.last_quadratic_form = None
+            self.last_update_diagnostics = MeasurementUpdateDiagnostics.skipped(
+                "no_active_measurements",
+                measurement_count=measurements.shape[0],
+                measurement_weights=self.last_measurement_weights,
+            )
             return
 
         residual = concatenate([measurements[index] for index in active_indices])
@@ -783,7 +792,15 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         )
         self._sync_state_views()
         solved_residual = linalg.solve(covariance_measurement, residual)
-        self.last_quadratic_form = residual @ solved_residual
+        self.last_quadratic_form = float(residual @ solved_residual)
+        self.last_update_diagnostics = MeasurementUpdateDiagnostics(
+            active_measurement_indices=tuple(active_indices),
+            measurement_count=measurements.shape[0],
+            measurement_weights=self.last_measurement_weights,
+            residual=residual,
+            innovation_covariance=covariance_measurement,
+            quadratic_form=self.last_quadratic_form,
+        )
 
         if self.log_posterior_estimates:
             self.store_posterior_estimates()

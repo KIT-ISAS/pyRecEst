@@ -129,6 +129,14 @@ Zero-weight measurements and masked measurements are skipped. `R` may be a
 shared `(2, 2)` covariance matrix or a per-measurement array with shape
 `(num_measurements, 2, 2)`.
 
+After a tracker update, inspect `tracker.last_update_diagnostics` for a
+standardized `MeasurementUpdateDiagnostics` snapshot.  For SCGP trackers this
+records active measurement indices, normalized measurement weights, the stacked
+residual, the innovation covariance, the residual quadratic form, and an optional
+`skipped_reason` such as `"no_active_measurements"`.  Legacy convenience fields
+such as `last_quadratic_form`, `last_active_measurement_indices`, and
+`last_measurement_weights` remain available for backward compatibility.
+
 ## Distribution Inputs
 
 Many distribution `pdf` methods accept either one point or a batch of points.
