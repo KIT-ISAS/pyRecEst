@@ -12,6 +12,7 @@ from pyrecest.filters import (
     GPRHMTracker,
     SCGPTracker,
     ScGpTracker,
+    MeasurementUpdateDiagnostics,
 )
 
 
@@ -82,6 +83,11 @@ class TestSCGPTracker(unittest.TestCase):
         cross_covariance = tracker.covariance[:5, 5:]
         self.assertFalse(all(abs(cross_covariance) <= 1e-12))
         self.assertIsNotNone(tracker.last_quadratic_form)
+        self.assertIsInstance(
+            tracker.last_update_diagnostics,
+            MeasurementUpdateDiagnostics,
+        )
+        self.assertTrue(tracker.last_update_diagnostics.updated)
         npt.assert_array_less(-1e-10, linalg.eigvalsh(tracker.covariance))
 
     def test_decorrelated_update_keeps_cross_covariance_zero(self):
@@ -111,6 +117,8 @@ class TestSCGPTracker(unittest.TestCase):
             atol=1e-12,
         )
         self.assertEqual(masked_tracker.last_active_measurement_indices, [0])
+        self.assertEqual(masked_tracker.last_update_diagnostics.active_measurement_indices, (0,))
+        self.assertEqual(masked_tracker.last_update_diagnostics.active_measurement_count, 1)
         npt.assert_allclose(masked_tracker.last_measurement_weights, array([1.0, 1.0]))
 
     def test_zero_measurement_weight_skips_measurement(self):
@@ -124,6 +132,10 @@ class TestSCGPTracker(unittest.TestCase):
         npt.assert_allclose(tracker.covariance, covariance_before, atol=1e-12)
         self.assertEqual(tracker.last_active_measurement_indices, [])
         self.assertIsNone(tracker.last_quadratic_form)
+        self.assertFalse(tracker.last_update_diagnostics.updated)
+        self.assertEqual(
+            tracker.last_update_diagnostics.skipped_reason, "no_active_measurements"
+        )
 
     def test_measurement_weight_changes_update_strength(self):
         high_weight_tracker = self._make_tracker()

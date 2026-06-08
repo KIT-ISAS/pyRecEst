@@ -127,6 +127,7 @@ _FILTER_EXPORTS: Final[dict[str, str]] = {
     "ManifoldExponentialMovingAverage": ".manifold_exponential_moving_average",
     "MeasurementRecord": ".out_of_sequence",
     "MeasurementTimeBuffer": ".out_of_sequence",
+    "MeasurementUpdateDiagnostics": ".update_diagnostics",
     "MultiBernoulliTracker": ".multi_bernoulli_tracker",
     "MultiHypothesisTracker": ".multi_hypothesis_tracker",
     "MultipleExtendedObjectStepResult": ".abstract_multiple_extended_object_tracker",
