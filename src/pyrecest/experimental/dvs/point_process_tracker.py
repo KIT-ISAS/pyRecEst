@@ -8,7 +8,6 @@ import numpy as np
 from pyrecest.backend import array
 
 from .event_likelihood import (
-    ContourSample,
     PointProcessUpdateConfig,
     event_batch_log_likelihood_terms,
 )
@@ -47,51 +46,7 @@ class DVSPointProcessSCGPTracker(DVSFullSCGPTracker):
 
     def sample_contour(self, n=100):
         """Return sampled star-convex contour geometry for likelihood models."""
-        if n <= 2:
-            raise ValueError("n must be greater than 2")
-
-        orientation = float(self.kinematic_state[2])
-        position = np.asarray(self.kinematic_state[:2], dtype=float)
-        shape_state = np.asarray(self.shape_state, dtype=float)
-        body_angles = np.linspace(0.0, 2.0 * np.pi, int(n), endpoint=False)
-        delta_angle = 2.0 * np.pi / float(n)
-        points = []
-        normals = []
-        weights = []
-        for body_angle in body_angles:
-            world_angle = float(body_angle + orientation)
-            unit_direction = np.array(
-                [np.cos(world_angle), np.sin(world_angle)], dtype=float
-            )
-            body_angle_vector = array([float(body_angle)])
-            basis_row = np.asarray(
-                self._basis_matrix(body_angle_vector)[0], dtype=float
-            )
-            derivative_row = np.asarray(
-                self._basis_derivative(body_angle_vector)[0], dtype=float
-            )
-            radius = float(basis_row @ shape_state)
-            radius_derivative = float(derivative_row @ shape_state)
-            tangent = radius_derivative * unit_direction + radius * np.array(
-                [-unit_direction[1], unit_direction[0]],
-                dtype=float,
-            )
-            normal = np.array([tangent[1], -tangent[0]], dtype=float)
-            normal_norm = float(np.linalg.norm(normal))
-            if normal_norm <= 1e-12:
-                normal = unit_direction
-            else:
-                normal = normal / normal_norm
-            points.append(position + radius * unit_direction)
-            normals.append(normal)
-            weights.append(float(np.linalg.norm(tangent)) * delta_angle)
-
-        return ContourSample(
-            points=np.asarray(points, dtype=float),
-            normals=np.asarray(normals, dtype=float),
-            weights=np.asarray(weights, dtype=float),
-            angles=body_angles,
-        )
+        return super().sample_contour(n=n)
 
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def update(

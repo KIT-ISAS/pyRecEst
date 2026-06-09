@@ -19,6 +19,14 @@ from .hyperspherical_sampler import (
 )
 from .hypertoroidal_sampler import CircularUniformSampler
 from .sigma_points import JulierSigmaPoints, MerweScaledSigmaPoints
+from .support_points import (
+    ellipsoid_axis_offsets,
+    ellipsoid_axis_support_points,
+    ellipsoid_sigma_points,
+    mahalanobis_support_points,
+    projected_linear_variance_from_axis_offsets,
+    support_points_from_axis_offsets,
+)
 
 __all__ = [
     "AbstractSampler",
@@ -39,4 +47,10 @@ __all__ = [
     "LeopardiSampler",
     "JulierSigmaPoints",
     "MerweScaledSigmaPoints",
+    "ellipsoid_axis_offsets",
+    "ellipsoid_axis_support_points",
+    "ellipsoid_sigma_points",
+    "mahalanobis_support_points",
+    "projected_linear_variance_from_axis_offsets",
+    "support_points_from_axis_offsets",
 ]

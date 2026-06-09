@@ -1,5 +1,7 @@
 # pylint: disable=duplicate-code,invalid-name,no-member,no-name-in-module
 # pylint: disable=redefined-builtin,too-many-lines,too-many-locals
+from dataclasses import dataclass
+
 from pyrecest.backend import (
     abs,
     all,
@@ -33,6 +35,7 @@ from .measurement_reliability import (
     normalize_measurement_noise_covariances,
     normalize_measurement_weights,
 )
+from .measurement_scoring import MeasurementScore
 from .update_diagnostics import MeasurementUpdateDiagnostics
 
 
@@ -46,6 +49,55 @@ def angle_between_two_vectors(x, y):
     dot_prod = dot(x, y)
     cross_prod = x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
     return -arctan2(cross_prod, dot_prod) % (2 * pi)
+
+
+@dataclass(frozen=True)
+class SCGPContourSample:
+    """Sampled geometry of a star-convex GP contour."""
+
+    points: object
+    normals: object
+    weights: object
+    angles: object | None = None
+    radii: object | None = None
+    radius_derivatives: object | None = None
+
+    def __post_init__(self):
+        points = array(self.points)
+        normals = array(self.normals)
+        weights = array(self.weights)
+        angles = None
+        radii = None
+        radius_derivatives = None
+
+        if points.ndim != 2 or points.shape[1] != 2:
+            raise ValueError("points must have shape (n, 2)")
+        if normals.shape != points.shape:
+            raise ValueError("normals must have the same shape as points")
+        if weights.shape != (points.shape[0],):
+            raise ValueError("weights must have shape (n,)")
+        if not bool(all(weights >= 0.0)):
+            raise ValueError("weights must be non-negative")
+
+        if self.angles is not None:
+            angles = array(self.angles)
+            if angles.shape != (points.shape[0],):
+                raise ValueError("angles must have shape (n,)")
+        if self.radii is not None:
+            radii = array(self.radii)
+            if radii.shape != (points.shape[0],):
+                raise ValueError("radii must have shape (n,)")
+        if self.radius_derivatives is not None:
+            radius_derivatives = array(self.radius_derivatives)
+            if radius_derivatives.shape != (points.shape[0],):
+                raise ValueError("radius_derivatives must have shape (n,)")
+
+        object.__setattr__(self, "points", points)
+        object.__setattr__(self, "normals", normals)
+        object.__setattr__(self, "weights", weights)
+        object.__setattr__(self, "angles", angles)
+        object.__setattr__(self, "radii", radii)
+        object.__setattr__(self, "radius_derivatives", radius_derivatives)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -316,6 +368,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         self.last_quadratic_form = None
         self.last_active_measurement_indices = None
         self.last_measurement_weights = None
+        self.last_measurement_score = None
         self.last_update_diagnostics = MeasurementUpdateDiagnostics(
             skipped_reason="not_updated",
         )
@@ -692,6 +745,80 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             active_indices,
         )
 
+    def score_measurements(
+        self,
+        measurements,
+        R=None,
+        s_hat=None,
+        sigma_squared_s=None,
+        measurement_weights=None,
+        active_measurement_mask=None,
+    ):
+        """Score measurements under the current state without applying an update."""
+
+        previous_scale_mean = self.scale_mean
+        previous_scale_variance = self.scale_variance
+        previous_last_weights = self.last_measurement_weights
+        previous_last_indices = self.last_active_measurement_indices
+        try:
+            if s_hat is not None:
+                self.scale_mean = float(s_hat)
+            if sigma_squared_s is not None:
+                self.scale_variance = float(sigma_squared_s)
+            measurements = self._normalize_measurements(measurements)
+            measurement_noises = self._normalize_measurement_noise_covariances(
+                self.measurement_noise if R is None else R,
+                measurements.shape[0],
+            )
+            (
+                measurement_jacobian,
+                predicted_measurements,
+                noise_covariance,
+                active_indices,
+            ) = self._stack_measurement_terms(
+                measurements,
+                measurement_noises,
+                measurement_weights=measurement_weights,
+                active_measurement_mask=active_measurement_mask,
+            )
+            normalized_weights = self.last_measurement_weights
+            active_indices = [int(index) for index in active_indices]
+            if not active_indices:
+                return MeasurementScore(
+                    measurement_jacobian=None,
+                    predicted_measurements=None,
+                    innovation_covariance=None,
+                    residual=None,
+                    active_measurement_indices=active_indices,
+                    measurement_weights=normalized_weights,
+                    quadratic_form=None,
+                    skipped_reason="no_active_measurements",
+                )
+
+            residual = concatenate([measurements[index] for index in active_indices])
+            residual = residual - predicted_measurements
+            innovation_covariance = self._symmetrize(
+                measurement_jacobian @ self.covariance @ measurement_jacobian.T
+                + noise_covariance
+            )
+            solved_residual = linalg.solve(innovation_covariance, residual)
+            quadratic_form = float(residual @ solved_residual)
+            return MeasurementScore(
+                measurement_jacobian=measurement_jacobian,
+                predicted_measurements=predicted_measurements,
+                innovation_covariance=innovation_covariance,
+                residual=residual,
+                active_measurement_indices=active_indices,
+                measurement_weights=normalized_weights,
+                quadratic_form=quadratic_form,
+                skipped_reason=None,
+            )
+        finally:
+            self.scale_mean = previous_scale_mean
+            self.scale_variance = previous_scale_variance
+            self.last_measurement_weights = previous_last_weights
+            self.last_active_measurement_indices = previous_last_indices
+
     def update(
         self,
         measurements,
@@ -714,53 +841,38 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             self.scale_mean = float(s_hat)
         if sigma_squared_s is not None:
             self.scale_variance = float(sigma_squared_s)
-        measurements = self._normalize_measurements(measurements)
-        measurement_noises = self._normalize_measurement_noise_covariances(
-            self.measurement_noise if R is None else R,
-            measurements.shape[0],
-        )
-
-        (
-            measurement_jacobian,
-            predicted_measurements,
-            noise_covariance,
-            active_indices,
-        ) = self._stack_measurement_terms(
+        score = self.score_measurements(
             measurements,
-            measurement_noises,
+            R=R,
             measurement_weights=measurement_weights,
             active_measurement_mask=active_measurement_mask,
         )
-        if not active_indices:
+        self.last_measurement_score = score
+        self.last_measurement_weights = score.measurement_weights
+        self.last_active_measurement_indices = score.active_measurement_indices
+        if not score.is_active:
             self.last_quadratic_form = None
             self.last_update_diagnostics = MeasurementUpdateDiagnostics.skipped(
                 "no_active_measurements",
-                measurement_count=measurements.shape[0],
-                measurement_weights=self.last_measurement_weights,
+                measurement_count=len(score.measurement_weights),
+                measurement_weights=score.measurement_weights,
             )
             return
 
-        residual = concatenate([measurements[index] for index in active_indices])
-        residual = residual - predicted_measurements
-        covariance_measurement = self._symmetrize(
-            measurement_jacobian @ self.covariance @ measurement_jacobian.T
-            + noise_covariance
-        )
-        cross_covariance = self.covariance @ measurement_jacobian.T
-        gain = linalg.solve(covariance_measurement.T, cross_covariance.T).T
-        self.state = self.state + gain @ residual
+        cross_covariance = self.covariance @ score.measurement_jacobian.T
+        gain = linalg.solve(score.innovation_covariance.T, cross_covariance.T).T
+        self.state = self.state + gain @ score.residual
         self.covariance = self._symmetrize(
-            self.covariance - gain @ covariance_measurement @ gain.T
+            self.covariance - gain @ score.innovation_covariance @ gain.T
         )
         self._sync_state_views()
-        solved_residual = linalg.solve(covariance_measurement, residual)
-        self.last_quadratic_form = float(residual @ solved_residual)
+        self.last_quadratic_form = score.quadratic_form
         self.last_update_diagnostics = MeasurementUpdateDiagnostics(
-            active_measurement_indices=tuple(active_indices),
-            measurement_count=measurements.shape[0],
-            measurement_weights=self.last_measurement_weights,
-            residual=residual,
-            innovation_covariance=covariance_measurement,
+            active_measurement_indices=tuple(score.active_measurement_indices),
+            measurement_count=len(score.measurement_weights),
+            measurement_weights=score.measurement_weights,
+            residual=score.residual,
+            innovation_covariance=score.innovation_covariance,
             quadratic_form=self.last_quadratic_form,
         )
 
@@ -795,6 +907,68 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         extents = scaling_factor * self.get_extents_on_grid(n, angles=angles)
         coords = pol2cart(angles, extents) + reshape(self.kinematic_state[:2], (-1, 1))
         return coords.T
+
+    def sample_contour(self, n: int = 100, angles=None, body_frame=True):
+        """Return sampled SCGP contour geometry."""
+
+        if angles is None:
+            if n <= 2:
+                raise ValueError("n must be greater than 2")
+            sample_angles = linspace(0.0, 2 * pi, int(n), endpoint=False)
+        else:
+            sample_angles = array(angles)
+            if sample_angles.ndim != 1:
+                raise ValueError("angles must be one-dimensional")
+            if sample_angles.shape[0] <= 2:
+                raise ValueError("at least three angles are required")
+
+        orientation = self.kinematic_state[2]
+        if body_frame:
+            body_angles = sample_angles
+            world_angles = sample_angles + orientation
+        else:
+            world_angles = sample_angles
+            body_angles = sample_angles - orientation
+
+        delta_angle = 2.0 * pi / float(sample_angles.shape[0])
+        points = []
+        normals = []
+        weights = []
+        radii = []
+        radius_derivatives = []
+        position = self.kinematic_state[:2]
+
+        for body_angle, world_angle in zip(body_angles, world_angles, strict=True):
+            unit_direction = array([cos(world_angle), sin(world_angle)])
+            basis_row = self._basis_matrix(array([body_angle]))[0]
+            derivative_row = self._basis_derivative(array([body_angle]))[0]
+            radius = basis_row @ self.shape_state
+            radius_derivative = derivative_row @ self.shape_state
+            tangent = radius_derivative * unit_direction + radius * array(
+                [-unit_direction[1], unit_direction[0]]
+            )
+            tangent_norm = linalg.norm(tangent)
+            normal = array([tangent[1], -tangent[0]])
+            normal_norm = linalg.norm(normal)
+            if float(normal_norm) <= 1e-12:
+                normal = unit_direction
+            else:
+                normal = normal / normal_norm
+
+            points.append(position + radius * unit_direction)
+            normals.append(normal)
+            weights.append(float(tangent_norm) * delta_angle)
+            radii.append(radius)
+            radius_derivatives.append(radius_derivative)
+
+        return SCGPContourSample(
+            points=vstack(points),
+            normals=vstack(normals),
+            weights=array(weights),
+            angles=sample_angles,
+            radii=array(radii),
+            radius_derivatives=array(radius_derivatives),
+        )
 
     def get_bounding_box(self, n: int = 100):
         contour_points = self.get_contour_points(n)

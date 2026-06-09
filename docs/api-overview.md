@@ -147,6 +147,8 @@ Common starting points include:
 
 - `GaussianSampler`;
 - `MerweScaledSigmaPoints` and `JulierSigmaPoints`;
+- `ellipsoid_axis_support_points` and `mahalanobis_support_points` for
+  deterministic covariance-ellipsoid support sets;
 - `FibonacciGridSampler`;
 - `FibonacciRejectionSampler`;
 - `SobolGridSampler`;
