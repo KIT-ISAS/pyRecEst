@@ -635,17 +635,26 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         theta_center_jacobian = (
             array([unit_direction[1], -unit_direction[0]]) / delta_norm
         )
-        measurement_jacobian = zeros((self.measurement_dim, self.state.shape[0]))
-        measurement_jacobian[:, :2] = eye(2) + self.scale_mean * (
+        position_jacobian = eye(2) + self.scale_mean * (
             center_direction_jacobian * radius
             + outer(unit_direction, theta_center_jacobian) * radius_derivative
         )
-        measurement_jacobian[:, 2] = (
-            -self.scale_mean * unit_direction * radius_derivative
+        orientation_jacobian = reshape(
+            -self.scale_mean * unit_direction * radius_derivative,
+            (self.measurement_dim, 1),
         )
-        measurement_jacobian[:, self.kinematic_dim :] = self.scale_mean * outer(
+        velocity_jacobian = zeros((self.measurement_dim, self.kinematic_dim - 3))
+        shape_jacobian = self.scale_mean * outer(
             unit_direction,
             basis_row,
+        )
+        measurement_jacobian = hstack(
+            (
+                position_jacobian,
+                orientation_jacobian,
+                velocity_jacobian,
+                shape_jacobian,
+            )
         )
 
         radial_variance = self.radial_noise_variance + self._residual_extent_covariance(
