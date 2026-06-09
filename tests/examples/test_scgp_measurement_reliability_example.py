@@ -1,8 +1,15 @@
 import numpy.testing as npt
+import pytest
 
+import pyrecest.backend
 from pyrecest.backend import array
 from pyrecest.examples.scgp_measurement_reliability import (
     run_scgp_measurement_reliability_example,
+)
+
+pytestmark = pytest.mark.skipif(
+    pyrecest.backend.__backend_name__ == "jax",
+    reason="SCGP tracker update example relies on mutable filter state.",
 )
 
 
