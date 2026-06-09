@@ -129,6 +129,11 @@ Zero-weight measurements and masked measurements are skipped. `R` may be a
 shared `(2, 2)` covariance matrix or a per-measurement array with shape
 `(num_measurements, 2, 2)`.
 
+The generic helpers in `pyrecest.filters.measurement_reliability` expose the
+same scalar/vector weight normalization, active-mask normalization, and
+shared/per-measurement covariance stacking logic for other filters and
+experimental trackers.
+
 After a tracker update, inspect `tracker.last_update_diagnostics` for a
 standardized `MeasurementUpdateDiagnostics` snapshot.  For SCGP trackers this
 records active measurement indices, normalized measurement weights, the stacked
