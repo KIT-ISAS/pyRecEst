@@ -83,6 +83,16 @@ class TestMeasurementReliability(unittest.TestCase):
         self.assertEqual(float(covariances[0, 0, 0]), 0.5)
         self.assertEqual(float(covariances[2, 1, 1]), 0.5)
 
+    def test_empty_measurement_covariances_have_batch_shape(self):
+        covariances = normalize_measurement_noise_covariances(
+            0.5,
+            0,
+            2,
+            as_covariance_matrix=_as_covariance_matrix,
+        )
+
+        self.assertEqual(covariances.shape, (0, 2, 2))
+
     def test_per_measurement_covariances_are_validated(self):
         covariances = normalize_measurement_noise_covariances(
             array([0.1 * eye(2), 0.2 * eye(2)]),

@@ -1,8 +1,13 @@
+import importlib.util
 import math
+import os
+import subprocess
+import sys
 import unittest
 
 import numpy as np
 import numpy.testing as npt
+import pytest
 from pyrecest.backend import array, to_numpy
 from pyrecest.distributions import GaussianDistribution
 
@@ -45,6 +50,50 @@ class GaussianDistributionRegressionTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             distribution.marginalize_out([2])
+
+
+def test_marginalize_out_uses_backend_index_arrays():
+    distribution = GaussianDistribution(
+        array([1.0, 2.0, 3.0]),
+        array([[4.0, 0.1, 0.2], [0.1, 5.0, 0.3], [0.2, 0.3, 6.0]]),
+    )
+
+    marginalized = distribution.marginalize_out([1])
+
+    npt.assert_allclose(to_numpy(marginalized.mu), np.array([1.0, 3.0]))
+    npt.assert_allclose(to_numpy(marginalized.C), np.array([[4.0, 0.2], [0.2, 6.0]]))
+
+
+@pytest.mark.backend_portable
+def test_jax_marginalize_out_accepts_list_dimensions():
+    if importlib.util.find_spec("jax") is None:
+        pytest.skip("jax is not installed")
+
+    env = os.environ.copy()
+    env["PYRECEST_BACKEND"] = "jax"
+    src_path = os.path.abspath("src")
+    env["PYTHONPATH"] = (
+        src_path
+        if not env.get("PYTHONPATH")
+        else os.pathsep.join([src_path, env["PYTHONPATH"]])
+    )
+
+    code = """
+import numpy as np
+from pyrecest.backend import array, to_numpy
+from pyrecest.distributions import GaussianDistribution
+
+distribution = GaussianDistribution(
+    array([1.0, 2.0, 3.0]),
+    array([[4.0, 0.1, 0.2], [0.1, 5.0, 0.3], [0.2, 0.3, 6.0]]),
+)
+marginalized = distribution.marginalize_out([1])
+np.testing.assert_allclose(to_numpy(marginalized.mu), np.array([1.0, 3.0]))
+np.testing.assert_allclose(
+    to_numpy(marginalized.C), np.array([[4.0, 0.2], [0.2, 6.0]])
+)
+"""
+    subprocess.run([sys.executable, "-c", code], check=True, env=env)
 
 
 if __name__ == "__main__":

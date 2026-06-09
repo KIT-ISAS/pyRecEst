@@ -1475,7 +1475,7 @@ def matvec(A, b):
         return _torch.matmul(A, b)
 
     if A.ndim == 2:  # b.ndim > 1
-        return _torch.matmul(A, b.T).T
+        return _torch.einsum("ij,...j->...i", A, b)
 
     return _torch.einsum("...ij,...j->...i", A, b)
 

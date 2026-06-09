@@ -7,6 +7,7 @@ import importlib
 import importlib.abc
 import importlib.machinery
 import logging
+import numbers as _numbers
 import os
 import sys
 import types
@@ -366,7 +367,7 @@ def _mean_with_numpy_signature(
 
 def _normalize_reduction_axes(axis, ndim):
     """Return normalized reduction axes for NumPy-style ``axis`` arguments."""
-    if isinstance(axis, int):
+    if isinstance(axis, _numbers.Integral):
         axes = (axis,)
     else:
         axes = tuple(axis)

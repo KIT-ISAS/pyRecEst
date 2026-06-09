@@ -566,7 +566,7 @@ def matvec(matrix, vector):
     if vector.ndim == 1:
         return _jnp.matmul(matrix, vector)
     if matrix.ndim == 2:
-        return _jnp.matmul(matrix, vector.T).T
+        return _jnp.einsum("ij,...j->...i", matrix, vector)
     return _jnp.einsum("...ij,...j->...i", matrix, vector)
 
 

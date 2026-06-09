@@ -287,10 +287,11 @@ class GaussianDistribution(AbstractLinearDistribution):
 
         dimensions = [int(dim) for dim in dimensions]
         remaining_dims = [i for i in range(self.dim) if i not in dimensions]
-        new_mu = self.mu[remaining_dims]
-        new_C = self.C[remaining_dims][
-            :, remaining_dims
-        ]  # Instead of np.ix_ for interface compatibiliy
+        remaining_indices = pyrecest.backend.asarray(remaining_dims)
+        new_mu = self.mu[remaining_indices]
+        new_C = self.C[remaining_indices][
+            :, remaining_indices
+        ]  # Instead of np.ix_ for interface compatibility
         return GaussianDistribution(new_mu, new_C, check_validity=False)
 
     def sample(self, n):

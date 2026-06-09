@@ -92,6 +92,22 @@ class TestSCGPTracker(unittest.TestCase):
         self.assertTrue(tracker.last_update_diagnostics.updated)
         npt.assert_array_less(-1e-10, linalg.eigvalsh(tracker.covariance))
 
+    def test_empty_measurement_batch_is_noop(self):
+        tracker = self._make_tracker()
+        state_before = array(tracker.state)
+        covariance_before = array(tracker.covariance)
+
+        tracker.update(zeros((0, 2)))
+
+        npt.assert_allclose(tracker.state, state_before, atol=0.0)
+        npt.assert_allclose(tracker.covariance, covariance_before, atol=0.0)
+        self.assertIsNone(tracker.last_quadratic_form)
+        self.assertEqual(tracker.last_active_measurement_indices, [])
+        self.assertEqual(
+            tracker.last_update_diagnostics.skipped_reason,
+            "no_active_measurements",
+        )
+
     def test_decorrelated_update_keeps_cross_covariance_zero(self):
         tracker = self._make_tracker(DecorrelatedSCGPTracker)
 

@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from pyrecest.backend import all, array, isfinite, ones, reshape, stack
+from pyrecest.backend import all, array, isfinite, ones, reshape, stack, zeros
 
 
 @dataclass(frozen=True)
@@ -117,6 +117,9 @@ def normalize_measurement_noise_covariances(
         raise ValueError("n_measurements must be non-negative")
     if measurement_dim <= 0:
         raise ValueError("measurement_dim must be positive")
+
+    if n_measurements == 0:
+        return zeros((0, measurement_dim, measurement_dim))
 
     noise = array(measurement_noise)
     if noise.ndim == 3:
