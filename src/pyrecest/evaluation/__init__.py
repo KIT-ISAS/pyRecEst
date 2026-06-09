@@ -11,6 +11,14 @@ from .get_axis_label import get_axis_label
 from .get_distance_function import get_distance_function
 from .get_extract_mean import get_extract_mean
 from .iterate_configs_and_runs import iterate_configs_and_runs
+from .implicit_surfaces import (
+    classify_inside_outside,
+    surface_band_mask,
+    surface_band_probability_from_signed_distance,
+    surface_gradients,
+    surface_residuals,
+    surface_variances,
+)
 from .model_comparison import (
     add_evidence_margin_columns,
     classify_evidence_margin,
@@ -35,6 +43,17 @@ from .pareto import (
 )
 from .perform_predict_update_cycles import perform_predict_update_cycles
 from .plot_results import plot_results
+from .selection import (
+    protected_tail_topk_mask,
+    quantile_tail_mask,
+    quantile_tail_threshold,
+    retained_count_from_fraction,
+    sanitized_score_vector,
+    tail_rescue_quota_count,
+    tail_rescue_topk_mask,
+    top_count_mask,
+    top_fraction_mask,
+)
 from .simulation_database import simulation_database
 from .summarize_filter_results import summarize_filter_results
 
@@ -56,6 +75,12 @@ __all__ = [
     "evaluate_for_file",
     "evaluate_for_simulation_config",
     "evaluate_for_variables",
+    "classify_inside_outside",
+    "surface_band_mask",
+    "surface_band_probability_from_signed_distance",
+    "surface_gradients",
+    "surface_residuals",
+    "surface_variances",
     "add_evidence_margin_columns",
     "classify_evidence_margin",
     "cluster_bootstrap_margin_summary",
@@ -74,4 +99,13 @@ __all__ = [
     "pareto_front_indices",
     "record_dominates",
     "select_under_constraints",
+    "protected_tail_topk_mask",
+    "quantile_tail_mask",
+    "quantile_tail_threshold",
+    "retained_count_from_fraction",
+    "sanitized_score_vector",
+    "tail_rescue_quota_count",
+    "tail_rescue_topk_mask",
+    "top_count_mask",
+    "top_fraction_mask",
 ]

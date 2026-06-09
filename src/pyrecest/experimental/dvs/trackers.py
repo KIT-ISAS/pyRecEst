@@ -16,6 +16,16 @@ from pyrecest.backend import (
 )
 from pyrecest.filters.gprhm_tracker import FullSCGPTracker
 
+from .normal_flow import (
+    INFER_POLARITY_CONTRAST_SIGN,
+    event_polarity_sign,
+    infer_polarity_contrast_sign,
+    normalize_polarity_contrast_sign,
+    polarity_consistency_for_signed_flow,
+    polarity_weight_for_signed_flow,
+    signed_scalar_sign,
+)
+
 
 class DVSFullSCGPTracker(FullSCGPTracker):
     """Star-convex GP tracker with a DVS-inspired active-contour update.
@@ -31,7 +41,7 @@ class DVSFullSCGPTracker(FullSCGPTracker):
     per event batch.
     """
 
-    _POLARITY_INFER_SENTINEL = "infer"
+    _POLARITY_INFER_SENTINEL = INFER_POLARITY_CONTRAST_SIGN
 
     def __init__(
         self,
@@ -72,35 +82,18 @@ class DVSFullSCGPTracker(FullSCGPTracker):
 
     @classmethod
     def _normalize_polarity_contrast_sign(cls, value):
-        if value is None:
-            return None
-        if isinstance(value, str):
-            normalized = value.lower()
-            if normalized != cls._POLARITY_INFER_SENTINEL:
-                raise ValueError(
-                    "polarity_contrast_sign must be 'infer', None, or non-zero"
-                )
-            return cls._POLARITY_INFER_SENTINEL
-        value = float(value)
-        if value == 0.0:
-            raise ValueError(
-                "polarity_contrast_sign must be 'infer', None, or non-zero"
-            )
-        return 1.0 if value > 0.0 else -1.0
+        return normalize_polarity_contrast_sign(
+            value,
+            infer_sentinel=cls._POLARITY_INFER_SENTINEL,
+        )
 
     @staticmethod
     def _event_polarity_sign(event_polarity):
-        # MEVDT and the synthetic generator use 0/1; some datasets use -1/+1.
-        return 1.0 if float(event_polarity) > 0.0 else -1.0
+        return event_polarity_sign(event_polarity)
 
     @staticmethod
     def _signed_scalar_sign(value, zero_tolerance=1e-12):
-        value = float(value)
-        if value > zero_tolerance:
-            return 1.0
-        if value < -zero_tolerance:
-            return -1.0
-        return 0.0
+        return signed_scalar_sign(value, zero_tolerance=zero_tolerance)
 
     @staticmethod
     def _normalize_event_polarities(event_polarities, measurement_count):
@@ -199,20 +192,12 @@ class DVSFullSCGPTracker(FullSCGPTracker):
         signed normal flow, ``-1`` when they should disagree. Batch-level
         inference resolves the ``"infer"`` sentinel before this method is used.
         """
-        contrast_sign = self._normalize_polarity_contrast_sign(polarity_contrast_sign)
-        if contrast_sign is None:
-            return None
-        if contrast_sign == self._POLARITY_INFER_SENTINEL:
-            raise ValueError(
-                "polarity_contrast_sign='infer' must be resolved at batch level"
-            )
-
-        flow_sign = self._signed_scalar_sign(signed_normal_flow)
-        if flow_sign == 0.0:
-            return None
-        expected_sign = contrast_sign * flow_sign
-        observed_sign = self._event_polarity_sign(event_polarity)
-        return bool(observed_sign == expected_sign)
+        return polarity_consistency_for_signed_flow(
+            signed_normal_flow,
+            event_polarity,
+            polarity_contrast_sign=polarity_contrast_sign,
+            infer_sentinel=self._POLARITY_INFER_SENTINEL,
+        )
 
     def polarity_weight_for_signed_flow(
         self,
@@ -228,14 +213,13 @@ class DVSFullSCGPTracker(FullSCGPTracker):
             polarity_mismatch_weight = self._validate_polarity_mismatch_weight(
                 polarity_mismatch_weight
             )
-        consistency = self.polarity_consistency_for_signed_flow(
+        return polarity_weight_for_signed_flow(
             signed_normal_flow,
             event_polarity,
             polarity_contrast_sign=polarity_contrast_sign,
+            polarity_mismatch_weight=polarity_mismatch_weight,
+            infer_sentinel=self._POLARITY_INFER_SENTINEL,
         )
-        if consistency is None or consistency:
-            return 1.0
-        return polarity_mismatch_weight
 
     def _resolve_polarity_contrast_sign(
         self,
@@ -247,26 +231,12 @@ class DVSFullSCGPTracker(FullSCGPTracker):
             return None
         if polarity_contrast_sign is None:
             polarity_contrast_sign = self.polarity_contrast_sign
-        contrast_sign = self._normalize_polarity_contrast_sign(polarity_contrast_sign)
-        if contrast_sign is None:
-            return None
-        if contrast_sign != self._POLARITY_INFER_SENTINEL:
-            return contrast_sign
-
-        polarity_flow_score = 0.0
-        for signed_flow, event_polarity in zip(
+        return infer_polarity_contrast_sign(
             signed_flows,
             event_polarities,
-            strict=True,
-        ):
-            if self._signed_scalar_sign(signed_flow) == 0.0:
-                continue
-            polarity_flow_score += self._event_polarity_sign(event_polarity) * float(
-                signed_flow
-            )
-        if abs(polarity_flow_score) <= 1e-12:
-            return 1.0
-        return 1.0 if polarity_flow_score > 0.0 else -1.0
+            polarity_contrast_sign=polarity_contrast_sign,
+            infer_sentinel=self._POLARITY_INFER_SENTINEL,
+        )
 
     def contour_signed_normal_flow(
         self,

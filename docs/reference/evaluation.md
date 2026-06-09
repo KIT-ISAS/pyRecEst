@@ -42,4 +42,25 @@ Useful entry points include `pareto_front_indices`, `is_pareto_front`,
 `record_dominates`, `constraint_mask`, `select_under_constraints`, and
 `equal_quality_selection`.
 
+## Implicit-surface helpers
+
+`pyrecest.evaluation.implicit_surfaces` contains lightweight helpers for
+backend-neutral scalar-field and implicit-surface evaluation. These helpers cover
+residual extraction through structural `value(points)` objects, surface-band
+masks, inside/outside classification, and surface-band probabilities from signed
+distance means and standard deviations. They are useful for shape-estimation and
+extended-object diagnostics without requiring implementations to inherit from a
+PyRecEst base class.
+
+## Protected-tail selection helpers
+
+`pyrecest.evaluation.selection` contains deterministic, domain-neutral helpers
+for selecting a fixed-size subset under reliability or confidence constraints.
+The helpers are useful when an evaluation or ablation should preserve a bounded
+number of low-reliability hypotheses, measurements, particles, or shape samples
+while still ranking each region by a primary score. They intentionally avoid
+domain-specific names such as visibility, splats, or rendering; callers provide
+the primary scores, tail scores, reliability scores, retention fractions, and
+tail quantiles.
+
 ::: pyrecest.evaluation
