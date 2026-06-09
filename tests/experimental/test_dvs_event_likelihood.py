@@ -7,8 +7,19 @@ from pyrecest.experimental.dvs.event_likelihood import (
     contour_event_intensity,
     event_batch_log_likelihood,
     expected_event_count,
+    scgp_event_batch_log_likelihood_terms,
     normal_flow_activities,
 )
+
+
+class _DummySCGPTracker:
+    def __init__(self, contour: ContourSample):
+        self.contour = contour
+        self.last_sample_count = None
+
+    def sample_contour(self, n=100):
+        self.last_sample_count = int(n)
+        return self.contour
 
 
 def _rectangle_contour(width: float, height: float) -> ContourSample:
@@ -167,3 +178,36 @@ def test_likelihood_prefers_correct_width_for_two_sided_support():
     )
 
     assert correct > collapsed
+
+
+def test_scgp_event_batch_log_likelihood_terms_uses_tracker_contour_sampler():
+    contour = _rectangle_contour(width=4.0, height=2.0)
+    tracker = _DummySCGPTracker(contour)
+    events = np.array(
+        [
+            [-2.0, -0.2],
+            [2.0, 0.2],
+        ],
+        dtype=float,
+    )
+    update_config = PointProcessUpdateConfig(
+        likelihood=EventLikelihoodConfig(
+            spatial_sigma_px=0.5,
+            foreground_rate=10.0,
+            background_rate=1e-3,
+            include_expected_count=False,
+        ),
+        contour_samples=17,
+    )
+
+    terms = scgp_event_batch_log_likelihood_terms(
+        tracker,
+        events,
+        np.array([1.0, 0.0]),
+        update_config,
+    )
+
+    assert tracker.last_sample_count == 17
+    assert terms.log_likelihood == pytest.approx(
+        event_batch_log_likelihood(events, contour, np.array([1.0, 0.0]), update_config.likelihood)
+    )
