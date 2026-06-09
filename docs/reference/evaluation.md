@@ -30,4 +30,16 @@ These utilities are useful for model comparison, parameter selection, and
 paper-quality diagnostics whenever multiple filters, smoothers, or trackers emit
 comparable log marginal likelihoods.
 
+## Pareto and equal-quality selection
+
+`pyrecest.evaluation.pareto` contains small dataframe-oriented utilities for
+rate--distortion and equal-quality comparisons.  Callers provide objective
+columns and objective directions, so the helpers are intentionally domain-neutral
+and can be used for particle-count, runtime, storage-size, or accuracy/quality
+trade-offs.
+
+Useful entry points include `pareto_front_indices`, `is_pareto_front`,
+`record_dominates`, `constraint_mask`, `select_under_constraints`, and
+`equal_quality_selection`.
+
 ::: pyrecest.evaluation

@@ -271,6 +271,77 @@ def event_batch_log_likelihood(
     ).log_likelihood
 
 
+def scgp_event_batch_log_likelihood_terms(
+    tracker,
+    event_xy: np.ndarray,
+    velocity: np.ndarray,
+    config: EventLikelihoodConfig | PointProcessUpdateConfig | None = None,
+    *,
+    contour_samples: int | None = None,
+    batch_duration: float | None = None,
+    image_area: float | None = None,
+) -> EventLikelihoodTerms:
+    """Score an event batch against a tracker-provided contour sample.
+
+    The tracker only has to provide ``sample_contour(n=...)`` returning an
+    object with ``points``, ``normals``, and ``weights`` attributes. This keeps
+    the point-process likelihood reusable for SCGP trackers without requiring a
+    tracker-specific likelihood implementation. ``config`` may be either an
+    ``EventLikelihoodConfig`` or a ``PointProcessUpdateConfig``; in the latter
+    case the embedded likelihood config and contour-sample count are used.
+    """
+    likelihood_config, sample_count = _resolve_scgp_likelihood_arguments(
+        config,
+        contour_samples,
+    )
+    contour = tracker.sample_contour(n=sample_count)
+    return event_batch_log_likelihood_terms(
+        event_xy,
+        contour,
+        velocity,
+        likelihood_config,
+        batch_duration=batch_duration,
+        image_area=image_area,
+    )
+
+
+def scgp_event_batch_log_likelihood(
+    tracker,
+    event_xy: np.ndarray,
+    velocity: np.ndarray,
+    config: EventLikelihoodConfig | PointProcessUpdateConfig | None = None,
+    *,
+    contour_samples: int | None = None,
+    batch_duration: float | None = None,
+    image_area: float | None = None,
+) -> float:
+    """Return the point-process event log likelihood for an SCGP tracker."""
+    return scgp_event_batch_log_likelihood_terms(
+        tracker,
+        event_xy,
+        velocity,
+        config,
+        contour_samples=contour_samples,
+        batch_duration=batch_duration,
+        image_area=image_area,
+    ).log_likelihood
+
+
+def _resolve_scgp_likelihood_arguments(
+    config: EventLikelihoodConfig | PointProcessUpdateConfig | None,
+    contour_samples: int | None,
+) -> tuple[EventLikelihoodConfig, int]:
+    if isinstance(config, PointProcessUpdateConfig):
+        likelihood_config = config.likelihood
+        sample_count = config.contour_samples if contour_samples is None else contour_samples
+    else:
+        likelihood_config = config or EventLikelihoodConfig()
+        sample_count = 96 if contour_samples is None else contour_samples
+    if int(sample_count) <= 2:
+        raise ValueError("contour_samples must be greater than 2")
+    return likelihood_config, int(sample_count)
+
+
 def _gaussian_contour_kernel(
     event_xy: np.ndarray,
     contour_points: np.ndarray,

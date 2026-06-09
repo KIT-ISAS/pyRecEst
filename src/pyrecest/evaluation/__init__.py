@@ -25,6 +25,14 @@ from .model_comparison import (
     paired_model_margin_threshold_sweep,
     select_paired_model_margin_threshold,
 )
+from .pareto import (
+    constraint_mask,
+    equal_quality_selection,
+    is_pareto_front,
+    pareto_front_indices,
+    record_dominates,
+    select_under_constraints,
+)
 from .perform_predict_update_cycles import perform_predict_update_cycles
 from .plot_results import plot_results
 from .simulation_database import simulation_database
@@ -60,4 +68,10 @@ __all__ = [
     "paired_model_margin_summary",
     "paired_model_margin_threshold_sweep",
     "select_paired_model_margin_threshold",
+    "constraint_mask",
+    "equal_quality_selection",
+    "is_pareto_front",
+    "pareto_front_indices",
+    "record_dominates",
+    "select_under_constraints",
 ]
