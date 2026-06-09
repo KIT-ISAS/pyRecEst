@@ -43,6 +43,16 @@ from .pareto import (
 )
 from .perform_predict_update_cycles import perform_predict_update_cycles
 from .plot_results import plot_results
+from .point_set_metrics import (
+    as_point_set,
+    chamfer_distance,
+    deterministic_subsample,
+    distance_quantiles,
+    nearest_neighbor_distances,
+    point_set_geometry_summary,
+    precision_recall_curve,
+    precision_recall_fscore,
+)
 from .selection import (
     protected_tail_topk_mask,
     quantile_tail_mask,
@@ -99,6 +109,14 @@ __all__ = [
     "pareto_front_indices",
     "record_dominates",
     "select_under_constraints",
+    "as_point_set",
+    "chamfer_distance",
+    "deterministic_subsample",
+    "distance_quantiles",
+    "nearest_neighbor_distances",
+    "point_set_geometry_summary",
+    "precision_recall_curve",
+    "precision_recall_fscore",
     "protected_tail_topk_mask",
     "quantile_tail_mask",
     "quantile_tail_threshold",

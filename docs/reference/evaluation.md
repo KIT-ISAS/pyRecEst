@@ -30,6 +30,18 @@ These utilities are useful for model comparison, parameter selection, and
 paper-quality diagnostics whenever multiple filters, smoothers, or trackers emit
 comparable log marginal likelihoods.
 
+## Point-set geometry metrics
+
+`pyrecest.evaluation.point_set_metrics` contains deterministic, NumPy/SciPy
+helpers for evaluating sampled shapes, point-cloud estimates, and
+extended-object geometry diagnostics. The functions provide nearest-neighbor
+distances, symmetric Chamfer-L1/L2 distances, threshold precision/recall/F-score,
+distance quantiles, and reproducible subsampling.
+
+These helpers are intended for evaluation pipelines rather than differentiable
+model code. They use `scipy.spatial.cKDTree` when available and a deterministic
+chunked dense fallback otherwise.
+
 ## Pareto and equal-quality selection
 
 `pyrecest.evaluation.pareto` contains small dataframe-oriented utilities for
