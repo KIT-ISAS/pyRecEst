@@ -41,6 +41,8 @@ class MeasurementUpdateDiagnostics:
     @property
     def active_measurement_count(self) -> int:
         """Return the number of measurements that contributed to the update."""
+        if self.active_measurement_indices is None:
+            return 0
         return len(self.active_measurement_indices)
 
     @property

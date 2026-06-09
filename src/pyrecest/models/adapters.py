@@ -74,7 +74,7 @@ def as_likelihood_model(
 
 
 def as_sampleable_transition_model(
-    model_or_sampler: SupportsTransitionSampling | Callable[[Any, int], Any],
+    model_or_sampler: SupportsTransitionSampling | Callable[..., Any],
     *,
     transition_density: Callable[[Any, Any], Any] | None = None,
     name: str | None = None,
@@ -101,7 +101,7 @@ def as_sampleable_transition_model(
 def as_density_transition_model(
     model_or_density: SupportsTransitionDensity | Callable[[Any, Any], Any],
     *,
-    sample_next: Callable[[Any, int], Any] | None = None,
+    sample_next: Callable[..., Any] | None = None,
     name: str | None = None,
 ) -> SupportsTransitionDensity:
     """Return a density-capable transition model, wrapping callbacks when needed."""
