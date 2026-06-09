@@ -27,7 +27,10 @@ It also defines distribution and filter capability protocols:
   representation conversion entry points;
 - `SupportsFilterState`, `SupportsPointEstimate`, `SupportsLinearPrediction`,
   `SupportsLinearUpdate`, and `SupportsHistoryRecording` for common filter
-  capabilities.
+  capabilities;
+- `SupportsScalarField`, `SupportsScalarFieldGradient`, and
+  `SupportsProbabilisticScalarField` for implicit-surface and scalar-field
+  evaluation utilities.
 
 ## Design principles
 
@@ -68,7 +71,7 @@ shapes, backend behavior, and semantics separately.
 Use package-level imports for public protocols:
 
 ```python
-from pyrecest.protocols import SupportsDim, SupportsPdf, SupportsSampling
+from pyrecest.protocols import SupportsDim, SupportsPdf, SupportsSampling, SupportsScalarField
 ```
 
 Submodule imports remain available when a smaller namespace is preferred:

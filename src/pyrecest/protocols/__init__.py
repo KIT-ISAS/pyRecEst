@@ -25,6 +25,11 @@ from .filters import (
     SupportsLinearUpdate,
     SupportsPointEstimate,
 )
+from .implicit_surfaces import (
+    SupportsProbabilisticScalarField,
+    SupportsScalarField,
+    SupportsScalarFieldGradient,
+)
 
 __all__ = [
     "ArrayLike",
@@ -43,5 +48,8 @@ __all__ = [
     "SupportsMeanAndCovariance",
     "SupportsPdf",
     "SupportsPointEstimate",
+    "SupportsProbabilisticScalarField",
     "SupportsSampling",
+    "SupportsScalarField",
+    "SupportsScalarFieldGradient",
 ]
