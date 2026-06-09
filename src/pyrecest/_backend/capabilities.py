@@ -8,7 +8,7 @@ module gives tests and documentation a single source of truth.
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Any, Final, cast
 
 BACKEND_NAMES: Final = ("numpy", "pytorch", "jax")
 
@@ -156,8 +156,8 @@ def get_unsupported_functions(
     backend_name: str, module_name: str = ""
 ) -> tuple[str, ...]:
     """Return unsupported facade functions for a backend module."""
-    backend = BACKEND_CAPABILITIES.get(backend_name, {})
-    unsupported = backend.get("unsupported", {})
+    backend = cast(dict[str, Any], BACKEND_CAPABILITIES.get(backend_name, {}))
+    unsupported = cast(dict[str, tuple[str, ...]], backend.get("unsupported", {}))
     return tuple(unsupported.get(module_name, ()))
 
 
@@ -165,8 +165,8 @@ def get_partial_capabilities(
     backend_name: str, module_name: str = ""
 ) -> dict[str, str]:
     """Return partial-support notes for a backend module."""
-    backend = BACKEND_CAPABILITIES.get(backend_name, {})
-    partial = backend.get("partial", {})
+    backend = cast(dict[str, Any], BACKEND_CAPABILITIES.get(backend_name, {}))
+    partial = cast(dict[str, dict[str, str]], backend.get("partial", {}))
     return dict(partial.get(module_name, {}))
 
 
@@ -174,8 +174,8 @@ def get_bridged_capabilities(
     backend_name: str, module_name: str = ""
 ) -> dict[str, str]:
     """Return operations that work by crossing into another numerical stack."""
-    backend = BACKEND_CAPABILITIES.get(backend_name, {})
-    bridged = backend.get("bridged", {})
+    backend = cast(dict[str, Any], BACKEND_CAPABILITIES.get(backend_name, {}))
+    bridged = cast(dict[str, dict[str, str]], backend.get("bridged", {}))
     return dict(bridged.get(module_name, {}))
 
 

@@ -126,7 +126,6 @@ from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
     tan,
     tanh,
     tile,
-    trace,
     transpose,
     tril,
     tril_indices,
@@ -570,9 +569,13 @@ def matvec(matrix, vector):
     return _jnp.einsum("...ij,...j->...i", matrix, vector)
 
 
+def trace(a):
+    return _jnp.trace(_jnp.asarray(a), axis1=-2, axis2=-1)
+
+
 # One-hot encoding
 def one_hot(indices, depth):
-    return _jnp.eye(depth)[indices]
+    return _jnp.eye(depth, dtype=_jnp.uint8)[_jnp.asarray(indices)]
 
 
 # Scatter-add operation

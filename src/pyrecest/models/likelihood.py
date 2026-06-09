@@ -114,17 +114,18 @@ class LikelihoodMeasurementModel:
             distribution = distribution_factory(state)
             return _evaluate_distribution_method(distribution, pdf_method, measurement)
 
-        if log_pdf_method is None:
-            log_likelihood = None
-        else:
+        log_likelihood_callback: Callable[[Any, Any], Any] | None = None
+        if log_pdf_method is not None:
 
-            def log_likelihood(measurement: Any, state: Any) -> Any:
+            def _log_likelihood_from_distribution(measurement: Any, state: Any) -> Any:
                 distribution = distribution_factory(state)
                 return _evaluate_distribution_method(
                     distribution, log_pdf_method, measurement
                 )
 
-        return cls(likelihood, log_likelihood=log_likelihood, name=name)
+            log_likelihood_callback = _log_likelihood_from_distribution
+
+        return cls(likelihood, log_likelihood=log_likelihood_callback, name=name)
 
     @property
     def has_log_likelihood(self) -> bool:
@@ -196,7 +197,7 @@ class DensityTransitionModel:
         self,
         transition_density: Callable[[Any, Any], Any],
         *,
-        sample_next: Callable[[Any, int], Any] | None = None,
+        sample_next: Callable[..., Any] | None = None,
         name: str | None = None,
     ):
         _ensure_callable(transition_density, "transition_density")

@@ -1,9 +1,13 @@
-class SampleableTransitionModel:
-    def __init__(self, sample_next, function_is_vectorized=True):
-        self.sample_next = sample_next
-        self.function_is_vectorized = function_is_vectorized
+"""Backward-compatible particle-model aliases.
 
+The canonical implementations live in :mod:`pyrecest.models.likelihood`.
+This module keeps the historical import path ``pyrecest.models.particle`` from
+drifting away from the public model API.
+"""
 
-class LikelihoodMeasurementModel:
-    def __init__(self, likelihood):
-        self.likelihood = likelihood
+from .likelihood import LikelihoodMeasurementModel, SampleableTransitionModel
+
+__all__ = [
+    "LikelihoodMeasurementModel",
+    "SampleableTransitionModel",
+]
