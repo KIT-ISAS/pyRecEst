@@ -10,7 +10,9 @@ from pyrecest.filters import (
     DecorrelatedScGpTracker,
     FullSCGPTracker,
     GPRHMTracker,
+    MeasurementScore,
     SCGPTracker,
+    SCGPContourSample,
     ScGpTracker,
     MeasurementUpdateDiagnostics,
 )
@@ -206,6 +208,43 @@ class TestSCGPTracker(unittest.TestCase):
         )
         self.assertEqual(masked_tracker.last_active_measurement_indices, [1])
 
+    def test_score_measurements_does_not_mutate_tracker(self):
+        tracker = self._make_tracker()
+        state_before = array(tracker.state)
+        covariance_before = array(tracker.covariance)
+
+        score = tracker.score_measurements(
+            array([[1.4, 0.2], [0.1, 1.3]]),
+            measurement_weights=array([1.0, 0.0]),
+        )
+
+        self.assertIsInstance(score, MeasurementScore)
+        self.assertTrue(score.is_active)
+        self.assertEqual(score.active_measurement_indices, [0])
+        self.assertIsNotNone(score.quadratic_form)
+        self.assertIsNone(score.skipped_reason)
+        npt.assert_allclose(score.measurement_weights, array([1.0, 0.0]))
+        npt.assert_allclose(tracker.state, state_before, atol=1e-12)
+        npt.assert_allclose(tracker.covariance, covariance_before, atol=1e-12)
+        self.assertIsNone(tracker.last_active_measurement_indices)
+        self.assertIsNone(tracker.last_measurement_weights)
+        self.assertIsNone(tracker.last_quadratic_form)
+
+    def test_update_records_last_measurement_score(self):
+        tracker = self._make_tracker()
+
+        tracker.update(
+            array([[1.4, 0.2], [0.1, 1.3]]),
+            active_measurement_mask=array([True, False]),
+        )
+
+        self.assertIsInstance(tracker.last_measurement_score, MeasurementScore)
+        self.assertEqual(tracker.last_measurement_score.active_measurement_indices, [0])
+        npt.assert_allclose(
+            tracker.last_measurement_score.quadratic_form,
+            tracker.last_quadratic_form,
+        )
+
     def test_measurement_weights_validate_shape_and_values(self):
         tracker = self._make_tracker()
 
@@ -231,6 +270,21 @@ class TestSCGPTracker(unittest.TestCase):
         self.assertEqual(contour_points.shape, (9, 2))
         self.assertEqual(bounding_box["center_xy"].shape, (2,))
         self.assertEqual(bounding_box["dimension"].shape, (2,))
+
+    def test_full_tracker_samples_contour_geometry(self):
+        tracker = self._make_tracker()
+
+        sample = tracker.sample_contour(n=12)
+
+        self.assertIsInstance(sample, SCGPContourSample)
+        self.assertEqual(sample.points.shape, (12, 2))
+        self.assertEqual(sample.normals.shape, (12, 2))
+        self.assertEqual(sample.weights.shape, (12,))
+        self.assertEqual(sample.angles.shape, (12,))
+        self.assertEqual(sample.radii.shape, (12,))
+        self.assertEqual(sample.radius_derivatives.shape, (12,))
+        self.assertTrue(bool(all(sample.weights >= 0.0)))
+        npt.assert_allclose(linalg.norm(sample.normals, axis=1), array([1.0] * 12))
 
 
 if __name__ == "__main__":
