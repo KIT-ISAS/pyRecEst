@@ -175,6 +175,15 @@ def test_prod_accepts_tuple_axis():
     assert _to_python(result) == [252.0, 1440.0]
 
 
+def test_reductions_accept_numpy_integer_axis():
+    np = pytest.importorskip("numpy")
+    values = array([[1.0, 2.0], [3.0, 4.0]])
+
+    result = backend.max(values, axis=np.int64(0))
+
+    assert _to_python(result) == [3.0, 4.0]
+
+
 def test_default_cumprod_flattens_all_elements():
     values = array([[2.0, 3.0], [4.0, 5.0]])
 
@@ -488,6 +497,24 @@ def test_matvec_accepts_array_like_inputs():
     )
 
     assert _to_python(result) == [17.0, 39.0]
+
+
+def test_matvec_accepts_high_rank_vector_batches_for_shared_matrix():
+    matrix = array([[1.0, 2.0], [3.0, 4.0]])
+    vectors = array(
+        [
+            [[5.0, 6.0], [7.0, 8.0], [9.0, 10.0]],
+            [[11.0, 12.0], [13.0, 14.0], [15.0, 16.0]],
+        ]
+    )
+
+    result = backend.matvec(matrix, vectors)
+
+    assert result.shape == (2, 3, 2)
+    assert _to_python(result) == [
+        [[17.0, 39.0], [23.0, 53.0], [29.0, 67.0]],
+        [[35.0, 81.0], [41.0, 95.0], [47.0, 109.0]],
+    ]
 
 
 def test_batched_dot_uses_last_axis_inner_product():
