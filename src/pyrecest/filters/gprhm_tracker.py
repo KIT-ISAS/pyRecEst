@@ -11,7 +11,6 @@ from pyrecest.backend import (
     exp,
     eye,
     hstack,
-    isfinite,
     linalg,
     linspace,
     max,
@@ -29,6 +28,11 @@ from pyrecest.backend import (
 )
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
+from .measurement_reliability import (
+    normalize_active_measurement_mask,
+    normalize_measurement_noise_covariances,
+    normalize_measurement_weights,
+)
 from .update_diagnostics import MeasurementUpdateDiagnostics
 
 
@@ -614,77 +618,35 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         return measurement_jacobian, predicted_measurement, noise_covariance
 
     def _normalize_measurement_weights(self, measurement_weights, n_measurements):
-        if measurement_weights is None:
-            return ones(n_measurements)
-
-        weights = array(measurement_weights)
-        if weights.ndim == 0:
-            weights = ones(n_measurements) * float(weights)
-        else:
-            weights = reshape(weights, (-1,))
-            if weights.shape[0] != n_measurements:
-                raise ValueError(
-                    "measurement_weights must be scalar or have one entry per measurement"
-                )
-        if not bool(all(isfinite(weights))):
-            raise ValueError("measurement_weights must be finite")
-        if not bool(all(weights >= 0.0)):
-            raise ValueError("measurement_weights must be non-negative")
-        return weights
+        return normalize_measurement_weights(measurement_weights, n_measurements)
 
     def _normalize_active_measurement_mask(
         self, active_measurement_mask, n_measurements
     ):
-        if active_measurement_mask is None:
-            return [True] * n_measurements
-
-        mask = array(active_measurement_mask)
-        if mask.ndim == 0:
-            return [bool(mask)] * n_measurements
-        mask = reshape(mask, (-1,))
-        if mask.shape[0] != n_measurements:
-            raise ValueError(
-                "active_measurement_mask must be scalar or have one entry per measurement"
-            )
-        return [bool(mask[index]) for index in range(n_measurements)]
+        return normalize_active_measurement_mask(
+            active_measurement_mask,
+            n_measurements,
+        )
 
     def _normalize_measurement_noise_covariances(
         self,
         measurement_noise,
         n_measurements,
     ):
-        noise = array(measurement_noise)
-        if noise.ndim == 3:
-            expected_shape = (
-                n_measurements,
-                self.measurement_dim,
-                self.measurement_dim,
-            )
-            if noise.shape != expected_shape:
-                raise ValueError(
-                    f"R must have shape ({self.measurement_dim}, {self.measurement_dim}) "
-                    f"or ({n_measurements}, {self.measurement_dim}, {self.measurement_dim}) "
-                    "for per-measurement covariances"
-                )
-            return stack(
-                [
-                    self._as_covariance_matrix(
-                        noise[index],
-                        self.measurement_dim,
-                        f"R[{index}]",
-                        require_positive_semidefinite=False,
-                    )
-                    for index in range(n_measurements)
-                ]
+        def as_measurement_covariance(value, dim, name):
+            return self._as_covariance_matrix(
+                value,
+                dim,
+                name,
+                require_positive_semidefinite=False,
             )
 
-        shared_noise = self._as_covariance_matrix(
-            noise,
+        return normalize_measurement_noise_covariances(
+            measurement_noise,
+            n_measurements,
             self.measurement_dim,
-            "R",
-            require_positive_semidefinite=False,
+            as_covariance_matrix=as_measurement_covariance,
         )
-        return stack([shared_noise for _ in range(n_measurements)])
 
     def _stack_measurement_terms(
         self,

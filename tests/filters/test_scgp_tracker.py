@@ -121,6 +121,17 @@ class TestSCGPTracker(unittest.TestCase):
         self.assertEqual(masked_tracker.last_update_diagnostics.active_measurement_count, 1)
         npt.assert_allclose(masked_tracker.last_measurement_weights, array([1.0, 1.0]))
 
+    def test_update_reuses_generic_reliability_helpers(self):
+        tracker = self._make_tracker()
+
+        tracker.update(
+            array([[1.4, 0.2], [0.1, 1.3]]),
+            measurement_weights=array([1.0, 0.0]),
+        )
+
+        self.assertEqual(tracker.last_active_measurement_indices, [0])
+        npt.assert_allclose(tracker.last_measurement_weights, array([1.0, 0.0]))
+
     def test_zero_measurement_weight_skips_measurement(self):
         tracker = self._make_tracker()
         state_before = array(tracker.state)
