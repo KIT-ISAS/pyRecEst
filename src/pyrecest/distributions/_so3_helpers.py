@@ -26,10 +26,14 @@ def as_batch(values, width, name):
     """Return values with a fixed trailing width as a two-dimensional batch."""
     values = array(values, dtype=float)
     if ndim(values) == 1:
-        assert values.shape[0] == width, f"{name} must have length {width}."
+        if values.shape[0] != width:
+            raise ValueError(f"{name} must have length {width}.")
         values = reshape(values, (1, width))
+    elif ndim(values) == 0:
+        raise ValueError(f"{name} must have length {width}.")
     else:
-        assert values.shape[-1] == width, f"{name} must have length {width}."
+        if values.shape[-1] != width:
+            raise ValueError(f"{name} must have length {width}.")
         values = reshape(values, (-1, width))
     return values
 
@@ -96,7 +100,8 @@ def so3_exp_map_volume_log_jacobian(tangent_vectors):
     ``log(dV / dv)`` and preserves all leading dimensions of ``tangent_vectors``.
     """
     tangent_vectors = array(tangent_vectors, dtype=float)
-    assert tangent_vectors.shape[-1] == 3, "SO(3) tangent vectors must have length 3."
+    if ndim(tangent_vectors) == 0 or tangent_vectors.shape[-1] != 3:
+        raise ValueError("SO(3) tangent vectors must have length 3.")
 
     angles = linalg.norm(tangent_vectors, axis=-1)
     safe_angles = where(angles > 1e-8, angles, 1.0)
@@ -109,14 +114,14 @@ def exp_map_identity(tangent_vectors):
     """Map SO(3) tangent vectors at identity to scalar-last quaternions."""
     tangent_vectors = array(tangent_vectors, dtype=float)
     if ndim(tangent_vectors) == 1:
-        assert (
-            tangent_vectors.shape[0] == 3
-        ), "SO(3) tangent vectors must have length 3."
+        if tangent_vectors.shape[0] != 3:
+            raise ValueError("SO(3) tangent vectors must have length 3.")
         tangent_vectors = reshape(tangent_vectors, (1, 3))
+    elif ndim(tangent_vectors) == 0:
+        raise ValueError("SO(3) tangent vectors must have length 3.")
     else:
-        assert (
-            tangent_vectors.shape[-1] == 3
-        ), "SO(3) tangent vectors must have length 3."
+        if tangent_vectors.shape[-1] != 3:
+            raise ValueError("SO(3) tangent vectors must have length 3.")
 
     angles = linalg.norm(tangent_vectors, axis=-1)
     angles_col = reshape(angles, tuple(angles.shape) + (1,))
