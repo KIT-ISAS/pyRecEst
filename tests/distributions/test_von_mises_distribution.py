@@ -18,6 +18,12 @@ class TestVonMisesDistribution(unittest.TestCase):
         self.assertEqual(dist1.kappa, dist2.kappa)
         self.assertNotEqual(dist1.mu, dist2.mu)
 
+    def test_constructor_rejects_invalid_kappa(self):
+        for kappa in (-1.0, float("nan"), float("inf"), [1.0, 2.0]):
+            with self.subTest(kappa=kappa):
+                with self.assertRaises(ValueError):
+                    VonMisesDistribution(0.0, kappa)
+
     def test_pdf(self):
         dist = VonMisesDistribution(2, 1)
         xs = linspace(1, 7, 7)
@@ -52,6 +58,16 @@ class TestVonMisesDistribution(unittest.TestCase):
 
         npt.assert_allclose(dist.cdf(0.5), dist.cdf(array(0.5)))
         npt.assert_allclose(dist.cdf(xs), dist.cdf(array(xs)))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_cdf_rejects_matrix_inputs(self):
+        dist = VonMisesDistribution(0.3, 1.2)
+
+        with self.assertRaisesRegex(ValueError, "one-dimensional"):
+            dist.cdf(array([[0.5, 1.0]]))
 
     def test_uniform_trigonometric_moments(self):
         dist = VonMisesDistribution(2, 0)

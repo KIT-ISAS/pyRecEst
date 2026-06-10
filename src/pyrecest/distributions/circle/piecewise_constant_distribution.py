@@ -1,4 +1,6 @@
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
+from numbers import Integral
+
 import numpy as np
 import pyrecest.backend
 from pyrecest.backend import (
@@ -41,6 +43,21 @@ def _validate_positive_sample_count(n) -> int:
     return count_int
 
 
+def _validate_interval_index(m, n) -> tuple[int, int]:
+    if isinstance(m, bool) or isinstance(n, bool):
+        raise ValueError("m and n must be integers")
+    if not isinstance(m, Integral) or not isinstance(n, Integral):
+        raise ValueError("m and n must be integers")
+
+    m = int(m)
+    n = int(n)
+    if n <= 0:
+        raise ValueError("n must be positive")
+    if not 1 <= m <= n:
+        raise ValueError("m must satisfy 1 <= m <= n")
+    return m, n
+
+
 class PiecewiseConstantDistribution(AbstractCircularDistribution):
     """Piecewise constant (i.e. discrete) circular distribution, similar to a histogram.
 
@@ -63,8 +80,13 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Weight for each interval (will be normalized to form a valid pdf).
         """
         AbstractCircularDistribution.__init__(self)
-        w = array(w, dtype=float).ravel()
-        assert w.ndim == 1 and w.shape[0] > 0
+        w = array(w, dtype=float)
+        if w.ndim == 0:
+            w = w.reshape((1,))
+        elif w.ndim != 1:
+            raise ValueError("Weights must be a one-dimensional array")
+        if w.shape[0] == 0:
+            raise ValueError("Weights must not be empty")
         if any(not bool(isfinite(weight)) for weight in w):
             raise ValueError("Weights must be finite")
         if any(bool(weight < 0.0) for weight in w):
@@ -190,7 +212,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         float
             Left border of the m-th interval.
         """
-        assert 1 <= m <= n
+        m, n = _validate_interval_index(m, n)
         return 2.0 * pi / n * (m - 1)
 
     @staticmethod
@@ -209,7 +231,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         float
             Right border of the m-th interval.
         """
-        assert 1 <= m <= n
+        m, n = _validate_interval_index(m, n)
         return 2.0 * pi / n * m
 
     @staticmethod
@@ -228,7 +250,7 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
         float
             Center of the m-th interval.
         """
-        assert 1 <= m <= n
+        m, n = _validate_interval_index(m, n)
         return 2.0 * pi / n * (m - 0.5)
 
     @staticmethod

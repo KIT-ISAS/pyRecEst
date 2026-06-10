@@ -5,12 +5,14 @@ from typing import Union
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import (
+    all as backend_all,
     allclose,
     arange,
     array,
     exp,
     int32,
     int64,
+    isfinite,
     linalg,
     meshgrid,
     mod,
@@ -29,7 +31,8 @@ def _as_1d_mu(mu):
     mu = array(mu)
     if mu.ndim == 0:
         mu = mu.reshape((1,))
-    assert mu.ndim == 1, f"mu must be one-dimensional, but got shape {mu.shape}"
+    if mu.ndim != 1:
+        raise ValueError(f"mu must be one-dimensional, but got shape {mu.shape}")
     return mu
 
 
@@ -56,14 +59,24 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
 
         :param mu: Mean vector.
         :param C: Covariance matrix.
-        :raises AssertionError: If C_ is not square, not symmetric, not positive definite, or its dimension does not match with mu_.
+        :raises ValueError: If C_ is not square, not symmetric, not positive definite, or its dimension does not match with mu_.
         """
         mu = _as_1d_mu(mu)
         C = _as_2d_covariance(C)
-        assert C.ndim == 2 and C.shape[0] == C.shape[1], "C must be of shape (dim, dim)"
-        assert allclose(C, C.T, atol=1e-8), "C must be symmetric"
-        assert len(linalg.cholesky(C)) > 0, "C must be positive definite"
-        assert mu.shape == (C.shape[0],), "mu must be of shape (dim,)"
+        if C.ndim != 2 or C.shape[0] != C.shape[1]:
+            raise ValueError("C must be of shape (dim, dim)")
+        if not bool(backend_all(isfinite(C))):
+            raise ValueError("C must contain only finite values")
+        if not bool(allclose(C, C.T, atol=1e-8)):
+            raise ValueError("C must be symmetric")
+        try:
+            cholesky_factor = linalg.cholesky(C)
+        except Exception as exc:
+            raise ValueError("C must be positive definite") from exc
+        if not bool(backend_all(isfinite(cholesky_factor))):
+            raise ValueError("C must be positive definite")
+        if mu.shape != (C.shape[0],):
+            raise ValueError("mu must be of shape (dim,)")
         AbstractHypertoroidalDistribution.__init__(self, mu.shape[0])
         self.mu = mod(mu, 2.0 * pi)
         self.C = C
@@ -79,7 +92,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         HypertoroidalWNDistribution: A new instance of the distribution with the updated mean.
         """
         mu = _as_1d_mu(mu)
-        assert mu.shape == (self.dim,), "mu must be of shape (dim,)"
+        if mu.shape != (self.dim,):
+            raise ValueError("mu must be of shape (dim,)")
         dist = copy.deepcopy(self)
         dist.mu = mod(mu, 2.0 * pi)
         return dist
@@ -137,7 +151,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         return int(n)
 
     def convolve(self, other: "HypertoroidalWrappedNormalDistribution"):
-        assert self.dim == other.dim, "Dimensions of the two distributions must match"
+        if self.dim != other.dim:
+            raise ValueError("Dimensions of the two distributions must match")
         mu_ = (self.mu + other.mu) % (2.0 * pi)
         C_ = self.C + other.C
         dist_result = self.__class__(mu_, C_)
@@ -154,7 +169,8 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         HypertoroidalWNDistribution: A new instance of the distribution with the updated mode.
         """
         m = _as_1d_mu(m)
-        assert m.shape == (self.dim,), "m must be of shape (dim,)"
+        if m.shape != (self.dim,):
+            raise ValueError("m must be of shape (dim,)")
         dist = copy.deepcopy(self)
         dist.mu = mod(m, 2.0 * pi)
         return dist
@@ -167,7 +183,9 @@ class HypertoroidalWrappedNormalDistribution(AbstractHypertoroidalDistribution):
         :param n: Integer moment order
         :return: Trigonometric moment
         """
-        assert isinstance(n, int), "n must be an integer"
+        if isinstance(n, bool) or not isinstance(n, Integral):
+            raise ValueError("n must be an integer")
+        n = int(n)
 
         m = exp(
             array(

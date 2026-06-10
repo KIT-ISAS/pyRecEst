@@ -89,6 +89,21 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "non-negative integer"):
                     dist.pdf(0.2, m=m)
 
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_cases = [
+            ([[0.0, 1.0]], [[1.0]], "one-dimensional"),
+            ([0.0], [1.0, 2.0], "shape"),
+            ([0.0], [[float("inf")]], "finite"),
+            ([0.0, 1.0], [[1.0, 0.2], [0.1, 1.0]], "symmetric"),
+            ([0.0, 1.0], [[1.0, 2.0], [2.0, 1.0]], "positive definite"),
+            ([0.0], [[1.0, 0.0], [0.0, 1.0]], "shape"),
+        ]
+
+        for mu, C, message in invalid_cases:
+            with self.subTest(mu=mu, C=C):
+                with self.assertRaisesRegex(ValueError, message):
+                    HypertoroidalWNDistribution(mu, C)
+
     def test_vector_pdf_accepts_single_point_sequence(self):
         dist = HypertoroidalWNDistribution(
             array([0.3, 0.4]), array([[0.7, 0.0], [0.0, 0.5]])
@@ -124,6 +139,27 @@ class TestHypertoroidalWNDistribution(unittest.TestCase):
             with self.subTest(n=n):
                 with self.assertRaisesRegex(ValueError, "positive integer"):
                     dist.sample(n)
+
+    def test_operations_reject_dimension_mismatches(self):
+        dist = HypertoroidalWNDistribution([1.0, 2.0], [[0.5, 0.1], [0.1, 0.6]])
+        one_dimensional = HypertoroidalWNDistribution(0.3, 0.7)
+
+        with self.assertRaisesRegex(ValueError, "shape"):
+            dist.set_mean([0.1])
+        with self.assertRaisesRegex(ValueError, "shape"):
+            dist.set_mode([0.1])
+        with self.assertRaisesRegex(ValueError, "Dimensions"):
+            dist.convolve(one_dimensional)
+
+    def test_trigonometric_moment_rejects_invalid_order(self):
+        dist = HypertoroidalWNDistribution([1.0, 2.0], [[0.5, 0.1], [0.1, 0.6]])
+
+        npt.assert_allclose(dist.trigonometric_moment(np.int64(1)), dist.trigonometric_moment(1))
+
+        for n in (True, 1.5, [1]):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "integer"):
+                    dist.trigonometric_moment(n)
 
     def test_shift_accepts_scalar_for_one_dimensional_distribution(self):
         dist = HypertoroidalWNDistribution(0.3, 0.7)
