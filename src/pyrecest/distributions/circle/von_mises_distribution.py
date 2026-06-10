@@ -42,7 +42,9 @@ class VonMisesDistribution(AbstractCircularDistribution):
         kappa,
         norm_const: float | None = None,
     ):
-        assert kappa >= 0.0
+        kappa_scalar = self._as_float_scalar(kappa, "kappa")
+        if kappa_scalar < 0.0:
+            raise ValueError("kappa must be nonnegative.")
         super().__init__()
         self.mu = mu
         self.kappa = kappa
@@ -102,7 +104,8 @@ class VonMisesDistribution(AbstractCircularDistribution):
             cdf evaluated at columns of xs
         """
         xs = array(xs)
-        assert xs.ndim <= 1
+        if xs.ndim > 1:
+            raise ValueError("xs must be a scalar or one-dimensional array")
 
         r = zeros_like(xs)
 

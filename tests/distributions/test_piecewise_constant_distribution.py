@@ -46,6 +46,8 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
 
     def test_constructor_rejects_invalid_weights(self):
         for invalid_weights, message in [
+            (array([]), "empty"),
+            (array([[1.0, 2.0]]), "one-dimensional"),
             (array([1.0, -0.5, 1.0]), "nonnegative"),
             (array([0.0, 0.0]), "positive total mass"),
             (array([float("nan"), 1.0]), "finite"),
@@ -111,6 +113,20 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         self.assertAlmostEqual(
             PiecewiseConstantDistribution.right_border(2, 2), 1.0 * 2.0 * pi
         )
+
+    def test_interval_borders_reject_invalid_indices(self):
+        helpers = [
+            PiecewiseConstantDistribution.left_border,
+            PiecewiseConstantDistribution.interval_center,
+            PiecewiseConstantDistribution.right_border,
+        ]
+        invalid_args = [(0, 2), (3, 2), (1, 0), (1.5, 2), (1, 2.5), (True, 2)]
+
+        for helper in helpers:
+            for m, n in invalid_args:
+                with self.subTest(helper=helper.__name__, m=m, n=n):
+                    with self.assertRaises(ValueError):
+                        helper(m, n)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
