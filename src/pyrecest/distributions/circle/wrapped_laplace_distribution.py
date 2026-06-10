@@ -27,12 +27,8 @@ class WrappedLaplaceDistribution(AbstractCircularDistribution):
 
     def __init__(self, lambda_, kappa_):
         AbstractCircularDistribution.__init__(self)
-        lambda_ = asarray(lambda_)
-        kappa_ = asarray(kappa_)
-        assert lambda_.shape in ((1,), ())
-        assert kappa_.shape in ((1,), ())
-        assert lambda_ > 0.0
-        assert kappa_ > 0.0
+        lambda_ = _validate_positive_scalar(lambda_, "lambda_")
+        kappa_ = _validate_positive_scalar(kappa_, "kappa_")
         self.lambda_ = lambda_
         self.kappa = kappa_
 

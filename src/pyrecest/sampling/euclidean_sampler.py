@@ -439,18 +439,14 @@ class FibonacciGridSampler(AbstractEuclideanSampler):
         xy_gauss : np.ndarray of shape (d, n_points)
             Gaussian grid on R^d with the given covariance and mean.
         """
-        d = int(d)
-        n_points = int(n_points)
+        d = _validate_integral_argument(d, "d")
+        n_points = _validate_integral_argument(n_points, "n_points")
         if d < 1:
             raise ValueError("d must be positive")
         if n_points < 0:
             raise ValueError("n_points must be nonnegative")
 
-        if covariance is None:
-            covariance = np.eye(d)
-        if mean is None:
-            mean = np.zeros(d)
-        mean = np.asarray(mean, dtype=float).ravel()
+        covariance, mean = _validate_gaussian_transform_args(d, covariance, mean)
 
         if n_points == 0:
             empty_arr = np.empty((d, 0))

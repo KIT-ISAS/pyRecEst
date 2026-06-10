@@ -33,7 +33,9 @@ class CustomHyperhemisphericalDistribution(
         :param xs: points where the pdf will be calculated.
         :return: numpy.ndarray: pdf values at given points.
         """
-        assert xs.shape[-1] == self.dim + 1
+        xs = asarray(xs)
+        if xs.ndim == 0 or xs.shape[-1] != self.dim + 1:
+            raise ValueError("Invalid shape of input data points.")
         p = asarray(self.scale_by * self.f(xs))
         assert p.ndim <= 1, "Output format of pdf is not as expected"
         return p

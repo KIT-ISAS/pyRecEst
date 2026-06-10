@@ -284,6 +284,9 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @staticmethod
     def a_d(d: Union[int, int32, int64], kappa):
         """Return the ratio of modified Bessel functions used by vMF moments."""
+        if kappa <= VonMisesFisherDistribution._KAPPA_EPS:
+            return array(0.0)
+
         bessel1 = array(ive(d / 2, kappa))
         bessel2 = array(ive(d / 2 - 1, kappa))
         if isnan(bessel1) or isnan(bessel2):

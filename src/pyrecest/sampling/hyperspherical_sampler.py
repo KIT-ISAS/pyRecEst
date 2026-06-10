@@ -232,10 +232,8 @@ class SphericalCoordinatesBasedFixedResolutionSampler(
             raise ValueError(
                 "grid_density_parameter must contain exactly two entries"
             ) from exc
-        res_lon = int(res_lon)
-        res_lat = int(res_lat)
-        if res_lon <= 0 or res_lat <= 0:
-            raise ValueError("grid resolution entries must be positive")
+        res_lon = _validate_positive_integral_scalar(res_lon, "res_lon")
+        res_lat = _validate_positive_integral_scalar(res_lat, "res_lat")
         phi_values = linspace(0.0, 2 * pi, num=res_lon, endpoint=False)
         theta_values = linspace(pi / (res_lat + 1), pi, num=res_lat, endpoint=False)
         phi_theta_stacked = array(list(itertools.product(phi_values, theta_values)))
