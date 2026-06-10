@@ -1026,7 +1026,7 @@ def prod(x, axis=None, dtype=None, out=None, keepdims=False):
         result = cast(x, dtype=dtype) if dtype is not None else x.clone()
         return _reduction_result(result, out)
     if axis is None:
-        result = _torch.prod(x, dtype=dtype)
+        result = _torch.prod(x) if dtype is None else _torch.prod(x, dtype=dtype)
         if keepdims:
             result = result.reshape((1,) * x.ndim)
         return _reduction_result(result, out)
