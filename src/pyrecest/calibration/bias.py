@@ -111,7 +111,12 @@ class SensorBiasCorrectionModel:
         values = _as_2d(measurements, "measurements")
         if values.shape[1] != self.target_dim:
             raise ValueError("measurements have incompatible target dimension")
-        bias = self.predict(features, n_rows=values.shape[0])
+        try:
+            bias = self.predict(features, n_rows=values.shape[0])
+        except ValueError as exc:
+            if str(exc) == "features rows must match requested row count":
+                raise ValueError(_FEATURE_ROW_COUNT_ERROR) from exc
+            raise
         if bias.shape != values.shape:
             raise ValueError(_FEATURE_ROW_COUNT_ERROR)
         corrected = values.copy()
