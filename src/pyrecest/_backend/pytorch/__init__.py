@@ -785,11 +785,13 @@ def einsum(equation, *inputs):
 
 
 def transpose(x, axes=None):
-    if axes:
+    if not is_array(x):
+        x = array(x)
+    if axes is not None:
         return x.permute(axes)
     if x.dim() == 1:
         return x
-    if x.dim() > 2 and axes is None:
+    if x.dim() > 2:
         return x.permute(tuple(range(x.ndim)[::-1]))
     return x.t()
 
@@ -931,6 +933,8 @@ def meshgrid(*arrays, indexing="xy"):
 
 
 def ndim(x):
+    if not is_array(x):
+        x = array(x)
     return x.dim()
 
 
