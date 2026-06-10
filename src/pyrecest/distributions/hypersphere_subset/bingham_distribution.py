@@ -11,6 +11,7 @@ from pyrecest.backend import (
     diag,
     exp,
     eye,
+    isfinite,
     linalg,
     max,
     sum,
@@ -56,6 +57,14 @@ def _validate_positive_sample_count(n) -> int:
     if count_int <= 0:
         raise ValueError("n must be positive")
     return count_int
+
+
+def _as_python_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
 
 
 @lru_cache(maxsize=4096)
@@ -156,17 +165,26 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
     def __init__(self, Z, M):
         Z = array(Z)
         M = array(M)
-        AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
-        assert M.shape[1] == self.input_dim, "M is not square"
-        assert Z.shape[0] == self.input_dim, "Z has wrong length"
-        assert Z.ndim == 1, "Z needs to be a 1-D vector"
-        assert Z[-1] == 0, "Last entry of Z needs to be zero"
-        assert all(Z[:-1] <= Z[1:]), "Values in Z have to be ascending"
+        if M.ndim != 2 or M.shape[0] != M.shape[1]:
+            raise ValueError("M must be square")
+        if Z.ndim != 1:
+            raise ValueError("Z needs to be a 1-D vector")
+        if Z.shape[0] != M.shape[0]:
+            raise ValueError("Z has wrong length")
+        if not _as_python_bool(all(isfinite(Z))) or not _as_python_bool(all(isfinite(M))):
+            raise ValueError("Z and M must contain only finite values")
+        if not _as_python_bool(abs(Z[-1]) <= 1e-12):
+            raise ValueError("Last entry of Z needs to be zero")
+        if not _as_python_bool(all(Z[:-1] <= Z[1:])):
+            raise ValueError("Values in Z have to be ascending")
+
+        AbstractHypersphericalDistribution.__init__(self, M.shape[0] - 1)
 
         # Verify that M is orthogonal
         epsilon = array(0.001)
-        assert max(abs(M @ M.T - eye(self.dim + 1))) < epsilon, "M is not orthogonal"
+        if not _as_python_bool(max(abs(M @ M.T - eye(self.dim + 1))) < epsilon):
+            raise ValueError("M is not orthogonal")
 
         self.Z = Z
         self.M = M
@@ -232,7 +250,8 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         return axis
 
     def multiply(self, B2):
-        assert isinstance(B2, BinghamDistribution)
+        if not isinstance(B2, BinghamDistribution):
+            raise ValueError("B2 must be a BinghamDistribution")
         if self.dim != B2.dim:
             raise ValueError("Dimensions do not match")
 
@@ -344,9 +363,12 @@ class BinghamDistribution(AbstractHypersphericalDistribution):
         Returns:
             BinghamDistribution: composed distribution
         """
-        assert isinstance(B2, BinghamDistribution)
-        assert self.dim == B2.dim, "Dimensions must match"
-        assert self.dim in (1, 3), "Compose only supported for 2D and 4D distributions"
+        if not isinstance(B2, BinghamDistribution):
+            raise ValueError("B2 must be a BinghamDistribution")
+        if self.dim != B2.dim:
+            raise ValueError("Dimensions must match")
+        if self.dim not in (1, 3):
+            raise ValueError("Compose only supported for 2D and 4D distributions")
 
         d2 = B2.dF / B2.F
         d2 = d2 / sum(d2)
