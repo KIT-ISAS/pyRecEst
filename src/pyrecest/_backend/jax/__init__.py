@@ -209,6 +209,59 @@ def unique(ar, *args, **kwargs):
     return _jnp.unique(_jnp.asarray(ar), *args, **kwargs)
 
 
+def _asarray_or_none(value):
+    return None if value is None else _jnp.asarray(value)
+
+
+def cov(
+    m,
+    y=None,
+    rowvar=True,
+    bias=False,
+    ddof=None,
+    fweights=None,
+    aweights=None,
+    dtype=None,
+):
+    return _jnp.cov(
+        _jnp.asarray(m),
+        y=_asarray_or_none(y),
+        rowvar=rowvar,
+        bias=bias,
+        ddof=ddof,
+        fweights=_asarray_or_none(fweights),
+        aweights=_asarray_or_none(aweights),
+        dtype=dtype,
+    )
+
+
+def diagonal(a, offset=0, axis1=0, axis2=1):
+    return _jnp.diagonal(_jnp.asarray(a), offset=offset, axis1=axis1, axis2=axis2)
+
+
+def squeeze(a, axis=None):
+    return _jnp.squeeze(_jnp.asarray(a), axis=axis)
+
+
+def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
+    return _jnp.trace(
+        _jnp.asarray(a),
+        offset=offset,
+        axis1=axis1,
+        axis2=axis2,
+        dtype=dtype,
+        out=out,
+    )
+
+
+def tril(m, k=0):
+    return _jnp.tril(_jnp.asarray(m), k=k)
+
+
+def triu(m, k=0):
+    return _jnp.triu(_jnp.asarray(m), k=k)
+
+
 def argmax(a, axis=None, out=None, keepdims=False, **kwargs):
     result = _jnp.argmax(_jnp.asarray(a), axis=axis, keepdims=keepdims, **kwargs)
     if out is not None:

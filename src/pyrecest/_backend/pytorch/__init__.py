@@ -237,7 +237,12 @@ def std(
 
 
 def cov(input, correction=1, fweights=None, aweights=None, bias=False):
-    # for pyrecest
+    input = array(input)
+    if fweights is not None:
+        fweights = asarray(fweights, device=input.device)
+    if aweights is not None:
+        aweights = asarray(aweights, dtype=input.dtype, device=input.device)
+
     if not bias:
         return _torch.cov(
             input, correction=correction, fweights=fweights, aweights=aweights
@@ -247,9 +252,7 @@ def cov(input, correction=1, fweights=None, aweights=None, bias=False):
     if aweights is None:
         aweights = ones(input.shape[1], dtype=input.dtype, device=input.device)
     else:
-        aweights = asarray(
-            aweights, dtype=input.dtype, device=input.device
-        ).clone()
+        aweights = copy(aweights)
 
     # Ensure weights sum to 1
     aweights = aweights / sum(aweights)
@@ -800,13 +803,15 @@ def transpose(x, axes=None):
 
 def squeeze(x, axis=None):
     if not is_array(x):
-        return x
+        x = array(x)
     if axis is None:
         return _torch.squeeze(x)
     return _torch.squeeze(x, dim=axis)
 
 
 def trace(x):
+    if not is_array(x):
+        x = array(x)
     if x.ndim == 2:
         return _torch.trace(x)
 
@@ -879,10 +884,14 @@ def diag_indices(*args, **kwargs):
 
 
 def tril(mat, k=0):
+    if not is_array(mat):
+        mat = array(mat)
     return _torch.tril(mat, diagonal=k)
 
 
 def triu(mat, k=0):
+    if not is_array(mat):
+        mat = array(mat)
     return _torch.triu(mat, diagonal=k)
 
 
@@ -946,6 +955,8 @@ def hsplit(x, indices_or_sections):
 
 
 def diagonal(x, offset=0, axis1=0, axis2=1):
+    if not is_array(x):
+        x = array(x)
     return _torch.diagonal(x, offset=offset, dim1=axis1, dim2=axis2)
 
 
@@ -1320,7 +1331,10 @@ def mat_from_diag_triu_tril(diag, tri_upp, tri_low):
     n = diag.shape[-1]
     (i,) = diag_indices(n, ndim=1)
     j, k = triu_indices(n, k=1)
-    mat = _torch.zeros((diag.shape + (n,)), dtype=diag.dtype)
+    i = i.to(device=diag.device)
+    j = j.to(device=diag.device)
+    k = k.to(device=diag.device)
+    mat = _torch.zeros((diag.shape + (n,)), dtype=diag.dtype, device=diag.device)
     mat[..., i, i] = diag
     mat[..., j, k] = tri_upp
     mat[..., k, j] = tri_low

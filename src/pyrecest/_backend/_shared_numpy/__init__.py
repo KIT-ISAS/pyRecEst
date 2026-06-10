@@ -84,6 +84,7 @@ def from_numpy(x):
 
 
 def squeeze(x, axis=None):
+    x = _np.asarray(x)
     if axis is None:
         return _np.squeeze(x)
     if x.shape[axis] != 1:
