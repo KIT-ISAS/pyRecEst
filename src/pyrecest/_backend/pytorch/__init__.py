@@ -1440,9 +1440,43 @@ def _torch_pad_width(pad_width, ndim_):
     return [int(value) for pair in reversed(pad_pairs.tolist()) for value in pair]
 
 
+def _trim_leading_zero_pad_pairs_for_nonconstant_mode(torch_pad_width, ndim_):
+    """Drop zero-padded leading axes unsupported by PyTorch nonconstant padding."""
+
+    # ``torch.nn.functional.pad`` supports nonconstant modes only for a suffix
+    # of dimensions.  PyRecEst accepts NumPy-style per-axis pad widths, so a
+    # common image-shaped request such as ``((0, 0), (0, 0), (1, 1), (1, 1))``
+    # becomes ``[1, 1, 1, 1, 0, 0, 0, 0]`` for PyTorch.  The trailing zero pairs
+    # address leading axes and must be stripped before calling PyTorch.
+    min_supported_pairs = {
+        2: 1,
+        3: 1,
+        4: 2,
+        5: 3,
+    }.get(ndim_)
+    if min_supported_pairs is None:
+        return torch_pad_width
+
+    pad_pairs = [
+        torch_pad_width[index : index + 2]
+        for index in range(0, len(torch_pad_width), 2)
+    ]
+    while len(pad_pairs) > min_supported_pairs and pad_pairs[-1] == [0, 0]:
+        pad_pairs.pop()
+
+    return [value for pair in pad_pairs for value in pair]
+
+
 def pad(a, pad_width, mode="constant", constant_values=0.0):
     a = array(a)
     torch_pad_width = _torch_pad_width(pad_width, a.ndim)
+    if mode != "constant":
+        torch_pad_width = _trim_leading_zero_pad_pairs_for_nonconstant_mode(
+            torch_pad_width,
+            a.ndim,
+        )
+        return _torch.nn.functional.pad(a, torch_pad_width, mode=mode)
+
     return _torch.nn.functional.pad(
         a, torch_pad_width, mode=mode, value=constant_values
     )

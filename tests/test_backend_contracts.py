@@ -72,6 +72,23 @@ def test_pytorch_to_numpy_resolves_conjugate_views():
     assert converted.tolist() == [1.0 - 2.0j, 3.0 + 4.0j]
 
 
+def test_pytorch_logm_backward_handles_high_rank_batches():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific logm gradient regression test")
+
+    torch = pytest.importorskip("torch")
+
+    values = torch.eye(2, dtype=torch.float64).repeat(2, 3, 1, 1)
+    values.requires_grad_(True)
+
+    result = linalg.logm(values)
+    result.sum().backward()
+
+    assert values.grad is not None
+    assert values.grad.shape == values.shape
+    assert bool(torch.isfinite(values.grad).all())
+
+
 def _to_python(value):
     value = backend.to_numpy(value)
     if hasattr(value, "tolist"):
@@ -318,6 +335,24 @@ def test_pad_uses_per_axis_pad_pairs_in_numpy_order():
 def test_pad_rejects_negative_widths():
     with pytest.raises(ValueError):
         backend.pad(array([1, 2, 3]), (-1, 0))
+
+
+def test_pytorch_pad_reflects_spatial_dimensions_with_unpadded_leading_axes():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific nonconstant pad regression test")
+
+    values = backend.reshape(backend.arange(9.0), (1, 1, 3, 3))
+
+    result = backend.pad(values, ((0, 0), (0, 0), (1, 1), (1, 1)), mode="reflect")
+
+    assert result.shape == (1, 1, 5, 5)
+    assert _to_python(result[0, 0]) == [
+        [4.0, 3.0, 4.0, 5.0, 4.0],
+        [1.0, 0.0, 1.0, 2.0, 1.0],
+        [4.0, 3.0, 4.0, 5.0, 4.0],
+        [7.0, 6.0, 7.0, 8.0, 7.0],
+        [4.0, 3.0, 4.0, 5.0, 4.0],
+    ]
 
 
 def test_cross_uses_trailing_vector_axis_for_batched_vectors():
