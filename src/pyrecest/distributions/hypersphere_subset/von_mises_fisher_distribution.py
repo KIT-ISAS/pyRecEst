@@ -18,6 +18,7 @@ from pyrecest.backend import (
     exp,
     int32,
     int64,
+    isfinite,
     isnan,
     linalg,
     ndim,
@@ -31,6 +32,38 @@ from pyrecest.backend import (
 from scipy.special import iv, ive
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
+
+
+def _as_python_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
+def _as_finite_scalar(value, name: str) -> float:
+    try:
+        scalar = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a finite scalar.") from exc
+
+    if not math.isfinite(scalar):
+        raise ValueError(f"{name} must be finite.")
+    return scalar
+
+
+def _as_unit_direction(mu, *, name: str = "mu", tolerance: float = 1e-6):
+    mu = array(mu)
+    if ndim(mu) != 1:
+        raise ValueError(f"{name} must be a vector")
+    if mu.shape[0] < 2:
+        raise ValueError(f"{name} must be at least two-dimensional")
+    if not _as_python_bool(all(isfinite(mu))):
+        raise ValueError(f"{name} must contain only finite values")
+    if not _as_python_bool(abs(linalg.norm(mu) - 1.0) < tolerance):
+        raise ValueError(f"{name} must be normalized")
+    return mu
 
 
 class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
@@ -63,20 +96,16 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             mass around ``mu``. ``kappa == 0`` is the uniform distribution on the
             hypersphere.
         """
-        mu = array(mu)
-        epsilon = 1e-6
-        assert mu.ndim == 1, "mu must be a vector"
-        assert (
-            mu.shape[0] >= 2
-        ), "mu must be at least two-dimensional for the circular case"
-        assert kappa >= 0, "kappa must be a nonnegative scalar"
-        assert abs(linalg.norm(mu) - 1.0) < epsilon, "mu must be a normalized"
+        mu = _as_unit_direction(mu)
+        kappa_scalar = _as_finite_scalar(kappa, "kappa")
+        if kappa_scalar < 0.0:
+            raise ValueError("kappa must be a nonnegative scalar")
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
 
         self.mu = mu
         self.kappa = kappa
 
-        if kappa <= self._KAPPA_EPS:
+        if kappa_scalar <= self._KAPPA_EPS:
             self.C = 1.0 / self.compute_unit_hypersphere_surface(self.dim)
         elif self.dim == 2:
             self.C = kappa / (4 * pi * sinh(kappa))
@@ -124,9 +153,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         Sampling currently requires the NumPy backend and SciPy's
         ``vonmises_fisher`` implementation.
         """
-        assert (
-            pyrecest.backend.__backend_name__ == "numpy"
-        ), "Only supported on NumPy backend"
+        if pyrecest.backend.__backend_name__ != "numpy":
+            raise NotImplementedError("sample is only supported on the NumPy backend.")
 
         if self.kappa <= self._KAPPA_EPS:
             from .hyperspherical_uniform_distribution import (
@@ -186,7 +214,8 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     @staticmethod
     def from_distribution(d):
         """Fit a von Mises-Fisher distribution to mean-resultant information."""
-        assert d.input_dim >= 2, "mu must be at least 2-D for the circular case"
+        if d.input_dim < 2:
+            raise ValueError("mu must be at least 2-D for the circular case")
 
         m = d.mean_resultant_vector()
         return VonMisesFisherDistribution.from_mean_resultant_vector(m)
@@ -209,8 +238,12 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
             distribution and therefore receives an arbitrary stored direction.
         """
         m = array(m)
-        assert ndim(m) == 1, "mu must be a vector"
-        assert len(m) >= 2, "mu must be at least 2 for the circular case"
+        if ndim(m) != 1:
+            raise ValueError("mu must be a vector")
+        if len(m) < 2:
+            raise ValueError("mu must be at least 2 for the circular case")
+        if not _as_python_bool(all(isfinite(m))):
+            raise ValueError("mu must contain only finite values")
 
         mean_res_length = linalg.norm(m)
         if mean_res_length <= VonMisesFisherDistribution._KAPPA_EPS:
@@ -230,23 +263,26 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
 
     def set_mean(self, new_mean):
         """Replace the mean direction and return the distribution."""
-        new_mean = array(new_mean)
-        assert new_mean.shape == self.mu.shape
+        new_mean = _as_unit_direction(new_mean, name="new_mean")
+        if new_mean.shape != self.mu.shape:
+            raise ValueError("new_mean must have the same shape as mu")
         dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mean)
         return dist
 
     def set_mode(self, new_mode):
         """Replace the modal direction and return the distribution."""
-        new_mode = array(new_mode)
-        assert new_mode.shape == self.mu.shape
+        new_mode = _as_unit_direction(new_mode, name="new_mode")
+        if new_mode.shape != self.mu.shape:
+            raise ValueError("new_mode must have the same shape as mu")
         dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mode)
         return dist
 
     def multiply(self, other: "VonMisesFisherDistribution"):
         """Multiply two vMF densities and return the normalized product."""
-        assert self.mu.shape == other.mu.shape
+        if self.mu.shape != other.mu.shape:
+            raise ValueError("Dimensions must match")
 
         mu_ = self.kappa * self.mu + other.kappa * other.mu
         kappa_ = linalg.norm(mu_)
@@ -263,13 +299,15 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         ``other`` must be zonal around the final coordinate axis unless either
         operand is uniform. Convolution with a uniform density is uniform.
         """
-        assert all(self.mu.shape == other.mu.shape)
+        if self.mu.shape != other.mu.shape:
+            raise ValueError("Dimensions must match")
         if self.kappa <= self._KAPPA_EPS or other.kappa <= self._KAPPA_EPS:
             return VonMisesFisherDistribution(
                 self._default_mean_direction(self.input_dim), 0.0
             )
 
-        assert other.mu[-1] == 1, "Other is not zonal"
+        if not _as_python_bool(abs(other.mu[-1] - 1.0) < 1e-8):
+            raise ValueError("Other is not zonal")
         d = self.dim + 1
 
         mu_ = self.mu
