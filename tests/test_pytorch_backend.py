@@ -178,6 +178,17 @@ class TestPytorchBackendCopy(unittest.TestCase):
 
 
 @unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
+class TestPytorchBackendArrayLikeInputs(unittest.TestCase):
+    def test_ndim_accepts_python_sequence(self):
+        self.assertEqual(pytorch_backend.ndim([[1, 2], [3, 4]]), 2)
+
+    def test_transpose_accepts_python_sequence(self):
+        result = pytorch_backend.transpose([[1, 2, 3], [4, 5, 6]])
+
+        self.assertEqual(result.tolist(), [[1, 4], [2, 5], [3, 6]])
+
+
+@unittest.skipIf(pytorch_backend is None, "PyTorch is not installed")
 class TestPytorchBackendRandom(unittest.TestCase):
     def test_randint_matches_numpy_scalar_contract(self):
         sample = pytorch_backend.random.randint(0, 5)
