@@ -111,6 +111,42 @@ class TestPytorchBackendReductions(unittest.TestCase):
                 self.assertEqual(tuple(result.shape), (3,))
                 self.assertEqual(result.tolist(), [False, False, True])
 
+    def test_reductions_accept_keepdims_keyword_directly(self):
+        values = pytorch_backend.array(
+            [[[0, 1], [2, 0]], [[3, 4], [0, 0]]], dtype=pytorch_backend.int64
+        )
+
+        self.assertEqual(
+            pytorch_backend.any(values, axis=(0, 2), keepdims=True).tolist(),
+            [[[True], [True]]],
+        )
+        self.assertEqual(
+            pytorch_backend.all(values >= 0, axis=(0, 2), keepdims=True).tolist(),
+            [[[True], [True]]],
+        )
+
+        max_out = pytorch_backend.empty((1, 2, 1), dtype=values.dtype)
+        max_result = pytorch_backend.max(
+            values, axis=(0, 2), keepdims=True, out=max_out
+        )
+        self.assertIs(max_result, max_out)
+        self.assertEqual(max_result.tolist(), [[[4], [2]]])
+
+        min_result = pytorch_backend.min(values, axis=(0, 2), keepdims=True)
+        self.assertEqual(min_result.tolist(), [[[0], [0]]])
+
+        prod_out = pytorch_backend.empty((1, 2, 1), dtype=pytorch_backend.float64)
+        prod_result = pytorch_backend.prod(
+            values + 1,
+            axis=(0, 2),
+            dtype=pytorch_backend.float64,
+            keepdims=True,
+            out=prod_out,
+        )
+        self.assertIs(prod_result, prod_out)
+        self.assertEqual(prod_result.dtype, pytorch_backend.float64)
+        self.assertEqual(prod_result.tolist(), [[[40.0], [3.0]]])
+
     def test_quantile_accepts_numpy_style_method_axis_and_keepdims(self):
         values = pytorch_backend.array(
             list(range(24)), dtype=pytorch_backend.float64
