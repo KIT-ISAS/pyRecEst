@@ -148,8 +148,7 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
     def sample_deterministic(self):
         """Return deterministic sigma points matched to the mean direction."""
         n_samples = self.dim * 2 + 1
-        samples = zeros((self.input_dim, n_samples))
-        samples[0, 0] = 1.0
+        columns = [array([1.0] + [0.0] * self.dim)]
 
         mean_res_length = self.a_d(self.input_dim, self.kappa)
         cos_alpha = clip(
@@ -159,14 +158,14 @@ class VonMisesFisherDistribution(AbstractHypersphericalDistribution):
         )
         alpha = arccos(cos_alpha)
         for i in range(self.dim):
-            positive_col = 2 * i + 1
-            negative_col = positive_col + 1
             tangent_row = i + 1
-            samples[0, positive_col] = cos(alpha)
-            samples[0, negative_col] = cos(alpha)
-            samples[tangent_row, positive_col] = sin(alpha)
-            samples[tangent_row, negative_col] = -sin(alpha)
+            positive = [cos(alpha)] + [0.0] * self.dim
+            negative = [cos(alpha)] + [0.0] * self.dim
+            positive[tangent_row] = sin(alpha)
+            negative[tangent_row] = -sin(alpha)
+            columns.extend((array(positive), array(negative)))
 
+        samples = concatenate(tuple(column[:, None] for column in columns), axis=1)
         Q = self.get_rotation_matrix()
         samples = Q @ samples
         return samples.T
