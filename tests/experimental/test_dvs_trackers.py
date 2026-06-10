@@ -65,6 +65,23 @@ class TestDVSFullSCGPTracker(unittest.TestCase):
         self.assertGreater(tracker.last_event_activities[0], 0.99)
         self.assertLess(tracker.last_event_activities[1], 1e-6)
 
+    def test_update_temporary_scale_parameters_do_not_mutate_tracker_defaults(self):
+        tracker = self._make_tracker()
+        default_scale_mean = tracker.scale_mean
+        default_scale_variance = tracker.scale_variance
+
+        tracker.update(
+            array([1.2, 0.0]),
+            event_velocity=array([1.0, 0.0]),
+            s_hat=0.75,
+            sigma_squared_s=0.1,
+        )
+
+        self.assertEqual(tracker.scale_mean, default_scale_mean)
+        self.assertEqual(tracker.scale_variance, default_scale_variance)
+        self.assertEqual(tracker.last_active_measurement_indices, [0])
+        self.assertGreater(tracker.last_event_activities[0], 0.99)
+
     def test_zero_event_activity_floor_is_allowed_when_inactive_events_are_skipped(
         self,
     ):
@@ -128,6 +145,36 @@ class TestDVSFullSCGPTracker(unittest.TestCase):
         self.assertIsNotNone(tracker.last_event_likelihood_terms)
         self.assertEqual(tracker.last_event_likelihood_terms.event_count, 2)
         self.assertIsNotNone(tracker.last_event_likelihood_gradient)
+
+    def test_point_process_update_temporary_scale_parameters_do_not_mutate_tracker_defaults(self):
+        tracker = DVSPointProcessSCGPTracker(
+            8,
+            kinematic_state=array([0.0, 0.0, 0.0, 0.0, 0.0]),
+            kinematic_covariance=1e-4 * eye(5),
+            shape_state=array([1.0] * 8),
+            shape_covariance=0.05 * eye(8),
+            measurement_noise=0.01 * eye(2),
+            radial_noise_variance=0.0,
+            point_process_update_config=PointProcessUpdateConfig(
+                contour_samples=16,
+                finite_difference_eps=1e-3,
+                map_step_size=0.01,
+                max_map_iterations=1,
+                shape_update_modes=2,
+            ),
+        )
+        default_scale_mean = tracker.scale_mean
+        default_scale_variance = tracker.scale_variance
+
+        tracker.update(
+            array([[1.0, -0.1], [1.0, 0.1]]),
+            event_velocity=array([1.0, 0.0]),
+            s_hat=0.75,
+            sigma_squared_s=0.1,
+        )
+
+        self.assertEqual(tracker.scale_mean, default_scale_mean)
+        self.assertEqual(tracker.scale_variance, default_scale_variance)
 
     def test_point_process_empty_batch_resets_previous_diagnostics(self):
         tracker = DVSPointProcessSCGPTracker(
