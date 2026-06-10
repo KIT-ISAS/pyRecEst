@@ -1,6 +1,5 @@
 import jax.numpy as _jnp
-import numpy as _np
-from pyrecest._backend._dtype_utils import _pre_set_default_dtype as set_default_dtype
+from pyrecest._backend._dtype_utils import _pre_set_default_dtype
 
 # Mapping of string dtype representations to JAX dtypes
 MAP_DTYPE = {
@@ -26,3 +25,6 @@ def as_dtype(value):
         JAX dtype object corresponding to the input string.
     """
     return MAP_DTYPE[value]
+
+
+set_default_dtype = _pre_set_default_dtype(as_dtype)

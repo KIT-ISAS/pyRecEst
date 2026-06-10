@@ -115,10 +115,9 @@ def generate_measurements(groundtruth, simulation_config):
                 )
 
             if "n_meas_at_individual_time_step" in simulation_config:
-                if "intensity_lambda" in simulation_config:
-                    raise ValueError(
-                        "Cannot use both intensity_lambda and n_meas_at_individual_time_step."
-                    )
+                assert (
+                    "intensity_lambda" not in simulation_config
+                ), "Cannot use both intensity_lambda and n_meas_at_individual_time_step."
                 n_meas_curr = simulation_config["n_meas_at_individual_time_step"][t]
             else:
                 if eot_sampling_style == "boundary":

@@ -322,6 +322,10 @@ def _json_value(value: Any) -> Any:
         return bool(value)
     if isinstance(value, np.ndarray):
         return [_json_value(item) for item in value.tolist()]
+    if isinstance(value, Mapping):
+        return _json_record(value)
+    if isinstance(value, (list, tuple)):
+        return [_json_value(item) for item in value]
     return value
 
 

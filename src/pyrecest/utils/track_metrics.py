@@ -119,7 +119,7 @@ def score_false_tracks(
     unreferenced_observations = 0
     total_observations = 0
     for observations in _observations_by_track(predicted):
-        if len(observations) < min_length:
+        if len(observations) < int(min_length):
             continue
         total_observations += len(observations)
         evaluated_tracks += 1
@@ -170,7 +170,7 @@ def score_missed_tracks(
     missed_observations = 0
     total_observations = 0
     for observations in _observations_by_track(reference):
-        if len(observations) < min_length:
+        if len(observations) < int(min_length):
             continue
         total_observations += len(observations)
         evaluated_tracks += 1

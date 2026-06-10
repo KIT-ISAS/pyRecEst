@@ -216,6 +216,7 @@ BACKEND_ATTRIBUTES = {
         "jacobian_vec",
         "jacobian_and_hessian",
         "value_and_grad",
+        "value_and_jacobian",
         "value_jacobian_and_hessian",
         "value_and_jacobian",
         "value_jacobian_and_hessian",
@@ -655,17 +656,6 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                             attribute,
                             getattr(backend, "asarray"),
                             getattr(backend, "reshape"),
-                        )
-                    if (
-                        module_name == ""
-                        and attribute_name == "prod"
-                        and backend_name == "pytorch"
-                    ):
-                        attribute = _reduction_with_numpy_keepdims(
-                            attribute,
-                            getattr(backend, "asarray"),
-                            getattr(backend, "reshape"),
-                            cast_func=getattr(backend, "cast"),
                         )
                     if (
                         module_name == ""

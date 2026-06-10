@@ -9,6 +9,7 @@ from beartype import beartype
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     all,
+    apply_along_axis,
     arange,
     argmax,
     asarray,

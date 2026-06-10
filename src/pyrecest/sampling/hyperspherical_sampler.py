@@ -476,9 +476,9 @@ class FibonacciHopfSampler(AbstractHopfBasedS3Sampler):
         # Step 2: Discretize the unit circle using the circular grid
         circular_sampler = CircularUniformSampler()
         if len(grid_density_parameter) == 2:
-            n_sample_circle = grid_density_parameter[1]
+            n_sample_circle = int(grid_density_parameter[1])
         else:
-            n_sample_circle = int(ceil(grid_density_parameter[0] ** 0.5))
+            n_sample_circle = int(ceil(float(grid_density_parameter[0]) ** 0.5))
         psi_points = circular_sampler.get_grid(n_sample_circle)
 
         # Step 3: Combine the two grids to generate a grid for S3

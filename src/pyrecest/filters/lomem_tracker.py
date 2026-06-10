@@ -4,6 +4,7 @@ from __future__ import annotations
 # pylint: disable=too-many-instance-attributes,too-many-arguments
 # pylint: disable=too-many-positional-arguments,too-many-locals
 from pyrecest.backend import abs as backend_abs
+from pyrecest.backend import sum as backend_sum
 from pyrecest.backend import (
     array,
     concatenate,
@@ -17,9 +18,6 @@ from pyrecest.backend import (
     mean,
     pi,
     sin,
-)
-from pyrecest.backend import sum as backend_sum
-from pyrecest.backend import (
     zeros,
 )
 
