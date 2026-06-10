@@ -45,6 +45,22 @@ class TestWatsonDistribution(unittest.TestCase):
 
         npt.assert_allclose(w.mu, mu)
 
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_cases = [
+            ([[1.0, 0.0, 0.0]], 2.0),
+            ([1.0], 2.0),
+            ([1.0, 1.0, 0.0], 2.0),
+            ([float("nan"), 0.0, 1.0], 2.0),
+            ([1.0, 0.0, 0.0], float("nan")),
+            ([1.0, 0.0, 0.0], float("inf")),
+            ([1.0, 0.0, 0.0], [1.0, 2.0]),
+        ]
+
+        for mu, kappa in invalid_cases:
+            with self.subTest(mu=mu, kappa=kappa):
+                with self.assertRaises(ValueError):
+                    WatsonDistribution(mu, kappa)
+
     def test_pdf(self):
         mu = array([1.0, 2.0, 3.0])
         mu = mu / linalg.norm(mu)
@@ -177,6 +193,14 @@ class TestWatsonDistribution(unittest.TestCase):
         npt.assert_allclose(dist.mu, mu)
         npt.assert_allclose(shifted.mu, new_mode)
 
+    def test_set_mode_rejects_invalid_direction(self):
+        dist = WatsonDistribution(array([0.0, 0.0, 1.0]), 2.0)
+
+        for new_mode in ([1.0, 0.0], [2.0, 0.0, 0.0]):
+            with self.subTest(new_mode=new_mode):
+                with self.assertRaises(ValueError):
+                    dist.set_mode(new_mode)
+
     def test_shift_accepts_flat_canonical_mu_and_returns_new_distribution(self):
         mu = array([0.0, 0.0, 1.0])
         new_mode = array([1.0, 0.0, 0.0])
@@ -187,6 +211,12 @@ class TestWatsonDistribution(unittest.TestCase):
         self.assertIsNot(shifted, dist)
         npt.assert_allclose(dist.mu, mu)
         npt.assert_allclose(shifted.mu, new_mode)
+
+    def test_shift_rejects_noncanonical_base_direction(self):
+        dist = WatsonDistribution(array([1.0, 0.0, 0.0]), 2.0)
+
+        with self.assertRaisesRegex(ValueError, "compatibility"):
+            dist.shift([0.0, 0.0, 1.0])
 
     def test_shift_accepts_list_mode(self):
         mu = array([0.0, 0.0, 1.0])

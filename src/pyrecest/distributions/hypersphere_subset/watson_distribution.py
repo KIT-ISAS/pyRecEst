@@ -1,4 +1,5 @@
 import copy
+import math
 
 import mpmath
 import pyrecest.backend
@@ -6,6 +7,7 @@ import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    all,
     allclose,
     array,
     concatenate,
@@ -14,8 +16,10 @@ from pyrecest.backend import (
     full,
     gammaln,
     hstack,
+    isfinite,
     linalg,
     log,
+    ndim,
     ones,
     tile,
     zeros,
@@ -23,6 +27,38 @@ from pyrecest.backend import (
 
 from .abstract_hyperspherical_distribution import AbstractHypersphericalDistribution
 from .bingham_distribution import BinghamDistribution
+
+
+def _as_python_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if hasattr(value, "item"):
+        return bool(value.item())
+    return bool(value)
+
+
+def _as_finite_scalar(value, name: str) -> float:
+    try:
+        scalar = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a finite scalar.") from exc
+
+    if not math.isfinite(scalar):
+        raise ValueError(f"{name} must be finite.")
+    return scalar
+
+
+def _as_unit_direction(mu, *, name: str = "mu", tolerance: float = 1e-6):
+    mu = array(mu)
+    if ndim(mu) != 1:
+        raise ValueError(f"{name} must be a 1-D vector")
+    if mu.shape[0] < 2:
+        raise ValueError(f"{name} must be at least two-dimensional")
+    if not _as_python_bool(all(isfinite(mu))):
+        raise ValueError(f"{name} must contain only finite values")
+    if not _as_python_bool(abs(linalg.norm(mu) - 1.0) < tolerance):
+        raise ValueError(f"{name} is unnormalized")
+    return mu
 
 
 class WatsonDistribution(AbstractHypersphericalDistribution):
@@ -36,9 +72,8 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
             mu (): The mean direction of the distribution.
             kappa (float): The concentration parameter of the distribution.
         """
-        mu = array(mu)
-        assert mu.ndim == 1, "mu must be a 1-D vector"
-        assert abs(linalg.norm(mu) - 1.0) < self.EPSILON, "mu is unnormalized"
+        mu = _as_unit_direction(mu, tolerance=self.EPSILON)
+        _as_finite_scalar(kappa, "kappa")
         AbstractHypersphericalDistribution.__init__(self, dim=mu.shape[0] - 1)
 
         self.mu = mu
@@ -123,16 +158,18 @@ class WatsonDistribution(AbstractHypersphericalDistribution):
         return self.mode_numerical()
 
     def set_mode(self, new_mode):
-        new_mode = array(new_mode)
-        assert new_mode.shape == self.mu.shape
+        new_mode = _as_unit_direction(new_mode, name="new_mode", tolerance=self.EPSILON)
+        if new_mode.shape != self.mu.shape:
+            raise ValueError("new_mode must have the same shape as mu")
         dist = copy.deepcopy(self)
         dist.mu = copy.deepcopy(new_mode)
         return dist
 
     def shift(self, shift_by):
         canonical_mu = concatenate((zeros(self.input_dim - 1), array([1.0])))
-        assert allclose(self.mu, canonical_mu), (
-            "There is no true shifting for the hypersphere. This is a function "
-            "for compatibility and only works when mu is [0,0,...,1]."
-        )
+        if not _as_python_bool(allclose(self.mu, canonical_mu)):
+            raise ValueError(
+                "There is no true shifting for the hypersphere. This is a function "
+                "for compatibility and only works when mu is [0,0,...,1]."
+            )
         return self.set_mode(shift_by)

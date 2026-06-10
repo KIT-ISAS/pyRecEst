@@ -78,6 +78,23 @@ class TestVonMisesFisherDistribution(
 
         npt.assert_allclose(vmf.mu, self.mu)
 
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_cases = [
+            ([[1.0, 0.0, 0.0]], 1.0),
+            ([1.0], 1.0),
+            ([1.0, 1.0, 0.0], 1.0),
+            ([float("nan"), 0.0, 1.0], 1.0),
+            ([1.0, 0.0, 0.0], -1.0),
+            ([1.0, 0.0, 0.0], float("nan")),
+            ([1.0, 0.0, 0.0], float("inf")),
+            ([1.0, 0.0, 0.0], [1.0, 2.0]),
+        ]
+
+        for mu, kappa in invalid_cases:
+            with self.subTest(mu=mu, kappa=kappa):
+                with self.assertRaises(ValueError):
+                    VonMisesFisherDistribution(mu, kappa)
+
     def test_zero_kappa_is_uniform_density(self):
         vmf = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 0.0)
         points = array(
@@ -113,6 +130,12 @@ class TestVonMisesFisherDistribution(
         npt.assert_allclose(self.vmf.mu, self.mu)
         npt.assert_allclose(shifted.mu, array(new_mu))
 
+    def test_set_mean_rejects_invalid_direction(self):
+        for new_mean in ([0.0, 1.0], [0.0, 0.0, 2.0]):
+            with self.subTest(new_mean=new_mean):
+                with self.assertRaises(ValueError):
+                    self.vmf.set_mean(new_mean)
+
     def test_set_mode_returns_new_distribution(self):
         new_mu = array([0.0, 0.0, 1.0])
 
@@ -131,6 +154,12 @@ class TestVonMisesFisherDistribution(
         npt.assert_allclose(self.vmf.mu, self.mu)
         npt.assert_allclose(shifted.mu, array(new_mu))
 
+    def test_set_mode_rejects_invalid_direction(self):
+        for new_mode in ([0.0, 1.0], [0.0, 0.0, 2.0]):
+            with self.subTest(new_mode=new_mode):
+                with self.assertRaises(ValueError):
+                    self.vmf.set_mode(new_mode)
+
     def test_from_zero_mean_resultant_vector_returns_uniform(self):
         vmf = VonMisesFisherDistribution.from_mean_resultant_vector(
             array([0.0, 0.0, 0.0])
@@ -146,6 +175,14 @@ class TestVonMisesFisherDistribution(
 
         npt.assert_allclose(vmf.mu, array([1.0, 0.0, 0.0]))
         self.assertGreater(_as_float(vmf.kappa), 0.0)
+
+    def test_from_mean_resultant_vector_rejects_invalid_vectors(self):
+        for mean_resultant in ([[0.2, 0.0, 0.0]], [0.2], [float("nan"), 0.0]):
+            with self.subTest(mean_resultant=mean_resultant):
+                with self.assertRaises(ValueError):
+                    VonMisesFisherDistribution.from_mean_resultant_vector(
+                        mean_resultant
+                    )
 
     def test_opposite_equal_vmf_product_is_uniform(self):
         mu = array([1.0, 0.0, 0.0])
@@ -165,6 +202,18 @@ class TestVonMisesFisherDistribution(
             1.0 / (4.0 * pi),
             places=12,
         )
+
+    def test_multiply_and_convolve_reject_invalid_partner(self):
+        other_dim = VonMisesFisherDistribution(array([1.0, 0.0, 0.0, 0.0]), 1.0)
+        non_zonal = VonMisesFisherDistribution(array([1.0, 0.0, 0.0]), 1.0)
+
+        with self.assertRaises(ValueError):
+            self.vmf.multiply(other_dim)
+        with self.assertRaises(ValueError):
+            self.vmf.convolve(other_dim)
+        with self.assertRaisesRegex(ValueError, "zonal"):
+            self.vmf.convolve(non_zonal)
+
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
@@ -363,6 +412,17 @@ class TestVonMisesFisherDistribution(
 
         npt.assert_allclose(vmf1.mu, vmf2.mu, rtol=1e-10)
         npt.assert_allclose(vmf1.kappa, vmf2.kappa, rtol=5e-7)
+
+    def test_from_distribution_rejects_one_dimensional_source(self):
+        class OneDimensionalSource:
+            input_dim = 1
+
+            @staticmethod
+            def mean_resultant_vector():
+                return array([1.0])
+
+        with self.assertRaises(ValueError):
+            VonMisesFisherDistribution.from_distribution(OneDimensionalSource())
 
     def test_from_distribution_dirac(self):
         dirac_dist = HypersphericalDiracDistribution(
