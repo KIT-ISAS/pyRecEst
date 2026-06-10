@@ -376,9 +376,9 @@ class DVSFullSCGPTracker(FullSCGPTracker):
         polarity_contrast_sign=None,
     ):
         if s_hat is not None:
-            self.scale_mean = float(s_hat)
+            s_hat = float(s_hat)
         if sigma_squared_s is not None:
-            self.scale_variance = float(sigma_squared_s)
+            sigma_squared_s = float(sigma_squared_s)
         if event_activity_floor is None:
             event_activity_floor = self.event_activity_floor
         else:

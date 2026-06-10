@@ -67,9 +67,10 @@ class DVSPointProcessSCGPTracker(DVSFullSCGPTracker):
         """Update the tracker state with the point-process event likelihood."""
         del R
         if s_hat is not None:
-            self.scale_mean = float(s_hat)
+            s_hat = float(s_hat)
         if sigma_squared_s is not None:
-            self.scale_variance = float(sigma_squared_s)
+            sigma_squared_s = float(sigma_squared_s)
+        del s_hat, sigma_squared_s
         return self.update_event_batch(
             measurements,
             event_velocity=event_velocity,
