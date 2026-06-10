@@ -51,6 +51,23 @@ class ToroidalVMRivestDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.pdf(x), self.dist.pdf(x), rtol=5e-7)
         npt.assert_allclose(dist.C, self.dist.C, rtol=5e-7)
 
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_cases = [
+            ([1.0], self.kappa, self.alpha, self.beta, "mu"),
+            (self.mu, [0.7], self.alpha, self.beta, "kappa"),
+            (self.mu, [-0.7, 1.4], self.alpha, self.beta, "nonnegative"),
+            (self.mu, [float("nan"), 1.4], self.alpha, self.beta, "finite"),
+            (self.mu, self.kappa, [0.5, 0.6], self.beta, "alpha"),
+            (self.mu, self.kappa, float("nan"), self.beta, "alpha"),
+            (self.mu, self.kappa, self.alpha, [0.3, 0.4], "beta"),
+            (self.mu, self.kappa, self.alpha, float("nan"), "beta"),
+        ]
+
+        for mu, kappa, alpha, beta, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    ToroidalVMRivestDistribution(mu, kappa, alpha, beta)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",

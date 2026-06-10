@@ -2,11 +2,14 @@
 import math
 
 import numpy as np
-from pyrecest.backend import asarray, cos, mod, pi
+from pyrecest.backend import cos, mod, pi
 from scipy.special import iv
 
 from ._input_validation import as_shift_vector
-from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDistribution
+from .abstract_toroidal_bivar_vm_distribution import (
+    AbstractToroidalBivarVMDistribution,
+    validate_scalar_parameter,
+)
 
 _SERIES_RTOL = 1e-14
 _SERIES_MIN_TERMS = 10
@@ -61,8 +64,7 @@ class ToroidalVonMisesCosineDistribution(AbstractToroidalBivarVMDistribution):
 
     def __init__(self, mu, kappa, kappa3):
         AbstractToroidalBivarVMDistribution.__init__(self, mu, kappa)
-        kappa3 = asarray(kappa3)
-        assert kappa3.shape == ()
+        kappa3 = validate_scalar_parameter(kappa3, "kappa3")
         self.kappa3 = kappa3
         self.C = 1.0 / self.norm_const
 

@@ -2,10 +2,13 @@
 # pylint: disable=no-name-in-module,no-member
 import math
 
-from pyrecest.backend import asarray, sin
+from pyrecest.backend import sin
 from scipy.special import gammaln, iv
 
-from .abstract_toroidal_bivar_vm_distribution import AbstractToroidalBivarVMDistribution
+from .abstract_toroidal_bivar_vm_distribution import (
+    AbstractToroidalBivarVMDistribution,
+    validate_scalar_parameter,
+)
 
 _SERIES_RTOL = 1e-12
 _SERIES_MIN_TERMS = 10
@@ -50,8 +53,7 @@ class ToroidalVonMisesSineDistribution(AbstractToroidalBivarVMDistribution):
 
     def __init__(self, mu, kappa, lambda_):
         AbstractToroidalBivarVMDistribution.__init__(self, mu, kappa)
-        lambda_ = asarray(lambda_)
-        assert lambda_.shape == ()
+        lambda_ = validate_scalar_parameter(lambda_, "lambda_")
         self.lambda_ = lambda_
         self.C = 1.0 / self.norm_const
 

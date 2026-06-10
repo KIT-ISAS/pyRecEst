@@ -96,6 +96,21 @@ class ToroidalVMCosineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCa
             tvm.trigonometric_moment(1), self.tvm.trigonometric_moment(1), rtol=5e-7
         )
 
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_cases = [
+            ([1.0], self.kappa, self.kappa3, "mu"),
+            (self.mu, [0.7], self.kappa3, "kappa"),
+            (self.mu, [-0.7, 1.4], self.kappa3, "nonnegative"),
+            (self.mu, [float("nan"), 1.4], self.kappa3, "finite"),
+            (self.mu, self.kappa, [0.5, 0.6], "kappa3"),
+            (self.mu, self.kappa, float("nan"), "kappa3"),
+        ]
+
+        for mu, kappa, kappa3, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    ToroidalVonMisesCosineDistribution(mu, kappa, kappa3)
+
     def _unnormalized_pdf(self, xs):
         return exp(
             self.kappa[0] * cos(xs[..., 0] - self.mu[0])

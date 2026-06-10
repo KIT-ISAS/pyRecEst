@@ -33,6 +33,22 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         npt.assert_allclose(tvm.kappa, self.kappa, atol=1e-10)
         npt.assert_allclose(tvm.A, self.A, atol=1e-10)
 
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_cases = [
+            ([1.0], self.kappa, self.A, "mu"),
+            (self.mu, [0.5], self.A, "kappa"),
+            (self.mu, [0.0, 0.7], self.A, "positive"),
+            (self.mu, [-0.5, 0.7], self.A, "positive"),
+            (self.mu, [float("nan"), 0.7], self.A, "finite"),
+            (self.mu, self.kappa, [[0.3, 0.1]], "shape"),
+            (self.mu, self.kappa, [[float("nan"), 0.1], [-0.2, 0.4]], "finite"),
+        ]
+
+        for mu, kappa, A, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    ToroidalVMMatrixDistribution(mu, kappa, A)
+
     def test_pdf_positive(self):
         xs = array([[0.5, 1.0], [1.0, 2.0], [3.0, 4.0]])
         vals = self.tvm.pdf(xs)
@@ -87,6 +103,10 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
         self.assertIsInstance(product, ToroidalVMMatrixDistribution)
         self.assertAlmostEqual(product.integrate(), 1.0, delta=2e-3)
 
+    def test_multiply_rejects_wrong_type(self):
+        with self.assertRaisesRegex(ValueError, "ToroidalVMMatrixDistribution"):
+            self.tvm.multiply(object())
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
@@ -102,6 +122,12 @@ class TestToroidalVMMatrixDistribution(unittest.TestCase):
     def test_marginalize_to_1d_dim1(self):
         marginal = self.tvm.marginalize_to_1d(1)
         self.assertAlmostEqual(marginal.integrate(), 1.0, delta=1e-4)
+
+    def test_marginalize_to_1d_rejects_invalid_dimension(self):
+        for dimension in (-1, 2):
+            with self.subTest(dimension=dimension):
+                with self.assertRaisesRegex(ValueError, "dimension"):
+                    self.tvm.marginalize_to_1d(dimension)
 
     def test_shift(self):
         shift = array([0.5, -0.3])
