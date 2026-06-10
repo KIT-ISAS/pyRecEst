@@ -1,6 +1,7 @@
 """Automatic differentiation in PyTorch."""
 
 import functools
+import inspect
 
 import torch as _torch
 from torch.autograd.functional import hessian as _torch_hessian
@@ -57,6 +58,39 @@ def _get_batch_shape(*points, point_ndims=1):
     return ()
 
 
+def _bind_values(signature, parameters, *args, **kwargs):
+    bound = signature.bind(*args, **kwargs)
+    bound.apply_defaults()
+    return tuple(bound.arguments[param.name] for param in parameters)
+
+
+def _call_with_bound_values(callable_, parameters, values):
+    positional_args = []
+    keyword_args = {}
+    for param, value in zip(parameters, values, strict=True):
+        if param.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        ):
+            positional_args.append(value)
+        elif param.kind == inspect.Parameter.VAR_POSITIONAL:
+            positional_args.extend(value)
+        elif param.kind == inspect.Parameter.KEYWORD_ONLY:
+            keyword_args[param.name] = value
+        elif param.kind == inspect.Parameter.VAR_KEYWORD:
+            keyword_args.update(value)
+    return callable_(*positional_args, **keyword_args)
+
+
+def _restore_values(value_is_tensor, saved_tensors, non_tensor_values):
+    tensor_iter = iter(saved_tensors)
+    non_tensor_iter = iter(non_tensor_values)
+    return tuple(
+        next(tensor_iter) if is_tensor else next(non_tensor_iter)
+        for is_tensor in value_is_tensor
+    )
+
+
 def custom_gradient(*grad_funcs):
     """Create a decorator that allows a function to define its custom gradient(s).
 
@@ -85,38 +119,61 @@ def custom_gradient(*grad_funcs):
         wrapped_function : callable
             Function func with gradients specified by grad_funcs.
         """
+        signature = inspect.signature(func)
+        parameters = tuple(signature.parameters.values())
 
         class FuncWithGrad(_torch.autograd.Function):
             """Wrapper class for a function with custom grad."""
 
             @staticmethod
-            def forward(ctx, *args, **kwargs):
-                ctx.save_for_backward(*args)
-                return func(*args, **kwargs)
+            def forward(ctx, *values):
+                value_is_tensor = tuple(_torch.is_tensor(value) for value in values)
+                tensor_values = tuple(
+                    value
+                    for value, is_tensor in zip(values, value_is_tensor, strict=True)
+                    if is_tensor
+                )
+                ctx.value_is_tensor = value_is_tensor
+                ctx.non_tensor_values = tuple(
+                    value
+                    for value, is_tensor in zip(values, value_is_tensor, strict=True)
+                    if not is_tensor
+                )
+                ctx.save_for_backward(*tensor_values)
+                return _call_with_bound_values(func, parameters, values)
 
             @staticmethod
             def backward(ctx, grad_output):
-                inputs = ctx.saved_tensors
-
-                if grad_output.ndim > 0:
-                    return tuple(
-                        (
-                            _torch.einsum(
-                                "n,n...->n...", grad_output, custom_grad(*inputs)
-                            )
-                            if input_.requires_grad
-                            else None
-                        )
-                        for input_, custom_grad in zip(inputs, grad_funcs)
-                    )
-
-                return tuple(
-                    grad_output * custom_grad(*inputs) if input_.requires_grad else None
-                    for input_, custom_grad in zip(inputs, grad_funcs)
+                values = _restore_values(
+                    ctx.value_is_tensor, ctx.saved_tensors, ctx.non_tensor_values
                 )
 
+                gradients = []
+                for arg_index, value in enumerate(values):
+                    if (
+                        arg_index >= len(grad_funcs)
+                        or not _torch.is_tensor(value)
+                        or not value.requires_grad
+                    ):
+                        gradients.append(None)
+                        continue
+
+                    custom_grad = _call_with_bound_values(
+                        grad_funcs[arg_index], parameters, values
+                    )
+                    if grad_output.ndim > 0:
+                        gradients.append(
+                            _torch.einsum("n,n...->n...", grad_output, custom_grad)
+                        )
+                    else:
+                        gradients.append(grad_output * custom_grad)
+
+                return tuple(gradients)
+
+        @functools.wraps(func)
         def wrapped_function(*args, **kwargs):
-            return FuncWithGrad.apply(*args, **kwargs)
+            values = _bind_values(signature, parameters, *args, **kwargs)
+            return FuncWithGrad.apply(*values)
 
         return wrapped_function
 

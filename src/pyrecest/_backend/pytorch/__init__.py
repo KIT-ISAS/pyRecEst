@@ -247,7 +247,9 @@ def cov(input, correction=1, fweights=None, aweights=None, bias=False):
     if aweights is None:
         aweights = ones(input.shape[1], dtype=input.dtype, device=input.device)
     else:
-        aweights = copy(asarray(aweights, dtype=input.dtype, device=input.device))
+        aweights = asarray(
+            aweights, dtype=input.dtype, device=input.device
+        ).clone()
 
     # Ensure weights sum to 1
     aweights = aweights / sum(aweights)

@@ -1,16 +1,16 @@
 import functools
 
+import numpy as _np
 import torch as _torch
 from pyrecest._backend import _backend_config as _config
 from pyrecest._backend._dtype_utils import (
     _MAP_FLOAT_TO_COMPLEX,
     _modify_func_default_dtype,
-    _pre_add_default_dtype_by_casting,
     _pre_allow_complex_dtype,
     _pre_cast_out_to_input_dtype,
     _update_default_dtypes,
-    get_default_cdtype,
-    get_default_dtype,
+    get_default_cdtype as _shared_get_default_cdtype,
+    get_default_dtype as _shared_get_default_dtype,
 )
 from torch import complex64, complex128, float32, float64
 
@@ -24,6 +24,28 @@ MAP_DTYPE = {
 }
 
 _COMPLEX_DTYPES = (complex64, complex128)
+
+
+def _normalize_torch_dtype(dtype, *, default):
+    """Return a torch dtype for dtype-like values from other backends."""
+    if dtype is None:
+        return default
+    if isinstance(dtype, _torch.dtype):
+        return dtype
+    try:
+        return MAP_DTYPE[str(_np.dtype(dtype))]
+    except (KeyError, TypeError):
+        return dtype
+
+
+def get_default_dtype():
+    """Get the PyTorch backend default floating dtype."""
+    return _normalize_torch_dtype(_shared_get_default_dtype(), default=float64)
+
+
+def get_default_cdtype():
+    """Get the PyTorch backend default complex dtype."""
+    return _normalize_torch_dtype(_shared_get_default_cdtype(), default=complex128)
 
 
 def is_floating(x):
@@ -64,7 +86,26 @@ def set_default_dtype(value):
     return _config.DEFAULT_DTYPE
 
 
-_add_default_dtype_by_casting = _pre_add_default_dtype_by_casting(cast)
+def _add_default_dtype_by_casting(target=None):
+    """Add the PyTorch default dtype to functions by casting output."""
+
+    def _decorator(func):
+        @functools.wraps(func)
+        def _wrapped(*args, dtype=None, **kwargs):
+            dtype = _normalize_torch_dtype(dtype, default=get_default_dtype())
+
+            out = func(*args, **kwargs)
+            if out.dtype != dtype:
+                return cast(out, dtype)
+            return out
+
+        return _wrapped
+
+    if target is None:
+        return _decorator
+
+    return _decorator(target)
+
 _cast_out_to_input_dtype = _pre_cast_out_to_input_dtype(
     cast, is_floating, is_complex, as_dtype, _dtype_as_str
 )
@@ -87,6 +128,8 @@ def _preserve_input_dtype(target=None):
         def _wrapped(x, *args, dtype=None, **kwargs):
             if dtype is None:
                 dtype = x.dtype
+            else:
+                dtype = _normalize_torch_dtype(dtype, default=get_default_dtype())
 
             return func(x, *args, dtype=dtype, **kwargs)
 
