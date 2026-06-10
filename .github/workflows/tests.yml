@@ -430,5 +430,6 @@ jobs:
         with:
           comment_mode: off
           compare_to_earlier_commit: false
+          github_token: ${{ github.token }}
           files: |
             test-results/*/junit_test_results_*.xml
