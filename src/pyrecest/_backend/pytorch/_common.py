@@ -1,6 +1,23 @@
 import numpy as _np
 import torch as _torch
 
+_TORCH_DTYPE_BY_NAME = {
+    "float32": _torch.float32,
+    "float64": _torch.float64,
+    "complex64": _torch.complex64,
+    "complex128": _torch.complex128,
+}
+
+
+def _normalize_dtype(dtype):
+    """Return a torch dtype for dtype-like values understood by NumPy."""
+    if dtype is None or isinstance(dtype, _torch.dtype):
+        return dtype
+    try:
+        return _TORCH_DTYPE_BY_NAME[str(_np.dtype(dtype))]
+    except (KeyError, TypeError):
+        return dtype
+
 
 def from_numpy(x):
     if _torch.is_tensor(x):
@@ -11,6 +28,7 @@ def from_numpy(x):
 
 
 def array(val, dtype=None):
+    dtype = _normalize_dtype(dtype)
     if _torch.is_tensor(val):
         if dtype is None or val.dtype == dtype:
             return val.clone()
@@ -32,6 +50,7 @@ def array(val, dtype=None):
 
 
 def cast(x, dtype):
+    dtype = _normalize_dtype(dtype)
     if _torch.is_tensor(x):
         return x.to(dtype=dtype)
     return array(x, dtype=dtype)

@@ -96,6 +96,41 @@ def _to_python(value):
     return value
 
 
+def test_pytorch_custom_gradient_accepts_keyword_arguments_and_defaults():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific custom_gradient regression test")
+
+    torch = pytest.importorskip("torch")
+
+    @backend.autodiff.custom_gradient(
+        lambda x, scale=1.0, offset=0.0: 2.0 * scale * x
+    )
+    def quadratic(x, scale=1.0, offset=0.0):
+        return scale * x * x + offset
+
+    x = torch.tensor(2.0, dtype=torch.float64, requires_grad=True)
+
+    result = quadratic(x, scale=3.0)
+    result.backward()
+
+    assert float(result.detach()) == pytest.approx(12.0)
+    assert float(x.grad) == pytest.approx(12.0)
+
+
+def test_pytorch_cov_bias_accepts_array_weights():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific covariance regression test")
+
+    result = backend.cov(
+        array([[1.0, 2.0, 3.0], [2.0, 4.0, 6.0]]),
+        bias=True,
+        aweights=array([1.0, 2.0, 1.0]),
+    )
+
+    assert result.shape == (2, 2)
+    assert _to_python(result) == [[0.5, 1.0], [1.0, 2.0]]
+
+
 def test_array_like_sequence_helpers_accept_python_lists():
     assert _to_python(backend.concatenate(([1, 2], [3, 4]), axis=0)) == [1, 2, 3, 4]
     assert _to_python(backend.stack(([1, 2], [3, 4]), axis=0)) == [[1, 2], [3, 4]]
