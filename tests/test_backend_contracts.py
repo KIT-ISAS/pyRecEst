@@ -139,6 +139,21 @@ def test_array_like_sequence_helpers_accept_python_lists():
     assert _to_python(backend.unique([2, 1, 2, 1])) == [1, 2]
 
 
+def test_array_like_matrix_helpers_accept_python_lists():
+    assert _to_python(backend.squeeze([[[1], [2]]], axis=2)) == [[1, 2]]
+    assert _to_python(backend.trace([[1, 2], [3, 4]])) == 5
+    assert _to_python(backend.diagonal([[1, 2], [3, 4]])) == [1, 4]
+    assert _to_python(backend.tril([[1, 2], [3, 4]])) == [[1, 0], [3, 4]]
+    assert _to_python(backend.triu([[1, 2], [3, 4]])) == [[1, 2], [0, 4]]
+
+
+def test_cov_accepts_array_like_inputs():
+    result = backend.cov([[1.0, 2.0, 3.0], [2.0, 4.0, 6.0]])
+
+    assert result.shape == (2, 2)
+    assert bool(_to_python(backend.allclose(result, array([[1.0, 2.0], [2.0, 4.0]]))))
+
+
 def test_one_hot_accepts_list_labels_and_returns_uint8_indicators():
     result = backend.one_hot([0, 2], 3)
 
