@@ -359,15 +359,14 @@ def count_nonzero(a, axis=None, keepdims=False):
         return result
 
     counts = (x != 0).to(dtype=_torch.int64)
-    result = _reduce_over_axes(
-        counts, axis, lambda values, one_axis: _torch.sum(values, dim=one_axis)
+    return _reduce_over_axes(
+        counts,
+        axis,
+        lambda values, one_axis, keepdim: _torch.sum(
+            values, dim=one_axis, keepdim=keepdim
+        ),
+        keepdims,
     )
-    if keepdims:
-        axes = _normalize_reduction_axes(axis, x.ndim)
-        result = result.reshape(
-            tuple(1 if dim in axes else x.shape[dim] for dim in range(x.ndim))
-        )
-    return result
 
 
 def has_autodiff():
@@ -569,22 +568,38 @@ def _normalize_reduction_axes(axis, ndim_):
     return normalized_axes
 
 
-def _reduce_over_axes(x, axis, reducer):
+def _reduce_over_axes(x, axis, reducer, keepdims=False):
     result = x
     for one_axis in sorted(_normalize_reduction_axes(axis, x.ndim), reverse=True):
-        result = reducer(result, one_axis)
+        result = reducer(result, one_axis, bool(keepdims))
     return result
 
 
-def any(x, axis=None):
+def _reduction_result(result, out=None):
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def any(x, axis=None, out=None, keepdims=False):
     if not _torch.is_tensor(x):
         x = _torch.tensor(x)
     x = x.bool()
     if axis is None:
-        return _torch.any(x)
-    return _reduce_over_axes(
-        x, axis, lambda values, one_axis: _torch.any(values, dim=one_axis)
+        result = _torch.any(x)
+        if keepdims:
+            result = result.reshape((1,) * x.ndim)
+        return _reduction_result(result, out)
+    result = _reduce_over_axes(
+        x,
+        axis,
+        lambda values, one_axis, keepdim: _torch.any(
+            values, dim=one_axis, keepdim=keepdim
+        ),
+        keepdims,
     )
+    return _reduction_result(result, out)
 
 
 def flip(x, axis):
@@ -601,15 +616,24 @@ def concatenate(seq, axis=0, out=None):
     return _torch.cat(seq, dim=axis, out=out)
 
 
-def all(x, axis=None):
+def all(x, axis=None, out=None, keepdims=False):
     if not _torch.is_tensor(x):
         x = _torch.tensor(x)
     x = x.bool()
     if axis is None:
-        return _torch.all(x)
-    return _reduce_over_axes(
-        x, axis, lambda values, one_axis: _torch.all(values, dim=one_axis)
+        result = _torch.all(x)
+        if keepdims:
+            result = result.reshape((1,) * x.ndim)
+        return _reduction_result(result, out)
+    result = _reduce_over_axes(
+        x,
+        axis,
+        lambda values, one_axis, keepdim: _torch.all(
+            values, dim=one_axis, keepdim=keepdim
+        ),
+        keepdims,
     )
+    return _reduction_result(result, out)
 
 
 def get_slice(x, indices):
@@ -703,13 +727,22 @@ def shape(val):
     return val.shape
 
 
-def max(a, axis=None):
+def max(a, axis=None, out=None, keepdims=False):
     a = array(a)
     if axis is None:
-        return _torch.max(a)
-    return _reduce_over_axes(
-        a, axis, lambda values, one_axis: _torch.max(values, dim=one_axis).values
+        result = _torch.max(a)
+        if keepdims:
+            result = result.reshape((1,) * a.ndim)
+        return _reduction_result(result, out)
+    result = _reduce_over_axes(
+        a,
+        axis,
+        lambda values, one_axis, keepdim: _torch.max(
+            values, dim=one_axis, keepdim=keepdim
+        ).values,
+        keepdims,
     )
+    return _reduction_result(result, out)
 
 
 amax = max
@@ -974,13 +1007,30 @@ def set_diag(x, new_diag):
     return result
 
 
-def prod(x, axis=None):
+def prod(x, axis=None, dtype=None, out=None, keepdims=False):
     x = array(x)
+    if _is_empty_reduction_axis(axis):
+        result = cast(x, dtype=dtype) if dtype is not None else x.clone()
+        return _reduction_result(result, out)
     if axis is None:
-        return _torch.prod(x)
-    return _reduce_over_axes(
-        x, axis, lambda values, one_axis: _torch.prod(values, dim=one_axis)
+        result = _torch.prod(x, dtype=dtype)
+        if keepdims:
+            result = result.reshape((1,) * x.ndim)
+        return _reduction_result(result, out)
+
+    def _prod_axis(values, one_axis, keepdim):
+        kwargs = {"dim": one_axis, "keepdim": keepdim}
+        if dtype is not None:
+            kwargs["dtype"] = dtype
+        return _torch.prod(values, **kwargs)
+
+    result = _reduce_over_axes(
+        x,
+        axis,
+        _prod_axis,
+        keepdims,
     )
+    return _reduction_result(result, out)
 
 
 def where(condition, x=None, y=None):
@@ -1360,11 +1410,22 @@ def sort(a, axis=-1):
     return sorted_a
 
 
-def min(a, axis=None):
+def min(a, axis=None, out=None, keepdims=False):
     a = array(a)
     if axis is None:
-        return _torch.min(a)
-    return _torch.amin(a, dim=axis)
+        result = _torch.min(a)
+        if keepdims:
+            result = result.reshape((1,) * a.ndim)
+        return _reduction_result(result, out)
+    result = _reduce_over_axes(
+        a,
+        axis,
+        lambda values, one_axis, keepdim: _torch.min(
+            values, dim=one_axis, keepdim=keepdim
+        ).values,
+        keepdims,
+    )
+    return _reduction_result(result, out)
 
 
 amin = min

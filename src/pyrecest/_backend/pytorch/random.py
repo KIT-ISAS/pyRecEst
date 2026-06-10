@@ -196,44 +196,70 @@ def _choice_indices(population_size, size, num_samples, replace, p, device):
             return _torch.empty(size or (0,), dtype=_torch.long, device=device)
         raise ValueError("a must be greater than 0 unless no samples are taken")
 
-def _choice_size(size):
-    if size is None:
-        return None, 1
-    if not hasattr(size, "__iter__"):
-        size = (size,)
-    size = tuple(int(dim) for dim in size)
-    return size, int(_torch.prod(_torch.tensor(size)).item())
-
-
-def choice(a, size=None, replace=True, p=None):
-    assert _torch.is_tensor(a), "a must be a tensor"
-    size, num_samples = _choice_size(size)
     if p is not None:
-        assert _torch.is_tensor(p), "p must be a tensor"
-        if not replace:
-            raise ValueError(
-                "Sampling without replacement is not supported with PyTorch when probabilities are given."
-            )
-
-        p = _torch.as_tensor(p, dtype=_torch.float32, device=a.device)
-        p = p / p.sum()  # Normalize probabilities
-        indices = _torch.multinomial(p, num_samples=num_samples, replacement=True)
-        if size is not None:
-            indices = indices.reshape(size)
-    elif replace:
-        indices = _torch.randint(0, len(a), size or (), device=a.device)
-    else:
-        if num_samples > len(a):
+        if not replace and num_samples > population_size:
             raise ValueError(
                 "Cannot take a larger sample than population when 'replace=False'."
             )
-        indices = _torch.randperm(len(a), device=a.device)[:num_samples]
-        if size is None:
-            indices = indices[0]
-        else:
-            indices = indices.reshape(size)
 
-    return a[indices]
+        p = _torch.as_tensor(p, dtype=_torch.float32, device=device)
+        if p.ndim != 1 or p.shape[0] != population_size:
+            raise ValueError(
+                "p must be 1-dimensional with one entry per population item"
+            )
+
+        p_sum = p.sum()
+        if not bool(_torch.isfinite(p_sum)) or bool(p_sum <= 0):
+            raise ValueError("probabilities do not sum to a positive value")
+        p = p / p_sum
+        indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
+        if size is None:
+            return indices[0]
+        return indices.reshape(size)
+
+    if replace:
+        return _torch.randint(0, population_size, size or (), device=device)
+
+    if num_samples > population_size:
+        raise ValueError(
+            "Cannot take a larger sample than population when 'replace=False'."
+        )
+
+    indices = _torch.randperm(population_size, device=device)[:num_samples]
+    if size is None:
+        return indices[0]
+    return indices.reshape(size)
+
+
+def _take_choice(a, indices, axis):
+    axis = axis % a.ndim
+    if indices.ndim == 0:
+        return a.select(axis, int(indices.item()))
+
+    flattened_indices = indices.reshape(-1)
+    selected = _torch.index_select(a, dim=axis, index=flattened_indices)
+    return selected.reshape((*a.shape[:axis], *indices.shape, *a.shape[axis + 1 :]))
+
+
+def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
+    del shuffle
+
+    size, num_samples = _choice_size(size)
+    population_size = _integer_population_size(a)
+    if population_size is not None:
+        device = p.device if _torch.is_tensor(p) else None
+        return _choice_indices(population_size, size, num_samples, replace, p, device)
+
+    if not _torch.is_tensor(a):
+        a = _torch.as_tensor(a)
+    if a.ndim == 0:
+        raise ValueError(
+            "a must be a positive integer or an array with at least one dimension"
+        )
+
+    axis = axis % a.ndim
+    indices = _choice_indices(a.shape[axis], size, num_samples, replace, p, a.device)
+    return _take_choice(a, indices, axis)
 
 
 def seed(*args, **kwargs):
