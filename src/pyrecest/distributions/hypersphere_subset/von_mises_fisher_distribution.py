@@ -13,6 +13,7 @@ from pyrecest.backend import (
     arccos,
     array,
     clip,
+    concatenate,
     cos,
     exp,
     int32,

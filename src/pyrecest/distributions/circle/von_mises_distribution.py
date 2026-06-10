@@ -1,5 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 import math
+from numbers import Integral
 
 from pyrecest.backend import (
     abs,

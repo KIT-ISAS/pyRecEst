@@ -10,7 +10,9 @@ from beartype import beartype
 from pyrecest.backend import (
     all,
     apply_along_axis,
+    arange,
     argmax,
+    asarray,
     int32,
     int64,
     isclose,

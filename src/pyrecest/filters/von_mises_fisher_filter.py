@@ -1,6 +1,7 @@
 # pylint: disable=no-name-in-module,no-member
 from math import isfinite as python_isfinite
 
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     allclose,
     array,
