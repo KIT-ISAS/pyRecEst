@@ -4,10 +4,12 @@ from math import factorial
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    all,
     arctan2,
     array,
     cos,
     exp,
+    isfinite,
     linalg,
     max,
     mod,
@@ -21,6 +23,10 @@ from scipy.special import iv
 from ..circle.custom_circular_distribution import CustomCircularDistribution
 from ._input_validation import as_shift_vector
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
+from .abstract_toroidal_bivar_vm_distribution import (
+    _as_python_bool,
+    validate_toroidal_vm_parameters,
+)
 
 _2pi = 2.0 * pi
 
@@ -43,14 +49,14 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
 
     def __init__(self, mu, kappa, A):
         AbstractToroidalDistribution.__init__(self)
-        mu = array(mu)
-        kappa = array(kappa)
+        mu, kappa = validate_toroidal_vm_parameters(
+            mu, kappa, require_positive_kappa=True
+        )
         A = array(A)
-        assert mu.shape == (2,)
-        assert kappa.shape == (2,)
-        assert A.shape == (2, 2)
-        assert kappa[0] > 0
-        assert kappa[1] > 0
+        if A.shape != (2, 2):
+            raise ValueError("A must have shape (2, 2)")
+        if not _as_python_bool(all(isfinite(A))):
+            raise ValueError("A must contain only finite values")
 
         self.mu = mod(mu, _2pi)
         self.kappa = kappa
@@ -270,7 +276,8 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
 
     def multiply(self, other):
         """Multiply two ToroidalVMMatrixDistributions (exact product)."""
-        assert isinstance(other, ToroidalVMMatrixDistribution)
+        if not isinstance(other, ToroidalVMMatrixDistribution):
+            raise ValueError("other must be a ToroidalVMMatrixDistribution")
 
         C1 = self.kappa[0] * cos(self.mu[0]) + other.kappa[0] * cos(other.mu[0])
         S1 = self.kappa[0] * sin(self.mu[0]) + other.kappa[0] * sin(other.mu[0])
@@ -308,7 +315,8 @@ class ToroidalVMMatrixDistribution(AbstractToroidalDistribution):
         Integrates out the *other* dimension analytically using the Bessel
         function identity for the von-Mises-type integral.
         """
-        assert dimension in (0, 1)
+        if dimension not in (0, 1):
+            raise ValueError("dimension must be 0 or 1")
         other = 1 - dimension
 
         mu_d = self.mu[dimension]

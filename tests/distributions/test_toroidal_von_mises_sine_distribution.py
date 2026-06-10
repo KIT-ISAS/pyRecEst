@@ -109,6 +109,21 @@ class ToroidalVMSineDistributionTest(ToroidalBivarVMTestMixin, unittest.TestCase
         npt.assert_allclose(tvm.pdf(x), self.tvm.pdf(x), rtol=5e-7)
         npt.assert_allclose(tvm.norm_const, self.tvm.norm_const, rtol=5e-7)
 
+    def test_constructor_rejects_invalid_parameters(self):
+        invalid_cases = [
+            ([1.0], self.kappa, self.lambda_, "mu"),
+            (self.mu, [0.7], self.lambda_, "kappa"),
+            (self.mu, [-0.7, 1.4], self.lambda_, "nonnegative"),
+            (self.mu, [float("nan"), 1.4], self.lambda_, "finite"),
+            (self.mu, self.kappa, [0.5, 0.6], "lambda_"),
+            (self.mu, self.kappa, float("nan"), "lambda_"),
+        ]
+
+        for mu, kappa, lambda_, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    ToroidalVonMisesSineDistribution(mu, kappa, lambda_)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "numpy",
         reason="Regression test uses NumPy/scipy scalar semantics",

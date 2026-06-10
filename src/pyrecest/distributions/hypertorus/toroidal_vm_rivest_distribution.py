@@ -1,9 +1,13 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
-from pyrecest.backend import all, array, asarray, cos, exp, mod, pi, sin, sqrt
+from pyrecest.backend import array, cos, exp, mod, pi, sin, sqrt
 from scipy.special import iv
 
 from ._input_validation import as_shift_vector
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
+from .abstract_toroidal_bivar_vm_distribution import (
+    validate_scalar_parameter,
+    validate_toroidal_vm_parameters,
+)
 
 
 class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
@@ -18,15 +22,9 @@ class ToroidalVMRivestDistribution(AbstractToroidalDistribution):
 
     def __init__(self, mu, kappa, alpha, beta):
         AbstractToroidalDistribution.__init__(self)
-        mu = array(mu)
-        kappa = array(kappa)
-        assert mu.shape == (2,)
-        assert kappa.shape == (2,)
-        alpha = asarray(alpha)
-        beta = asarray(beta)
-        assert alpha.shape == ()
-        assert beta.shape == ()
-        assert all(kappa >= 0.0)
+        mu, kappa = validate_toroidal_vm_parameters(mu, kappa)
+        alpha = validate_scalar_parameter(alpha, "alpha")
+        beta = validate_scalar_parameter(beta, "beta")
 
         self.mu = mod(mu, 2.0 * pi)
         self.kappa = kappa
