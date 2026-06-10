@@ -63,6 +63,12 @@ class TestAbstractHyperhemisphericalDistribution(unittest.TestCase):
         mode_numerical = watson_dist.mode_numerical()
         npt.assert_array_almost_equal(self.mu_, mode_numerical, decimal=6)
 
+    def test_mode_numerical_rejects_non_2d_hemisphere(self):
+        dist = HyperhemisphericalUniformDistribution(1)
+
+        with self.assertRaisesRegex(NotImplementedError, "2D"):
+            dist.mode_numerical()
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
