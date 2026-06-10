@@ -250,6 +250,22 @@ class TestSCGPTracker(unittest.TestCase):
         self.assertIsNone(tracker.last_measurement_weights)
         self.assertIsNone(tracker.last_quadratic_form)
 
+    def test_update_temporary_scale_parameters_do_not_mutate_tracker_defaults(self):
+        tracker = self._make_tracker(radial_noise_variance=0.0)
+        default_scale_mean = tracker.scale_mean
+        default_scale_variance = tracker.scale_variance
+
+        tracker.update(
+            array([1.4, 0.2]),
+            s_hat=0.75,
+            sigma_squared_s=0.1,
+        )
+
+        self.assertEqual(tracker.scale_mean, default_scale_mean)
+        self.assertEqual(tracker.scale_variance, default_scale_variance)
+        self.assertIsInstance(tracker.last_measurement_score, MeasurementScore)
+        self.assertIsNone(tracker.last_measurement_score.skipped_reason)
+
     def test_update_records_last_measurement_score(self):
         tracker = self._make_tracker()
 

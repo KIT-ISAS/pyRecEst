@@ -846,13 +846,11 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         ``active_measurement_mask`` can be used to explicitly disable cluttered,
         occluded, or otherwise unsupported measurements.
         """
-        if s_hat is not None:
-            self.scale_mean = float(s_hat)
-        if sigma_squared_s is not None:
-            self.scale_variance = float(sigma_squared_s)
         score = self.score_measurements(
             measurements,
             R=R,
+            s_hat=s_hat,
+            sigma_squared_s=sigma_squared_s,
             measurement_weights=measurement_weights,
             active_measurement_mask=active_measurement_mask,
         )
