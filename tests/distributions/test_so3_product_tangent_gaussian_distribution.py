@@ -69,6 +69,44 @@ class SO3ProductTangentGaussianDistributionTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     SO3ProductTangentGaussianDistribution(mean, covariance)
 
+    def test_constructor_rejects_invalid_mean_shapes(self):
+        invalid_means = [
+            (array([]), "4 entries"),
+            (array([0.0, 0.0, 0.0]), "4 entries"),
+            (array([[0.0, 0.0, 0.0]]), "length 4"),
+        ]
+
+        for mean, message in invalid_means:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    SO3ProductTangentGaussianDistribution(mean, eye(3))
+
+    def test_maps_reject_invalid_product_rotation_shapes(self):
+        invalid_rotations = [
+            (array([]), "4 entries"),
+            (array([0.0, 0.0, 0.0]), "4 entries"),
+            (array([[0.0, 0.0, 0.0, 1.0, 0.0]]), "4 entries"),
+            (array([[[0.0, 0.0, 0.0]]]), "length 4"),
+        ]
+
+        for rotations, message in invalid_rotations:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    SO3ProductTangentGaussianDistribution.log_map(rotations)
+
+    def test_exp_map_rejects_invalid_product_tangent_shapes(self):
+        invalid_tangent_vectors = [
+            (array([]), "3 entries"),
+            (array([0.1, 0.2]), "3 entries"),
+            (array([[0.1, 0.2, 0.3, 0.4]]), "3 entries"),
+            (array([[[0.1, 0.2]]]), "length 3"),
+        ]
+
+        for tangent_vectors, message in invalid_tangent_vectors:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    SO3ProductTangentGaussianDistribution.exp_map(tangent_vectors)
+
     def test_exp_log_roundtrip_with_base_product_rotation(self):
         base = array(
             [

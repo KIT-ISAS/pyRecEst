@@ -48,6 +48,39 @@ class SO3HelpersTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     private_normalize_quaternions(quaternions)
 
+    def test_helpers_reject_invalid_batch_widths(self):
+        invalid_calls = [
+            (
+                lambda: so3_helpers.as_batch(array(1.0), 3, "SO(3) tangent vectors"),
+                "length 3",
+            ),
+            (
+                lambda: so3_helpers.as_batch(
+                    array([[1.0, 2.0]]), 3, "SO(3) tangent vectors"
+                ),
+                "length 3",
+            ),
+            (
+                lambda: so3_helpers.so3_exp_map_volume_log_jacobian(
+                    array([1.0, 2.0])
+                ),
+                "length 3",
+            ),
+            (lambda: so3_helpers.exp_map_identity(array(1.0)), "length 3"),
+            (lambda: so3_helpers.exp_map(array([1.0, 2.0])), "length 3"),
+            (
+                lambda: so3_helpers.rotate_vectors(
+                    array([0.0, 0.0, 0.0, 1.0]), array([1.0, 2.0])
+                ),
+                "length 3",
+            ),
+        ]
+
+        for invalid_call, message in invalid_calls:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    invalid_call()
+
     def test_exp_log_roundtrip_with_base_rotation(self):
         base = z_quaternion(pi / 3.0)
         tangent_vectors = array([[0.1, -0.2, 0.05], [0.0, 0.0, 0.0]])

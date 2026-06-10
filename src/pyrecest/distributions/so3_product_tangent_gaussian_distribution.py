@@ -116,13 +116,17 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
         rotations = array(rotations, dtype=float)
 
         if ndim(rotations) == 1:
-            assert (
-                rotations.shape[0] % 4 == 0
-            ), "Flattened SO(3)^K rotations need 4 entries per component."
+            if rotations.shape[0] == 0 or rotations.shape[0] % 4 != 0:
+                raise ValueError(
+                    "Flattened SO(3)^K rotations need 4 entries per component."
+                )
             inferred_num_rotations = rotations.shape[0] // 4
             rotations = reshape(rotations, (inferred_num_rotations, 4))
         elif ndim(rotations) == 2:
-            assert rotations.shape[-1] == 4, "SO(3) quaternions must have length 4."
+            if rotations.shape[-1] != 4:
+                raise ValueError("SO(3) quaternions must have length 4.")
+            if rotations.shape[0] == 0:
+                raise ValueError("SO(3)^K rotations must contain at least one component.")
             inferred_num_rotations = rotations.shape[0]
         else:
             raise ValueError("A product point must have shape (K, 4) or (4 * K,).")
@@ -140,27 +144,36 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
         rotations = array(rotations, dtype=float)
 
         if ndim(rotations) == 1:
-            assert (
-                rotations.shape[0] % 4 == 0
-            ), "Flattened SO(3)^K rotations need 4 entries per component."
+            if rotations.shape[0] == 0 or rotations.shape[0] % 4 != 0:
+                raise ValueError(
+                    "Flattened SO(3)^K rotations need 4 entries per component."
+                )
             inferred_num_rotations = rotations.shape[0] // 4
             rotations = reshape(rotations, (1, inferred_num_rotations, 4))
         elif ndim(rotations) == 2:
             if rotations.shape[-1] == 4 and (
                 num_rotations is None or rotations.shape[0] == num_rotations
             ):
+                if rotations.shape[0] == 0:
+                    raise ValueError(
+                        "SO(3)^K rotations must contain at least one component."
+                    )
                 inferred_num_rotations = rotations.shape[0]
                 rotations = reshape(rotations, (1, inferred_num_rotations, 4))
             else:
-                assert (
-                    rotations.shape[-1] % 4 == 0
-                ), "Flattened SO(3)^K rotations need 4 entries per component."
+                if rotations.shape[-1] == 0 or rotations.shape[-1] % 4 != 0:
+                    raise ValueError(
+                        "Flattened SO(3)^K rotations need 4 entries per component."
+                    )
                 inferred_num_rotations = rotations.shape[-1] // 4
                 rotations = reshape(
                     rotations, (rotations.shape[0], inferred_num_rotations, 4)
                 )
         elif ndim(rotations) == 3:
-            assert rotations.shape[-1] == 4, "SO(3) quaternions must have length 4."
+            if rotations.shape[-1] != 4:
+                raise ValueError("SO(3) quaternions must have length 4.")
+            if rotations.shape[1] == 0:
+                raise ValueError("SO(3)^K rotations must contain at least one component.")
             inferred_num_rotations = rotations.shape[1]
         else:
             raise ValueError(
@@ -181,32 +194,41 @@ class SO3ProductTangentGaussianDistribution(AbstractBoundedDomainDistribution):
         tangent_vectors = array(tangent_vectors, dtype=float)
 
         if ndim(tangent_vectors) == 1:
-            assert (
-                tangent_vectors.shape[0] % 3 == 0
-            ), "Flattened SO(3)^K tangent vectors need 3 entries per component."
+            if tangent_vectors.shape[0] == 0 or tangent_vectors.shape[0] % 3 != 0:
+                raise ValueError(
+                    "Flattened SO(3)^K tangent vectors need 3 entries per component."
+                )
             inferred_num_rotations = tangent_vectors.shape[0] // 3
             tangent_vectors = reshape(tangent_vectors, (1, inferred_num_rotations, 3))
         elif ndim(tangent_vectors) == 2:
             if tangent_vectors.shape[-1] == 3 and (
                 num_rotations is None or tangent_vectors.shape[0] == num_rotations
             ):
+                if tangent_vectors.shape[0] == 0:
+                    raise ValueError(
+                        "SO(3)^K tangent vectors must contain at least one component."
+                    )
                 inferred_num_rotations = tangent_vectors.shape[0]
                 tangent_vectors = reshape(
                     tangent_vectors, (1, inferred_num_rotations, 3)
                 )
             else:
-                assert (
-                    tangent_vectors.shape[-1] % 3 == 0
-                ), "Flattened SO(3)^K tangent vectors need 3 entries per component."
+                if tangent_vectors.shape[-1] == 0 or tangent_vectors.shape[-1] % 3 != 0:
+                    raise ValueError(
+                        "Flattened SO(3)^K tangent vectors need 3 entries per component."
+                    )
                 inferred_num_rotations = tangent_vectors.shape[-1] // 3
                 tangent_vectors = reshape(
                     tangent_vectors,
                     (tangent_vectors.shape[0], inferred_num_rotations, 3),
                 )
         elif ndim(tangent_vectors) == 3:
-            assert (
-                tangent_vectors.shape[-1] == 3
-            ), "SO(3) tangent vectors must have length 3."
+            if tangent_vectors.shape[-1] != 3:
+                raise ValueError("SO(3) tangent vectors must have length 3.")
+            if tangent_vectors.shape[1] == 0:
+                raise ValueError(
+                    "SO(3)^K tangent vectors must contain at least one component."
+                )
             inferred_num_rotations = tangent_vectors.shape[1]
         else:
             raise ValueError(
