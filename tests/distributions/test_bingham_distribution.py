@@ -34,6 +34,25 @@ class TestBinghamDistribution(unittest.TestCase):
         npt.assert_allclose(bd.Z, array(Z))
         npt.assert_allclose(bd.M, array(M))
 
+    def test_constructor_rejects_invalid_parameters(self):
+        """Invalid concentration vectors and basis matrices fail explicitly."""
+        valid_Z = array([-5.0, -3.0, 0.0])
+        valid_M = self.bd.M
+        invalid_cases = [
+            (valid_Z, [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], "square"),
+            (array([[-5.0, -3.0, 0.0]]), valid_M, "1-D"),
+            (array([-5.0, 0.0]), valid_M, "wrong length"),
+            (array([-5.0, -3.0, 1.0]), valid_M, "zero"),
+            (array([-3.0, -5.0, 0.0]), valid_M, "ascending"),
+            (array([float("nan"), -3.0, 0.0]), valid_M, "finite"),
+            (valid_Z, array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 2.0]]), "orthogonal"),
+        ]
+
+        for Z, M, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    BinghamDistribution(Z, M)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
@@ -74,6 +93,24 @@ class TestBinghamDistribution(unittest.TestCase):
     def test_pdf_rejects_wrong_dimension(self):
         with self.assertRaises(ValueError):
             self.bd.pdf([1.0, 0.0])
+
+    def test_multiply_rejects_invalid_partner(self):
+        lower_dim = BinghamDistribution(array([-1.0, 0.0]), array([[1.0, 0.0], [0.0, 1.0]]))
+
+        with self.assertRaisesRegex(ValueError, "BinghamDistribution"):
+            self.bd.multiply(object())
+        with self.assertRaisesRegex(ValueError, "Dimensions"):
+            self.bd.multiply(lower_dim)
+
+    def test_compose_rejects_invalid_partner_or_dimension(self):
+        lower_dim = BinghamDistribution(array([-1.0, 0.0]), array([[1.0, 0.0], [0.0, 1.0]]))
+
+        with self.assertRaisesRegex(ValueError, "BinghamDistribution"):
+            self.bd.compose(object())
+        with self.assertRaisesRegex(ValueError, "Dimensions"):
+            self.bd.compose(lower_dim)
+        with self.assertRaisesRegex(ValueError, "Compose"):
+            self.bd.compose(self.bd)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
