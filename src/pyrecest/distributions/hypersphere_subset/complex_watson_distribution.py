@@ -346,7 +346,6 @@ class ComplexWatsonDistribution:
         Returns:
             log(C_D(kappa)); same shape as kappa (scalar if scalar input)
         """  # pylint: disable=too-many-locals
-        _validate_numpy_or_pytorch_backend("log_norm()")
         if isinstance(D, bool) or not isinstance(D, Integral):
             raise ValueError("D must be a positive integer")
         D = int(D)
@@ -356,6 +355,7 @@ class ComplexWatsonDistribution:
         kappa_arr = atleast_1d(asarray(kappa, dtype=float)).ravel()
         if not _to_python_bool(all(isfinite(kappa_arr))):
             raise ValueError("kappa must contain only finite values")
+        _validate_numpy_or_pytorch_backend("log_norm()")
         log_c = zeros_like(kappa_arr)
 
         # ----------------------------------------------------------
