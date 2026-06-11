@@ -23,8 +23,10 @@ class HyperhemisphereCartProdDiracDistribution(
         :param d: Dirac locations as a numpy array.
         :param w: Weights of Dirac locations as a numpy array. If not provided, defaults to uniform weights.
         """
-        assert dim_hemisphere is not None, "Hemisphere dimension must be specified."
-        assert n_hemispheres is not None, "Number of hemispheres must be specified."
+        if dim_hemisphere is None:
+            raise ValueError("Hemisphere dimension must be specified.")
+        if n_hemispheres is None:
+            raise ValueError("Number of hemispheres must be specified.")
         self.dim_hemisphere = dim_hemisphere
         self.n_hemispheres = n_hemispheres
         self._store_flat = store_flat
@@ -137,14 +139,15 @@ class HyperhemisphereCartProdDiracDistribution(
         :param f: Function to apply.
         :returns: A new distribution with the function applied to the locations.
         """
-        assert f_supports_multiple, "Function must support multiple inputs."
+        if not f_supports_multiple:
+            raise ValueError("Function must support multiple inputs.")
         dist = copy.deepcopy(self)
-        for i in range(self.n_hemispheres):
-            component_values = f(self.component_particles(i))
-            if self._store_flat:
-                start = i * self.component_dim
-                stop = (i + 1) * self.component_dim
-                dist.d[:, start:stop] = component_values
-            else:
-                dist.d[:, i, :] = component_values
+        component_values = stack(
+            [array(f(self.component_particles(i))) for i in range(self.n_hemispheres)],
+            1,
+        )
+        if self._store_flat:
+            dist.d = reshape(component_values, (self.d.shape[0], self.input_dim))
+        else:
+            dist.d = component_values
         return dist
