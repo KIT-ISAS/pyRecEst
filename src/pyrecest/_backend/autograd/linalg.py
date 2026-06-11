@@ -36,16 +36,19 @@ from .._shared_numpy.linalg import (
 )
 
 
-def _adjoint(_ans, x, fn):
-    vectorized = x.ndim == 3
-    axes = (0, 2, 1) if vectorized else (1, 0)
+def _matrix_transpose(x):
+    """Transpose trailing matrix axes while preserving any leading batch axes."""
+    return _np.swapaxes(x, -1, -2)
 
+
+def _adjoint(_ans, x, fn):
     def vjp(g):
         n = x.shape[-1]
         size_m = x.shape[:-2] + (2 * n, 2 * n)
+        transposed_x = _matrix_transpose(x)
         mat = _np.zeros(size_m)
-        mat[..., :n, :n] = x.transpose(axes)
-        mat[..., n:, n:] = x.transpose(axes)
+        mat[..., :n, :n] = transposed_x
+        mat[..., n:, n:] = transposed_x
         mat[..., :n, n:] = g
         return fn(mat)[..., :n, n:]
 

@@ -24,7 +24,6 @@ from .._backend_config import np_atol as atol
 from ..numpy import linalg as _gsnplinalg
 from ._common import array, cast
 from ._dtype import (
-    _cast_out_to_input_dtype,
     get_default_dtype,
     is_complex,
     is_floating,
@@ -34,7 +33,7 @@ from ._dtype import (
 def _as_numpy_no_grad(value):
     """Return a CPU NumPy view/copy for SciPy bridge functions."""
     if isinstance(value, _torch.Tensor):
-        return value.detach().cpu().numpy()
+        return value.detach().resolve_conj().resolve_neg().cpu().numpy()
     return _np.asarray(value)
 
 
@@ -240,14 +239,19 @@ def is_single_matrix_pd(mat):
         return False
 
 
-@_cast_out_to_input_dtype
 def fractional_matrix_power(A, t):
     """Compute the fractional power of a matrix."""
+    A = _as_linalg_tensor(A)
     A_np = _as_numpy_no_grad(A)
     if A_np.ndim == 2:
         out = _scipy.linalg.fractional_matrix_power(A_np, t)
     else:
         out = _np.stack([_scipy.linalg.fractional_matrix_power(A_, t) for A_ in A_np])
+
+    if out.dtype.kind == "c":
+        target_complex_dtype = _COMPLEX_DTYPE_FOR_TENSOR_DTYPE.get(A.dtype)
+        if target_complex_dtype is not None:
+            out = out.astype(target_complex_dtype, copy=False)
 
     return _torch_as_like(out, A)
 

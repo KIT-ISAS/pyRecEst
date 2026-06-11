@@ -2,6 +2,7 @@ import pyrecest.backend as backend
 import pytest
 from pyrecest._backend.capabilities import get_unsupported_functions
 from pyrecest.backend import array, linalg
+from tests.support.backend_runner import run_backend_code
 
 _MATRIX = array([[1.0, 0.0], [0.0, 1.0]])
 
@@ -72,6 +73,20 @@ def test_pytorch_to_numpy_resolves_conjugate_views():
     assert converted.tolist() == [1.0 - 2.0j, 3.0 + 4.0j]
 
 
+def test_pytorch_linalg_numpy_bridge_resolves_conjugate_views():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific linalg SciPy bridge conversion")
+
+    torch = pytest.importorskip("torch")
+
+    value = torch.eye(2, dtype=torch.complex128).conj()
+    assert value.is_conj()
+
+    result = linalg.sqrtm(value)
+
+    assert torch.allclose(result, torch.eye(2, dtype=torch.complex128))
+
+
 def test_pytorch_logm_backward_handles_high_rank_batches():
     if backend.__backend_name__ != "pytorch":
         pytest.skip("PyTorch-specific logm gradient regression test")
@@ -89,11 +104,58 @@ def test_pytorch_logm_backward_handles_high_rank_batches():
     assert bool(torch.isfinite(values.grad).all())
 
 
+def test_autograd_logm_vjp_handles_high_rank_batches():
+    pytest.importorskip("autograd")
+
+    code = """
+import autograd.numpy as np
+from autograd import grad
+from pyrecest.backend import linalg
+
+values = np.tile(np.eye(2), (2, 3, 1, 1))
+
+
+def objective(x):
+    return np.sum(linalg.logm(x))
+
+
+gradient = grad(objective)(values)
+assert gradient.shape == values.shape
+assert np.all(np.isfinite(gradient))
+"""
+    result = run_backend_code("autograd", code)
+    assert result.returncode == 0, result.stderr
+
+
 def _to_python(value):
     value = backend.to_numpy(value)
     if hasattr(value, "tolist"):
         return value.tolist()
     return value
+
+
+def test_pytorch_fractional_matrix_power_promotes_integer_inputs():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific fractional_matrix_power regression test")
+
+    values = backend.asarray([[2, 0], [0, 3]], dtype=backend.int64)
+
+    result = linalg.fractional_matrix_power(values, 0.5)
+    expected = array([[2.0**0.5, 0.0], [0.0, 3.0**0.5]])
+
+    assert backend.is_floating(result)
+    assert bool(_to_python(backend.allclose(result, expected)))
+
+
+def test_pytorch_fractional_matrix_power_accepts_python_lists():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific fractional_matrix_power regression test")
+
+    result = linalg.fractional_matrix_power([[2, 0], [0, 3]], 0.5)
+    expected = array([[2.0**0.5, 0.0], [0.0, 3.0**0.5]])
+
+    assert backend.is_floating(result)
+    assert bool(_to_python(backend.allclose(result, expected)))
 
 
 def test_pytorch_custom_gradient_accepts_keyword_arguments_and_defaults():
