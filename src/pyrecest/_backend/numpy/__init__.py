@@ -215,17 +215,21 @@ def vmap(pyfunc, randomness="error"):
                 "All arguments must have the same size in the first dimension"
             )
 
-        # Prepare the output array (assuming the output of pyfunc is a scalar or numpy array)
+        # Prepare the output array using the first result's exact array
+        # representation so dtype and shape match NumPy's stacking semantics.
         first_output = pyfunc(*(arg[0, ...] for arg in args))
-        if _np.isscalar(first_output):
+        first_output_array = _np.asarray(first_output)
+        if first_output_array.shape == ():
             output_shape = (args[0].shape[0],)
         else:
-            output_shape = (args[0].shape[0],) + first_output.shape
+            output_shape = (args[0].shape[0],) + first_output_array.shape
 
-        output = _np.empty(output_shape)
+        output = _np.empty(output_shape, dtype=first_output_array.dtype)
+        output[0, ...] = first_output
 
-        # Apply the function to each slice
-        for i in range(args[0].shape[0]):
+        # Apply the function to each remaining slice. The first slice was
+        # already evaluated above to determine output metadata.
+        for i in range(1, args[0].shape[0]):
             output[i, ...] = pyfunc(*(arg[i, ...] for arg in args))
 
         return output

@@ -1292,9 +1292,16 @@ def array_from_sparse(indices, data, target_shape):
     a : array, shape=target_shape
         Array of zeros with specified values assigned to specified indices.
     """
+    data = array(data)
+    indices = _torch.LongTensor(indices)
+    if indices.numel() == 0:
+        if data.numel() != 0:
+            raise ValueError("data must be empty when indices are empty")
+        return _torch.zeros(_torch.Size(target_shape), dtype=data.dtype, device=data.device)
+
     return _torch.sparse_coo_tensor(
-        _torch.LongTensor(indices).t(),
-        array(data),
+        indices.t(),
+        data,
         _torch.Size(target_shape),
     ).to_dense()
 

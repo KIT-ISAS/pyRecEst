@@ -297,7 +297,13 @@ def array_from_sparse(indices, data, target_shape):
     """
     data = array(data)
     out = zeros(target_shape, dtype=data.dtype)
-    out.put(_np.ravel_multi_index(_np.array(indices).T, target_shape), data)
+    indices = _np.array(indices)
+    if indices.size == 0:
+        if data.size != 0:
+            raise ValueError("data must be empty when indices are empty")
+        return out
+
+    out.put(_np.ravel_multi_index(indices.T, target_shape), data)
     return out
 
 
