@@ -1072,6 +1072,10 @@ def _is_iterable(x):
     return False
 
 
+def _is_empty_index_sequence(indices):
+    return _is_iterable(indices) and len(indices) == 0
+
+
 def _as_assignment_values(values, x):
     if _torch.is_tensor(values):
         return values.to(device=x.device, dtype=x.dtype)
@@ -1168,8 +1172,10 @@ def assignment(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(array(x))
-    values = _as_assignment_values(values, x_new)
+    if _is_empty_index_sequence(indices):
+        return x_new
 
+    values = _as_assignment_values(values, x_new)
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x_new)
     if _is_boolean(indices):
         indices = _as_boolean_index(indices, device=x_new.device)
@@ -1224,6 +1230,9 @@ def assignment_by_sum(x, values, indices, axis=0):
     If a list is given, it must have the same length as indices.
     """
     x_new = copy(array(x))
+    if _is_empty_index_sequence(indices):
+        return x_new
+
     values = _as_assignment_values(values, x_new)
     use_vectorization = hasattr(indices, "__len__") and len(indices) < ndim(x_new)
     if _is_boolean(indices):
@@ -1293,7 +1302,7 @@ def array_from_sparse(indices, data, target_shape):
         Array of zeros with specified values assigned to specified indices.
     """
     data = array(data)
-    indices = _torch.LongTensor(indices)
+    indices = _torch.as_tensor(indices, dtype=_torch.long, device=data.device)
     if indices.numel() == 0:
         if data.numel() != 0:
             raise ValueError("data must be empty when indices are empty")
@@ -1303,6 +1312,7 @@ def array_from_sparse(indices, data, target_shape):
         indices.t(),
         data,
         _torch.Size(target_shape),
+        device=data.device,
     ).to_dense()
 
 
@@ -1677,7 +1687,7 @@ def imag(a):
         a = _torch.tensor(a)
     if is_complex(a):
         return _torch.imag(a)
-    return _torch.zeros(a.shape, dtype=a.dtype)
+    return _torch.zeros(a.shape, dtype=a.dtype, device=a.device)
 
 
 def unique(ar, axis=None):

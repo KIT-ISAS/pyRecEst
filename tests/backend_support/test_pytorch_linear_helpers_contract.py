@@ -18,6 +18,13 @@ def test_pytorch_backend_exposes_dot_and_matvec():
 
     assert _to_python(backend.dot(first, second)) == [17.0, 53.0]
     assert _to_python(backend.dot(first, [5.0, 6.0])) == [17.0, 39.0]
+    assert _to_python(backend.outer([1.0, 2.0], [3.0, 4.0])) == [
+        [3.0, 4.0],
+        [6.0, 8.0],
+    ]
+    assert float(_to_python(backend.dot(backend.asarray(2.0), 3.0))) == pytest.approx(
+        6.0
+    )
 
     batched_matvec = backend.matvec(
         backend.asarray([[[1.0, 0.0], [0.0, 1.0]], [[2.0, 0.0], [0.0, 3.0]]]),
