@@ -211,6 +211,38 @@ def test_numpy_vmap_rejects_mismatched_leading_dimensions():
         vmapped(array([[1.0], [2.0]]), array([[1.0]]))
 
 
+def test_numpy_vmap_preserves_output_dtype_and_reuses_first_result():
+    if backend.__backend_name__ != "numpy":
+        pytest.skip("NumPy-specific vmap regression test")
+
+    np = pytest.importorskip("numpy")
+    values = array([[1, 2], [3, 4]], dtype=np.int64)
+    call_count = 0
+
+    def add_one(row):
+        nonlocal call_count
+        call_count += 1
+        return row + 1
+
+    result = backend.vmap(add_one)(values)
+
+    assert _to_python(result) == [[2, 3], [4, 5]]
+    assert result.dtype == values.dtype
+    assert call_count == values.shape[0]
+
+
+def test_numpy_vmap_preserves_complex_scalar_outputs():
+    if backend.__backend_name__ != "numpy":
+        pytest.skip("NumPy-specific vmap regression test")
+
+    values = array([[1.0, 2.0], [3.0, 4.0]])
+
+    result = backend.vmap(lambda row: row[0] + 1j * row[1])(values)
+
+    assert _to_python(result) == [1.0 + 2.0j, 3.0 + 4.0j]
+    assert result.dtype.kind == "c"
+
+
 def test_default_reductions_reduce_all_elements():
     values = array([[2.0, 3.0], [4.0, 5.0]])
 
@@ -448,6 +480,18 @@ def test_scatter_add_preserves_input_values_and_uses_facade_signature():
     result = backend.scatter_add(values, 1, indices, updates)
 
     assert _to_python(result) == [[3.0, 1.0, 4.0], [1.0, 5.0, 6.0]]
+
+
+def test_array_from_sparse_accepts_empty_support():
+    result = backend.array_from_sparse([], [], (2, 3))
+
+    assert result.shape == (2, 3)
+    assert _to_python(result) == [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+
+
+def test_array_from_sparse_rejects_data_without_indices():
+    with pytest.raises(ValueError, match="data must be empty"):
+        backend.array_from_sparse([], [1.0], (2, 3))
 
 
 def test_split_integer_sections_reject_uneven_division():

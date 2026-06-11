@@ -521,6 +521,10 @@ def array_from_sparse(indices, data, target_shape):
 
     # Create a dense array of zeros with the appropriate data type
     out = _jnp.zeros(target_shape, dtype=data.dtype)
+    if indices.size == 0:
+        if data.size != 0:
+            raise ValueError("data must be empty when indices are empty")
+        return out
 
     # Compute linear indices from multi-dimensional indices and apply them to
     # the flattened dense array.  Indexing the original n-D array with these
