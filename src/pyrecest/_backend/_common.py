@@ -11,6 +11,19 @@ def comb(n, k):
 
 def outer(a, b):
     """Return a batched outer product for array/tensor backends."""
+    torch_pair = _torch_promoted_pair(a, b)
+    if torch_pair is not None:
+        a, b = torch_pair
+        if a.ndim == 0 or b.ndim == 0:
+            return a * b
+        a_expanded = a[..., :, None]
+        b_expanded = b[..., None, :]
+        return a_expanded * b_expanded
+
+    a = _np.asarray(a)
+    b = _np.asarray(b)
+    if a.ndim == 0 or b.ndim == 0:
+        return _np.multiply(a, b)
     a_expanded = a[..., :, None]
     b_expanded = b[..., None, :]
     return a_expanded * b_expanded
@@ -69,6 +82,8 @@ def dot(a, b):
     if torch_pair is not None:
         a, b = torch_pair
         torch = _torch_module_for_values(a, b)
+        if a.ndim == 0 or b.ndim == 0:
+            return torch.multiply(a, b)
         if b.ndim == 1:
             return torch.einsum("...i,i->...", a, b)
         if a.ndim == 1:
@@ -77,6 +92,8 @@ def dot(a, b):
 
     a = _np.asarray(a)
     b = _np.asarray(b)
+    if a.ndim == 0 or b.ndim == 0:
+        return _np.multiply(a, b)
     if b.ndim == 1:
         return _np.einsum("...i,i->...", a, b)
     if a.ndim == 1:

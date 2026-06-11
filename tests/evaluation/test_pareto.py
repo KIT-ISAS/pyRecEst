@@ -8,6 +8,7 @@ from pyrecest.evaluation import (
     is_pareto_front,
     pareto_front_indices,
     record_dominates,
+    select_under_constraints,
 )
 
 
@@ -119,6 +120,42 @@ def test_constraint_mask_supports_tuple_and_mapping_specs() -> None:
     )
 
     assert table.loc[mask, "name"].tolist() == ["a"]
+
+
+def test_constraint_mask_treats_missing_not_equal_values_as_infeasible() -> None:
+    table = pd.DataFrame(
+        [
+            {"name": "different", "score": 0.2},
+            {"name": "same", "score": 0.0},
+            {"name": "missing", "score": None},
+            {"name": "non_numeric", "score": "unknown"},
+        ]
+    )
+
+    mask = constraint_mask(table, {"score": ("!=", 0.0)})
+
+    assert table.loc[mask, "name"].tolist() == ["different"]
+
+
+def test_select_under_constraints_rejects_invalid_directions() -> None:
+    table = pd.DataFrame([{"name": "a", "score": 1.0, "tie": 0.0}])
+
+    with pytest.raises(ValueError, match="objective"):
+        select_under_constraints(
+            table,
+            constraints={},
+            objective="score",
+            direction="sideways",  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="tie-breaker"):
+        select_under_constraints(
+            table,
+            constraints={},
+            objective="score",
+            direction="min",
+            tie_breakers=(("tie", "sideways"),),  # type: ignore[arg-type]
+        )
 
 
 def test_equal_quality_selection_returns_best_compression_row() -> None:

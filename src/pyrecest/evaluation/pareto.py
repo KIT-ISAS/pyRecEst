@@ -10,7 +10,7 @@ selection problems.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -160,20 +160,23 @@ def constraint_mask(
             mask &= False
             continue
         values = pd.to_numeric(table[column], errors="coerce")
+        present_values = values.notna()
         if op == "<=":
-            mask &= values <= float(threshold) + eps
+            comparison = values <= float(threshold) + eps
         elif op == ">=":
-            mask &= values >= float(threshold) - eps
+            comparison = values >= float(threshold) - eps
         elif op == "<":
-            mask &= values < float(threshold) - eps
+            comparison = values < float(threshold) - eps
         elif op == ">":
-            mask &= values > float(threshold) + eps
+            comparison = values > float(threshold) + eps
         elif op == "==":
-            mask &= np.isclose(values, float(threshold), atol=eps, rtol=0.0)
+            comparison = np.isclose(values, float(threshold), atol=eps, rtol=0.0)
         elif op == "!=":
-            mask &= ~np.isclose(values, float(threshold), atol=eps, rtol=0.0)
+            comparison = ~np.isclose(values, float(threshold), atol=eps, rtol=0.0)
         else:  # pragma: no cover - protected by _parse_constraint_spec.
             raise ValueError(f"Unsupported constraint operator {op!r}.")
+        comparison = pd.Series(comparison, index=table.index).fillna(False).astype(bool)
+        mask &= present_values & comparison
     return mask.fillna(False)
 
 
@@ -190,6 +193,11 @@ def select_under_constraints(
 
     if objective not in table.columns:
         raise ValueError(f"objective column {objective!r} is not present.")
+    direction = _validate_direction(direction, f"objective {objective!r}")
+    tie_breakers = tuple(
+        (column, _validate_direction(tie_direction, f"tie-breaker {column!r}"))
+        for column, tie_direction in tie_breakers
+    )
     sorted_columns = [objective, *(column for column, _ in tie_breakers)]
     missing = [column for column in sorted_columns if column not in table.columns]
     if missing:
@@ -300,6 +308,14 @@ def _directions_by_objective(
     if invalid:
         raise ValueError(f"Invalid objective directions for: {', '.join(invalid)}.")
     return result
+
+
+def _validate_direction(direction: Any, context: str) -> ObjectiveDirection:
+    if direction not in ("min", "max"):
+        raise ValueError(
+            f"Invalid {context} direction {direction!r}; expected 'min' or 'max'."
+        )
+    return cast(ObjectiveDirection, direction)
 
 
 def _feasible_index(
