@@ -208,16 +208,13 @@ def vmap(pyfunc, randomness="error"):
                 "All arguments must have the same size in the first dimension"
             )
 
-        first_output = pyfunc(*(arg[0, ...] for arg in args))
-        if _np.isscalar(first_output):
-            output_shape = (args[0].shape[0],)
-        else:
-            output_shape = (args[0].shape[0],) + first_output.shape
-
-        output = empty(output_shape)
-        for i in range(args[0].shape[0]):
-            output[i, ...] = pyfunc(*(arg[i, ...] for arg in args))
-        return output
+        # Use autograd.numpy.stack instead of preallocating and assigning into
+        # an output array.  The old implementation coerced integer/complex
+        # results to the backend default float dtype and in-place assignment is
+        # not a reliable autograd operation when pyfunc returns ArrayBox values.
+        return _np.stack(
+            [pyfunc(*(arg[i, ...] for arg in args)) for i in range(args[0].shape[0])]
+        )
 
     return vmapped_fun
 

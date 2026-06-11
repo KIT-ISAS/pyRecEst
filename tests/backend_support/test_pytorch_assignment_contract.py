@@ -67,6 +67,7 @@ by_array_like_sum = backend.assignment_by_sum(
     [0.0, 0.0, 0.0], [2.0, 3.0], [0, 2]
 )
 empty_array_like = backend.assignment([1.0, 2.0, 3.0], 99.0, [])
+empty_sum_array_like = backend.assignment_by_sum([1.0, 2.0, 3.0], 99.0, [])
 
 matrix = backend.zeros((3, 3))
 by_mask = backend.assignment(
@@ -87,6 +88,7 @@ assert backend.to_numpy(by_slice_sum).tolist() == [0.0, 1.0, 2.0]
 assert backend.to_numpy(by_array_like).tolist() == [[0.0, 4.0], [5.0, 0.0]]
 assert backend.to_numpy(by_array_like_sum).tolist() == [2.0, 0.0, 3.0]
 assert backend.to_numpy(empty_array_like).tolist() == [1.0, 2.0, 3.0]
+assert backend.to_numpy(empty_sum_array_like).tolist() == [1.0, 2.0, 3.0]
 assert backend.to_numpy(by_mask).tolist() == [
     [1.0, 0.0, 0.0],
     [0.0, 2.0, 0.0],
