@@ -243,10 +243,10 @@ def fractional_matrix_power(A, t):
     """Compute the fractional power of a matrix."""
     A = _as_linalg_tensor(A)
     A_np = _as_numpy_no_grad(A)
-    if A_np.ndim == 2:
-        out = _scipy.linalg.fractional_matrix_power(A_np, t)
-    else:
-        out = _np.stack([_scipy.linalg.fractional_matrix_power(A_, t) for A_ in A_np])
+    out = _np.vectorize(
+        lambda one_matrix: _scipy.linalg.fractional_matrix_power(one_matrix, t),
+        signature="(n,n)->(n,n)",
+    )(A_np)
 
     if out.dtype.kind == "c":
         target_complex_dtype = _COMPLEX_DTYPE_FOR_TENSOR_DTYPE.get(A.dtype)
