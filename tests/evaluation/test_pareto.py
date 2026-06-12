@@ -106,6 +106,25 @@ def test_record_dominates_can_skip_missing_optional_metrics() -> None:
     )
 
 
+def test_record_dominates_treats_non_numeric_metrics_as_missing_when_allowed() -> None:
+    left = {"size": 4.0, "quality": 0.95, "optional": "not available"}
+    right = {"size": 5.0, "quality": 0.95, "optional": 2.0}
+
+    assert record_dominates(
+        left,
+        right,
+        ["size", "quality", "optional"],
+        directions={"size": "min", "quality": "max", "optional": "max"},
+    )
+    assert not record_dominates(
+        left,
+        right,
+        ["size", "quality", "optional"],
+        directions={"size": "min", "quality": "max", "optional": "max"},
+        allow_missing=False,
+    )
+
+
 def test_constraint_mask_supports_tuple_and_mapping_specs() -> None:
     table = pd.DataFrame(
         [

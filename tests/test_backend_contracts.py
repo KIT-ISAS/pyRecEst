@@ -127,6 +127,30 @@ assert np.all(np.isfinite(gradient))
     assert result.returncode == 0, result.stderr
 
 
+def test_jax_divide_ignore_div_zero_has_finite_gradients():
+    pytest.importorskip("jax")
+
+    code = """
+import jax
+import jax.numpy as jnp
+import pyrecest.backend as backend
+
+
+def objective(denominator):
+    return jnp.sum(
+        backend.divide(jnp.array([1.0, 2.0]), denominator, ignore_div_zero=True)
+    )
+
+
+gradient = jax.grad(objective)(jnp.array([0.0, 2.0]))
+assert jnp.all(jnp.isfinite(gradient))
+assert float(gradient[0]) == 0.0
+assert float(gradient[1]) == -0.5
+"""
+    result = run_backend_code("jax", code)
+    assert result.returncode == 0, result.stderr
+
+
 def _to_python(value):
     value = backend.to_numpy(value)
     if hasattr(value, "tolist"):
