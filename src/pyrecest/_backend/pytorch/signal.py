@@ -3,12 +3,16 @@ import torch as _torch
 
 
 def _normalize_axes(axes, ndim):
+    axes_were_provided = axes is not None
     if axes is None:
         axes = tuple(range(ndim))
     elif isinstance(axes, (int, _np.integer)):
         axes = (int(axes),)
     else:
         axes = tuple(int(axis) for axis in axes)
+
+    if axes_were_provided and len(axes) == 0 and ndim > 0:
+        raise ValueError("when provided, axes cannot be empty")
 
     normalized_axes = []
     for axis in axes:
