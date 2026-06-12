@@ -39,11 +39,11 @@ def _as_tensor_pair(in1, in2):
     return x.to(dtype=dtype), y.to(dtype=dtype)
 
 
-def _centered_slice(full_shape, target_shape, axes):
-    slices = [slice(None)] * len(full_shape)
-    for axis in axes:
-        start = (full_shape[axis] - target_shape[axis]) // 2
-        slices[axis] = slice(start, start + target_shape[axis])
+def _centered_slice(full_shape, target_shape):
+    slices = []
+    for full, target in zip(full_shape, target_shape, strict=True):
+        start = (full - target) // 2
+        slices.append(slice(start, start + target))
     return tuple(slices)
 
 
@@ -67,11 +67,14 @@ def fftconvolve(in1, in2, mode="full", axes=None):
 
     axes = _normalize_axes(axes, x.ndim)
     if mode == "valid":
-        x_larger = all(x.shape[axis] >= y.shape[axis] for axis in axes)
-        y_larger = all(y.shape[axis] >= x.shape[axis] for axis in axes)
+        comparison_axes = tuple(
+            axis for axis in axes if x.shape[axis] != 1 and y.shape[axis] != 1
+        )
+        x_larger = all(x.shape[axis] >= y.shape[axis] for axis in comparison_axes)
+        y_larger = all(y.shape[axis] >= x.shape[axis] for axis in comparison_axes)
         if not (x_larger or y_larger):
             raise ValueError(
-                "For mode='valid', one input must be at least as large as the other in every selected dimension."
+                "For mode='valid', one input must be at least as large as the other in every selected non-singleton dimension."
             )
 
     fft_shape = tuple(int(x.shape[axis] + y.shape[axis] - 1) for axis in axes)
@@ -87,7 +90,7 @@ def fftconvolve(in1, in2, mode="full", axes=None):
         result = result.real
 
     if mode == "same":
-        return result[_centered_slice(tuple(result.shape), tuple(x.shape), axes)]
+        return result[_centered_slice(tuple(result.shape), tuple(x.shape))]
     if mode == "valid":
         return result[_valid_slice(tuple(x.shape), tuple(y.shape), axes)]
     return result
