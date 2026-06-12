@@ -4,7 +4,6 @@ import numpy as _np
 import torch as _torch
 from pyrecest._backend import _backend_config as _config
 from pyrecest._backend._dtype_utils import (
-    _MAP_FLOAT_TO_COMPLEX,
     _modify_func_default_dtype,
     _pre_allow_complex_dtype,
     _pre_cast_out_to_input_dtype,
@@ -25,6 +24,11 @@ MAP_DTYPE = {
     "float64": float64,
     "complex64": complex64,
     "complex128": complex128,
+}
+
+_FLOAT_TO_COMPLEX_DTYPE = {
+    float32: complex64,
+    float64: complex128,
 }
 
 _COMPLEX_DTYPES = (complex64, complex128)
@@ -78,11 +82,19 @@ def set_default_dtype(value):
 
     Parameters
     ----------
-    value : str
-        Possible values are "float32" as "float64".
+    value : str or dtype-like
+        Floating dtype alias resolving to ``float32`` or ``float64``.
     """
-    _config.DEFAULT_DTYPE = as_dtype(value)
-    _config.DEFAULT_COMPLEX_DTYPE = as_dtype(_MAP_FLOAT_TO_COMPLEX.get(value))
+    dtype = _normalize_torch_dtype(value, default=None)
+    try:
+        complex_dtype = _FLOAT_TO_COMPLEX_DTYPE[dtype]
+    except KeyError as exc:
+        raise ValueError(
+            "PyTorch default dtype must resolve to torch.float32 or torch.float64."
+        ) from exc
+
+    _config.DEFAULT_DTYPE = dtype
+    _config.DEFAULT_COMPLEX_DTYPE = complex_dtype
     _torch.set_default_dtype(_config.DEFAULT_DTYPE)
 
     _update_default_dtypes()
