@@ -100,6 +100,18 @@ class EvidenceComputationMode:
         return diagnostics
 
 
+def _require_return_smoothed_agreement(
+    mode: EvidenceComputationMode, return_smoothed: bool | None
+) -> EvidenceComputationMode:
+    """Reject contradictory explicit mode and compatibility flag requests."""
+
+    if return_smoothed is None:
+        return mode
+    if bool(return_smoothed) != mode.return_smoothed:
+        raise ValueError("mode and return_smoothed request inconsistent smoothing")
+    return mode
+
+
 def resolve_evidence_computation_mode(
     mode: EvidenceComputationMode | str | None = None,
     *,
@@ -108,7 +120,7 @@ def resolve_evidence_computation_mode(
     """Resolve a string/Boolean compatibility mode into a typed object."""
 
     if isinstance(mode, EvidenceComputationMode):
-        return mode
+        return _require_return_smoothed_agreement(mode, return_smoothed)
     if mode is None:
         return EvidenceComputationMode.from_return_smoothed(
             True if return_smoothed is None else bool(return_smoothed)
@@ -116,7 +128,9 @@ def resolve_evidence_computation_mode(
 
     key = str(mode).strip().lower().replace("-", "_")
     if key in {"full", "full_smoothing", "smoothed", "smoothing"}:
-        return EvidenceComputationMode.full_smoothing()
+        return _require_return_smoothed_agreement(
+            EvidenceComputationMode.full_smoothing(), return_smoothed
+        )
     if key in {
         "evidence",
         "evidence_only",
@@ -124,7 +138,9 @@ def resolve_evidence_computation_mode(
         "filter_only",
         "no_smoothing",
     }:
-        return EvidenceComputationMode.evidence_only()
+        return _require_return_smoothed_agreement(
+            EvidenceComputationMode.evidence_only(), return_smoothed
+        )
     raise ValueError(f"unknown evidence computation mode {mode!r}")
 
 

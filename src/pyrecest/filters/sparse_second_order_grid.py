@@ -71,7 +71,7 @@ def sparse_second_order_grid_evidence(
     *,
     transition_cache_key_builder: SparsePairTransitionCacheKeyBuilder | None = None,
     transition_row_cache: SparseTransitionRowCache | None = None,
-    return_smoothed: bool | None = True,
+    return_smoothed: bool | None = None,
     evidence_mode: EvidenceComputationMode | str | None = None,
     return_pair_lattice: bool = False,
 ) -> SparseSecondOrderGridResult:
