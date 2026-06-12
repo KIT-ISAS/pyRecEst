@@ -209,7 +209,7 @@ def assignment_by_sum(x, values, indices, axis=0):
 
 
 def ndim(x):
-    return x.ndim
+    return _np.ndim(x)
 
 
 def get_slice(x, indices):
