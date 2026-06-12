@@ -46,7 +46,11 @@ class CircularFourierFilter(AbstractCircularFilter):
 
     @filter_state.setter
     def filter_state(self, new_state):
-        assert isinstance(new_state, AbstractCircularDistribution)
+        if not isinstance(new_state, AbstractCircularDistribution):
+            raise ValueError(
+                "new_state must be an AbstractCircularDistribution, "
+                f"got {type(new_state).__name__}."
+            )
 
         if not isinstance(new_state, CircularFourierDistribution):
             state_to_set = self._convert_to_circular_fourier(
@@ -89,12 +93,16 @@ class CircularFourierFilter(AbstractCircularFilter):
 
         if is_array(d_sys):
             no_coefficients = self.no_of_coefficients
-            assert (
-                self.filter_state.transformation == "sqrt"
-            ), "Only sqrt transformation currently supported"
-            assert (
-                d_sys.size == no_coefficients
-            ), "Assume that as many grid points are used as there are coefficients."
+            if self.filter_state.transformation != "sqrt":
+                raise NotImplementedError(
+                    "Array-based predict_identity is only supported for the "
+                    "'sqrt' transformation."
+                )
+            if d_sys.size != no_coefficients:
+                raise ValueError(
+                    "d_sys must provide exactly one grid value per Fourier "
+                    f"coefficient: expected {no_coefficients}, got {d_sys.size}."
+                )
             density_values = (
                 fft.irfft(self.filter_state.get_c(), n=no_coefficients) ** 2
             )
@@ -125,7 +133,8 @@ class CircularFourierFilter(AbstractCircularFilter):
         noise_distribution,
         truncate_joint_sqrt=True,
     ):
-        assert callable(f)
+        if not callable(f):
+            raise TypeError("f must be callable.")
         hypertoroidal_filter = self._as_hypertoroidal_filter()
         hypertoroidal_filter.predict_nonlinear(
             f, noise_distribution, truncate_joint_sqrt
