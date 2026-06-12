@@ -457,8 +457,10 @@ def scatter_add(input, dim, index, src):
     if dim == 1:
         for j in range(len(input)):
             for i, val in zip(index[j], src[j]):
-                if not isinstance(val, _np.float64) and BACKEND_NAME == "autograd":
-                    val = float(val._value)
-                input[j, i] += float(val)
+                # Preserve the source dtype.  In particular, complex values are
+                # valid scatter-add inputs and must not be coerced through float().
+                if BACKEND_NAME == "autograd" and hasattr(val, "_value"):
+                    val = val._value
+                input[j, i] += val
         return input
     raise NotImplementedError

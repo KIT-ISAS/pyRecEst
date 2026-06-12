@@ -158,6 +158,25 @@ def _to_python(value):
     return value
 
 
+def test_shared_numpy_scatter_add_dim_one_preserves_complex_source_values():
+    if backend.__backend_name__ not in ("numpy", "autograd"):
+        pytest.skip("shared NumPy scatter_add regression test")
+
+    values = backend.zeros((2, 3), dtype=backend.complex128)
+    indices = backend.asarray([[0, 2], [1, 2]], dtype=backend.int64)
+    src = array(
+        [[1.0 + 2.0j, 3.0 - 4.0j], [5.0 + 0.5j, -1.0j]],
+        dtype=backend.complex128,
+    )
+
+    result = backend.scatter_add(values, 1, indices, src)
+
+    assert _to_python(result) == [
+        [1.0 + 2.0j, 0.0 + 0.0j, 3.0 - 4.0j],
+        [0.0 + 0.0j, 5.0 + 0.5j, 0.0 - 1.0j],
+    ]
+
+
 def test_pytorch_fractional_matrix_power_promotes_integer_inputs():
     if backend.__backend_name__ != "pytorch":
         pytest.skip("PyTorch-specific fractional_matrix_power regression test")
@@ -235,6 +254,12 @@ def test_array_like_sequence_helpers_accept_python_lists():
     assert _to_python(backend.flip([1, 2, 3], axis=0)) == [3, 2, 1]
     assert _to_python(backend.sort([3, 1, 2])) == [1, 2, 3]
     assert _to_python(backend.unique([2, 1, 2, 1])) == [1, 2]
+
+
+def test_array_equal_accepts_array_like_inputs():
+    assert bool(backend.array_equal([1, 2, 3], [1, 2, 3]))
+    assert not bool(backend.array_equal([1, 2, 3], [1, 2, 4]))
+    assert not bool(backend.array_equal([1, 2, 3], [1, 2]))
 
 
 def test_array_like_matrix_helpers_accept_python_lists():
