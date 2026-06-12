@@ -127,28 +127,25 @@ def _torch_promoted_pair(first, second):
     return first_tensor.to(dtype=dtype), second_tensor.to(dtype=dtype)
 
 
+def _dot_b_axis(b):
+    return 0 if b.ndim == 1 else -2
+
+
 def dot(a, b):
+    """Return NumPy-compatible dot products for NumPy and PyTorch values."""
     torch_pair = _torch_promoted_pair(a, b)
     if torch_pair is not None:
         a, b = torch_pair
         torch = _torch_module_for_values(a, b)
         if a.ndim == 0 or b.ndim == 0:
             return torch.multiply(a, b)
-        if b.ndim == 1:
-            return torch.einsum("...i,i->...", a, b)
-        if a.ndim == 1:
-            return torch.einsum("i,...i->...", a, b)
-        return torch.einsum("...i,...i->...", a, b)
+        return torch.tensordot(a, b, dims=([-1], [_dot_b_axis(b)]))
 
     a = _np.asarray(a)
     b = _np.asarray(b)
     if a.ndim == 0 or b.ndim == 0:
         return _np.multiply(a, b)
-    if b.ndim == 1:
-        return _np.einsum("...i,i->...", a, b)
-    if a.ndim == 1:
-        return _np.einsum("i,...i->...", a, b)
-    return _np.einsum("...i,...i->...", a, b)
+    return _np.tensordot(a, b, axes=([-1], [_dot_b_axis(b)]))
 
 
 def matvec(matrix, vector):
