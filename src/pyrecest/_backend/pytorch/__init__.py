@@ -28,7 +28,6 @@ from torch import (  # The ones below are for pyrecest; For Riemannian score-bas
     empty,
     empty_like,
 )
-from torch import equal as array_equal  # For PyRecEst
 from torch import (  # The ones below are for pyrecest; For Riemannian score-based SDE
     erf,
     eye,
@@ -387,6 +386,11 @@ def to_numpy(x):
     if not _torch.is_tensor(x):
         return _np.asarray(x)
     return x.detach().resolve_conj().resolve_neg().cpu().numpy()
+
+
+def array_equal(a, b):
+    """Return whether two array-like inputs have the same shape and elements."""
+    return _torch.equal(array(a), array(b))
 
 
 def one_hot(labels, num_classes):
