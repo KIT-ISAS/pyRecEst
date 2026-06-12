@@ -30,3 +30,27 @@ def test_explicit_pytorch_backend_accepts_numpy_dtype_arguments():
 
     assert result.dtype == torch.float64
     np.testing.assert_allclose(torch_backend.to_numpy(result), [1.0, 2.0])
+
+
+def test_explicit_pytorch_backend_set_default_dtype_accepts_dtype_objects():
+    torch = pytest.importorskip("torch")
+
+    from pyrecest.backends import get_backend
+
+    torch_backend = get_backend("pytorch")
+    previous_dtype = torch_backend.get_default_dtype()
+
+    try:
+        result = torch_backend.set_default_dtype(np.dtype("float32"))
+        assert result == torch.float32
+        assert torch_backend.get_default_dtype() == torch.float32
+        assert torch_backend.get_default_cdtype() == torch.complex64
+        assert torch_backend.linspace(0, 1, 2).dtype == torch.float32
+
+        result = torch_backend.set_default_dtype(torch.float64)
+        assert result == torch.float64
+        assert torch_backend.get_default_dtype() == torch.float64
+        assert torch_backend.get_default_cdtype() == torch.complex128
+        assert torch_backend.linspace(0, 1, 2).dtype == torch.float64
+    finally:
+        torch_backend.set_default_dtype(previous_dtype)
