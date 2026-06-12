@@ -209,7 +209,11 @@ def _choice_indices(population_size, size, num_samples, replace, p, device):
             )
 
         p_sum = p.sum()
-        if not bool(_torch.isfinite(p_sum)) or bool(p_sum <= 0):
+        if (
+            bool(_torch.any(p < 0))
+            or not bool(_torch.isfinite(p_sum))
+            or bool(p_sum <= 0)
+        ):
             raise ValueError("probabilities do not sum to a positive value")
         p = p / p_sum
         indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
