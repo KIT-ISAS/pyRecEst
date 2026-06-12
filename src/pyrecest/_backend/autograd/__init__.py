@@ -24,6 +24,7 @@ from autograd.numpy import (
     complex128,
     concatenate,
     conj,
+    copy,
     count_nonzero,
     cov,
     cross,
@@ -48,6 +49,7 @@ from autograd.numpy import (
     greater,
     hsplit,
     hstack,
+    imag,
     int32,
     int64,
     isclose,
@@ -217,3 +219,17 @@ def vmap(pyfunc, randomness="error"):
         )
 
     return vmapped_fun
+
+
+def outer(a, b):
+    a = a if is_array(a) else array(a)
+    b = b if is_array(b) else array(b)
+
+    if a.ndim > 1 and b.ndim > 1:
+        return _np.einsum("...i,...j->...ij", a, b)
+
+    out = _np.outer(a, b).reshape(a.shape + b.shape)
+    if b.ndim > 1:
+        out = out.swapaxes(0, -2)
+
+    return out
