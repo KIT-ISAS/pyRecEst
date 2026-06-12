@@ -333,7 +333,14 @@ def _lookup_numeric(record: Mapping[str, Any] | pd.Series, key: str) -> float:
     value = record.get(key, np.nan)
     if _is_missing(value):
         return float("nan")
-    return float(value)
+    return _coerce_numeric(value)
+
+
+def _coerce_numeric(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")
 
 
 def _is_missing(value: Any) -> bool:
