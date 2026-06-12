@@ -12,6 +12,7 @@ from pyrecest.backend import (
     pi,
     reshape,
     signal,
+    size,
     sqrt,
     zeros,
 )
@@ -98,10 +99,11 @@ class CircularFourierFilter(AbstractCircularFilter):
                     "Array-based predict_identity is only supported for the "
                     "'sqrt' transformation."
                 )
-            if d_sys.size != no_coefficients:
+            grid_size = int(size(d_sys))
+            if grid_size != no_coefficients:
                 raise ValueError(
                     "d_sys must provide exactly one grid value per Fourier "
-                    f"coefficient: expected {no_coefficients}, got {d_sys.size}."
+                    f"coefficient: expected {no_coefficients}, got {grid_size}."
                 )
             density_values = (
                 fft.irfft(self.filter_state.get_c(), n=no_coefficients) ** 2
