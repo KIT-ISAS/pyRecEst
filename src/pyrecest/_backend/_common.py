@@ -49,6 +49,47 @@ def size(x, axis=None):
     return result
 
 
+def _normalize_reduction_axes(axis, ndim_value):
+    if isinstance(axis, (int, _np.integer)):
+        axes = (int(axis),)
+    else:
+        axes = tuple(axis)
+
+    normalized_axes = tuple(
+        axis_index + ndim_value if axis_index < 0 else axis_index
+        for axis_index in axes
+    )
+    if len(set(normalized_axes)) != len(normalized_axes):
+        raise ValueError("duplicate value in 'axis'")
+
+    for original_axis, normalized_axis in zip(axes, normalized_axes):
+        if normalized_axis < 0 or normalized_axis >= ndim_value:
+            raise IndexError(
+                f"axis {original_axis} is out of bounds for array of dimension {ndim_value}"
+            )
+
+    return normalized_axes
+
+
+def min(a, axis=None):  # pylint: disable=redefined-builtin
+    """Return the minimum value using NumPy-style reduction axes."""
+    torch = _torch_module_for_values(a)
+    if torch is None:
+        return _np.min(a, axis=axis)
+
+    tensor = torch.as_tensor(a)
+    if axis is None:
+        return torch.min(tensor)
+
+    result = tensor
+    for one_axis in sorted(_normalize_reduction_axes(axis, tensor.ndim), reverse=True):
+        result = torch.min(result, dim=one_axis).values
+    return result
+
+
+amin = min
+
+
 def ndim(x):
     """Return the number of dimensions for arrays and array-like inputs."""
     ndim_value = getattr(x, "ndim", None)
