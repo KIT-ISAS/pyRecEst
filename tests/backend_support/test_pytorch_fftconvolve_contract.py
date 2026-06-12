@@ -66,3 +66,28 @@ def test_pytorch_fftconvolve_valid_allows_mixed_singleton_axes():
 
     assert actual.shape == expected.shape
     assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize("axes", [(), []])
+def test_pytorch_fftconvolve_rejects_empty_axes_for_arrays(axes):
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific signal backend contract")
+
+    first = backend.asarray([1.0, 2.0])
+    second = backend.asarray([3.0, 4.0])
+
+    with pytest.raises(ValueError, match="axes cannot be empty"):
+        backend.signal.fftconvolve(first, second, axes=axes)
+
+
+def test_pytorch_fftconvolve_scalar_empty_axes_matches_scipy():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific signal backend contract")
+
+    first = backend.asarray(2.0)
+    second = backend.asarray(3.0)
+
+    actual = _as_numpy(backend.signal.fftconvolve(first, second, axes=()))
+    expected = scipy_fftconvolve(_as_numpy(first), _as_numpy(second), axes=())
+
+    assert np.allclose(actual, expected)
