@@ -49,6 +49,15 @@ def size(x, axis=None):
     return result
 
 
+def ndim(x):
+    """Return the number of dimensions for arrays and array-like inputs."""
+    ndim_value = getattr(x, "ndim", None)
+    if ndim_value is not None:
+        return ndim_value
+
+    return _np.ndim(x)
+
+
 def _torch_module_for_values(*values):
     try:
         import torch as _torch

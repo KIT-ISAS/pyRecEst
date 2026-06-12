@@ -270,6 +270,12 @@ def test_array_like_matrix_helpers_accept_python_lists():
     assert _to_python(backend.triu([[1, 2], [3, 4]])) == [[1, 2], [0, 4]]
 
 
+def test_ndim_accepts_array_like_inputs():
+    assert backend.ndim(3.0) == 0
+    assert backend.ndim([1.0, 2.0]) == 1
+    assert backend.ndim([[1.0], [2.0]]) == 2
+
+
 def test_cov_accepts_array_like_inputs():
     result = backend.cov([[1.0, 2.0, 3.0], [2.0, 4.0, 6.0]])
 
