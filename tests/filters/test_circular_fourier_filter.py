@@ -1,3 +1,6 @@
+import os
+import subprocess
+import sys
 import unittest
 import warnings
 from math import pi
@@ -7,12 +10,66 @@ import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 import scipy.integrate
-from pyrecest.backend import abs, linspace, sign, sin
+from pyrecest.backend import abs, array, linspace, sign, sin
 from pyrecest.distributions import CircularFourierDistribution, VonMisesDistribution
 from pyrecest.filters.circular_fourier_filter import CircularFourierFilter
 
 
 class CircularFourierFilterTest(unittest.TestCase):
+
+    def test_filter_state_rejects_non_circular_distribution_without_asserts(self):
+        fourier_filter = CircularFourierFilter(5)
+
+        with self.assertRaisesRegex(ValueError, "AbstractCircularDistribution"):
+            fourier_filter.filter_state = object()
+
+    def test_array_predict_identity_validates_transformation_without_asserts(self):
+        fourier_filter = CircularFourierFilter(5, "identity")
+
+        with self.assertRaisesRegex(NotImplementedError, "sqrt"):
+            fourier_filter.predict_identity(array([1.0, 1.0, 1.0, 1.0, 1.0]))
+
+    def test_array_predict_identity_validates_grid_size_without_asserts(self):
+        fourier_filter = CircularFourierFilter(5, "sqrt")
+
+        with self.assertRaisesRegex(ValueError, "expected 5, got 4"):
+            fourier_filter.predict_identity(array([1.0, 1.0, 1.0, 1.0]))
+
+    def test_predict_nonlinear_rejects_noncallable_without_asserts(self):
+        fourier_filter = CircularFourierFilter(5)
+
+        with self.assertRaisesRegex(TypeError, "f must be callable"):
+            fourier_filter.predict_nonlinear(None, VonMisesDistribution(0.0, 1.0))
+
+    def test_validation_survives_optimized_python(self):
+        env = os.environ.copy()
+        src_path = os.path.abspath("src")
+        env["PYTHONPATH"] = (
+            src_path
+            if not env.get("PYTHONPATH")
+            else os.pathsep.join([src_path, env["PYTHONPATH"]])
+        )
+
+        code = """
+from pyrecest.backend import array
+from pyrecest.distributions import VonMisesDistribution
+from pyrecest.filters.circular_fourier_filter import CircularFourierFilter
+
+operations = (
+    (lambda: setattr(CircularFourierFilter(5), "filter_state", object()), ValueError),
+    (lambda: CircularFourierFilter(5, "identity").predict_identity(array([1.0] * 5)), NotImplementedError),
+    (lambda: CircularFourierFilter(5).predict_identity(array([1.0] * 4)), ValueError),
+    (lambda: CircularFourierFilter(5).predict_nonlinear(None, VonMisesDistribution(0.0, 1.0)), TypeError),
+)
+for operation, expected in operations:
+    try:
+        operation()
+    except expected:
+        pass
+    else:
+        raise AssertionError(f"{expected.__name__} was not raised under optimized Python")
+"""
+        subprocess.run([sys.executable, "-O", "-c", code], check=True, env=env)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("jax", "pytorch"),
