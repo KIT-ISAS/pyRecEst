@@ -26,6 +26,15 @@ def test_evidence_computation_mode_rejects_inconsistent_flags():
         resolve_evidence_computation_mode("posterior-only")
 
 
+def test_resolver_rejects_conflicting_explicit_mode_and_boolean_flag():
+    with pytest.raises(ValueError, match="mode and return_smoothed"):
+        resolve_evidence_computation_mode("evidence_only", return_smoothed=True)
+    with pytest.raises(ValueError, match="mode and return_smoothed"):
+        resolve_evidence_computation_mode(
+            EvidenceComputationMode.full_smoothing(), return_smoothed=False
+        )
+
+
 def test_sparse_second_order_grid_accepts_evidence_only_mode_object():
     log_likelihood = np.log(
         np.array(
