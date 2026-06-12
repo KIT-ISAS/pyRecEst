@@ -1,6 +1,6 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import column_stack, cos, diag, dot, sin, sqrt, sum, tile
+from pyrecest.backend import column_stack, cos, sin, sqrt, sum
 
 from .abstract_toroidal_distribution import AbstractToroidalDistribution
 from .hypertoroidal_dirac_distribution import HypertoroidalDiracDistribution
@@ -27,11 +27,10 @@ class ToroidalDiracDistribution(
         """
         m = self.mean_direction()
 
-        x = sum(self.w * sin(self.d[0, :] - m[0]) * sin(self.d[1, :] - m[1]))
-        y = sqrt(
-            sum(self.w * sin(self.d[0, :] - m[0]) ** 2)
-            * sum(self.w * sin(self.d[1, :] - m[1]) ** 2)
-        )
+        first_sines = sin(self.d[:, 0] - m[0])
+        second_sines = sin(self.d[:, 1] - m[1])
+        x = sum(self.w * first_sines * second_sines)
+        y = sqrt(sum(self.w * first_sines**2) * sum(self.w * second_sines**2))
         rhoc = x / y
         return rhoc
 
@@ -43,13 +42,13 @@ class ToroidalDiracDistribution(
         """
         dbar = column_stack(
             [
-                cos(self.d[0, :]),
-                sin(self.d[0, :]),
-                cos(self.d[1, :]),
-                sin(self.d[1, :]),
+                cos(self.d[:, 0]),
+                sin(self.d[:, 0]),
+                cos(self.d[:, 1]),
+                sin(self.d[:, 1]),
             ]
         )
-        mu = dot(self.w, dbar)
-        n = len(self.d)
-        C = (dbar - tile(mu, (n, 1))).T @ (diag(self.w) @ (dbar - tile(mu, (n, 1))))
+        mu = sum(self.w[:, None] * dbar, axis=0)
+        centered = dbar - mu
+        C = centered.T @ (self.w[:, None] * centered)
         return C
