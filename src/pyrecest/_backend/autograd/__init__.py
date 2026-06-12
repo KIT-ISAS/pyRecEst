@@ -34,6 +34,7 @@ from autograd.numpy import (
     diag_indices,
     diagonal,
     diff,
+    dot,
     dstack,
     einsum,
     empty_like,
@@ -122,7 +123,6 @@ from .._shared_numpy import (
     cos,
     cosh,
     divide,
-    dot,
     exp,
     flatten,
     floor,
@@ -217,29 +217,3 @@ def vmap(pyfunc, randomness="error"):
         )
 
     return vmapped_fun
-
-
-def imag(x):
-    out = _np.imag(x)
-    if is_array(x):
-        return out
-
-    return array(out)
-
-
-def copy(x):
-    return _np.array(x, copy=True)
-
-
-def outer(a, b):
-    a = a if is_array(a) else array(a)
-    b = b if is_array(b) else array(b)
-
-    if a.ndim > 1 and b.ndim > 1:
-        return _np.einsum("...i,...j->...ij", a, b)
-
-    out = _np.outer(a, b).reshape(a.shape + b.shape)
-    if b.ndim > 1:
-        out = out.swapaxes(0, -2)
-
-    return out
