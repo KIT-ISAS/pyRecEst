@@ -36,3 +36,33 @@ def test_pytorch_fftconvolve_matches_scipy_selected_axes():
     )
 
     assert np.allclose(actual, expected)
+
+
+def test_pytorch_fftconvolve_same_crops_broadcast_non_convolved_axes():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific signal backend contract")
+
+    first = backend.asarray([[2.0]])
+    second = backend.asarray([[1.0, 3.0, 5.0]])
+
+    actual = _as_numpy(backend.signal.fftconvolve(first, second, mode="same", axes=(0,)))
+    expected = scipy_fftconvolve(
+        _as_numpy(first), _as_numpy(second), mode="same", axes=(0,)
+    )
+
+    assert actual.shape == expected.shape == _as_numpy(first).shape
+    assert np.allclose(actual, expected)
+
+
+def test_pytorch_fftconvolve_valid_allows_mixed_singleton_axes():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific signal backend contract")
+
+    first = backend.asarray([[1.0, 2.0]])
+    second = backend.asarray([[0.5], [1.5]])
+
+    actual = _as_numpy(backend.signal.fftconvolve(first, second, mode="valid"))
+    expected = scipy_fftconvolve(_as_numpy(first), _as_numpy(second), mode="valid")
+
+    assert actual.shape == expected.shape
+    assert np.allclose(actual, expected)
