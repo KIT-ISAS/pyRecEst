@@ -156,7 +156,7 @@ def matvec(matrix, vector):
         if vector.ndim == 1:
             return torch.matmul(matrix, vector)
         if matrix.ndim == 2:
-            return torch.matmul(matrix, vector.T).T
+            return torch.einsum("ij,...j->...i", matrix, vector)
         return torch.einsum("...ij,...j->...i", matrix, vector)
 
     matrix = _np.asarray(matrix)
@@ -164,5 +164,5 @@ def matvec(matrix, vector):
     if vector.ndim == 1:
         return _np.matmul(matrix, vector)
     if matrix.ndim == 2:
-        return _np.matmul(matrix, vector.T).T
+        return _np.einsum("ij,...j->...i", matrix, vector)
     return _np.einsum("...ij,...j->...i", matrix, vector)
