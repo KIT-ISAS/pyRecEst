@@ -241,12 +241,50 @@ def normal(loc=0.0, scale=1.0, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
+def _integer_population_size(a):
+    if isinstance(a, (int, _np.integer)) and not isinstance(a, (bool, _np.bool_)):
+        return int(a)
+    if a.ndim == 0 and _jnp.issubdtype(a.dtype, _jnp.integer):
+        return int(a)
+    return None
+
+
+def _choice_population_size(a, kwargs):
+    population_size = _integer_population_size(a)
+    if population_size is not None:
+        return population_size
+
+    if a.ndim == 0:
+        raise ValueError(
+            "a must be a positive integer or an array with at least one dimension"
+        )
+
+    axis = kwargs.get("axis", 0)
+    if not _looks_like_integer_dimension(axis):
+        raise TypeError("axis must be an integer")
+    return a.shape[int(axis) % a.ndim]
+
+
+def _validate_choice_probabilities(p, population_size):
+    p = _jnp.asarray(p, dtype=_jnp.float32)
+    if p.ndim != 1 or p.shape[0] != population_size:
+        raise ValueError("p must be 1-dimensional with one entry per population item")
+
+    p_sum = p.sum()
+    if (
+        bool(_jnp.any(p < 0))
+        or not bool(_jnp.isfinite(p_sum))
+        or bool(p_sum <= 0)
+    ):
+        raise ValueError("probabilities do not sum to a positive value")
+    return p / p_sum
+
+
 def _choice(state, a, size=None, replace=True, p=None, *args, **kwargs):
     state, key = jax.random.split(state)
     a = _jnp.asarray(a)
     if p is not None:
-        p = _jnp.asarray(p, dtype=_jnp.float32)
-        p = p / p.sum()
+        p = _validate_choice_probabilities(p, _choice_population_size(a, kwargs))
     res = jax.random.choice(
         key,
         a,
