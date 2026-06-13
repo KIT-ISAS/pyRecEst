@@ -201,16 +201,38 @@ class CalibratedPairwiseAssociationModel:
         return probabilities.reshape(original_shape)
 
     def _predict_proba_positive_class_index(self) -> int:
-        classes = getattr(self.model, "classes_", None)
-        if classes is None:
-            return 1
-        classes = asarray(classes).reshape(-1)
-        if classes.shape != (2,):
+        classes = _class_labels_to_list(getattr(self.model, "classes_", None))
+        if len(classes) != 2:
             return 1
         for class_index, class_label in enumerate(classes):
-            if bool(class_label == 1):
-                return class_index
+            try:
+                if bool(class_label == 1):
+                    return class_index
+            except (TypeError, ValueError):
+                continue
         return 1
+
+
+def _class_labels_to_list(classes: Any) -> list[Any]:
+    if classes is None:
+        return []
+    if hasattr(classes, "detach"):
+        classes = classes.detach().cpu()
+    if hasattr(classes, "reshape"):
+        try:
+            classes = classes.reshape(-1)
+        except TypeError:
+            pass
+    if hasattr(classes, "tolist"):
+        labels = classes.tolist()
+    else:
+        try:
+            labels = list(classes)
+        except TypeError:
+            return []
+    if isinstance(labels, list):
+        return labels
+    return [labels]
 
 
 def _normalize_feature_names(feature_names: Sequence[str]) -> tuple[str, ...]:
