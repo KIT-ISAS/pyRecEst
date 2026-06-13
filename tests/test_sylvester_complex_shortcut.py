@@ -46,3 +46,25 @@ def test_pytorch_solve_sylvester_handles_complex_hermitian_general_path():
     residual = a @ x + x @ a - q
     residual_norm = pytorch_backend.linalg.norm(residual)
     assert float(pytorch_backend.to_numpy(residual_norm)) < 1e-12
+
+
+@pytest.mark.skipif(pytorch_backend is None, reason="PyTorch is not installed")
+def test_pytorch_solve_sylvester_uses_hermitian_shortcut_for_close_shared_factors():
+    a = pytorch_backend.array(
+        [[2.0 + 0.0j, 1.0j], [-1.0j, 3.0 + 0.0j]],
+        dtype=pytorch_backend.complex128,
+    )
+    b = a + pytorch_backend.array(
+        [[1e-8 + 0.0j, 0.0 + 0.0j], [0.0 + 0.0j, -1e-8 + 0.0j]],
+        dtype=pytorch_backend.complex128,
+    )
+    q = pytorch_backend.array(
+        [[1.0 + 0.0j, 0.2 - 0.1j], [0.3 + 0.4j, 2.0 + 0.0j]],
+        dtype=pytorch_backend.complex128,
+    )
+
+    x = pytorch_backend.linalg.solve_sylvester(a, b, q)
+
+    residual = a @ x + x @ b - q
+    residual_norm = pytorch_backend.linalg.norm(residual)
+    assert float(pytorch_backend.to_numpy(residual_norm)) < 1e-7
