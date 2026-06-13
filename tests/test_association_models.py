@@ -285,6 +285,23 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
 
         npt.assert_allclose(probabilities, array([0.8, 0.3]))
 
+    def test_calibrated_predict_proba_falls_back_for_nonnumeric_classes(self):
+        class TextClassPredictProbaModel:
+            classes_ = ["not_a_match", "match"]
+
+            def predict_proba(self, features):
+                del features
+                return array([[0.8, 0.2], [0.3, 0.7]])
+
+        calibrated_model = CalibratedPairwiseAssociationModel(
+            TextClassPredictProbaModel(), feature_names=("distance", "similarity")
+        )
+        features = array([[0.1, 0.9], [2.0, 0.1]])
+
+        probabilities = calibrated_model.predict_match_probability(features)
+
+        npt.assert_allclose(probabilities, array([0.2, 0.7]))
+
 
 if __name__ == "__main__":
     unittest.main()
