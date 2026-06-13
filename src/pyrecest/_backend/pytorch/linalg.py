@@ -166,7 +166,7 @@ def matrix_rank(a, tol=None, hermitian=False, *, rtol=None, atol=None, **kwargs)
     return _torch.linalg.matrix_rank(a, atol=atol, rtol=rtol, hermitian=hermitian)
 
 
-def quadratic_assignment(a, b, options):
+def quadratic_assignment(a, b, options=None):
     return list(
         _scipy.optimize.quadratic_assignment(
             _as_numpy_no_grad(a), _as_numpy_no_grad(b), options=options

@@ -70,7 +70,7 @@ def sqrtm(x):
     return _np.vectorize(_scipy.linalg.sqrtm, signature="(n,m)->(n,m)")(x)
 
 
-def quadratic_assignment(a, b, options):
+def quadratic_assignment(a, b, options=None):
     return list(_scipy.optimize.quadratic_assignment(a, b, options=options).col_ind)
 
 
