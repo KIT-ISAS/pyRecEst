@@ -129,3 +129,45 @@ def test_prefix_track_support_yields_bounded_reward():
     support = prefix_track_support(frames)
     candidate = TrackletAssociationCandidate("a1", track_id="A", time_s=1.0)
     assert track_support_cost(candidate, support[1]) < 0.0
+
+
+def _miss_penalty_config() -> TrackletViterbiConfig:
+    return TrackletViterbiConfig(
+        missed_detection_cost=2.0,
+        consecutive_miss_cost=5.0,
+    )
+
+
+def test_fixed_lag_leading_consecutive_misses_match_full_viterbi_cost():
+    frames = [[], []]
+    config = _miss_penalty_config()
+
+    full = solve_tracklet_viterbi(frames, config=config)
+    fixed_lag = solve_fixed_lag_tracklet_viterbi(
+        frames,
+        lag_s=0.1,
+        config=config,
+    )
+
+    assert full.path == [None, None]
+    assert fixed_lag.path == full.path
+    assert full.total_cost == 9.0
+    assert fixed_lag.total_cost == full.total_cost
+
+
+def test_fixed_lag_consecutive_miss_after_detection_uses_committed_streak():
+    frames = [
+        [TrackletAssociationCandidate("d0", unary_cost=0.0, track_id="track")],
+        [],
+        [],
+    ]
+    config = _miss_penalty_config()
+
+    fixed_lag = solve_fixed_lag_tracklet_viterbi(
+        frames,
+        lag_s=0.1,
+        config=config,
+    )
+
+    assert fixed_lag.path == [frames[0][0], None, None]
+    assert fixed_lag.total_cost == 9.0
