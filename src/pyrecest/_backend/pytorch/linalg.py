@@ -211,10 +211,17 @@ def solve_sylvester(a, b, q):
         )
         if conditions:
             tilde_q = eigvecs.transpose(-2, -1) @ q @ eigvecs
-            tilde_x = tilde_q / (
-                eigvals[..., :, None]
-                + eigvals[..., None, :]
-                + _torch.eye(a.shape[-1], dtype=a.dtype, device=a.device)
+            denominators = eigvals[..., :, None] + eigvals[..., None, :]
+            safe_denominators = _torch.where(
+                _torch.abs(denominators) < 1e-12,
+                _torch.ones((), dtype=denominators.dtype, device=denominators.device),
+                denominators,
+            )
+            tilde_x = tilde_q / safe_denominators
+            tilde_x = _torch.where(
+                _torch.abs(denominators) < 1e-12,
+                _torch.zeros((), dtype=tilde_x.dtype, device=tilde_x.device),
+                tilde_x,
             )
             return eigvecs @ tilde_x @ eigvecs.transpose(-2, -1)
 
