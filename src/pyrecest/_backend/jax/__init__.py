@@ -587,11 +587,7 @@ def dot(a, b):
 
     if a.ndim == 0 or b.ndim == 0:
         return _jnp.multiply(a, b)
-    if b.ndim == 1:
-        return _jnp.einsum("...i,i->...", a, b)
-    if a.ndim == 1:
-        return _jnp.einsum("i,...i->...", a, b)
-    return _jnp.einsum("...i,...i->...", a, b)
+    return _jnp.dot(a, b)
 
 
 def matmul(x, y, out=None):
