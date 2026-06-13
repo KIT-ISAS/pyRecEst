@@ -24,6 +24,7 @@ from autograd.numpy import (
     complex128,
     concatenate,
     conj,
+    copy,
     count_nonzero,
     cov,
     cross,
@@ -34,6 +35,7 @@ from autograd.numpy import (
     diag_indices,
     diagonal,
     diff,
+    dot,
     dstack,
     einsum,
     empty_like,
@@ -47,6 +49,7 @@ from autograd.numpy import (
     greater,
     hsplit,
     hstack,
+    imag,
     int32,
     int64,
     isclose,
@@ -122,7 +125,6 @@ from .._shared_numpy import (
     cos,
     cosh,
     divide,
-    dot,
     exp,
     flatten,
     floor,
@@ -217,18 +219,6 @@ def vmap(pyfunc, randomness="error"):
         )
 
     return vmapped_fun
-
-
-def imag(x):
-    out = _np.imag(x)
-    if is_array(x):
-        return out
-
-    return array(out)
-
-
-def copy(x):
-    return _np.array(x, copy=True)
 
 
 def outer(a, b):
