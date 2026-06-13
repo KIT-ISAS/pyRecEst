@@ -268,6 +268,23 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
         npt.assert_array_equal(argmax(probabilities, axis=1), array([0, 1]))
         npt.assert_array_equal(argmin(costs, axis=1), array([0, 1]))
 
+    def test_calibrated_predict_proba_respects_classes_order(self):
+        class ReversedClassPredictProbaModel:
+            classes_ = array([1, 0])
+
+            def predict_proba(self, features):
+                del features
+                return array([[0.8, 0.2], [0.3, 0.7]])
+
+        calibrated_model = CalibratedPairwiseAssociationModel(
+            ReversedClassPredictProbaModel(), feature_names=("distance", "similarity")
+        )
+        features = array([[0.1, 0.9], [2.0, 0.1]])
+
+        probabilities = calibrated_model.predict_match_probability(features)
+
+        npt.assert_allclose(probabilities, array([0.8, 0.3]))
+
 
 if __name__ == "__main__":
     unittest.main()
