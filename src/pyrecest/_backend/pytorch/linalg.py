@@ -182,19 +182,25 @@ def solve_sylvester(a, b, q):
     a = a.to(dtype=common_dtype)
     b = b.to(dtype=common_dtype)
     q = q.to(dtype=common_dtype)
+    is_shared_factor = a.shape == b.shape and _torch.allclose(a, b, atol=1e-6, rtol=1e-6)
+    is_shared_hermitian_factor = is_shared_factor and _torch.all(
+        _torch.abs(a - a.transpose(-2, -1).conj()) < 1e-6
+    )
+    if is_shared_hermitian_factor:
+        eigvals, eigvecs = eigh(a)
+        if _torch.all(eigvals >= 1e-6):
+            adjoint_eigvecs = eigvecs.transpose(-2, -1).conj()
+            tilde_q = adjoint_eigvecs @ q @ eigvecs
+            tilde_x = tilde_q / (eigvals[..., :, None] + eigvals[..., None, :])
+            return eigvecs @ tilde_x @ adjoint_eigvecs
+
     is_real_shared_symmetric_factor = (
-        not is_complex(a)
-        and a.shape == b.shape
-        and _torch.all(a == b)
+        is_shared_factor
+        and not is_complex(a)
         and _torch.all(_torch.abs(a - a.transpose(-2, -1)) < 1e-6)
     )
     if is_real_shared_symmetric_factor:
         eigvals, eigvecs = eigh(a)
-        if _torch.all(eigvals >= 1e-6):
-            tilde_q = eigvecs.transpose(-2, -1) @ q @ eigvecs
-            tilde_x = tilde_q / (eigvals[..., :, None] + eigvals[..., None, :])
-            return eigvecs @ tilde_x @ eigvecs.transpose(-2, -1)
-
         conditions = _torch.all(eigvals >= 1e-6) or (
             a.shape[-1] >= 2.0
             and _torch.all(eigvals[..., 0] > -1e-6)
