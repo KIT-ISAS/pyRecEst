@@ -61,27 +61,7 @@ def _as_nonnegative_integer(value: Any, name: str) -> int:
 
 @dataclass(frozen=True)
 class TrackletAssociationCandidate:
-    """One association candidate for one scan/frame.
-
-    Parameters
-    ----------
-    candidate_id : Hashable
-        Identifier that is unique enough for diagnostics within a frame.
-    unary_cost : float
-        Per-candidate negative log-cost or any additive score to minimize.
-    time_s : float, optional
-        Candidate timestamp.  When omitted, frame indices are used for fixed-lag
-        windows and motion costs.
-    track_id : Hashable, optional
-        External tracklet identifier used for switch-cost penalties.
-    position : array-like, optional
-        Position vector used by the default constant-velocity transition cost
-        when ``config.motion_weight`` is positive.
-    velocity : array-like, optional
-        Velocity vector used for default motion prediction when available.
-    metadata : mapping, optional
-        User-defined payload copied through to results.
-    """
+    """One association candidate for one scan/frame."""
 
     candidate_id: Hashable
     unary_cost: float = 0.0
@@ -185,13 +165,11 @@ class TrackletViterbiResult:
     @property
     def selected_candidates(self) -> list[TrackletAssociationCandidate]:
         """Return non-missed candidates in path order."""
-
         return [candidate for candidate in self.path if candidate is not None]
 
     @property
     def missed_detection_count(self) -> int:
         """Return the number of missed detections in the selected path."""
-
         return sum(candidate is None for candidate in self.path)
 
 
@@ -229,11 +207,7 @@ def solve_tracklet_viterbi(
     include_missed_detection: bool = True,
     return_tables: bool = False,
 ) -> TrackletViterbiResult:
-    """Select a minimum-cost single-target path through candidate frames.
-
-    The path contains one entry per input frame.  ``None`` denotes the missed
-    detection branch for that frame.
-    """
+    """Select a minimum-cost single-target path through candidate frames."""
 
     config = TrackletViterbiConfig() if config is None else config
     nodes_by_frame = [
@@ -299,14 +273,13 @@ def solve_tracklet_viterbi(
 
     terminal = int(np.argmin(costs[-1]))
     path_nodes = _reconstruct_path(nodes_by_frame, parents, terminal)
-    result = TrackletViterbiResult(
+    return TrackletViterbiResult(
         path=[node.candidate for node in path_nodes],
         total_cost=float(costs[-1][terminal]),
         costs_by_frame=costs if return_tables else [],
         parent_indices_by_frame=parents if return_tables else [],
         miss_streaks_by_frame=miss_streaks if return_tables else [],
     )
-    return result
 
 
 def solve_fixed_lag_tracklet_viterbi(
@@ -319,9 +292,11 @@ def solve_fixed_lag_tracklet_viterbi(
 ) -> TrackletViterbiResult:
     """Commit Viterbi decisions using at most ``lag_s`` future context.
 
-    Each frame is solved on a local look-ahead window.  The previous non-missed
-    committed candidate is prepended as a zero-cost prefix candidate, preserving
-    dynamic consistency without using unbounded future information.
+    Each frame is solved on a local look-ahead window. The previous non-missed
+    committed candidate is prepended as a zero-cost prefix candidate. The
+    committed missed-detection streak is carried into that synthetic prefix so
+    the local window scores another miss the same way the full Viterbi table
+    would score it.
     """
 
     if lag_s <= 0.0:
@@ -333,6 +308,7 @@ def solve_fixed_lag_tracklet_viterbi(
     frame_times = [_frame_time(frame, index) for index, frame in enumerate(frames)]
     path: list[TrackletAssociationCandidate | None] = []
     previous_committed: TrackletAssociationCandidate | None = None
+    committed_miss_streak = 0
     total_cost = 0.0
 
     for frame_index, start_time in enumerate(frame_times):
@@ -341,14 +317,23 @@ def solve_fixed_lag_tracklet_viterbi(
         while window_end + 1 < len(frames) and frame_times[window_end + 1] <= end_time:
             window_end += 1
         window_frames = [list(frame) for frame in frames[frame_index : window_end + 1]]
+        prefix_candidate: TrackletAssociationCandidate | None = None
         prefix_added = previous_committed is not None
+        local_transition_cost = transition_cost
         if prefix_added:
             assert previous_committed is not None
-            window_frames.insert(0, [replace(previous_committed, unary_cost=0.0)])
+            prefix_candidate = replace(previous_committed, unary_cost=0.0)
+            window_frames.insert(0, [prefix_candidate])
+            local_transition_cost = _transition_with_prefix_miss_streak(
+                transition_cost,
+                prefix_candidate,
+                committed_miss_streak,
+                config,
+            )
         local = solve_tracklet_viterbi(
             window_frames,
             config=config,
-            transition_cost=transition_cost,
+            transition_cost=local_transition_cost,
             include_missed_detection=include_missed_detection,
         )
         selected = local.path[1 if prefix_added else 0]
@@ -356,11 +341,15 @@ def solve_fixed_lag_tracklet_viterbi(
         total_cost += _fixed_lag_committed_step_cost(
             previous_committed,
             selected,
+            committed_miss_streak,
             config,
             transition_cost,
         )
-        if selected is not None:
+        if selected is None:
+            committed_miss_streak += 1
+        else:
             previous_committed = selected
+            committed_miss_streak = 0
 
     return TrackletViterbiResult(path=path, total_cost=total_cost)
 
@@ -376,7 +365,7 @@ def default_tracklet_transition_cost(
     config = TrackletViterbiConfig() if config is None else config
     if current is None:
         return float(config.missed_detection_cost) + (
-            float(config.consecutive_miss_cost) if previous is None else 0.0
+            float(config.consecutive_miss_cost) if previous_miss_streak > 0 else 0.0
         )
     if previous is None:
         return 0.0
@@ -452,10 +441,7 @@ def track_support_by_id(
         ]
         span_s = max(times) - min(times) if len(times) >= 2 else 0.0
         count = len(group)
-        if times:
-            frame_span = max(float(count), span_s + 1.0)
-        else:
-            frame_span = float(count)
+        frame_span = max(float(count), span_s + 1.0) if times else float(count)
         continuity = float(np.clip(count / max(frame_span, 1.0), 0.0, 1.0))
         score = float(
             np.log1p(count) + 0.5 * np.log1p(max(span_s, 0.0)) + 0.5 * continuity
@@ -499,27 +485,55 @@ def _nodes_for_frame(
     return nodes
 
 
+def _transition_with_prefix_miss_streak(
+    transition_cost: TransitionCost | None,
+    prefix_candidate: TrackletAssociationCandidate,
+    committed_miss_streak: int,
+    config: TrackletViterbiConfig,
+) -> TransitionCost:
+    transition = transition_cost or (
+        lambda previous, current, miss_streak: default_tracklet_transition_cost(
+            previous,
+            current,
+            miss_streak,
+            config,
+        )
+    )
+
+    def wrapped(
+        previous: TrackletAssociationCandidate | None,
+        current: TrackletAssociationCandidate | None,
+        miss_streak: int,
+    ) -> float:
+        if previous is prefix_candidate:
+            miss_streak = int(committed_miss_streak)
+        return float(transition(previous, current, miss_streak))
+
+    return wrapped
+
+
 def _fixed_lag_committed_step_cost(
     previous_committed: TrackletAssociationCandidate | None,
     selected: TrackletAssociationCandidate | None,
+    committed_miss_streak: int,
     config: TrackletViterbiConfig,
     transition_cost: TransitionCost | None,
 ) -> float:
-    """Score only the newly committed fixed-lag decision.
-
-    ``solve_fixed_lag_tracklet_viterbi`` solves overlapping look-ahead windows.
-    The local window total includes uncommitted future decisions, so accumulating
-    those window totals double-counts costs. This helper mirrors the solver's
-    prefix-memory semantics while charging only the decision committed at the
-    current frame.
-    """
+    """Score only the newly committed fixed-lag decision."""
 
     unary_cost = 0.0 if selected is None else float(selected.unary_cost)
     if previous_committed is None:
-        return float(
-            unary_cost
-            + (float(config.missed_detection_cost) if selected is None else 0.0)
-        )
+        if selected is None:
+            return float(
+                unary_cost
+                + config.missed_detection_cost
+                + (
+                    config.consecutive_miss_cost
+                    if committed_miss_streak > 0
+                    else 0.0
+                )
+            )
+        return float(unary_cost)
 
     transition = transition_cost or (
         lambda previous, current, miss_streak: default_tracklet_transition_cost(
@@ -529,7 +543,7 @@ def _fixed_lag_committed_step_cost(
             config,
         )
     )
-    return float(unary_cost + transition(previous_committed, selected, 0))
+    return float(unary_cost + transition(previous_committed, selected, committed_miss_streak))
 
 
 def _reconstruct_path(
@@ -577,15 +591,12 @@ def _motion_cost(
     else:
         predicted = (
             previous_position
-            + np.asarray(previous.velocity, dtype=float).reshape(
-                previous_position.shape
-            )
+            + np.asarray(previous.velocity, dtype=float).reshape(previous_position.shape)
             * dt_s
         )
     position_cost = float(
         np.sum(
-            ((current_position - predicted) / float(config.transition_position_std))
-            ** 2
+            ((current_position - predicted) / float(config.transition_position_std)) ** 2
         )
     )
     speed_cost = 0.0
@@ -603,10 +614,7 @@ def _motion_cost(
         )
         velocity_cost = float(
             np.sum(
-                (
-                    (velocity - displacement_velocity)
-                    / float(config.transition_velocity_std)
-                )
+                ((velocity - displacement_velocity) / float(config.transition_velocity_std))
                 ** 2
             )
         )
