@@ -798,6 +798,9 @@ def test_matvec_accepts_high_rank_vector_batches_for_shared_matrix():
 
 
 def test_batched_dot_uses_last_axis_inner_product():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific dot helper contract")
+
     first = array([[1.0, 2.0], [3.0, 4.0]])
     second = array([[5.0, 6.0], [7.0, 8.0]])
 
@@ -819,6 +822,9 @@ def test_dot_accepts_array_like_inputs():
 
 
 def test_batched_dot_accepts_high_rank_right_operand():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific dot helper contract")
+
     first = array([1.0, 2.0])
     second = array(
         [
