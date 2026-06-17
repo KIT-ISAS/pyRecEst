@@ -13,6 +13,7 @@ from pyrecest.utils import multisession_assignment as multisession_assignment_mo
 from pyrecest.utils import (
     solve_multisession_assignment,
     solve_multisession_assignment_from_similarity,
+    solve_multisession_assignment_with_observation_costs,
     tracks_to_session_labels,
 )
 
@@ -21,6 +22,17 @@ class TestMultiSessionAssignment(unittest.TestCase):
     @staticmethod
     def _canonical_tracks(tracks):
         return sorted(tuple(sorted(track.items())) for track in tracks)
+
+    def test_multisession_helpers_reject_jax_backend_explicitly(self):
+        with patch.object(multisession_assignment_module, "__backend_name__", "jax"):
+            with self.assertRaisesRegex(NotImplementedError, "JAX"):
+                solve_multisession_assignment({})
+            with self.assertRaisesRegex(NotImplementedError, "JAX"):
+                tracks_to_session_labels([])
+            with self.assertRaisesRegex(NotImplementedError, "JAX"):
+                solve_multisession_assignment_from_similarity({})
+            with self.assertRaisesRegex(NotImplementedError, "JAX"):
+                solve_multisession_assignment_with_observation_costs({})
 
     @unittest.skipIf(
         __backend_name__ == "jax",

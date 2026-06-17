@@ -7,9 +7,6 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
-from pyrecest.backend import (
-    __backend_name__,
-)
 from pyrecest.backend import all as backend_all  # pylint: disable=no-name-in-module
 from pyrecest.backend import (
     asarray,
@@ -30,6 +27,7 @@ from .multisession_assignment import (
     _iter_track_items,
     _normalize_pairwise_costs,
     _normalize_session_sizes,
+    _require_non_jax_backend,
     _validate_track_session_sizes,
     solve_multisession_assignment,
 )
@@ -73,7 +71,7 @@ def tracks_to_index_matrix(
     fill_value: int = -1,
 ):
     """Convert tracks to a dense ``track x session`` ROI-index matrix."""
-    assert __backend_name__ != "jax", "Not supported on JAX backend"
+    _require_non_jax_backend()
 
     _, max_session_index = _validate_track_session_sizes(
         tracks,
@@ -100,7 +98,7 @@ def solve_multisession_assignment_from_similarity(  # pylint: disable=R0913,R091
     score_to_cost: Callable[[Any], Any] | None = None,
 ) -> MultiSessionAssignmentResult:
     """Score-native wrapper around :func:`solve_multisession_assignment`."""
-    assert __backend_name__ != "jax", "Not supported on JAX backend"
+    _require_non_jax_backend()
 
     if min_score is not None and not math.isfinite(min_score):
         raise ValueError("min_score must be finite.")
