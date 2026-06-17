@@ -65,6 +65,12 @@ class TestCross(unittest.TestCase):
     def test_area(self):
         self.assertEqual(self.cross_full.area, 5)
 
+    def test_rejects_invalid_arm_dimensions(self):
+        with self.assertRaisesRegex(ValueError, "width_1"):
+            Cross(2.0, 1.0, 1.0, 3.0)
+        with self.assertRaisesRegex(ValueError, "width_2"):
+            Cross(2.0, 1.0, 2.0, 2.0)
+
     def test_compute_kernel_cross_convex(self):
         # Determining the kernel of a cross-shaped polygon is trivial
         self.assertEqual(self.cross_kernel.area, 2)

@@ -50,9 +50,10 @@ def evaluate_for_simulation_config(
         n_runs, initial_seed, consecutive_seed
     )
     if n_timesteps is None:
-        assert (
-            "n_timesteps" in simulation_config
-        ), "n_steps must be provided in simulation_config or as an argument."
+        if "n_timesteps" not in simulation_config:
+            raise ValueError(
+                "n_steps must be provided in simulation_config or as an argument."
+            )
     else:
         simulation_config["n_timesteps"] = n_timesteps  # type: ignore
 
