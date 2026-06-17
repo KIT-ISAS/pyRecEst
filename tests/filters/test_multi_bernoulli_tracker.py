@@ -90,6 +90,13 @@ class MultiBernoulliTrackerTest(unittest.TestCase):
             0.72,
         )
 
+    def test_predict_linear_rejects_nonzero_mean_gaussian_noise(self):
+        tracker = MultiBernoulliTracker(initial_prior=[self.initial_components[0]])
+        sys_noise = GaussianDistribution(array([1.0, 0.0, 0.0, 0.0]), eye(4))
+
+        with self.assertRaisesRegex(ValueError, "zero mean"):
+            tracker.predict_linear(self.system_matrix, sys_noise)
+
     def test_update_linear_with_measurement_reinforces_track(self):
         tracker = MultiBernoulliTracker(
             initial_prior=[self.initial_components[0]],

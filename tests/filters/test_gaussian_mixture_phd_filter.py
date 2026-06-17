@@ -58,6 +58,20 @@ class TestGaussianMixturePHDFilter(unittest.TestCase):
         npt.assert_allclose(state.dists[1].mu, array([5.0, 5.0]))
         npt.assert_allclose(state.dists[1].C, 2.0 * eye(2))
 
+    def test_predict_linear_rejects_nonzero_mean_gaussian_noise(self):
+        tracker = GaussianMixturePHDFilter(
+            initial_components=[
+                GaussianDistribution(array([0.0, 0.0]), eye(2)),
+            ],
+            initial_weights=array([0.8]),
+            log_prior_estimates=False,
+            log_posterior_estimates=False,
+        )
+        sys_noise = GaussianDistribution(array([1.0, 0.0]), eye(2))
+
+        with self.assertRaisesRegex(ValueError, "zero mean"):
+            tracker.predict_linear(eye(2), sys_noise)
+
     def test_update_linear_extracts_reasonable_point_estimate(self):
         tracker = GaussianMixturePHDFilter(
             initial_components=[

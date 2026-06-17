@@ -97,6 +97,16 @@ class MultiBernoulliMixtureTrackerTest(unittest.TestCase):
             expected_existence,
         )
 
+    def test_predict_linear_rejects_nonzero_mean_gaussian_noise(self):
+        tracker = MultiBernoulliMixtureTracker(
+            initial_prior=[self.initial_component],
+            tracker_param=self.tracker_param,
+        )
+        sys_noise = GaussianDistribution(array([1.0, 0.0, 0.0, 0.0]), eye(4))
+
+        with self.assertRaisesRegex(ValueError, "zero mean"):
+            tracker.predict_linear(eye(4), sys_noise)
+
     def test_exact_mbm_hypothesis_cap(self):
         tracker_param = dict(self.tracker_param)
         tracker_param["maximum_number_of_hypotheses"] = 1
