@@ -246,7 +246,10 @@ class HypersphericalGridDistribution(
                 )
             xs = xs[None, :]  # (1, dim)
         elif xs.ndim == 2:
-            assert xs.shape[-1] == self.input_dim
+            if xs.shape[-1] != self.input_dim:
+                raise ValueError(
+                    f"Expected xs with last dimension {self.input_dim}, got {xs.shape[-1]}."
+                )
         else:
             raise ValueError("xs must be 1D or 2D array.")
 

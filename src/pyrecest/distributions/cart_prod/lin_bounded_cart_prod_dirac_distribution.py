@@ -47,6 +47,9 @@ class LinBoundedCartProdDiracDistribution(
         Needs to be overwritten to allow the specification of bound_dim for Cartesian
         products of bounded and Euclidean manifolds
         """
-        assert cls.is_valid_for_conversion(distribution)
+        if not cls.is_valid_for_conversion(distribution):
+            raise ValueError(
+                f"{cls.__name__} cannot approximate distributions of this type."
+            )
         samples = distribution.sample(n_particles)
         return cls(distribution.bound_dim, samples)

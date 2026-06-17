@@ -37,6 +37,11 @@ from scipy.special import gamma
 from ..abstract_bounded_domain_distribution import AbstractBoundedDomainDistribution
 
 
+def _require_numerical_hypersphere_backend(operation: str):
+    if pyrecest.backend.__backend_name__ not in ("numpy", "pytorch"):
+        raise RuntimeError(f"{operation} is not supported for this backend.")
+
+
 class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     """
     Base class for distributions on subsets of the unit hypersphere.
@@ -79,10 +84,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
         return mu / mu_norm
 
     def mean_direction_numerical(self, integration_boundaries=None):
-        assert pyrecest.backend.__backend_name__ in (
-            "numpy",
-            "pytorch",
-        ), "Not supported for this backend."
+        _require_numerical_hypersphere_backend("mean_direction_numerical")
         if integration_boundaries is None:
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim
@@ -129,10 +131,7 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
 
     @staticmethod
     def gen_fun_hyperspherical_coords(f: Callable, dim: Union[int, int32, int64]):
-        assert pyrecest.backend.__backend_name__ in (
-            "numpy",
-            "pytorch",
-        ), "Not supported for this backend."
+        _require_numerical_hypersphere_backend("gen_fun_hyperspherical_coords")
 
         def generate_input(angles):
             dim_eucl = dim + 1
@@ -213,7 +212,8 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
     def _compute_mean_axis_from_moment(moment_matrix):
         D, V = linalg.eig(moment_matrix)
         if pyrecest.backend.__backend_name__ == "pytorch":
-            assert all(D.imag.abs() < 1e-6)
+            if not all(D.imag.abs() < 1e-6):
+                raise ValueError("Moment matrix eigenvalues must be real.")
             D = D.real
             V = V.real
         Dsorted = sort(D)
@@ -324,9 +324,10 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim
             )
-        assert (
-            self.dim == other.dim
-        ), "Cannot compare distributions with different number of dimensions"
+        if self.dim != other.dim:
+            raise ValueError(
+                "Cannot compare distributions with different number of dimensions"
+            )
 
         def hellinger_distance(pdf1, pdf2):
             return (sqrt(pdf1) - sqrt(pdf2)) ** 2
@@ -349,9 +350,10 @@ class AbstractHypersphereSubsetDistribution(AbstractBoundedDomainDistribution):
             integration_boundaries = self.__class__.get_full_integration_boundaries(
                 self.dim
             )
-        assert (
-            self.dim == other.dim
-        ), "Cannot compare distributions with different number of dimensions"
+        if self.dim != other.dim:
+            raise ValueError(
+                "Cannot compare distributions with different number of dimensions"
+            )
 
         def total_variation_distance(pdf1, pdf2):
             return abs(pdf1 - pdf2)

@@ -87,6 +87,40 @@ class HypersphericalGridDistributionTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Mean direction is undefined"):
                 dist.mean_direction()
 
+    def test_get_closest_point_rejects_wrong_batch_width(self):
+        grid = array(
+            [
+                [1.0, 0.0, 0.0],
+                [-1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, -1.0, 0.0],
+            ]
+        )
+        dist = HypersphericalGridDistribution(grid, array([1.0, 1.0, 1.0, 1.0]))
+
+        with self.assertRaisesRegex(ValueError, "last dimension 3"):
+            dist.get_closest_point(array([[1.0, 0.0], [0.0, 1.0]]))
+
+    def test_spherical_grid_pdf_rejects_unsupported_harmonics(self):
+        grid = array(
+            [
+                [1.0, 0.0, 0.0],
+                [-1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, -1.0, 0.0],
+            ]
+        )
+        dist = SphericalGridDistribution(grid, array([1.0, 1.0, 1.0, 1.0]))
+
+        with self.assertRaises(NotImplementedError):
+            dist.pdf(array([1.0, 0.0, 0.0]), use_harmonics=True)
+
+    def test_spherical_grid_from_function_rejects_non_s2_dimension(self):
+        with self.assertRaisesRegex(ValueError, "dimensions other than 2"):
+            SphericalGridDistribution.from_function(
+                lambda xs: array([1.0]), 4, dim=3
+            )
+
     # --------------------------------------------------------------
     # Approximation tests
     # --------------------------------------------------------------

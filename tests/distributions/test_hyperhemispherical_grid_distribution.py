@@ -25,6 +25,24 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
     def _normalized_grid_values(grid_distribution, raw_values):
         return raw_values / (grid_distribution.get_manifold_size() * mean(raw_values))
 
+    def test_constructor_rejects_lower_hemisphere_grid_point(self):
+        with self.assertRaisesRegex(ValueError, "upper hemisphere"):
+            HyperhemisphericalGridDistribution(array([[0.0, 0.0, -1.0]]), array([1.0]))
+
+    def test_to_full_sphere_rejects_unsupported_method(self):
+        dist = HyperhemisphericalGridDistribution(
+            array([[0.0, 0.0, 1.0]]), array([1.0])
+        )
+
+        with self.assertRaisesRegex(ValueError, "antipodal"):
+            dist.to_full_sphere(method="nearest")
+
+    def test_from_function_rejects_unsupported_grid_type(self):
+        with self.assertRaisesRegex(ValueError, "symmetric grid types"):
+            HyperhemisphericalGridDistribution.from_function(
+                lambda xs: array([1.0]), 1, grid_type="leopardi"
+            )
+
     # ------------------------------------------------------------------ #
     # Warning tests (testWarningAsymm)
     # ------------------------------------------------------------------ #

@@ -73,6 +73,20 @@ def _validate_positive_sample_count(n) -> int:
     return count_int
 
 
+def _require_complex_bingham_backend(operation: str):
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise RuntimeError(
+            f"ComplexBinghamDistribution.{operation} is not supported on the JAX backend"
+        )
+
+
+def _validate_hermitian_matrix(matrix, name: str):
+    if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError(f"{name} must be a square matrix")
+    if not allclose(matrix, conj(matrix).T, atol=1e-10):
+        raise ValueError(f"{name} must be Hermitian")
+
+
 class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
     """Complex Bingham distribution on the complex unit hypersphere.
 
@@ -101,11 +115,9 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
         B : array_like, shape (d, d)
             Hermitian parameter matrix (B == B^H must hold).
         """
-        assert (
-            pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
-        ), "ComplexBinghamDistribution is not supported on the JAX backend"
+        _require_complex_bingham_backend("__init__")
         B = asarray(B, dtype=complex128)
-        assert allclose(B, conj(B).T, atol=1e-10), "B must be Hermitian"
+        _validate_hermitian_matrix(B, "B")
         self.B = B
         super().__init__(B.shape[0])
         self.log_norm_const = ComplexBinghamDistribution.log_norm(B)
@@ -222,10 +234,9 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
         float
             Negative log normalization constant.
         """
-        assert (
-            pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
-        ), "ComplexBinghamDistribution.log_norm is not supported on the JAX backend"
+        _require_complex_bingham_backend("log_norm")
         B = asarray(B, dtype=complex128)
+        _validate_hermitian_matrix(B, "B")
         d = B.shape[0]
 
         # Real eigenvalues of a Hermitian matrix
@@ -392,9 +403,7 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
         float
             Non-negative divergence value.
         """
-        assert (
-            pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
-        ), "ComplexBinghamDistribution.cauchy_schwarz_divergence is not supported on the JAX backend"
+        _require_complex_bingham_backend("cauchy_schwarz_divergence")
         if isinstance(cB1, ComplexBinghamDistribution):
             B1 = cB1.B
         else:
@@ -404,8 +413,8 @@ class ComplexBinghamDistribution(AbstractComplexHypersphericalDistribution):
         else:
             B2 = asarray(cB2, dtype=complex128)
 
-        assert allclose(B1, conj(B1).T, atol=1e-10), "B1 must be Hermitian"
-        assert allclose(B2, conj(B2).T, atol=1e-10), "B2 must be Hermitian"
+        _validate_hermitian_matrix(B1, "B1")
+        _validate_hermitian_matrix(B2, "B2")
 
         log_c1 = ComplexBinghamDistribution.log_norm(2.0 * B1)
         log_c2 = ComplexBinghamDistribution.log_norm(2.0 * B2)
