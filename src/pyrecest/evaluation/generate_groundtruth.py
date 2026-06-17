@@ -4,6 +4,19 @@ import numpy as np
 from pyrecest.backend import atleast_2d, empty_like, squeeze
 
 
+def _validate_initial_state_shape(x0, simulation_param):
+    n_targets = simulation_param["n_targets"]
+    if n_targets == 1:
+        if x0.ndim == 1:
+            return
+        if x0.ndim == 2 and x0.shape[0] == 1:
+            return
+    elif x0.ndim == 2 and x0.shape[0] == n_targets:
+        return
+
+    raise ValueError("Mismatch in number of targets.")
+
+
 # pylint: disable=too-many-branches
 def generate_groundtruth(simulation_param, x0=None):
     """
@@ -21,20 +34,19 @@ def generate_groundtruth(simulation_param, x0=None):
     if x0 is None:
         x0 = simulation_param["initial_prior"].sample(simulation_param["n_targets"])
 
-    assert (
-        x0.ndim == 1
-        and simulation_param["n_targets"] == 1
-        or x0.shape[0] == simulation_param["n_targets"]
-    ), "Mismatch in number of targets."
+    _validate_initial_state_shape(x0, simulation_param)
 
     # Initialize ground truth
     groundtruth = np.empty(simulation_param["n_timesteps"], dtype=object)
 
     has_inputs = "inputs" in simulation_param and simulation_param["inputs"] is not None
     if has_inputs:
-        assert (
-            simulation_param["inputs"].shape[1] == simulation_param["n_timesteps"] - 1
-        ), "Mismatch in number of timesteps."
+        if (
+            simulation_param["inputs"].ndim != 2
+            or simulation_param["inputs"].shape[1]
+            != simulation_param["n_timesteps"] - 1
+        ):
+            raise ValueError("Mismatch in number of timesteps.")
 
     groundtruth[0] = atleast_2d(x0)
 
@@ -69,9 +81,10 @@ def generate_groundtruth(simulation_param, x0=None):
                             simulation_param["inputs"][:, t - 1],
                         )
                 else:
-                    assert (
-                        not has_inputs
-                    ), "No inputs accepted for the identity system model."
+                    if has_inputs:
+                        raise ValueError(
+                            "No inputs accepted for the identity system model."
+                        )
                     state_to_add_noise_to = previous_state
 
                 groundtruth[t][target_no, :] = state_to_add_noise_to + simulation_param[
@@ -81,8 +94,10 @@ def generate_groundtruth(simulation_param, x0=None):
             else:
                 raise ValueError("Cannot generate groundtruth.")
 
-    assert groundtruth[0].shape[0] == simulation_param["n_targets"]
-    assert groundtruth[0].shape[1] == simulation_param["initial_prior"].dim
+    if groundtruth[0].shape[0] != simulation_param["n_targets"]:
+        raise RuntimeError("Generated groundtruth has the wrong number of targets.")
+    if groundtruth[0].shape[1] != simulation_param["initial_prior"].dim:
+        raise RuntimeError("Generated groundtruth has the wrong state dimension.")
     for t in range(simulation_param["n_timesteps"]):
         groundtruth[t] = squeeze(groundtruth[t])
 

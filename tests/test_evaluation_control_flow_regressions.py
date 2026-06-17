@@ -113,6 +113,17 @@ class TestEvaluationControlFlowRegressions(unittest.TestCase):
             atol=1.0e-4,
         )
 
+    def test_configure_periodic_particle_filter_rejects_inputs(self):
+        scenario_config = {
+            "initial_prior": GaussianDistribution(array([0.0]), eye(1)),
+            "sys_noise": GaussianDistribution(array([0.0]), eye(1)),
+            "inputs": array([[1.0]]),
+            "manifold": "circle",
+        }
+
+        with self.assertRaisesRegex(ValueError, "Inputs currently not supported"):
+            configure_for_filter({"name": "pf", "parameter": 20}, scenario_config)
+
     def test_perform_cycles_honors_callable_likelihood_updates(self):
         filter_name = "likelihood_control_flow_regression"
         register_filter_factory(filter_name, _likelihood_test_factory)

@@ -14,17 +14,21 @@ def determine_all_deviations(
     groundtruths,
     mean_calculation_symm: str = "",
 ):
-    assert (
-        pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
-    ), "Not supported for the JAX backend."
+    if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+        raise NotImplementedError("Not supported for the JAX backend.")
 
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
-    assert groundtruths.ndim == 2 and groundtruths[0, 0].ndim in (
+    if groundtruths.ndim != 2 or groundtruths[0, 0].ndim not in (
         1,
         2,
-    ), "Assuming groundtruths to be a 2-D array of shape (n_runs, n_timesteps) composed arrays of shape (n_dim,) or (n_targets,n_dim)."
+    ):
+        raise ValueError(
+            "Assuming groundtruths to be a 2-D array of shape "
+            "(n_runs, n_timesteps) composed arrays of shape (n_dim,) or "
+            "(n_targets,n_dim)."
+        )
 
     all_deviations_last_mat = empty((len(results), groundtruths.shape[0]))
 
