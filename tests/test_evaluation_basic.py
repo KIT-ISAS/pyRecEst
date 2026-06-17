@@ -103,6 +103,18 @@ class TestEvalationBasics(TestEvalationBase):
                 fig.clf()
                 matplotlib.pyplot.close(fig)
 
+    def test_apply_log_scale_to_axes_rejects_invalid_log_shape(self):
+        from pyrecest.evaluation.plot_results import apply_log_scale_to_axes
+
+        with self.assertRaisesRegex(ValueError, "log_array"):
+            apply_log_scale_to_axes([object(), object(), object()], np.zeros((3, 2)))
+
+    def test_apply_log_scale_to_axes_rejects_wrong_axis_count(self):
+        from pyrecest.evaluation.plot_results import apply_log_scale_to_axes
+
+        with self.assertRaisesRegex(ValueError, "3 axes"):
+            apply_log_scale_to_axes([object(), object()], np.zeros((2, 3)))
+
     def _get_single_evaluation_file(self):
         files = sorted(
             os.path.join(self.tmpdirname.name, file)
