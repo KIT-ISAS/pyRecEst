@@ -169,6 +169,20 @@ class JointProbabilisticDataAssociationFilterTest(unittest.TestCase):
                 (posterior_covariance.diagonal() < prior_covariance.diagonal()).all()
             )
 
+    def test_update_linear_rejects_pairwise_cost_matrix(self):
+        tracker = JPDAF(self.kfs_init, association_param=self.association_param)
+        perfect_meas_ordered = (
+            self.meas_mat @ array([kf.get_point_estimate() for kf in self.kfs_init]).T
+        )
+
+        with self.assertRaises(NotImplementedError):
+            tracker.update_linear(
+                perfect_meas_ordered,
+                self.meas_mat,
+                self.meas_cov,
+                pairwise_cost_matrix=array([[0.0, 0.0], [0.0, 0.0]]),
+            )
+
     def test_symmetric_ambiguous_case_leads_to_symmetric_probabilities(self):
         tracker = JPDAF(
             [

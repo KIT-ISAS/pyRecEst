@@ -6,6 +6,7 @@ from abc import abstractmethod
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import ndim, stack
 from pyrecest.distributions import GaussianDistribution
 
@@ -42,6 +43,27 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
     def get_number_of_targets(self) -> int:
         return len(self.filter_bank)
 
+    @staticmethod
+    def _require_numpy_backend(operation: str):
+        if pyrecest.backend.__backend_name__ != "numpy":
+            raise RuntimeError(f"{operation} is only supported for the numpy backend")
+
+    @staticmethod
+    def _validate_measurement_update_inputs(
+        measurements, measurement_matrix, state_dim
+    ):
+        if measurements.ndim != 2:
+            raise ValueError("measurements must have shape (dim_meas, n_meas).")
+        if measurement_matrix.ndim != 2:
+            raise ValueError("measurement_matrix must be a 2D matrix.")
+        if (
+            measurement_matrix.shape[0] != measurements.shape[0]
+            or measurement_matrix.shape[1] != state_dim
+        ):
+            raise ValueError(
+                "Dimensions of measurement matrix must match state and measurement dimensions."
+            )
+
     @property
     def dim(self) -> int:
         if not self.filter_bank:
@@ -64,11 +86,15 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         if isinstance(new_state, list) and all(
             isinstance(item, EuclideanFilterMixin) for item in new_state
         ):
-            assert all(
+            if not all(
                 id(new_state[i]) != id(new_state[j])
                 for i in range(len(new_state))
                 for j in range(i + 1, len(new_state))
-            ), "No two filters of the filter bank should have the same handle. Updating the state of one target would update it for all!"
+            ):
+                raise ValueError(
+                    "No two filters of the filter bank should have the same handle. "
+                    "Updating the state of one target would update it for all!"
+                )
             self.filter_bank = copy.deepcopy(new_state)
         else:
             self.filter_bank = [
@@ -83,12 +109,17 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             warnings.warn("Currently, there are zero targets.")
             return
 
-        assert all(
+        if system_matrices is None or not all(
             dim == self.filter_bank[0].dim for dim in system_matrices.shape[:2]
-        ), "system_matrices may be a single (dimSingleState, dimSingleState) matrix or a (dimSingleState, dimSingleState, noTargets) tensor."
+        ):
+            raise ValueError(
+                "system_matrices may be a single (dimSingleState, dimSingleState) "
+                "matrix or a (dimSingleState, dimSingleState, noTargets) tensor."
+            )
 
         if isinstance(sys_noises, GaussianDistribution):
-            assert all(sys_noises.mu == 0)
+            if not bool(backend_all(sys_noises.mu == 0)):
+                raise ValueError("Gaussian process noise must have zero mean.")
             sys_noises = sys_noises.C
 
         curr_sys_matrix = system_matrices
@@ -117,17 +148,15 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         covMatsMeas,
         pairwise_cost_matrix=None,
     ):
-        assert (
-            pyrecest.backend.__backend_name__ == "numpy"
-        ), "Only supported for numpy backend"
+        self._require_numpy_backend("update_linear")
         if len(self.filter_bank) == 0:
             warnings.warn("Currently, there are zero targets")
             return
-        assert (
-            measurement_matrix.shape[0] == measurements.shape[0]
-            and measurement_matrix.shape[1]
-            == self.filter_bank[0].get_point_estimate().shape[0]
-        ), "Dimensions of measurement matrix must match state and measurement dimensions."
+        self._validate_measurement_update_inputs(
+            measurements,
+            measurement_matrix,
+            self.filter_bank[0].get_point_estimate().shape[0],
+        )
 
         if pairwise_cost_matrix is None:
             association = self.find_association(
