@@ -245,7 +245,10 @@ class FactorizedGIWRandomMatrixTracker(AbstractExtendedObjectTracker):
         plot_ellipsoid(position_estimate, self.extent, scaling_factor, color)
 
     def get_contour_points(self, n):
-        assert self.kinematic_state.shape == (2,)
+        if self.kinematic_state.shape != (2,):
+            raise ValueError(
+                "get_contour_points requires a two-dimensional kinematic state."
+            )
         xs = linspace(0, 2 * pi, n)
         contour_points = self.kinematic_state[:, None] + self.extent @ array(
             [cos(xs), sin(xs)]

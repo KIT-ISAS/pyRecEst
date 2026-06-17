@@ -220,6 +220,16 @@ class TestRandomMatrixTracker(unittest.TestCase):
         self.assertEqual(contour_points.shape[0], n_points)  # Expecting n_points
         self.assertEqual(contour_points.shape[1], 2)  # Expecting x and y coordinates
 
+    def test_get_contour_points_rejects_non_2d_state(self):
+        tracker = RandomMatrixTracker(
+            array([10.0, 5.0, 1.0]),
+            eye(3),
+            eye(2),
+        )
+
+        with self.assertRaisesRegex(ValueError, "two-dimensional"):
+            tracker.get_contour_points(10)
+
 
 if __name__ == "__main__":
     unittest.main()
