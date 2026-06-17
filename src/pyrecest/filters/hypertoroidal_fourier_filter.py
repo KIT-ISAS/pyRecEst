@@ -162,7 +162,8 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
         z : array_like, shape (dim,)
             Measurement in [0, 2*pi)^dim.
         """
-        assert isinstance(d_meas, AbstractHypertoroidalDistribution)
+        if not isinstance(d_meas, AbstractHypertoroidalDistribution):
+            raise TypeError("d_meas must be an AbstractHypertoroidalDistribution.")
         if not isinstance(d_meas, HypertoroidalFourierDistribution):
             warnings.warn(
                 "update_identity:automaticConversion: d_meas is not a "
@@ -177,9 +178,10 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
                 self._filter_state.transformation,
             )
         z = array(z)
-        assert z.shape == (
-            self._filter_state.dim,
-        ), f"z must have shape ({self._filter_state.dim},), got {z.shape}"
+        if z.shape != (self._filter_state.dim,):
+            raise ValueError(
+                f"z must have shape ({self._filter_state.dim},), got {z.shape}"
+            )
         d_meas_shifted = d_meas.shift(z)
         self._filter_state = self._filter_state.multiply(
             d_meas_shifted, self._filter_state.coeff_mat.shape
@@ -205,8 +207,12 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
         HypertoroidalFourierDistribution
             2*dim-dimensional transition density.
         """
-        assert isinstance(noise_distribution, AbstractHypertoroidalDistribution)
-        assert callable(f)
+        if not isinstance(noise_distribution, AbstractHypertoroidalDistribution):
+            raise TypeError(
+                "noise_distribution must be an AbstractHypertoroidalDistribution."
+            )
+        if not callable(f):
+            raise TypeError("f must be callable.")
         dim = self._filter_state.dim
         n_coefficients_2d = self._filter_state.coeff_mat.shape * 2
 
@@ -298,16 +304,19 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
                     self._filter_state.transformation,
                 )
         else:
-            assert isinstance(
-                f_trans, HypertoroidalFourierDistribution
-            ), "f_trans must be a HypertoroidalFourierDistribution or a callable."
-            assert (
-                f_trans.transformation == self._filter_state.transformation
-            ), "f_trans must use the same transformation as the filter state."
-            assert f_trans.dim == 2 * dim, (
-                "f_trans must be a 2*dim-dimensional HFD (first dim dims for "
-                "x_{k+1}, last dim dims for x_k)."
-            )
+            if not isinstance(f_trans, HypertoroidalFourierDistribution):
+                raise TypeError(
+                    "f_trans must be a HypertoroidalFourierDistribution or a callable."
+                )
+            if f_trans.transformation != self._filter_state.transformation:
+                raise ValueError(
+                    "f_trans must use the same transformation as the filter state."
+                )
+            if f_trans.dim != 2 * dim:
+                raise ValueError(
+                    "f_trans must be a 2*dim-dimensional HFD (first dim dims for "
+                    "x_{k+1}, last dim dims for x_k)."
+                )
 
         # Reshape the prior coefficient tensor to have dim leading singleton
         # dimensions so that fftconvolve can marginalize over the x_k dims.
@@ -388,12 +397,19 @@ class HypertoroidalFourierFilter(AbstractFilter, HypertoroidalFilterMixin):
         n_coefficients = self._filter_state.coeff_mat.shape
 
         if z is None:
-            assert isinstance(likelihood, HypertoroidalFourierDistribution), (
-                "When z is not given, likelihood must be a "
-                "HypertoroidalFourierDistribution."
-            )
+            if not isinstance(likelihood, HypertoroidalFourierDistribution):
+                raise TypeError(
+                    "When z is not given, likelihood must be a "
+                    "HypertoroidalFourierDistribution."
+                )
         else:
+            if not callable(likelihood):
+                raise TypeError("likelihood must be callable when z is provided.")
             z = array(z)
+            if z.shape != (self._filter_state.dim,):
+                raise ValueError(
+                    f"z must have shape ({self._filter_state.dim},), got {z.shape}"
+                )
             z_col = reshape(z, (-1, 1))  # (dim, 1)
 
             def _likelihood_fn(*grid_args):

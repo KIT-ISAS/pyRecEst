@@ -1,4 +1,5 @@
 import warnings
+from numbers import Integral
 
 import pyrecest.backend
 
@@ -11,6 +12,15 @@ from pyrecest.distributions.circle.piecewise_constant_distribution import (
 
 from .abstract_filter import AbstractFilter
 from .manifold_mixins import CircularFilterMixin
+
+
+def _validate_interval_count(value, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} must be a positive integer.")
+    value = int(value)
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer.")
+    return value
 
 
 class PiecewiseConstantFilter(AbstractFilter, CircularFilterMixin):
@@ -37,7 +47,7 @@ class PiecewiseConstantFilter(AbstractFilter, CircularFilterMixin):
         n : int
             Number of discretization intervals.
         """
-        assert isinstance(n, int) and n > 0
+        n = _validate_interval_count(n, "n")
         CircularFilterMixin.__init__(self)
         AbstractFilter.__init__(self, PiecewiseConstantDistribution(zeros(n) + 1.0))
 
@@ -96,7 +106,10 @@ class PiecewiseConstantFilter(AbstractFilter, CircularFilterMixin):
             Measurement in [0, 2*pi).
         """
         meas_matrix = array(meas_matrix)
-        assert meas_matrix.shape[1] == len(self.filter_state.w)
+        if meas_matrix.ndim != 2 or meas_matrix.shape[1] != len(self.filter_state.w):
+            raise ValueError(
+                "meas_matrix must be a 2D array with one column per state interval."
+            )
         lw = meas_matrix.shape[0]
         row = int(floor(z / (2.0 * pi) * lw)) % lw
         w_new = meas_matrix[row, :] * self.filter_state.w
@@ -157,9 +170,11 @@ class PiecewiseConstantFilter(AbstractFilter, CircularFilterMixin):
         """
         from scipy.integrate import nquad  # pylint: disable=import-outside-toplevel
 
-        assert isinstance(L, int) and L > 0
-        assert isinstance(noise_distribution, AbstractCircularDistribution)
-        assert callable(a)
+        L = _validate_interval_count(L, "L")
+        if not isinstance(noise_distribution, AbstractCircularDistribution):
+            raise TypeError("noise_distribution must be an AbstractCircularDistribution.")
+        if not callable(a):
+            raise TypeError("a must be callable.")
 
         A = zeros((L, L))
         for i in range(L):
@@ -207,10 +222,12 @@ class PiecewiseConstantFilter(AbstractFilter, CircularFilterMixin):
         """
         from scipy.integrate import nquad  # pylint: disable=import-outside-toplevel
 
-        assert isinstance(L, int) and L > 0
-        assert isinstance(l_meas, int) and l_meas > 0
-        assert isinstance(noise_distribution, AbstractCircularDistribution)
-        assert callable(h)
+        L = _validate_interval_count(L, "L")
+        l_meas = _validate_interval_count(l_meas, "l_meas")
+        if not isinstance(noise_distribution, AbstractCircularDistribution):
+            raise TypeError("noise_distribution must be an AbstractCircularDistribution.")
+        if not callable(h):
+            raise TypeError("h must be callable.")
 
         H = zeros((l_meas, L))
         for i in range(l_meas):
