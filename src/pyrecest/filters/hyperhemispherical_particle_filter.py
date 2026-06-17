@@ -34,7 +34,10 @@ class HyperhemisphericalParticleFilter(
         Parameters:
         dist_ (HyperhemisphericalDiracDistribution): New state
         """
-        assert isinstance(new_state, AbstractHyperhemisphericalDistribution)
+        if not isinstance(new_state, AbstractHyperhemisphericalDistribution):
+            raise TypeError(
+                "new_state must be an AbstractHyperhemisphericalDistribution."
+            )
         if not isinstance(new_state, HyperhemisphericalDiracDistribution):
             new_state = HyperhemisphericalDiracDistribution(
                 new_state.sample(self.filter_state.d.shape[0])
