@@ -47,6 +47,12 @@ class HyperhemisphericalParticleFilterTest(unittest.TestCase):
         self.assertTrue(is_close_to_mode or is_close_to_neg_mode)
         self.assertIsInstance(hpf.filter_state, HyperhemisphericalDiracDistribution)
 
+    def test_set_state_rejects_invalid_distribution(self):
+        hpf = HyperhemisphericalParticleFilter(5, 2)
+
+        with self.assertRaisesRegex(TypeError, "AbstractHyperhemispherical"):
+            hpf.set_state(object())
+
 
 if __name__ == "__main__":
     unittest.main()

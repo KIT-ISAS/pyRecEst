@@ -47,7 +47,27 @@ class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
         Parameters:
         dist_ (HyperhemisphericalDiracDistribution): New state
         """
-        assert isinstance(new_state, AbstractHyperhemisphericalDistribution)
+        if not isinstance(
+            new_state,
+            (
+                AbstractHyperhemisphericalDistribution,
+                HyperhemisphereCartProdDiracDistribution,
+            ),
+        ):
+            raise TypeError(
+                "new_state must be an AbstractHyperhemisphericalDistribution "
+                "or HyperhemisphereCartProdDiracDistribution."
+            )
+        if isinstance(new_state, HyperhemisphereCartProdDiracDistribution):
+            if (
+                new_state.dim_hemisphere != self.filter_state.dim_hemisphere
+                or new_state.n_hemispheres != self.filter_state.n_hemispheres
+            ):
+                raise ValueError(
+                    "new_state hemisphere topology must match the filter state."
+                )
+            self.filter_state = new_state
+            return
         if not isinstance(new_state, HyperhemisphereCartProdDiracDistribution):
             new_state = HyperhemisphereCartProdDiracDistribution(
                 new_state.sample(self.filter_state.d.shape[0]),
@@ -71,12 +91,17 @@ class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
         """
         Predicts the next state for each hyperhemisphere
         """
-        assert function_is_vectorized, "Only vectorized functions are supported"
-        assert (
+        if not function_is_vectorized:
+            raise ValueError("Only vectorized functions are supported.")
+        if not (
             noise_distribution is None
             or noise_distribution.dim == self.filter_state.dim_hemisphere
-        ), "Noise dimension must match state dimension in Cartesian product"
-        assert shift_instead_of_add, "Only shifting is supported"
+        ):
+            raise ValueError(
+                "Noise dimension must match state dimension in Cartesian product."
+            )
+        if not shift_instead_of_add:
+            raise ValueError("Only shifting is supported.")
         for i in range(self.filter_state.n_hemispheres):
             # Apply the function to each hyperhemisphere
             index_arr = range(
@@ -111,7 +136,11 @@ class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
                 AbstractHypersphericalDistribution,
             ),
         ):
-            assert new_state.dim == self.filter_state.dim_hemisphere
+            if new_state.dim != self.filter_state.dim_hemisphere:
+                raise ValueError(
+                    "new_state dimension must match the filter state's "
+                    "hemisphere dimension."
+                )
             samples = new_state.sample(
                 self._filter_state.d.shape[0] * self._filter_state.n_hemispheres
             )
