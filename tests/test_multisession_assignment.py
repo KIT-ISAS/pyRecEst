@@ -16,6 +16,7 @@ from pyrecest.utils import (
 from pyrecest.utils import (
     solve_multisession_assignment,
     solve_multisession_assignment_from_similarity,
+    solve_multisession_assignment_with_observation_costs,
     tracks_to_session_labels,
 )
 

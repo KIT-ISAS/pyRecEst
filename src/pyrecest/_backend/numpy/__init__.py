@@ -203,7 +203,8 @@ def has_autodiff():
 
 
 def vmap(pyfunc, randomness="error"):
-    assert randomness in ("error", "different")
+    if randomness not in ("error", "different"):
+        raise ValueError("randomness must be 'error' or 'different'.")
 
     def vmapped_fun(*args):
         # Check if all arguments have the same first dimension.  Use a list

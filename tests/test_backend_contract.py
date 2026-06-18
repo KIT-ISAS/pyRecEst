@@ -146,6 +146,14 @@ class BackendContractTest(unittest.TestCase):
         self.assertTrue(0.0 <= float(uniform_sample) <= 1.0)
 
     @unittest.skipUnless(
+        backend.__backend_name__ == "numpy",
+        reason="NumPy backend vmap randomness contract",
+    )
+    def test_numpy_vmap_rejects_unknown_randomness_option(self):
+        with self.assertRaisesRegex(ValueError, "randomness"):
+            backend.vmap(lambda value: value, randomness="same")
+
+    @unittest.skipUnless(
         backend.__backend_name__ == "jax",
         reason="JAX-specific explicit RNG state contract",
     )
