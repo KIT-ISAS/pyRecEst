@@ -25,7 +25,10 @@ def simulation_database(
         warnings.warn(
             "Scenario not recognized. Assuming scenario_customization_params contains all parameters."
         )
-        assert scenario_customization_params is not None
+        if scenario_customization_params is None:
+            raise ValueError(
+                "scenario_customization_params must be provided for custom scenarios."
+            )
         simulation_param.update(scenario_customization_params)
     elif scenario_name == "R2randomWalk":
         simulation_param["manifold"] = "Euclidean"

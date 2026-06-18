@@ -1,5 +1,6 @@
 import unittest
 import warnings
+from unittest.mock import patch
 
 import numpy as np
 
@@ -9,6 +10,18 @@ from pyrecest.evaluation import summarize_filter_results
 
 
 class TestSummarizeFilterResultsWarnings(unittest.TestCase):
+    def test_rejects_jax_backend_explicitly(self):
+        with patch.object(pyrecest.backend, "__backend_name__", "jax"):
+            with self.assertRaisesRegex(NotImplementedError, "JAX"):
+                summarize_filter_results(
+                    scenario_config={},
+                    filter_configs=[],
+                    runtimes=np.empty((0, 0)),
+                    groundtruths=np.empty((0, 0), dtype=object),
+                    run_failed=np.empty((0, 0), dtype=bool),
+                    last_estimates=np.empty((0, 0), dtype=object),
+                )
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
         reason="Not supported on this backend",
