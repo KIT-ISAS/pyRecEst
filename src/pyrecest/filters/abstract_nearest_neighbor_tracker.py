@@ -6,7 +6,7 @@ from abc import abstractmethod
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import all as backend_all
+from pyrecest.backend import any as backend_any
 from pyrecest.backend import ndim, stack
 from pyrecest.distributions import GaussianDistribution
 
@@ -33,6 +33,35 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         else:
             self._filter_state = None
 
+    @staticmethod
+    def _ensure_numpy_backend():
+        if pyrecest.backend.__backend_name__ != "numpy":
+            raise NotImplementedError(
+                "Nearest-neighbor trackers are only supported for the numpy backend."
+            )
+
+    @staticmethod
+    def _validate_unique_filter_handles(new_state):
+        if any(
+            id(new_state[i]) == id(new_state[j])
+            for i in range(len(new_state))
+            for j in range(i + 1, len(new_state))
+        ):
+            raise ValueError(
+                "No two filters of the filter bank should have the same handle. "
+                "Updating the state of one target would update it for all!"
+            )
+
+    def _validate_measurement_matrix_shape(self, measurement_matrix, measurements):
+        if (
+            measurement_matrix.shape[0] != measurements.shape[0]
+            or measurement_matrix.shape[1]
+            != self.filter_bank[0].get_point_estimate().shape[0]
+        ):
+            raise ValueError(
+                "Dimensions of measurement matrix must match state and measurement dimensions."
+            )
+
     @abstractmethod
     def find_association(self, measurements, measurement_matrix, cov_mats_meas):
         """
@@ -46,7 +75,9 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
     @staticmethod
     def _require_numpy_backend(operation: str):
         if pyrecest.backend.__backend_name__ != "numpy":
-            raise RuntimeError(f"{operation} is only supported for the numpy backend")
+            raise NotImplementedError(
+                f"{operation} is only supported for the numpy backend"
+            )
 
     @staticmethod
     def _validate_measurement_update_inputs(
@@ -86,15 +117,7 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         if isinstance(new_state, list) and all(
             isinstance(item, EuclideanFilterMixin) for item in new_state
         ):
-            if not all(
-                id(new_state[i]) != id(new_state[j])
-                for i in range(len(new_state))
-                for j in range(i + 1, len(new_state))
-            ):
-                raise ValueError(
-                    "No two filters of the filter bank should have the same handle. "
-                    "Updating the state of one target would update it for all!"
-                )
+            self._validate_unique_filter_handles(new_state)
             self.filter_bank = copy.deepcopy(new_state)
         else:
             self.filter_bank = [
@@ -115,10 +138,10 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             raise ValueError(
                 "system_matrices may be a single (dimSingleState, dimSingleState) "
                 "matrix or a (dimSingleState, dimSingleState, noTargets) tensor."
-            )
+        )
 
         if isinstance(sys_noises, GaussianDistribution):
-            if not bool(backend_all(sys_noises.mu == 0)):
+            if bool(backend_any(sys_noises.mu != 0)):
                 raise ValueError("Gaussian process noise must have zero mean.")
             sys_noises = sys_noises.C
 

@@ -74,6 +74,11 @@ class JointProbabilisticDataAssociationFilter(AbstractNearestNeighborTracker):
             self.filter_state = initial_prior
 
     @staticmethod
+    def _ensure_numpy_backend():
+        if pyrecest.backend.__backend_name__ != "numpy":
+            raise NotImplementedError("JPDAF is only supported for the numpy backend.")
+
+    @staticmethod
     def _get_measurement_covariance(cov_mats_meas, measurement_index):
         if cov_mats_meas.ndim == 2:
             return cov_mats_meas
