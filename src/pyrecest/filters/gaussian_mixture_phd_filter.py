@@ -30,7 +30,9 @@ from .abstract_multitarget_tracker import AbstractMultitargetTracker
 
 def _require_numpy_backend(operation):
     if pyrecest.backend.__backend_name__ != "numpy":
-        raise RuntimeError(f"{operation} is only supported for the numpy backend.")
+        raise NotImplementedError(
+            f"{operation} is only supported for the numpy backend."
+        )
 
 
 def _covariance_from_zero_mean_gaussian_noise(sys_noise):

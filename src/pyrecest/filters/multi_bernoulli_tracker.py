@@ -95,19 +95,6 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         "measurement_to_state_matrix": None,
     }
 
-    @staticmethod
-    def _require_numpy_backend(operation):
-        if pyrecest.backend.__backend_name__ != "numpy":
-            raise RuntimeError(f"{operation} is only supported for the numpy backend.")
-
-    @staticmethod
-    def _covariance_from_zero_mean_gaussian_noise(sys_noises):
-        if isinstance(sys_noises, GaussianDistribution):
-            if not bool(backend_all(sys_noises.mu == 0)):
-                raise ValueError("Gaussian process noise must have zero mean.")
-            return sys_noises.C
-        return sys_noises
-
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
@@ -160,6 +147,22 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
     @staticmethod
     def _clip_probability(probability, eps=1e-12):
         return min(max(float(probability), eps), 1.0 - eps)
+
+    @staticmethod
+    def _ensure_numpy_backend():
+        if pyrecest.backend.__backend_name__ != "numpy":
+            raise NotImplementedError(
+                "Multi-Bernoulli trackers are only supported for the numpy backend."
+            )
+
+    @staticmethod
+    def _coerce_zero_mean_gaussian_noise(sys_noises):
+        if not isinstance(sys_noises, GaussianDistribution):
+            return sys_noises
+
+        if not bool(backend_all(sys_noises.mu == 0)):
+            raise ValueError("Gaussian system noise must have zero mean.")
+        return sys_noises.C
 
     @staticmethod
     def _is_existence_state_tuple(component):
@@ -634,7 +637,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             Components appended after prediction instead of the tracker's stored
             birth components.
         """
-        sys_noises = self._covariance_from_zero_mean_gaussian_noise(sys_noises)
+        sys_noises = self._coerce_zero_mean_gaussian_noise(sys_noises)
 
         for i, component in enumerate(self.bernoulli_components):
             current_system_matrix = system_matrices
@@ -684,7 +687,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
         cov_mats_meas : array-like, shape (m, m) or (m, m, num_measurements)
             Shared or per-measurement covariance matrices.
         """
-        self._require_numpy_backend("MultiBernoulliTracker.find_association")
+        self._ensure_numpy_backend()
 
         measurements = array(measurements)
         measurement_matrix = array(measurement_matrix)
@@ -727,7 +730,7 @@ class MultiBernoulliTracker(AbstractMultitargetTracker):
             Shared measurement-noise covariance or per-measurement covariance
             matrices.
         """
-        self._require_numpy_backend("MultiBernoulliTracker.update_linear")
+        self._ensure_numpy_backend()
 
         measurements = array(measurements)
         measurement_matrix = array(measurement_matrix)
