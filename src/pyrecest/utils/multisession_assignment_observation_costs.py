@@ -8,6 +8,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from pyrecest.backend import (
+    __backend_name__,
+)
 from pyrecest.backend import all as backend_all  # pylint: disable=no-name-in-module
 from pyrecest.backend import (
     asarray,
@@ -29,7 +32,6 @@ from .multisession_assignment import (
     _infer_and_validate_session_sizes,
     _normalize_pairwise_costs,
     _normalize_session_sizes,
-    _require_non_jax_backend,
     solve_multisession_assignment,
 )
 
@@ -37,6 +39,11 @@ ObservationCostValue = float | Sequence[float] | Any
 ObservationCostsInput = (
     Mapping[int, ObservationCostValue] | Sequence[ObservationCostValue]
 )
+
+
+def _ensure_supported_backend(feature_name: str) -> None:
+    if __backend_name__ == "jax":
+        raise NotImplementedError(f"{feature_name} is not supported on the JAX backend.")
 
 
 @dataclass(frozen=True)
@@ -62,7 +69,7 @@ def solve_multisession_assignment_with_observation_costs(  # pylint: disable=R09
     cost_threshold: float | None = None,
 ) -> MultiSessionAssignmentResult:
     """Solve multi-session assignment with per-observation start/end costs."""
-    _require_non_jax_backend()
+    _ensure_supported_backend("solve_multisession_assignment_with_observation_costs")
 
     _validate_scalar_cost("start_cost", start_cost)
     _validate_scalar_cost("end_cost", end_cost)
