@@ -112,6 +112,17 @@ class TestFactorizedGIWRandomMatrixTracker(unittest.TestCase):
         npt.assert_allclose(tracker.extent_dof, expected_dof)
         npt.assert_allclose(tracker.extent_scale, expected_scale_factor * prior_scale)
 
+    def test_get_contour_points_rejects_non_2d_state(self):
+        tracker = FactorizedGIWRandomMatrixTracker(
+            array([1.0, 0.5, -0.25]),
+            eye(3),
+            14.0,
+            array([[16.0, 4.0], [4.0, 24.0]]),
+        )
+
+        with self.assertRaisesRegex(ValueError, "two-dimensional"):
+            tracker.get_contour_points(10)
+
 
 if __name__ == "__main__":
     unittest.main()
