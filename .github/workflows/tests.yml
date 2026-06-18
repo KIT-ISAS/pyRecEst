@@ -55,6 +55,14 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
+              while read -r source_file; do
+                sudo mv "$source_file" "${source_file}.disabled"
+              done
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \
@@ -135,6 +143,14 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
+              while read -r source_file; do
+                sudo mv "$source_file" "${source_file}.disabled"
+              done
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \
@@ -246,6 +262,14 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
+              while read -r source_file; do
+                sudo mv "$source_file" "${source_file}.disabled"
+              done
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \
@@ -350,6 +374,14 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
+              while read -r source_file; do
+                sudo mv "$source_file" "${source_file}.disabled"
+              done
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \
