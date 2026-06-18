@@ -303,6 +303,31 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         )
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__
+        in ("jax", "pytorch"),  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
+    def test_update_identity_rejects_invalid_noise_type(self):
+        f = HypertoroidalFourierFilter((11,), "sqrt")
+
+        with self.assertRaisesRegex(TypeError, "AbstractHypertoroidalDistribution"):
+            f.update_identity(object(), array([1.5]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__
+        in ("jax", "pytorch"),  # pylint: disable=no-member
+        reason="Not supported on this backend",
+    )
+    def test_update_identity_rejects_wrong_measurement_shape(self):
+        f = HypertoroidalFourierFilter((11,), "sqrt")
+        meas_noise = HypertoroidalFourierDistribution.from_distribution(
+            WrappedNormalDistribution(array(0.0), array(1.0)), (11,), "sqrt"
+        )
+
+        with self.assertRaisesRegex(ValueError, "shape"):
+            f.update_identity(meas_noise, array([1.0, 2.0]))
+
     # -----------------------------------------------------------------
     # update_identity - 2D
     # -----------------------------------------------------------------
@@ -377,6 +402,21 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         self.assertIsInstance(f.filter_state, HypertoroidalFourierDistribution)
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-3)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__
+        in ("jax", "pytorch"),  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_get_f_trans_as_hfd_rejects_invalid_arguments(self):
+        f = HypertoroidalFourierFilter((11,), "sqrt")
+        noise = WrappedNormalDistribution(array(0.0), array(0.3))
+
+        with self.assertRaisesRegex(TypeError, "noise_distribution"):
+            f.get_f_trans_as_hfd(lambda x: x, object())
+
+        with self.assertRaisesRegex(TypeError, "callable"):
+            f.get_f_trans_as_hfd(object(), noise)
+
     # -----------------------------------------------------------------
     # predict_nonlinear_via_transition_density
     # -----------------------------------------------------------------
@@ -435,6 +475,25 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         f.predict_nonlinear_via_transition_density(hfd_trans, truncate_joint_sqrt=False)
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-3)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__
+        in ("jax", "pytorch"),  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_predict_via_transition_density_rejects_invalid_inputs(self):
+        f = HypertoroidalFourierFilter((11,), "sqrt")
+
+        with self.assertRaisesRegex(TypeError, "HypertoroidalFourierDistribution"):
+            f.predict_nonlinear_via_transition_density(object())
+
+        wrong_transform = HypertoroidalFourierFilter((11, 11), "identity").filter_state
+        with self.assertRaisesRegex(ValueError, "same transformation"):
+            f.predict_nonlinear_via_transition_density(wrong_transform)
+
+        wrong_dim = HypertoroidalFourierFilter((11, 11, 11), "sqrt").filter_state
+        with self.assertRaisesRegex(ValueError, "2\\*dim"):
+            f.predict_nonlinear_via_transition_density(wrong_dim)
+
     # -----------------------------------------------------------------
     # update_nonlinear
     # -----------------------------------------------------------------
@@ -484,6 +543,23 @@ class TestHypertoroidalFourierFilter(unittest.TestCase):
         f.update_nonlinear(likelihood_fn, z)
         self.assertIsInstance(f.filter_state, HypertoroidalFourierDistribution)
         npt.assert_allclose(_integrate_1d(f.filter_state), 1.0, atol=1e-4)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__
+        in ("jax", "pytorch"),  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_update_nonlinear_rejects_invalid_likelihood_arguments(self):
+        f = HypertoroidalFourierFilter((11,), "sqrt")
+
+        with self.assertRaisesRegex(TypeError, "HypertoroidalFourierDistribution"):
+            f.update_nonlinear(object())
+
+        with self.assertRaisesRegex(TypeError, "callable"):
+            f.update_nonlinear(object(), array([1.5]))
+
+        with self.assertRaisesRegex(ValueError, "shape"):
+            f.update_nonlinear(lambda _z, _x: array([1.0]), array([1.0, 2.0]))
 
     # -----------------------------------------------------------------
     # get_point_estimate

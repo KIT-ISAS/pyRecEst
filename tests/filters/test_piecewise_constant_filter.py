@@ -30,6 +30,11 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
             rtol=1e-10,
         )
 
+    def test_init_rejects_invalid_interval_counts(self):
+        for n in (True, 0, -1, 1.5):
+            with self.subTest(n=n), self.assertRaisesRegex(ValueError, "positive"):
+                PiecewiseConstantFilter(n)
+
     def test_set_state_pwc(self):
         """Setting state with a PiecewiseConstantDistribution should work directly."""
         w = array([1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 4.0, 3.0, 2.0, 1.0])
@@ -108,6 +113,10 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
         expected = PiecewiseConstantDistribution(expected_raw).w
         npt.assert_allclose(self.f.filter_state.w, expected, rtol=1e-10)
 
+    def test_update_rejects_wrong_measurement_matrix_shape(self):
+        with self.assertRaisesRegex(ValueError, "one column per state interval"):
+            self.f.update(array([[1.0, 2.0], [3.0, 4.0]]), 0.5)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
@@ -130,6 +139,42 @@ class TestPiecewiseConstantFilter(unittest.TestCase):
         n = len(self.f.filter_state.w)
         integral = float(sum(self.f.filter_state.w)) * (2.0 * float(pi) / n)
         npt.assert_allclose(integral, 1.0, rtol=1e-5)
+
+    def test_calculate_system_matrix_rejects_invalid_arguments(self):
+        noise = WrappedNormalDistribution(array(0.0), array(0.5))
+
+        with self.assertRaisesRegex(ValueError, "positive"):
+            PiecewiseConstantFilter.calculate_system_matrix_numerically(
+                0, lambda x, w: x + w, noise
+            )
+
+        with self.assertRaisesRegex(TypeError, "noise_distribution"):
+            PiecewiseConstantFilter.calculate_system_matrix_numerically(
+                2, lambda x, w: x + w, object()
+            )
+
+        with self.assertRaisesRegex(TypeError, "callable"):
+            PiecewiseConstantFilter.calculate_system_matrix_numerically(
+                2, object(), noise
+            )
+
+    def test_calculate_measurement_matrix_rejects_invalid_arguments(self):
+        noise = WrappedNormalDistribution(array(0.0), array(0.5))
+
+        with self.assertRaisesRegex(ValueError, "positive"):
+            PiecewiseConstantFilter.calculate_measurement_matrix_numerically(
+                2, 0, lambda x, v: x + v, noise
+            )
+
+        with self.assertRaisesRegex(TypeError, "noise_distribution"):
+            PiecewiseConstantFilter.calculate_measurement_matrix_numerically(
+                2, 2, lambda x, v: x + v, object()
+            )
+
+        with self.assertRaisesRegex(TypeError, "callable"):
+            PiecewiseConstantFilter.calculate_measurement_matrix_numerically(
+                2, 2, object(), noise
+            )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
