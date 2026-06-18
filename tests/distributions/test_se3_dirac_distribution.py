@@ -45,6 +45,12 @@ class SE3DiracDistributionTest(unittest.TestCase):
         npt.assert_allclose(dist.w, array(weights))
         self.assertEqual(dist.d.shape, (2, 7))
 
+    def test_constructor_rejects_non_unit_hypersphere_particles(self):
+        particles = array([[2.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0]])
+
+        with self.assertRaisesRegex(ValueError, "normalized"):
+            SE3DiracDistribution(particles)
+
     def test_from_distribution(self):
         cpsd = SE3CartProdStackedDistribution(
             [
