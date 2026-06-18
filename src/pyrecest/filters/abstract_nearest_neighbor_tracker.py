@@ -72,6 +72,29 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
     def get_number_of_targets(self) -> int:
         return len(self.filter_bank)
 
+    @staticmethod
+    def _require_numpy_backend(operation: str):
+        if pyrecest.backend.__backend_name__ != "numpy":
+            raise NotImplementedError(
+                f"{operation} is only supported for the numpy backend"
+            )
+
+    @staticmethod
+    def _validate_measurement_update_inputs(
+        measurements, measurement_matrix, state_dim
+    ):
+        if measurements.ndim != 2:
+            raise ValueError("measurements must have shape (dim_meas, n_meas).")
+        if measurement_matrix.ndim != 2:
+            raise ValueError("measurement_matrix must be a 2D matrix.")
+        if (
+            measurement_matrix.shape[0] != measurements.shape[0]
+            or measurement_matrix.shape[1] != state_dim
+        ):
+            raise ValueError(
+                "Dimensions of measurement matrix must match state and measurement dimensions."
+            )
+
     @property
     def dim(self) -> int:
         if not self.filter_bank:
@@ -109,15 +132,17 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
             warnings.warn("Currently, there are zero targets.")
             return
 
-        if any(dim != self.filter_bank[0].dim for dim in system_matrices.shape[:2]):
+        if system_matrices is None or not all(
+            dim == self.filter_bank[0].dim for dim in system_matrices.shape[:2]
+        ):
             raise ValueError(
-                "system_matrices may be a single (dimSingleState, dimSingleState) matrix or a "
-                "(dimSingleState, dimSingleState, noTargets) tensor."
-            )
+                "system_matrices may be a single (dimSingleState, dimSingleState) "
+                "matrix or a (dimSingleState, dimSingleState, noTargets) tensor."
+        )
 
         if isinstance(sys_noises, GaussianDistribution):
-            if backend_any(sys_noises.mu != 0):
-                raise ValueError("Gaussian system noise distributions must have zero mean.")
+            if bool(backend_any(sys_noises.mu != 0)):
+                raise ValueError("Gaussian process noise must have zero mean.")
             sys_noises = sys_noises.C
 
         curr_sys_matrix = system_matrices
@@ -146,11 +171,15 @@ class AbstractNearestNeighborTracker(AbstractMultitargetTracker):
         covMatsMeas,
         pairwise_cost_matrix=None,
     ):
-        self._ensure_numpy_backend()
+        self._require_numpy_backend("update_linear")
         if len(self.filter_bank) == 0:
             warnings.warn("Currently, there are zero targets")
             return
-        self._validate_measurement_matrix_shape(measurement_matrix, measurements)
+        self._validate_measurement_update_inputs(
+            measurements,
+            measurement_matrix,
+            self.filter_bank[0].get_point_estimate().shape[0],
+        )
 
         if pairwise_cost_matrix is None:
             association = self.find_association(

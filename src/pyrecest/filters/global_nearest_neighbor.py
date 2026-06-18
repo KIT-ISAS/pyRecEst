@@ -260,11 +260,15 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
         pairwise_cost_matrix=None,
     ):
         """Update the tracker with an optional additional association cost matrix."""
-        self._ensure_numpy_backend()
+        self._require_numpy_backend("update_linear")
         if len(self.filter_bank) == 0:
             warnings.warn("Currently, there are zero targets")
             return
-        self._validate_measurement_matrix_shape(measurement_matrix, measurements)
+        self._validate_measurement_update_inputs(
+            measurements,
+            measurement_matrix,
+            self.filter_bank[0].get_point_estimate().shape[0],
+        )
         association = self.find_association(
             measurements,
             measurement_matrix,

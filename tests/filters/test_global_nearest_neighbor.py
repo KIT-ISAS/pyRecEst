@@ -81,6 +81,17 @@ class GlobalNearestNeighborTest(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
+    def test_setting_state_rejects_duplicate_filter_handles(self):
+        tracker = GlobalNearestNeighbor()
+        duplicated_filter = self.kfs_init[0]
+
+        with self.assertRaisesRegex(ValueError, "same handle"):
+            tracker.filter_state = [duplicated_filter, duplicated_filter]
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_get_state_returns_correct_shape(self):
         tracker = GlobalNearestNeighbor()
         tracker.filter_state = self.kfs_init
@@ -149,6 +160,31 @@ class GlobalNearestNeighborTest(unittest.TestCase):
             tracker.filter_bank[0].filter_state.C,
             prior_covariance + 2.0 * eye(4),
         )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_predict_linear_rejects_invalid_system_matrix_shape(self):
+        tracker = GlobalNearestNeighbor()
+        tracker.filter_state = [self.kfs_init[0]]
+
+        with self.assertRaisesRegex(ValueError, "system_matrices"):
+            tracker.predict_linear(eye(3), eye(4))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_predict_linear_rejects_nonzero_mean_gaussian_process_noise(self):
+        tracker = GlobalNearestNeighbor()
+        tracker.filter_state = [self.kfs_init[0]]
+        sys_noise = GaussianDistribution(
+            array([1.0, 0.0, 0.0, 0.0]), eye(4), check_validity=False
+        )
+
+        with self.assertRaisesRegex(ValueError, "zero mean"):
+            tracker.predict_linear(eye(4), sys_noise)
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
@@ -469,6 +505,17 @@ class GlobalNearestNeighborTest(unittest.TestCase):
                 tracker_clut.get_point_estimate(), tracker_no_clut.get_point_estimate()
             )
         )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        reason="Not supported on this backend",
+    )
+    def test_update_linear_rejects_measurement_matrix_dimension_mismatch(self):
+        tracker = GlobalNearestNeighbor()
+        tracker.filter_state = self.kfs_init
+
+        with self.assertRaisesRegex(ValueError, "measurement matrix"):
+            tracker.update_linear(array([[0.0]]), eye(4), eye(1))
 
 
 if __name__ == "__main__":
