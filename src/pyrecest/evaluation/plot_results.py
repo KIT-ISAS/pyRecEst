@@ -35,7 +35,8 @@ def plot_results(
     if size(plot_log) == 1:
         plot_log = zeros((2, 3), dtype=bool)
     else:
-        assert shape(plot_log) == (2, 3)
+        if shape(plot_log) != (2, 3):
+            raise ValueError("plot_log must have shape (2, 3)")
     plot_random_filter = True
 
     if filename is None:
@@ -270,8 +271,10 @@ def get_min_max_param(results_summarized):
 
 def apply_log_scale_to_axes(axes_list, log_array):
     # Ensure the provided array has the correct shape
-    assert log_array.shape == (2, 3), "Invalid shape for log_array"
-    assert len(axes_list) == 3, "Expecting 3 axes for 3 plots"
+    if log_array.shape != (2, 3):
+        raise ValueError("Invalid shape for log_array")
+    if len(axes_list) != 3:
+        raise ValueError("Expecting 3 axes for 3 plots")
 
     for plot_idx, ax in enumerate(axes_list):
         if log_array[0, plot_idx]:  # Check if x-axis should be log scale
