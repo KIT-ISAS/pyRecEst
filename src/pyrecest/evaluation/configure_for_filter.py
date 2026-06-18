@@ -104,9 +104,10 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
         manifold = scenario_config["manifold"]
 
         if manifold in ["circle", "hypertorus"]:
-            assert (
-                scenario_config.get("inputs") is None
-            ), "Inputs currently not supported for the current setting."
+            if scenario_config.get("inputs") is not None:
+                raise ValueError(
+                    "Inputs currently not supported for the current setting."
+                )
 
             filter_obj = HypertoroidalParticleFilter(
                 no_particles, scenario_config["initial_prior"].dim
@@ -134,9 +135,10 @@ def configure_for_filter(filter_config, scenario_config, precalculated_params=No
             "hypersphere_general",
             "hypersphere_symmetric",
         ]:
-            assert (
-                scenario_config.get("inputs") is None
-            ), "Inputs currently not supported for the current setting."
+            if scenario_config.get("inputs") is not None:
+                raise ValueError(
+                    "Inputs currently not supported for the current setting."
+                )
             raise NotImplementedError(
                 "HypersphericalParticleFilter not implemented yet"
             )

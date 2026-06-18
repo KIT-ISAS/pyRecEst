@@ -61,6 +61,18 @@ class TestDetermineAllDeviations(unittest.TestCase):
             )
         )
 
+    def test_rejects_malformed_groundtruth_container(self):
+        groundtruths = array([1.0, 2.0])
+        results = _ObjectMatrix([[array([1.0, 2.0])]])
+
+        with self.assertRaisesRegex(ValueError, "2-D array"):
+            determine_all_deviations(
+                results,
+                lambda filter_state: filter_state,
+                lambda estimate, truth: linalg.norm(estimate - truth),
+                groundtruths,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

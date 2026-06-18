@@ -84,6 +84,45 @@ class TestGenerateGroundtruth(unittest.TestCase):
         npt.assert_allclose(groundtruth[2], expected_second_step)
         npt.assert_allclose(groundtruth[3], expected_third_step)
 
+    def test_rejects_vector_initial_state_for_multiple_targets(self):
+        x0 = array([0.0, 1.0])
+        simulation_param = {
+            "initial_prior": GaussianDistribution(zeros(2), eye(2)),
+            "n_targets": 2,
+            "n_timesteps": 2,
+            "gen_next_state_with_noise": lambda state: state,
+        }
+
+        with self.assertRaisesRegex(ValueError, "number of targets"):
+            generate_groundtruth(simulation_param, x0)
+
+    def test_rejects_wrong_number_of_input_columns(self):
+        x0 = array([[0.0, 1.0], [2.0, 3.0]])
+        simulation_param = {
+            "initial_prior": GaussianDistribution(zeros(2), eye(2)),
+            "n_targets": 2,
+            "n_timesteps": 4,
+            "inputs": array([[1.0, 0.5], [-2.0, 1.5]]),
+            "sys_noise": _zero_noise(),
+            "gen_next_state_without_noise": lambda state, control: state + control,
+        }
+
+        with self.assertRaisesRegex(ValueError, "number of timesteps"):
+            generate_groundtruth(simulation_param, x0)
+
+    def test_rejects_inputs_for_identity_system_model(self):
+        x0 = array([0.0, 1.0])
+        simulation_param = {
+            "initial_prior": GaussianDistribution(zeros(2), eye(2)),
+            "n_targets": 1,
+            "n_timesteps": 2,
+            "inputs": array([[1.0], [-2.0]]),
+            "sys_noise": _zero_noise(),
+        }
+
+        with self.assertRaisesRegex(ValueError, "identity system model"):
+            generate_groundtruth(simulation_param, x0)
+
 
 if __name__ == "__main__":
     unittest.main()
