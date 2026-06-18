@@ -48,8 +48,8 @@ class LinBoundedCartProdDiracDistribution(
         products of bounded and Euclidean manifolds
         """
         if not cls.is_valid_for_conversion(distribution):
-            raise ValueError(
-                f"{cls.__name__} cannot approximate distributions of this type."
+            raise TypeError(
+                "distribution is not valid for conversion to this Dirac type"
             )
         samples = distribution.sample(n_particles)
         return cls(distribution.bound_dim, samples)
