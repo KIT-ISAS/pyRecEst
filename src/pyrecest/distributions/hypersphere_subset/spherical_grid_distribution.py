@@ -36,7 +36,7 @@ class SphericalGridDistribution(
             grid_type=grid_type,
         )
         if self.dim != 2 or grid.shape[1] != 3:
-            raise AssertionError(
+            raise ValueError(
                 "SphericalGridDistribution must represent S^2 with 3D Cartesian grid points"
             )
 
@@ -130,7 +130,9 @@ class SphericalGridDistribution(
         Construct a SphericalGridDistribution from an AbstractHypersphericalDistribution.
         """
         if distribution.dim != 2:
-            raise ValueError("SphericalGridDistribution requires a two-dimensional source")
+            raise ValueError(
+                "SphericalGridDistribution can only approximate two-dimensional S^2 distributions."
+            )
         return SphericalGridDistribution.from_function(
             distribution.pdf,
             no_of_grid_points,

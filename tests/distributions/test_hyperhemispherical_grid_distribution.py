@@ -48,7 +48,7 @@ class HyperhemisphericalGridDistributionTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "antipodal"):
             dist.to_full_sphere(method="copy")
 
-    def test_from_function_rejects_unknown_grid_type(self):
+    def test_from_function_rejects_unsupported_grid_type(self):
         with self.assertRaisesRegex(ValueError, "symmetric grid types"):
             HyperhemisphericalGridDistribution.from_function(
                 lambda xs: array([1.0] * xs.shape[0]),

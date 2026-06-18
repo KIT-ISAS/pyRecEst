@@ -39,9 +39,17 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         reason="Not supported on JAX backend",
     )
     def test_constructor_hermitian_check(self):
-        """Non-Hermitian matrix should raise AssertionError."""
-        with self.assertRaises(AssertionError):
+        """Non-Hermitian matrix should raise ValueError."""
+        with self.assertRaises(ValueError):
             ComplexBinghamDistribution(array([[1.0, 1j], [0.0, 1.0]]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_constructor_rejects_non_square_matrix(self):
+        with self.assertRaisesRegex(ValueError, "square"):
+            ComplexBinghamDistribution(array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
@@ -199,6 +207,14 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
+    def test_log_norm_rejects_non_hermitian_matrix(self):
+        with self.assertRaisesRegex(ValueError, "Hermitian"):
+            ComplexBinghamDistribution.log_norm(array([[1.0, 1j], [0.0, 1.0]]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_fit_returns_instance(self):
         """fit() returns a ComplexBinghamDistribution instance."""
         random.seed(0)
@@ -254,6 +270,19 @@ class TestComplexBinghamDistribution(unittest.TestCase):
         B3b = diag(array([-3.0, -2.0, 0.0], dtype=complex))
         d = ComplexBinghamDistribution.cauchy_schwarz_divergence(B3a, B3b)
         self.assertGreaterEqual(d, -1e-10)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_cauchy_schwarz_rejects_non_hermitian_inputs(self):
+        bad = array([[1.0, 1j], [0.0, 1.0]])
+
+        with self.assertRaisesRegex(ValueError, "B1 must be Hermitian"):
+            ComplexBinghamDistribution.cauchy_schwarz_divergence(bad, self.B2)
+
+        with self.assertRaisesRegex(ValueError, "B2 must be Hermitian"):
+            ComplexBinghamDistribution.cauchy_schwarz_divergence(self.B2, bad)
 
 
 if __name__ == "__main__":

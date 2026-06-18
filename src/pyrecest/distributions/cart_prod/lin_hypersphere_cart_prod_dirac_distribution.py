@@ -12,6 +12,10 @@ class LinHypersphereCartProdDiracDistribution(
 ):
     def __init__(self, bound_dim, d, w=None):
         d = asarray(d)
+        if d.ndim != 2 or d.shape[1] < bound_dim + 1:
+            raise ValueError(
+                "d must be a 2D array with enough columns for the hypersphere part."
+            )
         if not bool(
             amax(abs(linalg.norm(d[:, : (bound_dim + 1)], None, -1) - 1), 0)
             < 1e-5

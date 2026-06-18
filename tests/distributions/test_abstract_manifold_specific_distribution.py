@@ -95,6 +95,21 @@ class AbstractManifoldSpecificDistributionTest(unittest.TestCase):
 
         npt.assert_allclose(to_numpy(samples), 1.0)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="This regression test targets the non-JAX MH implementation.",
+    )
+    def test_sample_metropolis_hastings_rejects_wrong_proposal_shape(self):
+        distribution = DeterministicOneDimensionalDistribution()
+
+        def proposal(_):
+            return array([1.0, 2.0])
+
+        with self.assertRaisesRegex(ValueError, "same shape"):
+            distribution.sample_metropolis_hastings(
+                n=1, burn_in=0, skipping=1, proposal=proposal, start_point=array([0.0])
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

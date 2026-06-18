@@ -55,6 +55,15 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \
@@ -135,6 +144,15 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \
@@ -246,6 +264,15 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \
@@ -350,6 +377,15 @@ jobs:
             "$@"
           }
 
+          disable_unavailable_apt_sources() {
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
+          }
+
+          disable_unavailable_apt_sources
           retry sudo apt-get update
           retry sudo apt-get install -y \
             gfortran pkg-config ninja-build \

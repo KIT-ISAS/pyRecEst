@@ -119,7 +119,10 @@ class HypertoroidalFourierDistribution(
 
         if self.dim > 1 and ndim(xs) == 1:
             # Must be single point in multi-dim case
-            assert xs.shape[0] == self.dim
+            if xs.shape[0] != self.dim:
+                raise ValueError(
+                    f"Expected single point of length {self.dim}, got {xs.shape[0]}."
+                )
 
         if self.dim not in (1, xs.shape[-1]):
             raise ValueError(
@@ -165,9 +168,8 @@ class HypertoroidalFourierDistribution(
         if self.transformation == "sqrt":
             # For sqrt-transform, ∫ pdf = (2π)^dim * ||C||^2
             c00 = linalg.norm(reshape(self.coeff_mat, (-1,))) ** 2
-            assert (
-                abs(complex(c00).imag) <= 0.001
-            ), "Center coefficient must be real-valued."
+            if abs(complex(c00).imag) > 0.001:
+                raise ValueError("Center coefficient must be real-valued.")
             c00 = real(c00)
             factor_for_id = c00 * (2 * pi) ** self.dim
             normalization_factor = sqrt(real(factor_for_id))
@@ -175,9 +177,8 @@ class HypertoroidalFourierDistribution(
             # Center coefficient corresponds to k = 0
             center_indices = tuple(s // 2 for s in self.coeff_mat.shape)
             c00 = self.coeff_mat[center_indices]
-            assert (
-                abs(complex(c00).imag) <= 0.001
-            ), "Center coefficient must be real-valued."
+            if abs(complex(c00).imag) > 0.001:
+                raise ValueError("Center coefficient must be real-valued.")
             c00 = real(c00)
             factor_for_id = c00 * (2 * pi) ** self.dim
             normalization_factor = factor_for_id

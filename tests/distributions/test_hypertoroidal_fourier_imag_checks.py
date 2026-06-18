@@ -11,6 +11,12 @@ from pyrecest.distributions.hypertorus.hypertoroidal_fourier_distribution import
 
 
 class HypertoroidalFourierImaginaryCheckTest(unittest.TestCase):
+    def test_identity_normalization_rejects_imaginary_center_coefficient(self):
+        coeffs = array([0.0, 1.0 / (2.0 * pi) + 0.01j, 0.0])
+
+        with self.assertRaisesRegex(ValueError, "Center coefficient"):
+            HypertoroidalFourierDistribution(coeffs, transformation="identity")
+
     def test_identity_pdf_discards_negligible_imaginary_roundoff(self):
         coeffs = array([1e-12j, 1.0 / (2.0 * pi), 0.0])
         dist = HypertoroidalFourierDistribution(coeffs, transformation="identity")
@@ -33,6 +39,19 @@ class HypertoroidalFourierImaginaryCheckTest(unittest.TestCase):
 
         npt.assert_allclose(dist.pdf(array([0.0])), modulus_pdf)
         self.assertGreater(float(modulus_pdf[0]), float(real_only_pdf[0]))
+
+    def test_value_rejects_wrong_single_point_dimension(self):
+        coeffs = array(
+            [
+                [0.0, 0.0, 0.0],
+                [0.0, 1.0 / (2.0 * pi) ** 2, 0.0],
+                [0.0, 0.0, 0.0],
+            ]
+        )
+        dist = HypertoroidalFourierDistribution(coeffs, transformation="identity")
+
+        with self.assertRaisesRegex(ValueError, "single point"):
+            dist.value(array([0.0]))
 
 
 if __name__ == "__main__":
