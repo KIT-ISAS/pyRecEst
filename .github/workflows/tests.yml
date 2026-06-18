@@ -56,10 +56,11 @@ jobs:
           }
 
           disable_unavailable_apt_sources() {
-            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
-              while read -r source_file; do
-                sudo mv "$source_file" "${source_file}.disabled"
-              done
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
           }
 
           disable_unavailable_apt_sources
@@ -144,10 +145,11 @@ jobs:
           }
 
           disable_unavailable_apt_sources() {
-            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
-              while read -r source_file; do
-                sudo mv "$source_file" "${source_file}.disabled"
-              done
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
           }
 
           disable_unavailable_apt_sources
@@ -263,10 +265,11 @@ jobs:
           }
 
           disable_unavailable_apt_sources() {
-            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
-              while read -r source_file; do
-                sudo mv "$source_file" "${source_file}.disabled"
-              done
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
           }
 
           disable_unavailable_apt_sources
@@ -375,10 +378,11 @@ jobs:
           }
 
           disable_unavailable_apt_sources() {
-            grep -Ril "packages.microsoft.com" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null |
-              while read -r source_file; do
-                sudo mv "$source_file" "${source_file}.disabled"
-              done
+            sudo rm -f \
+              /etc/apt/sources.list.d/azure-cli.list \
+              /etc/apt/sources.list.d/azure-cli.sources \
+              /etc/apt/sources.list.d/microsoft-prod.list \
+              /etc/apt/sources.list.d/microsoft-prod.sources
           }
 
           disable_unavailable_apt_sources
