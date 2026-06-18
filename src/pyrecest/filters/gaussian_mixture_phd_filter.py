@@ -28,6 +28,21 @@ from pyrecest.distributions import GaussianDistribution
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 
 
+def _require_numpy_backend(operation):
+    if pyrecest.backend.__backend_name__ != "numpy":
+        raise NotImplementedError(
+            f"{operation} is only supported for the numpy backend."
+        )
+
+
+def _covariance_from_zero_mean_gaussian_noise(sys_noise):
+    if isinstance(sys_noise, GaussianDistribution):
+        if not bool(all(sys_noise.mu == 0)):
+            raise ValueError("Gaussian process noise must have zero mean.")
+        return sys_noise.C
+    return sys_noise
+
+
 class GaussianMixturePHDState:
     """
     Container for a Gaussian-mixture PHD intensity.
@@ -91,11 +106,7 @@ class GaussianMixturePHDFilter(
         log_prior_estimates: bool = True,
         log_posterior_estimates: bool = True,
     ):
-        if pyrecest.backend.__backend_name__ != "numpy":
-            raise NotImplementedError(
-                "GaussianMixturePHDFilter is currently only supported for the "
-                "numpy backend."
-            )
+        _require_numpy_backend("GaussianMixturePHDFilter")
 
         AbstractMultitargetTracker.__init__(
             self,
@@ -271,12 +282,7 @@ class GaussianMixturePHDFilter(
         birth_weights=None,
         survival_probability=None,
     ):
-        if isinstance(sys_noise, GaussianDistribution):
-            if not bool(all(sys_noise.mu == 0)):
-                raise ValueError("Gaussian system noise must have zero mean.")
-            sys_noise_cov = sys_noise.C
-        else:
-            sys_noise_cov = sys_noise
+        sys_noise_cov = _covariance_from_zero_mean_gaussian_noise(sys_noise)
 
         if survival_probability is None:
             survival_probability = self.survival_probability
