@@ -35,10 +35,10 @@ class HyperhemisphericalGridDistribution(
 
     def __init__(self, grid, grid_values, enforce_pdf_nonnegative=True):
         # Do not test norm precisely, only quick test if any coordinate exceeds 1.
-        if not all(abs(grid) <= 1 + 1e-12):
+        if not bool(all(abs(grid) <= 1 + 1e-12)):
             raise ValueError("Grid points must not lie outside the unit cube.")
-        if not all(grid[:, -1] >= -1e-12):
-            raise ValueError("Always using upper hemisphere (along last dimension).")
+        if not bool(all(grid[:, -1] >= -1e-12)):
+            raise ValueError("Always using upper hemisphere along the last dimension.")
 
         super().__init__(grid, grid_values, enforce_pdf_nonnegative)
 
