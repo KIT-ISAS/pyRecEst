@@ -205,12 +205,21 @@ class CalibratedPairwiseAssociationModel:
         if len(classes) != 2:
             return 1
         for class_index, class_label in enumerate(classes):
-            try:
-                if bool(class_label == 1):
-                    return class_index
-            except (TypeError, ValueError):
-                continue
+            if _is_positive_binary_label(class_label):
+                return class_index
         return 1
+
+
+def _is_positive_binary_label(class_label: Any) -> bool:
+    try:
+        if bool(class_label == 1):
+            return True
+    except (TypeError, ValueError):
+        pass
+    if isinstance(class_label, str):
+        normalized_label = class_label.strip().casefold()
+        return normalized_label in {"1", "true"}
+    return False
 
 
 def _class_labels_to_list(classes: Any) -> list[Any]:
