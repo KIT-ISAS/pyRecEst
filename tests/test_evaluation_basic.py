@@ -583,6 +583,20 @@ class TestEvalationBasics(TestEvalationBase):
             measurements,
         )
 
+    def test_evaluate_for_file_rejects_mismatched_n_timesteps(self):
+        data = {
+            "groundtruths": np.empty((1, 2), dtype=object),
+            "measurements": np.empty((1, 2), dtype=object),
+        }
+        filename = self._make_temp_npy_file(data)
+
+        with self.assertRaisesRegex(ValueError, "n_timesteps"):
+            evaluate_for_file(filename, [], {"n_timesteps": 3})
+
+    def test_evaluate_for_simulation_config_requires_n_timesteps(self):
+        with self.assertRaisesRegex(ValueError, "n_steps"):
+            evaluate_for_simulation_config({}, [], n_runs=1)
+
     def _make_temp_npy_file(self, data):
         fd, filename = tempfile.mkstemp(suffix=".npy")
         os.close(fd)

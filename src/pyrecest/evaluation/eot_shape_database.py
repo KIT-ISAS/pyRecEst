@@ -168,9 +168,10 @@ class Cross(StarShapedPolygon):  # pylint: disable=abstract-method
 
     # pylint: disable=signature-differs,too-many-positional-arguments
     def __new__(cls, height_1, height_2, width_1, width_2, centroid=None):
-        # Assertions to check conditions
-        assert width_1 > height_2, "width_1 has to be larger than height_2"
-        assert width_2 > height_1, "width_2 has to be larger than height_1"
+        if width_1 <= height_2:
+            raise ValueError("width_1 has to be larger than height_2")
+        if width_2 <= height_1:
+            raise ValueError("width_2 has to be larger than height_1")
 
         # Use a default centroid if none is provided
         if centroid is None:

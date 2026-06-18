@@ -33,9 +33,11 @@ def evaluate_for_file(
     if "name" not in scenario_config:
         scenario_config["name"] = os.path.splitext(os.path.basename(input_file_name))[0]
     if "n_timesteps" in scenario_config:
-        assert (
-            scenario_config["n_timesteps"] == data["groundtruths"].shape[1]
-        ), "n_timesteps in scenario_config does not match the number of measurements in the file"
+        if scenario_config["n_timesteps"] != data["groundtruths"].shape[1]:
+            raise ValueError(
+                "n_timesteps in scenario_config does not match the number of "
+                "measurements in the file"
+            )
     else:
         scenario_config["n_timesteps"] = data["groundtruths"].shape[1]
 
