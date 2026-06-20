@@ -24,6 +24,8 @@ from scipy.optimize import linear_sum_assignment
 
 @dataclass(frozen=True)
 class _MurtySubproblem:
+    """Internal Murty subproblem descriptor."""
+
     forced_pairs: tuple[tuple[int, int], ...]
     forbidden_pairs: tuple[tuple[int, int], ...]
     branching_row_start: int
@@ -38,12 +40,14 @@ def _validate_assignment_count(k: int) -> int:
 def _coerce_non_assignment_costs(costs, size: int, name: str):
     if costs is None:
         return _zeros(size, dtype=float)
+
     costs_array = _asarray(costs, dtype=float)
     if costs_array.ndim == 0:
         cost = float(costs_array)
         if not _is_scalar_finite(cost):
             raise ValueError(f"{name} must be finite")
         return _full((size,), cost, dtype=float)
+
     costs = costs_array.reshape(-1)
     if costs.shape[0] != size:
         raise ValueError(f"{name} must be scalar or have length {size}")
@@ -64,17 +68,30 @@ def _get_large_cost(cost_matrix, row_non_assignment_costs, col_non_assignment_co
     return 2.0 * (float(_sum(_abs(finite_entries))) + 1.0)
 
 
-def _build_augmented_cost_matrix(cost_matrix, row_non_assignment_costs, col_non_assignment_costs, large_cost):
+def _build_augmented_cost_matrix(
+    cost_matrix,
+    row_non_assignment_costs,
+    col_non_assignment_costs,
+    large_cost,
+):
     n_rows, n_cols = cost_matrix.shape
-    augmented_cost_matrix = _full((n_rows + n_cols, n_cols + n_rows), large_cost, dtype=float)
+    augmented_cost_matrix = _full(
+        (n_rows + n_cols, n_cols + n_rows),
+        large_cost,
+        dtype=float,
+    )
+
     if n_rows > 0 and n_cols > 0:
         finite_cost_matrix = _array(cost_matrix)
         finite_cost_matrix[~_isfinite(finite_cost_matrix)] = large_cost
         augmented_cost_matrix[:n_rows, :n_cols] = finite_cost_matrix
+
     for row_index, row_cost in enumerate(row_non_assignment_costs):
         augmented_cost_matrix[row_index, n_cols + row_index] = row_cost
+
     for col_index, col_cost in enumerate(col_non_assignment_costs):
         augmented_cost_matrix[n_rows + col_index, col_index] = col_cost
+
     augmented_cost_matrix[n_rows:, n_cols:] = 0.0
     return augmented_cost_matrix
 
@@ -87,6 +104,7 @@ def _solve_subproblem(  # pylint: disable=too-many-locals
     subproblem: _MurtySubproblem,
 ):
     modified_cost_matrix = _array(augmented_cost_matrix)
+
     for row_index, col_index in subproblem.forbidden_pairs:
         modified_cost_matrix[row_index, col_index] = large_cost
 
@@ -101,7 +119,9 @@ def _solve_subproblem(  # pylint: disable=too-many-locals
     for row_index, col_index in subproblem.forced_pairs:
         modified_cost_matrix[row_index, :] = large_cost
         modified_cost_matrix[:, col_index] = large_cost
-        modified_cost_matrix[row_index, col_index] = augmented_cost_matrix[row_index, col_index]
+        modified_cost_matrix[row_index, col_index] = augmented_cost_matrix[
+            row_index, col_index
+        ]
 
     row_ind, col_ind = linear_sum_assignment(modified_cost_matrix)
     chosen_costs = modified_cost_matrix[row_ind, col_ind]
@@ -124,6 +144,7 @@ def _solve_subproblem(  # pylint: disable=too-many-locals
         [col_index for col_index in range(n_cols) if col_index not in assigned_columns],
         dtype=_int64,
     )
+
     total_cost = float(augmented_cost_matrix[row_ind, col_ind].sum())
     return {
         "assignment": assignment,
@@ -144,17 +165,33 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
     k = _validate_assignment_count(k)
     if k <= 0:
         return []
+
     if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
-        raise NotImplementedError("murty_k_best_assignments is not supported on the JAX backend.")
+        raise NotImplementedError(
+            "murty_k_best_assignments is not supported on the JAX backend."
+        )
 
     cost_matrix = _asarray(cost_matrix, dtype=float)
     if cost_matrix.ndim != 2:
         raise ValueError("cost_matrix must be a two-dimensional array")
 
     n_rows, n_cols = cost_matrix.shape
-    row_non_assignment_costs = _coerce_non_assignment_costs(row_non_assignment_costs, n_rows, "row_non_assignment_costs")
-    col_non_assignment_costs = _coerce_non_assignment_costs(col_non_assignment_costs, n_cols, "col_non_assignment_costs")
-    large_cost = _get_large_cost(cost_matrix, row_non_assignment_costs, col_non_assignment_costs)
+    row_non_assignment_costs = _coerce_non_assignment_costs(
+        row_non_assignment_costs,
+        n_rows,
+        "row_non_assignment_costs",
+    )
+    col_non_assignment_costs = _coerce_non_assignment_costs(
+        col_non_assignment_costs,
+        n_cols,
+        "col_non_assignment_costs",
+    )
+
+    large_cost = _get_large_cost(
+        cost_matrix,
+        row_non_assignment_costs,
+        col_non_assignment_costs,
+    )
     augmented_cost_matrix = _build_augmented_cost_matrix(
         cost_matrix,
         row_non_assignment_costs,
@@ -163,13 +200,22 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
     )
 
     root_subproblem = _MurtySubproblem(tuple(), tuple(), 0)
-    root_solution = _solve_subproblem(augmented_cost_matrix, n_rows, n_cols, large_cost, root_subproblem)
+    root_solution = _solve_subproblem(
+        augmented_cost_matrix,
+        n_rows,
+        n_cols,
+        large_cost,
+        root_subproblem,
+    )
     if root_solution is None:
         return []
 
     solution_heap: list[tuple[float, int, _MurtySubproblem, dict]] = []
     counter = 0
-    heappush(solution_heap, (root_solution["cost"], counter, root_subproblem, root_solution))
+    heappush(
+        solution_heap,
+        (root_solution["cost"], counter, root_subproblem, root_solution),
+    )
     counter += 1
 
     ranked_solutions: list[dict] = []
@@ -188,14 +234,32 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
         for row_index in range(subproblem.branching_row_start, n_rows):
             child_subproblem = _MurtySubproblem(
                 tuple(forced_prefix),
-                subproblem.forbidden_pairs + ((row_index, int(solution["_full_assignment"][row_index])),),
+                subproblem.forbidden_pairs
+                + ((row_index, int(solution["_full_assignment"][row_index])),),
                 row_index,
             )
-            child_solution = _solve_subproblem(augmented_cost_matrix, n_rows, n_cols, large_cost, child_subproblem)
+            child_solution = _solve_subproblem(
+                augmented_cost_matrix,
+                n_rows,
+                n_cols,
+                large_cost,
+                child_subproblem,
+            )
             if child_solution is not None:
-                heappush(solution_heap, (child_solution["cost"], counter, child_subproblem, child_solution))
+                heappush(
+                    solution_heap,
+                    (
+                        child_solution["cost"],
+                        counter,
+                        child_subproblem,
+                        child_solution,
+                    ),
+                )
                 counter += 1
-            forced_prefix.append((row_index, int(solution["_full_assignment"][row_index])))
+
+            forced_prefix.append(
+                (row_index, int(solution["_full_assignment"][row_index]))
+            )
 
     return ranked_solutions
 
@@ -203,7 +267,9 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
 def min_cost_max_cardinality_assignment(cost_matrix):
     """Compute the cheapest assignment among maximum-cardinality matchings."""
     if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
-        raise NotImplementedError("min_cost_max_cardinality_assignment is not supported on the JAX backend.")
+        raise NotImplementedError(
+            "min_cost_max_cardinality_assignment is not supported on the JAX backend."
+        )
 
     cost_matrix = _asarray(cost_matrix, dtype=float)
     if cost_matrix.ndim != 2:
@@ -224,7 +290,9 @@ def min_cost_max_cardinality_assignment(cost_matrix):
     solutions = murty_k_best_assignments(
         cost_matrix,
         k=1,
-        row_non_assignment_costs=_full((n_rows,), cardinality_priority_cost, dtype=float),
+        row_non_assignment_costs=_full(
+            (n_rows,), cardinality_priority_cost, dtype=float
+        ),
         col_non_assignment_costs=_zeros(n_cols, dtype=float),
     )
     if not solutions:
