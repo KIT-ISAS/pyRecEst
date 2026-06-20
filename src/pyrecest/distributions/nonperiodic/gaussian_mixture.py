@@ -10,7 +10,10 @@ from .linear_mixture import LinearMixture
 
 class GaussianMixture(LinearMixture, AbstractLinearDistribution):
     def __init__(self, dists: list[GaussianDistribution], w):
-        AbstractLinearDistribution.__init__(self, dim=dists[0].dim)
+        if len(dists) == 0:
+            raise ValueError("Mixture must contain at least one distribution")
+        if not all(isinstance(dist, GaussianDistribution) for dist in dists):
+            raise ValueError("dists must be a list of GaussianDistribution instances")
         LinearMixture.__init__(self, dists, w)
 
     def mean(self):
