@@ -217,6 +217,31 @@ class MEMEKFTracker(AbstractExtendedObjectTracker):
         )
         return base_matrix @ scales
 
+    @staticmethod
+    def _pseudo_measurement_covariance(innovation_covariance):
+        sigma_11 = innovation_covariance[0, 0]
+        sigma_12 = innovation_covariance[0, 1]
+        sigma_22 = innovation_covariance[1, 1]
+        return array(
+            [
+                [
+                    2.0 * sigma_11**2,
+                    2.0 * sigma_11 * sigma_12,
+                    2.0 * sigma_12**2,
+                ],
+                [
+                    2.0 * sigma_11 * sigma_12,
+                    sigma_11 * sigma_22 + sigma_12**2,
+                    2.0 * sigma_22 * sigma_12,
+                ],
+                [
+                    2.0 * sigma_12**2,
+                    2.0 * sigma_22 * sigma_12,
+                    2.0 * sigma_22**2,
+                ],
+            ]
+        )
+
     @property
     def extent(self):
         return self.get_point_estimate_extent()
@@ -376,25 +401,7 @@ class MEMEKFTracker(AbstractExtendedObjectTracker):
         sigma_12 = innovation_covariance[0, 1]
         sigma_22 = innovation_covariance[1, 1]
         pseudo_mean = array([sigma_11, sigma_12, sigma_22])
-        pseudo_covariance = array(
-            [
-                [
-                    3.0 * sigma_11**2,
-                    3.0 * sigma_11 * sigma_12,
-                    sigma_11 * sigma_22 + 2.0 * sigma_12**2,
-                ],
-                [
-                    3.0 * sigma_11 * sigma_12,
-                    sigma_11 * sigma_22 + 2.0 * sigma_12**2,
-                    3.0 * sigma_22 * sigma_12,
-                ],
-                [
-                    sigma_11 * sigma_22 + 2.0 * sigma_12**2,
-                    3.0 * sigma_22 * sigma_12,
-                    3.0 * sigma_22**2,
-                ],
-            ]
-        )
+        pseudo_covariance = self._pseudo_measurement_covariance(innovation_covariance)
         if self.covariance_regularization > 0.0:
             pseudo_covariance = pseudo_covariance + (
                 self.covariance_regularization * eye(3)
