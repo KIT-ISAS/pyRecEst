@@ -121,6 +121,15 @@ class TestMEMEKFTracker(unittest.TestCase):
         npt.assert_allclose(self.tracker.kinematic_state, prior_kinematic_state)
         npt.assert_allclose(self.tracker.shape_state, prior_shape_state)
 
+    def test_update_without_flat_empty_measurements_is_noop(self):
+        prior_kinematic_state = self.tracker.kinematic_state.copy()
+        prior_shape_state = self.tracker.shape_state.copy()
+
+        self.tracker.update(array([]), meas_noise_cov=0.01 * eye(2))
+
+        npt.assert_allclose(self.tracker.kinematic_state, prior_kinematic_state)
+        npt.assert_allclose(self.tracker.shape_state, prior_shape_state)
+
     def test_get_contour_points(self):
         contour_points = self.tracker.get_contour_points(4)
 
