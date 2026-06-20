@@ -192,7 +192,7 @@ class RobustLinearGaussianUpdateTest(unittest.TestCase):
 
         self.assertIn("nis", diagnostics)
         self.assertTrue(diagnostics["accepted"])
-        self.assertGreater(float(diagnostics["scale"],), 1.0)
+        self.assertGreater(float(diagnostics["scale"]), 1.0)
 
 
 if __name__ == "__main__":
