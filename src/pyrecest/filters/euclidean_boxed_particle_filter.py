@@ -7,6 +7,7 @@ boxes are used as predicted support/proposal regions.
 
 import copy
 from collections.abc import Callable
+from numbers import Integral
 from typing import Union
 
 import numpy as _np
@@ -67,7 +68,7 @@ class EuclideanBoxedParticleFilter(EuclideanParticleFilter):
         gaussian_sigma_scale: float = 3.0,
         max_sampling_iterations: Union[int, int32, int64] = 100,
     ):
-        super().__init__(int(n_particles), int(dim))
+        super().__init__(n_particles, dim)
         self.resampling_criterion = resampling_criterion
         self.default_boxed_generation_method = self._validate_generation_method(
             boxed_generation_method
@@ -490,10 +491,13 @@ class EuclideanBoxedParticleFilter(EuclideanParticleFilter):
 
     @staticmethod
     def _validate_positive_int(value, name: str):
-        value = int(value)
-        if value <= 0:
-            raise ValueError(f"{name} must be positive")
-        return value
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, Integral)
+            or int(value) <= 0
+        ):
+            raise ValueError(f"{name} must be a positive integer")
+        return int(value)
 
     @staticmethod
     def _validate_positive_float(value, name: str):
