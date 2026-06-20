@@ -33,6 +33,45 @@ class EuclideanBoxedParticleFilterTest(unittest.TestCase):
         self.assertIsInstance(pf.filter_state, LinearDiracDistribution)
         self.assertIs(BoxedParticleFilter, EuclideanBoxedParticleFilter)
 
+    def test_rejects_bool_and_nonintegral_particle_counts(self):
+        invalid_arguments = (
+            (True, 1),
+            (1.5, 1),
+            (2, True),
+            (2, 1.5),
+        )
+
+        for n_particles, dim in invalid_arguments:
+            with self.subTest(n_particles=n_particles, dim=dim):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    EuclideanBoxedParticleFilter(n_particles, dim)
+
+    def test_sampling_controls_reject_bool_and_nonintegral_values(self):
+        invalid_values = (
+            ("batch_size", True),
+            ("batch_size", 1.5),
+            ("max_sampling_iterations", True),
+            ("max_sampling_iterations", 1.5),
+            ("max_tries_per_particle", True),
+            ("max_tries_per_particle", 1.5),
+        )
+
+        for name, value in invalid_values:
+            with self.subTest(name=name, value=value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    f"{name} must be a positive integer",
+                ):
+                    EuclideanBoxedParticleFilter._validate_positive_int(value, name)
+
+        self.assertEqual(
+            EuclideanBoxedParticleFilter._validate_positive_int(
+                np.int64(3),
+                "batch_size",
+            ),
+            3,
+        )
+
     def test_uniform_generation_places_point_particles_in_box(self):
         random.seed(1)
         pf = EuclideanBoxedParticleFilter(50, 2)
