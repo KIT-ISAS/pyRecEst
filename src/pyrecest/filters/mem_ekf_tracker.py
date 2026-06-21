@@ -167,6 +167,8 @@ class MEMEKFTracker(AbstractExtendedObjectTracker):
     def _normalize_measurements(self, measurements):
         measurements = array(measurements)
         if measurements.ndim == 1:
+            if measurements.shape[0] == 0:
+                return measurements.reshape((self.measurement_dim, 0))
             if measurements.shape[0] != self.measurement_dim:
                 raise ValueError("A single measurement must be two-dimensional")
             return measurements.reshape((self.measurement_dim, 1))
