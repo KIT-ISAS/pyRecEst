@@ -206,6 +206,12 @@ class MurtyAssignmentTest(unittest.TestCase):
     def test_non_positive_k_returns_empty_list(self):
         self.assertEqual(murty_k_best_assignments(np.eye(2), k=0), [])
 
+    def test_non_integer_k_is_rejected(self):
+        for invalid_k in (True, False, 1.5):
+            with self.subTest(invalid_k=invalid_k):
+                with self.assertRaisesRegex(ValueError, "k must be an integer"):
+                    murty_k_best_assignments(np.eye(2), k=invalid_k)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on the JAX backend",

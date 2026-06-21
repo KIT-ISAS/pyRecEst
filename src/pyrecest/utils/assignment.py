@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from heapq import heappop, heappush
 from math import isfinite as _is_scalar_finite
+from numbers import Integral
 
 import pyrecest.backend
 from pyrecest.backend import abs as _abs
@@ -28,6 +29,12 @@ class _MurtySubproblem:
     forced_pairs: tuple[tuple[int, int], ...]
     forbidden_pairs: tuple[tuple[int, int], ...]
     branching_row_start: int
+
+
+def _validate_assignment_count(k: int) -> int:
+    if isinstance(k, bool) or not isinstance(k, Integral):
+        raise ValueError("k must be an integer")
+    return int(k)
 
 
 def _coerce_non_assignment_costs(costs, size: int, name: str):
@@ -154,35 +161,8 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
     row_non_assignment_costs=None,
     col_non_assignment_costs=None,
 ):
-    """Compute the k best one-to-one partial assignments.
-
-    Parameters
-    ----------
-    cost_matrix : array_like, shape (n_rows, n_cols)
-        Matrix containing the cost of assigning each row to each column.
-        Forbidden assignments can be encoded as ``numpy.inf``.
-    k : int, default=1
-        Number of ranked assignments to return.
-    row_non_assignment_costs : array_like, optional
-        Cost incurred when a row remains unassigned. If omitted, zero cost is
-        used for all rows.
-    col_non_assignment_costs : array_like, optional
-        Cost incurred when a column remains unassigned. If omitted, zero cost is
-        used for all columns.
-
-    Returns
-    -------
-    list[dict]
-        Ranked assignment solutions in ascending cost order. Each dictionary has
-        the keys ``assignment`` (matched column per row or ``-1``),
-        ``unassigned_rows``, ``unassigned_cols``, and ``cost``.
-
-    Notes
-    -----
-    The implementation follows Murty's partitioning strategy on an augmented
-    square assignment formulation. Branching is performed only over the original
-    rows, which directly yields unique ranked partial assignments.
-    """
+    """Compute the k best one-to-one partial assignments."""
+    k = _validate_assignment_count(k)
     if k <= 0:
         return []
 
@@ -285,30 +265,7 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
 
 
 def min_cost_max_cardinality_assignment(cost_matrix):
-    """Compute the cheapest assignment among maximum-cardinality matchings.
-
-    Parameters
-    ----------
-    cost_matrix : array_like, shape (n_rows, n_cols)
-        Matrix containing the cost of assigning each row to each column.
-        Forbidden assignments can be encoded as ``numpy.inf``.
-
-    Returns
-    -------
-    dict
-        Assignment solution with the same keys as ``murty_k_best_assignments``:
-        ``assignment`` contains the matched column per row or ``-1``;
-        ``unassigned_rows`` and ``unassigned_cols`` list unmatched indices; and
-        ``cost`` is the sum of selected finite assignment costs, excluding the
-        artificial priority penalties used internally.
-
-    Notes
-    -----
-    This helper is useful for tracking-by-detection steps where track
-    birth/death is handled elsewhere and the association stage should first use
-    as many gated detections as possible, then minimize the association cost
-    among those maximum-cardinality solutions.
-    """
+    """Compute the cheapest assignment among maximum-cardinality matchings."""
     if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
         raise NotImplementedError(
             "min_cost_max_cardinality_assignment is not supported on the JAX backend."
