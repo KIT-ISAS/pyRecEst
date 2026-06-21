@@ -123,17 +123,12 @@ def solve_multisession_assignment_from_similarity(  # pylint: disable=R0913,R091
     if score_to_cost is None:
         score_to_cost = _default_score_to_cost
 
-    session_positions = {
-        session_idx: position
-        for position, session_idx in enumerate(sorted(session_sizes_map))
-    }
-
     transformed_pairwise_costs: dict[tuple[int, int], Any] = {}
     for (
         source_session,
         target_session,
     ), score_matrix in normalized_pairwise_scores.items():
-        gap = session_positions[target_session] - session_positions[source_session] - 1
+        gap = int(target_session) - int(source_session) - 1
         if max_gap is not None and gap > max_gap:
             continue
 
