@@ -139,6 +139,30 @@ class RobustLinearGaussianUpdateTest(unittest.TestCase):
         npt.assert_allclose(to_numpy(robust_mean), to_numpy(self.mean))
         npt.assert_allclose(to_numpy(robust_covariance), to_numpy(self.covariance))
 
+    def test_robust_update_rejects_wrong_measurement_shape(self):
+        with self.assertRaisesRegex(ValueError, "measurement has incompatible shape"):
+            linear_gaussian_update_robust(
+                self.mean,
+                self.covariance,
+                array([1.0]),
+                self.measurement_matrix,
+                self.meas_noise,
+                robust_update="none",
+                gate_threshold=1.0,
+            )
+
+    def test_robust_update_rejects_wrong_measurement_noise_shape(self):
+        with self.assertRaisesRegex(ValueError, "meas_noise must have shape"):
+            linear_gaussian_update_robust(
+                self.mean,
+                self.covariance,
+                array([1.0, -1.0]),
+                self.measurement_matrix,
+                eye(1),
+                robust_update="none",
+                gate_threshold=1.0,
+            )
+
     def test_kalman_filter_update_linear_robust_returns_diagnostics(self):
         kf = KalmanFilter(GaussianDistribution(self.mean, self.covariance))
         diagnostics = kf.update_linear_robust(

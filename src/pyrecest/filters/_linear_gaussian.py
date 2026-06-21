@@ -341,11 +341,14 @@ def linear_gaussian_update_robust(
     measurement_matrix = _as_matrix(measurement_matrix, "measurement_matrix")
     meas_noise = _as_matrix(meas_noise, "meas_noise")
 
-    meas_dim = measurement_matrix.shape[0]
-    innovation = measurement - measurement_matrix @ mean
-    nominal_innovation_cov = (
-        measurement_matrix @ covariance @ transpose(measurement_matrix) + meas_noise
+    innovation, nominal_innovation_cov = linear_gaussian_innovation(
+        mean,
+        covariance,
+        measurement,
+        measurement_matrix,
+        meas_noise,
     )
+    meas_dim = measurement_matrix.shape[0]
     nis = normalized_innovation_squared(innovation, nominal_innovation_cov)
     accepted, action, scale = _robust_update_decision(
         nis,
