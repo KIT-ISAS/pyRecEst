@@ -209,10 +209,17 @@ def _positive_int(value: int, name: str) -> int:
 
 def _nonnegative_int(value: int, name: str) -> int:
     try:
-        parsed = int(value)
+        array_value = np.asarray(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must be an integer") from exc
-    if parsed != value or parsed < 0:
+    if array_value.ndim != 0 or np.issubdtype(array_value.dtype, np.bool_):
+        raise ValueError(f"{name} must be a nonnegative integer")
+    scalar = array_value.item()
+    try:
+        parsed = int(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+    if parsed != scalar or parsed < 0:
         raise ValueError(f"{name} must be a nonnegative integer")
     return parsed
 
