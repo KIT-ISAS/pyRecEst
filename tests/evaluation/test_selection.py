@@ -89,6 +89,22 @@ def test_protected_tail_topk_mask_preserves_proportional_tail_capacity() -> None
     assert mask.tolist() == [True, False, True, True, False, False]
 
 
+def test_protected_tail_topk_mask_uses_tail_scores_when_all_items_are_tail() -> None:
+    primary = np.asarray([100.0, 90.0, 80.0])
+    tail_score = np.asarray([0.0, 10.0, 20.0])
+    reliability = np.asarray([0.0, 0.0, 0.0])
+
+    mask = protected_tail_topk_mask(
+        primary,
+        tail_score,
+        reliability,
+        2.0 / 3.0,
+        tail_quantile=0.5,
+    )
+
+    assert mask.tolist() == [False, True, True]
+
+
 def test_tail_rescue_topk_mask_swaps_in_missing_tail_items() -> None:
     primary = np.asarray([10.0, 9.0, 8.0, 7.0, 1.0, 0.5])
     tail_score = np.asarray([0.0, 0.0, 0.0, 0.0, 100.0, 90.0])
