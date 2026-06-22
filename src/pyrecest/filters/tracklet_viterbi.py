@@ -299,8 +299,7 @@ def solve_fixed_lag_tracklet_viterbi(
     would score it.
     """
 
-    if lag_s <= 0.0:
-        raise ValueError("lag_s must be positive")
+    lag_s = _as_positive_float(lag_s, "lag_s")
     config = TrackletViterbiConfig() if config is None else config
     if not frames:
         return TrackletViterbiResult([], 0.0)
