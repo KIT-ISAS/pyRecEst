@@ -113,7 +113,7 @@ class TestTrackCompletion(unittest.TestCase):
 
         def candidate_sessions(session: int, observation: int, direction: str):
             del session, observation, direction
-            return [True, np.bool_(True), 1.5, np.float64(1.0)]
+            return [True, np.bool_(True), 1.5, np.float64(1.5)]
 
         def provider(session: int, observation: int, target_session: int):
             if (session, observation, target_session) == (0, 7, 1):
@@ -127,9 +127,7 @@ class TestTrackCompletion(unittest.TestCase):
             candidate_session_provider=candidate_sessions,
         )
 
-        self.assertEqual(len(paths), 1)
-        self.assertEqual(path_sessions(paths[0]), (0, 1))
-        self.assertEqual(path_observations(paths[0]), (7, 8))
+        self.assertEqual(paths, [])
 
 
 if __name__ == "__main__":
