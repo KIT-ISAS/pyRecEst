@@ -36,6 +36,22 @@ class TestEstimateTransform(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
+    def test_estimate_transform_rejects_nonfinite_weights(self):
+        source = array([[0.0, 0.0], [1.0, 0.0]])
+        target = source + array([2.0, -0.5])
+
+        with self.assertRaisesRegex(ValueError, "weights must be finite"):
+            estimate_transform(
+                source,
+                target,
+                model="translation",
+                weights=array([1.0, float("nan")]),
+            )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_estimate_rigid_transform_recovers_rotation_and_translation(self):
         source = array(
             [[0.0, 0.0], [1.0, 0.2], [0.4, 1.1], [1.3, 1.6], [2.1, -0.3]],
