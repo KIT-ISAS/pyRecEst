@@ -4,9 +4,7 @@ import pytest
 from pyrecest.scenarios import available_scenario_types, run_scenario
 
 
-def _write_particle_scenario(
-    path: Path, weights: str, num_samples: str = "4"
-) -> None:
+def _write_particle_scenario(path: Path, weights: str, num_samples: str = "4") -> None:
     path.write_text(
         f"""
 [scenario]
