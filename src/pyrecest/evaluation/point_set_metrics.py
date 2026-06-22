@@ -351,6 +351,6 @@ def _validate_chunk_size(query_chunk_size: int) -> None:
 
 def _validate_threshold(threshold: float) -> float:
     threshold_float = float(threshold)
-    if threshold_float < 0.0:
-        raise ValueError("Distance thresholds must be non-negative.")
+    if not np.isfinite(threshold_float) or threshold_float < 0.0:
+        raise ValueError("Distance thresholds must be finite and non-negative.")
     return threshold_float
