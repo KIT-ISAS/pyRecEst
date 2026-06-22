@@ -114,3 +114,15 @@ def test_invalid_point_sets_raise_clear_errors():
 
     with pytest.raises(ValueError, match="non-negative"):
         precision_recall_fscore(np.array([[0.0]]), np.array([[0.0]]), -1.0)
+
+
+def test_nonfinite_thresholds_raise_clear_errors():
+    points = np.array([[0.0]])
+
+    for threshold in (np.nan, np.inf, -np.inf):
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            precision_recall_fscore(points, points, threshold)
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            precision_recall_curve(points, points, (threshold,))
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            point_set_geometry_summary(points, points, thresholds=(threshold,))
