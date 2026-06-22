@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import unittest
 
+import numpy as np
+
 from pyrecest.utils.track_completion import (
     CompletionCandidate,
     enumerate_fragment_completion_paths,
@@ -105,6 +107,29 @@ class TestTrackCompletion(unittest.TestCase):
         self.assertEqual(path_observations(paths[0]), (7, 9))
         self.assertEqual(calls[0], (0, 7, "suffix"))
         self.assertEqual(calls[1], (2, 9, "suffix"))
+
+    def test_custom_candidate_sessions_do_not_truncate_invalid_scalars(self) -> None:
+        tracks = [[7, None, None]]
+
+        def candidate_sessions(session: int, observation: int, direction: str):
+            del session, observation, direction
+            return [True, np.bool_(True), 1.5, np.float64(1.0)]
+
+        def provider(session: int, observation: int, target_session: int):
+            if (session, observation, target_session) == (0, 7, 1):
+                return [8]
+            return []
+
+        paths = enumerate_fragment_completion_paths(
+            tracks,
+            direction="suffix",
+            candidate_provider=provider,
+            candidate_session_provider=candidate_sessions,
+        )
+
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(path_sessions(paths[0]), (0, 1))
+        self.assertEqual(path_observations(paths[0]), (7, 8))
 
 
 if __name__ == "__main__":
