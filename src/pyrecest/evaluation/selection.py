@@ -43,7 +43,6 @@ def _normalize_nonnegative_integer(value, name: str) -> int:
 def _normalize_bounded_float(
     value,
     *,
-    name: str,
     lower: float,
     upper: float,
     include_lower: bool,
@@ -97,7 +96,6 @@ def retained_count_from_fraction(
     count = _normalize_nonnegative_integer(item_count, "item_count")
     fraction = _normalize_bounded_float(
         retention_fraction,
-        name="retention_fraction",
         lower=0.0,
         upper=1.0,
         include_lower=True,
@@ -333,7 +331,6 @@ def tail_rescue_quota_count(retained_count: int, *, rescue_fraction: float) -> i
     retained = _normalize_nonnegative_integer(retained_count, "retained_count")
     rescue = _normalize_bounded_float(
         rescue_fraction,
-        name="rescue_fraction",
         lower=0.0,
         upper=1.0,
         include_lower=False,
