@@ -322,12 +322,12 @@ def _candidate_sessions(
         adjacent = anchor_session + 1 if direction == "suffix" else anchor_session - 1
         raw = (adjacent,)
     else:
-        raw = tuple(
-            int(value)
-            for value in provider(anchor_session, anchor_observation, direction)
-        )
+        raw = tuple(provider(anchor_session, anchor_observation, direction))
     sessions = []
-    for value in raw:
+    for raw_value in raw:
+        value = _coerce_candidate_session(raw_value)
+        if value is None:
+            continue
         if value < 0 or value >= matrix.shape[1] or value == anchor_session:
             continue
         if direction == "suffix" and value <= anchor_session:
@@ -336,6 +336,18 @@ def _candidate_sessions(
             continue
         sessions.append(int(value))
     return tuple(dict.fromkeys(sessions))
+
+
+def _coerce_candidate_session(value: Any) -> int | None:
+    if isinstance(value, (bool, np.bool_)):
+        return None
+    if isinstance(value, (int, np.integer)):
+        return int(value)
+    if isinstance(value, (float, np.floating)):
+        if np.isfinite(value) and float(value).is_integer():
+            return int(value)
+        return None
+    return None
 
 
 def _completion_step(
