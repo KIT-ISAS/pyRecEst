@@ -84,6 +84,18 @@ class TestCandidatePruning(unittest.TestCase):
             np.array([[1.0, 2.0, 999.0], [3.0, 999.0, 999.0]]),
         )
 
+    def test_pruned_entries_remain_more_expensive_than_large_finite_costs(self):
+        costs = np.array([[2.0e6, 3.0e6]])
+
+        pruned = prune_pairwise_cost_matrix(
+            costs,
+            config=CandidatePruningConfig(row_top_k=1),
+        )
+
+        self.assertEqual(pruned[0, 0], costs[0, 0])
+        self.assertTrue(np.isfinite(pruned[0, 1]))
+        self.assertGreater(pruned[0, 1], costs[0, 1])
+
     def test_always_keep_finite_overrides_selective_rules(self):
         costs = np.array([[1.0, 10.0], [3.0, np.inf]])
 

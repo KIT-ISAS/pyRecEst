@@ -168,6 +168,7 @@ def prune_pairwise_cost_matrix(
     penalty = cfg.large_cost if large_cost is None else float(large_cost)
     if not np.isfinite(penalty) or penalty <= 0.0:
         raise ValueError("large_cost must be finite and positive")
+    penalty = _effective_large_cost(costs, penalty)
 
     mask = candidate_mask_from_costs(
         costs,
@@ -213,6 +214,21 @@ def _finite_percentile(costs: np.ndarray, percentile: float) -> float | None:
     if finite.size == 0:
         return None
     return float(np.percentile(finite, float(percentile)))
+
+
+def _effective_large_cost(costs: np.ndarray, penalty: float) -> float:
+    finite = costs[np.isfinite(costs)]
+    if finite.size == 0:
+        return penalty
+
+    max_finite = float(np.max(finite))
+    if penalty > max_finite:
+        return penalty
+
+    adjusted_penalty = float(np.nextafter(max_finite, np.inf))
+    if not np.isfinite(adjusted_penalty):
+        raise ValueError("large_cost is too small to exceed finite costs")
+    return adjusted_penalty
 
 
 def _as_cost_matrix(cost_matrix: Any) -> np.ndarray:
