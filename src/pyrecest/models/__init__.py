@@ -55,7 +55,6 @@ from .motion_models import (
     kinematic_transition_matrix,
     nearly_constant_speed_model,
     nearly_constant_speed_transition,
-    nearly_coordinated_turn_model,
     se2_unicycle_model,
     se2_unicycle_transition,
     se3_pose_twist_model,
@@ -67,6 +66,7 @@ from .motion_models import (
     white_noise_jerk_covariance,
     white_noise_snap_covariance,
 )
+from ._validated_motion_models import nearly_coordinated_turn_model
 from .sensor_models import (
     bearing_only_measurement,
     bearing_only_model,
