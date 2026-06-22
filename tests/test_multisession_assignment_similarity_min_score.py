@@ -12,7 +12,7 @@ class TestMultiSessionAssignmentSimilarityMinScore(unittest.TestCase):
         __backend_name__ == "jax",
         reason="Not supported on this backend",
     )
-    def test_accepts_scalar_integer_like_min_score(self):
+    def test_accepts_scalar_float_min_score(self):
         result = solve_multisession_assignment_from_similarity(
             [array([[0.25]], dtype=float)],
             min_score=np.array(0.2),
@@ -32,7 +32,10 @@ class TestMultiSessionAssignmentSimilarityMinScore(unittest.TestCase):
 
         for min_score in invalid_min_scores:
             with self.subTest(min_score=min_score):
-                with self.assertRaisesRegex(ValueError, "min_score must be a finite scalar"):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "min_score must be a finite scalar",
+                ):
                     solve_multisession_assignment_from_similarity(
                         pairwise_scores,
                         min_score=min_score,
