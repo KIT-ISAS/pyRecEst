@@ -65,6 +65,20 @@ def test_record_from_update_preserves_prior_posterior_and_legacy_aliases() -> No
     json.dumps(as_dict)
 
 
+def test_tracking_record_rejects_rectangular_innovation_cov_without_innovation() -> None:
+    event = event_from_measurement(time=0.0, source="imu", action="coast")
+
+    with pytest.raises(ValueError, match="innovation_cov must be a square matrix"):
+        record_from_update(
+            event=event,
+            prior_mean=[0.0, 0.0],
+            prior_cov=np.eye(2),
+            posterior_mean=[0.0, 0.0],
+            posterior_cov=np.eye(2),
+            innovation_cov=np.ones((2, 3)),
+        )
+
+
 def test_records_to_dicts_matrix_and_action_counts() -> None:
     event = event_from_measurement(time=0.0, source="radar", action="update")
     record_a = record_from_update(
