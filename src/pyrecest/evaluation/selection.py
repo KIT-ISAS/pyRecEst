@@ -181,14 +181,14 @@ def quantile_tail_mask(
         reliability_scores,
         nonnegative=sanitize_nonnegative,
     )
-    if scores.size == 0:
-        return np.zeros((0,), dtype=bool)
     threshold = quantile_tail_threshold(
         scores,
         quantile,
         tail=tail,
         sanitize_nonnegative=sanitize_nonnegative,
     )
+    if scores.size == 0:
+        return np.zeros((0,), dtype=bool)
     if tail == "lower":
         return scores <= threshold
     return scores >= threshold
