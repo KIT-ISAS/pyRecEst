@@ -127,6 +127,37 @@ class TestCandidatePruning(unittest.TestCase):
                 config=CandidatePruningConfig(probability_threshold=0.4),
             )
 
+    def test_scalar_cost_controls_reject_bools_and_non_scalars(self):
+        invalid_values = (True, np.array([1.0]))
+        cases = (
+            (
+                "probability_threshold",
+                "probability_threshold must lie in [0, 1]",
+            ),
+            ("max_cost", "max_cost must be finite or None"),
+            (
+                "max_cost_percentile",
+                "max_cost_percentile must lie in [0, 100]",
+            ),
+            ("large_cost", "large_cost must be finite and positive"),
+        )
+
+        for field_name, message in cases:
+            for value in invalid_values:
+                with self.subTest(field_name=field_name, value=value):
+                    with self.assertRaisesRegex(ValueError, message):
+                        CandidatePruningConfig(**{field_name: value})
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "large_cost must be finite and positive",
+        ):
+            prune_pairwise_cost_matrix(
+                np.array([[1.0]]),
+                config=CandidatePruningConfig(row_top_k=1),
+                large_cost=True,
+            )
+
     def test_top_k_rejects_non_integer_values(self):
         invalid_top_k_values = (True, 1.5, np.nan, np.inf, np.array([1]))
 
