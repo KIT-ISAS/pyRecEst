@@ -205,10 +205,13 @@ def prune_pairwise_cost_matrix(
     if cfg is None:
         return costs
 
-    penalty = cfg.large_cost if large_cost is None else _normalize_finite_scalar(
-        large_cost,
-        message="large_cost must be finite and positive",
-    )
+    if large_cost is None:
+        penalty = cfg.large_cost
+    else:
+        penalty = _normalize_finite_scalar(
+            large_cost,
+            message="large_cost must be finite and positive",
+        )
     if penalty <= 0.0:
         raise ValueError("large_cost must be finite and positive")
     penalty = _effective_large_cost(costs, penalty)
@@ -281,18 +284,19 @@ def _as_cost_matrix(cost_matrix: Any) -> np.ndarray:
     return np.nan_to_num(costs, nan=np.inf, posinf=np.inf, neginf=np.inf)
 
 
-def _as_probability_matrix(probability_matrix: Any, shape: tuple[int, int]) -> np.ndarray:
+def _as_probability_matrix(
+    probability_matrix: Any,
+    shape: tuple[int, int],
+) -> np.ndarray:
     probabilities = np.asarray(probability_matrix, dtype=float)
     if probabilities.shape != shape:
         raise ValueError("probability_matrix must match cost_matrix shape")
-    if np.any(np.isfinite(probabilities) & ((probabilities < 0.0) | (probabilities > 1.0))):
-        raise ValueError("probability_matrix entries must lie in [0, 1]")
     return probabilities
 
 
-__all__ = [
+__all__ = (
     "CandidatePruningConfig",
     "candidate_mask_from_costs",
     "candidate_pruning_config_from_mapping",
     "prune_pairwise_cost_matrix",
-]
+)
