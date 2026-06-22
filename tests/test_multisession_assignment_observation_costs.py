@@ -127,9 +127,10 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
         )
 
         self.assertEqual(
-            result.matched_edges,
-            [((0, 0), (2, 0), 0.8)],
+            self._canonical_tracks(result.tracks),
+            [((0, 0), (2, 0))],
         )
+        self.assertEqual(result.matched_edges, [((0, 0), (2, 0), 0.8)])
         self.assertAlmostEqual(result.total_cost, 8.8)
 
     def test_cost_threshold_uses_numeric_gap_when_sessions_are_omitted(self):
@@ -146,6 +147,7 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
             [((0, 0),), ((2, 0),)],
         )
         self.assertEqual(result.matched_edges, [])
+        self.assertAlmostEqual(result.total_cost, 16.0)
 
     def test_rejects_unknown_sessions(self):
         with self.assertRaises(ValueError):
