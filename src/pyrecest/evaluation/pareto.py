@@ -159,20 +159,21 @@ def constraint_mask(
         if column not in table.columns:
             mask &= False
             continue
+        threshold_value = _coerce_finite_threshold(threshold, column)
         values = pd.to_numeric(table[column], errors="coerce")
         present_values = values.notna()
         if op == "<=":
-            comparison = values <= float(threshold) + eps
+            comparison = values <= threshold_value + eps
         elif op == ">=":
-            comparison = values >= float(threshold) - eps
+            comparison = values >= threshold_value - eps
         elif op == "<":
-            comparison = values < float(threshold) - eps
+            comparison = values < threshold_value - eps
         elif op == ">":
-            comparison = values > float(threshold) + eps
+            comparison = values > threshold_value + eps
         elif op == "==":
-            comparison = np.isclose(values, float(threshold), atol=eps, rtol=0.0)
+            comparison = np.isclose(values, threshold_value, atol=eps, rtol=0.0)
         elif op == "!=":
-            comparison = ~np.isclose(values, float(threshold), atol=eps, rtol=0.0)
+            comparison = ~np.isclose(values, threshold_value, atol=eps, rtol=0.0)
         else:  # pragma: no cover - protected by _parse_constraint_spec.
             raise ValueError(f"Unsupported constraint operator {op!r}.")
         comparison = pd.Series(comparison, index=table.index).fillna(False).astype(bool)
@@ -339,7 +340,7 @@ def _lookup_numeric(record: Mapping[str, Any] | pd.Series, key: str) -> float:
 def _coerce_numeric(value: Any) -> float:
     try:
         return float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return float("nan")
 
 
@@ -358,3 +359,15 @@ def _parse_constraint_spec(spec: ConstraintSpec | Mapping[str, Any]) -> Constrai
     if op not in {"<=", ">=", "<", ">", "==", "!="}:
         raise ValueError(f"Unsupported constraint operator {op!r}.")
     return op, threshold
+
+
+def _coerce_finite_threshold(value: Any, column: str) -> float:
+    try:
+        threshold = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            f"Constraint threshold for {column!r} must be a finite scalar."
+        ) from exc
+    if not np.isfinite(threshold):
+        raise ValueError(f"Constraint threshold for {column!r} must be a finite scalar.")
+    return threshold
