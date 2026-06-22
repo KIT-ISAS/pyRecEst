@@ -20,11 +20,18 @@ class WeightedGaussianHypothesis:
     def __post_init__(self) -> None:
         mean = np.asarray(self.mean, dtype=float).reshape(-1)
         covariance = np.asarray(self.covariance, dtype=float)
+        if not np.all(np.isfinite(mean)):
+            raise ValueError("mean must contain only finite values")
         if covariance.shape != (mean.size, mean.size):
             raise ValueError("covariance must match mean dimension")
+        if not np.all(np.isfinite(covariance)):
+            raise ValueError("covariance must contain only finite values")
+        log_weight = float(self.log_weight)
+        if np.isnan(log_weight):
+            raise ValueError("log_weight must not be NaN")
         object.__setattr__(self, "mean", mean)
         object.__setattr__(self, "covariance", _symmetrized(covariance))
-        object.__setattr__(self, "log_weight", float(self.log_weight))
+        object.__setattr__(self, "log_weight", log_weight)
         if self.metadata is not None:
             object.__setattr__(self, "metadata", dict(self.metadata))
 
