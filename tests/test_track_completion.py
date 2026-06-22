@@ -67,7 +67,6 @@ class TestTrackCompletion(unittest.TestCase):
 
         for invalid_candidate in invalid_candidates:
             with self.subTest(invalid_candidate=invalid_candidate):
-
                 def provider(session: int, observation: int, target_session: int):
                     del session, observation, target_session
                     return [invalid_candidate]
