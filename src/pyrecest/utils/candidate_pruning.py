@@ -127,7 +127,11 @@ def candidate_mask_from_costs(
     if cfg.column_top_k is not None:
         keep |= _column_top_k_mask(costs, cfg.column_top_k)
         any_rule = True
-    if cfg.probability_threshold is not None and probability_matrix is not None:
+    if cfg.probability_threshold is not None:
+        if probability_matrix is None:
+            raise ValueError(
+                "probability_matrix must be provided when probability_threshold is configured"
+            )
         probabilities = _as_probability_matrix(probability_matrix, costs.shape)
         keep |= np.isfinite(probabilities) & (
             probabilities >= cfg.probability_threshold
