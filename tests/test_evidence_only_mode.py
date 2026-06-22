@@ -17,6 +17,14 @@ def test_evidence_computation_mode_resolves_boolean_and_string_aliases():
     assert fast.to_diagnostics()["evidence_computation_mode"] == "evidence_only"
 
 
+def test_evidence_computation_mode_accepts_numpy_bool_flags():
+    full = resolve_evidence_computation_mode(return_smoothed=np.bool_(True))
+    fast = resolve_evidence_computation_mode(return_smoothed=np.bool_(False))
+
+    assert full.mode == "full_smoothing"
+    assert fast.mode == "evidence_only"
+
+
 def test_evidence_computation_mode_rejects_inconsistent_flags():
     with pytest.raises(ValueError, match="evidence_only"):
         EvidenceComputationMode(mode="evidence_only", return_smoothed=True)
@@ -24,6 +32,12 @@ def test_evidence_computation_mode_rejects_inconsistent_flags():
         EvidenceComputationMode(mode="full_smoothing", return_smoothed=False)
     with pytest.raises(ValueError, match="unknown"):
         resolve_evidence_computation_mode("posterior-only")
+
+
+def test_evidence_computation_mode_rejects_truthy_non_bool_return_smoothed():
+    for return_smoothed in ("false", "true", 0, 1, np.array([False])):
+        with pytest.raises(ValueError, match="return_smoothed must be a bool"):
+            resolve_evidence_computation_mode(return_smoothed=return_smoothed)
 
 
 def test_resolver_rejects_conflicting_explicit_mode_and_boolean_flag():
