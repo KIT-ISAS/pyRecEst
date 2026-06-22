@@ -149,6 +149,15 @@ def test_shape_helpers_report_mismatches():
         assert_shape(object(), ())
 
 
+def test_shape_helpers_reject_non_integer_axes():
+    value = ArrayLikeObject((2, 3))
+
+    with pytest.raises(ProtocolAssertionError, match=r"expected_shape\[0\] must be an integer"):
+        assert_shape(value, (2.5, 3))
+    with pytest.raises(ProtocolAssertionError, match=r"value\[0\] must be an integer"):
+        assert_shape(ArrayLikeObject((2.5, 3)), (2, 3))
+
+
 def test_common_dimension_helpers_return_dimensions():
     obj = ObjectWithDimensions()
 
@@ -201,5 +210,6 @@ def test_model_helpers_return_method_results():
     )
     assert assert_supports_transition_density(transition_model, next_state, state) == (
         next_state,
-        state,
+        state_previous,
     )
+".replace("state_previous
