@@ -118,7 +118,7 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
         )
         self.assertEqual(result.matched_edges, [])
 
-    def test_gap_penalty_uses_numeric_session_indices_when_sizes_are_inferred(self):
+    def test_gap_penalty_uses_numeric_session_gap_when_sessions_are_omitted(self):
         result = solve_multisession_assignment_with_observation_costs(
             {(0, 2): array([[0.3]], dtype=float)},
             start_cost=4.0,
@@ -133,7 +133,7 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
         self.assertEqual(result.matched_edges, [((0, 0), (2, 0), 0.8)])
         self.assertAlmostEqual(result.total_cost, 8.8)
 
-    def test_cost_threshold_uses_numeric_session_indices_when_sizes_are_inferred(self):
+    def test_cost_threshold_uses_numeric_gap_when_sessions_are_omitted(self):
         result = solve_multisession_assignment_with_observation_costs(
             {(0, 2): array([[0.3]], dtype=float)},
             start_cost=4.0,

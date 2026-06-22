@@ -187,6 +187,7 @@ def build_tracklet_adjacency(
     """Build adjacency lists for a time-ordered tracklet DAG."""
 
     ordered = sort_tracklets(tracklets)
+    _require_unique_tracklet_ids(ordered)
     max_gap_value = None if max_gap is None else float(max_gap)
     adjacency: dict[Hashable, list[tuple[Hashable, float]]] = {
         item.id: [] for item in ordered
@@ -399,6 +400,24 @@ def sort_tracklets(tracklets: Iterable[Tracklet]) -> list[Tracklet]:
     return sorted(
         tracklets, key=lambda item: (item.start_time, item.end_time, str(item.id))
     )
+
+
+def _require_unique_tracklet_ids(tracklets: Sequence[Tracklet]) -> None:
+    seen: set[Hashable] = set()
+    duplicates: set[str] = set()
+    for item in tracklets:
+        try:
+            if item.id in seen:
+                duplicates.add(str(item.id))
+            else:
+                seen.add(item.id)
+        except TypeError as exc:
+            raise ValueError("tracklet ids must be hashable") from exc
+    if duplicates:
+        duplicate_text = ", ".join(sorted(duplicates))
+        raise ValueError(
+            f"tracklet ids must be unique; duplicate id(s): {duplicate_text}"
+        )
 
 
 def _node_cost(tracklet: Tracklet, node_cost_fn: CostFn | None) -> float:
