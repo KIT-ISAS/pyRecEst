@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import math
-tomllib
+import tomllib
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
