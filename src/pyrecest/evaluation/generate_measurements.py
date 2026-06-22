@@ -198,16 +198,14 @@ def generate_measurements(groundtruth, simulation_config):
             if isinstance(meas_noise, AbstractHypertoroidalDistribution):
                 noise_samples = meas_noise.sample(n_meas)
                 measurements[t] = mod(
-                    squeeze(
-                        tile(
-                            groundtruth[t],
-                            (
-                                n_meas,
-                                1,
-                            ),
-                        )
-                        + noise_samples
-                    ),
+                    tile(
+                        groundtruth[t],
+                        (
+                            n_meas,
+                            1,
+                        ),
+                    )
+                    + noise_samples,
                     2.0 * pi,
                 )
 
@@ -220,16 +218,13 @@ def generate_measurements(groundtruth, simulation_config):
 
             elif isinstance(meas_noise, GaussianDistribution):
                 noise_samples = meas_noise.sample(n_meas)
-                measurements[t] = squeeze(
-                    tile(
-                        groundtruth[t],
-                        (
-                            n_meas,
-                            1,
-                        ),
-                    )
-                    + noise_samples
-                )
+                measurements[t] = tile(
+                    groundtruth[t],
+                    (
+                        n_meas,
+                        1,
+                    ),
+                ) + noise_samples
 
     return measurements
 
