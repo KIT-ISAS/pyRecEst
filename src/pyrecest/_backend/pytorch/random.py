@@ -235,8 +235,17 @@ def _choice_indices(population_size, size, num_samples, replace, p, device):
     return indices.reshape(size)
 
 
+def _normalize_axis(axis, ndim):
+    if not _looks_like_integer_dimension(axis):
+        raise TypeError("axis must be an integer")
+    axis = int(axis)
+    if axis < -ndim or axis >= ndim:
+        raise ValueError(f"axis {axis} is out of bounds for array of dimension {ndim}")
+    return axis % ndim
+
+
 def _take_choice(a, indices, axis):
-    axis = axis % a.ndim
+    axis = _normalize_axis(axis, a.ndim)
     if indices.ndim == 0:
         return a.select(axis, int(indices.item()))
 
@@ -261,7 +270,7 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
             "a must be a positive integer or an array with at least one dimension"
         )
 
-    axis = axis % a.ndim
+    axis = _normalize_axis(axis, a.ndim)
     indices = _choice_indices(a.shape[axis], size, num_samples, replace, p, a.device)
     return _take_choice(a, indices, axis)
 
