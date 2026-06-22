@@ -57,12 +57,19 @@ class TestCandidatePruning(unittest.TestCase):
 
     def test_probability_threshold_requires_probability_matrix(self):
         costs = np.array([[1.0, 2.0]])
+        config = CandidatePruningConfig(probability_threshold=0.9)
 
-        with self.assertRaisesRegex(ValueError, "probability_matrix must be provided"):
-            candidate_mask_from_costs(
-                costs,
-                config=CandidatePruningConfig(probability_threshold=0.5),
-            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "probability_matrix is required when probability_threshold is set",
+        ):
+            candidate_mask_from_costs(costs, config=config)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "probability_matrix is required when probability_threshold is set",
+        ):
+            prune_pairwise_cost_matrix(costs, config=config)
 
     def test_percentile_rule_and_large_cost_replacement(self):
         costs = np.array([[1.0, 2.0, 100.0], [3.0, 4.0, 5.0]])

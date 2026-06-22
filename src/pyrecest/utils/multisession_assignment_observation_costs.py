@@ -178,7 +178,15 @@ def _session_gap(
     target_session: int,
     session_positions: Mapping[int, int],
 ) -> int:
-    gap = session_positions[target_session] - session_positions[source_session] - 1
+    try:
+        source_position = session_positions[source_session]
+        target_position = session_positions[target_session]
+    except KeyError as exc:
+        raise ValueError("Pairwise costs reference an unknown session.") from exc
+    if target_position <= source_position:
+        raise ValueError("Session indices must define a forward-in-time edge ordering.")
+
+    gap = int(target_session) - int(source_session) - 1
     if gap < 0:
         raise ValueError("Session indices must define a forward-in-time edge ordering.")
     return gap

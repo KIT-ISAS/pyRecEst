@@ -130,7 +130,7 @@ def candidate_mask_from_costs(
     if cfg.probability_threshold is not None:
         if probability_matrix is None:
             raise ValueError(
-                "probability_matrix must be provided when probability_threshold is configured"
+                "probability_matrix is required when probability_threshold is set"
             )
         probabilities = _as_probability_matrix(probability_matrix, costs.shape)
         keep |= np.isfinite(probabilities) & (
