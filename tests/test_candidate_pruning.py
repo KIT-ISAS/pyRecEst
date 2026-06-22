@@ -1,3 +1,4 @@
+import re
 import unittest
 
 import numpy as np
@@ -145,7 +146,7 @@ class TestCandidatePruning(unittest.TestCase):
         for field_name, message in cases:
             for value in invalid_values:
                 with self.subTest(field_name=field_name, value=value):
-                    with self.assertRaisesRegex(ValueError, message):
+                    with self.assertRaisesRegex(ValueError, re.escape(message)):
                         CandidatePruningConfig(**{field_name: value})
 
         with self.assertRaisesRegex(
