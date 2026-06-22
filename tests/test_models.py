@@ -25,6 +25,21 @@ class ModelObjectTest(unittest.TestCase):
             allclose(model.evaluate(array([1.0, 2.0]), scale=1.0), array([1.5, 2.5]))
         )
 
+    def test_explicit_transition_dt_overrides_function_args_dt(self):
+        def fx(x, dt, scale=1.0):
+            return scale * (x + dt)
+
+        model = AdditiveNoiseTransitionModel(
+            transition_function=fx,
+            dt=0.5,
+            function_args={"dt": 10.0, "scale": 2.0},
+        )
+
+        self.assertTrue(allclose(model.evaluate(array([1.0, 2.0])), array([3.0, 5.0])))
+        self.assertTrue(
+            allclose(model.evaluate(array([1.0, 2.0]), dt=0.25), array([2.5, 4.5]))
+        )
+
     def test_measurement_model_accepts_covariance_like_noise(self):
         noise_cov = diag(array([0.3, 0.4]))
 
