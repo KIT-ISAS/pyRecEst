@@ -377,5 +377,25 @@ def _coerce_candidate(
     value: int | CompletionCandidate[PayloadT],
 ) -> CompletionCandidate[PayloadT]:
     if isinstance(value, CompletionCandidate):
-        return value
-    return CompletionCandidate(observation=int(value))
+        return CompletionCandidate(
+            observation=_normalize_candidate_observation(value.observation),
+            score=value.score,
+            payload=value.payload,
+        )
+    return CompletionCandidate(observation=_normalize_candidate_observation(value))
+
+
+def _normalize_candidate_observation(value: Any) -> int:
+    if isinstance(value, (bool, np.bool_)):
+        raise ValueError("candidate observations must be non-negative integers")
+    if isinstance(value, (float, np.floating)) and not float(value).is_integer():
+        raise ValueError("candidate observations must be non-negative integers")
+    try:
+        observation = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "candidate observations must be non-negative integers"
+        ) from exc
+    if observation < 0:
+        raise ValueError("candidate observations must be non-negative integers")
+    return observation
