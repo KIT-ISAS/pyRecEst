@@ -40,6 +40,19 @@ class GaussianHypothesisMixtureTest(unittest.TestCase):
                 ]
             )
 
+    def test_hypotheses_reject_nonfinite_mean_and_covariance(self):
+        with self.assertRaisesRegex(ValueError, "mean"):
+            WeightedGaussianHypothesis(np.array([np.nan]), np.array([[1.0]]))
+
+        with self.assertRaisesRegex(ValueError, "mean"):
+            WeightedGaussianHypothesis(np.array([np.inf]), np.array([[1.0]]))
+
+        with self.assertRaisesRegex(ValueError, "covariance"):
+            WeightedGaussianHypothesis(np.array([0.0]), np.array([[np.nan]]))
+
+        with self.assertRaisesRegex(ValueError, "covariance"):
+            WeightedGaussianHypothesis(np.array([0.0]), np.array([[np.inf]]))
+
     def test_moment_matching_respects_dominant_infinite_weight(self):
         mean, covariance, weights = moment_match_gaussian_hypotheses(
             [
