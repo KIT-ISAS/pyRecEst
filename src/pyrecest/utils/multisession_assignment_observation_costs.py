@@ -50,6 +50,7 @@ def _ensure_supported_backend(feature_name: str) -> None:
 
 @dataclass(frozen=True)
 class _ObservationCostTransform:
+    session_positions: Mapping[int, int]
     start_costs: Mapping[int, Any]
     end_costs: Mapping[int, Any]
     uniform_start_cost: float
@@ -110,7 +111,12 @@ def solve_multisession_assignment_with_observation_costs(  # pylint: disable=R09
         for costs in normalized_end_costs.values()
     )
 
+    session_positions = {
+        session_idx: position
+        for position, session_idx in enumerate(sorted(session_sizes_map))
+    }
     transform = _ObservationCostTransform(
+        session_positions=session_positions,
         start_costs=normalized_start_costs,
         end_costs=normalized_end_costs,
         uniform_start_cost=max_start_cost,
@@ -139,7 +145,7 @@ def solve_multisession_assignment_with_observation_costs(  # pylint: disable=R09
     for source, target, _ in base_result.matched_edges:
         source_session, source_detection = source
         target_session, target_detection = target
-        gap = _session_gap(source_session, target_session)
+        gap = _session_gap(source_session, target_session, session_positions)
         original_cost = normalized_pairwise[(source_session, target_session)][
             source_detection, target_detection
         ]
@@ -170,7 +176,16 @@ def _array_length(values: Any) -> int:
 def _session_gap(
     source_session: int,
     target_session: int,
+    session_positions: Mapping[int, int],
 ) -> int:
+    try:
+        source_position = session_positions[source_session]
+        target_position = session_positions[target_session]
+    except KeyError as exc:
+        raise ValueError("Pairwise costs reference an unknown session.") from exc
+    if target_position <= source_position:
+        raise ValueError("Session indices must define a forward-in-time edge ordering.")
+
     gap = int(target_session) - int(source_session) - 1
     if gap < 0:
         raise ValueError("Session indices must define a forward-in-time edge ordering.")
@@ -248,7 +263,7 @@ def _transform_pairwise_costs(
 ) -> dict[tuple[int, int], Any]:
     transformed: dict[tuple[int, int], Any] = {}
     for (source_session, target_session), matrix in pairwise_costs.items():
-        gap = _session_gap(source_session, target_session)
+        gap = _session_gap(source_session, target_session, transform.session_positions)
         source_end = transform.end_costs[source_session][:, None]
         target_start = transform.start_costs[target_session][None, :]
         transformed_matrix = (

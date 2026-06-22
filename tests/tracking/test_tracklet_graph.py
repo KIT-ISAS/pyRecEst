@@ -50,6 +50,24 @@ def test_k_best_tracklet_paths_prefers_feasible_low_cost_chain() -> None:
     assert paths[0].length == 2
 
 
+def test_duplicate_tracklet_ids_are_rejected() -> None:
+    tracklets = [
+        _tracklet("dup", 0.0, 1.0, 0.0, 1.0),
+        _tracklet("dup", 2.0, 3.0, 2.0, 3.0),
+    ]
+
+    try:
+        k_best_tracklet_paths(
+            tracklets,
+            edge_cost_fn=constant_velocity_edge_cost(max_gap=5.0),
+            config=TrackletGraphConfig(top_k=2),
+        )
+    except ValueError as exc:
+        assert "tracklet ids must be unique" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("expected ValueError")
+
+
 def test_switch_penalty_and_node_cost_are_reflected() -> None:
     tracklets = [
         _tracklet("a", 0.0, 1.0, 0.0, 1.0, cost=-5.0, label="one"),
