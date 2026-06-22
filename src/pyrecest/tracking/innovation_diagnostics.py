@@ -114,7 +114,10 @@ def innovation_diagnostic(
         or not np.isfinite(innovation_covariance_array).all()
     ):
         raise ValueError("innovation inputs must be finite")
-    resolved_threshold = gate_threshold
+    resolved_threshold = _validate_optional_positive_scalar(
+        gate_threshold,
+        "gate_threshold",
+    )
     if resolved_threshold is None:
         resolved_threshold = innovation_gate_threshold(
             gate_probability, residual_array.size
@@ -376,6 +379,27 @@ def _optional_bool(value: Any) -> bool | None:
     if parsed == 1.0:
         return True
     raise ValueError("accepted must be a boolean-like value")
+
+
+def _validate_optional_positive_scalar(value: Any, name: str) -> float | None:
+    if value is None:
+        return None
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a finite positive scalar") from exc
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a finite positive scalar")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a finite positive scalar")
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite positive scalar") from exc
+    if not np.isfinite(parsed) or parsed <= 0.0:
+        raise ValueError(f"{name} must be a finite positive scalar")
+    return parsed
 
 
 def _mean_or_none(values: np.ndarray) -> float | None:
