@@ -26,9 +26,32 @@ def test_top_count_mask_uses_tie_break_scores() -> None:
     assert mask.tolist() == [False, True, False]
 
 
+def test_top_count_mask_rejects_invalid_retained_count_scalars() -> None:
+    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]))
+
+    for retained_count in invalid_counts:
+        with pytest.raises(ValueError, match="retained_count"):
+            top_count_mask([1.0, 2.0], retained_count)
+
+    with pytest.raises(ValueError, match="retained_count"):
+        top_count_mask([1.0, 2.0], 3)
+
+
 def test_top_fraction_mask_uses_ceil_retained_count() -> None:
     assert retained_count_from_fraction(10, 0.21) == 3
     assert top_fraction_mask(np.arange(10), 0.21).sum() == 3
+
+
+def test_retained_count_from_fraction_rejects_invalid_count_scalars() -> None:
+    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]))
+
+    for item_count in invalid_counts:
+        with pytest.raises(ValueError, match="item_count"):
+            retained_count_from_fraction(item_count, 0.5)
+
+    for min_count in invalid_counts:
+        with pytest.raises(ValueError, match="min_count"):
+            retained_count_from_fraction(10, 0.5, min_count=min_count)
 
 
 def test_quantile_tail_mask_selects_lower_tail() -> None:
@@ -89,3 +112,11 @@ def test_tail_rescue_quota_count_validates_fraction() -> None:
     assert tail_rescue_quota_count(10, rescue_fraction=0.2) == 2
     with pytest.raises(ValueError, match="rescue_fraction"):
         tail_rescue_quota_count(10, rescue_fraction=0.0)
+
+
+def test_tail_rescue_quota_count_rejects_invalid_retained_count_scalars() -> None:
+    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]))
+
+    for retained_count in invalid_counts:
+        with pytest.raises(ValueError, match="retained_count"):
+            tail_rescue_quota_count(retained_count, rescue_fraction=0.5)

@@ -16,6 +16,30 @@ import numpy as np
 TailSide = Literal["lower", "upper"]
 
 
+def _normalize_nonnegative_integer(value, name: str) -> int:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a non-negative integer.")
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a non-negative integer.")
+    if isinstance(scalar, (int, np.integer)):
+        integer = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"{name} must be a non-negative integer.") from exc
+        if not np.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(f"{name} must be a non-negative integer.")
+        integer = int(scalar_float)
+
+    if integer < 0:
+        raise ValueError(f"{name} must be a non-negative integer.")
+    return integer
+
+
 def sanitized_score_vector(values, *, nonnegative: bool = True) -> np.ndarray:
     """Return a finite one-dimensional ``float64`` score vector.
 
@@ -42,15 +66,11 @@ def retained_count_from_fraction(
     ``retention_fraction > 0``. Set ``min_count=0`` for exact zero-retention
     behavior.
     """
-    count = int(item_count)
-    if count < 0:
-        raise ValueError("item_count must be non-negative.")
+    count = _normalize_nonnegative_integer(item_count, "item_count")
     fraction = float(retention_fraction)
     if not np.isfinite(fraction) or not 0.0 <= fraction <= 1.0:
         raise ValueError("retention_fraction must be finite and in [0, 1].")
-    minimum = int(min_count)
-    if minimum < 0:
-        raise ValueError("min_count must be non-negative.")
+    minimum = _normalize_nonnegative_integer(min_count, "min_count")
     if count == 0 or fraction == 0.0:
         return 0
     return int(min(count, max(minimum, np.ceil(fraction * count))))
@@ -71,8 +91,8 @@ def top_count_mask(
     """
     primary = sanitized_score_vector(scores, nonnegative=sanitize_nonnegative)
     count = int(primary.shape[0])
-    retained = int(retained_count)
-    if not 0 <= retained <= count:
+    retained = _normalize_nonnegative_integer(retained_count, "retained_count")
+    if retained > count:
         raise ValueError("retained_count must be in [0, len(scores)].")
     mask = np.zeros((count,), dtype=bool)
     if retained == 0:
@@ -276,9 +296,7 @@ def protected_tail_topk_mask(
 
 def tail_rescue_quota_count(retained_count: int, *, rescue_fraction: float) -> int:
     """Return a bounded tail-rescue quota inside a retained budget."""
-    retained = int(retained_count)
-    if retained < 0:
-        raise ValueError("retained_count must be non-negative.")
+    retained = _normalize_nonnegative_integer(retained_count, "retained_count")
     rescue = float(rescue_fraction)
     if not np.isfinite(rescue) or not 0.0 < rescue <= 1.0:
         raise ValueError("rescue_fraction must be finite and in (0, 1].")
