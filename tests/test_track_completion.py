@@ -63,6 +63,26 @@ class TestTrackCompletion(unittest.TestCase):
         )
         self.assertEqual(len(allowed), 1)
 
+    def test_rejects_negative_candidate_observations(self) -> None:
+        tracks = [[0, None]]
+        invalid_candidates = (-1, CompletionCandidate(-1))
+
+        for invalid_candidate in invalid_candidates:
+            with self.subTest(invalid_candidate=invalid_candidate):
+                def provider(session: int, observation: int, target_session: int):
+                    del session, observation, target_session
+                    return [invalid_candidate]
+
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "candidate observations must be non-negative integers",
+                ):
+                    enumerate_fragment_completion_paths(
+                        tracks,
+                        direction="suffix",
+                        candidate_provider=provider,
+                    )
+
     def test_enumerates_prefix_paths(self) -> None:
         tracks = [[None, 5, 6]]
 
