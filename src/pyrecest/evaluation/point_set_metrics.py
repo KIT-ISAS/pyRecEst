@@ -81,7 +81,7 @@ def nearest_neighbor_distances(
     query_array = as_point_set(query, name="query")
     reference_array = as_point_set(reference, name="reference")
     _validate_matching_dimension(query_array, reference_array)
-    _validate_chunk_size(query_chunk_size)
+    query_chunk_size = _validate_chunk_size(query_chunk_size)
 
     tree_result = _nearest_neighbor_distances_ckdtree(
         query_array,
@@ -344,9 +344,24 @@ def _validate_matching_dimension(query: np.ndarray, reference: np.ndarray) -> No
         )
 
 
-def _validate_chunk_size(query_chunk_size: int) -> None:
-    if query_chunk_size < 1:
-        raise ValueError("query_chunk_size must be positive.")
+def _validate_chunk_size(query_chunk_size: int) -> int:
+    array = np.asarray(query_chunk_size)
+    if array.shape != () or array.dtype == np.bool_:
+        raise ValueError("query_chunk_size must be a positive integer.")
+    scalar = array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError("query_chunk_size must be a positive integer.")
+    try:
+        chunk_size_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("query_chunk_size must be a positive integer.") from exc
+    if (
+        not np.isfinite(chunk_size_float)
+        or not chunk_size_float.is_integer()
+        or chunk_size_float < 1.0
+    ):
+        raise ValueError("query_chunk_size must be a positive integer.")
+    return int(chunk_size_float)
 
 
 def _validate_threshold(threshold: float) -> float:
