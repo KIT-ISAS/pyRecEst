@@ -40,6 +40,34 @@ def _normalize_nonnegative_integer(value, name: str) -> int:
     return integer
 
 
+def _normalize_bounded_float(
+    value,
+    *,
+    name: str,
+    lower: float,
+    upper: float,
+    include_lower: bool,
+    include_upper: bool,
+    message: str,
+) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    try:
+        number = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    lower_ok = number >= lower if include_lower else number > lower
+    upper_ok = number <= upper if include_upper else number < upper
+    if not np.isfinite(number) or not lower_ok or not upper_ok:
+        raise ValueError(message)
+    return number
+
+
 def sanitized_score_vector(values, *, nonnegative: bool = True) -> np.ndarray:
     """Return a finite one-dimensional ``float64`` score vector.
 
@@ -67,9 +95,15 @@ def retained_count_from_fraction(
     behavior.
     """
     count = _normalize_nonnegative_integer(item_count, "item_count")
-    fraction = float(retention_fraction)
-    if not np.isfinite(fraction) or not 0.0 <= fraction <= 1.0:
-        raise ValueError("retention_fraction must be finite and in [0, 1].")
+    fraction = _normalize_bounded_float(
+        retention_fraction,
+        name="retention_fraction",
+        lower=0.0,
+        upper=1.0,
+        include_lower=True,
+        include_upper=True,
+        message="retention_fraction must be finite and in [0, 1].",
+    )
     minimum = _normalize_nonnegative_integer(min_count, "min_count")
     if count == 0 or fraction == 0.0:
         return 0
@@ -297,9 +331,15 @@ def protected_tail_topk_mask(
 def tail_rescue_quota_count(retained_count: int, *, rescue_fraction: float) -> int:
     """Return a bounded tail-rescue quota inside a retained budget."""
     retained = _normalize_nonnegative_integer(retained_count, "retained_count")
-    rescue = float(rescue_fraction)
-    if not np.isfinite(rescue) or not 0.0 < rescue <= 1.0:
-        raise ValueError("rescue_fraction must be finite and in (0, 1].")
+    rescue = _normalize_bounded_float(
+        rescue_fraction,
+        name="rescue_fraction",
+        lower=0.0,
+        upper=1.0,
+        include_lower=False,
+        include_upper=True,
+        message="rescue_fraction must be finite and in (0, 1].",
+    )
     if retained == 0:
         return 0
     return int(min(retained, max(1, np.ceil(rescue * retained))))
