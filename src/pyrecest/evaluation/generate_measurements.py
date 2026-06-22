@@ -31,10 +31,13 @@ def _as_shapely_scalar(value):
 def _mtt_state_at(groundtruth, t, target_no, n_targets):
     """Return one target state from dense or per-step object ground truth."""
     state_at_t = np.asarray(groundtruth[t])
-    if n_targets == 1 and state_at_t.ndim == 1:
+    if n_targets == 1:
         if target_no != 0:
             raise IndexError("target_no out of bounds for single-target ground truth")
-        return state_at_t
+        if state_at_t.ndim == 0:
+            return state_at_t.reshape(1)
+        if state_at_t.ndim == 1:
+            return state_at_t
     if state_at_t.ndim != 2:
         raise ValueError(
             "MTT groundtruth entries must have shape (n_targets, dim); "
@@ -215,7 +218,6 @@ def generate_measurements(groundtruth, simulation_config):
                 curr_dist = copy.deepcopy(meas_noise)
                 curr_dist.mu = groundtruth[t]
                 measurements[t] = curr_dist.sample(n_meas)
-
             elif isinstance(meas_noise, GaussianDistribution):
                 noise_samples = meas_noise.sample(n_meas)
                 measurements[t] = tile(
