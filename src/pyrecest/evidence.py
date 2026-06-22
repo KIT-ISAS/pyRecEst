@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+import numpy as np
+
 EvidenceComputationKind = Literal["full_smoothing", "evidence_only"]
 
 
@@ -77,7 +79,10 @@ class EvidenceComputationMode:
     def from_return_smoothed(cls, return_smoothed: bool) -> "EvidenceComputationMode":
         """Build a mode from the common Boolean smoothing flag."""
 
-        return cls.full_smoothing() if bool(return_smoothed) else cls.evidence_only()
+        return_smoothed = _coerce_return_smoothed(return_smoothed)
+        if return_smoothed is None:
+            raise ValueError("return_smoothed must be a bool")
+        return cls.full_smoothing() if return_smoothed else cls.evidence_only()
 
     @property
     def evidence_only_requested(self) -> bool:
@@ -100,14 +105,25 @@ class EvidenceComputationMode:
         return diagnostics
 
 
+def _coerce_return_smoothed(return_smoothed: bool | None) -> bool | None:
+    """Return an explicit Boolean smoothing flag without truthiness coercion."""
+
+    if return_smoothed is None:
+        return None
+    if isinstance(return_smoothed, (bool, np.bool_)):
+        return bool(return_smoothed)
+    raise ValueError("return_smoothed must be a bool or None")
+
+
 def _require_return_smoothed_agreement(
     mode: EvidenceComputationMode, return_smoothed: bool | None
 ) -> EvidenceComputationMode:
     """Reject contradictory explicit mode and compatibility flag requests."""
 
+    return_smoothed = _coerce_return_smoothed(return_smoothed)
     if return_smoothed is None:
         return mode
-    if bool(return_smoothed) != mode.return_smoothed:
+    if return_smoothed != mode.return_smoothed:
         raise ValueError("mode and return_smoothed request inconsistent smoothing")
     return mode
 
@@ -119,11 +135,12 @@ def resolve_evidence_computation_mode(
 ) -> EvidenceComputationMode:
     """Resolve a string/Boolean compatibility mode into a typed object."""
 
+    return_smoothed = _coerce_return_smoothed(return_smoothed)
     if isinstance(mode, EvidenceComputationMode):
         return _require_return_smoothed_agreement(mode, return_smoothed)
     if mode is None:
         return EvidenceComputationMode.from_return_smoothed(
-            True if return_smoothed is None else bool(return_smoothed)
+            True if return_smoothed is None else return_smoothed
         )
 
     key = str(mode).strip().lower().replace("-", "_")
