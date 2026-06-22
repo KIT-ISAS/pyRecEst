@@ -133,9 +133,11 @@ def _call_transition_function(
         return function(state, **call_kwargs)
 
     dt_mode = _dt_call_mode(function)
-    if dt_mode == "keyword" and "dt" not in call_kwargs:
-        return function(state, dt=dt, **call_kwargs)
+    if dt_mode == "keyword":
+        call_kwargs["dt"] = dt
+        return function(state, **call_kwargs)
     if dt_mode == "positional":
+        call_kwargs.pop("dt", None)
         return function(state, dt, **call_kwargs)
     return function(state, **call_kwargs)
 
@@ -153,9 +155,11 @@ def _call_transition_jacobian(
         return function(state, **call_kwargs)
 
     dt_mode = _dt_call_mode(function)
-    if dt_mode == "keyword" and "dt" not in call_kwargs:
-        return function(state, dt=dt, **call_kwargs)
+    if dt_mode == "keyword":
+        call_kwargs["dt"] = dt
+        return function(state, **call_kwargs)
     if dt_mode == "positional":
+        call_kwargs.pop("dt", None)
         return function(state, dt, **call_kwargs)
     return function(state, **call_kwargs)
 
