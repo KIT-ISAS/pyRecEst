@@ -154,6 +154,20 @@ class TestMultiSessionAssignmentObservationCosts(unittest.TestCase):
                 start_costs={2: array([1.0], dtype=float)},
             )
 
+    def test_rejects_invalid_mapping_session_keys(self):
+        invalid_cost_kwargs = (
+            {"start_costs": {True: array([1.0], dtype=float)}},
+            {"end_costs": {1.5: array([1.0], dtype=float)}},
+        )
+
+        for cost_kwargs in invalid_cost_kwargs:
+            with self.subTest(cost_kwargs=cost_kwargs):
+                with self.assertRaisesRegex(ValueError, "Session indices"):
+                    solve_multisession_assignment_with_observation_costs(
+                        [array([[1.0]], dtype=float)],
+                        **cost_kwargs,
+                    )
+
     def test_rejects_mismatched_lengths(self):
         with self.assertRaises(ValueError):
             solve_multisession_assignment_with_observation_costs(
