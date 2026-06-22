@@ -52,9 +52,9 @@ def pareto_front_indices(
 
     objective_names = _validate_objectives(objectives)
     _require_table_columns(table, objective_names, "Pareto objective")
+    direction_map = _directions_by_objective(objective_names, directions)
     if table.empty:
         return []
-    direction_map = _directions_by_objective(objective_names, directions)
     candidates = (
         table.loc[_feasible_index(table, feasible_mask)]
         if feasible_mask is not None
