@@ -152,9 +152,15 @@ def test_shape_helpers_report_mismatches():
 def test_shape_helpers_reject_non_integer_axes():
     value = ArrayLikeObject((2, 3))
 
-    with pytest.raises(ProtocolAssertionError, match=r"expected_shape\[0\] must be an integer"):
+    with pytest.raises(
+        ProtocolAssertionError,
+        match=r"expected_shape\[0\] must be an integer",
+    ):
         assert_shape(value, (2.5, 3))
-    with pytest.raises(ProtocolAssertionError, match=r"value\[0\] must be an integer"):
+    with pytest.raises(
+        ProtocolAssertionError,
+        match=r"value\[0\] must be an integer",
+    ):
         assert_shape(ArrayLikeObject((2.5, 3)), (2, 3))
 
 
@@ -210,6 +216,5 @@ def test_model_helpers_return_method_results():
     )
     assert assert_supports_transition_density(transition_model, next_state, state) == (
         next_state,
-        state_previous,
+        state,
     )
-".replace("state_previous
