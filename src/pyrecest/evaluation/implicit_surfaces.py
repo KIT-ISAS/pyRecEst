@@ -68,7 +68,8 @@ def surface_band_probability_from_signed_distance(
     epsilon = _positive_float("epsilon", epsilon)
     min_std = _positive_float("min_std", min_std)
     cdf = ndtr if normal_cdf is None else normal_cdf
-    std = _maximum(distance_std, min_std)
+    distance = _array_like(distance)
+    std = _maximum(_array_like(distance_std), min_std)
     upper = (epsilon - distance) / std
     lower = (-epsilon - distance) / std
     return _clip_01(cdf(upper) - cdf(lower))
@@ -79,6 +80,12 @@ def _positive_float(name: str, value: float) -> float:
     if not np.isfinite(parsed) or parsed <= 0.0:
         raise ValueError(f"{name} must be finite and positive.")
     return parsed
+
+
+def _array_like(values: Any) -> Any:
+    if hasattr(values, "clamp"):
+        return values
+    return np.asarray(values, dtype=np.float64)
 
 
 def _maximum(values: Any, minimum: float) -> Any:
