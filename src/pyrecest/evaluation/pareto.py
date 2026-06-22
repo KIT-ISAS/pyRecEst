@@ -156,10 +156,10 @@ def constraint_mask(
     mask = pd.Series(True, index=table.index, dtype=bool)
     for column, spec in constraints.items():
         op, threshold = _parse_constraint_spec(spec)
-        threshold_value = _coerce_finite_threshold(threshold, column)
         if column not in table.columns:
             mask &= False
             continue
+        threshold_value = _coerce_finite_threshold(threshold, column)
         values = pd.to_numeric(table[column], errors="coerce")
         present_values = values.notna()
         if op == "<=":
