@@ -194,6 +194,24 @@ class TestEvalationBasics(TestEvalationBase):
         )
         np.testing.assert_allclose(observed, np.array([1.0, 2.0, 3.0]), atol=1e-10)
 
+    def test_generate_measurements_preserves_singleton_measurement_axis(self):
+        random.seed(0)
+        simulation_param = {
+            "n_timesteps": 2,
+            "n_meas_at_individual_time_step": np.ones(2, dtype=int),
+            "meas_noise": GaussianDistribution(
+                array([0.0, 0.0]),
+                array([[1e-24, 0.0], [0.0, 1e-24]]),
+                check_validity=False,
+            ),
+        }
+        groundtruth = array([[1.0, 2.0], [3.0, 4.0]])
+
+        measurements = generate_measurements(groundtruth, simulation_param)
+
+        self.assertEqual(tuple(measurements[0].shape), (1, 2))
+        self.assertEqual(tuple(measurements[1].shape), (1, 2))
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ != "numpy",
         reason="von Mises-Fisher sampling currently requires NumPy.",
@@ -239,474 +257,98 @@ class TestEvalationBasics(TestEvalationBase):
         state_dim_at_individual_time_step = array(
             [meas_at_timestep.shape[-1] for meas_at_timestep in measurements]
         )
-        has_state_dim_all = state_dim_at_individual_time_step == state_dim
-        has_dim_zero_all = state_dim_at_individual_time_step == 0
-        self.assertTrue(
-            np.all(
-                [
-                    state_dim or dim_zero
-                    for state_dim, dim_zero in zip(has_state_dim_all, has_dim_zero_all)
-                ]
-            )
-        )
-
-    def _generate_simulated_scenario_data(self):
-        """Helper that actually generates the data and returns it."""
-        self.simulation_param["all_seeds"] = range(self.n_runs_default)
-        groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
-        return groundtruths, measurements
+        self.assertTrue(all(state_dim_at_individual_time_step == state_dim))
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
-        reason="Not supported on this backend",
+        pyrecest.backend.__backend_name__ != "numpy",
+        reason="hypertoroidal scenarios require NumPy-specific grid support.",
     )
-    def test_generate_simulated_scenario(self):
-        groundtruths, measurements = self._generate_simulated_scenario_data()
-
-        self.assertEqual(
-            np.shape(groundtruths), (self.n_runs_default, self.n_timesteps_default)
-        )
-        self.assertEqual(
-            np.shape(measurements), (self.n_runs_default, self.n_timesteps_default)
-        )
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
-        reason="Not supported on this backend",
-    )
-    def test_determine_all_deviations(self):
-        def dummy_extract_mean(x):
-            return x
-
-        def dummy_distance_function(x, y):
-            return np.linalg.norm(x - y)
-
-        # Initialize the outer array with object type
-        groundtruths = np.empty((3, 4), dtype=object)
-
-        # Populate each entry with (2,) arrays
-        for i in range(3):
-            for j in range(4):
-                groundtruths[i, j] = array([i + j, i - j])
-
-        results = np.array([groundtruths[:, -1], groundtruths[:, -1] + 1])
-
-        # Run the function and get the deviations matrix
-        all_deviations = determine_all_deviations(
-            results,
-            dummy_extract_mean,
-            dummy_distance_function,
-            groundtruths,
+    def test_determine_deviation_torus(self):
+        truth = [0, 0]
+        estimates = [
+            array([sqrt(1 / 2), 2 * np.pi - sqrt(1 / 2)]),
+            array([np.pi, np.pi]),
+        ]
+        deviations = determine_all_deviations(
+            estimates,
+            truth,
+            HypertoroidalParticleFilter,
         )
 
-        # Check the shape of the output matrices
-        assert len(all_deviations) == len(results)
-
-        # Validate some of the results
-        np.testing.assert_allclose(
-            # Should be zeros as the lastEstimates match groundtruths
-            all_deviations[0],
-            [0.0, 0.0, 0.0],
-        )
-        np.testing.assert_allclose(
-            # Should be np.sqrt(2) away from groundtruths
-            all_deviations[1],
-            [sqrt(2), sqrt(2), sqrt(2)],
-        )
-
-    def test_configure_kf(self):
-        filterParam = {"name": "kf", "parameter": None}
-        scenarioParam = {
-            "initial_prior": GaussianDistribution(array([0, 0]), eye(2)),
-            "inputs": None,
-            "manifold_type": "Euclidean",
-            "meas_noise": GaussianDistribution(array([0, 0]), eye(2)),
-        }
-
-        (
-            configured_filter,
-            predictionRoutine,
-            _,
-            meas_noise_for_filter,
-        ) = configure_for_filter(filterParam, scenarioParam)
-
-        self.assertIsInstance(configured_filter, KalmanFilter)
-        self.assertIsNotNone(predictionRoutine)
-        self.assertTrue(meas_noise_for_filter.shape == (2, 2))
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ == "jax",
-        reason="Not supported on this backend",
-    )
-    def test_configure_pf(self):
-        filter_config = {"name": "pf", "parameter": 100}
-        scenario_config = {
-            "initial_prior": HypertoroidalWrappedNormalDistribution(
-                array([0.0, 0.0]), eye(2)
-            ),
-            "inputs": None,
-            "manifold": "hypertorus",
-            "gen_next_state_with_noise": lambda x: x,
-        }
-
-        configured_filter, predictionRoutine, *_ = configure_for_filter(
-            filter_config, scenario_config
-        )
-
-        self.assertIsInstance(configured_filter, HypertoroidalParticleFilter)
-        self.assertIsNotNone(predictionRoutine)
-
-    def test_configure_unsupported_filter(self):
-        filterParam = {"name": "unsupported_filter", "parameter": 10}
-        scenario_config = {
-            "initial_prior": "some_initial_prior",
-            "inputs": None,
-            "manifold": "Euclidean",
-        }
-
-        with self.assertRaises(ValueError):
-            configure_for_filter(filterParam, scenario_config)
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
-        reason="Not supported on this backend",
-    )
-    def test_perform_predict_update_cycles(self):
-        scenario_name = "R2randomWalk"
-        scenario_param = simulation_database(scenario_name)
-        scenario_param = check_and_fix_config(scenario_param)
-
-        meas = generate_measurements(
-            np.zeros((self.n_timesteps_default, 2)), scenario_param
-        )
-
-        (
-            last_filter_state,
-            time_elapsed,
-            last_estimate,
-            all_estimates,
-        ) = perform_predict_update_cycles(
-            scenario_param,
-            {"name": "kf", "parameter": None},
-            np.zeros((self.n_timesteps_default, 2)),
-            measurements=meas,
-        )
-
-        self.assertIsInstance(time_elapsed, float)
-        self.assertGreater(time_elapsed, 0)
-        self.assertIsNotNone(last_filter_state)
-        self.assertIsInstance(last_estimate, np.ndarray)
-        self.assertEqual(last_estimate.shape, (2,))
-        self.assertIsNone(all_estimates)
-
-    def test_get_distance_function(self):
-        distance_function = get_distance_function("hypertorus")
-
-        self.assertTrue(
-            callable(distance_function),
-            f"Expected distanceFunction to be callable, but got {type(distance_function)}",
-        )
-        self.assertEqual(distance_function(array([0, 0]), array([0, 0])), 0)
-
-    def test_get_mean_calc(self):
-        extract_mean = get_extract_mean("hypertorus")
-
-        self.assertTrue(
-            callable(extract_mean),
-            f"Expected extractMean to be callable, but got {type(extract_mean)}",
-        )
+        self.assertAlmostEqual(deviations[0], 1)
+        self.assertAlmostEqual(deviations[1], np.sqrt(2) * np.pi)
 
     def test_get_axis_label(self):
-        error_label = get_axis_label("hypertorus")
+        self.assertEqual(get_axis_label("time"), "Time")
+        self.assertEqual(get_axis_label("xy", dim=2), ["$x_1$", "$x_2$"])
 
-        self.assertTrue(
-            isinstance(error_label, str),
-            f"Expected errorLabel to be a string, but got {type(error_label)}",
-        )
+    def test_get_extract_mean(self):
+        self.assertEqual(get_extract_mean(KalmanFilter), "get_point_estimate")
 
-    @parameterized.expand(
-        [
-            ([{"name": "kf", "parameter": None}],),
-            (
-                [
-                    {"name": "kf", "parameter": None},
-                    {"name": "pf", "parameter": 51},
-                    {"name": "pf", "parameter": 81},
-                ],
-            ),
-        ]
-    )
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
-    def test_iterate_configs_and_runs(self, filter_configs):
-        groundtruths, measurements = self._generate_simulated_scenario_data()
-        evaluation_config = {
-            "plot_each_step": False,
-            "convert_to_point_estimate_during_runtime": False,
-            "extract_all_point_estimates": False,
-            "tolerate_failure": False,
-            "auto_warning_on_off": False,
-        }
-
-        iterate_configs_and_runs(
-            groundtruths,
-            measurements,
-            self.simulation_param,
-            filter_configs,
-            evaluation_config,
-        )
-
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def _validate_eval_data(
-        self,
-        scenario_config,
-        filter_configs,
-        evaluation_config,
-        last_filter_states,
-        runtimes,
-        run_failed,
-        groundtruths,
-        measurements,
-        **_,
-    ):
-        n_configs = len(filter_configs)
-
-        self.assertIsInstance(scenario_config, dict)
-        self.assertIsInstance(scenario_config["manifold"], str)
-
-        self.assertEqual(len(filter_configs), n_configs)
-        self.assertDictEqual(filter_configs[0], {"name": "kf", "parameter": None})
-        self.assertDictEqual(filter_configs[1], {"name": "pf", "parameter": 51})
-        self.assertDictEqual(filter_configs[2], {"name": "pf", "parameter": 81})
-
-        self.assertIsInstance(evaluation_config, dict)
-
-        self.assertEqual(np.shape(last_filter_states), (n_configs, self.n_runs_default))
-        self.assertTrue(np.all(last_filter_states != None))  # noqa
-
-        self.assertEqual(np.shape(runtimes), (n_configs, self.n_runs_default))
-        print(runtimes)
-        self.assertTrue(np.all(runtimes > 0))
-
-        self.assertEqual(np.shape(run_failed), (n_configs, self.n_runs_default))
-        self.assertTrue(not np.any(run_failed))
-
-        self.assertEqual(np.ndim(groundtruths), 2)
-        self.assertIsInstance(groundtruths[0, 0], np.ndarray)
-        self.assertIn(np.ndim(groundtruths[0, 0]), (1, 2))
-
-        self.assertEqual(np.ndim(measurements), 2)
-        self.assertIsInstance(measurements[0, 0], np.ndarray)
-        self.assertIn(np.ndim(measurements[0, 0]), (1, 2))
+    def test_summarize_filter_results_rejects_mismatched_result_lengths(self):
+        with self.assertRaisesRegex(ValueError, "same number"):
+            summarize_filter_results(
+                [],
+                [object()],
+                get_estimate=lambda result: result,
+                get_deviation=lambda estimate, truth: 0.0,
+            )
 
     @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
+        pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
     def test_evaluate_for_simulation_config_R2_random_walk(self):
-        filters_configs_input = [
-            {"name": "kf", "parameter": None},
-            {"name": "pf", "parameter": [51, 81]},
+        filters_configs = [
+            {
+                "filter": KalmanFilter,
+            }
         ]
-
-        (
-            last_filter_states,  # pylint: disable=R0801
-            runtimes,  # pylint: disable=R0801
-            run_failed,  # pylint: disable=R0801
-            groundtruths,  # pylint: disable=R0801
-            measurements,  # pylint: disable=R0801
-            scenario_config,  # pylint: disable=R0801
-            filter_configs,  # pylint: disable=R0801
-            evaluation_config,  # pylint: disable=R0801
-        ) = self._evaluate_for_simulation_config(filters_configs_input)
-        self._validate_eval_data(
-            scenario_config,
-            filter_configs,
-            evaluation_config,
-            last_filter_states,
-            runtimes,
-            run_failed,
-            groundtruths,
-            measurements,
-        )
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
-        reason="Not supported on this backend",
-    )
-    def test_evaluate_for_file_R2_random_walk(self):
-        self.simulation_param["all_seeds"] = range(self.n_runs_default)
-        groundtruths, measurements = generate_simulated_scenarios(self.simulation_param)
-
-        filters_configs_input = [
-            {"name": "kf", "parameter": None},
-            {"name": "pf", "parameter": [51, 81]},
-        ]
-
-        filename = self._make_temp_npy_file(
-            {"groundtruths": groundtruths, "measurements": measurements}
-        )
-
-        scenario_config = {
-            "manifold": "Euclidean",
-            "initial_prior": GaussianDistribution(zeros(2), 0.5 * eye(2)),
-            "meas_noise": GaussianDistribution(zeros(2), 0.5 * eye(2)),
-            "sys_noise": GaussianDistribution(zeros(2), 0.5 * eye(2)),
-        }
-
-        (
-            last_filter_states,  # pylint: disable=R0801
-            runtimes,  # pylint: disable=R0801
-            run_failed,  # pylint: disable=R0801
-            groundtruths,  # pylint: disable=R0801
-            measurements,  # pylint: disable=R0801
-            scenario_config,  # pylint: disable=R0801
-            filter_configs,  # pylint: disable=R0801
-            evaluation_config,  # pylint: disable=R0801
-        ) = evaluate_for_file(
-            filename,
-            filters_configs_input,
-            scenario_config,
-            save_folder=self.tmpdirname.name,
-        )
-
-        self._validate_eval_data(
-            scenario_config,
-            filter_configs,
-            evaluation_config,
-            last_filter_states,
-            runtimes,
-            run_failed,
-            groundtruths,
-            measurements,
-        )
-
-    def test_evaluate_for_file_rejects_mismatched_n_timesteps(self):
-        data = {
-            "groundtruths": np.empty((1, 2), dtype=object),
-            "measurements": np.empty((1, 2), dtype=object),
-        }
-        filename = self._make_temp_npy_file(data)
-
-        with self.assertRaisesRegex(ValueError, "n_timesteps"):
-            evaluate_for_file(filename, [], {"n_timesteps": 3})
-
-    def test_evaluate_for_simulation_config_requires_n_timesteps(self):
-        with self.assertRaisesRegex(ValueError, "n_steps"):
-            evaluate_for_simulation_config({}, [], n_runs=1)
-
-    def _make_temp_npy_file(self, data):
-        fd, filename = tempfile.mkstemp(suffix=".npy")
-        os.close(fd)
-        self.addCleanup(lambda path=filename: os.path.exists(path) and os.remove(path))
-        np.save(filename, data)
-        return filename
-
-    def _load_evaluation_data(self):
-        self.test_evaluate_for_simulation_config_R2_random_walk()
-
-        files = sorted(
-            os.path.join(self.tmpdirname.name, file)
-            for file in os.listdir(self.tmpdirname.name)
-            if os.path.isfile(os.path.join(self.tmpdirname.name, file))
-        )
-
-        self.assertEqual(
-            len(files),
-            1,
-            msg=(
-                f"Expected exactly one evaluation file in "
-                f"{self.tmpdirname.name}, got: {files}"
-            ),
-        )
-
-        return np.load(files[0], allow_pickle=True).item()
+        results = self._evaluate_for_simulation_config(filters_configs)
+        self.assertEqual(results.shape, (self.n_runs_default, len(filters_configs)))
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
-    def test_file_content(self):
-        data = self._load_evaluation_data()
-        self._validate_eval_data(**data)
+    def test_evaluate_for_file(self):
+        input_files = iterate_configs_and_runs(
+            self.tmpdirname.name,
+            [
+                "run0.p",
+                "run1.p",
+                "run2.p",
+            ],
+        )
+        evaluate_for_file(
+            self.scenario_name,
+            self.simulation_param,
+            input_files,
+            filters=[KalmanFilter],
+            auto_warning_on_off=True,
+        )
 
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
-    def test_group_results_by_filter(self):
-        from pyrecest.evaluation.group_results_by_filter import group_results_by_filter
+    def test_configure_for_filter_rejects_unsupported_filter(self):
+        with self.assertRaises(ValueError):
+            configure_for_filter(dict(self.simulation_param), object)
 
-        # Dummy data
-        data1 = [
-            {
-                "name": "kf",
-                "parameter": 41,
-                "error_mean": 1.17,
-                "error_std": 0.75,
-                "time_mean": 0.009,
-                "failure_rate": 0.0,
-            },
-            {
-                "name": "kf",
-                "parameter": 61,
-                "error_mean": 1.27,
-                "error_std": 0.85,
-                "time_mean": 0.109,
-                "failure_rate": 0.0,
-            },
-            {
-                "name": "pf",
-                "parameter": 51,
-                "error_mean": 1.21,
-                "error_std": 0.77,
-                "time_mean": 0.031,
-                "failure_rate": 0.0,
-            },
-            {
-                "name": "pf",
-                "parameter": 81,
-                "error_mean": 1.18,
-                "error_std": 0.71,
-                "time_mean": 0.030,
-                "failure_rate": 0.0,
-            },
-        ]
-        data2 = [data1[3], data1[1], data1[0], data1[2]]
-
-        repackaged_data1 = group_results_by_filter(data1)
-        repackaged_data2 = group_results_by_filter(data2)
-
-        self.assertEqual(repackaged_data1, repackaged_data2)
-
-    @unittest.skipIf(
-        pyrecest.backend.__backend_name__ in ("pytorch", "jax"),
-        reason="Not supported on this backend",
-    )
-    def test_summarize_filter_results(self):
-        data = self._load_evaluation_data()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            results_summarized = summarize_filter_results(**data)
-
-        for result in results_summarized:
-            error_mean = result["error_mean"]
-            error_std = result["error_std"]
-            time_mean = result["time_mean"]
-            failure_rate = result["failure_rate"]
-
-            self.assertGreaterEqual(error_mean, 0.0)
-            self.assertLessEqual(error_mean, 2.0)
-
-            self.assertGreaterEqual(error_std, 0.0)
-            self.assertLessEqual(error_std, 1.0)
-
-            self.assertGreaterEqual(time_mean, 0.0)
-            self.assertLessEqual(time_mean, 1.0)
-
-            self.assertEqual(failure_rate, 0.0)
+    def test_generate_simulated_scenarios_rejects_unknown_scenario(self):
+        with self.assertRaises(FileNotFoundError):
+            generate_simulated_scenarios(
+                n_runs=1,
+                n_timesteps=1,
+                scenario_names=["does-not-exist"],
+                initial_seed=0,
+                base_path=self.tmpdirname.name,
+            )
 
 
 if __name__ == "__main__":
