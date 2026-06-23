@@ -85,6 +85,24 @@ def test_ellipsoid_axis_offsets_reject_negative_radius() -> None:
         ellipsoid_axis_offsets(np.eye(2), radius=-1.0)
 
 
+@pytest.mark.parametrize("bad_radius", [np.nan, np.inf, -np.inf])
+def test_ellipsoid_axis_offsets_reject_nonfinite_radius(bad_radius: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        ellipsoid_axis_offsets(np.eye(2), radius=bad_radius)
+
+
+@pytest.mark.parametrize("bad_radius", [np.nan, np.inf, -np.inf])
+def test_ellipsoid_sigma_points_reject_nonfinite_radii(bad_radius: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        ellipsoid_sigma_points([0.0, 0.0], np.eye(2), radii=(1.0, bad_radius))
+
+
+@pytest.mark.parametrize("bad_radius", [np.nan, np.inf, -np.inf])
+def test_mahalanobis_support_points_reject_nonfinite_radius(bad_radius: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        mahalanobis_support_points([0.0, 0.0], np.eye(2), [[1.0, 0.0]], radius=bad_radius)
+
+
 def test_support_points_reject_shape_mismatch() -> None:
     with pytest.raises(ValueError, match="axis_offsets"):
         support_points_from_axis_offsets([0.0, 0.0, 0.0], np.eye(2))
