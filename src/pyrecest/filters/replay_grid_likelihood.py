@@ -315,6 +315,8 @@ def _coerce_bin_centers(bin_centers) -> np.ndarray:
         raise ValueError(
             "bin_centers must contain at least one point and one dimension"
         )
+    if not np.all(np.isfinite(bin_centers)):
+        raise ValueError("bin_centers must be finite")
     return bin_centers
 
 
@@ -406,14 +408,20 @@ def _nearest_grid_values(
     *,
     log_zero: float,
 ) -> np.ndarray:
-    indices = _nearest_bin_indices(positions, bin_tree)
-    output = values[indices]
-    if not np.all(np.isfinite(output)):
+    finite_positions = np.isfinite(positions).all(axis=1)
+    output = np.full(positions.shape[0], float(log_zero), dtype=float)
+    if not np.any(finite_positions):
+        return output
+
+    indices = _nearest_bin_indices(positions[finite_positions], bin_tree)
+    nearest_values = values[indices]
+    if not np.all(np.isfinite(nearest_values)):
         finite_values = values[np.isfinite(values)]
         replacement = (
             float(np.min(finite_values)) if finite_values.size else float(log_zero)
         )
-        output = np.where(np.isfinite(output), output, replacement)
+        nearest_values = np.where(np.isfinite(nearest_values), nearest_values, replacement)
+    output[finite_positions] = nearest_values
     return output
 
 

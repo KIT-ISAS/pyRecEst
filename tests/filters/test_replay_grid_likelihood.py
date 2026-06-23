@@ -71,6 +71,28 @@ class TestReplayGridLikelihood(unittest.TestCase):
 
         self.assertEqual(lookup.method, "nearest")
 
+    def test_nearest_grid_likelihood_maps_nonfinite_positions_to_log_zero(self):
+        bin_centers = np.asarray([[0.0, 0.0], [1.0, 0.0]])
+        values = np.asarray([0.0, 2.0])
+
+        result = replay_grid_log_likelihood_values(
+            np.asarray([[np.nan, 0.0], [np.inf, 0.0], [1.1, 0.0]]),
+            values,
+            bin_centers,
+            interpolation="nearest",
+            log_zero=-123.0,
+        )
+
+        np.testing.assert_allclose(result, [-123.0, -123.0, 2.0])
+
+    def test_replay_grid_likelihood_rejects_nonfinite_bin_centers(self):
+        with self.assertRaisesRegex(ValueError, "bin_centers must be finite"):
+            replay_grid_log_likelihood_values(
+                np.asarray([[0.0, 0.0]]),
+                np.asarray([0.0]),
+                np.asarray([[0.0, np.nan]]),
+            )
+
     def test_position_proposal_probability_is_ess_adaptive(self):
         self.assertAlmostEqual(effective_sample_size_fraction(np.ones(4)), 1.0)
         probability, ess_fraction = adaptive_position_proposal_probability(
