@@ -41,26 +41,30 @@ from pyrecest.distributions.nonperiodic.custom_linear_distribution import (
 from pyrecest.distributions.nonperiodic.linear_mixture import LinearMixture
 
 
-def _validate_positive_sample_count(n) -> int:
-    count_array = np.asarray(n)
+def _validate_positive_scalar_integer(value, name: str) -> int:
+    count_array = np.asarray(value)
     if count_array.ndim != 0:
-        raise ValueError("n must be a scalar integer")
+        raise ValueError(f"{name} must be a scalar integer")
 
     count = count_array.item()
     if isinstance(count, (bool, np.bool_)):
-        raise ValueError("n must be an integer, not a boolean")
+        raise ValueError(f"{name} must be an integer, not a boolean")
 
     try:
         count_int = int(count)
         count_float = float(count)
     except (OverflowError, TypeError, ValueError) as exc:
-        raise ValueError("n must be an integer") from exc
+        raise ValueError(f"{name} must be an integer") from exc
 
     if not np.isfinite(count_float) or not count_float.is_integer():
-        raise ValueError("n must be a finite integer")
+        raise ValueError(f"{name} must be a finite integer")
     if count_int <= 0:
-        raise ValueError("n must be positive")
+        raise ValueError(f"{name} must be positive")
     return count_int
+
+
+def _validate_positive_sample_count(n) -> int:
+    return _validate_positive_scalar_integer(n, "n")
 
 
 def _require_numpy_backend() -> None:
@@ -275,6 +279,9 @@ class HypercylindricalStateSpaceSubdivisionDistribution(
             raise NotImplementedError("Currently, linear dimension must be 1.")
         if dim_bound != 1:
             raise NotImplementedError("Currently, bounded dimension must be 1.")
+        no_of_grid_points = _validate_positive_scalar_integer(
+            no_of_grid_points, "no_of_grid_points"
+        )
 
         # Generate equidistant grid on the circle: shape (no_of_grid_points, 1)
         grid = HypertoroidalGridDistribution.generate_cartesian_product_grid(

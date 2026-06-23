@@ -1,6 +1,8 @@
+import builtins
 import copy
 import math
 import warnings
+from numbers import Integral
 
 import pyrecest.backend
 from beartype import beartype
@@ -40,6 +42,50 @@ from ..abstract_orthogonal_basis_distribution import AbstractOrthogonalBasisDist
 from ._input_validation import as_shift_vector
 from .abstract_hypertoroidal_distribution import AbstractHypertoroidalDistribution
 from .hypertoroidal_uniform_distribution import HypertoroidalUniformDistribution
+
+
+def _as_positive_coefficient_count(value, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} entries must be positive integers.")
+    value = int(value)
+    if value <= 0:
+        raise ValueError(f"{name} entries must be positive integers.")
+    return value
+
+
+def _normalize_coefficient_shape(
+    n_coefficients,
+    name: str,
+    *,
+    dim: int | None = None,
+    require_odd: bool = False,
+    round_even: bool = False,
+) -> tuple[int, ...]:
+    if isinstance(n_coefficients, bool):
+        raise ValueError(f"{name} entries must be positive integers.")
+    if isinstance(n_coefficients, Integral):
+        value = _as_positive_coefficient_count(n_coefficients, name)
+        values = (value,) if dim is None else (value,) * dim
+    else:
+        try:
+            values = tuple(
+                _as_positive_coefficient_count(value, name)
+                for value in n_coefficients
+            )
+        except TypeError as exc:
+            raise TypeError(
+                f"{name} must be an integer or a sequence of integers."
+            ) from exc
+
+    if len(values) == 0:
+        raise ValueError(f"{name} must contain at least one entry.")
+    if dim is not None and len(values) != dim:
+        raise ValueError(f"{name} must contain {dim} entries.")
+    if require_odd and builtins.any(value % 2 == 0 for value in values):
+        raise ValueError(f"{name} must be odd in every dimension.")
+    if round_even:
+        values = tuple(value if value % 2 == 1 else value + 1 for value in values)
+    return values
 
 
 class HypertoroidalFourierDistribution(
@@ -218,7 +264,7 @@ class HypertoroidalFourierDistribution(
 
     @beartype
     def truncate(
-        self, n_coefficients: tuple[int, ...], force_normalization: bool = False
+        self, n_coefficients: int | tuple[int, ...], force_normalization: bool = False
     ):
         """
         Truncate or pad the coefficient tensor to a desired size, centered.
@@ -231,11 +277,12 @@ class HypertoroidalFourierDistribution(
             If True, ensures the resulting distribution is normalized
             even if the transformation is 'identity'.
         """
-        if not bool(all((array(n_coefficients) - 1) % 2 == 0)):
-            raise ValueError("n_coefficients must be odd in every dimension.")
-
-        if not all(array(n_coefficients) > 0):
-            raise ValueError("truncate: n_coefficients must be positive.")
+        n_coefficients = _normalize_coefficient_shape(
+            n_coefficients,
+            "n_coefficients",
+            dim=self.dim,
+            require_odd=True,
+        )
 
         current_shape = self.coeff_mat.shape
         n_coefficients_arr = array(n_coefficients)
@@ -298,8 +345,12 @@ class HypertoroidalFourierDistribution(
         if n_coefficients is None:
             n_coefficients = self.coeff_mat.shape
 
-        if not bool(all((array(n_coefficients) - 1) % 2 == 0)):
-            raise ValueError("n_coefficients must be odd in every dimension.")
+        n_coefficients = _normalize_coefficient_shape(
+            n_coefficients,
+            "n_coefficients",
+            dim=self.dim,
+            require_odd=True,
+        )
 
         if desired_transformation == "identity":
             return copy.deepcopy(self)
@@ -346,6 +397,12 @@ class HypertoroidalFourierDistribution(
 
         if n_coefficients is None:
             n_coefficients = self.coeff_mat.shape
+        n_coefficients = _normalize_coefficient_shape(
+            n_coefficients,
+            "n_coefficients",
+            dim=self.dim,
+            require_odd=True,
+        )
 
         if self.transformation == "log":
             # Log-space: multiplication becomes addition of log-densities
@@ -428,7 +485,7 @@ class HypertoroidalFourierDistribution(
     @beartype
     def from_function(
         fun,
-        n_coefficients: tuple[int, ...],
+        n_coefficients: int | tuple[int, ...],
         desired_transformation: str = "sqrt",
     ) -> "HypertoroidalFourierDistribution":
         """
@@ -442,10 +499,13 @@ class HypertoroidalFourierDistribution(
             unnormalized) pdf on the grid.
         n_coefficients : tuple[int]
             Desired number of Fourier coefficients along each dimension.
-        desired_transformation : str
+            desired_transformation : str
             Transformation to apply to the function values before computing
             Fourier coefficients. One of 'sqrt', 'log', 'identity'.
         """
+        n_coefficients = _normalize_coefficient_shape(
+            n_coefficients, "n_coefficients"
+        )
         # Check that number of arguments matches dimensionality, where possible
         axes = [linspace(0.0, 2.0 * pi, int(n), endpoint=False) for n in n_coefficients]
         grid = meshgrid(*axes, indexing="ij")
@@ -468,22 +528,18 @@ class HypertoroidalFourierDistribution(
     @staticmethod
     def _odd_coefficient_shape(shape_like) -> tuple[int, ...]:
         """Return a positive, odd coefficient shape for centered Fourier modes."""
-        result = []
-        for n in shape_like:
-            n_int = int(n)
-            if n_int <= 0:
-                raise ValueError(
-                    "from_function_values: n_coefficients must be positive."
-                )
-            result.append(n_int if n_int % 2 == 1 else n_int + 1)
-        return tuple(result)
+        return _normalize_coefficient_shape(
+            shape_like,
+            "from_function_values: n_coefficients",
+            round_even=True,
+        )
 
     @classmethod
     @beartype
     def from_function_values(
         cls,
         fvals,
-        n_coefficients: tuple[int, ...] | None = None,
+        n_coefficients: int | tuple[int, ...] | None = None,
         desired_transformation: str = "sqrt",
         already_transformed: bool = False,
     ) -> "HypertoroidalFourierDistribution":
@@ -572,7 +628,7 @@ class HypertoroidalFourierDistribution(
     def from_distribution(
         cls,
         distribution: AbstractHypertoroidalDistribution,
-        n_coefficients: tuple[int, ...],
+        n_coefficients: int | tuple[int, ...],
         desired_transformation: str = "sqrt",
     ) -> "HypertoroidalFourierDistribution":
         """
@@ -581,6 +637,16 @@ class HypertoroidalFourierDistribution(
         n_coefficients can be a single integer (broadcast to all dimensions)
         or a sequence with length equal to distribution.dim.
         """
+        if not isinstance(distribution, AbstractHypertoroidalDistribution):
+            raise ValueError(
+                "from_distribution: invalidObject: First argument has to be "
+                "a hypertoroidal distribution."
+            )
+        n_coefficients = _normalize_coefficient_shape(
+            n_coefficients,
+            "n_coefficients",
+            dim=distribution.dim,
+        )
 
         # Special closed-form case: uniform distribution
         if isinstance(distribution, HypertoroidalUniformDistribution):
@@ -598,12 +664,6 @@ class HypertoroidalFourierDistribution(
                 )
 
             return cls(C, desired_transformation)
-
-        if not isinstance(distribution, AbstractHypertoroidalDistribution):
-            raise ValueError(
-                "from_distribution: invalidObject: First argument has to be "
-                "a hypertoroidal distribution."
-            )
 
         # Generic case: sample pdf of the distribution on a grid
         def pdf_on_grid(*axes):
@@ -623,7 +683,9 @@ class HypertoroidalFourierDistribution(
 
     @beartype
     def transform_via_fft(
-        self, desired_transformation: str, n_coefficients: tuple[int, ...] | None = None
+        self,
+        desired_transformation: str,
+        n_coefficients: int | tuple[int, ...] | None = None,
     ):
         """
         Transform the distribution by:
@@ -638,6 +700,11 @@ class HypertoroidalFourierDistribution(
 
         if n_coefficients is None:
             n_coefficients = self.coeff_mat.shape
+        n_coefficients = _normalize_coefficient_shape(
+            n_coefficients,
+            "n_coefficients",
+            dim=self.dim,
+        )
 
         # 1) Get function values on the implicit grid from the current coeffs
         fvals_complex = fft.ifftn(fft.ifftshift(self.coeff_mat)) * prod(
@@ -668,9 +735,12 @@ class HypertoroidalFourierDistribution(
 
         if n_coefficients is None:
             n_coefficients = self.coeff_mat.shape
-
-        if self.dim != len(n_coefficients):
-            raise ValueError("convolve: Incompatible dimensions for n_coefficients.")
+        n_coefficients = _normalize_coefficient_shape(
+            n_coefficients,
+            "n_coefficients",
+            dim=self.dim,
+            require_odd=True,
+        )
 
         # --- Adjust coefficient matrices if shapes differ (truncate both to max) ---
         shape1 = self.coeff_mat.shape

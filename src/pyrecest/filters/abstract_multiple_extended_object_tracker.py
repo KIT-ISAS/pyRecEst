@@ -12,6 +12,21 @@ from pyrecest.backend import asarray, concatenate, empty, stack
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 
 
+def _coerce_bool_flag(value: Any, name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a bool") from exc
+    if value_array.shape != ():
+        raise ValueError(f"{name} must be a scalar bool")
+    scalar = value_array.item()
+    if isinstance(scalar, bool):
+        return bool(scalar)
+    raise ValueError(f"{name} must be a bool")
+
+
 @dataclass
 class ExtendedObjectEstimate:  # pylint: disable=too-many-instance-attributes
     """Extracted estimate of one extended object.
@@ -100,14 +115,32 @@ class AbstractMultipleExtendedObjectTracker(AbstractMultitargetTracker):
 
         self.extraction_threshold = extraction_threshold
         self.max_extracted_objects = max_extracted_objects
-        self.extract_confirmed_only = bool(extract_confirmed_only)
+        self.extract_confirmed_only = _coerce_bool_flag(
+            extract_confirmed_only,
+            "extract_confirmed_only",
+        )
 
-        self.log_prior_extents = bool(log_prior_extents)
-        self.log_posterior_extents = bool(log_posterior_extents)
-        self.log_prior_measurement_rates = bool(log_prior_measurement_rates)
-        self.log_posterior_measurement_rates = bool(log_posterior_measurement_rates)
-        self.log_cardinality = bool(log_cardinality)
-        self.log_associations = bool(log_associations)
+        self.log_prior_extents = _coerce_bool_flag(
+            log_prior_extents,
+            "log_prior_extents",
+        )
+        self.log_posterior_extents = _coerce_bool_flag(
+            log_posterior_extents,
+            "log_posterior_extents",
+        )
+        self.log_prior_measurement_rates = _coerce_bool_flag(
+            log_prior_measurement_rates,
+            "log_prior_measurement_rates",
+        )
+        self.log_posterior_measurement_rates = _coerce_bool_flag(
+            log_posterior_measurement_rates,
+            "log_posterior_measurement_rates",
+        )
+        self.log_cardinality = _coerce_bool_flag(log_cardinality, "log_cardinality")
+        self.log_associations = _coerce_bool_flag(
+            log_associations,
+            "log_associations",
+        )
 
         self.prior_measurement_rates_over_time = None
         self.posterior_measurement_rates_over_time = None

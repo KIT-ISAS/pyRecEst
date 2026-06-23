@@ -1,4 +1,5 @@
 import copy
+from numbers import Integral
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import eye, tile
@@ -11,8 +12,19 @@ from .abstract_particle_filter import AbstractParticleFilter
 from .manifold_mixins import HypersphericalFilterMixin
 
 
+def _validate_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} must be a positive integer.")
+    value = int(value)
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer.")
+    return value
+
+
 class HypersphericalParticleFilter(AbstractParticleFilter, HypersphericalFilterMixin):
     def __init__(self, n_particles, dim):
+        n_particles = _validate_positive_integer(n_particles, "n_particles")
+        dim = _validate_positive_integer(dim, "dim")
         HypersphericalFilterMixin.__init__(self)
         # Initialize with valid points on the sphere
         AbstractParticleFilter.__init__(

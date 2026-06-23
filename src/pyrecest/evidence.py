@@ -19,8 +19,9 @@ EvidenceComputationKind = Literal["full_smoothing", "evidence_only"]
 def _coerce_bool_flag(value: bool, name: str) -> bool:
     """Return a bool flag without treating arbitrary truthy objects as true."""
 
-    if isinstance(value, (bool, np.bool_)):
-        return bool(value)
+    value_array = np.asarray(value)
+    if value_array.shape == () and np.issubdtype(value_array.dtype, np.bool_):
+        return bool(value_array.item())
     raise ValueError(f"{name} must be a bool")
 
 
@@ -124,9 +125,7 @@ def _coerce_return_smoothed(return_smoothed: bool | None) -> bool | None:
 
     if return_smoothed is None:
         return None
-    if isinstance(return_smoothed, (bool, np.bool_)):
-        return bool(return_smoothed)
-    raise ValueError("return_smoothed must be a bool or None")
+    return _coerce_bool_flag(return_smoothed, "return_smoothed")
 
 
 def _require_return_smoothed_agreement(

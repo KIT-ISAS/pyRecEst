@@ -28,6 +28,24 @@ class HyperHemisphereCartProdParticleFilterTest(unittest.TestCase):
             (n_particles, (dim_hemisphere + 1) * n_hemispheres),
         )
 
+    def test_constructor_rejects_invalid_particle_count(self):
+        for n_particles in (True, 0, -1, 1.5):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "n_particles"):
+                    HyperhemisphereCartProdParticleFilter(n_particles, 3, 2)
+
+    def test_constructor_rejects_invalid_hemisphere_dimension(self):
+        for dim_hemisphere in (True, 0, -1, 1.5):
+            with self.subTest(dim_hemisphere=dim_hemisphere):
+                with self.assertRaisesRegex(ValueError, "dim_hemisphere"):
+                    HyperhemisphereCartProdParticleFilter(5, dim_hemisphere, 2)
+
+    def test_constructor_rejects_invalid_hemisphere_count(self):
+        for n_hemispheres in (True, 0, -1, 1.5):
+            with self.subTest(n_hemispheres=n_hemispheres):
+                with self.assertRaisesRegex(ValueError, "n_hemispheres"):
+                    HyperhemisphereCartProdParticleFilter(5, 3, n_hemispheres)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__  # pylint: disable=no-name-in-module,no-member
         in (
