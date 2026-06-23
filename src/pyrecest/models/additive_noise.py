@@ -4,6 +4,8 @@ import inspect
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member,too-many-instance-attributes,too-many-positional-arguments
 from pyrecest.backend import asarray, is_array
 
@@ -72,6 +74,13 @@ def _reject_unexpected_kwargs(kwargs: dict[str, Any]) -> None:
     if kwargs:
         unexpected = ", ".join(sorted(kwargs))
         raise TypeError(f"Unexpected keyword argument(s): {unexpected}")
+
+
+def _validate_bool_flag(value: Any, name: str) -> bool:
+    value_array = np.asarray(value)
+    if value_array.shape != () or not np.issubdtype(value_array.dtype, np.bool_):
+        raise TypeError(f"{name} must be a boolean")
+    return bool(value_array.item())
 
 
 def _dt_call_mode(function: Callable[..., Any]) -> str | None:
@@ -228,7 +237,7 @@ class AdditiveNoiseTransitionModel:
 
     @vectorized.setter
     def vectorized(self, value):
-        self._function_is_vectorized = bool(value)
+        self._function_is_vectorized = _validate_bool_flag(value, "vectorized")
 
     @property
     def function_is_vectorized(self):
@@ -237,7 +246,9 @@ class AdditiveNoiseTransitionModel:
 
     @function_is_vectorized.setter
     def function_is_vectorized(self, value):
-        self._function_is_vectorized = bool(value)
+        self._function_is_vectorized = _validate_bool_flag(
+            value, "function_is_vectorized"
+        )
 
     def evaluate(self, state, dt=None, **kwargs):
         """Evaluate the noise-free transition, including default function args."""
@@ -341,7 +352,7 @@ class AdditiveNoiseMeasurementModel:
         self._noise_mean = _as_optional_array(noise_mean)
         self._noise_covariance = _as_optional_array(noise_covariance)
         self._jacobian = jacobian
-        self.vectorized = vectorized
+        self.vectorized = _validate_bool_flag(vectorized, "vectorized")
         self.function_args = dict(function_args or {})
 
     def evaluate(self, state, **kwargs):
