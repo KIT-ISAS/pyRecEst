@@ -2,7 +2,7 @@ import inspect
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from numbers import Integral
+from numbers import Integral, Number
 from typing import Union
 
 import pyrecest.backend
@@ -22,11 +22,20 @@ def _to_scalar(value):
 
 
 def _validate_integer_sample_parameter(value, name: str, minimum: int) -> int:
+    shape = getattr(value, "shape", None)
+    if shape is not None:
+        try:
+            shape_tuple = tuple(shape)
+        except TypeError:
+            shape_tuple = (shape,)
+        if shape_tuple != ():
+            raise ValueError(f"{name} must be a scalar integer")
+
     try:
         scalar = value.item()
     except AttributeError:
         scalar = value
-    except ValueError as exc:
+    except (TypeError, ValueError, RuntimeError) as exc:
         raise ValueError(f"{name} must be a scalar integer") from exc
 
     if isinstance(scalar, bool):
@@ -35,6 +44,8 @@ def _validate_integer_sample_parameter(value, name: str, minimum: int) -> int:
     if isinstance(scalar, Integral):
         integer = int(scalar)
     else:
+        if not isinstance(scalar, Number):
+            raise ValueError(f"{name} must be an integer")
         try:
             scalar_float = float(scalar)
             integer = int(scalar)
