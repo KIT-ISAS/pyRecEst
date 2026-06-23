@@ -49,12 +49,41 @@ class TestGPRHMTracker(unittest.TestCase):
         self.n_measurements = 10
         self.R = eye(2) * 0.1  # Measurement noise covariance
 
+    def test_constructor_accepts_scalar_integer_base_point_count(self):
+        tracker = GPRHMTracker(
+            n_base_points=np.array(8),
+            log_prior_estimates=False,
+            log_posterior_estimates=False,
+            log_prior_extents=False,
+            log_posterior_extents=False,
+        )
+
+        self.assertEqual(tracker.phi_pts.shape, (8,))
+
+    def test_constructor_rejects_invalid_base_point_counts(self):
+        for invalid_count in (0, True, 8.5, "8", [8]):
+            with self.subTest(n_base_points=invalid_count), self.assertRaises(
+                ValueError
+            ):
+                GPRHMTracker(n_base_points=invalid_count)
+
     def test_get_contour_points_honors_requested_count(self):
         requested_points = 32
 
         predicted_points = self.tracker.get_contour_points(requested_points)
 
         self.assertEqual(predicted_points.shape, (requested_points, 2))
+
+    def test_grid_and_contour_counts_must_be_positive_integers(self):
+        for invalid_count in (0, True, 5.5, "5", [5]):
+            with self.subTest(method="grid", n=invalid_count), self.assertRaises(
+                ValueError
+            ):
+                self.tracker.get_extents_on_grid(invalid_count)
+            with self.subTest(method="contour", n=invalid_count), self.assertRaises(
+                ValueError
+            ):
+                self.tracker.get_contour_points(invalid_count)
 
     def test_iou_after_updates(self):
         for _ in range(self.n_steps):

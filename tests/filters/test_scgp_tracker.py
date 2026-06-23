@@ -67,6 +67,32 @@ class TestSCGPTracker(unittest.TestCase):
 
         self.assertEqual(tracker.get_contour_points(7).shape, (7, 2))
 
+    def test_scgp_constructor_rejects_invalid_base_point_counts(self):
+        for invalid_count in (0, True, 8.5, "8", [8]):
+            with self.subTest(n_base_points=invalid_count), self.assertRaises(
+                ValueError
+            ):
+                FullSCGPTracker(invalid_count)
+
+    def test_scgp_grid_contour_and_sample_counts_must_be_integers(self):
+        tracker = self._make_tracker()
+
+        for invalid_count in (0, True, 5.5, "5", [5]):
+            with self.subTest(method="grid", n=invalid_count), self.assertRaises(
+                ValueError
+            ):
+                tracker.get_extents_on_grid(invalid_count)
+            with self.subTest(method="contour", n=invalid_count), self.assertRaises(
+                ValueError
+            ):
+                tracker.get_contour_points(invalid_count)
+
+        for invalid_count in (2, True, 5.5, "5", [5]):
+            with self.subTest(method="sample", n=invalid_count), self.assertRaises(
+                ValueError
+            ):
+                tracker.sample_contour(invalid_count)
+
     def test_predict_updates_kinematics_and_shape_process(self):
         tracker = self._make_tracker(shape_state=2.0 * self.shape_state)
 

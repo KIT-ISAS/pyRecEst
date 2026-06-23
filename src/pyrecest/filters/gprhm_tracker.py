@@ -1,6 +1,7 @@
 # pylint: disable=duplicate-code,invalid-name,no-member,no-name-in-module
 # pylint: disable=redefined-builtin,too-many-lines,too-many-locals
 from dataclasses import dataclass
+from numbers import Integral
 
 from pyrecest.backend import (
     abs,
@@ -37,6 +38,27 @@ from .measurement_reliability import (
 )
 from .measurement_scoring import MeasurementScore
 from .update_diagnostics import MeasurementUpdateDiagnostics
+
+
+def _as_integer(value, name, minimum):
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be an integer")
+    try:
+        value_array = array(value)
+        if value_array.shape != ():
+            raise ValueError(f"{name} must be a scalar integer")
+        scalar = value_array.item()
+    except AttributeError:
+        scalar = value
+    except TypeError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+    if isinstance(scalar, bool) or not isinstance(scalar, Integral):
+        raise ValueError(f"{name} must be an integer")
+    integer = int(scalar)
+    if integer < minimum:
+        raise ValueError(f"{name} must be at least {minimum}")
+    return integer
 
 
 def pol2cart(phi, r=1.0):
@@ -120,6 +142,7 @@ class GPRHMTracker(AbstractExtendedObjectTracker):
             log_prior_extents=log_prior_extents,
             log_posterior_extents=log_posterior_extents,
         )
+        n_base_points = _as_integer(n_base_points, "n_base_points", 1)
 
         def sin_kernel(
             phi_1, phi_2, sigma_squared=kernel_params[0], kernel_width=kernel_params[1]
@@ -173,11 +196,13 @@ class GPRHMTracker(AbstractExtendedObjectTracker):
         return self.p.flatten() if flatten_matrix else self.p
 
     def get_extents_on_grid(self, n: int = 100):
+        n = _as_integer(n, "n", 1)
         angles = linspace(0.0, 2 * pi, n, endpoint=False)
         extents = array([linalg.norm(self.A_fun(phi) @ self.p) for phi in angles])
         return extents
 
     def get_contour_points(self, n: int = 100):
+        n = _as_integer(n, "n", 1)
         angles = linspace(0.0, 2 * pi, n, endpoint=False)
         star_point = self.H @ self.m
         extents = self.get_extents_on_grid(n)
@@ -288,6 +313,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
             log_posterior_extents=log_posterior_extents,
         )
         self.measurement_dim = 2
+        n_base_points = _as_integer(n_base_points, "n_base_points", 1)
         self.phi_pts = linspace(0.0, 2 * pi, n_base_points, endpoint=False)
         self.kernel_params = kernel_params
         self._kernel_variance = kernel_params[0]
@@ -902,6 +928,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
 
     def get_extents_on_grid(self, n: int = 100, angles=None, body_frame=False):
         if angles is None:
+            n = _as_integer(n, "n", 1)
             angles = linspace(0.0, 2 * pi, n, endpoint=False)
         if body_frame:
             body_angles = angles
@@ -910,6 +937,7 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         return self._basis_matrix(body_angles) @ self.shape_state
 
     def get_contour_points(self, n: int = 100, scaling_factor=1.0):
+        n = _as_integer(n, "n", 1)
         angles = linspace(0.0, 2 * pi, n, endpoint=False)
         extents = scaling_factor * self.get_extents_on_grid(n, angles=angles)
         coords = pol2cart(angles, extents) + reshape(self.kinematic_state[:2], (-1, 1))
@@ -919,9 +947,8 @@ class FullSCGPTracker(AbstractExtendedObjectTracker):
         """Return sampled SCGP contour geometry."""
 
         if angles is None:
-            if n <= 2:
-                raise ValueError("n must be greater than 2")
-            sample_angles = linspace(0.0, 2 * pi, int(n), endpoint=False)
+            n = _as_integer(n, "n", 3)
+            sample_angles = linspace(0.0, 2 * pi, n, endpoint=False)
         else:
             sample_angles = array(angles)
             if sample_angles.ndim != 1:
