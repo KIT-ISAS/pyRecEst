@@ -61,6 +61,14 @@ def _choice_size(size):
     return size, _prod(size) if size else 1
 
 
+def _choice_bool(value, name):
+    if isinstance(value, bool):
+        return value
+    if _torch.is_tensor(value) and value.ndim == 0 and value.dtype == _torch.bool:
+        return bool(value.item())
+    raise TypeError(f"{name} must be a boolean")
+
+
 def _randint_size(size):
     return _shape_from_size(size)
 
@@ -259,6 +267,8 @@ def _take_choice(a, indices, axis):
 
 
 def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
+    replace = _choice_bool(replace, "replace")
+    shuffle = _choice_bool(shuffle, "shuffle")
     size, num_samples = _choice_size(size)
     population_size = _integer_population_size(a)
     if population_size is not None:
