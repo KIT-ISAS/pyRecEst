@@ -390,9 +390,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 fd.c = fd.c * fd.n
                 fd.multiplied_by_n = True
         else:
-            xs = arange(
-                0.0, 2.0 * pi, 2.0 * pi / n
-            )  # Like linspace without endpoint but with compatbiility for pytorch
+            xs = linspace(0.0, 2.0 * pi, n, endpoint=False)
             fvals = distribution.pdf(xs)
             if transformation == "identity":
                 pass
