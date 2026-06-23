@@ -29,6 +29,18 @@ class HypertoroidalParticleFilterTest(unittest.TestCase):
         self.forced_mean = array([1.0, 2.0, 3.0])
         random.seed(self.seed)
 
+    def test_constructor_rejects_invalid_particle_count(self):
+        for n_particles in (True, 0, -1, 1.5):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "n_particles"):
+                    HypertoroidalParticleFilter(n_particles, 3)
+
+    def test_constructor_rejects_invalid_dimension(self):
+        for dim in (True, 0, -1, 1.5):
+            with self.subTest(dim=dim):
+                with self.assertRaisesRegex(ValueError, "dim"):
+                    HypertoroidalParticleFilter(5, dim)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported'"
     )

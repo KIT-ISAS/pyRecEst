@@ -5,7 +5,10 @@ from pyrecest.backend import float64, int32, int64, linspace, pi, sum
 from pyrecest.distributions import CircularDiracDistribution
 
 from .abstract_particle_filter import AbstractParticleFilter
-from .hypertoroidal_particle_filter import HypertoroidalParticleFilter
+from .hypertoroidal_particle_filter import (
+    HypertoroidalParticleFilter,
+    _validate_positive_integer,
+)
 from .manifold_mixins import CircularFilterMixin
 
 
@@ -25,6 +28,7 @@ class CircularParticleFilter(HypertoroidalParticleFilter, CircularFilterMixin):
 
         :param n_particles: number of particles
         """
+        n_particles = _validate_positive_integer(n_particles, "n_particles")
         filter_state = CircularDiracDistribution(
             linspace(0.0, 2.0 * pi, n_particles, endpoint=False)
         )
