@@ -56,7 +56,7 @@ class BayesianComplexWatsonMixtureModel:
         Complex Bingham parameter matrices for each component.
     concentrations : ndarray of shape (K,)
         Concentration parameters (kappa) for each Watson component.
-    alpha : ndarray
+    alpha : ndarray of shape (K,)
         Dirichlet parameter vector (proportional to mixture weights).
     K : int
         Number of mixture components.
