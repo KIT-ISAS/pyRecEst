@@ -51,6 +51,14 @@ def _square_matrix(value: Any, *, name: str, dim: int | None = None) -> np.ndarr
     return matrix.copy()
 
 
+def _optional_bool(value: Any, *, name: str) -> bool | None:
+    if value is None:
+        return None
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    raise ValueError(f"{name} must be a boolean or None")
+
+
 def _jsonable(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         return value.tolist()
@@ -94,9 +102,7 @@ class TrackingEvent:
         object.__setattr__(self, "action", str(self.action))
         object.__setattr__(self, "measurement", measurement)
         object.__setattr__(self, "covariance", covariance)
-        object.__setattr__(
-            self, "accepted", None if self.accepted is None else bool(self.accepted)
-        )
+        object.__setattr__(self, "accepted", _optional_bool(self.accepted, name="accepted"))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
     @property
@@ -155,12 +161,11 @@ class TrackingRecord:
         innovation_cov = (
             None
             if self.innovation_cov is None
-            else _square_matrix(
-                self.innovation_cov,
-                name="innovation_cov",
-                dim=None if innovation is None else int(innovation.size),
-            )
+            else _square_matrix(self.innovation_cov, name="innovation_cov")
         )
+        if innovation is not None and innovation_cov is not None:
+            if innovation_cov.shape != (innovation.size, innovation.size):
+                raise ValueError("innovation_cov must match innovation dimension")
         measurement = _array_or_none(self.measurement, name="measurement", ndim=1)
         nis = None if self.nis is None else float(self.nis)
         if nis is not None and (not np.isfinite(nis) or nis < 0.0):
@@ -175,9 +180,7 @@ class TrackingRecord:
         object.__setattr__(self, "innovation", innovation)
         object.__setattr__(self, "innovation_cov", innovation_cov)
         object.__setattr__(self, "nis", nis)
-        object.__setattr__(
-            self, "accepted", None if self.accepted is None else bool(self.accepted)
-        )
+        object.__setattr__(self, "accepted", _optional_bool(self.accepted, name="accepted"))
         object.__setattr__(self, "measurement", measurement)
         object.__setattr__(self, "event_metadata", dict(self.event_metadata))
         object.__setattr__(self, "metadata", dict(self.metadata))

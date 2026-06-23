@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from .time_offset import _as_nonnegative_time_delta, nearest_time_indices
+from .time_offset import _validate_max_time_delta, nearest_time_indices
 
 _FEATURE_ROW_COUNT_ERROR = (
     "features rows must match requested row count; "
@@ -169,11 +169,11 @@ def make_bias_training_examples(
     reference_values: np.ndarray,
     *,
     feature_values: np.ndarray | None = None,
-    max_time_delta_s: float = 2.0,
+    max_time_delta_s: float | None = 2.0,
 ) -> BiasTrainingExamples:
     """Match measurements to nearest reference values and compute residual bias."""
 
-    max_time_delta = _as_nonnegative_time_delta(max_time_delta_s, "max_time_delta_s")
+    max_time_delta = _validate_max_time_delta(max_time_delta_s)
     measurement_times = np.asarray(measurement_times_s, dtype=float).reshape(-1)
     measurements = _as_2d(measurement_values, "measurement_values")
     reference_times = np.asarray(reference_times_s, dtype=float).reshape(-1)
@@ -219,11 +219,9 @@ def make_bias_training_examples(
     references = references[order]
     nearest = nearest_time_indices(reference_times, measurement_times)
     delta_s = np.abs(reference_times[nearest] - measurement_times)
-    valid = (
-        np.isfinite(measurement_times)
-        & np.isfinite(measurements).all(axis=1)
-        & (delta_s <= max_time_delta)
-    )
+    valid = np.isfinite(measurement_times) & np.isfinite(measurements).all(axis=1)
+    if max_time_delta is not None:
+        valid &= delta_s <= max_time_delta
     valid &= np.isfinite(features).all(axis=1)
     measured = measurements[valid]
     reference = references[nearest[valid]]
