@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -80,6 +81,45 @@ class TestEKFSplineTracker(unittest.TestCase):
         tracker.update(array([3.0, 0.0]))
 
         npt.assert_allclose(tracker.scale_state, array([1.0, 1.0]), atol=1e-10)
+
+    def test_scalar_array_correction_flags_are_honored(self):
+        tracker = EKFSplineTracker(
+            scale_correction=np.array(False),
+            orientation_correction=np.array(False),
+        )
+
+        self.assertFalse(tracker.scale_correction)
+        self.assertFalse(tracker.orientation_correction)
+
+    def test_constructor_rejects_invalid_correction_flags(self):
+        invalid_flags = ("false", 0, 1, [False])
+
+        for invalid_flag in invalid_flags:
+            with self.subTest(flag=invalid_flag), self.assertRaises(ValueError):
+                EKFSplineTracker(scale_correction=invalid_flag)
+            with self.subTest(flag=invalid_flag), self.assertRaises(ValueError):
+                EKFSplineTracker(orientation_correction=invalid_flag)
+
+    def test_constructor_rejects_invalid_iteration_counts(self):
+        invalid_grid_sizes = (True, 1, 2.5, "3", [3])
+        invalid_iterations = (False, -1, 1.5, "2", [2])
+
+        for invalid_grid_size in invalid_grid_sizes:
+            with self.subTest(grid_size=invalid_grid_size), self.assertRaises(
+                ValueError
+            ):
+                EKFSplineTracker(closest_point_grid_size=invalid_grid_size)
+
+        for invalid_iteration in invalid_iterations:
+            with self.subTest(iterations=invalid_iteration), self.assertRaises(
+                ValueError
+            ):
+                EKFSplineTracker(closest_point_iterations=invalid_iteration)
+
+    def test_contour_point_count_must_be_positive_integer(self):
+        for invalid_n in (0, True, 4.5, "8", [8]):
+            with self.subTest(n=invalid_n), self.assertRaises(ValueError):
+                self.tracker.get_contour_points(invalid_n)
 
     def test_update_accepts_multiple_measurement_layouts(self):
         measurements = array([[3.0, 0.2], [0.0, 1.5], [-2.5, -0.1]])

@@ -1,4 +1,6 @@
 # pylint: disable=duplicate-code,no-member,no-name-in-module,too-many-lines
+from numbers import Integral
+
 from pyrecest.backend import (
     abs,
     all,
@@ -104,17 +106,27 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
         self.acceleration_variance = float(acceleration_variance)
         self.turn_rate_variance = float(turn_rate_variance)
         self.scale_process_noise = float(scale_process_noise)
-        self.scale_correction = bool(scale_correction)
-        self.orientation_correction = bool(orientation_correction)
+        self.scale_correction = self._as_bool_flag(
+            scale_correction,
+            "scale_correction",
+        )
+        self.orientation_correction = self._as_bool_flag(
+            orientation_correction,
+            "orientation_correction",
+        )
         self.finite_difference_step = float(finite_difference_step)
-        self.closest_point_grid_size = int(closest_point_grid_size)
-        self.closest_point_iterations = int(closest_point_iterations)
+        self.closest_point_grid_size = self._as_integer(
+            closest_point_grid_size,
+            "closest_point_grid_size",
+            2,
+        )
+        self.closest_point_iterations = self._as_integer(
+            closest_point_iterations,
+            "closest_point_iterations",
+            0,
+        )
         if self.finite_difference_step <= 0.0:
             raise ValueError("finite_difference_step must be positive")
-        if self.closest_point_grid_size <= 1:
-            raise ValueError("closest_point_grid_size must be greater than one")
-        if self.closest_point_iterations < 0:
-            raise ValueError("closest_point_iterations must be non-negative")
         self.last_quadratic_form = None
         self._sync_state_views()
 
@@ -137,6 +149,41 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
     @staticmethod
     def _symmetrize(matrix):
         return 0.5 * (matrix + matrix.T)
+
+    @staticmethod
+    def _as_bool_flag(value, name):
+        if isinstance(value, bool):
+            return value
+        try:
+            value_array = array(value)
+            if value_array.shape == ():
+                scalar = value_array.item()
+                if isinstance(scalar, bool):
+                    return bool(scalar)
+        except (AttributeError, TypeError, ValueError):
+            pass
+        raise ValueError(f"{name} must be a boolean")
+
+    @staticmethod
+    def _as_integer(value, name, minimum):
+        if isinstance(value, bool):
+            raise ValueError(f"{name} must be an integer")
+        try:
+            value_array = array(value)
+            if value_array.shape != ():
+                raise ValueError(f"{name} must be a scalar integer")
+            scalar = value_array.item()
+        except AttributeError:
+            scalar = value
+        except TypeError as exc:
+            raise ValueError(f"{name} must be an integer") from exc
+
+        if isinstance(scalar, bool) or not isinstance(scalar, Integral):
+            raise ValueError(f"{name} must be an integer")
+        integer = int(scalar)
+        if integer < minimum:
+            raise ValueError(f"{name} must be at least {minimum}")
+        return integer
 
     @classmethod
     def _as_covariance_matrix(
@@ -508,8 +555,7 @@ class EKFSplineTracker(AbstractExtendedObjectTracker):
         return scaled_control_points
 
     def get_contour_points(self, n=100, scaling_factor=1.0):
-        if n <= 0:
-            raise ValueError("n must be positive")
+        n = self._as_integer(n, "n", 1)
         segment_coordinates = linspace(
             0.0,
             float(self.num_control_points),
