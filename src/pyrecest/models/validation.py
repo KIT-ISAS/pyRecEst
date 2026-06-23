@@ -38,6 +38,9 @@ def _format_shape(shape: tuple[int, ...]) -> str:
 def _validate_bool_flag(value: Any, name: str) -> bool:
     if isinstance(value, (bool, np.bool_)):
         return bool(value)
+    value_array = np.asarray(value)
+    if value_array.shape == () and value_array.dtype == np.bool_:
+        return bool(value_array.item())
     raise TypeError(f"{name} must be a boolean.")
 
 
