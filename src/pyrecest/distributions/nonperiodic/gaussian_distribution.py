@@ -10,6 +10,7 @@ from pyrecest.backend import (
     allclose,
     exp,
     eye,
+    isfinite,
     linalg,
     matvec,
     ndim,
@@ -87,6 +88,10 @@ class GaussianDistribution(AbstractLinearDistribution):
         self.mu = mu
 
         if check_validity:
+            if not _to_python_bool(backend_all(isfinite(mu))):
+                raise ValueError("mu must contain only finite values.")
+            if not _to_python_bool(backend_all(isfinite(C))):
+                raise ValueError("C must contain only finite values.")
             if not _to_python_bool(allclose(C, transpose(C))):
                 raise ValueError("C must be symmetric.")
             if not _to_python_bool(backend_all(linalg.eigvalsh(C) > 0.0)):
