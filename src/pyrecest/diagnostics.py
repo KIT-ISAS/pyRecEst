@@ -23,6 +23,26 @@ EvidenceSupportType = Literal[
 _EVIDENCE_SUPPORT_TYPES = set(EvidenceSupportType.__args__)
 
 
+def _coerce_metadata_bool(value: Any, name: str) -> bool:
+    """Return a boolean metadata value without string truthiness surprises."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if hasattr(value, "item"):
+        try:
+            return _coerce_metadata_bool(value.item(), name)
+        except (AttributeError, TypeError, ValueError):
+            pass
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes"}:
+            return True
+        if normalized in {"false", "0", "no", ""}:
+            return False
+    raise ValueError(f"{name} must be a boolean value")
+
+
 def _coerce_weight_values(weights: Any) -> list[float]:
     """Return backend-independent Python floats from an array-like weight vector."""
     try:
@@ -213,6 +233,12 @@ class EvidenceSupport:
                 f"unsupported evidence support type {self.support_type!r}; "
                 f"expected one of {sorted(_EVIDENCE_SUPPORT_TYPES)}"
             )
+        object.__setattr__(
+            self, "comparable", _coerce_metadata_bool(self.comparable, "comparable")
+        )
+        object.__setattr__(
+            self, "lower_bound", _coerce_metadata_bool(self.lower_bound, "lower_bound")
+        )
         if not isinstance(self.diagnostics, dict):
             object.__setattr__(self, "diagnostics", dict(self.diagnostics))
         if self.support_type == "truncated_lower_bound" and not self.lower_bound:
@@ -261,8 +287,8 @@ class EvidenceSupport:
         )
         return cls(
             support_type=mapping.get("support_type", "unknown"),
-            comparable=bool(mapping.get("comparable", False)),
-            lower_bound=bool(mapping.get("lower_bound", False)),
+            comparable=mapping.get("comparable", False),
+            lower_bound=mapping.get("lower_bound", False),
             diagnostics=diagnostics,
         )
 

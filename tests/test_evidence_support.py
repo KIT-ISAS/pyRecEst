@@ -43,6 +43,30 @@ def test_evidence_support_from_mapping_preserves_unknown_fields_as_diagnostics()
     assert support.diagnostics["support_size"] == 17
 
 
+def test_evidence_support_from_mapping_parses_serialized_boolean_strings() -> None:
+    support = EvidenceSupport.from_mapping(
+        {
+            "support_type": "exact_sparse",
+            "comparable": "False",
+            "lower_bound": "False",
+        }
+    )
+
+    assert not support.comparable
+    assert not support.lower_bound
+    assert not support.headline_comparable
+
+
+def test_evidence_support_rejects_invalid_serialized_boolean_strings() -> None:
+    with pytest.raises(ValueError, match="comparable"):
+        EvidenceSupport.from_mapping(
+            {
+                "support_type": "exact_sparse",
+                "comparable": "sometimes",
+            }
+        )
+
+
 def test_coerce_evidence_support_rejects_unknown_support_type() -> None:
     with pytest.raises(ValueError, match="unsupported evidence support type"):
         coerce_evidence_support("candidate_magic")
