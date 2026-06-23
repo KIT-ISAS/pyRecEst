@@ -90,6 +90,31 @@ class HistoryRecorderTest(unittest.TestCase):
 
         self.assertEqual(recorder["state"][0], {"x": [1, 2]})
 
+    def test_register_and_record_reject_nonboolean_pad_with_nan_flags(self):
+        recorder = HistoryRecorder()
+
+        with self.assertRaisesRegex(TypeError, "pad_with_nan"):
+            recorder.register("bad_register", pad_with_nan="False")
+
+        with self.assertRaisesRegex(TypeError, "pad_with_nan"):
+            recorder.record("bad_record", [1.0], pad_with_nan="False")
+
+    def test_record_rejects_nonboolean_copy_value_flag(self):
+        recorder = HistoryRecorder()
+        recorder.register("events")
+
+        with self.assertRaisesRegex(TypeError, "copy_value"):
+            recorder.record("events", {"value": 1}, copy_value="False")
+
+    def test_backend_boolean_scalar_flags_remain_accepted(self):
+        recorder = HistoryRecorder()
+        flag = array(True)
+
+        recorder.register("states", pad_with_nan=flag)
+        history = recorder.record("states", [1.0], pad_with_nan=flag)
+
+        self.assertEqual(tuple(history.shape), (1, 1))
+
     def test_filter_helpers_record_state_and_point_estimate(self):
         filter_obj = _DummyFilter(_DummyBelief([1.0, 2.0]))
         filter_obj.record_filter_state()
