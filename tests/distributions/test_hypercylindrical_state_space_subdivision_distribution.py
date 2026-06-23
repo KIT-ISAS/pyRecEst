@@ -59,6 +59,22 @@ class HypercylindricalStateSpaceSubdivisionDistributionTest(unittest.TestCase):
                 self.fun, self.n, 1, 2
             )
 
+    def test_from_function_rejects_invalid_grid_count(self):
+        for no_of_grid_points in (0, -1, 1.5, True, [3]):
+            with self.subTest(no_of_grid_points=no_of_grid_points):
+                with self.assertRaisesRegex(ValueError, "no_of_grid_points"):
+                    HypercylindricalStateSpaceSubdivisionDistribution.from_function(
+                        self.fun, no_of_grid_points, 1, 1
+                    )
+
+    def test_from_distribution_rejects_invalid_grid_count(self):
+        for no_of_grid_points in (0, -1, 1.5, True, [3]):
+            with self.subTest(no_of_grid_points=no_of_grid_points):
+                with self.assertRaisesRegex(ValueError, "no_of_grid_points"):
+                    HypercylindricalStateSpaceSubdivisionDistribution.from_distribution(
+                        self.chd, no_of_grid_points
+                    )
+
     def test_marginalize_linear(self):
         from pyrecest.distributions.hypertorus.hypertoroidal_grid_distribution import (
             HypertoroidalGridDistribution,
