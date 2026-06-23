@@ -144,6 +144,47 @@ class HypertoroidalGridDistributionTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "positive integers"):
                     HypertoroidalGridDistribution.from_distribution(dist, n_grid_points)
 
+    def test_generate_cartesian_product_grid_accepts_scalar_resolution(self):
+        grid = HypertoroidalGridDistribution.generate_cartesian_product_grid(4)
+
+        self.assertEqual(grid.shape, (4, 1))
+        npt.assert_allclose(grid[:, 0], array([0.0, 0.5 * pi, pi, 1.5 * pi]))
+
+    def test_generate_cartesian_product_grid_rejects_invalid_resolution_counts(self):
+        invalid_resolutions = (
+            True,
+            (True, 3),
+            (1.5, 3),
+            (),
+            (0, 3),
+            (3, -1),
+        )
+
+        for n_grid_points in invalid_resolutions:
+            with self.subTest(n_grid_points=n_grid_points):
+                with self.assertRaisesRegex(ValueError, "positive integers|one entry"):
+                    HypertoroidalGridDistribution.generate_cartesian_product_grid(
+                        n_grid_points
+                    )
+
+    def test_from_function_rejects_boolean_grid_resolution_counts(self):
+        with self.assertRaisesRegex(ValueError, "positive integers"):
+            HypertoroidalGridDistribution.from_function(
+                lambda xs: xs[:, 0],
+                (True, 3),
+                "cartesian_prod",
+            )
+
+    def test_from_function_accepts_scalar_resolution(self):
+        hgd = HypertoroidalGridDistribution.from_function(
+            lambda xs: 1.0 + 0.0 * xs[:, 0],
+            4,
+            "cartesian_prod",
+        )
+
+        self.assertEqual(hgd.dim, 1)
+        self.assertEqual(hgd.grid_values.shape, (4,))
+
     def test_from_function_3D(self):
         random.seed(0)
         test_points = 2 * pi * random.uniform(size=(30, 3))
