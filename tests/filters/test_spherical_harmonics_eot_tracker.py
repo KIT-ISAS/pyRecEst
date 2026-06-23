@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-member,no-name-in-module
@@ -13,6 +14,19 @@ from pyrecest.filters import SphericalHarmonicsEOTTracker
     reason="Spherical-harmonics EOT tracker currently uses pyshtools/numpy",
 )
 class TestSphericalHarmonicsEOTTracker(unittest.TestCase):
+    def test_order_requires_nonnegative_integer(self):
+        invalid_orders = (True, np.bool_(True), 1.5, np.array(1.5), np.array([1]), -1)
+        for invalid in invalid_orders:
+            with self.subTest(order=invalid):
+                with self.assertRaisesRegex(ValueError, "order"):
+                    SphericalHarmonicsEOTTracker(invalid)
+
+        for valid in (np.int64(1), np.array(1)):
+            with self.subTest(order=valid):
+                tracker = SphericalHarmonicsEOTTracker(valid)
+                self.assertEqual(tracker.order, 1)
+                self.assertEqual(tracker.n_coefficients, 4)
+
     def test_coefficient_vector_matrix_roundtrip(self):
         coefficients = array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
 
