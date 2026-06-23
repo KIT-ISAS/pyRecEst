@@ -9,6 +9,7 @@ from pyrecest.tracking import (
     ellipse_angle_delta,
     ellipse_extent_matrix,
     ellipse_shape_canonicalization_transform,
+    project_symmetric_covariance,
     shape_from_extent_matrix,
     wrap_ellipse_angle_to_reference,
 )
@@ -33,6 +34,57 @@ def test_major_axis_first_requires_boolean_flag() -> None:
             np.array([1.0, 2.0]),
             major_axis_first="False",
         )
+
+
+def test_covariance_projection_rejects_invalid_eigenvalue_floor() -> None:
+    covariance = np.diag([-1.0, 2.0])
+    invalid_values = (
+        -1.0,
+        np.nan,
+        np.inf,
+        -np.inf,
+        np.array([0.0, 1.0]),
+        True,
+        np.bool_(False),
+    )
+
+    for minimum_eigenvalue in invalid_values:
+        with pytest.raises(ValueError, match="minimum_eigenvalue"):
+            project_symmetric_covariance(
+                covariance,
+                minimum_eigenvalue=minimum_eigenvalue,
+            )
+
+
+def test_axis_floor_rejects_invalid_values() -> None:
+    extent = np.eye(2)
+    shape = np.array([0.0, 1.0, 2.0])
+    invalid_values = (
+        -1.0,
+        np.nan,
+        np.inf,
+        -np.inf,
+        np.array([0.0, 1.0]),
+        False,
+        np.bool_(True),
+    )
+
+    for minimum_axis_length in invalid_values:
+        with pytest.raises(ValueError, match="minimum_axis_length"):
+            shape_from_extent_matrix(
+                extent,
+                minimum_axis_length=minimum_axis_length,
+            )
+        with pytest.raises(ValueError, match="minimum_axis_length"):
+            ellipse_shape_canonicalization_transform(
+                shape,
+                minimum_axis_length=minimum_axis_length,
+            )
+        with pytest.raises(ValueError, match="minimum_axis_length"):
+            canonicalize_ellipse_axes(
+                shape[1:],
+                minimum_axis_length=minimum_axis_length,
+            )
 
 
 def test_canonicalize_ellipse_shape_transforms_full_shape_covariance() -> None:
@@ -118,3 +170,6 @@ def test_shape_from_extent_matrix_orders_axes_and_respects_reference() -> None:
     extent = ellipse_extent_matrix(np.pi - 0.2, np.array([4.0, 1.5]))
 
     shape = shape_from_extent_matrix(extent, reference_orientation=-0.2)
+
+    npt.assert_allclose(shape[1:], np.array([4.0, 1.5]), atol=1e-12)
+    assert np.isclose(float(ellipse_angle_delta(-0.2, shape[0])), 0.0, atol=1e-12)
