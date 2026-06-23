@@ -2,8 +2,61 @@
 Sigma-point sampling schemes for unscented transforms.
 """
 
+import math
+from numbers import Integral
+
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import asarray, concatenate, float64, full, linalg, reshape, stack
+
+
+def _scalar_item(value, name: str):
+    """Return a scalar value while rejecting arrays and booleans."""
+
+    if isinstance(value, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a scalar")
+    shape = getattr(value, "shape", ())
+    if tuple(shape) != ():
+        raise ValueError(f"{name} must be a scalar")
+    try:
+        scalar = value.item() if hasattr(value, "item") else value
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise ValueError(f"{name} must be a scalar") from exc
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a scalar")
+    return scalar
+
+
+def _validate_positive_integer(value, name: str) -> int:
+    scalar = _scalar_item(value, name)
+    if not isinstance(scalar, Integral):
+        raise ValueError(f"{name} must be a positive integer")
+    result = int(scalar)
+    if result <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return result
+
+
+def _validate_finite_scalar(value, name: str) -> float:
+    scalar = _scalar_item(value, name)
+    try:
+        result = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be finite") from exc
+    if not math.isfinite(result):
+        raise ValueError(f"{name} must be finite")
+    return result
+
+
+def _validate_sigma_inputs(x, P, n: int):
+    x = reshape(asarray(x, dtype=float64), (-1,))
+    if x.shape != (n,):
+        raise ValueError(f"x must have shape ({n},)")
+    P = asarray(P, dtype=float64)
+    if P.shape != (n, n):
+        raise ValueError(f"P must have shape ({n}, {n})")
+    return x, P
 
 
 class MerweScaledSigmaPoints:
@@ -22,10 +75,14 @@ class MerweScaledSigmaPoints:
     """
 
     def __init__(self, n: int, alpha: float, beta: float, kappa: float):
-        self.n = n
-        self.alpha = alpha
-        self.beta = beta
-        self.kappa = kappa
+        self.n = _validate_positive_integer(n, "n")
+        self.alpha = _validate_finite_scalar(alpha, "alpha")
+        self.beta = _validate_finite_scalar(beta, "beta")
+        self.kappa = _validate_finite_scalar(kappa, "kappa")
+        if self.alpha <= 0.0:
+            raise ValueError("alpha must be positive")
+        if self.n + self.kappa <= 0.0:
+            raise ValueError("n + kappa must be positive")
         self._compute_weights()
 
     def _compute_weights(self):
@@ -62,8 +119,7 @@ class MerweScaledSigmaPoints:
         n = self.n
         lam = self.alpha**2 * (n + self.kappa) - n
 
-        x = reshape(asarray(x, dtype=float64), (-1,))
-        P = asarray(P, dtype=float64)
+        x, P = _validate_sigma_inputs(x, P, n)
 
         U = linalg.cholesky((n + lam) * P)  # lower-triangular
 
@@ -84,8 +140,10 @@ class JulierSigmaPoints:
     """
 
     def __init__(self, n: int, kappa: float = 0.0):
-        self.n = n
-        self.kappa = kappa
+        self.n = _validate_positive_integer(n, "n")
+        self.kappa = _validate_finite_scalar(kappa, "kappa")
+        if self.n + self.kappa <= 0.0:
+            raise ValueError("n + kappa must be positive")
         self._compute_weights()
 
     def _compute_weights(self):
@@ -118,8 +176,7 @@ class JulierSigmaPoints:
         n = self.n
         k = n + self.kappa
 
-        x = reshape(asarray(x, dtype=float64), (-1,))
-        P = asarray(P, dtype=float64)
+        x, P = _validate_sigma_inputs(x, P, n)
 
         U = linalg.cholesky(k * P)  # lower-triangular
 
