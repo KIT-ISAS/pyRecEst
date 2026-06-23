@@ -56,6 +56,25 @@ def test_aliases():
     assert RBFFBSiSmoother is MEMRBPFFFBSiSmoother
 
 
+def test_sample_axis_requires_boolean_flags():
+    smoother = MEMRBPFFFBSiSmoother(n_trajectories=1, sample_axis=np.bool_(False))
+
+    assert smoother.sample_axis is False
+
+    with pytest.raises(ValueError, match="sample_axis"):
+        MEMRBPFFFBSiSmoother(sample_axis="False")
+
+    record = _record(
+        [0.0],
+        [[1.0]],
+        [0.0],
+        [[2.0, 1.0]],
+        np.repeat(np.eye(2)[np.newaxis, :, :] * 0.1, 1, axis=0),
+    )
+    with pytest.raises(ValueError, match="sample_axis"):
+        smoother.smooth([record], rng=0, sample_axis="False")
+
+
 def test_two_record_deterministic_backward_kernel_matches_rts_moments():
     axis_cov = np.repeat(np.eye(2)[np.newaxis, :, :] * 0.5, 1, axis=0)
     records = [

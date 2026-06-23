@@ -143,6 +143,12 @@ class RBFFBSiResult:
         return self.kinematic_covariance
 
 
+def _coerce_bool_flag(value, name: str) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    raise ValueError(f"{name} must be a bool")
+
+
 class MEMRBPFFFBSiSmoother(AbstractSmoother):
     """Fixed-interval Rao-Blackwellized FFBSi smoother for MEM-RBPF records.
 
@@ -166,7 +172,7 @@ class MEMRBPFFFBSiSmoother(AbstractSmoother):
         if axis_floor <= 0.0:
             raise ValueError("axis_floor must be positive")
         self.n_trajectories = None if n_trajectories is None else int(n_trajectories)
-        self.sample_axis = bool(sample_axis)
+        self.sample_axis = _coerce_bool_flag(sample_axis, "sample_axis")
         self.angle_wrap_terms = int(angle_wrap_terms)
         self.axis_floor = float(axis_floor)
 
@@ -432,7 +438,11 @@ class MEMRBPFFFBSiSmoother(AbstractSmoother):
             n_samples = final_particles
         if n_samples <= 0:
             raise ValueError("n_trajectories must be positive")
-        do_sample_axis = self.sample_axis if sample_axis is None else bool(sample_axis)
+        do_sample_axis = (
+            self.sample_axis
+            if sample_axis is None
+            else _coerce_bool_flag(sample_axis, "sample_axis")
+        )
         terms = (
             self.angle_wrap_terms if angle_wrap_terms is None else int(angle_wrap_terms)
         )
