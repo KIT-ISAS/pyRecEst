@@ -15,6 +15,9 @@ replay dynamics:
 
 from __future__ import annotations
 
+import math
+from numbers import Integral
+
 # pylint: disable=no-name-in-module,no-member,duplicate-code
 from pyrecest import copy
 from pyrecest.backend import (
@@ -34,6 +37,50 @@ from pyrecest.backend import (
 )
 
 from .goal_conditioned_replay_particle_filter import GoalConditionedReplayParticleFilter
+
+
+def _as_mode_index(value, n_modes: int) -> int:
+    try:
+        scalar = value.item()
+    except AttributeError:
+        scalar = value
+    except (RuntimeError, ValueError) as exc:
+        raise ValueError("mode indices must be scalar integers") from exc
+
+    if isinstance(scalar, bool) or isinstance(scalar, str):
+        raise ValueError("mode indices must be integers")
+    if isinstance(scalar, Integral):
+        mode_index = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+            mode_index = int(scalar)
+        except (OverflowError, TypeError, ValueError) as exc:
+            raise ValueError("mode indices must be integers") from exc
+        if not math.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError("mode indices must be finite integers")
+
+    if mode_index < 0 or mode_index >= n_modes:
+        raise ValueError(f"mode_indices must lie in [0, {n_modes - 1}]")
+    return mode_index
+
+
+def _contains_boolean(value) -> bool:
+    if isinstance(value, bool):
+        return True
+    try:
+        scalar = value.item()
+    except (AttributeError, RuntimeError, ValueError):
+        scalar = None
+    if isinstance(scalar, bool):
+        return True
+    if isinstance(value, str):
+        return False
+    try:
+        iterator = iter(value)
+    except TypeError:
+        return False
+    return any(_contains_boolean(item) for item in iterator)
 
 
 class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instance-attributes
@@ -133,17 +180,20 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
     def set_mode_indices(self, mode_indices):
         """Set one discrete mode index per particle."""
 
-        mode_indices = atleast_1d(array(mode_indices))
+        if _contains_boolean(mode_indices):
+            raise ValueError("mode_indices must be integers, not booleans")
+        try:
+            mode_indices = atleast_1d(array(mode_indices))
+        except (RuntimeError, TypeError, ValueError) as exc:
+            raise ValueError("mode_indices must be integers") from exc
         if mode_indices.shape != (self.n_particles,):
             raise ValueError(
                 "mode_indices must contain one mode index per particle; "
                 f"got {mode_indices.shape}"
             )
-        for mode_index in mode_indices:
-            mode_int = int(mode_index)
-            if mode_int < 0 or mode_int >= self.n_modes:
-                raise ValueError(f"mode_indices must lie in [0, {self.n_modes - 1}]")
-        self._mode_indices = mode_indices
+        self._mode_indices = array(
+            [_as_mode_index(mode_index, self.n_modes) for mode_index in mode_indices]
+        )
         return self
 
     def sample_modes_from_prior(self, mode_prior=None):

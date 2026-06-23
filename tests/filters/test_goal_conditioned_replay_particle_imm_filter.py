@@ -28,6 +28,29 @@ from .test_goal_conditioned_replay_common import (
     pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported"
 )
 class TestGoalConditionedReplayParticleIMMFilter(unittest.TestCase):
+    def test_set_mode_indices_validates_scalar_integer_values(self):
+        filt = GoalConditionedReplayParticleIMMFilter(
+            n_particles=4,
+            spatial_dim=2,
+        )
+
+        filt.set_mode_indices(array([0.0, 1.0, 2.0, 3.0]))
+
+        self.assertEqual(filt.mode_indices.shape, (4,))
+
+        invalid_mode_indices = (
+            [0.5, 1, 2, 3],
+            [True, 1, 2, 3],
+            ["0", 1, 2, 3],
+            [-1, 1, 2, 3],
+            [len(filt.mode_names), 1, 2, 3],
+        )
+        for mode_indices in invalid_mode_indices:
+            with self.subTest(mode_indices=mode_indices), self.assertRaises(
+                ValueError
+            ):
+                filt.set_mode_indices(mode_indices)
+
     def test_goal_directed_mode_moves_velocity_toward_goal(self):
         random.seed(0)
         goal_mode = GoalConditionedReplayParticleIMMFilter.mode_names.index(
