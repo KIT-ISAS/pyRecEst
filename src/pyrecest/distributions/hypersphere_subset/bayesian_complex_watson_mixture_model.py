@@ -76,13 +76,16 @@ class BayesianComplexWatsonMixtureModel:
         alpha = asarray(alpha, dtype=float).ravel()
 
         K = alpha.shape[0]
-        assert B.shape[2] == K, "B.shape[2] must equal len(alpha)"
-        assert concentrations.shape[0] == K, "len(concentrations) must equal len(alpha)"
+        if B.ndim != 3 or B.shape[0] != B.shape[1]:
+            raise ValueError("B must have shape (D, D, K).")
+        if B.shape[2] != K:
+            raise ValueError("B.shape[2] must equal len(alpha).")
+        if concentrations.shape[0] != K:
+            raise ValueError("len(concentrations) must equal len(alpha).")
 
         for k in range(K):
-            assert allclose(
-                B[:, :, k], B[:, :, k].conj().T, atol=1e-6
-            ), f"B[:,:,{k}] must be Hermitian"
+            if not bool(allclose(B[:, :, k], B[:, :, k].conj().T, atol=1e-6)):
+                raise ValueError(f"B[:,:,{k}] must be Hermitian.")
 
         self.B = B
         self.concentrations = concentrations
