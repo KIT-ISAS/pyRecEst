@@ -60,7 +60,7 @@ class OnlineTimeOffsetEstimator:
             raise ValueError("measurement_variance must be nonnegative")
 
         speed2 = float(velocity @ velocity)
-        if speed2 < float(self.min_speed) ** 2:
+        if speed2 <= 0.0 or speed2 < float(self.min_speed) ** 2:
             return float("nan")
         measured_offset = float((residual @ velocity) / speed2)
         variance = max(float(measurement_variance) / speed2, 1.0e-12)
