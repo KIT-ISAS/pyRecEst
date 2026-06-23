@@ -91,6 +91,31 @@ def _normalize_max_gap(max_gap: Any) -> int:
     return int(max_gap_float)
 
 
+def _normalize_index_matrix_fill_value(fill_value: Any) -> int:
+    fill_value_array = np.asarray(fill_value)
+    if fill_value_array.shape != () or fill_value_array.dtype == np.bool_:
+        raise ValueError("fill_value must be a negative integer.")
+
+    fill_value_value = fill_value_array.item()
+    if isinstance(fill_value_value, (bool, np.bool_)):
+        raise ValueError("fill_value must be a negative integer.")
+
+    if isinstance(fill_value_value, (int, np.integer)):
+        integer_fill_value = int(fill_value_value)
+    else:
+        try:
+            fill_value_float = float(fill_value_value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("fill_value must be a negative integer.") from exc
+        if not math.isfinite(fill_value_float) or not fill_value_float.is_integer():
+            raise ValueError("fill_value must be a negative integer.")
+        integer_fill_value = int(fill_value_float)
+
+    if integer_fill_value >= 0:
+        raise ValueError("fill_value must be a negative integer.")
+    return integer_fill_value
+
+
 def tracks_to_index_matrix(
     tracks: list[TrackInput],
     session_sizes: SessionSizesInput | None = None,
@@ -99,6 +124,7 @@ def tracks_to_index_matrix(
 ):
     """Convert tracks to a dense ``track x session`` ROI-index matrix."""
     _ensure_supported_backend("tracks_to_index_matrix")
+    fill_value = _normalize_index_matrix_fill_value(fill_value)
 
     _, max_session_index = _validate_track_session_sizes(
         tracks,
