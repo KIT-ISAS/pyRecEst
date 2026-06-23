@@ -264,6 +264,14 @@ class HypersphericalUKFTest(unittest.TestCase):
             self.filter_3d.predict_nonlinear_arbitrary_noise(
                 lambda x, v: x, np.ones((3, 2)), np.ones(3)
             )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter_3d.predict_nonlinear_arbitrary_noise(
+                lambda x, v: x, np.ones((3, 2)), np.array([1.0, np.inf])
+            )
+        with self.assertRaisesRegex(ValueError, "finite"):
+            self.filter_3d.predict_nonlinear_arbitrary_noise(
+                lambda x, v: x, np.ones((3, 2)), np.array([1.0, np.nan])
+            )
         with self.assertRaisesRegex(ValueError, "strictly positive"):
             self.filter_3d.predict_nonlinear_arbitrary_noise(
                 lambda x, v: x, np.ones((3, 2)), np.array([1.0, 0.0])

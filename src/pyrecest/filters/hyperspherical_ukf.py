@@ -22,6 +22,7 @@ from pyrecest.backend import (  # pylint: disable=redefined-builtin
     expand_dims,
     eye,
     float64,
+    isfinite,
     linalg,
     reshape,
     zeros,
@@ -199,6 +200,8 @@ class HypersphericalUKF(AbstractFilter, HypersphericalFilterMixin):
                 "noise_samples and noise_weights must contain the same number "
                 "of samples."
             )
+        if not all(isfinite(noise_weights)):
+            raise ValueError("noise_weights must be finite.")
         if not all(noise_weights > 0):
             raise ValueError("noise_weights must be strictly positive.")
         noise_weights = noise_weights / noise_weights.sum()
