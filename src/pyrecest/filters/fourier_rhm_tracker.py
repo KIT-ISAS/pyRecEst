@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from numbers import Integral
+
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin,duplicate-code
@@ -73,9 +75,7 @@ class FourierRHMTracker(
                 "FourierRHMTracker is not supported on the JAX backend"
             )
 
-        self.n_harmonics = int(n_harmonics)
-        if self.n_harmonics < 0:
-            raise ValueError("n_harmonics must be non-negative")
+        self.n_harmonics = self._as_integer(n_harmonics, "n_harmonics", 0)
         self.n_fourier_coefficients = 2 * self.n_harmonics + 1
         self.state_dim = self.n_fourier_coefficients + 2
 
@@ -137,6 +137,27 @@ class FourierRHMTracker(
         if matrix.shape[0] != matrix.shape[1]:
             raise ValueError(f"{name} must be square")
         linalg.cholesky(matrix)
+
+    @staticmethod
+    def _as_integer(value, name, minimum):
+        if isinstance(value, bool):
+            raise ValueError(f"{name} must be an integer")
+        try:
+            value_array = array(value)
+            if value_array.shape != ():
+                raise ValueError(f"{name} must be a scalar integer")
+            scalar = value_array.item()
+        except AttributeError:
+            scalar = value
+        except TypeError as exc:
+            raise ValueError(f"{name} must be an integer") from exc
+
+        if isinstance(scalar, bool) or not isinstance(scalar, Integral):
+            raise ValueError(f"{name} must be an integer")
+        integer = int(scalar)
+        if integer < minimum:
+            raise ValueError(f"{name} must be at least {minimum}")
+        return integer
 
     @staticmethod
     def _as_vector(value, dim, name):
@@ -208,10 +229,12 @@ class FourierRHMTracker(
         return self.fourier_coefficients
 
     def get_extents_on_grid(self, n=100):
+        n = self._as_integer(n, "n", 1)
         angles = linspace(0.0, 2.0 * pi, n, endpoint=False)
         return self.evaluate_radius(angles)
 
     def get_contour_points(self, n=100):
+        n = self._as_integer(n, "n", 1)
         angles = linspace(0.0, 2.0 * pi, n, endpoint=False)
         radii = self.evaluate_radius(angles)
         contour_points = self.kinematic_state[:, None] + _pol2cart(angles, radii)
