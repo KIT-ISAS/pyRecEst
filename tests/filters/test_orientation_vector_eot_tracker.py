@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member,duplicate-code
@@ -58,6 +59,30 @@ class TestOrientationVectorEOTTracker(unittest.TestCase):
             atol=1e-12,
         )
         self.assertEqual(self.tracker.get_point_estimate().shape[0], 7)
+
+    def test_num_iterations_must_be_positive_integer(self):
+        tracker = OrientationVectorEOTTracker(
+            self.kinematic_state,
+            self.covariance,
+            self.shape_state,
+            measurement_noise_cov=self.measurement_noise_cov,
+            measurement_matrix=self.measurement_matrix,
+            num_iterations=np.int64(2),
+        )
+        self.assertEqual(tracker.num_iterations, 2)
+
+        for invalid_iterations in (0, True, 1.5, "2", [2]):
+            with self.subTest(num_iterations=invalid_iterations), self.assertRaises(
+                ValueError
+            ):
+                OrientationVectorEOTTracker(
+                    self.kinematic_state,
+                    self.covariance,
+                    self.shape_state,
+                    measurement_noise_cov=self.measurement_noise_cov,
+                    measurement_matrix=self.measurement_matrix,
+                    num_iterations=invalid_iterations,
+                )
 
     def test_extent_respects_orientation_vector(self):
         tracker = OrientationVectorEOTTracker(

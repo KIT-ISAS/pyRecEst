@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from numbers import Integral
+
 # pylint: disable=no-name-in-module,no-member
 # pylint: disable=too-many-instance-attributes,too-many-arguments
 # pylint: disable=too-many-positional-arguments,too-many-locals,duplicate-code
@@ -20,6 +22,27 @@ from pyrecest.backend import (
 )
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
+
+
+def _as_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer")
+    try:
+        value_array = array(value)
+        if value_array.shape != ():
+            raise ValueError(f"{name} must be a scalar integer")
+        scalar = value_array.item()
+    except AttributeError:
+        scalar = value
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+
+    if isinstance(scalar, bool) or not isinstance(scalar, Integral):
+        raise ValueError(f"{name} must be a positive integer")
+    integer = int(scalar)
+    if integer <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return integer
 
 
 class OrientationVectorEOTTracker(AbstractExtendedObjectTracker):
@@ -147,9 +170,7 @@ class OrientationVectorEOTTracker(AbstractExtendedObjectTracker):
             )
 
         self.velocity_indices = self._normalize_velocity_indices(velocity_indices)
-        self.num_iterations = int(num_iterations)
-        if self.num_iterations <= 0:
-            raise ValueError("num_iterations must be positive")
+        self.num_iterations = _as_positive_integer(num_iterations, "num_iterations")
         self.forgetting_factor = float(forgetting_factor)
         if self.forgetting_factor <= 0.0:
             raise ValueError("forgetting_factor must be positive")
