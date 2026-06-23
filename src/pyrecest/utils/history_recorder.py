@@ -22,7 +22,10 @@ class _HistoryEntry:
 def _validate_bool_flag(value: Any, name: str) -> bool:
     if isinstance(value, bool):
         return value
-    value_array = asarray(value)
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be a boolean") from exc
     if getattr(value_array, "shape", None) == ():
         scalar = value_array.item()
         if isinstance(scalar, bool):
