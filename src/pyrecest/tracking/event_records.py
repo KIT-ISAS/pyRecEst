@@ -59,6 +59,30 @@ def _optional_bool(value: Any, *, name: str) -> bool | None:
     raise ValueError(f"{name} must be a boolean or None")
 
 
+def _finite_scalar(value: Any, *, name: str, message: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(parsed):
+        raise ValueError(message)
+    return parsed
+
+
+def _nonnegative_scalar(value: Any, *, name: str, message: str) -> float:
+    parsed = _finite_scalar(value, name=name, message=message)
+    if parsed < 0.0:
+        raise ValueError(message)
+    return parsed
+
+
 def _jsonable(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         return value.tolist()
@@ -85,9 +109,7 @@ class TrackingEvent:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        time = float(self.time)
-        if not np.isfinite(time):
-            raise ValueError("time must be finite")
+        time = _finite_scalar(self.time, name="time", message="time must be finite")
         measurement = _array_or_none(self.measurement, name="measurement", ndim=1)
         covariance = (
             None
@@ -146,9 +168,7 @@ class TrackingRecord:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        time = float(self.time)
-        if not np.isfinite(time):
-            raise ValueError("time must be finite")
+        time = _finite_scalar(self.time, name="time", message="time must be finite")
         prior_mean = _vector(self.prior_mean, name="prior_mean")
         posterior_mean = _vector(self.posterior_mean, name="posterior_mean")
         if posterior_mean.shape != prior_mean.shape:
@@ -169,9 +189,15 @@ class TrackingRecord:
             if innovation_cov.shape != (innovation.size, innovation.size):
                 raise ValueError("innovation_cov must match innovation dimension")
         measurement = _array_or_none(self.measurement, name="measurement", ndim=1)
-        nis = None if self.nis is None else float(self.nis)
-        if nis is not None and (not np.isfinite(nis) or nis < 0.0):
-            raise ValueError("nis must be finite and nonnegative")
+        nis = (
+            None
+            if self.nis is None
+            else _nonnegative_scalar(
+                self.nis,
+                name="nis",
+                message="nis must be finite and nonnegative",
+            )
+        )
         object.__setattr__(self, "time", time)
         object.__setattr__(self, "source", str(self.source))
         object.__setattr__(self, "action", str(self.action))
