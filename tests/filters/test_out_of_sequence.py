@@ -16,6 +16,15 @@ from pyrecest.filters import (
 )
 
 
+class _DiagnosticsOnlyParticleFilter:
+    def __init__(self):
+        self.filter_state = {"updates": 0}
+
+    def update_nonlinear_using_likelihood(self, likelihood, measurement=None):
+        self.filter_state = {"updates": self.filter_state["updates"] + 1}
+        return likelihood(measurement, None)
+
+
 class OutOfSequenceMeasurementTest(unittest.TestCase):
     def test_fixed_lag_buffer_orders_and_trims(self):
         buffer = FixedLagBuffer(max_lag=1.0)
@@ -140,6 +149,31 @@ class OutOfSequenceMeasurementTest(unittest.TestCase):
         self.assertTrue(result.out_of_sequence)
         self.assertTrue(allclose(delayed.filter_state.d, chronological.filter_state.d))
         self.assertTrue(allclose(delayed.filter_state.w, chronological.filter_state.w))
+
+    def test_result_parses_serialized_accepted_diagnostics(self):
+        updater = OutOfSequenceParticleUpdater(
+            _DiagnosticsOnlyParticleFilter(),
+            initial_time=0.0,
+        )
+
+        result = updater.update_nonlinear_using_likelihood(
+            1.0,
+            lambda _measurement, _particles: {"accepted": "False"},
+        )
+
+        self.assertFalse(result.accepted)
+
+    def test_result_rejects_invalid_accepted_diagnostics(self):
+        updater = OutOfSequenceParticleUpdater(
+            _DiagnosticsOnlyParticleFilter(),
+            initial_time=0.0,
+        )
+
+        with self.assertRaisesRegex(ValueError, "accepted diagnostic"):
+            updater.update_nonlinear_using_likelihood(
+                1.0,
+                lambda _measurement, _particles: {"accepted": "maybe"},
+            )
 
     @staticmethod
     def _particle_filter():
