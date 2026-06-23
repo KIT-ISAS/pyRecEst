@@ -350,9 +350,8 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         transformation a grid-based approach with a 2× finer intermediate grid
         is used so that squaring the sqrt functions introduces no aliasing.
         """
-        assert isinstance(
-            other, SphericalHarmonicsDistributionComplex
-        ), "other must be a SphericalHarmonicsDistributionComplex"
+        if not isinstance(other, SphericalHarmonicsDistributionComplex):
+            raise TypeError("other must be a SphericalHarmonicsDistributionComplex")
 
         degree = self.coeff_mat.shape[0] - 1
 
