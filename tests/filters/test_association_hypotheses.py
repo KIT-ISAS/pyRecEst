@@ -135,6 +135,24 @@ class AssociationHypothesesTest(unittest.TestCase):
         hypothesis = AssociationHypothesis(0, 0, probability=0.0)
         self.assertTrue(ProbabilityThresholdGate(0.0).accepts(hypothesis))
 
+    def test_hypothesis_accepted_flag_must_be_boolean(self):
+        rejected = AssociationHypothesis(0, 0, cost=1.0, accepted=np.bool_(False))
+
+        self.assertFalse(rejected.accepted)
+        self.assertEqual(filter_hypotheses([rejected]), [])
+
+        with self.assertRaisesRegex(ValueError, "accepted"):
+            AssociationHypothesis(0, 0, cost=1.0, accepted="False")
+
+        with self.assertRaisesRegex(ValueError, "accepted"):
+            AssociationHypothesis(0, 0, cost=1.0).with_acceptance("False")
+
+    def test_callable_gate_result_must_be_boolean(self):
+        hypotheses = [AssociationHypothesis(0, 0, cost=1.0)]
+
+        with self.assertRaisesRegex(ValueError, "gate result"):
+            filter_hypotheses(hypotheses, lambda _hypothesis: "False")
+
     def test_measurement_axis_auto_uses_measurement_dimension(self):
         state_covariance = array(
             [

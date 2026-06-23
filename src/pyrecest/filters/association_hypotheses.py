@@ -68,6 +68,12 @@ def validate_association_backend(*, strict: bool = False) -> dict[str, str]:
     return support
 
 
+def _coerce_bool_flag(value: Any, name: str) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    raise ValueError(f"{name} must be a boolean")
+
+
 @dataclass(frozen=True)
 class AssociationHypothesis:
     """Pairwise association score between one track and one measurement.
@@ -91,6 +97,13 @@ class AssociationHypothesis:
     reason: str | None = None
     metadata: dict[str, Any] | None = None
 
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "accepted",
+            _coerce_bool_flag(self.accepted, "accepted"),
+        )
+
     @property
     def is_missed_detection(self) -> bool:
         """Return whether the hypothesis represents an unmatched track."""
@@ -98,7 +111,11 @@ class AssociationHypothesis:
 
     def with_acceptance(self, accepted: bool, reason: str | None = None):
         """Return a copy with updated gate acceptance metadata."""
-        return replace(self, accepted=bool(accepted), reason=reason)
+        return replace(
+            self,
+            accepted=_coerce_bool_flag(accepted, "accepted"),
+            reason=reason,
+        )
 
 
 def _nonnegative_index(value: Any, name: str) -> int:
@@ -413,8 +430,9 @@ def gate_hypotheses(
         if not hypothesis.accepted:
             result.append(hypothesis)
             continue
-        accepted = bool(
-            gate(hypothesis) if callable(gate) else gate.accepts(hypothesis)
+        accepted = _coerce_bool_flag(
+            gate(hypothesis) if callable(gate) else gate.accepts(hypothesis),
+            "gate result",
         )
         reason = None if accepted else reject_reason or type(gate).__name__
         result.append(hypothesis.with_acceptance(accepted, reason))
