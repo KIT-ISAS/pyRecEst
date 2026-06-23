@@ -43,6 +43,22 @@ def _validate_bool_flag(value: Any, name: str) -> bool:
     raise TypeError(f"{name} must be a boolean.")
 
 
+def _validate_nonnegative_finite_scalar(value: Any, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a finite nonnegative scalar.")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(f"{name} must be a finite nonnegative scalar.")
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite nonnegative scalar.") from exc
+    if not np.isfinite(parsed) or parsed < 0.0:
+        raise ValueError(f"{name} must be a finite nonnegative scalar.")
+    return parsed
+
+
 def _validate_expected_dim(
     actual_dim: int, expected_dim: int | None, name: str, dim_name: str
 ) -> None:
@@ -190,6 +206,14 @@ def validate_covariance_matrix(
     """
     allow_scalar = _validate_bool_flag(allow_scalar, "allow_scalar")
     check_symmetric = _validate_bool_flag(check_symmetric, "check_symmetric")
+    symmetric_rtol = _validate_nonnegative_finite_scalar(
+        symmetric_rtol,
+        "symmetric_rtol",
+    )
+    symmetric_atol = _validate_nonnegative_finite_scalar(
+        symmetric_atol,
+        "symmetric_atol",
+    )
     covariance = _as_backend_array(covariance, name)
 
     if backend.ndim(covariance) == 0 and allow_scalar:
