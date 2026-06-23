@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import array, pi
 from pyrecest.distributions import CircularDiracDistribution, VonMisesDistribution
@@ -8,6 +9,18 @@ from pyrecest.smoothers import SlidingWindowManifoldMeanSmoother
 
 class SlidingWindowManifoldMeanSmootherTest(unittest.TestCase):
     _CIRCULAR_ATOL = 1e-6
+
+    def test_window_size_requires_positive_integer(self):
+        invalid_values = (True, np.bool_(True), 1.5, np.array(1.5), np.array([3]), 0)
+        for invalid in invalid_values:
+            with self.subTest(window_size=invalid):
+                with self.assertRaisesRegex(ValueError, "window_size"):
+                    SlidingWindowManifoldMeanSmoother(window_size=invalid)
+
+        for valid in (np.int64(3), np.array(3)):
+            with self.subTest(window_size=valid):
+                smoother = SlidingWindowManifoldMeanSmoother(window_size=valid)
+                self.assertEqual(smoother.window_size, 3)
 
     def test_centered_window_smooths_linear_sequence(self):
         smoother = SlidingWindowManifoldMeanSmoother(window_size=3)
