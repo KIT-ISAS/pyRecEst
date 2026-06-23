@@ -30,7 +30,7 @@ class RecordSmootherConfig:
         applies the same backward recursion only over future records within
         ``lag`` seconds.  ``"none"`` returns copied records.
     lag:
-        Nonnegative fixed-lag horizon in seconds. Required for ``"fixed-lag"``.
+        Finite nonnegative fixed-lag horizon in seconds. Required for ``"fixed-lag"``.
     time_key, state_key, covariance_key:
         Keys used to extract timestamp, filtered state, and filtered covariance.
     output_state_key, output_covariance_key:
@@ -158,8 +158,9 @@ def _smooth_records_with_config(
 ) -> list[dict[str, Any]]:
     if config.method not in ("none", "rts", "fixed-lag"):
         raise ValueError(f"unknown smoothing method {config.method!r}")
-    if config.method == "fixed-lag" and (config.lag is None or config.lag < 0.0):
-        raise ValueError("fixed-lag smoothing requires a nonnegative lag")
+    fixed_lag = None
+    if config.method == "fixed-lag":
+        fixed_lag = _validate_fixed_lag(config.lag)
     if not records:
         return []
 
@@ -187,13 +188,14 @@ def _smooth_records_with_config(
             end_index=len(copied) - 1,
         )
     else:
+        assert fixed_lag is not None
         smoothed_states, smoothed_covariances = _fixed_lag_smooth_arrays(
             times,
             filtered_states,
             filtered_covariances,
             transition_model=transition_model,
             process_noise_model=process_noise_model,
-            lag=float(config.lag),
+            lag=fixed_lag,
         )
 
     out: list[dict[str, Any]] = []
@@ -206,6 +208,23 @@ def _smooth_records_with_config(
         item.update(metadata)
         out.append(item)
     return out
+
+
+def _validate_fixed_lag(lag: float | None) -> float:
+    if lag is None:
+        raise ValueError("fixed-lag smoothing requires a finite nonnegative lag")
+    lag_array = np.asarray(lag)
+    if lag_array.shape != () or lag_array.dtype == np.bool_:
+        raise ValueError("fixed-lag smoothing requires a finite nonnegative lag")
+    try:
+        lag_value = float(lag_array.item())
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            "fixed-lag smoothing requires a finite nonnegative lag"
+        ) from exc
+    if not np.isfinite(lag_value) or lag_value < 0.0:
+        raise ValueError("fixed-lag smoothing requires a finite nonnegative lag")
+    return lag_value
 
 
 def _record_arrays(

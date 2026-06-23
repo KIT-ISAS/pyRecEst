@@ -13,6 +13,8 @@ Reference:
     https://github.com/libDirectional/libDirectional
 """
 
+from collections.abc import Mapping
+
 import pyrecest.backend
 from pyrecest.backend import (  # pylint: disable=no-name-in-module,no-member
     allclose,
@@ -200,21 +202,45 @@ class BayesianComplexWatsonMixtureModel:
         Returns:
             dict: Posterior with keys ``B``, ``kappa``, ``alpha``, ``gamma``.
         """
-        uniform_component = parameters.get("uniformComponent", False)
-
         if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
             raise NotImplementedError(
                 "estimate_posterior is not supported on the JAX backend."
             )
 
-        _require_parameter(parameters, "initial")
-        initial_B = _require_parameter(parameters, "initial", "B")
-        initial_alpha = _require_parameter(parameters, "initial", "alpha")
-        initial_kappa = _require_parameter(parameters, "initial", "kappa")
-        prior = _require_parameter(parameters, "prior")
-        prior_B_input = _require_parameter(parameters, "prior", "B")
-        prior_alpha_input = _require_parameter(parameters, "prior", "alpha")
-        iterations = _require_parameter(parameters, "I")
+        if not isinstance(parameters, Mapping):
+            raise TypeError("parameters must be a mapping.")
+
+        missing_paths = []
+        for path in (
+            ("initial",),
+            ("initial", "B"),
+            ("initial", "alpha"),
+            ("initial", "kappa"),
+            ("prior",),
+            ("prior", "B"),
+            ("prior", "alpha"),
+            ("I",),
+        ):
+            current = parameters
+            for key in path:
+                if not isinstance(current, Mapping) or key not in current:
+                    missing_paths.append(".".join(path))
+                    break
+                current = current[key]
+        if missing_paths:
+            raise ValueError(
+                "parameters missing required entries: " + ", ".join(missing_paths)
+            )
+
+        initial = parameters["initial"]
+        prior = parameters["prior"]
+        initial_B = initial["B"]
+        initial_alpha = initial["alpha"]
+        initial_kappa = initial["kappa"]
+        prior_B_input = prior["B"]
+        prior_alpha_input = prior["alpha"]
+        iterations = parameters["I"]
+        uniform_component = parameters.get("uniformComponent", False)
 
         Z = asarray(Z, dtype=complex)
         if Z.ndim != 2:
@@ -251,7 +277,9 @@ class BayesianComplexWatsonMixtureModel:
         else:
             saliencies_vec = saliencies_arr.ravel()
             if len(saliencies_vec) != N:
-                raise ValueError("len(prior.saliencies) must equal the sample count")
+                raise ValueError(
+                    "prior saliencies must contain one entry per observation."
+                )
             ln_saliencies = log(maximum(saliencies_vec, 1e-7))[:, None] * ones((N, K))
 
         prior_B = asarray(prior_B_input, dtype=complex)
@@ -284,7 +312,7 @@ class BayesianComplexWatsonMixtureModel:
             gamma /= gamma.sum(axis=1, keepdims=True)
 
             if bool(any(isnan(gamma))):
-                raise ValueError("NaN in gamma during E-step")
+                raise FloatingPointError("NaN in gamma during E-step.")
             posterior["gamma"] = gamma
 
             # M-step
