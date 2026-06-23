@@ -35,13 +35,20 @@ def _is_hypersphere_symmetric_name(normalized_name: str) -> bool:
     )
 
 
+def _is_array_state(filter_state) -> bool:
+    return hasattr(filter_state, "ndim") and hasattr(filter_state, "shape")
+
+
 def _point_estimate_or_mean(filter_state):
     if hasattr(filter_state, "get_point_estimate"):
         return filter_state.get_point_estimate()
-    if hasattr(filter_state, "mean"):
-        return filter_state.mean()
     if hasattr(filter_state, "mu"):
         return filter_state.mu
+    if _is_array_state(filter_state):
+        return filter_state
+    if hasattr(filter_state, "mean"):
+        mean = filter_state.mean
+        return mean() if callable(mean) else mean
     return filter_state
 
 
