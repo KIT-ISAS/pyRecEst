@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from functools import partial
+from operator import index as operator_index
 
 from pyrecest.backend import any as backend_any
 from pyrecest.backend import asarray, concatenate, ndim, stack, sum
@@ -26,6 +27,18 @@ from pyrecest.distributions import (
 )
 
 from .abstract_smoother import AbstractSmoother
+
+
+def _validate_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer.")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer.") from exc
+    if value < 1:
+        raise ValueError(f"{name} must be a positive integer.")
+    return value
 
 
 class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
@@ -65,9 +78,7 @@ class SlidingWindowManifoldMeanSmoother(AbstractSmoother):
         window_weights=None,
         alignment: str = "center",
     ):
-        window_size = int(window_size)
-        if window_size < 1:
-            raise ValueError("window_size must be a positive integer.")
+        window_size = _validate_positive_integer(window_size, "window_size")
         if alignment not in self._ALIGNMENTS:
             raise ValueError(f"alignment must be one of {', '.join(self._ALIGNMENTS)}.")
 
