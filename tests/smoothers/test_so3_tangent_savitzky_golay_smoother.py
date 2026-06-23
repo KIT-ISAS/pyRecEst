@@ -1,6 +1,7 @@
 import math
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import array, cos, eye, sin, stack
 from pyrecest.smoothers import SO3TangentSavitzkyGolaySmoother, SO3TSGSmoother
@@ -67,8 +68,46 @@ class SO3TangentSavitzkyGolaySmootherTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             SO3TangentSavitzkyGolaySmoother(window_size=4)
+        for invalid_window in (
+            True,
+            np.bool_(True),
+            5.5,
+            np.array(5.5),
+            np.array([5]),
+            0,
+        ):
+            with self.subTest(window_size=invalid_window):
+                with self.assertRaisesRegex(ValueError, "window_size"):
+                    SO3TangentSavitzkyGolaySmoother(window_size=invalid_window)
+
         with self.assertRaises(ValueError):
             SO3TangentSavitzkyGolaySmoother(polynomial_degree=-1)
+        for invalid_degree in (
+            True,
+            np.bool_(True),
+            1.5,
+            np.array(1.5),
+            np.array([1]),
+            -1,
+        ):
+            with self.subTest(polynomial_degree=invalid_degree):
+                with self.assertRaisesRegex(ValueError, "polynomial_degree"):
+                    SO3TangentSavitzkyGolaySmoother(
+                        polynomial_degree=invalid_degree
+                    )
+
+        valid = SO3TangentSavitzkyGolaySmoother(
+            window_size=np.array(5),
+            polynomial_degree=np.int64(1),
+        )
+        self.assertEqual(valid.window_size, 5)
+        self.assertEqual(valid.polynomial_degree, 1)
+
+        with self.assertRaisesRegex(ValueError, "window_size"):
+            smoother.smooth([eye(3), eye(3)], window_size=1.5)
+        with self.assertRaisesRegex(ValueError, "polynomial_degree"):
+            smoother.smooth([eye(3), eye(3)], polynomial_degree=True)
+
         with self.assertRaises(ValueError):
             smoother.smooth([eye(3), eye(3)], mask=[False, False])
         with self.assertRaises(ValueError):
