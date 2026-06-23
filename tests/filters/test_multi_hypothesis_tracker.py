@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import pyrecest.backend
 from pyrecest.filters.multi_hypothesis_tracker import MultiHypothesisTracker
 
@@ -91,6 +92,55 @@ class MultiHypothesisTrackerEnumerationTest(unittest.TestCase):
         actual = tracker._enumerate_candidate_assignments([[], []], -2.0)
 
         self.assertEqual(actual, [(-2.0, (-1, -1))])
+
+    @staticmethod
+    def _make_diverse_tracker(association_param):
+        tracker = MultiHypothesisTracker.__new__(MultiHypothesisTracker)
+        tracker.association_param = association_param
+        tracker.hypothesis_diversity_key = None
+        tracker._global_hypothesis_histories = [  # pylint: disable=protected-access
+            ("first", "shared"),
+            ("second", "shared"),
+            ("third", "unique"),
+        ]
+        return tracker
+
+    def test_diverse_pruning_validates_integer_controls(self):
+        invalid_configs = (
+            {"diversity_history_length": True, "max_hypotheses_per_signature": 1},
+            {"diversity_history_length": 1.5, "max_hypotheses_per_signature": 1},
+            {
+                "diversity_history_length": np.array([1]),
+                "max_hypotheses_per_signature": 1,
+            },
+            {"diversity_history_length": 1, "max_hypotheses_per_signature": True},
+            {"diversity_history_length": 1, "max_hypotheses_per_signature": 1.5},
+            {
+                "diversity_history_length": 1,
+                "max_hypotheses_per_signature": np.array([1]),
+            },
+            {"diversity_history_length": 1, "max_hypotheses_per_signature": 0},
+        )
+        for config in invalid_configs:
+            with self.subTest(config=config):
+                tracker = self._make_diverse_tracker(config)
+                with self.assertRaisesRegex(ValueError, "must"):
+                    tracker._select_diverse_surviving_indices(  # pylint: disable=protected-access
+                        [0, 1, 2],
+                        3,
+                    )
+
+        valid_tracker = self._make_diverse_tracker(
+            {
+                "diversity_history_length": np.array(1),
+                "max_hypotheses_per_signature": np.int64(1),
+            }
+        )
+        selected = valid_tracker._select_diverse_surviving_indices(  # pylint: disable=protected-access
+            [0, 1, 2],
+            3,
+        )
+        self.assertEqual(selected, [0, 2])
 
 
 if __name__ == "__main__":

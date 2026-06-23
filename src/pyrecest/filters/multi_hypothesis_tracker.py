@@ -3,6 +3,7 @@ import warnings
 from builtins import all as builtin_all
 from copy import deepcopy
 from math import log
+from operator import index as operator_index
 
 from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
@@ -29,6 +30,22 @@ from scipy.stats import chi2
 from .abstract_multitarget_tracker import AbstractMultitargetTracker
 from .kalman_filter import KalmanFilter
 from .manifold_mixins import EuclideanFilterMixin
+
+
+def _validate_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be an integer")
+    try:
+        return operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+
+def _validate_positive_integer(value, name: str) -> int:
+    value = _validate_integer(value, name)
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return value
 
 
 class MultiHypothesisTracker(AbstractMultitargetTracker):
@@ -660,15 +677,19 @@ class MultiHypothesisTracker(AbstractMultitargetTracker):
         return surviving_indices
 
     def _select_diverse_surviving_indices(self, candidate_indices, max_hypotheses):
-        history_length = int(self.association_param.get("diversity_history_length", 3))
+        history_length = _validate_integer(
+            self.association_param.get("diversity_history_length", 3),
+            "diversity_history_length",
+        )
         max_per_signature = self.association_param.get(
             "max_hypotheses_per_signature", 1
         )
         if max_per_signature is None:
             max_per_signature = max_hypotheses
-        max_per_signature = int(max_per_signature)
-        if max_per_signature <= 0:
-            raise ValueError("max_hypotheses_per_signature must be positive")
+        max_per_signature = _validate_positive_integer(
+            max_per_signature,
+            "max_hypotheses_per_signature",
+        )
 
         selected_indices = []
         signature_counts = {}
