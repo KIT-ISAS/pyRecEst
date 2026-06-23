@@ -25,6 +25,13 @@ def test_evidence_computation_mode_accepts_numpy_bool_flags():
     assert fast.mode == "evidence_only"
 
 
+def test_evidence_computation_mode_accepts_none_metadata_constructor():
+    mode = EvidenceComputationMode(metadata=None)
+
+    assert mode.metadata == {}
+    assert mode.to_diagnostics()["evidence_computation_mode"] == "full_smoothing"
+
+
 def test_evidence_computation_mode_rejects_invalid_boolean_strings():
     with pytest.raises(ValueError, match="return_smoothed"):
         resolve_evidence_computation_mode(return_smoothed="definitely")
