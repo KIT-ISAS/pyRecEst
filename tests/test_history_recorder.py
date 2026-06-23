@@ -1,6 +1,7 @@
 import unittest
 from math import nan
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -31,8 +32,10 @@ class _DummyFilter(AbstractFilter):
 
 
 class _DummyMultitargetTracker(AbstractMultitargetTracker):
-    def __init__(self):
-        super().__init__(log_prior_estimates=True, log_posterior_estimates=True)
+    def __init__(self, **kwargs):
+        options = dict(log_prior_estimates=True, log_posterior_estimates=True)
+        options.update(kwargs)
+        super().__init__(**options)
         self.estimate = array([])
 
     def get_point_estimate(self, flatten_vector=False):
@@ -45,13 +48,15 @@ class _DummyMultitargetTracker(AbstractMultitargetTracker):
 
 
 class _DummyExtendedTracker(AbstractExtendedObjectTracker):
-    def __init__(self):
-        super().__init__(
+    def __init__(self, **kwargs):
+        options = dict(
             log_prior_estimates=True,
             log_posterior_estimates=True,
             log_prior_extents=True,
             log_posterior_extents=True,
         )
+        options.update(kwargs)
+        super().__init__(**options)
         self.estimate = array([])
         self.extent = array([[]])
 
@@ -135,6 +140,28 @@ class HistoryRecorderTest(unittest.TestCase):
         npt.assert_allclose(
             tracker.history["posterior_estimates"], expected_posterior, equal_nan=True
         )
+
+    def test_tracker_logging_flags_must_be_boolean(self):
+        tracker = _DummyMultitargetTracker(log_prior_estimates=np.bool_(False))
+
+        self.assertIs(tracker.log_prior_estimates, False)
+        self.assertIsNone(tracker.prior_estimates_over_time)
+
+        for field_name in ("log_prior_estimates", "log_posterior_estimates"):
+            with self.subTest(field_name=field_name):
+                with self.assertRaisesRegex(ValueError, field_name):
+                    _DummyMultitargetTracker(**{field_name: "False"})
+
+    def test_extended_tracker_extent_logging_flags_must_be_boolean(self):
+        tracker = _DummyExtendedTracker(log_prior_extents=np.bool_(False))
+
+        self.assertIs(tracker.log_prior_extents, False)
+        self.assertIsNone(tracker.prior_extents_over_time)
+
+        for field_name in ("log_prior_extents", "log_posterior_extents"):
+            with self.subTest(field_name=field_name):
+                with self.assertRaisesRegex(ValueError, field_name):
+                    _DummyExtendedTracker(**{field_name: "False"})
 
     def test_extended_tracker_logs_extents_via_same_recorder(self):
         tracker = _DummyExtendedTracker()
