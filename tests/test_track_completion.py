@@ -62,6 +62,34 @@ class TestTrackCompletion(unittest.TestCase):
         )
         self.assertEqual(len(allowed), 1)
 
+        allowed_from_numpy_bool = enumerate_fragment_completion_paths(
+            tracks,
+            direction="suffix",
+            candidate_provider=provider,
+            allow_duplicate_target=np.bool_(True),
+        )
+        self.assertEqual(len(allowed_from_numpy_bool), 1)
+
+    def test_duplicate_controls_must_be_boolean(self) -> None:
+        tracks = [[0, None]]
+
+        def provider(session: int, observation: int, target_session: int):
+            del session, observation, target_session
+            return [1]
+
+        for field_name in ("allow_duplicate_source", "allow_duplicate_target"):
+            with self.subTest(field_name=field_name):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    f"{field_name} must be a boolean",
+                ):
+                    enumerate_fragment_completion_paths(
+                        tracks,
+                        direction="suffix",
+                        candidate_provider=provider,
+                        **{field_name: "False"},
+                    )
+
     def test_rejects_negative_candidate_observations(self) -> None:
         tracks = [[0, None]]
         invalid_candidates = (-1, CompletionCandidate(-1))

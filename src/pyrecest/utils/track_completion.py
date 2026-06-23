@@ -140,6 +140,12 @@ def enumerate_fragment_completion_paths(
     """
 
     max_path_length = _as_positive_int(max_path_length, "max_path_length")
+    allow_duplicate_source = _as_bool_flag(
+        allow_duplicate_source, "allow_duplicate_source"
+    )
+    allow_duplicate_target = _as_bool_flag(
+        allow_duplicate_target, "allow_duplicate_target"
+    )
     if direction not in {"prefix", "suffix", "both"}:
         raise ValueError("direction must be 'prefix', 'suffix', or 'both'")
     if max_paths_per_fragment is not None:
@@ -182,8 +188,8 @@ def enumerate_fragment_completion_paths(
                 max_path_length=max_path_length,
                 candidate_provider=candidate_provider,
                 candidate_session_provider=candidate_session_provider,
-                allow_duplicate_source=bool(allow_duplicate_source),
-                allow_duplicate_target=bool(allow_duplicate_target),
+                allow_duplicate_source=allow_duplicate_source,
+                allow_duplicate_target=allow_duplicate_target,
                 score_path=score_path,
                 out=fragment_paths,
             )
@@ -447,3 +453,15 @@ def _as_positive_int(value: Any, name: str) -> int:
     if parsed <= 0:
         raise ValueError(message)
     return parsed
+
+
+def _as_bool_flag(value: Any, name: str) -> bool:
+    value_array = np.asarray(value)
+    message = f"{name} must be a boolean"
+    if value_array.shape != ():
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        return bool(scalar)
+    raise ValueError(message)

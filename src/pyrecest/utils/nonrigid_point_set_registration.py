@@ -288,6 +288,7 @@ def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too
             "joint_tps_registration_assignment is not supported on the JAX backend."
         )
 
+    regularization = _validate_regularization(regularization)
     max_iterations = _validate_positive_integer(max_iterations, "max_iterations")
     min_matches = _validate_positive_integer(min_matches, "min_matches", minimum=3)
 

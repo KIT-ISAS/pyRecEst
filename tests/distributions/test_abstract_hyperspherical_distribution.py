@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import matplotlib
 import pyrecest.backend
@@ -97,6 +98,14 @@ class AbstractHypersphericalDistributionTest(unittest.TestCase):
         uniform_circle = HypersphericalUniformDistribution(1)
         with self.assertRaisesRegex(ValueError, "Mean direction is undefined"):
             uniform_circle.mean_direction_numerical()
+
+    def test_mode_numerical_rejects_jax_backend(self):
+        mu = array([1.0, 0.0, 0.0])
+        vmf = VonMisesFisherDistribution(mu, 1.0)
+
+        with patch.object(pyrecest.backend, "__backend_name__", "jax"):
+            with self.assertRaisesRegex(NotImplementedError, "JAX backend"):
+                vmf.mode_numerical()
 
     def test_plotting_error_free_1d(self):
         """Tests the plotting function for circular distributions."""

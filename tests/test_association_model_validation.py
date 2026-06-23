@@ -44,6 +44,20 @@ class TestLogisticAssociationScalarValidation(unittest.TestCase):
 
         self.assertEqual(model.max_iterations, 3)
 
+    def test_constructor_rejects_nonboolean_controls(self):
+        for field_name in ("fit_intercept", "standardize"):
+            with self.subTest(field_name=field_name):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    f"{field_name} must be a boolean",
+                ):
+                    LogisticPairwiseAssociationModel(**{field_name: "False"})
+
+                model = LogisticPairwiseAssociationModel(
+                    **{field_name: np.bool_(False)}
+                )
+                self.assertIs(getattr(model, field_name), False)
+
     def test_class_weight_rejects_boolean_and_non_scalar_weights(self):
         features = array([[0.0], [1.0]])
         labels = array([0, 1])

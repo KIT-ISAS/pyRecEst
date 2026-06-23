@@ -367,7 +367,7 @@ def source_float_value(
 
     if values_by_source and str(measurement.source) in values_by_source:
         value = values_by_source[str(measurement.source)]
-        return None if value is None else float(value)
+        return None if value is None else _as_finite_scalar(value, "source value")
     return default
 
 

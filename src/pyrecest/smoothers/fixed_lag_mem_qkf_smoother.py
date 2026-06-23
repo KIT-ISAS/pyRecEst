@@ -25,6 +25,21 @@ from pyrecest.filters.mem_qkf_tracker import MEMQKFTracker
 from .abstract_smoother import AbstractSmoother
 
 
+def _coerce_bool_flag(value, name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a bool") from exc
+    if value_array.shape != ():
+        raise ValueError(f"{name} must be a scalar bool")
+    scalar = value_array.item()
+    if isinstance(scalar, bool):
+        return bool(scalar)
+    raise ValueError(f"{name} must be a bool")
+
+
 @dataclass
 class MEMQKFTrackerState:
     """Detached snapshot of a :class:`MEMQKFTracker` state."""
@@ -591,9 +606,13 @@ class ForwardBackwardForwardBackwardMEMQKFSmoother(FixedLagMEMQKFSmoother):
         if n_iterations < 1:
             raise ValueError("n_iterations must be at least one.")
         self.n_iterations = n_iterations
-        self.include_kinematic_covariance = bool(include_kinematic_covariance)
-        self.include_single_measurement_axis_covariance = bool(
-            include_single_measurement_axis_covariance
+        self.include_kinematic_covariance = _coerce_bool_flag(
+            include_kinematic_covariance,
+            "include_kinematic_covariance",
+        )
+        self.include_single_measurement_axis_covariance = _coerce_bool_flag(
+            include_single_measurement_axis_covariance,
+            "include_single_measurement_axis_covariance",
         )
 
     @staticmethod

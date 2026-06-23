@@ -124,17 +124,35 @@ class TestBayesianComplexWatsonMixtureModelConstructor(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Hermitian"):
             BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0]))
 
-    def test_B_component_count_mismatch_raises(self):
-        D = 2
-        B = zeros((D, D, 1), dtype=complex)
-        with self.assertRaisesRegex(ValueError, "B.shape\\[2\\]"):
+    def test_constructor_rejects_invalid_B_shape(self):
+        B = zeros((2, 2), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "shape"):
+            BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0]))
+
+    def test_constructor_rejects_component_count_mismatch(self):
+        B = zeros((2, 2, 2), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "B.shape"):
+            BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0]))
+
+    def test_constructor_rejects_too_few_B_components(self):
+        B = zeros((2, 2, 1), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "B.shape"):
             BayesianComplexWatsonMixtureModel(
                 B, array([1.0, 1.0]), array([1.0, 1.0])
             )
 
-    def test_concentration_count_mismatch_raises(self):
-        D, K = 2, 2
-        B = zeros((D, D, K), dtype=complex)
+    def test_constructor_rejects_concentration_count_mismatch(self):
+        B = zeros((2, 2, 1), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "concentrations"):
+            BayesianComplexWatsonMixtureModel(B, array([1.0, 2.0]), array([1.0]))
+
+    def test_constructor_rejects_too_few_concentrations(self):
+        B = zeros((2, 2, 2), dtype=complex)
+
         with self.assertRaisesRegex(ValueError, "concentrations"):
             BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0, 1.0]))
 

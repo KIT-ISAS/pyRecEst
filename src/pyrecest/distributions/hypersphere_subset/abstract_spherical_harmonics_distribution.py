@@ -6,6 +6,7 @@ import pyrecest.backend
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     abs,
+    all,
     atleast_2d,
     full,
     hstack,
@@ -29,9 +30,10 @@ class AbstractSphericalHarmonicsDistribution(
     def __init__(self, coeff_mat, transformation="identity"):
         AbstractSphericalDistribution.__init__(self)
         coeff_mat = atleast_2d(coeff_mat)
-        assert (
-            coeff_mat.shape[1] == coeff_mat.shape[0] * 2 - 1
-        ), "CoefficientMatrix:Size, Dimensions of coefficient Matrix are incompatible."
+        if coeff_mat.shape[1] != coeff_mat.shape[0] * 2 - 1:
+            raise ValueError(
+                "CoefficientMatrix:Size, Dimensions of coefficient Matrix are incompatible."
+            )
 
         # Ignore irrelevant entries of coeff_mat and set to NaN
         n = coeff_mat.shape[0]
@@ -43,10 +45,13 @@ class AbstractSphericalHarmonicsDistribution(
             ):  # Set the irrelevant elements to nan
                 coeff_mat[i, 2 * i + 1 :] = float("NaN")  # noqa: E203
             else:
-                assert coeff_mat[i, 2 * i + 1 :].shape[0] == 0 or all(  # noqa: E203
-                    isnan(coeff_mat[i, 2 * i + 1 :])  # noqa: E203
-                    | (coeff_mat[i, 2 * i + 1 :] == 0)  # noqa: E203
-                )
+                irrelevant_coeffs = coeff_mat[i, 2 * i + 1 :]  # noqa: E203
+                if irrelevant_coeffs.shape[0] != 0 and not bool(
+                    all(isnan(irrelevant_coeffs) | (irrelevant_coeffs == 0))
+                ):
+                    raise ValueError(
+                        "Irrelevant spherical harmonics coefficients must be zero or NaN."
+                    )
         AbstractOrthogonalBasisDistribution.__init__(self, coeff_mat, transformation)
 
     def pdf(self, xs):
@@ -94,7 +99,10 @@ class AbstractSphericalHarmonicsDistribution(
         else:
             raise ValueError("No analytical formula for normalization available")
 
-        assert abs(imag(int_val)) < 1e-8
+        if not bool(abs(imag(int_val)) < 1e-8):
+            raise ValueError(
+                "Spherical harmonics integral has a non-negligible imaginary part."
+            )
         return real(int_val)
 
     def truncate(self, degree):

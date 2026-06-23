@@ -71,9 +71,10 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
                 vals += self.coeff_mat[n_curr, n_curr + m_curr] * y_lm
 
         if self.assert_real:
-            assert all(
-                abs(imag(vals)) < 5e-8
-            ), "Coefficients apparently do not represent a real function."
+            if not bool(all(abs(imag(vals)) < 5e-8)):
+                raise ValueError(
+                    "Coefficients apparently do not represent a real function."
+                )
             return real(vals)
 
         return vals
@@ -350,9 +351,8 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         transformation a grid-based approach with a 2× finer intermediate grid
         is used so that squaring the sqrt functions introduces no aliasing.
         """
-        assert isinstance(
-            other, SphericalHarmonicsDistributionComplex
-        ), "other must be a SphericalHarmonicsDistributionComplex"
+        if not isinstance(other, SphericalHarmonicsDistributionComplex):
+            raise TypeError("other must be a SphericalHarmonicsDistributionComplex")
 
         degree = self.coeff_mat.shape[0] - 1
 
