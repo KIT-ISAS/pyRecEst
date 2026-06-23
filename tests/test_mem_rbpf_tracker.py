@@ -10,20 +10,33 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _make_tracker():
+def _make_tracker(**kwargs):
     random.seed(0)
-    return MEMRBPFTracker(
-        kinematic_state=array([0.0, 0.0, 1.0, -0.5]),
-        covariance=eye(4),
-        shape_state=array([0.2, 2.0, 1.0]),
-        shape_covariance=diag(array([0.05, 0.1, 0.1])),
-        meas_noise_cov=0.05 * eye(2),
-        sys_noise=0.01 * eye(4),
-        shape_sys_noise=diag(array([0.01, 0.01, 0.01])),
-        n_particles=32,
-        resampling_threshold=16,
-        axis_floor=1e-3,
-    )
+    parameters = {
+        "kinematic_state": array([0.0, 0.0, 1.0, -0.5]),
+        "covariance": eye(4),
+        "shape_state": array([0.2, 2.0, 1.0]),
+        "shape_covariance": diag(array([0.05, 0.1, 0.1])),
+        "meas_noise_cov": 0.05 * eye(2),
+        "sys_noise": 0.01 * eye(4),
+        "shape_sys_noise": diag(array([0.01, 0.01, 0.01])),
+        "n_particles": 32,
+        "resampling_threshold": 16,
+        "axis_floor": 1e-3,
+    }
+    parameters.update(kwargs)
+    return MEMRBPFTracker(**parameters)
+
+
+def test_mem_rbpf_validates_particle_count():
+    for invalid in (True, np.bool_(True), 1.5, np.array(1.5), np.array([3]), 0, -1):
+        with pytest.raises(ValueError, match="n_particles"):
+            _make_tracker(n_particles=invalid)
+
+    for valid in (np.int64(3), np.array(3)):
+        tracker = _make_tracker(n_particles=valid)
+        assert tracker.n_particles == 3
+        assert tracker.weights.shape == (3,)
 
 
 def test_mem_rbpf_predict_update_smoke():
