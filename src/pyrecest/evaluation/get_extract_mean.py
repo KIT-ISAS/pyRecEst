@@ -7,13 +7,20 @@ MeanExtractorFactory = Callable[[str, bool], Callable[[Any], Any]]
 _EXTRACT_MEAN_FACTORIES: dict[str, MeanExtractorFactory] = {}
 
 
+def _normalize_registry_name(manifold_name: str) -> str:
+    if not isinstance(manifold_name, str) or not manifold_name.strip():
+        raise ValueError("manifold_name must be a non-empty string")
+    return manifold_name.lower()
+
+
 def register_extract_mean(
     manifold_name: str, factory: MeanExtractorFactory
 ) -> MeanExtractorFactory:
     """Register a custom mean-extraction factory for a manifold name."""
-    if not manifold_name:
-        raise ValueError("manifold_name must be a non-empty string")
-    _EXTRACT_MEAN_FACTORIES[manifold_name.lower()] = factory
+    normalized_name = _normalize_registry_name(manifold_name)
+    if not callable(factory):
+        raise TypeError("factory must be callable")
+    _EXTRACT_MEAN_FACTORIES[normalized_name] = factory
     return factory
 
 

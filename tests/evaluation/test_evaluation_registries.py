@@ -21,6 +21,20 @@ def test_custom_distance_function_registry():
     )
 
 
+def test_custom_registries_validate_names_and_factories():
+    registries = (register_distance_function, register_extract_mean)
+
+    for register in registries:
+        with pytest.raises(ValueError, match="non-empty string"):
+            register("", lambda *_args: None)
+        with pytest.raises(ValueError, match="non-empty string"):
+            register("   ", lambda *_args: None)
+        with pytest.raises(ValueError, match="non-empty string"):
+            register(123, lambda *_args: None)
+        with pytest.raises(TypeError, match="factory must be callable"):
+            register("invalid-factory", None)
+
+
 def test_euclidean_mtt_distance_uses_assignment_with_cutoff():
     distance = get_distance_function("euclideanMTT", {"cutoff_distance": 10.0})
 

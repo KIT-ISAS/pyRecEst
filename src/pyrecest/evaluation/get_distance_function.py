@@ -13,13 +13,20 @@ DistanceFactory = Callable[[str, dict[str, Any] | None], Callable[[Any, Any], fl
 _DISTANCE_FUNCTION_FACTORIES: dict[str, DistanceFactory] = {}
 
 
+def _normalize_registry_name(manifold_name: str) -> str:
+    if not isinstance(manifold_name, str) or not manifold_name.strip():
+        raise ValueError("manifold_name must be a non-empty string")
+    return manifold_name.lower()
+
+
 def register_distance_function(
     manifold_name: str, factory: DistanceFactory
 ) -> DistanceFactory:
     """Register a custom distance-function factory for a manifold name."""
-    if not manifold_name:
-        raise ValueError("manifold_name must be a non-empty string")
-    _DISTANCE_FUNCTION_FACTORIES[manifold_name.lower()] = factory
+    normalized_name = _normalize_registry_name(manifold_name)
+    if not callable(factory):
+        raise TypeError("factory must be callable")
+    _DISTANCE_FUNCTION_FACTORIES[normalized_name] = factory
     return factory
 
 
