@@ -75,6 +75,36 @@ def test_feasible_mask_treats_missing_nullable_values_as_infeasible() -> None:
     assert mask.tolist() == [True, False, True]
 
 
+def test_feasible_mask_rejects_non_boolean_values() -> None:
+    table = pd.DataFrame(
+        [
+            {"name": "baseline", "error": 1.0, "runtime": 2.0},
+            {"name": "fast", "error": 2.0, "runtime": 1.0},
+        ]
+    )
+    invalid_masks = (
+        ["True", "False"],
+        [1, 0],
+        np.asarray([True, 0], dtype=object),
+    )
+
+    for feasible_mask in invalid_masks:
+        with pytest.raises(ValueError, match="feasible_mask"):
+            pareto_front_indices(
+                table,
+                ["error", "runtime"],
+                directions={"error": "min", "runtime": "min"},
+                feasible_mask=feasible_mask,
+            )
+        with pytest.raises(ValueError, match="feasible_mask"):
+            is_pareto_front(
+                table,
+                ["error", "runtime"],
+                directions={"error": "min", "runtime": "min"},
+                feasible_mask=feasible_mask,
+            )
+
+
 def test_is_pareto_front_respects_feasible_mask() -> None:
     table = pd.DataFrame(
         [
