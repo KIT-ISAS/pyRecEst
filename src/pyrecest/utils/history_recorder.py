@@ -19,6 +19,20 @@ class _HistoryEntry:
     pad_with_nan: bool
 
 
+def _validate_bool_flag(value: Any, name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be a boolean") from exc
+    if getattr(value_array, "shape", None) == ():
+        scalar = value_array.item()
+        if isinstance(scalar, bool):
+            return bool(scalar)
+    raise TypeError(f"{name} must be a boolean")
+
+
 class HistoryRecorder:
     """Record and retrieve named histories.
 
@@ -35,6 +49,7 @@ class HistoryRecorder:
 
     def register(self, name: str, initial_value=None, pad_with_nan: bool = False):
         """Register a named history and return its storage object."""
+        pad_with_nan = _validate_bool_flag(pad_with_nan, "pad_with_nan")
         if name in self._entries:
             raise ValueError(f"History '{name}' is already registered.")
 
@@ -56,8 +71,12 @@ class HistoryRecorder:
         copy_value: bool = True,
     ):
         """Append a value to the named history and return the updated history."""
+        copy_value = _validate_bool_flag(copy_value, "copy_value")
+        if pad_with_nan is not None:
+            pad_with_nan = _validate_bool_flag(pad_with_nan, "pad_with_nan")
+
         if name not in self._entries:
-            self.register(name, pad_with_nan=bool(pad_with_nan))
+            self.register(name, pad_with_nan=False if pad_with_nan is None else pad_with_nan)
 
         entry = self._entries[name]
         if pad_with_nan is not None and entry.pad_with_nan != pad_with_nan:
