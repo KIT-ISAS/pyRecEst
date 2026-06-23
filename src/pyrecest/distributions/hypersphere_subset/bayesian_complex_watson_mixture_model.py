@@ -56,7 +56,7 @@ class BayesianComplexWatsonMixtureModel:
         Complex Bingham parameter matrices for each component.
     concentrations : ndarray of shape (K,)
         Concentration parameters (kappa) for each Watson component.
-    alpha : ndarray of shape (K,)
+    alpha : ndarray
         Dirichlet parameter vector (proportional to mixture weights).
     K : int
         Number of mixture components.
@@ -133,9 +133,13 @@ class BayesianComplexWatsonMixtureModel:
         Returns:
             tuple: (BayesianComplexWatsonMixtureModel, posterior dict)
         """
-        assert (
-            Z.shape[0] < 100
-        ), "fit_default assumes D < 100 (feature dimension, not sample count)"
+        Z = asarray(Z, dtype=complex)
+        if Z.ndim != 2:
+            raise ValueError("Z must have shape (D, N).")
+        if Z.shape[0] >= 100:
+            raise ValueError(
+                "fit_default assumes D < 100 (feature dimension, not sample count)"
+            )
         D = Z.shape[0]
         parameters = BayesianComplexWatsonMixtureModel.parameters_default(D, K)
         return BayesianComplexWatsonMixtureModel.fit(Z, parameters)
