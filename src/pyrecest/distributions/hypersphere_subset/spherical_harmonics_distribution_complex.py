@@ -44,9 +44,10 @@ from .abstract_spherical_harmonics_distribution import (
 
 class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistribution):
     def __init__(self, coeff_mat, transformation="identity", assert_real=True):
-        assert (
-            pyrecest.backend.__backend_name__ != "jax"  # pylint: disable=no-member
-        ), "SphericalHarmonicsDistributionComplex is not supported on the JAX backend"
+        if pyrecest.backend.__backend_name__ == "jax":  # pylint: disable=no-member
+            raise NotImplementedError(
+                "SphericalHarmonicsDistributionComplex is not supported on the JAX backend."
+            )
         AbstractSphericalHarmonicsDistribution.__init__(self, coeff_mat, transformation)
         self.assert_real = assert_real
 
@@ -296,9 +297,8 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             ``pysh.SHGrid.from_array`` requires plain numpy arrays, so this
             method is only supported on the ``"numpy"`` backend.
         """
-        assert (
-            pyrecest.backend.__backend_name__ == "numpy"  # pylint: disable=no-member
-        ), "pysh.SHGrid.from_array requires the numpy backend"
+        if pyrecest.backend.__backend_name__ != "numpy":  # pylint: disable=no-member
+            raise NotImplementedError("pysh.SHGrid.from_array requires the numpy backend.")
         import numpy as _np  # noqa: PLC0415
         import pyshtools as pysh  # pylint: disable=import-error
 
@@ -370,6 +370,13 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
             return result
 
         if self.transformation == "sqrt" and other.transformation == "sqrt":
+            if (
+                pyrecest.backend.__backend_name__ != "numpy"
+            ):  # pylint: disable=no-member
+                raise NotImplementedError(
+                    "sqrt convolution requires the numpy backend."
+                )
+
             # Use a grid twice as fine to avoid aliasing when squaring.
             degree_fine = 2 * degree
 
@@ -384,11 +391,6 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
             import numpy as _np  # noqa: PLC0415
             import pyshtools as pysh  # pylint: disable=import-error
-
-            assert (
-                pyrecest.backend.__backend_name__
-                == "numpy"  # pylint: disable=no-member
-            ), "pysh.SHGrid.from_array requires the numpy backend"
 
             def _grid_to_coeff(grid_vals):
                 grid_vals_np = _np.asarray(grid_vals)
