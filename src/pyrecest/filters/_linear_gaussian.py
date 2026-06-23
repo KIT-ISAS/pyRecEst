@@ -33,7 +33,7 @@ def _as_matrix(x, name):
     return x
 
 
-def _as_finite_scalar_float(x, name):
+def _as_finite_scalar_float(x, name, requirement="finite"):
     try:
         scalar = np.asarray(x)
     except Exception as exc:  # pragma: no cover - backend-specific conversion errors
@@ -52,19 +52,19 @@ def _as_finite_scalar_float(x, name):
         raise ValueError(f"{name} must be a finite scalar number") from exc
 
     if not math.isfinite(value):
-        raise ValueError(f"{name} must be finite")
+        raise ValueError(f"{name} must be {requirement}")
     return value
 
 
 def _as_positive_float(x, name):
-    x = _as_finite_scalar_float(x, name)
+    x = _as_finite_scalar_float(x, name, "finite and positive")
     if x <= 0.0:
         raise ValueError(f"{name} must be finite and positive")
     return x
 
 
 def _as_nonnegative_float(x, name):
-    x = _as_finite_scalar_float(x, name)
+    x = _as_finite_scalar_float(x, name, "finite and nonnegative")
     if x < 0.0:
         raise ValueError(f"{name} must be finite and nonnegative")
     return x
@@ -153,7 +153,7 @@ def student_t_covariance_scale(  # pylint: disable=redefined-outer-name
     """
     measurement_dim = _as_positive_integer(measurement_dim, "measurement_dim")
 
-    dof = _as_finite_scalar_float(dof, "dof")
+    dof = _as_finite_scalar_float(dof, "dof", "finite and greater than 2")
     if dof <= 2.0:
         raise ValueError("dof must be finite and greater than 2")
 
