@@ -97,6 +97,72 @@ class TestToroidalFourierDistributionConstructor(unittest.TestCase):
         )
         self.assertIsInstance(tfd, ToroidalFourierDistribution)
 
+    def test_factory_methods_normalize_scalar_and_singleton_counts(self):
+        twn = ToroidalWrappedNormalDistribution(
+            array([1.0, 2.0]), diag(array([0.3, 0.5]))
+        )
+        n = 9
+        x = linspace(0, 2 * pi, n, endpoint=False)
+        y = linspace(0, 2 * pi, n, endpoint=False)
+        X, Y = meshgrid(x, y, indexing="ij")
+        pts = column_stack((X.flatten(), Y.flatten()))
+        fvals = twn.pdf(pts).reshape((n, n))
+
+        from_dist = ToroidalFourierDistribution.from_distribution(
+            twn, n, "identity"
+        )
+        from_values = ToroidalFourierDistribution.from_function_values(
+            fvals, (n,), "identity"
+        )
+
+        def fun(x_grid, y_grid):
+            query = column_stack((x_grid.flatten(), y_grid.flatten()))
+            return twn.pdf(query).reshape(x_grid.shape)
+
+        from_fun = ToroidalFourierDistribution.from_function(fun, (n,), "identity")
+
+        self.assertEqual(from_dist.coeff_mat.shape, (n, n))
+        self.assertEqual(from_values.coeff_mat.shape, (n, n))
+        self.assertEqual(from_fun.coeff_mat.shape, (n, n))
+
+    def test_factory_methods_reject_invalid_coefficient_counts(self):
+        twn = ToroidalWrappedNormalDistribution(
+            array([1.0, 2.0]), diag(array([0.3, 0.5]))
+        )
+        fvals = zeros((5, 5))
+
+        def fun(x_grid, _y_grid):
+            return x_grid
+
+        invalid_counts = (True, (True, 5), (5, 1.5), (), (5, 0), (5, -1), (3, 3, 3))
+
+        for n_coefficients in invalid_counts:
+            with self.subTest(method="from_distribution", n_coefficients=n_coefficients):
+                with self.assertRaisesRegex(
+                    (TypeError, ValueError), "n_coefficients"
+                ):
+                    ToroidalFourierDistribution.from_distribution(
+                        twn, n_coefficients, "identity"
+                    )
+
+            with self.subTest(method="from_function", n_coefficients=n_coefficients):
+                with self.assertRaisesRegex(
+                    (TypeError, ValueError), "n_coefficients"
+                ):
+                    ToroidalFourierDistribution.from_function(
+                        fun, n_coefficients, "identity"
+                    )
+
+            with self.subTest(
+                method="from_function_values", n_coefficients=n_coefficients
+            ):
+                with self.assertRaisesRegex(
+                    (TypeError, ValueError), "n_coefficients"
+                ):
+                    ToroidalFourierDistribution.from_function_values(
+                        fvals, n_coefficients, "identity"
+                    )
+
 
 class TestToroidalFourierDistributionPDF(unittest.TestCase):
     @unittest.skipIf(
