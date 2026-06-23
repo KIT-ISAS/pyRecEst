@@ -29,6 +29,12 @@ class CircularParticleFilterTest(unittest.TestCase):
     def test_estimate(self):
         npt.assert_array_almost_equal(self.dist.trigonometric_moment(1), 0.0)
 
+    def test_constructor_rejects_invalid_particle_count(self):
+        for n_particles in (True, 0, -1, 1.5):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "n_particles"):
+                    CircularParticleFilter(n_particles)
+
     def test_setting_state(self):
         # sanity check
         self.filter.filter_state = self.dist
