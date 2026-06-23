@@ -81,6 +81,10 @@ def _shape_from_size(size):
     return tuple(_integer_dimension(dim) for dim in size)
 
 
+def _shape_has_no_samples(shape):
+    return any(dim == 0 for dim in shape)
+
+
 def _shape_from_rand_args(dims, size):
     """Convert NumPy-style ``rand`` dimensions and ``size=`` to a shape."""
     if dims:
@@ -292,14 +296,21 @@ def _validate_choice_probabilities(p, population_size):
 def _choice(state, a, size=None, replace=True, p=None, *args, **kwargs):
     state, key = jax.random.split(state)
     a = _jnp.asarray(a)
+    shape = _shape_from_size(size)
     population_size = _choice_population_size(a, kwargs)
+    if population_size == 0:
+        if _shape_has_no_samples(shape):
+            return state, _jnp.empty(shape, dtype=a.dtype)
+        raise ValueError("a must be a positive integer or a non-empty array")
+    if population_size < 0:
+        raise ValueError("a must be a positive integer or a non-empty array")
     if p is not None:
         p = _validate_choice_probabilities(p, population_size)
     res = jax.random.choice(
         key,
         a,
         *args,
-        shape=_shape_from_size(size),
+        shape=shape,
         replace=replace,
         p=p,
         **kwargs,
