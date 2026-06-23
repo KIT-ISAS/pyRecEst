@@ -246,6 +246,55 @@ class HypertoroidalFourierDistributionTest(unittest.TestCase):
                 fvals, n_coefficients=(3, 3, 3)
             )
 
+    def test_from_function_values_rejects_boolean_coefficient_count(self):
+        fvals = zeros((3, 3))
+
+        with self.assertRaisesRegex(ValueError, "positive integers"):
+            HypertoroidalFourierDistribution.from_function_values(
+                fvals, n_coefficients=(True, 3)
+            )
+
+    def test_from_distribution_accepts_scalar_coefficient_count(self):
+        dist = ToroidalWrappedNormalDistribution(
+            array([1.0, 2.0]), diag(array([0.5, 0.5]))
+        )
+
+        hfd = HypertoroidalFourierDistribution.from_distribution(
+            dist, 5, "identity"
+        )
+
+        self.assertEqual(hfd.coeff_mat.shape, (5, 5))
+
+    def test_from_distribution_rejects_invalid_coefficient_counts(self):
+        dist = ToroidalWrappedNormalDistribution(
+            array([1.0, 2.0]), diag(array([0.5, 0.5]))
+        )
+        invalid_counts = (True, (True, 3), (1.5, 3), (), (0, 3), (3, -1))
+
+        for n_coefficients in invalid_counts:
+            with self.subTest(n_coefficients=n_coefficients):
+                with self.assertRaisesRegex(
+                    (TypeError, ValueError), "positive integers|at least one"
+                ):
+                    HypertoroidalFourierDistribution.from_distribution(
+                        dist, n_coefficients, "identity"
+                    )
+
+    def test_truncate_rejects_boolean_coefficient_count(self):
+        hfd = HypertoroidalFourierDistribution(
+            array(
+                [
+                    [0.0, 0.0, 0.0],
+                    [0.0, 1.0 / (sqrt(2 * pi) ** 2), 0.0],
+                    [0.0, 0.0, 0.0],
+                ]
+            ),
+            "sqrt",
+        )
+
+        with self.assertRaisesRegex(ValueError, "positive integers"):
+            hfd.truncate((True, 3))
+
     @parameterized.expand(
         [
             ("identity", "identity"),
