@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from operator import index as operator_index
 
 # pylint: disable=no-member,too-many-locals
 from pyrecest.backend import array, asarray, eye, linalg, ndim, reshape, stack, zeros
@@ -33,9 +34,11 @@ class SO3TangentSavitzkyGolaySmoother(AbstractSmoother):
 
     @staticmethod
     def _validate_window_size(window_size: int) -> int:
+        if isinstance(window_size, bool):
+            raise ValueError("window_size must be a positive odd integer.")
         try:
-            window_size_int = int(window_size)
-        except (TypeError, ValueError) as exc:
+            window_size_int = operator_index(window_size)
+        except TypeError as exc:
             raise ValueError("window_size must be a positive odd integer.") from exc
         if window_size_int < 1 or window_size_int % 2 == 0:
             raise ValueError("window_size must be a positive odd integer.")
@@ -43,9 +46,11 @@ class SO3TangentSavitzkyGolaySmoother(AbstractSmoother):
 
     @staticmethod
     def _validate_polynomial_degree(polynomial_degree: int) -> int:
+        if isinstance(polynomial_degree, bool):
+            raise ValueError("polynomial_degree must be a non-negative integer.")
         try:
-            degree_int = int(polynomial_degree)
-        except (TypeError, ValueError) as exc:
+            degree_int = operator_index(polynomial_degree)
+        except TypeError as exc:
             raise ValueError(
                 "polynomial_degree must be a non-negative integer."
             ) from exc
