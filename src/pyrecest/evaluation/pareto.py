@@ -345,7 +345,10 @@ def _coerce_numeric(value: Any) -> float:
 
 
 def _is_missing(value: Any) -> bool:
-    return bool(pd.isna(value))
+    missing = pd.isna(value)
+    if isinstance(missing, (bool, np.bool_)):
+        return bool(missing)
+    return False
 
 
 def _parse_constraint_spec(spec: ConstraintSpec | Mapping[str, Any]) -> ConstraintSpec:
