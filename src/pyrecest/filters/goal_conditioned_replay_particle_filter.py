@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Callable
+from numbers import Integral
 from typing import Any
 
 import pyrecest.backend
@@ -63,6 +64,27 @@ from pyrecest.distributions.nonperiodic.abstract_linear_distribution import (
 )
 
 from .euclidean_particle_filter import EuclideanParticleFilter
+
+
+def _as_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer")
+    try:
+        value_array = array(value)
+        if value_array.shape != ():
+            raise ValueError(f"{name} must be a scalar integer")
+        scalar = value_array.item()
+    except AttributeError:
+        scalar = value
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+
+    if isinstance(scalar, bool) or not isinstance(scalar, Integral):
+        raise ValueError(f"{name} must be a positive integer")
+    integer = int(scalar)
+    if integer <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return integer
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -154,26 +176,18 @@ class GoalConditionedReplayParticleFilter(EuclideanParticleFilter):
 
         if position_dim is None:
             position_dim = spatial_dim
-        elif spatial_dim is not None and int(spatial_dim) != int(position_dim):
-            raise ValueError(
-                "position_dim and spatial_dim must match when both are provided"
-            )
 
         if position_dim is None:
             raise ValueError("Either position_dim or spatial_dim must be provided")
 
-        try:
-            position_dim = int(position_dim)
-            n_particles = int(n_particles)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(
-                "position_dim/spatial_dim and n_particles must be positive integers"
-            ) from exc
-
-        if position_dim <= 0:
-            raise ValueError("position_dim/spatial_dim must be a positive integer")
-        if n_particles <= 0:
-            raise ValueError("n_particles must be a positive integer")
+        position_dim = _as_positive_integer(position_dim, "position_dim/spatial_dim")
+        if spatial_dim is not None:
+            spatial_dim = _as_positive_integer(spatial_dim, "spatial_dim")
+            if spatial_dim != position_dim:
+                raise ValueError(
+                    "position_dim and spatial_dim must match when both are provided"
+                )
+        n_particles = _as_positive_integer(n_particles, "n_particles")
         if dt <= 0.0:
             raise ValueError("dt must be positive")
 

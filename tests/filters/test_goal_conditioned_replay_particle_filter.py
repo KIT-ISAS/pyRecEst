@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
@@ -16,6 +17,30 @@ from .test_goal_conditioned_replay_common import (
     pyrecest.backend.__backend_name__ == "jax", reason="Backend not supported"
 )
 class TestGoalConditionedReplayParticleFilter(unittest.TestCase):
+    def test_constructor_accepts_integral_scalar_counts(self):
+        filt = GoalConditionedReplayParticleFilter(
+            n_particles=np.int64(4),
+            position_dim=np.int64(2),
+        )
+
+        self.assertEqual(filt.n_particles, 4)
+        self.assertEqual(filt.state_dim, 6)
+
+    def test_constructor_rejects_invalid_particle_and_dimension_counts(self):
+        invalid_arguments = (
+            {"n_particles": True, "position_dim": 2},
+            {"n_particles": 4.5, "position_dim": 2},
+            {"n_particles": 4, "position_dim": True},
+            {"n_particles": 4, "position_dim": 2.5},
+            {"n_particles": 4, "position_dim": [2]},
+            {"n_particles": 4, "position_dim": 2, "spatial_dim": 2.5},
+            {"n_particles": 4, "position_dim": 2.5, "spatial_dim": 2.5},
+        )
+
+        for kwargs in invalid_arguments:
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                GoalConditionedReplayParticleFilter(**kwargs)
+
     def test_predict_replay_moves_velocity_toward_goal(self):
         random.seed(0)
 
