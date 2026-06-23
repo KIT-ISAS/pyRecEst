@@ -44,6 +44,7 @@ def classify_inside_outside(values: Any, *, negative_inside: bool = True) -> np.
     non-finite values. Set ``negative_inside=False`` for the opposite sign
     convention.
     """
+    negative_inside = _boolean_flag("negative_inside", negative_inside)
     array = np.asarray(values, dtype=np.float64)
     labels = np.zeros(array.shape, dtype=np.int8)
     finite = np.isfinite(array)
@@ -74,6 +75,18 @@ def surface_band_probability_from_signed_distance(
     upper = (epsilon - distance) / std
     lower = (-epsilon - distance) / std
     return _clip_01(cdf(upper) - cdf(lower))
+
+
+def _boolean_flag(name: str, value: bool) -> bool:
+    message = f"{name} must be a boolean."
+    value_array = np.asarray(value)
+    if value_array.shape != ():
+        raise TypeError(message)
+
+    scalar = value_array.item()
+    if not isinstance(scalar, (bool, np.bool_)):
+        raise TypeError(message)
+    return bool(scalar)
 
 
 def _positive_float(name: str, value: float) -> float:
