@@ -87,6 +87,24 @@ class TestLogisticPairwiseAssociationModel(unittest.TestCase):
         self.assertLess(costs[0, 0], costs[0, 1])
         self.assertLess(costs[1, 1], costs[1, 0])
 
+    def test_predict_rejects_invalid_thresholds(self):
+        model = LogisticPairwiseAssociationModel(class_weight="balanced")
+        model.fit(self.training_features, self.training_labels)
+
+        invalid_thresholds = (
+            0.0,
+            1.0,
+            float("nan"),
+            float("inf"),
+            -float("inf"),
+            array([0.5]),
+            "not-a-number",
+        )
+        for threshold in invalid_thresholds:
+            with self.subTest(threshold=threshold):
+                with self.assertRaisesRegex(ValueError, "threshold"):
+                    model.predict(self.training_features[:2], threshold=threshold)
+
     def test_flattened_pairwise_training_tensor_is_supported(self):
         model = LogisticPairwiseAssociationModel(class_weight="balanced")
 
