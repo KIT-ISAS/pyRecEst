@@ -72,6 +72,32 @@ class TestCandidatePruning(unittest.TestCase):
         ):
             prune_pairwise_cost_matrix(costs, config=config)
 
+    def test_probability_matrix_rejects_finite_values_outside_unit_interval(self):
+        config = CandidatePruningConfig(probability_threshold=0.5)
+
+        for probabilities in (np.array([[1.2, 0.5]]), np.array([[0.5, -0.1]])):
+            with self.subTest(probabilities=probabilities):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "finite probability_matrix entries must lie in \\[0, 1\\]",
+                ):
+                    candidate_mask_from_costs(
+                        np.array([[1.0, 2.0]]),
+                        probability_matrix=probabilities,
+                        config=config,
+                    )
+
+    def test_probability_matrix_ignores_nonfinite_values(self):
+        config = CandidatePruningConfig(probability_threshold=0.5)
+
+        mask = candidate_mask_from_costs(
+            np.array([[1.0, 2.0]]),
+            probability_matrix=np.array([[np.nan, 0.75]]),
+            config=config,
+        )
+
+        npt.assert_array_equal(mask, np.array([[False, True]]))
+
     def test_percentile_rule_and_large_cost_replacement(self):
         costs = np.array([[1.0, 2.0, 100.0], [3.0, 4.0, 5.0]])
 
