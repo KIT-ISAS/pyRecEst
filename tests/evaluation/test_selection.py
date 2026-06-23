@@ -73,6 +73,15 @@ def test_quantile_tail_mask_selects_upper_tail() -> None:
     ]
 
 
+def test_quantile_tail_mask_validates_empty_inputs_before_empty_return() -> None:
+    for bad_quantile in (0.0, 1.0, np.nan):
+        with pytest.raises(ValueError, match="quantile"):
+            quantile_tail_mask([], bad_quantile)
+
+    with pytest.raises(ValueError, match="tail"):
+        quantile_tail_mask([], 0.5, tail="middle")
+
+
 def test_protected_tail_topk_mask_preserves_proportional_tail_capacity() -> None:
     primary = np.asarray([10.0, 9.0, 8.0, 7.0, 6.0, 5.0])
     tail_score = np.asarray([0.0, 0.0, 30.0, 20.0, 10.0, 1.0])
