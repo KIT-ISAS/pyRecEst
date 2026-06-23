@@ -331,8 +331,15 @@ def _feasible_index(
     if isinstance(feasible_mask, pd.Series):
         mask = feasible_mask.reindex(table.index, fill_value=False)
     else:
-        mask = pd.Series(feasible_mask, index=table.index)
-    return mask.fillna(False).astype(bool)
+        mask = pd.Series(feasible_mask)
+        if len(mask) != len(table):
+            raise ValueError("feasible_mask must have one entry per table row.")
+        mask.index = table.index
+    mask = mask.fillna(False)
+    invalid_values = mask.map(lambda value: not isinstance(value, (bool, np.bool_)))
+    if bool(invalid_values.any()):
+        raise ValueError("feasible_mask must contain only boolean or missing values.")
+    return mask.astype(bool)
 
 
 def _lookup_numeric(record: Mapping[str, Any] | pd.Series, key: str) -> float:
