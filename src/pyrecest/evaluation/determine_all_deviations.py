@@ -6,6 +6,16 @@ from beartype.typing import Callable
 from pyrecest.backend import any, empty, is_array, isinf, sum
 
 
+def _shape_size(container):
+    shape = getattr(container, "shape", None)
+    if shape is None:
+        return len(container)
+    n_entries = 1
+    for dimension in shape:
+        n_entries *= int(dimension)
+    return n_entries
+
+
 @beartype
 def determine_all_deviations(
     results,
@@ -20,9 +30,10 @@ def determine_all_deviations(
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
-    if groundtruths.ndim != 2 or groundtruths.size == 0 or groundtruths[0, 0].ndim not in (
-        1,
-        2,
+    if (
+        getattr(groundtruths, "ndim", None) != 2
+        or _shape_size(groundtruths) == 0
+        or groundtruths[0, 0].ndim not in (1, 2)
     ):
         raise ValueError(
             "Assuming groundtruths to be a non-empty 2-D array of shape "
