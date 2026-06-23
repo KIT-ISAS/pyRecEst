@@ -2,6 +2,7 @@ import unittest
 from math import log as math_log
 from unittest.mock import patch
 
+import numpy as np
 import numpy.testing as npt
 import pyrecest.backend
 
@@ -109,6 +110,36 @@ class AbstractManifoldSpecificDistributionTest(unittest.TestCase):
             distribution.sample_metropolis_hastings(
                 n=1, burn_in=0, skipping=1, proposal=proposal, start_point=array([0.0])
             )
+
+    def test_sample_metropolis_hastings_validates_count_parameters(self):
+        distribution = DeterministicOneDimensionalDistribution()
+
+        def proposal(x):
+            return x
+
+        invalid_parameters = (
+            {"n": 0},
+            {"n": 1.5},
+            {"n": True},
+            {"n": [1]},
+            {"burn_in": -1},
+            {"burn_in": False},
+            {"skipping": 0},
+            {"skipping": 1.5},
+            {"skipping": True},
+        )
+
+        for overrides in invalid_parameters:
+            kwargs = {
+                "n": np.array(1.0),
+                "burn_in": np.array(0.0),
+                "skipping": np.array(1.0),
+                "proposal": proposal,
+                "start_point": array([0.0]),
+            }
+            kwargs.update(overrides)
+            with self.subTest(overrides=overrides), self.assertRaises(ValueError):
+                distribution.sample_metropolis_hastings(**kwargs)
 
 
 if __name__ == "__main__":

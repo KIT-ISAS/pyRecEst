@@ -1,6 +1,8 @@
 import inspect
+import math
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from numbers import Integral
 from typing import Union
 
 import pyrecest.backend
@@ -17,6 +19,33 @@ def _to_scalar(value):
         return float(value)
     except (TypeError, ValueError, RuntimeError):
         return float(value.reshape(-1)[0])
+
+
+def _validate_integer_sample_parameter(value, name: str, minimum: int) -> int:
+    try:
+        scalar = value.item()
+    except AttributeError:
+        scalar = value
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a scalar integer") from exc
+
+    if isinstance(scalar, bool):
+        raise ValueError(f"{name} must be an integer, not a boolean")
+
+    if isinstance(scalar, Integral):
+        integer = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+            integer = int(scalar)
+        except (OverflowError, TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must be an integer") from exc
+        if not math.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(f"{name} must be a finite integer")
+
+    if integer < minimum:
+        raise ValueError(f"{name} must be at least {minimum}")
+    return integer
 
 
 class AbstractManifoldSpecificDistribution(ABC):
@@ -129,6 +158,10 @@ class AbstractManifoldSpecificDistribution(ABC):
         ``log q(candidate | current)``. If it is omitted, the proposal is
         assumed symmetric, recovering the ordinary Metropolis ratio.
         """
+        n = _validate_integer_sample_parameter(n, "n", 1)
+        burn_in = _validate_integer_sample_parameter(burn_in, "burn_in", 0)
+        skipping = _validate_integer_sample_parameter(skipping, "skipping", 1)
+
         if pyrecest.backend.__backend_name__ == "jax":
             # Get a key from your global JAX random state *outside* of lax.scan
             import jax as _jax  # pylint: disable=import-error
@@ -149,9 +182,9 @@ class AbstractManifoldSpecificDistribution(ABC):
                 log_pdf=self.ln_pdf,
                 proposal=proposal,  # must be (key, x) -> x_prop for JAX
                 start_point=start_point,
-                n=int(n),
-                burn_in=int(burn_in),
-                skipping=int(skipping),
+                n=n,
+                burn_in=burn_in,
+                skipping=skipping,
                 proposal_log_pdf=proposal_log_pdf,
             )
             # You could optionally stash `key_out` somewhere if you want chain continuation.
