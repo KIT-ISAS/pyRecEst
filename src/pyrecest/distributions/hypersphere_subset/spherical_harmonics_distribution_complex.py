@@ -136,9 +136,8 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
 
     @staticmethod
     def from_distribution_via_integral(dist, degree, transformation="identity"):
-        assert (
-            isinstance(dist, AbstractHypersphericalDistribution) and dist.dim == 2
-        ), "dist must be a distribution on the sphere."
+        if not isinstance(dist, AbstractHypersphericalDistribution) or dist.dim != 2:
+            raise ValueError("dist must be a distribution on the sphere.")
         shd = SphericalHarmonicsDistributionComplex.from_function_via_integral_cart(
             dist.pdf, degree, transformation
         )
