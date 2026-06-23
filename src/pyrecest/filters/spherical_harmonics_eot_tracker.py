@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from operator import index as operator_index
+
 import numpy as np
 import pyrecest.backend
 
@@ -31,6 +33,18 @@ from pyrecest.distributions.hypersphere_subset.spherical_harmonics_distribution_
 from pyrecest.sampling.sigma_points import MerweScaledSigmaPoints
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
+
+
+def _validate_nonnegative_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a non-negative integer")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a non-negative integer") from exc
+    if value < 0:
+        raise ValueError(f"{name} must be non-negative")
+    return value
 
 
 class SphericalHarmonicsEOTTracker(
@@ -75,9 +89,7 @@ class SphericalHarmonicsEOTTracker(
                 "numpy backend"
             )
 
-        self.order = int(order)
-        if self.order < 0:
-            raise ValueError("order must be non-negative")
+        self.order = _validate_nonnegative_integer(order, "order")
         self.n_coefficients = (self.order + 1) ** 2
         self.state_dim = 3 + self.n_coefficients
 
