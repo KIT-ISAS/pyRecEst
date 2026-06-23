@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from operator import index as operator_index
 from typing import Sequence
 
 # pylint: disable=no-member
@@ -42,10 +43,12 @@ class SO3ChordalMeanSmoother(AbstractSmoother):
     @staticmethod
     def _validate_window_size(window_size: int) -> int:
         try:
-            window_size_int = int(window_size)
-        except (TypeError, ValueError) as exc:
+            window_size_int = operator_index(window_size)
+        except TypeError as exc:
             raise ValueError("window_size must be a positive integer.") from exc
 
+        if isinstance(window_size, bool):
+            raise ValueError("window_size must be a positive integer.")
         if window_size_int < 1:
             raise ValueError("window_size must be a positive integer.")
         return window_size_int

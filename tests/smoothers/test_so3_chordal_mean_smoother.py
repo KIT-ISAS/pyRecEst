@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import array, cos, eye, linalg, sin, stack
 from pyrecest.smoothers import SO3ChordalMeanSmoother, SO3CMSmoother
@@ -18,6 +19,24 @@ def z_rotation(angle):
 
 
 class SO3ChordalMeanSmootherTest(unittest.TestCase):
+    def test_window_size_requires_positive_integer(self):
+        invalid_values = (True, np.bool_(True), 1.5, np.array(1.5), np.array([3]), 0)
+        for invalid in invalid_values:
+            with self.subTest(window_size=invalid):
+                with self.assertRaisesRegex(ValueError, "window_size"):
+                    SO3ChordalMeanSmoother(window_size=invalid)
+
+        for valid in (np.int64(3), np.array(3)):
+            with self.subTest(window_size=valid):
+                smoother = SO3ChordalMeanSmoother(window_size=valid)
+                self.assertEqual(smoother.window_size, 3)
+
+    def test_smooth_rejects_fractional_window_override(self):
+        smoother = SO3ChordalMeanSmoother(window_size=3)
+
+        with self.assertRaisesRegex(ValueError, "window_size"):
+            smoother.smooth([eye(3), eye(3)], window_size=1.5)
+
     def test_chordal_mean_between_two_z_rotations(self):
         identity = eye(3)
         quarter_turn = z_rotation(0.5 * 3.141592653589793)
