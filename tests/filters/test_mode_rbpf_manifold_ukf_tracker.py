@@ -33,23 +33,47 @@ class TestModeRBPFManifoldUKFTracker(unittest.TestCase):
         )
 
     def make_tracker(self, **kwargs):
+        parameters = {
+            "meas_noise_cov": self.meas_noise_cov,
+            "sys_noise": self.sys_noise,
+            "shape_sys_noise": self.shape_sys_noise,
+            "n_particles": 24,
+            "rng": 0,
+            "resampling_threshold": 12,
+        }
+        parameters.update(kwargs)
         return ModeRBPFManifoldUKFTracker(
             self.kinematic_state,
             self.covariance,
             self.shape_state,
             self.shape_covariance,
-            meas_noise_cov=self.meas_noise_cov,
-            sys_noise=self.sys_noise,
-            shape_sys_noise=self.shape_sys_noise,
-            n_particles=24,
-            rng=0,
-            resampling_threshold=12,
-            **kwargs,
+            **parameters,
         )
 
     def test_aliases_are_exported(self):
         self.assertIs(ModeRbpfManifoldUkfTracker, ModeRBPFManifoldUKFTracker)
         self.assertIs(ModeRBPFManifoldUKF, ModeRBPFManifoldUKFTracker)
+
+    def test_validates_particle_count(self):
+        invalid_values = (
+            True,
+            np.bool_(True),
+            1.5,
+            np.array(1.5),
+            np.array([3]),
+            0,
+            -1,
+        )
+        for invalid in invalid_values:
+            with self.subTest(n_particles=invalid):
+                with self.assertRaisesRegex(ValueError, "n_particles"):
+                    self.make_tracker(n_particles=invalid)
+
+        for valid in (np.int64(3), np.array(3)):
+            with self.subTest(n_particles=valid):
+                tracker = self.make_tracker(n_particles=valid)
+                self.assertEqual(tracker.n_particles, 3)
+                self.assertEqual(tracker.weights.shape, (3,))
 
     def test_predict_update_smoke(self):
         tracker = self.make_tracker()
