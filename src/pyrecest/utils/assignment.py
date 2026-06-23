@@ -77,10 +77,13 @@ def _coerce_non_assignment_costs(costs, size: int, name: str):
 
     try:
         costs_array = _asarray(raw_costs_array, dtype=float)
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must be numeric and finite") from exc
     if costs_array.ndim == 0:
-        cost = float(costs_array)
+        try:
+            cost = float(costs_array)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"{name} must be numeric and finite") from exc
         if not _is_scalar_finite(cost):
             raise ValueError(f"{name} must be finite")
         return _full((size,), cost, dtype=float)
