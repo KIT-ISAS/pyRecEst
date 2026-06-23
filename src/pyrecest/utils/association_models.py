@@ -121,6 +121,12 @@ def _normalize_positive_integer(value: Any, message: str) -> int:
     return parsed
 
 
+def _normalize_bool_flag(value: Any, message: str) -> bool:
+    if isinstance(value, (bool, _numpy.bool_)):
+        return bool(value)
+    raise ValueError(message)
+
+
 class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-attributes
     """Learn pairwise match probabilities from arbitrary association features.
 
@@ -183,6 +189,14 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         )
         tolerance = _normalize_positive_scalar(tolerance, "tolerance must be positive")
         probability_clip = _normalize_probability_clip(probability_clip)
+        fit_intercept = _normalize_bool_flag(
+            fit_intercept,
+            "fit_intercept must be a boolean",
+        )
+        standardize = _normalize_bool_flag(
+            standardize,
+            "standardize must be a boolean",
+        )
         if (
             class_weight != "balanced"
             and class_weight is not None
@@ -196,7 +210,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
         self.l2_regularization = l2_regularization
         self.max_iterations = max_iterations
         self.tolerance = tolerance
-        self.standardize = bool(standardize)
+        self.standardize = standardize
         self.class_weight = class_weight
         self.probability_clip = probability_clip
 
