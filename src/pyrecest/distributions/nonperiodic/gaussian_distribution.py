@@ -277,7 +277,9 @@ class GaussianDistribution(AbstractLinearDistribution):
         invalid_dimensions = [
             dim
             for dim in dimensions
-            if not isinstance(dim, Integral) or not 0 <= int(dim) < self.dim
+            if isinstance(dim, bool)
+            or not isinstance(dim, Integral)
+            or not 0 <= int(dim) < self.dim
         ]
         if invalid_dimensions:
             raise ValueError(

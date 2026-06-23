@@ -226,6 +226,12 @@ class GaussianDistributionTest(unittest.TestCase):
             g.marginalize_out(2)
 
         with self.assertRaises(ValueError):
+            g.marginalize_out(True)
+
+        with self.assertRaises(ValueError):
+            g.marginalize_out([False])
+
+        with self.assertRaises(ValueError):
             g.marginalize_out([0, 2])
 
     def test_default_linear_metropolis_hastings_proposal_shape(self):
