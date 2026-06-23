@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array, diag, eye
 from pyrecest.models import (
@@ -65,7 +67,7 @@ class AdditiveNoiseTransitionModelTest(unittest.TestCase):
         self.assertTrue(model.has_jacobian())
 
     def test_transition_vectorized_aliases_stay_in_sync(self):
-        model = AdditiveNoiseTransitionModel(lambda x: x, vectorized=True)
+        model = AdditiveNoiseTransitionModel(lambda x: x, vectorized=np.bool_(True))
 
         self.assertTrue(model.vectorized)
         self.assertTrue(model.function_is_vectorized)
@@ -73,6 +75,16 @@ class AdditiveNoiseTransitionModelTest(unittest.TestCase):
         self.assertFalse(model.vectorized)
         model.vectorized = True
         self.assertTrue(model.function_is_vectorized)
+
+        invalid_flags = ("False", 1, np.array([True]))
+        for flag in invalid_flags:
+            with self.subTest(flag=flag):
+                with self.assertRaisesRegex(TypeError, "vectorized"):
+                    AdditiveNoiseTransitionModel(lambda x: x, vectorized=flag)
+                with self.assertRaisesRegex(TypeError, "vectorized"):
+                    model.vectorized = flag
+                with self.assertRaisesRegex(TypeError, "function_is_vectorized"):
+                    model.function_is_vectorized = flag
 
     def test_transition_density_uses_additive_residual(self):
         noise = DummyNoise(
@@ -231,6 +243,15 @@ class AdditiveNoiseMeasurementModelTest(unittest.TestCase):
             self, model.measurement_function(array([3.0])), array([6.0])
         )
         assert_backend_allclose(self, model.jacobian(array([3.0])), array([[1.0]]))
+
+    def test_measurement_vectorized_flag_requires_boolean(self):
+        model = AdditiveNoiseMeasurementModel(lambda x: x, vectorized=np.bool_(True))
+        self.assertTrue(model.vectorized)
+
+        for flag in ("False", 1, np.array([True])):
+            with self.subTest(flag=flag):
+                with self.assertRaisesRegex(TypeError, "vectorized"):
+                    AdditiveNoiseMeasurementModel(lambda x: x, vectorized=flag)
 
     def test_missing_measurement_capabilities_raise(self):
         model = AdditiveNoiseMeasurementModel(lambda x: x)
