@@ -1,7 +1,6 @@
 import unittest
 
 import pyrecest.backend
-
 from pyrecest.backend import array, ones
 from pyrecest.distributions.hypersphere_subset.bayesian_complex_watson_mixture_model import (
     BayesianComplexWatsonMixtureModel,

@@ -225,9 +225,7 @@ class BayesianComplexWatsonMixtureModel:
 
         B_init = asarray(parameters["initial"]["B"], dtype=complex)
         for k in range(K):
-            if not bool(
-                allclose(B_init[:, :, k], B_init[:, :, k].conj().T, atol=1e-6)
-            ):
+            if not bool(allclose(B_init[:, :, k], B_init[:, :, k].conj().T, atol=1e-6)):
                 raise ValueError("initial B must be Hermitian.")
 
         kappa_init = parameters["initial"]["kappa"]
