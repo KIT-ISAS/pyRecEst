@@ -22,6 +22,39 @@ class BlockPartitionHelpersTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_partition([(0,)], 3)
 
+    def test_partition_counts_must_be_integral(self):
+        invalid_counts = (True, 3.5, "3", [3])
+
+        for invalid_count in invalid_counts:
+            with self.subTest(function="contiguous", count=invalid_count):
+                with self.assertRaises(ValueError):
+                    contiguous_partition(invalid_count, block_size=2)
+            with self.subTest(function="resolve", count=invalid_count):
+                with self.assertRaises(ValueError):
+                    resolve_partition(invalid_count, "singleton")
+            with self.subTest(function="validate", count=invalid_count):
+                with self.assertRaises(ValueError):
+                    validate_partition([(0,)], invalid_count)
+
+    def test_contiguous_block_size_must_be_integral(self):
+        for invalid_size in (True, 0, 2.5, "2", [2]):
+            with self.subTest(block_size=invalid_size), self.assertRaises(ValueError):
+                contiguous_partition(3, block_size=invalid_size)
+
+    def test_partition_component_indices_must_be_integral(self):
+        invalid_partitions = (
+            [(0.5, 1), (2,)],
+            [(True, 1), (2,)],
+            [("0", 1), (2,)],
+            [([0], 1), (2,)],
+        )
+
+        for invalid_partition in invalid_partitions:
+            with self.subTest(partition=invalid_partition), self.assertRaises(
+                ValueError
+            ):
+                validate_partition(invalid_partition, 3)
+
 
 if __name__ == "__main__":
     unittest.main()

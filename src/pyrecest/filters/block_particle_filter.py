@@ -1,6 +1,7 @@
 """Generic block particle-filter mechanics for product-state particle filters."""
 
 from collections.abc import Callable, Sequence
+from numbers import Integral
 from typing import Any, Protocol
 
 # pylint: disable=no-name-in-module,no-member,too-many-positional-arguments
@@ -30,6 +31,27 @@ class _WeightedParticleState(Protocol):
 PartitionSpec = str | Sequence[Sequence[int]] | None
 
 
+def _as_integer(value, name: str, minimum: int | None = None) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be an integer")
+    try:
+        value_array = array(value)
+        if value_array.shape != ():
+            raise ValueError(f"{name} must be a scalar integer")
+        scalar = value_array.item()
+    except AttributeError:
+        scalar = value
+    except TypeError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+    if isinstance(scalar, bool) or not isinstance(scalar, Integral):
+        raise ValueError(f"{name} must be an integer")
+    integer = int(scalar)
+    if minimum is not None and integer < minimum:
+        raise ValueError(f"{name} must be at least {minimum}.")
+    return integer
+
+
 def validate_partition(
     partition: Sequence[Sequence[int]], n_components: int
 ) -> tuple[tuple[int, ...], ...]:
@@ -39,13 +61,19 @@ def validate_partition(
     overlapping blocks, missing components, and out-of-range component indices
     raise ``ValueError``.
     """
-    if int(n_components) <= 0:
-        raise ValueError("n_components must be positive.")
+    n_components = _as_integer(n_components, "n_components", 1)
 
     normalized = []
     seen = set()
     for block_idx, raw_block in enumerate(partition):
-        block = tuple(int(component_idx) for component_idx in raw_block)
+        block = tuple(
+            _as_integer(
+                component_idx,
+                f"partition block {block_idx} component index",
+                0,
+            )
+            for component_idx in raw_block
+        )
         if not block:
             raise ValueError(f"partition block {block_idx} is empty.")
         for component_idx in block:
@@ -76,12 +104,8 @@ def contiguous_partition(
     n_components: int, block_size: int = 4
 ) -> tuple[tuple[int, ...], ...]:
     """Return contiguous blocks over ``range(n_components)``."""
-    n_components = int(n_components)
-    block_size = int(block_size)
-    if n_components <= 0:
-        raise ValueError("n_components must be positive.")
-    if block_size <= 0:
-        raise ValueError("block_size must be positive.")
+    n_components = _as_integer(n_components, "n_components", 1)
+    block_size = _as_integer(block_size, "block_size", 1)
     return tuple(
         tuple(range(start, min(start + block_size, n_components)))
         for start in range(0, n_components, block_size)
@@ -95,9 +119,7 @@ def resolve_partition(
     contiguous_block_size: int = 4,
 ) -> tuple[tuple[int, ...], ...]:
     """Resolve a named or explicit product-state partition."""
-    n_components = int(n_components)
-    if n_components <= 0:
-        raise ValueError("n_components must be positive.")
+    n_components = _as_integer(n_components, "n_components", 1)
     if partition is None:
         return (tuple(range(n_components)),)
 
@@ -155,10 +177,9 @@ class BlockParticleFilter:
                     "(n_particles, n_components, ...)."
                 )
             n_components = int(particles.shape[1])
-        if int(n_components) <= 0:
-            raise ValueError("n_components must be positive.")
+        n_components = _as_integer(n_components, "n_components", 1)
 
-        self._n_block_components = int(n_components)
+        self._n_block_components = n_components
         self.partition = self._validate_partition(partition, self._n_block_components)
         self._component_to_block = self._build_component_to_block(
             self.partition, self._n_block_components
@@ -300,7 +321,7 @@ class BlockParticleFilter:
 
     def component_weights(self, component_idx: int):
         """Return the weight vector used for one product-state component."""
-        component_idx = int(component_idx)
+        component_idx = _as_integer(component_idx, "component_idx", 0)
         if component_idx < 0 or component_idx >= self._n_block_components:
             raise ValueError("component_idx is out of range.")
         return self._block_weights[self._component_to_block[component_idx]]
@@ -346,7 +367,7 @@ class BlockParticleFilter:
 
     def resample_block_systematic(self, block_index: int):
         """Systematically resample one partition block and reset its weights."""
-        block_index = int(block_index)
+        block_index = _as_integer(block_index, "block_index", 0)
         if block_index < 0 or block_index >= self.n_blocks:
             raise ValueError("block_index is out of range.")
         indices = self._systematic_indices(
