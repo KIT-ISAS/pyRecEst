@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from numbers import Integral
+from operator import index as operator_index
 
 from pyrecest import backend
 from pyrecest.backend import abs as backend_abs
@@ -50,6 +51,18 @@ from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
 # pylint: disable=too-many-positional-arguments,too-many-locals
 
 
+def _validate_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return value
+
+
 class MEMRBPFTracker(AbstractExtendedObjectTracker):
     """Rao-Blackwellized MEM tracker for a single 2-D elliptical target.
 
@@ -91,9 +104,7 @@ class MEMRBPFTracker(AbstractExtendedObjectTracker):
             log_prior_extents=log_prior_extents,
             log_posterior_extents=log_posterior_extents,
         )
-        if n_particles <= 0:
-            raise ValueError("n_particles must be positive")
-        self.n_particles = int(n_particles)
+        self.n_particles = _validate_positive_integer(n_particles, "n_particles")
         self._seed_backend_random(rng)
         self.resampling_mode = str(resampling_mode).lower()
         self.resampling_threshold = resampling_threshold
