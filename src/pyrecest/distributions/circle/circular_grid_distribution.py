@@ -1,3 +1,5 @@
+from numbers import Integral
+
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
     arange,
@@ -19,6 +21,15 @@ from pyrecest.backend import (
 from ..abstract_grid_distribution import AbstractGridDistribution
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_fourier_distribution import CircularFourierDistribution
+
+
+def _validate_no_of_gridpoints(no_of_gridpoints) -> int:
+    if isinstance(no_of_gridpoints, bool) or not isinstance(no_of_gridpoints, Integral):
+        raise ValueError("no_of_gridpoints must be a positive integer.")
+    no_of_gridpoints = int(no_of_gridpoints)
+    if no_of_gridpoints <= 0:
+        raise ValueError("no_of_gridpoints must be a positive integer.")
+    return no_of_gridpoints
 
 
 class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistribution):
@@ -112,6 +123,7 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
 
     @staticmethod
     def from_function(fun, no_of_gridpoints, enforce_pdf_nonnegative=True):
+        no_of_gridpoints = _validate_no_of_gridpoints(no_of_gridpoints)
         grid_points = linspace(0.0, 2.0 * pi, no_of_gridpoints, endpoint=False)
         grid_values = array(fun(grid_points))
         return CircularGridDistribution(grid_values, enforce_pdf_nonnegative)
