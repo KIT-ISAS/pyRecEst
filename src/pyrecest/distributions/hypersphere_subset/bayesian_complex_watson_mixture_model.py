@@ -40,6 +40,28 @@ from scipy.special import digamma  # pylint: disable=no-name-in-module
 from .complex_watson_distribution import ComplexWatsonDistribution
 
 
+def _require_parameter(parameters, *keys):
+    current = parameters
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            path = ".".join(str(item) for item in keys)
+            raise ValueError(f"parameters must contain {path}")
+        current = current[key]
+    return current
+
+
+def _validate_bingham_stack(B, K: int, name: str):
+    if B.ndim != 3:
+        raise ValueError(f"{name} must have shape (D, D, K)")
+    if B.shape[0] != B.shape[1]:
+        raise ValueError(f"{name} matrices must be square")
+    if B.shape[2] != K:
+        raise ValueError(f"{name}.shape[2] must equal len(alpha)")
+    for k in range(K):
+        if not bool(allclose(B[:, :, k], B[:, :, k].conj().T, atol=1e-6)):
+            raise ValueError(f"{name}[:,:,{k}] must be Hermitian")
+
+
 class BayesianComplexWatsonMixtureModel:
     """
     Bayesian complex Watson mixture model.
@@ -76,13 +98,9 @@ class BayesianComplexWatsonMixtureModel:
         alpha = asarray(alpha, dtype=float).ravel()
 
         K = alpha.shape[0]
-        assert B.shape[2] == K, "B.shape[2] must equal len(alpha)"
-        assert concentrations.shape[0] == K, "len(concentrations) must equal len(alpha)"
-
-        for k in range(K):
-            assert allclose(
-                B[:, :, k], B[:, :, k].conj().T, atol=1e-6
-            ), f"B[:,:,{k}] must be Hermitian"
+        _validate_bingham_stack(B, K, "B")
+        if concentrations.shape[0] != K:
+            raise ValueError("len(concentrations) must equal len(alpha)")
 
         self.B = B
         self.concentrations = concentrations
@@ -128,9 +146,10 @@ class BayesianComplexWatsonMixtureModel:
         Returns:
             tuple: (BayesianComplexWatsonMixtureModel, posterior dict)
         """
-        assert (
-            Z.shape[0] < 100
-        ), "fit_default assumes D < 100 (feature dimension, not sample count)"
+        if Z.shape[0] >= 100:
+            raise ValueError(
+                "fit_default assumes D < 100 (feature dimension, not sample count)"
+            )
         D = Z.shape[0]
         parameters = BayesianComplexWatsonMixtureModel.parameters_default(D, K)
         return BayesianComplexWatsonMixtureModel.fit(Z, parameters)
@@ -188,34 +207,35 @@ class BayesianComplexWatsonMixtureModel:
                 "estimate_posterior is not supported on the JAX backend."
             )
 
-        assert "initial" in parameters
-        assert "B" in parameters["initial"]
-        assert "alpha" in parameters["initial"]
-        assert "kappa" in parameters["initial"]
-        assert "prior" in parameters
-        assert "B" in parameters["prior"]
-        assert "alpha" in parameters["prior"]
-        assert "I" in parameters
+        _require_parameter(parameters, "initial")
+        initial_B = _require_parameter(parameters, "initial", "B")
+        initial_alpha = _require_parameter(parameters, "initial", "alpha")
+        initial_kappa = _require_parameter(parameters, "initial", "kappa")
+        prior = _require_parameter(parameters, "prior")
+        prior_B_input = _require_parameter(parameters, "prior", "B")
+        prior_alpha_input = _require_parameter(parameters, "prior", "alpha")
+        iterations = _require_parameter(parameters, "I")
 
         Z = asarray(Z, dtype=complex)
+        if Z.ndim != 2:
+            raise ValueError("Z must have shape (D, N)")
         D, N = Z.shape
-        K = len(asarray(parameters["initial"]["alpha"]).ravel())
+        K = len(asarray(initial_alpha).ravel())
 
-        B_init = asarray(parameters["initial"]["B"], dtype=complex)
-        for k in range(K):
-            assert allclose(
-                B_init[:, :, k], B_init[:, :, k].conj().T, atol=1e-6
-            ), "initial B must be Hermitian"
+        B_init = asarray(initial_B, dtype=complex)
+        _validate_bingham_stack(B_init, K, "initial B")
 
-        kappa_init = parameters["initial"]["kappa"]
+        kappa_init = initial_kappa
         if asarray(kappa_init).ndim == 0:
             kappa_init_arr = full((K,), float(kappa_init))
         else:
             kappa_init_arr = copy(asarray(kappa_init, dtype=float).ravel())
+            if kappa_init_arr.shape[0] != K:
+                raise ValueError("len(initial.kappa) must equal len(initial.alpha)")
 
         posterior = {
             "B": copy(B_init),
-            "alpha": copy(asarray(parameters["initial"]["alpha"], dtype=float).ravel()),
+            "alpha": copy(asarray(initial_alpha, dtype=float).ravel()),
             "kappa": kappa_init_arr,
             "gamma": zeros((N, K)),
         }
@@ -224,20 +244,24 @@ class BayesianComplexWatsonMixtureModel:
         ZZ = (Z[:, None, :] * Z.conj()[None, :, :]).reshape(D * D, N)
 
         # Log saliencies shape (N, K)
-        saliencies = parameters["prior"].get("saliencies", 1.0)
+        saliencies = prior.get("saliencies", 1.0)
         saliencies_arr = asarray(saliencies)
         if saliencies_arr.ndim == 0:
             ln_saliencies = full((N, K), log(max(float(saliencies_arr), 1e-7)))
         else:
             saliencies_vec = saliencies_arr.ravel()
-            assert len(saliencies_vec) == N
+            if len(saliencies_vec) != N:
+                raise ValueError("len(prior.saliencies) must equal the sample count")
             ln_saliencies = log(maximum(saliencies_vec, 1e-7))[:, None] * ones((N, K))
 
-        prior_B = asarray(parameters["prior"]["B"], dtype=complex)
-        prior_alpha = asarray(parameters["prior"]["alpha"], dtype=float).ravel()
+        prior_B = asarray(prior_B_input, dtype=complex)
+        _validate_bingham_stack(prior_B, K, "prior B")
+        prior_alpha = asarray(prior_alpha_input, dtype=float).ravel()
+        if prior_alpha.shape[0] != K:
+            raise ValueError("len(prior.alpha) must equal len(initial.alpha)")
         concentration_max = 500.0
 
-        for _ in range(parameters["I"]):
+        for _ in range(iterations):
             # E-step
             log_gamma = copy(ln_saliencies)
 
@@ -259,7 +283,8 @@ class BayesianComplexWatsonMixtureModel:
             gamma = exp(log_gamma)
             gamma /= gamma.sum(axis=1, keepdims=True)
 
-            assert not any(isnan(gamma)), "NaN in gamma during E-step"
+            if bool(any(isnan(gamma))):
+                raise ValueError("NaN in gamma during E-step")
             posterior["gamma"] = gamma
 
             # M-step
