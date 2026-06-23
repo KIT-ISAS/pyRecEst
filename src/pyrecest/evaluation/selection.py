@@ -249,8 +249,9 @@ def protected_tail_topk_mask(
     The candidate set is split at ``tail_quantile`` of ``reliability_scores``.
     The tail receives the same retention fraction as the full set, ranked by
     ``tail_scores``. The complement receives the remaining retained budget,
-    ranked by ``primary_scores``. If either side is empty the function falls
-    back to ordinary top-fraction selection by ``primary_scores``.
+    ranked by ``primary_scores``. If the tail is empty the function falls back
+    to ordinary top-fraction selection by ``primary_scores``; if the complement
+    is empty, all candidates are ranked by ``tail_scores``.
     """
     primary = sanitized_score_vector(primary_scores, nonnegative=sanitize_nonnegative)
     tail_rank = sanitized_score_vector(tail_scores, nonnegative=sanitize_nonnegative)
@@ -279,9 +280,15 @@ def protected_tail_topk_mask(
     )
     tail_indices = np.flatnonzero(tail_mask)
     complement_indices = np.flatnonzero(~tail_mask)
-    if tail_indices.size == 0 or complement_indices.size == 0:
+    if tail_indices.size == 0:
         return top_count_mask(
             primary,
+            retained_total,
+            sanitize_nonnegative=sanitize_nonnegative,
+        )
+    if complement_indices.size == 0:
+        return top_count_mask(
+            tail_rank,
             retained_total,
             sanitize_nonnegative=sanitize_nonnegative,
         )
