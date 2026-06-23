@@ -40,3 +40,11 @@ def test_choice_without_replacement_shuffle_false_preserves_order():
 
     np.testing.assert_array_equal(samples, values)
     np.testing.assert_array_equal(column_samples, matrix)
+
+
+@pytest.mark.parametrize("control", ["replace", "shuffle"])
+def test_choice_rejects_non_boolean_controls(control):
+    kwargs = {control: "False"}
+
+    with pytest.raises(TypeError, match=f"{control} must be a boolean"):
+        random.choice(np.arange(3), size=2, **kwargs)

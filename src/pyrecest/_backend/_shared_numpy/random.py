@@ -63,8 +63,14 @@ def _normalize_choice_axis(axis, ndim):
     return axis % ndim
 
 
+def _choice_bool(value, name):
+    if isinstance(value, (bool, _np.bool_)):
+        return bool(value)
+    raise TypeError(f"{name} must be a boolean")
+
+
 def _maybe_preserve_choice_order(indices, *, replace, p, shuffle, size):
-    if replace or p is not None or bool(shuffle) or size is None:
+    if replace or p is not None or shuffle or size is None:
         return indices
 
     index_array = _np.asarray(indices)
@@ -83,6 +89,8 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
     and then gathers along ``axis`` for multidimensional inputs.
     """
 
+    replace = _choice_bool(replace, "replace")
+    shuffle = _choice_bool(shuffle, "shuffle")
     a_array = _np.asarray(a)
     if a_array.ndim == 0:
         return _maybe_preserve_choice_order(
