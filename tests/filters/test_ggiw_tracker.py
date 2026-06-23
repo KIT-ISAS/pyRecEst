@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -40,6 +41,33 @@ class TestGGIWTracker(unittest.TestCase):
         npt.assert_allclose(self.tracker.extent_scale, 6.0 * self.extent)
         self.assertEqual(self.tracker.get_measurement_rate_estimate(), 2.0)
         self.assertEqual(self.tracker.get_point_estimate().shape[0], 9)
+
+    def test_subtract_measurement_noise_flag_requires_boolean(self):
+        tracker = GGIWTracker(
+            self.kinematic_state,
+            self.covariance,
+            self.extent,
+            extent_degrees_of_freedom=12.0,
+            gamma_shape=4.0,
+            gamma_rate=2.0,
+            subtract_measurement_noise_from_scatter=np.bool_(True),
+        )
+        self.assertTrue(tracker.subtract_measurement_noise_from_scatter)
+
+        for flag in ("False", 1, np.array([True])):
+            with self.subTest(flag=flag):
+                with self.assertRaisesRegex(
+                    TypeError, "subtract_measurement_noise_from_scatter"
+                ):
+                    GGIWTracker(
+                        self.kinematic_state,
+                        self.covariance,
+                        self.extent,
+                        extent_degrees_of_freedom=12.0,
+                        gamma_shape=4.0,
+                        gamma_rate=2.0,
+                        subtract_measurement_noise_from_scatter=flag,
+                    )
 
     def test_predict_linear_preserves_extent_mean_with_forgetting(self):
         system_matrix = array(

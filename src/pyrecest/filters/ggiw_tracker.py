@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member,redefined-builtin,duplicate-code
 from pyrecest.backend import (
     array,
@@ -17,6 +19,13 @@ from pyrecest.backend import (
 )
 
 from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
+
+
+def _validate_bool_flag(value, name: str) -> bool:
+    value_array = np.asarray(value)
+    if value_array.shape != () or not np.issubdtype(value_array.dtype, np.bool_):
+        raise TypeError(f"{name} must be a boolean")
+    return bool(value_array.item())
 
 
 class GGIWTracker(
@@ -76,8 +85,9 @@ class GGIWTracker(
         self.gamma_shape = float(gamma_shape)
         self.gamma_rate = float(gamma_rate)
         self.extent_innovation_weight = float(extent_innovation_weight)
-        self.subtract_measurement_noise_from_scatter = bool(
-            subtract_measurement_noise_from_scatter
+        self.subtract_measurement_noise_from_scatter = _validate_bool_flag(
+            subtract_measurement_noise_from_scatter,
+            "subtract_measurement_noise_from_scatter",
         )
         self.latest_log_likelihood = None
 
