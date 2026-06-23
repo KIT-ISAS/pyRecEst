@@ -121,8 +121,26 @@ class TestBayesianComplexWatsonMixtureModelConstructor(unittest.TestCase):
     def test_non_hermitian_B_raises(self):
         D, K = 2, 1
         B = ones((D, D, K), dtype=complex) * (1 + 1j)
-        with self.assertRaises(AssertionError):
+        with self.assertRaisesRegex(ValueError, "Hermitian"):
             BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0]))
+
+    def test_constructor_rejects_invalid_B_shape(self):
+        B = zeros((2, 2), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "shape"):
+            BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0]))
+
+    def test_constructor_rejects_component_count_mismatch(self):
+        B = zeros((2, 2, 2), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "B.shape"):
+            BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0]))
+
+    def test_constructor_rejects_concentration_count_mismatch(self):
+        B = zeros((2, 2, 1), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "concentrations"):
+            BayesianComplexWatsonMixtureModel(B, array([1.0, 2.0]), array([1.0]))
 
 
 class TestParametersDefault(unittest.TestCase):
