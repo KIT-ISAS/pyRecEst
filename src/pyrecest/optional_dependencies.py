@@ -31,9 +31,7 @@ def require_optional_dependency(
     """
     try:
         return importlib.import_module(package)
-    except (
-        ModuleNotFoundError
-    ) as exc:  # pragma: no cover - branch behavior is covered through tests
+    except ModuleNotFoundError as exc:
         if not _is_missing_requested_package(exc, package):
             raise
         subject = f" for {feature}" if feature else ""
