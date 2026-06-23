@@ -12,6 +12,23 @@ def _as_real_array(name: str, value: np.ndarray | Sequence[float]) -> np.ndarray
     return array
 
 
+def _as_finite_nonnegative_scalar(name: str, value: float) -> float:
+    message = f"{name} must be a finite non-negative scalar."
+    array = np.asarray(value)
+    if array.shape != () or array.dtype == np.bool_:
+        raise ValueError(message)
+    scalar = array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    try:
+        scalar_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(scalar_float) or scalar_float < 0.0:
+        raise ValueError(message)
+    return scalar_float
+
+
 def _as_point_batch(
     name: str, points: np.ndarray | Sequence[float]
 ) -> tuple[np.ndarray, bool]:
@@ -104,8 +121,7 @@ def ellipsoid_axis_offsets(
     shape is ``(dim, dim)``.  For a batch, the shape is ``(count, dim, dim)``.
     """
 
-    if radius < 0.0:
-        raise ValueError("radius must be non-negative.")
+    radius = _as_finite_nonnegative_scalar("radius", radius)
     covariances, single = _as_covariance_batch("covariance", covariance)
     eigenvalues, eigenvectors = np.linalg.eigh(covariances)
     if sort_descending:
@@ -116,7 +132,7 @@ def ellipsoid_axis_offsets(
         eigenvalues = np.clip(eigenvalues, 0.0, None)
     elif bool(np.any(eigenvalues < 0.0)):
         raise ValueError("covariance has negative eigenvalues.")
-    scales = np.sqrt(eigenvalues) * float(radius)
+    scales = np.sqrt(eigenvalues) * radius
     offsets = eigenvectors * scales[:, None, :]
     return offsets[0] if single else offsets
 
@@ -193,11 +209,9 @@ def ellipsoid_sigma_points(
     ``(count, support_point_count, dim)``.
     """
 
-    radii_tuple = tuple(float(radius) for radius in radii)
+    radii_tuple = tuple(_as_finite_nonnegative_scalar("radius", radius) for radius in radii)
     if not radii_tuple:
         raise ValueError("radii must contain at least one radius.")
-    if any(radius < 0.0 for radius in radii_tuple):
-        raise ValueError("radii must be non-negative.")
 
     centers, center_single = _as_point_batch("mean", mean)
     covariances, cov_single = _as_covariance_batch("covariance", covariance)
@@ -253,8 +267,7 @@ def mahalanobis_support_points(
 ) -> np.ndarray:
     """Map unit directions to a covariance ellipsoid's surface."""
 
-    if radius < 0.0:
-        raise ValueError("radius must be non-negative.")
+    radius = _as_finite_nonnegative_scalar("radius", radius)
     centers, center_single = _as_point_batch("mean", mean)
     covariances, cov_single = _as_covariance_batch("covariance", covariance)
     directions_array = _as_real_array("directions", directions)
@@ -296,7 +309,7 @@ def mahalanobis_support_points(
     sqrt_covariances = np.einsum(
         "bij,bj,bkj->bik",
         eigenvectors,
-        np.sqrt(eigenvalues) * float(radius),
+        np.sqrt(eigenvalues) * radius,
         eigenvectors,
     )
     mapped_offsets = np.einsum("mj,bji->bmi", directions_array, sqrt_covariances)
