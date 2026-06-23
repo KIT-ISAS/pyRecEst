@@ -136,6 +136,20 @@ class TestCandidatePruning(unittest.TestCase):
 
         npt.assert_array_equal(mask, np.array([[True, True], [True, False]]))
 
+    def test_always_keep_finite_rejects_truthy_non_bools(self):
+        invalid_values = ("yes", 1, np.array([True]))
+
+        for value in invalid_values:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "always_keep_finite must be a boolean",
+                ):
+                    CandidatePruningConfig(always_keep_finite=value)
+
+        cfg = CandidatePruningConfig(always_keep_finite=np.array(True))
+        self.assertIs(cfg.always_keep_finite, True)
+
     def test_mapping_config_normalization_and_validation(self):
         cfg = candidate_pruning_config_from_mapping({"row_top_k": np.array(2.0)})
         self.assertIsInstance(cfg, CandidatePruningConfig)

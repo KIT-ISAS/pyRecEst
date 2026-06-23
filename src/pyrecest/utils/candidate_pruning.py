@@ -40,6 +40,12 @@ class CandidatePruningConfig:
             parsed = _normalize_positive_integer(value, name)
             object.__setattr__(self, name, parsed)
 
+        object.__setattr__(
+            self,
+            "always_keep_finite",
+            _normalize_bool(self.always_keep_finite, "always_keep_finite"),
+        )
+
         if self.probability_threshold is not None:
             threshold = _normalize_bounded_scalar(
                 self.probability_threshold,
@@ -84,6 +90,13 @@ def candidate_pruning_config_from_mapping(
     if isinstance(value, CandidatePruningConfig):
         return value
     return CandidatePruningConfig(**dict(value))
+
+
+def _normalize_bool(value: Any, name: str) -> bool:
+    value_array = np.asarray(value)
+    if value_array.shape == () and value_array.dtype == np.bool_:
+        return bool(value_array.item())
+    raise ValueError(f"{name} must be a boolean")
 
 
 def _normalize_positive_integer(value: Any, name: str) -> int:
