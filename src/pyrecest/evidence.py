@@ -46,7 +46,7 @@ class EvidenceComputationMode:
     mode: EvidenceComputationKind = "full_smoothing"
     return_smoothed: bool = True
     terminal_posterior: bool = True
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] | None = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.mode not in {"full_smoothing", "evidence_only"}:
@@ -61,7 +61,11 @@ class EvidenceComputationMode:
             raise ValueError("full_smoothing mode must return smoothed posteriors")
         object.__setattr__(self, "return_smoothed", return_smoothed)
         object.__setattr__(self, "terminal_posterior", terminal_posterior)
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        object.__setattr__(
+            self,
+            "metadata",
+            {} if self.metadata is None else dict(self.metadata),
+        )
 
     @classmethod
     def full_smoothing(
