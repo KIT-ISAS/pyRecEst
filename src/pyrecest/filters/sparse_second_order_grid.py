@@ -118,29 +118,34 @@ def sparse_second_order_grid_evidence(
     )
     return_smoothed = mode.return_smoothed
 
-    prev, curr, alpha, initial_edge_counts = initial_pair_initializer(scaled)
-    prev = np.asarray(prev, dtype=int)
-    curr = np.asarray(curr, dtype=int)
+    prev_raw, curr_raw, alpha, initial_edge_counts = initial_pair_initializer(scaled)
+    prev_raw = np.asarray(prev_raw)
+    curr_raw = np.asarray(curr_raw)
     alpha = np.asarray(alpha, dtype=float)
     if (
-        prev.ndim != 1
-        or curr.ndim != 1
+        prev_raw.ndim != 1
+        or curr_raw.ndim != 1
         or alpha.ndim != 1
-        or prev.shape != curr.shape
-        or prev.shape != alpha.shape
+        or prev_raw.shape != curr_raw.shape
+        or prev_raw.shape != alpha.shape
     ):
         raise ValueError(
             "initial pair arrays must have matching one-dimensional shapes"
         )
+    prev = _coerce_grid_index_array(
+        prev_raw,
+        integer_message="initial pair indices must be integer-valued",
+        bounds_message="initial pair indices are outside the grid",
+        n_states=n_states,
+    )
+    curr = _coerce_grid_index_array(
+        curr_raw,
+        integer_message="initial pair indices must be integer-valued",
+        bounds_message="initial pair indices are outside the grid",
+        n_states=n_states,
+    )
     if np.any(~np.isfinite(alpha)) or np.any(alpha < 0.0):
         raise ValueError("initial pair weights must be finite and nonnegative")
-    if (
-        np.any(prev < 0)
-        or np.any(prev >= n_states)
-        or np.any(curr < 0)
-        or np.any(curr >= n_states)
-    ):
-        raise ValueError("initial pair indices are outside the grid")
     first_scale = float(alpha.sum())
     if first_scale <= 0.0 or not np.isfinite(first_scale):
         raise ValueError("initial pair lattice has no positive finite mass")
@@ -306,16 +311,18 @@ def _advance_sparse_pair_alpha(
             dst, weights = transition_row_builder(
                 int(src_prev), int(src_curr), int(transition_index)
             )
-            dst = np.asarray(dst, dtype=int)
+            dst_raw = np.asarray(dst)
             weights = np.asarray(weights, dtype=float)
-            if dst.ndim != 1 or weights.shape != dst.shape:
+            if dst_raw.ndim != 1 or weights.shape != dst_raw.shape:
                 raise ValueError(
                     "transition rows must return one-dimensional dst and weights arrays with matching shapes"
                 )
-            if np.any(dst < 0) or np.any(dst >= n_states):
-                raise ValueError(
-                    "transition row contains destination indices outside the grid"
-                )
+            dst = _coerce_grid_index_array(
+                dst_raw,
+                integer_message="transition row destination indices must be integer-valued",
+                bounds_message="transition row contains destination indices outside the grid",
+                n_states=n_states,
+            )
             if np.any(~np.isfinite(weights)) or np.any(weights < 0.0):
                 raise ValueError(
                     "transition row weights must be finite and nonnegative"
@@ -360,6 +367,52 @@ def _advance_sparse_pair_alpha(
         cache_hits,
         cache_misses,
     )
+
+
+def _coerce_grid_index_array(
+    values: Any,
+    *,
+    integer_message: str,
+    bounds_message: str,
+    n_states: int,
+) -> np.ndarray:
+    array = np.asarray(values)
+    if np.issubdtype(array.dtype, np.bool_):
+        raise ValueError(integer_message)
+
+    if np.issubdtype(array.dtype, np.integer):
+        if np.any(array < 0) or np.any(array >= n_states):
+            raise ValueError(bounds_message)
+        return array.astype(int, copy=False)
+
+    if np.issubdtype(array.dtype, np.floating):
+        if np.any(~np.isfinite(array)) or np.any(np.floor(array) != array):
+            raise ValueError(integer_message)
+        if np.any(array < 0) or np.any(array >= n_states):
+            raise ValueError(bounds_message)
+        return array.astype(int)
+
+    if array.dtype == object:
+        coerced = np.empty(array.shape, dtype=int)
+        for index, value in np.ndenumerate(array):
+            if isinstance(value, (bool, np.bool_)):
+                raise ValueError(integer_message)
+            if isinstance(value, (int, np.integer)):
+                parsed = int(value)
+            elif (
+                isinstance(value, (float, np.floating))
+                and np.isfinite(value)
+                and float(value).is_integer()
+            ):
+                parsed = int(value)
+            else:
+                raise ValueError(integer_message)
+            if parsed < 0 or parsed >= n_states:
+                raise ValueError(bounds_message)
+            coerced[index] = parsed
+        return coerced
+
+    raise ValueError(integer_message)
 
 
 def _backward_sparse_pair_betas(
