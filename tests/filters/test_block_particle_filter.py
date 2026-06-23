@@ -62,6 +62,18 @@ class BlockParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.component_weights(0), array([0.8, 0.2]))
         npt.assert_allclose(filt.component_weights(1), array([0.2, 0.8]))
 
+    def test_component_indices_must_be_integral(self):
+        filt = DummyBlockParticleFilter(
+            array([[0.0, 10.0], [1.0, 11.0]]),
+            partition="singleton",
+        )
+
+        for invalid_index in (True, 0.5, "0", [0]):
+            with self.subTest(component_idx=invalid_index), self.assertRaises(
+                ValueError
+            ):
+                filt.component_weights(invalid_index)
+
     def test_resampling_assembles_hybrid_product_particles(self):
         filt = DummyBlockParticleFilter(
             array([[0.0, 10.0], [1.0, 11.0]]),
@@ -74,6 +86,23 @@ class BlockParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.particles, array([[0.0, 11.0], [0.0, 11.0]]))
         npt.assert_allclose(filt.block_weights, ones((2, 2)) / 2)
         npt.assert_allclose(filt.weights, ones(2) / 2)
+
+    def test_resample_block_indices_must_be_integral(self):
+        filt = DummyBlockParticleFilter(
+            array([[0.0, 10.0], [1.0, 11.0]]),
+            partition="singleton",
+            block_weights=array([[1.0, 0.0], [0.0, 1.0]]),
+        )
+
+        for invalid_index in (True, 0.5, "0", [0]):
+            with self.subTest(block_index=invalid_index), self.assertRaises(
+                ValueError
+            ):
+                filt.resample_block_systematic(invalid_index)
+            with self.subTest(block_indices=invalid_index), self.assertRaises(
+                ValueError
+            ):
+                filt.resample_blocks_systematic([invalid_index])
 
     def test_rejects_nonfinite_weights(self):
         for invalid_weight in (float("nan"), float("inf"), -float("inf")):
