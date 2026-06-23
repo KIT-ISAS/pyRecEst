@@ -216,9 +216,10 @@ class AbstractHypersphericalDistribution(AbstractHypersphereSubsetDistribution):
         return super().entropy_numerical()
 
     def mode_numerical(self):
-        assert (
-            pyrecest.backend.__backend_name__ != "jax"
-        ), "Not supported on this backend"
+        if pyrecest.backend.__backend_name__ == "jax":
+            raise NotImplementedError(
+                "mode_numerical is not supported on the JAX backend."
+            )
 
         def fun(s):
             return -self.pdf(
