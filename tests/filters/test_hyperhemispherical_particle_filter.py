@@ -33,6 +33,18 @@ class HyperhemisphericalParticleFilterTest(unittest.TestCase):
         self.assertEqual(hpf.filter_state.w.shape, (self.n_particles,))
         self.assertEqual(hpf.filter_state.d.shape, (self.n_particles, 4))
 
+    def test_constructor_rejects_invalid_particle_count(self):
+        for n_particles in (True, 0, -1, 1.5):
+            with self.subTest(n_particles=n_particles):
+                with self.assertRaisesRegex(ValueError, "n_particles"):
+                    HyperhemisphericalParticleFilter(n_particles, 3)
+
+    def test_constructor_rejects_invalid_dimension(self):
+        for dim in (True, 0, -1, 1.5):
+            with self.subTest(dim=dim):
+                with self.assertRaisesRegex(ValueError, "dim"):
+                    HyperhemisphericalParticleFilter(5, dim)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
