@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from numbers import Integral
 from typing import Any
 
 # pylint: disable=no-name-in-module,no-member,too-many-arguments,too-many-locals,protected-access
@@ -7,6 +8,27 @@ import numpy as np
 from pyrecest.backend import array, diag, linalg, mean, zeros
 
 from .mem_qkf_tracker import MEMQKFTracker
+
+
+def _as_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer")
+    try:
+        value_array = array(value)
+        if value_array.shape != ():
+            raise ValueError(f"{name} must be a scalar integer")
+        scalar = value_array.item()
+    except AttributeError:
+        scalar = value
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+
+    if isinstance(scalar, bool) or not isinstance(scalar, Integral):
+        raise ValueError(f"{name} must be a positive integer")
+    integer = int(scalar)
+    if integer <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return integer
 
 
 class IteratedBatchMEMQKFTracker(MEMQKFTracker):
@@ -63,9 +85,7 @@ class IteratedBatchMEMQKFTracker(MEMQKFTracker):
         kwargs.pop("update_mode", None)
         super().__init__(*args, update_mode="sequential", **kwargs)
 
-        self.n_iterations = int(n_iterations)
-        if self.n_iterations < 1:
-            raise ValueError("n_iterations must be at least 1")
+        self.n_iterations = _as_positive_integer(n_iterations, "n_iterations")
 
         self.damping = float(damping)
         if not 0.0 < self.damping <= 1.0:

@@ -69,8 +69,14 @@ class TestIteratedBatchMEMQKFTracker(unittest.TestCase):
         npt.assert_allclose(tracker.shape_state, self.shape_state)
 
     def test_rejects_invalid_parameters(self):
-        with self.assertRaises(ValueError):
-            self.make_tracker(n_iterations=0)
+        tracker = self.make_tracker(n_iterations=np.int64(2))
+        self.assertEqual(tracker.n_iterations, 2)
+
+        for invalid_iterations in (0, True, 1.5, "2", [2]):
+            with self.subTest(n_iterations=invalid_iterations), self.assertRaises(
+                ValueError
+            ):
+                self.make_tracker(n_iterations=invalid_iterations)
         with self.assertRaises(ValueError):
             self.make_tracker(damping=0.0)
         with self.assertRaises(ValueError):

@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member,duplicate-code
@@ -49,6 +50,34 @@ class TestVBRMTracker(unittest.TestCase):
             diag(array([4.0, 1.0])),
         )
         self.assertEqual(self.tracker.get_point_estimate().shape[0], 7)
+
+    def test_num_iterations_must_be_positive_integer(self):
+        tracker = VBRMTracker(
+            self.kinematic_state,
+            self.covariance,
+            self.shape_state,
+            self.orientation_variance,
+            inverse_gamma_shape=10.0,
+            measurement_noise_cov=self.measurement_noise_cov,
+            measurement_matrix=self.measurement_matrix,
+            num_iterations=np.int64(2),
+        )
+        self.assertEqual(tracker.num_iterations, 2)
+
+        for invalid_iterations in (0, True, 1.5, "2", [2]):
+            with self.subTest(num_iterations=invalid_iterations), self.assertRaises(
+                ValueError
+            ):
+                VBRMTracker(
+                    self.kinematic_state,
+                    self.covariance,
+                    self.shape_state,
+                    self.orientation_variance,
+                    inverse_gamma_shape=10.0,
+                    measurement_noise_cov=self.measurement_noise_cov,
+                    measurement_matrix=self.measurement_matrix,
+                    num_iterations=invalid_iterations,
+                )
 
     def test_get_state_and_cov_returns_public_shape_covariance(self):
         state, covariance = self.tracker.get_state_and_cov(
