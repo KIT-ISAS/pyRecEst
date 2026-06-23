@@ -28,6 +28,15 @@ assert bool(backend.all(compat_positional_shape >= 2))
 assert bool(backend.all(compat_positional_shape < 7))
 assert bool(backend.all(compat_keyword_shape >= 2))
 assert bool(backend.all(compat_keyword_shape < 7))
+
+for invalid_population in (0, -1, []):
+    try:
+        random.choice(invalid_population, size=(1,))
+    except ValueError as exc:
+        assert "positive integer or a non-empty array" in str(exc)
+    else:
+        raise AssertionError("invalid choice population was accepted")
+
 print("ok")
 """
 
