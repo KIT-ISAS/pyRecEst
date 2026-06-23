@@ -51,6 +51,21 @@ def project_symmetric_covariance(covariance, minimum_eigenvalue=0.0):
     return symmetrize((eigenvectors * eigenvalues) @ eigenvectors.T)
 
 
+def _coerce_bool_flag(value, name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a bool") from exc
+    if value_array.shape != ():
+        raise ValueError(f"{name} must be a scalar bool")
+    scalar = value_array.item()
+    if isinstance(scalar, bool):
+        return bool(scalar)
+    raise ValueError(f"{name} must be a bool")
+
+
 def rotation_matrix_2d(angle):
     """Return the 2-D rotation matrix for ``angle``."""
 
@@ -161,6 +176,7 @@ def ellipse_shape_canonicalization_transform(
     """
 
     shape_state = asarray(shape_state).reshape(3)
+    major_axis_first = _coerce_bool_flag(major_axis_first, "major_axis_first")
     orientation = shape_state[0]
     axes = shape_state[1:]
     transform = eye(3)
@@ -172,7 +188,7 @@ def ellipse_shape_canonicalization_transform(
         transform = sign_transform @ transform
     axes = maximum(backend_abs(axes), float(minimum_axis_length))
 
-    if bool(major_axis_first) and float(axes[1]) > float(axes[0]):
+    if major_axis_first and float(axes[1]) > float(axes[0]):
         swap_transform = array(
             [
                 [1.0, 0.0, 0.0],

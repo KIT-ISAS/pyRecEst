@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import numpy.testing as npt
+import pytest
 from pyrecest.tracking import (
     canonicalize_ellipse_axes,
     canonicalize_ellipse_shape,
@@ -16,6 +17,22 @@ from pyrecest.tracking import (
 def test_ellipse_angle_delta_is_pi_periodic() -> None:
     assert np.isclose(float(ellipse_angle_delta(0.0, np.pi - 0.1)), -0.1)
     assert np.isclose(float(wrap_ellipse_angle_to_reference(0.0, np.pi - 0.1)), -0.1)
+
+
+def test_major_axis_first_requires_boolean_flag() -> None:
+    axes, _axis_covariance, swapped = canonicalize_ellipse_axes(
+        np.array([1.0, 2.0]),
+        major_axis_first=np.bool_(False),
+    )
+
+    npt.assert_allclose(axes, np.array([1.0, 2.0]))
+    assert not swapped
+
+    with pytest.raises(ValueError, match="major_axis_first"):
+        canonicalize_ellipse_axes(
+            np.array([1.0, 2.0]),
+            major_axis_first="False",
+        )
 
 
 def test_canonicalize_ellipse_shape_transforms_full_shape_covariance() -> None:
