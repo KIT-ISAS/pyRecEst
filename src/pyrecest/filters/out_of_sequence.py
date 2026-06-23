@@ -35,6 +35,48 @@ def _coerce_time(time):
     return time
 
 
+def _coerce_diagnostic_accepted(value):
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "t", "yes", "y"}:
+            return True
+        if normalized in {"0", "false", "f", "no", "n"}:
+            return False
+        raise ValueError("accepted diagnostic must be a boolean-like value")
+
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("accepted diagnostic must be a boolean-like value") from exc
+    if len(value_array.shape) != 0:
+        raise ValueError("accepted diagnostic must be a scalar boolean-like value")
+
+    scalar = value_array.item()
+    if isinstance(scalar, bool):
+        return scalar
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("accepted diagnostic must be a boolean-like value") from exc
+    if not isfinite(parsed):
+        raise ValueError("accepted diagnostic must be finite")
+    if parsed == 0.0:
+        return False
+    if parsed == 1.0:
+        return True
+    raise ValueError("accepted diagnostic must be a boolean-like value")
+
+
+def _diagnostics_accepted(diagnostics):
+    if diagnostics is None:
+        return True
+    return _coerce_diagnostic_accepted(diagnostics.get("accepted", True))
+
+
 @dataclass(frozen=True)
 class TimestampedItem:
     """A value stored with an ordered scalar timestamp."""
@@ -317,9 +359,7 @@ class _EventReplayMixin:
 
         self._trim_to_lag()
         diagnostics = captured_result if hasattr(captured_result, "get") else None
-        accepted = (
-            True if diagnostics is None else bool(diagnostics.get("accepted", True))
-        )
+        accepted = _diagnostics_accepted(diagnostics)
         return OutOfSequenceResult(
             time=event_time,
             final_time=self._latest_time,
