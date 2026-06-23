@@ -263,6 +263,8 @@ def joint_tps_registration_assignment(  # pylint: disable=too-many-arguments,too
             "joint_tps_registration_assignment is not supported on the JAX backend."
         )
 
+    regularization = _validate_regularization(regularization)
+
     reference = _as_point_array(
         reference_points,
         expected_dim=2,
