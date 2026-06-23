@@ -2,7 +2,7 @@ import unittest
 
 import pyrecest.backend
 
-from pyrecest.backend import array, ones
+from pyrecest.backend import array, ones, zeros
 from pyrecest.distributions.hypersphere_subset.bayesian_complex_watson_mixture_model import (
     BayesianComplexWatsonMixtureModel,
 )
@@ -43,6 +43,18 @@ class BayesianComplexWatsonMixtureValidationTest(unittest.TestCase):
             BayesianComplexWatsonMixtureModel.estimate_posterior(
                 _observations(), params
             )
+
+    def test_fit_default_rejects_large_feature_dimension(self):
+        observations = zeros((100, 1), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "D < 100"):
+            BayesianComplexWatsonMixtureModel.fit_default(observations, 1)
+
+    def test_fit_default_rejects_non_matrix_observations(self):
+        observations = zeros((3,), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "shape"):
+            BayesianComplexWatsonMixtureModel.fit_default(observations, 1)
 
 
 if __name__ == "__main__":
