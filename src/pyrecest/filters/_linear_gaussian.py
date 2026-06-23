@@ -3,6 +3,8 @@
 
 import math
 
+import numpy as np
+
 from pyrecest.backend import (
     asarray,
     atleast_1d,
@@ -31,13 +33,50 @@ def _as_matrix(x, name):
     return x
 
 
-def _as_positive_float(x, name):
+def _as_finite_scalar_float(x, name, requirement="finite"):
     try:
-        x = float(x)
+        scalar = np.asarray(x)
+    except Exception as exc:  # pragma: no cover - backend-specific conversion errors
+        raise ValueError(f"{name} must be a finite scalar number") from exc
+
+    if scalar.ndim != 0:
+        raise ValueError(f"{name} must be a scalar number")
+
+    value = scalar.item()
+    if isinstance(value, (bool, np.bool_, str, bytes, np.bytes_)):
+        raise ValueError(f"{name} must be a numeric scalar")
+
+    try:
+        value = float(value)
     except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError(f"{name} must be finite and positive") from exc
-    if not math.isfinite(x) or x <= 0.0:
+        raise ValueError(f"{name} must be a finite scalar number") from exc
+
+    if not math.isfinite(value):
+        raise ValueError(f"{name} must be {requirement}")
+    return value
+
+
+def _as_positive_float(x, name):
+    x = _as_finite_scalar_float(x, name, "finite and positive")
+    if x <= 0.0:
         raise ValueError(f"{name} must be finite and positive")
+    return x
+
+
+def _as_nonnegative_float(x, name):
+    x = _as_finite_scalar_float(x, name, "finite and nonnegative")
+    if x < 0.0:
+        raise ValueError(f"{name} must be finite and nonnegative")
+    return x
+
+
+def _as_positive_integer(x, name):
+    x = _as_finite_scalar_float(x, name)
+    if not x.is_integer():
+        raise ValueError(f"{name} must be a finite positive integer")
+    x = int(x)
+    if x <= 0:
+        raise ValueError(f"{name} must be positive")
     return x
 
 
@@ -112,17 +151,13 @@ def student_t_covariance_scale(  # pylint: disable=redefined-outer-name
     min_scale : float, optional
         Lower bound on the returned covariance scale. Must be nonnegative.
     """
-    measurement_dim = int(measurement_dim)
-    if measurement_dim <= 0:
-        raise ValueError("measurement_dim must be positive")
+    measurement_dim = _as_positive_integer(measurement_dim, "measurement_dim")
 
-    dof = float(dof)
-    if not math.isfinite(dof) or dof <= 2.0:
+    dof = _as_finite_scalar_float(dof, "dof", "finite and greater than 2")
+    if dof <= 2.0:
         raise ValueError("dof must be finite and greater than 2")
 
-    min_scale = float(min_scale)
-    if not math.isfinite(min_scale) or min_scale < 0.0:
-        raise ValueError("min_scale must be finite and nonnegative")
+    min_scale = _as_nonnegative_float(min_scale, "min_scale")
 
     nis = asarray(normalized_innovation_squared, dtype=float64)
     scale = (dof + nis) / (dof + measurement_dim)
