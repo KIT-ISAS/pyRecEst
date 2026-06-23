@@ -29,6 +29,8 @@ from pyrecest.protocols.models import (
     SupportsTransitionSampling,
 )
 
+from .validation import _validate_bool_flag
+
 
 def _ensure_callable(value: Any, name: str) -> None:
     if not callable(value):
@@ -164,7 +166,9 @@ class SampleableTransitionModel:
         self._sample_next = sample_next
         self._sample_next_count_call_mode = _sample_count_call_mode(sample_next)
         self._transition_density = transition_density
-        self.function_is_vectorized = function_is_vectorized
+        self.function_is_vectorized = _validate_bool_flag(
+            function_is_vectorized, "function_is_vectorized"
+        )
         self.name = name
 
     @property

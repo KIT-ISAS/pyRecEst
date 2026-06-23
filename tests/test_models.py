@@ -1,8 +1,14 @@
 import unittest
 
+import numpy as np
+
 from pyrecest.backend import allclose, array, diag
 from pyrecest.distributions import GaussianDistribution
-from pyrecest.models import AdditiveNoiseMeasurementModel, AdditiveNoiseTransitionModel
+from pyrecest.models import (
+    AdditiveNoiseMeasurementModel,
+    AdditiveNoiseTransitionModel,
+    SampleableTransitionModel,
+)
 
 
 class ModelObjectTest(unittest.TestCase):
@@ -56,6 +62,28 @@ class ModelObjectTest(unittest.TestCase):
         self.assertTrue(
             allclose(model.evaluate(array([1.0, 2.0])), array([1.25, 1.75]))
         )
+
+    def test_sampleable_transition_model_validates_vectorized_flag(self):
+        self.assertTrue(
+            SampleableTransitionModel(
+                lambda value: value,
+                function_is_vectorized=np.bool_(True),
+            ).function_is_vectorized
+        )
+        self.assertFalse(
+            SampleableTransitionModel(
+                lambda value: value,
+                function_is_vectorized=False,
+            ).function_is_vectorized
+        )
+
+        for invalid_flag in ("False", 1):
+            with self.subTest(invalid_flag=invalid_flag):
+                with self.assertRaises(TypeError):
+                    SampleableTransitionModel(
+                        lambda value: value,
+                        function_is_vectorized=invalid_flag,
+                    )
 
 
 if __name__ == "__main__":
