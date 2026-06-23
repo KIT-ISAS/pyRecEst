@@ -33,6 +33,19 @@ class OnlineTimeOffsetEstimatorTest(unittest.TestCase):
         self.assertEqual(estimator.offset, 1.0)
         self.assertEqual(estimator.variance, 2.0)
 
+    def test_zero_velocity_returns_nan_without_update_even_with_zero_min_speed(self):
+        estimator = OnlineTimeOffsetEstimator(offset=1.0, variance=2.0, min_speed=0.0)
+
+        nis = estimator.update_from_position_residual(
+            residual=np.array([10.0]),
+            velocity=np.array([0.0]),
+            measurement_variance=1.0,
+        )
+
+        self.assertTrue(math.isnan(nis))
+        self.assertEqual(estimator.offset, 1.0)
+        self.assertEqual(estimator.variance, 2.0)
+
     def test_predict_adds_process_variance(self):
         estimator = OnlineTimeOffsetEstimator(variance=1.0, process_variance=0.25)
 
