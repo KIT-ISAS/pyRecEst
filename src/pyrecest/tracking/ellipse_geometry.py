@@ -10,6 +10,8 @@ representation bookkeeping.
 
 from __future__ import annotations
 
+from math import isfinite as _isfinite_scalar
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import abs as backend_abs
 from pyrecest.backend import (
@@ -45,9 +47,12 @@ def project_symmetric_covariance(covariance, minimum_eigenvalue=0.0):
         Eigenvalue floor used after symmetrization.
     """
 
+    minimum_eigenvalue = _coerce_nonnegative_finite_scalar(
+        minimum_eigenvalue, "minimum_eigenvalue"
+    )
     covariance = symmetrize(covariance)
     eigenvalues, eigenvectors = linalg.eigh(covariance)
-    eigenvalues = maximum(eigenvalues, float(minimum_eigenvalue))
+    eigenvalues = maximum(eigenvalues, minimum_eigenvalue)
     return symmetrize((eigenvectors * eigenvalues) @ eigenvectors.T)
 
 
@@ -64,6 +69,28 @@ def _coerce_bool_flag(value, name: str) -> bool:
     if isinstance(scalar, bool):
         return bool(scalar)
     raise ValueError(f"{name} must be a bool")
+
+
+def _coerce_nonnegative_finite_scalar(value, name: str) -> float:
+    message = f"{name} must be a finite non-negative scalar"
+    if isinstance(value, bool):
+        raise ValueError(message)
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if value_array.shape != ():
+        raise ValueError(message)
+    scalar = value_array.item()
+    if isinstance(scalar, bool):
+        raise ValueError(message)
+    try:
+        scalar_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not _isfinite_scalar(scalar_float) or scalar_float < 0.0:
+        raise ValueError(message)
+    return scalar_float
 
 
 def rotation_matrix_2d(angle):
@@ -122,6 +149,9 @@ def shape_from_extent_matrix(
     nearest pi-equivalent representation of that reference.
     """
 
+    minimum_axis_length = _coerce_nonnegative_finite_scalar(
+        minimum_axis_length, "minimum_axis_length"
+    )
     extent = symmetrize(extent)
     eigenvalues, eigenvectors = linalg.eigh(extent)
     if float(eigenvalues[1]) >= float(eigenvalues[0]):
@@ -131,7 +161,7 @@ def shape_from_extent_matrix(
         major_index = 0
         minor_index = 1
 
-    axis_floor_sq = float(minimum_axis_length) ** 2
+    axis_floor_sq = minimum_axis_length**2
     major_axis = sqrt(maximum(eigenvalues[major_index], axis_floor_sq))
     minor_axis = sqrt(maximum(eigenvalues[minor_index], axis_floor_sq))
     major_vector = eigenvectors[:, major_index]
@@ -176,6 +206,9 @@ def ellipse_shape_canonicalization_transform(
     """
 
     shape_state = asarray(shape_state).reshape(3)
+    minimum_axis_length = _coerce_nonnegative_finite_scalar(
+        minimum_axis_length, "minimum_axis_length"
+    )
     major_axis_first = _coerce_bool_flag(major_axis_first, "major_axis_first")
     orientation = shape_state[0]
     axes = shape_state[1:]
@@ -186,7 +219,7 @@ def ellipse_shape_canonicalization_transform(
     if sign_1 < 0.0 or sign_2 < 0.0:
         sign_transform = diag(array([1.0, sign_1, sign_2]))
         transform = sign_transform @ transform
-    axes = maximum(backend_abs(axes), float(minimum_axis_length))
+    axes = maximum(backend_abs(axes), minimum_axis_length)
 
     if major_axis_first and float(axes[1]) > float(axes[0]):
         swap_transform = array(
