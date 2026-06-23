@@ -25,6 +25,11 @@ class MeasurementReliabilitySelection:
     active_measurement_indices: list[int]
 
 
+def _has_boolean_dtype(value) -> bool:
+    dtype = getattr(value, "dtype", None)
+    return dtype is not None and "bool" in str(dtype).lower()
+
+
 def normalize_measurement_weights(measurement_weights, n_measurements: int):
     """Return one non-negative finite reliability weight per measurement.
 
@@ -66,6 +71,8 @@ def normalize_active_measurement_mask(
         return [True] * n_measurements
 
     mask = array(active_measurement_mask)
+    if not _has_boolean_dtype(mask):
+        raise ValueError("active_measurement_mask must contain booleans")
     if mask.ndim == 0:
         return [bool(mask)] * n_measurements
     mask = reshape(mask, (-1,))
