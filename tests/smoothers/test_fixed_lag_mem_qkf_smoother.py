@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.testing as npt
+import pytest
 from pyrecest.backend import array, diag, eye
 from pyrecest.filters.mem_qkf_tracker import MEMQKFTracker
 from pyrecest.smoothers import (
@@ -44,6 +45,26 @@ def test_aliases():
     assert FullIntervalMEMQKFSmoother is FixedIntervalMEMQKFSmoother
     assert FBFBMEMQKFSmoother is ForwardBackwardForwardBackwardMEMQKFSmoother
     assert ForwardBackwardMEMQKFSmoother is ForwardBackwardForwardBackwardMEMQKFSmoother
+
+
+def test_fbfb_covariance_flags_must_be_boolean():
+    smoother = ForwardBackwardForwardBackwardMEMQKFSmoother(
+        include_kinematic_covariance=np.bool_(False),
+        include_single_measurement_axis_covariance=np.bool_(False),
+    )
+
+    assert smoother.include_kinematic_covariance is False
+    assert smoother.include_single_measurement_axis_covariance is False
+
+    with pytest.raises(ValueError, match="include_kinematic_covariance"):
+        ForwardBackwardForwardBackwardMEMQKFSmoother(
+            include_kinematic_covariance="False",
+        )
+
+    with pytest.raises(ValueError, match="include_single_measurement_axis_covariance"):
+        ForwardBackwardForwardBackwardMEMQKFSmoother(
+            include_single_measurement_axis_covariance="False",
+        )
 
 
 def test_lag_one_smooths_kinematics_and_mem_qkf_shape_state():
