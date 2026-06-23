@@ -136,11 +136,25 @@ class TestBayesianComplexWatsonMixtureModelConstructor(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "B.shape"):
             BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0]))
 
+    def test_constructor_rejects_too_few_B_components(self):
+        B = zeros((2, 2, 1), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "B.shape"):
+            BayesianComplexWatsonMixtureModel(
+                B, array([1.0, 1.0]), array([1.0, 1.0])
+            )
+
     def test_constructor_rejects_concentration_count_mismatch(self):
         B = zeros((2, 2, 1), dtype=complex)
 
         with self.assertRaisesRegex(ValueError, "concentrations"):
             BayesianComplexWatsonMixtureModel(B, array([1.0, 2.0]), array([1.0]))
+
+    def test_constructor_rejects_too_few_concentrations(self):
+        B = zeros((2, 2, 2), dtype=complex)
+
+        with self.assertRaisesRegex(ValueError, "concentrations"):
+            BayesianComplexWatsonMixtureModel(B, array([1.0]), array([1.0, 1.0]))
 
 
 class TestParametersDefault(unittest.TestCase):
@@ -165,6 +179,11 @@ class TestParametersDefault(unittest.TestCase):
     reason="Not supported on JAX backend",
 )
 class TestFitDefault(unittest.TestCase):
+    def test_feature_dimension_limit_raises(self):
+        Z = zeros((100, 1), dtype=complex)
+        with self.assertRaisesRegex(ValueError, "D < 100"):
+            BayesianComplexWatsonMixtureModel.fit_default(Z, 1)
+
     def test_fit_returns_model(self):
         D, K, N = 3, 2, 50
         Z = _make_unit_vectors(D, N)
@@ -225,6 +244,41 @@ class TestFitDefault(unittest.TestCase):
         # Both components should have non-trivial assignment
         N_k = posterior["gamma"].sum(axis=0)
         self.assertGreater(float(min(N_k)), 10.0)
+
+
+@unittest.skipIf(
+    pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+    reason="Not supported on JAX backend",
+)
+class TestEstimatePosteriorValidation(unittest.TestCase):
+    def test_missing_initial_B_raises(self):
+        D, K, N = 2, 1, 3
+        Z = _make_unit_vectors(D, N)
+        params = BayesianComplexWatsonMixtureModel.parameters_default(D, K)
+        del params["initial"]["B"]
+
+        with self.assertRaisesRegex(ValueError, "initial.B"):
+            BayesianComplexWatsonMixtureModel.estimate_posterior(Z, params)
+
+    def test_initial_B_must_be_hermitian(self):
+        D, K, N = 2, 1, 3
+        Z = _make_unit_vectors(D, N)
+        params = BayesianComplexWatsonMixtureModel.parameters_default(D, K)
+        B = zeros((D, D, K), dtype=complex)
+        B[0, 1, 0] = 1.0
+        params["initial"]["B"] = B
+
+        with self.assertRaisesRegex(ValueError, "initial B.*Hermitian"):
+            BayesianComplexWatsonMixtureModel.estimate_posterior(Z, params)
+
+    def test_saliencies_must_match_sample_count(self):
+        D, K, N = 2, 1, 3
+        Z = _make_unit_vectors(D, N)
+        params = BayesianComplexWatsonMixtureModel.parameters_default(D, K)
+        params["prior"]["saliencies"] = array([1.0, 1.0])
+
+        with self.assertRaisesRegex(ValueError, "saliencies"):
+            BayesianComplexWatsonMixtureModel.estimate_posterior(Z, params)
 
 
 if __name__ == "__main__":

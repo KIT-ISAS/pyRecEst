@@ -42,6 +42,28 @@ from scipy.special import digamma  # pylint: disable=no-name-in-module
 from .complex_watson_distribution import ComplexWatsonDistribution
 
 
+def _require_parameter(parameters, *keys):
+    current = parameters
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            path = ".".join(str(item) for item in keys)
+            raise ValueError(f"parameters must contain {path}")
+        current = current[key]
+    return current
+
+
+def _validate_bingham_stack(B, K: int, name: str):
+    if B.ndim != 3:
+        raise ValueError(f"{name} must have shape (D, D, K)")
+    if B.shape[0] != B.shape[1]:
+        raise ValueError(f"{name} matrices must be square")
+    if B.shape[2] != K:
+        raise ValueError(f"{name}.shape[2] must equal len(alpha)")
+    for k in range(K):
+        if not bool(allclose(B[:, :, k], B[:, :, k].conj().T, atol=1e-6)):
+            raise ValueError(f"{name}[:,:,{k}] must be Hermitian")
+
+
 class BayesianComplexWatsonMixtureModel:
     """
     Bayesian complex Watson mixture model.
@@ -78,16 +100,9 @@ class BayesianComplexWatsonMixtureModel:
         alpha = asarray(alpha, dtype=float).ravel()
 
         K = alpha.shape[0]
-        if B.ndim != 3 or B.shape[0] != B.shape[1]:
-            raise ValueError("B must have shape (D, D, K).")
-        if B.shape[2] != K:
-            raise ValueError("B.shape[2] must equal len(alpha).")
+        _validate_bingham_stack(B, K, "B")
         if concentrations.shape[0] != K:
-            raise ValueError("len(concentrations) must equal len(alpha).")
-
-        for k in range(K):
-            if not bool(allclose(B[:, :, k], B[:, :, k].conj().T, atol=1e-6)):
-                raise ValueError(f"B[:,:,{k}] must be Hermitian.")
+            raise ValueError("len(concentrations) must equal len(alpha)")
 
         self.B = B
         self.concentrations = concentrations
@@ -217,28 +232,36 @@ class BayesianComplexWatsonMixtureModel:
                 "parameters missing required entries: " + ", ".join(missing_paths)
             )
 
+        initial = parameters["initial"]
+        prior = parameters["prior"]
+        initial_B = initial["B"]
+        initial_alpha = initial["alpha"]
+        initial_kappa = initial["kappa"]
+        prior_B_input = prior["B"]
+        prior_alpha_input = prior["alpha"]
+        iterations = parameters["I"]
         uniform_component = parameters.get("uniformComponent", False)
 
         Z = asarray(Z, dtype=complex)
+        if Z.ndim != 2:
+            raise ValueError("Z must have shape (D, N)")
         D, N = Z.shape
-        K = len(asarray(parameters["initial"]["alpha"]).ravel())
+        K = len(asarray(initial_alpha).ravel())
 
-        B_init = asarray(parameters["initial"]["B"], dtype=complex)
-        for k in range(K):
-            if not bool(
-                allclose(B_init[:, :, k], B_init[:, :, k].conj().T, atol=1e-6)
-            ):
-                raise ValueError("initial B must be Hermitian.")
+        B_init = asarray(initial_B, dtype=complex)
+        _validate_bingham_stack(B_init, K, "initial B")
 
-        kappa_init = parameters["initial"]["kappa"]
+        kappa_init = initial_kappa
         if asarray(kappa_init).ndim == 0:
             kappa_init_arr = full((K,), float(kappa_init))
         else:
             kappa_init_arr = copy(asarray(kappa_init, dtype=float).ravel())
+            if kappa_init_arr.shape[0] != K:
+                raise ValueError("len(initial.kappa) must equal len(initial.alpha)")
 
         posterior = {
             "B": copy(B_init),
-            "alpha": copy(asarray(parameters["initial"]["alpha"], dtype=float).ravel()),
+            "alpha": copy(asarray(initial_alpha, dtype=float).ravel()),
             "kappa": kappa_init_arr,
             "gamma": zeros((N, K)),
         }
@@ -247,7 +270,7 @@ class BayesianComplexWatsonMixtureModel:
         ZZ = (Z[:, None, :] * Z.conj()[None, :, :]).reshape(D * D, N)
 
         # Log saliencies shape (N, K)
-        saliencies = parameters["prior"].get("saliencies", 1.0)
+        saliencies = prior.get("saliencies", 1.0)
         saliencies_arr = asarray(saliencies)
         if saliencies_arr.ndim == 0:
             ln_saliencies = full((N, K), log(max(float(saliencies_arr), 1e-7)))
@@ -259,11 +282,14 @@ class BayesianComplexWatsonMixtureModel:
                 )
             ln_saliencies = log(maximum(saliencies_vec, 1e-7))[:, None] * ones((N, K))
 
-        prior_B = asarray(parameters["prior"]["B"], dtype=complex)
-        prior_alpha = asarray(parameters["prior"]["alpha"], dtype=float).ravel()
+        prior_B = asarray(prior_B_input, dtype=complex)
+        _validate_bingham_stack(prior_B, K, "prior B")
+        prior_alpha = asarray(prior_alpha_input, dtype=float).ravel()
+        if prior_alpha.shape[0] != K:
+            raise ValueError("len(prior.alpha) must equal len(initial.alpha)")
         concentration_max = 500.0
 
-        for _ in range(parameters["I"]):
+        for _ in range(iterations):
             # E-step
             log_gamma = copy(ln_saliencies)
 
