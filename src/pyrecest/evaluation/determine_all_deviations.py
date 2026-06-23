@@ -6,6 +6,16 @@ from beartype.typing import Callable
 from pyrecest.backend import any, empty, is_array, isinf, sum
 
 
+def _shape_size(container):
+    shape = getattr(container, "shape", None)
+    if shape is None:
+        return len(container)
+    n_entries = 1
+    for dimension in shape:
+        n_entries *= int(dimension)
+    return n_entries
+
+
 @beartype
 def determine_all_deviations(
     results,
@@ -20,20 +30,26 @@ def determine_all_deviations(
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
-    if groundtruths.ndim != 2 or groundtruths[0, 0].ndim not in (
-        1,
-        2,
+    if (
+        getattr(groundtruths, "ndim", None) != 2
+        or _shape_size(groundtruths) == 0
+        or groundtruths[0, 0].ndim not in (1, 2)
     ):
         raise ValueError(
-            "Assuming groundtruths to be a 2-D array of shape "
+            "Assuming groundtruths to be a non-empty 2-D array of shape "
             "(n_runs, n_timesteps) composed arrays of shape (n_dim,) or "
             "(n_targets,n_dim)."
         )
 
-    all_deviations_last_mat = empty((len(results), groundtruths.shape[0]))
+    n_runs = groundtruths.shape[0]
+    all_deviations_last_mat = empty((len(results), n_runs))
 
     for config_no, result_curr_config in enumerate(results):
-        for run in range(len(groundtruths)):
+        if len(result_curr_config) != n_runs:
+            raise ValueError(
+                "Each result configuration must contain one entry per groundtruth run."
+            )
+        for run in range(n_runs):
             if is_array(result_curr_config[run]):
                 # If estimates are already given as an array, use it
                 final_estimate = result_curr_config[run]
