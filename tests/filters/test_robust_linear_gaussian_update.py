@@ -47,6 +47,87 @@ class RobustLinearGaussianUpdateTest(unittest.TestCase):
         self.assertEqual(float(inlier), 1.0)
         self.assertGreater(float(outlier), 1.0)
 
+    def test_scalar_scale_controls_reject_bool_strings_and_arrays(self):
+        invalid_values = (True, "2.0", np.array([1.0]))
+        control_calls = (
+            (
+                "scale",
+                lambda value: linear_gaussian_update(
+                    self.mean,
+                    self.covariance,
+                    array([1.0, -1.0]),
+                    self.measurement_matrix,
+                    self.meas_noise,
+                    scale=value,
+                ),
+            ),
+            (
+                "gate_threshold",
+                lambda value: linear_gaussian_update_robust(
+                    self.mean,
+                    self.covariance,
+                    array([100.0, 100.0]),
+                    self.measurement_matrix,
+                    self.meas_noise,
+                    robust_update="none",
+                    gate_threshold=value,
+                ),
+            ),
+            (
+                "huber_threshold",
+                lambda value: huber_covariance_scale(4.0, huber_threshold=value),
+            ),
+            (
+                "inflation_alpha",
+                lambda value: linear_gaussian_update_robust(
+                    self.mean,
+                    self.covariance,
+                    array([100.0, 100.0]),
+                    self.measurement_matrix,
+                    self.meas_noise,
+                    robust_update="nis-inflate",
+                    gate_threshold=1.0,
+                    inflation_alpha=value,
+                ),
+            ),
+        )
+
+        for control_name, call_control in control_calls:
+            for value in invalid_values:
+                with self.subTest(control=control_name, value=value):
+                    with self.assertRaisesRegex(ValueError, control_name):
+                        call_control(value)
+
+    def test_student_t_scale_rejects_invalid_scalar_controls(self):
+        invalid_cases = (
+            (
+                "measurement_dim",
+                (True, 1.5, "2", np.array([2.0])),
+                lambda value: student_t_covariance_scale(2.0, value, dof=4.0),
+            ),
+            (
+                "dof",
+                (True, "4.0", np.array([4.0])),
+                lambda value: student_t_covariance_scale(2.0, 2, dof=value),
+            ),
+            (
+                "min_scale",
+                (True, "1.0", np.array([1.0])),
+                lambda value: student_t_covariance_scale(
+                    2.0,
+                    2,
+                    dof=4.0,
+                    min_scale=value,
+                ),
+            ),
+        )
+
+        for control_name, invalid_values, call_control in invalid_cases:
+            for value in invalid_values:
+                with self.subTest(control=control_name, value=value):
+                    with self.assertRaisesRegex(ValueError, control_name):
+                        call_control(value)
+
     def test_student_t_update_downweights_outlier(self):
         measurement = array([100.0, 100.0])
         plain_mean, _ = linear_gaussian_update(
