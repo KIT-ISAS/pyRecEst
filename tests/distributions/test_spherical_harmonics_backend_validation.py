@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 
+import numpy as np
 import pyrecest.backend
 
 from pyrecest.backend import array
@@ -23,7 +24,11 @@ class SphericalHarmonicsBackendValidationTest(unittest.TestCase):
                 )
 
     def test_sqrt_convolve_rejects_non_numpy_backend(self):
-        dist = SphericalHarmonicsDistributionComplex(array([[1.0]]), "sqrt")
+        dist = SphericalHarmonicsDistributionComplex.__new__(
+            SphericalHarmonicsDistributionComplex
+        )
+        dist.coeff_mat = np.array([[1.0]])
+        dist.transformation = "sqrt"
 
         with patch.object(pyrecest.backend, "__backend_name__", "pytorch"):
             with self.assertRaisesRegex(NotImplementedError, "numpy backend"):
