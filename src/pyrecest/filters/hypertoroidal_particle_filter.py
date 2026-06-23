@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from numbers import Integral
 from typing import Union
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -21,12 +22,23 @@ from .abstract_particle_filter import AbstractParticleFilter
 from .manifold_mixins import HypertoroidalFilterMixin
 
 
+def _validate_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} must be a positive integer.")
+    value = int(value)
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer.")
+    return value
+
+
 class HypertoroidalParticleFilter(AbstractParticleFilter, HypertoroidalFilterMixin):
     def __init__(
         self,
         n_particles: Union[int, int32, int64],
         dim: Union[int, int32, int64],
     ):
+        n_particles = _validate_positive_integer(n_particles, "n_particles")
+        dim = _validate_positive_integer(dim, "dim")
         if dim == 1:
             points = linspace(0.0, 2.0 * pi, num=n_particles, endpoint=False)
         else:

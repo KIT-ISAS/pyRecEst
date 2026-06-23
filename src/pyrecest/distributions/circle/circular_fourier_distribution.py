@@ -1,4 +1,5 @@
 import warnings
+from numbers import Integral
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -29,14 +30,26 @@ from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
 
 
-def _ensure_odd_n(n) -> None:
-    if n is not None and int(n) % 2 == 0:
+def _validate_odd_n(n) -> int | None:
+    if n is None:
+        return None
+    if isinstance(n, bool) or not isinstance(n, Integral):
+        raise ValueError("n must be a positive odd integer.")
+    n = int(n)
+    if n <= 0:
+        raise ValueError("n must be a positive odd integer.")
+    if n % 2 == 0:
         raise ValueError(
             "CircularFourierDistribution requires an odd number of "
             "coefficients/grid values. Even lengths contain a Nyquist "
             "coefficient that is not represented by the current real "
             "coefficient convention."
         )
+    return n
+
+
+def _ensure_odd_n(n) -> None:
+    _validate_odd_n(n)
 
 
 class CircularFourierDistribution(AbstractCircularDistribution):
@@ -80,8 +93,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
                 )
                 self.n = 2 * c.shape[0] - 1
             else:
-                self.n = int(n)
-            _ensure_odd_n(self.n)
+                self.n = _validate_odd_n(n)
             expected_coefficients = self.n // 2 + 1
             if c.shape[0] != expected_coefficients:
                 raise ValueError(
@@ -97,7 +109,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
             self.b = b
             self.c = None
             self.n = a.shape[0] + b.shape[0]
-            if n is not None and self.n != int(n):
+            if n is not None and self.n != _validate_odd_n(n):
                 raise ValueError(
                     f"n must match len(a) + len(b), got n={n} and "
                     f"len(a) + len(b)={self.n}."
@@ -352,7 +364,7 @@ class CircularFourierDistribution(AbstractCircularDistribution):
         transformation: str = "sqrt",
         store_values_multiplied_by_n: bool = True,
     ) -> "CircularFourierDistribution":
-        _ensure_odd_n(n)
+        n = _validate_odd_n(n)
         if isinstance(distribution, CircularDiracDistribution):
             if transformation != "identity":
                 warnings.warn(

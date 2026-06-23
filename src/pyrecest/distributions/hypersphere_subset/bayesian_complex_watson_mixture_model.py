@@ -138,7 +138,7 @@ class BayesianComplexWatsonMixtureModel:
             raise ValueError("Z must have shape (D, N).")
         if Z.shape[0] >= 100:
             raise ValueError(
-                "fit_default assumes D < 100 (feature dimension, not sample count)"
+                "fit_default assumes D < 100 (feature dimension, not sample count)."
             )
         D = Z.shape[0]
         parameters = BayesianComplexWatsonMixtureModel.parameters_default(D, K)

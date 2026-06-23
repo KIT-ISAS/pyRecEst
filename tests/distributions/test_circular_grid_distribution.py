@@ -60,6 +60,28 @@ class CircularGridDistributionTest(unittest.TestCase):
         indices = array([0, 3, 7])
         npt.assert_allclose(dist.get_grid_point(indices), dist.get_grid()[indices])
 
+    def test_from_function_rejects_invalid_gridpoint_count(self):
+        invalid_counts = (True, False, 0, -1, 1.5)
+
+        for no_of_gridpoints in invalid_counts:
+            with self.subTest(no_of_gridpoints=no_of_gridpoints):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    CircularGridDistribution.from_function(
+                        lambda xs: xs + 1.0,
+                        no_of_gridpoints,
+                    )
+
+    def test_from_distribution_rejects_invalid_gridpoint_count(self):
+        dist = VonMisesDistribution(0.4, 1.3)
+
+        for no_of_gridpoints in (True, 0, 1.5):
+            with self.subTest(no_of_gridpoints=no_of_gridpoints):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    CircularGridDistribution.from_distribution(
+                        dist,
+                        no_of_gridpoints,
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -198,6 +198,39 @@ class TestCircularFourierDistribution(unittest.TestCase):
                 multiplied_by_n=True,
             )
 
+    def test_n_must_be_positive_odd_integer(self):
+        dist = VonMisesDistribution(2.5, 1.5)
+
+        for n in (True, False, 0, -3, 1.5):
+            with self.subTest(path="from_distribution", n=n):
+                with self.assertRaisesRegex(
+                    ValueError, "positive odd|requires an odd number"
+                ):
+                    CircularFourierDistribution.from_distribution(
+                        dist, n=n, transformation="identity"
+                    )
+
+            with self.subTest(path="complex_constructor", n=n):
+                with self.assertRaisesRegex(
+                    ValueError, "positive odd|requires an odd number"
+                ):
+                    CircularFourierDistribution(
+                        c=array([1.0]),
+                        n=n,
+                        transformation="identity",
+                    )
+
+            with self.subTest(path="real_constructor", n=n):
+                with self.assertRaisesRegex(
+                    ValueError, "positive odd|requires an odd number"
+                ):
+                    CircularFourierDistribution(
+                        a=array([1.0]),
+                        b=array([]),
+                        n=n,
+                        transformation="identity",
+                    )
+
     def test_real_complex_coefficient_round_trip(self):
         a = array([2.0, 3.0, -5.0])
         b = array([7.0, -11.0])

@@ -1,6 +1,7 @@
 # pylint: disable=duplicate-code,too-many-arguments,too-many-positional-arguments
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 from pyrecest.backend import array, diag, zeros
 from pyrecest.filters import (
@@ -12,8 +13,8 @@ from pyrecest.filters import (
 
 
 class _DummyMultipleExtendedObjectTracker(AbstractMultipleExtendedObjectTracker):
-    def __init__(self):
-        super().__init__(
+    def __init__(self, **kwargs):
+        options = dict(
             log_prior_extents=True,
             log_posterior_extents=True,
             log_prior_measurement_rates=True,
@@ -21,6 +22,8 @@ class _DummyMultipleExtendedObjectTracker(AbstractMultipleExtendedObjectTracker)
             log_cardinality=True,
             log_associations=True,
         )
+        options.update(kwargs)
+        super().__init__(**options)
         self.predict_calls = []
         self.update_calls = []
         self.objects = [
@@ -126,6 +129,29 @@ class _DummyMultipleExtendedObjectTracker(AbstractMultipleExtendedObjectTracker)
 
 
 class AbstractMultipleExtendedObjectTrackerTest(unittest.TestCase):
+    def test_constructor_boolean_controls_must_be_boolean(self):
+        tracker = _DummyMultipleExtendedObjectTracker(
+            extract_confirmed_only=np.bool_(False),
+            log_cardinality=np.bool_(False),
+        )
+
+        self.assertIs(tracker.extract_confirmed_only, False)
+        self.assertIs(tracker.log_cardinality, False)
+
+        flag_names = (
+            "extract_confirmed_only",
+            "log_prior_extents",
+            "log_posterior_extents",
+            "log_prior_measurement_rates",
+            "log_posterior_measurement_rates",
+            "log_cardinality",
+            "log_associations",
+        )
+        for flag_name in flag_names:
+            with self.subTest(flag_name=flag_name):
+                with self.assertRaisesRegex(ValueError, flag_name):
+                    _DummyMultipleExtendedObjectTracker(**{flag_name: "False"})
+
     def test_vectorized_and_structured_estimates_are_available(self):
         tracker = _DummyMultipleExtendedObjectTracker()
 

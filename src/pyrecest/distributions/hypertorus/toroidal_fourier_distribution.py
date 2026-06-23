@@ -1,4 +1,5 @@
 import warnings
+from numbers import Integral
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import (
@@ -18,6 +19,39 @@ from .hypertoroidal_fourier_distribution import HypertoroidalFourierDistribution
 from .hypertoroidal_wrapped_normal_distribution import (
     HypertoroidalWrappedNormalDistribution,
 )
+
+
+def _as_positive_toroidal_coefficient_count(value) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError("n_coefficients entries must be positive integers.")
+    value = int(value)
+    if value <= 0:
+        raise ValueError("n_coefficients entries must be positive integers.")
+    return value
+
+
+def _normalize_toroidal_coefficient_shape(n_coefficients) -> tuple[int, int]:
+    if isinstance(n_coefficients, bool):
+        raise ValueError("n_coefficients entries must be positive integers.")
+    if isinstance(n_coefficients, Integral):
+        count = _as_positive_toroidal_coefficient_count(n_coefficients)
+        return count, count
+
+    try:
+        counts = tuple(
+            _as_positive_toroidal_coefficient_count(value)
+            for value in n_coefficients
+        )
+    except TypeError as exc:
+        raise TypeError(
+            "n_coefficients must be an integer or a sequence of integers."
+        ) from exc
+
+    if len(counts) == 1:
+        return counts[0], counts[0]
+    if len(counts) != 2:
+        raise ValueError("n_coefficients must contain one or two entries.")
+    return counts
 
 
 class ToroidalFourierDistribution(
@@ -250,11 +284,7 @@ class ToroidalFourierDistribution(
         desired_transformation : str
             'sqrt', 'identity', or 'log'.
         """
-        if isinstance(n_coefficients, int):
-            n_coefficients = (n_coefficients, n_coefficients)
-        elif len(n_coefficients) == 1:
-            n_coefficients = (int(n_coefficients[0]), int(n_coefficients[0]))
-        n_coefficients = tuple(int(n) for n in n_coefficients)
+        n_coefficients = _normalize_toroidal_coefficient_shape(n_coefficients)
         hfd = HypertoroidalFourierDistribution.from_function(
             fun, n_coefficients, desired_transformation
         )
@@ -281,7 +311,7 @@ class ToroidalFourierDistribution(
         already_transformed : bool
         """
         if n_coefficients is not None:
-            n_coefficients = tuple(int(n) for n in n_coefficients)
+            n_coefficients = _normalize_toroidal_coefficient_shape(n_coefficients)
         return super().from_function_values(
             fvals,
             n_coefficients=n_coefficients,
@@ -307,11 +337,7 @@ class ToroidalFourierDistribution(
             Number of Fourier coefficients per dimension.
         desired_transformation : str
         """
-        if isinstance(n_coefficients, int):
-            n_coefficients = (n_coefficients, n_coefficients)
-        elif len(n_coefficients) == 1:
-            n_coefficients = (int(n_coefficients[0]), int(n_coefficients[0]))
-        n_coefficients = tuple(int(n) for n in n_coefficients)
+        n_coefficients = _normalize_toroidal_coefficient_shape(n_coefficients)
         hfd = super().from_distribution(
             distribution, n_coefficients, desired_transformation
         )

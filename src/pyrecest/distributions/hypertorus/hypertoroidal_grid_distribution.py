@@ -9,7 +9,6 @@ from beartype import beartype
 from pyrecest.backend import (
     abs,
     all,
-    any,
     argmin,
     array,
     cast,
@@ -51,6 +50,29 @@ def _normalize_hypertoroidal_resolution(value, dim: int, name: str) -> tuple[int
             f"{name} must contain one entry per dimension. "
             f"Expected {dim}, got {len(resolution)}."
         )
+    if builtins.any(v <= 0 for v in resolution):
+        raise ValueError(f"{name} entries must be positive integers.")
+    return resolution
+
+
+def _normalize_hypertoroidal_grid_shape(value, name: str) -> tuple[int, ...]:
+    """Normalize a direct grid shape without an external dimension."""
+    if isinstance(value, bool):
+        raise ValueError(f"{name} entries must be positive integers.")
+    if isinstance(value, Integral):
+        resolution = (int(value),)
+    else:
+        try:
+            resolution = tuple(
+                _validate_hypertoroidal_resolution_entry(v, name) for v in value
+            )
+        except TypeError as exc:
+            raise TypeError(
+                f"{name} must be an integer or a sequence of integers."
+            ) from exc
+
+    if len(resolution) == 0:
+        raise ValueError(f"{name} must contain at least one entry.")
     if builtins.any(v <= 0 for v in resolution):
         raise ValueError(f"{name} entries must be positive integers.")
     return resolution
@@ -168,8 +190,9 @@ class HypertoroidalGridDistribution(
         n_grid_points : int or sequence of int
             Number of grid points along each dimension.
         """
-        if any(array(n_grid_points) <= 0):
-            raise ValueError("n_grid_points must contain positive integers")
+        n_grid_points = _normalize_hypertoroidal_grid_shape(
+            n_grid_points, "n_grid_points"
+        )
 
         axes = [linspace(0.0, 2.0 * pi - 2.0 * pi / n, n) for n in n_grid_points]
         mesh = meshgrid(*axes, indexing="ij")
@@ -328,7 +351,7 @@ class HypertoroidalGridDistribution(
     @beartype
     def from_function(
         fun,
-        n_grid_points: tuple | list,
+        n_grid_points: int | tuple | list,
         grid_type: str = "cartesian_prod",
         enforce_pdf_nonnegative: bool = True,
     ):
@@ -346,6 +369,9 @@ class HypertoroidalGridDistribution(
 
         """
         if grid_type == "cartesian_prod":
+            n_grid_points = _normalize_hypertoroidal_grid_shape(
+                n_grid_points, "n_grid_points"
+            )
             grid = HypertoroidalGridDistribution.generate_cartesian_product_grid(
                 n_grid_points
             )

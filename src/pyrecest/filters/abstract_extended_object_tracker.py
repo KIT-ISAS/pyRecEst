@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import vstack
 
-from .abstract_tracker_with_logging import AbstractTrackerWithLogging
+from .abstract_tracker_with_logging import AbstractTrackerWithLogging, _coerce_bool_flag
 
 
 # pylint: disable=too-many-instance-attributes
@@ -21,13 +21,19 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
             log_prior_estimates=log_prior_estimates,
             log_posterior_estimates=log_posterior_estimates,
         )
-        self.log_prior_extents = log_prior_extents
-        self.log_posterior_extents = log_posterior_extents
-        if log_prior_extents:
+        self.log_prior_extents = _coerce_bool_flag(
+            log_prior_extents,
+            "log_prior_extents",
+        )
+        self.log_posterior_extents = _coerce_bool_flag(
+            log_posterior_extents,
+            "log_posterior_extents",
+        )
+        if self.log_prior_extents:
             self.prior_extents_over_time = self.history.register(
                 "prior_extents", pad_with_nan=True
             )
-        if log_posterior_extents:
+        if self.log_posterior_extents:
             self.posterior_extents_over_time = self.history.register(
                 "posterior_extents", pad_with_nan=True
             )

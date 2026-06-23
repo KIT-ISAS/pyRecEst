@@ -1,24 +1,46 @@
 from abc import ABC
 
+from pyrecest.backend import asarray
 from pyrecest.utils.history_recorder import HistoryRecorder
+
+
+def _coerce_bool_flag(value, name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a bool") from exc
+    if value_array.shape != ():
+        raise ValueError(f"{name} must be a scalar bool")
+    scalar = value_array.item()
+    if isinstance(scalar, bool):
+        return bool(scalar)
+    raise ValueError(f"{name} must be a bool")
 
 
 class AbstractTrackerWithLogging(ABC):
     def __init__(self, log_prior_estimates=False, log_posterior_estimates=False):
-        self.log_prior_estimates = log_prior_estimates
-        self.log_posterior_estimates = log_posterior_estimates
+        self.log_prior_estimates = _coerce_bool_flag(
+            log_prior_estimates,
+            "log_prior_estimates",
+        )
+        self.log_posterior_estimates = _coerce_bool_flag(
+            log_posterior_estimates,
+            "log_posterior_estimates",
+        )
         self.history = HistoryRecorder()
         self.prior_estimates_over_time = None
         self.posterior_estimates_over_time = None
         self.prior_extents_over_time = None
         self.posterior_extents_over_time = None
 
-        if log_prior_estimates:
+        if self.log_prior_estimates:
             self.prior_estimates_over_time = self.history.register(
                 "prior_estimates", pad_with_nan=True
             )
 
-        if log_posterior_estimates:
+        if self.log_posterior_estimates:
             self.posterior_estimates_over_time = self.history.register(
                 "posterior_estimates", pad_with_nan=True
             )
