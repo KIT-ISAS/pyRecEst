@@ -92,6 +92,14 @@ def test_custom_extract_mean_registry():
     assert get_extract_mean("unit-test-mean")({"mean": 3}) == 3
 
 
+def test_euclidean_extract_mean_preserves_raw_array_state():
+    state = array([1.0, 2.0])
+
+    extracted = get_extract_mean("euclidean")(state)
+
+    assert to_numpy(extracted).tolist() == pytest.approx([1.0, 2.0])
+
+
 def test_symmetric_hypersphere_extract_mean_requires_custom_extractor():
     with pytest.raises(NotImplementedError, match="custom extractor"):
         get_extract_mean("hypersphereSymmetric")
