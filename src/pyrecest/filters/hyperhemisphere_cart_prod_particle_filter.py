@@ -1,4 +1,5 @@
 import copy
+from numbers import Integral
 
 from beartype import beartype
 
@@ -21,6 +22,15 @@ from pyrecest.distributions.hypersphere_subset.von_mises_fisher_distribution imp
 from .abstract_particle_filter import AbstractParticleFilter
 
 
+def _validate_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ValueError(f"{name} must be a positive integer.")
+    value = int(value)
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer.")
+    return value
+
+
 class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
     def __init__(
         self, n_particles: int, dim_hemisphere: int, n_hemispheres: int
@@ -32,6 +42,9 @@ class HyperhemisphereCartProdParticleFilter(AbstractParticleFilter):
         n_particles (int > 0): Number of particles to use
         dim (int > 0): Dimension
         """
+        n_particles = _validate_positive_integer(n_particles, "n_particles")
+        dim_hemisphere = _validate_positive_integer(dim_hemisphere, "dim_hemisphere")
+        n_hemispheres = _validate_positive_integer(n_hemispheres, "n_hemispheres")
         initial_filter_state = HyperhemisphereCartProdDiracDistribution(
             empty((n_particles, (dim_hemisphere + 1) * n_hemispheres)),
             ones(n_particles) / n_particles,
