@@ -20,20 +20,25 @@ def determine_all_deviations(
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
-    if groundtruths.ndim != 2 or groundtruths[0, 0].ndim not in (
+    if groundtruths.ndim != 2 or groundtruths.size == 0 or groundtruths[0, 0].ndim not in (
         1,
         2,
     ):
         raise ValueError(
-            "Assuming groundtruths to be a 2-D array of shape "
+            "Assuming groundtruths to be a non-empty 2-D array of shape "
             "(n_runs, n_timesteps) composed arrays of shape (n_dim,) or "
             "(n_targets,n_dim)."
         )
 
-    all_deviations_last_mat = empty((len(results), groundtruths.shape[0]))
+    n_runs = groundtruths.shape[0]
+    all_deviations_last_mat = empty((len(results), n_runs))
 
     for config_no, result_curr_config in enumerate(results):
-        for run in range(len(groundtruths)):
+        if len(result_curr_config) != n_runs:
+            raise ValueError(
+                "Each result configuration must contain one entry per groundtruth run."
+            )
+        for run in range(n_runs):
             if is_array(result_curr_config[run]):
                 # If estimates are already given as an array, use it
                 final_estimate = result_curr_config[run]
