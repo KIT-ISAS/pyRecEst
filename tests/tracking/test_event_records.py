@@ -33,6 +33,15 @@ def test_tracking_event_validates_measurement_covariance_shape() -> None:
         )
 
 
+def test_tracking_event_requires_square_covariance_without_measurement() -> None:
+    with pytest.raises(ValueError, match="covariance must be a square matrix"):
+        TrackingEvent(
+            time=0.0,
+            source="rf",
+            covariance=np.ones((2, 3)),
+        )
+
+
 def test_record_from_update_preserves_prior_posterior_and_legacy_aliases() -> None:
     event = event_from_measurement(
         time=2.0,

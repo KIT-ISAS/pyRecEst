@@ -81,7 +81,11 @@ class TrackingEvent:
         if not np.isfinite(time):
             raise ValueError("time must be finite")
         measurement = _array_or_none(self.measurement, name="measurement", ndim=1)
-        covariance = _array_or_none(self.covariance, name="covariance", ndim=2)
+        covariance = (
+            None
+            if self.covariance is None
+            else _square_matrix(self.covariance, name="covariance")
+        )
         if measurement is not None and covariance is not None:
             if covariance.shape != (measurement.size, measurement.size):
                 raise ValueError("covariance must match measurement dimension")
