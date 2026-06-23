@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from numbers import Integral
+from operator import index as operator_index
 
 import numpy as np
 from pyrecest import backend
@@ -10,6 +11,18 @@ from .abstract_extended_object_tracker import AbstractExtendedObjectTracker
 
 
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-public-methods
+def _validate_positive_integer(value, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a positive integer")
+    try:
+        value = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return value
+
+
 class ModeRBPFManifoldUKFTracker(AbstractExtendedObjectTracker):
     """Mode-particle RBPF with a manifold UKF per particle.
 
@@ -83,9 +96,7 @@ class ModeRBPFManifoldUKFTracker(AbstractExtendedObjectTracker):
             log_posterior_extents=log_posterior_extents,
         )
 
-        self.n_particles = int(n_particles)
-        if self.n_particles <= 0:
-            raise ValueError("n_particles must be positive")
+        self.n_particles = _validate_positive_integer(n_particles, "n_particles")
         self.rng = self._prepare_rng(rng)
         self.time_step_length = float(time_step_length)
         self.resampling_mode = str(resampling_mode).lower()
