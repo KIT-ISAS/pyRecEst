@@ -44,7 +44,7 @@ def _as_mode_index(value, n_modes: int) -> int:
         scalar = value.item()
     except AttributeError:
         scalar = value
-    except ValueError as exc:
+    except (RuntimeError, ValueError) as exc:
         raise ValueError("mode indices must be scalar integers") from exc
 
     if isinstance(scalar, bool) or isinstance(scalar, str):
@@ -70,7 +70,7 @@ def _contains_boolean(value) -> bool:
         return True
     try:
         scalar = value.item()
-    except (AttributeError, ValueError):
+    except (AttributeError, RuntimeError, ValueError):
         scalar = None
     if isinstance(scalar, bool):
         return True
@@ -182,7 +182,10 @@ class GoalConditionedReplayParticleIMMFilter(  # pylint: disable=too-many-instan
 
         if _contains_boolean(mode_indices):
             raise ValueError("mode_indices must be integers, not booleans")
-        mode_indices = atleast_1d(array(mode_indices))
+        try:
+            mode_indices = atleast_1d(array(mode_indices))
+        except (RuntimeError, TypeError, ValueError) as exc:
+            raise ValueError("mode_indices must be integers") from exc
         if mode_indices.shape != (self.n_particles,):
             raise ValueError(
                 "mode_indices must contain one mode index per particle; "
