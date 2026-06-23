@@ -53,6 +53,11 @@ class TestMeasurementReliability(unittest.TestCase):
             [True, True],
         )
 
+        for invalid_mask in ("False", 1):
+            with self.subTest(mask=invalid_mask):
+                with self.assertRaisesRegex(ValueError, "booleans"):
+                    normalize_active_measurement_mask(invalid_mask, 2)
+
     def test_mask_vector_is_validated(self):
         self.assertEqual(
             normalize_active_measurement_mask(array([True, False, True]), 3),
@@ -60,6 +65,8 @@ class TestMeasurementReliability(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             normalize_active_measurement_mask(array([True, False]), 3)
+        with self.assertRaisesRegex(ValueError, "booleans"):
+            normalize_active_measurement_mask(array([1, 0, 1]), 3)
 
     def test_reliability_selection_skips_masked_and_zero_weight_measurements(self):
         reliability = normalize_measurement_reliability(
