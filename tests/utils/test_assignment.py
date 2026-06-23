@@ -9,6 +9,11 @@ from pyrecest.utils import (
 )
 
 
+class _OverflowFloat:
+    def __float__(self):
+        raise OverflowError("simulated overflow")
+
+
 class MurtyAssignmentTest(unittest.TestCase):
     @staticmethod
     def _brute_force_solutions(
@@ -217,6 +222,32 @@ class MurtyAssignmentTest(unittest.TestCase):
                     murty_k_best_assignments(
                         cost_matrix,
                         col_non_assignment_costs=np.array([invalid_cost]),
+                    )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_overflowing_non_assignment_costs_are_rejected(self):
+        cost_matrix = np.array([[1.0]])
+        invalid_costs = (_OverflowFloat(), np.array(_OverflowFloat(), dtype=object))
+
+        for invalid_cost in invalid_costs:
+            with self.subTest(kind="row", invalid_cost=invalid_cost):
+                with self.assertRaisesRegex(
+                    ValueError, "row_non_assignment_costs must be numeric and finite"
+                ):
+                    murty_k_best_assignments(
+                        cost_matrix,
+                        row_non_assignment_costs=invalid_cost,
+                    )
+            with self.subTest(kind="column", invalid_cost=invalid_cost):
+                with self.assertRaisesRegex(
+                    ValueError, "col_non_assignment_costs must be numeric and finite"
+                ):
+                    murty_k_best_assignments(
+                        cost_matrix,
+                        col_non_assignment_costs=invalid_cost,
                     )
 
     @unittest.skipIf(
