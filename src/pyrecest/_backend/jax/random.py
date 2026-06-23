@@ -265,6 +265,8 @@ def _normalize_choice_axis(axis, ndim):
 def _choice_population_size(a, kwargs):
     population_size = _integer_population_size(a)
     if population_size is not None:
+        if population_size <= 0:
+            raise ValueError("a must be a positive integer or a non-empty array")
         return population_size
 
     if a.ndim == 0:
@@ -275,6 +277,8 @@ def _choice_population_size(a, kwargs):
     axis = _normalize_choice_axis(kwargs.get("axis", 0), a.ndim)
     if "axis" in kwargs:
         kwargs["axis"] = axis
+    if a.shape[axis] == 0:
+        raise ValueError("a must be a positive integer or a non-empty array")
     return a.shape[axis]
 
 
