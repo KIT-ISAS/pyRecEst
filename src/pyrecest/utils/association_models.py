@@ -97,6 +97,14 @@ def _normalize_probability_clip(value: Any) -> float:
     return parsed
 
 
+def _normalize_probability_threshold(value: Any) -> float:
+    message = "threshold must lie in (0, 1)"
+    parsed = _normalize_finite_scalar(value, message)
+    if not 0.0 < parsed < 1.0:
+        raise ValueError(message)
+    return parsed
+
+
 def _normalize_positive_integer(value: Any, message: str) -> int:
     value_array = _numpy.asarray(value)
     if value_array.shape != () or value_array.dtype == _numpy.bool_:
@@ -516,8 +524,7 @@ class LogisticPairwiseAssociationModel:  # pylint: disable=too-many-instance-att
 
     def predict(self, features: Any, threshold: float = 0.5) -> Any:
         """Predict binary match decisions using the supplied threshold."""
-        if not 0.0 < threshold < 1.0:
-            raise ValueError("threshold must lie in (0, 1)")
+        threshold = _normalize_probability_threshold(threshold)
         return self.predict_match_probability(features) >= threshold
 
     def pairwise_cost_matrix(
