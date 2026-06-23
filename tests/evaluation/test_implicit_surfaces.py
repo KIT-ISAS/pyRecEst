@@ -77,6 +77,22 @@ def test_surface_band_mask_and_inside_outside_classification() -> None:
     ]
 
 
+def test_classify_inside_outside_accepts_numpy_boolean_scalar() -> None:
+    values = np.asarray([-0.2, 0.0, 0.3])
+
+    assert classify_inside_outside(values, negative_inside=np.bool_(False)).tolist() == [
+        1,
+        0,
+        -1,
+    ]
+
+
+@pytest.mark.parametrize("bad_flag", ["False", "true", 0, 1, None, [False]])
+def test_classify_inside_outside_rejects_non_boolean_sign_flag(bad_flag) -> None:
+    with pytest.raises(TypeError, match="negative_inside must be a boolean"):
+        classify_inside_outside(np.asarray([1.0]), negative_inside=bad_flag)
+
+
 def test_surface_band_probability_from_signed_distance() -> None:
     probability = surface_band_probability_from_signed_distance(
         np.asarray([0.0, 0.2], dtype=np.float64),
