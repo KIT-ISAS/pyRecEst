@@ -430,12 +430,12 @@ class SphericalHarmonicsDistributionComplex(AbstractSphericalHarmonicsDistributi
         For ``'sqrt'``: ``sqrt(p) * sqrt(q) = sqrt(p*q)`` which is the correct
         sqrt-transformed product density.
         """
-        assert isinstance(
-            other, SphericalHarmonicsDistributionComplex
-        ), "other must be a SphericalHarmonicsDistributionComplex"
-        assert (
-            self.transformation == other.transformation
-        ), "multiply: both distributions must use the same transformation"
+        if not isinstance(other, SphericalHarmonicsDistributionComplex):
+            raise TypeError("other must be a SphericalHarmonicsDistributionComplex")
+        if self.transformation != other.transformation:
+            raise ValueError(
+                "multiply: both distributions must use the same transformation"
+            )
 
         degree = self.coeff_mat.shape[0] - 1
 
