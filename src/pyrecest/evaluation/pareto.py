@@ -383,14 +383,17 @@ def _parse_constraint_spec(spec: ConstraintSpec | Mapping[str, Any]) -> Constrai
 
 
 def _coerce_finite_threshold(value: Any, column: str) -> float:
+    message = f"Constraint threshold for {column!r} must be a finite scalar."
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
     try:
-        threshold = float(value)
+        threshold = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError(
-            f"Constraint threshold for {column!r} must be a finite scalar."
-        ) from exc
+        raise ValueError(message) from exc
     if not np.isfinite(threshold):
-        raise ValueError(
-            f"Constraint threshold for {column!r} must be a finite scalar."
-        )
+        raise ValueError(message)
     return threshold
