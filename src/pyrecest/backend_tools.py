@@ -18,6 +18,20 @@ def is_backend(expected: str) -> bool:
     return get_backend_name() == expected
 
 
+def _normalize_expected_backend_names(expected: str | tuple[str, ...]) -> tuple[str, ...]:
+    message = "expected must name at least one backend."
+    if isinstance(expected, str):
+        names = (expected,)
+    else:
+        try:
+            names = tuple(expected)
+        except TypeError as exc:
+            raise ValueError(message) from exc
+    if not names or any(not isinstance(name, str) or not name for name in names):
+        raise ValueError(message)
+    return names
+
+
 def assert_backend(expected: str | tuple[str, ...]) -> None:
     """Raise ``RuntimeError`` unless the active backend matches ``expected``.
 
@@ -27,7 +41,7 @@ def assert_backend(expected: str | tuple[str, ...]) -> None:
         Allowed backend name or names.
     """
     active = get_backend_name()
-    expected_names = (expected,) if isinstance(expected, str) else tuple(expected)
+    expected_names = _normalize_expected_backend_names(expected)
     if active not in expected_names:
         allowed = ", ".join(expected_names)
         raise RuntimeError(
