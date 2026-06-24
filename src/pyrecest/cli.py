@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import platform
 import sys
 from importlib.metadata import PackageNotFoundError, version
@@ -11,11 +12,28 @@ from pathlib import Path
 from typing import Any
 
 
+_INVALID_TOLERANCE_MESSAGE = "tolerance must be a non-negative finite number"
+
+
 def _package_version(name: str) -> str | None:
     try:
         return version(name)
     except PackageNotFoundError:
         return None
+
+
+def _validate_tolerance(value: Any) -> float:
+    """Return a validated comparison tolerance for expected-result checks."""
+
+    if isinstance(value, (bool, str, bytes, bytearray)):
+        raise ValueError(_INVALID_TOLERANCE_MESSAGE)
+    try:
+        tolerance = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(_INVALID_TOLERANCE_MESSAGE) from exc
+    if not math.isfinite(tolerance) or tolerance < 0.0:
+        raise ValueError(_INVALID_TOLERANCE_MESSAGE)
+    return tolerance
 
 
 def _cmd_info(_args: argparse.Namespace) -> int:
@@ -67,6 +85,7 @@ def _check_expected_mapping(
     *,
     tolerance: float,
 ) -> list[str]:
+    tolerance = _validate_tolerance(tolerance)
     errors: list[str] = []
     for key, expected_value in expected.items():
         if key not in actual:
@@ -94,11 +113,16 @@ def _cmd_run_scenario(args: argparse.Namespace) -> int:
 
     if args.expected is not None:
         expected = json.loads(Path(args.expected).read_text(encoding="utf-8"))
-        tolerance = (
+        raw_tolerance = (
             args.tolerance
             if args.tolerance is not None
-            else float(expected.get("tolerance", 1e-8))
+            else expected.get("tolerance", 1e-8)
         )
+        try:
+            tolerance = _validate_tolerance(raw_tolerance)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
         failures: list[str] = []
         expected_estimate = expected.get("final_estimate")
         if expected_estimate is not None:
