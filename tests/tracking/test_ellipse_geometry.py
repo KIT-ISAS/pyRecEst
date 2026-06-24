@@ -56,6 +56,18 @@ def test_covariance_projection_rejects_invalid_eigenvalue_floor() -> None:
             )
 
 
+def test_covariance_projection_rejects_invalid_covariance_matrix() -> None:
+    invalid_covariances = (
+        np.ones((2, 3)),
+        np.array([[1.0, np.nan], [0.0, 1.0]]),
+        np.array([[1.0, np.inf], [0.0, 1.0]]),
+    )
+
+    for covariance in invalid_covariances:
+        with pytest.raises(ValueError, match="covariance"):
+            project_symmetric_covariance(covariance)
+
+
 def test_axis_floor_rejects_invalid_values() -> None:
     extent = np.eye(2)
     shape = np.array([0.0, 1.0, 2.0])
@@ -85,6 +97,35 @@ def test_axis_floor_rejects_invalid_values() -> None:
                 shape[1:],
                 minimum_axis_length=minimum_axis_length,
             )
+
+
+def test_shape_from_extent_matrix_rejects_invalid_extent_matrix() -> None:
+    invalid_extents = (
+        np.eye(3),
+        np.array([[1.0, np.nan], [0.0, 1.0]]),
+        np.array([[1.0, np.inf], [0.0, 1.0]]),
+    )
+
+    for extent in invalid_extents:
+        with pytest.raises(ValueError, match="extent"):
+            shape_from_extent_matrix(extent)
+
+
+def test_canonicalize_ellipse_shape_rejects_nonfinite_covariance() -> None:
+    shape = np.array([0.2, 1.0, 2.0])
+    covariance = np.eye(3)
+    covariance[0, 1] = np.nan
+
+    with pytest.raises(ValueError, match="shape_covariance"):
+        canonicalize_ellipse_shape(shape, covariance)
+
+
+def test_canonicalize_ellipse_axes_rejects_nonfinite_covariance() -> None:
+    covariance = np.eye(2)
+    covariance[0, 1] = np.inf
+
+    with pytest.raises(ValueError, match="axis_covariance"):
+        canonicalize_ellipse_axes(np.array([1.0, 2.0]), covariance)
 
 
 def test_canonicalize_ellipse_shape_transforms_full_shape_covariance() -> None:
