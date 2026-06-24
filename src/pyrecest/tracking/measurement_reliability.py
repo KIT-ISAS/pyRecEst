@@ -45,7 +45,7 @@ class MeasurementReliabilityConfig:
         max_scale = (
             None
             if self.max_scale is None
-            else _positive_scalar(self.max_scale, "max_scale")
+            else _scale_upper_bound(self.max_scale, "max_scale")
         )
         object.__setattr__(self, "mode", mode)
         object.__setattr__(self, "threshold", threshold)
@@ -144,7 +144,7 @@ def reliability_to_covariance_scale(
     exponent = _positive_scalar(exponent, "exponent")
     scale = 1.0 / max(reliability, floor) ** exponent
     if max_scale is not None:
-        scale = min(scale, _positive_scalar(max_scale, "max_scale"))
+        scale = min(scale, _scale_upper_bound(max_scale, "max_scale"))
     return float(max(1.0, scale))
 
 
@@ -266,6 +266,13 @@ def _positive_scalar(value: float, name: str) -> float:
     value = _finite_scalar(value, name)
     if value <= 0.0:
         raise ValueError(f"{name} must be positive")
+    return value
+
+
+def _scale_upper_bound(value: float, name: str) -> float:
+    value = _positive_scalar(value, name)
+    if value < 1.0:
+        raise ValueError(f"{name} must be at least 1")
     return value
 
 
