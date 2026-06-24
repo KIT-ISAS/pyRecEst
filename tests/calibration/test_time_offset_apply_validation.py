@@ -8,7 +8,15 @@ class ApplyTimeOffsetValidationTest(unittest.TestCase):
     def test_apply_time_offset_rejects_invalid_offsets(self):
         times = np.array([0.0, 1.0])
 
-        for offset_s in (np.nan, np.inf, -np.inf, True, np.array([0.5])):
+        for offset_s in (
+            np.nan,
+            np.inf,
+            -np.inf,
+            True,
+            np.array([0.5]),
+            "0.25",
+            np.array(True, dtype=object),
+        ):
             with self.subTest(offset_s=offset_s):
                 with self.assertRaisesRegex(ValueError, "offset_s"):
                     apply_time_offset(times, offset_s)
