@@ -58,7 +58,9 @@ class AssignmentCostMatrixValidationTest(unittest.TestCase):
         for solver_name, solver in self._solvers():
             for matrix in text_matrices:
                 with self.subTest(solver=solver_name, dtype=str(matrix.dtype)):
-                    with self.assertRaisesRegex(ValueError, "cost_matrix must be numeric"):
+                    with self.assertRaisesRegex(
+                        ValueError, "cost_matrix must be numeric"
+                    ):
                         solver(matrix)
 
     @unittest.skipIf(
