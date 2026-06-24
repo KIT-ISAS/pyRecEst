@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 from numbers import Integral
 from typing import Any
 
+import numpy as np
 from pyrecest.backend import int64
 
 from .multisession_assignment import (  # pylint: disable=protected-access
@@ -19,12 +21,28 @@ from .multisession_assignment import (  # pylint: disable=protected-access
 
 
 def _normalize_fill_value(fill_value: Any, track_count: int) -> int:
-    if isinstance(fill_value, bool) or not isinstance(fill_value, Integral):
+    fill_value_array = np.asarray(fill_value)
+    if fill_value_array.shape != () or fill_value_array.dtype == np.bool_:
         raise ValueError("fill_value must be an integer.")
-    fill_value = int(fill_value)
-    if 0 <= fill_value < int(track_count):
+
+    fill_value_value = fill_value_array.item()
+    if isinstance(fill_value_value, (bool, np.bool_)):
+        raise ValueError("fill_value must be an integer.")
+
+    if isinstance(fill_value_value, Integral):
+        integer_fill_value = int(fill_value_value)
+    else:
+        try:
+            fill_value_float = float(fill_value_value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("fill_value must be an integer.") from exc
+        if not math.isfinite(fill_value_float) or not fill_value_float.is_integer():
+            raise ValueError("fill_value must be an integer.")
+        integer_fill_value = int(fill_value_float)
+
+    if 0 <= integer_fill_value < int(track_count):
         raise ValueError("fill_value must not collide with track labels.")
-    return fill_value
+    return integer_fill_value
 
 
 def tracks_to_session_labels(
