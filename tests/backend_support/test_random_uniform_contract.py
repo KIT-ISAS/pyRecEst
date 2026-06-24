@@ -41,6 +41,28 @@ print("ok")
 """
 
 
+_UNIFORM_NONFINITE_BOUNDS_REJECTION_CHECK = """
+from pyrecest.backend import random
+
+calls = [
+    ("nan low", lambda: random.uniform(float("nan"), 1.0, size=(2,))),
+    ("nan high", lambda: random.uniform(0.0, float("nan"), size=(2,))),
+    ("-inf low", lambda: random.uniform(float("-inf"), 1.0, size=(2,))),
+    ("inf high", lambda: random.uniform(0.0, float("inf"), size=(2,))),
+]
+
+for label, call in calls:
+    try:
+        call()
+    except ValueError as exc:
+        assert "finite" in str(exc)
+    else:
+        raise AssertionError(f"uniform accepted {label}")
+
+print("ok")
+"""
+
+
 @pytest.mark.backend_portable
 @pytest.mark.parametrize(
     "backend,required_module",
@@ -72,6 +94,25 @@ def test_uniform_rejects_array_valued_invalid_bounds(backend, required_module):
         pytest.skip(f"{backend} backend dependency is not installed")
 
     result = run_backend_code(backend, _UNIFORM_ARRAY_BOUNDS_REJECTION_CHECK)
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+@pytest.mark.backend_portable
+@pytest.mark.parametrize(
+    "backend,required_module",
+    [
+        ("numpy", "numpy"),
+        ("jax", "jax"),
+        ("pytorch", "torch"),
+    ],
+)
+def test_uniform_rejects_nonfinite_bounds(backend, required_module):
+    if importlib.util.find_spec(required_module) is None:
+        pytest.skip(f"{backend} backend dependency is not installed")
+
+    result = run_backend_code(backend, _UNIFORM_NONFINITE_BOUNDS_REJECTION_CHECK)
 
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
