@@ -1,12 +1,3 @@
-"""Utilities for masked and weak-dimension linear Gaussian measurements.
-
-These helpers cover a common practical case: a sensor observes several state
-components, but some measurement dimensions are known to be much less reliable
-than others.  The module is intentionally filter-independent.  It builds linear
-Gaussian measurement models and covariances that can be consumed by Kalman
-filters, robust update planners, and smoothers.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -18,8 +9,6 @@ from .linear_gaussian import LinearGaussianMeasurementModel
 
 
 def diagonal_measurement_covariance(stds: Sequence[float] | np.ndarray) -> np.ndarray:
-    """Return a diagonal covariance matrix from measurement standard deviations."""
-
     values = np.asarray(stds, dtype=float).reshape(-1)
     if values.size == 0:
         raise ValueError("stds must contain at least one standard deviation")
@@ -34,14 +23,6 @@ def block_diag_measurement_covariance(
     weak_std: Mapping[Any, float] | Sequence[float] | None = None,
     dimension_order: Sequence[Any] | None = None,
 ) -> np.ndarray:
-    """Return a diagonal covariance from trusted and weak dimension stds.
-
-    ``trusted_std`` and ``weak_std`` may be dictionaries keyed by dimension name
-    or plain sequences.  When dictionaries are supplied, ``dimension_order``
-    controls the output order.  If omitted, insertion order is used: all trusted
-    keys first, followed by weak keys not already present.
-    """
-
     if trusted_std is None and weak_std is None:
         raise ValueError("at least one of trusted_std or weak_std must be provided")
     if _is_mapping(trusted_std) or _is_mapping(weak_std):
@@ -82,8 +63,6 @@ def block_diag_measurement_covariance(
 
 
 def selection_matrix(state_dim: int, observed_dims: Sequence[int]) -> np.ndarray:
-    """Return a matrix selecting ``observed_dims`` from a Euclidean state vector."""
-
     state_dim = _positive_int(state_dim, "state_dim")
     dims = [_nonnegative_int(dim, "observed_dims") for dim in observed_dims]
     if not dims:
@@ -99,20 +78,6 @@ def selection_matrix(state_dim: int, observed_dims: Sequence[int]) -> np.ndarray
 
 
 class MaskedLinearMeasurementModel(LinearGaussianMeasurementModel):
-    """Linear Gaussian model that observes a subset of state dimensions.
-
-    Parameters
-    ----------
-    state_dim : int
-        Full Euclidean state dimension.
-    observed_dims : sequence of int
-        State indices observed by the measurement.
-    measurement_noise_cov : array-like, optional
-        Measurement covariance.  Mutually exclusive with ``stds``.
-    stds : sequence of float, optional
-        Per-observed-dimension standard deviations.
-    """
-
     def __init__(
         self,
         *,
@@ -137,8 +102,6 @@ class MaskedLinearMeasurementModel(LinearGaussianMeasurementModel):
 
 
 class WeakDimensionMeasurementModel(LinearGaussianMeasurementModel):
-    """Linear Gaussian model with per-dimension measurement trust levels."""
-
     def __init__(
         self,
         measurement_matrix: np.ndarray,
@@ -149,27 +112,23 @@ class WeakDimensionMeasurementModel(LinearGaussianMeasurementModel):
         dimension_order: Sequence[Any] | None = None,
         measurement_noise_cov: np.ndarray | None = None,
     ) -> None:
-        provided_covariance_sources = sum(
+        provided = sum(
             item is not None
             for item in (stds, measurement_noise_cov, trusted_std, weak_std)
         )
-        if provided_covariance_sources == 0:
+        if provided == 0:
             raise ValueError(
                 "provide stds, measurement_noise_cov, or trusted/weak stds"
             )
-        if measurement_noise_cov is not None and provided_covariance_sources > 1:
-            raise ValueError(
-                "measurement_noise_cov cannot be combined with std arguments"
-            )
+        if measurement_noise_cov is not None and provided > 1:
+            raise ValueError("measurement_noise_cov cannot be combined with std arguments")
         if stds is not None and (trusted_std is not None or weak_std is not None):
             raise ValueError("stds cannot be combined with trusted_std or weak_std")
-
         if measurement_noise_cov is not None:
             covariance = np.asarray(measurement_noise_cov, dtype=float)
         elif stds is not None and _is_mapping(stds):
             covariance = block_diag_measurement_covariance(
-                trusted_std=stds,
-                dimension_order=dimension_order,
+                trusted_std=stds, dimension_order=dimension_order
             )
         elif stds is not None:
             covariance = diagonal_measurement_covariance(stds)
@@ -187,12 +146,8 @@ def masked_position_measurement_model(
     observed_dims: Sequence[int],
     stds: Sequence[float] | np.ndarray,
 ) -> MaskedLinearMeasurementModel:
-    """Convenience constructor for masked position-like measurements."""
-
     return MaskedLinearMeasurementModel(
-        state_dim=state_dim,
-        observed_dims=observed_dims,
-        stds=stds,
+        state_dim=state_dim, observed_dims=observed_dims, stds=stds
     )
 
 
@@ -200,8 +155,6 @@ def weak_dimension_measurement_model(
     measurement_matrix: np.ndarray,
     stds: Sequence[float] | np.ndarray,
 ) -> WeakDimensionMeasurementModel:
-    """Convenience constructor for weak-dimension linear measurements."""
-
     return WeakDimensionMeasurementModel(measurement_matrix, stds=stds)
 
 
@@ -221,9 +174,11 @@ def _nonnegative_int(value: int, name: str) -> int:
         array_value = np.asarray(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must be an integer") from exc
-    if array_value.ndim != 0 or np.issubdtype(array_value.dtype, np.bool_):
+    if array_value.ndim != 0 or array_value.dtype.kind == "b":
         raise ValueError(f"{name} must be a nonnegative integer")
     scalar = array_value.item()
+    if type(scalar) is bool:
+        raise ValueError(f"{name} must be a nonnegative integer")
     try:
         parsed = int(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
