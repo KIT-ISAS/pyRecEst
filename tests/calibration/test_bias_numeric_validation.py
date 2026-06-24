@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
 
-from pyrecest.calibration.bias import SensorBiasCorrectionModel
+from pyrecest.calibration.bias import (
+    SensorBiasCorrectionModel,
+    make_bias_training_examples,
+)
 
 
 def _unit_feature_model_kwargs():
@@ -36,3 +39,15 @@ def test_model_rejects_boolean_array_field_before_float_coercion():
         SensorBiasCorrectionModel(**kwargs)
 
     assert "coefficients must contain numeric values" in str(exc_info.value)
+
+
+def test_make_bias_training_examples_rejects_text_times_before_float_coercion():
+    with pytest.raises(ValueError) as exc_info:
+        make_bias_training_examples(
+            measurement_times_s=np.array(["0.0", "1.0"]),
+            measurement_values=np.array([[1.0], [2.0]]),
+            reference_times_s=np.array([0.0, 1.0]),
+            reference_values=np.array([[1.5], [2.5]]),
+        )
+
+    assert "measurement_times_s must contain numeric values" in str(exc_info.value)
