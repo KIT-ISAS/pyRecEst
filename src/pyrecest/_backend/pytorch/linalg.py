@@ -174,6 +174,22 @@ def quadratic_assignment(a, b, options=None):
     )
 
 
+def qr(a, mode="reduced"):
+    """Compute QR decomposition with NumPy-compatible mode handling."""
+    a = _as_linalg_tensor(a)
+    if mode in {"reduced", "complete"}:
+        return _torch.linalg.qr(a, mode=mode)
+    if mode == "r":
+        return _torch.linalg.qr(a, mode=mode).R
+    if mode in {"raw", "economic"}:
+        result = _np.linalg.qr(_as_numpy_no_grad(a), mode=mode)
+        if mode == "raw":
+            h, tau = result
+            return _torch_as_like(h, a), _torch_as_like(tau, a)
+        return _torch_as_like(result, a)
+    raise ValueError(f"Unrecognized mode {mode!r}")
+
+
 def solve_sylvester(a, b, q):
     a = _as_linalg_tensor(a)
     b = _as_linalg_tensor(b)
