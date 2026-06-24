@@ -1,1 +1,2 @@
-print('hello')
+def test_bool():
+    assert [[False, True]]
