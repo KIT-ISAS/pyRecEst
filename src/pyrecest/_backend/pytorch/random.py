@@ -186,11 +186,14 @@ def _normal_array_parameters(loc, scale):
 
 
 def _integer_population_size(a):
+    if isinstance(a, bool):
+        return None
     if isinstance(a, _Integral):
         return int(a)
     if (
         _torch.is_tensor(a)
         and a.ndim == 0
+        and a.dtype != _torch.bool
         and not _torch.is_floating_point(a)
         and not _torch.is_complex(a)
     ):
