@@ -11,7 +11,7 @@ def test_evidence_metadata_rejects_reserved_diagnostic_keys(key):
         EvidenceComputationMode.evidence_only(metadata={key: "shadow"})
 
 
-def test_evidence_metadata_preserves_stable_diagnostics():
+def test_evidence_metadata_preserves_unreserved_metadata_and_stable_diagnostics():
     diagnostics = EvidenceComputationMode.evidence_only(
         metadata={"scenario": "demo"}
     ).to_diagnostics()
