@@ -62,8 +62,9 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
         return where(isclose(x, 0.0), 1.0, sin(x) / x)
 
     def _pdf_via_sinc(self, xs, sinc_repetitions):
+        sinc_repetitions = _validate_no_of_gridpoints(sinc_repetitions)
         if sinc_repetitions % 2 != 1:
-            raise ValueError("sinc_repetitions must be an odd integer.")
+            raise ValueError("sinc_repetitions must be a positive odd integer.")
 
         grid_size = self.grid_values.shape[0]
         step_size = 2.0 * pi / grid_size
