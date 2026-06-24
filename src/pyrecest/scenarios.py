@@ -10,6 +10,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+_TEXT_TYPES = (str, bytes, bytearray)
+
 
 @dataclass(slots=True)
 class ScenarioResult:
@@ -66,13 +68,37 @@ def load_scenario_config(path: str | Path) -> dict[str, Any]:
         return tomllib.load(handle)
 
 
+def _numeric_config_scalar(value: Any, message: str) -> float:
+    if isinstance(value, bool) or isinstance(value, _TEXT_TYPES):
+        raise ValueError(message)
+    try:
+        return float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+
+
+def _integer_config_value(value: Any, name: str, *, positive: bool) -> int:
+    descriptor = "positive" if positive else "non-negative"
+    message = f"{name} must be a {descriptor} integer"
+    scalar = _numeric_config_scalar(value, message)
+    if not math.isfinite(scalar) or not scalar.is_integer():
+        raise ValueError(message)
+    integer = int(scalar)
+    if positive:
+        if integer <= 0:
+            raise ValueError(message)
+    elif integer < 0:
+        raise ValueError(message)
+    return integer
+
+
 def _scenario_seed(config: dict[str, Any]) -> int | None:
     for section_name in ("random", "scenario"):
         section = config.get(section_name, {})
         if isinstance(section, dict) and "seed" in section:
-            return int(section["seed"])
+            return _integer_config_value(section["seed"], "seed", positive=False)
     if "seed" in config:
-        return int(config["seed"])
+        return _integer_config_value(config["seed"], "seed", positive=False)
     return None
 
 
@@ -86,7 +112,12 @@ def _apply_scenario_seed(config: dict[str, Any]) -> int | None:
     return seed
 
 
-def _to_float_list(value: Any) -> list[float]:
+def _to_float_list(
+    value: Any,
+    *,
+    name: str = "value",
+    reject_text_or_bool: bool = False,
+) -> list[float]:
     try:
         from pyrecest.backend import to_numpy
 
@@ -96,9 +127,22 @@ def _to_float_list(value: Any) -> list[float]:
 
     if hasattr(value, "tolist"):
         value = value.tolist()
+
+    message = f"{name} must contain numeric values"
+
+    def convert(item: Any) -> float:
+        if reject_text_or_bool and (isinstance(item, bool) or isinstance(item, _TEXT_TYPES)):
+            raise ValueError(message)
+        try:
+            return float(item)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(message) from exc
+
+    if reject_text_or_bool and isinstance(value, _TEXT_TYPES):
+        raise ValueError(message)
     if isinstance(value, int | float):
-        return [float(value)]
-    return [float(item) for item in value]
+        return [convert(value)]
+    return [convert(item) for item in value]
 
 
 def _normalized_particle_weights(raw_weights: Any, particle_count: int, backend):
@@ -108,7 +152,11 @@ def _normalized_particle_weights(raw_weights: Any, particle_count: int, backend)
     if raw_weights is None:
         weight_values = [1.0 for _ in range(particle_count)]
     else:
-        weight_values = _to_float_list(raw_weights)
+        weight_values = _to_float_list(
+            raw_weights,
+            name="weights",
+            reject_text_or_bool=True,
+        )
 
     if len(weight_values) != particle_count:
         raise ValueError("weights must contain one entry per particle")
@@ -128,15 +176,7 @@ def _normalized_particle_weights(raw_weights: Any, particle_count: int, backend)
 
 
 def _positive_integer_config_value(value: Any, name: str) -> int:
-    if isinstance(value, bool):
-        raise ValueError(f"{name} must be a positive integer")
-    try:
-        scalar = float(value)
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError(f"{name} must be a positive integer") from exc
-    if not math.isfinite(scalar) or scalar <= 0.0 or not scalar.is_integer():
-        raise ValueError(f"{name} must be a positive integer")
-    return int(scalar)
+    return _integer_config_value(value, name, positive=True)
 
 
 @scenario_runner("linear_gaussian")
