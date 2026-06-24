@@ -14,6 +14,14 @@ from typing import Any, Literal
 import numpy as np
 
 EvidenceComputationKind = Literal["full_smoothing", "evidence_only"]
+_RESERVED_DIAGNOSTIC_METADATA_KEYS = frozenset(
+    {
+        "computation_mode",
+        "only",
+        "return_smoothed",
+        "terminal_posterior",
+    }
+)
 
 
 def _coerce_bool_flag(value: bool, name: str) -> bool:
@@ -60,13 +68,19 @@ class EvidenceComputationMode:
             raise ValueError("evidence_only mode cannot return smoothed posteriors")
         if self.mode == "full_smoothing" and not return_smoothed:
             raise ValueError("full_smoothing mode must return smoothed posteriors")
+        metadata = {} if self.metadata is None else dict(self.metadata)
+        conflicting_metadata_keys = _RESERVED_DIAGNOSTIC_METADATA_KEYS.intersection(
+            metadata
+        )
+        if conflicting_metadata_keys:
+            reserved = ", ".join(sorted(str(key) for key in conflicting_metadata_keys))
+            raise ValueError(
+                "metadata keys would overwrite evidence diagnostics: "
+                f"{reserved}"
+            )
         object.__setattr__(self, "return_smoothed", return_smoothed)
         object.__setattr__(self, "terminal_posterior", terminal_posterior)
-        object.__setattr__(
-            self,
-            "metadata",
-            {} if self.metadata is None else dict(self.metadata),
-        )
+        object.__setattr__(self, "metadata", metadata)
 
     @classmethod
     def full_smoothing(

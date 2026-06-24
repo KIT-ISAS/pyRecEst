@@ -46,13 +46,19 @@ def _default_score_to_cost(scores: Any) -> Any:
     return -asarray(scores, dtype=float)
 
 
+def _is_text_scalar(value: Any) -> bool:
+    return isinstance(value, (str, bytes, np.str_, np.bytes_))
+
+
 def _normalize_min_score(min_score: Any) -> float:
     min_score_array = np.asarray(min_score)
     if min_score_array.shape != () or min_score_array.dtype == np.bool_:
         raise ValueError("min_score must be a finite scalar.")
 
     min_score_value = min_score_array.item()
-    if isinstance(min_score_value, (bool, np.bool_)):
+    if isinstance(min_score_value, (bool, np.bool_)) or _is_text_scalar(
+        min_score_value
+    ):
         raise ValueError("min_score must be a finite scalar.")
 
     try:
@@ -70,7 +76,7 @@ def _normalize_max_gap(max_gap: Any) -> int:
         raise ValueError("max_gap must be a non-negative integer.")
 
     max_gap_value = max_gap_array.item()
-    if isinstance(max_gap_value, (bool, np.bool_)):
+    if isinstance(max_gap_value, (bool, np.bool_)) or _is_text_scalar(max_gap_value):
         raise ValueError("max_gap must be a non-negative integer.")
 
     if isinstance(max_gap_value, (int, np.integer)):
@@ -97,7 +103,9 @@ def _normalize_index_matrix_fill_value(fill_value: Any) -> int:
         raise ValueError("fill_value must be a negative integer.")
 
     fill_value_value = fill_value_array.item()
-    if isinstance(fill_value_value, (bool, np.bool_)):
+    if isinstance(fill_value_value, (bool, np.bool_)) or _is_text_scalar(
+        fill_value_value
+    ):
         raise ValueError("fill_value must be a negative integer.")
 
     if isinstance(fill_value_value, (int, np.integer)):

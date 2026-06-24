@@ -6,7 +6,15 @@ from pyrecest.evaluation.get_distance_function import get_distance_function
 
 class EuclideanMttDistanceTest(unittest.TestCase):
     def test_rejects_invalid_cutoff_distances(self):
-        for cutoff_distance in (-1.0, float("nan"), float("inf"), True, [1.0]):
+        for cutoff_distance in (
+            -1.0,
+            float("nan"),
+            float("inf"),
+            True,
+            np.array(True, dtype=object),
+            np.array(False, dtype=object),
+            [1.0],
+        ):
             with self.subTest(cutoff_distance=cutoff_distance):
                 with self.assertRaisesRegex(ValueError, "cutoff_distance.*finite"):
                     get_distance_function(

@@ -27,11 +27,17 @@ rand = _modify_func_default_dtype(
 )
 
 
+def _validate_uniform_bounds(low, high):
+    if _np.any(~_np.isfinite(low)) or _np.any(~_np.isfinite(high)):
+        raise ValueError("uniform bounds must be finite")
+    if _np.any(low > high):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
+
+
 def _uniform(low=0.0, high=1.0, size=None):
     low_array = _np.asarray(low)
     high_array = _np.asarray(high)
-    if _np.any(low_array > high_array):
-        raise ValueError("Upper bound must be greater than or equal to lower bound")
+    _validate_uniform_bounds(low_array, high_array)
     return _np.random.uniform(low, high, size)
 
 
@@ -69,6 +75,14 @@ def _choice_bool(value, name):
     raise TypeError(f"{name} must be a boolean")
 
 
+def _validate_choice_population(a_array):
+    if a_array.ndim != 0:
+        return
+    scalar = a_array.item()
+    if isinstance(scalar, (bool, _np.bool_)):
+        raise ValueError("a must be a positive integer or a non-empty array")
+
+
 def _maybe_preserve_choice_order(indices, *, replace, p, shuffle, size):
     if replace or p is not None or shuffle or size is None:
         return indices
@@ -92,6 +106,7 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
     replace = _choice_bool(replace, "replace")
     shuffle = _choice_bool(shuffle, "shuffle")
     a_array = _np.asarray(a)
+    _validate_choice_population(a_array)
     if a_array.ndim == 0:
         return _maybe_preserve_choice_order(
             _np.random.choice(a, size=size, replace=replace, p=p),
@@ -103,13 +118,15 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
 
     axis = _normalize_choice_axis(axis, a_array.ndim)
     if a_array.ndim == 1 and axis == 0:
-        return _maybe_preserve_choice_order(
-            _np.random.choice(a_array, size=size, replace=replace, p=p),
+        indices = _np.random.choice(a_array.shape[0], size=size, replace=replace, p=p)
+        indices = _maybe_preserve_choice_order(
+            indices,
             replace=replace,
             p=p,
             shuffle=shuffle,
             size=size,
         )
+        return _np.take(a_array, indices, axis=0)
 
     if p is not None:
         p = _np.asarray(p)

@@ -276,11 +276,20 @@ def _scale_upper_bound(value: float, name: str) -> float:
     return value
 
 
-def _finite_scalar(value: float, name: str) -> float:
+def _finite_scalar(value: Any, name: str) -> float:
     array = np.asarray(value)
     if array.shape != () or array.dtype == np.bool_:
         raise ValueError(f"{name} must be a finite scalar")
-    parsed = float(array.item())
+    scalar = array.item()
+    if isinstance(
+        scalar,
+        (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_),
+    ):
+        raise ValueError(f"{name} must be a finite scalar")
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite scalar") from exc
     if not np.isfinite(parsed):
         raise ValueError(f"{name} must be finite")
     return parsed

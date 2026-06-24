@@ -412,6 +412,8 @@ def _normalize_candidate_observation(value: Any) -> int:
     scalar = value_array.item()
     if isinstance(scalar, (bool, np.bool_)):
         raise ValueError("candidate observations must be non-negative integers")
+    if isinstance(scalar, (str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError("candidate observations must be non-negative integers")
     if isinstance(scalar, (int, np.integer)):
         observation = int(scalar)
     elif isinstance(scalar, (float, np.floating)):

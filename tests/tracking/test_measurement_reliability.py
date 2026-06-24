@@ -26,6 +26,33 @@ def test_max_scale_caps_at_or_above_nominal_scale() -> None:
         MeasurementReliabilityConfig(max_scale=0.5)
 
 
+def test_scalar_reliability_inputs_reject_text_and_object_booleans() -> None:
+    invalid_values = (
+        "0.5",
+        b"0.5",
+        np.array("0.5"),
+        np.array("0.5", dtype=object),
+        np.array(True, dtype=object),
+    )
+
+    for value in invalid_values:
+        with pytest.raises(ValueError, match="finite scalar"):
+            reliability_to_covariance_scale(value)
+
+
+def test_reliability_config_rejects_text_and_object_boolean_scalars() -> None:
+    invalid_configs = (
+        {"threshold": "0.5"},
+        {"floor": np.array("0.1")},
+        {"exponent": "2.0"},
+        {"max_scale": np.array(True, dtype=object)},
+    )
+
+    for kwargs in invalid_configs:
+        with pytest.raises(ValueError):
+            MeasurementReliabilityConfig(**kwargs)
+
+
 def test_scale_covariance_by_reliability_returns_scaled_copy() -> None:
     cov = np.diag([4.0, 9.0])
     scaled, scale = scale_covariance_by_reliability(cov, 0.25)

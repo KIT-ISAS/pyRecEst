@@ -74,10 +74,18 @@ def quadratic_assignment(a, b, options=None):
     return list(_scipy.optimize.quadratic_assignment(a, b, options=options).col_ind)
 
 
-def qr(*args, **kwargs):
-    return _np.vectorize(
-        _np.linalg.qr, signature="(n,m)->(n,k),(k,m)", excluded=["mode"]
-    )(*args, **kwargs)
+def qr(a, mode="reduced"):
+    if mode == "r":
+        signature = "(n,m)->(k,m)"
+    elif mode == "raw":
+        signature = "(n,m)->(m,n),(k)"
+    elif mode == "economic":
+        signature = "(n,m)->(n,m)"
+    else:
+        signature = "(n,m)->(n,k),(k,m)"
+    return _np.vectorize(_np.linalg.qr, signature=signature, excluded=["mode"])(
+        a, mode=mode
+    )
 
 
 def is_single_matrix_pd(mat):
