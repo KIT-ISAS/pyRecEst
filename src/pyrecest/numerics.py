@@ -11,17 +11,27 @@ from pyrecest.exceptions import (
     ShapeError,
 )
 
-_TEXT_OR_BOOL_KINDS = {"b", "S", "U"}
-_TEXT_OR_BOOL_SCALAR_TYPES = (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+_UNSUPPORTED_NUMERIC_KINDS = {"b", "S", "U", "c"}
+_UNSUPPORTED_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+)
 
 
-def _contains_text_or_bool_values(value) -> bool:
+def _contains_unsupported_numeric_values(value) -> bool:
     value_array = np.asarray(value)
-    if value_array.dtype.kind in _TEXT_OR_BOOL_KINDS:
+    if value_array.dtype.kind in _UNSUPPORTED_NUMERIC_KINDS:
         return True
     if value_array.dtype.kind != "O":
         return False
-    return any(isinstance(item, _TEXT_OR_BOOL_SCALAR_TYPES) for item in value_array.flat)
+    return any(isinstance(item, _UNSUPPORTED_SCALAR_TYPES) for item in value_array.flat)
 
 
 def _to_numpy_array(value, *, name: str = "matrix") -> np.ndarray:
@@ -35,7 +45,7 @@ def _to_numpy_array(value, *, name: str = "matrix") -> np.ndarray:
         raw = value
 
     try:
-        if _contains_text_or_bool_values(raw):
+        if _contains_unsupported_numeric_values(raw):
             raise ValueError
         return np.asarray(raw, dtype=float)
     except (TypeError, ValueError, OverflowError) as exc:
