@@ -37,7 +37,7 @@ def test_distance_quantiles_reject_non_numeric_scalar_probabilities(quantile):
 
 @pytest.mark.parametrize("quantile", [-0.1, 1.1])
 def test_distance_quantiles_reject_out_of_range_probabilities(quantile):
-    with pytest.raises(ValueError, match="\[0, 1\]"):
+    with pytest.raises(ValueError, match=r"\[0, 1\]"):
         distance_quantiles(_POINTS, _POINTS, quantiles=(quantile,))
 
 
