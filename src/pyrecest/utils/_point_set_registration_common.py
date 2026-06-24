@@ -153,8 +153,16 @@ def _validate_max_cost(max_cost) -> float:
     max_cost_array = asarray(max_cost)
     if max_cost_array.shape != ():
         raise ValueError("max_cost must be a scalar.")
+
     try:
-        max_cost_value = float(max_cost_array)
+        max_cost_scalar = max_cost_array.item()
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise ValueError("max_cost must be a scalar numeric value.") from exc
+    if isinstance(max_cost_scalar, (bool, str, bytes, bytearray)):
+        raise ValueError("max_cost must be a scalar numeric value.")
+
+    try:
+        max_cost_value = float(max_cost_scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("max_cost must be a scalar numeric value.") from exc
     if math.isnan(max_cost_value) or max_cost_value < 0.0:
