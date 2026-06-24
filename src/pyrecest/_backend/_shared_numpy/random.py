@@ -27,11 +27,17 @@ rand = _modify_func_default_dtype(
 )
 
 
+def _validate_uniform_bounds(low, high):
+    if _np.any(~_np.isfinite(low)) or _np.any(~_np.isfinite(high)):
+        raise ValueError("uniform bounds must be finite")
+    if _np.any(low > high):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
+
+
 def _uniform(low=0.0, high=1.0, size=None):
     low_array = _np.asarray(low)
     high_array = _np.asarray(high)
-    if _np.any(low_array > high_array):
-        raise ValueError("Upper bound must be greater than or equal to lower bound")
+    _validate_uniform_bounds(low_array, high_array)
     return _np.random.uniform(low, high, size)
 
 
