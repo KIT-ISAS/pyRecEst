@@ -17,6 +17,22 @@ def test_require_optional_dependency_reports_extra_for_missing_module():
     assert "pyrecest[plot]" in str(exc_info.value)
 
 
+@pytest.mark.parametrize(
+    ("package", "extra"),
+    [
+        (None, "plot"),
+        ("", "plot"),
+        ("   ", "plot"),
+        ("math", None),
+        ("math", ""),
+        ("math", b"plot"),
+    ],
+)
+def test_require_optional_dependency_rejects_invalid_names(package, extra):
+    with pytest.raises(ValueError, match="must be a non-empty string"):
+        require_optional_dependency(package, extra)
+
+
 def test_require_optional_dependency_reports_missing_parent_for_submodule():
     import_error = ModuleNotFoundError(
         "No module named 'missing_parent'",

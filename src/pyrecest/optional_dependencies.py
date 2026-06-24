@@ -4,8 +4,15 @@ from __future__ import annotations
 
 import importlib
 from types import ModuleType
+from typing import Any
 
 from pyrecest.exceptions import OptionalDependencyError
+
+
+def _validate_nonempty_string(value: Any, name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-empty string")
+    return value.strip()
 
 
 def _is_missing_requested_package(exc: ModuleNotFoundError, package: str) -> bool:
@@ -29,6 +36,9 @@ def require_optional_dependency(
     feature:
         Optional user-facing feature name for the error message.
     """
+    package = _validate_nonempty_string(package, "package")
+    extra = _validate_nonempty_string(extra, "extra")
+
     try:
         return importlib.import_module(package)
     except ModuleNotFoundError as exc:
