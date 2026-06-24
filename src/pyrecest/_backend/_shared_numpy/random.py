@@ -75,6 +75,14 @@ def _choice_bool(value, name):
     raise TypeError(f"{name} must be a boolean")
 
 
+def _validate_choice_population(a_array):
+    if a_array.ndim != 0:
+        return
+    scalar = a_array.item()
+    if isinstance(scalar, (bool, _np.bool_)):
+        raise ValueError("a must be a positive integer or a non-empty array")
+
+
 def _maybe_preserve_choice_order(indices, *, replace, p, shuffle, size):
     if replace or p is not None or shuffle or size is None:
         return indices
@@ -98,6 +106,7 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
     replace = _choice_bool(replace, "replace")
     shuffle = _choice_bool(shuffle, "shuffle")
     a_array = _np.asarray(a)
+    _validate_choice_population(a_array)
     if a_array.ndim == 0:
         return _maybe_preserve_choice_order(
             _np.random.choice(a, size=size, replace=replace, p=p),
