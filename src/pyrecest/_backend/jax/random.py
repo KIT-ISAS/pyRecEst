@@ -142,12 +142,18 @@ def rand(*dims, size=None, **kwargs):
     return set_state_return(has_state, state, res)
 
 
+def _validate_uniform_bounds(low, high):
+    if bool(_jnp.any(~_jnp.isfinite(low))) or bool(_jnp.any(~_jnp.isfinite(high))):
+        raise ValueError("uniform bounds must be finite")
+    if bool(_jnp.any(low > high)):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
+
+
 def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
     low = _jnp.asarray(low)
     high = _jnp.asarray(high)
     shape = _bounded_sampler_shape(size, low, high)
-    if bool(_jnp.any(low > high)):
-        raise ValueError("Upper bound must be greater than or equal to lower bound")
+    _validate_uniform_bounds(low, high)
     state, has_state, kwargs = _get_state(**kwargs)
     state, res = _rand(state, shape, *args, minval=low, maxval=high, **kwargs)
     return set_state_return(has_state, state, res)
