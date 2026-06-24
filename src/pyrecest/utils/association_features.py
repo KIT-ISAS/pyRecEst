@@ -9,10 +9,12 @@ from typing import Any, Literal
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
+    all,
     asarray,
     clip,
     exp,
     float64,
+    isfinite,
     isinf,
     isnan,
     log,
@@ -148,7 +150,7 @@ class CalibratedPairwiseAssociationModel:
             raise TypeError(
                 "model must expose predict_match_probability, predict_proba, or pairwise_cost_matrix"
             )
-        return clip(asarray(probabilities, dtype=float64), 0.0, 1.0)
+        return clip(_finite_probability_array(probabilities), 0.0, 1.0)
 
     def pairwise_probability_matrix_from_components(
         self, components: Mapping[str, Any]
@@ -210,6 +212,13 @@ class CalibratedPairwiseAssociationModel:
             if _is_positive_binary_label(class_label):
                 return class_index
         return 1
+
+
+def _finite_probability_array(probabilities: Any) -> Any:
+    probabilities = asarray(probabilities, dtype=float64)
+    if not all(isfinite(probabilities)):
+        raise ValueError("predicted probabilities must be finite")
+    return probabilities
 
 
 def _is_positive_binary_label(class_label: Any) -> bool:
