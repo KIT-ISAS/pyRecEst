@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from numbers import Real
 from typing import Any
 
 import numpy as np
@@ -359,7 +360,7 @@ def _as_nonnegative_finite_float(value: Any, name: str) -> float:
     if arr.ndim != 0 or arr.dtype == np.bool_:
         raise ValueError(f"{name} must be a nonnegative finite scalar")
     scalar = arr.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_)) or not isinstance(scalar, Real):
         raise ValueError(f"{name} must be a nonnegative finite scalar")
     try:
         result = float(scalar)
