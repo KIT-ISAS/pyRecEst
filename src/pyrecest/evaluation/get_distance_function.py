@@ -57,8 +57,11 @@ def _validate_symmetry_count(nSymm: Any) -> int:
     count_array = np.asarray(to_numpy(nSymm))
     if count_array.shape != () or np.issubdtype(count_array.dtype, np.bool_):
         raise ValueError("nSymm must be a finite positive integer")
+    scalar = count_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError("nSymm must be a finite positive integer")
     try:
-        count = float(count_array.item())
+        count = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("nSymm must be a finite positive integer") from exc
     if not np.isfinite(count) or not count.is_integer() or count <= 0:
@@ -114,8 +117,11 @@ def _validate_mtt_cutoff_distance(value: Any) -> float:
     value_array = np.asarray(to_numpy(value))
     if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
         raise ValueError("cutoff_distance must be a finite nonnegative scalar")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError("cutoff_distance must be a finite nonnegative scalar")
     try:
-        cutoff_distance = float(value_array.item())
+        cutoff_distance = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("cutoff_distance must be a finite nonnegative scalar") from exc
     if not np.isfinite(cutoff_distance) or cutoff_distance < 0.0:
