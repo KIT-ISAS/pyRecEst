@@ -90,6 +90,54 @@ class TestTrackMetrics(unittest.TestCase):
                         session_times=session_times,
                     )
 
+    def test_track_latency_rejects_nonmonotonic_session_times(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "session_times must be nondecreasing",
+        ):
+            track_latencies(
+                self.predicted,
+                self.reference,
+                session_times=[0.0, 2.0, 1.0],
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "session_times must be nondecreasing",
+        ):
+            score_track_latency(
+                self.predicted,
+                self.reference,
+                session_times=[0.0, 2.0, 1.0],
+            )
+
+    def test_track_latency_rejects_bool_and_text_session_times(self):
+        invalid_session_times = (
+            [0.0, True, 2.0],
+            [0.0, "1.0", 2.0],
+            [0.0, b"1.0", 2.0],
+        )
+
+        for session_times in invalid_session_times:
+            with self.subTest(session_times=session_times):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "session_times must contain only finite numeric values",
+                ):
+                    track_latencies(
+                        self.predicted,
+                        self.reference,
+                        session_times=session_times,
+                    )
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "session_times must contain only finite numeric values",
+                ):
+                    score_track_latency(
+                        self.predicted,
+                        self.reference,
+                        session_times=session_times,
+                    )
+
     def test_min_length_limits_false_track_observation_rate_denominator(self):
         predicted = [
             [99, None, None],
