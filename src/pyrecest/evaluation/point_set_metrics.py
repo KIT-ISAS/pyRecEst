@@ -352,7 +352,7 @@ def _validate_chunk_size(query_chunk_size: int) -> int:
     if array.shape != () or array.dtype == np.bool_:
         raise ValueError("query_chunk_size must be a positive integer.")
     scalar = array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_, str, bytes)):
         raise ValueError("query_chunk_size must be a positive integer.")
     try:
         chunk_size_float = float(scalar)
@@ -377,7 +377,7 @@ def _normalize_optional_integer(value: Any, name: str) -> int | None:
         raise ValueError(message)
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_, str, bytes)):
         raise ValueError(message)
     if isinstance(scalar, (int, np.integer)):
         return int(scalar)
