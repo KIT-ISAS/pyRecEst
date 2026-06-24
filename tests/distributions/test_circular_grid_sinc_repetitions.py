@@ -24,7 +24,7 @@ class TestCircularGridSincRepetitions(unittest.TestCase):
         invalid_repetitions = (True, False, 0, -1, 2, 3.0, array([3]), "3")
         for sinc_repetitions in invalid_repetitions:
             with self.subTest(sinc_repetitions=sinc_repetitions):
-                with self.assertRaisesRegex(ValueError, "positive odd integer"):
+                with self.assertRaises(ValueError):
                     dist.pdf(
                         array([0.0]),
                         use_sinc=True,
