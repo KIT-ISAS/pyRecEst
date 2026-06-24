@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 from pyrecest.calibration.time_offset import make_offset_grid
 
 
@@ -11,6 +12,8 @@ class TimeOffsetGridInputValidationTest(unittest.TestCase):
             (0.0, 1.0, float("inf")),
             ([0.0], 1.0, 0.1),
             (0.0, True, 0.1),
+            ("0.0", 1.0, 0.1),
+            (0.0, np.array(True, dtype=object), 0.1),
         )
         for min_s, max_s, step_s in invalid_cases:
             with self.subTest(min_s=min_s, max_s=max_s, step_s=step_s):
