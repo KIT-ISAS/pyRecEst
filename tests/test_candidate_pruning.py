@@ -168,8 +168,8 @@ class TestCandidatePruning(unittest.TestCase):
                 config=CandidatePruningConfig(probability_threshold=0.4),
             )
 
-    def test_scalar_cost_controls_reject_bools_and_non_scalars(self):
-        invalid_values = (True, np.array([1.0]))
+    def test_scalar_cost_controls_reject_invalid_scalar_types(self):
+        invalid_values = (True, np.array([1.0]), "0.5", np.array("0.5", dtype=object))
         cases = (
             (
                 "probability_threshold",
@@ -189,18 +189,28 @@ class TestCandidatePruning(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, re.escape(message)):
                         CandidatePruningConfig(**{field_name: value})
 
-        with self.assertRaisesRegex(
-            ValueError,
-            "large_cost must be finite and positive",
-        ):
-            prune_pairwise_cost_matrix(
-                np.array([[1.0]]),
-                config=CandidatePruningConfig(row_top_k=1),
-                large_cost=True,
-            )
+        for invalid_large_cost in (True, "2.0"):
+            with self.subTest(invalid_large_cost=invalid_large_cost):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "large_cost must be finite and positive",
+                ):
+                    prune_pairwise_cost_matrix(
+                        np.array([[1.0]]),
+                        config=CandidatePruningConfig(row_top_k=1),
+                        large_cost=invalid_large_cost,
+                    )
 
     def test_top_k_rejects_non_integer_values(self):
-        invalid_top_k_values = (True, 1.5, np.nan, np.inf, np.array([1]))
+        invalid_top_k_values = (
+            True,
+            1.5,
+            np.nan,
+            np.inf,
+            np.array([1]),
+            "2",
+            np.array("2", dtype=object),
+        )
 
         for field_name in ("row_top_k", "column_top_k"):
             for value in invalid_top_k_values:

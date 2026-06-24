@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any
 
 import numpy as np
@@ -106,7 +107,7 @@ def _normalize_positive_integer(value: Any, name: str) -> int:
         raise ValueError(message)
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_)) or not isinstance(scalar, Real):
         raise ValueError(message)
     if isinstance(scalar, (int, np.integer)):
         parsed = int(scalar)
@@ -130,7 +131,7 @@ def _normalize_finite_scalar(value: Any, *, message: str) -> float:
         raise ValueError(message)
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_)) or not isinstance(scalar, Real):
         raise ValueError(message)
     try:
         parsed = float(scalar)
