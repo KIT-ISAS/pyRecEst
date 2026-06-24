@@ -1,3 +1,5 @@
+'Utilities for masked and weak-dimension linear Gaussian measurements.'
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
