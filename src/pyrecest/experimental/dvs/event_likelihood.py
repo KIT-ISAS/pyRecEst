@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 
-def _as_finite_scalar(value: float, name: str, message: str) -> float:
+def _as_finite_scalar(value: float, message: str) -> float:
     value_array = np.asarray(value)
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError(message)
@@ -25,7 +25,7 @@ def _as_finite_scalar(value: float, name: str, message: str) -> float:
 
 def _validate_positive_finite(value: float, name: str) -> float:
     message = f"{name} must be finite and positive"
-    value = _as_finite_scalar(value, name, message)
+    value = _as_finite_scalar(value, message)
     if value <= 0.0:
         raise ValueError(message)
     return value
@@ -33,7 +33,7 @@ def _validate_positive_finite(value: float, name: str) -> float:
 
 def _validate_nonnegative_finite(value: float, name: str) -> float:
     message = f"{name} must be finite and non-negative"
-    value = _as_finite_scalar(value, name, message)
+    value = _as_finite_scalar(value, message)
     if value < 0.0:
         raise ValueError(message)
     return value
