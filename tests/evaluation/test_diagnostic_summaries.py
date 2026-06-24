@@ -2,6 +2,7 @@ import math
 import unittest
 
 import numpy as np
+import pandas as pd
 from pyrecest.evaluation.diagnostic_summaries import (
     build_diagnostic_summary,
     covariance_inflation_summary,
@@ -61,6 +62,21 @@ class DiagnosticSummariesTest(unittest.TestCase):
     def test_track_switch_summary_counts_transitions(self):
         summary = track_switch_summary(self.records)
 
+        self.assertEqual(summary["count"], 1)
+        self.assertEqual(summary["top_transitions"][0]["from_track_id"], "A")
+        self.assertEqual(summary["top_transitions"][0]["to_track_id"], "B")
+
+    def test_track_switch_summary_skips_pandas_na_track_ids(self):
+        records = [
+            {"time_s": 0.0, "track_id": "A"},
+            {"time_s": 1.0, "track_id": pd.NA},
+            {"time_s": 2.0, "track_id": "A"},
+            {"time_s": 3.0, "track_id": "B"},
+        ]
+
+        summary = track_switch_summary(records)
+
+        self.assertEqual(summary["updates_with_track_id"], 3)
         self.assertEqual(summary["count"], 1)
         self.assertEqual(summary["top_transitions"][0]["from_track_id"], "A")
         self.assertEqual(summary["top_transitions"][0]["to_track_id"], "B")
