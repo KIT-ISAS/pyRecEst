@@ -48,6 +48,22 @@ def _to_python_bool(value):
     return bool(value)
 
 
+def _validate_bool_flag(value, name):
+    """Validate public boolean flags without truthiness coercion."""
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except Exception as exc:  # pragma: no cover - backend-specific failures
+        raise TypeError(f"{name} must be a boolean.") from exc
+    if getattr(value_array, "shape", ()) != () or not hasattr(value_array, "item"):
+        raise TypeError(f"{name} must be a boolean.")
+    scalar = value_array.item()
+    if not isinstance(scalar, bool):
+        raise TypeError(f"{name} must be a boolean.")
+    return scalar
+
+
 def _as_circular_gaussian(distribution, role):
     """Return a validated 1-D Gaussian for circular UKF state/noise."""
     if not isinstance(distribution, GaussianDistribution):
@@ -327,6 +343,9 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
                     "measurement noise must be convertible to GaussianDistribution."
                 ) from exc
         _validate_backend_supported("CircularUKF.update_nonlinear")
+        measurement_periodic = _validate_bool_flag(
+            measurement_periodic, "measurement_periodic"
+        )
 
         z = _measurement_vector(z)
         dim_z = len(z)
