@@ -27,9 +27,18 @@ rand = _modify_func_default_dtype(
 )
 
 
-def _validate_uniform_bounds(low, high):
-    if _np.any(~_np.isfinite(low)) or _np.any(~_np.isfinite(high)):
+def _validate_uniform_bound_array(bound, name):
+    if bound.dtype.kind == "b":
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    if bound.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    if _np.any(~_np.isfinite(bound)):
         raise ValueError("uniform bounds must be finite")
+
+
+def _validate_uniform_bounds(low, high):
+    _validate_uniform_bound_array(low, "low")
+    _validate_uniform_bound_array(high, "high")
     if _np.any(low > high):
         raise ValueError("Upper bound must be greater than or equal to lower bound")
 
@@ -44,7 +53,6 @@ def _uniform(low=0.0, high=1.0, size=None):
 uniform = _modify_func_default_dtype(
     copy=False, kw_only=True, target=_allow_complex_dtype(target=_uniform)
 )
-
 
 normal = _modify_func_default_dtype(
     copy=False, kw_only=True, target=_allow_complex_dtype(target=_np.random.normal)
