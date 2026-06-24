@@ -127,7 +127,7 @@ def student_t_covariance_scale(
                 _student_t_covariance_scale(
                     nis,
                     measurement_dim,
-                    dof=degrees_of_freedom,
+                    dof=dof,
                 ),
                 dtype=float,
             )
