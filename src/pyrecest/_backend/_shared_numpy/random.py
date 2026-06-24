@@ -103,13 +103,15 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
 
     axis = _normalize_choice_axis(axis, a_array.ndim)
     if a_array.ndim == 1 and axis == 0:
-        return _maybe_preserve_choice_order(
-            _np.random.choice(a_array, size=size, replace=replace, p=p),
+        indices = _np.random.choice(a_array.shape[0], size=size, replace=replace, p=p)
+        indices = _maybe_preserve_choice_order(
+            indices,
             replace=replace,
             p=p,
             shuffle=shuffle,
             size=size,
         )
+        return _np.take(a_array, indices, axis=0)
 
     if p is not None:
         p = _np.asarray(p)
