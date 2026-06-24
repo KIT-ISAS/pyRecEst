@@ -1,6 +1,5 @@
 import numpy as _np
 from pyrecest._backend._dtype_utils import (
-    _dyn_update_dtype,
     _modify_func_default_dtype,
     get_default_cdtype,
     get_default_dtype,
@@ -32,4 +31,9 @@ from .._shared_numpy._common import (
 
 array = _cast_out_from_dtype(target=_np.array, dtype_pos=1)
 eye = _modify_func_default_dtype(target=_np.eye)
-zeros = _dyn_update_dtype(target=_np.zeros, dtype_pos=1)
+
+
+def zeros(shape, dtype=None, *args, **kwargs):
+    if dtype is None:
+        dtype = get_default_dtype()
+    return _np.zeros(shape, dtype, *args, **kwargs)
