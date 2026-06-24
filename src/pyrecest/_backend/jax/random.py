@@ -123,6 +123,11 @@ def _looks_like_shape_sequence(value):
     )
 
 
+def _looks_like_scalar_randint_bound(value):
+    value = _np.asarray(value)
+    return value.shape == () and not _np.issubdtype(value.dtype, _np.bool_)
+
+
 def set_state_return(has_state, state, res):
     if has_state:
         return state, res
@@ -157,6 +162,16 @@ def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
     state, has_state, kwargs = _get_state(**kwargs)
     state, res = _rand(state, shape, *args, minval=low, maxval=high, **kwargs)
     return set_state_return(has_state, state, res)
+
+
+def _validate_randint_bounds(low, high):
+    try:
+        low, high = _jnp.broadcast_arrays(low, high)
+    except ValueError as exc:
+        raise ValueError("low and high could not be broadcast together") from exc
+    if bool(_jnp.any(high <= low)):
+        raise ValueError("high must be greater than low")
+    return low, high
 
 
 def _randint(state, size, low, high, *args, **kwargs):
@@ -202,7 +217,13 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
             raise TypeError("randint() missing required argument 'size'")
         low = legacy_minval
         high = legacy_maxval
-    elif _looks_like_shape_sequence(low) and high is not None and size is not None:
+    elif (
+        _looks_like_shape_sequence(low)
+        and high is not None
+        and size is not None
+        and _looks_like_scalar_randint_bound(high)
+        and _looks_like_scalar_randint_bound(size)
+    ):
         # Legacy positional form: randint(shape, minval, maxval)
         size, low, high = low, high, size
     elif high is None:
@@ -213,6 +234,7 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
 
     low = _jnp.asarray(low)
     high = _jnp.asarray(high)
+    low, high = _validate_randint_bounds(low, high)
     shape = _bounded_sampler_shape(size, low, high)
     state, has_state, kwargs = _get_state(**kwargs)
     state, res = _randint(state, shape, low, high, *args, **kwargs)
