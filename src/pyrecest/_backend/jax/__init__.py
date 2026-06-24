@@ -126,6 +126,7 @@ from jax.numpy import (  # For pyrecest; For Riemannian score-based SDE
     tan,
     tanh,
     tile,
+    trace,
     transpose,
     tril,
     tril_indices,
@@ -209,49 +210,29 @@ def unique(ar, *args, **kwargs):
     return _jnp.unique(_jnp.asarray(ar), *args, **kwargs)
 
 
-def _asarray_or_none(value):
-    return None if value is None else _jnp.asarray(value)
+def array_equal(a, b, **kwargs):
+    return _jnp.array_equal(_jnp.asarray(a), _jnp.asarray(b), **kwargs)
 
 
-def cov(
-    m,
-    y=None,
-    rowvar=True,
-    bias=False,
-    ddof=None,
-    fweights=None,
-    aweights=None,
-    dtype=None,
-):
-    return _jnp.cov(
-        _jnp.asarray(m),
-        y=_asarray_or_none(y),
-        rowvar=rowvar,
-        bias=bias,
-        ddof=ddof,
-        fweights=_asarray_or_none(fweights),
-        aweights=_asarray_or_none(aweights),
-        dtype=dtype,
-    )
+def ndim(a):
+    return _jnp.ndim(_jnp.asarray(a))
+
+
+def squeeze(a, axis=None):
+    a = _jnp.asarray(a)
+    if axis is None:
+        return _jnp.squeeze(a)
+    if a.shape[axis] != 1:
+        return a
+    return _jnp.squeeze(a, axis=axis)
 
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
     return _jnp.diagonal(_jnp.asarray(a), offset=offset, axis1=axis1, axis2=axis2)
 
 
-def squeeze(a, axis=None):
-    return _jnp.squeeze(_jnp.asarray(a), axis=axis)
-
-
-def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
-    return _jnp.trace(
-        _jnp.asarray(a),
-        offset=offset,
-        axis1=axis1,
-        axis2=axis2,
-        dtype=dtype,
-        out=out,
-    )
+def trace(a):
+    return _jnp.trace(_jnp.asarray(a), axis1=-2, axis2=-1)
 
 
 def tril(m, k=0):
@@ -575,10 +556,8 @@ def divide(a, b, ignore_div_zero=False):
     if ignore_div_zero is False:
         return _jnp.divide(a_arr, b_arr)
 
-    nonzero_denominator = b_arr != 0
-    safe_denominator = _jnp.where(nonzero_denominator, b_arr, _jnp.ones_like(b_arr))
-    quotient = _jnp.divide(a_arr, safe_denominator)
-    return _jnp.where(nonzero_denominator, quotient, _jnp.zeros_like(quotient))
+    quotient = _jnp.divide(a_arr, b_arr)
+    return _jnp.where(b_arr != 0, quotient, _jnp.zeros_like(quotient))
 
 
 def dot(a, b):
@@ -587,7 +566,11 @@ def dot(a, b):
 
     if a.ndim == 0 or b.ndim == 0:
         return _jnp.multiply(a, b)
-    return _jnp.dot(a, b)
+    if b.ndim == 1:
+        return _jnp.einsum("...i,i->...", a, b)
+    if a.ndim == 1:
+        return _jnp.einsum("i,...i->...", a, b)
+    return _jnp.einsum("...i,...i->...", a, b)
 
 
 def matmul(x, y, out=None):
@@ -620,12 +603,8 @@ def matvec(matrix, vector):
     if vector.ndim == 1:
         return _jnp.matmul(matrix, vector)
     if matrix.ndim == 2:
-        return _jnp.einsum("ij,...j->...i", matrix, vector)
+        return _jnp.matmul(matrix, vector.T).T
     return _jnp.einsum("...ij,...j->...i", matrix, vector)
-
-
-def trace(a):
-    return _jnp.trace(_jnp.asarray(a), axis1=-2, axis2=-1)
 
 
 # One-hot encoding
