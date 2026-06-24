@@ -17,6 +17,16 @@ from typing import Any, Literal
 import numpy as np
 
 ReliabilityMode = Literal["off", "inflate", "hard"] | str
+_BOOL_OR_TEXT_KINDS = {"b", "S", "U"}
+_BOOL_OR_TEXT_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+)
 
 
 @dataclass(frozen=True)
@@ -302,8 +312,22 @@ def _bool_scalar(value: Any, name: str) -> bool:
     return bool(array.item())
 
 
+def _contains_bool_or_text_values(value: Any) -> bool:
+    array = np.asarray(value)
+    if array.dtype.kind in _BOOL_OR_TEXT_KINDS:
+        return True
+    if array.dtype.kind != "O":
+        return False
+    return any(isinstance(item, _BOOL_OR_TEXT_SCALAR_TYPES) for item in array.flat)
+
+
 def _covariance_matrix(value: Any, *, dim: int | None = None) -> np.ndarray:
-    covariance = np.asarray(value, dtype=float)
+    try:
+        if _contains_bool_or_text_values(value):
+            raise ValueError
+        covariance = np.asarray(value, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("covariance must contain only real numeric values") from exc
     if covariance.ndim != 2 or covariance.shape[0] != covariance.shape[1]:
         raise ValueError("covariance must be a square matrix")
     if dim is not None and covariance.shape != (dim, dim):
