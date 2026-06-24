@@ -48,7 +48,9 @@ def test_selection_matrix_selects_state_components() -> None:
 def test_selection_matrix_rejects_bool_and_vector_indices() -> None:
     invalid_cases = (
         (True, [0], "state_dim"),
+        (np.array(True, dtype=object), [0], "state_dim"),
         (3, [False], "observed_dims"),
+        (3, [np.array(False, dtype=object)], "observed_dims"),
         (3, [np.array([1])], "observed_dims"),
     )
 
