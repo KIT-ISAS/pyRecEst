@@ -75,6 +75,8 @@ class TestThinPlateSplineEstimation(unittest.TestCase):
             float("nan"),
             float("inf"),
             -float("inf"),
+            True,
+            False,
             array([1e-3]),
         ):
             with self.subTest(bad_regularization=bad_regularization):

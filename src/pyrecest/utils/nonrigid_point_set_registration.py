@@ -149,7 +149,10 @@ def _validate_regularization(regularization: float) -> float:
     regularization_array = asarray(regularization)
     if regularization_array.shape != ():
         raise ValueError("regularization must be a finite non-negative scalar.")
-    regularization_value = float(regularization_array)
+    regularization_scalar = regularization_array.item()
+    if isinstance(regularization_scalar, bool):
+        raise ValueError("regularization must be a finite non-negative scalar.")
+    regularization_value = float(regularization_scalar)
     if not math.isfinite(regularization_value) or regularization_value < 0.0:
         raise ValueError("regularization must be a finite non-negative scalar.")
     return regularization_value
