@@ -6,8 +6,8 @@ from pyrecest.evaluation import (
 )
 
 
-def test_surface_band_scale_controls_reject_bools_and_non_scalars() -> None:
-    invalid_values = (True, np.array([0.1]))
+def test_surface_band_scale_controls_reject_bools_text_and_non_scalars() -> None:
+    invalid_values = (True, "0.1", b"0.1", np.array("0.1"), np.array([0.1]))
 
     for invalid_value in invalid_values:
         with pytest.raises(ValueError, match="threshold"):
