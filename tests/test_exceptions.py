@@ -23,6 +23,19 @@ def test_backend_not_supported_error_is_not_implemented_error():
     assert "numpy, pytorch" in str(error)
 
 
+def test_backend_not_supported_error_keeps_backendless_context():
+    error = BackendNotSupportedError(
+        "ExampleAPI.batch_update",
+        supported_backends=("numpy",),
+        reason="requires SciPy",
+    )
+
+    assert error.backend is None
+    assert "ExampleAPI.batch_update" in str(error)
+    assert "numpy" in str(error)
+    assert "requires SciPy" in str(error)
+
+
 def test_shape_error_message_includes_expected_shape():
     error = ShapeError("measurement", (2, 3), expected="shape (n,)")
     assert isinstance(error, ValueError)
