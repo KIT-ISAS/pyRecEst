@@ -75,6 +75,30 @@ def test_se2bounded_distance_uses_angular_component_before_linear_dispatch():
     assert _as_float(distance(x_estimate, x_true)) == pytest.approx(float(pi))
 
 
+def test_se2bounded_distance_accepts_vector_states():
+    distance = get_distance_function("se2bounded")
+
+    x_estimate = array([0.0, 1.0, 2.0])
+    x_true = array([pi, 1.0, 2.0])
+
+    assert _as_float(distance(x_estimate, x_true)) == pytest.approx(float(pi))
+
+
+def test_se2_and_se3_linear_distances_accept_vector_states():
+    se2_distance = get_distance_function("se2")
+    assert _as_float(
+        se2_distance(array([0.0, 1.0, 2.0]), array([0.0, 4.0, 6.0]))
+    ) == pytest.approx(5.0)
+
+    se3_distance = get_distance_function("se3")
+    assert _as_float(
+        se3_distance(
+            array([1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0]),
+            array([1.0, 0.0, 0.0, 0.0, 4.0, 6.0, 3.0]),
+        )
+    ) == pytest.approx(5.0)
+
+
 def test_se3bounded_distance_uses_quaternion_component_before_linear_dispatch():
     distance = get_distance_function("se3bounded")
 
