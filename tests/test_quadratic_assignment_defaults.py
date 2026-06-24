@@ -7,6 +7,10 @@ pytorch_backend = None
 if importlib.util.find_spec("torch") is not None:
     from pyrecest._backend import pytorch as pytorch_backend
 
+autograd_backend = None
+if importlib.util.find_spec("autograd") is not None:
+    from pyrecest._backend import autograd as autograd_backend
+
 
 def _problem_matrices():
     adjacency = np.array(
@@ -48,6 +52,19 @@ def test_pytorch_quadratic_assignment_accepts_default_options():
     assignment = pytorch_backend.linalg.quadratic_assignment(
         pytorch_backend.array(adjacency),
         pytorch_backend.array(permuted),
+    )
+
+    assert sorted(assignment) == [0, 1, 2]
+
+
+def test_autograd_quadratic_assignment_accepts_default_options():
+    if autograd_backend is None:
+        return
+    adjacency, permuted = _problem_matrices()
+
+    assignment = autograd_backend.linalg.quadratic_assignment(
+        autograd_backend.array(adjacency),
+        autograd_backend.array(permuted),
     )
 
     assert sorted(assignment) == [0, 1, 2]

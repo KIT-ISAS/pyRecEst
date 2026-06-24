@@ -65,5 +65,5 @@ _logm_vjp = _functools.partial(_adjoint, fn=logm)
 _defvjp(logm, _logm_vjp)
 
 
-def quadratic_assignment(a, b, options):
+def quadratic_assignment(a, b, options=None):
     return list(_quadratic_assignment(a, b, options=options).col_ind)
