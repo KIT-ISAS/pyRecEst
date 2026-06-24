@@ -11,16 +11,35 @@ from pyrecest.exceptions import (
     ShapeError,
 )
 
+_TEXT_OR_BOOL_KINDS = {"b", "S", "U"}
+_TEXT_OR_BOOL_SCALAR_TYPES = (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
 
-def _to_numpy_array(value) -> np.ndarray:
+
+def _contains_text_or_bool_values(value) -> bool:
+    value_array = np.asarray(value)
+    if value_array.dtype.kind in _TEXT_OR_BOOL_KINDS:
+        return True
+    if value_array.dtype.kind != "O":
+        return False
+    return any(isinstance(item, _TEXT_OR_BOOL_SCALAR_TYPES) for item in value_array.flat)
+
+
+def _to_numpy_array(value, *, name: str = "matrix") -> np.ndarray:
     try:
         import pyrecest.backend as backend
 
-        return np.asarray(backend.to_numpy(value), dtype=float)
+        raw = backend.to_numpy(value)
     except (
         Exception
     ):  # pragma: no cover - fallback for source-tree bootstrap or unusual array objects
-        return np.asarray(value, dtype=float)
+        raw = value
+
+    try:
+        if _contains_text_or_bool_values(raw):
+            raise ValueError
+        return np.asarray(raw, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain numeric values.") from exc
 
 
 def _from_numpy_array(value: np.ndarray):
@@ -103,7 +122,10 @@ def symmetrize_matrix(matrix):
 def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
     """Return whether a matrix is symmetric within an absolute tolerance."""
     atol = _validate_nonnegative_finite("atol", atol)
-    arr = _to_numpy_array(matrix)
+    try:
+        arr = _to_numpy_array(matrix)
+    except ValueError:
+        return False
     return bool(
         arr.ndim == 2
         and arr.shape[0] == arr.shape[1]
@@ -115,7 +137,10 @@ def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
 def is_positive_semidefinite(matrix, *, atol: float = 1e-10) -> bool:
     """Return whether a symmetric matrix is positive semidefinite within tolerance."""
     atol = _validate_nonnegative_finite("atol", atol)
-    arr = _to_numpy_array(matrix)
+    try:
+        arr = _to_numpy_array(matrix)
+    except ValueError:
+        return False
     if (
         arr.ndim != 2
         or arr.shape[0] != arr.shape[1]
@@ -180,7 +205,7 @@ def assert_covariance_matrix(
     """Validate a covariance matrix and return it in the active backend representation."""
     atol = _validate_nonnegative_finite("atol", atol)
     dim = _validate_optional_dimension("dim", dim)
-    arr = _to_numpy_array(matrix)
+    arr = _to_numpy_array(matrix, name=name)
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ShapeError(f"{name} must be a square matrix, got shape {arr.shape}.")
     if dim is not None and arr.shape[0] != dim:
