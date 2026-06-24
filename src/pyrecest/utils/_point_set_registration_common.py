@@ -162,6 +162,25 @@ def _validate_max_cost(max_cost) -> float:
     return max_cost_value
 
 
+def _validate_tolerance(tolerance) -> float:
+    tolerance_array = asarray(tolerance)
+    if tolerance_array.shape != ():
+        raise ValueError("tolerance must be a finite non-negative scalar.")
+
+    tolerance_scalar = tolerance_array.item()
+    if isinstance(tolerance_scalar, bool):
+        raise ValueError("tolerance must be a finite non-negative scalar.")
+
+    try:
+        tolerance_value = float(tolerance_scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("tolerance must be a finite non-negative scalar.") from exc
+
+    if not math.isfinite(tolerance_value) or tolerance_value < 0.0:
+        raise ValueError("tolerance must be a finite non-negative scalar.")
+    return tolerance_value
+
+
 def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
     """Solve one-to-one assignment with optional gating."""
     costs = asarray(cost_matrix)
@@ -255,6 +274,7 @@ def run_registration_loop(  # pylint: disable=too-many-locals
     assignment = zeros((reference.shape[0],), dtype=int64) - 1
     converged = False
     iteration = 0
+    tolerance = _validate_tolerance(config.tolerance)
     association_cost = (
         default_cost if config.cost_function is None else config.cost_function
     )
@@ -300,7 +320,7 @@ def run_registration_loop(  # pylint: disable=too-many-locals
         transform = updated_transform
         assignment = new_assignment
 
-        if same_assignment and change <= config.tolerance:
+        if same_assignment and change <= tolerance:
             converged = True
             break
 
