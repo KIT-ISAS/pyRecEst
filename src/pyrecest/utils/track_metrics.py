@@ -323,14 +323,29 @@ def _session_times(
 ) -> np.ndarray:
     if session_times is None:
         return np.arange(n_sessions, dtype=float)
-    times = np.asarray(session_times, dtype=float)
-    if times.shape != (n_sessions,):
+    raw_times = np.asarray(session_times, dtype=object)
+    if raw_times.shape != (n_sessions,):
         raise ValueError(
             "session_times must have length equal to the number of sessions"
         )
+    if _contains_bool_or_text(raw_times):
+        raise ValueError("session_times must contain only finite numeric values")
+    try:
+        times = raw_times.astype(float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            "session_times must contain only finite numeric values"
+        ) from exc
     if not np.all(np.isfinite(times)):
         raise ValueError("session_times must contain only finite values")
+    if np.any(np.diff(times) < 0):
+        raise ValueError("session_times must be nondecreasing")
     return times
+
+
+def _contains_bool_or_text(values: np.ndarray) -> bool:
+    invalid_types = (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+    return any(isinstance(value, invalid_types) for value in values.flat)
 
 
 def _as_positive_int(value: Any, name: str) -> int:
