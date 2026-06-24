@@ -1,0 +1,67 @@
+import unittest
+
+import numpy as np
+import pyrecest.backend
+from pyrecest.utils import (
+    min_cost_max_cardinality_assignment,
+    murty_k_best_assignments,
+)
+
+
+class AssignmentCostMatrixValidationTest(unittest.TestCase):
+    @staticmethod
+    def _solvers():
+        return (
+            ("murty", lambda matrix: murty_k_best_assignments(matrix, k=1)),
+            ("max_cardinality", min_cost_max_cardinality_assignment),
+        )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_nan_cost_matrix_entries_are_rejected(self):
+        for solver_name, solver in self._solvers():
+            with self.subTest(solver=solver_name):
+                with self.assertRaisesRegex(ValueError, "positive infinity"):
+                    solver(np.array([[np.nan, 1.0]]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_negative_infinite_cost_matrix_entries_are_rejected(self):
+        for solver_name, solver in self._solvers():
+            with self.subTest(solver=solver_name):
+                with self.assertRaisesRegex(ValueError, "positive infinity"):
+                    solver(np.array([[-np.inf, 1.0]]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_boolean_cost_matrix_is_rejected(self):
+        for solver_name, solver in self._solvers():
+            with self.subTest(solver=solver_name):
+                with self.assertRaisesRegex(ValueError, "not boolean"):
+                    solver(np.array([[True, False]]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_positive_infinity_remains_infeasible_edge_sentinel(self):
+        solutions = murty_k_best_assignments(
+            np.array([[np.inf, 1.0]]),
+            k=1,
+            row_non_assignment_costs=5.0,
+            col_non_assignment_costs=0.0,
+        )
+
+        self.assertEqual(len(solutions), 1)
+        np.testing.assert_array_equal(solutions[0]["assignment"], np.array([1]))
+        self.assertAlmostEqual(solutions[0]["cost"], 1.0)
+
+
+if __name__ == "__main__":
+    unittest.main()

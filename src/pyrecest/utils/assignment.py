@@ -16,6 +16,8 @@ from pyrecest.backend import concatenate as _concatenate
 from pyrecest.backend import full as _full
 from pyrecest.backend import int64 as _int64
 from pyrecest.backend import isfinite as _isfinite
+from pyrecest.backend import isinf as _isinf
+from pyrecest.backend import isnan as _isnan
 from pyrecest.backend import sum as _sum
 from pyrecest.backend import where as _where
 from pyrecest.backend import zeros as _zeros
@@ -65,6 +67,29 @@ def _validate_assignment_count(k: int) -> int:
 def _has_boolean_dtype(value) -> bool:
     dtype = getattr(value, "dtype", None)
     return dtype is not None and str(dtype).lower() in {"bool", "bool_", "torch.bool"}
+
+
+def _coerce_cost_matrix(cost_matrix):
+    try:
+        raw_cost_matrix = _asarray(cost_matrix)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError("cost_matrix must be numeric") from exc
+    if _has_boolean_dtype(raw_cost_matrix):
+        raise ValueError("cost_matrix must be numeric, not boolean")
+
+    try:
+        coerced_cost_matrix = _asarray(raw_cost_matrix, dtype=float)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError("cost_matrix must be numeric") from exc
+    if coerced_cost_matrix.ndim != 2:
+        raise ValueError("cost_matrix must be a two-dimensional array")
+    if _any(_isnan(coerced_cost_matrix)) or _any(
+        _isinf(coerced_cost_matrix) & (coerced_cost_matrix < 0.0)
+    ):
+        raise ValueError(
+            "cost_matrix may only contain finite values or positive infinity"
+        )
+    return coerced_cost_matrix
 
 
 def _coerce_non_assignment_costs(costs, size: int, name: str):
@@ -214,9 +239,7 @@ def murty_k_best_assignments(  # pylint: disable=too-many-locals
             "murty_k_best_assignments is not supported on the JAX backend."
         )
 
-    cost_matrix = _asarray(cost_matrix, dtype=float)
-    if cost_matrix.ndim != 2:
-        raise ValueError("cost_matrix must be a two-dimensional array")
+    cost_matrix = _coerce_cost_matrix(cost_matrix)
 
     n_rows, n_cols = cost_matrix.shape
     row_non_assignment_costs = _coerce_non_assignment_costs(
@@ -314,9 +337,7 @@ def min_cost_max_cardinality_assignment(cost_matrix):
             "min_cost_max_cardinality_assignment is not supported on the JAX backend."
         )
 
-    cost_matrix = _asarray(cost_matrix, dtype=float)
-    if cost_matrix.ndim != 2:
-        raise ValueError("cost_matrix must be a two-dimensional array")
+    cost_matrix = _coerce_cost_matrix(cost_matrix)
 
     n_rows, n_cols = cost_matrix.shape
     assignment = _full((n_rows,), -1, dtype=_int64)
