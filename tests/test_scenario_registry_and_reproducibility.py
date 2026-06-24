@@ -4,13 +4,18 @@ import pytest
 from pyrecest.scenarios import available_scenario_types, run_scenario
 
 
-def _write_particle_scenario(path: Path, weights: str, num_samples: str = "4") -> None:
+def _write_particle_scenario(
+    path: Path,
+    weights: str,
+    num_samples: str = "4",
+    seed: str = "7",
+) -> None:
     path.write_text(
         f"""
 [scenario]
 type = "particle_resampling"
 name = "particle-resampling"
-seed = 7
+seed = {seed}
 
 [data]
 particles = [[0.0, 0.0], [1.0, 0.0]]
@@ -50,7 +55,7 @@ num_samples = 8
     assert first.metrics["effective_sample_size"] > 0.0
 
 
-@pytest.mark.parametrize("num_samples", ["0", "-1", "1.5", "true"])
+@pytest.mark.parametrize("num_samples", ["0", "-1", "1.5", "true", '"4"'])
 def test_particle_resampling_scenario_rejects_invalid_num_samples(
     tmp_path: Path, num_samples: str
 ):
@@ -58,6 +63,30 @@ def test_particle_resampling_scenario_rejects_invalid_num_samples(
     _write_particle_scenario(scenario, "[0.5, 0.5]", num_samples=num_samples)
 
     with pytest.raises(ValueError, match="num_samples must be a positive integer"):
+        run_scenario(scenario)
+
+
+@pytest.mark.parametrize("seed", ["-1", "1.5", "true", '"7"'])
+def test_particle_resampling_scenario_rejects_invalid_seed(
+    tmp_path: Path,
+    seed: str,
+):
+    scenario = tmp_path / "invalid_seed.toml"
+    _write_particle_scenario(scenario, "[0.5, 0.5]", seed=seed)
+
+    with pytest.raises(ValueError, match="seed must be a non-negative integer"):
+        run_scenario(scenario)
+
+
+@pytest.mark.parametrize("weights", ["[true, false]", '["0.5", "0.5"]'])
+def test_particle_resampling_scenario_rejects_nonnumeric_weights(
+    tmp_path: Path,
+    weights: str,
+):
+    scenario = tmp_path / "nonnumeric_weights.toml"
+    _write_particle_scenario(scenario, weights)
+
+    with pytest.raises(ValueError, match="weights must contain numeric values"):
         run_scenario(scenario)
 
 
