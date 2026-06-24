@@ -127,6 +127,23 @@ class TestJointRegistrationAssignment(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",
         reason="Not supported on this backend",
     )
+    def test_joint_registration_assignment_rejects_invalid_tolerance(self):
+        points = array([[0.0, 0.0], [1.0, 0.0]])
+
+        for invalid_tolerance in (float("nan"), float("inf"), -1.0):
+            with self.subTest(invalid_tolerance=invalid_tolerance):
+                with self.assertRaisesRegex(ValueError, "tolerance"):
+                    joint_registration_assignment(
+                        points,
+                        points,
+                        model="translation",
+                        tolerance=invalid_tolerance,
+                    )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_joint_registration_assignment_recovers_permuted_affine_matches(self):
         reference = array(
             [
