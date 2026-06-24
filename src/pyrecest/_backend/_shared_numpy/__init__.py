@@ -87,9 +87,10 @@ def squeeze(x, axis=None):
     x = x if is_array(x) else array(x)
     if axis is None:
         return _np.squeeze(x)
-    if x.shape[axis] != 1:
+    axes = (int(axis),) if isinstance(axis, (int, _np.integer)) else tuple(axis)
+    if any(x.shape[one_axis] != 1 for one_axis in axes):
         return x
-    return _np.squeeze(x, axis=axis)
+    return _np.squeeze(x, axis=axes)
 
 
 def flatten(x):
@@ -407,7 +408,7 @@ def matvec(A, b):
     if b.ndim == 1:
         return _np.matmul(A, b)
     if A.ndim == 2:
-        return _np.matmul(A, b.T).T
+        return _np.einsum("ij,...j->...i", A, b)
     return _np.einsum("...ij,...j->...i", A, b)
 
 
@@ -456,8 +457,8 @@ def scatter_add(input, dim, index, src):
     if dim == 1:
         for j in range(len(input)):
             for i, val in zip(index[j], src[j]):
-                if not isinstance(val, _np.float64) and BACKEND_NAME == "autograd":
-                    val = float(val._value)
-                input[j, i] += float(val)
+                if BACKEND_NAME == "autograd" and hasattr(val, "_value"):
+                    val = val._value
+                input[j, i] += val
         return input
     raise NotImplementedError
