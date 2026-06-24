@@ -42,6 +42,19 @@ def test_choice_without_replacement_shuffle_false_preserves_order():
     np.testing.assert_array_equal(column_samples, matrix)
 
 
+def test_choice_without_replacement_shuffle_false_preserves_population_order_for_unsorted_values():
+    values = np.array([30, 10, 20, 40])
+
+    random.seed(1)
+    expected_indices = np.sort(np.random.choice(values.shape[0], size=3, replace=False))
+    expected = values[expected_indices]
+
+    random.seed(1)
+    samples = random.choice(values, size=3, replace=False, shuffle=False)
+
+    np.testing.assert_array_equal(samples, expected)
+
+
 @pytest.mark.parametrize("control", ["replace", "shuffle"])
 def test_choice_rejects_non_boolean_controls(control):
     kwargs = {control: "False"}
