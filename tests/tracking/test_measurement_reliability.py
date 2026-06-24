@@ -17,6 +17,15 @@ def test_reliability_to_covariance_scale_uses_inverse_probability() -> None:
     assert reliability_to_covariance_scale(0.01, floor=0.1) == 10.0
 
 
+def test_max_scale_caps_at_or_above_nominal_scale() -> None:
+    assert reliability_to_covariance_scale(0.25, max_scale=2.0) == 2.0
+
+    with pytest.raises(ValueError, match="max_scale must be at least 1"):
+        reliability_to_covariance_scale(0.25, max_scale=0.5)
+    with pytest.raises(ValueError, match="max_scale must be at least 1"):
+        MeasurementReliabilityConfig(max_scale=0.5)
+
+
 def test_scale_covariance_by_reliability_returns_scaled_copy() -> None:
     cov = np.diag([4.0, 9.0])
     scaled, scale = scale_covariance_by_reliability(cov, 0.25)
