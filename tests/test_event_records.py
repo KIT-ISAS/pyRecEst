@@ -10,8 +10,17 @@ class TestTrackingEventScalarValidation(unittest.TestCase):
 
         self.assertEqual(event.time, 1.25)
 
-    def test_time_rejects_bool_and_non_scalar_values(self):
-        for time in (True, np.bool_(False), np.array([1.0]), np.array([[1.0]])):
+    def test_time_rejects_bool_text_and_non_scalar_values(self):
+        invalid_times = (
+            True,
+            np.bool_(False),
+            "1.0",
+            b"1.0",
+            np.array("1.0", dtype=object),
+            np.array([1.0]),
+            np.array([[1.0]]),
+        )
+        for time in invalid_times:
             with self.subTest(time=time):
                 with self.assertRaisesRegex(ValueError, "time must be finite"):
                     TrackingEvent(time=time, source="sensor")
@@ -34,16 +43,34 @@ class TestTrackingRecordScalarValidation(unittest.TestCase):
 
         self.assertEqual(record.nis, 2.5)
 
-    def test_time_rejects_bool_and_non_scalar_values(self):
-        for time in (True, np.bool_(False), np.array([1.0]), np.array([[1.0]])):
+    def test_time_rejects_bool_text_and_non_scalar_values(self):
+        invalid_times = (
+            True,
+            np.bool_(False),
+            "1.0",
+            b"1.0",
+            np.array("1.0", dtype=object),
+            np.array([1.0]),
+            np.array([[1.0]]),
+        )
+        for time in invalid_times:
             kwargs = self._valid_record_kwargs()
             kwargs["time"] = time
             with self.subTest(time=time):
                 with self.assertRaisesRegex(ValueError, "time must be finite"):
                     TrackingRecord(**kwargs)
 
-    def test_nis_rejects_bool_non_scalar_and_negative_values(self):
-        invalid_nis_values = (True, np.bool_(False), np.array([1.0]), -1.0, np.nan)
+    def test_nis_rejects_bool_text_non_scalar_and_negative_values(self):
+        invalid_nis_values = (
+            True,
+            np.bool_(False),
+            "2.5",
+            b"2.5",
+            np.array("2.5", dtype=object),
+            np.array([1.0]),
+            -1.0,
+            np.nan,
+        )
 
         for nis in invalid_nis_values:
             with self.subTest(nis=nis):
