@@ -380,6 +380,12 @@ def _parse_optional_int(value: Any) -> int | None:
 def _optional_int_candidate(value: Any) -> Any:
     if value is None:
         return _MISSING
+    if isinstance(value, np.ndarray):
+        if value.ndim != 0:
+            return _MISSING
+        value = value.item()
+    if isinstance(value, (bool, np.bool_)):
+        return _MISSING
     if isinstance(value, bytes):
         value = value.decode("utf-8")
     if isinstance(value, str):
