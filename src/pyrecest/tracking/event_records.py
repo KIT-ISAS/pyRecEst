@@ -65,7 +65,7 @@ def _finite_scalar(value: Any, *, name: str, message: str) -> float:
         raise ValueError(message)
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
         raise ValueError(message)
     try:
         parsed = float(scalar)
