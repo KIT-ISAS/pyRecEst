@@ -28,7 +28,7 @@ def test_top_count_mask_uses_tie_break_scores() -> None:
 
 
 def test_top_count_mask_rejects_invalid_retained_count_scalars() -> None:
-    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]))
+    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]), "1", np.str_("1"), np.array("1"))
 
     for retained_count in invalid_counts:
         with pytest.raises(ValueError, match="retained_count"):
@@ -60,7 +60,7 @@ def test_top_fraction_mask_uses_ceil_retained_count() -> None:
 
 
 def test_retained_count_from_fraction_rejects_invalid_count_scalars() -> None:
-    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]))
+    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]), "1", np.str_("1"), np.array("1"))
 
     for item_count in invalid_counts:
         with pytest.raises(ValueError, match="item_count"):
@@ -69,6 +69,16 @@ def test_retained_count_from_fraction_rejects_invalid_count_scalars() -> None:
     for min_count in invalid_counts:
         with pytest.raises(ValueError, match="min_count"):
             retained_count_from_fraction(10, 0.5, min_count=min_count)
+
+
+def test_selection_helpers_reject_text_scalar_fractions() -> None:
+    for fraction in ("0.5", np.str_("0.5"), np.array("0.5")):
+        with pytest.raises(ValueError, match="retention_fraction"):
+            retained_count_from_fraction(10, fraction)
+        with pytest.raises(ValueError, match="quantile"):
+            quantile_tail_threshold([0.0, 1.0], fraction)
+        with pytest.raises(ValueError, match="rescue_fraction"):
+            tail_rescue_quota_count(3, rescue_fraction=fraction)
 
 
 def test_quantile_tail_mask_selects_lower_tail() -> None:
@@ -158,7 +168,7 @@ def test_tail_rescue_quota_count_validates_fraction() -> None:
 
 
 def test_tail_rescue_quota_count_rejects_invalid_retained_count_scalars() -> None:
-    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]))
+    invalid_counts = (True, False, 1.5, np.nan, np.inf, np.array([1]), "1", np.str_("1"), np.array("1"))
 
     for retained_count in invalid_counts:
         with pytest.raises(ValueError, match="retained_count"):
