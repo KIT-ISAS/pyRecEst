@@ -295,10 +295,16 @@ def _maybe_call(value: Any, *, allow_methods: bool) -> Any:
 
 
 def _positive_int_or_none(value: Any) -> int | None:
-    if isinstance(value, bool):
+    if isinstance(value, (bool, np.bool_)):
         return None
-    if isinstance(value, Integral) and int(value) > 0:
-        return int(value)
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        return None
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        return None
+    if isinstance(scalar, Integral) and int(scalar) > 0:
+        return int(scalar)
     return None
 
 
