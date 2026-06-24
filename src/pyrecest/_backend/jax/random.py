@@ -272,6 +272,12 @@ def _normalize_choice_axis(axis, ndim):
     return axis % ndim
 
 
+def _choice_bool(value, name):
+    if isinstance(value, (bool, _np.bool_)):
+        return bool(value)
+    raise TypeError(f"{name} must be a boolean")
+
+
 def _choice_population_size(a, kwargs):
     population_size = _integer_population_size(a)
     if population_size is not None:
@@ -303,6 +309,7 @@ def _choice(state, a, size=None, replace=True, p=None, *args, **kwargs):
     state, key = jax.random.split(state)
     a = _jnp.asarray(a)
     shape = _shape_from_size(size)
+    replace = _choice_bool(replace, "replace")
     population_size = _choice_population_size(a, kwargs)
     if population_size == 0:
         if _shape_has_no_samples(shape):
