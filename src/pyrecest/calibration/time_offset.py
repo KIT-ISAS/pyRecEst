@@ -74,8 +74,11 @@ def _as_finite_float(value: Any, name: str) -> float:
     arr = np.asarray(value)
     if arr.ndim != 0 or arr.dtype == np.bool_:
         raise ValueError(f"{name} must be a finite scalar")
+    scalar = arr.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
+        raise ValueError(f"{name} must be a finite scalar")
     try:
-        result = float(arr.item())
+        result = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must be a finite scalar") from exc
     if not np.isfinite(result):
@@ -90,7 +93,7 @@ def _as_nonnegative_time_delta(value: Any, name: str) -> float:
     if arr.ndim != 0 or arr.dtype == np.bool_:
         raise ValueError(f"{name} must be nonnegative")
     scalar = arr.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
         raise ValueError(f"{name} must be nonnegative")
     try:
         result = float(scalar)
