@@ -273,11 +273,9 @@ def distance_quantiles(
 ) -> dict[float, float]:
     """Return quantiles of directed nearest-neighbor distances."""
 
-    quantile_values = tuple(float(quantile) for quantile in quantiles)
+    quantile_values = tuple(_validate_quantile(quantile) for quantile in quantiles)
     if not quantile_values:
         raise ValueError("At least one quantile is required.")
-    if any(quantile < 0.0 or quantile > 1.0 for quantile in quantile_values):
-        raise ValueError("Quantiles must be in [0, 1].")
     distances = nearest_neighbor_distances(
         query, reference, query_chunk_size=query_chunk_size
     )
@@ -393,8 +391,37 @@ def _normalize_optional_integer(value: Any, name: str) -> int | None:
     return int(scalar_float)
 
 
+def _validate_numeric_scalar(value: Any, message: str) -> float:
+    try:
+        array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+    if array.shape != () or array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = array.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes)):
+        raise ValueError(message)
+    try:
+        value_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(value_float):
+        raise ValueError(message)
+    return value_float
+
+
 def _validate_threshold(threshold: float) -> float:
-    threshold_float = float(threshold)
-    if not np.isfinite(threshold_float) or threshold_float < 0.0:
-        raise ValueError("Distance thresholds must be finite and non-negative.")
+    message = "Distance thresholds must be finite and non-negative numeric scalars."
+    threshold_float = _validate_numeric_scalar(threshold, message)
+    if threshold_float < 0.0:
+        raise ValueError(message)
     return threshold_float
+
+
+def _validate_quantile(quantile: float) -> float:
+    message = "Quantiles must be finite numeric scalars in [0, 1]."
+    quantile_float = _validate_numeric_scalar(quantile, message)
+    if quantile_float < 0.0 or quantile_float > 1.0:
+        raise ValueError("Quantiles must be in [0, 1].")
+    return quantile_float
