@@ -4,5 +4,35 @@ import pytest
 from pyrecest.calibration.bias import SensorBiasCorrectionModel
 
 
-def test_placeholder():
-    assert True
+def _unit_feature_model_kwargs():
+    return {
+        "target_dim": 1,
+        "feature_dim": 1,
+        "intercept": np.array([0.0]),
+        "coefficients": np.array([[1.0]]),
+        "feature_mean": np.array([0.0]),
+        "feature_scale": np.array([1.0]),
+        "residual_std": np.array([0.0]),
+        "training_count": 2,
+        "ridge_alpha": 0.0,
+    }
+
+
+def test_model_rejects_text_array_field_before_float_coercion():
+    kwargs = _unit_feature_model_kwargs()
+    kwargs["intercept"] = np.array(["0.0"])
+
+    with pytest.raises(ValueError) as exc_info:
+        SensorBiasCorrectionModel(**kwargs)
+
+    assert "intercept must contain numeric values" in str(exc_info.value)
+
+
+def test_model_rejects_boolean_array_field_before_float_coercion():
+    kwargs = _unit_feature_model_kwargs()
+    kwargs["coefficients"] = np.array([[True]])
+
+    with pytest.raises(ValueError) as exc_info:
+        SensorBiasCorrectionModel(**kwargs)
+
+    assert "coefficients must contain numeric values" in str(exc_info.value)
