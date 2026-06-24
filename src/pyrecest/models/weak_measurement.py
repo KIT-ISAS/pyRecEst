@@ -51,15 +51,19 @@ def block_diag_measurement_covariance(
             raise TypeError("weak_std must be a mapping when trusted_std is a mapping")
         trusted_map = dict(trusted_std or {})
         weak_map = dict(weak_std or {})
+        provided_order = [
+            *trusted_map.keys(),
+            *(key for key in weak_map if key not in trusted_map),
+        ]
         if dimension_order is None:
-            order = [
-                *trusted_map.keys(),
-                *(key for key in weak_map if key not in trusted_map),
-            ]
+            order = provided_order
         else:
             order = list(dimension_order)
             if len(set(order)) != len(order):
                 raise ValueError("dimension_order must not contain duplicate entries")
+            omitted = [key for key in provided_order if key not in order]
+            if omitted:
+                raise KeyError(f"dimension_order omits std entries: {omitted}")
         missing = [
             key for key in order if key not in trusted_map and key not in weak_map
         ]
