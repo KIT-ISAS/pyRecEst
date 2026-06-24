@@ -12,7 +12,7 @@ from .linear_gaussian import LinearGaussianMeasurementModel
 
 def diagonal_measurement_covariance(stds: Sequence[float] | np.ndarray) -> np.ndarray:
     'Return a diagonal covariance matrix from measurement standard deviations.'
-    values = np.asarray(stds, dtype=float).reshape(-1)
+    values = _as_numeric_array(stds, "stds").reshape(-1)
     if values.size == 0:
         raise ValueError("stds must contain at least one standard deviation")
     if not np.isfinite(values).all() or np.any(values <= 0.0):
@@ -60,9 +60,9 @@ def block_diag_measurement_covariance(
 
     stds: list[float] = []
     if trusted_std is not None:
-        stds.extend(float(value) for value in trusted_std)
+        stds.extend(trusted_std)
     if weak_std is not None:
-        stds.extend(float(value) for value in weak_std)
+        stds.extend(weak_std)
     return diagonal_measurement_covariance(stds)
 
 
@@ -100,7 +100,7 @@ class MaskedLinearMeasurementModel(LinearGaussianMeasurementModel):
         covariance = (
             diagonal_measurement_covariance(stds)
             if stds is not None
-            else np.asarray(measurement_noise_cov, dtype=float)
+            else _as_numeric_array(measurement_noise_cov, "measurement_noise_cov")
         )
         super().__init__(matrix, covariance)
         self.observed_dims = tuple(
@@ -134,7 +134,7 @@ class WeakDimensionMeasurementModel(LinearGaussianMeasurementModel):
         if stds is not None and (trusted_std is not None or weak_std is not None):
             raise ValueError("stds cannot be combined with trusted_std or weak_std")
         if measurement_noise_cov is not None:
-            covariance = np.asarray(measurement_noise_cov, dtype=float)
+            covariance = _as_numeric_array(measurement_noise_cov, "measurement_noise_cov")
         elif stds is not None and _is_mapping(stds):
             covariance = block_diag_measurement_covariance(
                 trusted_std=stds, dimension_order=dimension_order
@@ -167,6 +167,30 @@ def weak_dimension_measurement_model(
 ) -> WeakDimensionMeasurementModel:
     'Convenience constructor for weak-dimension linear measurements.'
     return WeakDimensionMeasurementModel(measurement_matrix, stds=stds)
+
+
+def _as_numeric_array(values: object, name: str) -> np.ndarray:
+    try:
+        raw = np.asarray(values)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must contain numeric values") from exc
+    if _contains_bool_or_text(raw):
+        raise ValueError(f"{name} must contain numeric values")
+    try:
+        return np.asarray(values, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain numeric values") from exc
+
+
+def _contains_bool_or_text(values: np.ndarray) -> bool:
+    if values.dtype.kind in "bUS":
+        return True
+    if values.dtype == object:
+        return any(
+            isinstance(item, (bool, np.bool_, str, bytes, bytearray))
+            for item in values.reshape(-1)
+        )
+    return False
 
 
 def _is_mapping(value: object) -> bool:
