@@ -15,6 +15,8 @@ from typing import Any
 
 import numpy as np
 
+_TEXT_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+
 
 @dataclass(frozen=True)
 class CandidatePruningConfig:
@@ -155,6 +157,33 @@ def _normalize_bounded_scalar(
     return parsed
 
 
+def _contains_text_values(value: Any) -> bool:
+    if isinstance(value, _TEXT_TYPES):
+        return True
+    try:
+        values = np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError):
+        return False
+    return any(isinstance(item, _TEXT_TYPES) for item in values)
+
+
+def _as_numeric_matrix(value: Any, name: str) -> np.ndarray:
+    try:
+        raw_values = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be numeric") from exc
+
+    if raw_values.dtype == np.bool_:
+        raise ValueError(f"{name} must be numeric, not boolean")
+    if _contains_text_values(value) or _contains_text_values(raw_values):
+        raise ValueError(f"{name} must be numeric")
+
+    try:
+        return np.asarray(raw_values, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be numeric") from exc
+
+
 def candidate_mask_from_costs(
     cost_matrix: Any,
     *,
@@ -292,7 +321,7 @@ def _effective_large_cost(costs: np.ndarray, penalty: float) -> float:
 
 
 def _as_cost_matrix(cost_matrix: Any) -> np.ndarray:
-    costs = np.asarray(cost_matrix, dtype=float)
+    costs = _as_numeric_matrix(cost_matrix, "cost_matrix")
     if costs.ndim != 2:
         raise ValueError("cost_matrix must be two-dimensional")
     return np.nan_to_num(costs, nan=np.inf, posinf=np.inf, neginf=np.inf)
@@ -302,7 +331,7 @@ def _as_probability_matrix(
     probability_matrix: Any,
     shape: tuple[int, int],
 ) -> np.ndarray:
-    probabilities = np.asarray(probability_matrix, dtype=float)
+    probabilities = _as_numeric_matrix(probability_matrix, "probability_matrix")
     if probabilities.shape != shape:
         raise ValueError("probability_matrix must match cost_matrix shape")
     finite = np.isfinite(probabilities)
