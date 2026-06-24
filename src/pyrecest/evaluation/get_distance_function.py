@@ -156,6 +156,20 @@ def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
     return matched_cost + float(cutoff_distance) * missed_count
 
 
+def _state_component(value, index: int):
+    value = asarray(value)
+    if value.ndim == 1:
+        return value[index]
+    return value[index, :]
+
+
+def _state_slice(value, start: int, stop: int):
+    value = asarray(value)
+    if value.ndim == 1:
+        return value[start:stop]
+    return value[start:stop, :]
+
+
 def _angular_distance_from_inner_product(inner_product):
     return arccos(clip(inner_product, -1.0, 1.0))
 
@@ -197,13 +211,16 @@ def get_distance_function(
 
         def distance_function(xest, xtrue):
             return linalg.norm(
-                AbstractHypertoroidalDistribution.angular_error(xest[0, :], xtrue[0, :])
+                AbstractHypertoroidalDistribution.angular_error(
+                    _state_component(xest, 0),
+                    _state_component(xtrue, 0),
+                )
             )
 
     elif "se2" in normalized_name or "se2linear" in normalized_name:
 
         def distance_function(x1, x2):
-            return linalg.norm(x1[1:3, :] - x2[1:3, :])
+            return linalg.norm(_state_slice(x1, 1, 3) - _state_slice(x2, 1, 3))
 
     elif "se3bounded" in normalized_name:
 
@@ -216,7 +233,7 @@ def get_distance_function(
     elif "se3" in normalized_name or "se3linear" in normalized_name:
 
         def distance_function(x1, x2):
-            return linalg.norm(x1[4:7, :] - x2[4:7, :])
+            return linalg.norm(_state_slice(x1, 4, 7) - _state_slice(x2, 4, 7))
 
     elif "euclidean" in normalized_name and "mtt" not in normalized_name:
 
