@@ -34,7 +34,7 @@ class _MurtySubproblem:
 
 
 def _validate_assignment_count(k: int) -> int:
-    if isinstance(k, bool):
+    if isinstance(k, (bool, str, bytes)):
         raise ValueError("k must be an integer")
     if isinstance(k, Integral):
         return int(k)
@@ -52,7 +52,7 @@ def _validate_assignment_count(k: int) -> int:
         scalar = k_array.item()
     except AttributeError:
         scalar = k_array
-    if isinstance(scalar, bool):
+    if isinstance(scalar, (bool, str, bytes)):
         raise ValueError("k must be an integer")
 
     try:
