@@ -94,6 +94,20 @@ def test_size_arguments_reject_bool_and_non_integral_dimensions(bad_size):
             sampler(bad_size)
 
 
+@pytest.mark.parametrize("bad_replace", ["False", "True", 1, 0, None, np.array(True)])
+def test_choice_rejects_non_boolean_replace_flag(bad_replace):
+    with pytest.raises(TypeError, match="replace must be a boolean"):
+        random.choice(jnp.array([0, 1, 2]), size=2, replace=bad_replace)
+
+
+def test_choice_accepts_numpy_boolean_replace_flag():
+    random.seed(0)
+
+    sample = random.choice(jnp.array([0, 1, 2]), size=2, replace=np.bool_(False))
+
+    assert sample.shape == (2,)
+
+
 @pytest.mark.parametrize("bad_size", [-1, (2, -1)])
 def test_size_arguments_reject_negative_dimensions(bad_size):
     for sampler in _size_aware_samplers():
