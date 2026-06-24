@@ -7,6 +7,9 @@ from typing import Any
 
 import numpy as np
 
+_TEXT_OR_BOOL_KINDS = {"b", "S", "U"}
+_TEXT_OR_BOOL_SCALAR_TYPES = (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+
 
 @dataclass(frozen=True)
 class WeightedGaussianHypothesis:
@@ -18,17 +21,15 @@ class WeightedGaussianHypothesis:
     metadata: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
-        mean = np.asarray(self.mean, dtype=float).reshape(-1)
-        covariance = np.asarray(self.covariance, dtype=float)
+        mean = _as_float_array(self.mean, "mean").reshape(-1)
+        covariance = _as_float_array(self.covariance, "covariance")
         if not np.all(np.isfinite(mean)):
             raise ValueError("mean must contain only finite values")
         if covariance.shape != (mean.size, mean.size):
             raise ValueError("covariance must match mean dimension")
         if not np.all(np.isfinite(covariance)):
             raise ValueError("covariance must contain only finite values")
-        log_weight = float(self.log_weight)
-        if np.isnan(log_weight):
-            raise ValueError("log_weight must not be NaN")
+        log_weight = _as_log_weight(self.log_weight)
         object.__setattr__(self, "mean", mean)
         object.__setattr__(self, "covariance", _symmetrized(covariance))
         object.__setattr__(self, "log_weight", log_weight)
@@ -64,7 +65,7 @@ def moment_match_gaussian_hypotheses(
 
 def normalize_log_weights(log_weights: list[float] | np.ndarray) -> np.ndarray:
     """Normalize log weights to probabilities in a numerically stable way."""
-    values = np.asarray(log_weights, dtype=float).reshape(-1)
+    values = _as_float_array(log_weights, "log_weights").reshape(-1)
     if values.size == 0:
         raise ValueError("log_weights must not be empty")
     if np.any(np.isnan(values)):
@@ -86,6 +87,32 @@ def normalize_log_weights(log_weights: list[float] | np.ndarray) -> np.ndarray:
     return weights / total
 
 
+def _as_float_array(value: Any, name: str) -> np.ndarray:
+    try:
+        array = np.asarray(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain numeric values") from exc
+    if array.dtype.kind in _TEXT_OR_BOOL_KINDS or (
+        array.dtype.kind == "O"
+        and any(isinstance(item, _TEXT_OR_BOOL_SCALAR_TYPES) for item in array.flat)
+    ):
+        raise ValueError(f"{name} must contain numeric values")
+    try:
+        return array.astype(float, copy=False)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain numeric values") from exc
+
+
+def _as_log_weight(value: Any) -> float:
+    array = _as_float_array(value, "log_weight")
+    if array.shape != ():
+        raise ValueError("log_weight must be a scalar number")
+    log_weight = float(array.item())
+    if np.isnan(log_weight):
+        raise ValueError("log_weight must not be NaN")
+    return log_weight
+
+
 def _symmetrized(matrix: np.ndarray) -> np.ndarray:
-    array = np.asarray(matrix, dtype=float)
+    array = _as_float_array(matrix, "matrix")
     return 0.5 * (array + array.T)
