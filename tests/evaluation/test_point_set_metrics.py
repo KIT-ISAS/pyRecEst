@@ -145,3 +145,34 @@ def test_nonfinite_thresholds_raise_clear_errors():
 
     with pytest.raises(ValueError, match="finite and non-negative"):
         precision_recall_curve(points, points, (0.25, np.nan))
+
+
+@pytest.mark.parametrize("invalid_flag", ["False", "True", 0, 1, np.array(False)])
+def test_nearest_neighbor_distances_rejects_non_boolean_return_indices(invalid_flag):
+    points = np.array([[0.0], [1.0]])
+
+    with pytest.raises(TypeError, match="return_indices must be a boolean"):
+        nearest_neighbor_distances(points, points, return_indices=invalid_flag)
+
+
+@pytest.mark.parametrize("flag_name", ["squared", "symmetric"])
+@pytest.mark.parametrize("invalid_flag", ["False", "True", 0, 1, np.array(True)])
+def test_chamfer_distance_rejects_non_boolean_flags(flag_name, invalid_flag):
+    points = np.array([[0.0], [1.0]])
+
+    with pytest.raises(TypeError, match=f"{flag_name} must be a boolean"):
+        chamfer_distance(points, points, **{flag_name: invalid_flag})
+
+
+def test_numpy_boolean_flags_remain_supported():
+    points = np.array([[0.0], [1.0]])
+
+    distances, indices = nearest_neighbor_distances(
+        points, points, return_indices=np.bool_(True)
+    )
+
+    np.testing.assert_allclose(distances, [0.0, 0.0])
+    np.testing.assert_array_equal(indices, [0, 1])
+    assert chamfer_distance(
+        points, points, squared=np.bool_(False), symmetric=np.bool_(True)
+    ) == pytest.approx(0.0)
