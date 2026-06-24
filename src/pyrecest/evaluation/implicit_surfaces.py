@@ -8,8 +8,18 @@ from typing import Any
 import numpy as np
 from scipy.special import ndtr
 
-_TEXT_OR_BOOL_KINDS = {"b", "S", "U"}
-_TEXT_OR_BOOL_SCALAR_TYPES = (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+_INVALID_NUMERIC_KINDS = {"b", "S", "U", "c", "M", "m"}
+_INVALID_NUMERIC_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+)
 
 
 def surface_residuals(surface: Any, points: Any) -> Any:
@@ -95,11 +105,11 @@ def _boolean_flag(name: str, value: bool) -> bool:
 def _positive_float(name: str, value: float) -> float:
     message = f"{name} must be finite and positive."
     value_array = np.asarray(value)
-    if value_array.shape != () or value_array.dtype.kind in _TEXT_OR_BOOL_KINDS:
+    if value_array.shape != () or value_array.dtype.kind in _INVALID_NUMERIC_KINDS:
         raise ValueError(message)
 
     scalar = value_array.item()
-    if isinstance(scalar, _TEXT_OR_BOOL_SCALAR_TYPES):
+    if isinstance(scalar, _INVALID_NUMERIC_SCALAR_TYPES):
         raise ValueError(message)
     try:
         parsed = float(scalar)
@@ -139,9 +149,9 @@ def _as_numpy_numeric_array(values: Any, name: str) -> np.ndarray:
         array = np.asarray(values)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must contain numeric values.") from exc
-    if array.dtype.kind in _TEXT_OR_BOOL_KINDS or (
+    if array.dtype.kind in _INVALID_NUMERIC_KINDS or (
         array.dtype.kind == "O"
-        and any(isinstance(item, _TEXT_OR_BOOL_SCALAR_TYPES) for item in array.flat)
+        and any(isinstance(item, _INVALID_NUMERIC_SCALAR_TYPES) for item in array.flat)
     ):
         raise ValueError(f"{name} must contain numeric values.")
     try:
