@@ -14,6 +14,7 @@ from math import isfinite as _isfinite_scalar
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import abs as backend_abs
+from pyrecest.backend import all as backend_all
 from pyrecest.backend import (
     arctan2,
     array,
@@ -21,6 +22,7 @@ from pyrecest.backend import (
     cos,
     diag,
     eye,
+    isfinite,
     linalg,
     maximum,
     pi,
@@ -50,7 +52,7 @@ def project_symmetric_covariance(covariance, minimum_eigenvalue=0.0):
     minimum_eigenvalue = _coerce_nonnegative_finite_scalar(
         minimum_eigenvalue, "minimum_eigenvalue"
     )
-    covariance = symmetrize(covariance)
+    covariance = symmetrize(_coerce_finite_square_matrix(covariance, "covariance"))
     eigenvalues, eigenvectors = linalg.eigh(covariance)
     eigenvalues = maximum(eigenvalues, minimum_eigenvalue)
     return symmetrize((eigenvectors * eigenvalues) @ eigenvectors.T)
@@ -91,6 +93,24 @@ def _coerce_nonnegative_finite_scalar(value, name: str) -> float:
     if not _isfinite_scalar(scalar_float) or scalar_float < 0.0:
         raise ValueError(message)
     return scalar_float
+
+
+def _coerce_finite_square_matrix(value, name: str):
+    matrix = asarray(value)
+    if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError(f"{name} must be a finite square matrix")
+    if not bool(backend_all(isfinite(matrix))):
+        raise ValueError(f"{name} must contain only finite values")
+    return matrix
+
+
+def _coerce_finite_matrix_shape(value, name: str, shape: tuple[int, int]):
+    matrix = asarray(value)
+    if matrix.shape != shape:
+        raise ValueError(f"{name} must have shape {shape}")
+    if not bool(backend_all(isfinite(matrix))):
+        raise ValueError(f"{name} must contain only finite values")
+    return matrix
 
 
 def rotation_matrix_2d(angle):
@@ -152,7 +172,7 @@ def shape_from_extent_matrix(
     minimum_axis_length = _coerce_nonnegative_finite_scalar(
         minimum_axis_length, "minimum_axis_length"
     )
-    extent = symmetrize(extent)
+    extent = symmetrize(_coerce_finite_matrix_shape(extent, "extent", (2, 2)))
     eigenvalues, eigenvectors = linalg.eigh(extent)
     if float(eigenvalues[1]) >= float(eigenvalues[0]):
         major_index = 1
@@ -265,9 +285,11 @@ def canonicalize_ellipse_shape(
     if shape_covariance is None:
         return canonical_shape, None
 
-    shape_covariance = asarray(shape_covariance)
-    if shape_covariance.shape != (3, 3):
-        raise ValueError("shape_covariance must have shape (3, 3)")
+    shape_covariance = _coerce_finite_matrix_shape(
+        shape_covariance,
+        "shape_covariance",
+        (3, 3),
+    )
     canonical_covariance = transform @ symmetrize(shape_covariance) @ transform.T
     canonical_covariance = project_symmetric_covariance(
         canonical_covariance,
@@ -305,9 +327,11 @@ def canonicalize_ellipse_axes(
     )
     if axis_covariance is None:
         return axes, None, swapped
-    axis_covariance = asarray(axis_covariance)
-    if axis_covariance.shape != (2, 2):
-        raise ValueError("axis_covariance must have shape (2, 2)")
+    axis_covariance = _coerce_finite_matrix_shape(
+        axis_covariance,
+        "axis_covariance",
+        (2, 2),
+    )
     canonical_axis_covariance = (
         axis_transform @ symmetrize(axis_covariance) @ axis_transform.T
     )
