@@ -112,7 +112,10 @@ def _normalize_positive_integer(value: Any, name: str) -> int:
     if isinstance(scalar, (int, np.integer)):
         parsed = int(scalar)
     else:
-        scalar_float = float(scalar)
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(message) from exc
         if not np.isfinite(scalar_float) or not scalar_float.is_integer():
             raise ValueError(message)
         parsed = int(scalar_float)
@@ -130,7 +133,10 @@ def _normalize_finite_scalar(value: Any, *, message: str) -> float:
     scalar = value_array.item()
     if isinstance(scalar, (bool, np.bool_)) or not isinstance(scalar, Real):
         raise ValueError(message)
-    parsed = float(scalar)
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
     if not np.isfinite(parsed):
         raise ValueError(message)
     return parsed
