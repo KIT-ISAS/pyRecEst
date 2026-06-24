@@ -1,11 +1,22 @@
 import unittest
 
+import numpy as np
 from pyrecest.evaluation.get_distance_function import get_distance_function
 
 
 class SymmetricDistanceFunctionValidationTest(unittest.TestCase):
     def test_rejects_invalid_symmetry_counts(self):
-        for n_symm in (0, -1, 2.5, float("nan"), float("inf"), True, [2]):
+        for n_symm in (
+            0,
+            -1,
+            2.5,
+            float("nan"),
+            float("inf"),
+            True,
+            np.array(True, dtype=object),
+            np.array(False, dtype=object),
+            [2],
+        ):
             with self.subTest(n_symm=n_symm):
                 with self.assertRaisesRegex(ValueError, "nSymm.*positive integer"):
                     get_distance_function("circle", nSymm=n_symm)
