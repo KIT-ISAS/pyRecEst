@@ -113,6 +113,15 @@ def test_scalar_and_empty_tuple_sizes_keep_scalar_shape():
     assert random.multivariate_normal([0.0], [[1.0]], size=()).shape == (1,)
 
 
+@pytest.mark.parametrize(
+    "population",
+    [True, False, torch.tensor(True), torch.tensor(False)],
+)
+def test_choice_rejects_boolean_scalar_population(population):
+    with pytest.raises(ValueError, match="positive integer or an array"):
+        random.choice(population)
+
+
 def test_zero_sized_choice_still_works_for_empty_population():
     sample = random.choice(0, size=(0,))
 
