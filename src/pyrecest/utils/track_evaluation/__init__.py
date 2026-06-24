@@ -1,6 +1,6 @@
 from pathlib import Path
 import runpy,numpy as np
-d=runpy.run_path(str(Path(__file__).resolve().parents[1]/"track_evaluation.py"))
+d=runpy.run_path(str(Path(__file__).resolve().parents[1]/"track_evaluation.py"),run_name=__name__)
 o=d["_optional_int_candidate"]
 def f(v):
     if isinstance(v,np.ndarray):
