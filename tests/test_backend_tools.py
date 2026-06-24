@@ -19,6 +19,12 @@ def test_assert_backend_rejects_unexpected_backend():
         pyrecest.assert_backend(unexpected)
 
 
+@pytest.mark.parametrize("expected", [(), ("",), ("numpy", 1), 1])
+def test_assert_backend_rejects_invalid_expected_names(expected):
+    with pytest.raises(ValueError, match="expected"):
+        pyrecest.assert_backend(expected)
+
+
 def test_warn_if_backend_env_changed(monkeypatch):
     active = pyrecest.get_backend_name()
     changed = "jax" if active != "jax" else "numpy"
