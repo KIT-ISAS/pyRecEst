@@ -87,6 +87,7 @@ def nearest_neighbor_distances(
     reference_array = as_point_set(reference, name="reference")
     _validate_matching_dimension(query_array, reference_array)
     query_chunk_size = _validate_chunk_size(query_chunk_size)
+    return_indices = _validate_boolean_flag(return_indices, "return_indices")
 
     tree_result = _nearest_neighbor_distances_ckdtree(
         query_array,
@@ -119,6 +120,9 @@ def chamfer_distance(
     diagnostics. ``squared=True`` applies the same convention to squared
     nearest-neighbor distances.
     """
+
+    squared = _validate_boolean_flag(squared, "squared")
+    symmetric = _validate_boolean_flag(symmetric, "symmetric")
 
     a_to_b = nearest_neighbor_distances(
         points_a, points_b, query_chunk_size=query_chunk_size
@@ -345,6 +349,12 @@ def _validate_matching_dimension(query: np.ndarray, reference: np.ndarray) -> No
         raise ValueError(
             f"query and reference must have the same point dimension, got {query.shape[1]} and {reference.shape[1]}."
         )
+
+
+def _validate_boolean_flag(value: Any, name: str) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    raise TypeError(f"{name} must be a boolean.")
 
 
 def _validate_chunk_size(query_chunk_size: int) -> int:
