@@ -7,7 +7,7 @@ from pyrecest.calibration.time_offset import interpolate_reference_values
 
 class MaxTimeDeltaValidationTest(unittest.TestCase):
     def test_interpolation_rejects_boolean_and_non_scalar_max_time_delta(self):
-        invalid_values = (True, np.array([1.0]))
+        invalid_values = (True, np.array([1.0]), "1.0", np.array(True, dtype=object))
 
         for max_time_delta_s in invalid_values:
             with self.subTest(max_time_delta_s=max_time_delta_s):
@@ -23,7 +23,7 @@ class MaxTimeDeltaValidationTest(unittest.TestCase):
                     )
 
     def test_bias_examples_reject_boolean_and_non_scalar_max_time_delta(self):
-        invalid_values = (True, np.array([1.0]))
+        invalid_values = (True, np.array([1.0]), "1.0", np.array(True, dtype=object))
 
         for max_time_delta_s in invalid_values:
             with self.subTest(max_time_delta_s=max_time_delta_s):
