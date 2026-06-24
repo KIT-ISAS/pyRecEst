@@ -98,7 +98,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
-        w_new = f(dist.d)
+        w_new = asarray(f(dist.d))
 
         if w_new.shape != dist.w.shape:
             raise ValueError("Function returned wrong output dimensions.")
