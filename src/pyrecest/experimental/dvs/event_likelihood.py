@@ -7,18 +7,41 @@ from dataclasses import dataclass, field
 import numpy as np
 
 
+def _as_finite_scalar(value: float, name: str, message: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
+        raise ValueError(message)
+    try:
+        result = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(result):
+        raise ValueError(message)
+    return result
+
+
 def _validate_positive_finite(value: float, name: str) -> float:
-    value = float(value)
-    if not np.isfinite(value) or value <= 0.0:
-        raise ValueError(f"{name} must be finite and positive")
+    message = f"{name} must be finite and positive"
+    value = _as_finite_scalar(value, name, message)
+    if value <= 0.0:
+        raise ValueError(message)
     return value
 
 
 def _validate_nonnegative_finite(value: float, name: str) -> float:
-    value = float(value)
-    if not np.isfinite(value) or value < 0.0:
-        raise ValueError(f"{name} must be finite and non-negative")
+    message = f"{name} must be finite and non-negative"
+    value = _as_finite_scalar(value, name, message)
+    if value < 0.0:
+        raise ValueError(message)
     return value
+
+
+def _validate_finite_array(values: np.ndarray, name: str) -> None:
+    if np.any(~np.isfinite(values)):
+        raise ValueError(f"{name} must contain only finite values")
 
 
 @dataclass(frozen=True)
@@ -41,12 +64,16 @@ class ContourSample:
             raise ValueError("normals must have the same shape as points")
         if weights.shape != (points.shape[0],):
             raise ValueError("weights must have shape (n,)")
+        _validate_finite_array(points, "points")
+        _validate_finite_array(normals, "normals")
+        _validate_finite_array(weights, "weights")
         if np.any(weights < 0.0):
             raise ValueError("weights must be non-negative")
         if self.angles is not None:
             angles = np.asarray(self.angles, dtype=float)
             if angles.shape != (points.shape[0],):
                 raise ValueError("angles must have shape (n,)")
+            _validate_finite_array(angles, "angles")
         object.__setattr__(self, "points", points)
         object.__setattr__(self, "normals", normals)
         object.__setattr__(self, "weights", weights)
@@ -97,8 +124,8 @@ class PointProcessUpdateConfig:
             raise ValueError("max_map_iterations must be non-negative")
         if self.shape_update_modes < 0:
             raise ValueError("shape_update_modes must be non-negative")
-        covariance_damping = float(self.covariance_damping)
-        if not np.isfinite(covariance_damping) or not 0.0 < covariance_damping <= 1.0:
+        covariance_damping = _validate_positive_finite(self.covariance_damping, "covariance_damping")
+        if covariance_damping > 1.0:
             raise ValueError("covariance_damping must be finite and in (0, 1]")
         _validate_positive_finite(self.max_state_update_norm, "max_state_update_norm")
 
@@ -123,12 +150,13 @@ def normal_flow_activities(
     """Return normalized normal-flow activity for sampled contour normals."""
     normals = np.asarray(normals, dtype=float)
     velocity = np.asarray(velocity, dtype=float)
+    activity_floor = _validate_nonnegative_finite(activity_floor, "activity_floor")
     if normals.ndim != 2 or normals.shape[1] != 2:
         raise ValueError("normals must have shape (n, 2)")
     if velocity.shape != (2,):
         raise ValueError("velocity must have shape (2,)")
-    if activity_floor < 0.0:
-        raise ValueError("activity_floor must be non-negative")
+    _validate_finite_array(normals, "normals")
+    _validate_finite_array(velocity, "velocity")
 
     velocity_norm = float(np.linalg.norm(velocity))
     if velocity_norm <= 1e-12:
@@ -202,9 +230,8 @@ def expected_event_count(
     )
     expected_background = 0.0
     if image_area is not None:
-        if image_area < 0.0:
-            raise ValueError("image_area must be non-negative")
-        expected_background = duration * config.background_rate * float(image_area)
+        image_area = _validate_nonnegative_finite(image_area, "image_area")
+        expected_background = duration * config.background_rate * image_area
     return expected_foreground, expected_background
 
 
@@ -375,7 +402,5 @@ def _duration_from_argument(
     if batch_duration is None:
         duration = config.batch_duration
     else:
-        duration = float(batch_duration)
-    if not np.isfinite(duration) or duration < 0.0:
-        raise ValueError("batch_duration must be finite and non-negative")
-    return duration
+        duration = batch_duration
+    return _validate_nonnegative_finite(duration, "batch_duration")
