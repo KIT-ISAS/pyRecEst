@@ -53,6 +53,7 @@ def test_apply_accepts_matching_feature_rows():
         ("feature_dim", 1.5, "feature_dim"),
         ("training_count", 2.5, "training_count"),
         ("ridge_alpha", np.nan, "ridge_alpha"),
+        ("ridge_alpha", "0.0", "ridge_alpha"),
     ],
 )
 def test_model_rejects_invalid_scalar_metadata(field_name, invalid_value, match):
