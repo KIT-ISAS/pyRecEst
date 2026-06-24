@@ -32,7 +32,7 @@ def _normalize_seed(seed: int | None) -> int | None:
     except (TypeError, ValueError, RuntimeError, OverflowError) as exc:
         raise ValueError(message) from exc
 
-    if isinstance(scalar, bool):
+    if isinstance(scalar, bool | str | bytes):
         raise ValueError(message)
     if isinstance(scalar, Integral):
         normalized_seed = int(scalar)
