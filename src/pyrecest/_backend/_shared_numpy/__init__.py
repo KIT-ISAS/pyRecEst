@@ -83,30 +83,13 @@ def from_numpy(x):
     return x
 
 
-def _normalize_squeeze_axes(axis):
-    if isinstance(axis, (int, _np.integer)):
-        return (int(axis),)
-    return tuple(axis)
-
-
 def squeeze(x, axis=None):
-    x = _np.asarray(x)
+    x = x if is_array(x) else array(x)
     if axis is None:
         return _np.squeeze(x)
-
-    axes = _normalize_squeeze_axes(axis)
-    if not axes:
+    if x.shape[axis] != 1:
         return x
-
-    normalized_axes = tuple(
-        one_axis + x.ndim if one_axis < 0 else one_axis for one_axis in axes
-    )
-    if len(set(normalized_axes)) != len(normalized_axes):
-        raise ValueError("duplicate value in 'axis'")
-    if any(x.shape[one_axis] != 1 for one_axis in normalized_axes):
-        return x
-    squeeze_axis = normalized_axes[0] if len(normalized_axes) == 1 else normalized_axes
-    return _np.squeeze(x, axis=squeeze_axis)
+    return _np.squeeze(x, axis=axis)
 
 
 def flatten(x):
@@ -312,14 +295,13 @@ def array_from_sparse(indices, data, target_shape):
     a : array, shape=target_shape
         Array of zeros with specified values assigned to specified indices.
     """
+    indices = _np.asarray(indices)
     data = array(data)
     out = zeros(target_shape, dtype=data.dtype)
-    indices = _np.array(indices)
     if indices.size == 0:
         if data.size != 0:
             raise ValueError("data must be empty when indices are empty")
         return out
-
     out.put(_np.ravel_multi_index(indices.T, target_shape), data)
     return out
 
@@ -425,7 +407,7 @@ def matvec(A, b):
     if b.ndim == 1:
         return _np.matmul(A, b)
     if A.ndim == 2:
-        return _np.einsum("ij,...j->...i", A, b)
+        return _np.matmul(A, b.T).T
     return _np.einsum("...ij,...j->...i", A, b)
 
 
@@ -474,10 +456,8 @@ def scatter_add(input, dim, index, src):
     if dim == 1:
         for j in range(len(input)):
             for i, val in zip(index[j], src[j]):
-                # Preserve the source dtype.  In particular, complex values are
-                # valid scatter-add inputs and must not be coerced through float().
-                if BACKEND_NAME == "autograd" and hasattr(val, "_value"):
-                    val = val._value
-                input[j, i] += val
+                if not isinstance(val, _np.float64) and BACKEND_NAME == "autograd":
+                    val = float(val._value)
+                input[j, i] += float(val)
         return input
     raise NotImplementedError
