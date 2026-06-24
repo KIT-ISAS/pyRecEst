@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from numbers import Real
+
 import numpy as np
 from pyrecest.exceptions import (
     DimensionMismatchError,
@@ -37,8 +39,11 @@ def _validate_nonnegative_finite(name: str, value: float) -> float:
         raise ValueError(f"{name} must be a scalar number.") from exc
     if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
         raise ValueError(f"{name} must be a scalar number.")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)) or not isinstance(scalar, Real):
+        raise ValueError(f"{name} must be a scalar number.")
     try:
-        value = float(value_array.item())
+        value = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must be a scalar number.") from exc
     if not np.isfinite(value) or value < 0.0:
