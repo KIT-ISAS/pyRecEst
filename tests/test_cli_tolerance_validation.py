@@ -25,3 +25,35 @@ def test_expected_mapping_rejects_nan_tolerance() -> None:
             {"rmse": 2.0},
             tolerance=math.nan,
         )
+
+
+def test_expected_mapping_compares_booleans_exactly() -> None:
+    assert (
+        _check_expected_mapping(
+            "diagnostics",
+            {"flag": True},
+            {"flag": True},
+            tolerance=0.0,
+        )
+        == []
+    )
+
+    failures = _check_expected_mapping(
+        "diagnostics",
+        {"flag": 1},
+        {"flag": True},
+        tolerance=0.0,
+    )
+
+    assert failures == ["diagnostics.flag mismatch: expected True, got 1"]
+
+
+def test_expected_mapping_rejects_boolean_actual_for_numeric_expected() -> None:
+    failures = _check_expected_mapping(
+        "metrics",
+        {"count": True},
+        {"count": 1},
+        tolerance=0.0,
+    )
+
+    assert failures == ["metrics.count mismatch: expected numeric 1, got True"]
