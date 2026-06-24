@@ -9,14 +9,21 @@ import numpy as np
 
 from .linear_gaussian import LinearGaussianMeasurementModel
 
+_BOOL_OR_TEXT_KINDS = {"b", "S", "U"}
+_BOOL_OR_TEXT_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+)
+
 
 def diagonal_measurement_covariance(stds: Sequence[float] | np.ndarray) -> np.ndarray:
     'Return a diagonal covariance matrix from measurement standard deviations.'
-    values = np.asarray(stds, dtype=float).reshape(-1)
-    if values.size == 0:
-        raise ValueError("stds must contain at least one standard deviation")
-    if not np.isfinite(values).all() or np.any(values <= 0.0):
-        raise ValueError("stds must contain finite positive values")
+    values = _standard_deviations_array(stds)
     return np.diag(values**2)
 
 
@@ -58,11 +65,11 @@ def block_diag_measurement_covariance(
             [trusted_map[key] if key in trusted_map else weak_map[key] for key in order]
         )
 
-    stds: list[float] = []
+    stds: list[Any] = []
     if trusted_std is not None:
-        stds.extend(float(value) for value in trusted_std)
+        stds.extend(trusted_std)
     if weak_std is not None:
-        stds.extend(float(value) for value in weak_std)
+        stds.extend(weak_std)
     return diagonal_measurement_covariance(stds)
 
 
@@ -171,6 +178,29 @@ def weak_dimension_measurement_model(
 
 def _is_mapping(value: object) -> bool:
     return isinstance(value, Mapping)
+
+
+def _standard_deviations_array(stds: Sequence[float] | np.ndarray) -> np.ndarray:
+    try:
+        if _contains_bool_or_text_values(stds):
+            raise ValueError
+        values = np.asarray(stds, dtype=float).reshape(-1)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("stds must contain real numeric values") from exc
+    if values.size == 0:
+        raise ValueError("stds must contain at least one standard deviation")
+    if not np.isfinite(values).all() or np.any(values <= 0.0):
+        raise ValueError("stds must contain finite positive values")
+    return values
+
+
+def _contains_bool_or_text_values(value: Any) -> bool:
+    array = np.asarray(value)
+    if array.dtype.kind in _BOOL_OR_TEXT_KINDS:
+        return True
+    if array.dtype.kind != "O":
+        return False
+    return any(isinstance(item, _BOOL_OR_TEXT_SCALAR_TYPES) for item in array.flat)
 
 
 def _positive_int(value: int, name: str) -> int:
