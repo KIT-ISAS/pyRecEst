@@ -21,6 +21,16 @@ def _assert_supported_backend():
         )
 
 
+def _coerce_gaussian_state(state, name):
+    if isinstance(state, GaussianDistribution):
+        return state
+    if isinstance(state, tuple) and len(state) == 2:
+        return GaussianDistribution(state[0], state[1])
+    raise ValueError(
+        f"{name} must be a GaussianDistribution or a tuple of (mean, covariance)"
+    )
+
+
 class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
     # pylint: disable=too-many-positional-arguments
     def __init__(
@@ -32,14 +42,8 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         points=None,
         dim_z: int | None = None,
     ):
-        if isinstance(initial_state, GaussianDistribution):
-            dim_x = initial_state.dim
-        elif isinstance(initial_state, tuple) and len(initial_state) == 2:
-            dim_x = len(initial_state[0])
-        else:
-            raise ValueError(
-                "initial_state must be a GaussianDistribution or a tuple of (mean, covariance)"
-            )
+        initial_state = _coerce_gaussian_state(initial_state, "initial_state")
+        dim_x = initial_state.dim
 
         if points is None:
             # Standard settings for Gaussian approximations
@@ -52,12 +56,8 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
         AbstractFilter.__init__(self, bfukf)
 
         # Set initial state
-        if isinstance(initial_state, GaussianDistribution):
-            self._filter_state.x = initial_state.mu
-            self._filter_state.P = initial_state.C
-        else:
-            self._filter_state.x = initial_state[0]
-            self._filter_state.P = initial_state[1]
+        self._filter_state.x = initial_state.mu
+        self._filter_state.P = initial_state.C
         # Track whether predict() has been called before update()
         self._predicted = False
 
@@ -69,16 +69,10 @@ class UnscentedKalmanFilter(AbstractFilter, EuclideanFilterMixin):
 
     @filter_state.setter
     def filter_state(self, new_state: "GaussianDistribution | tuple"):
-        if isinstance(new_state, GaussianDistribution):
-            self._filter_state.x = new_state.mu
-            self._filter_state.P = new_state.C
-        elif isinstance(new_state, tuple) and len(new_state) == 2:
-            self._filter_state.x = new_state[0]
-            self._filter_state.P = new_state[1]
-        else:
-            raise ValueError(
-                "new_state must be a GaussianDistribution or a tuple of (mean, covariance)"
-            )
+        new_state = _coerce_gaussian_state(new_state, "new_state")
+        self._filter_state.x = new_state.mu
+        self._filter_state.P = new_state.C
+        self._predicted = False
 
     def _ensure_predicted(self):
         """Run a zero-noise predict to populate sigma points if needed."""
