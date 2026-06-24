@@ -311,6 +311,11 @@ def _optional_float(value: Any) -> float | None:
 
 def _is_nan(value: Any) -> bool:
     try:
+        if bool(value != value):
+            return True
+    except (TypeError, ValueError):
+        return True
+    try:
         return bool(math.isnan(float(value)))
     except OverflowError:
         return True
