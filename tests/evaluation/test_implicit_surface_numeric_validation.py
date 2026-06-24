@@ -14,9 +14,10 @@ from pyrecest.evaluation import (
         np.array([True, False]),
         ["0.0", "1.0"],
         np.array(["0.0", "1.0"]),
+        np.array([1.0 + 1.0j, 2.0 + 0.0j]),
     ),
 )
-def test_surface_numeric_fields_reject_bool_and_text_array_likes(values) -> None:
+def test_surface_numeric_fields_reject_malformed_array_likes(values) -> None:
     with pytest.raises(ValueError, match="values"):
         surface_band_mask(values, 0.1)
     with pytest.raises(ValueError, match="values"):
