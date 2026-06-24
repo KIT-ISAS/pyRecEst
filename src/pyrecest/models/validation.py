@@ -48,7 +48,10 @@ def _validate_nonnegative_finite_scalar(value: Any, name: str) -> float:
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError(f"{name} must be a finite nonnegative scalar.")
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(
+        scalar,
+        (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_),
+    ):
         raise ValueError(f"{name} must be a finite nonnegative scalar.")
     try:
         parsed = float(scalar)
