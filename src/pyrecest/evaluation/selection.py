@@ -16,13 +16,17 @@ import numpy as np
 TailSide = Literal["lower", "upper"]
 
 
+def _is_text_scalar(value) -> bool:
+    return isinstance(value, (str, bytes, np.str_, np.bytes_))
+
+
 def _normalize_nonnegative_integer(value, name: str) -> int:
     value_array = np.asarray(value)
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError(f"{name} must be a non-negative integer.")
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_)) or _is_text_scalar(scalar):
         raise ValueError(f"{name} must be a non-negative integer.")
     if isinstance(scalar, (int, np.integer)):
         integer = int(scalar)
@@ -56,7 +60,7 @@ def _normalize_finite_scalar(value, message: str) -> float:
         raise ValueError(message)
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_)) or _is_text_scalar(scalar):
         raise ValueError(message)
     try:
         result = float(scalar)
