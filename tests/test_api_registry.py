@@ -31,6 +31,12 @@ def test_get_public_api_registry_entry_returns_copy():
     assert PUBLIC_API_REGISTRY["KalmanFilter"]["category"] == "stable"
 
 
+def test_iter_public_api_registry_returns_row_copies():
+    rows = dict(iter_public_api_registry())
+    rows["KalmanFilter"]["category"] = "mutated"
+    assert PUBLIC_API_REGISTRY["KalmanFilter"]["category"] == "stable"
+
+
 def test_public_api_registry_document_contains_generated_table():
     document = Path("docs/public-api-registry.md").read_text(encoding="utf-8")
     assert render_markdown() in document
