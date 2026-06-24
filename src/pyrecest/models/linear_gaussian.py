@@ -1,5 +1,8 @@
 """Reusable linear Gaussian transition and measurement models."""
 
+import math
+from numbers import Integral
+
 from pyrecest.backend import (
     asarray,
     eye,
@@ -31,6 +34,34 @@ def _as_vector(value, name):
 
 def _shape(value):
     return tuple(value.shape)
+
+
+def _as_positive_integer(value, name):
+    message = f"{name} must be a positive integer"
+    if isinstance(value, bool):
+        raise ValueError(message)
+    arr = asarray(value)
+    if ndim(arr) != 0:
+        raise ValueError(message)
+    try:
+        scalar = arr.item()
+    except AttributeError:
+        scalar = arr
+    if isinstance(scalar, bool):
+        raise ValueError(message)
+    if isinstance(scalar, Integral):
+        parsed = int(scalar)
+    else:
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(message) from exc
+        if not math.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(message)
+        parsed = int(scalar_float)
+    if parsed <= 0:
+        raise ValueError(message)
+    return parsed
 
 
 def _as_square(value, name):
@@ -120,6 +151,7 @@ class LinearGaussianTransitionModel:
 
 class IdentityGaussianTransitionModel(LinearGaussianTransitionModel):
     def __init__(self, dim, noise_cov, offset=None):
+        dim = _as_positive_integer(dim, "dim")
         super().__init__(eye(dim), noise_cov, offset=offset)
 
 
@@ -177,4 +209,5 @@ class LinearGaussianMeasurementModel:
 
 class IdentityGaussianMeasurementModel(LinearGaussianMeasurementModel):
     def __init__(self, dim, noise_cov):
+        dim = _as_positive_integer(dim, "dim")
         super().__init__(eye(dim), noise_cov)

@@ -69,6 +69,17 @@ class LinearGaussianModelsTest(unittest.TestCase):
             to_numpy(measurement_model.measurement_matrix), to_numpy(eye(2)), atol=1e-12
         )
 
+    def test_identity_models_reject_invalid_dimensions(self):
+        invalid_dims = (True, False, 0, -1, 1.5, float("inf"))
+
+        for dim in invalid_dims:
+            with self.subTest(model="transition", dim=dim):
+                with self.assertRaisesRegex(ValueError, "dim must be a positive integer"):
+                    IdentityGaussianTransitionModel(dim, array([[1.0]]))
+            with self.subTest(model="measurement", dim=dim):
+                with self.assertRaisesRegex(ValueError, "dim must be a positive integer"):
+                    IdentityGaussianMeasurementModel(dim, array([[1.0]]))
+
     def test_rejects_incompatible_shapes(self):
         with self.assertRaises(ValueError):
             LinearGaussianTransitionModel(array([[1.0, 0.0]]), diag(array([0.1, 0.2])))
