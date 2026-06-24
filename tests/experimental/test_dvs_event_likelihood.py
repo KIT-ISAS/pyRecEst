@@ -73,6 +73,28 @@ def test_contour_sample_converts_sequence_inputs_to_arrays():
 @pytest.mark.parametrize(
     ("keyword", "value"),
     [
+        ("points", np.array([[0.0, 0.0], [np.nan, 0.0]])),
+        ("normals", np.array([[0.0, 1.0], [np.inf, 0.0]])),
+        ("weights", np.array([1.0, np.nan])),
+        ("angles", np.array([0.0, -np.inf])),
+    ],
+)
+def test_contour_sample_rejects_nonfinite_geometry(keyword, value):
+    kwargs = {
+        "points": np.array([[0.0, 0.0], [1.0, 0.0]]),
+        "normals": np.array([[0.0, 1.0], [0.0, 1.0]]),
+        "weights": np.array([1.0, 2.0]),
+        "angles": np.array([0.0, np.pi]),
+    }
+    kwargs[keyword] = value
+
+    with pytest.raises(ValueError, match=f"{keyword} must contain only finite values"):
+        ContourSample(**kwargs)
+
+
+@pytest.mark.parametrize(
+    ("keyword", "value"),
+    [
         ("spatial_sigma_px", float("nan")),
         ("spatial_sigma_px", float("inf")),
         ("foreground_rate", float("nan")),
@@ -90,6 +112,22 @@ def test_event_likelihood_config_rejects_nonfinite_numeric_values(keyword, value
 @pytest.mark.parametrize(
     ("keyword", "value"),
     [
+        ("spatial_sigma_px", "1.0"),
+        ("foreground_rate", True),
+        ("background_rate", b"0.1"),
+        ("activity_floor", np.array(True, dtype=object)),
+        ("min_intensity", "1e-12"),
+        ("batch_duration", np.array("1.0")),
+    ],
+)
+def test_event_likelihood_config_rejects_text_and_boolean_scalars(keyword, value):
+    with pytest.raises(ValueError, match=keyword):
+        EventLikelihoodConfig(**{keyword: value})
+
+
+@pytest.mark.parametrize(
+    ("keyword", "value"),
+    [
         ("finite_difference_eps", float("nan")),
         ("finite_difference_eps", float("inf")),
         ("map_step_size", float("nan")),
@@ -98,6 +136,20 @@ def test_event_likelihood_config_rejects_nonfinite_numeric_values(keyword, value
     ],
 )
 def test_point_process_update_config_rejects_nonfinite_numeric_values(keyword, value):
+    with pytest.raises(ValueError, match=keyword):
+        PointProcessUpdateConfig(**{keyword: value})
+
+
+@pytest.mark.parametrize(
+    ("keyword", "value"),
+    [
+        ("finite_difference_eps", "0.01"),
+        ("map_step_size", True),
+        ("covariance_damping", "0.98"),
+        ("max_state_update_norm", np.array(True, dtype=object)),
+    ],
+)
+def test_point_process_update_config_rejects_text_and_boolean_scalars(keyword, value):
     with pytest.raises(ValueError, match=keyword):
         PointProcessUpdateConfig(**{keyword: value})
 
@@ -118,6 +170,17 @@ def test_activity_floor_applies_without_motion():
     )
 
     np.testing.assert_allclose(activities, np.full(4, 0.05))
+
+
+def test_normal_flow_activities_rejects_nonfinite_inputs():
+    normals = np.array([[1.0, 0.0]], dtype=float)
+
+    with pytest.raises(ValueError, match="normals must contain only finite values"):
+        normal_flow_activities(np.array([[np.nan, 0.0]]), np.array([1.0, 0.0]))
+    with pytest.raises(ValueError, match="velocity must contain only finite values"):
+        normal_flow_activities(normals, np.array([np.inf, 0.0]))
+    with pytest.raises(ValueError, match="activity_floor"):
+        normal_flow_activities(normals, np.array([0.0, 0.0]), activity_floor=np.nan)
 
 
 def test_active_edge_events_have_higher_intensity():
@@ -151,6 +214,14 @@ def test_inactive_side_length_does_not_change_expected_count():
     wide_foreground, _ = expected_event_count(wide, np.array([1.0, 0.0]), config)
 
     assert narrow_foreground == pytest.approx(wide_foreground)
+
+
+@pytest.mark.parametrize("image_area", [np.nan, np.inf, -1.0, "4.0", True])
+def test_expected_event_count_rejects_invalid_image_area(image_area):
+    contour = _rectangle_contour(width=1.0, height=2.0)
+
+    with pytest.raises(ValueError, match="image_area"):
+        expected_event_count(contour, np.array([1.0, 0.0]), image_area=image_area)
 
 
 def test_likelihood_prefers_correct_width_for_two_sided_support():
