@@ -8,6 +8,13 @@ from types import ModuleType
 from pyrecest.exceptions import OptionalDependencyError
 
 
+def _is_missing_requested_package(exc: ModuleNotFoundError, package: str) -> bool:
+    missing_name = exc.name
+    if missing_name is None:
+        return False
+    return missing_name == package or package.startswith(f"{missing_name}.")
+
+
 def require_optional_dependency(
     package: str, extra: str, *, feature: str | None = None
 ) -> ModuleType:
@@ -24,9 +31,9 @@ def require_optional_dependency(
     """
     try:
         return importlib.import_module(package)
-    except (
-        ImportError
-    ) as exc:  # pragma: no cover - exercised through tests with a missing sentinel package
+    except ModuleNotFoundError as exc:
+        if not _is_missing_requested_package(exc, package):
+            raise
         subject = f" for {feature}" if feature else ""
         raise OptionalDependencyError(
             f"Optional dependency {package!r} is required{subject}. "
