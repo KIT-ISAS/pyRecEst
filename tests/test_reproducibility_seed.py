@@ -20,6 +20,7 @@ class ReproducibilitySeedValidationTest(unittest.TestCase):
             1.5,
             float("nan"),
             float("inf"),
+            "8",
             [1],
             np.array([1]),
             object(),
@@ -37,7 +38,6 @@ class ReproducibilitySeedValidationTest(unittest.TestCase):
     def test_seed_all_accepts_integer_like_scalar_seed(self):
         self.assertIsNone(seed_all(None))
         self.assertEqual(seed_all(np.array(7.0)), 7)
-        self.assertEqual(seed_all("8"), 8)
 
 
 if __name__ == "__main__":
