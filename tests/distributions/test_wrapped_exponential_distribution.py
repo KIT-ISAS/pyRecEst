@@ -99,6 +99,23 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         self.assertTrue(np.isfinite(entropy).all())
         npt.assert_allclose(entropy, 1.0 - np.log(lambda_), rtol=5e-7, atol=5e-7)
 
+    def test_small_lambda_approaches_uniform_entropy_and_density(self):
+        lambda_ = 1.0e-16
+        we = WrappedExponentialDistribution(array(lambda_))
+
+        entropy = pyrecest.backend.to_numpy(we.entropy())
+        density = pyrecest.backend.to_numpy(we.pdf(array([0.0, pi])))
+
+        self.assertTrue(np.isfinite(entropy).all())
+        self.assertTrue(np.isfinite(density).all())
+        npt.assert_allclose(entropy, np.log(2.0 * np.pi), rtol=1e-6, atol=1e-6)
+        npt.assert_allclose(
+            density,
+            np.full(2, 1.0 / (2.0 * np.pi)),
+            rtol=1e-6,
+            atol=1e-6,
+        )
+
     def test_periodicity(self):
         npt.assert_allclose(
             self.we.pdf(linspace(-2.0 * pi, 0.0, 100)),
