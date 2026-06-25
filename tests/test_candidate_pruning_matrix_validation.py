@@ -41,6 +41,23 @@ class TestCandidatePruningMatrixValidation(unittest.TestCase):
                     ):
                         function(matrix)
 
+    def test_cost_matrix_rejects_temporal_entries(self):
+        invalid_matrices = (
+            np.array([["2026-06-25"]], dtype="datetime64[D]"),
+            np.array([[np.timedelta64(5, "s")]]),
+            np.array([[np.datetime64("2026-06-25")]], dtype=object),
+            np.array([[np.timedelta64(5, "s")]], dtype=object),
+        )
+
+        for function in (candidate_mask_from_costs, prune_pairwise_cost_matrix):
+            for matrix in invalid_matrices:
+                with self.subTest(function=function.__name__, dtype=str(matrix.dtype)):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "cost_matrix must be numeric",
+                    ):
+                        function(matrix)
+
     def test_cost_matrix_rejects_negative_infinity(self):
         invalid_matrices = (
             [[0.0, -float("inf")]],
@@ -113,6 +130,27 @@ class TestCandidatePruningMatrixValidation(unittest.TestCase):
                 with self.assertRaisesRegex(
                     ValueError,
                     "probability_matrix must be real-valued numeric",
+                ):
+                    candidate_mask_from_costs(
+                        np.array([[1.0]]),
+                        probability_matrix=probabilities,
+                        config=config,
+                    )
+
+    def test_probability_matrix_rejects_temporal_entries(self):
+        config = CandidatePruningConfig(probability_threshold=0.5)
+        invalid_probability_matrices = (
+            np.array([["2026-06-25"]], dtype="datetime64[D]"),
+            np.array([[np.timedelta64(1, "s")]]),
+            np.array([[np.datetime64("2026-06-25")]], dtype=object),
+            np.array([[np.timedelta64(1, "s")]], dtype=object),
+        )
+
+        for probabilities in invalid_probability_matrices:
+            with self.subTest(dtype=str(probabilities.dtype)):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "probability_matrix must be numeric",
                 ):
                     candidate_mask_from_costs(
                         np.array([[1.0]]),
