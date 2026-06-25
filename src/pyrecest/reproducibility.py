@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from numbers import Integral
 from typing import Any
 
+_MAX_BACKEND_SEED = 2**32 - 1
+
 
 def _random_backend() -> Any:
     from pyrecest.backend import random
@@ -45,7 +47,7 @@ def _normalize_seed(seed: int | None) -> int | None:
             raise ValueError(message)
         normalized_seed = int(scalar_float)
 
-    if normalized_seed < 0:
+    if normalized_seed < 0 or normalized_seed > _MAX_BACKEND_SEED:
         raise ValueError(message)
     return normalized_seed
 
