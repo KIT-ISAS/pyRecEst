@@ -22,25 +22,28 @@ _INVALID_NUMERIC_SCALAR_TYPES = (
 )
 
 
+def _surface_method(surface: Any, name: str) -> Callable[[Any], Any]:
+    """Return a callable scalar-field method or raise a clear protocol error."""
+
+    method = getattr(surface, name, None)
+    if not callable(method):
+        raise TypeError(f"surface must implement {name}(points).")
+    return method
+
+
 def surface_residuals(surface: Any, points: Any) -> Any:
     """Return scalar-field residuals for ``points`` via ``surface.value``."""
-    if not hasattr(surface, "value"):
-        raise TypeError("surface must implement value(points).")
-    return surface.value(points)
+    return _surface_method(surface, "value")(points)
 
 
 def surface_gradients(surface: Any, points: Any) -> Any:
     """Return scalar-field gradients for ``points`` via ``surface.gradient``."""
-    if not hasattr(surface, "gradient"):
-        raise TypeError("surface must implement gradient(points).")
-    return surface.gradient(points)
+    return _surface_method(surface, "gradient")(points)
 
 
 def surface_variances(surface: Any, points: Any) -> Any:
     """Return predictive field variances for ``points`` via ``surface.variance_at``."""
-    if not hasattr(surface, "variance_at"):
-        raise TypeError("surface must implement variance_at(points).")
-    return surface.variance_at(points)
+    return _surface_method(surface, "variance_at")(points)
 
 
 def surface_band_mask(values: Any, threshold: float) -> np.ndarray:
