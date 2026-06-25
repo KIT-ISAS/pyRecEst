@@ -18,6 +18,7 @@ import numpy as np
 _TEXT_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
 _BOOLEAN_TYPES = (bool, np.bool_)
 _COMPLEX_TYPES = (complex, np.complexfloating)
+_MISSING_TYPES = (type(None),)
 
 
 @dataclass(frozen=True)
@@ -181,6 +182,10 @@ def _contains_complex_values(value: Any) -> bool:
     return _contains_values_of_type(value, _COMPLEX_TYPES)
 
 
+def _contains_missing_values(value: Any) -> bool:
+    return _contains_values_of_type(value, _MISSING_TYPES)
+
+
 def _as_numeric_matrix(value: Any, name: str) -> np.ndarray:
     try:
         raw_values = np.asarray(value)
@@ -189,6 +194,8 @@ def _as_numeric_matrix(value: Any, name: str) -> np.ndarray:
 
     if raw_values.dtype == np.bool_:
         raise ValueError(f"{name} must be numeric, not boolean")
+    if _contains_missing_values(value) or _contains_missing_values(raw_values):
+        raise ValueError(f"{name} must be numeric")
     if _contains_boolean_values(value) or _contains_boolean_values(raw_values):
         raise ValueError(f"{name} must be numeric, not boolean")
     if (

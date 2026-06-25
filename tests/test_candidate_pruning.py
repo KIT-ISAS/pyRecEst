@@ -98,6 +98,17 @@ class TestCandidatePruning(unittest.TestCase):
 
         npt.assert_array_equal(mask, np.array([[False, True]]))
 
+    def test_numeric_matrices_reject_none_object_values(self):
+        with self.assertRaisesRegex(ValueError, "cost_matrix must be numeric"):
+            candidate_mask_from_costs(np.array([[1.0, None]], dtype=object))
+
+        with self.assertRaisesRegex(ValueError, "probability_matrix must be numeric"):
+            candidate_mask_from_costs(
+                np.array([[1.0, 2.0]]),
+                probability_matrix=np.array([[0.5, None]], dtype=object),
+                config=CandidatePruningConfig(probability_threshold=0.4),
+            )
+
     def test_percentile_rule_and_large_cost_replacement(self):
         costs = np.array([[1.0, 2.0, 100.0], [3.0, 4.0, 5.0]])
 
