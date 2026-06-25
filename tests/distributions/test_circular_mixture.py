@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
+
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
@@ -92,7 +93,10 @@ class TestCircularMixture(unittest.TestCase):
         samples = mixture.sample(8)
 
         self.assertEqual(samples.shape, (8,))
-        npt.assert_allclose(samples, array([0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.9]))
+        npt.assert_allclose(
+            samples,
+            array([0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.9]),
+        )
 
     def test_sample_rejects_invalid_count(self):
         for n in (0, -1, 1.5, True):
