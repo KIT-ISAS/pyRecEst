@@ -95,6 +95,10 @@ def _contains_text_values(value) -> bool:
 
 
 def _coerce_cost_matrix(cost_matrix):
+    if _contains_boolean_values(cost_matrix):
+        raise ValueError("cost_matrix must be numeric, not boolean")
+    if _contains_text_values(cost_matrix):
+        raise ValueError("cost_matrix must be numeric")
     try:
         raw_cost_matrix = _asarray(cost_matrix)
     except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
