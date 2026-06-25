@@ -68,6 +68,12 @@ def _contains_unsupported_numeric_config_values(value: Any) -> bool:
     if isinstance(value, _UNSUPPORTED_NUMERIC_CONFIG_TYPES):
         return True
     try:
+        raw_values = np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        raw_values = ()
+    if any(isinstance(item, _UNSUPPORTED_NUMERIC_CONFIG_TYPES) for item in raw_values):
+        return True
+    try:
         values = np.asarray(to_numpy(value), dtype=object).reshape(-1)
     except (TypeError, ValueError, RuntimeError):
         return False
