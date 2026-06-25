@@ -26,6 +26,7 @@ from scipy.optimize import linear_sum_assignment
 
 _TEXT_TYPES = (str, bytes, bytearray, _np.str_, _np.bytes_)
 _BOOLEAN_TYPES = (bool, _np.bool_)
+_COMPLEX_TYPES = (complex, _np.complexfloating)
 _INVALID_SCALAR_TYPES = _BOOLEAN_TYPES + _TEXT_TYPES
 
 
@@ -74,6 +75,18 @@ def _has_boolean_dtype(value) -> bool:
     return dtype is not None and str(dtype).lower() in {"bool", "bool_", "torch.bool"}
 
 
+def _has_complex_dtype(value) -> bool:
+    dtype = getattr(value, "dtype", None)
+    if dtype is None:
+        return False
+    try:
+        if _np.issubdtype(dtype, _np.complexfloating):
+            return True
+    except TypeError:
+        pass
+    return str(dtype).lower() in {"complex", "complex64", "complex128", "torch.complex64", "torch.complex128"}
+
+
 def _contains_boolean_values(value) -> bool:
     if isinstance(value, _BOOLEAN_TYPES):
         return True
@@ -94,11 +107,23 @@ def _contains_text_values(value) -> bool:
     return any(isinstance(item, _TEXT_TYPES) for item in values)
 
 
+def _contains_complex_values(value) -> bool:
+    if isinstance(value, _COMPLEX_TYPES):
+        return True
+    try:
+        values = _np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, _COMPLEX_TYPES) for item in values)
+
+
 def _coerce_cost_matrix(cost_matrix):
     if _contains_boolean_values(cost_matrix):
         raise ValueError("cost_matrix must be numeric, not boolean")
     if _contains_text_values(cost_matrix):
         raise ValueError("cost_matrix must be numeric")
+    if _contains_complex_values(cost_matrix):
+        raise ValueError("cost_matrix must be real-valued numeric")
     try:
         raw_cost_matrix = _asarray(cost_matrix)
     except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
@@ -111,6 +136,8 @@ def _coerce_cost_matrix(cost_matrix):
         raise ValueError("cost_matrix must be numeric, not boolean")
     if _contains_text_values(cost_matrix) or _contains_text_values(raw_cost_matrix):
         raise ValueError("cost_matrix must be numeric")
+    if _has_complex_dtype(raw_cost_matrix) or _contains_complex_values(raw_cost_matrix):
+        raise ValueError("cost_matrix must be real-valued numeric")
 
     try:
         coerced_cost_matrix = _asarray(raw_cost_matrix, dtype=float)
@@ -141,6 +168,8 @@ def _coerce_non_assignment_costs(costs, size: int, name: str):
         raise ValueError(f"{name} must be numeric and finite")
     if _contains_text_values(costs) or _contains_text_values(raw_costs_array):
         raise ValueError(f"{name} must be numeric and finite")
+    if _has_complex_dtype(raw_costs_array) or _contains_complex_values(costs) or _contains_complex_values(raw_costs_array):
+        raise ValueError(f"{name} must be real-valued numeric and finite")
 
     try:
         costs_array = _asarray(raw_costs_array, dtype=float)
