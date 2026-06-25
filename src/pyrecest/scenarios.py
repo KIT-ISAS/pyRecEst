@@ -245,9 +245,18 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
     expected = config.get("expected", {})
     metrics: dict[str, float] = {}
     if "final_estimate" in expected and final_estimate:
+        expected_final_estimate = _to_float_list(
+            expected["final_estimate"],
+            name="expected.final_estimate",
+            reject_text_or_bool=True,
+        )
+        if len(final_estimate) != len(expected_final_estimate):
+            raise ValueError(
+                "expected.final_estimate must have the same length as the final estimate"
+            )
         errors = [
-            abs(a - float(b))
-            for a, b in zip(final_estimate, expected["final_estimate"])
+            abs(actual - expected_value)
+            for actual, expected_value in zip(final_estimate, expected_final_estimate)
         ]
         metrics["max_abs_final_estimate_error"] = max(errors) if errors else 0.0
     if nis_values:
