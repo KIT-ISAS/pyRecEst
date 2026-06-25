@@ -118,6 +118,28 @@ class BlockParticleFilterTest(unittest.TestCase):
                         block_weights=array([[1.0, invalid_weight], [1.0, 1.0]]),
                     )
 
+    def test_rejects_nonreal_weight_inputs(self):
+        invalid_weights = [
+            [True, False],
+            ["1.0", "0.0"],
+            [1.0 + 0.0j, 0.0],
+        ]
+
+        for weights in invalid_weights:
+            with self.subTest(weights=weights):
+                with self.assertRaisesRegex(ValueError, "real numeric"):
+                    DummyBlockParticleFilter(
+                        array([[0.0, 10.0], [1.0, 11.0]]),
+                        weights=weights,
+                    )
+
+                with self.assertRaisesRegex(ValueError, "real numeric"):
+                    DummyBlockParticleFilter(
+                        array([[0.0, 10.0], [1.0, 11.0]]),
+                        partition="singleton",
+                        block_weights=[weights, [1.0, 1.0]],
+                    )
+
     def test_global_log_likelihood_updates_all_blocks(self):
         filt = DummyBlockParticleFilter(
             array([[0.0, 10.0], [1.0, 11.0]]),
@@ -155,6 +177,55 @@ class BlockParticleFilterTest(unittest.TestCase):
                 )
             npt.assert_allclose(filt.block_weights, initial_block_weights)
             npt.assert_allclose(filt.weights, initial_weights)
+
+    def test_update_rejects_nonreal_ess_thresholds_before_mutating(self):
+        initial_block_weights = array([[0.5, 0.5], [0.5, 0.5]])
+        initial_weights = array([0.5, 0.5])
+        invalid_thresholds = [
+            True,
+            "0.0",
+            [0.0, "0.0"],
+            0.0 + 0.0j,
+        ]
+
+        for ess_threshold in invalid_thresholds:
+            filt = DummyBlockParticleFilter(
+                array([[0.0, 10.0], [1.0, 11.0]]),
+                partition="singleton",
+            )
+            with self.subTest(ess_threshold=ess_threshold), self.assertRaisesRegex(
+                ValueError, "real numeric"
+            ):
+                filt.update_with_log_likelihood(
+                    array([0.0, -1.0]),
+                    ess_threshold=ess_threshold,
+                    resample=False,
+                )
+            npt.assert_allclose(filt.block_weights, initial_block_weights)
+            npt.assert_allclose(filt.weights, initial_weights)
+
+    def test_update_rejects_nonreal_likelihoods(self):
+        invalid_likelihoods = [
+            [True, False],
+            ["1.0", "0.5"],
+            [1.0 + 0.0j, 0.5],
+        ]
+
+        for likelihood in invalid_likelihoods:
+            with self.subTest(likelihood=likelihood):
+                filt = DummyBlockParticleFilter(
+                    array([[0.0, 10.0], [1.0, 11.0]]),
+                    partition="singleton",
+                )
+                with self.assertRaisesRegex(ValueError, "real numeric"):
+                    filt.update_with_likelihood(likelihood, resample=False)
+
+                filt = DummyBlockParticleFilter(
+                    array([[0.0, 10.0], [1.0, 11.0]]),
+                    partition="singleton",
+                )
+                with self.assertRaisesRegex(ValueError, "real numeric"):
+                    filt.update_with_log_likelihood(likelihood, resample=False)
 
     def test_update_accepts_scalar_and_per_block_ess_thresholds(self):
         filt = DummyBlockParticleFilter(
