@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
+from numbers import Real
 from types import MappingProxyType
 from typing import Any, Literal
+
+import numpy as np
 
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
@@ -24,6 +27,8 @@ from pyrecest.backend import (
 
 _COST_MODE = Literal["negative_log_probability", "one_minus_probability"]
 FeatureTransform = Callable[[Mapping[str, Any]], Any]
+_PROBABILITY_CLIP_ERROR = "probability_clip must be a finite real scalar in (0, 0.5)"
+_TEXT_SCALAR_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
 
 
 @dataclass(frozen=True, init=False)
@@ -123,12 +128,11 @@ class CalibratedPairwiseAssociationModel:
             if feature_names is None:
                 raise ValueError("feature_names or schema is required")
             schema = NamedPairwiseFeatureSchema(feature_names, transforms=transforms)
-        if not 0.0 < probability_clip < 0.5:
-            raise ValueError("probability_clip must lie in (0, 0.5)")
+        probability_clip = _normalize_probability_clip(probability_clip)
 
         object.__setattr__(self, "model", model)
         object.__setattr__(self, "schema", schema)
-        object.__setattr__(self, "probability_clip", float(probability_clip))
+        object.__setattr__(self, "probability_clip", probability_clip)
 
     @property
     def feature_names(self) -> tuple[str, ...]:
@@ -212,6 +216,26 @@ class CalibratedPairwiseAssociationModel:
             if _is_positive_binary_label(class_label):
                 return class_index
         return 1
+
+
+def _normalize_probability_clip(value: Any) -> float:
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise ValueError(_PROBABILITY_CLIP_ERROR) from exc
+    if value_array.shape != ():
+        raise ValueError(_PROBABILITY_CLIP_ERROR)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_, complex, np.complexfloating, *_TEXT_SCALAR_TYPES)):
+        raise ValueError(_PROBABILITY_CLIP_ERROR)
+    if not isinstance(scalar, Real):
+        raise ValueError(_PROBABILITY_CLIP_ERROR)
+
+    probability_clip = float(scalar)
+    if not np.isfinite(probability_clip) or not 0.0 < probability_clip < 0.5:
+        raise ValueError(_PROBABILITY_CLIP_ERROR)
+    return probability_clip
 
 
 def _finite_probability_array(probabilities: Any) -> Any:
