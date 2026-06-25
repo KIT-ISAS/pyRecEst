@@ -20,6 +20,8 @@ from pyrecest.backend import (
 
 from .abstract_circular_distribution import AbstractCircularDistribution
 
+_SMALL_ENTROPY_SERIES_THRESHOLD = 1e-4
+
 
 def _validate_positive_scalar(value, name):
     value = asarray(value)
@@ -66,9 +68,20 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
         return mod(-log(u) / self.lambda_, 2.0 * pi)
 
     def entropy(self):
+        log_beta = 2.0 * pi * self.lambda_
+        if bool(all(log_beta < _SMALL_ENTROPY_SERIES_THRESHOLD)):
+            # As lambda approaches zero, the distribution approaches the uniform
+            # distribution on [0, 2*pi).  The direct expression evaluates
+            # log1p(-exp(-log_beta)) and divides by 1 - exp(-log_beta), which
+            # suffers catastrophic cancellation for tiny log_beta.
+            return (
+                log(2.0 * pi)
+                - log_beta**2 / 24.0
+                + log_beta**4 / 960.0
+            )
+
         # Use exp(-2*pi*lambda) to avoid overflowing exp(2*pi*lambda) for
         # concentrated wrapped exponentials.
-        log_beta = 2.0 * pi * self.lambda_
         exp_neg_log_beta = exp(-log_beta)
         return (
             1.0
