@@ -360,6 +360,12 @@ def _json_value(value: Any) -> Any:
         value = float(value)
     if isinstance(value, float):
         return None if not math.isfinite(value) else value
+    if isinstance(value, (complex, np.complexfloating)):
+        real = float(np.real(value))
+        imag = float(np.imag(value))
+        if not math.isfinite(real) or not math.isfinite(imag):
+            return None
+        return {"real": real, "imag": imag}
     if isinstance(value, (bytes, bytearray, np.bytes_)):
         return bytes(value).decode("utf-8", errors="replace")
     if isinstance(value, np.str_):
