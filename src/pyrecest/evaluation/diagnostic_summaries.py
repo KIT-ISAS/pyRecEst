@@ -23,7 +23,9 @@ def _as_scalar_float(value: Any, name: str) -> float:
         scalar_value = value_array.item()
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must be a scalar number") from exc
-    if isinstance(scalar_value, (bool, np.bool_, str, bytes, np.str_, np.bytes_)):
+    if isinstance(
+        scalar_value, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+    ):
         raise ValueError(f"{name} must be a scalar number")
     try:
         scalar = float(scalar_value)
@@ -303,7 +305,21 @@ def _optional_float(value: Any) -> float | None:
     if value is None:
         return None
     try:
-        out = float(value)
+        value_array = np.asarray(value)
+    except (TypeError, ValueError):
+        return None
+    if value_array.shape != ():
+        return None
+    try:
+        scalar_value = value_array.item()
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if isinstance(
+        scalar_value, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+    ):
+        return None
+    try:
+        out = float(scalar_value)
     except (TypeError, ValueError, OverflowError):
         return None
     return out if math.isfinite(out) else None
