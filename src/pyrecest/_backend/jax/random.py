@@ -100,9 +100,24 @@ def _broadcast_shape_from_values(*values):
 
 def _bounded_sampler_shape(size, *parameters):
     """Return the NumPy-compatible output shape for bounded random samplers."""
-    if size is not None:
-        return _shape_from_size(size)
-    return _broadcast_shape_from_values(*parameters)
+    try:
+        parameter_shape = _broadcast_shape_from_values(*parameters)
+    except ValueError as exc:
+        raise ValueError("parameter arrays could not be broadcast together") from exc
+
+    if size is None:
+        return parameter_shape
+
+    sample_shape = _shape_from_size(size)
+    try:
+        broadcast_shape = _np.broadcast_shapes(sample_shape, parameter_shape)
+    except ValueError as exc:
+        raise ValueError(
+            "size and parameter arrays could not be broadcast together"
+        ) from exc
+    if broadcast_shape != sample_shape:
+        raise ValueError("size and parameter arrays could not be broadcast together")
+    return sample_shape
 
 
 def _looks_like_shape(value):
