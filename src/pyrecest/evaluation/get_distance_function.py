@@ -11,6 +11,17 @@ from scipy.optimize import linear_sum_assignment
 
 DistanceFactory = Callable[[str, dict[str, Any] | None], Callable[[Any, Any], float]]
 _DISTANCE_FUNCTION_FACTORIES: dict[str, DistanceFactory] = {}
+_UNSUPPORTED_NUMERIC_CONFIG_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+)
 
 
 def _normalize_registry_name(manifold_name: str) -> str:
@@ -53,13 +64,26 @@ def _without_symmetry_suffix(manifold_name: str) -> str:
     )
 
 
+def _contains_unsupported_numeric_config_values(value: Any) -> bool:
+    if isinstance(value, _UNSUPPORTED_NUMERIC_CONFIG_TYPES):
+        return True
+    try:
+        values = np.asarray(to_numpy(value), dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, _UNSUPPORTED_NUMERIC_CONFIG_TYPES) for item in values)
+
+
 def _validate_symmetry_count(nSymm: Any) -> int:
     count_array = np.asarray(to_numpy(nSymm))
-    if count_array.shape != () or np.issubdtype(count_array.dtype, np.bool_):
+    if (
+        count_array.shape != ()
+        or np.issubdtype(count_array.dtype, np.bool_)
+        or _contains_unsupported_numeric_config_values(nSymm)
+        or _contains_unsupported_numeric_config_values(count_array)
+    ):
         raise ValueError("nSymm must be a finite positive integer")
     scalar = count_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
-        raise ValueError("nSymm must be a finite positive integer")
     try:
         count = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
@@ -69,12 +93,23 @@ def _validate_symmetry_count(nSymm: Any) -> int:
     return int(count)
 
 
+def _validate_symmetry_offsets(symmetryOffsets: Any) -> list[float]:
+    if _contains_unsupported_numeric_config_values(symmetryOffsets):
+        raise ValueError("symmetryOffsets must contain only finite real numeric values")
+    try:
+        offsets = np.asarray(to_numpy(symmetryOffsets), dtype=float).reshape(-1)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            "symmetryOffsets must contain only finite real numeric values"
+        ) from exc
+    if not np.all(np.isfinite(offsets)):
+        raise ValueError("symmetryOffsets must contain only finite real numeric values")
+    return [float(offset) for offset in offsets]
+
+
 def _symmetry_offsets(nSymm, symmetryOffsets):
     if symmetryOffsets is not None:
-        offsets = np.asarray(to_numpy(symmetryOffsets), dtype=float).reshape(-1)
-        if not np.all(np.isfinite(offsets)):
-            raise ValueError("symmetryOffsets must be finite")
-        return [float(offset) for offset in offsets]
+        return _validate_symmetry_offsets(symmetryOffsets)
     if nSymm is None:
         return []
     count = _validate_symmetry_count(nSymm)
