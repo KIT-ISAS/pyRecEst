@@ -37,6 +37,11 @@ def backend_support(
     return get_backend_support(api_name, backend=backend)
 
 
+def _markdown_table_cell(value: object) -> str:
+    """Return ``value`` escaped for use inside a Markdown table cell."""
+    return str(value).replace("|", "\\|").replace("\n", "<br>")
+
+
 def format_backend_support_markdown() -> str:
     """Render the public backend API matrix as a Markdown table."""
     lines = [
@@ -44,9 +49,14 @@ def format_backend_support_markdown() -> str:
         "|-----|-------|---------|-----|-------|",
     ]
     for api_name, row in iter_api_backend_capabilities():
-        lines.append(
-            f"| `{api_name}` | {row['numpy']} | {row['pytorch']} | {row['jax']} | {row.get('notes', '')} |"
-        )
+        cells = [
+            f"`{_markdown_table_cell(api_name)}`",
+            _markdown_table_cell(row["numpy"]),
+            _markdown_table_cell(row["pytorch"]),
+            _markdown_table_cell(row["jax"]),
+            _markdown_table_cell(row.get("notes", "")),
+        ]
+        lines.append(f"| {' | '.join(cells)} |")
     return "\n".join(lines)
 
 
