@@ -91,6 +91,12 @@ def test_ellipsoid_axis_offsets_reject_nonfinite_radius(bad_radius: float) -> No
         ellipsoid_axis_offsets(np.eye(2), radius=bad_radius)
 
 
+@pytest.mark.parametrize("bad_radius", ["1.0", b"1.0", np.str_("1.0"), np.bytes_(b"1.0")])
+def test_ellipsoid_axis_offsets_reject_text_radius(bad_radius: object) -> None:
+    with pytest.raises(ValueError, match="radius"):
+        ellipsoid_axis_offsets(np.eye(2), radius=bad_radius)
+
+
 @pytest.mark.parametrize("bad_radius", [np.nan, np.inf, -np.inf])
 def test_ellipsoid_sigma_points_reject_nonfinite_radii(bad_radius: float) -> None:
     with pytest.raises(ValueError, match="finite"):
@@ -103,6 +109,33 @@ def test_mahalanobis_support_points_reject_nonfinite_radius(bad_radius: float) -
         mahalanobis_support_points(
             [0.0, 0.0], np.eye(2), [[1.0, 0.0]], radius=bad_radius
         )
+
+
+@pytest.mark.parametrize(
+    "bad_centers",
+    [
+        [True, False],
+        np.asarray([True, False]),
+        ["0.0", "1.0"],
+    ],
+)
+def test_support_points_reject_non_real_numeric_centers(bad_centers: object) -> None:
+    with pytest.raises(ValueError, match="centers"):
+        support_points_from_axis_offsets(bad_centers, np.eye(2))
+
+
+@pytest.mark.parametrize(
+    "bad_covariance",
+    [
+        [["1.0", "0.0"], ["0.0", "1.0"]],
+        [[True, False], [False, True]],
+    ],
+)
+def test_ellipsoid_axis_offsets_reject_non_real_numeric_covariance(
+    bad_covariance: object,
+) -> None:
+    with pytest.raises(ValueError, match="covariance"):
+        ellipsoid_axis_offsets(bad_covariance)
 
 
 def test_support_points_reject_shape_mismatch() -> None:
