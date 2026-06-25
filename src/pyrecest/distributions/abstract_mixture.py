@@ -28,24 +28,25 @@ from .abstract_manifold_specific_distribution import (
 
 
 def _validate_positive_sample_count(n) -> int:
+    message = "n must be a positive integer"
     count_array = np.asarray(n)
     if count_array.ndim != 0:
-        raise ValueError("n must be a scalar integer")
+        raise ValueError(message)
 
     count = count_array.item()
     if isinstance(count, (bool, np.bool_)):
-        raise ValueError("n must be an integer, not a boolean")
+        raise ValueError(message)
 
     try:
         count_int = int(count)
         count_float = float(count)
     except (OverflowError, TypeError, ValueError) as exc:
-        raise ValueError("n must be an integer") from exc
+        raise ValueError(message) from exc
 
     if not np.isfinite(count_float) or not count_float.is_integer():
-        raise ValueError("n must be a finite integer")
+        raise ValueError(message)
     if count_int <= 0:
-        raise ValueError("n must be positive")
+        raise ValueError(message)
     return count_int
 
 
