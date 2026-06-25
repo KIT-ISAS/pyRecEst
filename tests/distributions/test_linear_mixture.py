@@ -66,6 +66,15 @@ class LinearMixtureTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 LinearMixture([gm1, gm2], array([0.0, 0.0]))
 
+    def test_rejects_boolean_weights(self):
+        gm1 = GaussianDistribution(array([1.0]), array([[1.0]]))
+        gm2 = GaussianDistribution(array([50.0]), array([[1.0]]))
+
+        with catch_warnings():
+            simplefilter("ignore", category=UserWarning)
+            with self.assertRaisesRegex(ValueError, "boolean"):
+                LinearMixture([gm1, gm2], array([True, False]))
+
     def test_pdf(self):
         gm1 = GaussianDistribution(array([1.0, 1.0]), diag(array([2.0, 3.0])))
         gm2 = GaussianDistribution(-array([3.0, 1.0]), diag(array([2.0, 3.0])))
