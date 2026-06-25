@@ -36,6 +36,7 @@ from .likelihood import (
     SupportsTransitionDensity,
     SupportsTransitionSampling,
 )
+from ._sampleable_transition_validation import install_sampleable_transition_validation
 from .linear_gaussian import (
     IdentityGaussianMeasurementModel,
     IdentityGaussianTransitionModel,
@@ -102,6 +103,8 @@ from .weak_measurement import (
     selection_matrix,
     weak_dimension_measurement_model,
 )
+
+install_sampleable_transition_validation()
 
 __all__ = [
     "AdditiveNoiseMeasurementModel",
