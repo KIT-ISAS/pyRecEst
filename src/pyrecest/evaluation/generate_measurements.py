@@ -52,6 +52,23 @@ def _as_nonnegative_measurement_count(value, name="measurement count") -> int:
     return count
 
 
+def _as_nonnegative_finite_scalar(value, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(f"{name} must be a finite non-negative scalar.")
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
+        raise ValueError(f"{name} must be a finite non-negative scalar.")
+    try:
+        result = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite non-negative scalar.") from exc
+    if not np.isfinite(result) or result < 0.0:
+        raise ValueError(f"{name} must be a finite non-negative scalar.")
+    return result
+
+
 def _mtt_state_at(groundtruth, t, target_no, n_targets):
     """Return one target state from dense or per-step object ground truth."""
     state_at_t = np.asarray(groundtruth[t])
@@ -271,7 +288,12 @@ def generate_measurements(groundtruth, simulation_config):
 
 @beartype
 def generate_n_measurements_PPP(area: float, intensity_lambda: float) -> int:
-    # Compute the expected number of points
+    area = _as_nonnegative_finite_scalar(area, "area")
+    intensity_lambda = _as_nonnegative_finite_scalar(
+        intensity_lambda,
+        "intensity_lambda",
+    )
     expected_num_points = intensity_lambda * area
-    # Get the actual number of points to generate as a realization from a Poisson distribution
-    return poisson.rvs(expected_num_points)
+    if not np.isfinite(expected_num_points):
+        raise ValueError("area * intensity_lambda must be finite.")
+    return int(poisson.rvs(expected_num_points))
