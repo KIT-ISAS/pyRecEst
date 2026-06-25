@@ -41,6 +41,30 @@ class TestCandidatePruningMatrixValidation(unittest.TestCase):
                     ):
                         function(matrix)
 
+    def test_cost_matrix_rejects_negative_infinity(self):
+        invalid_matrices = (
+            [[0.0, -float("inf")]],
+            np.array([[0.0, -np.inf]]),
+        )
+
+        for function in (candidate_mask_from_costs, prune_pairwise_cost_matrix):
+            for matrix in invalid_matrices:
+                with self.subTest(function=function.__name__, matrix=matrix):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "positive infinity",
+                    ):
+                        function(matrix)
+
+    def test_cost_matrix_keeps_positive_infinity_as_missing_candidate(self):
+        costs = np.array([[1.0, np.inf]])
+
+        np.testing.assert_array_equal(
+            candidate_mask_from_costs(costs),
+            np.array([[True, False]]),
+        )
+        np.testing.assert_array_equal(prune_pairwise_cost_matrix(costs), costs)
+
     def test_cost_matrix_rejects_text_entries(self):
         invalid_matrices = (
             np.array([["1.0", "2.0"]]),

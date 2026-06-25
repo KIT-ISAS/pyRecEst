@@ -346,7 +346,11 @@ def _as_cost_matrix(cost_matrix: Any) -> np.ndarray:
     costs = _as_numeric_matrix(cost_matrix, "cost_matrix")
     if costs.ndim != 2:
         raise ValueError("cost_matrix must be two-dimensional")
-    return np.nan_to_num(costs, nan=np.inf, posinf=np.inf, neginf=np.inf)
+    if np.any(np.isneginf(costs)):
+        raise ValueError(
+            "cost_matrix may only contain finite values or positive infinity"
+        )
+    return np.nan_to_num(costs, nan=np.inf, posinf=np.inf)
 
 
 def _as_probability_matrix(
