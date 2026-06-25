@@ -82,6 +82,20 @@ def test_choice_without_replacement_shuffle_false_preserves_population_order_for
 
 
 @pytest.mark.parametrize("control", ["replace", "shuffle"])
+@pytest.mark.parametrize("value", [np.array(False), np.array(True)])
+def test_choice_accepts_numpy_scalar_boolean_controls(control, value):
+    kwargs = {control: value}
+    size = 2
+    if control == "shuffle":
+        kwargs["replace"] = False
+        size = 3
+
+    samples = random.choice(np.arange(3), size=size, **kwargs)
+
+    assert samples.shape == (size,)
+
+
+@pytest.mark.parametrize("control", ["replace", "shuffle"])
 def test_choice_rejects_non_boolean_controls(control):
     kwargs = {control: "False"}
 
