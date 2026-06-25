@@ -4,9 +4,36 @@ from collections.abc import Sequence
 
 import numpy as np
 
+_TEXT_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+_BOOLEAN_TYPES = (bool, np.bool_)
+_COMPLEX_TYPES = (complex, np.complexfloating)
+
+
+def _contains_values_of_type(value: object, types: tuple[type, ...]) -> bool:
+    if isinstance(value, types):
+        return True
+    try:
+        values = np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, types) for item in values)
+
+
+def _has_non_real_numeric_values(value: object) -> bool:
+    return (
+        _contains_values_of_type(value, _TEXT_TYPES)
+        or _contains_values_of_type(value, _BOOLEAN_TYPES)
+        or _contains_values_of_type(value, _COMPLEX_TYPES)
+    )
+
 
 def _as_real_array(name: str, value: np.ndarray | Sequence[float]) -> np.ndarray:
-    array = np.asarray(value, dtype=np.float64)
+    if _has_non_real_numeric_values(value):
+        raise ValueError(f"{name} must contain real numeric values.")
+    try:
+        array = np.asarray(value, dtype=np.float64)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain real numeric values.") from exc
     if not np.isfinite(array).all():
         raise ValueError(f"{name} must contain only finite values.")
     return array
@@ -14,6 +41,8 @@ def _as_real_array(name: str, value: np.ndarray | Sequence[float]) -> np.ndarray
 
 def _as_finite_nonnegative_scalar(name: str, value: float) -> float:
     message = f"{name} must be a finite non-negative scalar."
+    if _has_non_real_numeric_values(value):
+        raise ValueError(message)
     array = np.asarray(value)
     if array.shape != () or array.dtype == np.bool_:
         raise ValueError(message)
