@@ -95,3 +95,56 @@ def test_pareto_constraint_thresholds_reject_text_scalars(threshold: object) -> 
             quality_constraints={"score": ("<=", threshold)},
             compression_objective="score",
         )
+
+
+@pytest.mark.parametrize(
+    ("metric", "direction", "reference"),
+    [
+        (False, "min", 1.0),
+        (np.bool_(False), "min", 1.0),
+        ("0.0", "min", 1.0),
+        (b"0.0", "min", 1.0),
+        (np.str_("0.0"), "min", 1.0),
+        (np.array("0.0"), "min", 1.0),
+        (True, "max", 0.0),
+        (np.bool_(True), "max", 0.0),
+        ("1.0", "max", 0.0),
+        (b"1.0", "max", 0.0),
+        (np.str_("1.0"), "max", 0.0),
+        (np.array("1.0"), "max", 0.0),
+    ],
+)
+def test_record_dominates_treats_bool_and_numeric_text_objectives_as_missing(
+    metric: object, direction: str, reference: float
+) -> None:
+    left = {"objective": metric}
+    right = {"objective": reference}
+
+    assert not record_dominates(
+        left,
+        right,
+        ["objective"],
+        directions={"objective": direction},
+    )
+    assert not record_dominates(
+        left,
+        right,
+        ["objective"],
+        directions={"objective": direction},
+        allow_missing=False,
+    )
+
+
+def test_pareto_front_treats_numeric_text_objectives_as_missing() -> None:
+    table = pd.DataFrame(
+        [
+            {"name": "text_fast", "runtime": "0.0"},
+            {"name": "numeric_slow", "runtime": 1.0},
+        ]
+    )
+
+    indices = pareto_front_indices(table, ["runtime"], directions={"runtime": "min"})
+    mask = is_pareto_front(table, ["runtime"], directions={"runtime": "min"})
+
+    assert table.loc[indices, "name"].tolist() == ["text_fast", "numeric_slow"]
+    assert mask.tolist() == [True, True]
