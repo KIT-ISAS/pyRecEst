@@ -13,9 +13,10 @@ def get_backend_name() -> str:
     return backend.__backend_name__  # pylint: disable=no-member
 
 
-def is_backend(expected: str) -> bool:
-    """Return whether the active backend equals ``expected``."""
-    return get_backend_name() == expected
+def is_backend(expected: str | tuple[str, ...]) -> bool:
+    """Return whether the active backend matches one of the expected names."""
+    expected_names = _normalize_expected_backend_names(expected)
+    return get_backend_name() in expected_names
 
 
 def _normalize_expected_backend_names(
