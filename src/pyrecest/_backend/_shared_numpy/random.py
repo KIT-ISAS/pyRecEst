@@ -8,6 +8,7 @@ _allow_complex_dtype = _common._allow_complex_dtype
 
 
 def _rand(*dims, size=None):
+    """Draw uniform samples with NumPy-style positional and size arguments."""
     if dims:
         if size is not None:
             raise TypeError("Specify either positional dimensions or size, not both.")
@@ -98,6 +99,7 @@ def _maybe_preserve_choice_order(indices, *, replace, p, shuffle, size):
 
 
 def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
+    """Draw samples from an integer or array population."""
     replace = _choice_bool(replace, "replace")
     shuffle = _choice_bool(shuffle, "shuffle")
     a_array = _np.asarray(a)
