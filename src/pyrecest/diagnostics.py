@@ -45,6 +45,8 @@ def _coerce_metadata_bool(value: Any, name: str) -> bool:
 
 def _coerce_weight_values(weights: Any) -> list[float]:
     """Return backend-independent Python floats from an array-like weight vector."""
+    if isinstance(weights, str | bytes | bytearray):
+        raise ValueError("Particle weights must be numeric.")
     try:
         from pyrecest.backend import to_numpy
 
