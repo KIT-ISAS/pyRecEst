@@ -278,7 +278,10 @@ def _apply_add_link(matrix: np.ndarray, edit: TrackEdit) -> TrackEditApplication
 
 def _apply_remove_link(matrix: np.ndarray, edit: TrackEdit) -> TrackEditApplication:
     session_a, session_b, source, target = _require_link_fields(edit)
-    occurrence_index = int(edit.metadata.get("occurrence_index", 0))
+    occurrence_index = _coerce_index(
+        edit.metadata.get("occurrence_index", 0),
+        "metadata['occurrence_index']",
+    )
     output = matrix.copy()
     matching_rows = tuple(
         int(row)
@@ -306,8 +309,16 @@ def _apply_remove_link(matrix: np.ndarray, edit: TrackEdit) -> TrackEditApplicat
 
 def _apply_swap_link(matrix: np.ndarray, edit: TrackEdit) -> TrackEditApplication:
     session_a, session_b, source, target = _require_link_fields(edit)
-    wrong_session_a = int(edit.metadata.get("remove_session_a", session_a))
-    wrong_session_b = int(edit.metadata.get("remove_session_b", session_b))
+    wrong_session_a = _coerce_index(
+        edit.metadata.get("remove_session_a", session_a),
+        "metadata['remove_session_a']",
+        nonnegative=True,
+    )
+    wrong_session_b = _coerce_index(
+        edit.metadata.get("remove_session_b", session_b),
+        "metadata['remove_session_b']",
+        nonnegative=True,
+    )
     wrong_source = _metadata_int(edit, "remove_source_observation")
     wrong_target = _metadata_int(edit, "remove_target_observation")
     output = matrix.copy()
@@ -354,8 +365,8 @@ def _apply_split_track(matrix: np.ndarray, edit: TrackEdit) -> TrackEditApplicat
         raise ValueError("split_track edits require track_index")
     if edit.session_b is None:
         raise ValueError("split_track edits require session_b as split point")
-    row_index = int(edit.track_index)
-    split_session = int(edit.session_b)
+    row_index = _coerce_index(edit.track_index, "track_index")
+    split_session = _coerce_index(edit.session_b, "session_b")
     output = matrix.copy()
     if row_index < 0 or row_index >= output.shape[0]:
         return TrackEditApplication(
@@ -389,8 +400,8 @@ def _apply_merge_tracks(matrix: np.ndarray, edit: TrackEdit) -> TrackEditApplica
     other = edit.metadata.get("other_track_index")
     if other is None:
         raise ValueError("merge_tracks edits require metadata['other_track_index']")
-    left_index = int(edit.track_index)
-    right_index = int(other)
+    left_index = _coerce_index(edit.track_index, "track_index")
+    right_index = _coerce_index(other, "metadata['other_track_index']")
     output = matrix.copy()
     if (
         left_index < 0
@@ -426,18 +437,64 @@ def _require_link_fields(edit: TrackEdit) -> TrackLink:
         raise ValueError(
             f"{edit.kind} edits require session_a, session_b, source_observation, and target_observation"
         )
-    session_a, session_b, source, target = (
-        int(value) for value in fields if value is not None
+
+    session_a = _coerce_index(edit.session_a, "session_a", nonnegative=True)
+    session_b = _coerce_index(edit.session_b, "session_b", nonnegative=True)
+    source = _coerce_index(
+        edit.source_observation, "source_observation", nonnegative=True
     )
-    if session_a < 0 or session_b < 0 or session_a >= session_b:
+    target = _coerce_index(
+        edit.target_observation, "target_observation", nonnegative=True
+    )
+    if session_a >= session_b:
         raise ValueError("edit sessions must satisfy 0 <= session_a < session_b")
     return session_a, session_b, source, target
+
+
+def _coerce_index(value: Any, name: str, *, nonnegative: bool = False) -> int:
+    message = (
+        f"{name} must be a non-negative integer"
+        if nonnegative
+        else f"{name} must be an integer"
+    )
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(
+        scalar,
+        (
+            bool,
+            np.bool_,
+            str,
+            bytes,
+            bytearray,
+            np.str_,
+            np.bytes_,
+            complex,
+            np.complexfloating,
+        ),
+    ):
+        raise ValueError(message)
+    if isinstance(scalar, (int, np.integer)):
+        parsed = int(scalar)
+    elif isinstance(scalar, (float, np.floating)):
+        if not np.isfinite(scalar) or not float(scalar).is_integer():
+            raise ValueError(message)
+        parsed = int(scalar)
+    else:
+        raise ValueError(message)
+
+    if nonnegative and parsed < 0:
+        raise ValueError(message)
+    return parsed
 
 
 def _metadata_int(edit: TrackEdit, name: str) -> int:
     if name not in edit.metadata:
         raise ValueError(f"swap_link edits require metadata[{name!r}]")
-    return int(edit.metadata[name])
+    return _coerce_index(edit.metadata[name], f"metadata[{name!r}]", nonnegative=True)
 
 
 def _merge_rows_if_compatible(left: np.ndarray, right: np.ndarray) -> np.ndarray | None:
@@ -554,11 +611,18 @@ def _complete_track_counter(
     *,
     session_indices: Sequence[int] | None,
 ) -> Counter[tuple[int, ...]]:
-    selected = (
-        tuple(range(track_matrix.shape[1]))
-        if session_indices is None
-        else tuple(int(index) for index in session_indices)
-    )
+    if session_indices is None:
+        selected = tuple(range(track_matrix.shape[1]))
+    else:
+        selected = tuple(
+            _coerce_index(index, "complete_session_indices", nonnegative=True)
+            for index in session_indices
+        )
+        for session_index in selected:
+            if session_index >= track_matrix.shape[1]:
+                raise IndexError(
+                    f"complete_session_indices {session_index} out of bounds for {track_matrix.shape[1]} sessions"
+                )
     counter: Counter[tuple[int, ...]] = Counter()
     for row in track_matrix:
         observations: list[int] = []
@@ -579,7 +643,11 @@ def _session_pairs(
     if session_pairs is None:
         return tuple((index, index + 1) for index in range(max(0, matrix.shape[1] - 1)))
     pairs = tuple(
-        (int(session_a), int(session_b)) for session_a, session_b in session_pairs
+        (
+            _coerce_index(session_a, "session_pairs", nonnegative=True),
+            _coerce_index(session_b, "session_pairs", nonnegative=True),
+        )
+        for session_a, session_b in session_pairs
     )
     for session_a, session_b in pairs:
         if session_a < 0 or session_b <= session_a:
