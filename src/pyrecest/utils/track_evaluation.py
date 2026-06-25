@@ -402,7 +402,10 @@ def _selected_sessions(
     selected = (
         list(range(matrix.shape[1]))
         if session_indices is None
-        else [int(index) for index in session_indices]
+        else [
+            _coerce_session_index(index, "session_indices")
+            for index in session_indices
+        ]
     )
     for session_idx in selected:
         _validate_session_index(matrix, session_idx)
@@ -415,7 +418,13 @@ def _session_pairs(
     pairs = (
         tuple((idx, idx + 1) for idx in range(max(0, matrix.shape[1] - 1)))
         if session_pairs is None
-        else tuple((int(a), int(b)) for a, b in session_pairs)
+        else tuple(
+            (
+                _coerce_session_index(session_a, "session_pairs"),
+                _coerce_session_index(session_b, "session_pairs"),
+            )
+            for session_a, session_b in session_pairs
+        )
     )
     for session_a, session_b in pairs:
         _validate_session_index(matrix, session_a)
@@ -423,6 +432,26 @@ def _session_pairs(
         if session_a >= session_b:
             raise ValueError("session_pairs must point forward in time")
     return pairs
+
+
+def _coerce_session_index(value: Any, name: str) -> int:
+    message = f"{name} entries must be integer session indices"
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError(message)
+    if isinstance(scalar, (int, np.integer)):
+        return int(scalar)
+    if (
+        isinstance(scalar, (float, np.floating))
+        and np.isfinite(scalar)
+        and float(scalar).is_integer()
+    ):
+        return int(scalar)
+    raise ValueError(message)
 
 
 def _validate_session_index(matrix: np.ndarray, session_idx: int) -> None:
