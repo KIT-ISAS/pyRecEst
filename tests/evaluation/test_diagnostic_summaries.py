@@ -111,6 +111,7 @@ class DiagnosticSummariesTest(unittest.TestCase):
             True,
             "2",
             b"2",
+            bytearray(b"2"),
             np.array("2"),
             np.array([1]),
         ):
@@ -135,6 +136,7 @@ class DiagnosticSummariesTest(unittest.TestCase):
             True,
             "5.0",
             b"5.0",
+            bytearray(b"5.0"),
             np.array("5.0"),
             np.array([1.0]),
         ):
@@ -174,6 +176,35 @@ class DiagnosticSummariesTest(unittest.TestCase):
         summary = build_diagnostic_summary(records, top_n=2, window_s=5.0)
         self.assertEqual(summary["top_residuals"], [])
         self.assertEqual(summary["track_switches"]["updates_with_track_id"], 0)
+        self.assertEqual(summary["covariance_inflation"]["count"], 0)
+        self.assertEqual(summary["worst_time_windows"], [])
+
+    def test_summary_treats_bool_and_text_optional_scalars_as_missing(self):
+        records = [
+            {
+                "time_s": "10.0",
+                "track_id": "A",
+                "source": "rf",
+                "residual_norm": True,
+                "covariance_scale": "3.0",
+                "error": "2.0",
+            },
+            {
+                "time_s": b"11.0",
+                "track_id": "B",
+                "source": "radar",
+                "residual_norm": bytearray(b"4.0"),
+                "covariance_scale": True,
+                "error": False,
+            },
+        ]
+
+        self.assertEqual(top_residuals(records), [])
+        self.assertEqual(covariance_inflation_summary(records)["count"], 0)
+        self.assertEqual(worst_time_windows(records), [])
+
+        summary = build_diagnostic_summary(records, top_n=2, window_s=5.0)
+        self.assertEqual(summary["top_residuals"], [])
         self.assertEqual(summary["covariance_inflation"]["count"], 0)
         self.assertEqual(summary["worst_time_windows"], [])
 
