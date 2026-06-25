@@ -23,7 +23,6 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     for submodule_name in BACKEND_ATTRIBUTES:
         if not submodule_name:
             continue
-        sys.modules.setdefault(
-            f"{backend.__name__}.{submodule_name}",
-            getattr(backend, submodule_name),
+        sys.modules[f"{backend.__name__}.{submodule_name}"] = getattr(
+            backend, submodule_name
         )
