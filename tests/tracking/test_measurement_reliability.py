@@ -94,6 +94,26 @@ def test_scale_covariance_by_reliability_returns_scaled_copy() -> None:
     assert np.allclose(cov, np.diag([4.0, 9.0]))
 
 
+def test_covariance_validation_rejects_bool_and_text_values() -> None:
+    invalid_covariances = (
+        [[True]],
+        [["1.0"]],
+        [[b"1.0"]],
+        np.array([[False]], dtype=object),
+        np.array([["1.0"]], dtype=object),
+    )
+
+    for covariance in invalid_covariances:
+        with pytest.raises(ValueError, match="real numeric values"):
+            scale_covariance_by_reliability(covariance, 0.5)
+        with pytest.raises(ValueError, match="real numeric values"):
+            ReliabilityWeightedMeasurement(
+                measurement=np.array([1.0]),
+                covariance=covariance,
+                reliability=0.5,
+            )
+
+
 def test_hard_mode_rejects_low_reliability_measurement() -> None:
     result = apply_measurement_reliability(
         np.eye(2),
