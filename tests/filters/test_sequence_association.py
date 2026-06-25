@@ -110,6 +110,49 @@ class SequenceAssociationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             SequenceAssociationNode(0, None)
 
+    def test_validation_rejects_noninteger_node_indices(self):
+        invalid_frame_indices = (True, 1.5, np.nan, np.inf, "0", np.array([0]))
+        for frame_index in invalid_frame_indices:
+            with self.subTest(frame_index=frame_index):
+                with self.assertRaisesRegex(ValueError, "frame_index must be an integer"):
+                    SequenceAssociationNode(frame_index, 0)
+
+        invalid_candidate_indices = (False, 1.25, -np.inf, "1", np.array([1]))
+        for candidate_index in invalid_candidate_indices:
+            with self.subTest(candidate_index=candidate_index):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "candidate_index must be an integer",
+                ):
+                    SequenceAssociationNode(0, candidate_index)
+
+    def test_validation_rejects_nonbool_missed_detection_flags(self):
+        invalid_flags = (0, 1, "False", np.array([True]))
+        for is_missed_detection in invalid_flags:
+            with self.subTest(is_missed_detection=is_missed_detection):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "is_missed_detection must be a bool",
+                ):
+                    SequenceAssociationNode(
+                        0,
+                        None,
+                        is_missed_detection=is_missed_detection,
+                    )
+
+    def test_validation_normalizes_integer_like_node_scalars(self):
+        node = SequenceAssociationNode(
+            np.array(1.0),
+            np.float64(2.0),
+            unary_cost=np.float64(0.5),
+            is_missed_detection=np.bool_(False),
+        )
+
+        self.assertEqual(node.frame_index, 1)
+        self.assertEqual(node.candidate_index, 2)
+        self.assertEqual(node.unary_cost, 0.5)
+        self.assertIs(node.is_missed_detection, False)
+
     def test_validation_rejects_nonfinite_unary_costs(self):
         for invalid_cost in (np.nan, np.inf, -np.inf):
             with self.subTest(invalid_cost=invalid_cost):
