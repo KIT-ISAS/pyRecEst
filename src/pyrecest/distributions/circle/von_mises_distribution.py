@@ -200,7 +200,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
         result = (
             -self.kappa * VonMisesDistribution.besselratio(0, self.kappa)
             + self.kappa
-            + log(2.0 * pi * ive(0, self.kappa))
+            + log(array(2.0 * pi * ive(0, self.kappa)))
         )
         return result
 
