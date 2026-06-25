@@ -14,6 +14,8 @@ def _validate_integral_scalar(value, name: str, *, minimum: int) -> int:
     scalar_value = scalar.item()
     if isinstance(scalar_value, (bool, np.bool_)):
         raise ValueError(f"{name} must be an integer, not a boolean")
+    if isinstance(scalar_value, (str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError(f"{name} must be an integer, not text")
 
     try:
         integer_value = int(scalar_value)

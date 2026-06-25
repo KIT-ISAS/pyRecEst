@@ -30,13 +30,13 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertEqual(samples.shape, (3, 1))
 
     def test_sample_stochastic_rejects_invalid_controls(self):
-        invalid_sample_counts = (-1, 1.5, True, [2])
+        invalid_sample_counts = (-1, 1.5, True, [2], "3", b"3")
         for n_samples in invalid_sample_counts:
             with self.subTest(n_samples=n_samples):
                 with self.assertRaises(ValueError):
                     self.sampler.sample_stochastic(n_samples)
 
-        invalid_dims = (0, 1.5, 2, True, [1])
+        invalid_dims = (0, 1.5, 2, True, [1], "1", b"1")
         for dim in invalid_dims:
             with self.subTest(dim=dim):
                 with self.assertRaises(ValueError):
@@ -68,7 +68,7 @@ class TestCircularUniformSampler(unittest.TestCase):
         self.assertEqual(grid_points.shape[0], 4)
 
     def test_get_grid_rejects_noninteger_density(self):
-        for density in (2.5, True, [3]):
+        for density in (2.5, True, [3], "3", b"3"):
             with self.subTest(density=density):
                 with self.assertRaises(ValueError):
                     self.sampler.get_grid(density)
