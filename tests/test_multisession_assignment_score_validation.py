@@ -66,6 +66,20 @@ class TestMultiSessionAssignmentScoreValidation(unittest.TestCase):
                         fill_value=fill_value,
                     )
 
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_tracks_to_index_matrix_rejects_duplicate_detections(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "Each detection can only belong to a single track",
+        ):
+            score_module.tracks_to_index_matrix(
+                [{0: 0}, {0: 0}],
+                session_sizes=[1],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
