@@ -54,9 +54,14 @@ def _coerce_weight_values(weights: Any) -> list[float]:
 
     if hasattr(weights, "tolist"):
         weights = weights.tolist()
+    if isinstance(weights, str | bytes | bytearray):
+        raise ValueError("Particle weights must be numeric.")
     if isinstance(weights, int | float):
         return [float(weights)]
-    return [float(weight) for weight in weights]
+    try:
+        return [float(weight) for weight in weights]
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Particle weights must be numeric.") from exc
 
 
 def _coerce_numeric_values(values: Any) -> list[float]:
