@@ -1,6 +1,7 @@
 import collections
 import warnings
-from numbers import Integral
+
+import pyrecest.backend
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
@@ -8,7 +9,6 @@ from pyrecest.backend import (
     asarray,
     atleast_1d,
     concatenate,
-    empty,
     ndim,
     random,
     reshape,
@@ -16,6 +16,7 @@ from pyrecest.backend import (
     zeros,
 )
 
+from ..abstract_mixture import _validate_positive_sample_count
 from ..hypertorus.hypertoroidal_mixture import HypertoroidalMixture
 from .abstract_circular_distribution import AbstractCircularDistribution
 from .circular_dirac_distribution import CircularDiracDistribution
@@ -95,28 +96,21 @@ class CircularMixture(AbstractCircularDistribution, HypertoroidalMixture):
         return p
 
     def sample(self, n):
-        """Draw samples from the circular mixture.
+        """Draw ordered iid samples from the circular mixture.
 
-        The generic mixture sampler stores samples in an array of shape
-        ``(n, input_dim)``. For one-dimensional circular distributions, component
-        samplers conventionally return a flat angle vector with shape ``(n,)``.
-        Returning a flat vector here preserves that circular API and avoids
-        assigning ``(k,)`` component samples into ``(k, 1)`` slices.
+        Drawing only multinomial component counts and then concatenating
+        component-wise samples makes early output positions more likely to come
+        from earlier components. Instead, draw a component label for each output
+        position and sample the corresponding component in that order.
         """
-        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
-            raise ValueError("n must be a positive integer.")
-        n = int(n)
+        n = _validate_positive_sample_count(n)
 
-        occurrences = random.multinomial(n, self.w)
+        component_indices = random.choice(len(self.dists), size=n, p=self.w)
+        component_indices = pyrecest.backend.to_numpy(component_indices).reshape(-1)
+
         samples = []
-
-        for i, occ in enumerate(occurrences):
-            occ_val = occ.item() if hasattr(occ, "item") else int(occ)
-            if occ_val != 0:
-                sample_i = self.dists[i].sample(occ_val)
-                samples.append(reshape(atleast_1d(sample_i), (-1,)))
-
-        if not samples:
-            return empty((0,))
+        for component_index in component_indices:
+            sample_i = self.dists[int(component_index)].sample(1)
+            samples.append(reshape(atleast_1d(sample_i), (-1,)))
 
         return concatenate(samples, axis=0)
