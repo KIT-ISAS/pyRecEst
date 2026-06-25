@@ -141,8 +141,13 @@ def tracks_to_index_matrix(
     )
 
     matrix = full((len(tracks), max_session_index + 1), fill_value, dtype=int)
+    seen_observations: set[tuple[int, int]] = set()
     for track_index, track in enumerate(tracks):
         for session_index, detection_index in _iter_track_items(track):
+            observation = (int(session_index), int(detection_index))
+            if observation in seen_observations:
+                raise ValueError("Each detection can only belong to a single track.")
+            seen_observations.add(observation)
             matrix[track_index, session_index] = detection_index
     return matrix
 
