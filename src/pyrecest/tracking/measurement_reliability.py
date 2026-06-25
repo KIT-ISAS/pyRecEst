@@ -17,8 +17,7 @@ from typing import Any, Literal
 import numpy as np
 
 ReliabilityMode = Literal["off", "inflate", "hard"] | str
-_BOOL_OR_TEXT_KINDS = {"b", "S", "U"}
-_BOOL_OR_TEXT_SCALAR_TYPES = (
+_TEXT_OR_BOOL_SCALAR_TYPES = (
     bool,
     np.bool_,
     str,
@@ -27,6 +26,7 @@ _BOOL_OR_TEXT_SCALAR_TYPES = (
     np.str_,
     np.bytes_,
 )
+_REJECTED_NUMERIC_ARRAY_KINDS = frozenset({"b", "c", "S", "U", "M", "m"})
 
 
 @dataclass(frozen=True)
@@ -102,7 +102,7 @@ class ReliabilityWeightedMeasurement:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        measurement = np.asarray(self.measurement, dtype=float).reshape(-1)
+        measurement = _real_numeric_array(self.measurement, "measurement").reshape(-1)
         if measurement.size == 0:
             raise ValueError("measurement must contain at least one value")
         if not np.isfinite(measurement).all():
@@ -291,10 +291,7 @@ def _finite_scalar(value: Any, name: str) -> float:
     if array.shape != () or array.dtype == np.bool_:
         raise ValueError(f"{name} must be a finite scalar")
     scalar = array.item()
-    if isinstance(
-        scalar,
-        (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_),
-    ):
+    if isinstance(scalar, _TEXT_OR_BOOL_SCALAR_TYPES):
         raise ValueError(f"{name} must be a finite scalar")
     try:
         parsed = float(scalar)
@@ -305,6 +302,22 @@ def _finite_scalar(value: Any, name: str) -> float:
     return parsed
 
 
+def _real_numeric_array(value: Any, name: str) -> np.ndarray:
+    raw = np.asarray(value)
+    if raw.dtype.kind in _REJECTED_NUMERIC_ARRAY_KINDS:
+        raise ValueError(f"{name} must contain real numeric values")
+    if raw.dtype == object:
+        for item in raw.ravel():
+            if isinstance(item, _TEXT_OR_BOOL_SCALAR_TYPES) or isinstance(
+                item, (complex, np.complexfloating)
+            ):
+                raise ValueError(f"{name} must contain real numeric values")
+    try:
+        return np.asarray(value, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain real numeric values") from exc
+
+
 def _bool_scalar(value: Any, name: str) -> bool:
     array = np.asarray(value)
     if array.shape != () or array.dtype != np.bool_:
@@ -312,22 +325,8 @@ def _bool_scalar(value: Any, name: str) -> bool:
     return bool(array.item())
 
 
-def _contains_bool_or_text_values(value: Any) -> bool:
-    array = np.asarray(value)
-    if array.dtype.kind in _BOOL_OR_TEXT_KINDS:
-        return True
-    if array.dtype.kind != "O":
-        return False
-    return any(isinstance(item, _BOOL_OR_TEXT_SCALAR_TYPES) for item in array.flat)
-
-
 def _covariance_matrix(value: Any, *, dim: int | None = None) -> np.ndarray:
-    try:
-        if _contains_bool_or_text_values(value):
-            raise ValueError
-        covariance = np.asarray(value, dtype=float)
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError("covariance must contain only real numeric values") from exc
+    covariance = _real_numeric_array(value, "covariance")
     if covariance.ndim != 2 or covariance.shape[0] != covariance.shape[1]:
         raise ValueError("covariance must be a square matrix")
     if dim is not None and covariance.shape != (dim, dim):

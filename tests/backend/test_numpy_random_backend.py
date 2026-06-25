@@ -24,6 +24,32 @@ def test_rand_rejects_ambiguous_positional_and_size_arguments():
         random.rand(2, size=(3,))
 
 
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        (False, 1.0),
+        (0.0, True),
+        (np.array([False, False]), np.array([1.0, 2.0])),
+    ],
+)
+def test_uniform_rejects_boolean_bounds(low, high):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.uniform(low, high)
+
+
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        ("0.0", 1.0),
+        (0.0, "1.0"),
+        (np.array(["0.0", "0.5"]), np.array([1.0, 1.5])),
+    ],
+)
+def test_uniform_rejects_text_bounds(low, high):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.uniform(low, high)
+
+
 def test_choice_without_replacement_shuffle_false_preserves_order():
     values = np.array([10, 20, 30, 40, 50])
     matrix = np.array([[10, 20, 30], [40, 50, 60]])

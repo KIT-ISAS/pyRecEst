@@ -17,13 +17,61 @@ import numpy as np
 
 TrackingAction = Literal["predict", "update", "reject", "coast"] | str
 
+_REAL_NUMERIC_ARRAY_KINDS = {"i", "u", "f"}
+_INVALID_NUMERIC_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    complex,
+    np.complexfloating,
+)
+
+
+def _invalid_numeric_array_message(name: str) -> str:
+    return f"{name} must contain real-valued numeric entries"
+
+
+def _dtype_is_real_numeric(dtype: np.dtype) -> bool:
+    return np.dtype(dtype).kind in _REAL_NUMERIC_ARRAY_KINDS
+
+
+def _raw_item_is_invalid_numeric(value: Any) -> bool:
+    if isinstance(value, _INVALID_NUMERIC_SCALAR_TYPES):
+        return True
+    if isinstance(value, np.ndarray):
+        if value.dtype == object:
+            return any(_raw_item_is_invalid_numeric(item) for item in value.reshape(-1))
+        return not _dtype_is_real_numeric(value.dtype)
+    if isinstance(value, (list, tuple)):
+        return any(_raw_item_is_invalid_numeric(item) for item in value)
+    return False
+
+
+def _as_real_numeric_array(value: Any, *, name: str) -> np.ndarray:
+    if _raw_item_is_invalid_numeric(value):
+        raise ValueError(_invalid_numeric_array_message(name))
+
+    raw_array = np.asarray(value)
+    if raw_array.dtype == object:
+        if any(_raw_item_is_invalid_numeric(item) for item in raw_array.reshape(-1)):
+            raise ValueError(_invalid_numeric_array_message(name))
+    elif not _dtype_is_real_numeric(raw_array.dtype):
+        raise ValueError(_invalid_numeric_array_message(name))
+
+    try:
+        return raw_array.astype(float, copy=False)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(_invalid_numeric_array_message(name)) from exc
+
 
 def _array_or_none(
     value: Any, *, name: str, ndim: int | None = None
 ) -> np.ndarray | None:
     if value is None:
         return None
-    array = np.asarray(value, dtype=float)
+    array = _as_real_numeric_array(value, name=name)
     if ndim is not None and array.ndim != ndim:
         raise ValueError(f"{name} must have ndim={ndim}")
     if not np.isfinite(array).all():
@@ -32,7 +80,7 @@ def _array_or_none(
 
 
 def _vector(value: Any, *, name: str) -> np.ndarray:
-    array = np.asarray(value, dtype=float).reshape(-1)
+    array = _as_real_numeric_array(value, name=name).reshape(-1)
     if array.size == 0:
         raise ValueError(f"{name} must contain at least one element")
     if not np.isfinite(array).all():
@@ -41,7 +89,7 @@ def _vector(value: Any, *, name: str) -> np.ndarray:
 
 
 def _square_matrix(value: Any, *, name: str, dim: int | None = None) -> np.ndarray:
-    matrix = np.asarray(value, dtype=float)
+    matrix = _as_real_numeric_array(value, name=name)
     if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
         raise ValueError(f"{name} must be a square matrix")
     if dim is not None and matrix.shape != (dim, dim):
@@ -330,7 +378,7 @@ def records_to_matrix(
     """Stack a vector-valued field from records into a matrix."""
 
     arrays = [
-        np.asarray(getattr(record, field), dtype=float).reshape(-1)
+        _as_real_numeric_array(getattr(record, field), name=field).reshape(-1)
         for record in records
     ]
     if not arrays:

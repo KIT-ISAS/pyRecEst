@@ -16,6 +16,8 @@ from typing import Any
 import numpy as np
 
 _TEXT_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+_BOOLEAN_TYPES = (bool, np.bool_)
+_COMPLEX_TYPES = (complex, np.complexfloating)
 
 
 @dataclass(frozen=True)
@@ -157,14 +159,26 @@ def _normalize_bounded_scalar(
     return parsed
 
 
-def _contains_text_values(value: Any) -> bool:
-    if isinstance(value, _TEXT_TYPES):
+def _contains_values_of_type(value: Any, types: tuple[type, ...]) -> bool:
+    if isinstance(value, types):
         return True
     try:
         values = np.asarray(value, dtype=object).reshape(-1)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RuntimeError):
         return False
-    return any(isinstance(item, _TEXT_TYPES) for item in values)
+    return any(isinstance(item, types) for item in values)
+
+
+def _contains_text_values(value: Any) -> bool:
+    return _contains_values_of_type(value, _TEXT_TYPES)
+
+
+def _contains_boolean_values(value: Any) -> bool:
+    return _contains_values_of_type(value, _BOOLEAN_TYPES)
+
+
+def _contains_complex_values(value: Any) -> bool:
+    return _contains_values_of_type(value, _COMPLEX_TYPES)
 
 
 def _as_numeric_matrix(value: Any, name: str) -> np.ndarray:
@@ -175,6 +189,14 @@ def _as_numeric_matrix(value: Any, name: str) -> np.ndarray:
 
     if raw_values.dtype == np.bool_:
         raise ValueError(f"{name} must be numeric, not boolean")
+    if _contains_boolean_values(value) or _contains_boolean_values(raw_values):
+        raise ValueError(f"{name} must be numeric, not boolean")
+    if (
+        raw_values.dtype.kind == "c"
+        or _contains_complex_values(value)
+        or _contains_complex_values(raw_values)
+    ):
+        raise ValueError(f"{name} must be real-valued numeric")
     if _contains_text_values(value) or _contains_text_values(raw_values):
         raise ValueError(f"{name} must be numeric")
 
