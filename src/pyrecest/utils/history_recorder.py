@@ -33,6 +33,39 @@ def _validate_bool_flag(value: Any, name: str) -> bool:
     raise TypeError(f"{name} must be a boolean")
 
 
+_INVALID_PADDED_HISTORY_DTYPE_PREFIXES = ("<u", ">u", "|u", "=u", "<s", ">s", "|s", "=s")
+
+
+def _is_invalid_padded_history_dtype(dtype: Any) -> bool:
+    dtype_name = str(dtype).lower()
+    return (
+        "bool" in dtype_name
+        or "complex" in dtype_name
+        or "object" in dtype_name
+        or "str" in dtype_name
+        or "bytes" in dtype_name
+        or "datetime" in dtype_name
+        or "timedelta" in dtype_name
+        or dtype_name.startswith(_INVALID_PADDED_HISTORY_DTYPE_PREFIXES)
+    )
+
+
+def _as_padded_numeric_array(curr_ests):
+    message = "padded history values must be real numeric"
+    try:
+        raw_curr_ests = asarray(curr_ests)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(message) from exc
+
+    if _is_invalid_padded_history_dtype(getattr(raw_curr_ests, "dtype", None)):
+        raise TypeError(message)
+
+    try:
+        return asarray(raw_curr_ests, dtype=float)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(message) from exc
+
+
 class HistoryRecorder:
     """Record and retrieve named histories.
 
@@ -140,7 +173,7 @@ class HistoryRecorder:
 
     @staticmethod
     def _ensure_2d(curr_ests):
-        curr_ests = asarray(curr_ests, dtype=float)
+        curr_ests = _as_padded_numeric_array(curr_ests)
         if curr_ests.ndim == 0:
             curr_ests = curr_ests.reshape(1, 1)
         elif curr_ests.ndim != 2 or curr_ests.shape[1] != 1:
