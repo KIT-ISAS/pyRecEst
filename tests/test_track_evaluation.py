@@ -114,7 +114,7 @@ class TestTrackEvaluation(unittest.TestCase):
             with self.subTest(session_pair=session_pair):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session_(indices must be integers|pairs must contain pairs)",
+                    "session[ _](indices must be integers|pairs must contain pairs)",
                 ):
                     track_pair_set([[0, 1, 2]], session_pairs=[session_pair])
 
