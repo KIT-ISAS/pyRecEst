@@ -8,13 +8,7 @@ _allow_complex_dtype = _common._allow_complex_dtype
 
 
 def _rand(*dims, size=None):
-    """Draw uniform samples while accepting the backend ``size=`` contract.
-
-    ``numpy.random.rand`` only accepts legacy positional dimensions, whereas the
-    PyRecEst random backend exposes ``rand(size=...)`` like the JAX and PyTorch
-    implementations.  Use ``numpy.random.random`` internally so keyword and
-    tuple sizes work without dropping support for NumPy's positional form.
-    """
+    """Draw uniform samples with NumPy-style positional and size arguments."""
     if dims:
         if size is not None:
             raise TypeError("Specify either positional dimensions or size, not both.")
@@ -80,6 +74,9 @@ def _normalize_choice_axis(axis, ndim):
 def _choice_bool(value, name):
     if isinstance(value, (bool, _np.bool_)):
         return bool(value)
+    value_array = _np.asarray(value)
+    if value_array.shape == () and value_array.dtype.kind == "b":
+        return bool(value_array.item())
     raise TypeError(f"{name} must be a boolean")
 
 
@@ -102,15 +99,7 @@ def _maybe_preserve_choice_order(indices, *, replace, p, shuffle, size):
 
 
 def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
-    """Draw samples using NumPy's seeded global random state.
-
-    ``numpy.random.Generator.choice`` supports sampling rows from a multidimensional
-    array, but it is independent of ``numpy.random.seed`` when a fresh generator is
-    created for every call.  The backend exposes ``random.seed``/``get_state`` from
-    ``numpy.random``, so this wrapper samples indices through the seeded legacy RNG
-    and then gathers along ``axis`` for multidimensional inputs.
-    """
-
+    """Draw samples from an integer or array population."""
     replace = _choice_bool(replace, "replace")
     shuffle = _choice_bool(shuffle, "shuffle")
     a_array = _np.asarray(a)
