@@ -18,6 +18,37 @@ def test_diagonal_measurement_covariance_from_stds() -> None:
     assert np.allclose(covariance, np.diag([4.0, 9.0]))
 
 
+def test_measurement_std_validation_rejects_bool_and_text_values() -> None:
+    invalid_stds = (
+        [True],
+        [np.bool_(False)],
+        ["1.0"],
+        [b"1.0"],
+        np.array([False], dtype=object),
+        np.array(["1.0"], dtype=object),
+    )
+
+    for stds in invalid_stds:
+        with pytest.raises(ValueError, match="real numeric values"):
+            diagonal_measurement_covariance(stds)
+        with pytest.raises(ValueError, match="real numeric values"):
+            block_diag_measurement_covariance(trusted_std=stds)
+        with pytest.raises(ValueError, match="real numeric values"):
+            MaskedLinearMeasurementModel(state_dim=1, observed_dims=[0], stds=stds)
+        with pytest.raises(ValueError, match="real numeric values"):
+            WeakDimensionMeasurementModel(np.eye(1), stds=stds)
+
+
+def test_measurement_std_mapping_validation_rejects_bool_and_text_values() -> None:
+    invalid_values = (True, np.bool_(False), "1.0", b"1.0")
+
+    for value in invalid_values:
+        with pytest.raises(ValueError, match="real numeric values"):
+            block_diag_measurement_covariance(trusted_std={"x": value})
+        with pytest.raises(ValueError, match="real numeric values"):
+            WeakDimensionMeasurementModel(np.eye(1), stds={"x": value})
+
+
 def test_block_diag_measurement_covariance_preserves_named_order() -> None:
     covariance = block_diag_measurement_covariance(
         trusted_std={"x": 1.0, "y": 2.0},
