@@ -51,10 +51,22 @@ def _get_state(**kwargs):
     return state, has_state, kwargs
 
 
+def _scalar_integer_dimension(value):
+    if isinstance(value, (bool, _np.bool_)):
+        return None
+    if isinstance(value, (int, _np.integer)):
+        return int(value)
+    if hasattr(value, "ndim") and value.ndim == 0:
+        value_array = _np.asarray(value)
+        if _np.issubdtype(value_array.dtype, _np.bool_):
+            return None
+        if _np.issubdtype(value_array.dtype, _np.integer):
+            return int(value_array.item())
+    return None
+
+
 def _looks_like_integer_dimension(value):
-    return isinstance(value, (int, _np.integer)) and not isinstance(
-        value, (bool, _np.bool_)
-    )
+    return _scalar_integer_dimension(value) is not None
 
 
 def _size_type_error():
@@ -62,9 +74,9 @@ def _size_type_error():
 
 
 def _integer_dimension(value):
-    if not _looks_like_integer_dimension(value):
+    value = _scalar_integer_dimension(value)
+    if value is None:
         raise _size_type_error()
-    value = int(value)
     if value < 0:
         raise ValueError("size dimensions must be non-negative")
     return value
