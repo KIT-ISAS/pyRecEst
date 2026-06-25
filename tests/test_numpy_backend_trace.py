@@ -35,10 +35,7 @@ def test_numpy_backend_trace_accepts_explicit_axes_offset_dtype_and_out():
     assert _to_python(result) == [8.0, 20.0]
 
 
-def test_numpy_backend_trace_defaults_to_last_two_axes():
-    if backend.__backend_name__ != "numpy":
-        pytest.skip("NumPy backend trace regression test")
-
+def test_backend_trace_defaults_to_last_two_axes():
     values = array(
         [
             [[1.0, 2.0], [3.0, 4.0]],
