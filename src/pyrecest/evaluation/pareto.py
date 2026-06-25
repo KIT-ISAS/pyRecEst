@@ -360,8 +360,11 @@ def _validate_eps(eps: Any) -> float:
     value_array = np.asarray(eps)
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError("eps must be a finite non-negative scalar.")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes, np.str_, np.bytes_)):
+        raise ValueError("eps must be a finite non-negative scalar.")
     try:
-        value = float(value_array.item())
+        value = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("eps must be a finite non-negative scalar.") from exc
     if not np.isfinite(value) or value < 0.0:
@@ -395,7 +398,7 @@ def _coerce_finite_threshold(value: Any, column: str) -> float:
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError(message)
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_, str, bytes, np.str_, np.bytes_)):
         raise ValueError(message)
     try:
         threshold = float(scalar)
