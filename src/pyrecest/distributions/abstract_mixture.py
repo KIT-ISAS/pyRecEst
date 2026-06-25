@@ -27,6 +27,10 @@ from .abstract_manifold_specific_distribution import (
 )
 
 
+def _is_boolean_array(values) -> bool:
+    return np.asarray(values).dtype == np.bool_
+
+
 def _validate_positive_sample_count(n) -> int:
     count_array = np.asarray(n)
     if count_array.ndim != 0:
@@ -68,6 +72,8 @@ class AbstractMixture(AbstractDistributionType):
         if weights is None:
             weights = ones(num_distributions) / num_distributions
         else:
+            if _is_boolean_array(weights):
+                raise ValueError("Mixture weights must be numeric, not boolean")
             weights = reshape(asarray(weights), (-1,))
 
         if num_distributions != weights.shape[0]:
