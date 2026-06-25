@@ -24,6 +24,23 @@ class TestVonMisesDistribution(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     VonMisesDistribution(0.0, kappa)
 
+    def test_besselratio_remains_finite_for_large_concentration(self):
+        ratio = VonMisesDistribution.besselratio(0, 1000.0)
+
+        self.assertTrue(np.isfinite(float(ratio)))
+        self.assertGreater(float(ratio), 0.999)
+        self.assertLess(float(ratio), 1.0)
+
+    def test_large_concentration_pdf_and_entropy_are_finite(self):
+        dist = VonMisesDistribution(0.3, 1000.0)
+
+        mode_pdf = dist.pdf(array([0.3]))
+        entropy = dist.entropy()
+
+        self.assertTrue(np.isfinite(float(mode_pdf[0])))
+        self.assertGreater(float(mode_pdf[0]), 0.0)
+        self.assertTrue(np.isfinite(float(entropy)))
+
     def test_pdf(self):
         dist = VonMisesDistribution(2, 1)
         xs = linspace(1, 7, 7)
