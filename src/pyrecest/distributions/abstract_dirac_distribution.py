@@ -4,6 +4,7 @@ from collections.abc import Callable
 from numbers import Integral
 from typing import Union
 
+import numpy as np
 from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -26,6 +27,10 @@ from pyrecest.backend import (
 )
 
 from .abstract_distribution_type import AbstractDistributionType
+
+
+def _is_boolean_array(values) -> bool:
+    return np.asarray(values).dtype == np.bool_
 
 
 class AbstractDiracDistribution(AbstractDistributionType):
@@ -56,6 +61,9 @@ class AbstractDiracDistribution(AbstractDistributionType):
         """
         Validate Dirac weights and return their total mass.
         """
+        if _is_boolean_array(w):
+            raise ValueError("Dirac weights must be numeric, not boolean.")
+
         if not bool(all(isfinite(w))):
             raise ValueError("Dirac weights must be finite.")
 
