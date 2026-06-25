@@ -35,6 +35,12 @@ class PlaneField:
         return np.full(points.shape[:-1], 0.04, dtype=np.float64)
 
 
+class NonCallableField:
+    value = 1.0
+    gradient = 1.0
+    variance_at = 1.0
+
+
 def test_scalar_field_protocols_are_structural() -> None:
     field = PlaneField()
 
@@ -53,6 +59,21 @@ def test_surface_residual_gradient_and_variance_helpers() -> None:
         [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]],
     )
     assert np.allclose(surface_variances(field, points), [0.04, 0.04])
+
+
+@pytest.mark.parametrize(
+    ("helper", "method_name"),
+    [
+        (surface_residuals, "value"),
+        (surface_gradients, "gradient"),
+        (surface_variances, "variance_at"),
+    ],
+)
+def test_surface_helpers_reject_non_callable_protocol_members(helper, method_name) -> None:
+    points = np.asarray([[0.0, 0.0, 1.0]], dtype=np.float64)
+
+    with pytest.raises(TypeError, match=f"surface must implement {method_name}"):
+        helper(NonCallableField(), points)
 
 
 def test_surface_band_mask_and_inside_outside_classification() -> None:
