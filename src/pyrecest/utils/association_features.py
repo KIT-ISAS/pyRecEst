@@ -28,7 +28,19 @@ from pyrecest.backend import (
 _COST_MODE = Literal["negative_log_probability", "one_minus_probability"]
 FeatureTransform = Callable[[Mapping[str, Any]], Any]
 _PROBABILITY_CLIP_ERROR = "probability_clip must be a finite real scalar in (0, 0.5)"
+_PREDICTED_PROBABILITY_ERROR = "predicted probabilities must be real numeric"
+_PAIRWISE_COST_ERROR = "predicted pairwise costs must be real numeric"
 _TEXT_SCALAR_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+_NON_REAL_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    complex,
+    np.complexfloating,
+    np.datetime64,
+    np.timedelta64,
+    *_TEXT_SCALAR_TYPES,
+)
+_TEMPORAL_DTYPE_KINDS = {"M", "m"}
 
 
 @dataclass(frozen=True, init=False)
@@ -148,7 +160,10 @@ class CalibratedPairwiseAssociationModel:
         elif hasattr(self.model, "predict_proba"):
             probabilities = self._predict_proba_probability(features)
         elif hasattr(self.model, "pairwise_cost_matrix"):
-            costs = asarray(self.model.pairwise_cost_matrix(features), dtype=float64)
+            costs = _as_real_numeric_backend_array(
+                self.model.pairwise_cost_matrix(features),
+                message=_PAIRWISE_COST_ERROR,
+            )
             probabilities = exp(-costs)
         else:
             raise TypeError(
@@ -193,8 +208,9 @@ class CalibratedPairwiseAssociationModel:
 
     def _predict_proba_probability(self, features: Any) -> Any:
         flattened_features, original_shape = _flatten_prediction_features(features)
-        probabilities = asarray(
-            self.model.predict_proba(flattened_features), dtype=float64
+        probabilities = _as_real_numeric_backend_array(
+            self.model.predict_proba(flattened_features),
+            message=_PREDICTED_PROBABILITY_ERROR,
         )
         if probabilities.ndim >= 2 and probabilities.shape[-1] == 2:
             probabilities = probabilities[
@@ -241,12 +257,52 @@ def _normalize_probability_clip(value: Any) -> float:
 
 
 def _finite_probability_array(probabilities: Any) -> Any:
-    probabilities = asarray(probabilities, dtype=float64)
+    probabilities = _as_real_numeric_backend_array(
+        probabilities,
+        message=_PREDICTED_PROBABILITY_ERROR,
+    )
     if not all(isfinite(probabilities)):
         raise ValueError("predicted probabilities must be finite")
     if not all(probabilities >= 0.0) or not all(probabilities <= 1.0):
         raise ValueError("predicted probabilities must lie in [0, 1]")
     return probabilities
+
+
+def _as_real_numeric_backend_array(values: Any, *, message: str) -> Any:
+    if _contains_non_real_values(values):
+        raise ValueError(message)
+    try:
+        return asarray(values, dtype=float64)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError(message) from exc
+
+
+def _contains_non_real_values(values: Any) -> bool:
+    if isinstance(values, _NON_REAL_SCALAR_TYPES):
+        return True
+    if _has_temporal_dtype(values):
+        return True
+    try:
+        value_array = np.asarray(values)
+    except (TypeError, ValueError, RuntimeError):
+        value_array = None
+    if value_array is not None and _has_temporal_dtype(value_array):
+        return True
+    try:
+        object_values = np.asarray(values, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(value, _NON_REAL_SCALAR_TYPES) for value in object_values)
+
+
+def _has_temporal_dtype(values: Any) -> bool:
+    dtype = getattr(values, "dtype", None)
+    if dtype is None:
+        return False
+    try:
+        return np.dtype(dtype).kind in _TEMPORAL_DTYPE_KINDS
+    except TypeError:
+        return False
 
 
 def _is_positive_binary_label(class_label: Any) -> bool:
