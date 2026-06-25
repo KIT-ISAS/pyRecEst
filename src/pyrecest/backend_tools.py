@@ -29,7 +29,9 @@ def _normalize_expected_backend_names(
             names = tuple(expected)
         except TypeError as exc:
             raise ValueError(message) from exc
-    if not names or any(not isinstance(name, str) or not name for name in names):
+    if not names or any(
+        not isinstance(name, str) or not name or name.strip() != name for name in names
+    ):
         raise ValueError(message)
     return names
 
