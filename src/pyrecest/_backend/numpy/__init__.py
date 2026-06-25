@@ -192,6 +192,18 @@ linspace = _dyn_update_dtype(target=_np.linspace, dtype_pos=5)
 empty = _dyn_update_dtype(target=_np.empty, dtype_pos=1)
 
 
+def trace(a, offset=0, axis1=-2, axis2=-1, dtype=None, out=None):
+    """Return the trace while preserving PyRecEst's last-two-axes default."""
+    return _np.trace(
+        a,
+        offset=offset,
+        axis1=axis1,
+        axis2=axis2,
+        dtype=dtype,
+        out=out,
+    )
+
+
 def has_autodiff():
     """If allows for automatic differentiation.
 
