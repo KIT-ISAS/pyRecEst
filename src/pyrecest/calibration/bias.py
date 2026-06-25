@@ -324,7 +324,7 @@ def _as_numeric_array(values: Any, name: str) -> np.ndarray:
         raw = np.asarray(values)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must contain numeric values") from exc
-    if _contains_bool_or_text(raw):
+    if _contains_non_real_or_text(raw):
         raise ValueError(f"{name} must contain numeric values")
     try:
         return np.asarray(values, dtype=float)
@@ -336,12 +336,15 @@ def _as_numeric_vector(values: Any, name: str) -> np.ndarray:
     return _as_numeric_array(values, name).reshape(-1)
 
 
-def _contains_bool_or_text(values: np.ndarray) -> bool:
-    if values.dtype.kind in "bUS":
+def _contains_non_real_or_text(values: np.ndarray) -> bool:
+    if values.dtype.kind in "bUSc":
         return True
     if values.dtype == object:
         return any(
-            isinstance(item, (bool, np.bool_, str, bytes, bytearray))
+            isinstance(
+                item,
+                (bool, np.bool_, str, bytes, bytearray, complex, np.complexfloating),
+            )
             for item in values.reshape(-1)
         )
     return False
