@@ -29,15 +29,26 @@ def as_point_set(
         Optional required point dimensionality.
     """
 
-    array = np.asarray(points, dtype=np.float64)
+    try:
+        array = np.asarray(points)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must have shape (N, D).") from exc
     if array.ndim != 2:
         raise ValueError(f"{name} must have shape (N, D).")
     if expected_dim is not None and array.shape[1] != expected_dim:
         raise ValueError(f"{name} must have shape (N, {expected_dim}).")
     if array.shape[0] == 0:
         raise ValueError(f"{name} must contain at least one point.")
+    if array.dtype.kind not in "iuf":
+        raise ValueError(f"{name} must contain only finite real numeric values.")
+    try:
+        array = array.astype(np.float64, copy=False)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            f"{name} must contain only finite real numeric values."
+        ) from exc
     if not np.all(np.isfinite(array)):
-        raise ValueError(f"{name} must contain only finite values.")
+        raise ValueError(f"{name} must contain only finite real numeric values.")
     return array
 
 
