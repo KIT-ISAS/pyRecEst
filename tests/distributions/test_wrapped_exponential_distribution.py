@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import numpy.testing as npt
@@ -112,6 +113,18 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         self.assertEqual(s.shape, (n,))
         self.assertTrue((s >= 0).all())
         self.assertTrue((s < 2.0 * pi).all())
+
+    def test_sample_handles_zero_uniform_endpoint(self):
+        with patch(
+            "pyrecest.distributions.circle.wrapped_exponential_distribution.random.uniform",
+            return_value=array([0.0, 0.5]),
+        ):
+            samples = self.we.sample(2)
+
+        samples = pyrecest.backend.to_numpy(samples)
+        self.assertTrue(np.isfinite(samples).all())
+        self.assertTrue((samples >= 0.0).all())
+        self.assertTrue((samples < 2.0 * np.pi).all())
 
     def test_sample_accepts_integer_like_count(self):
         samples = self.we.sample(np.int64(4))
