@@ -58,6 +58,31 @@ def _as_real_numeric_array(value, name: str):
     """Return ``value`` as a backend float array without silent nonnumeric coercion."""
 
     try:
+        original = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must contain real numeric values.") from exc
+
+    if original.dtype == object:
+        for item in original.reshape(-1):
+            if isinstance(
+                item,
+                (
+                    bool,
+                    np.bool_,
+                    str,
+                    bytes,
+                    bytearray,
+                    complex,
+                    np.complexfloating,
+                ),
+            ):
+                raise ValueError(f"{name} must contain real numeric values.")
+    elif original.dtype.kind in "USbcmM" or not np.issubdtype(
+        original.dtype, np.number
+    ):
+        raise ValueError(f"{name} must contain real numeric values.")
+
+    try:
         raw = np.asarray(to_numpy(array(value)))
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must contain real numeric values.") from exc
