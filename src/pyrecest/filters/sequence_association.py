@@ -284,7 +284,26 @@ def _reconstruct_path(
 
 
 def _validate_cost(value: object, name: str) -> float:
-    cost = float(value)
+    numeric_message = f"{name} must be a scalar numeric cost"
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(numeric_message) from exc
+
+    if value_array.ndim != 0 or value_array.dtype.kind in {"b", "S", "U", "c"}:
+        raise ValueError(numeric_message)
+
+    scalar = value_array.item()
+    if isinstance(
+        scalar,
+        (bool, np.bool_, str, bytes, bytearray, complex, np.complexfloating),
+    ):
+        raise ValueError(numeric_message)
+
+    try:
+        cost = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(numeric_message) from exc
     if not np.isfinite(cost):
         raise ValueError(f"{name} must be finite")
     return cost
