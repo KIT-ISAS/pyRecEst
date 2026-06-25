@@ -27,7 +27,10 @@ _RESERVED_DIAGNOSTIC_METADATA_KEYS = frozenset(
 def _coerce_bool_flag(value: bool, name: str) -> bool:
     """Return a bool flag without treating arbitrary truthy objects as true."""
 
-    value_array = np.asarray(value)
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a bool") from exc
     if value_array.shape == () and np.issubdtype(value_array.dtype, np.bool_):
         return bool(value_array.item())
     raise ValueError(f"{name} must be a bool")
