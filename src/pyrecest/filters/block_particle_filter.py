@@ -57,6 +57,9 @@ def _as_integer(value, name: str, minimum: int | None = None) -> int:
 def _as_real_numeric_array(value, name: str):
     """Return ``value`` as a backend float array without silent nonnumeric coercion."""
 
+    if _has_unsupported_numeric_leaf(value):
+        raise ValueError(f"{name} must contain real numeric values.")
+
     try:
         original = np.asarray(value)
     except (TypeError, ValueError) as exc:
@@ -109,6 +112,27 @@ def _as_real_numeric_array(value, name: str):
         return array(value, dtype=float)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must contain real numeric values.") from exc
+
+
+def _has_unsupported_numeric_leaf(value) -> bool:
+    if isinstance(
+        value,
+        (
+            bool,
+            np.bool_,
+            str,
+            bytes,
+            bytearray,
+            complex,
+            np.complexfloating,
+        ),
+    ):
+        return True
+    if isinstance(value, np.ndarray):
+        return False
+    if isinstance(value, Sequence):
+        return any(_has_unsupported_numeric_leaf(item) for item in value)
+    return False
 
 
 def validate_partition(
