@@ -74,6 +74,19 @@ def _contains_unsupported_numeric_config_values(value: Any) -> bool:
     return any(isinstance(item, _UNSUPPORTED_NUMERIC_CONFIG_TYPES) for item in values)
 
 
+def _as_real_numeric_array(value: Any, name: str) -> np.ndarray:
+    message = f"{name} must contain only finite real numeric values"
+    if _contains_unsupported_numeric_config_values(value):
+        raise ValueError(message)
+    try:
+        values = np.asarray(to_numpy(value), dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.all(np.isfinite(values)):
+        raise ValueError(message)
+    return values
+
+
 def _validate_symmetry_count(nSymm: Any) -> int:
     count_array = np.asarray(to_numpy(nSymm))
     if (
@@ -131,8 +144,8 @@ def _symmetric_distance_function(
     return distance_function
 
 
-def _as_target_matrix(value) -> np.ndarray:
-    value = np.asarray(to_numpy(value), dtype=float)
+def _as_target_matrix(value, name: str) -> np.ndarray:
+    value = _as_real_numeric_array(value, name)
     if value.size == 0:
         if value.ndim == 2:
             return value
@@ -150,7 +163,12 @@ def _as_target_matrix(value) -> np.ndarray:
 
 def _validate_mtt_cutoff_distance(value: Any) -> float:
     value_array = np.asarray(to_numpy(value))
-    if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
+    if (
+        value_array.shape != ()
+        or np.issubdtype(value_array.dtype, np.bool_)
+        or _contains_unsupported_numeric_config_values(value)
+        or _contains_unsupported_numeric_config_values(value_array)
+    ):
         raise ValueError("cutoff_distance must be a finite nonnegative scalar")
     scalar = value_array.item()
     if isinstance(scalar, (bool, np.bool_)):
@@ -165,8 +183,8 @@ def _validate_mtt_cutoff_distance(value: Any) -> float:
 
 
 def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
-    raw_first = np.asarray(to_numpy(x1), dtype=float)
-    raw_second = np.asarray(to_numpy(x2), dtype=float)
+    raw_first = _as_real_numeric_array(x1, "x1")
+    raw_second = _as_real_numeric_array(x2, "x2")
     if raw_first.size == 0 and raw_first.ndim == 2 and raw_second.ndim == 2:
         if raw_first.shape[1] != raw_second.shape[1]:
             raise ValueError("MTT state sets must use the same target dimension")
@@ -175,8 +193,8 @@ def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
         if raw_first.shape[1] != raw_second.shape[1]:
             raise ValueError("MTT state sets must use the same target dimension")
         return float(cutoff_distance * raw_first.shape[0])
-    first = _as_target_matrix(x1)
-    second = _as_target_matrix(x2)
+    first = _as_target_matrix(raw_first, "x1")
+    second = _as_target_matrix(raw_second, "x2")
     if first.shape[0] == 0 or second.shape[0] == 0:
         return float(cutoff_distance * abs(first.shape[0] - second.shape[0]))
     if first.shape[1] != second.shape[1]:
