@@ -86,11 +86,7 @@ def _common_linalg_dtype(*tensors):
 
 
 class _Logm(_torch.autograd.Function):
-    """Torch autograd function for matrix logarithm.
-
-    Implementation based on:
-    https://github.com/pytorch/pytorch/issues/9983#issuecomment-891777620
-    """
+    """Torch autograd function for matrix logarithm."""
 
     @staticmethod
     def _logm(x):
@@ -260,37 +256,9 @@ def is_single_matrix_pd(mat):
             return False
         eigvals = _torch.linalg.eigvalsh(mat)
         return _torch.min(_torch.real(eigvals)) > 0
-    if not _torch.all(_torch.abs(mat - mat.transpose(-2, -1)) < atol):
+
+    is_symmetric = _torch.all(_torch.abs(mat - _torch.transpose(mat, 0, 1)) < atol)
+    if not is_symmetric:
         return False
-    try:
-        _torch.linalg.cholesky(mat)
-        return True
-    except RuntimeError:
-        return False
-
-
-def fractional_matrix_power(A, t):
-    """Compute the fractional power of a matrix."""
-    A = _as_linalg_tensor(A)
-    A_np = _as_numpy_no_grad(A)
-    out = _np.vectorize(
-        lambda one_matrix: _scipy.linalg.fractional_matrix_power(one_matrix, t),
-        signature="(n,n)->(n,n)",
-    )(A_np)
-
-    if out.dtype.kind == "c":
-        target_complex_dtype = _COMPLEX_DTYPE_FOR_TENSOR_DTYPE.get(A.dtype)
-        if target_complex_dtype is not None:
-            out = out.astype(target_complex_dtype, copy=False)
-
-    return _torch_as_like(out, A)
-
-
-def polar(a, side="right"):
-    """Polar decomposition of a square or rectangular matrix."""
-    a = _as_linalg_tensor(a)
-    signature = "(m,n)->(m,n),(m,m)" if side == "left" else "(m,n)->(m,n),(n,n)"
-    func = _np.vectorize(_scipy.linalg.polar, signature=signature, excluded=["side"])
-    unitary, hermitian = func(_as_numpy_no_grad(a), side=side)
-
-    return _torch_as_like(unitary, a), _torch_as_like(hermitian, a)
+    eigvals = _torch.linalg.eigvalsh(mat)
+    return _torch.min(eigvals) > 0
