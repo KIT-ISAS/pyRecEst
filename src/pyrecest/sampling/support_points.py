@@ -58,6 +58,18 @@ def _as_finite_nonnegative_scalar(name: str, value: float) -> float:
     return scalar_float
 
 
+def _as_bool_scalar(name: str, value: bool) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    try:
+        array = np.asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise ValueError(f"{name} must be a boolean.") from exc
+    if array.shape == () and array.dtype == np.bool_:
+        return bool(array.item())
+    raise ValueError(f"{name} must be a boolean.")
+
+
 def _as_point_batch(
     name: str, points: np.ndarray | Sequence[float]
 ) -> tuple[np.ndarray, bool]:
@@ -151,6 +163,10 @@ def ellipsoid_axis_offsets(
     """
 
     radius = _as_finite_nonnegative_scalar("radius", radius)
+    sort_descending = _as_bool_scalar("sort_descending", sort_descending)
+    clip_negative_eigenvalues = _as_bool_scalar(
+        "clip_negative_eigenvalues", clip_negative_eigenvalues
+    )
     covariances, single = _as_covariance_batch("covariance", covariance)
     eigenvalues, eigenvectors = np.linalg.eigh(covariances)
     if sort_descending:
@@ -179,6 +195,7 @@ def support_points_from_axis_offsets(
     return ``(support_point_count, dim)``.
     """
 
+    include_center = _as_bool_scalar("include_center", include_center)
     point_batch, point_single = _as_point_batch("centers", centers)
     axis_batch, axis_single = _as_axis_offset_batch(
         axis_offsets, dim=point_batch.shape[1]
@@ -238,6 +255,11 @@ def ellipsoid_sigma_points(
     ``(count, support_point_count, dim)``.
     """
 
+    include_center = _as_bool_scalar("include_center", include_center)
+    sort_descending = _as_bool_scalar("sort_descending", sort_descending)
+    clip_negative_eigenvalues = _as_bool_scalar(
+        "clip_negative_eigenvalues", clip_negative_eigenvalues
+    )
     radii_tuple = tuple(
         _as_finite_nonnegative_scalar("radius", radius) for radius in radii
     )
@@ -299,6 +321,7 @@ def mahalanobis_support_points(
     """Map unit directions to a covariance ellipsoid's surface."""
 
     radius = _as_finite_nonnegative_scalar("radius", radius)
+    normalize_directions = _as_bool_scalar("normalize_directions", normalize_directions)
     centers, center_single = _as_point_batch("mean", mean)
     covariances, cov_single = _as_covariance_batch("covariance", covariance)
     directions_array = _as_real_array("directions", directions)
