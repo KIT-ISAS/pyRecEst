@@ -16,6 +16,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+import numpy as _np
+
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import (
     abs,
@@ -41,6 +43,9 @@ from pyrecest.backend import (
     where,
     zeros,
 )
+
+_TEXT_OR_BYTES_TYPES = (str, bytes, bytearray, _np.str_, _np.bytes_)
+_BOOL_TYPES = (bool, _np.bool_)
 
 
 def pairwise_mahalanobis_distances(
@@ -183,7 +188,10 @@ def pairwise_covariance_shape_components(
 
 
 def _validate_control_scalar(value: Any, name: str, *, allow_zero: bool) -> float:
-    value_array = asarray(value)
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError(f"{name} must be numeric") from exc
     if value_array.shape != ():
         raise ValueError(f"{name} must be a scalar")
 
@@ -194,8 +202,10 @@ def _validate_control_scalar(value: Any, name: str, *, allow_zero: bool) -> floa
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must be a scalar") from exc
 
-    if isinstance(scalar_value, bool):
+    if isinstance(scalar_value, _BOOL_TYPES):
         raise ValueError(f"{name} must be numeric, not boolean")
+    if isinstance(scalar_value, _TEXT_OR_BYTES_TYPES):
+        raise ValueError(f"{name} must be numeric, not text")
 
     try:
         value_float = float(scalar_value)
@@ -216,7 +226,7 @@ def _validate_mean_covariance_stack(
     covariance_name: str,
     covariances: Any,
 ) -> tuple[Any, Any]:
-    means = asarray(means, dtype=float64)
+    means = _as_real_numeric_array(means, mean_name)
     if means.ndim != 2:
         raise ValueError(f"{mean_name} must have shape (dim, n_items)")
     if not bool(backend_all(isfinite(means))):
@@ -235,12 +245,32 @@ def _validate_mean_covariance_stack(
 
 
 def _validate_covariance_stack(name: str, covariances: Any) -> Any:
-    covariances = asarray(covariances, dtype=float64)
+    covariances = _as_real_numeric_array(covariances, name)
     if covariances.ndim != 3 or covariances.shape[0] != covariances.shape[1]:
         raise ValueError(f"{name} must have shape (dim, dim, n_items)")
     if not bool(backend_all(isfinite(covariances))):
         raise ValueError(f"{name} must contain only finite values")
     return covariances
+
+
+def _as_real_numeric_array(value: Any, name: str) -> Any:
+    """Return ``value`` as a real float array without silent text/bool coercion."""
+
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError(f"{name} must contain real numeric values") from exc
+
+    dtype = getattr(value_array, "dtype", None)
+    dtype_kind = getattr(dtype, "kind", "")
+    dtype_name = str(dtype).lower()
+    if dtype_kind in "USbcmMO" or "bool" in dtype_name or "complex" in dtype_name:
+        raise ValueError(f"{name} must contain real numeric values")
+
+    try:
+        return asarray(value_array, dtype=float64)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError(f"{name} must contain real numeric values") from exc
 
 
 def _symmetrized_covariance_batch(covariances: Any) -> Any:
