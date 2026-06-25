@@ -7,7 +7,15 @@ import numpy.testing as npt
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, column_stack, diag, linspace, meshgrid, reshape, zeros
+from pyrecest.backend import (
+    array,
+    column_stack,
+    diag,
+    linspace,
+    meshgrid,
+    reshape,
+    zeros,
+)
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.distributions.nonperiodic.abstract_linear_distribution import (
     AbstractLinearDistribution,
