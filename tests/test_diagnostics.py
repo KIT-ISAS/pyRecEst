@@ -29,3 +29,11 @@ def test_particle_diagnostics_rejects_nonfinite_weights():
     for weights in ([float("nan"), 1.0], [float("inf"), 1.0]):
         with pytest.raises(ValueError, match="Particle weights must be finite"):
             ParticleDiagnostics.from_weights(weights)
+
+
+def test_particle_diagnostics_rejects_text_weight_sequences():
+    text_bytes = bytes([49, 50])
+    mutable_text_bytes = bytearray([49, 50])
+    for weights in ("12", text_bytes, mutable_text_bytes):
+        with pytest.raises(ValueError, match="Particle weights must be numeric"):
+            ParticleDiagnostics.from_weights(weights)
