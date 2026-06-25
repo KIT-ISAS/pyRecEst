@@ -64,3 +64,25 @@ print("ok")
 
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.backend_portable
+def test_pytorch_is_single_matrix_pd_accepts_real_positive_definite_matrix():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("PyTorch is not installed")
+
+    result = run_backend_code(
+        "pytorch",
+        """
+import pyrecest.backend as backend
+
+matrix = backend.array([[2.0, 0.0], [0.0, 3.0]])
+result = backend.linalg.is_single_matrix_pd(matrix)
+assert result is not None
+assert bool(result) is True
+print("ok")
+""",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
