@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from operator import index as operator_index
 from typing import Any
 
 
@@ -27,14 +28,16 @@ class MeasurementUpdateDiagnostics:
     metadata: Mapping[str, Any] | None = None
 
     def __post_init__(self):
-        indices = (
-            ()
-            if self.active_measurement_indices is None
-            else tuple(int(index) for index in self.active_measurement_indices)
+        indices = _normalize_active_measurement_indices(
+            self.active_measurement_indices
         )
         object.__setattr__(self, "active_measurement_indices", indices)
-        if self.measurement_count is not None and self.measurement_count < 0:
-            raise ValueError("measurement_count must be non-negative when provided")
+        if self.measurement_count is not None:
+            object.__setattr__(
+                self,
+                "measurement_count",
+                _as_nonnegative_integer(self.measurement_count, "measurement_count"),
+            )
         metadata = {} if self.metadata is None else dict(self.metadata)
         object.__setattr__(self, "metadata", metadata)
 
@@ -67,3 +70,33 @@ class MeasurementUpdateDiagnostics:
             skipped_reason=reason,
             metadata=metadata,
         )
+
+
+def _normalize_active_measurement_indices(
+    values: Sequence[int] | None,
+) -> tuple[int, ...]:
+    if values is None:
+        return ()
+    try:
+        iterator = iter(values)
+    except TypeError as exc:
+        raise ValueError(
+            "active_measurement_indices must be a sequence of non-negative integers"
+        ) from exc
+    return tuple(
+        _as_nonnegative_integer(value, "active_measurement_indices")
+        for value in iterator
+    )
+
+
+def _as_nonnegative_integer(value: Any, name: str) -> int:
+    message = f"{name} must be a non-negative integer"
+    if isinstance(value, bool):
+        raise ValueError(message)
+    try:
+        parsed = operator_index(value)
+    except TypeError as exc:
+        raise ValueError(message) from exc
+    if parsed < 0:
+        raise ValueError(message)
+    return int(parsed)
