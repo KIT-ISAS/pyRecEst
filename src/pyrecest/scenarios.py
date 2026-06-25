@@ -218,10 +218,17 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
 
     estimates: list[list[float]] = []
     nis_values: list[float] = []
-    for scalar_measurement in data["measurements"]:
+    for measurement_value in data["measurements"]:
         kalman_filter.predict_linear(system_matrix, system_noise_cov)
+        measurement_vector = be.array(
+            _to_float_list(
+                measurement_value,
+                name="measurement",
+                reject_text_or_bool=True,
+            )
+        )
         diagnostics = kalman_filter.update_linear(
-            be.array([float(scalar_measurement)]),
+            measurement_vector,
             measurement_matrix,
             measurement_noise_cov,
             return_diagnostics=True,
