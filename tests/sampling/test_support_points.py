@@ -164,6 +164,18 @@ def test_support_points_reject_non_real_numeric_centers(bad_centers: object) -> 
 
 
 @pytest.mark.parametrize(
+    "bad_centers",
+    [
+        np.asarray([np.datetime64("2026-01-01")]),
+        np.asarray([np.datetime64("2026-01-01")], dtype=object),
+    ],
+)
+def test_support_points_reject_temporal_centers(bad_centers: object) -> None:
+    with pytest.raises(ValueError, match="centers"):
+        support_points_from_axis_offsets(bad_centers, np.eye(1))
+
+
+@pytest.mark.parametrize(
     "bad_covariance",
     [
         [["1.0", "0.0"], ["0.0", "1.0"]],
@@ -171,6 +183,20 @@ def test_support_points_reject_non_real_numeric_centers(bad_centers: object) -> 
     ],
 )
 def test_ellipsoid_axis_offsets_reject_non_real_numeric_covariance(
+    bad_covariance: object,
+) -> None:
+    with pytest.raises(ValueError, match="covariance"):
+        ellipsoid_axis_offsets(bad_covariance)
+
+
+@pytest.mark.parametrize(
+    "bad_covariance",
+    [
+        np.asarray([[np.timedelta64(3, "s")]]),
+        np.asarray([[np.timedelta64(3, "s")]], dtype=object),
+    ],
+)
+def test_ellipsoid_axis_offsets_reject_temporal_covariance(
     bad_covariance: object,
 ) -> None:
     with pytest.raises(ValueError, match="covariance"):
