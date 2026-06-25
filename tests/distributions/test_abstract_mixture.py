@@ -1,10 +1,11 @@
 import unittest
 
+import numpy.testing as npt
 # pylint: disable=no-name-in-module,no-member
 import pyrecest.backend
 
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import allclose, array, eye, linalg, ones
+from pyrecest.backend import allclose, array, eye, linalg, ones, zeros
 from pyrecest.distributions import VonMisesFisherDistribution
 from pyrecest.distributions.hypersphere_subset.custom_hyperhemispherical_distribution import (
     CustomHyperhemisphericalDistribution,
@@ -19,6 +20,23 @@ from pyrecest.distributions.hypertorus.hypertoroidal_wrapped_normal_distribution
 from pyrecest.distributions.hypertorus.toroidal_wrapped_normal_distribution import (
     ToroidalWrappedNormalDistribution,
 )
+from pyrecest.distributions.nonperiodic.abstract_linear_distribution import (
+    AbstractLinearDistribution,
+)
+from pyrecest.distributions.nonperiodic.linear_mixture import LinearMixture
+
+
+class _ConstantLinearDistribution(AbstractLinearDistribution):
+    def __init__(self, value):
+        super().__init__(1)
+        self.value = value
+
+    def pdf(self, xs):
+        xs = array(xs)
+        return zeros(xs.shape[:-1] if xs.ndim > 1 else xs.shape)
+
+    def sample(self, n):
+        return array([[self.value] for _ in range(int(n))])
 
 
 class AbstractMixtureTest(unittest.TestCase):
@@ -51,6 +69,24 @@ class AbstractMixtureTest(unittest.TestCase):
                 [vmf, shifted_vmf],
                 array([float("nan"), 1.0]),
             )
+
+    def test_sample_preserves_numpy_drawn_component_order(self):
+        if pyrecest.backend.__backend_name__ != "numpy":
+            self.skipTest("NumPy RNG regression test")
+
+        mix = LinearMixture(
+            [_ConstantLinearDistribution(0.1), _ConstantLinearDistribution(0.9)],
+            array([0.5, 0.5]),
+        )
+
+        pyrecest.backend.random.seed(0)
+        samples = mix.sample(8)
+
+        self.assertEqual(samples.shape, (8, 1))
+        npt.assert_allclose(
+            samples[:, 0],
+            array([0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.9]),
+        )
 
     def test_sample_metropolis_hastings_basics_only_t2(self):
         vmf = ToroidalWrappedNormalDistribution(array([1.0, 0.0]), eye(2))
