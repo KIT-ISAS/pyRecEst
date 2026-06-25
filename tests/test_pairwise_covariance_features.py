@@ -67,7 +67,7 @@ class TestPairwiseCovarianceFeatures(unittest.TestCase):
         means = array([[0.0], [0.0]])
         covariance = zeros((2, 2, 1))
 
-        for bad_regularization in (True, array([1.0])):
+        for bad_regularization in (True, "1.0", b"1.0", array([1.0])):
             with self.subTest(bad_regularization=bad_regularization):
                 with self.assertRaisesRegex(ValueError, "regularization"):
                     pairwise_mahalanobis_distances(
@@ -76,6 +76,26 @@ class TestPairwiseCovarianceFeatures(unittest.TestCase):
                         means,
                         covariance,
                         regularization=bad_regularization,
+                    )
+
+    def test_pairwise_mahalanobis_distances_rejects_text_and_boolean_data(self):
+        means = array([[0.0]])
+        covariance = array([[[1.0]]])
+        bad_cases = (
+            ("means_a", [["1.0"]], covariance, means, covariance),
+            ("means_a", [[True]], covariance, means, covariance),
+            ("covariances_a", means, [[["1.0"]]], means, covariance),
+            ("covariances_a", means, [[[True]]], means, covariance),
+        )
+
+        for expected_name, means_a, covariances_a, means_b, covariances_b in bad_cases:
+            with self.subTest(expected_name=expected_name):
+                with self.assertRaisesRegex(ValueError, expected_name):
+                    pairwise_mahalanobis_distances(
+                        means_a,
+                        covariances_a,
+                        means_b,
+                        covariances_b,
                     )
 
     def test_pairwise_covariance_shape_components_separate_shape_and_scale(self):
@@ -134,13 +154,24 @@ class TestPairwiseCovarianceFeatures(unittest.TestCase):
     def test_pairwise_covariance_shape_components_rejects_ambiguous_epsilon(self):
         covariances = zeros((2, 2, 1))
 
-        for bad_epsilon in (True, array([1e-6])):
+        for bad_epsilon in (True, "1.0", b"1.0", array([1e-6])):
             with self.subTest(bad_epsilon=bad_epsilon):
                 with self.assertRaisesRegex(ValueError, "epsilon"):
                     pairwise_covariance_shape_components(
                         covariances,
                         covariances,
                         epsilon=bad_epsilon,
+                    )
+
+    def test_pairwise_covariance_shape_components_rejects_text_and_boolean_covariances(self):
+        valid_covariances = array([[[1.0]]])
+
+        for bad_covariances in ([[["1.0"]]], [[[True]]]):
+            with self.subTest(bad_covariances=bad_covariances):
+                with self.assertRaisesRegex(ValueError, "covariances_a"):
+                    pairwise_covariance_shape_components(
+                        bad_covariances,
+                        valid_covariances,
                     )
 
     def test_invalid_inputs_raise(self):
