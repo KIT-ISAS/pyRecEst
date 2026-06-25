@@ -11,6 +11,7 @@ from pyrecest.backend import (
     int64,
     isfinite,
     log,
+    log1p,
     mod,
     ndim,
     pi,
@@ -65,7 +66,13 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
         return mod(-log(u) / self.lambda_, 2.0 * pi)
 
     def entropy(self):
-        # log(exp(2*pi*lambda)) = 2*pi*lambda, avoiding redundant exp/log
+        # Use exp(-2*pi*lambda) to avoid overflowing exp(2*pi*lambda) for
+        # concentrated wrapped exponentials.
         log_beta = 2.0 * pi * self.lambda_
-        beta = exp(log_beta)
-        return 1.0 + log((beta - 1.0) / self.lambda_) - beta / (beta - 1.0) * log_beta
+        exp_neg_log_beta = exp(-log_beta)
+        return (
+            1.0
+            - log(self.lambda_)
+            + log1p(-exp_neg_log_beta)
+            - log_beta * exp_neg_log_beta / (1.0 - exp_neg_log_beta)
+        )
