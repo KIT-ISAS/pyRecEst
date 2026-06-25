@@ -1,6 +1,7 @@
 import pytest
 from pyrecest.backend import array, pi, to_numpy
 from pyrecest.evaluation.get_distance_function import (
+    available_distance_functions,
     get_distance_function,
     register_distance_function,
 )
@@ -18,6 +19,26 @@ def test_custom_distance_function_registry():
 
     assert (
         get_distance_function("unit-test-manifold")(array([0.0]), array([1.0])) == 42.0
+    )
+
+
+def test_custom_distance_function_registry_strips_names_for_registration_and_lookup():
+    register_distance_function(
+        "  unit-test-manifold-trimmed  ",
+        lambda _name, _params: lambda x, y: 17.0,
+    )
+
+    assert "unit-test-manifold-trimmed" in available_distance_functions()
+    assert "  unit-test-manifold-trimmed  " not in available_distance_functions()
+    assert (
+        get_distance_function("unit-test-manifold-trimmed")(array([0.0]), array([1.0]))
+        == 17.0
+    )
+    assert (
+        get_distance_function("  unit-test-manifold-trimmed  ")(
+            array([0.0]), array([1.0])
+        )
+        == 17.0
     )
 
 
