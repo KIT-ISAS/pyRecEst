@@ -218,6 +218,8 @@ def _finite_probability_array(probabilities: Any) -> Any:
     probabilities = asarray(probabilities, dtype=float64)
     if not all(isfinite(probabilities)):
         raise ValueError("predicted probabilities must be finite")
+    if not all(probabilities >= 0.0) or not all(probabilities <= 1.0):
+        raise ValueError("predicted probabilities must lie in [0, 1]")
     return probabilities
 
 
