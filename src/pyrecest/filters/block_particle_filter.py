@@ -4,6 +4,8 @@ from collections.abc import Callable, Sequence
 from numbers import Integral
 from typing import Any, Protocol
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member,too-many-positional-arguments
 from pyrecest.backend import (
     all,
@@ -50,6 +52,38 @@ def _as_integer(value, name: str, minimum: int | None = None) -> int:
     if minimum is not None and integer < minimum:
         raise ValueError(f"{name} must be at least {minimum}.")
     return integer
+
+
+def _as_real_numeric_array(value, name: str):
+    """Return ``value`` as a backend float array without silent nonnumeric coercion."""
+
+    try:
+        raw = np.asarray(to_numpy(array(value)))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must contain real numeric values.") from exc
+
+    if raw.dtype == object:
+        for item in raw.reshape(-1):
+            if isinstance(
+                item,
+                (
+                    bool,
+                    np.bool_,
+                    str,
+                    bytes,
+                    bytearray,
+                    complex,
+                    np.complexfloating,
+                ),
+            ):
+                raise ValueError(f"{name} must contain real numeric values.")
+    elif raw.dtype.kind in "USbcmM" or not np.issubdtype(raw.dtype, np.number):
+        raise ValueError(f"{name} must contain real numeric values.")
+
+    try:
+        return array(value, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain real numeric values.") from exc
 
 
 def validate_partition(
@@ -231,7 +265,7 @@ class BlockParticleFilter:
 
     @staticmethod
     def _normalize_weights(weights):
-        weights = array(weights, dtype=float)
+        weights = _as_real_numeric_array(weights, "Particle weights")
         if ndim(weights) != 1:
             weights = reshape(weights, (-1,))
         if not all(isfinite(weights)):
@@ -245,7 +279,7 @@ class BlockParticleFilter:
 
     @staticmethod
     def _normalize_log_weights(log_weights):
-        log_weights = array(log_weights, dtype=float)
+        log_weights = _as_real_numeric_array(log_weights, "log weights")
         if ndim(log_weights) != 1:
             log_weights = reshape(log_weights, (-1,))
         if any(isnan(log_weights)):
@@ -258,7 +292,7 @@ class BlockParticleFilter:
         return BlockParticleFilter._normalize_weights(exp(log_weights - max_log_weight))
 
     def _normalize_block_weights(self, block_weights):
-        block_weights = array(block_weights, dtype=float)
+        block_weights = _as_real_numeric_array(block_weights, "block_weights")
         if ndim(block_weights) == 1:
             if block_weights.shape[0] != self.n_particles:
                 raise ValueError("block_weights must contain one value per particle.")
@@ -416,7 +450,7 @@ class BlockParticleFilter:
             )
         else:
             values = likelihood
-        values = array(values, dtype=float)
+        values = _as_real_numeric_array(values, "likelihood values")
         if values.shape != (self.n_particles,):
             raise ValueError("likelihood must return one value per particle.")
         if not all(values >= 0.0):
@@ -441,7 +475,7 @@ class BlockParticleFilter:
             )
         else:
             values = log_likelihood
-        values = array(values, dtype=float)
+        values = _as_real_numeric_array(values, "log_likelihood values")
         if values.shape != (self.n_particles,):
             raise ValueError("log_likelihood must return one value per particle.")
         return self.update_with_block_log_likelihoods(
@@ -466,7 +500,7 @@ class BlockParticleFilter:
             )
         else:
             values = likelihood
-        values = array(values, dtype=float)
+        values = _as_real_numeric_array(values, "block likelihood values")
         if values.shape != (self.n_blocks, self.n_particles):
             raise ValueError(
                 "block likelihoods must have shape "
@@ -481,7 +515,7 @@ class BlockParticleFilter:
     def _resampling_thresholds(self, ess_threshold):
         if ess_threshold is None:
             return [self.n_particles / 2.0 for _ in range(self.n_blocks)]
-        threshold_values = array(ess_threshold, dtype=float)
+        threshold_values = _as_real_numeric_array(ess_threshold, "ess_threshold")
         if not all(isfinite(threshold_values)) or any(threshold_values < 0.0):
             raise ValueError("ess_threshold values must be nonnegative and finite.")
         values = to_numpy(threshold_values).reshape(-1)
@@ -507,7 +541,7 @@ class BlockParticleFilter:
             )
         else:
             values = log_likelihood
-        values = array(values, dtype=float)
+        values = _as_real_numeric_array(values, "block log_likelihood values")
         if values.shape != (self.n_blocks, self.n_particles):
             raise ValueError(
                 "block log-likelihoods must have shape "
@@ -541,7 +575,7 @@ class BlockParticleFilter:
         ess_threshold=None,
     ):
         """Update from per-component likelihoods shaped ``(n_particles, K)``."""
-        values = array(component_likelihoods, dtype=float)
+        values = _as_real_numeric_array(component_likelihoods, "component_likelihoods")
         if values.shape != (self.n_particles, self._n_block_components):
             raise ValueError(
                 "component_likelihoods must have shape "
@@ -561,7 +595,9 @@ class BlockParticleFilter:
         ess_threshold=None,
     ):
         """Update from per-component log-likelihoods shaped ``(n_particles, K)``."""
-        values = array(component_log_likelihoods, dtype=float)
+        values = _as_real_numeric_array(
+            component_log_likelihoods, "component_log_likelihoods"
+        )
         if values.shape != (self.n_particles, self._n_block_components):
             raise ValueError(
                 "component_log_likelihoods must have shape "
