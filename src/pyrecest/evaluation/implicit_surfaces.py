@@ -19,6 +19,7 @@ _INVALID_NUMERIC_SCALAR_TYPES = (
     np.bytes_,
     complex,
     np.complexfloating,
+    type(None),
 )
 
 
