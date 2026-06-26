@@ -1,0 +1,8 @@
+from pyrecest._backend.numpy import random
+
+
+def test_multinomial_accepts_real_pvals():
+    result = random.multinomial(1, [1.0])
+
+    assert result.shape == (1,)
+    assert result.sum() == 1
