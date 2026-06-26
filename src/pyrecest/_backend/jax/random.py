@@ -13,6 +13,7 @@ import jax.numpy as _jnp
 import numpy as _np
 
 backend = sys.modules[__name__]
+_BOOLEAN_TYPES = (bool, _np.bool_)
 
 
 def create_random_state(seed=0):
@@ -51,10 +52,22 @@ def _get_state(**kwargs):
     return state, has_state, kwargs
 
 
+def _scalar_integer_dimension(value):
+    if isinstance(value, (bool, _np.bool_)):
+        return None
+    if isinstance(value, (int, _np.integer)):
+        return int(value)
+    if hasattr(value, "ndim") and value.ndim == 0:
+        value_array = _np.asarray(value)
+        if _np.issubdtype(value_array.dtype, _np.bool_):
+            return None
+        if _np.issubdtype(value_array.dtype, _np.integer):
+            return int(value_array.item())
+    return None
+
+
 def _looks_like_integer_dimension(value):
-    return isinstance(value, (int, _np.integer)) and not isinstance(
-        value, (bool, _np.bool_)
-    )
+    return _scalar_integer_dimension(value) is not None
 
 
 def _size_type_error():
@@ -62,9 +75,9 @@ def _size_type_error():
 
 
 def _integer_dimension(value):
-    if not _looks_like_integer_dimension(value):
+    value = _scalar_integer_dimension(value)
+    if value is None:
         raise _size_type_error()
-    value = int(value)
     if value < 0:
         raise ValueError("size dimensions must be non-negative")
     return value
@@ -100,9 +113,24 @@ def _broadcast_shape_from_values(*values):
 
 def _bounded_sampler_shape(size, *parameters):
     """Return the NumPy-compatible output shape for bounded random samplers."""
-    if size is not None:
-        return _shape_from_size(size)
-    return _broadcast_shape_from_values(*parameters)
+    try:
+        parameter_shape = _broadcast_shape_from_values(*parameters)
+    except ValueError as exc:
+        raise ValueError("parameter arrays could not be broadcast together") from exc
+
+    if size is None:
+        return parameter_shape
+
+    sample_shape = _shape_from_size(size)
+    try:
+        broadcast_shape = _np.broadcast_shapes(sample_shape, parameter_shape)
+    except ValueError as exc:
+        raise ValueError(
+            "size and parameter arrays could not be broadcast together"
+        ) from exc
+    if broadcast_shape != sample_shape:
+        raise ValueError("size and parameter arrays could not be broadcast together")
+    return sample_shape
 
 
 def _looks_like_shape(value):
@@ -121,6 +149,11 @@ def _looks_like_shape_sequence(value):
     return isinstance(value, (list, tuple)) and all(
         _looks_like_integer_dimension(dim) for dim in value
     )
+
+
+def _looks_like_scalar_randint_bound(value):
+    value = _np.asarray(value)
+    return value.shape == () and not _np.issubdtype(value.dtype, _np.bool_)
 
 
 def set_state_return(has_state, state, res):
@@ -142,21 +175,54 @@ def rand(*dims, size=None, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def _validate_uniform_bounds(low, high):
-    if bool(_jnp.any(~_jnp.isfinite(low))) or bool(_jnp.any(~_jnp.isfinite(high))):
+def _contains_boolean_value(value):
+    if isinstance(value, _BOOLEAN_TYPES):
+        return True
+    try:
+        values = _np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, _BOOLEAN_TYPES) for item in values)
+
+
+def _validate_uniform_bound(bound, name):
+    if _contains_boolean_value(bound):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        bound_array = _jnp.asarray(bound)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if bound_array.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    if bool(_jnp.any(~_jnp.isfinite(bound_array))):
         raise ValueError("uniform bounds must be finite")
-    if bool(_jnp.any(low > high)):
-        raise ValueError("Upper bound must be greater than or equal to lower bound")
+    return bound_array
+
+
+def _validate_uniform_bounds(low, high):
+    low = _validate_uniform_bound(low, "low")
+    high = _validate_uniform_bound(high, "high")
+    return low, high
 
 
 def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
-    low = _jnp.asarray(low)
-    high = _jnp.asarray(high)
+    low, high = _validate_uniform_bounds(low, high)
     shape = _bounded_sampler_shape(size, low, high)
-    _validate_uniform_bounds(low, high)
+    if bool(_jnp.any(low > high)):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
     state, has_state, kwargs = _get_state(**kwargs)
     state, res = _rand(state, shape, *args, minval=low, maxval=high, **kwargs)
     return set_state_return(has_state, state, res)
+
+
+def _validate_randint_bounds(low, high):
+    try:
+        low, high = _jnp.broadcast_arrays(low, high)
+    except ValueError as exc:
+        raise ValueError("low and high could not be broadcast together") from exc
+    if bool(_jnp.any(high <= low)):
+        raise ValueError("high must be greater than low")
+    return low, high
 
 
 def _randint(state, size, low, high, *args, **kwargs):
@@ -202,7 +268,13 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
             raise TypeError("randint() missing required argument 'size'")
         low = legacy_minval
         high = legacy_maxval
-    elif _looks_like_shape_sequence(low) and high is not None and size is not None:
+    elif (
+        _looks_like_shape_sequence(low)
+        and high is not None
+        and size is not None
+        and _looks_like_scalar_randint_bound(high)
+        and _looks_like_scalar_randint_bound(size)
+    ):
         # Legacy positional form: randint(shape, minval, maxval)
         size, low, high = low, high, size
     elif high is None:
@@ -213,6 +285,7 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
 
     low = _jnp.asarray(low)
     high = _jnp.asarray(high)
+    low, high = _validate_randint_bounds(low, high)
     shape = _bounded_sampler_shape(size, low, high)
     state, has_state, kwargs = _get_state(**kwargs)
     state, res = _randint(state, shape, low, high, *args, **kwargs)
@@ -272,6 +345,12 @@ def _normalize_choice_axis(axis, ndim):
     return axis % ndim
 
 
+def _choice_bool(value, name):
+    if isinstance(value, (bool, _np.bool_)):
+        return bool(value)
+    raise TypeError(f"{name} must be a boolean")
+
+
 def _choice_population_size(a, kwargs):
     population_size = _integer_population_size(a)
     if population_size is not None:
@@ -303,6 +382,7 @@ def _choice(state, a, size=None, replace=True, p=None, *args, **kwargs):
     state, key = jax.random.split(state)
     a = _jnp.asarray(a)
     shape = _shape_from_size(size)
+    replace = _choice_bool(replace, "replace")
     population_size = _choice_population_size(a, kwargs)
     if population_size == 0:
         if _shape_has_no_samples(shape):

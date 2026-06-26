@@ -48,6 +48,48 @@ def _to_python_bool(value):
     return bool(value)
 
 
+def _validate_bool_flag(value, name):
+    """Validate public boolean flags without truthiness coercion."""
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except Exception as exc:  # pragma: no cover - backend-specific failures
+        raise TypeError(f"{name} must be a boolean.") from exc
+    if getattr(value_array, "shape", ()) != () or not hasattr(value_array, "item"):
+        raise TypeError(f"{name} must be a boolean.")
+    scalar = value_array.item()
+    if not isinstance(scalar, bool):
+        raise TypeError(f"{name} must be a boolean.")
+    return scalar
+
+
+def _has_invalid_real_numeric_value(value):
+    """Return whether ``value`` is not an unambiguous real numeric input."""
+    if isinstance(value, (bool, str, bytes, bytearray, complex)):
+        return True
+
+    dtype = getattr(value, "dtype", None)
+    dtype_kind = getattr(dtype, "kind", None)
+    if dtype_kind in {"b", "c", "S", "U"}:
+        return True
+    if dtype_kind == "O":
+        return any(_has_invalid_real_numeric_value(item) for item in value.flat)
+
+    dtype_name = str(dtype).lower() if dtype is not None else ""
+    if "bool" in dtype_name or "complex" in dtype_name:
+        return True
+
+    if isinstance(value, (list, tuple)):
+        return any(_has_invalid_real_numeric_value(item) for item in value)
+    return False
+
+
+def _validate_real_numeric_input(value, name):
+    if _has_invalid_real_numeric_value(value):
+        raise TypeError(f"{name} must contain real numeric values.")
+
+
 def _as_circular_gaussian(distribution, role):
     """Return a validated 1-D Gaussian for circular UKF state/noise."""
     if not isinstance(distribution, GaussianDistribution):
@@ -79,7 +121,11 @@ def _validate_backend_supported(operation):
 
 
 def _validate_circular_scalar_measurement(z):
-    measurement = array(z, dtype=float)
+    _validate_real_numeric_input(z, "measurement z")
+    try:
+        measurement = array(z, dtype=float)
+    except Exception as exc:  # pragma: no cover - backend-specific failures
+        raise TypeError("measurement z must contain real numeric values.") from exc
     if measurement.shape not in ((), (1,)):
         raise ValueError("measurement z must be scalar.")
     measurement = measurement[0] if measurement.shape == (1,) else measurement
@@ -90,7 +136,11 @@ def _validate_circular_scalar_measurement(z):
 
 def _measurement_vector(value):
     """Convert a scalar or vector-valued measurement to a flat 1-D array."""
-    measurement = atleast_1d(array(value, dtype=float)).flatten()
+    _validate_real_numeric_input(value, "measurement vector")
+    try:
+        measurement = atleast_1d(array(value, dtype=float)).flatten()
+    except Exception as exc:  # pragma: no cover - backend-specific failures
+        raise TypeError("measurement vector must contain real numeric values.") from exc
     if measurement.shape[0] == 0:
         raise ValueError("measurement vector must not be empty.")
     if not _to_python_bool(backend_all(isfinite(measurement))):
@@ -327,6 +377,9 @@ class CircularUKF(AbstractFilter, CircularFilterMixin):
                     "measurement noise must be convertible to GaussianDistribution."
                 ) from exc
         _validate_backend_supported("CircularUKF.update_nonlinear")
+        measurement_periodic = _validate_bool_flag(
+            measurement_periodic, "measurement_periodic"
+        )
 
         z = _measurement_vector(z)
         dim_z = len(z)

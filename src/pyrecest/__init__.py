@@ -1,23 +1,29 @@
 from importlib.metadata import PackageNotFoundError, version
 
 import pyrecest._backend  # noqa
+from pyrecest._backend_submodules import (  # noqa: F401
+    register_backend_submodules as _register_backend_submodules,
+)
 from pyrecest.backend import copy  # noqa: F401
-from pyrecest.backend_support import (  # noqa: F401
+
+_register_backend_submodules()
+
+from pyrecest.backend_support import (  # noqa: E402,F401
     backend_support,
     format_backend_support_markdown,
     get_backend_support,
 )
-from pyrecest.backend_tools import (  # noqa: F401
+from pyrecest.backend_tools import (  # noqa: E402,F401
     assert_backend,
     get_backend_name,
     is_backend,
     warn_if_backend_env_changed,
 )
-from pyrecest.evidence import (  # noqa: F401
+from pyrecest.evidence import (  # noqa: E402,F401
     EvidenceComputationMode,
     resolve_evidence_computation_mode,
 )
-from pyrecest.exceptions import (  # noqa: F401
+from pyrecest.exceptions import (  # noqa: E402,F401
     BackendNotSupportedError,
     BackendSupportError,
     DimensionMismatchError,
@@ -27,7 +33,7 @@ from pyrecest.exceptions import (  # noqa: F401
     ShapeError,
     ValidationError,
 )
-from pyrecest.stability import (  # noqa: F401
+from pyrecest.stability import (  # noqa: E402,F401
     get_public_api_status,
     iter_public_api_status,
     stability,

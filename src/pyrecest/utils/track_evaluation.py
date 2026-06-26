@@ -62,11 +62,9 @@ def complete_track_set(
     """Return exact full-track tuples present in every selected session."""
     matrix = normalize_track_matrix(track_matrix)
     complete_tracks: set[tuple[int, ...]] = set()
+    selected_sessions = _selected_sessions(matrix, session_indices)
     for row in matrix:
-        values = [
-            row[session_idx]
-            for session_idx in _selected_sessions(matrix, session_indices)
-        ]
+        values = [row[session_idx] for session_idx in selected_sessions]
         if all(value is not None for value in values):
             complete_tracks.add(tuple(int(value) for value in values))
     return complete_tracks
@@ -372,13 +370,19 @@ def _parse_optional_int(value: Any) -> int | None:
         return None
     try:
         parsed = int(candidate)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return parsed if parsed >= 0 else None
 
 
 def _optional_int_candidate(value: Any) -> Any:
     if value is None:
+        return _MISSING
+    if isinstance(value, np.ndarray):
+        if value.ndim != 0:
+            return _MISSING
+        value = value.item()
+    if isinstance(value, (bool, np.bool_)):
         return _MISSING
     if isinstance(value, bytes):
         value = value.decode("utf-8")
@@ -393,11 +397,9 @@ def _optional_int_candidate(value: Any) -> Any:
 def _selected_sessions(
     matrix: np.ndarray, session_indices: Sequence[int] | None
 ) -> list[int]:
-    selected = (
-        list(range(matrix.shape[1]))
-        if session_indices is None
-        else [int(index) for index in session_indices]
-    )
+    if session_indices is None:
+        return list(range(matrix.shape[1]))
+    selected = [_coerce_session_index(index) for index in session_indices]
     for session_idx in selected:
         _validate_session_index(matrix, session_idx)
     return selected
@@ -406,17 +408,44 @@ def _selected_sessions(
 def _session_pairs(
     matrix: np.ndarray, session_pairs: Iterable[tuple[int, int]] | None
 ) -> tuple[tuple[int, int], ...]:
-    pairs = (
-        tuple((idx, idx + 1) for idx in range(max(0, matrix.shape[1] - 1)))
-        if session_pairs is None
-        else tuple((int(a), int(b)) for a, b in session_pairs)
-    )
+    if session_pairs is None:
+        pairs = tuple((idx, idx + 1) for idx in range(max(0, matrix.shape[1] - 1)))
+    else:
+        parsed_pairs = []
+        for pair in session_pairs:
+            try:
+                raw_a, raw_b = pair
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "session_pairs must contain pairs of session indices"
+                ) from exc
+            parsed_pairs.append(
+                (_coerce_session_index(raw_a), _coerce_session_index(raw_b))
+            )
+        pairs = tuple(parsed_pairs)
     for session_a, session_b in pairs:
         _validate_session_index(matrix, session_a)
         _validate_session_index(matrix, session_b)
         if session_a >= session_b:
             raise ValueError("session_pairs must point forward in time")
     return pairs
+
+
+def _coerce_session_index(value: Any) -> int:
+    array = np.asarray(value)
+    message = "session indices must be integers"
+    if array.shape != () or array.dtype == np.bool_:
+        raise ValueError(message)
+    scalar = array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    if isinstance(scalar, (int, np.integer)):
+        return int(scalar)
+    if isinstance(scalar, (float, np.floating)):
+        if np.isfinite(scalar) and float(scalar).is_integer():
+            return int(scalar)
+        raise ValueError(message)
+    raise ValueError(message)
 
 
 def _validate_session_index(matrix: np.ndarray, session_idx: int) -> None:
@@ -526,15 +555,15 @@ def _track_rows(
 
 
 def _summary_rows(
-    predicted_rows,
-    reference_rows,
-    false_links,
-    missed_links,
-    predicted_links,
-    reference_links,
-    predicted_duplicates,
-    reference_duplicates,
-):
+    predicted_rows: list[dict[str, Any]],
+    reference_rows: list[dict[str, Any]],
+    false_links: list[TrackLink],
+    missed_links: list[TrackLink],
+    predicted_links: set[TrackLink],
+    reference_links: set[TrackLink],
+    predicted_duplicates: list[tuple[Observation, int, int]],
+    reference_duplicates: list[tuple[Observation, int, int]],
+) -> dict[str, int | float]:
     reference_tracks = len(reference_rows)
     predicted_tracks = len(predicted_rows)
     fragmented = sum(1 for row in reference_rows if row["fragment_count"] > 0)

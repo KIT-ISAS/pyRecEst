@@ -1,10 +1,15 @@
 import pytest
 from pyrecest.backend import array, pi, to_numpy
 from pyrecest.evaluation.get_distance_function import (
+    available_distance_functions,
     get_distance_function,
     register_distance_function,
 )
-from pyrecest.evaluation.get_extract_mean import get_extract_mean, register_extract_mean
+from pyrecest.evaluation.get_extract_mean import (
+    available_extract_mean_functions,
+    get_extract_mean,
+    register_extract_mean,
+)
 
 
 def _as_float(value):
@@ -18,6 +23,26 @@ def test_custom_distance_function_registry():
 
     assert (
         get_distance_function("unit-test-manifold")(array([0.0]), array([1.0])) == 42.0
+    )
+
+
+def test_custom_distance_function_registry_strips_names_for_registration_and_lookup():
+    register_distance_function(
+        "  unit-test-manifold-trimmed  ",
+        lambda _name, _params: lambda x, y: 17.0,
+    )
+
+    assert "unit-test-manifold-trimmed" in available_distance_functions()
+    assert "  unit-test-manifold-trimmed  " not in available_distance_functions()
+    assert (
+        get_distance_function("unit-test-manifold-trimmed")(array([0.0]), array([1.0]))
+        == 17.0
+    )
+    assert (
+        get_distance_function("  unit-test-manifold-trimmed  ")(
+            array([0.0]), array([1.0])
+        )
+        == 17.0
     )
 
 
@@ -75,6 +100,30 @@ def test_se2bounded_distance_uses_angular_component_before_linear_dispatch():
     assert _as_float(distance(x_estimate, x_true)) == pytest.approx(float(pi))
 
 
+def test_se2bounded_distance_accepts_vector_states():
+    distance = get_distance_function("se2bounded")
+
+    x_estimate = array([0.0, 1.0, 2.0])
+    x_true = array([pi, 1.0, 2.0])
+
+    assert _as_float(distance(x_estimate, x_true)) == pytest.approx(float(pi))
+
+
+def test_se2_and_se3_linear_distances_accept_vector_states():
+    se2_distance = get_distance_function("se2")
+    assert _as_float(
+        se2_distance(array([0.0, 1.0, 2.0]), array([0.0, 4.0, 6.0]))
+    ) == pytest.approx(5.0)
+
+    se3_distance = get_distance_function("se3")
+    assert _as_float(
+        se3_distance(
+            array([1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0]),
+            array([1.0, 0.0, 0.0, 0.0, 4.0, 6.0, 3.0]),
+        )
+    ) == pytest.approx(5.0)
+
+
 def test_se3bounded_distance_uses_quaternion_component_before_linear_dispatch():
     distance = get_distance_function("se3bounded")
 
@@ -90,6 +139,18 @@ def test_custom_extract_mean_registry():
     )
 
     assert get_extract_mean("unit-test-mean")({"mean": 3}) == 3
+
+
+def test_custom_extract_mean_registry_strips_names_for_registration_and_lookup():
+    register_extract_mean(
+        "  unit-test-mean-trimmed  ",
+        lambda _name, _mtt: lambda state: state["mean"],
+    )
+
+    assert "unit-test-mean-trimmed" in available_extract_mean_functions()
+    assert "  unit-test-mean-trimmed  " not in available_extract_mean_functions()
+    assert get_extract_mean("unit-test-mean-trimmed")({"mean": 7}) == 7
+    assert get_extract_mean("  unit-test-mean-trimmed  ")({"mean": 8}) == 8
 
 
 def test_euclidean_extract_mean_preserves_raw_array_state():

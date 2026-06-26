@@ -49,7 +49,14 @@ def test_evidence_computation_mode_rejects_inconsistent_flags():
 
 
 def test_evidence_computation_mode_rejects_truthy_non_bool_return_smoothed():
-    for return_smoothed in ("false", "true", 0, 1, np.array([False])):
+    for return_smoothed in (
+        "false",
+        "true",
+        0,
+        1,
+        np.array([False]),
+        [[True], [False, True]],
+    ):
         with pytest.raises(ValueError, match="return_smoothed must be a bool"):
             resolve_evidence_computation_mode(return_smoothed=return_smoothed)
 

@@ -1,7 +1,9 @@
+import json
 import math
 import unittest
 
 import numpy as np
+import pandas as pd
 from pyrecest.evaluation.diagnostic_summaries import (
     build_diagnostic_summary,
     covariance_inflation_summary,
@@ -65,6 +67,21 @@ class DiagnosticSummariesTest(unittest.TestCase):
         self.assertEqual(summary["top_transitions"][0]["from_track_id"], "A")
         self.assertEqual(summary["top_transitions"][0]["to_track_id"], "B")
 
+    def test_track_switch_summary_skips_pandas_na_track_ids(self):
+        records = [
+            {"time_s": 0.0, "track_id": "A"},
+            {"time_s": 1.0, "track_id": pd.NA},
+            {"time_s": 2.0, "track_id": "A"},
+            {"time_s": 3.0, "track_id": "B"},
+        ]
+
+        summary = track_switch_summary(records)
+
+        self.assertEqual(summary["updates_with_track_id"], 3)
+        self.assertEqual(summary["count"], 1)
+        self.assertEqual(summary["top_transitions"][0]["from_track_id"], "A")
+        self.assertEqual(summary["top_transitions"][0]["to_track_id"], "B")
+
     def test_covariance_inflation_summary_counts_by_source(self):
         summary = covariance_inflation_summary(self.records)
 
@@ -95,6 +112,7 @@ class DiagnosticSummariesTest(unittest.TestCase):
             True,
             "2",
             b"2",
+            bytearray(b"2"),
             np.array("2"),
             np.array([1]),
         ):
@@ -119,6 +137,7 @@ class DiagnosticSummariesTest(unittest.TestCase):
             True,
             "5.0",
             b"5.0",
+            bytearray(b"5.0"),
             np.array("5.0"),
             np.array([1.0]),
         ):
@@ -160,6 +179,57 @@ class DiagnosticSummariesTest(unittest.TestCase):
         self.assertEqual(summary["track_switches"]["updates_with_track_id"], 0)
         self.assertEqual(summary["covariance_inflation"]["count"], 0)
         self.assertEqual(summary["worst_time_windows"], [])
+
+    def test_summary_treats_bool_and_text_optional_scalars_as_missing(self):
+        records = [
+            {
+                "time_s": "10.0",
+                "track_id": "A",
+                "source": "rf",
+                "residual_norm": True,
+                "covariance_scale": "3.0",
+                "error": "2.0",
+            },
+            {
+                "time_s": b"11.0",
+                "track_id": "B",
+                "source": "radar",
+                "residual_norm": bytearray(b"4.0"),
+                "covariance_scale": True,
+                "error": False,
+            },
+        ]
+
+        self.assertEqual(top_residuals(records), [])
+        self.assertEqual(covariance_inflation_summary(records)["count"], 0)
+        self.assertEqual(worst_time_windows(records), [])
+
+        summary = build_diagnostic_summary(records, top_n=2, window_s=5.0)
+        self.assertEqual(summary["top_residuals"], [])
+        self.assertEqual(summary["covariance_inflation"]["count"], 0)
+        self.assertEqual(summary["worst_time_windows"], [])
+
+    def test_summary_json_records_normalize_missing_and_bytes_payloads(self):
+        records = [
+            {
+                "time_s": 0.0,
+                "track_id": "A",
+                "source": "rf",
+                "residual_norm": 2.0,
+                "covariance_scale": 1.0,
+                "error": 1.0,
+                "note": pd.NA,
+                "payload": b"ok",
+                "vector": np.array([1.0, np.nan]),
+            }
+        ]
+
+        rows = top_residuals(records)
+
+        self.assertIsNone(rows[0]["note"])
+        self.assertEqual(rows[0]["payload"], "ok")
+        self.assertEqual(rows[0]["vector"], [1.0, None])
+        json.dumps(rows)
 
 
 if __name__ == "__main__":

@@ -49,6 +49,25 @@ def test_uniform_accepts_numpy_broadcasted_bounds_without_explicit_size():
     assert jnp.all(samples <= jnp.array([1.0, 11.0]))
 
 
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        (False, 1.0),
+        (0.0, True),
+        (jnp.array([False, False]), jnp.array([1.0, 2.0])),
+        ([False, 0.0], [1.0, 2.0]),
+        ([0.0, 0.5], [1.0, np.bool_(True)]),
+        (
+            np.array([0.0, np.bool_(False)], dtype=object),
+            np.array([1.0, 2.0], dtype=object),
+        ),
+    ],
+)
+def test_uniform_rejects_boolean_bounds(low, high):
+    with pytest.raises(TypeError, match="boolean"):
+        random.uniform(low, high)
+
+
 def test_randint_accepts_numpy_broadcasted_bounds_without_explicit_size():
     random.seed(0)
 
@@ -67,6 +86,51 @@ def test_uniform_and_randint_reject_incompatible_bounds_without_explicit_size():
         random.randint(
             jnp.zeros((2,), dtype=jnp.int32), jnp.ones((3,), dtype=jnp.int32)
         )
+
+
+@pytest.mark.parametrize("bad_size", [(), (3,), (3, 1)])
+def test_normal_rejects_array_parameters_incompatible_with_explicit_size(bad_size):
+    with pytest.raises(ValueError, match="broadcast"):
+        random.normal(jnp.array([1.0, 2.0]), 1.0, size=bad_size)
+
+
+@pytest.mark.parametrize("bad_size", [(), (3,), (3, 1)])
+def test_uniform_rejects_array_parameters_incompatible_with_explicit_size(bad_size):
+    with pytest.raises(ValueError, match="broadcast"):
+        random.uniform(jnp.array([1.0, 2.0]), 3.0, size=bad_size)
+
+
+def test_randint_rejects_array_bounds_incompatible_with_explicit_size():
+    with pytest.raises(ValueError, match="broadcast"):
+        random.randint(jnp.array([0, 10]), jnp.array([3, 13]), size=(3,))
+
+
+def test_normal_accepts_array_parameters_with_compatible_explicit_size():
+    random.seed(0)
+
+    samples = random.normal(jnp.array([1.0, 2.0]), 1.0, size=(4, 2))
+
+    assert samples.shape == (4, 2)
+
+
+def test_uniform_accepts_array_parameters_with_compatible_explicit_size():
+    random.seed(0)
+
+    samples = random.uniform(jnp.array([1.0, 2.0]), 3.0, size=(4, 2))
+
+    assert samples.shape == (4, 2)
+    assert jnp.all(samples >= jnp.array([1.0, 2.0]))
+    assert jnp.all(samples <= 3.0)
+
+
+def test_randint_accepts_array_bounds_with_compatible_explicit_size():
+    random.seed(0)
+
+    samples = random.randint(jnp.array([0, 10]), jnp.array([3, 13]), size=(4, 2))
+
+    assert samples.shape == (4, 2)
+    assert jnp.all(samples >= jnp.array([0, 10]))
+    assert jnp.all(samples < jnp.array([3, 13]))
 
 
 def _size_aware_samplers():
@@ -92,6 +156,20 @@ def test_size_arguments_reject_bool_and_non_integral_dimensions(bad_size):
     for sampler in _size_aware_samplers():
         with pytest.raises(TypeError):
             sampler(bad_size)
+
+
+@pytest.mark.parametrize("bad_replace", ["False", "True", 1, 0, None, np.array(True)])
+def test_choice_rejects_non_boolean_replace_flag(bad_replace):
+    with pytest.raises(TypeError, match="replace must be a boolean"):
+        random.choice(jnp.array([0, 1, 2]), size=2, replace=bad_replace)
+
+
+def test_choice_accepts_numpy_boolean_replace_flag():
+    random.seed(0)
+
+    sample = random.choice(jnp.array([0, 1, 2]), size=2, replace=np.bool_(False))
+
+    assert sample.shape == (2,)
 
 
 @pytest.mark.parametrize("bad_size", [-1, (2, -1)])
