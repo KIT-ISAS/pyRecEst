@@ -53,6 +53,19 @@ def test_expected_mapping_accepts_finite_numeric_actuals() -> None:
     )
 
 
+@pytest.mark.parametrize("actual_value", [np.float64(1.000001), np.int64(1)])
+def test_expected_mapping_accepts_numpy_scalar_actuals(actual_value) -> None:
+    assert (
+        _check_expected_mapping(
+            "metrics",
+            {"rmse": actual_value},
+            {"rmse": 1.0},
+            tolerance=1e-5,
+        )
+        == []
+    )
+
+
 @pytest.mark.parametrize("actual_value", [True, "1.0", math.nan, math.inf])
 def test_expected_mapping_rejects_malformed_numeric_actuals(actual_value) -> None:
     errors = _check_expected_mapping(
