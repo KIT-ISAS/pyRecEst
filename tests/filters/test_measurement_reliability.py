@@ -43,6 +43,21 @@ class TestMeasurementReliability(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_measurement_weights(array([1.0, -0.1, 0.0]), 3)
 
+    def test_weight_inputs_must_be_real_numeric(self):
+        invalid_weights = (
+            True,
+            array([True, False]),
+            "0.25",
+            array(["0.5", "1.0"]),
+            1.0 + 0.0j,
+            array([1.0 + 0.0j]),
+        )
+
+        for invalid_weight in invalid_weights:
+            with self.subTest(weight=invalid_weight):
+                with self.assertRaisesRegex(ValueError, "real numeric"):
+                    normalize_measurement_weights(invalid_weight, 2)
+
     def test_scalar_mask_expands_to_all_measurements(self):
         self.assertEqual(
             normalize_active_measurement_mask(False, 3),

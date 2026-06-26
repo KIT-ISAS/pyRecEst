@@ -30,6 +30,24 @@ def _has_boolean_dtype(value) -> bool:
     return dtype is not None and "bool" in str(dtype).lower()
 
 
+def _has_real_numeric_dtype(value) -> bool:
+    dtype = getattr(value, "dtype", None)
+    if dtype is None:
+        return False
+    kind = getattr(dtype, "kind", None)
+    if kind is not None:
+        return kind in {"i", "u", "f"}
+    dtype_name = str(dtype).lower()
+    if any(token in dtype_name for token in ("bool", "complex", "str", "string", "object")):
+        return False
+    return "float" in dtype_name or "int" in dtype_name
+
+
+def _raise_if_not_real_numeric_weights(weights) -> None:
+    if not _has_real_numeric_dtype(weights):
+        raise ValueError("measurement_weights must be real numeric")
+
+
 def normalize_measurement_weights(measurement_weights, n_measurements: int):
     """Return one non-negative finite reliability weight per measurement.
 
@@ -44,17 +62,30 @@ def normalize_measurement_weights(measurement_weights, n_measurements: int):
         return ones(n_measurements)
 
     weights = array(measurement_weights)
+    _raise_if_not_real_numeric_weights(weights)
     if weights.ndim == 0:
-        weights = ones(n_measurements) * float(weights)
+        try:
+            scalar_weight = float(weights)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("measurement_weights must be real numeric") from exc
+        weights = ones(n_measurements) * scalar_weight
     else:
         weights = reshape(weights, (-1,))
         if weights.shape[0] != n_measurements:
             raise ValueError(
                 "measurement_weights must be scalar or have one entry per measurement"
             )
-    if not bool(all(isfinite(weights))):
+    try:
+        weights_are_finite = bool(all(isfinite(weights)))
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("measurement_weights must be real numeric") from exc
+    if not weights_are_finite:
         raise ValueError("measurement_weights must be finite")
-    if not bool(all(weights >= 0.0)):
+    try:
+        weights_are_nonnegative = bool(all(weights >= 0.0))
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("measurement_weights must be real numeric") from exc
+    if not weights_are_nonnegative:
         raise ValueError("measurement_weights must be non-negative")
     return weights
 
