@@ -33,7 +33,7 @@ def test_rand_rejects_ambiguous_positional_and_size_arguments():
         (0, True),
         (np.array([0.0, 10.0]), np.array([3, 13])),
         ([0, 10], [3.0, 13.0]),
-        (np.array([False, 0]), np.array([3, 13])),
+        (np.array([False, 0], dtype=object), np.array([3, 13])),
         (np.array([0, 10]), np.array([3, np.bool_(True)], dtype=object)),
         (np.array([0 + 0j, 10]), np.array([3, 13])),
     ],
