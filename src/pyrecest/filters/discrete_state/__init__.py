@@ -54,6 +54,32 @@ def _validated_state_vectors(state_vectors: Any) -> np.ndarray:
     return states
 
 
+def _validated_positive_scalar(
+    value: Any,
+    name: str,
+    *,
+    allow_infinite: bool = False,
+) -> float:
+    try:
+        raw_value = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive real scalar") from exc
+    if raw_value.shape != () or raw_value.dtype.kind in _REJECTED_STATE_KINDS:
+        raise ValueError(f"{name} must be a positive real scalar")
+    scalar = raw_value.item()
+    if isinstance(scalar, _TEXT_TYPES + _BOOLEAN_TYPES + _COMPLEX_TYPES):
+        raise ValueError(f"{name} must be a positive real scalar")
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a positive real scalar") from exc
+    if parsed <= 0.0 or np.isnan(parsed):
+        raise ValueError(f"{name} must be a positive real scalar")
+    if not allow_infinite and not np.isfinite(parsed):
+        raise ValueError(f"{name} must be a positive real scalar")
+    return parsed
+
+
 def sparse_gaussian_transition_matrix(
     state_vectors,
     sigma,
@@ -62,6 +88,12 @@ def sparse_gaussian_transition_matrix(
     valid_state_mask=None,
 ):
     states = _validated_state_vectors(state_vectors)
+    sigma = _validated_positive_scalar(sigma, "sigma")
+    max_step_sigma = _validated_positive_scalar(
+        max_step_sigma,
+        "max_step_sigma",
+        allow_infinite=True,
+    )
     return _original_sparse_gaussian_transition_matrix(
         states,
         sigma,
