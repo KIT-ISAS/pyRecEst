@@ -2,8 +2,8 @@ import numpy as _np
 from pyrecest._backend._dtype_utils import (
     _dyn_update_dtype,
     _modify_func_default_dtype,
-    get_default_cdtype,
-    get_default_dtype,
+    get_default_cdtype as _shared_get_default_cdtype,
+    get_default_dtype as _shared_get_default_dtype,
 )
 
 from .._shared_numpy._common import (
@@ -30,6 +30,28 @@ from .._shared_numpy._common import (
     to_ndarray,
 )
 
+
+def _normalize_numpy_dtype(dtype, default):
+    if dtype is None:
+        dtype = default
+    try:
+        return _np.dtype(dtype)
+    except (TypeError, ValueError):
+        return _np.dtype(str(dtype).split(".")[-1])
+
+
+def get_default_dtype():
+    return _normalize_numpy_dtype(_shared_get_default_dtype(), _np.float64)
+
+
+def get_default_cdtype():
+    return _normalize_numpy_dtype(_shared_get_default_cdtype(), _np.complex128)
+
+
 array = _cast_out_from_dtype(target=_np.array, dtype_pos=1)
 eye = _modify_func_default_dtype(target=_np.eye)
-zeros = _dyn_update_dtype(target=_np.zeros, dtype_pos=1)
+
+
+def zeros(shape, dtype=None, *args, **kwargs):
+    dtype = _normalize_numpy_dtype(dtype, get_default_dtype())
+    return _np.zeros(shape, dtype, *args, **kwargs)
