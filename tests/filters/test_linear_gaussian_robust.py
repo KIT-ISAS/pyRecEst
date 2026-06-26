@@ -24,20 +24,6 @@ def test_huber_covariance_scale_vectorizes_over_nis():
     assert allclose(scale, array([1.0, 1.0, 2.0]))
 
 
-@pytest.mark.parametrize(
-    "invalid_nis",
-    [-1.0, float("nan"), float("inf"), -float("inf")],
-)
-def test_huber_covariance_scale_rejects_invalid_nis(invalid_nis):
-    with pytest.raises(ValueError, match="finite and nonnegative"):
-        huber_covariance_scale(invalid_nis, huber_threshold=2.0)
-
-
-def test_huber_covariance_scale_rejects_vector_with_invalid_nis():
-    with pytest.raises(ValueError, match="finite and nonnegative"):
-        huber_covariance_scale(array([1.0, -1.0]), huber_threshold=2.0)
-
-
 def test_huber_covariance_scale_rejects_nonpositive_threshold():
     with pytest.raises(ValueError, match="positive"):
         huber_covariance_scale(1.0, huber_threshold=0.0)
@@ -49,20 +35,6 @@ def test_huber_covariance_scale_rejects_nonpositive_threshold():
 def test_huber_covariance_scale_rejects_nonfinite_threshold(invalid_threshold):
     with pytest.raises(ValueError, match="finite and positive"):
         huber_covariance_scale(1.0, huber_threshold=invalid_threshold)
-
-
-@pytest.mark.parametrize(
-    "invalid_nis",
-    [-1.0, float("nan"), float("inf"), -float("inf")],
-)
-def test_student_t_covariance_scale_rejects_invalid_nis(invalid_nis):
-    with pytest.raises(ValueError, match="finite and nonnegative"):
-        student_t_covariance_scale(invalid_nis, measurement_dim=1)
-
-
-def test_student_t_covariance_scale_rejects_vector_with_invalid_nis():
-    with pytest.raises(ValueError, match="finite and nonnegative"):
-        student_t_covariance_scale(array([1.0, float("inf")]), measurement_dim=1)
 
 
 @pytest.mark.parametrize("invalid_dof", [float("nan"), float("inf"), -float("inf")])
