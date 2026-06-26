@@ -11,7 +11,6 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
-
 _INVALID_TOLERANCE_MESSAGE = "tolerance must be a non-negative finite number"
 
 
@@ -34,6 +33,14 @@ def _validate_tolerance(value: Any) -> float:
     if not math.isfinite(tolerance) or tolerance < 0.0:
         raise ValueError(_INVALID_TOLERANCE_MESSAGE)
     return tolerance
+
+
+def _is_finite_real_number(value: Any) -> bool:
+    return (
+        isinstance(value, int | float)
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
 
 
 def _cmd_info(_args: argparse.Namespace) -> int:
@@ -92,11 +99,24 @@ def _check_expected_mapping(
             errors.append(f"{section_name}.{key} missing from scenario result")
             continue
         actual_value = actual[key]
-        if isinstance(expected_value, int | float):
-            delta = abs(float(actual_value) - float(expected_value))
+        if _is_finite_real_number(expected_value):
+            if not _is_finite_real_number(actual_value):
+                errors.append(
+                    f"{section_name}.{key} mismatch: expected finite numeric "
+                    f"{expected_value!r}, got {actual_value!r}"
+                )
+                continue
+            actual_numeric = float(actual_value)
+            expected_numeric = float(expected_value)
+            delta = abs(actual_numeric - expected_numeric)
             if delta > tolerance:
                 errors.append(
                     f"{section_name}.{key} mismatch: abs_error={delta:.6g} > tolerance={tolerance:.6g}"
+                )
+        elif isinstance(expected_value, bool):
+            if not isinstance(actual_value, bool) or actual_value is not expected_value:
+                errors.append(
+                    f"{section_name}.{key} mismatch: expected {expected_value!r}, got {actual_value!r}"
                 )
         elif actual_value != expected_value:
             errors.append(

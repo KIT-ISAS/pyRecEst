@@ -164,7 +164,12 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             Entropy of the distribution.
         """
         n = len(self.w)
-        return float(-2.0 * pi / n * sum(self.w * log(self.w)))
+        positive_weights = self.w > 0.0
+        safe_weights = pyrecest.backend.where(positive_weights, self.w, 1.0)
+        entropy_terms = pyrecest.backend.where(
+            positive_weights, self.w * log(safe_weights), 0.0
+        )
+        return float(-2.0 * pi / n * sum(entropy_terms))
 
     def sample(self, n):
         """Draw n random samples from the distribution.

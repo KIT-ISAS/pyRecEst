@@ -332,6 +332,7 @@ def solve_fixed_lag_tracklet_viterbi(
             local_transition_cost = _transition_with_prefix_miss_streak(
                 transition_cost,
                 prefix_candidate,
+                previous_committed,
                 committed_miss_streak,
                 config,
             )
@@ -493,6 +494,7 @@ def _nodes_for_frame(
 def _transition_with_prefix_miss_streak(
     transition_cost: TransitionCost | None,
     prefix_candidate: TrackletAssociationCandidate,
+    prefix_previous: TrackletAssociationCandidate | None,
     committed_miss_streak: int,
     config: TrackletViterbiConfig,
 ) -> TransitionCost:
@@ -511,6 +513,7 @@ def _transition_with_prefix_miss_streak(
         miss_streak: int,
     ) -> float:
         if previous is prefix_candidate:
+            previous = prefix_previous
             miss_streak = int(committed_miss_streak)
         return float(transition(previous, current, miss_streak))
 
@@ -527,15 +530,6 @@ def _fixed_lag_committed_step_cost(
     """Score only the newly committed fixed-lag decision."""
 
     unary_cost = 0.0 if selected is None else float(selected.unary_cost)
-    if previous_committed is None:
-        if selected is None:
-            return float(
-                unary_cost
-                + config.missed_detection_cost
-                + (config.consecutive_miss_cost if committed_miss_streak > 0 else 0.0)
-            )
-        return float(unary_cost)
-
     transition = transition_cost or (
         lambda previous, current, miss_streak: default_tracklet_transition_cost(
             previous,
@@ -544,6 +538,12 @@ def _fixed_lag_committed_step_cost(
             config,
         )
     )
+    if previous_committed is None:
+        if committed_miss_streak > 0:
+            return float(unary_cost + transition(None, selected, committed_miss_streak))
+        if selected is None:
+            return float(unary_cost + config.missed_detection_cost)
+        return float(unary_cost)
     return float(
         unary_cost + transition(previous_committed, selected, committed_miss_streak)
     )

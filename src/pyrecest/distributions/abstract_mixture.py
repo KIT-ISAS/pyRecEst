@@ -28,24 +28,25 @@ from .abstract_manifold_specific_distribution import (
 
 
 def _validate_positive_sample_count(n) -> int:
+    message = "n must be a positive integer"
     count_array = np.asarray(n)
     if count_array.ndim != 0:
-        raise ValueError("n must be a scalar integer")
+        raise ValueError(message)
 
     count = count_array.item()
     if isinstance(count, (bool, np.bool_)):
-        raise ValueError("n must be an integer, not a boolean")
+        raise ValueError(message)
 
     try:
         count_int = int(count)
         count_float = float(count)
     except (OverflowError, TypeError, ValueError) as exc:
-        raise ValueError("n must be an integer") from exc
+        raise ValueError(message) from exc
 
     if not np.isfinite(count_float) or not count_float.is_integer():
-        raise ValueError("n must be a finite integer")
+        raise ValueError(message)
     if count_int <= 0:
-        raise ValueError("n must be positive")
+        raise ValueError(message)
     return count_int
 
 
@@ -121,34 +122,43 @@ class AbstractMixture(AbstractDistributionType):
 
         return pyrecest.backend.atleast_2d(samples)
 
+    def _sample_component_matrix(self, component_index: int, n_samples: int):
+        try:
+            sample_i = self.dists[component_index].sample(n_samples)
+        except (NotImplementedError, AssertionError, ValueError, TypeError):
+            if pyrecest.backend.__backend_name__ != "jax":
+                raise
+            sample_i = self.dists[component_index].sample_metropolis_hastings(n_samples)
+        return self._as_sample_matrix(sample_i, n_samples)
+
     def sample(self, n: Union[int, int32, int64]):
+        """Draw iid mixture samples without biasing output positions.
+
+        Sampling only multinomial component counts gives the correct unordered
+        bag of component labels, but filling the output array with component-wise
+        blocks makes early output positions more likely to come from early
+        components. Draw one component label per requested sample and place each
+        component's samples back into those sampled positions.
+        """
         n = _validate_positive_sample_count(n)
-        occurrences = random.multinomial(n, self.w)
+        component_indices = random.choice(len(self.dists), size=n, p=self.w)
+        component_indices_np = pyrecest.backend.to_numpy(component_indices).reshape(-1)
+
         if pyrecest.backend.__backend_name__ == "jax":
-            samples = []
-            for i, occ in enumerate(occurrences):
-                occ_val = occ.item() if hasattr(occ, "item") else int(occ)
-                if occ_val != 0:
-                    try:
-                        sample_i = self.dists[i].sample(occ_val)
-                    except (NotImplementedError, AssertionError, ValueError, TypeError):
-                        sample_i = self.dists[i].sample_metropolis_hastings(occ_val)
-                    sample_i = self._as_sample_matrix(sample_i, occ_val)
-                    samples.append(sample_i)
-            if not samples:
-                return empty((0, self.input_dim))
+            samples = [
+                self._sample_component_matrix(int(component_index), 1)
+                for component_index in component_indices_np
+            ]
             return pyrecest.backend.concatenate(samples, axis=0)
 
-        count = 0
         s = empty((n, self.input_dim))
-        for i, occ in enumerate(occurrences):
-            occ_val = occ.item() if hasattr(occ, "item") else int(occ)
-            if occ_val != 0:
-                sample_i = self._as_sample_matrix(
-                    self.dists[i].sample(occ_val), occ_val
-                )
-                s[count : count + occ_val] = sample_i  # noqa: E203
-                count += occ_val
+        for component_index in range(len(self.dists)):
+            positions = np.flatnonzero(component_indices_np == component_index)
+            occ_val = int(positions.size)
+            if occ_val == 0:
+                continue
+            sample_i = self._sample_component_matrix(component_index, occ_val)
+            s[array(positions, dtype=int64)] = sample_i
 
         return s
 

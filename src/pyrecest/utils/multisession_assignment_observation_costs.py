@@ -42,6 +42,41 @@ ObservationCostsInput = (
     Mapping[int, ObservationCostValue] | Sequence[ObservationCostValue]
 )
 
+_INVALID_COST_SCALAR_TYPES = (
+    type(None),
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+    np.datetime64,
+    np.timedelta64,
+)
+_REJECTED_COST_ARRAY_KINDS = frozenset({"b", "c", "S", "U", "M", "m"})
+
+
+def _contains_boolean_cost(values: np.ndarray) -> bool:
+    if values.dtype.kind == "b":
+        return True
+    if values.dtype == object:
+        return any(isinstance(item, (bool, np.bool_)) for item in values.reshape(-1))
+    return False
+
+
+def _contains_non_real_cost(values: np.ndarray) -> bool:
+    if values.dtype.kind in _REJECTED_COST_ARRAY_KINDS:
+        return True
+    if values.dtype == object:
+        return any(
+            isinstance(item, _INVALID_COST_SCALAR_TYPES)
+            for item in values.reshape(-1)
+        )
+    return False
+
 
 def _ensure_supported_backend(feature_name: str) -> None:
     if __backend_name__ == "jax":
@@ -167,14 +202,14 @@ def solve_multisession_assignment_with_observation_costs(  # pylint: disable=R09
 
 
 def _normalize_scalar_cost(name: str, value: float) -> float:
-    value_array = np.asarray(value)
-    if value_array.shape != () or value_array.dtype == np.bool_:
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite scalar.") from exc
+    if value_array.shape != () or _contains_non_real_cost(value_array):
         raise ValueError(f"{name} must be a finite scalar.")
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
-        raise ValueError(f"{name} must be a finite scalar.")
-
     try:
         parsed = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
@@ -258,12 +293,26 @@ def _normalize_observation_cost_entry(
     session_idx: int,
     name: str,
 ) -> Any:
-    raw_values = np.asarray(value)
-    if raw_values.dtype == np.bool_:
+    try:
+        raw_values = np.asarray(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            f"{name} entry for session {session_idx} must contain real numeric values."
+        ) from exc
+    if _contains_boolean_cost(raw_values):
         raise ValueError(
             f"{name} entry for session {session_idx} must be numeric, not boolean."
         )
-    values = asarray(raw_values, dtype=float64)
+    if _contains_non_real_cost(raw_values):
+        raise ValueError(
+            f"{name} entry for session {session_idx} must contain real numeric values."
+        )
+    try:
+        values = asarray(raw_values, dtype=float64)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            f"{name} entry for session {session_idx} must contain real numeric values."
+        ) from exc
     if values.ndim == 0:
         return full((session_size,), float(values), dtype=float64)
     if values.ndim != 1:

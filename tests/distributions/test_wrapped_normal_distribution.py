@@ -52,6 +52,18 @@ class WrappedNormalDistributionTest(unittest.TestCase):
             )
         )
 
+    def test_constructor_rejects_invalid_mu(self):
+        for mu in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(mu=mu):
+                with self.assertRaisesRegex(ValueError, "finite real values"):
+                    WrappedNormalDistribution(array(mu), array(1.0))
+
+    def test_set_mean_rejects_invalid_mu(self):
+        for mu in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(mu=mu):
+                with self.assertRaisesRegex(ValueError, "finite real values"):
+                    self.wn.set_mean(array(mu))
+
     def test_constructor_rejects_invalid_sigma(self):
         for sigma in (-1.0, 0.0, float("nan"), float("inf")):
             with self.subTest(sigma=sigma):

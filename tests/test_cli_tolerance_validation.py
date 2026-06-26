@@ -25,3 +25,28 @@ def test_expected_mapping_rejects_nan_tolerance() -> None:
             {"rmse": 2.0},
             tolerance=math.nan,
         )
+
+
+def test_expected_mapping_accepts_finite_numeric_actuals() -> None:
+    assert (
+        _check_expected_mapping(
+            "metrics",
+            {"rmse": 1.000001},
+            {"rmse": 1.0},
+            tolerance=1e-5,
+        )
+        == []
+    )
+
+
+@pytest.mark.parametrize("actual_value", [True, "1.0", math.nan, math.inf])
+def test_expected_mapping_rejects_malformed_numeric_actuals(actual_value) -> None:
+    errors = _check_expected_mapping(
+        "metrics",
+        {"rmse": actual_value},
+        {"rmse": 1.0},
+        tolerance=0.0,
+    )
+
+    assert errors
+    assert "metrics.rmse mismatch" in errors[0]
