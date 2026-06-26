@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 
+import numpy as np
 import pyrecest.backend as backend
 import pytest
 
@@ -16,6 +17,23 @@ def _to_python(value):
     if hasattr(value, "tolist"):
         return value.tolist()
     return value
+
+
+def test_convert_to_wider_dtype_matches_numpy_result_type_for_mixed_dtypes():
+    if backend.__backend_name__ not in {"autograd", "numpy"}:
+        pytest.skip("shared NumPy dtype promotion regression test")
+
+    first, second = backend.convert_to_wider_dtype(
+        [backend.array([1], dtype=np.int64), backend.array([1.5], dtype=np.float32)]
+    )
+
+    expected_dtype = np.result_type(np.dtype("int64"), np.dtype("float32"))
+    assert backend.to_numpy(first).dtype == expected_dtype
+    assert backend.to_numpy(second).dtype == expected_dtype
+    np.testing.assert_allclose(backend.to_numpy(first), np.array([1], dtype=expected_dtype))
+    np.testing.assert_allclose(
+        backend.to_numpy(second), np.array([1.5], dtype=expected_dtype)
+    )
 
 
 def test_sum_axis_none_keepdims_matches_numpy_contract():
