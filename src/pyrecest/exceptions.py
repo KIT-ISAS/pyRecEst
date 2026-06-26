@@ -75,10 +75,10 @@ class ShapeError(ValidationError):
             message = name
         else:
             message = f"{name} has invalid shape {actual_shape!r}"
-            if expected:
-                message += f"; expected {expected}"
-            if reason:
-                message += f"; reason: {reason}"
+        if expected:
+            message += f"; expected {expected}"
+        if reason:
+            message += f"; reason: {reason}"
         super().__init__(message)
 
 

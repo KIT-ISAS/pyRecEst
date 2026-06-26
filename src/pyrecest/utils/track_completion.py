@@ -281,16 +281,17 @@ def _extend_completion_path(
                 anchor_observation,
                 int(candidate_session),
                 int(candidate.observation),
-                float(candidate.score),
+                candidate.score,
                 candidate.payload,
             )
             raw_steps = (*steps, step)
             chronological_steps = _chronological_steps(direction, raw_steps)
-            score = (
-                float(score_path(chronological_steps))
-                if score_path is not None
-                else float(sum(item.score for item in chronological_steps))
-            )
+            if score_path is not None:
+                score = _as_finite_score(score_path(chronological_steps), "path scores")
+            else:
+                score = _as_finite_score(
+                    sum(item.score for item in chronological_steps), "path scores"
+                )
             out.append(
                 CompletionPath(
                     track_index=int(track_index),
@@ -398,7 +399,7 @@ def _coerce_candidate(
     if isinstance(value, CompletionCandidate):
         return CompletionCandidate(
             observation=_normalize_candidate_observation(value.observation),
-            score=value.score,
+            score=_as_finite_score(value.score, "candidate scores"),
             payload=value.payload,
         )
     return CompletionCandidate(observation=_normalize_candidate_observation(value))
@@ -430,6 +431,28 @@ def _normalize_candidate_observation(value: Any) -> int:
     if observation < 0:
         raise ValueError("candidate observations must be non-negative integers")
     return observation
+
+
+def _as_finite_score(value: Any, name: str) -> float:
+    message = f"{name} must be a finite real scalar"
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    if isinstance(scalar, (str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError(message)
+    if isinstance(scalar, (complex, np.complexfloating)):
+        raise ValueError(message)
+    try:
+        score = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(score):
+        raise ValueError(message)
+    return score
 
 
 def _as_positive_int(value: Any, name: str) -> int:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
@@ -35,6 +35,23 @@ from .multisession_assignment import (
 )
 
 
+_INVALID_SCORE_SCALAR_TYPES = (
+    type(None),
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+    np.datetime64,
+    np.timedelta64,
+)
+_REJECTED_SCORE_ARRAY_KINDS = frozenset({"b", "c", "S", "U", "M", "m"})
+
+
 def _ensure_supported_backend(feature_name: str) -> None:
     if __backend_name__ == "jax":
         raise NotImplementedError(
@@ -48,6 +65,34 @@ def _default_score_to_cost(scores: Any) -> Any:
 
 def _is_text_scalar(value: Any) -> bool:
     return isinstance(value, (str, bytes, np.str_, np.bytes_))
+
+
+def _raise_invalid_score_matrix() -> None:
+    raise ValueError("pairwise_scores must contain real numeric score matrices.")
+
+
+def _validate_real_score_matrix(value: Any) -> None:
+    try:
+        raw_values = np.asarray(value)
+    except (TypeError, ValueError, RuntimeError):
+        return
+
+    if raw_values.dtype.kind in _REJECTED_SCORE_ARRAY_KINDS:
+        _raise_invalid_score_matrix()
+    if raw_values.dtype == object:
+        for item in raw_values.reshape(-1):
+            if isinstance(item, _INVALID_SCORE_SCALAR_TYPES):
+                _raise_invalid_score_matrix()
+
+
+def _validate_pairwise_score_inputs(pairwise_scores: PairwiseCostsInput) -> None:
+    if isinstance(pairwise_scores, Mapping):
+        score_matrices = pairwise_scores.values()
+    else:
+        score_matrices = pairwise_scores
+
+    for score_matrix in score_matrices:
+        _validate_real_score_matrix(score_matrix)
 
 
 def _normalize_min_score(min_score: Any) -> float:
@@ -141,8 +186,13 @@ def tracks_to_index_matrix(
     )
 
     matrix = full((len(tracks), max_session_index + 1), fill_value, dtype=int)
+    seen_observations: set[tuple[int, int]] = set()
     for track_index, track in enumerate(tracks):
         for session_index, detection_index in _iter_track_items(track):
+            observation = (int(session_index), int(detection_index))
+            if observation in seen_observations:
+                raise ValueError("Each detection can only belong to a single track.")
+            seen_observations.add(observation)
             matrix[track_index, session_index] = detection_index
     return matrix
 
@@ -166,6 +216,7 @@ def solve_multisession_assignment_from_similarity(  # pylint: disable=R0913,R091
     if max_gap is not None:
         max_gap = _normalize_max_gap(max_gap)
 
+    _validate_pairwise_score_inputs(pairwise_scores)
     normalized_pairwise_scores = _normalize_pairwise_costs(pairwise_scores)
     normalized_session_sizes = _normalize_session_sizes(session_sizes)
     session_sizes_map = _infer_and_validate_session_sizes(

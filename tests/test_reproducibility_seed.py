@@ -17,6 +17,8 @@ class ReproducibilitySeedValidationTest(unittest.TestCase):
             True,
             False,
             -1,
+            2**32,
+            np.array(2**32, dtype=np.uint64),
             1.5,
             float("nan"),
             float("inf"),
@@ -38,6 +40,7 @@ class ReproducibilitySeedValidationTest(unittest.TestCase):
     def test_seed_all_accepts_integer_like_scalar_seed(self):
         self.assertIsNone(seed_all(None))
         self.assertEqual(seed_all(np.array(7.0)), 7)
+        self.assertEqual(seed_all(2**32 - 1), 2**32 - 1)
 
 
 if __name__ == "__main__":

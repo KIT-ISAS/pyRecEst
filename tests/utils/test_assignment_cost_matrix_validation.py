@@ -50,6 +50,21 @@ class AssignmentCostMatrixValidationTest(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on the JAX backend",
     )
+    def test_object_boolean_cost_matrix_entries_are_rejected(self):
+        matrices = (
+            np.array([[1.0, True]], dtype=object),
+            np.array([[False, 2.0]], dtype=object),
+        )
+        for solver_name, solver in self._solvers():
+            for matrix in matrices:
+                with self.subTest(solver=solver_name, matrix=matrix.tolist()):
+                    with self.assertRaisesRegex(ValueError, "not boolean"):
+                        solver(matrix)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
     def test_text_cost_matrix_entries_are_rejected(self):
         text_matrices = (
             np.array([["1.0", "2.0"]]),
@@ -58,7 +73,9 @@ class AssignmentCostMatrixValidationTest(unittest.TestCase):
         for solver_name, solver in self._solvers():
             for matrix in text_matrices:
                 with self.subTest(solver=solver_name, dtype=str(matrix.dtype)):
-                    with self.assertRaisesRegex(ValueError, "cost_matrix must be numeric"):
+                    with self.assertRaisesRegex(
+                        ValueError, "cost_matrix must be numeric"
+                    ):
                         solver(matrix)
 
     @unittest.skipIf(
@@ -70,6 +87,21 @@ class AssignmentCostMatrixValidationTest(unittest.TestCase):
         invalid_costs = (
             {"row_non_assignment_costs": np.array(["0.5"])},
             {"col_non_assignment_costs": np.array([b"0.5"], dtype=object)},
+        )
+        for kwargs in invalid_costs:
+            with self.subTest(kwargs=tuple(kwargs)):
+                with self.assertRaisesRegex(ValueError, "must be numeric and finite"):
+                    murty_k_best_assignments(matrix, k=1, **kwargs)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_object_boolean_non_assignment_costs_are_rejected(self):
+        matrix = np.array([[1.0]])
+        invalid_costs = (
+            {"row_non_assignment_costs": np.array([True], dtype=object)},
+            {"col_non_assignment_costs": np.array([False], dtype=object)},
         )
         for kwargs in invalid_costs:
             with self.subTest(kwargs=tuple(kwargs)):
