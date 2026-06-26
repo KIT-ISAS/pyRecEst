@@ -8,6 +8,21 @@ from ..abstract_bounded_nonperiodic_distribution import (
 )
 
 
+def _require_finite_bounds(bounds, name: str) -> None:
+    try:
+        finite = bool(backend_all(isfinite(bounds)))
+    except TypeError as exc:
+        raise ValueError(f"{name} must contain only finite values") from exc
+    if not finite:
+        raise ValueError(f"{name} must contain only finite values")
+
+
+def _require_increasing_bounds(bounds, name: str) -> None:
+    widths = diff(bounds, axis=1)
+    if not bool(backend_all(widths > 0.0)):
+        raise ValueError(f"{name} must be strictly increasing in every dimension")
+
+
 class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistribution):
     def __init__(self, bounds):
         bounds = array(bounds)
@@ -17,11 +32,8 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
             bounds = reshape(bounds, (1, 2))
         if bounds.ndim != 2 or bounds.shape[1] != 2:
             raise ValueError("bounds must have shape (dim, 2)")
-        if not bool(backend_all(isfinite(bounds))):
-            raise ValueError("bounds must contain only finite values")
-        widths = diff(bounds, axis=1)
-        if not bool(backend_all(widths > 0.0)):
-            raise ValueError("bounds must be strictly increasing in every dimension")
+        _require_finite_bounds(bounds, "bounds")
+        _require_increasing_bounds(bounds, "bounds")
         AbstractBoundedNonPeriodicDistribution.__init__(self, int(bounds.shape[0]))
         self.bounds = bounds
 
@@ -49,9 +61,16 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
         if integration_boundaries is None:
             integration_boundaries = self.bounds
 
-        integration_boundaries = reshape(array(integration_boundaries), (-1, 2))
+        try:
+            integration_boundaries = reshape(array(integration_boundaries), (-1, 2))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"integration_boundaries must have shape ({self.dim}, 2)"
+            ) from exc
         if integration_boundaries.shape[0] != self.dim:
             raise ValueError(f"integration_boundaries must have shape ({self.dim}, 2)")
+        _require_finite_bounds(integration_boundaries, "integration_boundaries")
+        _require_increasing_bounds(integration_boundaries, "integration_boundaries")
         left = integration_boundaries[:, 0]
         right = integration_boundaries[:, 1]
         ranges = [
