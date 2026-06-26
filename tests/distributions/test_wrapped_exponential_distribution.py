@@ -116,9 +116,17 @@ class WrappedExponentialDistributionTest(unittest.TestCase):
         we = WrappedExponentialDistribution(array(1e-18))
 
         entropy = pyrecest.backend.to_numpy(we.entropy())
+        density = pyrecest.backend.to_numpy(we.pdf(array([0.0, pi])))
 
         self.assertTrue(np.isfinite(entropy).all())
+        self.assertTrue(np.isfinite(density).all())
         npt.assert_allclose(entropy, np.log(2.0 * np.pi), rtol=5e-7, atol=5e-7)
+        npt.assert_allclose(
+            density,
+            np.full(2, 1.0 / (2.0 * np.pi)),
+            rtol=1e-6,
+            atol=1e-6,
+        )
 
     def test_periodicity(self):
         npt.assert_allclose(

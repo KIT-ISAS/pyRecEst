@@ -215,6 +215,18 @@ def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
+def _validate_randint_bound(bound, name):
+    if _contains_boolean_value(bound):
+        raise TypeError(f"{name} must contain integer values")
+    try:
+        bound_array = _jnp.asarray(bound)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must contain integer values") from exc
+    if bound_array.dtype.kind not in "iu":
+        raise TypeError(f"{name} must contain integer values")
+    return bound_array
+
+
 def _validate_randint_bounds(low, high):
     try:
         low, high = _jnp.broadcast_arrays(low, high)
@@ -283,8 +295,8 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
         high = low
         low = 0
 
-    low = _jnp.asarray(low)
-    high = _jnp.asarray(high)
+    low = _validate_randint_bound(low, "low")
+    high = _validate_randint_bound(high, "high")
     low, high = _validate_randint_bounds(low, high)
     shape = _bounded_sampler_shape(size, low, high)
     state, has_state, kwargs = _get_state(**kwargs)

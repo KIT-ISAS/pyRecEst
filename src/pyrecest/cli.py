@@ -11,7 +11,18 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 _INVALID_TOLERANCE_MESSAGE = "tolerance must be a non-negative finite number"
+_INVALID_TOLERANCE_SCALAR_TYPES = (
+    bool,
+    str,
+    bytes,
+    bytearray,
+    np.bool_,
+    np.str_,
+    np.bytes_,
+)
 
 
 def _package_version(name: str) -> str | None:
@@ -24,10 +35,20 @@ def _package_version(name: str) -> str | None:
 def _validate_tolerance(value: Any) -> float:
     """Return a validated comparison tolerance for expected-result checks."""
 
-    if isinstance(value, (bool, str, bytes, bytearray)):
-        raise ValueError(_INVALID_TOLERANCE_MESSAGE)
     try:
-        tolerance = float(value)
+        value_array = np.asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise ValueError(_INVALID_TOLERANCE_MESSAGE) from exc
+
+    if value_array.shape != ():
+        raise ValueError(_INVALID_TOLERANCE_MESSAGE)
+
+    scalar = value_array.item()
+    if isinstance(scalar, _INVALID_TOLERANCE_SCALAR_TYPES):
+        raise ValueError(_INVALID_TOLERANCE_MESSAGE)
+
+    try:
+        tolerance = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(_INVALID_TOLERANCE_MESSAGE) from exc
     if not math.isfinite(tolerance) or tolerance < 0.0:

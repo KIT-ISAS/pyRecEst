@@ -9,7 +9,18 @@ from contextlib import contextmanager
 from numbers import Integral
 from typing import Any
 
+import numpy as np
+
 _MAX_BACKEND_SEED = 2**32 - 1
+_UNSUPPORTED_SEED_SCALAR_TYPES = (
+    bool,
+    str,
+    bytes,
+    bytearray,
+    np.bool_,
+    np.str_,
+    np.bytes_,
+)
 
 
 def _random_backend() -> Any:
@@ -34,7 +45,7 @@ def _normalize_seed(seed: int | None) -> int | None:
     except (TypeError, ValueError, RuntimeError, OverflowError) as exc:
         raise ValueError(message) from exc
 
-    if isinstance(scalar, bool | str | bytes):
+    if isinstance(scalar, _UNSUPPORTED_SEED_SCALAR_TYPES):
         raise ValueError(message)
     if isinstance(scalar, Integral):
         normalized_seed = int(scalar)
