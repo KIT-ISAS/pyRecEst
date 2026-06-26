@@ -26,9 +26,9 @@ def test_backend_support_markdown_contains_expected_rows():
     assert "BackendFacade" in rendered
 
 
-def test_backend_support_markdown_handles_table_separators(monkeypatch):
+def test_backend_support_markdown_preserves_table_separators(monkeypatch):
     separator = chr(124)
-    replacement = chr(0xFF5C)
+    escaped_separator = chr(92) + separator
 
     def fake_backend_capabilities():
         return (
@@ -52,7 +52,7 @@ def test_backend_support_markdown_handles_table_separators(monkeypatch):
     rendered = backend_support_module.format_backend_support_markdown()
     data_row = rendered.splitlines()[-1]
 
-    assert data_row.count(separator) == 6
-    assert f"Pipe{replacement}API" in data_row
-    assert f"partial{replacement}bridged" in data_row
-    assert f"first {replacement} second<br>continued" in data_row
+    assert data_row.count(separator) == 9
+    assert f"Pipe{escaped_separator}API" in data_row
+    assert f"partial{escaped_separator}bridged" in data_row
+    assert f"first {escaped_separator} second<br>continued" in data_row
