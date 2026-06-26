@@ -355,7 +355,16 @@ def _lookup_numeric(record: Mapping[str, Any] | pd.Series, key: str) -> float:
 
 def _coerce_numeric(value: Any) -> float:
     try:
-        return float(value)
+        value_array = np.asarray(value)
+    except (TypeError, ValueError, OverflowError):
+        return float("nan")
+    if value_array.shape != () or value_array.dtype.kind in "bSUcMm":
+        return float("nan")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_, complex, np.complexfloating)) or _is_text_scalar(scalar):
+        return float("nan")
+    try:
+        return float(scalar)
     except (TypeError, ValueError, OverflowError):
         return float("nan")
 

@@ -9,6 +9,17 @@ import numpy as np
 from .active_contour import activity_profile, rectangle_contour_samples
 
 EDGE_ORDER = ("left", "right", "top", "bottom")
+_INVALID_REAL_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+)
 
 
 @dataclass(frozen=True)
@@ -71,12 +82,12 @@ def count_negative_log_likelihood(
     probability_floor: float = 1e-12,
 ) -> float:
     """Return multinomial count NLL up to the count-dependent constant."""
-    if probability_floor <= 0.0:
-        raise ValueError("probability_floor must be positive")
+    probability_floor = _validate_probability_floor(probability_floor)
     nll = 0.0
     for edge in EDGE_ORDER:
-        probability = max(float(probabilities[edge]), probability_floor)
-        nll -= int(observed_counts[edge]) * float(np.log(probability))
+        count = _edge_count(observed_counts, edge)
+        probability = _edge_probability(probabilities, edge, probability_floor)
+        nll -= count * float(np.log(probability))
     return nll
 
 
@@ -121,3 +132,55 @@ def simulate_rectangle_event_counts(
         normal_flow_probabilities=true_probabilities,
         uniform_probabilities=uniform_edge_probabilities(contour.edge_labels),
     )
+
+
+def _mapping_value(mapping: dict[str, float], edge: str, name: str):
+    try:
+        return mapping[edge]
+    except KeyError as exc:
+        raise ValueError(f"{name} must include an entry for edge {edge!r}") from exc
+
+
+def _as_finite_real_scalar(value, name: str) -> float:
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype.kind in "bcSU":
+        raise ValueError(f"{name} must be a finite real scalar")
+    scalar = value_array.item()
+    if isinstance(scalar, _INVALID_REAL_SCALAR_TYPES):
+        raise ValueError(f"{name} must be a finite real scalar")
+    try:
+        value_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a finite real scalar") from exc
+    if not np.isfinite(value_float):
+        raise ValueError(f"{name} must be a finite real scalar")
+    return value_float
+
+
+def _validate_probability_floor(probability_floor: float) -> float:
+    value = _as_finite_real_scalar(probability_floor, "probability_floor")
+    if value <= 0.0 or value > 1.0:
+        raise ValueError("probability_floor must be finite and in (0, 1]")
+    return value
+
+
+def _edge_count(observed_counts: dict[str, int], edge: str) -> int:
+    value = _as_finite_real_scalar(
+        _mapping_value(observed_counts, edge, "observed_counts"),
+        "observed_counts values",
+    )
+    if value < 0.0 or not value.is_integer():
+        raise ValueError("observed_counts values must be non-negative integers")
+    return int(value)
+
+
+def _edge_probability(
+    probabilities: dict[str, float], edge: str, probability_floor: float
+) -> float:
+    value = _as_finite_real_scalar(
+        _mapping_value(probabilities, edge, "probabilities"),
+        "probabilities values",
+    )
+    if value < 0.0 or value > 1.0:
+        raise ValueError("probabilities values must lie in [0, 1]")
+    return max(value, probability_floor)

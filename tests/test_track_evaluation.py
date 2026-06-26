@@ -62,6 +62,25 @@ class TestTrackEvaluation(unittest.TestCase):
             {"tracks": 3, "mean_track_length": 7.0 / 3.0, "max_track_length": 3},
         )
 
+    def test_complete_track_set_accepts_integer_like_session_indices(self):
+        tracks = [[0, 1, 2], [3, None, 4], [None, 5, 6]]
+
+        self.assertEqual(
+            complete_track_set(tracks, session_indices=[np.array(1), 2.0]),
+            {(1, 2), (5, 6)},
+        )
+
+    def test_complete_track_set_rejects_noninteger_session_indices(self):
+        invalid_indices = (True, 1.5, np.nan, np.inf, "1", b"1", np.array([1]))
+
+        for session_index in invalid_indices:
+            with self.subTest(session_index=session_index):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "session indices must be integers",
+                ):
+                    complete_track_set([[0, 1, 2]], session_indices=[session_index])
+
     def test_track_pair_set_defaults_to_adjacent_sessions(self):
         tracks = [[0, 1, 2], [3, None, 4]]
 
@@ -69,6 +88,35 @@ class TestTrackEvaluation(unittest.TestCase):
         self.assertEqual(
             track_pair_set(tracks, session_pairs=[(0, 2)]), {(0, 2, 0, 2), (0, 2, 3, 4)}
         )
+
+    def test_track_pair_set_accepts_integer_like_session_pairs(self):
+        tracks = [[0, 1, 2], [3, None, 4]]
+
+        self.assertEqual(
+            track_pair_set(tracks, session_pairs=[(np.array(0), 2.0)]),
+            {(0, 2, 0, 2), (0, 2, 3, 4)},
+        )
+
+    def test_track_pair_set_rejects_noninteger_session_pairs(self):
+        invalid_pairs = (
+            (True, 1),
+            (0, 1.5),
+            (0, np.nan),
+            (0, np.inf),
+            ("0", 1),
+            (b"0", 1),
+            (np.array([0]), 1),
+            (0, 1, 2),
+            0,
+        )
+
+        for session_pair in invalid_pairs:
+            with self.subTest(session_pair=session_pair):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "session[ _](indices must be integers|pairs must contain pairs)",
+                ):
+                    track_pair_set([[0, 1, 2]], session_pairs=[session_pair])
 
     def test_score_track_links_and_pairwise_alias(self):
         predicted = [[0, 1, 2], [3, None, 5]]

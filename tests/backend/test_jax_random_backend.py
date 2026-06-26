@@ -49,6 +49,25 @@ def test_uniform_accepts_numpy_broadcasted_bounds_without_explicit_size():
     assert jnp.all(samples <= jnp.array([1.0, 11.0]))
 
 
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        (False, 1.0),
+        (0.0, True),
+        (jnp.array([False, False]), jnp.array([1.0, 2.0])),
+        ([False, 0.0], [1.0, 2.0]),
+        ([0.0, 0.5], [1.0, np.bool_(True)]),
+        (
+            np.array([0.0, np.bool_(False)], dtype=object),
+            np.array([1.0, 2.0], dtype=object),
+        ),
+    ],
+)
+def test_uniform_rejects_boolean_bounds(low, high):
+    with pytest.raises(TypeError, match="boolean"):
+        random.uniform(low, high)
+
+
 def test_randint_accepts_numpy_broadcasted_bounds_without_explicit_size():
     random.seed(0)
 

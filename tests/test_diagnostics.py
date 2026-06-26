@@ -1,5 +1,6 @@
 from math import isclose, log
 
+import numpy as np
 import pytest
 from pyrecest.diagnostics import (
     AssociationDiagnostics,
@@ -35,5 +36,12 @@ def test_particle_diagnostics_rejects_text_weight_sequences():
     text_bytes = bytes([49, 50])
     mutable_text_bytes = bytearray([49, 50])
     for weights in ("12", text_bytes, mutable_text_bytes):
+        with pytest.raises(ValueError, match="Particle weights must be numeric"):
+            ParticleDiagnostics.from_weights(weights)
+
+
+def test_particle_diagnostics_rejects_boolean_weights():
+    invalid_cases = (True, [True, False], np.array([True, False]))
+    for weights in invalid_cases:
         with pytest.raises(ValueError, match="Particle weights must be numeric"):
             ParticleDiagnostics.from_weights(weights)

@@ -62,11 +62,9 @@ def complete_track_set(
     """Return exact full-track tuples present in every selected session."""
     matrix = normalize_track_matrix(track_matrix)
     complete_tracks: set[tuple[int, ...]] = set()
+    selected_sessions = _selected_sessions(matrix, session_indices)
     for row in matrix:
-        values = [
-            row[session_idx]
-            for session_idx in _selected_sessions(matrix, session_indices)
-        ]
+        values = [row[session_idx] for session_idx in selected_sessions]
         if all(value is not None for value in values):
             complete_tracks.add(tuple(int(value) for value in values))
     return complete_tracks
@@ -372,7 +370,7 @@ def _parse_optional_int(value: Any) -> int | None:
         return None
     try:
         parsed = int(candidate)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return parsed if parsed >= 0 else None
 
@@ -399,14 +397,11 @@ def _optional_int_candidate(value: Any) -> Any:
 def _selected_sessions(
     matrix: np.ndarray, session_indices: Sequence[int] | None
 ) -> list[int]:
-    selected = (
-        list(range(matrix.shape[1]))
-        if session_indices is None
-        else [
-            _coerce_session_index(index, "session_indices")
-            for index in session_indices
-        ]
-    )
+    if session_indices is None:
+        return list(range(matrix.shape[1]))
+    selected = [
+        _coerce_session_index(index, "session_indices") for index in session_indices
+    ]
     for session_idx in selected:
         _validate_session_index(matrix, session_idx)
     return selected
@@ -415,17 +410,24 @@ def _selected_sessions(
 def _session_pairs(
     matrix: np.ndarray, session_pairs: Iterable[tuple[int, int]] | None
 ) -> tuple[tuple[int, int], ...]:
-    pairs = (
-        tuple((idx, idx + 1) for idx in range(max(0, matrix.shape[1] - 1)))
-        if session_pairs is None
-        else tuple(
-            (
-                _coerce_session_index(session_a, "session_pairs"),
-                _coerce_session_index(session_b, "session_pairs"),
+    if session_pairs is None:
+        pairs = tuple((idx, idx + 1) for idx in range(max(0, matrix.shape[1] - 1)))
+    else:
+        parsed_pairs = []
+        for pair in session_pairs:
+            try:
+                raw_a, raw_b = pair
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "session_pairs must contain pairs of session indices"
+                ) from exc
+            parsed_pairs.append(
+                (
+                    _coerce_session_index(raw_a, "session_pairs"),
+                    _coerce_session_index(raw_b, "session_pairs"),
+                )
             )
-            for session_a, session_b in session_pairs
-        )
-    )
+        pairs = tuple(parsed_pairs)
     for session_a, session_b in pairs:
         _validate_session_index(matrix, session_a)
         _validate_session_index(matrix, session_b)
@@ -435,22 +437,19 @@ def _session_pairs(
 
 
 def _coerce_session_index(value: Any, name: str) -> int:
+    array = np.asarray(value)
     message = f"{name} entries must be integer session indices"
-    value_array = np.asarray(value)
-    if value_array.shape != () or value_array.dtype == np.bool_:
+    if array.shape != () or array.dtype == np.bool_:
         raise ValueError(message)
-
-    scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)):
+    scalar = array.item()
+    if isinstance(scalar, (bool, np.bool_)):
         raise ValueError(message)
     if isinstance(scalar, (int, np.integer)):
         return int(scalar)
-    if (
-        isinstance(scalar, (float, np.floating))
-        and np.isfinite(scalar)
-        and float(scalar).is_integer()
-    ):
-        return int(scalar)
+    if isinstance(scalar, (float, np.floating)):
+        if np.isfinite(scalar) and float(scalar).is_integer():
+            return int(scalar)
+        raise ValueError(message)
     raise ValueError(message)
 
 
@@ -561,15 +560,15 @@ def _track_rows(
 
 
 def _summary_rows(
-    predicted_rows,
-    reference_rows,
-    false_links,
-    missed_links,
-    predicted_links,
-    reference_links,
-    predicted_duplicates,
-    reference_duplicates,
-):
+    predicted_rows: list[dict[str, Any]],
+    reference_rows: list[dict[str, Any]],
+    false_links: list[TrackLink],
+    missed_links: list[TrackLink],
+    predicted_links: set[TrackLink],
+    reference_links: set[TrackLink],
+    predicted_duplicates: list[tuple[Observation, int, int]],
+    reference_duplicates: list[tuple[Observation, int, int]],
+) -> dict[str, int | float]:
     reference_tracks = len(reference_rows)
     predicted_tracks = len(predicted_rows)
     fragmented = sum(1 for row in reference_rows if row["fragment_count"] > 0)
