@@ -104,6 +104,52 @@ def _as_nonnegative_time_delta(value: Any, name: str) -> float:
     return result
 
 
+def _as_real_numeric_array(value: Any, name: str) -> np.ndarray:
+    """Return ``value`` as a real float array without silent text/bool coercion."""
+
+    arr = np.asarray(value)
+    if arr.dtype == np.bool_ or arr.dtype.kind in "USbcMm":
+        raise ValueError(f"{name} must contain real numeric values")
+    if arr.dtype == object:
+        flat = arr.reshape(-1)
+        for item in flat:
+            if isinstance(item, (bool, np.bool_, str, bytes, bytearray)):
+                raise ValueError(f"{name} must contain real numeric values")
+    try:
+        return np.asarray(value, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain real numeric values") from exc
+
+
+def _as_summary_scalar(value: Any, name: str, *, allow_nan: bool = False) -> float:
+    """Return a sweep-summary scalar without silent text, bool, or complex coercion."""
+
+    arr = np.asarray(value)
+    if arr.ndim != 0 or arr.dtype == np.bool_ or arr.dtype.kind in "USbcMm":
+        raise ValueError(f"{name} must be a real scalar")
+    scalar = arr.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
+        raise ValueError(f"{name} must be a real scalar")
+    try:
+        result = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be a real scalar") from exc
+    if np.isnan(result) and allow_nan:
+        return result
+    if not np.isfinite(result):
+        raise ValueError(f"{name} must be a finite real scalar")
+    return result
+
+
+def _as_nonnegative_summary_count(value: Any, name: str) -> float:
+    """Return a finite, nonnegative summary count."""
+
+    result = _as_summary_scalar(value, name)
+    if result < 0.0:
+        raise ValueError(f"{name} must be nonnegative")
+    return result
+
+
 def make_offset_grid(min_s: float, max_s: float, step_s: float) -> np.ndarray:
     """Return an inclusive offset grid rounded to nanosecond precision."""
 
@@ -125,7 +171,7 @@ def apply_time_offset(times_s: np.ndarray, offset_s: float | None) -> np.ndarray
     """Return a copy of ``times_s`` shifted by ``offset_s`` seconds."""
 
     offset = 0.0 if offset_s is None else _as_finite_float(offset_s, "offset_s")
-    return np.asarray(times_s, dtype=float) + offset
+    return _as_real_numeric_array(times_s, "times_s") + offset
 
 
 def _validate_max_time_delta(max_time_delta_s: float | None) -> float | None:
@@ -140,10 +186,12 @@ def _finite_reference_rows(
 ) -> np.ndarray:
     """Return a mask selecting reference rows that are usable for matching."""
 
-    reference_times = np.asarray(reference_times_s, dtype=float).reshape(-1)
+    reference_times = _as_real_numeric_array(
+        reference_times_s, "reference_times_s"
+    ).reshape(-1)
     finite = np.isfinite(reference_times)
     if reference_values is not None:
-        values = np.asarray(reference_values, dtype=float)
+        values = _as_real_numeric_array(reference_values, "reference_values")
         if values.ndim == 1:
             values = values.reshape(-1, 1)
         finite &= np.isfinite(values).all(axis=1)
@@ -158,8 +206,10 @@ def nearest_time_indices(
     Non-finite query times have no nearest reference time and are marked as ``-1``.
     """
 
-    reference = np.asarray(reference_times_s, dtype=float).reshape(-1)
-    query = np.asarray(query_times_s, dtype=float).reshape(-1)
+    reference = _as_real_numeric_array(reference_times_s, "reference_times_s").reshape(
+        -1
+    )
+    query = _as_real_numeric_array(query_times_s, "query_times_s").reshape(-1)
     finite_reference = _finite_reference_rows(reference)
     if not finite_reference.any():
         raise ValueError("reference_times_s must contain at least one finite value")
@@ -194,9 +244,11 @@ def interpolate_reference_values(
     """Interpolate reference values at query times and return a validity mask."""
 
     max_time_delta = _validate_max_time_delta(max_time_delta_s)
-    reference_times = np.asarray(reference_times_s, dtype=float).reshape(-1)
-    reference_values = np.asarray(reference_values, dtype=float)
-    query_times = np.asarray(query_times_s, dtype=float).reshape(-1)
+    reference_times = _as_real_numeric_array(
+        reference_times_s, "reference_times_s"
+    ).reshape(-1)
+    reference_values = _as_real_numeric_array(reference_values, "reference_values")
+    query_times = _as_real_numeric_array(query_times_s, "query_times_s").reshape(-1)
     if reference_values.ndim not in (1, 2):
         raise ValueError("reference_values must be one- or two-dimensional")
     if reference_values.ndim == 1:
@@ -243,7 +295,9 @@ def time_offset_error_summary(
 ) -> dict[str, float]:
     """Evaluate one candidate offset against a reference trajectory."""
 
-    measurement_values = np.asarray(measurement_values, dtype=float)
+    measurement_values = _as_real_numeric_array(
+        measurement_values, "measurement_values"
+    )
     if measurement_values.ndim == 1:
         measurement_values = measurement_values.reshape(-1, 1)
     elif measurement_values.ndim != 2:
@@ -259,7 +313,7 @@ def time_offset_error_summary(
         query_times,
         max_time_delta_s=max_time_delta_s,
     )
-    if reference_at_query.shape[1] != measurement_values.shape[1]:
+    if measurement_values.shape[1] != reference_at_query.shape[1]:
         raise ValueError(
             "measurement_values and reference_values must have the same value dimension"
         )
@@ -345,17 +399,26 @@ def aggregate_time_offset_sweeps(
     by_offset: dict[float, list[Mapping[str, float]]] = {}
     for sweep in sweeps:
         for row in sweep:
-            by_offset.setdefault(float(row["time_offset_s"]), []).append(row)
+            offset = _as_summary_scalar(row["time_offset_s"], "time_offset_s")
+            by_offset.setdefault(offset, []).append(row)
     rows: list[dict[str, float]] = []
     for offset, parts in sorted(by_offset.items()):
         counts = np.array(
-            [float(part.get("count", 0.0)) for part in parts], dtype=float
+            [
+                _as_nonnegative_summary_count(part.get("count", 0.0), "count")
+                for part in parts
+            ],
+            dtype=float,
         )
         total = float(np.sum(counts))
         row = {"time_offset_s": float(offset), "count": total}
         for key in dict.fromkeys(("mean", "rmse", "p95", "max", metric)):
             values = np.array(
-                [float(part.get(key, np.nan)) for part in parts], dtype=float
+                [
+                    _as_summary_scalar(part.get(key, np.nan), str(key), allow_nan=True)
+                    for part in parts
+                ],
+                dtype=float,
             )
             row[key] = _aggregate_summary_metric(key, values, counts)
         rows.append(row)

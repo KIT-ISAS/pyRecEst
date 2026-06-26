@@ -61,7 +61,12 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     def pdf(self, xs):
         xs = array(xs)
-        p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
+        if self._norm_const is None:
+            p = exp(self.kappa * (cos(xs - self.mu) - 1.0)) / (
+                2.0 * pi * ive(0, self.kappa)
+            )
+        else:
+            p = exp(self.kappa * cos(xs - self.mu)) / self.norm_const
         return p
 
     def sample(self, n):
@@ -86,7 +91,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     @staticmethod
     def besselratio(nu, kappa):
-        return iv(nu + 1, kappa) / iv(nu, kappa)
+        return ive(nu + 1, kappa) / ive(nu, kappa)
 
     def cdf(self, xs, starting_point=0):
         """
@@ -192,8 +197,10 @@ class VonMisesDistribution(AbstractCircularDistribution):
         return VonMisesDistribution(mu_, kappa_)
 
     def entropy(self):
-        result = -self.kappa * VonMisesDistribution.besselratio(0, self.kappa) + log(
-            2.0 * pi * iv(0, self.kappa)
+        result = (
+            -self.kappa * VonMisesDistribution.besselratio(0, self.kappa)
+            + self.kappa
+            + log(array(2.0 * pi * ive(0, self.kappa)))
         )
         return result
 

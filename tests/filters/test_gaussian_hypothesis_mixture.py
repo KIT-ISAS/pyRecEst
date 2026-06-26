@@ -40,6 +40,18 @@ class GaussianHypothesisMixtureTest(unittest.TestCase):
                 ]
             )
 
+    def test_log_weights_reject_bool_and_text_inputs(self):
+        invalid_log_weights = (
+            [True, False],
+            np.array([True, False]),
+            ["0.0", "1.0"],
+            np.array(["0.0", "1.0"]),
+        )
+        for log_weights in invalid_log_weights:
+            with self.subTest(log_weights=log_weights):
+                with self.assertRaisesRegex(ValueError, "log_weights"):
+                    normalize_log_weights(log_weights)
+
     def test_hypotheses_reject_nonfinite_mean_and_covariance(self):
         with self.assertRaisesRegex(ValueError, "mean"):
             WeightedGaussianHypothesis(np.array([np.nan]), np.array([[1.0]]))
@@ -52,6 +64,52 @@ class GaussianHypothesisMixtureTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "covariance"):
             WeightedGaussianHypothesis(np.array([0.0]), np.array([[np.inf]]))
+
+    def test_hypotheses_reject_bool_and_text_numeric_fields(self):
+        invalid_cases = [
+            {
+                "mean": np.array([True]),
+                "covariance": np.array([[1.0]]),
+                "log_weight": 0.0,
+                "message": "mean",
+            },
+            {
+                "mean": np.array(["0.0"]),
+                "covariance": np.array([[1.0]]),
+                "log_weight": 0.0,
+                "message": "mean",
+            },
+            {
+                "mean": np.array([0.0]),
+                "covariance": np.array([[True]]),
+                "log_weight": 0.0,
+                "message": "covariance",
+            },
+            {
+                "mean": np.array([0.0]),
+                "covariance": np.array([["1.0"]]),
+                "log_weight": 0.0,
+                "message": "covariance",
+            },
+            {
+                "mean": np.array([0.0]),
+                "covariance": np.array([[1.0]]),
+                "log_weight": True,
+                "message": "log_weight",
+            },
+            {
+                "mean": np.array([0.0]),
+                "covariance": np.array([[1.0]]),
+                "log_weight": "0.0",
+                "message": "log_weight",
+            },
+        ]
+        for case in invalid_cases:
+            with self.subTest(case=case):
+                with self.assertRaisesRegex(ValueError, case["message"]):
+                    WeightedGaussianHypothesis(
+                        case["mean"], case["covariance"], log_weight=case["log_weight"]
+                    )
 
     def test_moment_matching_rejects_mixed_state_dimensions(self):
         with self.assertRaisesRegex(ValueError, "same dimension"):

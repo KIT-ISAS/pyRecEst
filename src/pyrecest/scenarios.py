@@ -131,7 +131,9 @@ def _to_float_list(
     message = f"{name} must contain numeric values"
 
     def convert(item: Any) -> float:
-        if reject_text_or_bool and (isinstance(item, bool) or isinstance(item, _TEXT_TYPES)):
+        if reject_text_or_bool and (
+            isinstance(item, bool) or isinstance(item, _TEXT_TYPES)
+        ):
             raise ValueError(message)
         try:
             return float(item)
@@ -216,10 +218,17 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
 
     estimates: list[list[float]] = []
     nis_values: list[float] = []
-    for scalar_measurement in data["measurements"]:
+    for measurement_value in data["measurements"]:
         kalman_filter.predict_linear(system_matrix, system_noise_cov)
+        measurement_vector = be.array(
+            _to_float_list(
+                measurement_value,
+                name="measurement",
+                reject_text_or_bool=True,
+            )
+        )
         diagnostics = kalman_filter.update_linear(
-            be.array([float(scalar_measurement)]),
+            measurement_vector,
             measurement_matrix,
             measurement_noise_cov,
             return_diagnostics=True,
@@ -236,9 +245,18 @@ def run_linear_gaussian_scenario(path: str | Path) -> ScenarioResult:
     expected = config.get("expected", {})
     metrics: dict[str, float] = {}
     if "final_estimate" in expected and final_estimate:
+        expected_final_estimate = _to_float_list(
+            expected["final_estimate"],
+            name="expected.final_estimate",
+            reject_text_or_bool=True,
+        )
+        if len(final_estimate) != len(expected_final_estimate):
+            raise ValueError(
+                "expected.final_estimate must have the same length as the final estimate"
+            )
         errors = [
-            abs(a - float(b))
-            for a, b in zip(final_estimate, expected["final_estimate"])
+            abs(actual - expected_value)
+            for actual, expected_value in zip(final_estimate, expected_final_estimate)
         ]
         metrics["max_abs_final_estimate_error"] = max(errors) if errors else 0.0
     if nis_values:

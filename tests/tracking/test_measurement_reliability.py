@@ -53,6 +53,44 @@ def test_reliability_config_rejects_text_and_object_boolean_scalars() -> None:
             MeasurementReliabilityConfig(**kwargs)
 
 
+def test_reliability_weighted_measurement_rejects_malformed_measurements() -> None:
+    invalid_measurements = (
+        np.array([True]),
+        np.array(["1.0"]),
+        np.array([True], dtype=object),
+        np.array([1.0 + 0.0j]),
+    )
+
+    for measurement in invalid_measurements:
+        with pytest.raises(
+            ValueError, match="measurement must contain real numeric values"
+        ):
+            ReliabilityWeightedMeasurement(
+                measurement=measurement,
+                covariance=np.eye(1),
+                reliability=0.5,
+            )
+
+
+def test_reliability_helpers_reject_malformed_covariance_arrays() -> None:
+    invalid_covariances = (
+        np.array([[True]]),
+        np.array([["1.0"]]),
+        np.array([[True]], dtype=object),
+        np.array([[1.0 + 0.0j]]),
+    )
+
+    for covariance in invalid_covariances:
+        with pytest.raises(
+            ValueError, match="covariance must contain real numeric values"
+        ):
+            scale_covariance_by_reliability(covariance, 0.5)
+        with pytest.raises(
+            ValueError, match="covariance must contain real numeric values"
+        ):
+            apply_measurement_reliability(covariance, reliability=0.5)
+
+
 def test_scale_covariance_by_reliability_returns_scaled_copy() -> None:
     cov = np.diag([4.0, 9.0])
     scaled, scale = scale_covariance_by_reliability(cov, 0.25)
@@ -60,6 +98,26 @@ def test_scale_covariance_by_reliability_returns_scaled_copy() -> None:
     assert scale == 4.0
     assert np.allclose(scaled, np.diag([16.0, 36.0]))
     assert np.allclose(cov, np.diag([4.0, 9.0]))
+
+
+def test_covariance_validation_rejects_bool_and_text_values() -> None:
+    invalid_covariances = (
+        [[True]],
+        [["1.0"]],
+        [[b"1.0"]],
+        np.array([[False]], dtype=object),
+        np.array([["1.0"]], dtype=object),
+    )
+
+    for covariance in invalid_covariances:
+        with pytest.raises(ValueError, match="real numeric values"):
+            scale_covariance_by_reliability(covariance, 0.5)
+        with pytest.raises(ValueError, match="real numeric values"):
+            ReliabilityWeightedMeasurement(
+                measurement=np.array([1.0]),
+                covariance=covariance,
+                reliability=0.5,
+            )
 
 
 def test_hard_mode_rejects_low_reliability_measurement() -> None:

@@ -23,7 +23,9 @@ def _as_scalar_float(value: Any, name: str) -> float:
         scalar_value = value_array.item()
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must be a scalar number") from exc
-    if isinstance(scalar_value, (bool, np.bool_, str, bytes, np.str_, np.bytes_)):
+    if isinstance(
+        scalar_value, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+    ):
         raise ValueError(f"{name} must be a scalar number")
     try:
         scalar = float(scalar_value)
@@ -303,13 +305,32 @@ def _optional_float(value: Any) -> float | None:
     if value is None:
         return None
     try:
-        out = float(value)
+        value_array = np.asarray(value)
+    except (TypeError, ValueError):
+        return None
+    if value_array.shape != ():
+        return None
+    try:
+        scalar_value = value_array.item()
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if isinstance(
+        scalar_value, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+    ):
+        return None
+    try:
+        out = float(scalar_value)
     except (TypeError, ValueError, OverflowError):
         return None
     return out if math.isfinite(out) else None
 
 
 def _is_nan(value: Any) -> bool:
+    try:
+        if bool(value != value):
+            return True
+    except (TypeError, ValueError):
+        return True
     try:
         return bool(math.isnan(float(value)))
     except OverflowError:
@@ -323,20 +344,34 @@ def _json_record(record: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _json_value(value: Any) -> Any:
-    if isinstance(value, np.integer):
-        return int(value)
-    if isinstance(value, np.floating):
-        value = float(value)
-    if isinstance(value, float):
-        return None if not math.isfinite(value) else value
-    if isinstance(value, np.bool_):
-        return bool(value)
+    if value is None:
+        return None
     if isinstance(value, np.ndarray):
         return [_json_value(item) for item in value.tolist()]
     if isinstance(value, Mapping):
         return _json_record(value)
     if isinstance(value, (list, tuple)):
         return [_json_value(item) for item in value]
+    if isinstance(value, np.bool_):
+        return bool(value)
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        value = float(value)
+    if isinstance(value, float):
+        return None if not math.isfinite(value) else value
+    if isinstance(value, (complex, np.complexfloating)):
+        real = float(np.real(value))
+        imag = float(np.imag(value))
+        if not math.isfinite(real) or not math.isfinite(imag):
+            return None
+        return {"real": real, "imag": imag}
+    if isinstance(value, (bytes, bytearray, np.bytes_)):
+        return bytes(value).decode("utf-8", errors="replace")
+    if isinstance(value, np.str_):
+        return str(value)
+    if not isinstance(value, str) and _is_nan(value):
+        return None
     return value
 
 

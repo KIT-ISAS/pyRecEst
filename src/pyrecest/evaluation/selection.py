@@ -9,6 +9,7 @@ and point-set or extended-object evaluation pipelines.
 
 from __future__ import annotations
 
+from numbers import Real
 from typing import Literal, cast
 
 import numpy as np
@@ -26,7 +27,11 @@ def _normalize_nonnegative_integer(value, name: str) -> int:
         raise ValueError(f"{name} must be a non-negative integer.")
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)) or _is_text_scalar(scalar):
+    if (
+        isinstance(scalar, (bool, np.bool_))
+        or _is_text_scalar(scalar)
+        or not isinstance(scalar, Real)
+    ):
         raise ValueError(f"{name} must be a non-negative integer.")
     if isinstance(scalar, (int, np.integer)):
         integer = int(scalar)
@@ -60,7 +65,11 @@ def _normalize_finite_scalar(value, message: str) -> float:
         raise ValueError(message)
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)) or _is_text_scalar(scalar):
+    if (
+        isinstance(scalar, (bool, np.bool_))
+        or _is_text_scalar(scalar)
+        or not isinstance(scalar, Real)
+    ):
         raise ValueError(message)
     try:
         result = float(scalar)

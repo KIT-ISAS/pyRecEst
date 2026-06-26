@@ -20,6 +20,7 @@ from pyrecest.backend import (
     log,
     ones,
     random,
+    reshape,
     stack,
     sum,
 )
@@ -44,7 +45,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
         if w is None:
             self.w = ones(d.shape[0]) / d.shape[0]
         else:
-            w = asarray(w)
+            w = reshape(asarray(w), (-1,))
             if d.shape[0] != w.shape[0]:
                 raise ValueError("Number of Diracs and weights must match.")
             self.w = copy.copy(w)
@@ -98,7 +99,7 @@ class AbstractDiracDistribution(AbstractDistributionType):
 
     def reweigh(self, f: Callable) -> "AbstractDiracDistribution":
         dist = copy.deepcopy(self)
-        w_new = f(dist.d)
+        w_new = asarray(f(dist.d))
 
         if w_new.shape != dist.w.shape:
             raise ValueError("Function returned wrong output dimensions.")

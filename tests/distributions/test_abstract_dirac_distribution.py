@@ -167,6 +167,17 @@ class TestAbstractDiracDistribution(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "wrong output dimensions"):
             dist.reweigh(lambda _: array([[1.0, 1.0]]))
 
+    def test_reweigh_accepts_array_like_output_weights(self):
+        dist = LinearDiracDistribution(
+            array([[0.0], [1.0]]),
+            array([0.25, 0.75]),
+        )
+
+        reweighted = dist.reweigh(lambda _: [2.0, 1.0])
+
+        npt.assert_allclose(reweighted.w, array([0.4, 0.6]))
+        npt.assert_allclose(dist.w, array([0.25, 0.75]))
+
     def test_reweigh_rejects_zero_posterior_weight_mass(self):
         dist = LinearDiracDistribution(
             array(

@@ -38,12 +38,12 @@ class BackendNotSupportedError(BackendSupportError, NotImplementedError):
         if backend is None:
             message = api
         else:
-            message = f"{api} is not supported for backend '{backend}'"
-            if self.supported_backends:
-                supported = ", ".join(self.supported_backends)
-                message += f"; supported backends: {supported}"
-            if reason:
-                message += f"; reason: {reason}"
+            message = f"{api} is unavailable for backend '{backend}'"
+        if self.supported_backends:
+            supported = ", ".join(self.supported_backends)
+            message += f"; supported backends: {supported}"
+        if reason:
+            message += f"; reason: {reason}"
         super().__init__(message)
 
 
@@ -75,10 +75,10 @@ class ShapeError(ValidationError):
             message = name
         else:
             message = f"{name} has invalid shape {actual_shape!r}"
-            if expected:
-                message += f"; expected {expected}"
-            if reason:
-                message += f"; reason: {reason}"
+        if expected:
+            message += f"; expected {expected}"
+        if reason:
+            message += f"; reason: {reason}"
         super().__init__(message)
 
 

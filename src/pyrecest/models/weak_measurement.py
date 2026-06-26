@@ -1,22 +1,37 @@
-'Utilities for masked and weak-dimension linear Gaussian measurements.'
+"Utilities for masked and weak-dimension linear Gaussian measurements."
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import numpy as np
 
 from .linear_gaussian import LinearGaussianMeasurementModel
 
+_NON_REAL_NUMERIC_KINDS = {"b", "c", "m", "M", "S", "U"}
+_NON_REAL_NUMERIC_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+    date,
+    datetime,
+    timedelta,
+    np.datetime64,
+    np.timedelta64,
+)
+
 
 def diagonal_measurement_covariance(stds: Sequence[float] | np.ndarray) -> np.ndarray:
-    'Return a diagonal covariance matrix from measurement standard deviations.'
-    values = _as_numeric_array(stds, "stds").reshape(-1)
-    if values.size == 0:
-        raise ValueError("stds must contain at least one standard deviation")
-    if not np.isfinite(values).all() or np.any(values <= 0.0):
-        raise ValueError("stds must contain finite positive values")
+    "Return a diagonal covariance matrix from measurement standard deviations."
+    values = _standard_deviations_array(stds)
     return np.diag(values**2)
 
 
@@ -26,7 +41,7 @@ def block_diag_measurement_covariance(
     weak_std: Mapping[Any, float] | Sequence[float] | None = None,
     dimension_order: Sequence[Any] | None = None,
 ) -> np.ndarray:
-    'Return a diagonal covariance from trusted and weak dimension stds.'
+    "Return a diagonal covariance from trusted and weak dimension stds."
     if trusted_std is None and weak_std is None:
         raise ValueError("at least one of trusted_std or weak_std must be provided")
     if _is_mapping(trusted_std) or _is_mapping(weak_std):
@@ -58,7 +73,7 @@ def block_diag_measurement_covariance(
             [trusted_map[key] if key in trusted_map else weak_map[key] for key in order]
         )
 
-    stds: list[float] = []
+    stds: list[Any] = []
     if trusted_std is not None:
         stds.extend(trusted_std)
     if weak_std is not None:
@@ -67,7 +82,7 @@ def block_diag_measurement_covariance(
 
 
 def selection_matrix(state_dim: int, observed_dims: Sequence[int]) -> np.ndarray:
-    'Return a matrix selecting observed state components.'
+    "Return a matrix selecting observed state components."
     state_dim = _positive_int(state_dim, "state_dim")
     dims = [_nonnegative_int(dim, "observed_dims") for dim in observed_dims]
     if not dims:
@@ -83,7 +98,7 @@ def selection_matrix(state_dim: int, observed_dims: Sequence[int]) -> np.ndarray
 
 
 class MaskedLinearMeasurementModel(LinearGaussianMeasurementModel):
-    'Linear Gaussian model that observes a subset of state dimensions.'
+    "Linear Gaussian model that observes a subset of state dimensions."
 
     def __init__(
         self,
@@ -100,7 +115,9 @@ class MaskedLinearMeasurementModel(LinearGaussianMeasurementModel):
         covariance = (
             diagonal_measurement_covariance(stds)
             if stds is not None
-            else _as_numeric_array(measurement_noise_cov, "measurement_noise_cov")
+            else _real_numeric_array(
+                measurement_noise_cov, name="measurement_noise_cov"
+            )
         )
         super().__init__(matrix, covariance)
         self.observed_dims = tuple(
@@ -109,7 +126,7 @@ class MaskedLinearMeasurementModel(LinearGaussianMeasurementModel):
 
 
 class WeakDimensionMeasurementModel(LinearGaussianMeasurementModel):
-    'Linear Gaussian model with per-dimension measurement trust levels.'
+    "Linear Gaussian model with per-dimension measurement trust levels."
 
     def __init__(
         self,
@@ -130,11 +147,15 @@ class WeakDimensionMeasurementModel(LinearGaussianMeasurementModel):
                 "provide stds, measurement_noise_cov, or trusted/weak stds"
             )
         if measurement_noise_cov is not None and provided > 1:
-            raise ValueError("measurement_noise_cov cannot be combined with std arguments")
+            raise ValueError(
+                "measurement_noise_cov cannot be combined with std arguments"
+            )
         if stds is not None and (trusted_std is not None or weak_std is not None):
             raise ValueError("stds cannot be combined with trusted_std or weak_std")
         if measurement_noise_cov is not None:
-            covariance = _as_numeric_array(measurement_noise_cov, "measurement_noise_cov")
+            covariance = _real_numeric_array(
+                measurement_noise_cov, name="measurement_noise_cov"
+            )
         elif stds is not None and _is_mapping(stds):
             covariance = block_diag_measurement_covariance(
                 trusted_std=stds, dimension_order=dimension_order
@@ -155,7 +176,7 @@ def masked_position_measurement_model(
     observed_dims: Sequence[int],
     stds: Sequence[float] | np.ndarray,
 ) -> MaskedLinearMeasurementModel:
-    'Convenience constructor for masked position-like measurements.'
+    "Convenience constructor for masked position-like measurements."
     return MaskedLinearMeasurementModel(
         state_dim=state_dim, observed_dims=observed_dims, stds=stds
     )
@@ -165,36 +186,41 @@ def weak_dimension_measurement_model(
     measurement_matrix: np.ndarray,
     stds: Sequence[float] | np.ndarray,
 ) -> WeakDimensionMeasurementModel:
-    'Convenience constructor for weak-dimension linear measurements.'
+    "Convenience constructor for weak-dimension linear measurements."
     return WeakDimensionMeasurementModel(measurement_matrix, stds=stds)
-
-
-def _as_numeric_array(values: object, name: str) -> np.ndarray:
-    try:
-        raw = np.asarray(values)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"{name} must contain numeric values") from exc
-    if _contains_bool_or_text(raw):
-        raise ValueError(f"{name} must contain numeric values")
-    try:
-        return np.asarray(values, dtype=float)
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError(f"{name} must contain numeric values") from exc
-
-
-def _contains_bool_or_text(values: np.ndarray) -> bool:
-    if values.dtype.kind in "bUS":
-        return True
-    if values.dtype == object:
-        return any(
-            isinstance(item, (bool, np.bool_, str, bytes, bytearray))
-            for item in values.reshape(-1)
-        )
-    return False
 
 
 def _is_mapping(value: object) -> bool:
     return isinstance(value, Mapping)
+
+
+def _real_numeric_array(value: Any, *, name: str) -> np.ndarray:
+    try:
+        if _contains_non_real_numeric_values(value):
+            raise ValueError
+        return np.asarray(value, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain real numeric values") from exc
+
+
+def _standard_deviations_array(stds: Sequence[float] | np.ndarray) -> np.ndarray:
+    values = _real_numeric_array(stds, name="stds").reshape(-1)
+    if values.size == 0:
+        raise ValueError("stds must contain at least one standard deviation")
+    if not np.isfinite(values).all() or np.any(values <= 0.0):
+        raise ValueError("stds must contain finite positive values")
+    return values
+
+
+def _contains_non_real_numeric_values(value: Any) -> bool:
+    array = np.asarray(value)
+    if array.dtype.kind in _NON_REAL_NUMERIC_KINDS:
+        return True
+    if array.dtype.kind != "O":
+        return False
+    return any(
+        isinstance(item, _NON_REAL_NUMERIC_SCALAR_TYPES) for item in array.flat
+    )
 
 
 def _positive_int(value: int, name: str) -> int:

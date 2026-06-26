@@ -21,7 +21,7 @@ class TestWeakMeasurementInputValidation(unittest.TestCase):
         for stds in invalid_stds:
             with self.subTest(stds=stds):
                 with self.assertRaisesRegex(
-                    ValueError, "stds must contain numeric values"
+                    ValueError, "stds must contain real numeric values"
                 ):
                     diagonal_measurement_covariance(stds)
 
@@ -34,7 +34,7 @@ class TestWeakMeasurementInputValidation(unittest.TestCase):
         for kwargs in invalid_kwargs:
             with self.subTest(kwargs=kwargs):
                 with self.assertRaisesRegex(
-                    ValueError, "stds must contain numeric values"
+                    ValueError, "stds must contain real numeric values"
                 ):
                     block_diag_measurement_covariance(**kwargs)
 
@@ -47,13 +47,13 @@ class TestWeakMeasurementInputValidation(unittest.TestCase):
         for kwargs in invalid_kwargs:
             with self.subTest(kwargs=kwargs):
                 with self.assertRaisesRegex(
-                    ValueError, "stds must contain numeric values"
+                    ValueError, "stds must contain real numeric values"
                 ):
                     block_diag_measurement_covariance(**kwargs)
 
     def test_models_reject_bool_and_text_measurement_covariances(self):
         with self.assertRaisesRegex(
-            ValueError, "measurement_noise_cov must contain numeric values"
+            ValueError, "measurement_noise_cov must contain real numeric values"
         ):
             MaskedLinearMeasurementModel(
                 state_dim=1,
@@ -62,7 +62,7 @@ class TestWeakMeasurementInputValidation(unittest.TestCase):
             )
 
         with self.assertRaisesRegex(
-            ValueError, "measurement_noise_cov must contain numeric values"
+            ValueError, "measurement_noise_cov must contain real numeric values"
         ):
             WeakDimensionMeasurementModel(
                 np.eye(1), measurement_noise_cov=np.array([[True]])
