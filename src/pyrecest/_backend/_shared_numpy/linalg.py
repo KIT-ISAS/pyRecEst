@@ -143,6 +143,8 @@ def solve(a, b):
     x : array-like, shape=[..., M] or [..., M, K]
         Solution to the system a x = b.
     """
+    a = _np.asarray(a)
+    b = _np.asarray(b)
     vector_rhs = b.ndim == a.ndim - 1
     if vector_rhs:
         b = _np.expand_dims(b, axis=-1)
