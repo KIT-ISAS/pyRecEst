@@ -24,3 +24,22 @@ def test_jax_set_default_dtype_invokes_shared_dtype_setter():
         assert get_default_cdtype() == jnp.complex64
     finally:
         jax_dtype.set_default_dtype(previous_name)
+
+
+def test_jax_set_default_dtype_accepts_dtype_like_values():
+    previous_name = _current_float_dtype_name()
+
+    try:
+        returned_dtype = jax_dtype.set_default_dtype(jnp.dtype("float32"))
+
+        assert returned_dtype == jnp.float32
+        assert get_default_dtype() == jnp.float32
+        assert get_default_cdtype() == jnp.complex64
+
+        returned_dtype = jax_dtype.set_default_dtype(jnp.float32)
+
+        assert returned_dtype == jnp.float32
+        assert get_default_dtype() == jnp.float32
+        assert get_default_cdtype() == jnp.complex64
+    finally:
+        jax_dtype.set_default_dtype(previous_name)
