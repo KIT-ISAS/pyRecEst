@@ -34,4 +34,4 @@ class MeasurementScore:
     def is_active(self) -> bool:
         """Return whether the score contains at least one active measurement."""
 
-        return bool(self.active_measurement_indices)
+        return len(self.active_measurement_indices) > 0
