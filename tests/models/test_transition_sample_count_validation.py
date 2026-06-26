@@ -53,6 +53,24 @@ class TransitionSampleCountValidationTest(unittest.TestCase):
         self.assertEqual(calls, [2])
         self.assertIs(type(calls[0]), int)
 
+    def test_sampleable_transition_model_rejects_unsupported_unary_counts(self):
+        calls = []
+
+        def sample_next(state):
+            calls.append(state)
+            return state
+
+        model = SampleableTransitionModel(sample_next)
+
+        for n in (0, 2):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "does not accept"):
+                    sample_next_state(model, array([0.0]), n=n)
+
+        self.assertEqual(calls, [])
+        sample_next_state(model, array([0.0]), n=1)
+        self.assertEqual(len(calls), 1)
+
     def test_density_transition_model_rejects_invalid_sample_counts(self):
         calls = []
 
@@ -71,6 +89,27 @@ class TransitionSampleCountValidationTest(unittest.TestCase):
                     model.sample_next(array([0.0]), n=n)
 
         self.assertEqual(calls, [])
+
+    def test_density_transition_model_rejects_unsupported_unary_counts(self):
+        calls = []
+
+        def transition_density(state_next, state_previous):
+            return 1.0 if state_next is state_previous else 0.0
+
+        def sample_next(state):
+            calls.append(state)
+            return state
+
+        model = DensityTransitionModel(transition_density, sample_next=sample_next)
+
+        for n in (0, 3):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "does not accept"):
+                    model.sample_next(array([0.0]), n=n)
+
+        self.assertEqual(calls, [])
+        model.sample_next(array([0.0]), n=1)
+        self.assertEqual(len(calls), 1)
 
 
 if __name__ == "__main__":
