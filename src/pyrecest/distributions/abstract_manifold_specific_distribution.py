@@ -10,15 +10,52 @@ import pyrecest.backend
 # pylint: disable=no-name-in-module,no-member,redefined-builtin
 from pyrecest.backend import empty, int32, int64, log, random, squeeze
 
+_SCALAR_VALUE_ERROR = "Metropolis-Hastings scalar evaluations must return scalar values."
+
+
+def _shape_size(value) -> int | None:
+    shape = getattr(value, "shape", None)
+    if shape is None:
+        return None
+    try:
+        dimensions = tuple(shape)
+    except TypeError:
+        dimensions = (shape,)
+
+    size = 1
+    for dimension in dimensions:
+        try:
+            size *= int(dimension)
+        except (TypeError, ValueError):
+            return None
+    return size
+
 
 def _to_scalar(value):
     """Convert a backend scalar or length-one array to a Python float."""
+    value_size = _shape_size(value)
+    if value_size is not None and value_size != 1:
+        raise ValueError(_SCALAR_VALUE_ERROR)
     try:
         return float(value.item())
     except AttributeError:
-        return float(value)
-    except (TypeError, ValueError, RuntimeError):
-        return float(value.reshape(-1)[0])
+        try:
+            return float(value)
+        except (TypeError, ValueError, RuntimeError) as exc:
+            raise ValueError(_SCALAR_VALUE_ERROR) from exc
+    except (TypeError, ValueError, RuntimeError) as exc:
+        try:
+            flattened = value.reshape(-1)
+        except AttributeError as reshape_exc:
+            raise ValueError(_SCALAR_VALUE_ERROR) from reshape_exc
+
+        flattened_size = _shape_size(flattened)
+        if flattened_size is not None and flattened_size != 1:
+            raise ValueError(_SCALAR_VALUE_ERROR) from exc
+        try:
+            return float(flattened[0])
+        except (IndexError, TypeError, ValueError, RuntimeError) as flatten_exc:
+            raise ValueError(_SCALAR_VALUE_ERROR) from flatten_exc
 
 
 def _validate_integer_sample_parameter(value, name: str, minimum: int) -> int:
@@ -275,8 +312,11 @@ def sample_metropolis_hastings_jax(
     x = start_point
 
     def _to_scalar(val):
-        """Convert a JAX array of any shape to a Python float."""
-        return float(_jnp.asarray(val).ravel()[0])
+        """Convert a JAX scalar or length-one array to a Python float."""
+        arr = _jnp.asarray(val)
+        if arr.size != 1:
+            raise ValueError(_SCALAR_VALUE_ERROR)
+        return float(arr.reshape(-1)[0])
 
     log_px = _to_scalar(log_pdf(x))
 
