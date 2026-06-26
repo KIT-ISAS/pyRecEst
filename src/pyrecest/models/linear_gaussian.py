@@ -15,6 +15,8 @@ from pyrecest.backend import (
 )
 from pyrecest.distributions import GaussianDistribution
 
+_INVALID_DIMENSION_SCALAR_TYPES = (bool, str, bytes, bytearray)
+
 
 def _as_matrix(value, name):
     arr = asarray(value)
@@ -38,16 +40,19 @@ def _shape(value):
 
 def _as_positive_integer(value, name):
     message = f"{name} must be a positive integer"
-    if isinstance(value, bool):
+    if isinstance(value, _INVALID_DIMENSION_SCALAR_TYPES):
         raise ValueError(message)
-    arr = asarray(value)
+    try:
+        arr = asarray(value)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError(message) from exc
     if ndim(arr) != 0:
         raise ValueError(message)
     try:
         scalar = arr.item()
     except AttributeError:
         scalar = arr
-    if isinstance(scalar, bool):
+    if isinstance(scalar, _INVALID_DIMENSION_SCALAR_TYPES):
         raise ValueError(message)
     if isinstance(scalar, Integral):
         parsed = int(scalar)
