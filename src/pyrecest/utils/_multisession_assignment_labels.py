@@ -19,6 +19,8 @@ from .multisession_assignment import (  # pylint: disable=protected-access
     _validate_track_session_sizes,
 )
 
+_TEXT_TYPES = (str, np.str_)
+
 
 def _normalize_fill_value(fill_value: Any, track_count: int) -> int:
     fill_value_array = np.asarray(fill_value)
@@ -26,7 +28,7 @@ def _normalize_fill_value(fill_value: Any, track_count: int) -> int:
         raise ValueError("fill_value must be an integer.")
 
     fill_value_value = fill_value_array.item()
-    if isinstance(fill_value_value, (bool, np.bool_)):
+    if isinstance(fill_value_value, (bool, np.bool_) + _TEXT_TYPES):
         raise ValueError("fill_value must be an integer.")
 
     if isinstance(fill_value_value, Integral):
