@@ -45,8 +45,13 @@ def _edge_probabilities(
     edge_labels: list[str], point_weights: np.ndarray
 ) -> dict[str, float]:
     labels = np.array(edge_labels)
+    weights = np.asarray(point_weights, dtype=float)
+    if weights.shape != labels.shape:
+        raise ValueError("point_weights must contain one value per edge label")
+    if np.any(~np.isfinite(weights)) or np.any(weights < 0.0):
+        raise ValueError("point_weights must contain only finite non-negative values")
     edge_weights = np.array(
-        [float(np.sum(point_weights[labels == edge])) for edge in EDGE_ORDER],
+        [float(np.sum(weights[labels == edge])) for edge in EDGE_ORDER],
         dtype=float,
     )
     total_weight = float(np.sum(edge_weights))
@@ -65,6 +70,10 @@ def edge_probabilities_from_activity(
     background_activity: float = 1e-3,
 ) -> dict[str, float]:
     """Convert normal-flow activities into edge-level event probabilities."""
+    background_activity = _nonnegative_real_scalar(
+        background_activity,
+        "background_activity",
+    )
     if background_activity < 0.0:
         raise ValueError("background_activity must be non-negative")
     weights = np.asarray(activities, dtype=float) + float(background_activity)
@@ -101,8 +110,13 @@ def simulate_rectangle_event_counts(
     seed: int | None = 0,
 ) -> RectangleCountSimulation:
     """Sample event counts from a motion-gated rectangle contour model."""
+    total_events = _positive_integer_count(total_events, "total_events")
     if total_events <= 0:
         raise ValueError("total_events must be positive")
+    background_activity = _nonnegative_real_scalar(
+        background_activity,
+        "background_activity",
+    )
     if background_activity < 0.0:
         raise ValueError("background_activity must be non-negative")
 
@@ -162,6 +176,20 @@ def _validate_probability_floor(probability_floor: float) -> float:
     if value <= 0.0 or value > 1.0:
         raise ValueError("probability_floor must be finite and in (0, 1]")
     return value
+
+
+def _nonnegative_real_scalar(value, name: str) -> float:
+    scalar = _as_finite_real_scalar(value, name)
+    if scalar < 0.0:
+        raise ValueError(f"{name} must be non-negative")
+    return scalar
+
+
+def _positive_integer_count(value, name: str) -> int:
+    scalar = _as_finite_real_scalar(value, name)
+    if scalar <= 0.0 or not scalar.is_integer():
+        raise ValueError(f"{name} must be a positive integer")
+    return int(scalar)
 
 
 def _edge_count(observed_counts: dict[str, int], edge: str) -> int:
