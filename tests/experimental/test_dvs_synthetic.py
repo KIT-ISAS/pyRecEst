@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from pyrecest.experimental.dvs import (
     count_negative_log_likelihood,
+    edge_probabilities_from_activity,
     simulate_rectangle_event_counts,
     uniform_edge_probabilities,
 )
@@ -79,4 +80,48 @@ def test_count_nll_rejects_invalid_probability_floor():
                 observed_counts,
                 probabilities,
                 probability_floor=probability_floor,
+            )
+
+
+def test_count_nll_uses_probability_floor_for_zero_probability():
+    counts = {edge: 0 for edge in _EDGES}
+    counts["left"] = 2
+    probabilities = {edge: 0.25 for edge in _EDGES}
+    probabilities["left"] = 0.0
+
+    nll = count_negative_log_likelihood(counts, probabilities, probability_floor=1e-3)
+
+    assert nll == pytest.approx(-2.0 * np.log(1e-3))
+
+
+def test_edge_probabilities_from_activity_rejects_invalid_background_activity():
+    edge_labels = list(_EDGES)
+    activities = np.ones(len(edge_labels), dtype=float)
+
+    for bad_background in (np.nan, np.inf, -1.0, True, "0.1", np.array([0.1])):
+        with pytest.raises(ValueError, match="background_activity"):
+            edge_probabilities_from_activity(
+                edge_labels,
+                activities,
+                background_activity=bad_background,
+            )
+
+
+def test_edge_probabilities_from_activity_rejects_invalid_weights():
+    for bad_activities in (
+        [np.nan, 1.0, 1.0, 1.0],
+        [np.inf, 1.0, 1.0, 1.0],
+        [-2.0, 1.0, 1.0, 1.0],
+    ):
+        with pytest.raises(ValueError, match="point_weights"):
+            edge_probabilities_from_activity(list(_EDGES), np.array(bad_activities))
+
+
+def test_simulate_rectangle_event_counts_rejects_invalid_total_events():
+    for bad_total_events in (0, -1, 1.5, np.nan, np.inf, True, "4"):
+        with pytest.raises(ValueError, match="total_events"):
+            simulate_rectangle_event_counts(
+                np.array([1.0, 0.0]),
+                total_events=bad_total_events,
+                samples_per_edge=2,
             )

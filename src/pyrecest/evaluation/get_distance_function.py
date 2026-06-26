@@ -189,19 +189,15 @@ def _validate_mtt_cutoff_distance(value: Any) -> float:
 
 
 def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
-    raw_first = _as_real_numeric_array(x1, "x1")
-    raw_second = _as_real_numeric_array(x2, "x2")
-    if raw_first.size == 0 and raw_first.ndim == 2 and raw_second.ndim == 2:
-        if raw_first.shape[1] != raw_second.shape[1]:
-            raise ValueError("MTT state sets must use the same target dimension")
-        return float(cutoff_distance * raw_second.shape[0])
-    if raw_second.size == 0 and raw_second.ndim == 2 and raw_first.ndim == 2:
-        if raw_first.shape[1] != raw_second.shape[1]:
-            raise ValueError("MTT state sets must use the same target dimension")
-        return float(cutoff_distance * raw_first.shape[0])
-    first = _as_target_matrix(raw_first, "x1")
-    second = _as_target_matrix(raw_second, "x2")
+    first = _as_target_matrix(x1, "x1")
+    second = _as_target_matrix(x2, "x2")
     if first.shape[0] == 0 or second.shape[0] == 0:
+        if (
+            first.shape[1] != 0
+            and second.shape[1] != 0
+            and first.shape[1] != second.shape[1]
+        ):
+            raise ValueError("MTT state sets must use the same target dimension")
         return float(cutoff_distance * abs(first.shape[0] - second.shape[0]))
     if first.shape[1] != second.shape[1]:
         raise ValueError("MTT state sets must use the same target dimension")
