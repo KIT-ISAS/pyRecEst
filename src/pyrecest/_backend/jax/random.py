@@ -13,6 +13,7 @@ import jax.numpy as _jnp
 import numpy as _np
 
 backend = sys.modules[__name__]
+_BOOLEAN_TYPES = (bool, _np.bool_)
 
 
 def create_random_state(seed=0):
@@ -51,10 +52,22 @@ def _get_state(**kwargs):
     return state, has_state, kwargs
 
 
+def _scalar_integer_dimension(value):
+    if isinstance(value, (bool, _np.bool_)):
+        return None
+    if isinstance(value, (int, _np.integer)):
+        return int(value)
+    if hasattr(value, "ndim") and value.ndim == 0:
+        value_array = _np.asarray(value)
+        if _np.issubdtype(value_array.dtype, _np.bool_):
+            return None
+        if _np.issubdtype(value_array.dtype, _np.integer):
+            return int(value_array.item())
+    return None
+
+
 def _looks_like_integer_dimension(value):
-    return isinstance(value, (int, _np.integer)) and not isinstance(
-        value, (bool, _np.bool_)
-    )
+    return _scalar_integer_dimension(value) is not None
 
 
 def _size_type_error():
@@ -62,9 +75,9 @@ def _size_type_error():
 
 
 def _integer_dimension(value):
-    if not _looks_like_integer_dimension(value):
+    value = _scalar_integer_dimension(value)
+    if value is None:
         raise _size_type_error()
-    value = int(value)
     if value < 0:
         raise ValueError("size dimensions must be non-negative")
     return value
@@ -162,18 +175,41 @@ def rand(*dims, size=None, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def _validate_uniform_bounds(low, high):
-    if bool(_jnp.any(~_jnp.isfinite(low))) or bool(_jnp.any(~_jnp.isfinite(high))):
+def _contains_boolean_value(value):
+    if isinstance(value, _BOOLEAN_TYPES):
+        return True
+    try:
+        values = _np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, _BOOLEAN_TYPES) for item in values)
+
+
+def _validate_uniform_bound(bound, name):
+    if _contains_boolean_value(bound):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        bound_array = _jnp.asarray(bound)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if bound_array.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    if bool(_jnp.any(~_jnp.isfinite(bound_array))):
         raise ValueError("uniform bounds must be finite")
-    if bool(_jnp.any(low > high)):
-        raise ValueError("Upper bound must be greater than or equal to lower bound")
+    return bound_array
+
+
+def _validate_uniform_bounds(low, high):
+    low = _validate_uniform_bound(low, "low")
+    high = _validate_uniform_bound(high, "high")
+    return low, high
 
 
 def uniform(low=0.0, high=1.0, size=None, *args, **kwargs):
-    low = _jnp.asarray(low)
-    high = _jnp.asarray(high)
+    low, high = _validate_uniform_bounds(low, high)
     shape = _bounded_sampler_shape(size, low, high)
-    _validate_uniform_bounds(low, high)
+    if bool(_jnp.any(low > high)):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
     state, has_state, kwargs = _get_state(**kwargs)
     state, res = _rand(state, shape, *args, minval=low, maxval=high, **kwargs)
     return set_state_return(has_state, state, res)

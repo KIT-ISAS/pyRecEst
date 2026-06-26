@@ -51,6 +51,13 @@ def test_support_points_from_axis_offsets_supports_batches() -> None:
     )
 
 
+def test_support_points_from_axis_offsets_can_omit_center() -> None:
+    support = support_points_from_axis_offsets([0.0, 0.0], np.eye(2), include_center=False)
+
+    assert support.shape == (4, 2)
+    assert np.allclose(support, [[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]])
+
+
 def test_projected_linear_variance_from_axis_offsets() -> None:
     axis_offsets = np.broadcast_to(np.eye(2, dtype=np.float64), (2, 2, 2))
     coefficients = np.asarray([[3.0, 4.0], [1.0, 2.0]], dtype=np.float64)
@@ -99,6 +106,36 @@ def test_ellipsoid_axis_offsets_reject_text_radius(bad_radius: object) -> None:
         ellipsoid_axis_offsets(np.eye(2), radius=bad_radius)
 
 
+@pytest.mark.parametrize(
+    "bad_flag",
+    ["False", 1, np.asarray([True]), None],
+)
+def test_support_points_reject_non_boolean_include_center(bad_flag: object) -> None:
+    with pytest.raises(ValueError, match="include_center"):
+        support_points_from_axis_offsets([0.0, 0.0], np.eye(2), include_center=bad_flag)
+
+
+@pytest.mark.parametrize(
+    "keyword",
+    ["sort_descending", "clip_negative_eigenvalues"],
+)
+def test_ellipsoid_axis_offsets_reject_non_boolean_flags(keyword: str) -> None:
+    with pytest.raises(ValueError, match=keyword):
+        ellipsoid_axis_offsets(np.eye(2), **{keyword: "False"})
+
+
+def test_ellipsoid_sigma_points_reject_non_boolean_include_center() -> None:
+    with pytest.raises(ValueError, match="include_center"):
+        ellipsoid_sigma_points([0.0, 0.0], np.eye(2), include_center="False")
+
+
+def test_mahalanobis_support_points_reject_non_boolean_normalize_flag() -> None:
+    with pytest.raises(ValueError, match="normalize_directions"):
+        mahalanobis_support_points(
+            [0.0, 0.0], np.eye(2), [[1.0, 0.0]], normalize_directions="False"
+        )
+
+
 @pytest.mark.parametrize("bad_radius", [np.nan, np.inf, -np.inf])
 def test_ellipsoid_sigma_points_reject_nonfinite_radii(bad_radius: float) -> None:
     with pytest.raises(ValueError, match="finite"):
@@ -127,6 +164,18 @@ def test_support_points_reject_non_real_numeric_centers(bad_centers: object) -> 
 
 
 @pytest.mark.parametrize(
+    "bad_centers",
+    [
+        np.asarray([np.datetime64("2026-01-01")]),
+        np.asarray([np.datetime64("2026-01-01")], dtype=object),
+    ],
+)
+def test_support_points_reject_temporal_centers(bad_centers: object) -> None:
+    with pytest.raises(ValueError, match="centers"):
+        support_points_from_axis_offsets(bad_centers, np.eye(1))
+
+
+@pytest.mark.parametrize(
     "bad_covariance",
     [
         [["1.0", "0.0"], ["0.0", "1.0"]],
@@ -134,6 +183,20 @@ def test_support_points_reject_non_real_numeric_centers(bad_centers: object) -> 
     ],
 )
 def test_ellipsoid_axis_offsets_reject_non_real_numeric_covariance(
+    bad_covariance: object,
+) -> None:
+    with pytest.raises(ValueError, match="covariance"):
+        ellipsoid_axis_offsets(bad_covariance)
+
+
+@pytest.mark.parametrize(
+    "bad_covariance",
+    [
+        np.asarray([[np.timedelta64(3, "s")]]),
+        np.asarray([[np.timedelta64(3, "s")]], dtype=object),
+    ],
+)
+def test_ellipsoid_axis_offsets_reject_temporal_covariance(
     bad_covariance: object,
 ) -> None:
     with pytest.raises(ValueError, match="covariance"):

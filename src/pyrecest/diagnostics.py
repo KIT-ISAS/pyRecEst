@@ -12,6 +12,8 @@ from dataclasses import asdict, dataclass, field, fields
 from math import isfinite, log
 from typing import Any, Literal
 
+import numpy as np
+
 EvidenceSupportType = Literal[
     "exact_full_grid",
     "exact_sparse",
@@ -21,6 +23,7 @@ EvidenceSupportType = Literal[
 ]
 
 _EVIDENCE_SUPPORT_TYPES = set(EvidenceSupportType.__args__)
+_WEIGHT_TEXT_OR_BOOL_TYPES = (bool, np.bool_, str, bytes, bytearray)
 
 
 def _coerce_metadata_bool(value: Any, name: str) -> bool:
@@ -45,6 +48,8 @@ def _coerce_metadata_bool(value: Any, name: str) -> bool:
 
 def _coerce_weight_values(weights: Any) -> list[float]:
     """Return backend-independent Python floats from an array-like weight vector."""
+    if isinstance(weights, _WEIGHT_TEXT_OR_BOOL_TYPES):
+        raise ValueError("Particle weights must be numeric.")
     try:
         from pyrecest.backend import to_numpy
 
@@ -54,9 +59,19 @@ def _coerce_weight_values(weights: Any) -> list[float]:
 
     if hasattr(weights, "tolist"):
         weights = weights.tolist()
+    if isinstance(weights, _WEIGHT_TEXT_OR_BOOL_TYPES):
+        raise ValueError("Particle weights must be numeric.")
     if isinstance(weights, int | float):
         return [float(weights)]
-    return [float(weight) for weight in weights]
+    try:
+        values = []
+        for weight in weights:
+            if isinstance(weight, _WEIGHT_TEXT_OR_BOOL_TYPES):
+                raise ValueError
+            values.append(float(weight))
+        return values
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Particle weights must be numeric.") from exc
 
 
 def _coerce_numeric_values(values: Any) -> list[float]:

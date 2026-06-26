@@ -11,7 +11,7 @@ from pyrecest.exceptions import (
     ShapeError,
 )
 
-_UNSUPPORTED_NUMERIC_KINDS = {"b", "S", "U", "c"}
+_UNSUPPORTED_NUMERIC_KINDS = {"b", "S", "U", "c", "M", "m"}
 _UNSUPPORTED_SCALAR_TYPES = (
     bool,
     np.bool_,
@@ -22,6 +22,8 @@ _UNSUPPORTED_SCALAR_TYPES = (
     np.bytes_,
     complex,
     np.complexfloating,
+    np.datetime64,
+    np.timedelta64,
 )
 
 
