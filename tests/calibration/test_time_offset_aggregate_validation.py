@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
-from pyrecest.calibration.time_offset import aggregate_time_offset_sweeps
+from pyrecest.calibration import aggregate_time_offset_sweeps
 
 
 class TimeOffsetAggregateValidationTest(unittest.TestCase):
@@ -12,6 +12,7 @@ class TimeOffsetAggregateValidationTest(unittest.TestCase):
             "time_offset_s": 0.0,
             "count": 2.0,
             "mean": 1.0,
+            "std": 0.5,
             "rmse": 2.0,
             "p95": 2.5,
             "max": 3.0,
@@ -48,6 +49,22 @@ class TimeOffsetAggregateValidationTest(unittest.TestCase):
                 row[key] = value
                 with self.assertRaisesRegex(ValueError, pattern):
                     aggregate_time_offset_sweeps([[row]])
+
+    def test_aggregate_time_offset_sweeps_rejects_invalid_metric_names(self):
+        invalid_metrics = (None, 1, "", "median", "coverage")
+        for metric in invalid_metrics:
+            with self.subTest(metric=metric):
+                with self.assertRaisesRegex(ValueError, "metric must be one of"):
+                    aggregate_time_offset_sweeps([[self._summary_row()]], metric=metric)
+
+    def test_aggregate_time_offset_sweeps_normalizes_metric_names(self):
+        aggregated = aggregate_time_offset_sweeps(
+            [[self._summary_row()]],
+            metric=" STD ",
+        )
+
+        self.assertEqual(aggregated[0]["std"], 0.5)
+        self.assertNotIn(" STD ", aggregated[0])
 
 
 if __name__ == "__main__":
