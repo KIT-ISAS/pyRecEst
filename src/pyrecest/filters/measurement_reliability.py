@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -30,10 +31,52 @@ def _has_boolean_dtype(value) -> bool:
     return dtype is not None and "bool" in str(dtype).lower()
 
 
+def _has_object_dtype(value) -> bool:
+    dtype = getattr(value, "dtype", None)
+    if dtype is None:
+        return False
+    kind = getattr(dtype, "kind", None)
+    return kind == "O" or (kind is None and "object" in str(dtype).lower())
+
+
+def _is_real_numeric_object_value(value) -> bool:
+    if isinstance(value, (bool, complex, str, bytes, bytearray)):
+        return False
+    dtype = getattr(value, "dtype", None)
+    if dtype is not None:
+        kind = getattr(dtype, "kind", None)
+        if kind is not None:
+            return kind in {"i", "u", "f"}
+        dtype_name = str(dtype).lower()
+        if any(token in dtype_name for token in ("bool", "complex", "str", "string", "object")):
+            return False
+        if "float" in dtype_name or "int" in dtype_name:
+            return True
+    try:
+        float(value)
+    except (TypeError, ValueError, OverflowError):
+        return False
+    return True
+
+
+def _object_array_contains_only_real_numeric_values(value) -> bool:
+    try:
+        flat_values = reshape(value, (-1,))
+    except (TypeError, ValueError, AttributeError):
+        item = value.item() if hasattr(value, "item") else value
+        return _is_real_numeric_object_value(item)
+    return builtins.all(
+        _is_real_numeric_object_value(flat_values[index])
+        for index in range(flat_values.shape[0])
+    )
+
+
 def _has_real_numeric_dtype(value) -> bool:
     dtype = getattr(value, "dtype", None)
     if dtype is None:
         return False
+    if _has_object_dtype(value):
+        return _object_array_contains_only_real_numeric_values(value)
     kind = getattr(dtype, "kind", None)
     if kind is not None:
         return kind in {"i", "u", "f"}
@@ -41,6 +84,13 @@ def _has_real_numeric_dtype(value) -> bool:
     if any(token in dtype_name for token in ("bool", "complex", "str", "string", "object")):
         return False
     return "float" in dtype_name or "int" in dtype_name
+
+
+def _coerce_object_weight_array_to_float(weights):
+    if not _has_object_dtype(weights):
+        return weights
+    flat_weights = reshape(weights, (-1,))
+    return array([float(flat_weights[index]) for index in range(flat_weights.shape[0])])
 
 
 def _raise_if_not_real_numeric_weights(weights) -> None:
@@ -75,6 +125,7 @@ def normalize_measurement_weights(measurement_weights, n_measurements: int):
             raise ValueError(
                 "measurement_weights must be scalar or have one entry per measurement"
             )
+        weights = _coerce_object_weight_array_to_float(weights)
     try:
         weights_are_finite = bool(all(isfinite(weights)))
     except (TypeError, ValueError, OverflowError) as exc:
