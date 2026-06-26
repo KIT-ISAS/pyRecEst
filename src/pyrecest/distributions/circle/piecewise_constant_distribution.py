@@ -282,7 +282,20 @@ class PiecewiseConstantDistribution(AbstractCircularDistribution):
             )
 
         def _evaluate_pdf(x):
-            return float(array(pdf_func(array([x]))).reshape(-1)[0])
+            pdf_values = array(pdf_func(array([x])), dtype=float)
+            if pdf_values.shape == ():
+                scalar_value = pdf_values
+            else:
+                flat_values = pdf_values.reshape(-1)
+                if flat_values.shape[0] != 1:
+                    raise ValueError(
+                        "pdf_func must return a scalar or single value per integration point"
+                    )
+                scalar_value = flat_values[0]
+            scalar_float = float(scalar_value)
+            if not np.isfinite(scalar_float):
+                raise ValueError("pdf_func must return finite values")
+            return scalar_float
 
         n = _validate_positive_sample_count(n)
         w = zeros(n)
