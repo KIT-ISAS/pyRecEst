@@ -61,6 +61,17 @@ class EuclideanParticleFilterTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "dimension"):
             self.pf.predict_nonlinear(lambda xs: xs, mismatched_noise)
 
+    def test_predict_identity_preserves_one_dimensional_particle_matrix_shape(self):
+        pf = EuclideanParticleFilter(n_particles=3, dim=1)
+        particles = array([[0.0], [1.0], [2.0]])
+        noise = LinearDiracDistribution(array([[0.5]]))
+        pf.filter_state = LinearDiracDistribution(particles)
+
+        pf.predict_identity(noise)
+
+        self.assertEqual(pf.filter_state.d.shape, particles.shape)
+        npt.assert_allclose(pf.filter_state.d, particles + 0.5)
+
     def test_update_identity_accepts_scalar_measurement_for_one_dimensional_noise(self):
         pf = EuclideanParticleFilter(n_particles=3, dim=1)
         particles = array([[0.0], [1.0], [2.0]])
