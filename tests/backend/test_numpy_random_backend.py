@@ -27,6 +27,52 @@ def test_rand_rejects_ambiguous_positional_and_size_arguments():
 @pytest.mark.parametrize(
     ("low", "high"),
     [
+        (0.2, 3),
+        (0, 3.7),
+        (False, 3),
+        (0, True),
+        (np.array([0.0, 10.0]), np.array([3, 13])),
+        ([0, 10], [3.0, 13.0]),
+        (np.array([False, 0], dtype=object), np.array([3, 13])),
+        (np.array([0, 10]), np.array([3, np.bool_(True)], dtype=object)),
+        (np.array([0 + 0j, 10]), np.array([3, 13])),
+    ],
+)
+def test_randint_rejects_non_integer_bounds(low, high):
+    with pytest.raises(TypeError, match="integer"):
+        random.randint(low, high)
+
+
+@pytest.mark.parametrize(
+    "high",
+    [
+        3.0,
+        True,
+        np.array([3.0, 13.0]),
+        [3, 13.0],
+        np.array([True, False]),
+    ],
+)
+def test_randint_rejects_non_integer_high_only(high):
+    with pytest.raises(TypeError, match="integer"):
+        random.randint(high)
+
+
+def test_randint_accepts_integer_array_bounds():
+    random.seed(0)
+    low = np.array([0, 10])
+    high = np.array([3, 13])
+
+    samples = random.randint(low, high, size=(4, 2))
+
+    assert samples.shape == (4, 2)
+    assert np.all(samples >= low)
+    assert np.all(samples < high)
+
+
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
         (False, 1.0),
         (0.0, True),
         (np.array([False, False]), np.array([1.0, 2.0])),
