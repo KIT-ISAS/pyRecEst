@@ -37,15 +37,32 @@ def backend_support(
     return get_backend_support(api_name, backend=backend)
 
 
+def _markdown_table_cell(value: object) -> str:
+    return str(value).replace("\r", " ").replace("\n", "<br>").replace(chr(124), chr(0xFF5C))
+
+
+def _markdown_table_row(cells: list[str]) -> str:
+    separator = chr(124)
+    return f"{separator} " + f" {separator} ".join(cells) + f" {separator}"
+
+
 def format_backend_support_markdown() -> str:
     """Render the public backend API matrix as a Markdown table."""
     lines = [
-        "| API | NumPy | PyTorch | JAX | Notes |",
-        "|-----|-------|---------|-----|-------|",
+        _markdown_table_row(["API", "NumPy", "PyTorch", "JAX", "Notes"]),
+        _markdown_table_row(["-----", "-------", "---------", "-----", "-------"]),
     ]
     for api_name, row in iter_api_backend_capabilities():
         lines.append(
-            f"| `{api_name}` | {row['numpy']} | {row['pytorch']} | {row['jax']} | {row.get('notes', '')} |"
+            _markdown_table_row(
+                [
+                    f"`{_markdown_table_cell(api_name)}`",
+                    _markdown_table_cell(row["numpy"]),
+                    _markdown_table_cell(row["pytorch"]),
+                    _markdown_table_cell(row["jax"]),
+                    _markdown_table_cell(row.get("notes", "")),
+                ]
+            )
         )
     return "\n".join(lines)
 

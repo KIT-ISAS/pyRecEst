@@ -12,6 +12,8 @@ from pyrecest.evaluation import (
     (
         [True, False],
         np.array([True, False]),
+        [None, 0.0],
+        np.array([None, 0.0], dtype=object),
         ["0.0", "1.0"],
         np.array(["0.0", "1.0"]),
         np.array([1.0 + 1.0j, 2.0 + 0.0j]),

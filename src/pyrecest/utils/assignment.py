@@ -25,6 +25,8 @@ from pyrecest.backend import zeros as _zeros
 from scipy.optimize import linear_sum_assignment
 
 _TEXT_TYPES = (str, bytes, bytearray, _np.str_, _np.bytes_)
+_BOOLEAN_TYPES = (bool, _np.bool_)
+_INVALID_SCALAR_TYPES = _BOOLEAN_TYPES + _TEXT_TYPES
 
 
 @dataclass(frozen=True)
@@ -37,7 +39,7 @@ class _MurtySubproblem:
 
 
 def _validate_assignment_count(k: int) -> int:
-    if isinstance(k, (bool, str, bytes)):
+    if isinstance(k, _INVALID_SCALAR_TYPES):
         raise ValueError("k must be an integer")
     if isinstance(k, Integral):
         return int(k)
@@ -55,7 +57,7 @@ def _validate_assignment_count(k: int) -> int:
         scalar = k_array.item()
     except AttributeError:
         scalar = k_array
-    if isinstance(scalar, (bool, str, bytes)):
+    if isinstance(scalar, _INVALID_SCALAR_TYPES):
         raise ValueError("k must be an integer")
 
     try:
@@ -72,6 +74,16 @@ def _has_boolean_dtype(value) -> bool:
     return dtype is not None and str(dtype).lower() in {"bool", "bool_", "torch.bool"}
 
 
+def _contains_boolean_values(value) -> bool:
+    if isinstance(value, _BOOLEAN_TYPES):
+        return True
+    try:
+        values = _np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, _BOOLEAN_TYPES) for item in values)
+
+
 def _contains_text_values(value) -> bool:
     if isinstance(value, _TEXT_TYPES):
         return True
@@ -83,11 +95,19 @@ def _contains_text_values(value) -> bool:
 
 
 def _coerce_cost_matrix(cost_matrix):
+    if _contains_boolean_values(cost_matrix):
+        raise ValueError("cost_matrix must be numeric, not boolean")
+    if _contains_text_values(cost_matrix):
+        raise ValueError("cost_matrix must be numeric")
     try:
         raw_cost_matrix = _asarray(cost_matrix)
     except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
         raise ValueError("cost_matrix must be numeric") from exc
     if _has_boolean_dtype(raw_cost_matrix):
+        raise ValueError("cost_matrix must be numeric, not boolean")
+    if _contains_boolean_values(cost_matrix) or _contains_boolean_values(
+        raw_cost_matrix
+    ):
         raise ValueError("cost_matrix must be numeric, not boolean")
     if _contains_text_values(cost_matrix) or _contains_text_values(raw_cost_matrix):
         raise ValueError("cost_matrix must be numeric")
@@ -116,6 +136,8 @@ def _coerce_non_assignment_costs(costs, size: int, name: str):
     except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
         raise ValueError(f"{name} must be numeric and finite") from exc
     if _has_boolean_dtype(raw_costs_array):
+        raise ValueError(f"{name} must be numeric and finite")
+    if _contains_boolean_values(costs) or _contains_boolean_values(raw_costs_array):
         raise ValueError(f"{name} must be numeric and finite")
     if _contains_text_values(costs) or _contains_text_values(raw_costs_array):
         raise ValueError(f"{name} must be numeric and finite")

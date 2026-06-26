@@ -55,6 +55,30 @@ def _flatten_numbers(value: Any, *, path: str) -> list[float]:
     raise TypeError(f"{path} must be a number or nested sequence of numbers")
 
 
+def _finite_nonnegative_number(value: Any, *, path: str) -> tuple[float | None, str | None]:
+    if isinstance(value, bool):
+        return None, f"{path} must be numeric, not boolean"
+    if not isinstance(value, int | float):
+        return None, f"{path} must be numeric, got {value!r}"
+
+    number = float(value)
+    if not math.isfinite(number):
+        return None, f"{path} must be finite"
+    if number < 0.0:
+        return None, f"{path} must be nonnegative"
+    return number, None
+
+
+def _nonnegative_integer(value: Any, *, path: str) -> tuple[int | None, str | None]:
+    if isinstance(value, bool):
+        return None, f"{path} must be an integer, not boolean"
+    if not isinstance(value, int):
+        return None, f"{path} must be an integer, got {value!r}"
+    if value < 0:
+        return None, f"{path} must be nonnegative"
+    return value, None
+
+
 def _check_numeric_sequence(
     actual: Any,
     expected: Any,
@@ -64,10 +88,13 @@ def _check_numeric_sequence(
     abs_tol: float,
     rel_tol: float,
 ) -> list[str]:
-    actual_values = _flatten_numbers(actual, path=f"{benchmark_name}.{field_name}")
-    expected_values = _flatten_numbers(
-        expected, path=f"baseline.{benchmark_name}.{field_name}"
-    )
+    try:
+        actual_values = _flatten_numbers(actual, path=f"{benchmark_name}.{field_name}")
+        expected_values = _flatten_numbers(
+            expected, path=f"baseline.{benchmark_name}.{field_name}"
+        )
+    except (TypeError, ValueError) as exc:
+        return [str(exc)]
     if len(actual_values) != len(expected_values):
         return [
             f"{benchmark_name}: {field_name} length changed from {len(expected_values)} to {len(actual_values)}"
@@ -96,25 +123,43 @@ def _check_elapsed(
     if "elapsed_seconds" not in actual_entry:
         return [f"{benchmark_name}: result is missing elapsed_seconds"]
 
-    elapsed = float(actual_entry["elapsed_seconds"])
-    if not math.isfinite(elapsed) or elapsed < 0.0:
-        return [f"{benchmark_name}: elapsed_seconds must be finite and nonnegative"]
-
     failures = []
+    elapsed, error = _finite_nonnegative_number(
+        actual_entry["elapsed_seconds"], path=f"{benchmark_name}.elapsed_seconds"
+    )
+    if error is not None:
+        return [error]
+
     if "max_elapsed_seconds" in baseline_entry:
-        max_elapsed = float(baseline_entry["max_elapsed_seconds"])
-        if elapsed > max_elapsed:
-            failures.append(
-                f"{benchmark_name}: elapsed_seconds {elapsed:.6g} exceeded absolute limit {max_elapsed:.6g}"
-            )
+        max_elapsed, error = _finite_nonnegative_number(
+            baseline_entry["max_elapsed_seconds"],
+            path=f"baseline.{benchmark_name}.max_elapsed_seconds",
+        )
+        if error is not None:
+            failures.append(error)
+        else:
+            assert elapsed is not None
+            assert max_elapsed is not None
+            if elapsed > max_elapsed:
+                failures.append(
+                    f"{benchmark_name}: elapsed_seconds {elapsed:.6g} exceeded absolute limit {max_elapsed:.6g}"
+                )
 
     if "elapsed_seconds" in baseline_entry:
-        baseline_elapsed = float(baseline_entry["elapsed_seconds"])
-        limit = baseline_elapsed * max_slowdown
-        if elapsed > limit:
-            failures.append(
-                f"{benchmark_name}: elapsed_seconds {elapsed:.6g} exceeded baseline {baseline_elapsed:.6g} * {max_slowdown:.6g}"
-            )
+        baseline_elapsed, error = _finite_nonnegative_number(
+            baseline_entry["elapsed_seconds"],
+            path=f"baseline.{benchmark_name}.elapsed_seconds",
+        )
+        if error is not None:
+            failures.append(error)
+        else:
+            assert elapsed is not None
+            assert baseline_elapsed is not None
+            limit = baseline_elapsed * max_slowdown
+            if elapsed > limit:
+                failures.append(
+                    f"{benchmark_name}: elapsed_seconds {elapsed:.6g} exceeded baseline {baseline_elapsed:.6g} * {max_slowdown:.6g}"
+                )
     return failures
 
 
@@ -139,12 +184,24 @@ def check_benchmarks(
             continue
 
         if "iterations" in baseline_entry:
-            expected_iterations = int(baseline_entry["iterations"])
-            actual_iterations = int(actual_entry.get("iterations", -1))
-            if actual_iterations != expected_iterations:
-                failures.append(
-                    f"{benchmark_name}: iterations changed from {expected_iterations} to {actual_iterations}"
+            expected_iterations, error = _nonnegative_integer(
+                baseline_entry["iterations"],
+                path=f"baseline.{benchmark_name}.iterations",
+            )
+            if error is not None:
+                failures.append(error)
+            elif "iterations" not in actual_entry:
+                failures.append(f"{benchmark_name}: result is missing iterations")
+            else:
+                actual_iterations, error = _nonnegative_integer(
+                    actual_entry["iterations"], path=f"{benchmark_name}.iterations"
                 )
+                if error is not None:
+                    failures.append(error)
+                elif actual_iterations != expected_iterations:
+                    failures.append(
+                        f"{benchmark_name}: iterations changed from {expected_iterations} to {actual_iterations}"
+                    )
 
         failures.extend(
             _check_elapsed(
@@ -185,15 +242,20 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Iterable[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    failures = check_benchmarks(
-        _load_json(args.actual),
-        _load_json(args.baseline),
-        actual_path=args.actual,
-        baseline_path=args.baseline,
-        max_slowdown=args.max_slowdown,
-        abs_tol=args.abs_tol,
-        rel_tol=args.rel_tol,
-    )
+    try:
+        failures = check_benchmarks(
+            _load_json(args.actual),
+            _load_json(args.baseline),
+            actual_path=args.actual,
+            baseline_path=args.baseline,
+            max_slowdown=args.max_slowdown,
+            abs_tol=args.abs_tol,
+            rel_tol=args.rel_tol,
+        )
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        print(f"::error::{exc}")
+        return 1
+
     if failures:
         for failure in failures:
             print(f"::error::{failure}")

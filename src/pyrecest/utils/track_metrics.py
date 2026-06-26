@@ -219,6 +219,7 @@ def track_latencies(
     )
     predicted_lookup = _single_observation_lookup(predicted)
     times = _session_times(reference.shape[1], session_times)
+    missed_latency = _validate_missed_value(missed_value)
     values: list[float] = []
     for observations in _observations_by_track(reference):
         if not observations:
@@ -230,7 +231,7 @@ def track_latencies(
             if (session, observation) in predicted_lookup
         ]
         if not detected_sessions:
-            values.append(float(missed_value))
+            values.append(missed_latency)
             continue
         values.append(
             float(times[min(detected_sessions)] - times[first_reference_session])
@@ -341,6 +342,22 @@ def _session_times(
     if np.any(np.diff(times) < 0):
         raise ValueError("session_times must be nondecreasing")
     return times
+
+
+def _validate_missed_value(value: Any) -> float:
+    value_array = np.asarray(value, dtype=object)
+    if value_array.shape != ():
+        raise ValueError("missed_value must be a scalar numeric value")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError("missed_value must be a scalar numeric value")
+    try:
+        parsed = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("missed_value must be a scalar numeric value") from exc
+    if np.isinf(parsed):
+        raise ValueError("missed_value must be finite or NaN")
+    return parsed
 
 
 def _contains_bool_or_text(values: np.ndarray) -> bool:

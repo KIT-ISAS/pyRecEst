@@ -48,11 +48,25 @@ class SequenceAssociationNode:
     metadata: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
-        if self.candidate_index is None and not self.is_missed_detection:
+        frame_index = _validate_integer(self.frame_index, "frame_index")
+        is_missed_detection = _validate_bool_flag(
+            self.is_missed_detection,
+            "is_missed_detection",
+        )
+        if self.candidate_index is None and not is_missed_detection:
             raise ValueError(
                 "candidate_index=None is reserved for missed-detection nodes"
             )
-        _validate_cost(self.unary_cost, "unary_cost")
+        candidate_index = (
+            None
+            if self.candidate_index is None
+            else _validate_integer(self.candidate_index, "candidate_index")
+        )
+        unary_cost = _validate_cost(self.unary_cost, "unary_cost")
+        object.__setattr__(self, "frame_index", frame_index)
+        object.__setattr__(self, "candidate_index", candidate_index)
+        object.__setattr__(self, "unary_cost", unary_cost)
+        object.__setattr__(self, "is_missed_detection", is_missed_detection)
         if self.metadata is not None:
             object.__setattr__(self, "metadata", dict(self.metadata))
 
@@ -283,8 +297,66 @@ def _reconstruct_path(
     )
 
 
+def _validate_bool_flag(value: object, name: str) -> bool:
+    message = f"{name} must be a bool"
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+    if value_array.ndim != 0 or value_array.dtype != np.bool_:
+        raise ValueError(message)
+    return bool(value_array.item())
+
+
+def _validate_integer(value: object, name: str) -> int:
+    message = f"{name} must be an integer"
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+    if value_array.ndim != 0 or value_array.dtype == np.bool_:
+        raise ValueError(message)
+    if value_array.dtype.kind in {"S", "U", "c"}:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(
+        scalar,
+        (bool, np.bool_, str, bytes, bytearray, complex, np.complexfloating),
+    ):
+        raise ValueError(message)
+    if isinstance(scalar, (int, np.integer)):
+        return int(scalar)
+    if (
+        isinstance(scalar, (float, np.floating))
+        and np.isfinite(scalar)
+        and float(scalar).is_integer()
+    ):
+        return int(scalar)
+    raise ValueError(message)
+
+
 def _validate_cost(value: object, name: str) -> float:
-    cost = float(value)
+    numeric_message = f"{name} must be a scalar numeric cost"
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(numeric_message) from exc
+
+    if value_array.ndim != 0 or value_array.dtype.kind in {"b", "S", "U", "c"}:
+        raise ValueError(numeric_message)
+
+    scalar = value_array.item()
+    if isinstance(
+        scalar,
+        (bool, np.bool_, str, bytes, bytearray, complex, np.complexfloating),
+    ):
+        raise ValueError(numeric_message)
+
+    try:
+        cost = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(numeric_message) from exc
     if not np.isfinite(cost):
         raise ValueError(f"{name} must be finite")
     return cost

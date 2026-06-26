@@ -36,6 +36,10 @@ from .likelihood import (
     SupportsTransitionDensity,
     SupportsTransitionSampling,
 )
+from ._sampleable_transition_validation import install_sampleable_transition_validation
+
+install_sampleable_transition_validation()
+
 from .linear_gaussian import (
     IdentityGaussianMeasurementModel,
     IdentityGaussianTransitionModel,
