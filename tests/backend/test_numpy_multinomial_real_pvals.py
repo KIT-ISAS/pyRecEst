@@ -1,4 +1,11 @@
+import pytest
+
 from pyrecest._backend.numpy import random
+
+
+def test_multinomial_rejects_text_pvals():
+    with pytest.raises(TypeError, match="real numeric"):
+        random.multinomial(1, ["1.0"])
 
 
 def test_multinomial_accepts_real_pvals():
