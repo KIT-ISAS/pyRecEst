@@ -25,6 +25,24 @@ class JaxChoiceProbabilityValidationTest(unittest.TestCase):
         result = run_backend_code("jax", code)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def assert_choice_raises_type_error(self, call_source):
+        code = textwrap.dedent(f"""
+            from pyrecest.backend import array, random
+
+            try:
+                {call_source}
+            except TypeError:
+                raise SystemExit(0)
+            except Exception as exc:
+                raise AssertionError(
+                    f"expected TypeError, got {{type(exc).__name__}}: {{exc}}"
+                ) from exc
+            else:
+                raise AssertionError("expected TypeError")
+            """)
+        result = run_backend_code("jax", code)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_choice_rejects_negative_probabilities(self):
         self.assert_choice_raises_value_error(
             "random.choice(array([0, 1, 2]), size=2, p=array([0.5, -0.1, 0.6]))"
@@ -43,6 +61,19 @@ class JaxChoiceProbabilityValidationTest(unittest.TestCase):
     def test_choice_rejects_wrong_probability_length(self):
         self.assert_choice_raises_value_error(
             "random.choice(array([0, 1, 2]), size=2, p=array([0.5, 0.5]))"
+        )
+
+    def test_choice_rejects_boolean_probabilities(self):
+        self.assert_choice_raises_type_error(
+            "random.choice(array([0, 1, 2]), size=2, p=array([True, False, False]))"
+        )
+        self.assert_choice_raises_type_error(
+            "random.choice(array([0, 1, 2]), size=2, p=[True, False, False])"
+        )
+
+    def test_choice_rejects_text_probabilities(self):
+        self.assert_choice_raises_type_error(
+            "random.choice(array([0, 1, 2]), size=2, p=['1.0', '0.0', '0.0'])"
         )
 
 
