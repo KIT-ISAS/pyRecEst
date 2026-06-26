@@ -238,7 +238,7 @@ def vmap(pyfunc, randomness="error"):
             output_shape = (args[0].shape[0],) + first_output_array.shape
 
         output = _np.empty(output_shape, dtype=first_output_array.dtype)
-        output[0, ...] = first_output
+        output[0, ...] = first_output_array
 
         # Apply the function to each remaining slice. The first slice was
         # already evaluated above to determine output metadata.
