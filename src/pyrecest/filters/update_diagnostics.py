@@ -31,11 +31,15 @@ class MeasurementUpdateDiagnostics:
         indices = _normalize_active_measurement_indices(self.active_measurement_indices)
         object.__setattr__(self, "active_measurement_indices", indices)
         if self.measurement_count is not None:
-            object.__setattr__(
-                self,
+            measurement_count = _as_nonnegative_integer(
+                self.measurement_count,
                 "measurement_count",
-                _as_nonnegative_integer(self.measurement_count, "measurement_count"),
             )
+            if indices and max(indices) >= measurement_count:
+                raise ValueError(
+                    "active_measurement_indices must be smaller than measurement_count"
+                )
+            object.__setattr__(self, "measurement_count", measurement_count)
         metadata = {} if self.metadata is None else dict(self.metadata)
         object.__setattr__(self, "metadata", metadata)
 
