@@ -6,13 +6,19 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+_TEXT_SCALAR_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+_BOOL_SCALAR_TYPES = (bool, np.bool_)
+
 
 def _as_finite_scalar(value: float, message: str) -> float:
-    value_array = np.asarray(value)
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError(message)
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
+    if isinstance(scalar, (*_BOOL_SCALAR_TYPES, *_TEXT_SCALAR_TYPES)):
         raise ValueError(message)
     try:
         result = float(scalar)
@@ -37,6 +43,31 @@ def _validate_nonnegative_finite(value: float, name: str) -> float:
     if value < 0.0:
         raise ValueError(message)
     return value
+
+
+def _validate_integer_greater_than(value: int, name: str, lower_bound: int) -> int:
+    message = f"{name} must be greater than {lower_bound}"
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+    scalar = value_array.item()
+    if isinstance(scalar, (*_BOOL_SCALAR_TYPES, *_TEXT_SCALAR_TYPES)):
+        raise ValueError(message)
+    if isinstance(scalar, (int, np.integer)):
+        parsed = int(scalar)
+    elif isinstance(scalar, (float, np.floating)):
+        scalar_float = float(scalar)
+        if not np.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(message)
+        parsed = int(scalar_float)
+    else:
+        raise ValueError(message)
+    if parsed <= int(lower_bound):
+        raise ValueError(message)
+    return parsed
 
 
 def _validate_finite_array(values: np.ndarray, name: str) -> None:
@@ -116,8 +147,12 @@ class PointProcessUpdateConfig:
     max_state_update_norm: float = 5.0
 
     def __post_init__(self) -> None:
-        if self.contour_samples <= 2:
-            raise ValueError("contour_samples must be greater than 2")
+        contour_samples = _validate_integer_greater_than(
+            self.contour_samples,
+            "contour_samples",
+            2,
+        )
+        object.__setattr__(self, "contour_samples", contour_samples)
         _validate_positive_finite(self.finite_difference_eps, "finite_difference_eps")
         _validate_nonnegative_finite(self.map_step_size, "map_step_size")
         if self.max_map_iterations < 0:
@@ -368,9 +403,12 @@ def _resolve_scgp_likelihood_arguments(
     else:
         likelihood_config = config or EventLikelihoodConfig()
         sample_count = 96 if contour_samples is None else contour_samples
-    if int(sample_count) <= 2:
-        raise ValueError("contour_samples must be greater than 2")
-    return likelihood_config, int(sample_count)
+    sample_count = _validate_integer_greater_than(
+        sample_count,
+        "contour_samples",
+        2,
+    )
+    return likelihood_config, sample_count
 
 
 def _gaussian_contour_kernel(
