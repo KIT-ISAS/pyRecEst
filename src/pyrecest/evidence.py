@@ -27,7 +27,10 @@ _RESERVED_DIAGNOSTIC_METADATA_KEYS = frozenset(
 def _coerce_bool_flag(value: bool, name: str) -> bool:
     """Return a bool flag without treating arbitrary truthy objects as true."""
 
-    value_array = np.asarray(value)
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a bool") from exc
     if value_array.shape == () and np.issubdtype(value_array.dtype, np.bool_):
         return bool(value_array.item())
     raise ValueError(f"{name} must be a bool")
@@ -75,8 +78,7 @@ class EvidenceComputationMode:
         if conflicting_metadata_keys:
             reserved = ", ".join(sorted(str(key) for key in conflicting_metadata_keys))
             raise ValueError(
-                "metadata keys would overwrite evidence diagnostics: "
-                f"{reserved}"
+                "metadata keys would overwrite evidence diagnostics: " f"{reserved}"
             )
         object.__setattr__(self, "return_smoothed", return_smoothed)
         object.__setattr__(self, "terminal_posterior", terminal_posterior)

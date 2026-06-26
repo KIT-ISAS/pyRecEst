@@ -125,7 +125,7 @@ def innovation_diagnostic(
     nis = float(
         normalized_innovation_squared(residual_array, innovation_covariance_array)
     )
-    inferred_accepted = accepted
+    inferred_accepted = _optional_bool(accepted) if accepted is not None else None
     if inferred_accepted is None and resolved_threshold is not None:
         inferred_accepted = bool(nis <= resolved_threshold)
     return InnovationDiagnostic(

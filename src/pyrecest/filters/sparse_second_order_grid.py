@@ -27,6 +27,8 @@ SparsePairTransitionRowBuilder = Callable[
     [int, int, int], tuple[np.ndarray, np.ndarray]
 ]
 SparsePairTransitionCacheKeyBuilder = Callable[[int, int, int], Hashable | None]
+_TEXT_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+_BOOLEAN_TYPES = (bool, np.bool_)
 
 
 @dataclass(frozen=True)
@@ -121,7 +123,7 @@ def sparse_second_order_grid_evidence(
     prev_raw, curr_raw, alpha, initial_edge_counts = initial_pair_initializer(scaled)
     prev_raw = np.asarray(prev_raw)
     curr_raw = np.asarray(curr_raw)
-    alpha = np.asarray(alpha, dtype=float)
+    alpha = _coerce_real_weight_array(alpha, "initial pair weights")
     if (
         prev_raw.ndim != 1
         or curr_raw.ndim != 1
@@ -312,7 +314,7 @@ def _advance_sparse_pair_alpha(
                 int(src_prev), int(src_curr), int(transition_index)
             )
             dst_raw = np.asarray(dst)
-            weights = np.asarray(weights, dtype=float)
+            weights = _coerce_real_weight_array(weights, "transition row weights")
             if dst_raw.ndim != 1 or weights.shape != dst_raw.shape:
                 raise ValueError(
                     "transition rows must return one-dimensional dst and weights arrays with matching shapes"
@@ -367,6 +369,31 @@ def _advance_sparse_pair_alpha(
         cache_hits,
         cache_misses,
     )
+
+
+def _contains_values_of_type(value: Any, types: tuple[type, ...]) -> bool:
+    if isinstance(value, types):
+        return True
+    try:
+        values = np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, types) for item in values)
+
+
+def _coerce_real_weight_array(values: Any, message_prefix: str) -> np.ndarray:
+    message = f"{message_prefix} must be finite and nonnegative"
+    if _contains_values_of_type(values, _TEXT_TYPES) or _contains_values_of_type(
+        values, _BOOLEAN_TYPES
+    ):
+        raise ValueError(message)
+    try:
+        weights = np.asarray(values, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if np.any(~np.isfinite(weights)) or np.any(weights < 0.0):
+        raise ValueError(message)
+    return weights
 
 
 def _coerce_grid_index_array(

@@ -15,6 +15,18 @@ _FEATURE_ROW_COUNT_ERROR = (
     "features rows must match requested row count; "
     "features must produce one predicted bias row per measurement"
 )
+_REJECTED_NUMERIC_KINDS = frozenset("bUScMm")
+_REJECTED_OBJECT_VALUE_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    complex,
+    np.complexfloating,
+    np.datetime64,
+    np.timedelta64,
+)
 
 
 @dataclass(frozen=True)
@@ -54,9 +66,15 @@ class SensorBiasCorrectionModel:
         coefficients = _as_numeric_array(self.coefficients, "coefficients").reshape(
             feature_dim, target_dim
         )
-        feature_mean = _as_numeric_array(self.feature_mean, "feature_mean").reshape(feature_dim)
-        feature_scale = _as_numeric_array(self.feature_scale, "feature_scale").reshape(feature_dim)
-        residual_std = _as_numeric_array(self.residual_std, "residual_std").reshape(target_dim)
+        feature_mean = _as_numeric_array(self.feature_mean, "feature_mean").reshape(
+            feature_dim
+        )
+        feature_scale = _as_numeric_array(self.feature_scale, "feature_scale").reshape(
+            feature_dim
+        )
+        residual_std = _as_numeric_array(self.residual_std, "residual_std").reshape(
+            target_dim
+        )
         feature_scale = np.where(
             np.isfinite(feature_scale) & (feature_scale > 0.0), feature_scale, 1.0
         )
@@ -324,7 +342,7 @@ def _as_numeric_array(values: Any, name: str) -> np.ndarray:
         raw = np.asarray(values)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must contain numeric values") from exc
-    if _contains_non_real_or_text(raw):
+    if _contains_invalid_numeric_values(raw):
         raise ValueError(f"{name} must contain numeric values")
     try:
         return np.asarray(values, dtype=float)
@@ -336,15 +354,12 @@ def _as_numeric_vector(values: Any, name: str) -> np.ndarray:
     return _as_numeric_array(values, name).reshape(-1)
 
 
-def _contains_non_real_or_text(values: np.ndarray) -> bool:
-    if values.dtype.kind in "bUSc":
+def _contains_invalid_numeric_values(values: np.ndarray) -> bool:
+    if values.dtype.kind in _REJECTED_NUMERIC_KINDS:
         return True
     if values.dtype == object:
         return any(
-            isinstance(
-                item,
-                (bool, np.bool_, str, bytes, bytearray, complex, np.complexfloating),
-            )
+            isinstance(item, _REJECTED_OBJECT_VALUE_TYPES)
             for item in values.reshape(-1)
         )
     return False
