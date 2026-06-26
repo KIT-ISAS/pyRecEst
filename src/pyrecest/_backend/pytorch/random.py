@@ -109,6 +109,15 @@ def _randint_array_size(size, low, high):
     return sample_shape
 
 
+def _validate_randint_array_bound(name, bound):
+    if (
+        bound.dtype == _torch.bool
+        or bound.dtype.is_floating_point
+        or bound.dtype.is_complex
+    ):
+        raise TypeError(f"{name} must contain integer values")
+
+
 def _randint_array(low, high, size, *args, **kwargs):
     if args:
         raise TypeError(
@@ -128,6 +137,8 @@ def _randint_array(low, high, size, *args, **kwargs):
     device = _randint_device(low, high, device=device)
     low = _torch.as_tensor(low, device=device)
     high = _torch.as_tensor(high, device=device)
+    _validate_randint_array_bound("low", low)
+    _validate_randint_array_bound("high", high)
     sample_shape = _randint_array_size(size, low, high)
 
     try:
