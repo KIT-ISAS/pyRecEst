@@ -4,7 +4,6 @@ import numpy as _np
 from numpy.random import default_rng as _default_rng
 from numpy.random import (  # For PyRecEst
     get_state,
-    multinomial,
     seed,
     set_state,
 )
@@ -45,3 +44,20 @@ def randint(low, high=None, size=None, dtype=int):
     _validate_randint_bound(low, "low")
     _validate_randint_bound(high, "high")
     return _np.random.randint(low, high=high, size=size, dtype=dtype)
+
+
+def _validate_multinomial_pvals(pvals):
+    if _contains_boolean_value(pvals):
+        raise TypeError("pvals must be real numeric, not boolean")
+    try:
+        pvals_array = _np.asarray(pvals)
+    except (TypeError, ValueError) as exc:
+        raise TypeError("pvals must be real numeric") from exc
+    if pvals_array.dtype.kind not in "iuf":
+        raise TypeError("pvals must be real numeric")
+    return pvals_array
+
+
+def multinomial(n, pvals, size=None):
+    pvals_array = _validate_multinomial_pvals(pvals)
+    return _np.random.multinomial(n, pvals_array, size=size)
