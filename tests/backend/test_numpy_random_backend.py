@@ -107,3 +107,29 @@ def test_choice_rejects_non_boolean_controls(control):
 
     with pytest.raises(TypeError, match=f"{control} must be a boolean"):
         random.choice(np.arange(3), size=2, **kwargs)
+
+
+@pytest.mark.parametrize(
+    "probabilities",
+    [
+        [True, False, False],
+        np.array([True, False, False]),
+        np.array([0.5, np.bool_(False), 0.5], dtype=object),
+    ],
+)
+def test_choice_rejects_boolean_probabilities(probabilities):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.choice(np.arange(3), p=probabilities)
+
+
+@pytest.mark.parametrize(
+    "probabilities",
+    [
+        ["1.0", "0.0", "0.0"],
+        np.array(["0.2", "0.3", "0.5"]),
+        np.array([0.5, "0.5", 0.0], dtype=object),
+    ],
+)
+def test_choice_rejects_text_probabilities(probabilities):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.choice(np.arange(3), p=probabilities)
