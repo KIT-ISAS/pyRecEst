@@ -23,6 +23,18 @@ def test_backend_not_supported_error_is_not_implemented_error():
     assert "numpy, pytorch" in str(error)
 
 
+def test_backend_not_supported_error_accepts_single_string_supported_backend():
+    error = BackendNotSupportedError(
+        "ExampleAPI.update",
+        "jax",
+        supported_backends="numpy",
+    )
+
+    assert error.supported_backends == ("numpy",)
+    assert "supported backends: numpy" in str(error)
+    assert "n, u, m, p, y" not in str(error)
+
+
 def test_backend_not_supported_error_keeps_backendless_context():
     error = BackendNotSupportedError(
         "ExampleAPI.batch_update",
