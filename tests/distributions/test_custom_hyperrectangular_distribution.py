@@ -44,6 +44,22 @@ class TestCustomHyperrectangularDistribution(unittest.TestCase):
     def test_integrate_defaults_to_full_rectangular_bounds(self):
         self.assertAlmostEqual(float(self.hud.integrate()), 1.0, places=10)
 
+    def test_integrate_rejects_vector_pdf_values(self):
+        cd = CustomHyperrectangularDistribution(
+            lambda _xs: array([0.25, 0.75]), array([0.0, 1.0])
+        )
+
+        with self.assertRaisesRegex(ValueError, "one finite scalar"):
+            cd.integrate()
+
+    def test_integrate_rejects_nonfinite_pdf_values(self):
+        cd = CustomHyperrectangularDistribution(
+            lambda _xs: float("nan"), array([0.0, 1.0])
+        )
+
+        with self.assertRaisesRegex(ValueError, "one finite scalar"):
+            cd.integrate()
+
     def test_one_dimensional_bounds_are_supported(self):
         cd = CustomHyperrectangularDistribution(lambda _xs: 0.5, array([0.0, 2.0]))
 
