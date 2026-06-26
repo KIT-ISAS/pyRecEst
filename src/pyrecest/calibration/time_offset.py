@@ -9,6 +9,10 @@ from typing import Any
 import numpy as np
 
 
+_ERROR_METRIC_NAMES = frozenset({"max", "mean", "p95", "rmse", "std"})
+_ERROR_METRIC_MESSAGE = "metric must be one of 'max', 'mean', 'p95', 'rmse', or 'std'"
+
+
 @dataclass(frozen=True)
 class TimeOffsetFitResult:
     """Best timestamp correction selected from an offset sweep."""
@@ -66,6 +70,17 @@ def _best_metric_index(
         return int(candidates[int(np.nanargmin(values[candidates]))])
     candidates = np.flatnonzero(finite)
     return int(candidates[int(np.nanargmin(values[candidates]))])
+
+
+def _validate_error_metric(metric: Any) -> str:
+    """Return a normalized fit metric name with a deterministic validation error."""
+
+    if not isinstance(metric, str):
+        raise ValueError(_ERROR_METRIC_MESSAGE)
+    normalized = metric.strip().lower()
+    if normalized not in _ERROR_METRIC_NAMES:
+        raise ValueError(_ERROR_METRIC_MESSAGE)
+    return normalized
 
 
 def _as_finite_float(value: Any, name: str) -> float:
@@ -361,6 +376,7 @@ def fit_time_offset(
 ) -> TimeOffsetFitResult:
     """Fit a timestamp offset by minimizing a sweep metric."""
 
+    metric = _validate_error_metric(metric)
     summaries = time_offset_sweep(
         measurement_times_s,
         measurement_values,
@@ -370,7 +386,7 @@ def fit_time_offset(
         max_time_delta_s=max_time_delta_s,
     )
     offsets = np.array([row["time_offset_s"] for row in summaries], dtype=float)
-    values = np.array([row.get(metric, np.nan) for row in summaries], dtype=float)
+    values = np.array([row[metric] for row in summaries], dtype=float)
     counts = np.array([row.get("count", 0.0) for row in summaries], dtype=float)
     finite = np.isfinite(values) & (counts > 0)
     best = (
@@ -380,7 +396,7 @@ def fit_time_offset(
     )
     return TimeOffsetFitResult(
         best_offset_s=best,
-        metric=str(metric),
+        metric=metric,
         offsets_s=offsets,
         metric_values=values,
         counts=counts.astype(int),
