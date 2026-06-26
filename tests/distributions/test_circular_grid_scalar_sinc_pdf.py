@@ -16,6 +16,14 @@ class CircularGridScalarSincPdfTest(unittest.TestCase):
 
         self.assertAlmostEqual(float(scalar_value), float(vector_value))
 
+    def test_sinc_interpolation_matches_knots(self):
+        values = array([0.05, 0.15, 0.35, 0.25, 0.2])
+        dist = CircularGridDistribution(values, enforce_pdf_nonnegative=False)
+        evaluated = dist.pdf(dist.get_grid(), use_sinc=True, sinc_repetitions=3)
+
+        for actual, expected in zip(evaluated, values):
+            self.assertAlmostEqual(float(actual), float(expected), delta=1e-7)
+
 
 if __name__ == "__main__":
     unittest.main()
