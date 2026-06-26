@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import date, datetime, timedelta
 
 import numpy as np
 
 _TEXT_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
 _BOOLEAN_TYPES = (bool, np.bool_)
 _COMPLEX_TYPES = (complex, np.complexfloating)
+_TEMPORAL_TYPES = (date, datetime, timedelta, np.datetime64, np.timedelta64)
 
 
 def _contains_values_of_type(value: object, types: tuple[type, ...]) -> bool:
@@ -19,11 +21,20 @@ def _contains_values_of_type(value: object, types: tuple[type, ...]) -> bool:
     return any(isinstance(item, types) for item in values)
 
 
+def _has_temporal_dtype(value: object) -> bool:
+    try:
+        return np.asarray(value).dtype.kind in "Mm"
+    except (TypeError, ValueError, RuntimeError):
+        return False
+
+
 def _has_non_real_numeric_values(value: object) -> bool:
     return (
-        _contains_values_of_type(value, _TEXT_TYPES)
+        _has_temporal_dtype(value)
+        or _contains_values_of_type(value, _TEXT_TYPES)
         or _contains_values_of_type(value, _BOOLEAN_TYPES)
         or _contains_values_of_type(value, _COMPLEX_TYPES)
+        or _contains_values_of_type(value, _TEMPORAL_TYPES)
     )
 
 
