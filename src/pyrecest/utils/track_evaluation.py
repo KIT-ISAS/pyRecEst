@@ -399,7 +399,9 @@ def _selected_sessions(
 ) -> list[int]:
     if session_indices is None:
         return list(range(matrix.shape[1]))
-    selected = [_coerce_session_index(index) for index in session_indices]
+    selected = [
+        _coerce_session_index(index, "session_indices") for index in session_indices
+    ]
     for session_idx in selected:
         _validate_session_index(matrix, session_idx)
     return selected
@@ -420,7 +422,10 @@ def _session_pairs(
                     "session_pairs must contain pairs of session indices"
                 ) from exc
             parsed_pairs.append(
-                (_coerce_session_index(raw_a), _coerce_session_index(raw_b))
+                (
+                    _coerce_session_index(raw_a, "session_pairs"),
+                    _coerce_session_index(raw_b, "session_pairs"),
+                )
             )
         pairs = tuple(parsed_pairs)
     for session_a, session_b in pairs:
@@ -431,9 +436,9 @@ def _session_pairs(
     return pairs
 
 
-def _coerce_session_index(value: Any) -> int:
+def _coerce_session_index(value: Any, name: str) -> int:
     array = np.asarray(value)
-    message = "session indices must be integers"
+    message = f"{name} entries must be integer session indices"
     if array.shape != () or array.dtype == np.bool_:
         raise ValueError(message)
     scalar = array.item()

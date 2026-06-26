@@ -1,6 +1,7 @@
 # pylint: disable=redefined-builtin,no-name-in-module,no-member,duplicate-code
 import warnings
 
+import numpy as np
 from pyrecest.backend import (
     all,
     any,
@@ -72,11 +73,26 @@ class GlobalNearestNeighbor(AbstractNearestNeighborTracker):
     def _validate_pairwise_cost_matrix(pairwise_cost_matrix, n_targets, n_meas):
         if pairwise_cost_matrix is None:
             return None
+        try:
+            raw_pairwise_cost_matrix = np.asarray(pairwise_cost_matrix)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "pairwise_cost_matrix must contain real numeric costs."
+            ) from exc
+        if raw_pairwise_cost_matrix.dtype.kind in {"b", "c", "S", "U"}:
+            raise ValueError("pairwise_cost_matrix must contain real numeric costs.")
         pairwise_cost_matrix = asarray(pairwise_cost_matrix, dtype=float)
         if pairwise_cost_matrix.shape != (n_targets, n_meas):
             raise ValueError(
                 "pairwise_cost_matrix must have shape "
                 f"({n_targets}, {n_meas}), got {pairwise_cost_matrix.shape}."
+            )
+        pairwise_cost_values = np.asarray(pairwise_cost_matrix, dtype=float)
+        if np.any(np.isnan(pairwise_cost_values)) or np.any(
+            np.isneginf(pairwise_cost_values)
+        ):
+            raise ValueError(
+                "pairwise_cost_matrix may only contain finite values or positive infinity."
             )
         return pairwise_cost_matrix
 
