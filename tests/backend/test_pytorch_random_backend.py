@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 torch = pytest.importorskip("torch")
@@ -104,6 +105,33 @@ def test_randint_rejects_invalid_array_bounds(low, high):
         random.randint(low, high)
 
 
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        (torch.tensor([0.0, 10.0]), torch.tensor([3.0, 13.0])),
+        ([0.2, 10.0], [3.0, 13.0]),
+        (torch.tensor([False, True]), torch.tensor([3, 13])),
+        (torch.tensor([0, 10]), torch.tensor([3.5, 13.0])),
+    ],
+)
+def test_randint_rejects_non_integer_array_bounds(low, high):
+    with pytest.raises(TypeError, match="integer"):
+        random.randint(low, high)
+
+
+@pytest.mark.parametrize(
+    "high",
+    [
+        torch.tensor([3.0, 13.0]),
+        [3.0, 13.0],
+        torch.tensor([True, False]),
+    ],
+)
+def test_randint_rejects_non_integer_array_high_only(high):
+    with pytest.raises(TypeError, match="integer"):
+        random.randint(high)
+
+
 @pytest.mark.parametrize("bad_size", [(), (3,), (3, 1)])
 def test_normal_rejects_array_parameters_incompatible_with_explicit_size(bad_size):
     with pytest.raises(ValueError, match="broadcast"):
@@ -114,6 +142,38 @@ def test_normal_rejects_array_parameters_incompatible_with_explicit_size(bad_siz
 def test_uniform_rejects_array_parameters_incompatible_with_explicit_size(bad_size):
     with pytest.raises(ValueError, match="broadcast"):
         random.uniform(torch.tensor([1.0, 2.0]), 3.0, size=bad_size)
+
+
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        (False, 1.0),
+        (0.0, True),
+        (torch.tensor([False, False]), torch.tensor([1.0, 2.0])),
+        ([False, 0.0], [1.0, 2.0]),
+        ([0.0, 0.5], [1.0, np.bool_(True)]),
+        (
+            np.array([0.0, np.bool_(False)], dtype=object),
+            np.array([1.0, 2.0], dtype=object),
+        ),
+    ],
+)
+def test_uniform_rejects_boolean_bounds(low, high):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.uniform(low, high)
+
+
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        ("0.0", 1.0),
+        (0.0, "1.0"),
+        (["0.0", "0.5"], [1.0, 1.5]),
+    ],
+)
+def test_uniform_rejects_text_bounds(low, high):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.uniform(low, high)
 
 
 def test_normal_accepts_array_parameters_with_compatible_explicit_size():

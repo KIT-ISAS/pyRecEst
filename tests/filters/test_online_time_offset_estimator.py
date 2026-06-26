@@ -41,7 +41,15 @@ class OnlineTimeOffsetEstimatorTest(unittest.TestCase):
         self.assertAlmostEqual(estimator.variance, 1.25)
 
     def test_constructor_rejects_nonfinite_scalar_controls(self):
-        invalid_values = (np.nan, np.inf, -np.inf, True, np.array([1.0]))
+        invalid_values = (
+            np.nan,
+            np.inf,
+            -np.inf,
+            True,
+            "1.0",
+            np.array("1.0"),
+            np.array([1.0]),
+        )
         for field_name in ("offset", "variance", "process_variance", "min_speed"):
             for value in invalid_values:
                 with self.subTest(field_name=field_name, value=value):
@@ -56,10 +64,16 @@ class OnlineTimeOffsetEstimatorTest(unittest.TestCase):
             {"measurement_variance": np.nan},
             {"measurement_variance": np.inf},
             {"measurement_variance": True},
+            {"measurement_variance": "1.0"},
+            {"measurement_variance": np.array("1.0")},
             {"measurement_variance": np.array([1.0])},
             {"measurement_variance": -1.0},
             {"residual": np.array([np.nan])},
+            {"residual": np.array([True])},
+            {"residual": np.array(["1.0"])},
             {"velocity": np.array([np.inf])},
+            {"velocity": np.array([False])},
+            {"velocity": np.array(["2.0"])},
         )
 
         for override in invalid_updates:

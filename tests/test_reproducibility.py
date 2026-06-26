@@ -6,7 +6,16 @@ from pyrecest.reproducibility import _normalize_seed
 
 class ReproducibilityValidationTest(unittest.TestCase):
     def test_normalize_seed_rejects_text_values(self):
-        for value in ("1", np.array("1")):
+        for value in ("1", np.array("1"), bytes([49]), bytearray([49]), np.bytes_(bytes([49]))):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "seed must be a non-negative integer or None",
+                ):
+                    _normalize_seed(value)
+
+    def test_normalize_seed_rejects_boolean_values(self):
+        for value in (True, np.bool_(True), np.array(True)):
             with self.subTest(value=repr(value)):
                 with self.assertRaisesRegex(
                     ValueError,

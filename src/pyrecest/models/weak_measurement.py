@@ -115,7 +115,7 @@ class MaskedLinearMeasurementModel(LinearGaussianMeasurementModel):
         covariance = (
             diagonal_measurement_covariance(stds)
             if stds is not None
-            else _real_numeric_array(
+            else _finite_real_numeric_array(
                 measurement_noise_cov, name="measurement_noise_cov"
             )
         )
@@ -153,7 +153,7 @@ class WeakDimensionMeasurementModel(LinearGaussianMeasurementModel):
         if stds is not None and (trusted_std is not None or weak_std is not None):
             raise ValueError("stds cannot be combined with trusted_std or weak_std")
         if measurement_noise_cov is not None:
-            covariance = _real_numeric_array(
+            covariance = _finite_real_numeric_array(
                 measurement_noise_cov, name="measurement_noise_cov"
             )
         elif stds is not None and _is_mapping(stds):
@@ -201,6 +201,13 @@ def _real_numeric_array(value: Any, *, name: str) -> np.ndarray:
         return np.asarray(value, dtype=float)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must contain real numeric values") from exc
+
+
+def _finite_real_numeric_array(value: Any, *, name: str) -> np.ndarray:
+    array = _real_numeric_array(value, name=name)
+    if not np.isfinite(array).all():
+        raise ValueError(f"{name} must contain finite real numeric values")
+    return array
 
 
 def _standard_deviations_array(stds: Sequence[float] | np.ndarray) -> np.ndarray:
