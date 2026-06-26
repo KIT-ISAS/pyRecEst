@@ -10,21 +10,28 @@ MAP_DTYPE = {
 }
 
 
+def _dtype_key(value):
+    try:
+        return str(_jnp.dtype(value))
+    except (TypeError, ValueError):
+        return str(value).rsplit(".", maxsplit=1)[-1].removesuffix("'>")
+
+
 def as_dtype(value):
     """
-    Transform string representing dtype into JAX dtype.
+    Transform string or dtype-like value into JAX dtype.
 
     Parameters
     ----------
-    value : str
-        String representing the dtype to be converted.
+    value : str or dtype-like
+        String or object representing the dtype to be converted.
 
     Returns
     -------
     dtype : jnp.dtype
-        JAX dtype object corresponding to the input string.
+        JAX dtype object corresponding to the input value.
     """
-    return MAP_DTYPE[value]
+    return MAP_DTYPE[_dtype_key(value)]
 
 
 set_default_dtype = _pre_set_default_dtype(as_dtype)
