@@ -43,7 +43,16 @@ def test_innovation_diagnostic_rejects_when_over_gate() -> None:
 
 
 def test_innovation_diagnostic_rejects_invalid_explicit_gate_threshold() -> None:
-    invalid_thresholds = (0.0, -1.0, np.nan, np.inf, True, np.array([1.0]))
+    invalid_thresholds = (
+        0.0,
+        -1.0,
+        np.nan,
+        np.inf,
+        True,
+        "9.0",
+        np.array("9.0", dtype=object),
+        np.array([1.0]),
+    )
 
     for threshold in invalid_thresholds:
         with pytest.raises(ValueError, match="gate_threshold"):
@@ -52,6 +61,40 @@ def test_innovation_diagnostic_rejects_invalid_explicit_gate_threshold() -> None
                 np.eye(1),
                 gate_threshold=threshold,
             )
+
+
+@pytest.mark.parametrize(
+    "bad_residual",
+    (
+        np.array([True]),
+        ["1.0"],
+        np.array([1.0 + 1.0j]),
+        [None],
+    ),
+)
+def test_innovation_diagnostic_rejects_non_real_residual_values(bad_residual) -> None:
+    with pytest.raises(
+        ValueError,
+        match="residual must contain finite real numeric values",
+    ):
+        innovation_diagnostic(bad_residual, np.eye(1))
+
+
+@pytest.mark.parametrize(
+    "bad_covariance",
+    (
+        np.array([[True]]),
+        [["1.0"]],
+        np.array([[1.0 + 1.0j]]),
+        [[None]],
+    ),
+)
+def test_innovation_diagnostic_rejects_non_real_covariance_values(bad_covariance) -> None:
+    with pytest.raises(
+        ValueError,
+        match="innovation_covariance must contain finite real numeric values",
+    ):
+        innovation_diagnostic(np.array([1.0]), bad_covariance)
 
 
 def test_normalized_innovation_squared_reexport() -> None:
@@ -73,6 +116,20 @@ def test_linear_innovation_diagnostic_uses_measurement_model() -> None:
     assert np.isclose(diagnostic.nis, 2.5)
     assert diagnostic.accepted is True
     assert diagnostic.source == "rf"
+
+
+def test_linear_innovation_diagnostic_rejects_non_real_model_inputs() -> None:
+    with pytest.raises(
+        ValueError,
+        match="measurement_matrix must contain finite real numeric values",
+    ):
+        linear_innovation_diagnostic(
+            mean=np.array([0.0]),
+            covariance=np.eye(1),
+            measurement=np.array([1.0]),
+            measurement_matrix=np.array([[True]]),
+            measurement_covariance=np.eye(1),
+        )
 
 
 def test_diagnostic_from_record_preserves_fields() -> None:

@@ -136,9 +136,9 @@ def _dyn_update_dtype(dtype_pos=None, target=None):
         @functools.wraps(func)
         def _wrapped(*args, **kwargs):
             if dtype_pos is not None and len(args) > dtype_pos:
-                args = list(args)
-                args[dtype_pos] = _config.DEFAULT_DTYPE
-
+                if args[dtype_pos] is None:
+                    args = list(args)
+                    args[dtype_pos] = _config.DEFAULT_DTYPE
             else:
                 if kwargs.get("dtype") is None:
                     kwargs["dtype"] = _config.DEFAULT_DTYPE

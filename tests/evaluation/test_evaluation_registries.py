@@ -16,6 +16,25 @@ def _as_float(value):
     return float(to_numpy(value))
 
 
+class _PointEstimateTrack:
+    def __init__(self, value):
+        self.value = value
+
+    def get_point_estimate(self):
+        return self.value
+
+
+class _TrackManagerLikeState:
+    def __init__(self):
+        self.tracks = [
+            _PointEstimateTrack("raw-hidden"),
+            _PointEstimateTrack("selected"),
+        ]
+
+    def get_tracks(self):
+        return self.tracks[1:]
+
+
 def test_custom_distance_function_registry():
     register_distance_function(
         "unit-test-manifold", lambda _name, _params: lambda x, y: 42.0
@@ -159,6 +178,14 @@ def test_euclidean_extract_mean_preserves_raw_array_state():
     extracted = get_extract_mean("euclidean")(state)
 
     assert to_numpy(extracted).tolist() == pytest.approx([1.0, 2.0])
+
+
+def test_euclidean_mtt_extract_mean_uses_public_track_selection():
+    extracted = get_extract_mean("euclidean", mtt_scenario=True)(
+        _TrackManagerLikeState()
+    )
+
+    assert extracted == ["selected"]
 
 
 def test_symmetric_hypersphere_extract_mean_requires_custom_extractor():

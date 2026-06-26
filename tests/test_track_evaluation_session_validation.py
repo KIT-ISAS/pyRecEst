@@ -32,13 +32,13 @@ class TestTrackEvaluationSessionValidation(unittest.TestCase):
             with self.subTest(function="complete_track_set", value=session_index):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session indices must be integers",
+                    "session_indices entries must be integer session indices",
                 ):
                     complete_track_set([[0, 1]], session_indices=[session_index])
             with self.subTest(function="score_complete_tracks", value=session_index):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session indices must be integers",
+                    "session_indices entries must be integer session indices",
                 ):
                     score_complete_tracks(
                         [[0, 1]],
@@ -63,19 +63,19 @@ class TestTrackEvaluationSessionValidation(unittest.TestCase):
             with self.subTest(function="track_pair_set", pair=pair):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session indices must be integers",
+                    "session_pairs entries must be integer session indices",
                 ):
                     track_pair_set([[0, 1]], session_pairs=[pair])
             with self.subTest(function="score_pairwise_tracks", pair=pair):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session indices must be integers",
+                    "session_pairs entries must be integer session indices",
                 ):
                     score_pairwise_tracks([[0, 1]], [[0, 1]], session_pairs=[pair])
             with self.subTest(function="score_track_matrices", pair=pair):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session indices must be integers",
+                    "session_pairs entries must be integer session indices",
                 ):
                     score_track_matrices([[0, 1]], [[0, 1]], session_pairs=[pair])
 
