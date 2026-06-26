@@ -35,6 +35,14 @@ def _validate_tolerance(value: Any) -> float:
     return tolerance
 
 
+def _is_finite_real_number(value: Any) -> bool:
+    return (
+        isinstance(value, int | float)
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
 def _cmd_info(_args: argparse.Namespace) -> int:
     import pyrecest
     import pyrecest.backend as backend
@@ -91,17 +99,15 @@ def _check_expected_mapping(
             errors.append(f"{section_name}.{key} missing from scenario result")
             continue
         actual_value = actual[key]
-        if isinstance(expected_value, int | float) and not isinstance(
-            expected_value, bool
-        ):
-            try:
-                actual_numeric = float(actual_value)
-                expected_numeric = float(expected_value)
-            except (TypeError, ValueError, OverflowError):
+        if _is_finite_real_number(expected_value):
+            if not _is_finite_real_number(actual_value):
                 errors.append(
-                    f"{section_name}.{key} mismatch: expected numeric {expected_value!r}, got {actual_value!r}"
+                    f"{section_name}.{key} mismatch: expected finite numeric "
+                    f"{expected_value!r}, got {actual_value!r}"
                 )
                 continue
+            actual_numeric = float(actual_value)
+            expected_numeric = float(expected_value)
             delta = abs(actual_numeric - expected_numeric)
             if delta > tolerance:
                 errors.append(

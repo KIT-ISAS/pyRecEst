@@ -40,6 +40,7 @@ def test_empty_square_matrix_is_symmetric_psd_covariance():
         np.array([[True, False], [False, True]]),
         np.array([["1.0", "0.0"], ["0.0", "1.0"]]),
         np.array([[1.0, False], [0.0, 1.0]], dtype=object),
+        np.array([[None, 0.0], [0.0, 1.0]], dtype=object),
         np.array(
             [
                 [np.datetime64("2020-01-01"), np.datetime64("2020-01-02")],
@@ -55,7 +56,7 @@ def test_empty_square_matrix_is_symmetric_psd_covariance():
         np.array([[np.datetime64("2020-01-01"), 0.0], [0.0, 1.0]], dtype=object),
     ],
 )
-def test_covariance_helpers_reject_bool_text_and_temporal_matrices(matrix):
+def test_covariance_helpers_reject_bool_text_temporal_and_none_matrices(matrix):
     assert not is_symmetric(matrix)
     assert not is_positive_semidefinite(matrix)
 
