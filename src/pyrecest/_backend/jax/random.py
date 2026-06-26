@@ -380,7 +380,15 @@ def _choice_population_size(a, kwargs):
 
 
 def _validate_choice_probabilities(p, population_size):
-    p = _jnp.asarray(p, dtype=_jnp.float32)
+    if _contains_boolean_value(p):
+        raise TypeError("p must be real numeric, not boolean")
+    try:
+        p = _jnp.asarray(p)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError("p must be real numeric") from exc
+    if p.dtype.kind not in "iuf":
+        raise TypeError("p must be real numeric")
+    p = p.astype(_jnp.float32)
     if p.ndim != 1 or p.shape[0] != population_size:
         raise ValueError("p must be 1-dimensional with one entry per population item")
 
