@@ -86,6 +86,22 @@ def _sample_count_call_mode(callback: Callable[..., Any]) -> str | None:
     return None
 
 
+def _call_sample_next(
+    callback: Callable[..., Any], count_call_mode: str | None, state: Any, n: int
+) -> Any:
+    """Call a transition sampler without silently dropping unsupported counts."""
+
+    if count_call_mode == "positional":
+        return callback(state, n)
+    if count_call_mode == "keyword":
+        return callback(state, n=n)
+    if n != 1:
+        raise ValueError(
+            "n must be 1 when sample_next callback does not accept a sample-count argument."
+        )
+    return callback(state)
+
+
 def _evaluate_distribution_method(
     distribution: Any, method_name: str, *args: Any
 ) -> Any:
@@ -198,11 +214,9 @@ class SampleableTransitionModel:
         """Draw ``n`` next-state samples conditioned on ``state``."""
 
         n = _validate_sample_count(n)
-        if self._sample_next_count_call_mode == "positional":
-            return self._sample_next(state, n)
-        if self._sample_next_count_call_mode == "keyword":
-            return self._sample_next(state, n=n)
-        return self._sample_next(state)
+        return _call_sample_next(
+            self._sample_next, self._sample_next_count_call_mode, state, n
+        )
 
     def transition_density(self, state_next: Any, state_previous: Any) -> Any:
         """Return transition density values if available."""
@@ -250,11 +264,9 @@ class DensityTransitionModel:
         if self._sample_next is None:
             raise NotImplementedError("No sample_next callback was provided.")
         n = _validate_sample_count(n)
-        if self._sample_next_count_call_mode == "positional":
-            return self._sample_next(state, n)
-        if self._sample_next_count_call_mode == "keyword":
-            return self._sample_next(state, n=n)
-        return self._sample_next(state)
+        return _call_sample_next(
+            self._sample_next, self._sample_next_count_call_mode, state, n
+        )
 
 
 __all__ = [
