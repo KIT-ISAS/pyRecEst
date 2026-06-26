@@ -4,14 +4,44 @@ from warnings import catch_warnings, simplefilter
 import numpy as np
 import numpy.testing as npt
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array, column_stack, diag, linspace, meshgrid, reshape
+from pyrecest.backend import (
+    array,
+    column_stack,
+    diag,
+    linspace,
+    meshgrid,
+    reshape,
+    zeros,
+)
 from pyrecest.distributions import GaussianDistribution
+from pyrecest.distributions.nonperiodic.abstract_linear_distribution import (
+    AbstractLinearDistribution,
+)
 from pyrecest.distributions.nonperiodic.gaussian_mixture import GaussianMixture
 from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
     LinearDiracDistribution,
 )
 from pyrecest.distributions.nonperiodic.linear_mixture import LinearMixture
+
+
+class _ConstantLinearDistribution(AbstractLinearDistribution):
+    def __init__(self, value):
+        super().__init__(1)
+        self.value = value
+
+    def pdf(self, xs):
+        xs = array(xs)
+        if xs.ndim == 0:
+            return array(0.0)
+        if xs.ndim == 1:
+            return zeros(xs.shape)
+        return zeros(xs.shape[0])
+
+    def sample(self, n):
+        return array([[self.value]] * int(n))
 
 
 class LinearMixtureTest(unittest.TestCase):
@@ -141,6 +171,24 @@ class LinearMixtureTest(unittest.TestCase):
         samples = mixture.sample(np.array(4.0))
 
         self.assertEqual(samples.shape, (4, 2))
+
+    def test_sample_preserves_numpy_drawn_component_order(self):
+        if pyrecest.backend.__backend_name__ != "numpy":
+            self.skipTest("NumPy RNG regression test")
+
+        mixture = LinearMixture(
+            [_ConstantLinearDistribution(0.1), _ConstantLinearDistribution(0.9)],
+            array([0.5, 0.5]),
+        )
+
+        pyrecest.backend.random.seed(0)
+        samples = mixture.sample(8)
+
+        self.assertEqual(samples.shape, (8, 1))
+        npt.assert_allclose(
+            samples,
+            array([[0.9], [0.9], [0.9], [0.9], [0.1], [0.9], [0.1], [0.9]]),
+        )
 
     def test_sample_rejects_invalid_count(self):
         mixture = GaussianMixture(

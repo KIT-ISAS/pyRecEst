@@ -32,6 +32,10 @@ class PublicAPIStatus:
     replacement: str | None = None
     notes: str = ""
 
+    def __post_init__(self) -> None:
+        if self.level not in STABILITY_LEVELS:
+            raise ValueError(f"Unknown stability level: {self.level!r}")
+
     def to_dict(self) -> dict[str, str | None]:
         """Return a JSON-serializable representation."""
         return asdict(self)

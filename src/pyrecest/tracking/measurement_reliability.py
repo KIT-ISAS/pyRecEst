@@ -17,7 +17,15 @@ from typing import Any, Literal
 import numpy as np
 
 ReliabilityMode = Literal["off", "inflate", "hard"] | str
-_TEXT_OR_BOOL_SCALAR_TYPES = (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)
+_TEXT_OR_BOOL_SCALAR_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+)
 _REJECTED_NUMERIC_ARRAY_KINDS = frozenset({"b", "c", "S", "U", "M", "m"})
 
 

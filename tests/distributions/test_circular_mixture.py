@@ -3,9 +3,26 @@ import unittest
 import numpy as np
 import numpy.testing as npt
 
+import pyrecest.backend
+
 # pylint: disable=no-name-in-module,no-member
-from pyrecest.backend import array
+from pyrecest.backend import array, zeros
 from pyrecest.distributions import CircularMixture, VonMisesDistribution
+from pyrecest.distributions.circle.abstract_circular_distribution import (
+    AbstractCircularDistribution,
+)
+
+
+class _ConstantCircularDistribution(AbstractCircularDistribution):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def pdf(self, xs):
+        return zeros(array(xs).shape)
+
+    def sample(self, n):
+        return array([self.value] * int(n))
 
 
 class TestCircularMixture(unittest.TestCase):
@@ -62,6 +79,24 @@ class TestCircularMixture(unittest.TestCase):
         samples = mixture.sample(np.int64(4))
 
         self.assertEqual(samples.shape, (4,))
+
+    def test_sample_preserves_numpy_drawn_component_order(self):
+        if pyrecest.backend.__backend_name__ != "numpy":
+            self.skipTest("NumPy RNG regression test")
+
+        mixture = CircularMixture(
+            [_ConstantCircularDistribution(0.1), _ConstantCircularDistribution(0.9)],
+            array([0.5, 0.5]),
+        )
+
+        pyrecest.backend.random.seed(0)
+        samples = mixture.sample(8)
+
+        self.assertEqual(samples.shape, (8,))
+        npt.assert_allclose(
+            samples,
+            array([0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.9]),
+        )
 
     def test_sample_rejects_invalid_count(self):
         for n in (0, -1, 1.5, True):

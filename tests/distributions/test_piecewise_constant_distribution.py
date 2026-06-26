@@ -177,6 +177,14 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         expected = -2.0 * pi / n * sum(w * log(w))
         npt.assert_allclose(self.dist.entropy(), expected, rtol=1e-10)
 
+    def test_entropy_handles_zero_weight_intervals(self):
+        dist = PiecewiseConstantDistribution(array([1.0, 0.0, 1.0]))
+
+        entropy = dist.entropy()
+
+        self.assertTrue(np.isfinite(entropy))
+        npt.assert_allclose(entropy, np.log(4.0 * np.pi / 3.0), rtol=1e-12)
+
     @unittest.skipIf(
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
