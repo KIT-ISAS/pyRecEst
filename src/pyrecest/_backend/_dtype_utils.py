@@ -26,6 +26,24 @@ _MAP_FLOAT_TO_COMPLEX = {
 }
 
 
+def _dtype_lookup_key(value):
+    """Return a backend-agnostic dtype name for shared dtype maps."""
+    name = getattr(value, "name", None)
+    if isinstance(name, str):
+        return name
+
+    name = getattr(value, "__name__", None)
+    if isinstance(name, str):
+        return name
+
+    text = str(value)
+    if text.startswith("torch."):
+        return text.split(".")[-1]
+    if text.endswith("'>") and "." in text:
+        return text.rsplit(".", maxsplit=1)[-1].removesuffix("'>")
+    return text
+
+
 def _copy_func(func):
     """Copy function."""
     new_func = types.FunctionType(
@@ -162,8 +180,17 @@ def _pre_set_default_dtype(as_dtype):
         value : str
             Possible values are "float32" as "float64".
         """
-        _config.DEFAULT_DTYPE = as_dtype(value)
-        _config.DEFAULT_COMPLEX_DTYPE = as_dtype(_MAP_FLOAT_TO_COMPLEX[value])
+        dtype = as_dtype(value)
+        dtype_key = _dtype_lookup_key(dtype)
+        try:
+            complex_dtype_name = _MAP_FLOAT_TO_COMPLEX[dtype_key]
+        except KeyError as exc:
+            raise ValueError(
+                "Default dtype must resolve to float32 or float64."
+            ) from exc
+
+        _config.DEFAULT_DTYPE = dtype
+        _config.DEFAULT_COMPLEX_DTYPE = as_dtype(complex_dtype_name)
 
         _update_default_dtypes()
 
