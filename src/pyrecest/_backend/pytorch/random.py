@@ -167,6 +167,36 @@ def _normal_size(size):
     return _shape_from_size(size)
 
 
+def _broadcasted_parameter_shape(*parameters, message):
+    try:
+        return tuple(_torch.broadcast_shapes(*(parameter.shape for parameter in parameters)))
+    except RuntimeError as exc:
+        raise ValueError(message) from exc
+
+
+def _sample_shape_from_size_and_parameters(size, parameters, message):
+    parameter_shape = _broadcasted_parameter_shape(*parameters, message=message)
+    if size is None:
+        return parameter_shape
+
+    sample_shape = _shape_from_size(size)
+    try:
+        broadcast_shape = tuple(_torch.broadcast_shapes(sample_shape, parameter_shape))
+    except RuntimeError as exc:
+        raise ValueError(message) from exc
+    if broadcast_shape != sample_shape:
+        raise ValueError(message)
+    return sample_shape
+
+
+def _normal_array_size(size, loc, scale):
+    return _sample_shape_from_size_and_parameters(
+        size,
+        (loc, scale),
+        "size, loc, and scale could not be broadcast together",
+    )
+
+
 def _normal_device(*values):
     for value in values:
         if _torch.is_tensor(value):
@@ -186,11 +216,14 @@ def _normal_array_parameters(loc, scale):
 
 
 def _integer_population_size(a):
+    if isinstance(a, bool):
+        return None
     if isinstance(a, _Integral):
         return int(a)
     if (
         _torch.is_tensor(a)
         and a.ndim == 0
+        and a.dtype != _torch.bool
         and not _torch.is_floating_point(a)
         and not _torch.is_complex(a)
     ):
@@ -346,23 +379,28 @@ def normal(loc=0.0, scale=1.0, size=None):
         return _torch.normal(mean=loc, std=scale, size=size or ())
 
     loc, scale = _normal_array_parameters(loc, scale)
-    if size is None:
-        return _torch.normal(mean=loc, std=scale)
-
     if bool(_torch.any(scale < 0)):
         raise ValueError("scale must be non-negative")
+    size = _normal_array_size(size, loc, scale)
     dtype = _torch.result_type(loc, scale)
     return _torch.empty(size, dtype=dtype, device=loc.device).normal_() * scale + loc
 
 
 def _uniform_size(size, low, high):
-    if size is not None:
-        return _shape_from_size(size)
+    return _sample_shape_from_size_and_parameters(
+        size,
+        (low, high),
+        "size, low, and high could not be broadcast together",
+    )
 
-    try:
-        return tuple(_torch.broadcast_shapes(low.shape, high.shape))
-    except RuntimeError as exc:
-        raise ValueError("low and high could not be broadcast together") from exc
+
+def _validate_uniform_bounds(low, high):
+    if bool(_torch.any(~_torch.isfinite(low))) or bool(
+        _torch.any(~_torch.isfinite(high))
+    ):
+        raise ValueError("uniform bounds must be finite")
+    if bool(_torch.any(low > high)):
+        raise ValueError("Upper bound must be greater than or equal to lower bound")
 
 
 def uniform(low=0.0, high=1.0, size=None, dtype=None):
@@ -375,8 +413,7 @@ def uniform(low=0.0, high=1.0, size=None, dtype=None):
     low = _torch.as_tensor(low, dtype=dtype, device=device)
     high = _torch.as_tensor(high, dtype=dtype, device=device)
     size = _uniform_size(size, low, high)
-    if bool(_torch.any(low > high)):
-        raise ValueError("Upper bound must be greater than or equal to lower bound")
+    _validate_uniform_bounds(low, high)
     return (high - low) * _torch.rand(size, dtype=dtype, device=device) + low
 
 

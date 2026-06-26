@@ -24,6 +24,38 @@ def test_rand_rejects_ambiguous_positional_and_size_arguments():
         random.rand(2, size=(3,))
 
 
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        (False, 1.0),
+        (0.0, True),
+        (np.array([False, False]), np.array([1.0, 2.0])),
+        ([False, 0.0], [1.0, 2.0]),
+        ([0.0, 0.5], [1.0, np.bool_(True)]),
+        (
+            np.array([0.0, np.bool_(False)], dtype=object),
+            np.array([1.0, 2.0], dtype=object),
+        ),
+    ],
+)
+def test_uniform_rejects_boolean_bounds(low, high):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.uniform(low, high)
+
+
+@pytest.mark.parametrize(
+    ("low", "high"),
+    [
+        ("0.0", 1.0),
+        (0.0, "1.0"),
+        (np.array(["0.0", "0.5"]), np.array([1.0, 1.5])),
+    ],
+)
+def test_uniform_rejects_text_bounds(low, high):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.uniform(low, high)
+
+
 def test_choice_without_replacement_shuffle_false_preserves_order():
     values = np.array([10, 20, 30, 40, 50])
     matrix = np.array([[10, 20, 30], [40, 50, 60]])
@@ -40,6 +72,33 @@ def test_choice_without_replacement_shuffle_false_preserves_order():
 
     np.testing.assert_array_equal(samples, values)
     np.testing.assert_array_equal(column_samples, matrix)
+
+
+def test_choice_without_replacement_shuffle_false_preserves_population_order_for_unsorted_values():
+    values = np.array([30, 10, 20, 40])
+
+    random.seed(1)
+    expected_indices = np.sort(np.random.choice(values.shape[0], size=3, replace=False))
+    expected = values[expected_indices]
+
+    random.seed(1)
+    samples = random.choice(values, size=3, replace=False, shuffle=False)
+
+    np.testing.assert_array_equal(samples, expected)
+
+
+@pytest.mark.parametrize("control", ["replace", "shuffle"])
+@pytest.mark.parametrize("value", [np.array(False), np.array(True)])
+def test_choice_accepts_numpy_scalar_boolean_controls(control, value):
+    kwargs = {control: value}
+    size = 2
+    if control == "shuffle":
+        kwargs["replace"] = False
+        size = 3
+
+    samples = random.choice(np.arange(3), size=size, **kwargs)
+
+    assert samples.shape == (size,)
 
 
 @pytest.mark.parametrize("control", ["replace", "shuffle"])

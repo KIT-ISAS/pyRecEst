@@ -19,6 +19,15 @@ def test_scale_increases_for_high_nis_ratio_and_decreases_for_low_ratio():
     assert adaptive_scale_from_ratio(0.0, config) < 1.0
 
 
+@pytest.mark.parametrize(
+    "ratio",
+    [np.nan, np.inf, -np.inf, -0.1, True, "1.0", np.array([1.0])],
+)
+def test_scale_rejects_invalid_ratios(ratio):
+    with pytest.raises(ValueError, match="ratio must be a nonnegative finite scalar"):
+        adaptive_scale_from_ratio(ratio)
+
+
 def test_rolling_adapter_updates_source_ratio_and_scales_covariance():
     adapter = RollingNISProcessNoiseAdapter(
         AdaptiveProcessNoiseConfig(ewma_alpha=1.0, high_nis_ratio=1.1)

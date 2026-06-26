@@ -20,6 +20,11 @@ GridLikelihoodFunction = Callable[[Any, Any], Any]
 GridTransitionDensityFactory = Callable[[Any], Any]
 
 
+def _ensure_callable(value: Any, name: str) -> None:
+    if not callable(value):
+        raise TypeError(f"{name} must be callable")
+
+
 @dataclass(frozen=True)
 class GridLikelihoodMeasurementModel:
     """Measurement model that evaluates likelihoods on a filter grid.
@@ -38,6 +43,9 @@ class GridLikelihoodMeasurementModel:
     """
 
     likelihood: GridLikelihoodFunction
+
+    def __post_init__(self) -> None:
+        _ensure_callable(self.likelihood, "likelihood")
 
     def likelihood_values(self, measurement: Any, grid: Any) -> Any:
         """Evaluate the measurement likelihood on ``grid``."""
@@ -81,6 +89,9 @@ class GridTransitionDensityFactoryModel:
     """
 
     transition_density_factory: GridTransitionDensityFactory
+
+    def __post_init__(self) -> None:
+        _ensure_callable(self.transition_density_factory, "transition_density_factory")
 
     def transition_density_for_filter(self, filter_instance: Any) -> Any:
         """Create a transition density compatible with ``filter_instance``."""

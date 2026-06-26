@@ -13,12 +13,15 @@ def get_backend_name() -> str:
     return backend.__backend_name__  # pylint: disable=no-member
 
 
-def is_backend(expected: str) -> bool:
-    """Return whether the active backend equals ``expected``."""
-    return get_backend_name() == expected
+def is_backend(expected: str | tuple[str, ...]) -> bool:
+    """Return whether the active backend matches one of the expected names."""
+    expected_names = _normalize_expected_backend_names(expected)
+    return get_backend_name() in expected_names
 
 
-def _normalize_expected_backend_names(expected: str | tuple[str, ...]) -> tuple[str, ...]:
+def _normalize_expected_backend_names(
+    expected: str | tuple[str, ...],
+) -> tuple[str, ...]:
     message = "expected must name at least one backend."
     if isinstance(expected, str):
         names = (expected,)
@@ -27,7 +30,9 @@ def _normalize_expected_backend_names(expected: str | tuple[str, ...]) -> tuple[
             names = tuple(expected)
         except TypeError as exc:
             raise ValueError(message) from exc
-    if not names or any(not isinstance(name, str) or not name for name in names):
+    if not names or any(
+        not isinstance(name, str) or not name or name.strip() != name for name in names
+    ):
         raise ValueError(message)
     return names
 

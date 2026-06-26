@@ -20,8 +20,10 @@ compatibility.
 from __future__ import annotations
 
 from inspect import Parameter, signature
+from numbers import Integral
 from typing import Any, Callable
 
+import numpy as np
 from pyrecest.protocols.models import (
     SupportsLikelihood,
     SupportsLogLikelihood,
@@ -35,6 +37,21 @@ from .validation import _validate_bool_flag
 def _ensure_callable(value: Any, name: str) -> None:
     if not callable(value):
         raise TypeError(f"{name} must be callable")
+
+
+def _validate_sample_count(value: Any) -> int:
+    """Return ``value`` as a nonnegative integer sample count."""
+
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError("n must be a nonnegative integer.")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)) or not isinstance(scalar, Integral):
+        raise ValueError("n must be a nonnegative integer.")
+    count = int(scalar)
+    if count < 0:
+        raise ValueError("n must be a nonnegative integer.")
+    return count
 
 
 def _sample_count_call_mode(callback: Callable[..., Any]) -> str | None:
@@ -180,6 +197,7 @@ class SampleableTransitionModel:
     def sample_next(self, state: Any, n: int = 1) -> Any:
         """Draw ``n`` next-state samples conditioned on ``state``."""
 
+        n = _validate_sample_count(n)
         if self._sample_next_count_call_mode == "positional":
             return self._sample_next(state, n)
         if self._sample_next_count_call_mode == "keyword":
@@ -231,6 +249,7 @@ class DensityTransitionModel:
 
         if self._sample_next is None:
             raise NotImplementedError("No sample_next callback was provided.")
+        n = _validate_sample_count(n)
         if self._sample_next_count_call_mode == "positional":
             return self._sample_next(state, n)
         if self._sample_next_count_call_mode == "keyword":

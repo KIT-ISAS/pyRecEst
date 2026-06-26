@@ -100,4 +100,4 @@ def get_public_api_registry_entry(api_name: str) -> dict[str, str]:
 
 def iter_public_api_registry() -> tuple[tuple[str, dict[str, str]], ...]:
     """Return public API registry rows in stable name order."""
-    return tuple(sorted(PUBLIC_API_REGISTRY.items()))
+    return tuple((name, dict(row)) for name, row in sorted(PUBLIC_API_REGISTRY.items()))

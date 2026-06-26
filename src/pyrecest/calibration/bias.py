@@ -15,6 +15,18 @@ _FEATURE_ROW_COUNT_ERROR = (
     "features rows must match requested row count; "
     "features must produce one predicted bias row per measurement"
 )
+_REJECTED_NUMERIC_KINDS = frozenset("bUScMm")
+_REJECTED_OBJECT_VALUE_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    complex,
+    np.complexfloating,
+    np.datetime64,
+    np.timedelta64,
+)
 
 
 @dataclass(frozen=True)
@@ -50,13 +62,19 @@ class SensorBiasCorrectionModel:
     def __post_init__(self) -> None:
         target_dim = _as_positive_int(self.target_dim, "target_dim")
         feature_dim = _as_nonnegative_int(self.feature_dim, "feature_dim")
-        intercept = np.asarray(self.intercept, dtype=float).reshape(target_dim)
-        coefficients = np.asarray(self.coefficients, dtype=float).reshape(
+        intercept = _as_numeric_array(self.intercept, "intercept").reshape(target_dim)
+        coefficients = _as_numeric_array(self.coefficients, "coefficients").reshape(
             feature_dim, target_dim
         )
-        feature_mean = np.asarray(self.feature_mean, dtype=float).reshape(feature_dim)
-        feature_scale = np.asarray(self.feature_scale, dtype=float).reshape(feature_dim)
-        residual_std = np.asarray(self.residual_std, dtype=float).reshape(target_dim)
+        feature_mean = _as_numeric_array(self.feature_mean, "feature_mean").reshape(
+            feature_dim
+        )
+        feature_scale = _as_numeric_array(self.feature_scale, "feature_scale").reshape(
+            feature_dim
+        )
+        residual_std = _as_numeric_array(self.residual_std, "residual_std").reshape(
+            target_dim
+        )
         feature_scale = np.where(
             np.isfinite(feature_scale) & (feature_scale > 0.0), feature_scale, 1.0
         )
@@ -152,11 +170,11 @@ class SensorBiasCorrectionModel:
         return cls(
             target_dim=payload["target_dim"],
             feature_dim=payload["feature_dim"],
-            intercept=np.asarray(payload["intercept"], dtype=float),
-            coefficients=np.asarray(payload["coefficients"], dtype=float),
-            feature_mean=np.asarray(payload["feature_mean"], dtype=float),
-            feature_scale=np.asarray(payload["feature_scale"], dtype=float),
-            residual_std=np.asarray(payload["residual_std"], dtype=float),
+            intercept=payload["intercept"],
+            coefficients=payload["coefficients"],
+            feature_mean=payload["feature_mean"],
+            feature_scale=payload["feature_scale"],
+            residual_std=payload["residual_std"],
             training_count=payload["training_count"],
             ridge_alpha=payload.get("ridge_alpha", 0.0),
             metadata=payload.get("metadata", {}),
@@ -175,9 +193,9 @@ def make_bias_training_examples(
     """Match measurements to nearest reference values and compute residual bias."""
 
     max_time_delta = _validate_max_time_delta(max_time_delta_s)
-    measurement_times = np.asarray(measurement_times_s, dtype=float).reshape(-1)
+    measurement_times = _as_numeric_vector(measurement_times_s, "measurement_times_s")
     measurements = _as_2d(measurement_values, "measurement_values")
-    reference_times = np.asarray(reference_times_s, dtype=float).reshape(-1)
+    reference_times = _as_numeric_vector(reference_times_s, "reference_times_s")
     references = _as_2d(reference_values, "reference_values")
     if measurement_times.size != measurements.shape[0]:
         raise ValueError(
@@ -319,8 +337,36 @@ def fit_sensor_bias_correction(
     )
 
 
+def _as_numeric_array(values: Any, name: str) -> np.ndarray:
+    try:
+        raw = np.asarray(values)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must contain numeric values") from exc
+    if _contains_invalid_numeric_values(raw):
+        raise ValueError(f"{name} must contain numeric values")
+    try:
+        return np.asarray(values, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must contain numeric values") from exc
+
+
+def _as_numeric_vector(values: Any, name: str) -> np.ndarray:
+    return _as_numeric_array(values, name).reshape(-1)
+
+
+def _contains_invalid_numeric_values(values: np.ndarray) -> bool:
+    if values.dtype.kind in _REJECTED_NUMERIC_KINDS:
+        return True
+    if values.dtype == object:
+        return any(
+            isinstance(item, _REJECTED_OBJECT_VALUE_TYPES)
+            for item in values.reshape(-1)
+        )
+    return False
+
+
 def _as_2d(values: np.ndarray, name: str) -> np.ndarray:
-    out = np.asarray(values, dtype=float)
+    out = _as_numeric_array(values, name)
     if out.ndim == 1:
         return out.reshape(-1, 1)
     if out.ndim != 2:

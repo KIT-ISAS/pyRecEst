@@ -34,6 +34,41 @@ def test_empty_square_matrix_is_symmetric_psd_covariance():
     assert validated.shape == (0, 0)
 
 
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        np.array([[True, False], [False, True]]),
+        np.array([["1.0", "0.0"], ["0.0", "1.0"]]),
+        np.array([[1.0, False], [0.0, 1.0]], dtype=object),
+        np.array(
+            [
+                [np.datetime64("2020-01-01"), np.datetime64("2020-01-02")],
+                [np.datetime64("2020-01-02"), np.datetime64("2020-01-03")],
+            ]
+        ),
+        np.array(
+            [
+                [np.timedelta64(1, "D"), np.timedelta64(0, "D")],
+                [np.timedelta64(0, "D"), np.timedelta64(1, "D")],
+            ]
+        ),
+        np.array([[np.datetime64("2020-01-01"), 0.0], [0.0, 1.0]], dtype=object),
+    ],
+)
+def test_covariance_helpers_reject_bool_text_and_temporal_matrices(matrix):
+    assert not is_symmetric(matrix)
+    assert not is_positive_semidefinite(matrix)
+
+    with pytest.raises(ValueError, match="covariance must contain numeric values"):
+        assert_covariance_matrix(matrix)
+    with pytest.raises(ValueError, match="matrix must contain numeric values"):
+        symmetrize_matrix(matrix)
+    with pytest.raises(ValueError, match="matrix must contain numeric values"):
+        nearest_symmetric_psd(matrix)
+    with pytest.raises(ValueError, match="matrix must contain numeric values"):
+        jittered_cholesky(matrix)
+
+
 def test_covariance_helpers_reject_nonfinite_matrices():
     matrix = np.array([[np.inf, 0.0], [0.0, 1.0]])
 

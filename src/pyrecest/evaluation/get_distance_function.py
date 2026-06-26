@@ -11,12 +11,23 @@ from scipy.optimize import linear_sum_assignment
 
 DistanceFactory = Callable[[str, dict[str, Any] | None], Callable[[Any, Any], float]]
 _DISTANCE_FUNCTION_FACTORIES: dict[str, DistanceFactory] = {}
+_UNSUPPORTED_NUMERIC_CONFIG_TYPES = (
+    bool,
+    np.bool_,
+    str,
+    bytes,
+    bytearray,
+    np.str_,
+    np.bytes_,
+    complex,
+    np.complexfloating,
+)
 
 
 def _normalize_registry_name(manifold_name: str) -> str:
     if not isinstance(manifold_name, str) or not manifold_name.strip():
         raise ValueError("manifold_name must be a non-empty string")
-    return manifold_name.lower()
+    return manifold_name.strip().lower()
 
 
 def register_distance_function(
@@ -53,12 +64,47 @@ def _without_symmetry_suffix(manifold_name: str) -> str:
     )
 
 
+def _contains_unsupported_numeric_config_values(value: Any) -> bool:
+    if isinstance(value, _UNSUPPORTED_NUMERIC_CONFIG_TYPES):
+        return True
+    try:
+        raw_values = np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        raw_values = ()
+    if any(isinstance(item, _UNSUPPORTED_NUMERIC_CONFIG_TYPES) for item in raw_values):
+        return True
+    try:
+        values = np.asarray(to_numpy(value), dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, _UNSUPPORTED_NUMERIC_CONFIG_TYPES) for item in values)
+
+
+def _as_real_numeric_array(value: Any, name: str) -> np.ndarray:
+    message = f"{name} must contain only finite real numeric values"
+    if _contains_unsupported_numeric_config_values(value):
+        raise ValueError(message)
+    try:
+        values = np.asarray(to_numpy(value), dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.all(np.isfinite(values)):
+        raise ValueError(message)
+    return values
+
+
 def _validate_symmetry_count(nSymm: Any) -> int:
     count_array = np.asarray(to_numpy(nSymm))
-    if count_array.shape != () or np.issubdtype(count_array.dtype, np.bool_):
+    if (
+        count_array.shape != ()
+        or np.issubdtype(count_array.dtype, np.bool_)
+        or _contains_unsupported_numeric_config_values(nSymm)
+        or _contains_unsupported_numeric_config_values(count_array)
+    ):
         raise ValueError("nSymm must be a finite positive integer")
+    scalar = count_array.item()
     try:
-        count = float(count_array.item())
+        count = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("nSymm must be a finite positive integer") from exc
     if not np.isfinite(count) or not count.is_integer() or count <= 0:
@@ -66,12 +112,23 @@ def _validate_symmetry_count(nSymm: Any) -> int:
     return int(count)
 
 
+def _validate_symmetry_offsets(symmetryOffsets: Any) -> list[float]:
+    if _contains_unsupported_numeric_config_values(symmetryOffsets):
+        raise ValueError("symmetryOffsets must contain only finite real numeric values")
+    try:
+        offsets = np.asarray(to_numpy(symmetryOffsets), dtype=float).reshape(-1)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(
+            "symmetryOffsets must contain only finite real numeric values"
+        ) from exc
+    if not np.all(np.isfinite(offsets)):
+        raise ValueError("symmetryOffsets must contain only finite real numeric values")
+    return [float(offset) for offset in offsets]
+
+
 def _symmetry_offsets(nSymm, symmetryOffsets):
     if symmetryOffsets is not None:
-        offsets = np.asarray(to_numpy(symmetryOffsets), dtype=float).reshape(-1)
-        if not np.all(np.isfinite(offsets)):
-            raise ValueError("symmetryOffsets must be finite")
-        return [float(offset) for offset in offsets]
+        return _validate_symmetry_offsets(symmetryOffsets)
     if nSymm is None:
         return []
     count = _validate_symmetry_count(nSymm)
@@ -93,8 +150,8 @@ def _symmetric_distance_function(
     return distance_function
 
 
-def _as_target_matrix(value) -> np.ndarray:
-    value = np.asarray(to_numpy(value), dtype=float)
+def _as_target_matrix(value, name: str) -> np.ndarray:
+    value = _as_real_numeric_array(value, name)
     if value.size == 0:
         if value.ndim == 2:
             return value
@@ -112,10 +169,18 @@ def _as_target_matrix(value) -> np.ndarray:
 
 def _validate_mtt_cutoff_distance(value: Any) -> float:
     value_array = np.asarray(to_numpy(value))
-    if value_array.shape != () or np.issubdtype(value_array.dtype, np.bool_):
+    if (
+        value_array.shape != ()
+        or np.issubdtype(value_array.dtype, np.bool_)
+        or _contains_unsupported_numeric_config_values(value)
+        or _contains_unsupported_numeric_config_values(value_array)
+    ):
+        raise ValueError("cutoff_distance must be a finite nonnegative scalar")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
         raise ValueError("cutoff_distance must be a finite nonnegative scalar")
     try:
-        cutoff_distance = float(value_array.item())
+        cutoff_distance = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("cutoff_distance must be a finite nonnegative scalar") from exc
     if not np.isfinite(cutoff_distance) or cutoff_distance < 0.0:
@@ -124,8 +189,8 @@ def _validate_mtt_cutoff_distance(value: Any) -> float:
 
 
 def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
-    raw_first = np.asarray(to_numpy(x1), dtype=float)
-    raw_second = np.asarray(to_numpy(x2), dtype=float)
+    raw_first = _as_real_numeric_array(x1, "x1")
+    raw_second = _as_real_numeric_array(x2, "x2")
     if raw_first.size == 0 and raw_first.ndim == 2 and raw_second.ndim == 2:
         if raw_first.shape[1] != raw_second.shape[1]:
             raise ValueError("MTT state sets must use the same target dimension")
@@ -134,8 +199,8 @@ def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
         if raw_first.shape[1] != raw_second.shape[1]:
             raise ValueError("MTT state sets must use the same target dimension")
         return float(cutoff_distance * raw_first.shape[0])
-    first = _as_target_matrix(x1)
-    second = _as_target_matrix(x2)
+    first = _as_target_matrix(raw_first, "x1")
+    second = _as_target_matrix(raw_second, "x2")
     if first.shape[0] == 0 or second.shape[0] == 0:
         return float(cutoff_distance * abs(first.shape[0] - second.shape[0]))
     if first.shape[1] != second.shape[1]:
@@ -150,6 +215,20 @@ def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
     return matched_cost + float(cutoff_distance) * missed_count
 
 
+def _state_component(value, index: int):
+    value = asarray(value)
+    if value.ndim == 1:
+        return value[index]
+    return value[index, :]
+
+
+def _state_slice(value, start: int, stop: int):
+    value = asarray(value)
+    if value.ndim == 1:
+        return value[start:stop]
+    return value[start:stop, :]
+
+
 def _angular_distance_from_inner_product(inner_product):
     return arccos(clip(inner_product, -1.0, 1.0))
 
@@ -157,7 +236,7 @@ def _angular_distance_from_inner_product(inner_product):
 def get_distance_function(
     manifold_name, additional_params=None, nSymm=None, symmetryOffsets=None
 ):
-    normalized_name = str(manifold_name).lower()
+    normalized_name = _normalize_registry_name(manifold_name)
     registered_factory = _DISTANCE_FUNCTION_FACTORIES.get(normalized_name)
     if registered_factory is not None:
         return registered_factory(manifold_name, additional_params)
@@ -191,13 +270,16 @@ def get_distance_function(
 
         def distance_function(xest, xtrue):
             return linalg.norm(
-                AbstractHypertoroidalDistribution.angular_error(xest[0, :], xtrue[0, :])
+                AbstractHypertoroidalDistribution.angular_error(
+                    _state_component(xest, 0),
+                    _state_component(xtrue, 0),
+                )
             )
 
     elif "se2" in normalized_name or "se2linear" in normalized_name:
 
         def distance_function(x1, x2):
-            return linalg.norm(x1[1:3, :] - x2[1:3, :])
+            return linalg.norm(_state_slice(x1, 1, 3) - _state_slice(x2, 1, 3))
 
     elif "se3bounded" in normalized_name:
 
@@ -210,7 +292,7 @@ def get_distance_function(
     elif "se3" in normalized_name or "se3linear" in normalized_name:
 
         def distance_function(x1, x2):
-            return linalg.norm(x1[4:7, :] - x2[4:7, :])
+            return linalg.norm(_state_slice(x1, 4, 7) - _state_slice(x2, 4, 7))
 
     elif "euclidean" in normalized_name and "mtt" not in normalized_name:
 
