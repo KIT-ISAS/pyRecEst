@@ -3,6 +3,7 @@
 from math import prod as _prod
 from numbers import Integral as _Integral
 
+import numpy as _np
 import torch as _torch
 from torch import get_rng_state as get_state  # For PyRecEst
 from torch import set_rng_state as set_state  # For PyRecEst
@@ -15,6 +16,14 @@ from ._dtype import _allow_complex_dtype, _modify_func_default_dtype
 _COMPLEX_TO_FLOAT_DTYPE = {
     _torch.complex64: _torch.float32,
     _torch.complex128: _torch.float64,
+}
+_BOOLEAN_TYPES = (bool, _np.bool_)
+_INTEGER_DTYPES = {
+    _torch.uint8,
+    _torch.int8,
+    _torch.int16,
+    _torch.int32,
+    _torch.int64,
 }
 
 
@@ -405,11 +414,41 @@ def _uniform_size(size, low, high):
     )
 
 
-def _validate_uniform_bounds(low, high):
-    if bool(_torch.any(~_torch.isfinite(low))) or bool(
-        _torch.any(~_torch.isfinite(high))
-    ):
+def _contains_boolean_value(value):
+    if isinstance(value, _BOOLEAN_TYPES):
+        return True
+    if _torch.is_tensor(value):
+        return value.dtype == _torch.bool
+    try:
+        values = _np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(
+        isinstance(item, _BOOLEAN_TYPES)
+        or (_torch.is_tensor(item) and item.ndim == 0 and item.dtype == _torch.bool)
+        for item in values
+    )
+
+
+def _is_real_numeric_dtype(dtype):
+    return dtype.is_floating_point or dtype in _INTEGER_DTYPES
+
+
+def _validate_uniform_bound(bound, name, *, dtype=None, device=None):
+    if _contains_boolean_value(bound):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        bound = _torch.as_tensor(bound, dtype=dtype, device=device)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if not _is_real_numeric_dtype(bound.dtype):
+        raise TypeError(f"{name} must be real numeric")
+    if bool(_torch.any(~_torch.isfinite(bound))):
         raise ValueError("uniform bounds must be finite")
+    return bound
+
+
+def _validate_uniform_bounds(low, high):
     if bool(_torch.any(low > high)):
         raise ValueError("Upper bound must be greater than or equal to lower bound")
 
@@ -421,8 +460,8 @@ def uniform(low=0.0, high=1.0, size=None, dtype=None):
     elif _torch.is_tensor(high):
         device = high.device
 
-    low = _torch.as_tensor(low, dtype=dtype, device=device)
-    high = _torch.as_tensor(high, dtype=dtype, device=device)
+    low = _validate_uniform_bound(low, "low", dtype=dtype, device=device)
+    high = _validate_uniform_bound(high, "high", dtype=dtype, device=device)
     size = _uniform_size(size, low, high)
     _validate_uniform_bounds(low, high)
     return (high - low) * _torch.rand(size, dtype=dtype, device=device) + low
