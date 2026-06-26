@@ -30,6 +30,12 @@ def test_rand_rejects_ambiguous_positional_and_size_arguments():
         (False, 1.0),
         (0.0, True),
         (np.array([False, False]), np.array([1.0, 2.0])),
+        ([False, 0.0], [1.0, 2.0]),
+        ([0.0, 0.5], [1.0, np.bool_(True)]),
+        (
+            np.array([0.0, np.bool_(False)], dtype=object),
+            np.array([1.0, 2.0], dtype=object),
+        ),
     ],
 )
 def test_uniform_rejects_boolean_bounds(low, high):

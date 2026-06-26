@@ -5,6 +5,7 @@ from ._dispatch import numpy as _np
 
 _modify_func_default_dtype = _common._modify_func_default_dtype
 _allow_complex_dtype = _common._allow_complex_dtype
+_BOOLEAN_TYPES = (bool, _np.bool_)
 
 
 def _rand(*dims, size=None):
@@ -21,26 +22,36 @@ rand = _modify_func_default_dtype(
 )
 
 
-def _validate_uniform_bound_array(bound, name):
-    if bound.dtype.kind == "b":
+def _contains_boolean_value(value):
+    if isinstance(value, _BOOLEAN_TYPES):
+        return True
+    try:
+        values = _np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, _BOOLEAN_TYPES) for item in values)
+
+
+def _validate_uniform_bound(bound, name):
+    if _contains_boolean_value(bound):
         raise TypeError(f"{name} must be real numeric, not boolean")
-    if bound.dtype.kind not in "iuf":
+    bound_array = _np.asarray(bound)
+    if bound_array.dtype.kind not in "iuf":
         raise TypeError(f"{name} must be real numeric")
-    if _np.any(~_np.isfinite(bound)):
+    if _np.any(~_np.isfinite(bound_array)):
         raise ValueError("uniform bounds must be finite")
+    return bound_array
 
 
 def _validate_uniform_bounds(low, high):
-    _validate_uniform_bound_array(low, "low")
-    _validate_uniform_bound_array(high, "high")
-    if _np.any(low > high):
+    low_array = _validate_uniform_bound(low, "low")
+    high_array = _validate_uniform_bound(high, "high")
+    if _np.any(low_array > high_array):
         raise ValueError("Upper bound must be greater than or equal to lower bound")
 
 
 def _uniform(low=0.0, high=1.0, size=None):
-    low_array = _np.asarray(low)
-    high_array = _np.asarray(high)
-    _validate_uniform_bounds(low_array, high_array)
+    _validate_uniform_bounds(low, high)
     return _np.random.uniform(low, high, size)
 
 
@@ -60,7 +71,7 @@ multivariate_normal = _modify_func_default_dtype(
 
 
 def _normalize_choice_axis(axis, ndim):
-    if isinstance(axis, (bool, _np.bool_)):
+    if isinstance(axis, _BOOLEAN_TYPES):
         raise TypeError("axis must be an integer")
     try:
         axis = _operator.index(axis)
@@ -72,7 +83,7 @@ def _normalize_choice_axis(axis, ndim):
 
 
 def _choice_bool(value, name):
-    if isinstance(value, (bool, _np.bool_)):
+    if isinstance(value, _BOOLEAN_TYPES):
         return bool(value)
     value_array = _np.asarray(value)
     if value_array.shape == () and value_array.dtype.kind == "b":
@@ -84,7 +95,7 @@ def _validate_choice_population(a_array):
     if a_array.ndim != 0:
         return
     scalar = a_array.item()
-    if isinstance(scalar, (bool, _np.bool_)):
+    if isinstance(scalar, _BOOLEAN_TYPES):
         raise ValueError("a must be a positive integer or a non-empty array")
 
 
