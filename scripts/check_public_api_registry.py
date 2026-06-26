@@ -40,6 +40,10 @@ def _load_backend_capabilities() -> dict[str, dict[str, str]]:
     return dict(capabilities)
 
 
+def _markdown_table_cell(value: object) -> str:
+    return str(value).replace("\r", " ").replace("\n", "<br>").replace(chr(124), chr(0xFF5C))
+
+
 def validate_registry() -> list[str]:
     registry, categories = _load_registry()
     backend_capabilities = _load_backend_capabilities()
@@ -79,11 +83,11 @@ def render_markdown() -> str:
     for api_name, row in sorted(registry.items()):
         rows.append(
             [
-                f"`{api_name}`",
-                f"`{row['module']}`",
-                row["category"],
-                f"`{row.get('backend_contract', '')}`",
-                row.get("notes", ""),
+                f"`{_markdown_table_cell(api_name)}`",
+                f"`{_markdown_table_cell(row['module'])}`",
+                _markdown_table_cell(row["category"]),
+                f"`{_markdown_table_cell(row.get('backend_contract', ''))}`",
+                _markdown_table_cell(row.get("notes", "")),
             ]
         )
 
