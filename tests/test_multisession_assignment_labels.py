@@ -66,6 +66,23 @@ class TestMultiSessionAssignmentLabels(unittest.TestCase):
         __backend_name__ == "jax",
         reason="Not supported on this backend",
     )
+    def test_text_fill_values_are_rejected(self):
+        tracks = [{0: 0}]
+        invalid_fill_values = ("-1", np.str_("-2"), np.array("-3"))
+
+        for fill_value in invalid_fill_values:
+            for name, converter in self._converters():
+                with self.subTest(converter=name, fill_value=repr(fill_value)):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "fill_value must be an integer",
+                    ):
+                        converter(tracks, session_sizes=[2], fill_value=fill_value)
+
+    @unittest.skipIf(
+        __backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
     def test_fill_value_cannot_collide_with_track_labels(self):
         tracks = [{0: 0}, {0: 1}]
 

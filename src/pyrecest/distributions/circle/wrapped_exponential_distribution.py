@@ -73,6 +73,7 @@ class WrappedExponentialDistribution(AbstractCircularDistribution):
         n = int(n)
         # Use inverse CDF method: X = -ln(U)/lambda ~ Exp(lambda), then wrap
         u = random.uniform(size=(n,))
+        u = u + (u == 0.0) * 1.0e-12
         return mod(-log(u) / self.lambda_, 2.0 * pi)
 
     def entropy(self):

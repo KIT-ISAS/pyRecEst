@@ -77,7 +77,7 @@ class TestTrackEvaluation(unittest.TestCase):
             with self.subTest(session_index=session_index):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session indices must be integers",
+                    "session_indices entries must be integer session indices",
                 ):
                     complete_track_set([[0, 1, 2]], session_indices=[session_index])
 
@@ -114,7 +114,7 @@ class TestTrackEvaluation(unittest.TestCase):
             with self.subTest(session_pair=session_pair):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "session[ _](indices must be integers|pairs must contain pairs)",
+                    "session_pairs (entries must be integer session indices|must contain pairs)",
                 ):
                     track_pair_set([[0, 1, 2]], session_pairs=[session_pair])
 
@@ -211,6 +211,17 @@ class TestTrackEvaluation(unittest.TestCase):
             track_pair_set([[0, 1]], session_pairs=[(1, 0)])
         with self.assertRaises(IndexError):
             track_pair_set([[0, 1]], session_pairs=[(0, 2)])
+
+    def test_rejects_non_integer_session_selectors(self):
+        tracks = [[0, 1, 2]]
+
+        for session_indices in ([True], [1.5], ["1"]):
+            with self.assertRaisesRegex(ValueError, "session_indices"):
+                complete_track_set(tracks, session_indices=session_indices)
+
+        for session_pairs in ([(0, True)], [(0, 1.5)], [("0", 1)]):
+            with self.assertRaisesRegex(ValueError, "session_pairs"):
+                track_pair_set(tracks, session_pairs=session_pairs)
 
 
 if __name__ == "__main__":

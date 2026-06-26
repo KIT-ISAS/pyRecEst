@@ -109,12 +109,24 @@ def _maybe_preserve_choice_order(indices, *, replace, p, shuffle, size):
     return _np.sort(index_array.reshape(-1)).reshape(index_array.shape)
 
 
+def _validate_choice_probabilities(p):
+    if p is None:
+        return None
+    if _contains_boolean_value(p):
+        raise TypeError("p must be real numeric, not boolean")
+    p_array = _np.asarray(p)
+    if p_array.dtype.kind not in "iuf":
+        raise TypeError("p must be real numeric")
+    return p_array
+
+
 def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
     """Draw samples from an integer or array population."""
     replace = _choice_bool(replace, "replace")
     shuffle = _choice_bool(shuffle, "shuffle")
     a_array = _np.asarray(a)
     _validate_choice_population(a_array)
+    p = _validate_choice_probabilities(p)
     if a_array.ndim == 0:
         return _maybe_preserve_choice_order(
             _np.random.choice(a, size=size, replace=replace, p=p),
@@ -135,9 +147,6 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
             size=size,
         )
         return _np.take(a_array, indices, axis=0)
-
-    if p is not None:
-        p = _np.asarray(p)
 
     indices = _np.random.choice(a_array.shape[axis], size=size, replace=replace, p=p)
     indices = _maybe_preserve_choice_order(
