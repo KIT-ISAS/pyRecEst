@@ -33,6 +33,12 @@ def _as_1d_mu(mu):
         mu = mu.reshape((1,))
     if mu.ndim != 1:
         raise ValueError(f"mu must be one-dimensional, but got shape {mu.shape}")
+    try:
+        finite_mu = backend_all(isfinite(mu))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("mu must contain only finite real values") from exc
+    if not bool(finite_mu):
+        raise ValueError("mu must contain only finite real values")
     return mu
 
 

@@ -34,7 +34,7 @@ def _as_nonnegative_measurement_count(value, name="measurement count") -> int:
         raise ValueError(f"{name} must be a non-negative integer.")
 
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_)):
         raise ValueError(f"{name} must be a non-negative integer.")
     if isinstance(scalar, (int, np.integer)):
         count = int(scalar)

@@ -179,3 +179,59 @@ def test_fixed_lag_consecutive_miss_after_detection_uses_committed_streak():
 
     assert fixed_lag.path == [frames[0][0], None, None]
     assert fixed_lag.total_cost == 9.0
+
+
+def test_fixed_lag_custom_transition_preserves_leading_gap_previous_none():
+    frames = [[], [TrackletAssociationCandidate("candidate", unary_cost=0.0)]]
+    config = TrackletViterbiConfig(missed_detection_cost=2.0)
+
+    def transition(previous, current, miss_streak):
+        del miss_streak
+        if current is None:
+            return 20.0
+        if previous is None:
+            return 0.0
+        return 100.0
+
+    full = solve_tracklet_viterbi(
+        frames,
+        config=config,
+        transition_cost=transition,
+    )
+    fixed_lag = solve_fixed_lag_tracklet_viterbi(
+        frames,
+        lag_s=0.1,
+        config=config,
+        transition_cost=transition,
+    )
+
+    assert fixed_lag.path == full.path == [None, frames[1][0]]
+    assert fixed_lag.total_cost == full.total_cost
+
+
+def test_fixed_lag_custom_transition_scores_recovery_after_leading_gap():
+    frames = [[], [TrackletAssociationCandidate("candidate", unary_cost=0.0)]]
+    config = TrackletViterbiConfig(missed_detection_cost=2.0)
+
+    def transition(previous, current, miss_streak):
+        if current is None:
+            return 100.0
+        if previous is None and miss_streak > 0:
+            return 7.0
+        return 0.0
+
+    full = solve_tracklet_viterbi(
+        frames,
+        config=config,
+        transition_cost=transition,
+    )
+    fixed_lag = solve_fixed_lag_tracklet_viterbi(
+        frames,
+        lag_s=0.1,
+        config=config,
+        transition_cost=transition,
+    )
+
+    assert fixed_lag.path == full.path == [None, frames[1][0]]
+    assert full.total_cost == 9.0
+    assert fixed_lag.total_cost == full.total_cost
