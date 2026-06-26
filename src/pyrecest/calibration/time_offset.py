@@ -412,6 +412,7 @@ def aggregate_time_offset_sweeps(
 ) -> list[dict[str, float]]:
     """Aggregate same-offset sweeps with count weighting."""
 
+    metric = _validate_error_metric(metric)
     by_offset: dict[float, list[Mapping[str, float]]] = {}
     for sweep in sweeps:
         for row in sweep:
