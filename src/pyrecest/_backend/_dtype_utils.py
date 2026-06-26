@@ -153,6 +153,17 @@ def _dyn_update_dtype(dtype_pos=None, target=None):
     return _decorator(target)
 
 
+def _dtype_name(value):
+    """Return a stable dtype name for backend dtype-like objects."""
+    name = getattr(value, "name", None) or getattr(value, "__name__", None)
+    if name is not None:
+        return str(name)
+    text = str(value)
+    if "." in text:
+        text = text.rsplit(".", maxsplit=1)[-1]
+    return text.strip("'>")
+
+
 def _pre_set_default_dtype(as_dtype):
     def set_default_dtype(value):
         """Set backend default dtype.
@@ -162,8 +173,17 @@ def _pre_set_default_dtype(as_dtype):
         value : str
             Possible values are "float32" as "float64".
         """
-        _config.DEFAULT_DTYPE = as_dtype(value)
-        _config.DEFAULT_COMPLEX_DTYPE = as_dtype(_MAP_FLOAT_TO_COMPLEX[value])
+        default_dtype = as_dtype(value)
+        dtype_name = _dtype_name(default_dtype)
+        try:
+            complex_dtype = as_dtype(_MAP_FLOAT_TO_COMPLEX[dtype_name])
+        except KeyError as exc:
+            raise ValueError(
+                "Default dtype must resolve to float32 or float64."
+            ) from exc
+
+        _config.DEFAULT_DTYPE = default_dtype
+        _config.DEFAULT_COMPLEX_DTYPE = complex_dtype
 
         _update_default_dtypes()
 
