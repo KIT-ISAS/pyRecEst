@@ -33,6 +33,9 @@ class PublicAPIStatus:
     notes: str = ""
 
     def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("public API status name must be a non-empty string")
+        object.__setattr__(self, "name", self.name.strip())
         if self.level not in STABILITY_LEVELS:
             raise ValueError(f"Unknown stability level: {self.level!r}")
 
