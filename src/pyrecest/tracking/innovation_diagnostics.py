@@ -105,15 +105,13 @@ def innovation_diagnostic(
 ) -> InnovationDiagnostic:
     """Compute NIS and residual diagnostics from one innovation."""
 
-    residual_array = np.asarray(residual, dtype=float).reshape(-1)
-    innovation_covariance_array = np.asarray(innovation_covariance, dtype=float)
+    residual_array = _as_finite_real_array(residual, "residual").reshape(-1)
+    innovation_covariance_array = _as_finite_real_array(
+        innovation_covariance,
+        "innovation_covariance",
+    )
     if innovation_covariance_array.shape != (residual_array.size, residual_array.size):
         raise ValueError("innovation_covariance must match residual dimension")
-    if (
-        not np.isfinite(residual_array).all()
-        or not np.isfinite(innovation_covariance_array).all()
-    ):
-        raise ValueError("innovation inputs must be finite")
     resolved_threshold = _validate_optional_positive_scalar(
         gate_threshold,
         "gate_threshold",
@@ -162,11 +160,14 @@ def linear_innovation_diagnostic(
 ) -> InnovationDiagnostic:
     """Compute innovation diagnostics for a linear measurement ``z = Hx + v``."""
 
-    state_mean = np.asarray(mean, dtype=float).reshape(-1)
-    state_covariance = np.asarray(covariance, dtype=float)
-    measurement_vector = np.asarray(measurement, dtype=float).reshape(-1)
-    observation = np.asarray(measurement_matrix, dtype=float)
-    measurement_noise = np.asarray(measurement_covariance, dtype=float)
+    state_mean = _as_finite_real_array(mean, "mean").reshape(-1)
+    state_covariance = _as_finite_real_array(covariance, "covariance")
+    measurement_vector = _as_finite_real_array(measurement, "measurement").reshape(-1)
+    observation = _as_finite_real_array(measurement_matrix, "measurement_matrix")
+    measurement_noise = _as_finite_real_array(
+        measurement_covariance,
+        "measurement_covariance",
+    )
     if state_covariance.shape != (state_mean.size, state_mean.size):
         raise ValueError("covariance must have shape (state_dim, state_dim)")
     if observation.shape != (measurement_vector.size, state_mean.size):
@@ -335,6 +336,51 @@ def _summarize_group(
     )
 
 
+_TEXT_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+_BOOLEAN_TYPES = (bool, np.bool_)
+_COMPLEX_TYPES = (complex, np.complexfloating)
+_TEMPORAL_TYPES = (np.datetime64, np.timedelta64)
+_MISSING_TYPES = (type(None),)
+_INVALID_REAL_NUMERIC_TYPES = (
+    *_TEXT_TYPES,
+    *_BOOLEAN_TYPES,
+    *_COMPLEX_TYPES,
+    *_TEMPORAL_TYPES,
+    *_MISSING_TYPES,
+)
+
+
+def _contains_values_of_type(value: Any, types: tuple[type, ...]) -> bool:
+    if isinstance(value, types):
+        return True
+    try:
+        values = np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(item, types) for item in values)
+
+
+def _as_finite_real_array(value: Any, name: str) -> np.ndarray:
+    message = f"{name} must contain finite real numeric values"
+    try:
+        raw_values = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+
+    if raw_values.dtype == np.bool_ or raw_values.dtype.kind in "USbcMm":
+        raise ValueError(message)
+    if _contains_values_of_type(value, _INVALID_REAL_NUMERIC_TYPES) or _contains_values_of_type(raw_values, _INVALID_REAL_NUMERIC_TYPES):
+        raise ValueError(message)
+
+    try:
+        values = np.asarray(raw_values, dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(values).all():
+        raise ValueError(message)
+    return values
+
+
 def _optional_float(value: Any) -> float | None:
     if value is None:
         return None
@@ -417,7 +463,7 @@ def _validate_optional_positive_scalar(value: Any, name: str) -> float | None:
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError(f"{name} must be a finite positive scalar")
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, np.bool_, str, bytes, bytearray)):
         raise ValueError(f"{name} must be a finite positive scalar")
     try:
         parsed = float(scalar)

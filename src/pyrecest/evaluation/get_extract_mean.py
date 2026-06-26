@@ -52,16 +52,20 @@ def _point_estimate_or_mean(filter_state):
     return filter_state
 
 
+def _extract_track_collection_mean(tracks):
+    return [_point_estimate_or_mean(track) for track in tracks]
+
+
 def _extract_mtt_mean(filter_state):
+    get_tracks = getattr(filter_state, "get_tracks", None)
+    if callable(get_tracks):
+        return _extract_track_collection_mean(get_tracks())
     if hasattr(filter_state, "tracks"):
-        return [_point_estimate_or_mean(track) for track in filter_state.tracks]
+        return _extract_track_collection_mean(filter_state.tracks)
     if hasattr(filter_state, "single_target_filters"):
-        return [
-            _point_estimate_or_mean(track)
-            for track in filter_state.single_target_filters
-        ]
+        return _extract_track_collection_mean(filter_state.single_target_filters)
     if isinstance(filter_state, list | tuple):
-        return [_point_estimate_or_mean(track) for track in filter_state]
+        return _extract_track_collection_mean(filter_state)
     return _point_estimate_or_mean(filter_state)
 
 
