@@ -46,6 +46,13 @@ def _call_vectorized_sample_next(sample_next, particles, n_particles):
     return sample_next(particles)
 
 
+def _stack_particle_updates(updates, reference_particles):
+    """Stack scalar/one-dimensional particle updates without transposing matrices."""
+    if ndim(reference_particles) == 1:
+        return hstack(updates)
+    return vstack(updates)
+
+
 class AbstractParticleFilter(AbstractFilter):
     def __init__(
         self,
@@ -151,10 +158,9 @@ class AbstractParticleFilter(AbstractFilter):
             updated_particles = [
                 sample_next(particle) for particle in self.filter_state.d
             ]
-            if self.filter_state.dim == 1:
-                updated_particles = hstack(updated_particles)
-            else:
-                updated_particles = vstack(updated_particles)
+            updated_particles = _stack_particle_updates(
+                updated_particles, self.filter_state.d
+            )
 
         if updated_particles.shape != self.filter_state.d.shape:
             raise ValueError(
@@ -201,10 +207,9 @@ class AbstractParticleFilter(AbstractFilter):
                         noise_curr = shifted_noise
                     updated_particles.append(noise_curr.sample(1))
 
-            if self.filter_state.dim == 1:
-                updated_particles = hstack(updated_particles)
-            else:
-                updated_particles = vstack(updated_particles)
+            updated_particles = _stack_particle_updates(
+                updated_particles, self.filter_state.d
+            )
 
         self._filter_state.d = updated_particles
 
