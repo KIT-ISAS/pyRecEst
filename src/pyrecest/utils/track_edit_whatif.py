@@ -376,6 +376,8 @@ def _apply_split_track(matrix: np.ndarray, edit: TrackEdit) -> TrackEditApplicat
         return TrackEditApplication(
             edit, output, False, "reject", "split_session_out_of_bounds"
         )
+    if not any(value is not None for value in output[row_index]):
+        return TrackEditApplication(edit, output, False, "reject", "empty_track")
     left = output[row_index].copy()
     right = output[row_index].copy()
     left[split_session:] = None
