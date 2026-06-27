@@ -159,6 +159,30 @@ def test_uniform_rejects_text_bounds(low, high):
         random.uniform(low, high)
 
 
+@pytest.mark.parametrize(
+    "scale",
+    [
+        True,
+        False,
+        np.bool_(True),
+        np.array(False),
+        [1.0, False],
+        np.array([1.0, np.bool_(True)], dtype=object),
+    ],
+)
+def test_normal_rejects_boolean_scale(scale):
+    with pytest.raises(TypeError, match="scale.*boolean"):
+        random.normal(scale=scale)
+
+
+def test_normal_rejects_negative_scale():
+    with pytest.raises(ValueError, match="non-negative"):
+        random.normal(scale=-1.0)
+
+    with pytest.raises(ValueError, match="non-negative"):
+        random.normal(scale=np.array([1.0, -0.1]))
+
+
 def test_choice_without_replacement_shuffle_false_preserves_order():
     values = np.array([10, 20, 30, 40, 50])
     matrix = np.array([[10, 20, 30], [40, 50, 60]])
