@@ -102,6 +102,32 @@ def test_multinomial_accepts_integer_like_scalar_sample_counts():
 
 
 @pytest.mark.parametrize(
+    "bad_size",
+    [
+        True,
+        False,
+        np.bool_(True),
+        (True,),
+        [np.bool_(False), 2],
+        np.array(True),
+        np.array([True, 2], dtype=object),
+    ],
+)
+def test_multinomial_rejects_boolean_size_arguments(bad_size):
+    with pytest.raises(TypeError, match="size"):
+        random.multinomial(2, [0.25, 0.75], size=bad_size)
+
+
+def test_multinomial_accepts_integer_like_size_argument():
+    random.seed(0)
+
+    samples = random.multinomial(2, [0.25, 0.75], size=np.array(3, dtype=np.int64))
+
+    assert samples.shape == (3, 2)
+    assert np.all(samples.sum(axis=1) == 2)
+
+
+@pytest.mark.parametrize(
     ("low", "high"),
     [
         (False, 1.0),
