@@ -78,6 +78,26 @@ def _choice_bool(value, name):
     raise TypeError(f"{name} must be a boolean")
 
 
+def _validate_choice_probabilities(p, population_size, device):
+    if _contains_boolean_value(p):
+        raise TypeError("p must be real numeric, not boolean")
+    try:
+        p = _torch.as_tensor(p, dtype=_torch.float32, device=device)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError("p must be real numeric") from exc
+    if p.ndim != 1 or p.shape[0] != population_size:
+        raise ValueError("p must be 1-dimensional with one entry per population item")
+
+    p_sum = p.sum()
+    if (
+        bool(_torch.any(p < 0))
+        or not bool(_torch.isfinite(p_sum))
+        or bool(p_sum <= 0)
+    ):
+        raise ValueError("probabilities do not sum to a positive value")
+    return p / p_sum
+
+
 def _randint_size(size):
     return _shape_from_size(size)
 
@@ -265,20 +285,7 @@ def _choice_indices(
                 "Cannot take a larger sample than population when 'replace=False'."
             )
 
-        p = _torch.as_tensor(p, dtype=_torch.float32, device=device)
-        if p.ndim != 1 or p.shape[0] != population_size:
-            raise ValueError(
-                "p must be 1-dimensional with one entry per population item"
-            )
-
-        p_sum = p.sum()
-        if (
-            bool(_torch.any(p < 0))
-            or not bool(_torch.isfinite(p_sum))
-            or bool(p_sum <= 0)
-        ):
-            raise ValueError("probabilities do not sum to a positive value")
-        p = p / p_sum
+        p = _validate_choice_probabilities(p, population_size, device)
         indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
         if size is None:
             return indices[0]

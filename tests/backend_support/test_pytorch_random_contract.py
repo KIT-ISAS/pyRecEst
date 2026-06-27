@@ -38,6 +38,46 @@ else:
     assert result.returncode == 0, result.stderr
 
 
+def test_pytorch_choice_rejects_boolean_probabilities_with_type_error():
+    pytest.importorskip("torch")
+
+    code = """
+import torch
+import pyrecest.backend as backend
+
+for probabilities in ([True, False, False], torch.tensor([True, False, False])):
+    try:
+        backend.random.choice(3, p=probabilities)
+    except TypeError as exc:
+        if "real numeric" not in str(exc):
+            raise
+    else:
+        raise AssertionError("choice accepted boolean probabilities")
+"""
+    result = run_backend_code("pytorch", code)
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_pytorch_choice_rejects_text_probabilities_with_type_error():
+    pytest.importorskip("torch")
+
+    code = """
+import pyrecest.backend as backend
+
+try:
+    backend.random.choice(3, p=["1.0", "0.0", "0.0"])
+except TypeError as exc:
+    if "real numeric" not in str(exc):
+        raise
+else:
+    raise AssertionError("choice accepted text probabilities")
+"""
+    result = run_backend_code("pytorch", code)
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_pytorch_choice_rejects_out_of_bounds_axis():
     pytest.importorskip("torch")
 
