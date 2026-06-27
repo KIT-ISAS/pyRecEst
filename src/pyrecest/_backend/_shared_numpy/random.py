@@ -60,21 +60,27 @@ uniform = _modify_func_default_dtype(
 )
 
 
-def _validate_normal_scale(scale):
-    if _contains_boolean_value(scale):
-        raise TypeError("scale must be real numeric, not boolean")
+def _validate_normal_parameter(value, name):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
     try:
-        scale_array = _np.asarray(scale)
+        value_array = _np.asarray(value)
     except (TypeError, ValueError) as exc:
-        raise TypeError("scale must be real numeric") from exc
-    if scale_array.dtype.kind not in "iuf":
-        raise TypeError("scale must be real numeric")
+        raise TypeError(f"{name} must be real numeric") from exc
+    if value_array.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    return value_array
+
+
+def _validate_normal_scale(scale):
+    scale_array = _validate_normal_parameter(scale, "scale")
     if _np.any(scale_array < 0):
         raise ValueError("scale must be non-negative")
     return scale_array
 
 
 def _normal(loc=0.0, scale=1.0, size=None):
+    loc = _validate_normal_parameter(loc, "loc")
     scale = _validate_normal_scale(scale)
     return _np.random.normal(loc, scale, size)
 
