@@ -1,3 +1,4 @@
+import math
 from collections.abc import Callable
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
@@ -6,6 +7,36 @@ from pyrecest.distributions import CircularDiracDistribution, WrappedNormalDistr
 
 from .abstract_filter import AbstractFilter
 from .manifold_mixins import CircularFilterMixin
+
+
+_PROGRESSIVE_TAU_MESSAGE = "tau must be a positive finite scalar"
+
+
+def _normalize_progressive_tau(tau, default: float) -> float:
+    """Normalize the progressive-update threshold without truthiness coercion."""
+    if tau is None:
+        return default
+    if isinstance(tau, (bool, str, bytes, bytearray)):
+        raise ValueError(_PROGRESSIVE_TAU_MESSAGE)
+    try:
+        tau_array = array(tau)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(_PROGRESSIVE_TAU_MESSAGE) from exc
+    if getattr(tau_array, "shape", ()) != ():
+        raise ValueError(_PROGRESSIVE_TAU_MESSAGE)
+    try:
+        scalar = tau_array.item()
+    except AttributeError:
+        scalar = tau_array
+    if isinstance(scalar, (bool, str, bytes, bytearray)):
+        raise ValueError(_PROGRESSIVE_TAU_MESSAGE)
+    try:
+        tau_value = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(_PROGRESSIVE_TAU_MESSAGE) from exc
+    if not math.isfinite(tau_value) or tau_value <= 0.0:
+        raise ValueError(_PROGRESSIVE_TAU_MESSAGE)
+    return tau_value
 
 
 class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
@@ -77,7 +108,7 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
         # pylint: disable=too-many-locals
         DEFAULT_TAU = 0.02
         MINIMUM_LAMBDA: float = 0.001
-        tau = tau if tau else DEFAULT_TAU
+        tau = _normalize_progressive_tau(tau, DEFAULT_TAU)
         lambda_ = 1.0
         steps = 0
 

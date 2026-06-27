@@ -71,6 +71,26 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.assertIsInstance(self.wn_filter.filter_state, WrappedNormalDistribution)
         self.assertTrue(math.isfinite(float(self.wn_filter.filter_state.sigma)))
 
+    def test_update_nonlinear_progressive_rejects_invalid_tau(self):
+        self.wn_filter.filter_state = WrappedNormalDistribution(array(0.0), array(0.5))
+        invalid_taus = (
+            0.0,
+            -0.1,
+            float("nan"),
+            float("inf"),
+            True,
+            "0.02",
+            array([0.02]),
+        )
+
+        for tau in invalid_taus:
+            with self.subTest(tau=tau), self.assertRaisesRegex(
+                ValueError, "tau must be a positive finite scalar"
+            ):
+                self.wn_filter.update_nonlinear_progressive(
+                    _scalar_only_likelihood, 0.1, tau=tau
+                )
+
     def test_update_nonlinear_progressive_uses_adaptive_lambda(self):
         class FakeDiracDistribution:
             def __init__(self):
