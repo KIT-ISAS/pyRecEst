@@ -12,3 +12,11 @@ def test_multinomial_accepts_real_probability_values():
 
     assert sample.shape == (2,)
     assert int(np.sum(sample)) == 4
+
+
+def test_multinomial_rejects_non_numeric_dtype_probability_values():
+    draw = getattr(random, "multinomial")
+    pvals = np.array([1, 0], dtype="?")
+
+    with pytest.raises(TypeError, match="real numeric"):
+        draw(4, pvals)
