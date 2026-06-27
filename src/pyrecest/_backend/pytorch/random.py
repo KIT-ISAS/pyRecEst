@@ -71,9 +71,15 @@ def _choice_size(size):
 
 
 def _choice_bool(value, name):
-    if isinstance(value, bool):
-        return value
+    if isinstance(value, _BOOLEAN_TYPES):
+        return bool(value)
     if _torch.is_tensor(value) and value.ndim == 0 and value.dtype == _torch.bool:
+        return bool(value.item())
+    if (
+        isinstance(value, _np.ndarray)
+        and value.shape == ()
+        and value.dtype.kind == "b"
+    ):
         return bool(value.item())
     raise TypeError(f"{name} must be a boolean")
 
