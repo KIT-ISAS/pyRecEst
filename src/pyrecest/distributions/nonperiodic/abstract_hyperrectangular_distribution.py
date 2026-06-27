@@ -1,10 +1,17 @@
 # pylint: disable=no-name-in-module,no-member
+from math import isfinite as math_isfinite
+
 from pyrecest.backend import all as backend_all
 from pyrecest.backend import array, diff, isfinite, prod, reshape, to_numpy
 from scipy.integrate import nquad
 
 from ..abstract_bounded_nonperiodic_distribution import (
     AbstractBoundedNonPeriodicDistribution,
+)
+
+
+_ERROR_SCALAR_PDF_VALUE = (
+    "pdf must return one finite scalar value per integration point"
 )
 
 
@@ -21,6 +28,22 @@ def _require_increasing_bounds(bounds, name: str) -> None:
     widths = diff(bounds, axis=1)
     if not bool(backend_all(widths > 0.0)):
         raise ValueError(f"{name} must be strictly increasing in every dimension")
+
+
+def _require_scalar_pdf_value(values) -> float:
+    try:
+        flat_values = to_numpy(array(values)).reshape(-1)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(_ERROR_SCALAR_PDF_VALUE) from exc
+    if flat_values.size != 1:
+        raise ValueError(_ERROR_SCALAR_PDF_VALUE)
+    try:
+        value = float(flat_values[0])
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(_ERROR_SCALAR_PDF_VALUE) from exc
+    if not math_isfinite(value):
+        raise ValueError(_ERROR_SCALAR_PDF_VALUE)
+    return value
 
 
 class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistribution):
@@ -80,6 +103,6 @@ class AbstractHyperrectangularDistribution(AbstractBoundedNonPeriodicDistributio
 
         def integrand(*args):
             values = self.pdf(reshape(array(args), (1, self.dim)))
-            return float(to_numpy(array(values)).reshape(-1)[0])
+            return _require_scalar_pdf_value(values)
 
         return nquad(integrand, ranges)[0]
