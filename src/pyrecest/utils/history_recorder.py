@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from math import nan
 from typing import Any
 
+import numpy as np
 from pyrecest import backend
 
 # pylint: disable=no-name-in-module,no-member
@@ -33,30 +34,26 @@ def _validate_bool_flag(value: Any, name: str) -> bool:
     raise TypeError(f"{name} must be a boolean")
 
 
-_INVALID_PADDED_HISTORY_DTYPE_PREFIXES = (
-    "<u",
-    ">u",
-    "|u",
-    "=u",
-    "<s",
-    ">s",
-    "|s",
-    "=s",
+_INVALID_PADDED_HISTORY_DTYPE_KINDS = frozenset("bcOSUmM")
+_INVALID_PADDED_HISTORY_DTYPE_NAME_TOKENS = (
+    "bool",
+    "complex",
+    "object",
+    "str",
+    "bytes",
+    "datetime",
+    "timedelta",
 )
 
 
 def _is_invalid_padded_history_dtype(dtype: Any) -> bool:
-    dtype_name = str(dtype).lower()
-    return (
-        "bool" in dtype_name
-        or "complex" in dtype_name
-        or "object" in dtype_name
-        or "str" in dtype_name
-        or "bytes" in dtype_name
-        or "datetime" in dtype_name
-        or "timedelta" in dtype_name
-        or dtype_name.startswith(_INVALID_PADDED_HISTORY_DTYPE_PREFIXES)
-    )
+    try:
+        return np.dtype(dtype).kind in _INVALID_PADDED_HISTORY_DTYPE_KINDS
+    except (TypeError, ValueError):
+        dtype_name = str(dtype).lower()
+        return any(
+            token in dtype_name for token in _INVALID_PADDED_HISTORY_DTYPE_NAME_TOKENS
+        )
 
 
 def _as_padded_numeric_array(curr_ests):
