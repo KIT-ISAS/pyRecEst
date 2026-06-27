@@ -14,10 +14,7 @@ from torch.linalg import (
     inv,
 )
 from torch.linalg import matrix_exp as expm
-from torch.linalg import (
-    matrix_power,
-    solve,
-)
+from torch.linalg import matrix_power
 
 from .._backend_config import np_atol as atol
 from ..numpy import linalg as _gsnplinalg
@@ -163,6 +160,20 @@ def matrix_rank(a, tol=None, hermitian=False, *, rtol=None, atol=None, **kwargs)
 
     a = _as_linalg_tensor(a)
     return _torch.linalg.matrix_rank(a, atol=atol, rtol=rtol, hermitian=hermitian)
+
+
+def solve(a, b):
+    """Solve a linear system with PyRecEst-compatible array-like inputs."""
+    device = next((value.device for value in (a, b) if _torch.is_tensor(value)), None)
+    a = _as_linalg_tensor(a)
+    b = _as_linalg_tensor(b)
+    if device is not None:
+        a = a.to(device=device)
+        b = b.to(device=device)
+    common_dtype = _common_linalg_dtype(a, b)
+    a = a.to(dtype=common_dtype)
+    b = b.to(dtype=common_dtype)
+    return _torch.linalg.solve(a, b)
 
 
 def quadratic_assignment(a, b, options=None):
