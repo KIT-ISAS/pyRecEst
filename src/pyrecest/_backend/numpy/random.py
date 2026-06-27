@@ -46,6 +46,21 @@ def randint(low, high=None, size=None, dtype=int):
     return _np.random.randint(low, high=high, size=size, dtype=dtype)
 
 
+def _validate_multinomial_sample_count(n):
+    if _contains_boolean_value(n):
+        raise TypeError("n must be a non-negative integer")
+    try:
+        n_array = _np.asarray(n)
+    except (TypeError, ValueError) as exc:
+        raise TypeError("n must be a non-negative integer") from exc
+    if n_array.shape != () or n_array.dtype.kind not in "iu":
+        raise TypeError("n must be a non-negative integer")
+    count = int(n_array.item())
+    if count < 0:
+        raise ValueError("n must be non-negative")
+    return count
+
+
 def _validate_multinomial_pvals(pvals):
     if _contains_boolean_value(pvals):
         raise TypeError("pvals must be real numeric, not boolean")
@@ -59,5 +74,6 @@ def _validate_multinomial_pvals(pvals):
 
 
 def multinomial(n, pvals, size=None):
+    n = _validate_multinomial_sample_count(n)
     pvals_array = _validate_multinomial_pvals(pvals)
     return _np.random.multinomial(n, pvals_array, size=size)
