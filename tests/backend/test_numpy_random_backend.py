@@ -71,6 +71,37 @@ def test_randint_accepts_integer_array_bounds():
 
 
 @pytest.mark.parametrize(
+    "n",
+    [
+        True,
+        False,
+        np.bool_(True),
+        np.array(True),
+        np.array([1]),
+        1.5,
+        "1",
+    ],
+)
+def test_multinomial_rejects_non_integer_or_boolean_sample_counts(n):
+    with pytest.raises(TypeError, match="non-negative integer"):
+        random.multinomial(n, [1.0])
+
+
+def test_multinomial_rejects_negative_sample_counts():
+    with pytest.raises(ValueError, match="non-negative"):
+        random.multinomial(-1, [1.0])
+
+
+def test_multinomial_accepts_integer_like_scalar_sample_counts():
+    random.seed(0)
+
+    samples = random.multinomial(np.array(2, dtype=np.int64), [0.25, 0.75], size=3)
+
+    assert samples.shape == (3, 2)
+    assert np.all(samples.sum(axis=1) == 2)
+
+
+@pytest.mark.parametrize(
     ("low", "high"),
     [
         (False, 1.0),
