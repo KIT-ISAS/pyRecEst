@@ -244,6 +244,11 @@ def _normal_device(*values):
     return None
 
 
+def _validate_normal_parameter(value, name):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+
+
 def _normal_array_parameters(loc, scale):
     device = _normal_device(loc, scale)
     loc = _torch.as_tensor(loc, device=device)
@@ -413,6 +418,8 @@ def multinomial(n, pvals, size=None):
 
 @_allow_complex_dtype
 def normal(loc=0.0, scale=1.0, size=None):
+    _validate_normal_parameter(loc, "loc")
+    _validate_normal_parameter(scale, "scale")
     size = _normal_size(size)
     if not (_is_array_parameter(loc) or _is_array_parameter(scale)):
         return _torch.normal(mean=loc, std=scale, size=size or ())
