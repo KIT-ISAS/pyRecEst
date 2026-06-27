@@ -59,8 +59,28 @@ uniform = _modify_func_default_dtype(
     copy=False, kw_only=True, target=_allow_complex_dtype(target=_uniform)
 )
 
+
+def _validate_normal_scale(scale):
+    if _contains_boolean_value(scale):
+        raise TypeError("scale must be real numeric, not boolean")
+    try:
+        scale_array = _np.asarray(scale)
+    except (TypeError, ValueError) as exc:
+        raise TypeError("scale must be real numeric") from exc
+    if scale_array.dtype.kind not in "iuf":
+        raise TypeError("scale must be real numeric")
+    if _np.any(scale_array < 0):
+        raise ValueError("scale must be non-negative")
+    return scale_array
+
+
+def _normal(loc=0.0, scale=1.0, size=None):
+    scale = _validate_normal_scale(scale)
+    return _np.random.normal(loc, scale, size)
+
+
 normal = _modify_func_default_dtype(
-    copy=False, kw_only=True, target=_allow_complex_dtype(target=_np.random.normal)
+    copy=False, kw_only=True, target=_allow_complex_dtype(target=_normal)
 )
 
 multivariate_normal = _modify_func_default_dtype(
