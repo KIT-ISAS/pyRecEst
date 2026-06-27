@@ -363,6 +363,16 @@ def _choice_bool(value, name):
     raise TypeError(f"{name} must be a boolean")
 
 
+def _maybe_preserve_choice_order(indices, *, replace, p, shuffle):
+    if replace or p is not None or shuffle:
+        return indices
+
+    index_array = _jnp.asarray(indices)
+    if index_array.ndim == 0:
+        return indices
+    return _jnp.sort(index_array.reshape(-1)).reshape(index_array.shape)
+
+
 def _choice_population_size(a, kwargs):
     population_size = _integer_population_size(a)
     if population_size is not None:
@@ -398,11 +408,14 @@ def _validate_choice_probabilities(p, population_size):
     return p / p_sum
 
 
-def _choice(state, a, size=None, replace=True, p=None, *args, **kwargs):
+def _choice(state, a, size=None, replace=True, p=None, shuffle=True, *args, **kwargs):
+    if args:
+        raise TypeError("choice() received unexpected positional arguments")
     state, key = jax.random.split(state)
     a = _jnp.asarray(a)
     shape = _shape_from_size(size)
     replace = _choice_bool(replace, "replace")
+    shuffle = _choice_bool(shuffle, "shuffle")
     population_size = _choice_population_size(a, kwargs)
     if population_size == 0:
         if _shape_has_no_samples(shape):
@@ -412,26 +425,34 @@ def _choice(state, a, size=None, replace=True, p=None, *args, **kwargs):
         raise ValueError("a must be a positive integer or a non-empty array")
     if p is not None:
         p = _validate_choice_probabilities(p, population_size)
-    res = jax.random.choice(
+    choice_kwargs = {name: value for name, value in kwargs.items() if name != "axis"}
+    indices = jax.random.choice(
         key,
-        a,
-        *args,
+        population_size,
         shape=shape,
         replace=replace,
         p=p,
-        **kwargs,
+        **choice_kwargs,
     )
-    return state, res
+    indices = _maybe_preserve_choice_order(
+        indices,
+        replace=replace,
+        p=p,
+        shuffle=shuffle,
+    )
+    if a.ndim == 0:
+        return state, indices
+    return state, _jnp.take(a, indices, axis=kwargs.get("axis", 0))
 
 
-def choice(a, size=None, replace=True, p=None, *args, **kwargs):
+def choice(a, size=None, replace=True, p=None, shuffle=True, *args, **kwargs):
     """Draw samples using a NumPy-like ``choice`` contract."""
     if "n" in kwargs:
         if size is not None:
             raise TypeError("Specify only one of 'size' or legacy 'n'.")
         size = kwargs.pop("n")
     state, has_state, kwargs = _get_state(**kwargs)
-    state, res = _choice(state, a, size, replace, p, *args, **kwargs)
+    state, res = _choice(state, a, size, replace, p, shuffle, *args, **kwargs)
     return set_state_return(has_state, state, res)
 
 
