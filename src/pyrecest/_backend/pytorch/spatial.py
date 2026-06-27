@@ -14,9 +14,22 @@ class Rotation:
             "Use a NumPy/JAX backend for this functionality."
         )
 
+    @classmethod
+    def from_matrix(cls, *args, **kwargs):
+        raise RuntimeError(
+            "Rotation.from_matrix is not supported on the PyTorch backend. "
+            "Use a NumPy/JAX backend for this functionality."
+        )
+
     def as_quat(self, *args, **kwargs):
         raise RuntimeError(
             "Rotation.as_quat is not supported on the PyTorch backend. "
+            "Use a NumPy/JAX backend for this functionality."
+        )
+
+    def as_matrix(self, *args, **kwargs):
+        raise RuntimeError(
+            "Rotation.as_matrix is not supported on the PyTorch backend. "
             "Use a NumPy/JAX backend for this functionality."
         )
 
