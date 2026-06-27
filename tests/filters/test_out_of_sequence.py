@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import allclose, array
 from pyrecest.distributions.nonperiodic.linear_dirac_distribution import (
@@ -37,6 +39,24 @@ class OutOfSequenceMeasurementTest(unittest.TestCase):
         self.assertTrue(buffer.is_within_lag(2.0))
         self.assertFalse(buffer.is_within_lag(1.5))
         self.assertEqual(buffer.latest_at_or_before(2.5).value, "b")
+
+    def test_fixed_lag_buffer_rejects_nonboolean_copy_values(self):
+        for copy_values in ("False", 1, [True]):
+            with self.subTest(copy_values=copy_values):
+                with self.assertRaisesRegex(ValueError, "copy_values"):
+                    FixedLagBuffer(copy_values=copy_values)
+                with self.assertRaisesRegex(ValueError, "copy_values"):
+                    MeasurementTimeBuffer(copy_values=copy_values)
+
+    def test_fixed_lag_buffer_accepts_scalar_numpy_bool_copy_values(self):
+        buffer = FixedLagBuffer(copy_values=np.bool_(False))
+        stored_value = {"items": []}
+        buffer.append(0.0, stored_value)
+
+        stored_value["items"].append("updated")
+
+        self.assertFalse(buffer.copy_values)
+        self.assertEqual(buffer.items[0].value["items"], ["updated"])
 
     def test_measurement_time_buffer_reports_oosm(self):
         buffer = MeasurementTimeBuffer(max_lag=2.0)
