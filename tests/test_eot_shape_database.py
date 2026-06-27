@@ -48,6 +48,13 @@ class TestStarShapedPolygon(unittest.TestCase):
 
         self.assertEqual(samples.shape, (5, 2))
 
+    def test_zero_point_samples_keep_coordinate_dimension(self):
+        boundary_samples = self.square_star_convex_poly.sample_on_boundary(0)
+        within_samples = self.square_star_convex_poly.sample_within(0)
+
+        self.assertEqual(boundary_samples.shape, (0, 2))
+        self.assertEqual(within_samples.shape, (0, 2))
+
 
 class TestStar(unittest.TestCase):
     def test_compute_kernel_star_convex(self):
