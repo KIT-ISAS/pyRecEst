@@ -35,12 +35,17 @@ ScenarioRunner = Callable[[str | Path], ScenarioResult]
 _SCENARIO_RUNNERS: dict[str, ScenarioRunner] = {}
 
 
+def _normalize_scenario_type(scenario_type: Any) -> str:
+    if not isinstance(scenario_type, str) or not scenario_type.strip():
+        raise ValueError("scenario_type must be a non-empty string")
+    return scenario_type.strip()
+
+
 def register_scenario_runner(
     scenario_type: str, runner: ScenarioRunner
 ) -> ScenarioRunner:
     """Register ``runner`` for a TOML ``scenario.type`` value."""
-    if not scenario_type:
-        raise ValueError("scenario_type must be a non-empty string")
+    scenario_type = _normalize_scenario_type(scenario_type)
     if scenario_type in _SCENARIO_RUNNERS:
         raise ValueError(f"Scenario type {scenario_type!r} is already registered")
     _SCENARIO_RUNNERS[scenario_type] = runner
@@ -49,6 +54,7 @@ def register_scenario_runner(
 
 def scenario_runner(scenario_type: str) -> Callable[[ScenarioRunner], ScenarioRunner]:
     """Decorator form of :func:`register_scenario_runner`."""
+    scenario_type = _normalize_scenario_type(scenario_type)
 
     def decorator(runner: ScenarioRunner) -> ScenarioRunner:
         return register_scenario_runner(scenario_type, runner)
@@ -344,13 +350,23 @@ def run_particle_resampling_scenario(path: str | Path) -> ScenarioResult:
 def run_scenario(path: str | Path) -> ScenarioResult:
     """Run the scenario described by ``path``."""
     config = load_scenario_config(path)
-    scenario_type = config.get("scenario", {}).get("type")
+    raw_scenario_type = config.get("scenario", {}).get("type")
+    available = ", ".join(available_scenario_types()) or "none"
+    try:
+        scenario_type = _normalize_scenario_type(raw_scenario_type)
+    except ValueError as exc:
+        message = (
+            f"Unsupported scenario type: {raw_scenario_type!r}. "
+            f"Available scenario types: {available}."
+        )
+        raise ValueError(message) from exc
     runner = _SCENARIO_RUNNERS.get(scenario_type)
     if runner is None:
-        available = ", ".join(available_scenario_types()) or "none"
-        raise ValueError(
-            f"Unsupported scenario type: {scenario_type!r}. Available scenario types: {available}."
+        message = (
+            f"Unsupported scenario type: {scenario_type!r}. "
+            f"Available scenario types: {available}."
         )
+        raise ValueError(message)
     return runner(path)
 
 
