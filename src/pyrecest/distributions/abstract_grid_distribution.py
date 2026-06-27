@@ -33,12 +33,20 @@ class AbstractGridDistribution(AbstractDistributionType):
                     f"grid values. Expected {expected_grid_points}, got "
                     f"{grid.shape[0]}."
                 )
-            if grid.ndim != 1 and grid.shape[1] != dim:
+            if grid.ndim == 1:
+                actual_dim = 1
+            elif grid.ndim == 2:
+                actual_dim = grid.shape[1]
+            else:
+                raise ValueError(
+                    "Grid coordinates must be a one- or two-dimensional array."
+                )
+            if dim is not None and actual_dim != dim:
                 raise ValueError(
                     f"Grid coordinates must have dimension {dim}, got "
-                    f"{grid.shape[1]}."
+                    f"{actual_dim}."
                 )
-        if grid is None or grid.ndim > 1 and grid.shape[0] < grid.shape[1]:
+        if grid is None or (grid.ndim > 1 and grid.shape[0] < grid.shape[1]):
             warnings.warn(
                 "Warning: Dimension is higher than number of grid points. Verify that this is really intended."
             )

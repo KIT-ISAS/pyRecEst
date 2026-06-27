@@ -8,6 +8,12 @@ def _uniform_scalar(low: float = 0.0, high: float = 1.0) -> float:
     return float(to_numpy(random.uniform(size=()) * (high - low) + low))
 
 
+def _points_to_array(points):
+    if not points:
+        return array([]).reshape((0, 2))
+    return array([(point.x, point.y) for point in points])
+
+
 class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
     __slots__ = Polygon.__slots__
 
@@ -39,7 +45,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
                     break
                 distance -= line.length
 
-        return array([(point.x, point.y) for point in points])
+        return _points_to_array(points)
 
     def sample_within(self, num_points: int):
         min_x, min_y, max_x, max_y = self.bounds
@@ -62,7 +68,7 @@ class PolygonWithSampling(Polygon):  # pylint: disable=abstract-method
 
             points.append(random_point)
 
-        return array([(point.x, point.y) for point in points])
+        return _points_to_array(points)
 
 
 class StarShapedPolygon(PolygonWithSampling):  # pylint: disable=abstract-method

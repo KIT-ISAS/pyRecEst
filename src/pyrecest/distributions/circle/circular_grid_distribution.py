@@ -62,7 +62,10 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
 
     @staticmethod
     def _matlab_sinc(x):
-        return where(isclose(x, 0.0), 1.0, sin(x) / x)
+        zero_mask = isclose(x, 0.0)
+        scaled_x = pi * x
+        safe_scaled_x = where(zero_mask, 1.0, scaled_x)
+        return where(zero_mask, 1.0, sin(scaled_x) / safe_scaled_x)
 
     def _pdf_via_sinc(self, xs, sinc_repetitions):
         sinc_repetitions = _validate_no_of_gridpoints(sinc_repetitions)
