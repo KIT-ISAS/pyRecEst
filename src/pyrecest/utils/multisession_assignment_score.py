@@ -50,6 +50,7 @@ _INVALID_SCORE_SCALAR_TYPES = (
     np.timedelta64,
 )
 _REJECTED_SCORE_ARRAY_KINDS = frozenset({"b", "c", "S", "U", "M", "m"})
+_SCORE_TO_COST_ERROR = "score_to_cost must return real numeric cost matrices."
 
 
 def _ensure_supported_backend(feature_name: str) -> None:
@@ -83,6 +84,24 @@ def _validate_real_score_matrix(value: Any) -> None:
         for item in raw_values.reshape(-1):
             if isinstance(item, _INVALID_SCORE_SCALAR_TYPES):
                 _raise_invalid_score_matrix()
+
+
+def _raise_invalid_score_to_cost_matrix() -> None:
+    raise ValueError(_SCORE_TO_COST_ERROR)
+
+
+def _validate_real_score_to_cost_matrix(value: Any) -> None:
+    try:
+        raw_values = np.asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise ValueError(_SCORE_TO_COST_ERROR) from exc
+
+    if raw_values.dtype.kind in _REJECTED_SCORE_ARRAY_KINDS:
+        _raise_invalid_score_to_cost_matrix()
+    if raw_values.dtype == object:
+        for item in raw_values.reshape(-1):
+            if isinstance(item, _INVALID_SCORE_SCALAR_TYPES):
+                _raise_invalid_score_to_cost_matrix()
 
 
 def _validate_pairwise_score_inputs(pairwise_scores: PairwiseCostsInput) -> None:
@@ -242,7 +261,9 @@ def solve_multisession_assignment_from_similarity(  # pylint: disable=R0913,R091
             admissible_mask &= score_matrix_array >= min_score
 
         safe_scores = where(score_finite_mask, score_matrix_array, 0.0)
-        cost_matrix = asarray(score_to_cost(safe_scores), dtype=float)
+        raw_cost_matrix = score_to_cost(safe_scores)
+        _validate_real_score_to_cost_matrix(raw_cost_matrix)
+        cost_matrix = asarray(raw_cost_matrix, dtype=float)
         if cost_matrix.shape != score_matrix_array.shape:
             raise ValueError("score_to_cost must preserve the input matrix shape.")
 
