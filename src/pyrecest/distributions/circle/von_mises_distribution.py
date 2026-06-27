@@ -62,7 +62,7 @@ class VonMisesDistribution(AbstractCircularDistribution):
 
     def pdf(self, xs):
         xs = array(xs)
-        if not self._norm_const_is_explicit:
+        if not getattr(self, "_norm_const_is_explicit", False):
             p = exp(self.kappa * (cos(xs - self.mu) - 1.0)) / (
                 2.0 * pi * ive(0, self.kappa)
             )
