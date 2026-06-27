@@ -437,7 +437,19 @@ def aggregate_time_offset_sweeps(
                 ],
                 dtype=float,
             )
-            row[key] = _aggregate_summary_metric(key, values, counts)
+            if key == "std":
+                means = np.array(
+                    [
+                        _as_summary_scalar(
+                            part.get("mean", np.nan), "mean", allow_nan=True
+                        )
+                        for part in parts
+                    ],
+                    dtype=float,
+                )
+                row[key] = _aggregate_std_metric(values, means, counts)
+            else:
+                row[key] = _aggregate_summary_metric(key, values, counts)
         rows.append(row)
     return rows
 
@@ -453,6 +465,21 @@ def _aggregate_summary_metric(
     if key == "max":
         return float(np.max(values[valid]))
     return float(np.average(values[valid], weights=counts[valid]))
+
+
+def _aggregate_std_metric(
+    stds: np.ndarray, means: np.ndarray, counts: np.ndarray
+) -> float:
+    valid = np.isfinite(stds) & np.isfinite(means) & (counts > 0.0)
+    if not valid.any():
+        return float("nan")
+    weights = counts[valid]
+    pooled_mean = float(np.average(means[valid], weights=weights))
+    second_moment = float(
+        np.average(stds[valid] ** 2 + means[valid] ** 2, weights=weights)
+    )
+    variance = max(0.0, second_moment - pooled_mean**2)
+    return float(np.sqrt(variance))
 
 
 def _error_stats(

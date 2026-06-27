@@ -168,6 +168,13 @@ class GaussianMixturePHDFilter(
             )
 
         state = GaussianMixturePHDState(components, weights)
+        if state.dists and self.birth_components:
+            self._require_component_dimension(
+                self.birth_components,
+                state.dim,
+                "Birth",
+            )
+
         self._components = copy.deepcopy(state.dists)
         self._weights = array(state.w)
         if self._weights.ndim == 0:
@@ -188,6 +195,13 @@ class GaussianMixturePHDFilter(
             birth_weights = 0.05 * ones((len(birth_components),))
 
         birth_state = GaussianMixturePHDState(birth_components, birth_weights)
+        if birth_state.dists and self._dim is not None:
+            self._require_component_dimension(
+                birth_state.dists,
+                self._dim,
+                "Birth",
+            )
+
         self.birth_components = copy.deepcopy(birth_state.dists)
         self.birth_weights = array(birth_state.w)
 
@@ -264,6 +278,17 @@ class GaussianMixturePHDFilter(
             return float(clutter_as_array.reshape((-1,))[0])
         return float(clutter_as_array.reshape((-1,))[measurement_index])
 
+    @staticmethod
+    def _require_component_dimension(components, expected_dim, component_kind):
+        if not components:
+            return
+        component_dim = components[0].dim
+        if component_dim != expected_dim:
+            raise ValueError(
+                f"{component_kind} components must have dimension {expected_dim}, "
+                f"got {component_dim}."
+            )
+
     def _resolve_birth_arguments(self, birth_components, birth_weights):
         if birth_components is None:
             return self.birth_components, self.birth_weights
@@ -282,7 +307,8 @@ class GaussianMixturePHDFilter(
         birth_weights=None,
         survival_probability=None,
     ):
-        sys_noise_cov = _covariance_from_zero_mean_gaussian_noise(sys_noise)
+        system_matrix = array(system_matrix)
+        sys_noise_cov = array(_covariance_from_zero_mean_gaussian_noise(sys_noise))
 
         if survival_probability is None:
             survival_probability = self.survival_probability
@@ -311,6 +337,11 @@ class GaussianMixturePHDFilter(
 
         birth_components_resolved, birth_weights_resolved = (
             self._resolve_birth_arguments(birth_components, birth_weights)
+        )
+        self._require_component_dimension(
+            birth_components_resolved,
+            system_matrix.shape[0],
+            "Birth",
         )
         predicted_components.extend(copy.deepcopy(birth_components_resolved))
 

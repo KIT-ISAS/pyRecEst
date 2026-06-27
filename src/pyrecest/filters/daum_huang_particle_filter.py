@@ -350,15 +350,52 @@ def _validate_flow_type(flow_type) -> FlowType:
 
 
 def _validate_positive_int(value, name: str) -> int:
-    if isinstance(value, bool) or int(value) != value or int(value) <= 0:
-        raise ValueError(f"{name} must be a positive integer.")
-    return int(value)
+    message = f"{name} must be a positive integer."
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    if isinstance(scalar, (str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError(message)
+    if isinstance(scalar, (complex, np.complexfloating)):
+        raise ValueError(message)
+
+    try:
+        scalar_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(scalar_float) or not scalar_float.is_integer():
+        raise ValueError(message)
+
+    parsed = int(scalar_float)
+    if parsed <= 0:
+        raise ValueError(message)
+    return parsed
 
 
 def _validate_nonnegative_float(value, name: str) -> float:
-    value = float(value)
+    message = f"{name} must be finite and nonnegative."
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    if isinstance(scalar, (str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError(message)
+    if isinstance(scalar, (complex, np.complexfloating)):
+        raise ValueError(message)
+
+    try:
+        value = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
     if not np.isfinite(value) or value < 0.0:
-        raise ValueError(f"{name} must be finite and nonnegative.")
+        raise ValueError(message)
     return value
 
 
