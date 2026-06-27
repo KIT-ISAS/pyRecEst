@@ -25,6 +25,53 @@ def test_rand_rejects_ambiguous_positional_and_size_arguments():
 
 
 @pytest.mark.parametrize(
+    "bad_size",
+    [
+        True,
+        False,
+        np.bool_(True),
+        np.array(True),
+        (True,),
+        [np.bool_(False), 2],
+        np.array([True, 2], dtype=object),
+    ],
+)
+@pytest.mark.parametrize(
+    "sampler",
+    [
+        lambda size: random.rand(size=size),
+        lambda size: random.uniform(size=size),
+        lambda size: random.choice(np.arange(5), size=size),
+    ],
+)
+def test_random_wrappers_reject_boolean_size_arguments(sampler, bad_size):
+    with pytest.raises(TypeError, match="size"):
+        sampler(bad_size)
+
+
+@pytest.mark.parametrize(
+    "dims",
+    [
+        (True,),
+        (np.bool_(True),),
+        (2, False),
+        ([True, 2],),
+    ],
+)
+def test_rand_rejects_boolean_positional_dimensions(dims):
+    with pytest.raises(TypeError, match="size"):
+        random.rand(*dims)
+
+
+def test_random_wrappers_accept_integer_array_size_arguments():
+    random.seed(0)
+
+    assert random.rand(size=np.array([2, 3], dtype=np.int64)).shape == (2, 3)
+    assert random.uniform(size=np.array(2, dtype=np.int64)).shape == (2,)
+    assert random.choice(np.arange(5), size=np.array([2], dtype=np.int64)).shape == (2,)
+
+
+@pytest.mark.parametrize(
     ("low", "high"),
     [
         (0.2, 3),
