@@ -45,6 +45,8 @@ def _normalize_size(size):
         size_array = _np.asarray(size)
     except (TypeError, ValueError) as exc:
         raise _size_type_error() from exc
+    if size_array.ndim == 1 and size_array.size == 0:
+        return ()
     if size_array.dtype.kind not in "iu":
         raise _size_type_error()
     if size_array.ndim == 0:
