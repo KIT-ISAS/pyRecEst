@@ -73,7 +73,14 @@ def _validate_multinomial_pvals(pvals):
     return pvals_array
 
 
+def _validate_multinomial_size(size):
+    if size is not None and _contains_boolean_value(size):
+        raise TypeError("size must be None, an integer, or a sequence of integers")
+    return size
+
+
 def multinomial(n, pvals, size=None):
     n = _validate_multinomial_sample_count(n)
     pvals_array = _validate_multinomial_pvals(pvals)
+    size = _validate_multinomial_size(size)
     return _np.random.multinomial(n, pvals_array, size=size)
