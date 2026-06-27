@@ -304,11 +304,23 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
+def _validate_normal_scale(scale):
+    if _contains_boolean_value(scale):
+        raise TypeError("scale must be real numeric, not boolean")
+    try:
+        scale_array = _jnp.asarray(scale)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError("scale must be real numeric") from exc
+    if scale_array.dtype.kind not in "iuf":
+        raise TypeError("scale must be real numeric")
+    if bool(_jnp.any(scale_array < 0)):
+        raise ValueError("scale must be non-negative")
+    return scale_array
+
+
 def _normal(state, loc=0.0, scale=1.0, size=None, *args, **kwargs):
     loc = _jnp.asarray(loc)
-    scale = _jnp.asarray(scale)
-    if bool(_jnp.any(scale < 0)):
-        raise ValueError("scale must be non-negative")
+    scale = _validate_normal_scale(scale)
     sample_shape = _bounded_sampler_shape(size, loc, scale)
     state, key = jax.random.split(state)
     samples = jax.random.normal(key, sample_shape, *args, **kwargs)
