@@ -454,6 +454,18 @@ def multivariate_normal(mean, cov, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
+def _validate_multinomial_pvals(pvals):
+    if _contains_boolean_value(pvals):
+        raise TypeError("pvals must be real numeric, not boolean")
+    try:
+        pvals = _jnp.asarray(pvals)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError("pvals must be real numeric") from exc
+    if pvals.dtype.kind not in "iuf":
+        raise TypeError("pvals must be real numeric")
+    return pvals.astype(_jnp.float32)
+
+
 def _multinomial(state, n, pvals, size=None):
     if not _looks_like_integer_dimension(n):
         raise TypeError("n must be a non-negative integer")
@@ -463,7 +475,7 @@ def _multinomial(state, n, pvals, size=None):
 
     state, key = jax.random.split(state)
     sample_shape = _shape_from_size(size)
-    pvals = _jnp.asarray(pvals, dtype=_jnp.float32)
+    pvals = _validate_multinomial_pvals(pvals)
     if pvals.ndim != 1:
         raise ValueError("pvals must be 1-dimensional")
     if pvals.shape[0] == 0:

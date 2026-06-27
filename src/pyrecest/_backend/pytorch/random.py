@@ -363,6 +363,18 @@ def _multinomial_sample_count(sample_shape):
     return _prod(sample_shape) if sample_shape else 1
 
 
+def _validate_multinomial_pvals(pvals, device):
+    if _contains_boolean_value(pvals):
+        raise TypeError("pvals must be real numeric, not boolean")
+    try:
+        pvals = _torch.as_tensor(pvals, device=device)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError("pvals must be real numeric") from exc
+    if not _is_real_numeric_dtype(pvals.dtype):
+        raise TypeError("pvals must be real numeric")
+    return pvals.to(dtype=_torch.float32)
+
+
 def multinomial(n, pvals, size=None):
     if not _looks_like_integer_dimension(n):
         raise TypeError("n must be a non-negative integer")
@@ -372,7 +384,7 @@ def multinomial(n, pvals, size=None):
 
     sample_shape = _shape_from_size(size)
     device = pvals.device if _torch.is_tensor(pvals) else None
-    pvals = _torch.as_tensor(pvals, dtype=_torch.float32, device=device)
+    pvals = _validate_multinomial_pvals(pvals, device)
     if pvals.ndim != 1:
         raise ValueError("pvals must be 1-dimensional")
     if pvals.numel() == 0:
