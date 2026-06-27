@@ -46,6 +46,16 @@ class BlockParticleFilterTest(unittest.TestCase):
         npt.assert_allclose(filt.block_effective_sample_size(), array([2.0, 2.0, 2.0]))
         npt.assert_allclose(filt.effective_sample_size(), 2.0)
 
+    def test_accepts_python_list_block_weights(self):
+        filt = DummyBlockParticleFilter(
+            [[0.0, 10.0], [1.0, 11.0]],
+            partition="singleton",
+            block_weights=[[1.0, 0.0], [0.25, 0.75]],
+        )
+
+        npt.assert_allclose(filt.block_weights, array([[1.0, 0.0], [0.25, 0.75]]))
+        npt.assert_allclose(filt.weights, array([0.625, 0.375]))
+
     def test_component_likelihoods_update_blocks_independently(self):
         filt = DummyBlockParticleFilter(
             array([[0.0, 10.0], [1.0, 11.0]]),
