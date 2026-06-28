@@ -12,7 +12,6 @@ from jax.numpy.linalg import (  # NOQA
     matrix_rank,
     norm,
     pinv,
-    qr,
     solve,
     svd,
 )
@@ -44,6 +43,16 @@ def _unsupported_function(name):
     _raise_unsupported.__qualname__ = name
     _raise_unsupported.__doc__ = f"Unsupported JAX-backend placeholder for ``{name}``."
     return _raise_unsupported
+
+
+def qr(a, mode="reduced"):
+    """Compute QR decomposition with NumPy-compatible mode handling."""
+
+    a = _jnp.asarray(a)
+    if mode == "economic":
+        raw_result = _jnp.linalg.qr(a, mode="raw")
+        return _jnp.swapaxes(raw_result[0], -2, -1)
+    return _jnp.linalg.qr(a, mode=mode)
 
 
 def is_single_matrix_pd(mat):
