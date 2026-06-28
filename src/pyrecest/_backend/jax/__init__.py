@@ -243,15 +243,18 @@ def squeeze(a, axis=None):
     return _jnp.squeeze(_jnp.asarray(a), axis=axis)
 
 
-def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
-    return _jnp.trace(
+def trace(a, offset=0, axis1=-2, axis2=-1, dtype=None, out=None):
+    """Return the trace while preserving PyRecEst's last-two-axes default."""
+    result = _jnp.trace(
         _jnp.asarray(a),
         offset=offset,
         axis1=axis1,
         axis2=axis2,
         dtype=dtype,
-        out=out,
     )
+    if out is not None:
+        return out.at[...].set(result)
+    return result
 
 
 def tril(m, k=0):
@@ -626,10 +629,6 @@ def matvec(matrix, vector):
     if matrix.ndim == 2:
         return _jnp.einsum("ij,...j->...i", matrix, vector)
     return _jnp.einsum("...ij,...j->...i", matrix, vector)
-
-
-def trace(a):
-    return _jnp.trace(_jnp.asarray(a), axis1=-2, axis2=-1)
 
 
 # One-hot encoding
