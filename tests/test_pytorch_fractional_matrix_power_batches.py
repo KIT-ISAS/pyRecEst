@@ -1,5 +1,7 @@
+import numpy as np
 import pyrecest.backend as backend
 import pytest
+from pyrecest._backend import numpy as numpy_backend
 from pyrecest.backend import linalg
 
 
@@ -8,6 +10,46 @@ def _to_python(value):
     if hasattr(value, "tolist"):
         return value.tolist()
     return value
+
+
+def test_numpy_fractional_matrix_power_accepts_multiple_batch_axes():
+    values = numpy_backend.asarray(
+        [
+            [
+                [[4.0, 0.0], [0.0, 9.0]],
+                [[16.0, 0.0], [0.0, 25.0]],
+                [[36.0, 0.0], [0.0, 49.0]],
+            ],
+            [
+                [[64.0, 0.0], [0.0, 81.0]],
+                [[100.0, 0.0], [0.0, 121.0]],
+                [[144.0, 0.0], [0.0, 169.0]],
+            ],
+        ],
+        dtype=numpy_backend.float64,
+    )
+
+    result = numpy_backend.linalg.fractional_matrix_power(values, 0.5)
+
+    expected = numpy_backend.asarray(
+        [
+            [
+                [[2.0, 0.0], [0.0, 3.0]],
+                [[4.0, 0.0], [0.0, 5.0]],
+                [[6.0, 0.0], [0.0, 7.0]],
+            ],
+            [
+                [[8.0, 0.0], [0.0, 9.0]],
+                [[10.0, 0.0], [0.0, 11.0]],
+                [[12.0, 0.0], [0.0, 13.0]],
+            ],
+        ],
+        dtype=numpy_backend.float64,
+    )
+
+    assert result.shape == (2, 3, 2, 2)
+    assert result.dtype == np.dtype("float64")
+    assert numpy_backend.allclose(result, expected, atol=1e-10, rtol=1e-10)
 
 
 def test_pytorch_fractional_matrix_power_accepts_multiple_batch_axes():
