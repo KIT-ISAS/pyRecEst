@@ -67,14 +67,26 @@ def _validate_expected_dim(
 ) -> None:
     if expected_dim is None:
         return
-    if isinstance(expected_dim, bool) or not isinstance(expected_dim, Integral):
-        raise TypeError(f"{dim_name} must be an integer or None.")
-    if int(expected_dim) <= 0:
+    expected_dim_value = _validate_expected_dim_scalar(expected_dim, dim_name)
+    if expected_dim_value <= 0:
         raise ValueError(f"{dim_name} must be positive.")
-    if actual_dim != int(expected_dim):
+    if actual_dim != expected_dim_value:
         raise ValueError(
-            f"{name} has dimension {actual_dim}, expected {int(expected_dim)}."
+            f"{name} has dimension {actual_dim}, expected {expected_dim_value}."
         )
+
+
+def _validate_expected_dim_scalar(value: Any, dim_name: str) -> int:
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise TypeError(f"{dim_name} must be an integer or None.") from exc
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise TypeError(f"{dim_name} must be an integer or None.")
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)) or not isinstance(scalar, Integral):
+        raise TypeError(f"{dim_name} must be an integer or None.")
+    return int(scalar)
 
 
 def _to_python_bool(value: Any) -> bool:
