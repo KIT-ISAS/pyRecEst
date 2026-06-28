@@ -10,6 +10,13 @@ if importlib.util.find_spec("torch") is not None:
     from pyrecest._backend import pytorch as pytorch_backend
 
 
+def test_numpy_solve_sylvester_accepts_array_like_inputs():
+    x = numpy_backend.linalg.solve_sylvester([[1.0]], [[2.0]], [[3.0]])
+
+    assert x.shape == (1, 1)
+    npt.assert_allclose(x, [[1.0]])
+
+
 def test_numpy_solve_sylvester_falls_back_for_complex_symmetric_nonhermitian():
     a = np.array([[2.0 + 0.0j, 1.0j], [1.0j, 2.0 + 0.0j]], dtype=np.complex128)
     q = np.eye(2, dtype=np.complex128)
