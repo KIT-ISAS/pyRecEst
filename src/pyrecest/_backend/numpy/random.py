@@ -70,7 +70,21 @@ def _validate_multinomial_pvals(pvals):
         raise TypeError("pvals must be real numeric") from exc
     if pvals_array.dtype.kind not in "iuf":
         raise TypeError("pvals must be real numeric")
-    return pvals_array
+
+    pvals_array = pvals_array.astype(float, copy=False)
+    if pvals_array.ndim != 1:
+        raise ValueError("pvals must be 1-dimensional")
+    if pvals_array.size == 0:
+        raise ValueError("pvals must contain at least one probability")
+
+    pvals_sum = pvals_array.sum()
+    if (
+        _np.any(pvals_array < 0)
+        or not _np.isfinite(pvals_sum)
+        or pvals_sum <= 0
+    ):
+        raise ValueError("probabilities do not sum to a positive value")
+    return pvals_array / pvals_sum
 
 
 def _validate_multinomial_size(size):
