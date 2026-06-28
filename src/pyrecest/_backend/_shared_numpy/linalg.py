@@ -51,6 +51,10 @@ def logm(x):
 
 
 def solve_sylvester(a, b, q, tol=atol):
+    a = _np.asarray(a)
+    b = _np.asarray(b)
+    q = _np.asarray(q)
+
     if a.shape == b.shape:
         if _np.all(_np.isclose(a, b)) and _is_hermitian(a, tol=tol):
             eigvals, eigvecs = _np.linalg.eigh(a)
