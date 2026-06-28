@@ -719,15 +719,29 @@ def grouped_claim_gate_summary(
             f"min {claim_fraction_col} > {float(min_claim_fraction):g}",
         )
         if forbidden_claims_col:
-            max_forbidden = int(
-                pd.to_numeric(summary[forbidden_claims_col], errors="coerce")
-                .fillna(np.inf)
-                .max()
+            forbidden_values = pd.to_numeric(
+                summary[forbidden_claims_col], errors="coerce"
             )
+            missing_forbidden = bool(forbidden_values.isna().any())
+            max_forbidden_value = (
+                float(forbidden_values.max())
+                if not forbidden_values.dropna().empty
+                else np.nan
+            )
+            if missing_forbidden or not np.isfinite(max_forbidden_value):
+                observed_forbidden: object = "missing"
+            elif float(max_forbidden_value).is_integer():
+                observed_forbidden = int(max_forbidden_value)
+            else:
+                observed_forbidden = f"{max_forbidden_value:.6g}"
             add(
                 "all_groups_no_forbidden_claims",
-                max_forbidden == 0,
-                max_forbidden,
+                (
+                    not missing_forbidden
+                    and np.isfinite(max_forbidden_value)
+                    and max_forbidden_value == 0.0
+                ),
+                observed_forbidden,
                 f"max {forbidden_claims_col} == 0",
             )
         if mean_delta_col:
