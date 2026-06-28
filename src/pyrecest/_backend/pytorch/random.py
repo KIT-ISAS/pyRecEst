@@ -286,6 +286,14 @@ def _normal_device(*values):
 def _validate_normal_parameter(value, name):
     if _contains_boolean_value(value):
         raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        value_tensor = _torch.as_tensor(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if not _is_real_numeric_dtype(value_tensor.dtype):
+        raise TypeError(f"{name} must be real numeric")
+    if bool(_torch.any(~_torch.isfinite(value_tensor))):
+        raise ValueError(f"{name} must be finite")
 
 
 def _normal_array_parameters(loc, scale):
