@@ -36,3 +36,27 @@ print("ok")
 
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.backend_portable
+def test_jax_std_accepts_out_argument():
+    if importlib.util.find_spec("jax") is None:
+        pytest.skip("JAX is not installed")
+
+    result = run_backend_code(
+        "jax",
+        """
+import pyrecest.backend as backend
+
+values = backend.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+out = backend.zeros((1, 3), dtype=backend.float64)
+result = backend.std(values, axis=0, dtype=backend.float64, out=out, ddof=1, keepdims=True)
+expected = backend.array([[2.1213203435596424, 2.1213203435596424, 2.1213203435596424]])
+assert tuple(result.shape) == (1, 3)
+assert backend.allclose(result, expected)
+print("ok")
+""",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
