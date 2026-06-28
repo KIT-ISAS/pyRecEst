@@ -99,6 +99,8 @@ def _validate_normal_parameter(value, name):
         raise TypeError(f"{name} must be real numeric") from exc
     if value_array.dtype.kind not in "iuf":
         raise TypeError(f"{name} must be real numeric")
+    if _np.any(~_np.isfinite(value_array)):
+        raise ValueError(f"{name} must be finite")
     return value_array
 
 
