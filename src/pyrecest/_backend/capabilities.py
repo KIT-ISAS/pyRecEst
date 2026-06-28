@@ -150,6 +150,10 @@ API_BACKEND_CAPABILITIES: Final = {
 
 BACKEND_SUPPORT_LEVELS: Final = ("supported", "bridged", "partial", "unsupported")
 REQUIRED_BACKENDS: Final = ("numpy", "pytorch", "jax")
+_OPTIONAL_API_CAPABILITY_KEYS: Final = frozenset({"notes"})
+_ALLOWED_API_CAPABILITY_KEYS: Final = frozenset(
+    (*REQUIRED_BACKENDS, *_OPTIONAL_API_CAPABILITY_KEYS)
+)
 
 
 def get_unsupported_functions(
@@ -195,6 +199,12 @@ def validate_api_backend_capabilities() -> tuple[str, ...]:
     for api_name, row in iter_api_backend_capabilities():
         if not api_name:
             errors.append("Capability row has an empty API name.")
+
+        unknown_keys = sorted(set(row) - _ALLOWED_API_CAPABILITY_KEYS)
+        if unknown_keys:
+            errors.append(
+                f"{api_name}: unknown capability entries for {', '.join(unknown_keys)}."
+            )
 
         missing_backends = [
             backend for backend in REQUIRED_BACKENDS if backend not in row
