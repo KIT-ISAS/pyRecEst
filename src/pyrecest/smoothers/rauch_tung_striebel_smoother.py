@@ -113,6 +113,7 @@ class RauchTungStriebelSmoother(AbstractSmoother):
             raise ValueError("At least one measurement is required.")
 
         state_dim = initial_state.dim
+        measurement_dim = int(measurement_list[0].shape[0])
         identity_matrix = eye(state_dim)
 
         measurement_matrices_list = self._normalize_matrix_sequence(
@@ -126,7 +127,7 @@ class RauchTungStriebelSmoother(AbstractSmoother):
             meas_noise_covariances,
             len(measurement_list),
             "meas_noise_covariances",
-            state_dim,
+            measurement_dim,
         )
         system_matrices_list = self._normalize_matrix_sequence(
             system_matrices,

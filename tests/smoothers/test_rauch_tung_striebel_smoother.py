@@ -1,7 +1,7 @@
 import unittest
 
 import numpy.testing as npt
-from pyrecest.backend import array, eye
+from pyrecest.backend import array, eye, zeros
 from pyrecest.distributions import GaussianDistribution
 from pyrecest.smoothers import RauchTungStriebelSmoother
 
@@ -37,6 +37,26 @@ class RauchTungStriebelSmootherTest(unittest.TestCase):
         npt.assert_allclose(smoothed_states[0].C, array([[0.4]]))
         npt.assert_allclose(smoothed_states[1].C, array([[0.6]]))
         npt.assert_allclose(smoother_gains[0], array([[1.0 / 3.0]]))
+
+    def test_scalar_measurement_noise_uses_measurement_dimension_not_state_dimension(self):
+        smoother = RauchTungStriebelSmoother()
+        filtered_states, predicted_states, smoothed_states, smoother_gains = (
+            smoother.filter_and_smooth(
+                initial_state=GaussianDistribution(array([0.0, 0.0]), eye(2)),
+                measurements=array([1.0, 2.0]),
+                measurement_matrices=array([[1.0, 0.0]]),
+                meas_noise_covariances=array([1.0, 1.0]),
+                system_matrices=eye(2),
+                sys_noise_covariances=zeros((2, 2)),
+            )
+        )
+
+        self.assertEqual(len(filtered_states), 2)
+        self.assertEqual(len(predicted_states), 1)
+        self.assertEqual(len(smoothed_states), 2)
+        self.assertEqual(len(smoother_gains), 1)
+        self.assertEqual(filtered_states[0].mu.shape, (2,))
+        self.assertEqual(filtered_states[0].C.shape, (2, 2))
 
     def test_smoothing_does_not_change_last_filtered_state(self):
         smoother = RauchTungStriebelSmoother()
