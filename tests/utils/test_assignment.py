@@ -275,6 +275,49 @@ class MurtyAssignmentTest(unittest.TestCase):
                         col_non_assignment_costs=invalid_cost,
                     )
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_complex_assignment_costs_are_rejected(self):
+        invalid_cost_matrices = (
+            np.array([[1.0 + 2.0j]]),
+            [[1.0 + 2.0j]],
+        )
+
+        for invalid_cost_matrix in invalid_cost_matrices:
+            with self.subTest(invalid_cost_matrix=invalid_cost_matrix):
+                with self.assertRaisesRegex(ValueError, "cost_matrix must be real-valued"):
+                    murty_k_best_assignments(invalid_cost_matrix)
+
+        with self.assertRaisesRegex(ValueError, "cost_matrix must be real-valued"):
+            min_cost_max_cardinality_assignment(np.array([[1.0 + 2.0j]]))
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on the JAX backend",
+    )
+    def test_complex_non_assignment_costs_are_rejected(self):
+        cost_matrix = np.array([[1.0]])
+
+        for invalid_cost in (1.0 + 2.0j, np.array([1.0 + 2.0j])):
+            with self.subTest(kind="row", invalid_cost=invalid_cost):
+                with self.assertRaisesRegex(
+                    ValueError, "row_non_assignment_costs must be real-valued"
+                ):
+                    murty_k_best_assignments(
+                        cost_matrix,
+                        row_non_assignment_costs=invalid_cost,
+                    )
+            with self.subTest(kind="column", invalid_cost=invalid_cost):
+                with self.assertRaisesRegex(
+                    ValueError, "col_non_assignment_costs must be real-valued"
+                ):
+                    murty_k_best_assignments(
+                        cost_matrix,
+                        col_non_assignment_costs=invalid_cost,
+                    )
+
     def test_non_positive_k_returns_empty_list(self):
         self.assertEqual(murty_k_best_assignments(np.eye(2), k=0), [])
 
