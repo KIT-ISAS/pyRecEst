@@ -1,2 +1,5 @@
+import pytest
+
+
 def test_placeholder():
-    assert True
+    assert pytest is not None
