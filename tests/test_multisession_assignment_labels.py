@@ -66,9 +66,17 @@ class TestMultiSessionAssignmentLabels(unittest.TestCase):
         __backend_name__ == "jax",
         reason="Not supported on this backend",
     )
-    def test_text_fill_values_are_rejected(self):
+    def test_text_and_bytes_fill_values_are_rejected(self):
         tracks = [{0: 0}]
-        invalid_fill_values = ("-1", np.str_("-2"), np.array("-3"))
+        invalid_fill_values = (
+            "-1",
+            b"-1",
+            np.str_("-2"),
+            np.bytes_(b"-2"),
+            np.array("-3"),
+            np.array(b"-4"),
+            np.array(b"-5", dtype=object),
+        )
 
         for fill_value in invalid_fill_values:
             for name, converter in self._converters():
