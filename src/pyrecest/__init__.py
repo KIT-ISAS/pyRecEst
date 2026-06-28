@@ -53,7 +53,57 @@ def _patch_pytorch_comparison_facade() -> None:
     backend.logical_or = _wrap_comparison(_torch.logical_or)
 
 
+def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style tile repetitions for ``torch.Tensor.repeat``."""
+
+    if torch_module.is_tensor(reps):
+        reps = reps.detach().cpu().numpy()
+    reps_array = numpy_module.asarray(reps)
+    if reps_array.shape == ():
+        repetitions = (int(reps_array.item()),)
+    else:
+        repetitions = tuple(
+            int(one_repetition) for one_repetition in reps_array.tolist()
+        )
+    if any(one_repetition < 0 for one_repetition in repetitions):
+        raise ValueError("negative dimensions are not allowed")
+    return repetitions
+
+
+def _patch_pytorch_tile_facade() -> None:
+    """Make public PyTorch ``tile`` follow NumPy repetition semantics."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import numpy as _np  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    def tile(x, reps):
+        x = backend.array(x)
+        repetitions = _pytorch_tile_repetitions(reps, _np, _torch)
+        if not repetitions:
+            return x.clone()
+        if x.ndim < len(repetitions):
+            x = x.reshape((1,) * (len(repetitions) - x.ndim) + tuple(x.shape))
+        elif x.ndim > len(repetitions):
+            repetitions = (1,) * (x.ndim - len(repetitions)) + repetitions
+        return x.repeat(repetitions)
+
+    tile.__name__ = "tile"
+    tile.__doc__ = getattr(_np.tile, "__doc__", None)
+    backend.tile = tile
+
+
 _patch_pytorch_comparison_facade()
+_patch_pytorch_tile_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
     backend_support,
