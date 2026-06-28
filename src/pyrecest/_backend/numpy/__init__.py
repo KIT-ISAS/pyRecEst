@@ -121,7 +121,6 @@ from .._shared_numpy import (
     assignment,
     assignment_by_sum,
     ceil,
-    copy,
     cos,
     cosh,
     divide,
@@ -190,6 +189,11 @@ from ._common import (
 ones = _modify_func_default_dtype(target=_np.ones)
 linspace = _dyn_update_dtype(target=_np.linspace, dtype_pos=5)
 empty = _dyn_update_dtype(target=_np.empty, dtype_pos=1)
+
+
+def copy(x):
+    """Return a NumPy copy for Python scalars, sequences, and arrays."""
+    return _np.copy(x)
 
 
 def trace(a, offset=0, axis1=-2, axis2=-1, dtype=None, out=None):
