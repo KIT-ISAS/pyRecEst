@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 import pyrecest.backend as backend
+from pyrecest.backend_tools import get_backend_name
 import pytest
 
 
@@ -15,6 +16,9 @@ def _to_python(value):
 
 
 def test_cumulative_out_contract_default_backend():
+    if get_backend_name() == "jax":
+        pytest.skip("JAX arrays do not support NumPy-style out mutation")
+
     values = backend.reshape(backend.arange(1, 7), (2, 3))
     out_sum = backend.zeros((2, 3), dtype=values.dtype)
     out_prod = backend.zeros((2, 3), dtype=values.dtype)
