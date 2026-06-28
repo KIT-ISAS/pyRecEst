@@ -37,5 +37,18 @@ empty_result = backend.tile(values, ())
 assert tuple(backend.shape(empty_result)) == (2, 2)
 assert backend.to_numpy(empty_result).tolist() == [[1, 2], [3, 4]]
 assert empty_result is not values
+
+
+def assert_tile_repetitions_rejected(repetitions):
+    try:
+        backend.tile(values, repetitions)
+    except TypeError:
+        return
+    raise AssertionError(f"backend.tile accepted invalid repetitions {repetitions!r}")
+
+
+assert_tile_repetitions_rejected(2.5)
+assert_tile_repetitions_rejected([2.5, 1])
+assert_tile_repetitions_rejected(backend.array([2.5, 1.0]))
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
