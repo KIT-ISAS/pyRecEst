@@ -1,36 +1,82 @@
 """JAX-based linear algebra backend."""
 
 import jax.numpy as _jnp
-from jax.numpy.linalg import (  # NOQA
-    cholesky,
-    det,
-    eig,
-    eigh,
-    eigvalsh,
-    inv,
-    matrix_power,
-    matrix_rank,
-    norm,
-    pinv,
-    qr,
-    solve,
-    svd,
-)
-from jax.scipy.linalg import block_diag  # For PyRecEst
-from jax.scipy.linalg import (
-    expm,
-    polar,
-    sqrtm,
-)
+import jax.scipy.linalg as _jax_scipy_linalg
 
 from .._backend_config import jax_atol as atol
 
-unsupported_functions = [
-    "fractional_matrix_power",
-    "logm",
-    "quadratic_assignment",
-    "solve_sylvester",
-]
+
+def _as_linalg_array(value):
+    """Convert PyRecEst array-like inputs before calling raw JAX linalg."""
+    return _jnp.asarray(value)
+
+
+def cholesky(a, *args, **kwargs):
+    return _jnp.linalg.cholesky(_as_linalg_array(a), *args, **kwargs)
+
+
+def det(a, *args, **kwargs):
+    return _jnp.linalg.det(_as_linalg_array(a), *args, **kwargs)
+
+
+def eig(a, *args, **kwargs):
+    return _jnp.linalg.eig(_as_linalg_array(a), *args, **kwargs)
+
+
+def eigh(a, *args, **kwargs):
+    return _jnp.linalg.eigh(_as_linalg_array(a), *args, **kwargs)
+
+
+def eigvalsh(a, *args, **kwargs):
+    return _jnp.linalg.eigvalsh(_as_linalg_array(a), *args, **kwargs)
+
+
+def inv(a, *args, **kwargs):
+    return _jnp.linalg.inv(_as_linalg_array(a), *args, **kwargs)
+
+
+def matrix_power(a, n):
+    return _jnp.linalg.matrix_power(_as_linalg_array(a), n)
+
+
+def matrix_rank(a, *args, **kwargs):
+    return _jnp.linalg.matrix_rank(_as_linalg_array(a), *args, **kwargs)
+
+
+def norm(x, *args, **kwargs):
+    return _jnp.linalg.norm(_as_linalg_array(x), *args, **kwargs)
+
+
+def pinv(a, *args, **kwargs):
+    return _jnp.linalg.pinv(_as_linalg_array(a), *args, **kwargs)
+
+
+def qr(a, *args, **kwargs):
+    return _jnp.linalg.qr(_as_linalg_array(a), *args, **kwargs)
+
+
+def solve(a, b, *args, **kwargs):
+    return _jnp.linalg.solve(_as_linalg_array(a), _as_linalg_array(b), *args, **kwargs)
+
+
+def svd(a, *args, **kwargs):
+    return _jnp.linalg.svd(_as_linalg_array(a), *args, **kwargs)
+
+
+def block_diag(*arrs):
+    return _jax_scipy_linalg.block_diag(*(_as_linalg_array(arr) for arr in arrs))
+
+
+def expm(a, *args, **kwargs):
+    return _jax_scipy_linalg.expm(_as_linalg_array(a), *args, **kwargs)
+
+
+def polar(a, *args, **kwargs):
+    return _jax_scipy_linalg.polar(_as_linalg_array(a), *args, **kwargs)
+
+
+def sqrtm(a, *args, **kwargs):
+    return _jax_scipy_linalg.sqrtm(_as_linalg_array(a), *args, **kwargs)
 
 
 def _unsupported_function(name):
@@ -46,9 +92,15 @@ def _unsupported_function(name):
     return _raise_unsupported
 
 
+fractional_matrix_power = _unsupported_function("fractional_matrix_power")
+logm = _unsupported_function("logm")
+quadratic_assignment = _unsupported_function("quadratic_assignment")
+solve_sylvester = _unsupported_function("solve_sylvester")
+
+
 def is_single_matrix_pd(mat):
     """Check if a 2D square matrix is positive definite."""
-    mat = _jnp.asarray(mat)
+    mat = _as_linalg_array(mat)
     if mat.ndim != 2 or mat.shape[0] != mat.shape[1]:
         return False
 
@@ -60,7 +112,3 @@ def is_single_matrix_pd(mat):
     is_symmetric = _jnp.all(_jnp.abs(mat - _jnp.transpose(mat)) < atol)
     factor = _jnp.linalg.cholesky(mat)
     return _jnp.logical_and(is_symmetric, _jnp.all(_jnp.isfinite(factor)))
-
-
-for func_name in unsupported_functions:
-    globals()[func_name] = _unsupported_function(func_name)
