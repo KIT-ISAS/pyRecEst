@@ -12,7 +12,12 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-PYTHON_FENCE_RE = re.compile(r"```(?:python|py)\n(?P<code>.*?)\n```", re.DOTALL)
+PYTHON_FENCE_RE = re.compile(
+    r"^[ \t]{0,3}```[ \t]*(?:python|py)(?:[ \t][^\r\n]*)?\r?\n"
+    r"(?P<code>.*?)"
+    r"\r?\n[ \t]{0,3}```[ \t]*\r?$",
+    re.DOTALL | re.IGNORECASE | re.MULTILINE,
+)
 SKIP_MARKERS = ("# pyrecest: skip", "# doctest: +SKIP")
 
 
