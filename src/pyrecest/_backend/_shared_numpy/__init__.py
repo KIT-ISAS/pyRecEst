@@ -410,7 +410,6 @@ def outer(a, b):
 
     if a.ndim > 1 and b.ndim > 1:
         return _np.einsum("...i,...j->...ij", a, b)
-
     if a.ndim == 1 and b.ndim > 1:
         return _np.einsum("i,...j->...ij", a, b)
     if a.ndim > 1 and b.ndim == 1:
@@ -444,8 +443,13 @@ def dot(a, b):
     return _np.einsum("...i,...i->...", a, b)
 
 
-def trace(a):
-    return _np.trace(a, axis1=-2, axis2=-1)
+def trace(a, offset=0, axis1=-2, axis2=-1, dtype=None, out=None):
+    kwargs = {"offset": offset, "axis1": axis1, "axis2": axis2}
+    if dtype is not None:
+        kwargs["dtype"] = dtype
+    if out is not None:
+        kwargs["out"] = out
+    return _np.trace(a, **kwargs)
 
 
 def scatter_add(input, dim, index, src):
