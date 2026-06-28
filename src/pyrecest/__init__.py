@@ -124,8 +124,38 @@ def _patch_pytorch_tile_facade() -> None:
     backend.tile = tile
 
 
+def _patch_jax_std_out_facade() -> None:
+    """Make public JAX ``std`` accept NumPy's ``out`` argument."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "jax":
+        return
+
+    original_std = backend.std
+
+    def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, correction=0):
+        result = original_std(
+            a,
+            axis=axis,
+            dtype=dtype,
+            out=None,
+            ddof=ddof,
+            keepdims=keepdims,
+            correction=correction,
+        )
+        if out is None:
+            return result
+        return backend.asarray(out).at[...].set(result)
+
+    std.__name__ = getattr(original_std, "__name__", "std")
+    std.__doc__ = getattr(original_std, "__doc__", None)
+    backend.std = std
+
+
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
+_patch_jax_std_out_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
     backend_support,
