@@ -7,6 +7,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
+
 from pyrecest.backend import all, array, isfinite, ones, reshape, stack, zeros
 
 
@@ -24,6 +26,51 @@ class MeasurementReliabilitySelection:
     measurement_weights: Any
     active_measurement_mask: list[bool]
     active_measurement_indices: list[int]
+
+
+def _normalize_integer_count(value: Any, name: str, *, minimum: int, message: str) -> int:
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    if isinstance(scalar, (int, np.integer)):
+        parsed = int(scalar)
+    elif (
+        isinstance(scalar, (float, np.floating))
+        and np.isfinite(scalar)
+        and float(scalar).is_integer()
+    ):
+        parsed = int(scalar)
+    else:
+        raise ValueError(message)
+
+    if parsed < minimum:
+        raise ValueError(message)
+    return parsed
+
+
+def _normalize_nonnegative_integer(value: Any, name: str) -> int:
+    return _normalize_integer_count(
+        value,
+        name,
+        minimum=0,
+        message=f"{name} must be a non-negative integer",
+    )
+
+
+def _normalize_positive_integer(value: Any, name: str) -> int:
+    return _normalize_integer_count(
+        value,
+        name,
+        minimum=1,
+        message=f"{name} must be a positive integer",
+    )
 
 
 def _has_boolean_dtype(value) -> bool:
@@ -48,7 +95,10 @@ def _is_real_numeric_object_value(value) -> bool:
         if kind is not None:
             return kind in {"i", "u", "f"}
         dtype_name = str(dtype).lower()
-        if any(token in dtype_name for token in ("bool", "complex", "str", "string", "object")):
+        if any(
+            token in dtype_name
+            for token in ("bool", "complex", "str", "string", "object")
+        ):
             return False
         if "float" in dtype_name or "int" in dtype_name:
             return True
@@ -106,8 +156,7 @@ def normalize_measurement_weights(measurement_weights, n_measurements: int):
     that the corresponding measurement should be skipped.
     """
 
-    if n_measurements < 0:
-        raise ValueError("n_measurements must be non-negative")
+    n_measurements = _normalize_nonnegative_integer(n_measurements, "n_measurements")
     if measurement_weights is None:
         return ones(n_measurements)
 
@@ -147,8 +196,7 @@ def normalize_active_measurement_mask(
 ) -> list[bool]:
     """Return one boolean active/inactive flag per measurement."""
 
-    if n_measurements < 0:
-        raise ValueError("n_measurements must be non-negative")
+    n_measurements = _normalize_nonnegative_integer(n_measurements, "n_measurements")
     if active_measurement_mask is None:
         return [True] * n_measurements
 
@@ -172,6 +220,7 @@ def normalize_measurement_reliability(
 ) -> MeasurementReliabilitySelection:
     """Normalize measurement weights and active-mask inputs together."""
 
+    n_measurements = _normalize_nonnegative_integer(n_measurements, "n_measurements")
     weights = normalize_measurement_weights(measurement_weights, n_measurements)
     mask = normalize_active_measurement_mask(active_measurement_mask, n_measurements)
     active_indices = [
@@ -202,10 +251,8 @@ def normalize_measurement_noise_covariances(
     tracker classes reuse their own covariance validation conventions.
     """
 
-    if n_measurements < 0:
-        raise ValueError("n_measurements must be non-negative")
-    if measurement_dim <= 0:
-        raise ValueError("measurement_dim must be positive")
+    n_measurements = _normalize_nonnegative_integer(n_measurements, "n_measurements")
+    measurement_dim = _normalize_positive_integer(measurement_dim, "measurement_dim")
 
     if n_measurements == 0:
         return zeros((0, measurement_dim, measurement_dim))
