@@ -82,6 +82,21 @@ def _common_linalg_dtype(*tensors):
     return _default_linalg_dtype()
 
 
+def _preferred_linalg_device(*values):
+    """Return the non-CPU tensor device to preserve, falling back to any tensor."""
+    non_cpu_device = next(
+        (
+            value.device
+            for value in values
+            if _torch.is_tensor(value) and value.device.type != "cpu"
+        ),
+        None,
+    )
+    if non_cpu_device is not None:
+        return non_cpu_device
+    return next((value.device for value in values if _torch.is_tensor(value)), None)
+
+
 class _Logm(_torch.autograd.Function):
     """Torch autograd function for matrix logarithm.
 
@@ -164,7 +179,7 @@ def matrix_rank(a, tol=None, hermitian=False, *, rtol=None, atol=None, **kwargs)
 
 def solve(a, b):
     """Solve a linear system with PyRecEst-compatible array-like inputs."""
-    device = next((value.device for value in (a, b) if _torch.is_tensor(value)), None)
+    device = _preferred_linalg_device(a, b)
     a = _as_linalg_tensor(a)
     b = _as_linalg_tensor(b)
     if device is not None:
@@ -246,7 +261,7 @@ def solve_sylvester(a, b, q):
             tilde_x = tilde_q / safe_denominators
             tilde_x = _torch.where(
                 _torch.abs(denominators) < 1e-12,
-                _torch.zeros((), dtype=tilde_x.dtype, device=tilde_x.device),
+                _torch.zeros((), dtype=tilde_x.dtype, device=tilte_x.device),
                 tilde_x,
             )
             return eigvecs @ tilde_x @ eigvecs.transpose(-2, -1)
