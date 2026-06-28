@@ -33,17 +33,8 @@ unsupported_functions = [
 ]
 
 
-def _unsupported_function(name):
-    """Create an unsupported-function shim that preserves facade identity."""
-
-    def _raise_unsupported(*args, **kwargs):
-        del args, kwargs
-        raise NotImplementedError(f"{name} is not supported in this JAX backend.")
-
-    _raise_unsupported.__name__ = name
-    _raise_unsupported.__qualname__ = name
-    _raise_unsupported.__doc__ = f"Unsupported JAX-backend placeholder for ``{name}``."
-    return _raise_unsupported
+def _raise_unsupported(*args, **kwargs):
+    raise NotImplementedError("This function is not supported in this JAX backend.")
 
 
 def is_single_matrix_pd(mat):
@@ -63,4 +54,4 @@ def is_single_matrix_pd(mat):
 
 
 for func_name in unsupported_functions:
-    globals()[func_name] = _unsupported_function(func_name)
+    globals()[func_name] = _raise_unsupported
