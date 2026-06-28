@@ -98,6 +98,19 @@ def ndim(x):
     return _np.ndim(x)
 
 
+def diagonal(a, offset=0, axis1=0, axis2=1):
+    """Return selected diagonals for NumPy arrays and PyTorch tensors."""
+    torch = _torch_module_for_values(a)
+    if torch is not None:
+        return torch.diagonal(
+            torch.as_tensor(a),
+            offset=offset,
+            dim1=axis1,
+            dim2=axis2,
+        )
+    return _np.diagonal(a, offset=offset, axis1=axis1, axis2=axis2)
+
+
 def _torch_module_for_values(*values):
     try:
         import torch as _torch
