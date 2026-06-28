@@ -1,8 +1,35 @@
 """Utility helpers for :mod:`pyrecest`."""
 
+from . import assignment as _assignment_module
 from . import multisession_assignment as _multisession_assignment_module
 from ._multisession_assignment_labels import tracks_to_session_labels
-from .assignment import min_cost_max_cardinality_assignment, murty_k_best_assignments
+
+
+def _murty_solution_with_full_assignment(solution, n_cols):
+    if solution is None or "_full_assignment" in solution:
+        return solution
+    full_assignment = _assignment_module._array(solution["assignment"])
+    for row_index, col_index in enumerate(full_assignment):
+        if int(col_index) < 0:
+            full_assignment[row_index] = n_cols + row_index
+    patched_solution = dict(solution)
+    patched_solution["_full_assignment"] = full_assignment
+    return patched_solution
+
+
+def _solve_subproblem_with_full_assignment(*args, **kwargs):
+    solution = _assignment_module._solve_subproblem_without_full_assignment(*args, **kwargs)
+    n_cols = args[2] if len(args) > 2 else kwargs["n_cols"]
+    return _murty_solution_with_full_assignment(solution, n_cols)
+
+
+if not hasattr(_assignment_module, "_solve_subproblem_without_full_assignment"):
+    _assignment_module._solve_subproblem_without_full_assignment = _assignment_module._solve_subproblem
+    _assignment_module._solve_subproblem = _solve_subproblem_with_full_assignment
+
+
+min_cost_max_cardinality_assignment = _assignment_module.min_cost_max_cardinality_assignment
+murty_k_best_assignments = _assignment_module.murty_k_best_assignments
 from .association_features import (
     CalibratedPairwiseAssociationModel,
     NamedPairwiseFeatureSchema,
