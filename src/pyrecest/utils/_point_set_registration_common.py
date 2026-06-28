@@ -128,9 +128,54 @@ def validate_pair(
     return source, target
 
 
+def _dtype_kind(value) -> str | None:
+    dtype = getattr(value, "dtype", None)
+    return getattr(dtype, "kind", None)
+
+
+def _dtype_name(value) -> str:
+    return str(getattr(value, "dtype", "")).lower()
+
+
+def _is_boolean_dtype(value) -> bool:
+    return _dtype_kind(value) == "b" or _dtype_name(value) in {
+        "bool",
+        "bool_",
+        "torch.bool",
+    }
+
+
+def _is_complex_dtype(value) -> bool:
+    return _dtype_kind(value) == "c" or _dtype_name(value) in {
+        "complex64",
+        "complex128",
+        "complex256",
+        "torch.complex64",
+        "torch.complex128",
+    }
+
+
+def _coerce_cost_matrix(cost_matrix):
+    try:
+        costs = asarray(cost_matrix)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError("cost_matrix must contain real numeric values.") from exc
+
+    if costs.ndim != 2:
+        raise ValueError("cost_matrix must be two-dimensional.")
+    if _is_boolean_dtype(costs) or _is_complex_dtype(costs):
+        raise ValueError("cost_matrix must contain real numeric values.")
+
+    try:
+        finite_mask = isfinite(costs)
+    except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
+        raise ValueError("cost_matrix must contain real numeric values.") from exc
+    return costs, finite_mask
+
+
 def validate_cost_matrix(cost_matrix, *, n_reference: int, n_moving: int):
-    """Validate the shape of an association cost matrix."""
-    costs = asarray(cost_matrix)
+    """Validate the shape and numeric contract of an association cost matrix."""
+    costs, _ = _coerce_cost_matrix(cost_matrix)
     if costs.shape != (n_reference, n_moving):
         raise ValueError(
             "cost_function must return an array of shape (n_reference, n_moving)."
@@ -194,16 +239,13 @@ def _validate_tolerance(tolerance) -> float:
 
 def solve_gated_assignment(cost_matrix, *, max_cost: float = float("inf")):
     """Solve one-to-one assignment with optional gating."""
-    costs = asarray(cost_matrix)
-    if costs.ndim != 2:
-        raise ValueError("cost_matrix must be two-dimensional.")
+    costs, finite_mask = _coerce_cost_matrix(cost_matrix)
     if costs.shape[0] == 0:
         return zeros((0,), dtype=int64)
     if costs.shape[1] == 0:
         return zeros((costs.shape[0],), dtype=int64) - 1
 
     max_cost_value = _validate_max_cost(max_cost)
-    finite_mask = isfinite(costs)
     valid_cost_mask = finite_mask
     if math.isfinite(max_cost_value):
         valid_cost_mask = finite_mask & (costs <= max_cost_value)
