@@ -445,6 +445,30 @@ def _sum_with_numpy_signature(sum_func, asarray_func, reshape_func):
     return sum
 
 
+def _trace_with_numpy_signature(diagonal_func, sum_func):
+    """Return a trace wrapper with PyRecEst's NumPy-style contract."""
+
+    def trace(a, offset=0, axis1=-2, axis2=-1, dtype=None, out=None):
+        diagonal = diagonal_func(a, offset=offset, axis1=axis1, axis2=axis2)
+        result = sum_func(diagonal, axis=-1, dtype=dtype)
+        if out is not None:
+            copy_ = getattr(out, "copy_", None)
+            if copy_ is not None:
+                copy_(result)
+                return out
+            try:
+                out[...] = result
+            except TypeError:
+                at = getattr(out, "at", None)
+                if at is None:
+                    raise
+                return at[...].set(result)
+            return out
+        return result
+
+    return trace
+
+
 def _std_with_numpy_input(
     std_func,
     asarray_func,
@@ -700,6 +724,15 @@ class BackendImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                         attribute = _quantile_with_numpy_axis(
                             attribute,
                             getattr(backend, "asarray"),
+                        )
+                    if (
+                        module_name == ""
+                        and attribute_name == "trace"
+                        and backend_name in {"jax", "pytorch"}
+                    ):
+                        attribute = _trace_with_numpy_signature(
+                            getattr(backend, "diagonal"),
+                            getattr(backend, "sum"),
                         )
                     if module_name == "" and attribute_name in {
                         "assignment",
