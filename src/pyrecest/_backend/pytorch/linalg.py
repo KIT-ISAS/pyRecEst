@@ -3,18 +3,6 @@
 import numpy as _np
 import scipy as _scipy
 import torch as _torch
-from torch import block_diag  # For PyRecEst
-from torch.linalg import pinv  # For PyRecEst
-from torch.linalg import (
-    cholesky,
-    det,
-    eig,
-    eigh,
-    eigvalsh,
-    inv,
-)
-from torch.linalg import matrix_exp as expm
-from torch.linalg import matrix_power
 
 from .._backend_config import np_atol as atol
 from ..numpy import linalg as _gsnplinalg
@@ -24,6 +12,11 @@ from ._dtype import (
     is_complex,
     is_floating,
 )
+
+
+# The public backend facade exposes NumPy-style helpers. Keep array-like
+# coercion local to this module instead of re-exporting raw torch.linalg
+# functions, because raw torch.linalg rejects Python lists and integer arrays.
 
 
 def _as_numpy_no_grad(value):
@@ -82,6 +75,70 @@ def _common_linalg_dtype(*tensors):
     return _default_linalg_dtype()
 
 
+def _out_kwargs(out):
+    return {} if out is None else {"out": out}
+
+
+def cholesky(a, upper=False, out=None):
+    """Compute a Cholesky factor after PyRecEst-style array-like promotion."""
+    return _torch.linalg.cholesky(_as_linalg_tensor(a), upper=upper, **_out_kwargs(out))
+
+
+def det(a, out=None):
+    """Compute a determinant after PyRecEst-style array-like promotion."""
+    return _torch.linalg.det(_as_linalg_tensor(a), **_out_kwargs(out))
+
+
+def eig(a, out=None):
+    """Compute eigenvalues/eigenvectors after array-like input promotion."""
+    return _torch.linalg.eig(_as_linalg_tensor(a), **_out_kwargs(out))
+
+
+def eigh(a, UPLO="L", out=None):
+    """Compute Hermitian eigenpairs after array-like input promotion."""
+    return _torch.linalg.eigh(_as_linalg_tensor(a), UPLO=UPLO, **_out_kwargs(out))
+
+
+def eigvalsh(a, UPLO="L", out=None):
+    """Compute Hermitian eigenvalues after array-like input promotion."""
+    return _torch.linalg.eigvalsh(_as_linalg_tensor(a), UPLO=UPLO, **_out_kwargs(out))
+
+
+def inv(a, out=None):
+    """Invert a matrix after PyRecEst-style array-like promotion."""
+    return _torch.linalg.inv(_as_linalg_tensor(a), **_out_kwargs(out))
+
+
+def expm(a):
+    """Compute the matrix exponential after array-like input promotion."""
+    return _torch.linalg.matrix_exp(_as_linalg_tensor(a))
+
+
+def matrix_power(a, n):
+    """Raise a matrix to an integer power after array-like input promotion."""
+    return _torch.linalg.matrix_power(_as_linalg_tensor(a), n)
+
+
+def pinv(a, rcond=None, hermitian=False, *, atol=None, rtol=None, out=None):
+    """Compute the Moore-Penrose pseudoinverse after array-like input promotion."""
+    if rcond is not None:
+        if rtol is not None:
+            raise TypeError("pinv() got both 'rcond' and 'rtol'")
+        rtol = rcond
+    return _torch.linalg.pinv(
+        _as_linalg_tensor(a),
+        atol=atol,
+        rtol=rtol,
+        hermitian=hermitian,
+        **_out_kwargs(out),
+    )
+
+
+def block_diag(*arrs):
+    """Build a block diagonal tensor from PyRecEst-style array-like inputs."""
+    return _torch.block_diag(*(array(arr) for arr in arrs))
+
+
 class _Logm(_torch.autograd.Function):
     """Torch autograd function for matrix logarithm.
 
@@ -120,14 +177,11 @@ logm = _Logm.apply
 
 
 def sqrtm(x):
+    x = _as_linalg_tensor(x)
     x_np = _as_numpy_no_grad(x)
     np_sqrtm = _np.vectorize(_scipy.linalg.sqrtm, signature="(n,m)->(n,m)")(x_np)
     if np_sqrtm.dtype.kind == "c":
-        target_complex_dtype = (
-            _COMPLEX_DTYPE_FOR_TENSOR_DTYPE.get(x.dtype)
-            if isinstance(x, _torch.Tensor)
-            else None
-        )
+        target_complex_dtype = _COMPLEX_DTYPE_FOR_TENSOR_DTYPE.get(x.dtype)
         if target_complex_dtype is not None:
             np_sqrtm = np_sqrtm.astype(target_complex_dtype, copy=False)
 
