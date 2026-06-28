@@ -27,6 +27,12 @@ def test_is_single_matrix_pd_rejects_real_nonsymmetric_matrix():
 
 
 @pytest.mark.backend_portable
+def test_is_single_matrix_pd_accepts_array_like_inputs():
+    assert _as_bool(backend.linalg.is_single_matrix_pd([[2.0, 0.0], [0.0, 3.0]])) is True
+    assert _as_bool(backend.linalg.is_single_matrix_pd([1.0, 2.0])) is False
+
+
+@pytest.mark.backend_portable
 def test_jax_is_single_matrix_pd_rejects_real_nonsymmetric_matrix():
     if importlib.util.find_spec("jax") is None:
         pytest.skip("JAX is not installed")
