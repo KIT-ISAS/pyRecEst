@@ -40,6 +40,28 @@ print("ok")
 """
 
 
+_NONFINITE_PARAMETER_CHECK = """
+from pyrecest.backend import random
+
+bad_parameters = (
+    {"loc": float("inf"), "scale": 1.0},
+    {"loc": 0.0, "scale": float("inf")},
+    {"loc": [0.0, float("nan")], "scale": 1.0, "size": (2,)},
+    {"loc": [0.0, 1.0], "scale": [0.1, float("inf")]},
+)
+
+for kwargs in bad_parameters:
+    try:
+        random.normal(**kwargs)
+    except ValueError as exc:
+        assert "finite" in str(exc)
+    else:
+        raise AssertionError(f"normal accepted non-finite parameters: {kwargs}")
+
+print("ok")
+"""
+
+
 @pytest.mark.backend_portable
 def test_pytorch_normal_accepts_array_valued_parameters():
     if importlib.util.find_spec("torch") is None:
@@ -57,6 +79,17 @@ def test_pytorch_normal_rejects_negative_array_scale_with_size():
         pytest.skip("PyTorch is not installed")
 
     result = run_backend_code("pytorch", _ARRAY_PARAMETER_NEGATIVE_SCALE_CHECK)
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+@pytest.mark.backend_portable
+def test_pytorch_normal_rejects_nonfinite_parameters():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("PyTorch is not installed")
+
+    result = run_backend_code("pytorch", _NONFINITE_PARAMETER_CHECK)
 
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout

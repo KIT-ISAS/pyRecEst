@@ -313,6 +313,8 @@ def _validate_normal_parameter(value, name):
         raise TypeError(f"{name} must be real numeric") from exc
     if value.dtype.kind not in "iuf":
         raise TypeError(f"{name} must be real numeric")
+    if bool(_jnp.any(~_jnp.isfinite(value))):
+        raise ValueError(f"{name} must be finite")
     return value
 
 

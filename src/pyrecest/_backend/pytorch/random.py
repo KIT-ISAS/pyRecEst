@@ -299,14 +299,14 @@ def _validate_normal_parameter(value, name, *, device=None):
     if _contains_boolean_value(value):
         raise TypeError(f"{name} must be real numeric, not boolean")
     try:
-        value = _torch.as_tensor(value, device=device)
+        parameter = _torch.as_tensor(value, device=device)
     except (TypeError, ValueError, RuntimeError) as exc:
         raise TypeError(f"{name} must be real numeric") from exc
-    if not _is_real_numeric_dtype(value.dtype):
+    if not _is_real_numeric_dtype(parameter.dtype):
         raise TypeError(f"{name} must be real numeric")
-    if bool(_torch.any(~_torch.isfinite(value))):
-        raise ValueError("normal parameters must be finite")
-    return value
+    if bool(_torch.any(~_torch.isfinite(parameter))):
+        raise ValueError(f"{name} must be finite")
+    return parameter
 
 
 def _validate_normal_scale(scale, *, device=None):
