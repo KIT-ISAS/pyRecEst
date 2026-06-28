@@ -38,11 +38,27 @@ print("ok")
 
 
 @pytest.mark.backend_portable
-def test_jax_linalg_det_accepts_array_like_input_directly():
+def test_jax_linalg_accepts_array_like_inputs_directly():
     if importlib.util.find_spec("jax") is None:
         pytest.skip("JAX is not installed")
 
+    import jax.numpy as jnp
+
     from pyrecest._backend.jax import linalg
 
-    value = linalg.det([[1.0, 2.0], [3.0, 4.0]])
-    assert abs(float(value) + 2.0) < 1e-5
+    assert abs(float(linalg.det([[1.0, 2.0], [3.0, 4.0]])) + 2.0) < 1e-5
+
+    solution = linalg.solve([[2.0, 0.0], [0.0, 4.0]], [2.0, 8.0])
+    assert bool(jnp.allclose(solution, jnp.array([1.0, 2.0])))
+
+    inverse = linalg.inv([[1.0, 0.0], [0.0, 2.0]])
+    assert bool(jnp.allclose(inverse, jnp.array([[1.0, 0.0], [0.0, 0.5]])))
+
+    block = linalg.block_diag([[1.0]], [[2.0]])
+    assert bool(jnp.allclose(block, jnp.array([[1.0, 0.0], [0.0, 2.0]])))
+
+    exponential = linalg.expm([[0.0, 0.0], [0.0, 0.0]])
+    assert bool(jnp.allclose(exponential, jnp.eye(2)))
+
+    root = linalg.sqrtm([[4.0, 0.0], [0.0, 9.0]])
+    assert bool(jnp.allclose(root, jnp.array([[2.0, 0.0], [0.0, 3.0]]), atol=1e-5))
