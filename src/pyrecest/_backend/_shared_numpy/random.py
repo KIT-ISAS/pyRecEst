@@ -112,17 +112,24 @@ def _validate_normal_scale(scale):
 def _normal(loc=0.0, scale=1.0, size=None):
     loc = _validate_normal_parameter(loc, "loc")
     scale = _validate_normal_scale(scale)
-    return _np.random.normal(loc, scale, size)
+    return _np.random.normal(loc, scale, _normalize_size(size))
 
 
 normal = _modify_func_default_dtype(
     copy=False, kw_only=True, target=_allow_complex_dtype(target=_normal)
 )
 
+
+def _multivariate_normal(mean, cov, size=None, check_valid="warn", tol=1e-8):
+    return _np.random.multivariate_normal(
+        mean, cov, _normalize_size(size), check_valid, tol
+    )
+
+
 multivariate_normal = _modify_func_default_dtype(
     copy=False,
     kw_only=True,
-    target=_allow_complex_dtype(target=_np.random.multivariate_normal),
+    target=_allow_complex_dtype(target=_multivariate_normal),
 )
 
 
