@@ -72,6 +72,21 @@ class TestModelValidation(unittest.TestCase):
                 array([[1.0, 2.0], [0.0, 1.0]]), check_symmetric=True
             )
 
+    def test_validate_covariance_matrix_accepts_complex_hermitian(self):
+        covariance = validate_covariance_matrix(
+            array([[1.0 + 0.0j, 2.0 + 3.0j], [2.0 - 3.0j, 4.0 + 0.0j]]),
+            check_symmetric=True,
+        )
+
+        self.assertEqual(covariance.shape, (2, 2))
+
+    def test_validate_covariance_matrix_rejects_complex_symmetric_non_hermitian(self):
+        with self.assertRaisesRegex(ValueError, "symmetric"):
+            validate_covariance_matrix(
+                array([[1.0 + 0.0j, 2.0 + 3.0j], [2.0 + 3.0j, 4.0 + 0.0j]]),
+                check_symmetric=True,
+            )
+
     def test_validate_noise_covariance_uses_covariance_rules(self):
         noise_covariance = validate_noise_covariance(
             array(0.5), dim=1, allow_scalar=True
