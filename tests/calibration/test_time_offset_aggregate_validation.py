@@ -37,12 +37,47 @@ class TimeOffsetAggregateValidationTest(unittest.TestCase):
         self.assertEqual(aggregated[0]["count"], 2.0)
         npt.assert_allclose(aggregated[0]["rmse"], 2.0)
 
+    def test_aggregate_time_offset_sweeps_pools_std_across_different_means(self):
+        sweeps = [
+            [
+                {
+                    "time_offset_s": 0.0,
+                    "count": 1.0,
+                    "mean": 0.0,
+                    "std": 0.0,
+                    "rmse": 0.0,
+                    "p95": 0.0,
+                    "max": 0.0,
+                }
+            ],
+            [
+                {
+                    "time_offset_s": 0.0,
+                    "count": 1.0,
+                    "mean": 2.0,
+                    "std": 0.0,
+                    "rmse": 2.0,
+                    "p95": 2.0,
+                    "max": 2.0,
+                }
+            ],
+        ]
+
+        for aggregate in (
+            aggregate_time_offset_sweeps,
+            aggregate_time_offset_sweeps_from_module,
+        ):
+            with self.subTest(aggregate=aggregate.__module__):
+                aggregated = aggregate(sweeps)
+
+                self.assertAlmostEqual(aggregated[0]["std"], 1.0)
+
     def test_aggregate_time_offset_sweeps_rejects_malformed_summary_scalars(self):
         invalid_cases = (
             ("time_offset_s", "0.0", "time_offset_s"),
             ("count", True, "count"),
             ("count", -1.0, "count"),
-            ("mean", 1.0 + 0.0j, "mean"),
+            ("mean", complex(1.0, 0.0), "mean"),
             ("rmse", "2.0", "rmse"),
             ("p95", np.array([2.5]), "p95"),
         )
