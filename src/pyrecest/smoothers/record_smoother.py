@@ -8,6 +8,7 @@ that should be preserved while the state and covariance are smoothed.
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -358,19 +359,68 @@ def _predict_arrays(
 def _call_model(
     model: Callable[..., np.ndarray], dt: float, state_dim: int, name: str
 ) -> np.ndarray:
-    try:
+    arity = _preferred_model_call_arity(model)
+    if arity == 2:
         matrix = model(dt, state_dim)
-    except TypeError as exc:
-        try:
-            matrix = model(dt)
-        except TypeError:
-            raise exc
+    elif arity == 1:
+        matrix = model(dt)
+    else:
+        matrix = _call_model_with_fallback(model, dt, state_dim, name)
+
     array = np.asarray(matrix, dtype=float)
     if array.shape != (state_dim, state_dim):
         raise ValueError(f"{name} must return a ({state_dim}, {state_dim}) matrix")
     if not np.isfinite(array).all():
         raise ValueError(f"{name} must return finite values")
     return array
+
+
+def _preferred_model_call_arity(model: Callable[..., np.ndarray]) -> int | None:
+    try:
+        signature = inspect.signature(model)
+    except (TypeError, ValueError):
+        return None
+
+    if _accepts_positional_argument_count(signature, 2):
+        return 2
+    if _accepts_positional_argument_count(signature, 1):
+        return 1
+    return None
+
+
+def _accepts_positional_argument_count(
+    signature: inspect.Signature, argument_count: int
+) -> bool:
+    required_positional = 0
+    positional_capacity = 0
+    accepts_varargs = False
+    for parameter in signature.parameters.values():
+        if parameter.kind == inspect.Parameter.VAR_POSITIONAL:
+            accepts_varargs = True
+        elif parameter.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        ):
+            positional_capacity += 1
+            if parameter.default is inspect.Parameter.empty:
+                required_positional += 1
+    return required_positional <= argument_count and (
+        accepts_varargs or argument_count <= positional_capacity
+    )
+
+
+def _call_model_with_fallback(
+    model: Callable[..., np.ndarray], dt: float, state_dim: int, name: str
+) -> np.ndarray:
+    try:
+        return model(dt, state_dim)
+    except TypeError:
+        try:
+            return model(dt)
+        except TypeError as exc:
+            raise TypeError(
+                f"{name} must accept either (dt, state_dim) or (dt)"
+            ) from exc
 
 
 def _smoothing_gain(
