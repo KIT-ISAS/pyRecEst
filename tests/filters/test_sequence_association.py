@@ -128,6 +128,13 @@ class SequenceAssociationTest(unittest.TestCase):
                 ):
                     SequenceAssociationNode(0, candidate_index)
 
+    def test_validation_rejects_indexed_gap_node(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "gap nodes must use candidate_index=None",
+        ):
+            SequenceAssociationNode(0, 3, is_missed_detection=True)
+
     def test_validation_rejects_nonbool_missed_detection_flags(self):
         invalid_flags = (0, 1, "False", np.array([True]))
         for is_missed_detection in invalid_flags:
