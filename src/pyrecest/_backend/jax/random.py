@@ -237,6 +237,11 @@ def _validate_randint_bounds(low, high):
     return low, high
 
 
+def _validate_normal_scale(scale):
+    if _contains_boolean_value(scale):
+        raise TypeError("scale must be real numeric, not boolean")
+
+
 def _randint(state, size, low, high, *args, **kwargs):
     state, key = jax.random.split(state)
     return state, jax.random.randint(
@@ -317,6 +322,7 @@ def _validate_normal_scale(scale):
 
 
 def _normal(state, loc=0.0, scale=1.0, size=None, *args, **kwargs):
+    _validate_normal_scale(scale)
     loc = _jnp.asarray(loc)
     scale = _validate_normal_scale(scale)
     if bool(_jnp.any(scale < 0)):
