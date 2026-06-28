@@ -445,11 +445,9 @@ def _choice(state, a, size=None, replace=True, p=None, shuffle=True, *args, **kw
     shuffle = _choice_bool(shuffle, "shuffle")
     population_size = _choice_population_size(a, kwargs)
     axis = kwargs.get("axis", 0)
-    if population_size == 0:
+    if population_size <= 0:
         if _shape_has_no_samples(shape):
             return state, _empty_choice_result(a, shape, axis)
-        raise ValueError("a must be a positive integer or a non-empty array")
-    if population_size < 0:
         raise ValueError("a must be a positive integer or a non-empty array")
     if p is not None:
         p = _validate_choice_probabilities(p, population_size)
