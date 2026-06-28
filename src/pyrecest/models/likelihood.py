@@ -42,7 +42,10 @@ def _ensure_callable(value: Any, name: str) -> None:
 def _validate_sample_count(value: Any) -> int:
     """Return ``value`` as a nonnegative integer sample count."""
 
-    value_array = np.asarray(value)
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("n must be a nonnegative integer.") from exc
     if value_array.shape != () or value_array.dtype == np.bool_:
         raise ValueError("n must be a nonnegative integer.")
     scalar = value_array.item()
