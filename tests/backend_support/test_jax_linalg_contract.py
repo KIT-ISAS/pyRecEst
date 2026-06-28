@@ -35,3 +35,14 @@ print("ok")
 
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.backend_portable
+def test_jax_linalg_det_accepts_array_like_input_directly():
+    if importlib.util.find_spec("jax") is None:
+        pytest.skip("JAX is not installed")
+
+    from pyrecest._backend.jax import linalg
+
+    value = linalg.det([[1.0, 2.0], [3.0, 4.0]])
+    assert abs(float(value) + 2.0) < 1e-5
