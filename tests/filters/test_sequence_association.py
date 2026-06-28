@@ -110,6 +110,10 @@ class SequenceAssociationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             SequenceAssociationNode(0, None)
 
+    def test_validation_rejects_indexed_missed_detection_node(self):
+        with self.assertRaisesRegex(ValueError, "candidate_index must be None"):
+            SequenceAssociationNode(0, 3, is_missed_detection=True)
+
     def test_validation_rejects_noninteger_node_indices(self):
         invalid_frame_indices = (True, 1.5, np.nan, np.inf, "0", np.array([0]))
         for frame_index in invalid_frame_indices:
