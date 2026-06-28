@@ -70,6 +70,21 @@ class TestBackendRandom(unittest.TestCase):
 
         self.assertEqual(samples.shape, (0,))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "jax",
+        "JAX-specific empty multidimensional choice regression",
+    )
+    def test_jax_choice_preserves_unsampled_axes_for_empty_population(self):
+        axis0_values = pyrecest.backend.reshape(pyrecest.backend.array([]), (0, 2))
+        axis0_samples = random.choice(axis0_values, size=(0,), axis=0)
+
+        self.assertEqual(tuple(pyrecest.backend.shape(axis0_samples)), (0, 2))
+
+        axis1_values = pyrecest.backend.reshape(pyrecest.backend.array([]), (2, 0))
+        axis1_samples = random.choice(axis1_values, size=(0,), axis=1)
+
+        self.assertEqual(tuple(pyrecest.backend.shape(axis1_samples)), (2, 0))
+
     def test_choice_samples_matrix_values_along_requested_axis(self):
         values = pyrecest.backend.array([[0, 1, 2], [3, 4, 5]])
 
