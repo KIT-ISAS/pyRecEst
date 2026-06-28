@@ -190,15 +190,33 @@ def _maybe_preserve_choice_order(indices, *, replace, p, shuffle, size):
     return _np.sort(index_array.reshape(-1)).reshape(index_array.shape)
 
 
-def _validate_choice_probabilities(p):
+def _integer_choice_population_size(a_array):
+    if a_array.ndim == 0:
+        try:
+            return _operator.index(a_array.item())
+        except TypeError:
+            return None
+    return None
+
+
+def _validate_choice_probabilities(p, population_size):
     if p is None:
         return None
     if _contains_boolean_value(p):
         raise TypeError("p must be real numeric, not boolean")
-    p_array = _np.asarray(p)
+    try:
+        p_array = _np.asarray(p)
+    except (TypeError, ValueError) as exc:
+        raise TypeError("p must be real numeric") from exc
     if p_array.dtype.kind not in "iuf":
         raise TypeError("p must be real numeric")
-    return p_array
+    p_array = p_array.astype(_np.float64, copy=False)
+    if p_array.ndim != 1 or p_array.shape[0] != population_size:
+        raise ValueError("p must be 1-dimensional with one entry per population item")
+    p_sum = p_array.sum()
+    if _np.any(p_array < 0) or not _np.isfinite(p_sum) or p_sum <= 0:
+        raise ValueError("probabilities do not sum to a positive value")
+    return p_array / p_sum
 
 
 def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
@@ -208,8 +226,10 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
     size = _normalize_size(size)
     a_array = _np.asarray(a)
     _validate_choice_population(a_array)
-    p = _validate_choice_probabilities(p)
     if a_array.ndim == 0:
+        population_size = _integer_choice_population_size(a_array)
+        if population_size is not None:
+            p = _validate_choice_probabilities(p, population_size)
         return _maybe_preserve_choice_order(
             _np.random.choice(a, size=size, replace=replace, p=p),
             replace=replace,
@@ -219,6 +239,7 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
         )
 
     axis = _normalize_choice_axis(axis, a_array.ndim)
+    p = _validate_choice_probabilities(p, a_array.shape[axis])
     if a_array.ndim == 1 and axis == 0:
         indices = _np.random.choice(a_array.shape[0], size=size, replace=replace, p=p)
         indices = _maybe_preserve_choice_order(
