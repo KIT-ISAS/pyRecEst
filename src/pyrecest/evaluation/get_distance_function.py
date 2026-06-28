@@ -294,7 +294,7 @@ def get_distance_function(
     elif "euclidean" in normalized_name and "mtt" not in normalized_name:
 
         def distance_function(x1, x2):
-            return linalg.norm(x1 - x2)
+            return linalg.norm(asarray(x1) - asarray(x2))
 
     elif "euclidean" in normalized_name and "mtt" in normalized_name:
         params = additional_params or {}

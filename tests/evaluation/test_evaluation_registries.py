@@ -85,6 +85,12 @@ def test_euclidean_mtt_distance_uses_assignment_with_cutoff():
     assert distance(array([[0.0], [10.0]]), array([[0.0], [12.0]])) == 2.0
 
 
+def test_euclidean_distance_accepts_array_like_inputs():
+    distance = get_distance_function("euclidean")
+
+    assert _as_float(distance([1.0, 2.0], (4.0, 6.0))) == pytest.approx(5.0)
+
+
 def test_underscored_symmetric_hypersphere_distance_is_antipodal_invariant():
     distance = get_distance_function("hypersphere_symmetric")
 
