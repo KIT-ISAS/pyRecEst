@@ -61,7 +61,10 @@ class ManifoldExponentialMovingAverage(AbstractFilter):
             raise TypeError(message)
 
         alpha_scalar = alpha_array.item()
-        if isinstance(alpha_scalar, (bool, np.bool_)):
+        if isinstance(
+            alpha_scalar,
+            (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_),
+        ):
             raise TypeError(message)
 
         try:
