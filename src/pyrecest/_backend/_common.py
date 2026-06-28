@@ -76,7 +76,7 @@ def min(a, axis=None):  # pylint: disable=redefined-builtin
     if torch is None:
         return _np.min(a, axis=axis)
 
-    tensor = torch.as_tensor(a)
+    tensor = _torch_as_tensor_compatible(a, torch)
     if axis is None:
         return torch.min(tensor)
 
@@ -111,6 +111,13 @@ def _torch_module_for_values(*values):
     return None
 
 
+def _torch_as_tensor_compatible(value, torch, *, device=None):
+    """Convert values to torch tensors, copying unsupported NumPy views first."""
+    if isinstance(value, _np.ndarray) and any(stride < 0 for stride in value.strides):
+        value = value.copy()
+    return torch.as_tensor(value, device=device)
+
+
 def _torch_promoted_pair(first, second):
     torch = _torch_module_for_values(first, second)
     if torch is None:
@@ -120,8 +127,8 @@ def _torch_promoted_pair(first, second):
         (value.device for value in (first, second) if torch.is_tensor(value)),
         None,
     )
-    first_tensor = torch.as_tensor(first, device=device)
-    second_tensor = torch.as_tensor(second, device=device)
+    first_tensor = _torch_as_tensor_compatible(first, torch, device=device)
+    second_tensor = _torch_as_tensor_compatible(second, torch, device=device)
     dtype = torch.promote_types(first_tensor.dtype, second_tensor.dtype)
     return first_tensor.to(dtype=dtype), second_tensor.to(dtype=dtype)
 
