@@ -27,6 +27,12 @@ assert backend.to_numpy(vector_tensor).tolist() == [4.0, 3.0, 2.0, 1.0, 0.0]
 matrix_view = np.arange(6.0).reshape(2, 3)[:, ::-1]
 matrix_tensor = backend.array(matrix_view)
 assert backend.to_numpy(matrix_tensor).tolist() == [[2.0, 1.0, 0.0], [5.0, 4.0, 3.0]]
+
+matrix_diagonal = backend.diagonal(matrix_view)
+assert backend.to_numpy(matrix_diagonal).tolist() == [2.0, 4.0]
+
+matrix_trace = backend.trace(matrix_view)
+assert backend.to_numpy(matrix_trace).item() == 6.0
 """,
     )
 
