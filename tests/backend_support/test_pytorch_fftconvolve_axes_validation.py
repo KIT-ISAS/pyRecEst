@@ -37,3 +37,13 @@ def test_pytorch_fftconvolve_rejects_non_integer_axes(axes):
 
     with pytest.raises(TypeError, match="axes must be None"):
         backend.signal.fftconvolve(first, second, axes=axes)
+
+
+def test_pytorch_fftconvolve_rejects_incompatible_non_convolved_axes():
+    _skip_unless_pytorch()
+
+    first = backend.ones((3, 1))
+    second = backend.ones((2, 4))
+
+    with pytest.raises(ValueError, match="incompatible shapes"):
+        backend.signal.fftconvolve(first, second, axes=(1,))

@@ -339,12 +339,16 @@ def _integer_population_size(a):
     return None
 
 
+def _empty_choice_indices(size, device):
+    return _torch.empty(size or (0,), dtype=_torch.long, device=device)
+
+
 def _choice_indices(
     population_size, size, num_samples, replace, p, device, *, shuffle=True
 ):
     if population_size <= 0:
         if num_samples == 0:
-            return _torch.empty(size or (0,), dtype=_torch.long, device=device)
+            return _empty_choice_indices(size, device)
         raise ValueError("a must be greater than 0 unless no samples are taken")
 
     if p is not None:
@@ -353,10 +357,15 @@ def _choice_indices(
                 "Cannot take a larger sample than population when 'replace=False'."
             )
         p = _validate_choice_probabilities(p, population_size, device)
+        if num_samples == 0:
+            return _empty_choice_indices(size, p.device)
         indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
         if size is None:
             return indices[0]
         return indices.reshape(size)
+
+    if num_samples == 0:
+        return _empty_choice_indices(size, device)
 
     if replace:
         return _torch.randint(0, population_size, size or (), device=device)
@@ -551,11 +560,35 @@ def _normal_sample_size(size):
     return _shape_from_size(size)
 
 
+def _validate_multivariate_normal_parameter(value, name, *, dtype, device):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        parameter = _torch.as_tensor(value, device=device)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if not _is_real_numeric_dtype(parameter.dtype):
+        raise TypeError(f"{name} must be real numeric")
+    if bool(_torch.any(~_torch.isfinite(parameter))):
+        raise ValueError(f"{name} must be finite")
+    return parameter.to(dtype=dtype)
+
+
 @_modify_func_default_dtype(copy=False, kw_only=True)
 @_allow_complex_dtype
 def multivariate_normal(mean, cov, size=None):
     device = _tensor_device(mean, cov)
     dtype = _floating_distribution_dtype(mean, cov)
-    mean = _torch.as_tensor(mean, dtype=dtype, device=device)
-    cov = _torch.as_tensor(cov, dtype=mean.dtype, device=mean.device)
+    mean = _validate_multivariate_normal_parameter(
+        mean,
+        "mean",
+        dtype=dtype,
+        device=device,
+    )
+    cov = _validate_multivariate_normal_parameter(
+        cov,
+        "cov",
+        dtype=mean.dtype,
+        device=mean.device,
+    )
     return _MultivariateNormal(mean, cov).sample(_normal_sample_size(size))

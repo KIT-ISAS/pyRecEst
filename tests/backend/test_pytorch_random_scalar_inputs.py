@@ -58,3 +58,19 @@ def test_size_arguments_reject_zero_dimensional_non_integer_arrays_and_tensors(
 def test_choice_rejects_complex_probabilities(probabilities):
     with pytest.raises(TypeError, match="real numeric"):
         random.choice(2, size=1, p=probabilities)
+
+
+@pytest.mark.parametrize(
+    ("mean", "cov", "match"),
+    [
+        ([True], [[1.0]], "mean.*boolean"),
+        ([0.0], [[True]], "cov.*boolean"),
+        (np.array([True]), np.eye(1), "mean.*boolean"),
+        (np.zeros(1), np.array([[np.bool_(True)]], dtype=object), "cov.*boolean"),
+        (torch.tensor([True]), torch.eye(1), "mean.*boolean"),
+        (torch.zeros(1), torch.tensor([[True]]), "cov.*boolean"),
+    ],
+)
+def test_multivariate_normal_rejects_boolean_parameters(mean, cov, match):
+    with pytest.raises(TypeError, match=match):
+        random.multivariate_normal(mean, cov)

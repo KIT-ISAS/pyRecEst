@@ -50,6 +50,14 @@ def _normalize_axes(axes, ndim):
     return tuple(normalized_axes)
 
 
+def _validate_non_convolved_shapes(shape1, shape2, axes):
+    axes_set = set(axes)
+    for axis, (first, second) in enumerate(zip(shape1, shape2, strict=True)):
+        if axis in axes_set or first == second or first == 1 or second == 1:
+            continue
+        raise ValueError(f"incompatible shapes for in1 and in2: {shape1} and {shape2}")
+
+
 def _as_tensor_pair(in1, in2):
     device = next(
         (value.device for value in (in1, in2) if _torch.is_tensor(value)), None
@@ -91,6 +99,9 @@ def fftconvolve(in1, in2, mode="full", axes=None):
         raise ValueError("in1 and in2 should have the same dimensionality")
 
     axes = _normalize_axes(axes, x.ndim)
+    x_shape = tuple(x.shape)
+    y_shape = tuple(y.shape)
+    _validate_non_convolved_shapes(x_shape, y_shape, axes)
     if mode == "valid":
         comparison_axes = tuple(
             axis for axis in axes if x.shape[axis] != 1 and y.shape[axis] != 1
@@ -115,7 +126,7 @@ def fftconvolve(in1, in2, mode="full", axes=None):
         result = result.real
 
     if mode == "same":
-        return result[_centered_slice(tuple(result.shape), tuple(x.shape))]
+        return result[_centered_slice(tuple(result.shape), x_shape)]
     if mode == "valid":
-        return result[_valid_slice(tuple(x.shape), tuple(y.shape), axes)]
+        return result[_valid_slice(x_shape, y_shape, axes)]
     return result
