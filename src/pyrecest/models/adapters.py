@@ -39,8 +39,17 @@ class LinearMeasurementArguments:
     meas_noise: Any
 
 
-def _require_capability(obj: object, protocol: Any, capability_name: str) -> None:
-    if not isinstance(obj, protocol):
+def _has_callable_capability(obj: object, protocol: Any, method_name: str) -> bool:
+    return isinstance(obj, protocol) and callable(getattr(obj, method_name, None))
+
+
+def _require_capability(
+    obj: object,
+    protocol: Any,
+    capability_name: str,
+    method_name: str,
+) -> None:
+    if not _has_callable_capability(obj, protocol, method_name):
         raise TypeError(f"{type(obj).__name__} must support {capability_name}.")
 
 
@@ -56,7 +65,7 @@ def as_likelihood_model(
 ) -> SupportsLikelihood:
     """Return a likelihood-capable model, wrapping callbacks when needed."""
 
-    if isinstance(model_or_likelihood, SupportsLikelihood):
+    if _has_callable_capability(model_or_likelihood, SupportsLikelihood, "likelihood"):
         if _metadata_was_requested(name=name, extra=log_likelihood):
             raise ValueError(
                 "log_likelihood and name are only used when wrapping a callable."
@@ -81,7 +90,9 @@ def as_sampleable_transition_model(
 ) -> SupportsTransitionSampling:
     """Return a sampleable transition model, wrapping callbacks when needed."""
 
-    if isinstance(model_or_sampler, SupportsTransitionSampling):
+    if _has_callable_capability(
+        model_or_sampler, SupportsTransitionSampling, "sample_next"
+    ):
         if _metadata_was_requested(name=name, extra=transition_density):
             raise ValueError(
                 "transition_density and name are only used when wrapping a callable."
@@ -106,7 +117,9 @@ def as_density_transition_model(
 ) -> SupportsTransitionDensity:
     """Return a density-capable transition model, wrapping callbacks when needed."""
 
-    if isinstance(model_or_density, SupportsTransitionDensity):
+    if _has_callable_capability(
+        model_or_density, SupportsTransitionDensity, "transition_density"
+    ):
         if _metadata_was_requested(name=name, extra=sample_next):
             raise ValueError(
                 "sample_next and name are only used when wrapping a callable."
@@ -126,7 +139,12 @@ def as_density_transition_model(
 def evaluate_likelihood(model: SupportsLikelihood, measurement: Any, state: Any) -> Any:
     """Evaluate ``p(measurement | state)`` on a likelihood-capable model."""
 
-    _require_capability(model, SupportsLikelihood, "likelihood(measurement, state)")
+    _require_capability(
+        model,
+        SupportsLikelihood,
+        "likelihood(measurement, state)",
+        "likelihood",
+    )
     return model.likelihood(measurement, state)
 
 
@@ -138,7 +156,10 @@ def evaluate_log_likelihood(
     """Evaluate ``log p(measurement | state)`` on a compatible model."""
 
     _require_capability(
-        model, SupportsLogLikelihood, "log_likelihood(measurement, state)"
+        model,
+        SupportsLogLikelihood,
+        "log_likelihood(measurement, state)",
+        "log_likelihood",
     )
     return model.log_likelihood(measurement, state)
 
@@ -146,7 +167,12 @@ def evaluate_log_likelihood(
 def sample_next_state(model: SupportsTransitionSampling, state: Any, n: int = 1) -> Any:
     """Draw next-state samples from a sampleable transition model."""
 
-    _require_capability(model, SupportsTransitionSampling, "sample_next(state, n)")
+    _require_capability(
+        model,
+        SupportsTransitionSampling,
+        "sample_next(state, n)",
+        "sample_next",
+    )
     return model.sample_next(state, n=n)
 
 
@@ -161,6 +187,7 @@ def evaluate_transition_density(
         model,
         SupportsTransitionDensity,
         "transition_density(state_next, state_previous)",
+        "transition_density",
     )
     return model.transition_density(state_next, state_previous)
 
@@ -174,7 +201,10 @@ def predict_distribution_from_model(
     """Propagate ``state_distribution`` with a distribution-aware model."""
 
     _require_capability(
-        model, SupportsPredictedDistribution, "predict_distribution(state_distribution)"
+        model,
+        SupportsPredictedDistribution,
+        "predict_distribution(state_distribution)",
+        "predict_distribution",
     )
     return model.predict_distribution(state_distribution, *args, **kwargs)
 
