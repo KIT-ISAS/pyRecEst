@@ -283,9 +283,9 @@ class AdditiveNoiseTransitionModel:
             else _distribution_covariance(self.noise_distribution)
         )
 
-    def mean(self, state):
+    def mean(self, state, dt=None, **kwargs):
         """Return ``f(state)`` plus the additive noise mean if available."""
-        propagated = self.transition_function(state)
+        propagated = self.evaluate(state, dt=dt, **kwargs)
         noise_mean = self.noise_mean
         return propagated if noise_mean is None else propagated + noise_mean
 
@@ -303,7 +303,7 @@ class AdditiveNoiseTransitionModel:
         """Return whether this model can provide transition Jacobians."""
         return self._jacobian is not None
 
-    def sample_next(self, state, n: int = 1):
+    def sample_next(self, state, n: int = 1, dt=None, **kwargs):
         """Draw ``n`` samples from ``p(x_next | state)``."""
         if self.noise_distribution is None or not hasattr(
             self.noise_distribution, "sample"
@@ -311,9 +311,9 @@ class AdditiveNoiseTransitionModel:
             raise NotImplementedError(
                 "The transition noise distribution does not provide sample(n)"
             )
-        return self.transition_function(state) + self.noise_distribution.sample(n)
+        return self.evaluate(state, dt=dt, **kwargs) + self.noise_distribution.sample(n)
 
-    def transition_density(self, next_state, state):
+    def transition_density(self, next_state, state, dt=None, **kwargs):
         """Evaluate ``p(next_state | state)`` from the additive noise density."""
         if self.noise_distribution is None or not hasattr(
             self.noise_distribution, "pdf"
@@ -321,7 +321,9 @@ class AdditiveNoiseTransitionModel:
             raise NotImplementedError(
                 "The transition noise distribution does not provide pdf(x)"
             )
-        return self.noise_distribution.pdf(next_state - self.transition_function(state))
+        return self.noise_distribution.pdf(
+            next_state - self.evaluate(state, dt=dt, **kwargs)
+        )
 
 
 class AdditiveNoiseMeasurementModel:
@@ -363,15 +365,15 @@ class AdditiveNoiseMeasurementModel:
         """Evaluate the noise-free measurement ``h(state)``."""
         return self.evaluate(state, **kwargs)
 
-    def predict_measurement(self, state):
+    def predict_measurement(self, state, **kwargs):
         """Return ``h(state)`` plus the additive noise mean if available."""
-        prediction = self.measurement_function(state)
+        prediction = self.measurement_function(state, **kwargs)
         noise_mean = self.noise_mean
         return prediction if noise_mean is None else prediction + noise_mean
 
-    def mean(self, state):
+    def mean(self, state, **kwargs):
         """Alias for :meth:`predict_measurement`."""
-        return self.predict_measurement(state)
+        return self.predict_measurement(state, **kwargs)
 
     @property
     def noise_mean(self):
@@ -402,11 +404,11 @@ class AdditiveNoiseMeasurementModel:
         """Return whether this model can provide measurement Jacobians."""
         return self._jacobian is not None
 
-    def measurement_residual(self, measurement, state):
+    def measurement_residual(self, measurement, state, **kwargs):
         """Return ``measurement - h(state)``."""
-        return measurement - self.measurement_function(state)
+        return measurement - self.measurement_function(state, **kwargs)
 
-    def sample_measurement(self, state, n: int = 1):
+    def sample_measurement(self, state, n: int = 1, **kwargs):
         """Draw ``n`` samples from ``p(measurement | state)``."""
         if self.noise_distribution is None or not hasattr(
             self.noise_distribution, "sample"
@@ -414,9 +416,9 @@ class AdditiveNoiseMeasurementModel:
             raise NotImplementedError(
                 "The measurement noise distribution does not provide sample(n)"
             )
-        return self.measurement_function(state) + self.noise_distribution.sample(n)
+        return self.measurement_function(state, **kwargs) + self.noise_distribution.sample(n)
 
-    def likelihood(self, measurement, state):
+    def likelihood(self, measurement, state, **kwargs):
         """Evaluate ``p(measurement | state)`` from the additive noise density."""
         if self.noise_distribution is None or not hasattr(
             self.noise_distribution, "pdf"
@@ -425,5 +427,5 @@ class AdditiveNoiseMeasurementModel:
                 "The measurement noise distribution does not provide pdf(x)"
             )
         return self.noise_distribution.pdf(
-            self.measurement_residual(measurement, state)
+            self.measurement_residual(measurement, state, **kwargs)
         )
