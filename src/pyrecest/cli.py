@@ -65,6 +65,27 @@ def _is_finite_real_number(value: Any) -> bool:
     )
 
 
+def _comparison_value(value: Any) -> Any:
+    if isinstance(value, np.ndarray):
+        return _comparison_value(value.tolist())
+    if isinstance(value, np.generic):
+        return _comparison_value(value.item())
+    if isinstance(value, dict):
+        return {str(key): _comparison_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_comparison_value(item) for item in value]
+    return value
+
+
+def _values_equal(actual_value: Any, expected_value: Any) -> bool:
+    actual_value = _comparison_value(actual_value)
+    expected_value = _comparison_value(expected_value)
+    try:
+        return bool(actual_value == expected_value)
+    except (TypeError, ValueError):
+        return False
+
+
 def _cmd_info(_args: argparse.Namespace) -> int:
     import pyrecest
     import pyrecest.backend as backend
@@ -136,11 +157,12 @@ def _check_expected_mapping(
                     f"{section_name}.{key} mismatch: abs_error={delta:.6g} > tolerance={tolerance:.6g}"
                 )
         elif isinstance(expected_value, bool):
-            if not isinstance(actual_value, bool) or actual_value is not expected_value:
+            actual_bool = _comparison_value(actual_value)
+            if not isinstance(actual_bool, bool) or actual_bool is not expected_value:
                 errors.append(
                     f"{section_name}.{key} mismatch: expected {expected_value!r}, got {actual_value!r}"
                 )
-        elif actual_value != expected_value:
+        elif not _values_equal(actual_value, expected_value):
             errors.append(
                 f"{section_name}.{key} mismatch: expected {expected_value!r}, got {actual_value!r}"
             )
