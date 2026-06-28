@@ -2,6 +2,8 @@
 
 from typing import Any, Callable
 
+import numpy as np
+
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import asarray
 
@@ -50,10 +52,25 @@ class ManifoldExponentialMovingAverage(AbstractFilter):
 
     @staticmethod
     def _validate_alpha(alpha: float) -> float:
-        alpha = float(alpha)
-        if alpha < 0.0 or alpha > 1.0:
+        message = "alpha must be a real scalar between 0 and 1"
+        try:
+            alpha_array = np.asarray(alpha)
+        except (TypeError, ValueError) as exc:
+            raise TypeError(message) from exc
+        if alpha_array.shape != () or alpha_array.dtype == np.bool_:
+            raise TypeError(message)
+
+        alpha_scalar = alpha_array.item()
+        if isinstance(alpha_scalar, (bool, np.bool_)):
+            raise TypeError(message)
+
+        try:
+            alpha_float = float(alpha_scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise TypeError(message) from exc
+        if not np.isfinite(alpha_float) or alpha_float < 0.0 or alpha_float > 1.0:
             raise ValueError("alpha must be between 0 and 1")
-        return alpha
+        return alpha_float
 
     @property
     def alpha(self) -> float:

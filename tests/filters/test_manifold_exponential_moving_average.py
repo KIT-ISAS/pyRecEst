@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 import numpy.testing as npt
 
 # pylint: disable=no-name-in-module,no-member
@@ -81,6 +82,26 @@ class TestManifoldExponentialMovingAverage(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             ema.alpha = -0.1
+
+    def test_alpha_rejects_boolean_values(self):
+        for alpha in (True, False, np.bool_(True), np.array(False)):
+            with self.subTest(alpha=alpha):
+                with self.assertRaisesRegex(TypeError, "real scalar"):
+                    ManifoldExponentialMovingAverage(
+                        initial_state=0.0,
+                        alpha=alpha,
+                        phi=_phi_so2,
+                        phi_inv=_phi_inv_so2,
+                    )
+
+        ema = ManifoldExponentialMovingAverage(
+            initial_state=0.0,
+            alpha=0.5,
+            phi=_phi_so2,
+            phi_inv=_phi_inv_so2,
+        )
+        with self.assertRaisesRegex(TypeError, "real scalar"):
+            ema.alpha = True
 
 
 if __name__ == "__main__":

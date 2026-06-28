@@ -41,6 +41,8 @@ def test_rand_rejects_ambiguous_positional_and_size_arguments():
     [
         lambda size: random.rand(size=size),
         lambda size: random.uniform(size=size),
+        lambda size: random.normal(size=size),
+        lambda size: random.multivariate_normal([0.0], [[1.0]], size=size),
         lambda size: random.choice(np.arange(5), size=size),
     ],
 )
@@ -68,6 +70,10 @@ def test_random_wrappers_accept_integer_array_size_arguments():
 
     assert random.rand(size=np.array([2, 3], dtype=np.int64)).shape == (2, 3)
     assert random.uniform(size=np.array(2, dtype=np.int64)).shape == (2,)
+    assert random.normal(size=np.array([2, 3], dtype=np.int64)).shape == (2, 3)
+    assert random.multivariate_normal(
+        [0.0], [[1.0]], size=np.array(2, dtype=np.int64)
+    ).shape == (2, 1)
     assert random.choice(np.arange(5), size=np.array([2], dtype=np.int64)).shape == (2,)
 
 
