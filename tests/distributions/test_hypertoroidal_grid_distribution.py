@@ -79,6 +79,26 @@ class HypertoroidalGridDistributionTest(unittest.TestCase):
         npt.assert_allclose(hgd.get_closest_point(query), array([0.0, 0.0]))
         npt.assert_allclose(hgd.pdf(query), array([4.0]) / normalizer)
 
+    def test_custom_grid_accepts_list_query_points(self):
+        grid = array(
+            [
+                [0.0, 0.0],
+                [0.0, pi],
+                [pi, 0.0],
+                [pi, pi],
+            ]
+        )
+        normalizer = ((2.0 * pi) ** 2) * 2.5
+        grid_values = array([[4.0, 1.0], [2.0, 3.0]]) / normalizer
+        hgd = HypertoroidalGridDistribution(grid_values, grid=grid)
+
+        list_query = [[2.0 * pi - 0.1, 0.05]]
+        array_query = array(list_query)
+
+        npt.assert_allclose(hgd.get_closest_point(list_query), hgd.get_closest_point(array_query))
+        npt.assert_allclose(hgd.value_of_closest(list_query), hgd.value_of_closest(array_query))
+        npt.assert_allclose(hgd.pdf(list_query), hgd.pdf(array_query))
+
     def test_custom_one_dimensional_flat_grid_is_reshaped_to_column_grid(self):
         grid = array([0.0, pi, 2.0 * pi - 0.2])
         # Mean is 1 / (2*pi), so the 1-D torus integral is already one.
