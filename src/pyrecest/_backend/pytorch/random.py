@@ -551,11 +551,35 @@ def _normal_sample_size(size):
     return _shape_from_size(size)
 
 
+def _validate_multivariate_normal_parameter(value, name, *, dtype, device):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        parameter = _torch.as_tensor(value, device=device)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if not _is_real_numeric_dtype(parameter.dtype):
+        raise TypeError(f"{name} must be real numeric")
+    if bool(_torch.any(~_torch.isfinite(parameter))):
+        raise ValueError(f"{name} must be finite")
+    return parameter.to(dtype=dtype)
+
+
 @_modify_func_default_dtype(copy=False, kw_only=True)
 @_allow_complex_dtype
 def multivariate_normal(mean, cov, size=None):
     device = _tensor_device(mean, cov)
     dtype = _floating_distribution_dtype(mean, cov)
-    mean = _torch.as_tensor(mean, dtype=dtype, device=device)
-    cov = _torch.as_tensor(cov, dtype=mean.dtype, device=mean.device)
+    mean = _validate_multivariate_normal_parameter(
+        mean,
+        "mean",
+        dtype=dtype,
+        device=device,
+    )
+    cov = _validate_multivariate_normal_parameter(
+        cov,
+        "cov",
+        dtype=mean.dtype,
+        device=mean.device,
+    )
     return _MultivariateNormal(mean, cov).sample(_normal_sample_size(size))
