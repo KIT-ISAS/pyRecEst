@@ -114,10 +114,10 @@ def is_single_matrix_pd(mat):
 
 @_cast_out_to_input_dtype
 def fractional_matrix_power(A, t):
-    if A.ndim == 2:
-        return _scipy.linalg.fractional_matrix_power(A, t)
-
-    return _np.stack([_scipy.linalg.fractional_matrix_power(A_, t) for A_ in A])
+    return _np.vectorize(
+        lambda one_matrix: _scipy.linalg.fractional_matrix_power(one_matrix, t),
+        signature="(n,n)->(n,n)",
+    )(A)
 
 
 def polar(a, side="right"):
