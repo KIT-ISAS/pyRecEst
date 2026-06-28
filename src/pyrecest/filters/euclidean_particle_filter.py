@@ -1,7 +1,8 @@
 import copy
 from collections.abc import Callable
-from numbers import Integral
 from typing import Union
+
+import numpy as np
 
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import int32, int64, zeros
@@ -69,10 +70,27 @@ class EuclideanParticleFilter(AbstractParticleFilter, EuclideanFilterMixin):
 
     @staticmethod
     def _validate_positive_int(value, name: str):
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, Integral)
-            or int(value) <= 0
-        ):
-            raise ValueError(f"{name} must be a positive integer")
-        return int(value)
+        message = f"{name} must be a positive integer"
+        value_array = np.asarray(value)
+        if value_array.shape != () or value_array.dtype == np.bool_:
+            raise ValueError(message)
+
+        scalar = value_array.item()
+        if isinstance(scalar, (bool, np.bool_)):
+            raise ValueError(message)
+        if isinstance(scalar, (str, bytes, bytearray, np.str_, np.bytes_)):
+            raise ValueError(message)
+        if isinstance(scalar, (complex, np.complexfloating)):
+            raise ValueError(message)
+
+        try:
+            scalar_float = float(scalar)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(message) from exc
+        if not np.isfinite(scalar_float) or not scalar_float.is_integer():
+            raise ValueError(message)
+
+        integer = int(scalar_float)
+        if integer <= 0:
+            raise ValueError(message)
+        return integer
