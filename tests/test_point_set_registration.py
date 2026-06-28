@@ -114,6 +114,22 @@ class TestGatedAssignment(unittest.TestCase):
 
         npt.assert_array_equal(assignment, array([-1, 0]))
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",
+        reason="Not supported on this backend",
+    )
+    def test_solve_gated_assignment_rejects_non_real_cost_values(self):
+        invalid_matrices = (
+            array([[True, False]]),
+            array([[1.0 + 2.0j, 0.0 + 0.0j]]),
+            [["low", "high"]],
+        )
+
+        for cost_matrix in invalid_matrices:
+            with self.subTest(cost_matrix=cost_matrix):
+                with self.assertRaisesRegex(ValueError, "real numeric"):
+                    solve_gated_assignment(cost_matrix)
+
 
 class TestJointRegistrationAssignment(unittest.TestCase):
     def test_joint_registration_assignment_rejects_jax_backend_without_asserts(self):
