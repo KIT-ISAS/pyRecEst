@@ -3,8 +3,6 @@ from ._dispatch import numpy as _np
 from ._dispatch import scipy as _scipy
 
 _to_ndarray = _common.to_ndarray
-_cast_fout_to_input_dtype = _common._cast_fout_to_input_dtype
-_cast_out_to_input_dtype = _common._cast_out_to_input_dtype
 atol = _common.atol
 
 
@@ -18,6 +16,39 @@ def _adjoint(array):
     return _np.conj(_transpose(array))
 
 
+def _as_scipy_linalg_array(x):
+    """Return an array with a dtype suitable for SciPy linalg routines."""
+
+    array = _np.asarray(x)
+    if array.dtype.kind in ("f", "c"):
+        return array
+    return array.astype(_np.float64)
+
+
+def _complex_dtype_like(input_array):
+    if input_array.dtype in (_np.float32, _np.complex64):
+        return _np.complex64
+    if input_array.dtype in (_np.float64, _np.complex128):
+        return _np.complex128
+    return None
+
+
+def _cast_scipy_linalg_result_to_input_dtype(result, input_array):
+    if result.dtype.kind == "f":
+        if input_array.dtype.kind == "f" and result.dtype != input_array.dtype:
+            return _common.cast(result, input_array.dtype)
+    elif result.dtype.kind == "c":
+        if input_array.dtype.kind == "c":
+            target_dtype = input_array.dtype
+        elif input_array.dtype.kind == "f":
+            target_dtype = _complex_dtype_like(input_array)
+        else:
+            target_dtype = None
+        if target_dtype is not None and result.dtype != target_dtype:
+            return _common.cast(result, target_dtype)
+    return result
+
+
 def _is_symmetric(x, tol=atol):
     return (_np.abs(x - _transpose(x)) < tol).all()
 
@@ -28,12 +59,11 @@ def _is_hermitian(x, tol=atol):
 
 _diag_vec = _np.vectorize(_np.diag, signature="(n)->(n,n)")
 
-_logm_vec = _cast_fout_to_input_dtype(
-    target=_np.vectorize(_scipy.linalg.logm, signature="(n,m)->(n,m)")
-)
+_logm_vec = _np.vectorize(_scipy.linalg.logm, signature="(n,m)->(n,m)")
 
 
 def logm(x):
+    x = _as_scipy_linalg_array(x)
     if _is_symmetric(x) and x.dtype not in [_np.complex64, _np.complex128]:
         eigvals, eigvecs = _np.linalg.eigh(x)
         if (eigvals > 0).all():
@@ -47,7 +77,7 @@ def logm(x):
     else:
         result = _logm_vec(x)
 
-    return result
+    return _cast_scipy_linalg_result_to_input_dtype(result, x)
 
 
 def solve_sylvester(a, b, q, tol=atol):
@@ -69,9 +99,10 @@ def solve_sylvester(a, b, q, tol=atol):
     )(a, b, q)
 
 
-@_cast_fout_to_input_dtype
 def sqrtm(x):
-    return _np.vectorize(_scipy.linalg.sqrtm, signature="(n,m)->(n,m)")(x)
+    x = _as_scipy_linalg_array(x)
+    result = _np.vectorize(_scipy.linalg.sqrtm, signature="(n,m)->(n,m)")(x)
+    return _cast_scipy_linalg_result_to_input_dtype(result, x)
 
 
 def quadratic_assignment(a, b, options=None):
@@ -112,12 +143,13 @@ def is_single_matrix_pd(mat):
         raise e
 
 
-@_cast_out_to_input_dtype
 def fractional_matrix_power(A, t):
-    return _np.vectorize(
+    A = _as_scipy_linalg_array(A)
+    result = _np.vectorize(
         lambda one_matrix: _scipy.linalg.fractional_matrix_power(one_matrix, t),
         signature="(n,n)->(n,n)",
     )(A)
+    return _cast_scipy_linalg_result_to_input_dtype(result, A)
 
 
 def polar(a, side="right"):
