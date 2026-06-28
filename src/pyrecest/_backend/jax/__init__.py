@@ -570,6 +570,10 @@ def is_bool(array):
     return _jnp.issubdtype(array.dtype, _jnp.bool_)
 
 
+def logical_or(x, y):
+    return _jnp.logical_or(_jnp.asarray(x), _jnp.asarray(y))
+
+
 def divide(a, b, ignore_div_zero=False):
     a_arr, b_arr = _jnp.asarray(a), _jnp.asarray(b)
     if ignore_div_zero is False:

@@ -48,6 +48,7 @@ def _patch_pytorch_comparison_facade() -> None:
 
     backend.greater = _wrap_comparison(_torch.greater)
     backend.less = _wrap_comparison(_torch.less)
+    backend.logical_or = _wrap_comparison(_torch.logical_or)
 
 
 _patch_pytorch_comparison_facade()
