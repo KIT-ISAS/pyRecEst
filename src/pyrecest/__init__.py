@@ -28,7 +28,66 @@ def _patch_shared_numpy_copy_facade() -> None:
     globals()["copy"] = backend.copy
 
 
+def _patch_shared_numpy_squeeze_facade() -> None:
+    """Make shared NumPy squeeze reject out-of-bounds axes before shape access."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) not in {"autograd", "numpy"}:
+        return
+
+    import pyrecest._backend._shared_numpy as shared_numpy  # pylint: disable=import-outside-toplevel
+
+    original_squeeze = shared_numpy.squeeze
+    np_module = shared_numpy._np
+
+    def _axis_out_of_bounds_error(axis, ndim):
+        axis_error = getattr(getattr(np_module, "exceptions", None), "AxisError", None)
+        if axis_error is None:
+            axis_error = getattr(np_module, "AxisError", None)
+        if axis_error is None:
+            return ValueError(f"axis {axis} is out of bounds for array of dimension {ndim}")
+        try:
+            return axis_error(axis, ndim=ndim)
+        except TypeError:  # pragma: no cover - compatibility with older NumPy APIs
+            return axis_error(axis, ndim)
+
+    def squeeze(x, axis=None):
+        x_arr = np_module.asarray(x)
+        if axis is None:
+            return original_squeeze(x_arr, axis=None)
+
+        axes = shared_numpy._normalize_squeeze_axes(axis)
+        if not axes:
+            return x_arr
+
+        normalized_axes = []
+        for one_axis in axes:
+            if isinstance(one_axis, (int, np_module.integer)):
+                one_axis = int(one_axis)
+                normalized_axis = one_axis + x_arr.ndim if one_axis < 0 else one_axis
+                if normalized_axis < 0 or normalized_axis >= x_arr.ndim:
+                    raise _axis_out_of_bounds_error(one_axis, x_arr.ndim)
+                normalized_axes.append(normalized_axis)
+            else:
+                normalized_axes.append(one_axis)
+        normalized_axes = tuple(normalized_axes)
+
+        if len(set(normalized_axes)) != len(normalized_axes):
+            raise ValueError("duplicate value in 'axis'")
+        if any(x_arr.shape[one_axis] != 1 for one_axis in normalized_axes):
+            return x_arr
+        squeeze_axis = normalized_axes[0] if len(normalized_axes) == 1 else normalized_axes
+        return np_module.squeeze(x_arr, axis=squeeze_axis)
+
+    squeeze.__name__ = getattr(original_squeeze, "__name__", "squeeze")
+    squeeze.__doc__ = getattr(original_squeeze, "__doc__", None)
+    shared_numpy.squeeze = squeeze
+    backend.squeeze = squeeze
+
+
 _patch_shared_numpy_copy_facade()
+_patch_shared_numpy_squeeze_facade()
 
 
 def _patch_pytorch_comparison_facade() -> None:
