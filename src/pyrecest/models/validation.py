@@ -246,7 +246,7 @@ def validate_covariance_matrix(
     if check_symmetric and not _to_python_bool(
         backend.allclose(
             covariance,
-            backend.transpose(covariance),
+            backend.conj(backend.transpose(covariance)),
             rtol=symmetric_rtol,
             atol=symmetric_atol,
         )
