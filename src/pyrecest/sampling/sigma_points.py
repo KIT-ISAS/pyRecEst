@@ -10,6 +10,8 @@ import numpy as np
 # pylint: disable=no-name-in-module,no-member
 from pyrecest.backend import asarray, concatenate, float64, full, linalg, reshape, stack
 
+_TEXT_SCALAR_TYPES = (str, bytes, np.str_, np.bytes_)
+
 
 def _scalar_item(value, name: str):
     """Return a scalar value while rejecting arrays and booleans."""
@@ -40,6 +42,8 @@ def _validate_positive_integer(value, name: str) -> int:
 
 def _validate_finite_scalar(value, name: str) -> float:
     scalar = _scalar_item(value, name)
+    if isinstance(scalar, _TEXT_SCALAR_TYPES):
+        raise ValueError(f"{name} must be finite")
     try:
         result = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:

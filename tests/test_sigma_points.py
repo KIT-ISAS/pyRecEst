@@ -68,6 +68,16 @@ class TestSigmaPoints(unittest.TestCase):
             ),
             (
                 MerweScaledSigmaPoints,
+                {"n": 2, "alpha": "0.5", "beta": 2.0, "kappa": 0.0},
+                "alpha must be finite",
+            ),
+            (
+                MerweScaledSigmaPoints,
+                {"n": 2, "alpha": 0.5, "beta": np.array("2.0"), "kappa": 0.0},
+                "beta must be finite",
+            ),
+            (
+                MerweScaledSigmaPoints,
                 {"n": 2, "alpha": 0.5, "beta": np.inf, "kappa": 0.0},
                 "beta must be finite",
             ),
@@ -84,6 +94,11 @@ class TestSigmaPoints(unittest.TestCase):
             (
                 JulierSigmaPoints,
                 {"n": 2, "kappa": np.nan},
+                "kappa must be finite",
+            ),
+            (
+                JulierSigmaPoints,
+                {"n": 2, "kappa": b"1.0"},
                 "kappa must be finite",
             ),
             (

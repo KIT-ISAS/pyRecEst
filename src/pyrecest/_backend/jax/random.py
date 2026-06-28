@@ -474,6 +474,30 @@ def choice(a, size=None, replace=True, p=None, shuffle=True, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
+def _validate_multivariate_normal_mean(mean):
+    mean = _validate_normal_parameter(mean, "mean")
+    if mean.ndim != 1:
+        raise ValueError("mean must be 1-dimensional")
+    if mean.shape[0] == 0:
+        raise ValueError("mean must contain at least one entry")
+    return mean
+
+
+def _validate_multivariate_normal_cov(cov, mean_dim):
+    cov = _validate_normal_parameter(cov, "cov")
+    if cov.ndim != 2:
+        raise ValueError("cov must be a 2-dimensional square matrix")
+    if cov.shape != (mean_dim, mean_dim):
+        raise ValueError("cov must have shape (mean.size, mean.size)")
+    if not bool(_jnp.allclose(cov, cov.T)):
+        raise ValueError("cov must be symmetric")
+    cov_float = cov.astype(_jnp.result_type(cov, _jnp.float32))
+    eigenvalue_tolerance = 1e-8
+    if bool(_jnp.any(_jnp.linalg.eigvalsh(cov_float) < -eigenvalue_tolerance)):
+        raise ValueError("cov must be positive semidefinite")
+    return cov
+
+
 def _multivariate_normal(state, mean, cov, size=None, *args, **kwargs):
     state, key = jax.random.split(state)
     if "shape" in kwargs:
@@ -481,8 +505,11 @@ def _multivariate_normal(state, mean, cov, size=None, *args, **kwargs):
             raise TypeError("Specify only one of 'size' or 'shape'.")
         size = kwargs.pop("shape")
     shape = _shape_from_size(size)
-    mean = _jnp.asarray(mean)
-    cov = _jnp.asarray(cov)
+    mean = _validate_multivariate_normal_mean(mean)
+    cov = _validate_multivariate_normal_cov(cov, mean.shape[0])
+    dtype = _jnp.result_type(mean, cov, _jnp.float32)
+    mean = mean.astype(dtype)
+    cov = cov.astype(dtype)
     return state, jax.random.multivariate_normal(key, mean, cov, shape, *args, **kwargs)
 
 

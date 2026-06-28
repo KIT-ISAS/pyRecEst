@@ -160,6 +160,7 @@ class HypertoroidalGridDistribution(
         ----------
         x : array_like, shape (dim,) or (1, dim)
         """
+        xs = array(xs)
         if ndim(xs) == 1:
             xs = reshape(xs, (1, -1))
         if xs.shape[1] != self.dim:
@@ -215,6 +216,7 @@ class HypertoroidalGridDistribution(
         xs : array_like (backend compatible), shape (n_points_eval, dim) or (dim,)
         """
         # 1. Handle shapes using backend functions
+        xs = array(xs)
         if ndim(xs) == 1:
             xs = reshape(xs, (1, -1))
 
@@ -302,8 +304,9 @@ class HypertoroidalGridDistribution(
         ----------
         xa : array_like, shape (n_eval, dim) or (dim,)
         """
-        if xa.ndim == 1:
-            xa = xa.reshape(1, -1)
+        xa = array(xa)
+        if ndim(xa) == 1:
+            xa = reshape(xa, (1, -1))
         if xa.shape[1] != self.dim:
             raise ValueError(
                 f"Expected xa with shape (n_eval, {self.dim}), got {xa.shape}"

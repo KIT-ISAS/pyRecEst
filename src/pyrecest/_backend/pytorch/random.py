@@ -100,6 +100,22 @@ def _choice_size(size):
     return size, _prod(size) if size else 1
 
 
+def _contains_boolean_value(value):
+    if isinstance(value, _BOOLEAN_TYPES):
+        return True
+    if _torch.is_tensor(value):
+        return value.dtype == _torch.bool
+    try:
+        values = _np.asarray(value, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(
+        isinstance(item, _BOOLEAN_TYPES)
+        or (_torch.is_tensor(item) and item.ndim == 0 and item.dtype == _torch.bool)
+        for item in values
+    )
+
+
 def _choice_bool(value, name):
     if isinstance(value, _BOOLEAN_TYPES):
         return bool(value)
@@ -114,6 +130,10 @@ def _choice_bool(value, name):
     raise TypeError(f"{name} must be a boolean")
 
 
+def _is_real_numeric_dtype(dtype):
+    return dtype.is_floating_point or dtype in _INTEGER_DTYPES
+
+
 def _validate_choice_probabilities(p, population_size, device):
     if _contains_boolean_value(p):
         raise TypeError("p must be real numeric, not boolean")
@@ -126,7 +146,6 @@ def _validate_choice_probabilities(p, population_size, device):
     p = p.to(dtype=_torch.float32)
     if p.ndim != 1 or p.shape[0] != population_size:
         raise ValueError("p must be 1-dimensional with one entry per population item")
-
     p_sum = p.sum()
     if (
         bool(_torch.any(p < 0))
@@ -163,10 +182,8 @@ def _randint_array_size(size, low, high):
         parameter_shape = tuple(_torch.broadcast_shapes(low.shape, high.shape))
     except RuntimeError as exc:
         raise ValueError("low and high could not be broadcast together") from exc
-
     if size is None:
         return parameter_shape
-
     sample_shape = _shape_from_size(size)
     try:
         broadcast_shape = tuple(_torch.broadcast_shapes(sample_shape, parameter_shape))
@@ -191,7 +208,6 @@ def _randint_array(low, high, size, *args, **kwargs):
         raise TypeError(
             "array-valued randint bounds do not support additional positional arguments"
         )
-
     dtype = kwargs.pop("dtype", None)
     if dtype is None:
         dtype = _torch.int64
@@ -208,20 +224,17 @@ def _randint_array(low, high, size, *args, **kwargs):
     _validate_randint_array_bound("low", low)
     _validate_randint_array_bound("high", high)
     sample_shape = _randint_array_size(size, low, high)
-
     try:
         low = _torch.broadcast_to(low, sample_shape)
         high = _torch.broadcast_to(high, sample_shape)
     except RuntimeError as exc:
         raise ValueError("size, low, and high could not be broadcast together") from exc
-
     if bool(_torch.any(high <= low)):
         raise ValueError("high must be greater than low")
 
     span = high - low
     unit_samples = _torch.rand(sample_shape, device=device, generator=generator)
     result = _torch.floor(unit_samples * span).to(dtype=dtype) + low.to(dtype=dtype)
-
     if out is not None:
         out.copy_(result)
         return out
@@ -257,7 +270,6 @@ def _sample_shape_from_size_and_parameters(size, parameters, message):
     parameter_shape = _broadcasted_parameter_shape(*parameters, message=message)
     if size is None:
         return parameter_shape
-
     sample_shape = _shape_from_size(size)
     try:
         broadcast_shape = tuple(_torch.broadcast_shapes(sample_shape, parameter_shape))
@@ -283,23 +295,31 @@ def _normal_device(*values):
     return None
 
 
-def _validate_normal_parameter(value, name):
+def _validate_normal_parameter(value, name, *, device=None):
     if _contains_boolean_value(value):
         raise TypeError(f"{name} must be real numeric, not boolean")
     try:
-        parameter = _torch.as_tensor(value)
+        parameter = _torch.as_tensor(value, device=device)
     except (TypeError, ValueError, RuntimeError) as exc:
         raise TypeError(f"{name} must be real numeric") from exc
     if not _is_real_numeric_dtype(parameter.dtype):
         raise TypeError(f"{name} must be real numeric")
     if bool(_torch.any(~_torch.isfinite(parameter))):
         raise ValueError(f"{name} must be finite")
+    return parameter
+
+
+def _validate_normal_scale(scale, *, device=None):
+    scale = _validate_normal_parameter(scale, "scale", device=device)
+    if bool(_torch.any(scale < 0)):
+        raise ValueError("scale must be non-negative")
+    return scale
 
 
 def _normal_array_parameters(loc, scale):
     device = _normal_device(loc, scale)
-    loc = _torch.as_tensor(loc, device=device)
-    scale = _torch.as_tensor(scale, device=device)
+    loc = _validate_normal_parameter(loc, "loc", device=device)
+    scale = _validate_normal_scale(scale, device=device)
     dtype = _torch.promote_types(
         _torch.result_type(loc, scale),
         _torch.get_default_dtype(),
@@ -342,7 +362,6 @@ def _choice_indices(
             raise ValueError(
                 "Cannot take a larger sample than population when 'replace=False'."
             )
-
         p = _validate_choice_probabilities(p, population_size, device)
         indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
         if size is None:
@@ -356,7 +375,6 @@ def _choice_indices(
         raise ValueError(
             "Cannot take a larger sample than population when 'replace=False'."
         )
-
     indices = _torch.randperm(population_size, device=device)[:num_samples]
     if not bool(shuffle):
         indices = _torch.sort(indices).values
@@ -378,7 +396,6 @@ def _take_choice(a, indices, axis):
     axis = _normalize_axis(axis, a.ndim)
     if indices.ndim == 0:
         return a.select(axis, int(indices.item()))
-
     flattened_indices = indices.reshape(-1)
     selected = _torch.index_select(a, dim=axis, index=flattened_indices)
     return selected.reshape((*a.shape[:axis], *indices.shape, *a.shape[axis + 1 :]))
@@ -401,7 +418,6 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
         raise ValueError(
             "a must be a positive integer or an array with at least one dimension"
         )
-
     axis = _normalize_axis(axis, a.ndim)
     indices = _choice_indices(
         a.shape[axis], size, num_samples, replace, p, a.device, shuffle=shuffle
@@ -471,15 +487,13 @@ def multinomial(n, pvals, size=None):
 
 @_allow_complex_dtype
 def normal(loc=0.0, scale=1.0, size=None):
-    _validate_normal_parameter(loc, "loc")
-    _validate_normal_parameter(scale, "scale")
     size = _normal_size(size)
     if not (_is_array_parameter(loc) or _is_array_parameter(scale)):
+        _validate_normal_parameter(loc, "loc")
+        _validate_normal_scale(scale)
         return _torch.normal(mean=loc, std=scale, size=size or ())
 
     loc, scale = _normal_array_parameters(loc, scale)
-    if bool(_torch.any(scale < 0)):
-        raise ValueError("scale must be non-negative")
     size = _normal_array_size(size, loc, scale)
     dtype = _torch.result_type(loc, scale)
     return _torch.empty(size, dtype=dtype, device=loc.device).normal_() * scale + loc
@@ -491,26 +505,6 @@ def _uniform_size(size, low, high):
         (low, high),
         "size, low, and high could not be broadcast together",
     )
-
-
-def _contains_boolean_value(value):
-    if isinstance(value, _BOOLEAN_TYPES):
-        return True
-    if _torch.is_tensor(value):
-        return value.dtype == _torch.bool
-    try:
-        values = _np.asarray(value, dtype=object).reshape(-1)
-    except (TypeError, ValueError, RuntimeError):
-        return False
-    return any(
-        isinstance(item, _BOOLEAN_TYPES)
-        or (_torch.is_tensor(item) and item.ndim == 0 and item.dtype == _torch.bool)
-        for item in values
-    )
-
-
-def _is_real_numeric_dtype(dtype):
-    return dtype.is_floating_point or dtype in _INTEGER_DTYPES
 
 
 def _validate_uniform_bound(bound, name, *, dtype=None, device=None):
@@ -538,7 +532,6 @@ def uniform(low=0.0, high=1.0, size=None, dtype=None):
         device = low.device
     elif _torch.is_tensor(high):
         device = high.device
-
     low = _validate_uniform_bound(low, "low", dtype=dtype, device=device)
     high = _validate_uniform_bound(high, "high", dtype=dtype, device=device)
     size = _uniform_size(size, low, high)

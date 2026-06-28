@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
+from pyrecest.evaluation.eot_shape_database import PolygonWithSampling
 from pyrecest.evaluation.generate_measurements import (
     _as_nonnegative_measurement_count,
     _as_shapely_scalar,
+    generate_measurements,
     generate_n_measurements_PPP,
 )
 
@@ -63,3 +65,20 @@ def test_generate_n_measurements_ppp_returns_python_int_for_zero_rate():
 
     assert count == 0
     assert isinstance(count, int)
+
+
+def test_generate_measurements_eot_accepts_array_like_groundtruth_entries():
+    simulation_config = {
+        "n_timesteps": 1,
+        "eot": True,
+        "target_shape": PolygonWithSampling(
+            [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
+        ),
+        "eot_sampling_style": "within",
+        "n_meas_at_individual_time_step": np.array([0]),
+    }
+
+    measurements = generate_measurements([[1.0, 2.0]], simulation_config)
+
+    assert measurements.shape == (1,)
+    assert measurements[0].shape == (0, 2)

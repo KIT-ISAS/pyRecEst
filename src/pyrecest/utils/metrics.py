@@ -455,12 +455,10 @@ def gaussian_wasserstein_distance(
     """Return the 2-Wasserstein distance between Gaussian distributions."""
     mean1_np = _as_numeric_array(mean1, "mean1").reshape(-1)
     mean2_np = _as_numeric_array(mean2, "mean2").reshape(-1)
-    covariance1_np = _symmetrize(_as_numeric_array(covariance1, "covariance1"))
-    covariance2_np = _symmetrize(_as_numeric_array(covariance2, "covariance2"))
+    covariance1_np = _as_covariance_matrix(covariance1, "covariance1")
+    covariance2_np = _as_covariance_matrix(covariance2, "covariance2")
     if mean1_np.shape != mean2_np.shape:
         raise ValueError("mean1 and mean2 must have the same shape")
-    _validate_square_matrix(covariance1_np, "covariance1")
-    _validate_square_matrix(covariance2_np, "covariance2")
     if covariance1_np.shape != covariance2_np.shape:
         raise ValueError("covariance1 and covariance2 must have the same shape")
     if covariance1_np.shape[0] != mean1_np.size:
@@ -481,10 +479,8 @@ def extent_wasserstein_distance(
     estimated_extent: ArrayLike, reference_extent: ArrayLike, *, squared: bool = False
 ) -> float:
     """Return the covariance/extent part of the Gaussian 2-Wasserstein distance."""
-    estimated = _as_numeric_array(estimated_extent, "estimated_extent")
-    reference = _as_numeric_array(reference_extent, "reference_extent")
-    _validate_square_matrix(estimated, "estimated_extent")
-    _validate_square_matrix(reference, "reference_extent")
+    estimated = _as_covariance_matrix(estimated_extent, "estimated_extent")
+    reference = _as_covariance_matrix(reference_extent, "reference_extent")
     if estimated.shape != reference.shape:
         raise ValueError(
             "estimated_extent and reference_extent must have the same shape"
@@ -695,7 +691,30 @@ def _symmetrize(matrix: np.ndarray) -> np.ndarray:
     return 0.5 * (matrix + matrix.T)
 
 
+def _covariance_eigenvalue_tolerance(matrix: np.ndarray) -> float:
+    return 1e-12 * max(1.0, float(np.linalg.norm(matrix, ord=2)))
+
+
+def _validate_positive_semidefinite(matrix: np.ndarray, name: str) -> None:
+    if not np.all(np.isfinite(matrix)):
+        raise ValueError(f"{name} must contain only finite values")
+    eigenvalues = np.linalg.eigvalsh(matrix)
+    tolerance = _covariance_eigenvalue_tolerance(matrix)
+    if float(np.min(eigenvalues)) < -tolerance:
+        raise ValueError(f"{name} must be positive semidefinite")
+
+
+def _as_covariance_matrix(value: ArrayLike, name: str) -> np.ndarray:
+    matrix = _as_numeric_array(value, name)
+    _validate_square_matrix(matrix, name)
+    matrix = _symmetrize(matrix)
+    _validate_positive_semidefinite(matrix, name)
+    return matrix
+
+
 def _symmetric_matrix_square_root(matrix: np.ndarray) -> np.ndarray:
-    eigenvalues, eigenvectors = np.linalg.eigh(_symmetrize(matrix))
+    matrix = _symmetrize(matrix)
+    _validate_positive_semidefinite(matrix, "matrix")
+    eigenvalues, eigenvectors = np.linalg.eigh(matrix)
     eigenvalues = np.clip(eigenvalues, a_min=0.0, a_max=None)
     return (eigenvectors * np.sqrt(eigenvalues)) @ eigenvectors.T

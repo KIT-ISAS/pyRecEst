@@ -1,15 +1,36 @@
 import numpy as _np
 import torch as _torch
 
+_AXIS_TYPE_ERROR = "axes must be None, an integer, or a sequence of integers"
+
+
+def _coerce_axis(axis):
+    try:
+        axis_array = _np.asarray(axis)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(_AXIS_TYPE_ERROR) from exc
+    if axis_array.shape != () or axis_array.dtype.kind not in "iu":
+        raise TypeError(_AXIS_TYPE_ERROR)
+    return int(axis_array.item())
+
+
+def _is_scalar_axis_argument(value):
+    if isinstance(value, (int, _np.integer, bool, _np.bool_)):
+        return True
+    return getattr(value, "shape", None) == ()
+
 
 def _normalize_axes(axes, ndim):
     axes_were_provided = axes is not None
     if axes is None:
         axes = tuple(range(ndim))
-    elif isinstance(axes, (int, _np.integer)):
-        axes = (int(axes),)
+    elif _is_scalar_axis_argument(axes):
+        axes = (_coerce_axis(axes),)
     else:
-        axes = tuple(int(axis) for axis in axes)
+        try:
+            axes = tuple(_coerce_axis(axis) for axis in axes)
+        except TypeError as exc:
+            raise TypeError(_AXIS_TYPE_ERROR) from exc
 
     if axes_were_provided and len(axes) == 0 and ndim > 0:
         raise ValueError("when provided, axes cannot be empty")

@@ -122,7 +122,23 @@ normal = _modify_func_default_dtype(
 )
 
 
+def _validate_multivariate_normal_parameter(value, name):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        value_array = _np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if value_array.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    if _np.any(~_np.isfinite(value_array)):
+        raise ValueError(f"{name} must be finite")
+    return value_array
+
+
 def _multivariate_normal(mean, cov, size=None, check_valid="warn", tol=1e-8):
+    mean = _validate_multivariate_normal_parameter(mean, "mean")
+    cov = _validate_multivariate_normal_parameter(cov, "cov")
     return _np.random.multivariate_normal(
         mean, cov, _normalize_size(size), check_valid, tol
     )

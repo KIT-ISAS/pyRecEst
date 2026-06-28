@@ -254,9 +254,6 @@ def normalize_measurement_noise_covariances(
     n_measurements = _normalize_nonnegative_integer(n_measurements, "n_measurements")
     measurement_dim = _normalize_positive_integer(measurement_dim, "measurement_dim")
 
-    if n_measurements == 0:
-        return zeros((0, measurement_dim, measurement_dim))
-
     noise = array(measurement_noise)
     empty_shape = (0, measurement_dim, measurement_dim)
     if noise.ndim == 3:

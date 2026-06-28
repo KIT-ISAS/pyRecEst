@@ -13,6 +13,7 @@ from pyrecest.backend import (
     linalg,
     maximum,
     sqrt,
+    to_numpy,
     transpose,
 )
 from pyrecest.diagnostics import FilterDiagnostics
@@ -69,6 +70,19 @@ def _as_nonnegative_float(x, name):
     return x
 
 
+def _as_nonnegative_nis(x, name="normalized_innovation_squared"):
+    nis = asarray(x, dtype=float64)
+    try:
+        nis_values = np.asarray(to_numpy(nis), dtype=float)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{name} must be finite and nonnegative") from exc
+    if not np.all(np.isfinite(nis_values)):
+        raise ValueError(f"{name} must be finite and nonnegative")
+    if np.any(nis_values < 0.0):
+        raise ValueError(f"{name} must be finite and nonnegative")
+    return nis
+
+
 def _as_positive_integer(x, name):
     x = _as_finite_scalar_float(x, name)
     if not x.is_integer():
@@ -109,13 +123,13 @@ def huber_covariance_scale(  # pylint: disable=redefined-outer-name
     Parameters
     ----------
     normalized_innovation_squared : scalar or array-like
-        Squared Mahalanobis innovation, i.e. NIS.
+        Squared Mahalanobis innovation, i.e. NIS. Must be finite and nonnegative.
     huber_threshold : float, optional
         Huber threshold ``k`` in Mahalanobis-norm units. Must be positive.
     """
     huber_threshold = _as_positive_float(huber_threshold, "huber_threshold")
 
-    nis = asarray(normalized_innovation_squared, dtype=float64)
+    nis = _as_nonnegative_nis(normalized_innovation_squared)
     return maximum(1.0, sqrt(nis) / huber_threshold)
 
 
@@ -142,7 +156,7 @@ def student_t_covariance_scale(  # pylint: disable=redefined-outer-name
     Parameters
     ----------
     normalized_innovation_squared : scalar or array-like
-        Squared Mahalanobis innovation, i.e. NIS.
+        Squared Mahalanobis innovation, i.e. NIS. Must be finite and nonnegative.
     measurement_dim : int
         Dimension ``d`` of the measurement vector. Must be positive.
     dof : float, optional
@@ -158,7 +172,7 @@ def student_t_covariance_scale(  # pylint: disable=redefined-outer-name
 
     min_scale = _as_nonnegative_float(min_scale, "min_scale")
 
-    nis = asarray(normalized_innovation_squared, dtype=float64)
+    nis = _as_nonnegative_nis(normalized_innovation_squared)
     scale = (dof + nis) / (dof + measurement_dim)
     return maximum(min_scale, scale)
 
@@ -174,7 +188,7 @@ def _robust_update_decision(
     inflation_alpha,
 ):
     robust_update = None if robust_update in (None, "none") else robust_update
-    nis = float(normalized_innovation_squared_value)
+    nis = float(to_numpy(_as_nonnegative_nis(normalized_innovation_squared_value)))
 
     if robust_update is None:
         if gate_threshold is not None:

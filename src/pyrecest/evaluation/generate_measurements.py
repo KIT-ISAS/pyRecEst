@@ -140,7 +140,11 @@ def generate_measurements(groundtruth, simulation_config):
             )
 
         for t in range(simulation_config["n_timesteps"]):
-            curr_groundtruth = groundtruth[t]
+            curr_groundtruth = np.asarray(groundtruth[t])
+            if curr_groundtruth.ndim == 0:
+                raise ValueError(
+                    "Currently only R^2 and SE(2) scenarios are supported."
+                )
             if curr_groundtruth.shape[-1] == 2:
                 x = _as_shapely_scalar(curr_groundtruth[..., 0], "groundtruth x")
                 y = _as_shapely_scalar(curr_groundtruth[..., 1], "groundtruth y")

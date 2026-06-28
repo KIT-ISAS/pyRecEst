@@ -1,7 +1,7 @@
 import unittest
 
 import pyrecest.backend
-from pyrecest.backend import array, eye
+from pyrecest.backend import array, eye, zeros
 from pyrecest.filters import (
     normalize_active_measurement_mask,
     normalize_measurement_noise_covariances,
@@ -108,6 +108,25 @@ class TestMeasurementReliability(unittest.TestCase):
     def test_empty_measurement_covariances_have_batch_shape(self):
         covariances = normalize_measurement_noise_covariances(
             0.5,
+            0,
+            2,
+            as_covariance_matrix=_as_covariance_matrix,
+        )
+
+        self.assertEqual(covariances.shape, (0, 2, 2))
+
+    def test_empty_measurement_covariances_validate_shared_noise(self):
+        with self.assertRaisesRegex(ValueError, "R vector must have length 2"):
+            normalize_measurement_noise_covariances(
+                array([0.5, 0.25, 0.125]),
+                0,
+                2,
+                as_covariance_matrix=_as_covariance_matrix,
+            )
+
+    def test_empty_per_measurement_covariances_have_batch_shape(self):
+        covariances = normalize_measurement_noise_covariances(
+            zeros((0, 2, 2)),
             0,
             2,
             as_covariance_matrix=_as_covariance_matrix,
