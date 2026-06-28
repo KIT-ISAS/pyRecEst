@@ -126,7 +126,66 @@ def _add_default_dtype_by_casting(target=None):
 _cast_out_to_input_dtype = _pre_cast_out_to_input_dtype(
     cast, is_floating, is_complex, as_dtype, _dtype_as_str
 )
-_allow_complex_dtype = _pre_allow_complex_dtype(cast, _COMPLEX_DTYPES)
+_base_allow_complex_dtype = _pre_allow_complex_dtype(cast, _COMPLEX_DTYPES)
+
+
+def _is_random_array_parameter(value):
+    return (
+        _torch.is_tensor(value)
+        or isinstance(value, (list, tuple))
+        or (not isinstance(value, (str, bytes)) and hasattr(value, "__array__"))
+    )
+
+
+def _is_real_numeric_dtype(dtype):
+    return dtype.is_floating_point or dtype in {
+        _torch.uint8,
+        _torch.int8,
+        _torch.int16,
+        _torch.int32,
+        _torch.int64,
+    }
+
+
+def _normal_scale_from_call(args, kwargs):
+    if "scale" in kwargs:
+        return kwargs["scale"]
+    if len(args) >= 2:
+        return args[1]
+    return 1.0
+
+
+def _validate_scalar_normal_scale(scale):
+    if _is_random_array_parameter(scale):
+        return
+
+    try:
+        scale = _torch.as_tensor(scale)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError("scale must be real numeric") from exc
+    if scale.ndim != 0 or not _is_real_numeric_dtype(scale.dtype):
+        raise TypeError("scale must be real numeric")
+    if bool(scale < 0):
+        raise ValueError("scale must be non-negative")
+
+
+def _allow_complex_dtype(target=None):
+    def _decorator(func):
+        wrapped = _base_allow_complex_dtype(func)
+        if getattr(func, "__name__", "") != "normal":
+            return wrapped
+
+        @functools.wraps(wrapped)
+        def _wrapped(*args, **kwargs):
+            _validate_scalar_normal_scale(_normal_scale_from_call(args, kwargs))
+            return wrapped(*args, **kwargs)
+
+        return _wrapped
+
+    if target is None:
+        return _decorator
+
+    return _decorator(target)
 
 
 def _preserve_input_dtype(target=None):
