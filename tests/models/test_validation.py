@@ -66,6 +66,14 @@ class TestModelValidation(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "expected 3"):
             validate_covariance_matrix(eye(2), dim=3)
 
+    def test_validate_covariance_matrix_rejects_nonfinite_values(self):
+        for value in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    validate_covariance_matrix(array([[value]]))
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    validate_noise_covariance(array([[value]]))
+
     def test_validate_covariance_matrix_can_check_symmetry(self):
         with self.assertRaisesRegex(ValueError, "symmetric"):
             validate_covariance_matrix(
