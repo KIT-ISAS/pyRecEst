@@ -2,8 +2,9 @@
 
 # pylint: disable=no-name-in-module,no-member
 from math import isfinite
-from numbers import Integral, Real
+from numbers import Integral
 
+import numpy as np
 from pyrecest.backend import array, diag, matmul, reshape, sum, transpose
 
 from .conversion import register_conversion
@@ -36,11 +37,26 @@ def _validate_particle_count(n_particles):
 
 
 def _validate_covariance_regularization(covariance_regularization):
-    if isinstance(covariance_regularization, bool) or not isinstance(
-        covariance_regularization, Real
+    try:
+        regularization_array = np.asarray(covariance_regularization)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(_COVARIANCE_REGULARIZATION_ERROR) from exc
+
+    if regularization_array.shape != () or regularization_array.dtype.kind in "bSU":
+        raise ValueError(_COVARIANCE_REGULARIZATION_ERROR)
+
+    regularization_scalar = regularization_array.item()
+    if isinstance(
+        regularization_scalar,
+        (bool, np.bool_, str, bytes, bytearray, np.str_, np.bytes_),
     ):
         raise ValueError(_COVARIANCE_REGULARIZATION_ERROR)
-    covariance_regularization = float(covariance_regularization)
+
+    try:
+        covariance_regularization = float(regularization_scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(_COVARIANCE_REGULARIZATION_ERROR) from exc
+
     if not isfinite(covariance_regularization) or covariance_regularization < 0.0:
         raise ValueError(_COVARIANCE_REGULARIZATION_ERROR)
     return covariance_regularization

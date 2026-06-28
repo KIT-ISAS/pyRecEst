@@ -215,36 +215,23 @@ def has_autodiff():
 
 
 def vmap(pyfunc, randomness="error"):
+    """Vectorize ``pyfunc`` over the first axis of all positional arguments."""
     if randomness not in ("error", "different"):
         raise ValueError("randomness must be 'error' or 'different'.")
 
     def vmapped_fun(*args):
-        # Check if all arguments have the same first dimension.  Use a list
-        # comprehension instead of a generator because this module imports
-        # numpy.all as ``all``; NumPy treats a bare generator as one truthy
-        # object instead of iterating over its yielded booleans.
-        if not all([arg.shape[0] == args[0].shape[0] for arg in args]):
+        if not args:
+            raise ValueError("vmap requires at least one positional argument")
+        mapped_args = [_np.asarray(arg) for arg in args]
+        if not all([arg.shape[0] == mapped_args[0].shape[0] for arg in mapped_args]):
             raise ValueError(
                 "All arguments must have the same size in the first dimension"
             )
-
-        # Prepare the output array using the first result's exact array
-        # representation so dtype and shape match NumPy's stacking semantics.
-        first_output = pyfunc(*(arg[0, ...] for arg in args))
-        first_output_array = _np.asarray(first_output)
-        if first_output_array.shape == ():
-            output_shape = (args[0].shape[0],)
-        else:
-            output_shape = (args[0].shape[0],) + first_output_array.shape
-
-        output = _np.empty(output_shape, dtype=first_output_array.dtype)
-        output[0, ...] = first_output
-
-        # Apply the function to each remaining slice. The first slice was
-        # already evaluated above to determine output metadata.
-        for i in range(1, args[0].shape[0]):
-            output[i, ...] = pyfunc(*(arg[i, ...] for arg in args))
-
-        return output
+        return _np.stack(
+            [
+                pyfunc(*(arg[index, ...] for arg in mapped_args))
+                for index in range(mapped_args[0].shape[0])
+            ]
+        )
 
     return vmapped_fun

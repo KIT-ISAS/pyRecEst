@@ -4,12 +4,15 @@ from numbers import Integral
 from pyrecest.backend import (
     arange,
     array,
+    atleast_1d,
     ceil,
     floor,
     isclose,
     linspace,
     mod,
+    ndim,
     pi,
+    reshape,
     round,
     sin,
     sqrt,
@@ -59,25 +62,33 @@ class CircularGridDistribution(AbstractCircularDistribution, AbstractGridDistrib
 
     @staticmethod
     def _matlab_sinc(x):
-        return where(isclose(x, 0.0), 1.0, sin(x) / x)
+        zero_mask = isclose(x, 0.0)
+        scaled_x = pi * x
+        safe_scaled_x = where(zero_mask, 1.0, scaled_x)
+        return where(zero_mask, 1.0, sin(scaled_x) / safe_scaled_x)
 
     def _pdf_via_sinc(self, xs, sinc_repetitions):
         sinc_repetitions = _validate_no_of_gridpoints(sinc_repetitions)
         if sinc_repetitions % 2 != 1:
             raise ValueError("sinc_repetitions must be a positive odd integer.")
 
+        scalar_input = ndim(xs) == 0
+        xs_eval = reshape(atleast_1d(xs), (-1,))
+
         grid_size = self.grid_values.shape[0]
         step_size = 2.0 * pi / grid_size
         lower = int(floor(sinc_repetitions / 2) * grid_size)
         upper = int(ceil(sinc_repetitions / 2) * grid_size)
         repetitions = arange(-lower, upper)
-        sinc_vals = self._matlab_sinc((xs / step_size)[:, None] - repetitions[None, :])
+        sinc_vals = self._matlab_sinc((xs_eval / step_size)[:, None] - repetitions[None, :])
         grid_values = (
             sqrt(self.grid_values) if self.enforce_pdf_nonnegative else self.grid_values
         )
         density = sum(tile(grid_values, sinc_repetitions) * sinc_vals, axis=1)
         if self.enforce_pdf_nonnegative:
-            return density**2
+            density = density**2
+        if scalar_input:
+            return density[0]
         return density
 
     def _pdf_via_fourier(self, xs):

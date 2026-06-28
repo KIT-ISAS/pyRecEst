@@ -162,6 +162,41 @@ class PiecewiseConstantDistributionTest(unittest.TestCase):
         pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
         reason="Not supported on JAX backend",
     )
+    def test_calculate_parameters_numerically_accepts_scalar_pdf_output(self):
+        weights = PiecewiseConstantDistribution.calculate_parameters_numerically(
+            lambda _xs: 1.0 / (2.0 * pi), 4
+        )
+
+        npt.assert_allclose(weights, array([0.25, 0.25, 0.25, 0.25]), rtol=1e-12)
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_calculate_parameters_numerically_rejects_malformed_pdf_output(self):
+        malformed_outputs = [array([]), array([1.0, 2.0])]
+
+        for output in malformed_outputs:
+            with self.subTest(output=output):
+                with self.assertRaisesRegex(ValueError, "scalar or single value"):
+                    PiecewiseConstantDistribution.calculate_parameters_numerically(
+                        lambda _xs, output=output: output, 4
+                    )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
+    def test_calculate_parameters_numerically_rejects_nonfinite_pdf_output(self):
+        with self.assertRaisesRegex(ValueError, "finite"):
+            PiecewiseConstantDistribution.calculate_parameters_numerically(
+                lambda _xs: array([float("nan")]), 4
+            )
+
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ == "jax",  # pylint: disable=no-member
+        reason="Not supported on JAX backend",
+    )
     def test_calculate_parameters_numerically_rejects_invalid_count(self):
         for n in (0, -1, 1.5, True, [3], float("nan"), float("inf")):
             with self.subTest(n=n):

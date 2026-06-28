@@ -4,7 +4,6 @@ import numpy as _np
 from numpy.random import default_rng as _default_rng
 from numpy.random import (  # For PyRecEst
     get_state,
-    multinomial,
     seed,
     set_state,
 )
@@ -45,3 +44,43 @@ def randint(low, high=None, size=None, dtype=int):
     _validate_randint_bound(low, "low")
     _validate_randint_bound(high, "high")
     return _np.random.randint(low, high=high, size=size, dtype=dtype)
+
+
+def _validate_multinomial_sample_count(n):
+    if _contains_boolean_value(n):
+        raise TypeError("n must be a non-negative integer")
+    try:
+        n_array = _np.asarray(n)
+    except (TypeError, ValueError) as exc:
+        raise TypeError("n must be a non-negative integer") from exc
+    if n_array.shape != () or n_array.dtype.kind not in "iu":
+        raise TypeError("n must be a non-negative integer")
+    count = int(n_array.item())
+    if count < 0:
+        raise ValueError("n must be non-negative")
+    return count
+
+
+def _validate_multinomial_pvals(pvals):
+    if _contains_boolean_value(pvals):
+        raise TypeError("pvals must be real numeric, not boolean")
+    try:
+        pvals_array = _np.asarray(pvals)
+    except (TypeError, ValueError) as exc:
+        raise TypeError("pvals must be real numeric") from exc
+    if pvals_array.dtype.kind not in "iuf":
+        raise TypeError("pvals must be real numeric")
+    return pvals_array
+
+
+def _validate_multinomial_size(size):
+    if size is not None and _contains_boolean_value(size):
+        raise TypeError("size must be None, an integer, or a sequence of integers")
+    return size
+
+
+def multinomial(n, pvals, size=None):
+    n = _validate_multinomial_sample_count(n)
+    pvals_array = _validate_multinomial_pvals(pvals)
+    size = _validate_multinomial_size(size)
+    return _np.random.multinomial(n, pvals_array, size=size)

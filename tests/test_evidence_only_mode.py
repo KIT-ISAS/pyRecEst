@@ -48,6 +48,18 @@ def test_evidence_computation_mode_rejects_inconsistent_flags():
         resolve_evidence_computation_mode("posterior-only")
 
 
+def test_evidence_computation_mode_rejects_non_scalar_mode_values():
+    invalid_modes = (
+        ["evidence_only"],
+        {"mode": "evidence_only"},
+        np.array(["evidence_only"], dtype=object),
+    )
+
+    for mode in invalid_modes:
+        with pytest.raises(ValueError, match="unknown evidence computation mode"):
+            EvidenceComputationMode(mode=mode)
+
+
 def test_evidence_computation_mode_rejects_truthy_non_bool_return_smoothed():
     for return_smoothed in (
         "false",

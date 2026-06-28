@@ -35,6 +35,21 @@ def _coerce_time(time):
     return time
 
 
+def _coerce_bool_flag(value, name):
+    if isinstance(value, bool):
+        return value
+    try:
+        value_array = asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a boolean scalar") from exc
+    if len(value_array.shape) != 0:
+        raise ValueError(f"{name} must be a boolean scalar")
+    scalar = value_array.item()
+    if isinstance(scalar, bool):
+        return bool(scalar)
+    raise ValueError(f"{name} must be a boolean scalar")
+
+
 def _coerce_diagnostic_accepted(value):
     if value is None:
         return False
@@ -106,7 +121,7 @@ class FixedLagBuffer:
         self.maxlen = None if maxlen is None else int(maxlen)
         if self.maxlen is not None and self.maxlen <= 0:
             raise ValueError("maxlen must be positive or None")
-        self.copy_values = bool(copy_values)
+        self.copy_values = _coerce_bool_flag(copy_values, "copy_values")
         self._items = []
         self._next_sequence = 0
 

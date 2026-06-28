@@ -14,7 +14,7 @@ def _rand(*dims, size=None):
         if size is not None:
             raise TypeError("Specify either positional dimensions or size, not both.")
         size = dims[0] if len(dims) == 1 else dims
-    return _np.random.random(size)
+    return _np.random.random(_normalize_size(size))
 
 
 rand = _modify_func_default_dtype(
@@ -30,6 +30,36 @@ def _contains_boolean_value(value):
     except (TypeError, ValueError, RuntimeError):
         return False
     return any(isinstance(item, _BOOLEAN_TYPES) for item in values)
+
+
+def _size_type_error():
+    return TypeError("size must be None, an integer, or a sequence of integers")
+
+
+def _normalize_size(size):
+    if size is None:
+        return None
+    if _contains_boolean_value(size) or isinstance(size, (str, bytes)):
+        raise _size_type_error()
+    try:
+        size_array = _np.asarray(size)
+    except (TypeError, ValueError) as exc:
+        raise _size_type_error() from exc
+    if size_array.ndim == 1 and size_array.size == 0:
+        return ()
+    if size_array.dtype.kind not in "iu":
+        raise _size_type_error()
+    if size_array.ndim == 0:
+        dimension = int(size_array.item())
+        if dimension < 0:
+            raise ValueError("size dimensions must be non-negative")
+        return dimension
+    if size_array.ndim != 1:
+        raise _size_type_error()
+    dimensions = tuple(int(dimension) for dimension in size_array.tolist())
+    if any(dimension < 0 for dimension in dimensions):
+        raise ValueError("size dimensions must be non-negative")
+    return dimensions
 
 
 def _validate_uniform_bound(bound, name):
@@ -52,21 +82,54 @@ def _validate_uniform_bounds(low, high):
 
 def _uniform(low=0.0, high=1.0, size=None):
     _validate_uniform_bounds(low, high)
-    return _np.random.uniform(low, high, size)
+    return _np.random.uniform(low, high, _normalize_size(size))
 
 
 uniform = _modify_func_default_dtype(
     copy=False, kw_only=True, target=_allow_complex_dtype(target=_uniform)
 )
 
+
+def _validate_normal_parameter(value, name):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        value_array = _np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if value_array.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    return value_array
+
+
+def _validate_normal_scale(scale):
+    scale_array = _validate_normal_parameter(scale, "scale")
+    if _np.any(scale_array < 0):
+        raise ValueError("scale must be non-negative")
+    return scale_array
+
+
+def _normal(loc=0.0, scale=1.0, size=None):
+    loc = _validate_normal_parameter(loc, "loc")
+    scale = _validate_normal_scale(scale)
+    return _np.random.normal(loc, scale, _normalize_size(size))
+
+
 normal = _modify_func_default_dtype(
-    copy=False, kw_only=True, target=_allow_complex_dtype(target=_np.random.normal)
+    copy=False, kw_only=True, target=_allow_complex_dtype(target=_normal)
 )
+
+
+def _multivariate_normal(mean, cov, size=None, check_valid="warn", tol=1e-8):
+    return _np.random.multivariate_normal(
+        mean, cov, _normalize_size(size), check_valid, tol
+    )
+
 
 multivariate_normal = _modify_func_default_dtype(
     copy=False,
     kw_only=True,
-    target=_allow_complex_dtype(target=_np.random.multivariate_normal),
+    target=_allow_complex_dtype(target=_multivariate_normal),
 )
 
 
@@ -124,6 +187,7 @@ def choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
     """Draw samples from an integer or array population."""
     replace = _choice_bool(replace, "replace")
     shuffle = _choice_bool(shuffle, "shuffle")
+    size = _normalize_size(size)
     a_array = _np.asarray(a)
     _validate_choice_population(a_array)
     p = _validate_choice_probabilities(p)

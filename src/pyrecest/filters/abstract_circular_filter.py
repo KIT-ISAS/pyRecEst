@@ -8,6 +8,16 @@ from .abstract_filter import AbstractFilter
 from .manifold_mixins import CircularFilterMixin
 
 
+def _scalar_pdf_value(value, owner: str):
+    """Return one PDF value and reject ambiguous vector outputs."""
+    flattened = asarray(value).reshape(-1)
+    if flattened.shape[0] != 1:
+        raise ValueError(
+            f"{owner}.pdf must return exactly one value for one integration angle."
+        )
+    return flattened[0]
+
+
 class AbstractCircularFilter(AbstractFilter, CircularFilterMixin):
     """Abstract base class for filters on S1/SO(2)."""
 
@@ -29,8 +39,14 @@ class AbstractCircularFilter(AbstractFilter, CircularFilterMixin):
 
         def integrand(angle):
             angle_array = array([angle])
-            estimate_pdf = asarray(estimate.pdf(angle_array)).reshape(-1)[0]
-            likelihood_pdf = asarray(likelihood.pdf(angle_array)).reshape(-1)[0]
+            estimate_pdf = _scalar_pdf_value(
+                estimate.pdf(angle_array),
+                "filter_state",
+            )
+            likelihood_pdf = _scalar_pdf_value(
+                likelihood.pdf(angle_array),
+                "likelihood",
+            )
             return float(estimate_pdf * likelihood_pdf)
 
         likelihood_val, _ = quad(integrand, 0.0, 2.0 * pi)

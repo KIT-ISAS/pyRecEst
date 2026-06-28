@@ -4,7 +4,7 @@ from collections.abc import Callable
 from math import pi
 from typing import Any
 
-import numpy as np
+import numpy
 from pyrecest.backend import arccos, asarray, clip, dot, linalg, to_numpy
 from pyrecest.distributions import AbstractHypertoroidalDistribution
 from scipy.optimize import linear_sum_assignment
@@ -13,14 +13,14 @@ DistanceFactory = Callable[[str, dict[str, Any] | None], Callable[[Any, Any], fl
 _DISTANCE_FUNCTION_FACTORIES: dict[str, DistanceFactory] = {}
 _UNSUPPORTED_NUMERIC_CONFIG_TYPES = (
     bool,
-    np.bool_,
+    numpy.bool_,
     str,
     bytes,
     bytearray,
-    np.str_,
-    np.bytes_,
+    numpy.str_,
+    numpy.bytes_,
     complex,
-    np.complexfloating,
+    numpy.complexfloating,
 )
 
 
@@ -68,36 +68,36 @@ def _contains_unsupported_numeric_config_values(value: Any) -> bool:
     if isinstance(value, _UNSUPPORTED_NUMERIC_CONFIG_TYPES):
         return True
     try:
-        raw_values = np.asarray(value, dtype=object).reshape(-1)
+        raw_values = numpy.asarray(value, dtype=object).reshape(-1)
     except (TypeError, ValueError, RuntimeError):
         raw_values = ()
     if any(isinstance(item, _UNSUPPORTED_NUMERIC_CONFIG_TYPES) for item in raw_values):
         return True
     try:
-        values = np.asarray(to_numpy(value), dtype=object).reshape(-1)
+        values = numpy.asarray(to_numpy(value), dtype=object).reshape(-1)
     except (TypeError, ValueError, RuntimeError):
         return False
     return any(isinstance(item, _UNSUPPORTED_NUMERIC_CONFIG_TYPES) for item in values)
 
 
-def _as_real_numeric_array(value: Any, name: str) -> np.ndarray:
+def _as_real_numeric_array(value: Any, name: str) -> numpy.ndarray:
     message = f"{name} must contain only finite real numeric values"
     if _contains_unsupported_numeric_config_values(value):
         raise ValueError(message)
     try:
-        values = np.asarray(to_numpy(value), dtype=float)
+        values = numpy.asarray(to_numpy(value), dtype=float)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(message) from exc
-    if not np.all(np.isfinite(values)):
+    if not numpy.all(numpy.isfinite(values)):
         raise ValueError(message)
     return values
 
 
 def _validate_symmetry_count(nSymm: Any) -> int:
-    count_array = np.asarray(to_numpy(nSymm))
+    count_array = numpy.asarray(to_numpy(nSymm))
     if (
         count_array.shape != ()
-        or np.issubdtype(count_array.dtype, np.bool_)
+        or numpy.issubdtype(count_array.dtype, numpy.bool_)
         or _contains_unsupported_numeric_config_values(nSymm)
         or _contains_unsupported_numeric_config_values(count_array)
     ):
@@ -107,7 +107,7 @@ def _validate_symmetry_count(nSymm: Any) -> int:
         count = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("nSymm must be a finite positive integer") from exc
-    if not np.isfinite(count) or not count.is_integer() or count <= 0:
+    if not numpy.isfinite(count) or not count.is_integer() or count <= 0:
         raise ValueError("nSymm must be a finite positive integer")
     return int(count)
 
@@ -116,12 +116,12 @@ def _validate_symmetry_offsets(symmetryOffsets: Any) -> list[float]:
     if _contains_unsupported_numeric_config_values(symmetryOffsets):
         raise ValueError("symmetryOffsets must contain only finite real numeric values")
     try:
-        offsets = np.asarray(to_numpy(symmetryOffsets), dtype=float).reshape(-1)
+        offsets = numpy.asarray(to_numpy(symmetryOffsets), dtype=float).reshape(-1)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(
             "symmetryOffsets must contain only finite real numeric values"
         ) from exc
-    if not np.all(np.isfinite(offsets)):
+    if not numpy.all(numpy.isfinite(offsets)):
         raise ValueError("symmetryOffsets must contain only finite real numeric values")
     return [float(offset) for offset in offsets]
 
@@ -145,12 +145,13 @@ def _symmetric_distance_function(
         offsets = [0.0]
 
     def distance_function(xest, xtrue):
-        return min(base_distance(xest, xtrue + offset) for offset in offsets)
+        xtrue_array = asarray(xtrue)
+        return min(base_distance(xest, xtrue_array + offset) for offset in offsets)
 
     return distance_function
 
 
-def _as_target_matrix(value, name: str) -> np.ndarray:
+def _as_target_matrix(value, name: str) -> numpy.ndarray:
     value = _as_real_numeric_array(value, name)
     if value.size == 0:
         if value.ndim == 2:
@@ -168,22 +169,22 @@ def _as_target_matrix(value, name: str) -> np.ndarray:
 
 
 def _validate_mtt_cutoff_distance(value: Any) -> float:
-    value_array = np.asarray(to_numpy(value))
+    value_array = numpy.asarray(to_numpy(value))
     if (
         value_array.shape != ()
-        or np.issubdtype(value_array.dtype, np.bool_)
+        or numpy.issubdtype(value_array.dtype, numpy.bool_)
         or _contains_unsupported_numeric_config_values(value)
         or _contains_unsupported_numeric_config_values(value_array)
     ):
         raise ValueError("cutoff_distance must be a finite nonnegative scalar")
     scalar = value_array.item()
-    if isinstance(scalar, (bool, np.bool_)):
+    if isinstance(scalar, (bool, numpy.bool_)):
         raise ValueError("cutoff_distance must be a finite nonnegative scalar")
     try:
         cutoff_distance = float(scalar)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError("cutoff_distance must be a finite nonnegative scalar") from exc
-    if not np.isfinite(cutoff_distance) or cutoff_distance < 0.0:
+    if not numpy.isfinite(cutoff_distance) or cutoff_distance < 0.0:
         raise ValueError("cutoff_distance must be a finite nonnegative scalar")
     return cutoff_distance
 
@@ -203,8 +204,8 @@ def _euclidean_mtt_distance(x1, x2, *, cutoff_distance: float) -> float:
         raise ValueError("MTT state sets must use the same target dimension")
 
     deltas = first[:, None, :] - second[None, :, :]
-    costs = np.linalg.norm(deltas, axis=2)
-    costs = np.minimum(costs, float(cutoff_distance))
+    costs = numpy.linalg.norm(deltas, axis=2)
+    costs = numpy.minimum(costs, float(cutoff_distance))
     row_indices, column_indices = linear_sum_assignment(costs)
     matched_cost = float(costs[row_indices, column_indices].sum())
     missed_count = abs(first.shape[0] - second.shape[0])

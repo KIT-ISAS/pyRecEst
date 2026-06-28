@@ -105,5 +105,5 @@ class AbstractExtendedObjectTracker(AbstractTrackerWithLogging):
 
     def plot_point_estimate(self):
         contour = self.get_contour_points(100)
-        closed_contour = vstack((contour, contour[-1]))
+        closed_contour = vstack((contour, contour[0]))
         plt.plot(closed_contour[:, 0], closed_contour[:, 1])

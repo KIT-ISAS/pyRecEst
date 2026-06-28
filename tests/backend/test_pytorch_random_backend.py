@@ -164,6 +164,29 @@ def test_uniform_rejects_boolean_bounds(low, high):
 
 
 @pytest.mark.parametrize(
+    ("loc", "scale"),
+    [
+        (False, 1.0),
+        (0.0, True),
+        (np.bool_(True), 1.0),
+        (0.0, np.bool_(True)),
+        (torch.tensor(True), 1.0),
+        (0.0, torch.tensor(True)),
+        (torch.tensor([False, False]), torch.tensor([1.0, 2.0])),
+        ([False, 0.0], [1.0, 2.0]),
+        ([0.0, 0.5], [1.0, np.bool_(True)]),
+        (
+            np.array([0.0, np.bool_(False)], dtype=object),
+            np.array([1.0, 2.0], dtype=object),
+        ),
+    ],
+)
+def test_normal_rejects_boolean_parameters(loc, scale):
+    with pytest.raises(TypeError, match="real numeric"):
+        random.normal(loc, scale)
+
+
+@pytest.mark.parametrize(
     ("low", "high"),
     [
         ("0.0", 1.0),

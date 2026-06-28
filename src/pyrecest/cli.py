@@ -8,6 +8,7 @@ import math
 import platform
 import sys
 from importlib.metadata import PackageNotFoundError, version
+from numbers import Real
 from pathlib import Path
 from typing import Any
 
@@ -58,7 +59,7 @@ def _validate_tolerance(value: Any) -> float:
 
 def _is_finite_real_number(value: Any) -> bool:
     return (
-        isinstance(value, int | float)
+        isinstance(value, Real)
         and not isinstance(value, bool)
         and math.isfinite(float(value))
     )

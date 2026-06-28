@@ -1,5 +1,11 @@
 """Calibration helpers for asynchronous sensor-fusion workflows."""
 
+from collections.abc import Iterable, Mapping
+from typing import Any
+
+import numpy as np
+
+from . import time_offset as _time_offset_module
 from .bias import (
     BiasTrainingExamples,
     SensorBiasCorrectionModel,
@@ -9,7 +15,7 @@ from .bias import (
 )
 from .time_offset import (
     TimeOffsetFitResult,
-    aggregate_time_offset_sweeps,
+    aggregate_time_offset_sweeps as _aggregate_time_offset_sweeps,
     apply_time_offset,
     fit_time_offset,
     interpolate_reference_values,
@@ -18,6 +24,55 @@ from .time_offset import (
     time_offset_error_summary,
     time_offset_sweep,
 )
+from .time_offset import (
+    _aggregate_summary_metric,
+    _as_nonnegative_summary_count,
+    _as_summary_scalar,
+    _validate_error_metric,
+)
+
+
+def aggregate_time_offset_sweeps(
+    sweeps: Iterable[Iterable[Mapping[str, float]]],
+    *,
+    metric: str = "rmse",
+) -> list[dict[str, float]]:
+    """Aggregate same-offset sweeps while preserving all summary metrics."""
+
+    metric = _validate_error_metric(metric)
+    materialized_sweeps = [list(sweep) for sweep in sweeps]
+    rows = _aggregate_time_offset_sweeps(materialized_sweeps, metric=metric)
+    if metric == "std":
+        return rows
+
+    by_offset: dict[float, list[Mapping[str, float]]] = {}
+    for sweep in materialized_sweeps:
+        for part in sweep:
+            offset = _as_summary_scalar(part["time_offset_s"], "time_offset_s")
+            by_offset.setdefault(offset, []).append(part)
+
+    for row in rows:
+        parts = by_offset.get(float(row["time_offset_s"]), ())
+        counts = np.array(
+            [
+                _as_nonnegative_summary_count(part.get("count", 0.0), "count")
+                for part in parts
+            ],
+            dtype=float,
+        )
+        values = np.array(
+            [
+                _as_summary_scalar(part.get("std", np.nan), "std", allow_nan=True)
+                for part in parts
+            ],
+            dtype=float,
+        )
+        row["std"] = _aggregate_summary_metric("std", values, counts)
+    return rows
+
+
+_time_offset_module.aggregate_time_offset_sweeps = aggregate_time_offset_sweeps
+
 
 __all__ = [
     "BiasTrainingExamples",

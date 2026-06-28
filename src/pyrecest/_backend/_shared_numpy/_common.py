@@ -84,7 +84,7 @@ _allow_complex_dtype = _pre_allow_complex_dtype(cast, _COMPLEX_DTYPES)
 
 
 def is_array(x):
-    return type(x) is _np.ndarray
+    return x.__class__ is _np.ndarray
 
 
 def to_ndarray(x, to_ndim, axis=0, dtype=None):
@@ -107,22 +107,14 @@ def _get_wider_dtype(tensor_list):
     if all(dtype == dtypes[0] for dtype in dtypes[1:]):
         return dtypes[0], True
 
-    dtype_ranks = [_DTYPES.get(dtype) for dtype in dtypes]
-    if any(rank is None for rank in dtype_ranks):
-        try:
-            return _np.result_type(*dtypes), False
-        except AttributeError as exc:
-            raise TypeError(
-                "Cannot determine a common dtype for unsupported dtype(s): "
-                f"{', '.join(str(dtype) for dtype in dtypes)}"
-            ) from exc
-
-    wider_dtype_rank = max(dtype_ranks)
-    wider_dtype = next(
-        dtype for dtype, rank in _DTYPES.items() if rank == wider_dtype_rank
-    )
-
-    return wider_dtype, False
+    try:
+        common_dtype = _np.result_type(*dtypes)
+    except (AttributeError, TypeError) as exc:
+        raise TypeError(
+            "Cannot determine a common dtype for unsupported dtype(s): "
+            f"{', '.join(str(dtype) for dtype in dtypes)}"
+        ) from exc
+    return common_dtype, False
 
 
 def convert_to_wider_dtype(tensor_list):
@@ -130,7 +122,8 @@ def convert_to_wider_dtype(tensor_list):
     if same:
         return tensor_list
 
-    return [cast(x, dtype=wider_dtype) for x in tensor_list]
+    converted = [cast(x, dtype=wider_dtype) for x in tensor_list]
+    return converted
 
 
 def _is_boolean(x):

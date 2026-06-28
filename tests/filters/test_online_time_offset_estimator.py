@@ -40,6 +40,29 @@ class OnlineTimeOffsetEstimatorTest(unittest.TestCase):
 
         self.assertAlmostEqual(estimator.variance, 1.25)
 
+    def test_predict_rejects_invalid_dt_without_state_change(self):
+        invalid_values = (
+            np.nan,
+            np.inf,
+            -np.inf,
+            -1.0,
+            True,
+            "1.0",
+            np.array("1.0"),
+            np.array([1.0]),
+        )
+        for value in invalid_values:
+            estimator = OnlineTimeOffsetEstimator(
+                offset=1.0,
+                variance=2.0,
+                process_variance=0.25,
+            )
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    estimator.predict(dt=value)
+                self.assertEqual(estimator.offset, 1.0)
+                self.assertEqual(estimator.variance, 2.0)
+
     def test_constructor_rejects_nonfinite_scalar_controls(self):
         invalid_values = (
             np.nan,

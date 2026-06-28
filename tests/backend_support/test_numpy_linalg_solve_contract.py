@@ -7,6 +7,29 @@ from tests.support.backend_runner import run_backend_code
 
 
 @pytest.mark.backend_portable
+def test_numpy_linalg_solve_accepts_array_like_inputs():
+    result = run_backend_code(
+        "numpy",
+        """
+import pyrecest.backend as backend
+
+x = backend.linalg.solve([[2.0, 0.0], [0.0, 4.0]], [2.0, 8.0])
+assert x.shape == (2,)
+assert backend.to_numpy(x).tolist() == [1.0, 2.0]
+
+X = backend.linalg.solve(
+    [[2.0, 0.0], [0.0, 4.0]],
+    [[2.0, 4.0], [8.0, 12.0]],
+)
+assert X.shape == (2, 2)
+assert backend.to_numpy(X).tolist() == [[1.0, 2.0], [2.0, 3.0]]
+""",
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.backend_portable
 def test_numpy_linalg_solve_preserves_batched_matrix_rhs_shape_and_values():
     result = run_backend_code(
         "numpy",

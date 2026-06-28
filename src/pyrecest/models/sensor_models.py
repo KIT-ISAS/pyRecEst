@@ -126,6 +126,13 @@ def _as_vector(value, length: int, name: str):
     return vector
 
 
+def _as_matrix(value, shape: tuple[int, int], name: str):
+    matrix = asarray(value)
+    if tuple(matrix.shape) != shape:
+        raise ValueError(f"{name} must have shape {shape}")
+    return matrix
+
+
 def _as_sensor_positions(value, position_dim: int = 2):
     sensors = asarray(value)
     sensor_shape = tuple(sensors.shape)
@@ -334,7 +341,7 @@ def camera_projection_measurement(
     are returned.
     """
     position = _select(state, position_indices, 3, "position_indices")
-    rotation = asarray(rotation) if rotation is not None else None
+    rotation = None if rotation is None else _as_matrix(rotation, (3, 3), "rotation")
     translation = _as_vector(translation, 3, "translation")
     camera_position = position if rotation is None else matvec(rotation, position)
     camera_position = camera_position + translation
@@ -348,7 +355,7 @@ def camera_projection_measurement(
     )
     if camera_matrix is None:
         return stack([normalized[0], normalized[1]])
-    homogeneous = matvec(asarray(camera_matrix), normalized)
+    homogeneous = matvec(_as_matrix(camera_matrix, (3, 3), "camera_matrix"), normalized)
     _validate_nonzero_scalar(homogeneous[2], "homogeneous camera scale")
     return stack([homogeneous[0] / homogeneous[2], homogeneous[1] / homogeneous[2]])
 

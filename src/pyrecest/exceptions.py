@@ -11,6 +11,16 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 
+def _normalize_supported_backends(
+    supported_backends: Iterable[str] | str | None,
+) -> tuple[str, ...]:
+    if supported_backends is None:
+        return ()
+    if isinstance(supported_backends, str):
+        return (supported_backends,)
+    return tuple(supported_backends)
+
+
 class PyRecEstError(Exception):
     """Base class for PyRecEst-specific exceptions."""
 
@@ -27,12 +37,12 @@ class BackendNotSupportedError(BackendSupportError, NotImplementedError):
         api: str,
         backend: str | None = None,
         *,
-        supported_backends: Iterable[str] | None = None,
+        supported_backends: Iterable[str] | str | None = None,
         reason: str | None = None,
     ) -> None:
         self.api = api
         self.backend = backend
-        self.supported_backends = tuple(supported_backends or ())
+        self.supported_backends = _normalize_supported_backends(supported_backends)
         self.reason = reason
 
         if backend is None:

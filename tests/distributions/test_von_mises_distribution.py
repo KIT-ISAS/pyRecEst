@@ -41,6 +41,16 @@ class TestVonMisesDistribution(unittest.TestCase):
         self.assertGreater(float(mode_pdf[0]), 0.0)
         self.assertTrue(np.isfinite(float(entropy)))
 
+    def test_large_concentration_pdf_stays_stable_after_norm_const_access(self):
+        dist = VonMisesDistribution(0.3, 1000.0)
+        expected = VonMisesDistribution(0.3, 1000.0).pdf(array([0.3]))
+
+        _ = dist.norm_const
+        mode_pdf = dist.pdf(array([0.3]))
+
+        self.assertTrue(np.isfinite(float(mode_pdf[0])))
+        npt.assert_allclose(mode_pdf, expected)
+
     def test_pdf(self):
         dist = VonMisesDistribution(2, 1)
         xs = linspace(1, 7, 7)
