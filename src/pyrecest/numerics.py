@@ -11,7 +11,7 @@ from pyrecest.exceptions import (
     ShapeError,
 )
 
-_UNSUPPORTED_NUMERIC_KINDS = {"b", "S", "U", "c", "M", "m"}
+_UNSUPPORTED_NUMERIC_KINDS = {"b", "S", "U", "M", "m"}
 _UNSUPPORTED_SCALAR_TYPES = (
     type(None),
     bool,
@@ -21,17 +21,21 @@ _UNSUPPORTED_SCALAR_TYPES = (
     bytearray,
     np.str_,
     np.bytes_,
-    complex,
-    np.complexfloating,
     np.datetime64,
     np.timedelta64,
+)
+_UNSUPPORTED_OBJECT_SCALAR_TYPES = _UNSUPPORTED_SCALAR_TYPES + (
+    complex,
+    np.complexfloating,
 )
 
 
 def _object_item_contains_unsupported_numeric_values(item) -> bool:
-    if isinstance(item, _UNSUPPORTED_SCALAR_TYPES):
+    if isinstance(item, _UNSUPPORTED_OBJECT_SCALAR_TYPES):
         return True
     if isinstance(item, np.ndarray):
+        if item.dtype.kind == "c":
+            return True
         return _contains_unsupported_numeric_values(item)
     if isinstance(item, (list, tuple)):
         return any(
@@ -64,9 +68,11 @@ def _to_numpy_array(value, *, name: str = "matrix") -> np.ndarray:
         raw = value
 
     try:
-        if _contains_unsupported_numeric_values(raw):
+        raw_array = np.asarray(raw)
+        if _contains_unsupported_numeric_values(raw_array):
             raise ValueError
-        return np.asarray(raw, dtype=float)
+        dtype = complex if raw_array.dtype.kind == "c" else float
+        return np.asarray(raw_array, dtype=dtype)
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f"{name} must contain numeric values.") from exc
 
@@ -78,6 +84,10 @@ def _from_numpy_array(value: np.ndarray):
         return backend.array(value)
     except Exception:  # pragma: no cover
         return value
+
+
+def _adjoint(matrix: np.ndarray) -> np.ndarray:
+    return matrix.conj().T
 
 
 def _validate_nonnegative_finite(name: str, value: float) -> float:
@@ -142,14 +152,14 @@ def _raise_if_not_square_matrix(matrix: np.ndarray, name: str = "matrix") -> Non
 
 
 def symmetrize_matrix(matrix):
-    """Return ``0.5 * (matrix + matrix.T)`` in the active backend representation."""
+    """Return the symmetric/Hermitian part in the active backend representation."""
     arr = _to_numpy_array(matrix)
     _raise_if_not_square_matrix(arr)
-    return _from_numpy_array(0.5 * (arr + arr.T))
+    return _from_numpy_array(0.5 * (arr + _adjoint(arr)))
 
 
 def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
-    """Return whether a matrix is symmetric within an absolute tolerance."""
+    """Return whether a matrix is symmetric/Hermitian within an absolute tolerance."""
     atol = _validate_nonnegative_finite("atol", atol)
     try:
         arr = _to_numpy_array(matrix)
@@ -159,12 +169,12 @@ def is_symmetric(matrix, *, atol: float = 1e-10) -> bool:
         arr.ndim == 2
         and arr.shape[0] == arr.shape[1]
         and _is_finite_matrix(arr)
-        and np.allclose(arr, arr.T, atol=atol, rtol=0.0)
+        and np.allclose(arr, _adjoint(arr), atol=atol, rtol=0.0)
     )
 
 
 def is_positive_semidefinite(matrix, *, atol: float = 1e-10) -> bool:
-    """Return whether a symmetric matrix is positive semidefinite within tolerance."""
+    """Return whether a symmetric/Hermitian matrix is positive semidefinite within tolerance."""
     atol = _validate_nonnegative_finite("atol", atol)
     try:
         arr = _to_numpy_array(matrix)
@@ -183,7 +193,7 @@ def is_positive_semidefinite(matrix, *, atol: float = 1e-10) -> bool:
 
 
 def nearest_symmetric_psd(matrix, *, min_eigenvalue: float = 0.0):
-    """Project a symmetric matrix to the nearest eigenvalue-clipped PSD matrix.
+    """Project a symmetric/Hermitian matrix to the nearest eigenvalue-clipped PSD matrix.
 
     This helper is intended for diagnostics and controlled numerical repair. It
     should not silently replace validation in algorithms where invalid covariance
@@ -194,11 +204,11 @@ def nearest_symmetric_psd(matrix, *, min_eigenvalue: float = 0.0):
     arr = _to_numpy_array(matrix)
     _raise_if_not_square_matrix(arr)
     _raise_if_nonfinite_matrix(arr, "matrix")
-    sym = 0.5 * (arr + arr.T)
+    sym = 0.5 * (arr + _adjoint(arr))
     eigvals, eigvecs = np.linalg.eigh(sym)
     clipped = np.maximum(eigvals, min_eigenvalue)
-    repaired = (eigvecs * clipped) @ eigvecs.T
-    return _from_numpy_array(0.5 * (repaired + repaired.T))
+    repaired = (eigvecs * clipped) @ _adjoint(eigvecs)
+    return _from_numpy_array(0.5 * (repaired + _adjoint(repaired)))
 
 
 def jittered_cholesky(matrix, *, initial_jitter: float = 1e-12, max_attempts: int = 8):
@@ -214,7 +224,7 @@ def jittered_cholesky(matrix, *, initial_jitter: float = 1e-12, max_attempts: in
     arr = _to_numpy_array(matrix)
     _raise_if_not_square_matrix(arr)
     _raise_if_nonfinite_matrix(arr, "matrix")
-    sym = 0.5 * (arr + arr.T)
+    sym = 0.5 * (arr + _adjoint(arr))
     eye = np.eye(sym.shape[0])
     jitter = 0.0
     for attempt in range(max_attempts + 1):

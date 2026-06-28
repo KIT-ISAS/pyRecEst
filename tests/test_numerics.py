@@ -25,6 +25,22 @@ def test_symmetrize_matrix_and_psd_projection():
     assert is_positive_semidefinite(repaired)
 
 
+def test_complex_hermitian_covariance_helpers():
+    matrix = np.array([[2.0, 1.0 + 0.5j], [1.0 - 0.5j, 1.5]])
+
+    assert is_symmetric(matrix)
+    assert is_positive_semidefinite(matrix)
+    np.testing.assert_allclose(np.asarray(assert_covariance_matrix(matrix)), matrix)
+
+    nonsymmetric = np.array([[1.0, 2.0 + 1.0j], [3.0 + 4.0j, 5.0]])
+    hermitian = np.asarray(symmetrize_matrix(nonsymmetric))
+    np.testing.assert_allclose(hermitian, hermitian.conj().T)
+
+    repaired = np.asarray(nearest_symmetric_psd(nonsymmetric))
+    np.testing.assert_allclose(repaired, repaired.conj().T)
+    assert is_positive_semidefinite(repaired)
+
+
 def test_empty_square_matrix_is_symmetric_psd_covariance():
     matrix = np.empty((0, 0))
 
