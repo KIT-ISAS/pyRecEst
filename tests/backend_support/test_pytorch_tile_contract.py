@@ -37,5 +37,13 @@ empty_result = backend.tile(values, ())
 assert tuple(backend.shape(empty_result)) == (2, 2)
 assert backend.to_numpy(empty_result).tolist() == [[1, 2], [3, 4]]
 assert empty_result is not values
+
+for bad_reps in (1.5, [2.5, 1], "2", backend.array([2.5, 1.0])):
+    try:
+        backend.tile(values, bad_reps)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError(f"tile accepted non-integer repetitions {bad_reps!r}")
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
