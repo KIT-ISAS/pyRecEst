@@ -15,6 +15,14 @@ def _process_noise(dt: float, state_dim: int) -> np.ndarray:
     return 0.01 * max(dt, 0.0) * np.eye(2)
 
 
+def _transition_single_argument(dt: float) -> np.ndarray:
+    return _transition(dt, 2)
+
+
+def _process_noise_single_argument(dt: float) -> np.ndarray:
+    return _process_noise(dt, 2)
+
+
 def _records() -> list[dict[str, object]]:
     return [
         {
@@ -78,6 +86,45 @@ def test_rts_and_fixed_lag_match_when_lag_covers_all_future_records() -> None:
 
     assert np.allclose(full[0]["state"], lagged[0]["state"])
     assert np.allclose(full[0]["covariance"], lagged[0]["covariance"])
+
+
+def test_single_argument_models_are_supported() -> None:
+    out = smooth_records(
+        _records(),
+        method="rts",
+        transition_model=_transition_single_argument,
+        process_noise_model=_process_noise_single_argument,
+    )
+
+    assert len(out) == 3
+    assert out[0]["state"].shape == (2,)
+    assert out[0]["covariance"].shape == (2, 2)
+
+
+def test_single_argument_model_type_error_is_not_masked() -> None:
+    def bad_transition(_dt: float) -> np.ndarray:
+        raise TypeError("single-argument transition failure")
+
+    with pytest.raises(TypeError, match="single-argument transition failure"):
+        smooth_records(
+            _records(),
+            method="rts",
+            transition_model=bad_transition,
+            process_noise_model=_process_noise,
+        )
+
+
+def test_two_argument_model_type_error_is_not_masked() -> None:
+    def bad_transition(_dt: float, _state_dim: int) -> np.ndarray:
+        raise TypeError("two-argument transition failure")
+
+    with pytest.raises(TypeError, match="two-argument transition failure"):
+        smooth_records(
+            _records(),
+            method="rts",
+            transition_model=bad_transition,
+            process_noise_model=_process_noise,
+        )
 
 
 def test_none_returns_copied_records_with_metadata() -> None:
