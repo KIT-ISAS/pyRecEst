@@ -16,7 +16,20 @@ def test_determine_all_deviations_rejects_empty_groundtruths():
         determine_all_deviations(
             [],
             None,
-            lambda estimate, truth: 0.0,
+            lambda estimate, expected: 0.0,
+            groundtruths,
+        )
+
+
+def test_determine_all_deviations_rejects_nonarray_groundtruth_entries():
+    groundtruths = np.empty((1, 1), dtype=object)
+    groundtruths[0, 0] = 1.0
+
+    with pytest.raises(ValueError, match="arrays of shape"):
+        determine_all_deviations(
+            [[np.asarray([0.0])]],
+            None,
+            lambda estimate, expected: 0.0,
             groundtruths,
         )
 
@@ -31,6 +44,6 @@ def test_determine_all_deviations_rejects_mismatched_result_run_count():
         determine_all_deviations(
             results,
             None,
-            lambda estimate, truth: float(np.linalg.norm(estimate - truth)),
+            lambda estimate, expected: float(np.linalg.norm(estimate - expected)),
             groundtruths,
         )
