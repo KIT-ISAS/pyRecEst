@@ -9,6 +9,28 @@ from pyrecest.backend import copy  # noqa: F401
 _register_backend_submodules()
 
 
+def _patch_shared_numpy_copy_facade() -> None:
+    """Make shared NumPy backend copy accept scalar and array-like inputs."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) not in {"autograd", "numpy"}:
+        return
+
+    original_copy = backend.copy
+
+    def copy_arraylike(x):
+        return original_copy(backend.array(x))
+
+    copy_arraylike.__name__ = getattr(original_copy, "__name__", "copy")
+    copy_arraylike.__doc__ = getattr(original_copy, "__doc__", None)
+    backend.copy = copy_arraylike
+    globals()["copy"] = backend.copy
+
+
+_patch_shared_numpy_copy_facade()
+
+
 def _patch_pytorch_comparison_facade() -> None:
     """Make public PyTorch comparison helpers accept array-like inputs."""
 
