@@ -186,10 +186,19 @@ def test_normal_legacy_shape_detection_accepts_numpy_integer_dimensions():
     assert random.normal((np.int64(2), 3)).shape == (2, 3)
 
 
-def test_normal_bool_location_is_not_interpreted_as_legacy_shape():
-    random.seed(0)
-
-    assert random.normal(True).shape == ()
+@pytest.mark.parametrize(
+    "loc",
+    [
+        False,
+        np.bool_(True),
+        jnp.array([True, False]),
+        [False, 0.0],
+        np.array([0.0, np.bool_(True)], dtype=object),
+    ],
+)
+def test_normal_rejects_boolean_location(loc):
+    with pytest.raises(TypeError, match="loc must be real numeric, not boolean"):
+        random.normal(loc=loc)
 
 
 def test_normal_integer_tuple_location_with_array_scale_is_not_legacy_shape():
