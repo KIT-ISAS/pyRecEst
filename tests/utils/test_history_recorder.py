@@ -36,3 +36,14 @@ def test_padded_history_registers_array_like_initial_value():
     history = recorder.register("state", [1.0, 2.0], pad_with_nan=True)
 
     npt.assert_allclose(_to_numpy(history), np.array([[1.0], [2.0]]))
+
+
+def test_padded_history_empty_initial_value_does_not_add_nan_column():
+    recorder = HistoryRecorder()
+
+    history = recorder.register("state", [], pad_with_nan=True)
+    npt.assert_allclose(_to_numpy(history), np.empty((1, 0)))
+
+    history = recorder.record("state", [1.0, 2.0], pad_with_nan=True)
+
+    npt.assert_allclose(_to_numpy(history), np.array([[1.0], [2.0]]))

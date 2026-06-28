@@ -183,6 +183,8 @@ class HistoryRecorder:
     @staticmethod
     def _ensure_2d(curr_ests):
         curr_ests = _as_padded_numeric_array(curr_ests)
+        if backend.size(curr_ests) == 0:
+            return array([[]])
         if curr_ests.ndim == 0:
             curr_ests = curr_ests.reshape(1, 1)
         elif curr_ests.ndim != 2 or curr_ests.shape[1] != 1:
