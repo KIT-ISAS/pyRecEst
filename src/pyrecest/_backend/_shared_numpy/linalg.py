@@ -125,6 +125,7 @@ def qr(a, mode="reduced"):
 
 def is_single_matrix_pd(mat):
     """Check if 2D square matrix is positive definite."""
+    mat = _np.asarray(mat)
     if mat.ndim != 2 or mat.shape[0] != mat.shape[1]:
         return False
     if mat.dtype in [_np.complex64, _np.complex128]:
