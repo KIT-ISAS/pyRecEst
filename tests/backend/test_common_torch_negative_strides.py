@@ -13,14 +13,17 @@ import torch
 import pyrecest.backend as backend
 
 values = np.arange(3.0)[::-1]
+matrix = np.arange(9.0).reshape(3, 3)[::-1]
 weights = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
 
 outer_result = backend.outer(values, weights)
 dot_result = backend.dot(values, weights)
 matvec_result = backend.matvec(np.eye(3, dtype=float)[::-1], weights)
+diagonal_result = backend.diagonal(matrix)
 
 assert backend.__backend_name__ == "pytorch"
 assert torch.is_tensor(outer_result)
+assert torch.is_tensor(diagonal_result)
 assert backend.to_numpy(outer_result).tolist() == [
     [2.0, 4.0, 6.0],
     [1.0, 2.0, 3.0],
@@ -28,6 +31,7 @@ assert backend.to_numpy(outer_result).tolist() == [
 ]
 assert float(dot_result) == 4.0
 assert backend.to_numpy(matvec_result).tolist() == [3.0, 2.0, 1.0]
+assert backend.to_numpy(diagonal_result).tolist() == [6.0, 4.0, 2.0]
 """
 
     result = run_backend_code("pytorch", code)
