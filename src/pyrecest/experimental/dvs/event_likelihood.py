@@ -45,8 +45,7 @@ def _validate_nonnegative_finite(value: float, name: str) -> float:
     return value
 
 
-def _validate_integer_greater_than(value: int, name: str, lower_bound: int) -> int:
-    message = f"{name} must be greater than {lower_bound}"
+def _as_integer_scalar(value: int, message: str) -> int:
     try:
         value_array = np.asarray(value)
     except (TypeError, ValueError) as exc:
@@ -57,15 +56,26 @@ def _validate_integer_greater_than(value: int, name: str, lower_bound: int) -> i
     if isinstance(scalar, (*_BOOL_SCALAR_TYPES, *_TEXT_SCALAR_TYPES)):
         raise ValueError(message)
     if isinstance(scalar, (int, np.integer)):
-        parsed = int(scalar)
-    elif isinstance(scalar, (float, np.floating)):
+        return int(scalar)
+    if isinstance(scalar, (float, np.floating)):
         scalar_float = float(scalar)
-        if not np.isfinite(scalar_float) or not scalar_float.is_integer():
-            raise ValueError(message)
-        parsed = int(scalar_float)
-    else:
-        raise ValueError(message)
+        if np.isfinite(scalar_float) and scalar_float.is_integer():
+            return int(scalar_float)
+    raise ValueError(message)
+
+
+def _validate_integer_greater_than(value: int, name: str, lower_bound: int) -> int:
+    message = f"{name} must be greater than {lower_bound}"
+    parsed = _as_integer_scalar(value, message)
     if parsed <= int(lower_bound):
+        raise ValueError(message)
+    return parsed
+
+
+def _validate_integer_at_least(value: int, name: str, lower_bound: int) -> int:
+    message = f"{name} must be at least {lower_bound}"
+    parsed = _as_integer_scalar(value, message)
+    if parsed < int(lower_bound):
         raise ValueError(message)
     return parsed
 
@@ -155,10 +165,18 @@ class PointProcessUpdateConfig:
         object.__setattr__(self, "contour_samples", contour_samples)
         _validate_positive_finite(self.finite_difference_eps, "finite_difference_eps")
         _validate_nonnegative_finite(self.map_step_size, "map_step_size")
-        if self.max_map_iterations < 0:
-            raise ValueError("max_map_iterations must be non-negative")
-        if self.shape_update_modes < 0:
-            raise ValueError("shape_update_modes must be non-negative")
+        max_map_iterations = _validate_integer_at_least(
+            self.max_map_iterations,
+            "max_map_iterations",
+            0,
+        )
+        object.__setattr__(self, "max_map_iterations", max_map_iterations)
+        shape_update_modes = _validate_integer_at_least(
+            self.shape_update_modes,
+            "shape_update_modes",
+            0,
+        )
+        object.__setattr__(self, "shape_update_modes", shape_update_modes)
         covariance_damping = _validate_positive_finite(
             self.covariance_damping, "covariance_damping"
         )
