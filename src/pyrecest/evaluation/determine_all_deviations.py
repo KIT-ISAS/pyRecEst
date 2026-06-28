@@ -30,10 +30,15 @@ def determine_all_deviations(
     if mean_calculation_symm != "":
         raise NotImplementedError("Not implemented yet")
 
+    groundtruths_ndim = getattr(groundtruths, "ndim", None)
+    groundtruths_size = _shape_size(groundtruths) if groundtruths_ndim == 2 else 0
+    first_groundtruth_ndim = (
+        getattr(groundtruths[0, 0], "ndim", None) if groundtruths_size != 0 else None
+    )
     if (
-        getattr(groundtruths, "ndim", None) != 2
-        or _shape_size(groundtruths) == 0
-        or groundtruths[0, 0].ndim not in (1, 2)
+        groundtruths_ndim != 2
+        or groundtruths_size == 0
+        or first_groundtruth_ndim not in (1, 2)
     ):
         raise ValueError(
             "Assuming groundtruths to be a non-empty 2-D array of shape "
