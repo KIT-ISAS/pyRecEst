@@ -25,7 +25,7 @@ from .time_offset import (
     time_offset_sweep,
 )
 from .time_offset import (
-    _aggregate_summary_metric,
+    _aggregate_std_metric,
     _as_nonnegative_summary_count,
     _as_summary_scalar,
     _validate_error_metric,
@@ -67,7 +67,14 @@ def aggregate_time_offset_sweeps(
             ],
             dtype=float,
         )
-        row["std"] = _aggregate_summary_metric("std", values, counts)
+        means = np.array(
+            [
+                _as_summary_scalar(part.get("mean", np.nan), "mean", allow_nan=True)
+                for part in parts
+            ],
+            dtype=float,
+        )
+        row["std"] = _aggregate_std_metric(values, means, counts)
     return rows
 
 
