@@ -19,3 +19,31 @@ from pyrecest._backend.jax import random  # noqa: E402
 def test_normal_rejects_boolean_scale(scale):
     with pytest.raises(TypeError, match="scale must be real numeric, not boolean"):
         random.normal(scale=scale)
+
+
+@pytest.mark.parametrize(
+    "loc",
+    [
+        np.nan,
+        np.inf,
+        -np.inf,
+        jnp.array([0.0, np.nan]),
+    ],
+)
+def test_normal_rejects_nonfinite_loc(loc):
+    with pytest.raises(ValueError, match="loc must be finite"):
+        random.normal(loc=loc)
+
+
+@pytest.mark.parametrize(
+    "scale",
+    [
+        np.nan,
+        np.inf,
+        -np.inf,
+        jnp.array([1.0, np.inf]),
+    ],
+)
+def test_normal_rejects_nonfinite_scale(scale):
+    with pytest.raises(ValueError, match="scale must be finite"):
+        random.normal(scale=scale)
