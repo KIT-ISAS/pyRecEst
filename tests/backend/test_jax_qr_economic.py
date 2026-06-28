@@ -1,5 +1,7 @@
 import pytest
 
+jnp = pytest.importorskip("jax.numpy")
+
 
 def test_placeholder():
-    assert pytest is not None
+    assert jnp is not None
