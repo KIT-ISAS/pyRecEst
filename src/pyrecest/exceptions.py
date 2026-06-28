@@ -18,7 +18,7 @@ def _normalize_supported_backends(
         return ()
     if isinstance(supported_backends, str):
         return (supported_backends,)
-    return tuple(supported_backends)
+    return tuple(str(backend) for backend in supported_backends)
 
 
 class PyRecEstError(Exception):
