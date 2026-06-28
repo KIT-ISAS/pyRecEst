@@ -378,6 +378,12 @@ def _normalize_choice_axis(axis, ndim):
 def _choice_bool(value, name):
     if isinstance(value, (bool, _np.bool_)):
         return bool(value)
+    try:
+        value_array = _jnp.asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be a boolean") from exc
+    if value_array.shape == () and _jnp.issubdtype(value_array.dtype, _jnp.bool_):
+        return bool(value_array.item())
     raise TypeError(f"{name} must be a boolean")
 
 
