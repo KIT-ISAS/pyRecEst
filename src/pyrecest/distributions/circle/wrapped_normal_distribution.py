@@ -266,7 +266,9 @@ class WrappedNormalDistribution(
 
     @staticmethod
     def from_moment(m) -> "WrappedNormalDistribution":
-        moment = m.squeeze()
+        moment = squeeze(array(m))
+        if ndim(moment) != 0:
+            raise ValueError("First trigonometric moment must be a scalar.")
         moment_abs = float(abs(moment))
         if not isfinite(moment_abs):
             raise ValueError("First trigonometric moment must be finite.")
