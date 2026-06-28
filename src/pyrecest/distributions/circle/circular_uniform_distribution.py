@@ -1,4 +1,4 @@
-from pyrecest.backend import array, pi, where
+from pyrecest.backend import array, mod, pi
 
 from ..hypertorus.hypertoroidal_uniform_distribution import (
     HypertoroidalUniformDistribution,
@@ -42,7 +42,4 @@ class CircularUniformDistribution(
         """
 
         xa = array(xa)
-        val = (xa - starting_point) / (2 * pi)
-        val = where(val < 0, val + 1, val)
-
-        return val
+        return mod(xa - starting_point, 2.0 * pi) / (2.0 * pi)
