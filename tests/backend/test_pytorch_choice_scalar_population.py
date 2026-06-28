@@ -35,6 +35,40 @@ def test_choice_allows_zero_sized_sample_from_zero_dimensional_numpy_zero_popula
     assert samples.shape == (0,)
 
 
+@pytest.mark.parametrize(
+    ("size", "expected_shape"),
+    [
+        (0, (0,)),
+        ((0,), (0,)),
+        ((2, 0), (2, 0)),
+    ],
+)
+@pytest.mark.parametrize("replace", [True, False])
+def test_choice_allows_empty_weighted_sample(size, expected_shape, replace):
+    random.seed(0)
+
+    samples = random.choice(
+        3,
+        size=size,
+        replace=replace,
+        p=np.array([0.2, 0.3, 0.5]),
+    )
+
+    assert samples.shape == expected_shape
+
+
+def test_choice_allows_empty_weighted_sample_from_array_population():
+    random.seed(0)
+
+    samples = random.choice(
+        torch.arange(3),
+        size=(0,),
+        p=torch.tensor([0.2, 0.3, 0.5]),
+    )
+
+    assert samples.shape == (0,)
+
+
 @pytest.mark.parametrize("population", [np.array(True), np.array(3.0)])
 def test_choice_rejects_zero_dimensional_numpy_non_integer_population(population):
     with pytest.raises(ValueError, match="positive integer or an array"):

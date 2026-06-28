@@ -339,12 +339,16 @@ def _integer_population_size(a):
     return None
 
 
+def _empty_choice_indices(size, device):
+    return _torch.empty(size or (0,), dtype=_torch.long, device=device)
+
+
 def _choice_indices(
     population_size, size, num_samples, replace, p, device, *, shuffle=True
 ):
     if population_size <= 0:
         if num_samples == 0:
-            return _torch.empty(size or (0,), dtype=_torch.long, device=device)
+            return _empty_choice_indices(size, device)
         raise ValueError("a must be greater than 0 unless no samples are taken")
 
     if p is not None:
@@ -353,10 +357,15 @@ def _choice_indices(
                 "Cannot take a larger sample than population when 'replace=False'."
             )
         p = _validate_choice_probabilities(p, population_size, device)
+        if num_samples == 0:
+            return _empty_choice_indices(size, p.device)
         indices = _torch.multinomial(p, num_samples=num_samples, replacement=replace)
         if size is None:
             return indices[0]
         return indices.reshape(size)
+
+    if num_samples == 0:
+        return _empty_choice_indices(size, device)
 
     if replace:
         return _torch.randint(0, population_size, size or (), device=device)
