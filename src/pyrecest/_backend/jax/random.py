@@ -237,11 +237,6 @@ def _validate_randint_bounds(low, high):
     return low, high
 
 
-def _validate_normal_scale(scale):
-    if _contains_boolean_value(scale):
-        raise TypeError("scale must be real numeric, not boolean")
-
-
 def _randint(state, size, low, high, *args, **kwargs):
     state, key = jax.random.split(state)
     return state, jax.random.randint(
@@ -309,21 +304,24 @@ def randint(low=None, high=None, size=None, *args, **kwargs):
     return set_state_return(has_state, state, res)
 
 
-def _validate_normal_scale(scale):
-    if _contains_boolean_value(scale):
-        raise TypeError("scale must be real numeric, not boolean")
+def _validate_normal_parameter(value, name):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
     try:
-        scale = _jnp.asarray(scale)
+        value = _jnp.asarray(value)
     except (TypeError, ValueError, RuntimeError) as exc:
-        raise TypeError("scale must be real numeric") from exc
-    if scale.dtype.kind not in "iuf":
-        raise TypeError("scale must be real numeric")
-    return scale
+        raise TypeError(f"{name} must be real numeric") from exc
+    if value.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    return value
+
+
+def _validate_normal_scale(scale):
+    return _validate_normal_parameter(scale, "scale")
 
 
 def _normal(state, loc=0.0, scale=1.0, size=None, *args, **kwargs):
-    _validate_normal_scale(scale)
-    loc = _jnp.asarray(loc)
+    loc = _validate_normal_parameter(loc, "loc")
     scale = _validate_normal_scale(scale)
     if bool(_jnp.any(scale < 0)):
         raise ValueError("scale must be non-negative")
