@@ -103,7 +103,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     torch = _torch_module_for_values(a)
     if torch is not None:
         return torch.diagonal(
-            torch.as_tensor(a),
+            _torch_as_tensor_compatible(a, torch),
             offset=offset,
             dim1=axis1,
             dim2=axis2,
