@@ -18,6 +18,11 @@ from pyrecest.distributions import GaussianDistribution
 _INVALID_DIMENSION_SCALAR_TYPES = (bool, str, bytes, bytearray)
 
 
+def _has_boolean_dtype(value):
+    dtype = getattr(value, "dtype", None)
+    return dtype is not None and str(dtype).lower() in {"bool", "bool_", "torch.bool"}
+
+
 def _as_matrix(value, name):
     arr = asarray(value)
     if ndim(arr) != 2:
@@ -46,7 +51,7 @@ def _as_positive_integer(value, name):
         arr = asarray(value)
     except (TypeError, ValueError, OverflowError, RuntimeError) as exc:
         raise ValueError(message) from exc
-    if ndim(arr) != 0:
+    if ndim(arr) != 0 or _has_boolean_dtype(arr):
         raise ValueError(message)
     try:
         scalar = arr.item()
