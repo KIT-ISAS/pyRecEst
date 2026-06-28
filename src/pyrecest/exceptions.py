@@ -9,6 +9,16 @@ validation helper to change at once. Existing ``ValueError`` and
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Any
+
+
+def _normalize_supported_backend_name(value: Any) -> str:
+    if not isinstance(value, str):
+        raise ValueError("supported_backends must contain backend names as strings")
+    backend = value.strip()
+    if not backend:
+        raise ValueError("supported_backends must contain non-empty backend names")
+    return backend
 
 
 def _normalize_supported_backends(
@@ -17,8 +27,14 @@ def _normalize_supported_backends(
     if supported_backends is None:
         return ()
     if isinstance(supported_backends, str):
-        return (supported_backends,)
-    return tuple(str(backend) for backend in supported_backends)
+        return (_normalize_supported_backend_name(supported_backends),)
+    try:
+        return tuple(
+            _normalize_supported_backend_name(backend)
+            for backend in supported_backends
+        )
+    except TypeError as exc:
+        raise ValueError("supported_backends must be an iterable of backend names") from exc
 
 
 class PyRecEstError(Exception):
