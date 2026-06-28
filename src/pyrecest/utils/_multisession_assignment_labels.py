@@ -19,7 +19,7 @@ from .multisession_assignment import (  # pylint: disable=protected-access
     _validate_track_session_sizes,
 )
 
-_TEXT_TYPES = (str, np.str_)
+_TEXT_TYPES = (str, bytes, np.str_, np.bytes_)
 
 
 def _normalize_fill_value(fill_value: Any, track_count: int) -> int:
