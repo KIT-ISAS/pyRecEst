@@ -37,6 +37,6 @@ def test_choice_allows_zero_sized_sample_from_zero_dimensional_numpy_zero_popula
 
 
 @pytest.mark.parametrize("population", [np.array(True), np.array(3.0)])
-def test_choice_rejects_zero_dimimensional_numpy_non_integer_population(population):
+def test_choice_rejects_zero_dimensional_numpy_non_integer_population(population):
     with pytest.raises(ValueError, match="positive integer or an array"):
         random.choice(population)
