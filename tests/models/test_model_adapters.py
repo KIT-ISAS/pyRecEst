@@ -39,6 +39,10 @@ class DistributionPredictor:
         return state_distribution * scale
 
 
+class NonCallableLikelihood:
+    likelihood = 1
+
+
 class AliasTransitionModel:
     def __init__(self, system_matrix, sys_noise_cov, system_input=None):
         self.system_matrix = system_matrix
@@ -78,6 +82,10 @@ class ModelAdapterTest(unittest.TestCase):
 
         self.assertIs(as_likelihood_model(model), model)
 
+    def test_as_likelihood_model_rejects_noncallable_protocol_attribute(self):
+        with self.assertRaises(TypeError):
+            as_likelihood_model(NonCallableLikelihood())
+
     def test_as_likelihood_model_rejects_metadata_for_existing_model(self):
         def likelihood(measurement, state):
             return measurement + state
@@ -110,6 +118,10 @@ class ModelAdapterTest(unittest.TestCase):
     def test_evaluate_likelihood_rejects_missing_capability(self):
         with self.assertRaises(TypeError):
             evaluate_likelihood(object(), array([1.0]), array([0.0]))
+
+    def test_evaluate_likelihood_rejects_noncallable_protocol_attribute(self):
+        with self.assertRaisesRegex(TypeError, "must support likelihood"):
+            evaluate_likelihood(NonCallableLikelihood(), array([1.0]), array([0.0]))
 
     def test_as_sampleable_transition_model_wraps_callback(self):
         def sample_next(state, n=1):
