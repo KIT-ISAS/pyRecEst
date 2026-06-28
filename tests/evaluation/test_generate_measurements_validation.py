@@ -67,6 +67,13 @@ def test_generate_n_measurements_ppp_returns_python_int_for_zero_rate():
     assert isinstance(count, int)
 
 
+def test_generate_n_measurements_ppp_accepts_numpy_scalar_like_inputs():
+    count = generate_n_measurements_PPP(np.array(0.0), np.float32(123.0))
+
+    assert count == 0
+    assert isinstance(count, int)
+
+
 def test_generate_measurements_eot_accepts_array_like_groundtruth_entries():
     simulation_config = {
         "n_timesteps": 1,
