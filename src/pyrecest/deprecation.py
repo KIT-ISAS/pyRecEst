@@ -11,6 +11,12 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+def _validate_nonempty_version(value: str, name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-empty string")
+    return value.strip()
+
+
 def deprecated(
     *,
     since: str,
@@ -28,6 +34,11 @@ def deprecated(
     replacement:
         Optional replacement API name.
     """
+
+    since = _validate_nonempty_version(since, "since")
+    remove_in = _validate_nonempty_version(remove_in, "remove_in")
+    if replacement is not None:
+        replacement = _validate_nonempty_version(replacement, "replacement")
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         message = (
