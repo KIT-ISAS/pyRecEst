@@ -1,3 +1,4 @@
+import operator as _operator
 from importlib.metadata import PackageNotFoundError, version
 
 import pyrecest._backend  # noqa
@@ -75,6 +76,18 @@ def _patch_pytorch_comparison_facade() -> None:
     backend.logical_or = _wrap_comparison(_torch.logical_or)
 
 
+def _pytorch_tile_repetition_as_index(repetition) -> int:
+    """Return one validated repetition count for ``torch.Tensor.repeat``."""
+
+    try:
+        repetition = _operator.index(repetition)
+    except TypeError as exc:
+        raise TypeError("tile repetitions must be integers") from exc
+    if repetition < 0:
+        raise ValueError("negative dimensions are not allowed")
+    return repetition
+
+
 def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ...]:
     """Normalize NumPy-style tile repetitions for ``torch.Tensor.repeat``."""
 
@@ -82,14 +95,13 @@ def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ..
         reps = reps.detach().cpu().numpy()
     reps_array = numpy_module.asarray(reps)
     if reps_array.shape == ():
-        repetitions = (int(reps_array.item()),)
+        raw_repetitions = (reps_array.item(),)
     else:
-        repetitions = tuple(
-            int(one_repetition) for one_repetition in reps_array.tolist()
-        )
-    if any(one_repetition < 0 for one_repetition in repetitions):
-        raise ValueError("negative dimensions are not allowed")
-    return repetitions
+        raw_repetitions = tuple(reps_array.tolist())
+    return tuple(
+        _pytorch_tile_repetition_as_index(one_repetition)
+        for one_repetition in raw_repetitions
+    )
 
 
 def _patch_pytorch_tile_facade() -> None:
