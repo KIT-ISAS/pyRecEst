@@ -111,6 +111,27 @@ class TestReplayGridLikelihood(unittest.TestCase):
         self.assertAlmostEqual(probability, 0.5)
         self.assertAlmostEqual(ess_fraction, 0.25)
 
+    def test_position_proposal_probability_rejects_text_scalars(self):
+        invalid_probabilities = (
+            "0.5",
+            b"0.5",
+            bytearray(b"0.5"),
+            np.str_("0.5"),
+            np.bytes_(b"0.5"),
+            np.array("0.5"),
+            np.array(b"0.5"),
+            np.array("0.5", dtype=object),
+            np.array(b"0.5", dtype=object),
+        )
+
+        for probability in invalid_probabilities:
+            with self.subTest(field="base_probability", probability=repr(probability)):
+                with self.assertRaisesRegex(ValueError, "base_probability"):
+                    adaptive_position_proposal_probability([1.0], probability, None)
+            with self.subTest(field="ess_threshold", probability=repr(probability)):
+                with self.assertRaisesRegex(ValueError, "ess_threshold"):
+                    adaptive_position_proposal_probability([1.0], 0.5, probability)
+
     def test_effective_sample_size_rejects_invalid_weights(self):
         for weights in ([1.0, -0.1], [1.0, np.nan], [1.0, np.inf]):
             with self.subTest(weights=weights):

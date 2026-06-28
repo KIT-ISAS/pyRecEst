@@ -16,6 +16,8 @@ import numpy as np
 from scipy.spatial import cKDTree
 from scipy.special import logsumexp
 
+_TEXT_SCALAR_TYPES = (str, bytes, bytearray, np.str_, np.bytes_)
+
 
 @dataclass(frozen=True)
 class ReplayGridLikelihoodLookup:
@@ -434,10 +436,14 @@ def _nearest_bin_indices(positions: np.ndarray, bin_tree: cKDTree) -> np.ndarray
 
 def _validate_probability(probability: float, name: str) -> float:
     probability_array = np.asarray(probability)
-    if probability_array.shape != ():
+    if (
+        probability_array.shape != ()
+        or probability_array.dtype == np.bool_
+        or probability_array.dtype.kind in "SU"
+    ):
         raise ValueError(f"{name} must be a scalar probability in [0, 1]")
     probability_scalar = probability_array.item()
-    if isinstance(probability_scalar, (bool, np.bool_)):
+    if isinstance(probability_scalar, (bool, np.bool_) + _TEXT_SCALAR_TYPES):
         raise ValueError(f"{name} must be a scalar probability in [0, 1]")
     try:
         value = float(probability_scalar)
