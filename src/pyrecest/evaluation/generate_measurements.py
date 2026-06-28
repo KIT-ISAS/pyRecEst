@@ -1,7 +1,6 @@
 import copy
 
 import numpy as np
-from beartype import beartype
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 from pyrecest.backend import array, dot, get_backend_name, mod, pi, squeeze, tile, zeros
@@ -296,7 +295,6 @@ def generate_measurements(groundtruth, simulation_config):
     return measurements
 
 
-@beartype
 def generate_n_measurements_PPP(area: float, intensity_lambda: float) -> int:
     area = _as_nonnegative_finite_scalar(area, "area")
     intensity_lambda = _as_nonnegative_finite_scalar(
