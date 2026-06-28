@@ -28,13 +28,23 @@ _UNSUPPORTED_SCALAR_TYPES = (
 )
 
 
+def _object_item_contains_unsupported_numeric_values(item) -> bool:
+    if isinstance(item, _UNSUPPORTED_SCALAR_TYPES):
+        return True
+    if isinstance(item, np.ndarray):
+        return _contains_unsupported_numeric_values(item)
+    if isinstance(item, (list, tuple)):
+        return any(_object_item_contains_unsupported_numeric_values(subitem) for subitem in item)
+    return False
+
+
 def _contains_unsupported_numeric_values(value) -> bool:
     value_array = np.asarray(value)
     if value_array.dtype.kind in _UNSUPPORTED_NUMERIC_KINDS:
         return True
     if value_array.dtype.kind != "O":
         return False
-    return any(isinstance(item, _UNSUPPORTED_SCALAR_TYPES) for item in value_array.flat)
+    return any(_object_item_contains_unsupported_numeric_values(item) for item in value_array.flat)
 
 
 def _to_numpy_array(value, *, name: str = "matrix") -> np.ndarray:
@@ -42,9 +52,7 @@ def _to_numpy_array(value, *, name: str = "matrix") -> np.ndarray:
         import pyrecest.backend as backend
 
         raw = backend.to_numpy(value)
-    except (
-        Exception
-    ):  # pragma: no cover - fallback for source-tree bootstrap or unusual array objects
+    except Exception:  # pragma: no cover - fallback for source-tree bootstrap or unusual array objects
         raw = value
 
     try:
