@@ -9,6 +9,7 @@ from pyrecest.backend import (
     any,
     argmax,
     argmin,
+    array,
     concatenate,
     isclose,
     linalg,
@@ -91,6 +92,7 @@ class HypersphericalGridDistribution(
         - scalar if input is 1D
         - (batch,) if input is 2D
         """
+        xs = array(xs)
         warnings.warn(
             "PDF:UseInterpolated: Interpolating the pdf with constant values in each "
             "region is not very efficient, but it is good enough for "
@@ -239,6 +241,7 @@ class HypersphericalGridDistribution(
         indices : int or ndarray
             Index/indices of closest grid points.
         """
+        xs = array(xs)
         if xs.ndim == 1:
             if xs.shape[0] != self.input_dim:
                 raise ValueError(
