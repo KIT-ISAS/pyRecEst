@@ -1,4 +1,5 @@
 from importlib.metadata import PackageNotFoundError, version
+from operator import index as _operator_index
 
 import pyrecest._backend  # noqa
 from pyrecest._backend_submodules import (  # noqa: F401
@@ -75,6 +76,15 @@ def _patch_pytorch_comparison_facade() -> None:
     backend.logical_or = _wrap_comparison(_torch.logical_or)
 
 
+def _pytorch_tile_repetition(repetition) -> int:
+    """Return one NumPy-style tile repetition as an integer."""
+
+    try:
+        return _operator_index(repetition)
+    except TypeError as exc:
+        raise TypeError("tile repetitions must be integers") from exc
+
+
 def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ...]:
     """Normalize NumPy-style tile repetitions for ``torch.Tensor.repeat``."""
 
@@ -82,10 +92,11 @@ def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ..
         reps = reps.detach().cpu().numpy()
     reps_array = numpy_module.asarray(reps)
     if reps_array.shape == ():
-        repetitions = (int(reps_array.item()),)
+        repetitions = (_pytorch_tile_repetition(reps_array.item()),)
     else:
         repetitions = tuple(
-            int(one_repetition) for one_repetition in reps_array.tolist()
+            _pytorch_tile_repetition(one_repetition)
+            for one_repetition in reps_array.tolist()
         )
     if any(one_repetition < 0 for one_repetition in repetitions):
         raise ValueError("negative dimensions are not allowed")
@@ -138,52 +149,8 @@ from pyrecest.backend_tools import (  # noqa: E402,F401
     is_backend,
     warn_if_backend_env_changed,
 )
-from pyrecest.evidence import (  # noqa: E402,F401
-    EvidenceComputationMode,
-    resolve_evidence_computation_mode,
-)
-from pyrecest.exceptions import (  # noqa: E402,F401
-    BackendNotSupportedError,
-    BackendSupportError,
-    DimensionMismatchError,
-    NumericalStabilityError,
-    OptionalDependencyError,
-    PyRecEstError,
-    ShapeError,
-    ValidationError,
-)
-from pyrecest.stability import (  # noqa: E402,F401
-    get_public_api_status,
-    iter_public_api_status,
-    stability,
-)
 
 try:
     __version__ = version("pyrecest")
-except PackageNotFoundError:  # pragma: no cover - source tree without install metadata
+except PackageNotFoundError:  # pragma: no cover - editable/source tree without install metadata
     __version__ = "0+unknown"
-
-__all__ = [
-    "BackendNotSupportedError",
-    "BackendSupportError",
-    "DimensionMismatchError",
-    "EvidenceComputationMode",
-    "NumericalStabilityError",
-    "OptionalDependencyError",
-    "PyRecEstError",
-    "ShapeError",
-    "ValidationError",
-    "__version__",
-    "assert_backend",
-    "backend_support",
-    "copy",
-    "format_backend_support_markdown",
-    "get_backend_name",
-    "get_backend_support",
-    "get_public_api_status",
-    "is_backend",
-    "iter_public_api_status",
-    "stability",
-    "warn_if_backend_env_changed",
-    "resolve_evidence_computation_mode",
-]
