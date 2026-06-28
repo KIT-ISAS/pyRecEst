@@ -8,16 +8,20 @@ from pyrecest.backend import array, pi
 from pyrecest.filters import ManifoldExponentialMovingAverage
 
 
+
 def _phi_euclidean(state, xi):
     return state + xi
+
 
 
 def _phi_inv_euclidean(state_ref, state):
     return state - state_ref
 
 
+
 def _phi_so2(state, xi):
     return state + xi[0]
+
 
 
 def _phi_inv_so2(state_ref, state):
@@ -102,6 +106,26 @@ class TestManifoldExponentialMovingAverage(unittest.TestCase):
         )
         with self.assertRaisesRegex(TypeError, "real scalar"):
             ema.alpha = True
+
+    def test_alpha_rejects_text_values(self):
+        for alpha in ("0.5", b"0.5", np.array("0.5")):
+            with self.subTest(alpha=alpha):
+                with self.assertRaisesRegex(TypeError, "real scalar"):
+                    ManifoldExponentialMovingAverage(
+                        initial_state=0.0,
+                        alpha=alpha,
+                        phi=_phi_so2,
+                        phi_inv=_phi_inv_so2,
+                    )
+
+        ema = ManifoldExponentialMovingAverage(
+            initial_state=0.0,
+            alpha=0.5,
+            phi=_phi_so2,
+            phi_inv=_phi_inv_so2,
+        )
+        with self.assertRaisesRegex(TypeError, "real scalar"):
+            ema.alpha = "0.25"
 
 
 if __name__ == "__main__":
