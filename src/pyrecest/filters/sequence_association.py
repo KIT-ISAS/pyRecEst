@@ -27,12 +27,12 @@ class SequenceAssociationNode:
         Original frame or event index.  The value does not need to be dense;
         it is preserved in returned paths for downstream bookkeeping.
     candidate_index : int or None
-        Candidate identifier inside the frame. ``None`` denotes a missed
-        detection and requires ``is_missed_detection=True``.
+        Candidate identifier inside the frame. ``None`` denotes an explicit
+        gap and requires ``is_missed_detection=True``.
     unary_cost : float, optional
         Candidate-local cost before transition costs are added.
     is_missed_detection : bool, optional
-        Whether this node is an explicit missed-detection branch.
+        Whether this node is an explicit gap branch.
     payload : object, optional
         Optional domain object, row, measurement, or label carried through the
         solver unchanged.
@@ -53,15 +53,16 @@ class SequenceAssociationNode:
             self.is_missed_detection,
             "is_missed_detection",
         )
-        if self.candidate_index is None and not is_missed_detection:
-            raise ValueError(
-                "candidate_index=None is reserved for missed-detection nodes"
-            )
-        candidate_index = (
-            None
-            if self.candidate_index is None
-            else _validate_integer(self.candidate_index, "candidate_index")
-        )
+        if self.candidate_index is None:
+            if not is_missed_detection:
+                raise ValueError(
+                    "candidate_index=None is reserved for explicit gap nodes"
+                )
+            candidate_index = None
+        else:
+            if is_missed_detection:
+                raise ValueError("candidate_index must be None for explicit gap nodes")
+            candidate_index = _validate_integer(self.candidate_index, "candidate_index")
         unary_cost = _validate_cost(self.unary_cost, "unary_cost")
         object.__setattr__(self, "frame_index", frame_index)
         object.__setattr__(self, "candidate_index", candidate_index)
@@ -79,7 +80,7 @@ class SequenceAssociationNode:
         payload: Any | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> "SequenceAssociationNode":
-        """Create an explicit missed-detection node for ``frame_index``."""
+        """Create an explicit gap node for ``frame_index``."""
         return cls(
             frame_index=frame_index,
             candidate_index=None,
@@ -122,7 +123,7 @@ class SequenceAssociationPath:
 
     @property
     def missed_detection_frame_indices(self) -> tuple[int, ...]:
-        """Return frame indices where the path selected a missed detection."""
+        """Return frame indices where the path selected an explicit gap."""
         return tuple(
             node.frame_index for node in self.nodes if node.is_missed_detection
         )
