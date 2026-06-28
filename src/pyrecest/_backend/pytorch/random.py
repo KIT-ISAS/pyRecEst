@@ -304,6 +304,12 @@ def _integer_population_size(a):
         return None
     if isinstance(a, _Integral):
         return int(a)
+    if isinstance(a, _np.ndarray) and a.ndim == 0:
+        if _np.issubdtype(a.dtype, _np.integer) and not _np.issubdtype(
+            a.dtype, _np.bool_
+        ):
+            return int(a.item())
+        return None
     if (
         _torch.is_tensor(a)
         and a.ndim == 0
