@@ -8,6 +8,35 @@ from pyrecest.backend import copy  # noqa: F401
 
 _register_backend_submodules()
 
+
+def _patch_pytorch_logical_or_arraylike():
+    """Make the public PyTorch backend logical_or accept array-like inputs."""
+    import pyrecest.backend as _backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(_backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import torch as _torch  # pylint: disable=import-error,import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - inconsistent PyTorch backend env
+        return
+
+    def logical_or(x, y):
+        device = None
+        if _torch.is_tensor(x):
+            device = x.device
+        elif _torch.is_tensor(y):
+            device = y.device
+        return _torch.logical_or(
+            _torch.as_tensor(x, device=device),
+            _torch.as_tensor(y, device=device),
+        )
+
+    _backend.logical_or = logical_or
+
+
+_patch_pytorch_logical_or_arraylike()
+
 from pyrecest.backend_support import (  # noqa: E402,F401
     backend_support,
     format_backend_support_markdown,
