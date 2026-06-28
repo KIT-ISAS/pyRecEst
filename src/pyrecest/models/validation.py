@@ -98,6 +98,16 @@ def _to_python_bool(value: Any) -> bool:
     return bool(value)
 
 
+def _validate_finite_entries(value: Any, name: str) -> None:
+    """Raise if a backend array contains NaN or infinite entries."""
+    try:
+        finite = backend.all(backend.isfinite(value))
+    except Exception as exc:  # pragma: no cover - backend-specific exception type
+        raise ValueError(f"{name} must contain only finite values.") from exc
+    if not _to_python_bool(finite):
+        raise ValueError(f"{name} must contain only finite values.")
+
+
 def validate_vector(
     vector: Any,
     *,
@@ -242,6 +252,7 @@ def validate_covariance_matrix(
         )
 
     _validate_expected_dim(rows, dim, name, "dim")
+    _validate_finite_entries(covariance, name)
 
     if check_symmetric and not _to_python_bool(
         backend.allclose(
