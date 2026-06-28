@@ -407,6 +407,15 @@ def _choice_population_size(a, kwargs):
     return a.shape[axis]
 
 
+def _empty_choice_result(a, shape, axis):
+    if a.ndim == 0:
+        return _jnp.empty(shape, dtype=a.dtype)
+    return _jnp.empty(
+        tuple(a.shape[:axis]) + tuple(shape) + tuple(a.shape[axis + 1 :]),
+        dtype=a.dtype,
+    )
+
+
 def _validate_choice_probabilities(p, population_size):
     if _contains_boolean_value(p):
         raise TypeError("p must be real numeric, not boolean")
@@ -435,9 +444,10 @@ def _choice(state, a, size=None, replace=True, p=None, shuffle=True, *args, **kw
     replace = _choice_bool(replace, "replace")
     shuffle = _choice_bool(shuffle, "shuffle")
     population_size = _choice_population_size(a, kwargs)
+    axis = kwargs.get("axis", 0)
     if population_size == 0:
         if _shape_has_no_samples(shape):
-            return state, _jnp.empty(shape, dtype=a.dtype)
+            return state, _empty_choice_result(a, shape, axis)
         raise ValueError("a must be a positive integer or a non-empty array")
     if population_size < 0:
         raise ValueError("a must be a positive integer or a non-empty array")
@@ -460,7 +470,7 @@ def _choice(state, a, size=None, replace=True, p=None, shuffle=True, *args, **kw
     )
     if a.ndim == 0:
         return state, indices
-    return state, _jnp.take(a, indices, axis=kwargs.get("axis", 0))
+    return state, _jnp.take(a, indices, axis=axis)
 
 
 def choice(a, size=None, replace=True, p=None, shuffle=True, *args, **kwargs):
