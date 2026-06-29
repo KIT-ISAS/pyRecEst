@@ -66,7 +66,7 @@ def array(val, dtype=None):
         if dtype is not None and tensor.dtype != dtype:
             tensor = cast(tensor, dtype=dtype)
 
-        return tensor
+        return tensor.clone()
 
     if isinstance(val, (list, tuple)) and len(val):
         tensors = [array(tensor, dtype=dtype) for tensor in val]
