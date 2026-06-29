@@ -33,6 +33,12 @@ def test_require_optional_dependency_rejects_invalid_names(package, extra):
         require_optional_dependency(package, extra)
 
 
+@pytest.mark.parametrize("feature", ["", "   "])
+def test_require_optional_dependency_rejects_blank_feature_names(feature):
+    with pytest.raises(ValueError, match="feature must be a non-empty string"):
+        require_optional_dependency("math", "plot", feature=feature)
+
+
 def test_require_optional_dependency_reports_missing_parent_for_submodule():
     import_error = ModuleNotFoundError(
         "No module named 'missing_parent'",

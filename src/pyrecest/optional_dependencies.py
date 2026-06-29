@@ -15,6 +15,12 @@ def _validate_nonempty_string(value: Any, name: str) -> str:
     return value.strip()
 
 
+def _validate_optional_feature(value: Any | None) -> str | None:
+    if value is None:
+        return None
+    return _validate_nonempty_string(value, "feature")
+
+
 def _is_missing_requested_package(exc: ModuleNotFoundError, package: str) -> bool:
     missing_name = exc.name
     if missing_name is None:
@@ -38,6 +44,7 @@ def require_optional_dependency(
     """
     package = _validate_nonempty_string(package, "package")
     extra = _validate_nonempty_string(extra, "extra")
+    feature = _validate_optional_feature(feature)
 
     try:
         return importlib.import_module(package)
