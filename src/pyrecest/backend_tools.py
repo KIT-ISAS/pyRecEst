@@ -34,7 +34,7 @@ def _normalize_expected_backend_names(
         not isinstance(name, str) or not name or name.strip() != name for name in names
     ):
         raise ValueError(message)
-    return names
+    return tuple(dict.fromkeys(names))
 
 
 def assert_backend(expected: str | tuple[str, ...]) -> None:
