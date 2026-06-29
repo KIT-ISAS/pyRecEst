@@ -1,3 +1,7 @@
+import importlib.util
+
+import numpy as np
+import numpy.testing as npt
 import pyrecest.backend as backend
 import pytest
 
@@ -37,3 +41,21 @@ def test_pytorch_backend_exposes_dot_and_matvec():
 
     assert _to_python(batched_matvec) == [[1.0, 2.0], [6.0, 12.0]]
     assert _to_python(shared_vector_matvec) == [[1.0, 2.0], [2.0, 6.0]]
+
+
+def test_raw_pytorch_log1p_accepts_array_like_inputs_and_out():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("torch is not installed")
+
+    import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+
+    values = [0.0, 1.0, 3.0]
+    expected = np.log1p(values)
+
+    result = pytorch_backend.log1p(values)
+    npt.assert_allclose(pytorch_backend.to_numpy(result), expected)
+
+    out = pytorch_backend.zeros(3)
+    returned = pytorch_backend.log1p(values, out=out)
+    assert returned is out
+    npt.assert_allclose(pytorch_backend.to_numpy(out), expected)
