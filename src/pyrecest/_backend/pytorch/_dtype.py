@@ -34,6 +34,19 @@ _FLOAT_TO_COMPLEX_DTYPE = {
 _COMPLEX_DTYPES = (complex64, complex128)
 
 
+def _dtype_key(value):
+    """Return the canonical PyTorch dtype-map key for dtype-like values."""
+    try:
+        return str(_np.dtype(value))
+    except (TypeError, ValueError):
+        text = str(value)
+        if text.startswith("torch."):
+            return text.split(".")[-1]
+        if text.endswith("'>") and "." in text:
+            return text.rsplit(".", maxsplit=1)[-1].removesuffix("'>")
+        return text
+
+
 def _normalize_torch_dtype(dtype, *, default):
     """Return a torch dtype for dtype-like values from other backends."""
     if dtype is None:
@@ -41,8 +54,8 @@ def _normalize_torch_dtype(dtype, *, default):
     if isinstance(dtype, _torch.dtype):
         return dtype
     try:
-        return MAP_DTYPE[str(_np.dtype(dtype))]
-    except (KeyError, TypeError):
+        return MAP_DTYPE[_dtype_key(dtype)]
+    except KeyError:
         return dtype
 
 
@@ -69,8 +82,8 @@ def is_bool(x):
 
 
 def as_dtype(value):
-    """Transform string representing dtype in dtype."""
-    return MAP_DTYPE[value]
+    """Transform string or dtype-like value into a PyTorch dtype."""
+    return MAP_DTYPE[_dtype_key(value)]
 
 
 def _dtype_as_str(dtype):
