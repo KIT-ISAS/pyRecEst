@@ -62,7 +62,38 @@ def _patch_pytorch_assignment_scalar_tensor_indices() -> None:
     )
 
 
+def _patch_pytorch_diag_numpy_contract() -> None:
+    """Make PyTorch diag accept array-like inputs and NumPy's ``k`` keyword."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    if getattr(pytorch_backend.diag, "_pyrecest_numpy_contract", False):
+        return
+
+    def diag(v, k=0):
+        return _torch.diag(pytorch_backend.array(v), diagonal=k)
+
+    diag.__name__ = getattr(_torch.diag, "__name__", "diag")
+    diag.__doc__ = getattr(_torch.diag, "__doc__", None)
+    diag._pyrecest_numpy_contract = True
+    backend.diag = diag
+    pytorch_backend.diag = diag
+
+
 _patch_pytorch_assignment_scalar_tensor_indices()
+_patch_pytorch_diag_numpy_contract()
 
 
 def get_backend_name() -> str:
