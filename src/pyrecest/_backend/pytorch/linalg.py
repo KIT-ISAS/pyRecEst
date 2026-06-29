@@ -267,6 +267,14 @@ def qr(a, mode="reduced"):
     raise ValueError(f"Unrecognized mode {mode!r}")
 
 
+def _solve_sylvester_scipy(a, b, q):
+    result = _np.vectorize(
+        _scipy.linalg.solve_sylvester,
+        signature="(m,m),(n,n),(m,n)->(m,n)",
+    )(_as_numpy_no_grad(a), _as_numpy_no_grad(b), _as_numpy_no_grad(q))
+    return _torch_as_like(result, q)
+
+
 def solve_sylvester(a, b, q):
     a = _as_linalg_tensor(a)
     b = _as_linalg_tensor(b)
@@ -318,57 +326,4 @@ def solve_sylvester(a, b, q):
             )
             return eigvecs @ tilde_x @ eigvecs.transpose(-2, -1)
 
-    solution = _np.vectorize(
-        _scipy.linalg.solve_sylvester, signature="(m,m),(n,n),(m,n)->(m,n)"
-    )(_as_numpy_no_grad(a), _as_numpy_no_grad(b), _as_numpy_no_grad(q))
-    return _torch_as_like(solution, q)
-
-
-# (TODO) (sait) _torch.linalg.cholesky_ex for even faster way
-def is_single_matrix_pd(mat):
-    """Check if 2D square matrix is positive definite."""
-    mat = _as_linalg_tensor(mat)
-    if mat.ndim != 2 or mat.shape[0] != mat.shape[1]:
-        return False
-    if mat.dtype in [_torch.complex64, _torch.complex128]:
-        is_hermitian = _torch.all(
-            _torch.abs(mat - _torch.conj(_torch.transpose(mat, 0, 1))) < atol
-        )
-        if not is_hermitian:
-            return False
-        eigvals = _torch.linalg.eigvalsh(mat)
-        return _torch.min(_torch.real(eigvals)) > 0
-    if not _torch.all(_torch.abs(mat - mat.transpose(-2, -1)) < atol):
-        return False
-    try:
-        _torch.linalg.cholesky(mat)
-        return True
-    except RuntimeError:
-        return False
-
-
-def fractional_matrix_power(A, t):
-    """Compute the fractional power of a matrix."""
-    A = _as_linalg_tensor(A)
-    A_np = _as_numpy_no_grad(A)
-    out = _np.vectorize(
-        lambda one_matrix: _scipy.linalg.fractional_matrix_power(one_matrix, t),
-        signature="(n,n)->(n,n)",
-    )(A_np)
-
-    if out.dtype.kind == "c":
-        target_complex_dtype = _COMPLEX_DTYPE_FOR_TENSOR_DTYPE.get(A.dtype)
-        if target_complex_dtype is not None:
-            out = out.astype(target_complex_dtype, copy=False)
-
-    return _torch_as_like(out, A)
-
-
-def polar(a, side="right"):
-    """Polar decomposition of a square or rectangular matrix."""
-    a = _as_linalg_tensor(a)
-    signature = "(m,n)->(m,n),(m,m)" if side == "left" else "(m,n)->(m,n),(n,n)"
-    func = _np.vectorize(_scipy.linalg.polar, signature=signature, excluded=["side"])
-    unitary, hermitian = func(_as_numpy_no_grad(a), side=side)
-
-    return _torch_as_like(unitary, a), _torch_as_like(hermitian, a)
+    return _solve_sylvester_scipy(a, b, q)
