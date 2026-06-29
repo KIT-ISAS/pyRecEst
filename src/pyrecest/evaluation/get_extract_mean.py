@@ -39,9 +39,14 @@ def _is_array_state(filter_state) -> bool:
     return hasattr(filter_state, "ndim") and hasattr(filter_state, "shape")
 
 
+def _unsupported(message: str) -> None:
+    raise NotImplementedError(message)
+
+
 def _point_estimate_or_mean(filter_state):
-    if hasattr(filter_state, "get_point_estimate"):
-        return filter_state.get_point_estimate()
+    point_estimate = getattr(filter_state, "get_point_estimate", None)
+    if point_estimate is not None:
+        return point_estimate() if callable(point_estimate) else point_estimate
     if hasattr(filter_state, "mu"):
         return filter_state.mu
     if _is_array_state(filter_state):
@@ -64,7 +69,7 @@ def _extract_mtt_mean(filter_state):
         return _extract_track_collection_mean(filter_state.tracks)
     if hasattr(filter_state, "single_target_filters"):
         return _extract_track_collection_mean(filter_state.single_target_filters)
-    if isinstance(filter_state, list | tuple):
+    if isinstance(filter_state, (list, tuple)):
         return _extract_track_collection_mean(filter_state)
     return _point_estimate_or_mean(filter_state)
 
@@ -82,7 +87,7 @@ def get_extract_mean(manifold_name, mtt_scenario=False):
             return filter_state.mean_direction()
 
     elif _is_hypersphere_symmetric_name(normalized_name):
-        raise NotImplementedError(
+        _unsupported(
             "Symmetric hypersphere mean extraction needs an explicit convention via a custom extractor."
         )
 
@@ -92,15 +97,13 @@ def get_extract_mean(manifold_name, mtt_scenario=False):
             return filter_state.mean_direction()
 
     elif "symm" in normalized_name:
-        raise NotImplementedError(
-            "Symmetric mean extraction needs an explicit convention"
-        )
+        _unsupported("Symmetric mean extraction needs an explicit convention")
 
     elif "se2bounded" in normalized_name:
-        raise NotImplementedError("Not implemented yet")
+        _unsupported("Not implemented yet")
 
     elif "se2" in normalized_name or "se2linear" in normalized_name:
-        raise NotImplementedError("Not implemented yet")
+        _unsupported("Not implemented yet")
 
     elif "se3bounded" in normalized_name:
 
