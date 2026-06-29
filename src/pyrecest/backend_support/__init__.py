@@ -310,6 +310,32 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_raw_jax_matmul_out_contract() -> None:
+    """Make raw JAX matmul honor ``out`` under any active public backend."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.jax as raw_jax  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - JAX may be unavailable
+        return
+
+    original_matmul = raw_jax.matmul
+    if getattr(original_matmul, "_pyrecest_out_contract", False):
+        return
+
+    def matmul(x, y, out=None):
+        result = original_matmul(x, y, out=None)
+        if out is None:
+            return result
+        return raw_jax.asarray(out).at[...].set(result)
+
+    matmul.__name__ = getattr(original_matmul, "__name__", "matmul")
+    matmul.__doc__ = getattr(original_matmul, "__doc__", None)
+    matmul._pyrecest_out_contract = True
+    raw_jax.matmul = matmul
+    if getattr(backend, "__backend_name__", None) == "jax":
+        backend.matmul = matmul
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer flatten inputs like NumPy's outer."""
     try:
@@ -347,6 +373,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_raw_jax_matmul_out_contract()
 _patch_jax_outer_numpy_contract()
 
 
