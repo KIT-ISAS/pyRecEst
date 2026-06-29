@@ -7,6 +7,7 @@ from pyrecest._backend.capabilities import (
     BACKEND_SUPPORT_LEVELS,
     iter_api_backend_capabilities,
 )
+from pyrecest.backend_support import _torch_tile_contract
 
 
 def _patch_pytorch_dot_numpy_contract() -> None:
@@ -54,6 +55,7 @@ def _patch_pytorch_dot_numpy_contract() -> None:
 
 
 _patch_pytorch_dot_numpy_contract()
+_torch_tile_contract.install()
 
 
 def get_backend_support(
