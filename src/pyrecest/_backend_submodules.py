@@ -291,6 +291,128 @@ def _adapt_pytorch_stack_helpers_contract(backend: ModuleType) -> None:
         setattr(backend, helper_name, helper)
 
 
+def _resolve_pytorch_reduction_axis(axis, dim, func_name):
+    """Resolve NumPy ``axis`` and PyTorch ``dim`` aliases."""
+    if dim is not None:
+        if axis is not None and axis != dim:
+            raise TypeError(f"{func_name}() got both 'axis' and 'dim'")
+        axis = dim
+    return axis
+
+
+def _resolve_pytorch_keepdims(keepdims, keepdim, func_name):
+    """Resolve NumPy ``keepdims`` and PyTorch ``keepdim`` aliases."""
+    if keepdim is not None:
+        if keepdims not in (False, None) and keepdims != keepdim:
+            raise TypeError(f"{func_name}() got both 'keepdims' and 'keepdim'")
+        keepdims = keepdim
+    return keepdims
+
+
+def _wrap_pytorch_axis_keepdim_reduction(reduction, func_name):
+    """Return a reduction wrapper that accepts ``dim`` and ``keepdim``."""
+
+    @wraps(reduction)
+    def wrapped_reduction(
+        x, axis=None, out=None, keepdims=False, *, dim=None, keepdim=None
+    ):
+        axis = _resolve_pytorch_reduction_axis(axis, dim, func_name)
+        keepdims = _resolve_pytorch_keepdims(keepdims, keepdim, func_name)
+        return reduction(x, axis=axis, out=out, keepdims=keepdims)
+
+    wrapped_reduction._pyrecest_reduction_alias_contract = True
+    return wrapped_reduction
+
+
+def _wrap_pytorch_prod_reduction(prod):
+    """Return a ``prod`` wrapper that accepts ``dim`` and ``keepdim``."""
+
+    @wraps(prod)
+    def wrapped_prod(
+        x,
+        axis=None,
+        dtype=None,
+        out=None,
+        keepdims=False,
+        *,
+        dim=None,
+        keepdim=None,
+    ):
+        axis = _resolve_pytorch_reduction_axis(axis, dim, "prod")
+        keepdims = _resolve_pytorch_keepdims(keepdims, keepdim, "prod")
+        return prod(x, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+
+    wrapped_prod._pyrecest_reduction_alias_contract = True
+    return wrapped_prod
+
+
+def _wrap_pytorch_count_nonzero_reduction(count_nonzero):
+    """Return a ``count_nonzero`` wrapper accepting ``dim`` and ``keepdim``."""
+
+    @wraps(count_nonzero)
+    def wrapped_count_nonzero(a, axis=None, keepdims=False, *, dim=None, keepdim=None):
+        axis = _resolve_pytorch_reduction_axis(axis, dim, "count_nonzero")
+        keepdims = _resolve_pytorch_keepdims(
+            keepdims,
+            keepdim,
+            "count_nonzero",
+        )
+        return count_nonzero(a, axis=axis, keepdims=keepdims)
+
+    wrapped_count_nonzero._pyrecest_reduction_alias_contract = True
+    return wrapped_count_nonzero
+
+
+def _adapt_pytorch_reduction_alias_contract(backend: ModuleType) -> None:
+    """Preserve PyTorch ``dim``/``keepdim`` aliases on reduction helpers."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+
+    for reduction_name in ("all", "any", "max", "min"):
+        reduction = getattr(pytorch_backend, reduction_name, None)
+        if reduction is None or getattr(
+            reduction,
+            "_pyrecest_reduction_alias_contract",
+            False,
+        ):
+            continue
+        wrapped_reduction = _wrap_pytorch_axis_keepdim_reduction(
+            reduction,
+            reduction_name,
+        )
+        setattr(pytorch_backend, reduction_name, wrapped_reduction)
+        setattr(backend, reduction_name, wrapped_reduction)
+
+    prod = getattr(pytorch_backend, "prod", None)
+    if prod is not None and not getattr(
+        prod,
+        "_pyrecest_reduction_alias_contract",
+        False,
+    ):
+        wrapped_prod = _wrap_pytorch_prod_reduction(prod)
+        setattr(pytorch_backend, "prod", wrapped_prod)
+        setattr(backend, "prod", wrapped_prod)
+
+    count_nonzero = getattr(pytorch_backend, "count_nonzero", None)
+    if count_nonzero is not None and not getattr(
+        count_nonzero,
+        "_pyrecest_reduction_alias_contract",
+        False,
+    ):
+        wrapped_count_nonzero = _wrap_pytorch_count_nonzero_reduction(count_nonzero)
+        setattr(pytorch_backend, "count_nonzero", wrapped_count_nonzero)
+        setattr(backend, "count_nonzero", wrapped_count_nonzero)
+
+    if hasattr(pytorch_backend, "max"):
+        setattr(pytorch_backend, "amax", pytorch_backend.max)
+        setattr(backend, "amax", pytorch_backend.max)
+    if hasattr(pytorch_backend, "min"):
+        setattr(pytorch_backend, "amin", pytorch_backend.min)
+        setattr(backend, "amin", pytorch_backend.min)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -301,6 +423,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     _adapt_pytorch_repeat_contract(backend)
     _adapt_pytorch_reshape_contract(backend)
     _adapt_pytorch_stack_helpers_contract(backend)
+    _adapt_pytorch_reduction_alias_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
