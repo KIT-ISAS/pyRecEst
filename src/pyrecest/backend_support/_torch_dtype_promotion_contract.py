@@ -14,11 +14,10 @@ def _patch_pytorch_allclose_equal_nan_contract(raw_pytorch, torch_module) -> Non
     default_rtol = raw_pytorch.rtol
 
     def _as_allclose_tensor(value, *, device):
-        if torch_module.is_tensor(value):
-            if device is not None and value.device != device:
-                return value.to(device=device)
-            return value
-        return torch_module.as_tensor(value, device=device)
+        tensor = value if torch_module.is_tensor(value) else raw_pytorch.array(value)
+        if device is not None and tensor.device != device:
+            return tensor.to(device=device)
+        return tensor
 
     def allclose(a, b, atol=default_atol, rtol=default_rtol, equal_nan=False):
         device = next(
