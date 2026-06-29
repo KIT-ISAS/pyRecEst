@@ -310,6 +310,68 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_pytorch_angle_unit_numpy_contract() -> None:
+    """Make PyTorch degree/radian helpers accept NumPy-style inputs."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_deg2rad = raw_pytorch.deg2rad
+    original_rad2deg = raw_pytorch.rad2deg
+    if getattr(original_deg2rad, "_pyrecest_numpy_contract", False) and getattr(
+        original_rad2deg,
+        "_pyrecest_numpy_contract",
+        False,
+    ):
+        return
+
+    def _angle_unit_input(x):
+        x = raw_pytorch.array(x)
+        if raw_pytorch.is_floating(x) or raw_pytorch.is_complex(x):
+            return x
+        return raw_pytorch.cast(x, dtype=raw_pytorch.get_default_dtype())
+
+    def _copy_result_to_out(result, out):
+        if out is None:
+            return result
+        copy_ = getattr(out, "copy_", None)
+        if copy_ is not None:
+            copy_(result)
+            return out
+        out[...] = result
+        return out
+
+    def deg2rad(x, out=None):
+        result = torch.deg2rad(_angle_unit_input(x))
+        return _copy_result_to_out(result, out)
+
+    def rad2deg(x, out=None):
+        result = torch.rad2deg(_angle_unit_input(x))
+        return _copy_result_to_out(result, out)
+
+    deg2rad.__name__ = getattr(original_deg2rad, "__name__", "deg2rad")
+    deg2rad.__doc__ = getattr(original_deg2rad, "__doc__", None)
+    deg2rad._pyrecest_numpy_contract = True
+    rad2deg.__name__ = getattr(original_rad2deg, "__name__", "rad2deg")
+    rad2deg.__doc__ = getattr(original_rad2deg, "__doc__", None)
+    rad2deg._pyrecest_numpy_contract = True
+
+    raw_pytorch.deg2rad = deg2rad
+    raw_pytorch.rad2deg = rad2deg
+    if active_pytorch_backend:
+        backend.deg2rad = deg2rad
+        backend.rad2deg = rad2deg
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer flatten inputs like NumPy's outer."""
     try:
@@ -347,6 +409,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_angle_unit_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
