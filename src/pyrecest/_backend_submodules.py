@@ -188,6 +188,52 @@ def _adapt_pytorch_repeat_contract(backend: ModuleType) -> None:
     setattr(backend, "repeat", wrapped_repeat)
 
 
+def _pytorch_reshape_shape(shape, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style reshape dimensions for ``torch.reshape``."""
+    if torch_module.is_tensor(shape):
+        if shape.ndim == 0:
+            return (_operator_index(shape.item()),)
+        shape = shape.detach().cpu().tolist()
+    elif getattr(shape, "ndim", None) == 0 and hasattr(shape, "item"):
+        return (_operator_index(shape.item()),)
+
+    try:
+        return (_operator_index(shape),)
+    except TypeError:
+        pass
+
+    if isinstance(shape, (str, bytes)):
+        raise TypeError("reshape shape must be an integer or a sequence of integers")
+
+    try:
+        return tuple(_operator_index(dimension) for dimension in shape)
+    except TypeError as exc:
+        raise TypeError(
+            "reshape shape must be an integer or a sequence of integers"
+        ) from exc
+
+
+def _adapt_pytorch_reshape_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch reshape to accept array-like inputs and NumPy-style shapes."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    import torch as torch_module  # pylint: disable=import-outside-toplevel
+
+    reshape = getattr(pytorch_backend, "reshape", None)
+    if reshape is None or getattr(reshape, "_pyrecest_reshape_contract", False):
+        return
+
+    @wraps(reshape)
+    def wrapped_reshape(x, shape):
+        return reshape(pytorch_backend.array(x), _pytorch_reshape_shape(shape, torch_module))
+
+    wrapped_reshape._pyrecest_reshape_contract = True
+    setattr(pytorch_backend, "reshape", wrapped_reshape)
+    setattr(backend, "reshape", wrapped_reshape)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -196,6 +242,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     _adapt_cumulative_out_contract(backend)
     _adapt_pytorch_allclose_keyword_contract(backend)
     _adapt_pytorch_repeat_contract(backend)
+    _adapt_pytorch_reshape_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
