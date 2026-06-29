@@ -38,6 +38,19 @@ def test_pytorch_fftconvolve_matches_scipy_selected_axes():
     assert np.allclose(actual, expected)
 
 
+def test_pytorch_fftconvolve_accepts_negative_stride_numpy_views():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific signal backend contract")
+
+    first = np.arange(6.0).reshape(2, 3)[:, ::-1]
+    second = np.asarray([[1.0, -0.25], [0.5, 0.75]])[::-1, :]
+
+    actual = _as_numpy(backend.signal.fftconvolve(first, second, mode="same"))
+    expected = scipy_fftconvolve(first, second, mode="same")
+
+    assert np.allclose(actual, expected)
+
+
 def test_pytorch_fftconvolve_same_crops_broadcast_non_convolved_axes():
     if backend.__backend_name__ != "pytorch":
         pytest.skip("PyTorch-specific signal backend contract")
