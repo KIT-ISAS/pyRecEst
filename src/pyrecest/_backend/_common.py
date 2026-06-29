@@ -111,15 +111,21 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     return _np.diagonal(a, offset=offset, axis1=axis1, axis2=axis2)
 
 
+def _active_backend_name():
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except Exception:  # pragma: no cover - only during backend bootstrap/failure paths
+        return _os.environ.get("PYRECEST_BACKEND")
+    return getattr(backend, "__backend_name__", _os.environ.get("PYRECEST_BACKEND"))
+
+
 def _torch_module_for_values(*values):
     try:
         import torch as _torch
     except ModuleNotFoundError:
         return None
 
-    if _os.environ.get("PYRECEST_BACKEND") == "pytorch" or any(
-        _torch.is_tensor(value) for value in values
-    ):
+    if _active_backend_name() == "pytorch" or any(_torch.is_tensor(value) for value in values):
         return _torch
     return None
 
