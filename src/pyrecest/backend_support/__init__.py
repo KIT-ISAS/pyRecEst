@@ -215,10 +215,43 @@ def _patch_pytorch_tile_numpy_contract() -> None:
         backend.tile = tile
 
 
+def _patch_pytorch_copy_numpy_contract() -> None:
+    """Make PyTorch copy return tensors for array-like inputs."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_copy = raw_pytorch.copy
+    if getattr(original_copy, "_pyrecest_numpy_contract", False):
+        return
+
+    def copy(x):
+        if raw_pytorch.is_array(x):
+            return original_copy(x)
+        return raw_pytorch.array(x)
+
+    copy.__name__ = getattr(original_copy, "__name__", "copy")
+    copy.__doc__ = getattr(original_copy, "__doc__", None)
+    copy._pyrecest_numpy_contract = True
+    raw_pytorch.copy = copy
+    if active_pytorch_backend:
+        backend.copy = copy
+
+
 _patch_raw_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_dot_numpy_contract()
 _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
+_patch_pytorch_copy_numpy_contract()
+_patch_pytorch_copy_numpy_contract()
 
 
 def get_backend_support(
