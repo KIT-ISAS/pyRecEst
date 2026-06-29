@@ -113,6 +113,8 @@ def _pytorch_repeat_count(repetition) -> int:
 def _pytorch_repeat_counts(repeats, *, numpy_module, torch_module, device):
     """Normalize NumPy-style repeat counts for ``torch.repeat_interleave``."""
     if torch_module.is_tensor(repeats):
+        if repeats.ndim > 1:
+            raise ValueError("object too deep for desired array")
         if repeats.dtype.is_floating_point or repeats.dtype.is_complex:
             raise TypeError("repeat counts must be integers")
         repeat_counts = repeats.to(device=device, dtype=torch_module.long)
@@ -123,6 +125,8 @@ def _pytorch_repeat_counts(repeats, *, numpy_module, torch_module, device):
     repeats_array = numpy_module.asarray(repeats)
     if repeats_array.shape == ():
         return _pytorch_repeat_count(repeats_array.item())
+    if repeats_array.ndim > 1:
+        raise ValueError("object too deep for desired array")
     if not numpy_module.can_cast(
         repeats_array.dtype, numpy_module.dtype("intp"), casting="safe"
     ):
