@@ -234,6 +234,48 @@ def _adapt_pytorch_reshape_contract(backend: ModuleType) -> None:
     setattr(backend, "reshape", wrapped_reshape)
 
 
+def _pytorch_trace_with_numpy_signature(trace, array_func, torch_module):
+    """Return a NumPy-compatible ``trace`` wrapper for the PyTorch backend."""
+
+    @wraps(trace)
+    def wrapped_trace(a, offset=0, axis1=-2, axis2=-1, dtype=None, out=None):
+        a = array_func(a)
+        diagonal_values = torch_module.diagonal(
+            a,
+            offset=offset,
+            dim1=axis1,
+            dim2=axis2,
+        )
+        result = torch_module.sum(diagonal_values, dim=-1, dtype=dtype)
+        if out is not None:
+            return _copy_result_to_out(result, out)
+        return result
+
+    wrapped_trace._pyrecest_trace_contract = True
+    return wrapped_trace
+
+
+def _adapt_pytorch_trace_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch trace to PyRecEst's NumPy-style backend contract."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    import torch as torch_module  # pylint: disable=import-outside-toplevel
+
+    trace = getattr(pytorch_backend, "trace", None)
+    if trace is None or getattr(trace, "_pyrecest_trace_contract", False):
+        return
+
+    wrapped_trace = _pytorch_trace_with_numpy_signature(
+        trace,
+        backend.array,
+        torch_module,
+    )
+    setattr(pytorch_backend, "trace", wrapped_trace)
+    setattr(backend, "trace", wrapped_trace)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -243,6 +285,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     _adapt_pytorch_allclose_keyword_contract(backend)
     _adapt_pytorch_repeat_contract(backend)
     _adapt_pytorch_reshape_contract(backend)
+    _adapt_pytorch_trace_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
