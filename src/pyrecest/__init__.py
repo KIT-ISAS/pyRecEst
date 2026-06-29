@@ -327,6 +327,49 @@ def _patch_pytorch_stack_helpers_facade() -> None:
         setattr(backend, helper_name, helper)
 
 
+def _patch_pytorch_trace_facade() -> None:
+    """Make public and raw PyTorch ``trace`` follow the backend trace contract."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    original_trace = getattr(pytorch_backend, "trace", None)
+
+    def trace(a, offset=0, axis1=-2, axis2=-1, dtype=None, out=None):
+        values = pytorch_backend.array(a)
+        if values.ndim < 2:
+            raise ValueError("trace requires an array of at least two dimensions")
+        diagonal = pytorch_backend.diagonal(
+            values,
+            offset=_operator_index(offset),
+            axis1=_operator_index(axis1),
+            axis2=_operator_index(axis2),
+        )
+        result = pytorch_backend.sum(diagonal, axis=-1, dtype=dtype)
+        if out is not None:
+            copy_ = getattr(out, "copy_", None)
+            if copy_ is not None:
+                copy_(result)
+                return out
+            out[...] = result
+            return out
+        return result
+
+    trace.__name__ = getattr(original_trace, "__name__", "trace")
+    trace.__doc__ = getattr(original_trace, "__doc__", None)
+    pytorch_backend.trace = trace
+    backend.trace = trace
+
+
 def _patch_jax_std_out_facade() -> None:
     """Make public and raw JAX ``std`` accept NumPy's ``out`` argument."""
 
@@ -422,6 +465,7 @@ _patch_pytorch_comparison_facade()
 _patch_pytorch_clip_facade()
 _patch_pytorch_tile_facade()
 _patch_pytorch_stack_helpers_facade()
+_patch_pytorch_trace_facade()
 _patch_jax_std_out_facade()
 _patch_jax_matmul_out_facade()
 
