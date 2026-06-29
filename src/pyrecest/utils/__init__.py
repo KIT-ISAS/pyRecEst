@@ -1,7 +1,10 @@
 """Utility helpers for :mod:`pyrecest`."""
 
+import math as _math
+
 from . import assignment as _assignment_module
 from . import multisession_assignment as _multisession_assignment_module
+from . import roi_assignment as _roi_assignment_module
 from ._multisession_assignment_labels import tracks_to_session_labels
 
 
@@ -30,6 +33,65 @@ if not hasattr(_assignment_module, "_solve_subproblem_without_full_assignment"):
         _assignment_module._solve_subproblem
     )
     _assignment_module._solve_subproblem = _solve_subproblem_with_full_assignment
+
+
+def _normalize_roi_unmatched_value(unmatched_value):
+    value_array = _roi_assignment_module.asarray(unmatched_value)
+    if value_array.shape != ():
+        raise ValueError("unmatched_value must be an integer.")
+
+    scalar = value_array.item() if hasattr(value_array, "item") else value_array
+    if isinstance(scalar, bool):
+        raise ValueError("unmatched_value must be an integer.")
+    if isinstance(scalar, int):
+        return int(scalar)
+
+    try:
+        scalar_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("unmatched_value must be an integer.") from exc
+    if not _math.isfinite(scalar_float) or not scalar_float.is_integer():
+        raise ValueError("unmatched_value must be an integer.")
+    return int(scalar_float)
+
+
+def _assign_by_similarity_matrix_with_unmatched_value_validation(
+    similarity_matrix,
+    min_similarity=0.0,
+    num_dummy=None,
+    unmatched_value=-1,
+    *,
+    return_result=False,
+):
+    normalized_unmatched_value = _normalize_roi_unmatched_value(unmatched_value)
+    similarities = _roi_assignment_module.asarray(
+        similarity_matrix,
+        dtype=_roi_assignment_module.float64,
+    )
+    if similarities.ndim == 2 and 0 <= normalized_unmatched_value < similarities.shape[1]:
+        raise ValueError(
+            "unmatched_value must be outside the valid column index range."
+        )
+
+    return _roi_assignment_module._assign_by_similarity_matrix_without_unmatched_value_validation(
+        similarity_matrix,
+        min_similarity=min_similarity,
+        num_dummy=num_dummy,
+        unmatched_value=normalized_unmatched_value,
+        return_result=return_result,
+    )
+
+
+if not hasattr(
+    _roi_assignment_module,
+    "_assign_by_similarity_matrix_without_unmatched_value_validation",
+):
+    _roi_assignment_module._assign_by_similarity_matrix_without_unmatched_value_validation = (
+        _roi_assignment_module.assign_by_similarity_matrix
+    )
+    _roi_assignment_module.assign_by_similarity_matrix = (
+        _assign_by_similarity_matrix_with_unmatched_value_validation
+    )
 
 
 min_cost_max_cardinality_assignment = (
