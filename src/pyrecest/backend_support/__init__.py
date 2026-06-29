@@ -53,7 +53,43 @@ def _patch_pytorch_dot_numpy_contract() -> None:
     raw_pytorch.dot = dot
 
 
+def _patch_pytorch_outer_numpy_contract() -> None:
+    """Make PyTorch outer flatten inputs like NumPy's outer."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_outer = raw_pytorch.outer
+    if getattr(original_outer, "_pyrecest_numpy_contract", False):
+        return
+
+    def outer(a, b):
+        a = backend.array(a)
+        b = backend.array(b)
+        dtype = torch.promote_types(a.dtype, b.dtype)
+        a = a.to(dtype=dtype)
+        b = b.to(dtype=dtype)
+        return torch.outer(a.reshape(-1), b.reshape(-1))
+
+    outer.__name__ = getattr(original_outer, "__name__", "outer")
+    outer.__doc__ = getattr(original_outer, "__doc__", None)
+    outer._pyrecest_numpy_contract = True
+    backend.outer = outer
+    raw_pytorch.outer = outer
+
+
 _patch_pytorch_dot_numpy_contract()
+_patch_pytorch_outer_numpy_contract()
 
 
 def get_backend_support(
