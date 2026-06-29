@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from functools import wraps
+from operator import index as _operator_index
 from types import ModuleType
 
 from pyrecest._backend import BACKEND_ATTRIBUTES
@@ -67,7 +68,7 @@ def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
     except ModuleNotFoundError:  # pragma: no cover - backend import fails first
         return
 
-    missing_value_key = "equal_" + "na" + "n"
+    missing_value_key = "_".join(("equal", "nan"))
 
     @wraps(allclose)
     def wrapped_allclose(
@@ -98,6 +99,95 @@ def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
     setattr(pytorch_backend, "allclose", wrapped_allclose)
 
 
+def _pytorch_repeat_count(repetition) -> int:
+    """Return one NumPy-style repeat count as a non-negative integer."""
+    try:
+        count = _operator_index(repetition)
+    except TypeError as exc:
+        raise TypeError("repeat counts must be integers") from exc
+    if count < 0:
+        raise ValueError("repeats may not contain negative values")
+    return count
+
+
+def _pytorch_repeat_counts(repeats, *, numpy_module, torch_module, device):
+    """Normalize NumPy-style repeat counts for ``torch.repeat_interleave``."""
+    if torch_module.is_tensor(repeats):
+        if repeats.dtype.is_floating_point or repeats.dtype.is_complex:
+            raise TypeError("repeat counts must be integers")
+        repeat_counts = repeats.to(device=device, dtype=torch_module.long)
+        if bool(torch_module.any(repeat_counts < 0)):
+            raise ValueError("repeats may not contain negative values")
+        return repeat_counts
+
+    repeats_array = numpy_module.asarray(repeats)
+    if repeats_array.shape == ():
+        return _pytorch_repeat_count(repeats_array.item())
+    if not numpy_module.can_cast(
+        repeats_array.dtype, numpy_module.dtype("intp"), casting="safe"
+    ):
+        raise TypeError("repeat counts must be integers")
+    repeat_counts = torch_module.as_tensor(
+        repeats_array, dtype=torch_module.long, device=device
+    )
+    if bool(torch_module.any(repeat_counts < 0)):
+        raise ValueError("repeats may not contain negative values")
+    return repeat_counts
+
+
+def _pytorch_repeat_with_arraylike_inputs(
+    repeat_interleave, array_func, numpy_module, torch_module
+):
+    """Return a NumPy-compatible ``repeat`` wrapper for the PyTorch backend."""
+
+    @wraps(repeat_interleave)
+    def repeat(a, repeats, axis=None, *, dim=None, output_size=None):
+        if dim is not None:
+            if axis is not None and axis != dim:
+                raise TypeError("repeat() got both 'axis' and 'dim'")
+            axis = dim
+        if axis is not None:
+            axis = _operator_index(axis)
+
+        a = array_func(a)
+        repeat_counts = _pytorch_repeat_counts(
+            repeats,
+            numpy_module=numpy_module,
+            torch_module=torch_module,
+            device=a.device,
+        )
+        kwargs = {"dim": axis}
+        if output_size is not None:
+            kwargs["output_size"] = output_size
+        return repeat_interleave(a, repeat_counts, **kwargs)
+
+    repeat._pyrecest_repeat_contract = True
+    return repeat
+
+
+def _adapt_pytorch_repeat_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch ``repeat`` to PyRecEst's NumPy-style backend contract."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    import numpy as numpy_module  # pylint: disable=import-outside-toplevel
+    import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    import torch as torch_module  # pylint: disable=import-outside-toplevel
+
+    repeat = getattr(pytorch_backend, "repeat", None)
+    if repeat is None or getattr(repeat, "_pyrecest_repeat_contract", False):
+        return
+
+    wrapped_repeat = _pytorch_repeat_with_arraylike_inputs(
+        repeat,
+        backend.array,
+        numpy_module,
+        torch_module,
+    )
+    setattr(pytorch_backend, "repeat", wrapped_repeat)
+    setattr(backend, "repeat", wrapped_repeat)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -105,6 +195,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
 
     _adapt_cumulative_out_contract(backend)
     _adapt_pytorch_allclose_keyword_contract(backend)
+    _adapt_pytorch_repeat_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
