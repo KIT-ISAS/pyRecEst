@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from functools import wraps
+from operator import index as _operator_index
 from types import ModuleType
 
 from pyrecest._backend import BACKEND_ATTRIBUTES
@@ -98,6 +99,59 @@ def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
     setattr(pytorch_backend, "allclose", wrapped_allclose)
 
 
+def _pytorch_reshape_shape(shape, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style reshape dimensions for ``torch.reshape``."""
+    if torch_module.is_tensor(shape):
+        if shape.ndim == 0:
+            return (_operator_index(shape.item()),)
+        shape = shape.detach().cpu().tolist()
+    elif getattr(shape, "ndim", None) == 0 and hasattr(shape, "item"):
+        return (_operator_index(shape.item()),)
+
+    try:
+        return (_operator_index(shape),)
+    except TypeError:
+        pass
+
+    if isinstance(shape, (str, bytes)):
+        raise TypeError("reshape shape must be an integer or a sequence of integers")
+
+    try:
+        return tuple(_operator_index(dimension) for dimension in shape)
+    except TypeError as exc:
+        raise TypeError(
+            "reshape shape must be an integer or a sequence of integers"
+        ) from exc
+
+
+def _adapt_pytorch_reshape_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch reshape to accept array-like inputs and NumPy-style shapes."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    reshape = getattr(backend, "reshape", None)
+    if reshape is None or getattr(reshape, "_pyrecest_arraylike_contract", False):
+        return
+
+    try:
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+        return
+
+    original_reshape = getattr(pytorch_backend, "reshape", reshape)
+
+    @wraps(original_reshape)
+    def wrapped_reshape(x, shape):
+        return original_reshape(
+            pytorch_backend.array(x), _pytorch_reshape_shape(shape, _torch)
+        )
+
+    wrapped_reshape._pyrecest_arraylike_contract = True
+    setattr(backend, "reshape", wrapped_reshape)
+    setattr(pytorch_backend, "reshape", wrapped_reshape)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -105,6 +159,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
 
     _adapt_cumulative_out_contract(backend)
     _adapt_pytorch_allclose_keyword_contract(backend)
+    _adapt_pytorch_reshape_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
