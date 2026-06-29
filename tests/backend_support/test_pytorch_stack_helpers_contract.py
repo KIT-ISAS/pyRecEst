@@ -39,5 +39,13 @@ assert backend.to_numpy(backend.hstack((values, [[5, 6], [7, 8]]))).tolist() == 
 assert backend.to_numpy(backend.column_stack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
 assert backend.to_numpy(pytorch_backend.hstack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
 assert backend.to_numpy(pytorch_backend.column_stack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
+
+left, right = backend.broadcast_arrays([1, 2, 3], [[10], [20]])
+assert backend.to_numpy(left).tolist() == [[1, 2, 3], [1, 2, 3]]
+assert backend.to_numpy(right).tolist() == [[10, 10, 10], [20, 20, 20]]
+
+raw_left, raw_right = pytorch_backend.broadcast_arrays([1, 2], 3.0)
+assert backend.to_numpy(raw_left).tolist() == [1, 2]
+assert backend.to_numpy(raw_right).tolist() == [3.0, 3.0]
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
