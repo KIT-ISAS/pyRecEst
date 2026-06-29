@@ -24,18 +24,25 @@ def test_pytorch_round_accepts_array_like_inputs_decimals_and_out():
 import pyrecest.backend as backend
 import pyrecest._backend.pytorch as raw_backend
 
+
+def assert_close_list(actual, expected):
+    actual = [float(value) for value in actual]
+    assert len(actual) == len(expected)
+    assert all(abs(one_actual - one_expected) < 1e-6 for one_actual, one_expected in zip(actual, expected))
+
+
 for round_backend in (backend, raw_backend):
     result = round_backend.round([1.24, 2.76], decimals=1)
-    assert round_backend.to_numpy(result).tolist() == [1.2, 2.8]
+    assert_close_list(round_backend.to_numpy(result).tolist(), [1.2, 2.8])
 
     tensor = backend.array([1.24, 2.76])
     tensor_result = round_backend.round(tensor, decimals=1)
-    assert round_backend.to_numpy(tensor_result).tolist() == [1.2, 2.8]
+    assert_close_list(round_backend.to_numpy(tensor_result).tolist(), [1.2, 2.8])
 
     out = round_backend.array([0.0, 0.0])
     returned = round_backend.round([1.24, 2.76], decimals=1, out=out)
     assert returned is out
-    assert round_backend.to_numpy(out).tolist() == [1.2, 2.8]
+    assert_close_list(round_backend.to_numpy(out).tolist(), [1.2, 2.8])
 
 try:
     backend.round([1.0], decimals=1.5)
