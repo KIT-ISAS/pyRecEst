@@ -234,6 +234,63 @@ def _adapt_pytorch_reshape_contract(backend: ModuleType) -> None:
     setattr(backend, "reshape", wrapped_reshape)
 
 
+def _adapt_pytorch_stack_helpers_contract(backend: ModuleType) -> None:
+    """Adapt raw PyTorch stack helpers to accept NumPy-style sequences."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import numpy as numpy_module  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as torch_module  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+        return
+
+    helper_names = ("hstack", "vstack", "column_stack", "dstack")
+    if all(
+        getattr(getattr(pytorch_backend, helper_name, None), "_pyrecest_stack_contract", False)
+        for helper_name in helper_names
+    ):
+        return
+
+    def _tensor_sequence(tup):
+        return [backend.array(item) for item in tup]
+
+    def hstack(tup):
+        tensors = [torch_module.atleast_1d(tensor) for tensor in _tensor_sequence(tup)]
+        if not tensors:
+            return torch_module.cat(tensors, dim=0)
+        return torch_module.cat(tensors, dim=0 if tensors[0].ndim == 1 else 1)
+
+    def vstack(tup):
+        tensors = [torch_module.atleast_2d(tensor) for tensor in _tensor_sequence(tup)]
+        return torch_module.cat(tensors, dim=0)
+
+    def column_stack(tup):
+        tensors = []
+        for tensor in _tensor_sequence(tup):
+            if tensor.ndim < 2:
+                tensor = tensor.reshape(-1, 1)
+            tensors.append(tensor)
+        return torch_module.cat(tensors, dim=1)
+
+    def dstack(tup):
+        tensors = [torch_module.atleast_3d(tensor) for tensor in _tensor_sequence(tup)]
+        return torch_module.cat(tensors, dim=2)
+
+    for helper_name, helper in {
+        "hstack": hstack,
+        "vstack": vstack,
+        "column_stack": column_stack,
+        "dstack": dstack,
+    }.items():
+        helper.__name__ = helper_name
+        helper.__doc__ = getattr(numpy_module, helper_name).__doc__
+        helper._pyrecest_stack_contract = True
+        setattr(pytorch_backend, helper_name, helper)
+        setattr(backend, helper_name, helper)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -243,6 +300,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     _adapt_pytorch_allclose_keyword_contract(backend)
     _adapt_pytorch_repeat_contract(backend)
     _adapt_pytorch_reshape_contract(backend)
+    _adapt_pytorch_stack_helpers_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
