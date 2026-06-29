@@ -11,7 +11,11 @@ from torch.distributions.multivariate_normal import (
     MultivariateNormal as _MultivariateNormal,
 )
 
-from ._dtype import _allow_complex_dtype, _modify_func_default_dtype
+from ._dtype import (
+    _allow_complex_dtype,
+    _modify_func_default_dtype,
+    _normalize_torch_dtype,
+)
 
 _COMPLEX_TO_FLOAT_DTYPE = {
     _torch.complex64: _torch.float32,
@@ -191,14 +195,20 @@ def _validate_randint_array_bound(name, bound):
         raise TypeError(f"{name} must contain integer values")
 
 
+def _normalize_torch_dtype_kwargs(kwargs):
+    if "dtype" not in kwargs:
+        return kwargs
+    kwargs = dict(kwargs)
+    kwargs["dtype"] = _normalize_torch_dtype(kwargs["dtype"], default=None)
+    return kwargs
+
+
 def _randint_array(low, high, size, *args, **kwargs):
     if args:
         raise TypeError(
             "array-valued randint bounds do not support additional positional arguments"
         )
-    dtype = kwargs.pop("dtype", None)
-    if dtype is None:
-        dtype = _torch.int64
+    dtype = _normalize_torch_dtype(kwargs.pop("dtype", None), default=_torch.int64)
     device = kwargs.pop("device", None)
     generator = kwargs.pop("generator", None)
     out = kwargs.pop("out", None)
@@ -230,6 +240,7 @@ def _randint_array(low, high, size, *args, **kwargs):
 
 
 def randint(low, high=None, size=None, *args, **kwargs):
+    kwargs = _normalize_torch_dtype_kwargs(kwargs)
     if high is None:
         if low is None:
             raise TypeError("randint() missing required argument 'high'")
@@ -429,6 +440,7 @@ def seed(*args, **kwargs):
 
 
 def rand(*dims, size=None, dtype=None):
+    dtype = _normalize_torch_dtype(dtype, default=None)
     return _torch.rand(_shape_from_rand_args(dims, size), dtype=dtype)
 
 
@@ -526,6 +538,7 @@ def _validate_uniform_bounds(low, high):
 
 
 def uniform(low=0.0, high=1.0, size=None, dtype=None):
+    dtype = _normalize_torch_dtype(dtype, default=None)
     device = None
     if _torch.is_tensor(low):
         device = low.device
