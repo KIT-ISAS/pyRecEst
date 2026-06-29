@@ -275,12 +275,12 @@ def warn_if_backend_env_changed() -> None:
     already constructed backend facade.
     """
     active = get_backend_name()
-    current_env = os.environ.get("PYRECEST_BACKEND", "numpy")
-    if current_env != active:
+    requested = os.environ.get("PYRECEST_BACKEND", active)
+    if requested != active:
         warnings.warn(
-            "PYRECEST_BACKEND was changed after importing pyrecest; "
-            f"active backend remains {active!r}, while the environment requests "
-            f"{current_env!r}.",
+            "PYRECEST_BACKEND was changed after pyrecest was imported. "
+            f"The active backend remains {active!r}; the environment now requests "
+            f"{requested!r}. Start a new Python process to switch backends.",
             RuntimeWarning,
             stacklevel=2,
         )
