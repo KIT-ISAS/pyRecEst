@@ -114,7 +114,7 @@ _patch_set_diag_arraylike_facade()
 
 
 def _patch_pytorch_comparison_facade() -> None:
-    """Make public PyTorch comparison helpers accept array-like inputs."""
+    """Make public and raw PyTorch comparison helpers accept array-like inputs."""
 
     import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
 
@@ -122,6 +122,7 @@ def _patch_pytorch_comparison_facade() -> None:
         return
 
     try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import torch as _torch  # pylint: disable=import-outside-toplevel
     except (
         ModuleNotFoundError
@@ -152,9 +153,13 @@ def _patch_pytorch_comparison_facade() -> None:
         comparison.__doc__ = getattr(torch_func, "__doc__", None)
         return comparison
 
-    backend.greater = _wrap_comparison(_torch.greater)
-    backend.less = _wrap_comparison(_torch.less)
-    backend.logical_or = _wrap_comparison(_torch.logical_or)
+    greater = _wrap_comparison(_torch.greater)
+    less = _wrap_comparison(_torch.less)
+    logical_or = _wrap_comparison(_torch.logical_or)
+
+    backend.greater = raw_pytorch.greater = greater
+    backend.less = raw_pytorch.less = less
+    backend.logical_or = raw_pytorch.logical_or = logical_or
 
 
 def _patch_pytorch_clip_facade() -> None:
