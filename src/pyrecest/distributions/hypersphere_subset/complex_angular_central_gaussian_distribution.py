@@ -183,6 +183,14 @@ class ComplexAngularCentralGaussianDistribution:
         C : array-like of shape (d, d)
             Estimated Hermitian parameter matrix.
         """
+        Z = array(Z)
+        if Z.ndim != 2:
+            raise ValueError("Z must be a two-dimensional array of samples")
+        if Z.shape[0] == 0 or Z.shape[1] == 0:
+            raise ValueError("Z must contain at least one sample and one dimension")
+        if not _to_python_bool(backend_all(isfinite(Z))):
+            raise ValueError("Z must contain only finite values")
+
         N = Z.shape[0]
         D = Z.shape[1]
         C = eye(D, dtype=complex128)
