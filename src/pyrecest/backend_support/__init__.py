@@ -340,6 +340,54 @@ def _patch_jax_outer_numpy_contract() -> None:
         backend.outer = outer
 
 
+def _patch_jax_std_out_numpy_contract() -> None:
+    """Make raw JAX std honor NumPy's ``out`` contract."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.jax as raw_jax  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - JAX backend may be unavailable
+        return
+
+    original_std = raw_jax.std
+    if getattr(original_std, "_pyrecest_numpy_contract", False):
+        return
+
+    def _return_or_store_out(result, out):
+        if out is None:
+            return result
+        return raw_jax.asarray(out).at[...].set(result)
+
+    def std(
+        a,
+        axis=None,
+        dtype=None,
+        out=None,
+        ddof=0,
+        keepdims=False,
+        *,
+        correction=0,
+    ):
+        kwargs = {
+            "axis": axis,
+            "dtype": dtype,
+            "out": None,
+            "ddof": ddof,
+            "keepdims": keepdims,
+        }
+        if correction != 0:
+            kwargs["correction"] = correction
+        result = original_std(a, **kwargs)
+        return _return_or_store_out(result, out)
+
+    std.__name__ = getattr(original_std, "__name__", "std")
+    std.__doc__ = getattr(original_std, "__doc__", None)
+    std._pyrecest_numpy_contract = True
+    raw_jax.std = std
+    if getattr(backend, "__backend_name__", None) == "jax":
+        backend.std = std
+
+
 _patch_raw_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_dtype_promotion_contract()
 _patch_pytorch_dot_numpy_contract()
@@ -348,6 +396,7 @@ _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
 _patch_jax_outer_numpy_contract()
+_patch_jax_std_out_numpy_contract()
 
 
 def get_backend_support(
