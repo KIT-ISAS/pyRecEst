@@ -93,3 +93,27 @@ def test_pytorch_fftconvolve_scalar_empty_axes_matches_scipy():
     expected = scipy_fftconvolve(_as_numpy(first), _as_numpy(second), axes=())
 
     assert np.allclose(actual, expected)
+
+
+def test_pytorch_fft_helpers_accept_array_like_inputs():
+    if backend.__backend_name__ != "pytorch":
+        pytest.skip("PyTorch-specific FFT backend contract")
+
+    matrix = [[1.0, 2.0], [3.0, 4.0]]
+    assert np.allclose(_as_numpy(backend.fft.fftn(matrix)), np.fft.fftn(matrix))
+
+    vector = [1.0, 2.0, 3.0]
+    spectrum = np.fft.rfft(vector)
+    assert np.allclose(_as_numpy(backend.fft.rfft(vector)), spectrum)
+    assert np.allclose(
+        _as_numpy(backend.fft.irfft(spectrum, n=len(vector))),
+        np.fft.irfft(spectrum, n=len(vector)),
+    )
+
+    shift_source = [1, 2, 3, 4]
+    assert _as_numpy(backend.fft.fftshift(shift_source)).tolist() == np.fft.fftshift(
+        shift_source
+    ).tolist()
+    assert _as_numpy(backend.fft.ifftshift(shift_source)).tolist() == np.fft.ifftshift(
+        shift_source
+    ).tolist()
