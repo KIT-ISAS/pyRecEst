@@ -47,13 +47,34 @@ def test_jax_std_accepts_out_argument():
         "jax",
         """
 import pyrecest.backend as backend
+import pyrecest._backend.jax as raw_jax
 
 values = backend.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-out = backend.zeros((1, 3), dtype=backend.float64)
-result = backend.std(values, axis=0, dtype=backend.float64, out=out, ddof=1, keepdims=True)
 expected = backend.array([[2.1213203435596424, 2.1213203435596424, 2.1213203435596424]])
-assert tuple(result.shape) == (1, 3)
-assert backend.allclose(result, expected)
+
+public_out = backend.zeros((1, 3), dtype=backend.float64)
+public_result = backend.std(
+    values,
+    axis=0,
+    dtype=backend.float64,
+    out=public_out,
+    ddof=1,
+    keepdims=True,
+)
+assert tuple(public_result.shape) == (1, 3)
+assert backend.allclose(public_result, expected)
+
+raw_out = backend.zeros((1, 3), dtype=backend.float64)
+raw_result = raw_jax.std(
+    values,
+    axis=0,
+    dtype=backend.float64,
+    out=raw_out,
+    ddof=1,
+    keepdims=True,
+)
+assert tuple(raw_result.shape) == (1, 3)
+assert backend.allclose(raw_result, expected)
 print("ok")
 """,
     )
