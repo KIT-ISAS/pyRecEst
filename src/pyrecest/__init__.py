@@ -198,6 +198,38 @@ def _patch_pytorch_tile_facade() -> None:
     backend.tile = tile
 
 
+def _patch_pytorch_apply_along_axis_facade() -> None:
+    """Make PyTorch ``apply_along_axis`` forward callback arguments."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    original_apply_along_axis = pytorch_backend.apply_along_axis
+
+    def apply_along_axis(func1d, axis, arr, *args, **kwargs):
+        return original_apply_along_axis(
+            lambda tensor_slice: func1d(tensor_slice, *args, **kwargs),
+            axis,
+            arr,
+        )
+
+    apply_along_axis.__name__ = getattr(
+        original_apply_along_axis, "__name__", "apply_along_axis"
+    )
+    apply_along_axis.__doc__ = getattr(original_apply_along_axis, "__doc__", None)
+    pytorch_backend.apply_along_axis = apply_along_axis
+    backend.apply_along_axis = apply_along_axis
+
+
 def _patch_jax_std_out_facade() -> None:
     """Make public JAX ``std`` accept NumPy's ``out`` argument."""
 
@@ -231,6 +263,7 @@ def _patch_jax_std_out_facade() -> None:
 
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
+_patch_pytorch_apply_along_axis_facade()
 _patch_jax_std_out_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
@@ -258,38 +291,3 @@ from pyrecest.exceptions import (  # noqa: E402,F401
     ShapeError,
     ValidationError,
 )
-from pyrecest.stability import (  # noqa: E402,F401
-    get_public_api_status,
-    iter_public_api_status,
-    stability,
-)
-
-try:
-    __version__ = version("pyrecest")
-except PackageNotFoundError:  # pragma: no cover - source tree without install metadata
-    __version__ = "0+unknown"
-
-__all__ = [
-    "BackendNotSupportedError",
-    "BackendSupportError",
-    "DimensionMismatchError",
-    "EvidenceComputationMode",
-    "NumericalStabilityError",
-    "OptionalDependencyError",
-    "PyRecEstError",
-    "ShapeError",
-    "ValidationError",
-    "__version__",
-    "assert_backend",
-    "backend_support",
-    "copy",
-    "format_backend_support_markdown",
-    "get_backend_name",
-    "get_backend_support",
-    "get_public_api_status",
-    "is_backend",
-    "iter_public_api_status",
-    "stability",
-    "warn_if_backend_env_changed",
-    "resolve_evidence_computation_mode",
-]
