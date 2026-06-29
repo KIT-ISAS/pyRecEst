@@ -19,6 +19,16 @@ def test_assert_backend_rejects_unexpected_backend():
         pyrecest.assert_backend(unexpected)
 
 
+def test_assert_backend_deduplicates_expected_names_in_error_message():
+    active = pyrecest.get_backend_name()
+    unexpected = "jax" if active != "jax" else "numpy"
+
+    with pytest.raises(RuntimeError) as excinfo:
+        pyrecest.assert_backend((unexpected, unexpected))
+
+    assert str(excinfo.value).count(unexpected) == 1
+
+
 @pytest.mark.parametrize(
     "expected", [(), ("",), " ", (" numpy",), ("numpy ",), ("numpy", 1), 1]
 )
