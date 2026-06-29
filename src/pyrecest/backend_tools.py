@@ -123,6 +123,41 @@ def _patch_pytorch_broadcast_arrays_numpy_contract() -> None:
     pytorch_backend.broadcast_arrays = broadcast_arrays
 
 
+def _patch_pytorch_round_numpy_contract() -> None:
+    """Make PyTorch round accept NumPy-style array-like inputs."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    if getattr(pytorch_backend.round, "_pyrecest_numpy_contract", False):
+        return
+
+    def round(a, decimals=0, out=None):  # pylint: disable=redefined-builtin
+        decimals = _operator_index(decimals)
+        result = _torch.round(pytorch_backend.array(a), decimals=decimals)
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
+    round.__name__ = getattr(_torch.round, "__name__", "round")
+    round.__doc__ = getattr(_torch.round, "__doc__", None)
+    round._pyrecest_numpy_contract = True
+    backend.round = round
+    pytorch_backend.round = round
+
+
 def _patch_pytorch_special_numpy_contract() -> None:
     """Make PyTorch special functions accept NumPy-style array-like inputs."""
 
@@ -180,6 +215,7 @@ def _patch_pytorch_special_numpy_contract() -> None:
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
 _patch_pytorch_broadcast_arrays_numpy_contract()
+_patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
 
 
@@ -239,12 +275,12 @@ def warn_if_backend_env_changed() -> None:
     already constructed backend facade.
     """
     active = get_backend_name()
-    requested = os.environ.get("PYRECEST_BACKEND", active)
-    if requested != active:
+    current_env = os.environ.get("PYRECEST_BACKEND", "numpy")
+    if current_env != active:
         warnings.warn(
-            "PYRECEST_BACKEND was changed after pyrecest was imported. "
-            f"The active backend remains {active!r}; the environment now requests "
-            f"{requested!r}. Start a new Python process to switch backends.",
+            "PYRECEST_BACKEND was changed after importing pyrecest; "
+            f"active backend remains {active!r}, while the environment requests "
+            f"{current_env!r}.",
             RuntimeWarning,
             stacklevel=2,
         )
