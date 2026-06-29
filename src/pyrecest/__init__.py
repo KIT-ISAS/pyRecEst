@@ -229,9 +229,39 @@ def _patch_jax_std_out_facade() -> None:
     backend.std = std
 
 
+def _patch_jax_matmul_out_facade() -> None:
+    """Make public and raw JAX ``matmul`` honor NumPy's ``out`` contract."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "jax":
+        return
+
+    try:
+        import pyrecest._backend.jax as jax_backend  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    original_matmul = jax_backend.matmul
+
+    def matmul(x, y, out=None):
+        result = original_matmul(x, y, out=None)
+        if out is None:
+            return result
+        return backend.asarray(out).at[...].set(result)
+
+    matmul.__name__ = getattr(original_matmul, "__name__", "matmul")
+    matmul.__doc__ = getattr(original_matmul, "__doc__", None)
+    jax_backend.matmul = matmul
+    backend.matmul = matmul
+
+
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
 _patch_jax_std_out_facade()
+_patch_jax_matmul_out_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
     backend_support,
