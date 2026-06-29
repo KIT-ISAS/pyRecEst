@@ -1,5 +1,7 @@
 """Numpy based computation backend."""
 
+import builtins as _builtins
+
 import numpy as _np
 from numpy import (  # The ones below are for pyrecest; For Riemannian score-based SDE
     all,
@@ -223,9 +225,11 @@ def vmap(pyfunc, randomness="error"):
         if not args:
             raise ValueError("vmap requires at least one positional argument")
         mapped_args = [_np.asarray(arg) for arg in args]
-        if any(arg.ndim == 0 for arg in mapped_args):
+        if _builtins.any(arg.ndim == 0 for arg in mapped_args):
             raise ValueError("vmap arguments must have at least one dimension")
-        if not all(arg.shape[0] == mapped_args[0].shape[0] for arg in mapped_args):
+        if not _builtins.all(
+            arg.shape[0] == mapped_args[0].shape[0] for arg in mapped_args
+        ):
             raise ValueError(
                 "All arguments must have the same size in the first dimension"
             )
