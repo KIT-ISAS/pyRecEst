@@ -242,7 +242,7 @@ def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ..
 
 
 def _patch_pytorch_tile_facade() -> None:
-    """Make public PyTorch ``tile`` follow NumPy repetition semantics."""
+    """Make public and raw PyTorch ``tile`` follow NumPy repetition semantics."""
 
     import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
 
@@ -252,6 +252,7 @@ def _patch_pytorch_tile_facade() -> None:
     try:
         import numpy as _np  # pylint: disable=import-outside-toplevel
         import torch as _torch  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as _pytorch_backend  # pylint: disable=import-outside-toplevel
     except (
         ModuleNotFoundError
     ):  # pragma: no cover - backend import fails first in practice
@@ -271,6 +272,7 @@ def _patch_pytorch_tile_facade() -> None:
     tile.__name__ = "tile"
     tile.__doc__ = getattr(_np.tile, "__doc__", None)
     backend.tile = tile
+    _pytorch_backend.tile = tile
 
 
 def _patch_pytorch_stack_helpers_facade() -> None:
