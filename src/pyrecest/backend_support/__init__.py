@@ -16,8 +16,7 @@ def _patch_pytorch_dot_numpy_contract() -> None:
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
 
-    if getattr(backend, "__backend_name__", None) != "pytorch":
-        return
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
@@ -30,8 +29,8 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         return
 
     def dot(a, b):
-        a = backend.array(a)
-        b = backend.array(b)
+        a = raw_pytorch.array(a)
+        b = raw_pytorch.array(b)
         dtype = torch.promote_types(a.dtype, b.dtype)
         a = a.to(dtype=dtype)
         b = b.to(dtype=dtype)
@@ -49,8 +48,9 @@ def _patch_pytorch_dot_numpy_contract() -> None:
     dot.__name__ = getattr(original_dot, "__name__", "dot")
     dot.__doc__ = getattr(original_dot, "__doc__", None)
     dot._pyrecest_numpy_contract = True
-    backend.dot = dot
     raw_pytorch.dot = dot
+    if active_pytorch_backend:
+        backend.dot = dot
 
 
 _patch_pytorch_dot_numpy_contract()
