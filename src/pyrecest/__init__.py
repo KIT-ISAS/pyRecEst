@@ -198,6 +198,64 @@ def _patch_pytorch_tile_facade() -> None:
     backend.tile = tile
 
 
+def _pytorch_reshape_shape(shape, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style reshape dimensions for ``torch.reshape``."""
+
+    if torch_module.is_tensor(shape):
+        if shape.ndim == 0:
+            return (_operator_index(shape.item()),)
+        shape = shape.detach().cpu().tolist()
+    elif getattr(shape, "ndim", None) == 0 and hasattr(shape, "item"):
+        return (_operator_index(shape.item()),)
+
+    try:
+        return (_operator_index(shape),)
+    except TypeError:
+        pass
+
+    if isinstance(shape, (str, bytes)):
+        raise TypeError("reshape shape must be an integer or a sequence of integers")
+
+    try:
+        return tuple(_operator_index(dimension) for dimension in shape)
+    except TypeError as exc:
+        raise TypeError(
+            "reshape shape must be an integer or a sequence of integers"
+        ) from exc
+
+
+def _patch_pytorch_reshape_facade() -> None:
+    """Make PyTorch ``reshape`` accept array-like inputs and NumPy-style shapes."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    original_reshape = pytorch_backend.reshape
+    if getattr(original_reshape, "_pyrecest_arraylike_contract", False):
+        return
+
+    def reshape(x, shape):
+        return original_reshape(
+            pytorch_backend.array(x), _pytorch_reshape_shape(shape, _torch)
+        )
+
+    reshape.__name__ = getattr(original_reshape, "__name__", "reshape")
+    reshape.__doc__ = getattr(original_reshape, "__doc__", None)
+    reshape._pyrecest_arraylike_contract = True
+    pytorch_backend.reshape = reshape
+    backend.reshape = reshape
+
+
 def _patch_jax_std_out_facade() -> None:
     """Make public JAX ``std`` accept NumPy's ``out`` argument."""
 
@@ -231,6 +289,7 @@ def _patch_jax_std_out_facade() -> None:
 
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
+_patch_pytorch_reshape_facade()
 _patch_jax_std_out_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
