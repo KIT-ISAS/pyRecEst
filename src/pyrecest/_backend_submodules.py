@@ -227,7 +227,7 @@ def _adapt_pytorch_reshape_contract(backend: ModuleType) -> None:
 
     @wraps(reshape)
     def wrapped_reshape(x, shape):
-        return reshape(pytorch_backend.array(x), _pytorch_reshape_shape(shape, torch_module))
+        return reshape(backend.array(x), _pytorch_reshape_shape(shape, torch_module))
 
     wrapped_reshape._pyrecest_reshape_contract = True
     setattr(pytorch_backend, "reshape", wrapped_reshape)
