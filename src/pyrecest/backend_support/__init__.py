@@ -9,6 +9,9 @@ from pyrecest._backend.capabilities import (
     BACKEND_SUPPORT_LEVELS,
     iter_api_backend_capabilities,
 )
+from pyrecest.backend_support._torch_dtype_promotion_contract import (
+    patch_pytorch_dtype_promotion_contract as _patch_pytorch_dtype_promotion_contract,
+)
 
 
 def _pytorch_scalar_tensor_index(index, torch_module):
@@ -338,6 +341,7 @@ def _patch_jax_outer_numpy_contract() -> None:
 
 
 _patch_raw_pytorch_assignment_scalar_tensor_indices()
+_patch_pytorch_dtype_promotion_contract()
 _patch_pytorch_dot_numpy_contract()
 _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
