@@ -26,6 +26,10 @@ def test_raw_pytorch_fft_helpers_accept_numpy_axis_aliases():
         pytorch_fft.ifftn(pytorch_fft.fftn(matrix, axes=(0, 1)), axes=(0, 1)).numpy(),
         np.fft.ifftn(np.fft.fftn(matrix, axes=(0, 1)), axes=(0, 1)),
     )
+    npt.assert_allclose(
+        pytorch_fft.fftn(matrix, dim=0, axes=None).numpy(),
+        np.fft.fftn(matrix, axes=(0,)),
+    )
 
     npt.assert_array_equal(
         pytorch_fft.fftshift([0, 1, 2, 3], axes=0).numpy(),
@@ -34,6 +38,10 @@ def test_raw_pytorch_fft_helpers_accept_numpy_axis_aliases():
     npt.assert_array_equal(
         pytorch_fft.ifftshift([2, 3, 0, 1], axes=0).numpy(),
         np.fft.ifftshift(np.asarray([2, 3, 0, 1]), axes=0),
+    )
+    npt.assert_array_equal(
+        pytorch_fft.fftshift(matrix, dim=0, axes=None).numpy(),
+        np.fft.fftshift(matrix, axes=0),
     )
 
 
