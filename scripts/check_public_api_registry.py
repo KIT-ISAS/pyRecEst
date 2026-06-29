@@ -4,38 +4,32 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
+import importlib
 import sys
 from pathlib import Path
-from types import ModuleType
 from typing import Any
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-API_REGISTRY_PATH = REPOSITORY_ROOT / "src" / "pyrecest" / "api_registry.py"
-CAPABILITIES_PATH = (
-    REPOSITORY_ROOT / "src" / "pyrecest" / "_backend" / "capabilities.py"
-)
+SRC_PATH = REPOSITORY_ROOT / "src"
 
 
-def _load_module(path: Path, name: str) -> ModuleType:
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Cannot load {path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
+def _ensure_src_on_path() -> None:
+    src_path = str(SRC_PATH)
+    if src_path not in sys.path:
+        sys.path.insert(0, src_path)
 
 
 def _load_registry() -> tuple[dict[str, dict[str, str]], tuple[str, ...]]:
-    module = _load_module(API_REGISTRY_PATH, "_pyrecest_api_registry_for_docs")
+    _ensure_src_on_path()
+    module = importlib.import_module("pyrecest.api_registry")
     registry: Any = getattr(module, "PUBLIC_API_REGISTRY")
     categories: Any = getattr(module, "PUBLIC_API_CATEGORIES")
     return dict(registry), tuple(categories)
 
 
 def _load_backend_capabilities() -> dict[str, dict[str, str]]:
-    module = _load_module(CAPABILITIES_PATH, "_pyrecest_capabilities_for_registry")
+    _ensure_src_on_path()
+    module = importlib.import_module("pyrecest._backend.capabilities")
     capabilities: Any = getattr(module, "API_BACKEND_CAPABILITIES")
     return dict(capabilities)
 
@@ -133,13 +127,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+
     errors = validate_registry()
     if errors:
         for error in errors:
             print(f"::error::{error}")
         return 1
 
-    args = build_parser().parse_args(argv)
     if args.check:
         return check_document(args.check)
 
