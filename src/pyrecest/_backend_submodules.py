@@ -179,7 +179,6 @@ def _adapt_pytorch_repeat_contract(backend: ModuleType) -> None:
     repeat = getattr(pytorch_backend, "repeat", None)
     if repeat is None or getattr(repeat, "_pyrecest_repeat_contract", False):
         return
-
     wrapped_repeat = _pytorch_repeat_with_arraylike_inputs(
         repeat,
         backend.array,
@@ -295,6 +294,51 @@ def _adapt_pytorch_stack_helpers_contract(backend: ModuleType) -> None:
         helper._pyrecest_stack_contract = True
         setattr(pytorch_backend, helper_name, helper)
         setattr(backend, helper_name, helper)
+
+
+def _adapt_pytorch_squeeze_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch squeeze to reject non-singleton axes like NumPy."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    import torch as torch_module  # pylint: disable=import-outside-toplevel
+
+    squeeze = getattr(pytorch_backend, "squeeze", None)
+    if squeeze is None or getattr(squeeze, "_pyrecest_squeeze_contract", False):
+        return
+
+    def _normalize_squeeze_axes(axis, ndim):
+        try:
+            axis_int = _operator_index(axis)
+        except TypeError:
+            axis_int = None
+        if ndim == 0 and axis_int in {0, -1}:
+            return ()
+        return pytorch_backend._normalize_reduction_axes(axis, ndim)
+
+    @wraps(squeeze)
+    def wrapped_squeeze(x, axis=None):
+        values = pytorch_backend.array(x)
+        if axis is None:
+            return torch_module.squeeze(values)
+
+        axes = _normalize_squeeze_axes(axis, values.ndim)
+        if not axes:
+            return values
+        if any(values.shape[one_axis] != 1 for one_axis in axes):
+            raise ValueError(
+                "cannot select an axis to squeeze out which has size not equal to one"
+            )
+
+        result = values
+        for one_axis in sorted(axes, reverse=True):
+            result = torch_module.squeeze(result, dim=one_axis)
+        return result
+
+    wrapped_squeeze._pyrecest_squeeze_contract = True
+    setattr(pytorch_backend, "squeeze", wrapped_squeeze)
+    setattr(backend, "squeeze", wrapped_squeeze)
 
 
 def _resolve_pytorch_reduction_axis(axis, dim, func_name):
@@ -429,6 +473,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     _adapt_pytorch_repeat_contract(backend)
     _adapt_pytorch_reshape_contract(backend)
     _adapt_pytorch_stack_helpers_contract(backend)
+    _adapt_pytorch_squeeze_contract(backend)
     _adapt_pytorch_reduction_alias_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
