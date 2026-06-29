@@ -268,12 +268,59 @@ def _patch_pytorch_stack_helpers_numpy_contract() -> None:
         setattr(pytorch_backend, helper_name, helper)
 
 
+def _patch_raw_pytorch_comparison_numpy_contract() -> None:
+    """Make raw PyTorch comparison helpers accept NumPy-style array-like inputs."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend may be unavailable
+        return
+
+    def _coerce_binary_args(x, y):
+        device = next(
+            (value.device for value in (x, y) if _torch.is_tensor(value)),
+            None,
+        )
+        if not _torch.is_tensor(x):
+            x = _torch.as_tensor(x, device=device)
+        elif device is not None and x.device != device:
+            x = x.to(device=device)
+        if not _torch.is_tensor(y):
+            y = _torch.as_tensor(y, device=device)
+        elif device is not None and y.device != device:
+            y = y.to(device=device)
+        return x, y
+
+    def _wrap_comparison(helper_name, torch_func):
+        def comparison(x, y, **kwargs):
+            x, y = _coerce_binary_args(x, y)
+            return torch_func(x, y, **kwargs)
+
+        comparison.__name__ = getattr(torch_func, "__name__", helper_name)
+        comparison.__doc__ = getattr(torch_func, "__doc__", None)
+        comparison._pyrecest_numpy_contract = True
+        return comparison
+
+    for helper_name, torch_func in (
+        ("greater", _torch.greater),
+        ("less", _torch.less),
+        ("logical_or", _torch.logical_or),
+    ):
+        helper = _wrap_comparison(helper_name, torch_func)
+        setattr(pytorch_backend, helper_name, helper)
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, helper_name, helper)
+
+
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
 _patch_pytorch_broadcast_arrays_numpy_contract()
 _patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
 _patch_pytorch_stack_helpers_numpy_contract()
+_patch_raw_pytorch_comparison_numpy_contract()
 
 
 def get_backend_name() -> str:
