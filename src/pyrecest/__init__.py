@@ -139,6 +139,38 @@ def _patch_pytorch_comparison_facade() -> None:
     backend.logical_or = _wrap_comparison(_torch.logical_or)
 
 
+def _patch_pytorch_finiteness_predicate_facade() -> None:
+    """Make PyTorch finite predicates accept scalar and array-like inputs."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    def _wrap_predicate(torch_func):
+        def predicate(x):
+            if not _torch.is_tensor(x):
+                x = backend.array(x)
+            return torch_func(x)
+
+        predicate.__name__ = getattr(torch_func, "__name__", "predicate")
+        predicate.__doc__ = getattr(torch_func, "__doc__", None)
+        return predicate
+
+    for predicate_name in ("isfinite", "isinf", "isnan", "isreal"):
+        predicate = _wrap_predicate(getattr(_torch, predicate_name))
+        setattr(pytorch_backend, predicate_name, predicate)
+        setattr(backend, predicate_name, predicate)
+
+
 def _pytorch_tile_repetition(repetition) -> int:
     """Return one NumPy-style tile repetition as an integer."""
 
@@ -230,6 +262,7 @@ def _patch_jax_std_out_facade() -> None:
 
 
 _patch_pytorch_comparison_facade()
+_patch_pytorch_finiteness_predicate_facade()
 _patch_pytorch_tile_facade()
 _patch_jax_std_out_facade()
 
