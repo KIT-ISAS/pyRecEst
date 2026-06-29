@@ -9,19 +9,57 @@ from pyrecest._backend.capabilities import (
 )
 
 
+def _patch_pytorch_dot_numpy_contract() -> None:
+    """Make PyTorch dot follow NumPy's contraction axes."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_dot = raw_pytorch.dot
+    if getattr(original_dot, "_pyrecest_numpy_contract", False):
+        return
+
+    def dot(a, b):
+        a = backend.array(a)
+        b = backend.array(b)
+        dtype = torch.promote_types(a.dtype, b.dtype)
+        a = a.to(dtype=dtype)
+        b = b.to(dtype=dtype)
+
+        if a.ndim == 0 or b.ndim == 0:
+            return torch.multiply(a, b)
+        if a.ndim == 1 and b.ndim == 1:
+            return torch.dot(a, b)
+        if b.ndim == 1:
+            return torch.tensordot(a, b, dims=([-1], [0]))
+        if a.ndim == 1:
+            return torch.tensordot(a, b, dims=([0], [-2]))
+        return torch.tensordot(a, b, dims=([-1], [-2]))
+
+    dot.__name__ = getattr(original_dot, "__name__", "dot")
+    dot.__doc__ = getattr(original_dot, "__doc__", None)
+    dot._pyrecest_numpy_contract = True
+    backend.dot = dot
+    raw_pytorch.dot = dot
+
+
+_patch_pytorch_dot_numpy_contract()
+
+
 def get_backend_support(
     api_name: str, *, backend: str | None = None
 ) -> dict[str, str] | str | None:
-    """Return backend support metadata for a public API.
-
-    Parameters
-    ----------
-    api_name:
-        Name as listed in the backend API matrix.
-    backend:
-        Optional backend name. When supplied, return only that backend's support
-        level. Otherwise return the complete row.
-    """
+    """Return backend support metadata for a public API."""
     row = API_BACKEND_CAPABILITIES.get(api_name)
     if row is None:
         return None
