@@ -1,29 +1,46 @@
 # For ffts. Added for pyrecest.
-from functools import wraps as _wraps
-
 import torch as _torch
 
 from ._common import array as _array
 
 
 def _as_fft_tensor(value):
-    """Convert array-like FFT inputs to torch tensors."""
     return value if _torch.is_tensor(value) else _array(value)
 
 
-def _wrap_arraylike_fft(torch_func):
-    """Return a PyRecEst-compatible FFT helper accepting array-like input."""
-
-    @_wraps(torch_func)
-    def fft_func(input, *args, **kwargs):  # pylint: disable=redefined-builtin
-        return torch_func(_as_fft_tensor(input), *args, **kwargs)
-
-    return fft_func
+def _resolve_dim_alias(dim, alias, alias_name, func_name, *, default=None):
+    if alias is None:
+        return default if dim is None else dim
+    if dim is not None and dim != alias:
+        raise TypeError(f"{func_name}() got both 'dim' and '{alias_name}'")
+    return alias
 
 
-rfft = _wrap_arraylike_fft(_torch.fft.rfft)
-irfft = _wrap_arraylike_fft(_torch.fft.irfft)
-fftshift = _wrap_arraylike_fft(_torch.fft.fftshift)
-ifftshift = _wrap_arraylike_fft(_torch.fft.ifftshift)
-fftn = _wrap_arraylike_fft(_torch.fft.fftn)
-ifftn = _wrap_arraylike_fft(_torch.fft.ifftn)
+def fftn(input, s=None, dim=None, norm=None, *, axes=None, out=None):
+    dim = _resolve_dim_alias(dim, axes, "axes", "fftn")
+    return _torch.fft.fftn(_as_fft_tensor(input), s=s, dim=dim, norm=norm, out=out)
+
+
+def ifftn(input, s=None, dim=None, norm=None, *, axes=None, out=None):
+    dim = _resolve_dim_alias(dim, axes, "axes", "ifftn")
+    return _torch.fft.ifftn(_as_fft_tensor(input), s=s, dim=dim, norm=norm, out=out)
+
+
+def rfft(input, n=None, dim=None, norm=None, *, axis=None, out=None):
+    dim = _resolve_dim_alias(dim, axis, "axis", "rfft", default=-1)
+    return _torch.fft.rfft(_as_fft_tensor(input), n=n, dim=dim, norm=norm, out=out)
+
+
+def irfft(input, n=None, dim=None, norm=None, *, axis=None, out=None):
+    dim = _resolve_dim_alias(dim, axis, "axis", "irfft", default=-1)
+    return _torch.fft.irfft(_as_fft_tensor(input), n=n, dim=dim, norm=norm, out=out)
+
+
+def fftshift(input, dim=None, *, axes=None):
+    dim = _resolve_dim_alias(dim, axes, "axes", "fftshift")
+    return _torch.fft.fftshift(_as_fft_tensor(input), dim=dim)
+
+
+def ifftshift(input, dim=None, *, axes=None):
+    dim = _resolve_dim_alias(dim, axes, "axes", "ifftshift")
+    return _torch.fft.ifftshift(_as_fft_tensor(input), dim=dim)
