@@ -4,7 +4,7 @@ import numpy as _np
 import scipy as _scipy
 import torch as _torch
 
-from .._backend_config import np_atol as atol
+from .._backend_config import pytorch_atol as atol
 from ..numpy import linalg as _gsnplinalg
 from ._common import array, cast
 from ._dtype import (
@@ -154,11 +154,7 @@ def block_diag(*arrs):
 
 
 class _Logm(_torch.autograd.Function):
-    """Torch autograd function for matrix logarithm.
-
-    Implementation based on:
-    https://github.com/pytorch/pytorch/issues/9983#issuecomment-891777620
-    """
+    """Torch autograd function for matrix logarithm."""
 
     @staticmethod
     def _logm(x):
