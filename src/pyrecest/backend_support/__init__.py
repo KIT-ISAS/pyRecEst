@@ -83,7 +83,6 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_dot = raw_pytorch.dot
     if getattr(original_dot, "_pyrecest_numpy_contract", False):
         return
@@ -129,7 +128,6 @@ def _patch_pytorch_outer_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_outer = raw_pytorch.outer
     if getattr(original_outer, "_pyrecest_numpy_contract", False):
         return
@@ -194,7 +192,6 @@ def _patch_pytorch_tile_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_tile = raw_pytorch.tile
     if getattr(original_tile, "_pyrecest_numpy_contract", False):
         return
@@ -310,6 +307,45 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_pytorch_round_numpy_contract() -> None:
+    """Make PyTorch round accept NumPy-style array-like inputs."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_round = raw_pytorch.round
+    if getattr(original_round, "_pyrecest_numpy_contract", False):
+        return
+
+    def round(a, decimals=0, out=None):  # pylint: disable=redefined-builtin
+        decimals = _operator_index(decimals)
+        result = torch.round(raw_pytorch.array(a), decimals=decimals)
+        if out is not None:
+            copy_ = getattr(out, "copy_", None)
+            if copy_ is not None:
+                copy_(result)
+                return out
+            out[...] = raw_pytorch.to_numpy(result)
+            return out
+        return result
+
+    round.__name__ = getattr(original_round, "__name__", "round")
+    round.__doc__ = getattr(original_round, "__doc__", None)
+    round._pyrecest_numpy_contract = True
+    raw_pytorch.round = round
+    if active_pytorch_backend:
+        backend.round = round
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer flatten inputs like NumPy's outer."""
     try:
@@ -347,6 +383,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_round_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
