@@ -280,6 +280,83 @@ def _patch_pytorch_stack_helpers_numpy_contract() -> None:
         setattr(pytorch_backend, helper_name, helper)
 
 
+def _patch_pytorch_diff_numpy_contract() -> None:
+    """Make PyTorch diff accept NumPy-style array-like inputs and ``axis``."""
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend may be unavailable
+        return
+
+    if getattr(pytorch_backend.diff, "_pyrecest_numpy_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.diff = pytorch_backend.diff
+        return
+
+    def _boundary(value, x, axis):
+        boundary = pytorch_backend.array(value)
+        if _torch.is_tensor(boundary):
+            boundary = boundary.to(device=x.device)
+        if boundary.ndim == 0:
+            shape = list(x.shape)
+            shape[axis] = 1
+            boundary = boundary.expand(tuple(shape))
+        return boundary
+
+    def diff(a, n=1, axis=-1, prepend=None, append=None, out=None, *, dim=None):
+        if dim is not None:
+            if axis != -1 and axis != dim:
+                raise TypeError("diff() got both 'axis' and 'dim'")
+            axis = dim
+
+        n = _operator_index(n)
+        if n < 0:
+            raise ValueError("order must be non-negative")
+
+        x = pytorch_backend.array(a)
+        axis = _operator_index(axis)
+        normalized_axis = axis + x.ndim if axis < 0 else axis
+        if normalized_axis < 0 or normalized_axis >= x.ndim:
+            raise IndexError(
+                f"axis {axis} is out of bounds for array of dimension {x.ndim}"
+            )
+
+        tensors = [x]
+        prepend_tensor = None
+        append_tensor = None
+        if prepend is not None:
+            prepend_tensor = _boundary(prepend, x, normalized_axis)
+            tensors.append(prepend_tensor)
+        if append is not None:
+            append_tensor = _boundary(append, x, normalized_axis)
+            tensors.append(append_tensor)
+
+        promoted = pytorch_backend.convert_to_wider_dtype(tensors)
+        x = promoted[0]
+        cursor = 1
+        kwargs = {"n": n, "dim": normalized_axis}
+        if prepend_tensor is not None:
+            kwargs["prepend"] = promoted[cursor]
+            cursor += 1
+        if append_tensor is not None:
+            kwargs["append"] = promoted[cursor]
+
+        result = _torch.diff(x, **kwargs)
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
+    diff.__name__ = getattr(_torch.diff, "__name__", "diff")
+    diff.__doc__ = getattr(_torch.diff, "__doc__", None)
+    diff._pyrecest_numpy_contract = True
+    pytorch_backend.diff = diff
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.diff = diff
+
+
 def _patch_raw_pytorch_comparison_numpy_contract() -> None:
     """Make raw PyTorch comparison helpers accept NumPy-style array-like inputs."""
 
@@ -372,6 +449,7 @@ _patch_pytorch_broadcast_arrays_numpy_contract()
 _patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
 _patch_pytorch_stack_helpers_numpy_contract()
+_patch_pytorch_diff_numpy_contract()
 _patch_raw_pytorch_comparison_numpy_contract()
 _patch_raw_pytorch_isclose_equal_nan_contract()
 
