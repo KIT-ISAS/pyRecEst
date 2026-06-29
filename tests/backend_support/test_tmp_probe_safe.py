@@ -1,6 +1,5 @@
 # simple
-from functools import wraps as _wraps
-
+import torch
 
 def test_tmp_probe_safe():
-    assert 1 == 1
+    assert torch is not None
