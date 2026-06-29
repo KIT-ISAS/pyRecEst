@@ -123,9 +123,64 @@ def _patch_pytorch_broadcast_arrays_numpy_contract() -> None:
     pytorch_backend.broadcast_arrays = broadcast_arrays
 
 
+def _patch_pytorch_special_numpy_contract() -> None:
+    """Make PyTorch special functions accept NumPy-style array-like inputs."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    def _return_or_store_out(result, out):
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
+    def erf(a, out=None):
+        result = _torch.erf(pytorch_backend.array(a))
+        return _return_or_store_out(result, out)
+
+    def gammaln(a, out=None):
+        result = _torch.special.gammaln(pytorch_backend.array(a))
+        return _return_or_store_out(result, out)
+
+    def gamma(a, out=None):
+        result = _torch.exp(gammaln(a))
+        return _return_or_store_out(result, out)
+
+    def polygamma(n, a, out=None):
+        result = _torch.polygamma(n, pytorch_backend.array(a))
+        return _return_or_store_out(result, out)
+
+    for name, helper, target in (
+        ("erf", erf, _torch.erf),
+        ("gammaln", gammaln, _torch.special.gammaln),
+        ("gamma", gamma, pytorch_backend.gamma),
+        ("polygamma", polygamma, _torch.polygamma),
+    ):
+        helper.__name__ = name
+        helper.__doc__ = getattr(target, "__doc__", None)
+        helper._pyrecest_numpy_contract = True
+        setattr(backend, name, helper)
+        setattr(pytorch_backend, name, helper)
+
+    pytorch_backend._gammaln = gammaln  # pylint: disable=protected-access
+
+
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
 _patch_pytorch_broadcast_arrays_numpy_contract()
+_patch_pytorch_special_numpy_contract()
 
 
 def get_backend_name() -> str:
