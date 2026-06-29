@@ -337,6 +337,7 @@ def _patch_jax_outer_numpy_contract() -> None:
         backend.outer = outer
 
 
+_patch_raw_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_dot_numpy_contract()
 _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
