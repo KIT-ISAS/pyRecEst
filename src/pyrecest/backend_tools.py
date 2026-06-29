@@ -212,11 +212,78 @@ def _patch_pytorch_special_numpy_contract() -> None:
     pytorch_backend._gammaln = gammaln  # pylint: disable=protected-access
 
 
+def _pytorch_tile_repetition(repetition) -> int:
+    """Return one NumPy-style tile repetition as an integer."""
+
+    try:
+        return _operator_index(repetition)
+    except TypeError as exc:
+        raise TypeError("tile repetitions must be integers") from exc
+
+
+def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style tile repetitions for ``torch.Tensor.repeat``."""
+
+    if torch_module.is_tensor(reps):
+        reps = reps.detach().cpu().numpy()
+    reps_array = numpy_module.asarray(reps)
+    if reps_array.shape == ():
+        repetitions = (_pytorch_tile_repetition(reps_array.item()),)
+    else:
+        repetitions = tuple(
+            _pytorch_tile_repetition(one_repetition)
+            for one_repetition in reps_array.tolist()
+        )
+    if any(one_repetition < 0 for one_repetition in repetitions):
+        raise ValueError("negative dimensions are not allowed")
+    return repetitions
+
+
+def _patch_raw_pytorch_tile_numpy_contract() -> None:
+    """Make raw PyTorch tile follow NumPy repetition semantics."""
+
+    try:
+        import numpy as _np  # pylint: disable=import-outside-toplevel
+        from pyrecest._backend import (  # pylint: disable=import-outside-toplevel
+            pytorch as pytorch_backend,
+        )
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend not installed
+        return
+
+    if getattr(pytorch_backend.tile, "_pyrecest_numpy_contract", False):
+        return
+
+    def tile(x, reps):
+        x = pytorch_backend.array(x)
+        repetitions = _pytorch_tile_repetitions(reps, _np, _torch)
+        if not repetitions:
+            return x.clone()
+        if x.ndim < len(repetitions):
+            x = x.reshape((1,) * (len(repetitions) - x.ndim) + tuple(x.shape))
+        elif x.ndim > len(repetitions):
+            repetitions = (1,) * (x.ndim - len(repetitions)) + repetitions
+        return x.repeat(repetitions)
+
+    tile.__name__ = "tile"
+    tile.__doc__ = getattr(_np.tile, "__doc__", None)
+    tile._pyrecest_numpy_contract = True
+    pytorch_backend.tile = tile
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.tile = tile
+
+
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
 _patch_pytorch_broadcast_arrays_numpy_contract()
 _patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
+_patch_raw_pytorch_tile_numpy_contract()
 
 
 def get_backend_name() -> str:
