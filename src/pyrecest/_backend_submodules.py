@@ -179,7 +179,6 @@ def _adapt_pytorch_repeat_contract(backend: ModuleType) -> None:
     repeat = getattr(pytorch_backend, "repeat", None)
     if repeat is None or getattr(repeat, "_pyrecest_repeat_contract", False):
         return
-
     wrapped_repeat = _pytorch_repeat_with_arraylike_inputs(
         repeat,
         backend.array,
@@ -215,6 +214,14 @@ def _pytorch_reshape_shape(shape, torch_module) -> tuple[int, ...]:
         ) from exc
 
 
+def _pytorch_broadcast_shape(shape, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style broadcast target shapes for PyTorch expand."""
+    target_shape = _pytorch_reshape_shape(shape, torch_module)
+    if any(dimension < 0 for dimension in target_shape):
+        raise ValueError("all elements of broadcast shape must be non-negative")
+    return target_shape
+
+
 def _adapt_pytorch_reshape_contract(backend: ModuleType) -> None:
     """Adapt PyTorch reshape to accept array-like inputs and NumPy-style shapes."""
     if getattr(backend, "__backend_name__", None) != "pytorch":
@@ -234,6 +241,34 @@ def _adapt_pytorch_reshape_contract(backend: ModuleType) -> None:
     wrapped_reshape._pyrecest_reshape_contract = True
     setattr(pytorch_backend, "reshape", wrapped_reshape)
     setattr(backend, "reshape", wrapped_reshape)
+
+
+def _adapt_pytorch_broadcast_to_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch broadcast_to to accept NumPy-style array-like shapes."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    import torch as torch_module  # pylint: disable=import-outside-toplevel
+
+    broadcast_to = getattr(pytorch_backend, "broadcast_to", None)
+    if broadcast_to is None or getattr(
+        broadcast_to,
+        "_pyrecest_broadcast_to_contract",
+        False,
+    ):
+        return
+
+    @wraps(broadcast_to)
+    def wrapped_broadcast_to(x, shape):
+        return broadcast_to(
+            backend.array(x),
+            _pytorch_broadcast_shape(shape, torch_module),
+        )
+
+    wrapped_broadcast_to._pyrecest_broadcast_to_contract = True
+    setattr(pytorch_backend, "broadcast_to", wrapped_broadcast_to)
+    setattr(backend, "broadcast_to", wrapped_broadcast_to)
 
 
 def _adapt_pytorch_stack_helpers_contract(backend: ModuleType) -> None:
@@ -428,6 +463,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     _adapt_pytorch_allclose_keyword_contract(backend)
     _adapt_pytorch_repeat_contract(backend)
     _adapt_pytorch_reshape_contract(backend)
+    _adapt_pytorch_broadcast_to_contract(backend)
     _adapt_pytorch_stack_helpers_contract(backend)
     _adapt_pytorch_reduction_alias_contract(backend)
 
