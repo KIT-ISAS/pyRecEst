@@ -1,5 +1,5 @@
 # simple
-import torch
+import torch as _torch
 
 def test_tmp_probe_safe():
-    assert torch is not None
+    assert _torch is not None
