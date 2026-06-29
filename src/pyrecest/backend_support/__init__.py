@@ -11,6 +11,59 @@ from pyrecest._backend.capabilities import (
 )
 
 
+def _pytorch_scalar_tensor_index(index, torch_module):
+    """Return Python int indices for scalar integer tensors."""
+
+    if not torch_module.is_tensor(index) or index.ndim != 0:
+        return index
+    if (
+        index.dtype in {torch_module.bool, torch_module.uint8}
+        or index.dtype.is_floating_point
+        or index.dtype.is_complex
+    ):
+        return index
+    return _operator_index(index)
+
+
+def _wrap_pytorch_assignment_helper(original_assignment, torch_module):
+    """Normalize scalar tensor indices before assignment helper len() checks."""
+
+    if getattr(original_assignment, "_pyrecest_scalar_tensor_index_contract", False):
+        return original_assignment
+
+    def assignment(x, values, indices, axis=0):
+        indices = _pytorch_scalar_tensor_index(indices, torch_module)
+        return original_assignment(x, values, indices, axis=axis)
+
+    assignment.__name__ = getattr(original_assignment, "__name__", "assignment")
+    assignment.__doc__ = getattr(original_assignment, "__doc__", None)
+    assignment._pyrecest_scalar_tensor_index_contract = True
+    return assignment
+
+
+def _patch_raw_pytorch_assignment_scalar_tensor_indices() -> None:
+    """Make raw PyTorch assignment helpers accept scalar integer tensor indices."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend may be unavailable
+        return
+
+    raw_pytorch.assignment = _wrap_pytorch_assignment_helper(
+        raw_pytorch.assignment,
+        _torch,
+    )
+    raw_pytorch.assignment_by_sum = _wrap_pytorch_assignment_helper(
+        raw_pytorch.assignment_by_sum,
+        _torch,
+    )
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.assignment = raw_pytorch.assignment
+        backend.assignment_by_sum = raw_pytorch.assignment_by_sum
+
+
 def _patch_pytorch_dot_numpy_contract() -> None:
     """Make PyTorch dot follow NumPy's contraction axes."""
     try:
@@ -156,6 +209,7 @@ def _patch_pytorch_tile_numpy_contract() -> None:
         backend.tile = tile
 
 
+_patch_raw_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_dot_numpy_contract()
 _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
