@@ -327,6 +327,51 @@ def _patch_pytorch_stack_helpers_facade() -> None:
         setattr(backend, helper_name, helper)
 
 
+def _patch_pytorch_linear_helpers_facade() -> None:
+    """Make public and raw PyTorch linear helpers follow backend contracts."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+        return
+
+    def _promoted_pair(a, b):
+        a = pytorch_backend.array(a)
+        b = pytorch_backend.array(b)
+        return pytorch_backend.convert_to_wider_dtype([a, b])
+
+    def dot(a, b):
+        a, b = _promoted_pair(a, b)
+        if a.ndim == 0 or b.ndim == 0:
+            return _torch.multiply(a, b)
+        if a.ndim == 1 and b.ndim == 1:
+            return _torch.dot(a, b)
+        if b.ndim == 1:
+            return _torch.einsum("...i,i->...", a, b)
+        if a.ndim == 1:
+            return _torch.einsum("i,...i->...", a, b)
+        return _torch.einsum("...i,...i->...", a, b)
+
+    def outer(a, b):
+        a, b = _promoted_pair(a, b)
+        if a.ndim == 0 or b.ndim == 0:
+            return _torch.multiply(a, b)
+        return a[..., :, None] * b[..., None, :]
+
+    dot.__name__ = "dot"
+    dot.__doc__ = getattr(pytorch_backend.dot, "__doc__", None)
+    outer.__name__ = "outer"
+    outer.__doc__ = getattr(pytorch_backend.outer, "__doc__", None)
+    backend.dot = pytorch_backend.dot = dot
+    backend.outer = pytorch_backend.outer = outer
+
+
 def _patch_raw_pytorch_trace_facade() -> None:
     """Make raw PyTorch ``trace`` follow NumPy's trace signature."""
 
@@ -462,6 +507,7 @@ _patch_pytorch_comparison_facade()
 _patch_pytorch_clip_facade()
 _patch_pytorch_tile_facade()
 _patch_pytorch_stack_helpers_facade()
+_patch_pytorch_linear_helpers_facade()
 _patch_raw_pytorch_trace_facade()
 _patch_jax_std_out_facade()
 _patch_jax_matmul_out_facade()
