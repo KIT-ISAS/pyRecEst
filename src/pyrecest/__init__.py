@@ -120,7 +120,6 @@ def _patch_pytorch_comparison_facade() -> None:
 
     if getattr(backend, "__backend_name__", None) != "pytorch":
         return
-
     try:
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import torch as _torch  # pylint: disable=import-outside-toplevel
@@ -169,7 +168,6 @@ def _patch_pytorch_clip_facade() -> None:
 
     if getattr(backend, "__backend_name__", None) != "pytorch":
         return
-
     try:
         import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
         import torch as _torch  # pylint: disable=import-outside-toplevel
@@ -282,7 +280,6 @@ def _patch_pytorch_stack_helpers_facade() -> None:
 
     if getattr(backend, "__backend_name__", None) != "pytorch":
         return
-
     try:
         import numpy as _np  # pylint: disable=import-outside-toplevel
         import torch as _torch  # pylint: disable=import-outside-toplevel
@@ -479,8 +476,7 @@ def _patch_jax_matmul_out_facade() -> None:
 
     import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
 
-    if getattr(backend, "__backend_name__", None) != "jax":
-        return
+    active_jax_backend = getattr(backend, "__backend_name__", None) == "jax"
 
     try:
         import pyrecest._backend.jax as jax_backend  # pylint: disable=import-outside-toplevel
@@ -490,17 +486,21 @@ def _patch_jax_matmul_out_facade() -> None:
         return
 
     original_matmul = jax_backend.matmul
+    if getattr(original_matmul, "_pyrecest_out_contract", False):
+        return
 
     def matmul(x, y, out=None):
-        result = original_matmul(x, y, out=None)
+        result = original_matmul(x, y)
         if out is None:
             return result
-        return backend.asarray(out).at[...].set(result)
+        return jax_backend.asarray(out).at[...].set(result)
 
     matmul.__name__ = getattr(original_matmul, "__name__", "matmul")
     matmul.__doc__ = getattr(original_matmul, "__doc__", None)
+    matmul._pyrecest_out_contract = True
     jax_backend.matmul = matmul
-    backend.matmul = matmul
+    if active_jax_backend:
+        backend.matmul = matmul
 
 
 _patch_pytorch_comparison_facade()
