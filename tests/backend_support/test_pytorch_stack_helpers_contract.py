@@ -22,14 +22,18 @@ def test_pytorch_stack_helpers_accept_array_like_sequences():
 
     code = """
 import pyrecest.backend as backend
+import pyrecest._backend.pytorch as raw_backend
 
-assert backend.to_numpy(backend.hstack(([1, 2], [3, 4]))).tolist() == [1, 2, 3, 4]
-assert backend.to_numpy(backend.vstack(([1, 2], [3, 4]))).tolist() == [[1, 2], [3, 4]]
-assert backend.to_numpy(backend.column_stack(([1, 2], [3, 4]))).tolist() == [[1, 3], [2, 4]]
-assert backend.to_numpy(backend.dstack(([1, 2], [3, 4]))).tolist() == [[[1, 3], [2, 4]]]
+for stack_backend in (backend, raw_backend):
+    to_numpy = stack_backend.to_numpy
 
-values = backend.array([[1, 2], [3, 4]])
-assert backend.to_numpy(backend.hstack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
-assert backend.to_numpy(backend.column_stack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
+    assert to_numpy(stack_backend.hstack(([1, 2], [3, 4]))).tolist() == [1, 2, 3, 4]
+    assert to_numpy(stack_backend.vstack(([1, 2], [3, 4]))).tolist() == [[1, 2], [3, 4]]
+    assert to_numpy(stack_backend.column_stack(([1, 2], [3, 4]))).tolist() == [[1, 3], [2, 4]]
+    assert to_numpy(stack_backend.dstack(([1, 2], [3, 4]))).tolist() == [[[1, 3], [2, 4]]]
+
+    values = backend.array([[1, 2], [3, 4]])
+    assert to_numpy(stack_backend.hstack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
+    assert to_numpy(stack_backend.column_stack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
