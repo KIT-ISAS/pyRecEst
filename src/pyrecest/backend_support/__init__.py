@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from operator import index as _operator_index
+
 from pyrecest._backend.capabilities import (
     API_BACKEND_CAPABILITIES,
     BACKEND_SUPPORT_LEVELS,
@@ -60,8 +62,7 @@ def _patch_pytorch_outer_numpy_contract() -> None:
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
 
-    if getattr(backend, "__backend_name__", None) != "pytorch":
-        return
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
@@ -74,8 +75,8 @@ def _patch_pytorch_outer_numpy_contract() -> None:
         return
 
     def outer(a, b):
-        a = backend.array(a)
-        b = backend.array(b)
+        a = raw_pytorch.array(a)
+        b = raw_pytorch.array(b)
         dtype = torch.promote_types(a.dtype, b.dtype)
         a = a.to(dtype=dtype)
         b = b.to(dtype=dtype)
@@ -84,12 +85,80 @@ def _patch_pytorch_outer_numpy_contract() -> None:
     outer.__name__ = getattr(original_outer, "__name__", "outer")
     outer.__doc__ = getattr(original_outer, "__doc__", None)
     outer._pyrecest_numpy_contract = True
-    backend.outer = outer
     raw_pytorch.outer = outer
+    if active_pytorch_backend:
+        backend.outer = outer
+
+
+def _pytorch_tile_repetition(repetition) -> int:
+    """Return one NumPy-style tile repetition as an integer."""
+
+    try:
+        return _operator_index(repetition)
+    except TypeError as exc:
+        raise TypeError("tile repetitions must be integers") from exc
+
+
+def _pytorch_tile_repetitions(reps, numpy_module, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style tile repetitions for ``torch.Tensor.repeat``."""
+
+    if torch_module.is_tensor(reps):
+        reps = reps.detach().cpu().numpy()
+    reps_array = numpy_module.asarray(reps)
+    if reps_array.shape == ():
+        repetitions = (_pytorch_tile_repetition(reps_array.item()),)
+    else:
+        repetitions = tuple(
+            _pytorch_tile_repetition(one_repetition)
+            for one_repetition in reps_array.tolist()
+        )
+    if any(one_repetition < 0 for one_repetition in repetitions):
+        raise ValueError("negative dimensions are not allowed")
+    return repetitions
+
+
+def _patch_pytorch_tile_numpy_contract() -> None:
+    """Make PyTorch tile follow NumPy repetition semantics."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import numpy as np  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_tile = raw_pytorch.tile
+    if getattr(original_tile, "_pyrecest_numpy_contract", False):
+        return
+
+    def tile(x, reps):
+        x = raw_pytorch.array(x)
+        repetitions = _pytorch_tile_repetitions(reps, np, torch)
+        if not repetitions:
+            return x.clone()
+        if x.ndim < len(repetitions):
+            x = x.reshape((1,) * (len(repetitions) - x.ndim) + tuple(x.shape))
+        elif x.ndim > len(repetitions):
+            repetitions = (1,) * (x.ndim - len(repetitions)) + repetitions
+        return x.repeat(repetitions)
+
+    tile.__name__ = getattr(original_tile, "__name__", "tile")
+    tile.__doc__ = getattr(np.tile, "__doc__", None)
+    tile._pyrecest_numpy_contract = True
+    raw_pytorch.tile = tile
+    if active_pytorch_backend:
+        backend.tile = tile
 
 
 _patch_pytorch_dot_numpy_contract()
 _patch_pytorch_outer_numpy_contract()
+_patch_pytorch_tile_numpy_contract()
 
 
 def get_backend_support(
