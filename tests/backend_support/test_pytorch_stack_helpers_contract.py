@@ -35,5 +35,13 @@ for stack_backend in (backend, raw_backend):
     values = backend.array([[1, 2], [3, 4]])
     assert to_numpy(stack_backend.hstack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
     assert to_numpy(stack_backend.column_stack((values, [[5, 6], [7, 8]]))).tolist() == [[1, 2, 5, 6], [3, 4, 7, 8]]
+
+left, right = backend.broadcast_arrays([1, 2, 3], [[10], [20]])
+assert backend.to_numpy(left).tolist() == [[1, 2, 3], [1, 2, 3]]
+assert backend.to_numpy(right).tolist() == [[10, 10, 10], [20, 20, 20]]
+
+raw_left, raw_right = raw_backend.broadcast_arrays([1, 2], 3.0)
+assert raw_backend.to_numpy(raw_left).tolist() == [1, 2]
+assert raw_backend.to_numpy(raw_right).tolist() == [3.0, 3.0]
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
