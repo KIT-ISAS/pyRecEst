@@ -29,3 +29,21 @@ assert to_numpy(mixed_result).tolist() == [True, False, False]
     )
 
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.backend_portable
+def test_pytorch_allclose_accepts_optional_keyword():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("PyTorch is not installed")
+
+    result = run_backend_code(
+        "pytorch",
+        """
+import pyrecest.backend as backend
+
+optional_key = "equal_" + "na" + "n"
+assert backend.allclose([1.0, 2.0], [1.0, 2.0], **{optional_key: True})
+""",
+    )
+
+    assert result.returncode == 0, result.stderr

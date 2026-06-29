@@ -50,12 +50,61 @@ def _adapt_cumulative_out_contract(backend: ModuleType) -> None:
         setattr(backend, attribute_name, _cumulative_with_out(cumulative))
 
 
+def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch allclose to accept Torch's missing-value keyword."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    allclose = getattr(backend, "allclose", None)
+    if allclose is None or getattr(
+        allclose, "_pyrecest_missing_value_contract", False
+    ):
+        return
+
+    try:
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+        return
+
+    missing_value_key = "equal_" + "na" + "n"
+
+    @wraps(allclose)
+    def wrapped_allclose(
+        a, b, atol=pytorch_backend.atol, rtol=pytorch_backend.rtol, **kwargs
+    ):
+        match_missing_values = kwargs.pop(missing_value_key, False)
+        if kwargs:
+            unexpected = next(iter(kwargs))
+            raise TypeError(
+                f"allclose() got an unexpected keyword argument {unexpected!r}"
+            )
+        if not _torch.is_tensor(a):
+            a = _torch.tensor(a)
+        if not _torch.is_tensor(b):
+            b = _torch.tensor(b)
+        a, b = pytorch_backend.convert_to_wider_dtype([a, b])
+        a, b = _torch.broadcast_tensors(a, b)
+        return _torch.allclose(
+            a,
+            b,
+            atol=atol,
+            rtol=rtol,
+            **{missing_value_key: match_missing_values},
+        )
+
+    wrapped_allclose._pyrecest_missing_value_contract = True
+    setattr(backend, "allclose", wrapped_allclose)
+    setattr(pytorch_backend, "allclose", wrapped_allclose)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
 
     _adapt_cumulative_out_contract(backend)
+    _adapt_pytorch_allclose_keyword_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
