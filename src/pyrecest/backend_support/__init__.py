@@ -310,6 +310,55 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_pytorch_cov_numpy_contract() -> None:
+    """Make PyTorch cov promote integer observations like NumPy's cov."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_cov = raw_pytorch.cov
+    if getattr(original_cov, "_pyrecest_numpy_contract", False):
+        return
+
+    def cov(input, correction=1, fweights=None, aweights=None, bias=False):
+        values = raw_pytorch.array(input)
+        if not (raw_pytorch.is_floating(values) or raw_pytorch.is_complex(values)):
+            values = raw_pytorch.cast(values, dtype=raw_pytorch.get_default_dtype())
+
+        if fweights is not None:
+            fweights = torch.as_tensor(fweights, device=values.device)
+        if aweights is not None:
+            aweights = torch.as_tensor(
+                aweights,
+                dtype=values.dtype,
+                device=values.device,
+            )
+        if bias:
+            correction = 0
+        return torch.cov(
+            values,
+            correction=correction,
+            fweights=fweights,
+            aweights=aweights,
+        )
+
+    cov.__name__ = getattr(original_cov, "__name__", "cov")
+    cov.__doc__ = getattr(original_cov, "__doc__", None)
+    cov._pyrecest_numpy_contract = True
+    raw_pytorch.cov = cov
+    if active_pytorch_backend:
+        backend.cov = cov
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer flatten inputs like NumPy's outer."""
     try:
@@ -347,6 +396,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_cov_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
