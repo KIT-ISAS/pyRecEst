@@ -33,6 +33,10 @@ assert np.allclose(
     backend.to_numpy(backend.fft.ifftn(matrix, axes=(0, 1))),
     np.fft.ifftn(matrix, axes=(0, 1)),
 )
+assert np.allclose(
+    backend.to_numpy(backend.fft.fftn(matrix, dim=0, axes=None)),
+    np.fft.fftn(matrix, axes=(0,)),
+)
 
 vector = [1.0, 2.0, 3.0, 4.0]
 spectrum = np.fft.rfft(vector, axis=0)
@@ -53,6 +57,12 @@ assert backend.to_numpy(shifted).tolist() == np.fft.fftshift(
 ).tolist()
 assert backend.to_numpy(backend.fft.ifftshift(shifted, axes=0)).tolist() == np.fft.ifftshift(
     np.fft.fftshift(shift_source, axes=0),
+    axes=0,
+).tolist()
+
+shift_matrix = [[1, 2, 3], [4, 5, 6]]
+assert backend.to_numpy(backend.fft.fftshift(shift_matrix, dim=0, axes=None)).tolist() == np.fft.fftshift(
+    shift_matrix,
     axes=0,
 ).tolist()
 
