@@ -29,6 +29,19 @@ _INTEGER_DTYPES = {
     _torch.int32,
     _torch.int64,
 }
+_TORCH_DTYPE_BY_NAME = {
+    "bool": _torch.bool,
+    "uint8": _torch.uint8,
+    "int8": _torch.int8,
+    "int16": _torch.int16,
+    "int32": _torch.int32,
+    "int64": _torch.int64,
+    "float16": _torch.float16,
+    "float32": _torch.float32,
+    "float64": _torch.float64,
+    "complex64": _torch.complex64,
+    "complex128": _torch.complex128,
+}
 
 
 def _size_type_error():
@@ -195,11 +208,21 @@ def _validate_randint_array_bound(name, bound):
         raise TypeError(f"{name} must contain integer values")
 
 
+def _normalize_random_dtype(dtype, *, default):
+    dtype = _normalize_torch_dtype(dtype, default=default)
+    if dtype is None or isinstance(dtype, _torch.dtype):
+        return dtype
+    try:
+        return _TORCH_DTYPE_BY_NAME[str(_np.dtype(dtype))]
+    except (KeyError, TypeError):
+        return dtype
+
+
 def _normalize_torch_dtype_kwargs(kwargs):
     if "dtype" not in kwargs:
         return kwargs
     kwargs = dict(kwargs)
-    kwargs["dtype"] = _normalize_torch_dtype(kwargs["dtype"], default=None)
+    kwargs["dtype"] = _normalize_random_dtype(kwargs["dtype"], default=None)
     return kwargs
 
 
@@ -208,7 +231,7 @@ def _randint_array(low, high, size, *args, **kwargs):
         raise TypeError(
             "array-valued randint bounds do not support additional positional arguments"
         )
-    dtype = _normalize_torch_dtype(kwargs.pop("dtype", None), default=_torch.int64)
+    dtype = _normalize_random_dtype(kwargs.pop("dtype", None), default=_torch.int64)
     device = kwargs.pop("device", None)
     generator = kwargs.pop("generator", None)
     out = kwargs.pop("out", None)
@@ -440,7 +463,7 @@ def seed(*args, **kwargs):
 
 
 def rand(*dims, size=None, dtype=None):
-    dtype = _normalize_torch_dtype(dtype, default=None)
+    dtype = _normalize_random_dtype(dtype, default=None)
     return _torch.rand(_shape_from_rand_args(dims, size), dtype=dtype)
 
 
@@ -538,7 +561,7 @@ def _validate_uniform_bounds(low, high):
 
 
 def uniform(low=0.0, high=1.0, size=None, dtype=None):
-    dtype = _normalize_torch_dtype(dtype, default=None)
+    dtype = _normalize_random_dtype(dtype, default=None)
     device = None
     if _torch.is_tensor(low):
         device = low.device
