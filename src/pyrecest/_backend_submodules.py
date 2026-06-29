@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from functools import wraps
+from operator import index as _operator_index
 from types import ModuleType
 
 from pyrecest._backend import BACKEND_ATTRIBUTES
@@ -66,7 +67,6 @@ def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
         import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - backend import fails first
         return
-
     missing_value_key = "equal_" + "na" + "n"
 
     @wraps(allclose)
@@ -98,6 +98,71 @@ def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
     setattr(pytorch_backend, "allclose", wrapped_allclose)
 
 
+def _adapt_pytorch_stack_sequence_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch stack/concatenate to NumPy-style sequence and axis inputs."""
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    stack_func = getattr(backend, "stack", None)
+    concatenate_func = getattr(backend, "concatenate", None)
+    if stack_func is None or concatenate_func is None:
+        return
+    if getattr(stack_func, "_pyrecest_sequence_contract", False) and getattr(
+        concatenate_func, "_pyrecest_sequence_contract", False
+    ):
+        return
+
+    try:
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+        return
+
+    def _tensor_sequence(seq):
+        tensors = tuple(backend.array(item) for item in seq)
+        if not tensors:
+            return tensors
+
+        device = next(
+            (tensor.device for tensor in tensors if _torch.is_tensor(tensor)),
+            None,
+        )
+        if device is not None:
+            tensors = tuple(tensor.to(device=device) for tensor in tensors)
+
+        dtype = tensors[0].dtype
+        for tensor in tensors[1:]:
+            dtype = _torch.promote_types(dtype, tensor.dtype)
+        return tuple(tensor.to(dtype=dtype) for tensor in tensors)
+
+    def _stack_axis(axis, dim):
+        axis = _operator_index(axis)
+        if dim is None:
+            return axis
+        dim = _operator_index(dim)
+        if axis not in (0, dim):
+            raise TypeError("stack() got both 'axis' and 'dim'")
+        return dim
+
+    @wraps(stack_func)
+    def wrapped_stack(seq, axis=0, out=None, *, dim=None):
+        axis = _stack_axis(axis, dim)
+        return _torch.stack(_tensor_sequence(seq), dim=axis, out=out)
+
+    @wraps(concatenate_func)
+    def wrapped_concatenate(seq, axis=0, out=None):
+        axis = _operator_index(axis)
+        return _torch.cat(_tensor_sequence(seq), dim=axis, out=out)
+
+    wrapped_stack._pyrecest_sequence_contract = True
+    wrapped_concatenate._pyrecest_sequence_contract = True
+
+    setattr(backend, "stack", wrapped_stack)
+    setattr(pytorch_backend, "stack", wrapped_stack)
+    setattr(backend, "concatenate", wrapped_concatenate)
+    setattr(pytorch_backend, "concatenate", wrapped_concatenate)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -105,6 +170,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
 
     _adapt_cumulative_out_contract(backend)
     _adapt_pytorch_allclose_keyword_contract(backend)
+    _adapt_pytorch_stack_sequence_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
