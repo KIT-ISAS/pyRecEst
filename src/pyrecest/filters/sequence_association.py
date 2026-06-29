@@ -365,7 +365,10 @@ def _validate_cost(value: object, name: str) -> float:
 
 def _validate_positive_integer(value: object, name: str) -> int:
     message = f"{name} must be a positive integer"
-    value_array = np.asarray(value)
+    try:
+        value_array = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
     if value_array.ndim != 0 or value_array.dtype == np.bool_:
         raise ValueError(message)
 
