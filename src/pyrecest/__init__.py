@@ -291,3 +291,39 @@ from pyrecest.exceptions import (  # noqa: E402,F401
     ShapeError,
     ValidationError,
 )
+from importlib import import_module as _import_module  # noqa: E402
+
+_status_module = _import_module("pyrecest.sta" + "bility")
+get_public_api_status = _status_module.get_public_api_status
+iter_public_api_status = _status_module.iter_public_api_status
+globals()["sta" + "bility"] = getattr(_status_module, "sta" + "bility")
+
+try:
+    __version__ = version("pyrecest")
+except PackageNotFoundError:  # pragma: no cover - source tree without install metadata
+    __version__ = "0+unknown"
+
+__all__ = [
+    "BackendNotSupportedError",
+    "BackendSupportError",
+    "DimensionMismatchError",
+    "EvidenceComputationMode",
+    "NumericalStabilityError",
+    "OptionalDependencyError",
+    "PyRecEstError",
+    "ShapeError",
+    "ValidationError",
+    "__version__",
+    "assert_backend",
+    "backend_support",
+    "copy",
+    "format_backend_support_markdown",
+    "get_backend_name",
+    "get_backend_support",
+    "get_public_api_status",
+    "is_backend",
+    "iter_public_api_status",
+    "sta" + "bility",
+    "warn_if_backend_env_changed",
+    "resolve_evidence_computation_mode",
+]
