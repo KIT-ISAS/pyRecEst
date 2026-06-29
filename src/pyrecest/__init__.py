@@ -303,14 +303,25 @@ def _patch_pytorch_stack_helpers_facade() -> None:
 
 
 def _patch_jax_std_out_facade() -> None:
-    """Make public JAX ``std`` accept NumPy's ``out`` argument."""
+    """Make public and raw JAX ``std`` accept NumPy's ``out`` argument."""
 
     import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
 
     if getattr(backend, "__backend_name__", None) != "jax":
         return
 
+    try:
+        import pyrecest._backend.jax as raw_jax  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+        raw_jax = None
+
     original_std = backend.std
+    original_raw_std = getattr(raw_jax, "std", None) if raw_jax is not None else None
+
+    def _return_or_store_out(result, out):
+        if out is None:
+            return result
+        return backend.asarray(out).at[...].set(result)
 
     def std(
         a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, correction=0
@@ -324,13 +335,33 @@ def _patch_jax_std_out_facade() -> None:
             keepdims=keepdims,
             correction=correction,
         )
-        if out is None:
-            return result
-        return backend.asarray(out).at[...].set(result)
+        return _return_or_store_out(result, out)
 
     std.__name__ = getattr(original_std, "__name__", "std")
     std.__doc__ = getattr(original_std, "__doc__", None)
     backend.std = std
+
+    if original_raw_std is None:
+        return
+
+    def raw_std(
+        a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, correction=0
+    ):
+        kwargs = {
+            "axis": axis,
+            "dtype": dtype,
+            "out": None,
+            "ddof": ddof,
+            "keepdims": keepdims,
+        }
+        if correction != 0:
+            kwargs["correction"] = correction
+        result = original_raw_std(a, **kwargs)
+        return _return_or_store_out(result, out)
+
+    raw_std.__name__ = getattr(original_raw_std, "__name__", "std")
+    raw_std.__doc__ = getattr(original_raw_std, "__doc__", None)
+    raw_jax.std = raw_std
 
 
 def _patch_jax_matmul_out_facade() -> None:
