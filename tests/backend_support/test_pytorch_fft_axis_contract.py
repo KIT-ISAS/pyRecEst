@@ -37,6 +37,24 @@ def test_raw_pytorch_fft_helpers_accept_numpy_axis_aliases():
     )
 
 
+@pytest.mark.backend_portable
+def test_raw_pytorch_fft_none_axis_alias_preserves_explicit_dim():
+    matrix = np.arange(6.0).reshape(2, 3)
+
+    npt.assert_allclose(
+        pytorch_fft.fftn(matrix.tolist(), axes=None, dim=(0,)).numpy(),
+        np.fft.fftn(matrix, axes=(0,)),
+    )
+    npt.assert_allclose(
+        pytorch_fft.ifftn(
+            pytorch_fft.fftn(matrix, dim=(0,)),
+            axes=None,
+            dim=(0,),
+        ).numpy(),
+        np.fft.ifftn(np.fft.fftn(matrix, axes=(0,)), axes=(0,)),
+    )
+
+
 def test_raw_pytorch_fft_rejects_conflicting_axis_aliases():
     with pytest.raises(TypeError):
         pytorch_fft.rfft(np.arange(4.0), axis=0, dim=1)
