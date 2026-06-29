@@ -97,6 +97,35 @@ def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
     setattr(pytorch_backend, "allclose", wrapped_allclose)
 
 
+def _adapt_pytorch_log1p_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch ``log1p`` to accept NumPy-style array-like inputs."""
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+        return
+
+    log1p = getattr(pytorch_backend, "log1p", None)
+    if log1p is None:
+        return
+
+    if getattr(log1p, "_pyrecest_unary_arraylike_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, "log1p", log1p)
+        return
+
+    @wraps(log1p)
+    def wrapped_log1p(x, *args, out=None, **kwargs):
+        result = log1p(pytorch_backend.array(x), *args, **kwargs)
+        if out is not None:
+            return _copy_result_to_out(result, out)
+        return result
+
+    wrapped_log1p._pyrecest_unary_arraylike_contract = True
+    setattr(pytorch_backend, "log1p", wrapped_log1p)
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        setattr(backend, "log1p", wrapped_log1p)
+
+
 def _pytorch_repeat_count(repetition) -> int:
     """Return one NumPy-style repeat count as a non-negative integer."""
     try:
@@ -426,6 +455,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
 
     _adapt_cumulative_out_contract(backend)
     _adapt_pytorch_allclose_keyword_contract(backend)
+    _adapt_pytorch_log1p_contract(backend)
     _adapt_pytorch_repeat_contract(backend)
     _adapt_pytorch_reshape_contract(backend)
     _adapt_pytorch_stack_helpers_contract(backend)
