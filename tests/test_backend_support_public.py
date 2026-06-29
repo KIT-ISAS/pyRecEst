@@ -1,4 +1,8 @@
+import importlib.util
 from importlib import import_module
+
+import pytest
+from tests.support.backend_runner import run_backend_code
 
 from pyrecest import (
     backend_support,
@@ -55,3 +59,29 @@ def test_backend_support_markdown_preserves_table_separators(monkeypatch):
     assert f"Pipe{escaped_separator}API" in data_row
     assert f"partial{escaped_separator}bridged" in data_row
     assert f"first {escaped_separator} second<br>continued" in data_row
+
+
+@pytest.mark.backend_portable
+def test_pytorch_pad_edge_mode_matches_numpy_contract():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("PyTorch is not installed")
+
+    result = run_backend_code(
+        "pytorch",
+        """
+import numpy as np
+import pyrecest.backend as backend
+
+values = backend.array([[1, 2, 3], [4, 5, 6]])
+padded = backend.pad(values, ((1, 1), (2, 1)), mode="edge")
+
+expected = np.pad(
+    np.array([[1, 2, 3], [4, 5, 6]]),
+    ((1, 1), (2, 1)),
+    mode="edge",
+)
+assert backend.to_numpy(padded).tolist() == expected.tolist()
+""",
+    )
+
+    assert result.returncode == 0, result.stderr
