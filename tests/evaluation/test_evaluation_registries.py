@@ -194,6 +194,12 @@ def test_euclidean_mtt_extract_mean_uses_public_track_selection():
     assert extracted == ["selected"]
 
 
+def test_named_euclidean_mtt_extract_mean_uses_public_track_selection():
+    extracted = get_extract_mean("euclideanMTT")(_TrackManagerLikeState())
+
+    assert extracted == ["selected"]
+
+
 def test_symmetric_hypersphere_extract_mean_requires_custom_extractor():
     with pytest.raises(NotImplementedError, match="custom extractor"):
         get_extract_mean("hypersphereSymmetric")
