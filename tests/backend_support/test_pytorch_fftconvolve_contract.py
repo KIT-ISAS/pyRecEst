@@ -89,7 +89,7 @@ def test_pytorch_fftconvolve_scalar_empty_axes_matches_scipy():
     first = backend.asarray(2.0)
     second = backend.asarray(3.0)
 
-    actual = _as_numpy(backend.signal.fftconvolve(first, second, axes=())
+    actual = _as_numpy(backend.signal.fftconvolve(first, second, axes=()))
     expected = scipy_fftconvolve(_as_numpy(first), _as_numpy(second), axes=())
 
     assert np.allclose(actual, expected)
