@@ -229,9 +229,43 @@ def _patch_jax_std_out_facade() -> None:
     backend.std = std
 
 
+def _patch_jax_dot_out_facade() -> None:
+    """Make public and raw JAX ``dot`` accept NumPy's ``out`` argument."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "jax":
+        return
+
+    import jax.numpy as _jnp  # pylint: disable=import-outside-toplevel
+    import pyrecest._backend.jax as jax_backend  # pylint: disable=import-outside-toplevel
+
+    original_dot = backend.dot
+
+    def dot(a, b, out=None):
+        result = original_dot(a, b)
+        if out is None:
+            return result
+
+        out_array = _jnp.asarray(out)
+        result_shape = tuple(getattr(result, "shape", ()))
+        if tuple(out_array.shape) != result_shape:
+            raise ValueError(
+                "output array has wrong shape: "
+                f"expected {result_shape}, got {tuple(out_array.shape)}"
+            )
+        return out_array.at[...].set(result)
+
+    dot.__name__ = getattr(original_dot, "__name__", "dot")
+    dot.__doc__ = getattr(original_dot, "__doc__", None)
+    backend.dot = dot
+    jax_backend.dot = dot
+
+
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
 _patch_jax_std_out_facade()
+_patch_jax_dot_out_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
     backend_support,
