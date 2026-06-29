@@ -250,6 +250,58 @@ def _patch_pytorch_tile_facade() -> None:
     backend.tile = tile
 
 
+def _patch_pytorch_stack_helpers_facade() -> None:
+    """Make public PyTorch stack helpers accept NumPy-style array-like inputs."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import numpy as _np  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    def _tensor_sequence(tup):
+        return [backend.array(item) for item in tup]
+
+    def hstack(tup):
+        tensors = [_torch.atleast_1d(tensor) for tensor in _tensor_sequence(tup)]
+        if not tensors:
+            return _torch.cat(tensors, dim=0)
+        return _torch.cat(tensors, dim=0 if tensors[0].ndim == 1 else 1)
+
+    def vstack(tup):
+        tensors = [_torch.atleast_2d(tensor) for tensor in _tensor_sequence(tup)]
+        return _torch.cat(tensors, dim=0)
+
+    def column_stack(tup):
+        tensors = []
+        for tensor in _tensor_sequence(tup):
+            if tensor.ndim < 2:
+                tensor = tensor.reshape(-1, 1)
+            tensors.append(tensor)
+        return _torch.cat(tensors, dim=1)
+
+    def dstack(tup):
+        tensors = [_torch.atleast_3d(tensor) for tensor in _tensor_sequence(tup)]
+        return _torch.cat(tensors, dim=2)
+
+    for helper_name, helper in {
+        "hstack": hstack,
+        "vstack": vstack,
+        "column_stack": column_stack,
+        "dstack": dstack,
+    }.items():
+        helper.__name__ = helper_name
+        helper.__doc__ = getattr(_np, helper_name).__doc__
+        setattr(backend, helper_name, helper)
+
+
 def _patch_jax_std_out_facade() -> None:
     """Make public JAX ``std`` accept NumPy's ``out`` argument."""
 
@@ -313,6 +365,7 @@ def _patch_jax_matmul_out_facade() -> None:
 _patch_pytorch_comparison_facade()
 _patch_pytorch_clip_facade()
 _patch_pytorch_tile_facade()
+_patch_pytorch_stack_helpers_facade()
 _patch_jax_std_out_facade()
 _patch_jax_matmul_out_facade()
 
