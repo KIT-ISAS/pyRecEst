@@ -212,11 +212,68 @@ def _patch_pytorch_special_numpy_contract() -> None:
     pytorch_backend._gammaln = gammaln  # pylint: disable=protected-access
 
 
+def _patch_pytorch_stack_helpers_numpy_contract() -> None:
+    """Make PyTorch stack helpers accept NumPy-style array-like inputs."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import numpy as _np  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    def _tensor_sequence(tup):
+        return [pytorch_backend.array(item) for item in tup]
+
+    def hstack(tup):
+        tensors = [_torch.atleast_1d(tensor) for tensor in _tensor_sequence(tup)]
+        if not tensors:
+            return _torch.cat(tensors, dim=0)
+        return _torch.cat(tensors, dim=0 if tensors[0].ndim == 1 else 1)
+
+    def vstack(tup):
+        tensors = [_torch.atleast_2d(tensor) for tensor in _tensor_sequence(tup)]
+        return _torch.cat(tensors, dim=0)
+
+    def column_stack(tup):
+        tensors = []
+        for tensor in _tensor_sequence(tup):
+            if tensor.ndim < 2:
+                tensor = tensor.reshape(-1, 1)
+            tensors.append(tensor)
+        return _torch.cat(tensors, dim=1)
+
+    def dstack(tup):
+        tensors = [_torch.atleast_3d(tensor) for tensor in _tensor_sequence(tup)]
+        return _torch.cat(tensors, dim=2)
+
+    for helper_name, helper in {
+        "hstack": hstack,
+        "vstack": vstack,
+        "column_stack": column_stack,
+        "dstack": dstack,
+    }.items():
+        helper.__name__ = helper_name
+        helper.__doc__ = getattr(_np, helper_name).__doc__
+        helper._pyrecest_numpy_contract = True
+        setattr(backend, helper_name, helper)
+        setattr(pytorch_backend, helper_name, helper)
+
+
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
 _patch_pytorch_broadcast_arrays_numpy_contract()
 _patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
+_patch_pytorch_stack_helpers_numpy_contract()
 
 
 def get_backend_name() -> str:
