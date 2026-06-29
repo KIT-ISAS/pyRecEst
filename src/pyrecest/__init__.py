@@ -91,8 +91,26 @@ def _patch_shared_numpy_squeeze_facade() -> None:
     backend.squeeze = squeeze
 
 
+def _patch_set_diag_arraylike_facade() -> None:
+    """Make public set_diag accept array-like matrix inputs."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    original_set_diag = backend.set_diag
+
+    def set_diag(x, new_diag):
+        if not backend.is_array(x):
+            x = backend.array(x)
+        return original_set_diag(x, new_diag)
+
+    set_diag.__name__ = getattr(original_set_diag, "__name__", "set_diag")
+    set_diag.__doc__ = getattr(original_set_diag, "__doc__", None)
+    backend.set_diag = set_diag
+
+
 _patch_shared_numpy_copy_facade()
 _patch_shared_numpy_squeeze_facade()
+_patch_set_diag_arraylike_facade()
 
 
 def _patch_pytorch_comparison_facade() -> None:
