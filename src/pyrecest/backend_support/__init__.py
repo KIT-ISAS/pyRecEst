@@ -310,6 +310,146 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_pytorch_cov_numpy_contract() -> None:
+    """Make PyTorch cov accept NumPy-style y/rowvar/ddof/dtype arguments."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_cov = raw_pytorch.cov
+    if getattr(original_cov, "_pyrecest_numpy_contract", False):
+        return
+
+    def _cov_device(*values):
+        tensor_values = [value for value in values if torch.is_tensor(value)]
+        if not tensor_values:
+            return None
+        return next(
+            (value.device for value in tensor_values if value.device.type != "cpu"),
+            tensor_values[0].device,
+        )
+
+    def _cov_tensor(values, *, dtype=None, device=None, name="m"):
+        tensor = raw_pytorch.array(values, dtype=dtype)
+        if device is not None and tensor.device != device:
+            tensor = tensor.to(device=device)
+        if tensor.ndim > 2:
+            raise ValueError(f"{name} has more than 2 dimensions")
+        return tensor
+
+    def _cov_dtype(tensors, explicit_dtype=None):
+        if explicit_dtype is not None:
+            return tensors[0].dtype
+        result_dtype = tensors[0].dtype
+        for tensor in tensors[1:]:
+            result_dtype = torch.promote_types(result_dtype, tensor.dtype)
+        if result_dtype.is_floating_point or result_dtype.is_complex:
+            return result_dtype
+        return raw_pytorch.get_default_dtype()
+
+    def _cov_matrix(tensor, *, rowvar):
+        if tensor.ndim == 0:
+            tensor = tensor.reshape(1)
+        if tensor.ndim == 1:
+            return tensor.reshape(1, -1)
+        if not rowvar:
+            return tensor.T
+        return tensor
+
+    def _cov_weights(weights, *, dtype=None, device=None):
+        if weights is None:
+            return None
+        if torch.is_tensor(weights):
+            result = weights.to(device=device)
+            if dtype is not None:
+                result = result.to(dtype=dtype)
+            return result
+        return torch.as_tensor(weights, dtype=dtype, device=device)
+
+    def cov(
+        m,
+        y=None,
+        rowvar=True,
+        bias=False,
+        ddof=None,
+        fweights=None,
+        aweights=None,
+        dtype=None,
+        *,
+        correction=None,
+    ):
+        if (
+            y is not None
+            and correction is None
+            and rowvar is True
+            and ddof is None
+            and fweights is None
+            and aweights is None
+            and dtype is None
+            and not torch.is_tensor(y)
+        ):
+            try:
+                correction = _operator_index(y)
+            except TypeError:
+                pass
+            else:
+                y = None
+
+        device = _cov_device(m, y, fweights, aweights)
+        m_tensor = _cov_tensor(m, dtype=dtype, device=device, name="m")
+        cov_tensors = [m_tensor]
+        y_tensor = None
+        if y is not None:
+            y_tensor = _cov_tensor(y, dtype=dtype, device=device, name="y")
+            cov_tensors.append(y_tensor)
+
+        result_dtype = _cov_dtype(cov_tensors, explicit_dtype=dtype)
+        input_tensor = _cov_matrix(m_tensor.to(dtype=result_dtype), rowvar=rowvar)
+        if y_tensor is not None:
+            y_tensor = _cov_matrix(y_tensor.to(dtype=result_dtype), rowvar=rowvar)
+            if y_tensor.shape[1] != input_tensor.shape[1]:
+                raise ValueError("m and y have incompatible numbers of observations")
+            input_tensor = torch.cat((input_tensor, y_tensor), dim=0)
+
+        if ddof is not None and correction is not None:
+            raise ValueError("ddof and correction cannot both be specified")
+        if ddof is not None:
+            correction_value = ddof
+        elif bias:
+            correction_value = 0
+        elif correction is not None:
+            correction_value = correction
+        else:
+            correction_value = 1
+
+        fweights_tensor = _cov_weights(fweights, device=input_tensor.device)
+        aweights_tensor = _cov_weights(
+            aweights, dtype=input_tensor.dtype, device=input_tensor.device
+        )
+        return torch.cov(
+            input_tensor,
+            correction=_operator_index(correction_value),
+            fweights=fweights_tensor,
+            aweights=aweights_tensor,
+        )
+
+    cov.__name__ = getattr(original_cov, "__name__", "cov")
+    cov.__doc__ = getattr(original_cov, "__doc__", None)
+    cov._pyrecest_numpy_contract = True
+    raw_pytorch.cov = cov
+    if active_pytorch_backend:
+        backend.cov = cov
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer flatten inputs like NumPy's outer."""
     try:
@@ -347,6 +487,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_cov_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
