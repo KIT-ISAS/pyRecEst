@@ -198,6 +198,113 @@ def _patch_pytorch_tile_facade() -> None:
     backend.tile = tile
 
 
+def _pytorch_pad_pairs(pad_width, ndim, numpy_module) -> tuple[tuple[int, int], ...]:
+    """Normalize NumPy-style pad widths to per-axis pairs."""
+
+    try:
+        pad_pairs = numpy_module.broadcast_to(numpy_module.asarray(pad_width), (ndim, 2))
+    except ValueError as exc:
+        raise ValueError(
+            f"pad_width must be broadcastable to shape ({ndim}, 2)"
+        ) from exc
+
+    if numpy_module.any(pad_pairs < 0):
+        raise ValueError("index can't contain negative values")
+
+    return tuple(tuple(int(value) for value in pair) for pair in pad_pairs.tolist())
+
+
+def _pytorch_torch_pad_width(pad_pairs: tuple[tuple[int, int], ...]) -> list[int]:
+    """Convert NumPy-ordered pad pairs to PyTorch's reversed flat order."""
+
+    return [value for pair in reversed(pad_pairs) for value in pair]
+
+
+def _pytorch_constant_value_pairs(
+    constant_values,
+    ndim,
+    numpy_module,
+    torch_module,
+) -> tuple[tuple[object, object], ...]:
+    """Normalize NumPy-style constant pad values to per-axis pairs."""
+
+    if torch_module.is_tensor(constant_values):
+        constant_values = constant_values.detach().cpu().numpy()
+
+    try:
+        value_pairs = numpy_module.broadcast_to(
+            numpy_module.asarray(constant_values),
+            (ndim, 2),
+        )
+    except ValueError as exc:
+        raise ValueError(
+            f"constant_values must be broadcastable to shape ({ndim}, 2)"
+        ) from exc
+
+    return tuple(tuple(pair) for pair in value_pairs.tolist())
+
+
+def _patch_pytorch_pad_facade() -> None:
+    """Make public PyTorch ``pad`` accept NumPy-style constant values."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import numpy as _np  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    original_pad = backend.pad
+
+    def pad(a, pad_width, mode="constant", constant_values=0.0):
+        values = backend.array(a)
+        if mode != "constant":
+            return original_pad(
+                values,
+                pad_width,
+                mode=mode,
+                constant_values=constant_values,
+            )
+
+        pad_pairs = _pytorch_pad_pairs(pad_width, values.ndim, _np)
+        torch_pad_width = _pytorch_torch_pad_width(pad_pairs)
+        result = _torch.nn.functional.pad(
+            values,
+            torch_pad_width,
+            mode="constant",
+            value=0.0,
+        )
+        value_pairs = _pytorch_constant_value_pairs(
+            constant_values,
+            values.ndim,
+            _np,
+            _torch,
+        )
+
+        for axis, ((before, after), (before_value, after_value)) in enumerate(
+            zip(pad_pairs, value_pairs)
+        ):
+            if before:
+                index = [slice(None)] * result.ndim
+                index[axis] = slice(0, before)
+                result[tuple(index)] = before_value
+            if after:
+                index = [slice(None)] * result.ndim
+                index[axis] = slice(result.shape[axis] - after, result.shape[axis])
+                result[tuple(index)] = after_value
+        return result
+
+    pad.__name__ = "pad"
+    pad.__doc__ = getattr(original_pad, "__doc__", None)
+    backend.pad = pad
+
+
 def _patch_jax_std_out_facade() -> None:
     """Make public JAX ``std`` accept NumPy's ``out`` argument."""
 
@@ -231,6 +338,7 @@ def _patch_jax_std_out_facade() -> None:
 
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
+_patch_pytorch_pad_facade()
 _patch_jax_std_out_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
@@ -258,38 +366,8 @@ from pyrecest.exceptions import (  # noqa: E402,F401
     ShapeError,
     ValidationError,
 )
-from pyrecest.stability import (  # noqa: E402,F401
-    get_public_api_status,
-    iter_public_api_status,
-    stability,
-)
 
 try:
     __version__ = version("pyrecest")
-except PackageNotFoundError:  # pragma: no cover - source tree without install metadata
+except PackageNotFoundError:  # pragma: no cover - editable/source tree without install metadata
     __version__ = "0+unknown"
-
-__all__ = [
-    "BackendNotSupportedError",
-    "BackendSupportError",
-    "DimensionMismatchError",
-    "EvidenceComputationMode",
-    "NumericalStabilityError",
-    "OptionalDependencyError",
-    "PyRecEstError",
-    "ShapeError",
-    "ValidationError",
-    "__version__",
-    "assert_backend",
-    "backend_support",
-    "copy",
-    "format_backend_support_markdown",
-    "get_backend_name",
-    "get_backend_support",
-    "get_public_api_status",
-    "is_backend",
-    "iter_public_api_status",
-    "stability",
-    "warn_if_backend_env_changed",
-    "resolve_evidence_computation_mode",
-]
