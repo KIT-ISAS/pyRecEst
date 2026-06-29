@@ -37,3 +37,25 @@ assert backend.to_numpy(matrix_trace).item() == 6.0
     )
 
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.backend_portable
+def test_pytorch_array_copies_numpy_inputs():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("PyTorch is not installed")
+
+    result = run_backend_code(
+        "pytorch",
+        """
+import numpy as np
+import pyrecest.backend as backend
+
+source = np.arange(3.0)
+converted = backend.array(source)
+source[0] = 99.0
+
+assert backend.to_numpy(converted).tolist() == [0.0, 1.0, 2.0]
+""",
+    )
+
+    assert result.returncode == 0, result.stderr
