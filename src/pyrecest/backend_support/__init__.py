@@ -310,6 +310,39 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_pytorch_roll_numpy_contract() -> None:
+    """Make PyTorch roll accept NumPy-style array-like inputs and axis."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_roll = raw_pytorch.roll
+    if getattr(original_roll, "_pyrecest_numpy_contract", False):
+        return
+
+    def roll(a, shift, axis=None):
+        values = raw_pytorch.array(a)
+        if axis is None:
+            return torch.roll(values.reshape(-1), shifts=shift, dims=0).reshape(values.shape)
+        return torch.roll(values, shifts=shift, dims=axis)
+
+    roll.__name__ = getattr(original_roll, "__name__", "roll")
+    roll.__doc__ = getattr(original_roll, "__doc__", None)
+    roll._pyrecest_numpy_contract = True
+    raw_pytorch.roll = roll
+    if active_pytorch_backend:
+        backend.roll = roll
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer flatten inputs like NumPy's outer."""
     try:
@@ -347,6 +380,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_roll_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
