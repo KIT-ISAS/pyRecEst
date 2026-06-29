@@ -19,11 +19,7 @@ def _is_missing_requested_package(exc: ModuleNotFoundError, package: str) -> boo
     missing_name = exc.name
     if missing_name is None:
         return False
-    return (
-        missing_name == package
-        or package.startswith(f"{missing_name}.")
-        or missing_name.startswith(f"{package}.")
-    )
+    return missing_name == package or package.startswith(f"{missing_name}.")
 
 
 def require_optional_dependency(
