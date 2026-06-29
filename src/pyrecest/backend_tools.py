@@ -326,6 +326,39 @@ def _patch_raw_pytorch_comparison_numpy_contract() -> None:
             setattr(backend, helper_name, helper)
 
 
+def _patch_raw_pytorch_conj_numpy_contract() -> None:
+    """Make raw PyTorch conj accept NumPy-style array-like inputs."""
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend may be unavailable
+        return
+
+    original_conj = getattr(pytorch_backend, "conj", None)
+    if original_conj is None or getattr(original_conj, "_pyrecest_numpy_contract", False):
+        return
+
+    def conj(a, out=None):
+        result = _torch.conj(pytorch_backend.array(a))
+        if out is not None:
+            copy_ = getattr(out, "copy_", None)
+            if copy_ is not None:
+                copy_(result)
+                return out
+            out[...] = pytorch_backend.to_numpy(result)
+            return out
+        return result
+
+    conj.__name__ = getattr(original_conj, "__name__", "conj")
+    conj.__doc__ = getattr(original_conj, "__doc__", None)
+    conj._pyrecest_numpy_contract = True
+    pytorch_backend.conj = conj
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.conj = conj
+
+
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
 _patch_pytorch_broadcast_arrays_numpy_contract()
@@ -333,6 +366,7 @@ _patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
 _patch_pytorch_stack_helpers_numpy_contract()
 _patch_raw_pytorch_comparison_numpy_contract()
+_patch_raw_pytorch_conj_numpy_contract()
 
 
 def get_backend_name() -> str:
