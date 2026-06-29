@@ -58,12 +58,26 @@ def _validate_non_convolved_shapes(shape1, shape2, axes):
         raise ValueError(f"incompatible shapes for in1 and in2: {shape1} and {shape2}")
 
 
+def _as_torch_compatible(value):
+    if isinstance(value, _np.ndarray) and any(stride < 0 for stride in value.strides):
+        return value.copy()
+    return value
+
+
 def _as_tensor_pair(in1, in2):
     device = next(
         (value.device for value in (in1, in2) if _torch.is_tensor(value)), None
     )
-    x = in1 if _torch.is_tensor(in1) else _torch.as_tensor(in1, device=device)
-    y = in2 if _torch.is_tensor(in2) else _torch.as_tensor(in2, device=x.device)
+    x = (
+        in1
+        if _torch.is_tensor(in1)
+        else _torch.as_tensor(_as_torch_compatible(in1), device=device)
+    )
+    y = (
+        in2
+        if _torch.is_tensor(in2)
+        else _torch.as_tensor(_as_torch_compatible(in2), device=x.device)
+    )
     y = y.to(device=x.device)
 
     dtype = _torch.promote_types(x.dtype, y.dtype)
