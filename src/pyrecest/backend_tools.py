@@ -92,6 +92,37 @@ def _patch_pytorch_diag_numpy_contract() -> None:
     pytorch_backend.diag = diag
 
 
+def _patch_pytorch_broadcast_arrays_numpy_contract() -> None:
+    """Make PyTorch broadcast_arrays accept NumPy-style array-like inputs."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    if getattr(pytorch_backend.broadcast_arrays, "_pyrecest_numpy_contract", False):
+        return
+
+    def broadcast_arrays(*arrays):
+        tensors = tuple(pytorch_backend.array(array) for array in arrays)
+        return _torch.broadcast_tensors(*tensors)
+
+    broadcast_arrays.__name__ = "broadcast_arrays"
+    broadcast_arrays.__doc__ = getattr(_torch.broadcast_tensors, "__doc__", None)
+    broadcast_arrays._pyrecest_numpy_contract = True
+    backend.broadcast_arrays = broadcast_arrays
+    pytorch_backend.broadcast_arrays = broadcast_arrays
+
+
 def _patch_pytorch_stack_helper_raw_bindings() -> None:
     """Keep raw PyTorch stack helpers aligned with the public backend facade."""
 
@@ -114,6 +145,7 @@ def _patch_pytorch_stack_helper_raw_bindings() -> None:
 
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
+_patch_pytorch_broadcast_arrays_numpy_contract()
 _patch_pytorch_stack_helper_raw_bindings()
 
 
