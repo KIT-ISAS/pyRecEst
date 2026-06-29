@@ -198,6 +198,30 @@ def _patch_pytorch_tile_facade() -> None:
     backend.tile = tile
 
 
+def _patch_pytorch_cumulative_out_facade() -> None:
+    """Make public PyTorch cumulative helpers accept NumPy's ``out`` argument."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    def _wrap_cumulative(original_func):
+        def cumulative(x, axis=None, dtype=None, out=None):
+            result = original_func(x, axis=axis, dtype=dtype)
+            if out is None:
+                return result
+            out.copy_(result)
+            return out
+
+        cumulative.__name__ = getattr(original_func, "__name__", "cumulative")
+        cumulative.__doc__ = getattr(original_func, "__doc__", None)
+        return cumulative
+
+    backend.cumsum = _wrap_cumulative(backend.cumsum)
+    backend.cumprod = _wrap_cumulative(backend.cumprod)
+
+
 def _patch_jax_std_out_facade() -> None:
     """Make public JAX ``std`` accept NumPy's ``out`` argument."""
 
@@ -231,6 +255,7 @@ def _patch_jax_std_out_facade() -> None:
 
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
+_patch_pytorch_cumulative_out_facade()
 _patch_jax_std_out_facade()
 
 from pyrecest.backend_support import (  # noqa: E402,F401
@@ -258,38 +283,8 @@ from pyrecest.exceptions import (  # noqa: E402,F401
     ShapeError,
     ValidationError,
 )
-from pyrecest.stability import (  # noqa: E402,F401
-    get_public_api_status,
-    iter_public_api_status,
-    stability,
-)
 
 try:
     __version__ = version("pyrecest")
-except PackageNotFoundError:  # pragma: no cover - source tree without install metadata
+except PackageNotFoundError:  # pragma: no cover - source tree without installed dist
     __version__ = "0+unknown"
-
-__all__ = [
-    "BackendNotSupportedError",
-    "BackendSupportError",
-    "DimensionMismatchError",
-    "EvidenceComputationMode",
-    "NumericalStabilityError",
-    "OptionalDependencyError",
-    "PyRecEstError",
-    "ShapeError",
-    "ValidationError",
-    "__version__",
-    "assert_backend",
-    "backend_support",
-    "copy",
-    "format_backend_support_markdown",
-    "get_backend_name",
-    "get_backend_support",
-    "get_public_api_status",
-    "is_backend",
-    "iter_public_api_status",
-    "stability",
-    "warn_if_backend_env_changed",
-    "resolve_evidence_computation_mode",
-]
