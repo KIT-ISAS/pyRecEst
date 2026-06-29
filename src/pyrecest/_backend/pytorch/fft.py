@@ -17,6 +17,8 @@ def _with_dim_alias(kwargs, alias, func_name):
 
     kwargs = dict(kwargs)
     alias_value = kwargs.pop(alias)
+    if alias_value is None:
+        return kwargs
     dim_value = kwargs.get("dim")
     if dim_value is not None and alias_value is not None and dim_value != alias_value:
         raise TypeError("conflicting FFT axis aliases")
