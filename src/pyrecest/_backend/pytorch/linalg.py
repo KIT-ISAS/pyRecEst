@@ -251,6 +251,9 @@ def quadratic_assignment(a, b, options=None):
 def qr(a, mode="reduced"):
     """Compute QR decomposition with NumPy-compatible mode handling."""
     a = _as_linalg_tensor(a)
+    if mode == "full":
+        # NumPy still accepts the deprecated ``full`` alias for ``reduced``.
+        mode = "reduced"
     if mode in {"reduced", "complete"}:
         return _torch.linalg.qr(a, mode=mode)
     if mode == "r":
