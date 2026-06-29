@@ -4,6 +4,65 @@ from __future__ import annotations
 
 import os
 import warnings
+from operator import index as _operator_index
+
+
+def _pytorch_scalar_tensor_index(index, torch_module):
+    """Return Python int indices for scalar integer tensors."""
+
+    if not torch_module.is_tensor(index) or index.ndim != 0:
+        return index
+    if (
+        index.dtype in {torch_module.bool, torch_module.uint8}
+        or index.dtype.is_floating_point
+        or index.dtype.is_complex
+    ):
+        return index
+    return _operator_index(index)
+
+
+def _wrap_pytorch_assignment_helper(original_assignment, torch_module):
+    """Normalize scalar tensor indices before assignment helper len() checks."""
+
+    def assignment(x, values, indices, axis=0):
+        indices = _pytorch_scalar_tensor_index(indices, torch_module)
+        return original_assignment(x, values, indices, axis=axis)
+
+    assignment.__name__ = getattr(original_assignment, "__name__", "assignment")
+    assignment.__doc__ = getattr(original_assignment, "__doc__", None)
+    return assignment
+
+
+def _patch_pytorch_assignment_scalar_tensor_indices() -> None:
+    """Make PyTorch assignment helpers accept scalar integer tensor indices."""
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    backend.assignment = _wrap_pytorch_assignment_helper(backend.assignment, _torch)
+    backend.assignment_by_sum = _wrap_pytorch_assignment_helper(
+        backend.assignment_by_sum, _torch
+    )
+    pytorch_backend.assignment = _wrap_pytorch_assignment_helper(
+        pytorch_backend.assignment, _torch
+    )
+    pytorch_backend.assignment_by_sum = _wrap_pytorch_assignment_helper(
+        pytorch_backend.assignment_by_sum, _torch
+    )
+
+
+_patch_pytorch_assignment_scalar_tensor_indices()
 
 
 def get_backend_name() -> str:
