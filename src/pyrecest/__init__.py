@@ -139,6 +139,58 @@ def _patch_pytorch_comparison_facade() -> None:
     backend.logical_or = _wrap_comparison(_torch.logical_or)
 
 
+def _patch_pytorch_clip_facade() -> None:
+    """Make public and raw PyTorch ``clip`` accept array-like inputs."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    def _clip_bound(value, *, device):
+        if value is None:
+            return None
+        if _torch.is_tensor(value):
+            return value.to(device=device)
+        return _torch.as_tensor(value, device=device)
+
+    def clip(a, a_min=None, a_max=None, out=None, *, min=None, max=None):
+        if min is not None:
+            if a_min is not None:
+                raise TypeError("clip() got both 'a_min' and 'min'")
+            a_min = min
+        if max is not None:
+            if a_max is not None:
+                raise TypeError("clip() got both 'a_max' and 'max'")
+            a_max = max
+        if a_min is None and a_max is None:
+            raise ValueError("One of max or min must be given")
+
+        x = backend.array(a)
+        result = _torch.clip(
+            x,
+            min=_clip_bound(a_min, device=x.device),
+            max=_clip_bound(a_max, device=x.device),
+        )
+        if out is not None:
+            out.copy_(result)
+            return out
+        return result
+
+    clip.__name__ = getattr(_torch.clip, "__name__", "clip")
+    clip.__doc__ = getattr(_torch.clip, "__doc__", None)
+    pytorch_backend.clip = clip
+    backend.clip = clip
+
+
 def _pytorch_tile_repetition(repetition) -> int:
     """Return one NumPy-style tile repetition as an integer."""
 
@@ -259,6 +311,7 @@ def _patch_jax_matmul_out_facade() -> None:
 
 
 _patch_pytorch_comparison_facade()
+_patch_pytorch_clip_facade()
 _patch_pytorch_tile_facade()
 _patch_jax_std_out_facade()
 _patch_jax_matmul_out_facade()
