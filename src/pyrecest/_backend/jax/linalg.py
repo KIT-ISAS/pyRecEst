@@ -79,6 +79,17 @@ def sqrtm(a, *args, **kwargs):
     return _jax_scipy_linalg.sqrtm(_as_linalg_array(a), *args, **kwargs)
 
 
+def solve_sylvester(a, b, q, *args, **kwargs):
+    """Solve ``A X + X B = Q`` using JAX arrays and JAX SciPy."""
+    return _jax_scipy_linalg.solve_sylvester(
+        _as_linalg_array(a),
+        _as_linalg_array(b),
+        _as_linalg_array(q),
+        *args,
+        **kwargs,
+    )
+
+
 def _unsupported_function(name):
     """Create an unsupported-function shim that preserves facade identity."""
 
@@ -95,7 +106,6 @@ def _unsupported_function(name):
 fractional_matrix_power = _unsupported_function("fractional_matrix_power")
 logm = _unsupported_function("logm")
 quadratic_assignment = _unsupported_function("quadratic_assignment")
-solve_sylvester = _unsupported_function("solve_sylvester")
 
 
 def is_single_matrix_pd(mat):

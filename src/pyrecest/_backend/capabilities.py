@@ -54,7 +54,6 @@ BACKEND_CAPABILITIES: Final = {
                 "fractional_matrix_power",
                 "logm",
                 "quadratic_assignment",
-                "solve_sylvester",
             ),
         },
         "bridged": {},
