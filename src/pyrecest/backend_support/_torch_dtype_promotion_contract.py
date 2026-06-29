@@ -6,6 +6,7 @@ from __future__ import annotations
 def patch_pytorch_dtype_promotion_contract() -> None:
     """Make PyTorch mixed-dtype helpers use Torch's promotion rules."""
     try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
@@ -13,6 +14,8 @@ def patch_pytorch_dtype_promotion_contract() -> None:
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.convert_to_wider_dtype = original_convert
         return
 
     def convert_to_wider_dtype(tensor_list):
@@ -34,3 +37,5 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     convert_to_wider_dtype.__doc__ = getattr(original_convert, "__doc__", None)
     convert_to_wider_dtype._pyrecest_torch_promotion_contract = True
     raw_pytorch.convert_to_wider_dtype = convert_to_wider_dtype
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.convert_to_wider_dtype = convert_to_wider_dtype
