@@ -310,6 +310,36 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_pytorch_diag_numpy_contract() -> None:
+    """Make PyTorch diag accept array-like inputs and NumPy's ``k`` keyword."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_diag = raw_pytorch.diag
+    if getattr(original_diag, "_pyrecest_numpy_contract", False):
+        return
+
+    def diag(v, k=0):
+        return torch.diag(raw_pytorch.array(v), diagonal=_operator_index(k))
+
+    diag.__name__ = getattr(original_diag, "__name__", "diag")
+    diag.__doc__ = getattr(original_diag, "__doc__", None)
+    diag._pyrecest_numpy_contract = True
+    raw_pytorch.diag = diag
+    if active_pytorch_backend:
+        backend.diag = diag
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer flatten inputs like NumPy's outer."""
     try:
@@ -347,6 +377,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_diag_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
