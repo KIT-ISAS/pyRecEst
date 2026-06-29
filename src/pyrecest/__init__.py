@@ -198,6 +198,68 @@ def _patch_pytorch_tile_facade() -> None:
     backend.tile = tile
 
 
+def _pytorch_repeat_repeats(repeats, numpy_module, torch_module, *, device):
+    """Normalize NumPy-style repeat counts for ``torch.repeat_interleave``."""
+
+    if torch_module.is_tensor(repeats):
+        if repeats.ndim == 0:
+            return _pytorch_tile_repetition(repeats.detach().cpu().item())
+        return repeats.to(device=device, dtype=torch_module.long)
+
+    repeats_array = numpy_module.asarray(repeats)
+    if repeats_array.shape == ():
+        return _pytorch_tile_repetition(repeats_array.item())
+
+    if any(stride < 0 for stride in repeats_array.strides):
+        repeats_array = repeats_array.copy()
+    return torch_module.as_tensor(repeats_array, dtype=torch_module.long, device=device)
+
+
+def _patch_pytorch_repeat_facade() -> None:
+    """Make public PyTorch ``repeat`` follow NumPy's axis contract."""
+
+    import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+
+    if getattr(backend, "__backend_name__", None) != "pytorch":
+        return
+
+    try:
+        import numpy as _np  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except (
+        ModuleNotFoundError
+    ):  # pragma: no cover - backend import fails first in practice
+        return
+
+    def repeat(a, repeats, axis=None):
+        values = backend.array(a)
+        if axis is None:
+            values = values.reshape(-1)
+            dim = 0
+        else:
+            dim = _operator_index(axis)
+            if dim < 0:
+                dim += values.ndim
+            if dim < 0 or dim >= values.ndim:
+                raise IndexError(
+                    f"axis {axis} is out of bounds for array of dimension {values.ndim}"
+                )
+
+        repeat_counts = _pytorch_repeat_repeats(
+            repeats,
+            _np,
+            _torch,
+            device=values.device,
+        )
+        return _torch.repeat_interleave(values, repeat_counts, dim=dim)
+
+    repeat.__name__ = "repeat"
+    repeat.__doc__ = getattr(_np.repeat, "__doc__", None)
+    backend.repeat = repeat
+    pytorch_backend.repeat = repeat
+
+
 def _patch_jax_std_out_facade() -> None:
     """Make public JAX ``std`` accept NumPy's ``out`` argument."""
 
@@ -260,6 +322,7 @@ def _patch_jax_matmul_out_facade() -> None:
 
 _patch_pytorch_comparison_facade()
 _patch_pytorch_tile_facade()
+_patch_pytorch_repeat_facade()
 _patch_jax_std_out_facade()
 _patch_jax_matmul_out_facade()
 
