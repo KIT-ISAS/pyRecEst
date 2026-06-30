@@ -108,9 +108,52 @@ def _patch_set_diag_arraylike_facade() -> None:
     backend.set_diag = set_diag
 
 
+def _patch_pytorch_one_hot_integer_label_facade() -> None:
+    """Make PyTorch one_hot accept all integer label tensor dtypes."""
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch may be unavailable
+        return
+
+    original_one_hot = getattr(pytorch_backend, "one_hot", None)
+    if original_one_hot is None:
+        return
+    if getattr(original_one_hot, "_pyrecest_integer_label_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.one_hot = original_one_hot
+        return
+
+    def one_hot(labels, num_classes):
+        if _torch.is_tensor(labels):
+            if (
+                labels.dtype == _torch.bool
+                or labels.dtype.is_floating_point
+                or labels.dtype.is_complex
+            ):
+                return original_one_hot(labels, _operator_index(num_classes))
+            labels = labels.to(dtype=_torch.long)
+        else:
+            labels = _torch.LongTensor(labels)
+        return _torch.nn.functional.one_hot(
+            labels,
+            _operator_index(num_classes),
+        ).type(_torch.uint8)
+
+    one_hot.__name__ = getattr(original_one_hot, "__name__", "one_hot")
+    one_hot.__doc__ = getattr(original_one_hot, "__doc__", None)
+    one_hot._pyrecest_integer_label_contract = True
+    pytorch_backend.one_hot = one_hot
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.one_hot = one_hot
+
+
 _patch_shared_numpy_copy_facade()
 _patch_shared_numpy_squeeze_facade()
 _patch_set_diag_arraylike_facade()
+_patch_pytorch_one_hot_integer_label_facade()
 
 
 def _patch_pytorch_comparison_facade() -> None:
