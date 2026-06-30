@@ -33,6 +33,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
         return
 
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_creation_shape_bool_contract(raw_pytorch, backend, torch)
 
 
 def _preferred_pytorch_device(torch_module, *values):
@@ -118,6 +119,81 @@ def _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch) -> None:
     if getattr(backend, "__backend_name__", None) == "pytorch":
         backend.logical_and = logical_and
         backend.where = where
+
+
+def _shape_contains_boolean_dimension(shape, torch_module):
+    """Return whether ``shape`` contains a boolean dimension value."""
+    try:
+        import numpy as np  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - NumPy is a core dependency
+        np = None
+
+    boolean_types = (bool,) if np is None else (bool, np.bool_)
+    if isinstance(shape, boolean_types):
+        return True
+    if torch_module.is_tensor(shape):
+        return shape.dtype == torch_module.bool
+    if np is None:
+        return False
+
+    try:
+        shape_values = np.asarray(shape, dtype=object).reshape(-1)
+    except (TypeError, ValueError, RuntimeError):
+        return False
+    return any(isinstance(one_dimension, boolean_types) for one_dimension in shape_values)
+
+
+def _validate_creation_shape_not_boolean(shape, torch_module) -> None:
+    """Reject boolean shape values before the base PyTorch creation wrapper runs."""
+    if _shape_contains_boolean_dimension(shape, torch_module):
+        raise TypeError("shape dimensions must be integers, not booleans")
+
+
+def _patch_pytorch_creation_shape_bool_contract(raw_pytorch, backend, torch) -> None:
+    """Keep PyTorch creation helpers from treating booleans as dimensions."""
+    helper_specs = (
+        ("empty", False),
+        ("zeros", False),
+        ("ones", False),
+        ("full", True),
+    )
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+    if all(
+        getattr(getattr(raw_pytorch, helper_name, None), "_pyrecest_rejects_bool_shape", False)
+        for helper_name, _ in helper_specs
+    ):
+        if active_pytorch_backend:
+            for helper_name, _ in helper_specs:
+                setattr(backend, helper_name, getattr(raw_pytorch, helper_name))
+        return
+
+    def _wrap_creation_helper(helper_name, *, has_fill_value=False):
+        original_helper = getattr(raw_pytorch, helper_name)
+        if getattr(original_helper, "_pyrecest_rejects_bool_shape", False):
+            return original_helper
+
+        if has_fill_value:
+
+            def creation_helper(shape, fill_value, *args, **kwargs):
+                _validate_creation_shape_not_boolean(shape, torch)
+                return original_helper(shape, fill_value, *args, **kwargs)
+
+        else:
+
+            def creation_helper(shape, *args, **kwargs):
+                _validate_creation_shape_not_boolean(shape, torch)
+                return original_helper(shape, *args, **kwargs)
+
+        creation_helper.__name__ = getattr(original_helper, "__name__", helper_name)
+        creation_helper.__doc__ = getattr(original_helper, "__doc__", None)
+        creation_helper._pyrecest_rejects_bool_shape = True
+        return creation_helper
+
+    for helper_name, has_fill_value in helper_specs:
+        helper = _wrap_creation_helper(helper_name, has_fill_value=has_fill_value)
+        setattr(raw_pytorch, helper_name, helper)
+        if active_pytorch_backend:
+            setattr(backend, helper_name, helper)
 
 
 __all__ = ["patch_pytorch_dtype_promotion_contract"]
