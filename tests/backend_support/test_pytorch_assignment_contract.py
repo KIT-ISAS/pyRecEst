@@ -52,6 +52,7 @@ def test_pytorch_assignment_accepts_list_and_boolean_indices():
     result = run_backend_code(
         "pytorch",
         """
+import numpy as np
 import pyrecest.backend as backend
 
 vector = backend.zeros(3)
@@ -79,6 +80,18 @@ by_mask = backend.assignment(
         [False, False, False],
     ],
 )
+numpy_mask = np.array(
+    [
+        [True, False, False],
+        [False, True, False],
+        [False, False, True],
+    ],
+    dtype=bool,
+)
+by_numpy_mask = backend.assignment(backend.zeros((3, 3)), [3.0, 4.0, 5.0], numpy_mask)
+by_numpy_mask_sum = backend.assignment_by_sum(
+    backend.ones((3, 3)), [3.0, 4.0, 5.0], numpy_mask
+)
 
 logical = backend.logical_and(backend.asarray([1, 0]), backend.asarray([2, 3]))
 
@@ -94,8 +107,49 @@ assert backend.to_numpy(by_mask).tolist() == [
     [0.0, 2.0, 0.0],
     [0.0, 0.0, 0.0],
 ]
+assert backend.to_numpy(by_numpy_mask).tolist() == [
+    [3.0, 0.0, 0.0],
+    [0.0, 4.0, 0.0],
+    [0.0, 0.0, 5.0],
+]
+assert backend.to_numpy(by_numpy_mask_sum).tolist() == [
+    [4.0, 1.0, 1.0],
+    [1.0, 5.0, 1.0],
+    [1.0, 1.0, 6.0],
+]
 assert backend.to_numpy(logical).tolist() == [True, False]
 """,
     )
 
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.backend_portable
+def test_raw_pytorch_assignment_accepts_numpy_boolean_mask_after_import():
+    if importlib.util.find_spec("torch") is None:
+        pytest.skip("PyTorch is not installed")
+
+    result = run_backend_code(
+        "numpy",
+        """
+import numpy as np
+import pyrecest  # noqa: F401  # triggers raw-backend compatibility patches
+import pyrecest._backend.pytorch as raw_pytorch_backend
+
+mask = np.array([True, False, True], dtype=bool)
+
+assigned = raw_pytorch_backend.assignment(
+    raw_pytorch_backend.zeros(3), [4.0, 5.0], mask
+)
+summed = raw_pytorch_backend.assignment_by_sum(
+    raw_pytorch_backend.ones(3), [4.0, 5.0], mask
+)
+
+assert raw_pytorch_backend.to_numpy(assigned).tolist() == [4.0, 0.0, 5.0]
+assert raw_pytorch_backend.to_numpy(summed).tolist() == [5.0, 1.0, 6.0]
+print("ok")
+""",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
