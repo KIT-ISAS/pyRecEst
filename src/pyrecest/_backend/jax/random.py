@@ -185,6 +185,31 @@ def _contains_boolean_value(value):
     return any(isinstance(item, _BOOLEAN_TYPES) for item in values)
 
 
+def _coerce_probability_values(value, name):
+    if _contains_boolean_value(value):
+        raise TypeError(f"{name} must be real numeric, not boolean")
+    try:
+        values = _np.asarray(value)
+    except (TypeError, ValueError, RuntimeError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
+    if values.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be real numeric")
+    return values.astype(_np.float64, copy=False)
+
+
+def _normalize_probability_values(values):
+    if _np.any(values < 0.0) or _np.any(~_np.isfinite(values)):
+        raise ValueError("probabilities do not sum to a positive value")
+    scale = float(values.max()) if values.size else 0.0
+    if scale <= 0.0:
+        raise ValueError("probabilities do not sum to a positive value")
+    scaled = values / scale
+    total = float(scaled.sum())
+    if not _np.isfinite(total) or total <= 0.0:
+        raise ValueError("probabilities do not sum to a positive value")
+    return _jnp.asarray(scaled / total)
+
+
 def _validate_uniform_bound(bound, name):
     if _contains_boolean_value(bound):
         raise TypeError(f"{name} must be real numeric, not boolean")
@@ -423,22 +448,10 @@ def _empty_choice_result(a, shape, axis):
 
 
 def _validate_choice_probabilities(p, population_size):
-    if _contains_boolean_value(p):
-        raise TypeError("p must be real numeric, not boolean")
-    try:
-        p = _jnp.asarray(p)
-    except (TypeError, ValueError, RuntimeError) as exc:
-        raise TypeError("p must be real numeric") from exc
-    if p.dtype.kind not in "iuf":
-        raise TypeError("p must be real numeric")
-    p = p.astype(_jnp.float32)
-    if p.ndim != 1 or p.shape[0] != population_size:
+    values = _coerce_probability_values(p, "p")
+    if values.ndim != 1 or values.shape[0] != population_size:
         raise ValueError("p must be 1-dimensional with one entry per population item")
-
-    p_sum = p.sum()
-    if bool(_jnp.any(p < 0)) or not bool(_jnp.isfinite(p_sum)) or bool(p_sum <= 0):
-        raise ValueError("probabilities do not sum to a positive value")
-    return p / p_sum
+    return _normalize_probability_values(values)
 
 
 def _choice(state, a, size=None, replace=True, p=None, shuffle=True, *args, **kwargs):
@@ -535,15 +548,12 @@ def multivariate_normal(mean, cov, size=None, *args, **kwargs):
 
 
 def _validate_multinomial_pvals(pvals):
-    if _contains_boolean_value(pvals):
-        raise TypeError("pvals must be real numeric, not boolean")
-    try:
-        pvals = _jnp.asarray(pvals)
-    except (TypeError, ValueError, RuntimeError) as exc:
-        raise TypeError("pvals must be real numeric") from exc
-    if pvals.dtype.kind not in "iuf":
-        raise TypeError("pvals must be real numeric")
-    return pvals.astype(_jnp.float32)
+    values = _coerce_probability_values(pvals, "pvals")
+    if values.ndim != 1:
+        raise ValueError("pvals must be 1-dimensional")
+    if values.shape[0] == 0:
+        raise ValueError("pvals must contain at least one probability")
+    return _normalize_probability_values(values)
 
 
 def _multinomial(state, n, pvals, size=None):
@@ -556,15 +566,6 @@ def _multinomial(state, n, pvals, size=None):
     state, key = jax.random.split(state)
     sample_shape = _shape_from_size(size)
     pvals = _validate_multinomial_pvals(pvals)
-    if pvals.ndim != 1:
-        raise ValueError("pvals must be 1-dimensional")
-    if pvals.shape[0] == 0:
-        raise ValueError("pvals must contain at least one probability")
-
-    p_sum = pvals.sum()
-    if bool(_jnp.any(pvals < 0)) or not bool(_jnp.isfinite(p_sum)) or bool(p_sum <= 0):
-        raise ValueError("probabilities do not sum to a positive value")
-    pvals = pvals / p_sum
 
     samples = jax.random.categorical(key, _jnp.log(pvals), shape=(*sample_shape, n))
     counts = _jnp.sum(
