@@ -30,6 +30,8 @@ from pyrecest.backend import (
     sqrt,
 )
 
+_TEXT_TYPES = (str, bytes, bytearray)
+
 
 def symmetrize(matrix):
     """Return the symmetric part of ``matrix``."""
@@ -75,7 +77,7 @@ def _coerce_bool_flag(value, name: str) -> bool:
 
 def _coerce_nonnegative_finite_scalar(value, name: str) -> float:
     message = f"{name} must be a finite non-negative scalar"
-    if isinstance(value, bool):
+    if isinstance(value, (bool, *_TEXT_TYPES)):
         raise ValueError(message)
     try:
         value_array = asarray(value)
@@ -84,7 +86,7 @@ def _coerce_nonnegative_finite_scalar(value, name: str) -> float:
     if value_array.shape != ():
         raise ValueError(message)
     scalar = value_array.item()
-    if isinstance(scalar, bool):
+    if isinstance(scalar, (bool, *_TEXT_TYPES)):
         raise ValueError(message)
     try:
         scalar_float = float(scalar)
@@ -128,8 +130,8 @@ def ellipse_angle_delta(reference, theta):
     """Return the axial orientation residual ``theta - reference``.
 
     Ellipse orientations are pi-periodic: ``theta`` and ``theta + pi`` describe
-    the same physical extent.  The returned residual lies in the principal axial
-    interval ``[-pi/2, pi/2]`` up to floating-point boundary effects.
+the same physical extent.  The returned residual lies in the principal axial
+interval ``[-pi/2, pi/2]`` up to floating-point boundary effects.
     """
 
     return 0.5 * arctan2(sin(2.0 * (theta - reference)), cos(2.0 * (theta - reference)))
