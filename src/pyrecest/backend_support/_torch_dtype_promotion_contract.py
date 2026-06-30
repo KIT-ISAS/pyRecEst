@@ -10,6 +10,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     try:
         import numpy as np  # pylint: disable=import-outside-toplevel
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
         return
@@ -19,6 +20,8 @@ def patch_pytorch_dtype_promotion_contract() -> None:
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.convert_to_wider_dtype = original_convert
         return
 
     def convert_to_wider_dtype(tensor_list):
@@ -40,6 +43,8 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     convert_to_wider_dtype.__doc__ = getattr(original_convert, "__doc__", None)
     convert_to_wider_dtype._pyrecest_torch_promotion_contract = True
     raw_pytorch.convert_to_wider_dtype = convert_to_wider_dtype
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.convert_to_wider_dtype = convert_to_wider_dtype
 
 
 def _patch_pytorch_diff_numpy_contract(raw_pytorch, torch) -> None:
