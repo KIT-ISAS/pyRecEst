@@ -15,6 +15,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
         return
 
+    _patch_pytorch_assignment_numpy_boolean_contract(raw_pytorch, torch, np)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
 
@@ -45,6 +46,42 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     raw_pytorch.convert_to_wider_dtype = convert_to_wider_dtype
     if getattr(backend, "__backend_name__", None) == "pytorch":
         backend.convert_to_wider_dtype = convert_to_wider_dtype
+
+
+def _normalize_numpy_boolean_index(indices, torch, np):
+    """Convert NumPy boolean indices before PyTorch assignment normalization."""
+    if isinstance(indices, np.bool_):
+        return bool(indices)
+    if isinstance(indices, np.ndarray) and indices.dtype == np.bool_:
+        return torch.as_tensor(indices, dtype=torch.bool)
+    return indices
+
+
+def _patch_pytorch_assignment_numpy_boolean_contract(raw_pytorch, torch, np) -> None:
+    """Make PyTorch assignment helpers treat NumPy boolean arrays as masks."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    def _wrap_assignment(original_assignment):
+        if getattr(original_assignment, "_pyrecest_numpy_boolean_index_contract", False):
+            return original_assignment
+
+        def assignment(x, values, indices, axis=0):
+            indices = _normalize_numpy_boolean_index(indices, torch, np)
+            return original_assignment(x, values, indices, axis=axis)
+
+        assignment.__name__ = getattr(original_assignment, "__name__", "assignment")
+        assignment.__doc__ = getattr(original_assignment, "__doc__", None)
+        assignment._pyrecest_numpy_boolean_index_contract = True
+        return assignment
+
+    raw_pytorch.assignment = _wrap_assignment(raw_pytorch.assignment)
+    raw_pytorch.assignment_by_sum = _wrap_assignment(raw_pytorch.assignment_by_sum)
+    if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.assignment = raw_pytorch.assignment
+        backend.assignment_by_sum = raw_pytorch.assignment_by_sum
 
 
 def _patch_pytorch_diff_numpy_contract(raw_pytorch, torch) -> None:
