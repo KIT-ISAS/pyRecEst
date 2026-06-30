@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+from operator import index as _operator_index
 from pathlib import Path
 
 
@@ -33,6 +34,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
         return
 
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_diagonal_axis_contract(raw_pytorch, backend, torch)
 
 
 def _preferred_pytorch_device(torch_module, *values):
@@ -55,6 +57,51 @@ def _as_pytorch_tensor_on_device(value, torch_module, *, device, dtype=None):
             value = value.to(dtype=dtype)
         return value
     return torch_module.as_tensor(value, dtype=dtype, device=device)
+
+
+def _normalize_pytorch_diagonal_integer(value, torch_module, name):
+    """Return a NumPy-style scalar integer argument for ``diagonal``."""
+    if torch_module.is_tensor(value):
+        if (
+            value.ndim != 0
+            or value.dtype == torch_module.bool
+            or value.dtype.is_floating_point
+            or value.dtype.is_complex
+        ):
+            raise TypeError(f"{name} must be an integer")
+        return _operator_index(value.item())
+    if isinstance(value, bool):
+        raise TypeError(f"{name} must be an integer")
+    try:
+        return _operator_index(value)
+    except TypeError as exc:
+        raise TypeError(f"{name} must be an integer") from exc
+
+
+def _patch_pytorch_diagonal_axis_contract(raw_pytorch, backend, torch) -> None:
+    """Make PyTorch diagonal accept NumPy-style scalar integer indices."""
+    original_diagonal = getattr(raw_pytorch, "diagonal", None)
+    if original_diagonal is None:
+        return
+    if getattr(original_diagonal, "_pyrecest_axis_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.diagonal = original_diagonal
+        return
+
+    def diagonal(x, offset=0, axis1=0, axis2=1):
+        return original_diagonal(
+            x,
+            offset=_normalize_pytorch_diagonal_integer(offset, torch, "offset"),
+            axis1=_normalize_pytorch_diagonal_integer(axis1, torch, "axis1"),
+            axis2=_normalize_pytorch_diagonal_integer(axis2, torch, "axis2"),
+        )
+
+    diagonal.__name__ = getattr(original_diagonal, "__name__", "diagonal")
+    diagonal.__doc__ = getattr(original_diagonal, "__doc__", None)
+    diagonal._pyrecest_axis_contract = True
+    raw_pytorch.diagonal = diagonal
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.diagonal = diagonal
 
 
 def _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch) -> None:
