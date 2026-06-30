@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import importlib.util
+from operator import index as _operator_index
 from pathlib import Path
+
+_AXIS_TYPE_ERROR = "axis must be an integer or sequence of integers"
 
 
 def _load_base_contract_module():
@@ -23,9 +26,10 @@ _BASE_CONTRACT = _load_base_contract_module()
 
 
 def patch_pytorch_dtype_promotion_contract() -> None:
-    """Apply the base PyTorch contract patch plus logical-helper device fixes."""
+    """Apply the base PyTorch contract patch plus backend helper fixes."""
     _BASE_CONTRACT.patch_pytorch_dtype_promotion_contract()
     try:
+        import numpy as np  # pylint: disable=import-outside-toplevel
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
@@ -33,6 +37,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
         return
 
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_flip_numpy_axis_contract(raw_pytorch, backend, torch, np)
 
 
 def _preferred_pytorch_device(torch_module, *values):
@@ -118,6 +123,52 @@ def _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch) -> None:
     if getattr(backend, "__backend_name__", None) == "pytorch":
         backend.logical_and = logical_and
         backend.where = where
+
+
+def _flip_axis_index(axis, numpy_module) -> int:
+    """Return one PyTorch ``flip`` axis as a plain Python integer."""
+    if isinstance(axis, (bool, numpy_module.bool_)):
+        raise TypeError(_AXIS_TYPE_ERROR)
+    try:
+        return _operator_index(axis)
+    except TypeError as exc:
+        raise TypeError(_AXIS_TYPE_ERROR) from exc
+
+
+def _normalize_flip_axes(axis, ndim, numpy_module, torch_module) -> tuple[int, ...]:
+    """Return NumPy-style ``flip`` axes as a tuple of Python integers."""
+    if axis is None:
+        return tuple(range(ndim))
+    if torch_module.is_tensor(axis):
+        axis = axis.detach().cpu().numpy()
+
+    axis_array = numpy_module.asarray(axis)
+    if axis_array.shape == ():
+        return (_flip_axis_index(axis_array.item(), numpy_module),)
+    if axis_array.ndim != 1:
+        raise TypeError(_AXIS_TYPE_ERROR)
+    return tuple(_flip_axis_index(one_axis, numpy_module) for one_axis in axis_array.tolist())
+
+
+def _patch_pytorch_flip_numpy_axis_contract(raw_pytorch, backend, torch, numpy_module) -> None:
+    """Make PyTorch ``flip`` accept NumPy scalar/array axes."""
+    original_flip = raw_pytorch.flip
+    if getattr(original_flip, "_pyrecest_numpy_axis_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.flip = original_flip
+        return
+
+    def flip(x, axis):
+        values = raw_pytorch.array(x)
+        axes = _normalize_flip_axes(axis, values.ndim, numpy_module, torch)
+        return torch.flip(values, dims=axes)
+
+    flip.__name__ = getattr(original_flip, "__name__", "flip")
+    flip.__doc__ = getattr(original_flip, "__doc__", None)
+    flip._pyrecest_numpy_axis_contract = True
+    raw_pytorch.flip = flip
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.flip = flip
 
 
 __all__ = ["patch_pytorch_dtype_promotion_contract"]
