@@ -12,11 +12,15 @@ def patch_pytorch_dtype_promotion_contract() -> None:
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
+        from pyrecest._backend.pytorch._common import (  # pylint: disable=import-outside-toplevel
+            _normalize_dtype,
+        )
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
         return
 
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
+    _patch_pytorch_creation_numpy_contract(raw_pytorch, torch, np, _normalize_dtype)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -105,6 +109,88 @@ def _patch_pytorch_diff_numpy_contract(raw_pytorch, torch) -> None:
     raw_pytorch.diff = diff
     if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
         backend.diff = diff
+
+
+def _normalize_creation_shape(shape, torch, np):
+    """Return a tuple of Python integers for NumPy-style shape inputs."""
+    if torch.is_tensor(shape):
+        shape = shape.detach().cpu().numpy()
+    shape_array = np.asarray(shape)
+    if shape_array.shape == ():
+        normalized_shape = (_operator_index(shape_array.item()),)
+    else:
+        normalized_shape = tuple(
+            _operator_index(one_dimension)
+            for one_dimension in shape_array.tolist()
+        )
+    if any(one_dimension < 0 for one_dimension in normalized_shape):
+        raise ValueError("negative dimensions are not allowed")
+    return normalized_shape
+
+
+def _patch_pytorch_creation_numpy_contract(
+    raw_pytorch,
+    torch,
+    np,
+    normalize_dtype,
+) -> None:
+    """Make raw/public PyTorch creation helpers accept NumPy shapes and dtypes."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    active_pytorch_backend = (
+        backend is not None and getattr(backend, "__backend_name__", None) == "pytorch"
+    )
+
+    def _wrap_creation_helper(helper_name, torch_helper, *, has_fill_value=False):
+        original_helper = getattr(raw_pytorch, helper_name)
+        if getattr(original_helper, "_pyrecest_numpy_contract", False):
+            if active_pytorch_backend:
+                setattr(backend, helper_name, original_helper)
+            return original_helper
+
+        if has_fill_value:
+
+            def creation_helper(shape, fill_value, dtype=None, *args, **kwargs):
+                return torch_helper(
+                    _normalize_creation_shape(shape, torch, np),
+                    fill_value,
+                    *args,
+                    dtype=normalize_dtype(dtype),
+                    **kwargs,
+                )
+
+        else:
+
+            def creation_helper(shape, dtype=None, *args, **kwargs):
+                return torch_helper(
+                    _normalize_creation_shape(shape, torch, np),
+                    *args,
+                    dtype=normalize_dtype(dtype),
+                    **kwargs,
+                )
+
+        creation_helper.__name__ = getattr(original_helper, "__name__", helper_name)
+        creation_helper.__doc__ = getattr(original_helper, "__doc__", None)
+        creation_helper._pyrecest_numpy_contract = True
+        return creation_helper
+
+    for helper_name, torch_helper, has_fill_value in (
+        ("empty", torch.empty, False),
+        ("zeros", torch.zeros, False),
+        ("ones", torch.ones, False),
+        ("full", torch.full, True),
+    ):
+        helper = _wrap_creation_helper(
+            helper_name,
+            torch_helper,
+            has_fill_value=has_fill_value,
+        )
+        setattr(raw_pytorch, helper_name, helper)
+        if active_pytorch_backend:
+            setattr(backend, helper_name, helper)
 
 
 def _normalize_pad_pairs(pad_width, ndim, np):
