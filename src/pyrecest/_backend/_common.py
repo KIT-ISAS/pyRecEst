@@ -5,7 +5,7 @@ import os as _os
 import numpy as _np
 from numpy import pi
 
-_AXIS_FLAG_TYPE = type(True)
+_AXIS_FLAG_TYPES = (bool, _np.bool_)
 
 
 def comb(n, k):
@@ -35,7 +35,7 @@ def outer(a, b):
 def _normalize_size_axis(axis):
     if axis is None:
         return None
-    if isinstance(axis, _AXIS_FLAG_TYPE):
+    if isinstance(axis, _AXIS_FLAG_TYPES):
         raise TypeError("an integer is required")
     try:
         return _operator.index(axis)
