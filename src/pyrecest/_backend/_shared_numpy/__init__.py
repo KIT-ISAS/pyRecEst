@@ -89,6 +89,18 @@ def _normalize_squeeze_axes(axis):
     return tuple(axis)
 
 
+def _axis_out_of_bounds_error(axis, ndim):
+    axis_error = getattr(getattr(_np, "exceptions", None), "AxisError", None)
+    if axis_error is None:
+        axis_error = getattr(_np, "AxisError", None)
+    if axis_error is None:
+        return ValueError(f"axis {axis} is out of bounds for array of dimension {ndim}")
+    try:
+        return axis_error(axis, ndim=ndim)
+    except TypeError:  # pragma: no cover - compatibility with older NumPy APIs
+        return axis_error(axis, ndim)
+
+
 def squeeze(x, axis=None):
     x = _np.asarray(x)
     if axis is None:
@@ -98,9 +110,14 @@ def squeeze(x, axis=None):
     if not axes:
         return x
 
-    normalized_axes = tuple(
-        one_axis + x.ndim if one_axis < 0 else one_axis for one_axis in axes
-    )
+    normalized_axes = []
+    for one_axis in axes:
+        normalized_axis = one_axis + x.ndim if one_axis < 0 else one_axis
+        if normalized_axis < 0 or normalized_axis >= x.ndim:
+            raise _axis_out_of_bounds_error(one_axis, x.ndim)
+        normalized_axes.append(normalized_axis)
+    normalized_axes = tuple(normalized_axes)
+
     if len(set(normalized_axes)) != len(normalized_axes):
         raise ValueError("duplicate value in 'axis'")
     if any(x.shape[one_axis] != 1 for one_axis in normalized_axes):
