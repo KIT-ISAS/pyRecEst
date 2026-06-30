@@ -326,6 +326,46 @@ def _patch_raw_pytorch_comparison_numpy_contract() -> None:
             setattr(backend, helper_name, helper)
 
 
+def _patch_raw_pytorch_isclose_equal_nan_contract() -> None:
+    """Make PyTorch isclose accept NumPy's ``equal_nan`` keyword."""
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend may be unavailable
+        return
+
+    def isclose(
+        x,
+        y,
+        rtol=pytorch_backend.rtol,
+        atol=pytorch_backend.atol,
+        equal_nan=False,
+    ):
+        device = next(
+            (value.device for value in (x, y) if _torch.is_tensor(value)),
+            None,
+        )
+        if not _torch.is_tensor(x):
+            x = _torch.as_tensor(x, device=device)
+        elif device is not None and x.device != device:
+            x = x.to(device=device)
+        if not _torch.is_tensor(y):
+            y = _torch.as_tensor(y, device=device)
+        elif device is not None and y.device != device:
+            y = y.to(device=device)
+        x, y = pytorch_backend.convert_to_wider_dtype([x, y])
+        return _torch.isclose(x, y, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+    isclose.__name__ = getattr(pytorch_backend.isclose, "__name__", "isclose")
+    isclose.__doc__ = getattr(pytorch_backend.isclose, "__doc__", None)
+    isclose._pyrecest_equal_nan_contract = True
+    pytorch_backend.isclose = isclose
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.isclose = isclose
+
+
 _patch_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_diag_numpy_contract()
 _patch_pytorch_broadcast_arrays_numpy_contract()
@@ -333,6 +373,7 @@ _patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
 _patch_pytorch_stack_helpers_numpy_contract()
 _patch_raw_pytorch_comparison_numpy_contract()
+_patch_raw_pytorch_isclose_equal_nan_contract()
 
 
 def get_backend_name() -> str:
