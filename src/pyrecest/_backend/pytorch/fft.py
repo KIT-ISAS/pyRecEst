@@ -71,5 +71,15 @@ ifftshift = _wrap_arraylike_fft(
     dim_alias="axes",
     empty_dim_is_noop=True,
 )
-fftn = _wrap_arraylike_fft(_torch.fft.fftn, func_name="fftn", dim_alias="axes")
-ifftn = _wrap_arraylike_fft(_torch.fft.ifftn, func_name="ifftn", dim_alias="axes")
+fftn = _wrap_arraylike_fft(
+    _torch.fft.fftn,
+    func_name="fftn",
+    dim_alias="axes",
+    empty_dim_is_noop=True,
+)
+ifftn = _wrap_arraylike_fft(
+    _torch.fft.ifftn,
+    func_name="ifftn",
+    dim_alias="axes",
+    empty_dim_is_noop=True,
+)
