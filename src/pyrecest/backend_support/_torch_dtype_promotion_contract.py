@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from operator import index as _operator_index
 
+from ._torch_reduction_axis_contract import (
+    patch_pytorch_reduction_axis_contract as _patch_pytorch_reduction_axis_contract,
+)
+
 
 def patch_pytorch_dtype_promotion_contract() -> None:
     """Make PyTorch backend helpers use PyRecEst compatibility contracts."""
@@ -18,6 +22,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
+    _patch_pytorch_reduction_axis_contract(raw_pytorch, torch, np)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
