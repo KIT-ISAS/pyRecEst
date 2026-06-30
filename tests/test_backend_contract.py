@@ -101,6 +101,16 @@ class BackendContractTest(unittest.TestCase):
             to_numpy(expanded), np.expand_dims(to_numpy(values), axis=(0, 2))
         )
 
+    def test_expand_dims_accepts_numpy_scalar_axis(self):
+        values = array([1.0, 2.0, 3.0])
+
+        expanded = backend.expand_dims(values, axis=np.array(0))
+
+        self.assertEqual(tuple(shape(expanded)), (1, 3))
+        npt.assert_allclose(
+            to_numpy(expanded), np.expand_dims(to_numpy(values), axis=np.array(0))
+        )
+
     def test_meshgrid_uses_numpy_default_xy_indexing(self):
         first, second = backend.meshgrid(array([1, 2]), array([3, 4]))
 
