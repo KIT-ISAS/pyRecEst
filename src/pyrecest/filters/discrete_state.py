@@ -234,7 +234,30 @@ def sparse_gaussian_transition_matrix(
         destination rows receive zero probability.
     """
 
-    states = np.asarray(state_vectors, dtype=float)
+    try:
+        raw_states = np.asarray(state_vectors)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("state_vectors must contain real numeric values") from exc
+    if raw_states.dtype.kind in {"b", "c", "S", "U", "M", "m"}:
+        raise ValueError("state_vectors must contain real numeric values")
+    if raw_states.dtype == object:
+        rejected_types = (
+            bool,
+            np.bool_,
+            str,
+            bytes,
+            bytearray,
+            np.str_,
+            np.bytes_,
+            complex,
+            np.complexfloating,
+        )
+        if any(isinstance(value, rejected_types) for value in raw_states.ravel()):
+            raise ValueError("state_vectors must contain real numeric values")
+    try:
+        states = raw_states.astype(float, copy=False)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("state_vectors must contain real numeric values") from exc
     if states.ndim == 1:
         states = states[:, None]
     elif states.ndim != 2:
@@ -244,6 +267,10 @@ def sparse_gaussian_transition_matrix(
     n_states = states.shape[0]
     if n_states == 0:
         raise ValueError("state_vectors must contain at least one state")
+    if states.shape[1] == 0:
+        raise ValueError("state_vectors must contain at least one coordinate per state")
+    if np.any(~np.isfinite(states)):
+        raise ValueError("state_vectors must contain only finite values")
 
     sigma = float(sigma)
     if not np.isfinite(sigma) or sigma <= 0.0:
