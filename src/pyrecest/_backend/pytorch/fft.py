@@ -11,6 +11,16 @@ def _as_fft_tensor(value):
     return value if _torch.is_tensor(value) else _array(value)
 
 
+def _is_empty_dim(dim):
+    """Return whether a NumPy-style FFT axis tuple/list selects no axes."""
+    if dim is None or isinstance(dim, (str, bytes)):
+        return False
+    try:
+        return len(tuple(dim)) == 0
+    except TypeError:
+        return False
+
+
 def _with_dim_alias(kwargs, alias, func_name):
     if alias not in kwargs:
         return kwargs
@@ -28,12 +38,21 @@ def _with_dim_alias(kwargs, alias, func_name):
     return kwargs
 
 
-def _wrap_arraylike_fft(torch_func, *, func_name, dim_alias=None):
+def _wrap_arraylike_fft(
+    torch_func,
+    *,
+    func_name,
+    dim_alias=None,
+    empty_dim_is_noop=False,
+):
     @_wraps(torch_func)
     def fft_func(value, *args, **kwargs):
         if dim_alias is not None:
             kwargs = _with_dim_alias(kwargs, dim_alias, func_name)
-        return torch_func(_as_fft_tensor(value), *args, **kwargs)
+        value = _as_fft_tensor(value)
+        if empty_dim_is_noop and _is_empty_dim(kwargs.get("dim")):
+            return value
+        return torch_func(value, *args, **kwargs)
 
     return fft_func
 
@@ -41,10 +60,16 @@ def _wrap_arraylike_fft(torch_func, *, func_name, dim_alias=None):
 rfft = _wrap_arraylike_fft(_torch.fft.rfft, func_name="rfft", dim_alias="axis")
 irfft = _wrap_arraylike_fft(_torch.fft.irfft, func_name="irfft", dim_alias="axis")
 fftshift = _wrap_arraylike_fft(
-    _torch.fft.fftshift, func_name="fftshift", dim_alias="axes"
+    _torch.fft.fftshift,
+    func_name="fftshift",
+    dim_alias="axes",
+    empty_dim_is_noop=True,
 )
 ifftshift = _wrap_arraylike_fft(
-    _torch.fft.ifftshift, func_name="ifftshift", dim_alias="axes"
+    _torch.fft.ifftshift,
+    func_name="ifftshift",
+    dim_alias="axes",
+    empty_dim_is_noop=True,
 )
 fftn = _wrap_arraylike_fft(_torch.fft.fftn, func_name="fftn", dim_alias="axes")
 ifftn = _wrap_arraylike_fft(_torch.fft.ifftn, func_name="ifftn", dim_alias="axes")
