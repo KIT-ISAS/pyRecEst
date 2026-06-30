@@ -176,8 +176,7 @@ def _patch_pytorch_special_numpy_contract() -> None:
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
 
-    if getattr(backend, "__backend_name__", None) != "pytorch":
-        return
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
         import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
@@ -193,20 +192,51 @@ def _patch_pytorch_special_numpy_contract() -> None:
             return out
         return result
 
+    def _special_input(a):
+        values = pytorch_backend.array(a)
+        if not pytorch_backend.is_floating(values) and not pytorch_backend.is_complex(
+            values
+        ):
+            values = pytorch_backend.cast(
+                values, dtype=pytorch_backend.get_default_dtype()
+            )
+        return values
+
+    def _gamma_from_lgamma(values):
+        result = _torch.exp(_torch.special.gammaln(values))
+        if pytorch_backend.is_complex(values):
+            return result
+
+        sign = _torch.ones_like(result)
+        negative = values < 0
+        negative_zero = (values == 0) & _torch.signbit(values)
+        nonpositive_integer_pole = negative & (values == _torch.floor(values))
+        reflected_sign = _torch.sign(_torch.sin(_torch.pi * values)).to(
+            dtype=result.dtype
+        )
+        sign = _torch.where(negative, reflected_sign, sign)
+        sign = _torch.where(negative_zero, -_torch.ones_like(sign), sign)
+        result = result * sign
+        return _torch.where(
+            nonpositive_integer_pole,
+            _torch.full_like(result, float("nan")),
+            result,
+        )
+
     def erf(a, out=None):
-        result = _torch.erf(pytorch_backend.array(a))
+        result = _torch.erf(_special_input(a))
         return _return_or_store_out(result, out)
 
     def gammaln(a, out=None):
-        result = _torch.special.gammaln(pytorch_backend.array(a))
+        result = _torch.special.gammaln(_special_input(a))
         return _return_or_store_out(result, out)
 
     def gamma(a, out=None):
-        result = _torch.exp(gammaln(a))
+        result = _gamma_from_lgamma(_special_input(a))
         return _return_or_store_out(result, out)
 
     def polygamma(n, a, out=None):
-        result = _torch.polygamma(n, pytorch_backend.array(a))
+        result = _torch.polygamma(n, _special_input(a))
         return _return_or_store_out(result, out)
 
     for name, helper, target in (
@@ -218,8 +248,9 @@ def _patch_pytorch_special_numpy_contract() -> None:
         helper.__name__ = name
         helper.__doc__ = getattr(target, "__doc__", None)
         helper._pyrecest_numpy_contract = True
-        setattr(backend, name, helper)
         setattr(pytorch_backend, name, helper)
+        if active_pytorch_backend:
+            setattr(backend, name, helper)
 
     pytorch_backend._gammaln = gammaln  # pylint: disable=protected-access
 
