@@ -11,6 +11,13 @@ def test_pytorch_as_dtype_accepts_dtype_like_aliases():
 
     original_dtype = backend.get_default_dtype()
     try:
+        assert backend.as_dtype(torch.bool) == torch.bool
+        assert backend.as_dtype(torch.uint8) == torch.uint8
+        assert backend.as_dtype(torch.int64) == torch.int64
+        assert backend.as_dtype(np.bool_) == torch.bool
+        assert backend.as_dtype(np.int64) == torch.int64
+        assert backend.as_dtype("int32") == torch.int32
+        assert backend.as_dtype("torch.uint8") == torch.uint8
         assert backend.as_dtype(torch.float64) == torch.float64
         assert backend.as_dtype(np.float64) == torch.float64
         assert backend.as_dtype(np.dtype("complex128")) == torch.complex128
