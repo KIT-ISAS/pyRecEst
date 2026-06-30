@@ -17,6 +17,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
 
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
+    _patch_pytorch_min_reduction_contract(raw_pytorch, backend, torch)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -45,6 +46,68 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     raw_pytorch.convert_to_wider_dtype = convert_to_wider_dtype
     if getattr(backend, "__backend_name__", None) == "pytorch":
         backend.convert_to_wider_dtype = convert_to_wider_dtype
+
+
+def _normalize_reduction_axes(axis, ndim):
+    """Return normalized NumPy-style reduction axes."""
+    try:
+        axes = (_operator_index(axis),)
+    except TypeError:
+        axes = tuple(_operator_index(one_axis) for one_axis in axis)
+
+    normalized_axes = tuple(
+        one_axis + ndim if one_axis < 0 else one_axis for one_axis in axes
+    )
+    if len(set(normalized_axes)) != len(normalized_axes):
+        raise ValueError("duplicate value in 'axis'")
+    for original_axis, normalized_axis in zip(axes, normalized_axes):
+        if normalized_axis < 0 or normalized_axis >= ndim:
+            raise IndexError(
+                f"axis {original_axis} is out of bounds for array of dimension {ndim}"
+            )
+    return normalized_axes
+
+
+def _return_or_store_out(result, out, raw_pytorch):
+    if out is None:
+        return result
+    copy_ = getattr(out, "copy_", None)
+    if copy_ is not None:
+        copy_(result)
+        return out
+    out[...] = raw_pytorch.to_numpy(result)
+    return out
+
+
+def _patch_pytorch_min_reduction_contract(raw_pytorch, backend, torch) -> None:
+    """Make raw/public PyTorch min expose the NumPy-style reduction contract."""
+    original_min = getattr(raw_pytorch, "min", None)
+    if getattr(original_min, "_pyrecest_numpy_contract", False):
+        return
+
+    def min(a, axis=None, out=None, keepdims=False):  # pylint: disable=redefined-builtin
+        values = raw_pytorch.array(a)
+        if axis is None:
+            result = torch.min(values)
+            if keepdims:
+                result = result.reshape((1,) * values.ndim)
+            return _return_or_store_out(result, out, raw_pytorch)
+
+        result = values
+        for one_axis in sorted(
+            _normalize_reduction_axes(axis, values.ndim), reverse=True
+        ):
+            result = torch.min(result, dim=one_axis, keepdim=keepdims).values
+        return _return_or_store_out(result, out, raw_pytorch)
+
+    min.__name__ = getattr(original_min, "__name__", "min")
+    min.__doc__ = getattr(original_min, "__doc__", getattr(torch.min, "__doc__", None))
+    min._pyrecest_numpy_contract = True
+    raw_pytorch.min = min
+    raw_pytorch.amin = min
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.min = min
+        backend.amin = min
 
 
 def _patch_pytorch_diff_numpy_contract(raw_pytorch, torch) -> None:
