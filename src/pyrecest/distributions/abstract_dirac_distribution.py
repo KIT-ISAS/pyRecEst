@@ -1,7 +1,7 @@
 import copy
 import warnings
 from collections.abc import Callable
-from numbers import Integral
+from operator import index as _operator_index
 from typing import Union
 
 from beartype import beartype
@@ -27,6 +27,30 @@ from pyrecest.backend import (
 )
 
 from .abstract_distribution_type import AbstractDistributionType
+
+
+def _validate_positive_sample_count(n) -> int:
+    """Return ``n`` as a positive Python int after scalar-count validation."""
+    message = "n must be a positive integer."
+    if isinstance(n, bool):
+        raise ValueError(message)
+
+    ndim = getattr(n, "ndim", None)
+    if ndim not in (None, 0):
+        raise ValueError(message)
+
+    dtype = getattr(n, "dtype", None)
+    if getattr(dtype, "kind", None) == "b" or str(dtype) == "torch.bool":
+        raise ValueError(message)
+
+    try:
+        count = _operator_index(n)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+
+    if count <= 0:
+        raise ValueError(message)
+    return int(count)
 
 
 class AbstractDiracDistribution(AbstractDistributionType):
@@ -113,9 +137,8 @@ class AbstractDiracDistribution(AbstractDistributionType):
         return dist
 
     def sample(self, n: Union[int, int32, int64]):
-        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
-            raise ValueError("n must be a positive integer.")
-        indices = random.choice(arange(self.d.shape[0]), int(n), p=self.w)
+        n = _validate_positive_sample_count(n)
+        indices = random.choice(arange(self.d.shape[0]), n, p=self.w)
         samples = self.d[indices]
         return samples
 
