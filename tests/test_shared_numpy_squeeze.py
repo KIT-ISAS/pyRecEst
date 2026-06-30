@@ -1,6 +1,7 @@
 import pyrecest.backend as backend
 import pytest
 from pyrecest.backend import array
+from tests.support.backend_runner import run_backend_code
 
 
 def _to_python(value):
@@ -29,3 +30,23 @@ def test_shared_numpy_squeeze_rejects_out_of_bounds_axis(axis):
         backend.squeeze(array([[[1], [2]]]), axis=axis)
 
     assert "out of bounds" in str(exc_info.value)
+
+
+def test_raw_numpy_squeeze_rejects_out_of_bounds_axis():
+    code = """
+import pyrecest  # noqa: F401
+import pyrecest._backend.numpy as raw_numpy
+
+for axis in (3, -4):
+    try:
+        raw_numpy.squeeze([[[1], [2]]], axis=axis)
+    except Exception as exc:
+        assert "out of bounds" in str(exc), str(exc)
+    else:
+        raise AssertionError("expected an out-of-bounds axis failure")
+print("ok")
+"""
+    result = run_backend_code("numpy", code)
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
