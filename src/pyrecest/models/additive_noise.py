@@ -15,6 +15,11 @@ def _as_optional_array(value):
     return None if value is None else asarray(value)
 
 
+def _array_difference(left, right):
+    """Subtract array-like values through the active backend."""
+    return asarray(left) - asarray(right)
+
+
 def _call_or_value(obj, name):
     """Return an attribute value, calling zero-argument attributes if needed."""
     if obj is None or not hasattr(obj, name):
@@ -322,7 +327,7 @@ class AdditiveNoiseTransitionModel:
                 "The transition noise distribution does not provide pdf(x)"
             )
         return self.noise_distribution.pdf(
-            next_state - self.evaluate(state, dt=dt, **kwargs)
+            _array_difference(next_state, self.evaluate(state, dt=dt, **kwargs))
         )
 
 
@@ -406,7 +411,7 @@ class AdditiveNoiseMeasurementModel:
 
     def measurement_residual(self, measurement, state, **kwargs):
         """Return ``measurement - h(state)``."""
-        return measurement - self.measurement_function(state, **kwargs)
+        return _array_difference(measurement, self.measurement_function(state, **kwargs))
 
     def sample_measurement(self, state, n: int = 1, **kwargs):
         """Draw ``n`` samples from ``p(measurement | state)``."""
