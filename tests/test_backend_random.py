@@ -16,6 +16,24 @@ class TestBackendRandom(unittest.TestCase):
         npt.assert_array_less(-1, samples)
         npt.assert_array_less(samples, 5)
 
+    @unittest.skipIf(
+        pyrecest.backend.__backend_name__ != "pytorch",
+        "PyTorch-specific randint dtype validation",
+    )
+    def test_pytorch_randint_rejects_non_integer_result_dtypes(self):
+        invalid_dtypes = (
+            pyrecest.backend.float32,
+            pyrecest.backend.float64,
+            pyrecest.backend.complex64,
+        )
+
+        for dtype in invalid_dtypes:
+            with self.subTest(dtype=dtype):
+                with self.assertRaises(TypeError):
+                    random.randint(0, 5, size=(3,), dtype=dtype)
+                with self.assertRaises(TypeError):
+                    random.randint([0, 1, 2], [3, 4, 5], dtype=dtype)
+
     def test_uniform_allows_degenerate_interval(self):
         samples = random.uniform(2.5, 2.5, size=(4,))
 
