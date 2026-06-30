@@ -18,6 +18,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
+    _patch_pytorch_expand_dims_numpy_contract(raw_pytorch, backend, np)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -90,6 +91,38 @@ def _pytorch_repeat_counts(repeats, *, numpy_module, torch_module, device):
     if bool(torch_module.any(repeat_counts < 0)):
         raise ValueError("repeats may not contain negative values")
     return repeat_counts
+
+
+def _pytorch_expand_dims_axes(axis, numpy_module):
+    """Normalize NumPy-style expand_dims axes for PyTorch."""
+    if isinstance(axis, (int, numpy_module.integer)):
+        return (axis,)
+    axis_array = numpy_module.asarray(axis)
+    if axis_array.shape == ():
+        return (axis_array.item(),)
+    return tuple(axis)
+
+
+def _patch_pytorch_expand_dims_numpy_contract(raw_pytorch, backend, numpy_module) -> None:
+    """Make raw/public PyTorch expand_dims accept NumPy scalar axes."""
+    original_expand_dims = raw_pytorch.expand_dims
+    if getattr(original_expand_dims, "_pyrecest_numpy_scalar_axis_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.expand_dims = original_expand_dims
+        return
+
+    def expand_dims(x, axis=0):
+        return original_expand_dims(
+            x,
+            axis=_pytorch_expand_dims_axes(axis, numpy_module),
+        )
+
+    expand_dims.__name__ = getattr(original_expand_dims, "__name__", "expand_dims")
+    expand_dims.__doc__ = getattr(original_expand_dims, "__doc__", None)
+    expand_dims._pyrecest_numpy_scalar_axis_contract = True
+    raw_pytorch.expand_dims = expand_dims
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.expand_dims = expand_dims
 
 
 def _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch) -> None:
