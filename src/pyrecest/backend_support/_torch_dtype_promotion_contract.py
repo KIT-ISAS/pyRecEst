@@ -284,19 +284,19 @@ def _patch_pytorch_creation_numpy_contract(
 
 def _normalize_pad_pairs(pad_width, ndim, np):
     """Return NumPy-style per-axis pad-width pairs as Python integers."""
+    pad_width_array = np.asarray(pad_width)
+    if not np.issubdtype(pad_width_array.dtype, np.signedinteger):
+        raise TypeError("pad_width must be of integral type")
     try:
-        pad_pairs = np.broadcast_to(np.asarray(pad_width), (ndim, 2))
+        pad_pairs = np.broadcast_to(pad_width_array, (ndim, 2))
     except ValueError as exc:
         raise ValueError(f"pad_width must be broadcastable to shape ({ndim}, 2)") from exc
     if np.any(pad_pairs < 0):
         raise ValueError("index can't contain negative values")
-    try:
-        return tuple(
-            (_operator_index(before), _operator_index(after))
-            for before, after in pad_pairs.tolist()
-        )
-    except TypeError as exc:
-        raise TypeError("pad_width must be of integral type") from exc
+    return tuple(
+        (_operator_index(before), _operator_index(after))
+        for before, after in pad_pairs.tolist()
+    )
 
 
 def _normalize_constant_value_pairs(constant_values, ndim, np):
@@ -355,6 +355,7 @@ def _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np) -> None:
     def pad(a, pad_width, mode="constant", constant_values=0.0):
         values = raw_pytorch.array(a)
         if mode != "constant":
+            _normalize_pad_pairs(pad_width, values.ndim, np)
             return original_pad(
                 values,
                 pad_width,
