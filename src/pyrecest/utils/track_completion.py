@@ -10,6 +10,7 @@ path enumeration, duplicate-observation checks, and path bookkeeping.
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from typing import Any, Generic, Literal, TypeAlias, TypeVar
@@ -423,8 +424,8 @@ def _normalize_candidate_observation(value: Any) -> int:
         observation = int(scalar)
     else:
         try:
-            observation = int(scalar)
-        except (TypeError, ValueError, OverflowError) as exc:
+            observation = operator.index(scalar)
+        except TypeError as exc:
             raise ValueError(
                 "candidate observations must be non-negative integers"
             ) from exc
