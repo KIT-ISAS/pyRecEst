@@ -1,4 +1,4 @@
-"""PyTorch backend logical-helper compatibility patch."""
+"""PyTorch backend compatibility patch."""
 
 from __future__ import annotations
 
@@ -147,10 +147,17 @@ def _normalize_flip_axes(axis, ndim, numpy_module, torch_module) -> tuple[int, .
         return (_flip_axis_index(axis_array.item(), numpy_module),)
     if axis_array.ndim != 1:
         raise TypeError(_AXIS_TYPE_ERROR)
-    return tuple(_flip_axis_index(one_axis, numpy_module) for one_axis in axis_array.tolist())
+    return tuple(
+        _flip_axis_index(one_axis, numpy_module) for one_axis in axis_array.tolist()
+    )
 
 
-def _patch_pytorch_flip_numpy_axis_contract(raw_pytorch, backend, torch, numpy_module) -> None:
+def _patch_pytorch_flip_numpy_axis_contract(
+    raw_pytorch,
+    backend,
+    torch,
+    numpy_module,
+) -> None:
     """Make PyTorch ``flip`` accept NumPy scalar/array axes."""
     original_flip = raw_pytorch.flip
     if getattr(original_flip, "_pyrecest_numpy_axis_contract", False):
