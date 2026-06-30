@@ -1,5 +1,7 @@
 import numpy as np
 
+from pyrecest._backend import _common
 
-def test_placeholder_axis_scalar_array():
-    assert np.array(0).shape == ()
+
+def test_normalize_reduction_axes_accepts_scalar_array_axis():
+    assert _common._normalize_reduction_axes(np.asarray(0), 2) == (0,)
