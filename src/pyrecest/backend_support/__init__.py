@@ -73,7 +73,6 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
-
     active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
@@ -83,7 +82,6 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_dot = raw_pytorch.dot
     if getattr(original_dot, "_pyrecest_numpy_contract", False):
         return
@@ -119,7 +117,6 @@ def _patch_pytorch_outer_numpy_contract() -> None:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
-
     active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
@@ -129,7 +126,6 @@ def _patch_pytorch_outer_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_outer = raw_pytorch.outer
     if getattr(original_outer, "_pyrecest_numpy_contract", False):
         return
@@ -196,7 +192,6 @@ def _patch_pytorch_tile_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_tile = raw_pytorch.tile
     if getattr(original_tile, "_pyrecest_numpy_contract", False):
         return
@@ -312,6 +307,57 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _pytorch_broadcast_shape(shape, numpy_module, torch_module) -> tuple[int, ...]:
+    """Normalize NumPy-style broadcast shapes for ``torch.Tensor.expand``."""
+
+    if torch_module.is_tensor(shape):
+        shape = shape.detach().cpu().numpy()
+    shape_array = numpy_module.asarray(shape)
+    if shape_array.shape == ():
+        broadcast_shape = (_operator_index(shape_array.item()),)
+    else:
+        broadcast_shape = tuple(
+            _operator_index(one_dimension)
+            for one_dimension in shape_array.tolist()
+        )
+    if any(one_dimension < 0 for one_dimension in broadcast_shape):
+        raise ValueError("all elements of broadcast shape must be non-negative")
+    return broadcast_shape
+
+
+def _patch_pytorch_broadcast_to_numpy_contract() -> None:
+    """Make PyTorch broadcast_to normalize shapes like NumPy."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import numpy as np  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    original_broadcast_to = raw_pytorch.broadcast_to
+    if getattr(original_broadcast_to, "_pyrecest_numpy_contract", False):
+        return
+
+    def broadcast_to(x, shape):
+        x = raw_pytorch.array(x)
+        result = x.expand(_pytorch_broadcast_shape(shape, np, torch))
+        return result
+
+    broadcast_to.__name__ = getattr(original_broadcast_to, "__name__", "broadcast_to")
+    broadcast_to.__doc__ = getattr(original_broadcast_to, "__doc__", None)
+    broadcast_to._pyrecest_numpy_contract = True
+    raw_pytorch.broadcast_to = broadcast_to
+    if active_pytorch_backend:
+        backend.broadcast_to = broadcast_to
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer pair leading dimensions like the backend contract."""
     try:
@@ -353,6 +399,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_broadcast_to_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
