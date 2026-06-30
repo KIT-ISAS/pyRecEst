@@ -18,6 +18,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
+    _patch_pytorch_array_from_sparse_assignment_contract(raw_pytorch, torch)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -283,3 +284,74 @@ def _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np) -> None:
     raw_pytorch.pad = pad
     if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
         backend.pad = pad
+
+
+def _normalize_sparse_target_shape(target_shape) -> tuple[int, ...]:
+    """Return a plain tuple shape for dense sparse-reconstruction output."""
+    return tuple(_operator_index(size) for size in target_shape)
+
+
+def _ravel_sparse_indices(indices, target_shape, torch):
+    """Return C-order flat indices with NumPy ``ravel_multi_index`` checks."""
+    if indices.ndim != 2 or indices.shape[1] != len(target_shape):
+        raise ValueError("indices must have shape (n_entries, ndim)")
+
+    shape_tensor = torch.as_tensor(
+        target_shape,
+        dtype=torch.long,
+        device=indices.device,
+    )
+    if bool(torch.any(indices < 0)) or bool(torch.any(indices >= shape_tensor)):
+        raise ValueError("invalid entry in coordinates array")
+
+    strides = []
+    stride = 1
+    for size in reversed(target_shape):
+        strides.insert(0, stride)
+        stride *= size
+    stride_tensor = torch.as_tensor(strides, dtype=torch.long, device=indices.device)
+    return torch.sum(indices * stride_tensor, dim=1)
+
+
+def _patch_pytorch_array_from_sparse_assignment_contract(raw_pytorch, torch) -> None:
+    """Make PyTorch array_from_sparse match NumPy duplicate-index semantics."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    original_array_from_sparse = raw_pytorch.array_from_sparse
+    if getattr(
+        original_array_from_sparse,
+        "_pyrecest_sparse_assignment_contract",
+        False,
+    ):
+        if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.array_from_sparse = original_array_from_sparse
+        return
+
+    def array_from_sparse(indices, data, target_shape):
+        data = raw_pytorch.array(data)
+        target_shape = _normalize_sparse_target_shape(target_shape)
+        indices = torch.as_tensor(indices, dtype=torch.long, device=data.device)
+        output = torch.zeros(torch.Size(target_shape), dtype=data.dtype, device=data.device)
+
+        if indices.numel() == 0:
+            if data.numel() != 0:
+                raise ValueError("data must be empty when indices are empty")
+            return output
+
+        flat_indices = _ravel_sparse_indices(indices, target_shape, torch)
+        output.reshape(-1)[flat_indices] = data
+        return output
+
+    array_from_sparse.__name__ = getattr(
+        original_array_from_sparse,
+        "__name__",
+        "array_from_sparse",
+    )
+    array_from_sparse.__doc__ = getattr(original_array_from_sparse, "__doc__", None)
+    array_from_sparse._pyrecest_sparse_assignment_contract = True
+    raw_pytorch.array_from_sparse = array_from_sparse
+    if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.array_from_sparse = array_from_sparse
