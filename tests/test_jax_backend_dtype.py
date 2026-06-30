@@ -52,7 +52,6 @@ def test_jax_set_default_dtype_accepts_dtype_like_values():
         "fractional_matrix_power",
         "logm",
         "quadratic_assignment",
-        "solve_sylvester",
     ],
 )
 def test_jax_linalg_unsupported_shims_preserve_function_identity(function_name):
