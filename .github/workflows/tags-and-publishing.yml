@@ -170,7 +170,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-          COPILOT_TIMEOUT_MS: "900000"
+          COPILOT_TIMEOUT_MS: "1800000"
           COPILOT_HEARTBEAT_MS: "30000"
           COPILOT_DEBUG_DIR: "${{ runner.temp }}/copilot-debug"
           COPILOT_SAVE_PROMPT: "false"
