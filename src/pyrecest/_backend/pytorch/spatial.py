@@ -1,7 +1,14 @@
-def _unsupported_rotation_error(operation: str) -> RuntimeError:
-    return RuntimeError(
-        f"{operation} is not supported on the PyTorch backend. "
-        "Use a NumPy/JAX backend for this functionality."
+from pyrecest.exceptions import BackendNotSupportedError
+
+_SUPPORTED_ROTATION_BACKENDS = ("numpy", "jax")
+
+
+def _unsupported_rotation_error(operation: str) -> BackendNotSupportedError:
+    return BackendNotSupportedError(
+        operation,
+        "pytorch",
+        supported_backends=_SUPPORTED_ROTATION_BACKENDS,
+        reason="Use a NumPy/JAX backend for this functionality.",
     )
 
 
