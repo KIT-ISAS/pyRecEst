@@ -80,3 +80,51 @@ def test_multivariate_normal_accepts_finite_positive_semidefinite_inputs(size):
 
     expected_shape = (2,) if size is None else (*np.atleast_1d(size), 2)
     assert sample.shape == expected_shape
+
+
+def test_multivariate_normal_accepts_numpy_validation_keywords():
+    random.seed(0)
+
+    sample = random.multivariate_normal(
+        [0, 1],
+        [[2, 0], [0, 1]],
+        size=3,
+        check_valid="raise",
+        tol=np.array(1e-8),
+    )
+
+    assert sample.shape == (3, 2)
+
+
+def test_multivariate_normal_accepts_positional_validation_arguments():
+    random.seed(0)
+
+    sample = random.multivariate_normal(
+        [0, 1],
+        [[2, 0], [0, 1]],
+        3,
+        "raise",
+        1e-8,
+    )
+
+    assert sample.shape == (3, 2)
+
+
+@pytest.mark.parametrize("bad_check_valid", ["bad", None, True])
+def test_multivariate_normal_rejects_invalid_check_valid_mode(bad_check_valid):
+    with pytest.raises(ValueError, match="check_valid must be one of"):
+        random.multivariate_normal(
+            [0, 1],
+            [[2, 0], [0, 1]],
+            check_valid=bad_check_valid,
+        )
+
+
+@pytest.mark.parametrize("bad_tol", [True, [1e-8], -1.0, np.inf])
+def test_multivariate_normal_rejects_invalid_tolerance(bad_tol):
+    with pytest.raises((TypeError, ValueError), match="tol must be"):
+        random.multivariate_normal(
+            [0, 1],
+            [[2, 0], [0, 1]],
+            tol=bad_tol,
+        )
