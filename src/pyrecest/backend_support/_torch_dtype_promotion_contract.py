@@ -3,6 +3,45 @@
 from __future__ import annotations
 
 
+def _patch_pytorch_randint_dtype_contract(raw_pytorch, torch) -> None:
+    """Make PyTorch randint reject non-integer result dtypes."""
+    pytorch_random = getattr(raw_pytorch, "random", None)
+    if pytorch_random is None:
+        return
+
+    original_randint = getattr(pytorch_random, "randint", None)
+    if original_randint is None or getattr(
+        original_randint,
+        "_pyrecest_integer_dtype_contract",
+        False,
+    ):
+        return
+
+    def _validate_randint_dtype(dtype):
+        dtype = pytorch_random._normalize_random_dtype(dtype, default=None)
+        if isinstance(dtype, torch.dtype) and dtype not in pytorch_random._INTEGER_DTYPES:
+            raise TypeError("randint dtype must be an integer dtype")
+        return dtype
+
+    def randint(low, high=None, size=None, *args, **kwargs):
+        if "dtype" in kwargs:
+            kwargs = dict(kwargs)
+            kwargs["dtype"] = _validate_randint_dtype(kwargs["dtype"])
+        return original_randint(low, high, size, *args, **kwargs)
+
+    randint.__name__ = getattr(original_randint, "__name__", "randint")
+    randint.__doc__ = getattr(original_randint, "__doc__", None)
+    randint._pyrecest_integer_dtype_contract = True
+    pytorch_random.randint = randint
+
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.random.randint = randint
+
+
 def patch_pytorch_dtype_promotion_contract() -> None:
     """Make PyTorch mixed-dtype helpers use Torch's promotion rules."""
     try:
@@ -10,6 +49,8 @@ def patch_pytorch_dtype_promotion_contract() -> None:
         import torch  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
         return
+
+    _patch_pytorch_randint_dtype_contract(raw_pytorch, torch)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
