@@ -64,6 +64,18 @@ def _patch_pytorch_assignment_scalar_tensor_indices() -> None:
     )
 
 
+def _preferred_pytorch_device(torch_module, *values):
+    """Return a non-CPU tensor device when mixed-device operands are present."""
+
+    for value in values:
+        if torch_module.is_tensor(value) and value.device.type != "cpu":
+            return value.device
+    for value in values:
+        if torch_module.is_tensor(value):
+            return value.device
+    return None
+
+
 def _patch_pytorch_diag_numpy_contract() -> None:
     """Make PyTorch diag accept array-like inputs and NumPy's ``k`` keyword."""
 
@@ -330,10 +342,7 @@ def _patch_raw_pytorch_comparison_numpy_contract() -> None:
         return
 
     def _coerce_binary_args(x, y):
-        device = next(
-            (value.device for value in (x, y) if _torch.is_tensor(value)),
-            None,
-        )
+        device = _preferred_pytorch_device(_torch, x, y)
         if not _torch.is_tensor(x):
             x = _torch.as_tensor(x, device=device)
         elif device is not None and x.device != device:
@@ -382,10 +391,7 @@ def _patch_raw_pytorch_isclose_equal_nan_contract() -> None:
         atol=pytorch_backend.atol,
         equal_nan=False,
     ):
-        device = next(
-            (value.device for value in (x, y) if _torch.is_tensor(value)),
-            None,
-        )
+        device = _preferred_pytorch_device(_torch, x, y)
         if not _torch.is_tensor(x):
             x = _torch.as_tensor(x, device=device)
         elif device is not None and x.device != device:
