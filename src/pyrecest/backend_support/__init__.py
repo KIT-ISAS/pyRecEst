@@ -68,7 +68,7 @@ def _patch_raw_pytorch_assignment_scalar_tensor_indices() -> None:
 
 
 def _patch_pytorch_dot_numpy_contract() -> None:
-    """Make PyTorch dot follow NumPy's contraction axes."""
+    """Make PyTorch dot follow the backend batched inner-product contract."""
     try:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
@@ -100,10 +100,10 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         if a.ndim == 1 and b.ndim == 1:
             return torch.dot(a, b)
         if b.ndim == 1:
-            return torch.tensordot(a, b, dims=([-1], [0]))
+            return torch.einsum("...i,i->...", a, b)
         if a.ndim == 1:
-            return torch.tensordot(a, b, dims=([0], [-2]))
-        return torch.tensordot(a, b, dims=([-1], [-2]))
+            return torch.einsum("i,...i->...", a, b)
+        return torch.einsum("...i,...i->...", a, b)
 
     dot.__name__ = getattr(original_dot, "__name__", "dot")
     dot.__doc__ = getattr(original_dot, "__doc__", None)
@@ -114,7 +114,7 @@ def _patch_pytorch_dot_numpy_contract() -> None:
 
 
 def _patch_pytorch_outer_numpy_contract() -> None:
-    """Make PyTorch outer flatten inputs like NumPy's outer."""
+    """Make PyTorch outer pair leading dimensions like the backend contract."""
     try:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
@@ -140,7 +140,9 @@ def _patch_pytorch_outer_numpy_contract() -> None:
         dtype = torch.promote_types(a.dtype, b.dtype)
         a = a.to(dtype=dtype)
         b = b.to(dtype=dtype)
-        return torch.outer(a.reshape(-1), b.reshape(-1))
+        if a.ndim == 0 or b.ndim == 0:
+            return torch.multiply(a, b)
+        return a[..., :, None] * b[..., None, :]
 
     outer.__name__ = getattr(original_outer, "__name__", "outer")
     outer.__doc__ = getattr(original_outer, "__doc__", None)
@@ -373,7 +375,7 @@ def _patch_pytorch_angle_unit_numpy_contract() -> None:
 
 
 def _patch_jax_outer_numpy_contract() -> None:
-    """Make JAX outer flatten inputs like NumPy's outer."""
+    """Make JAX outer pair leading dimensions like the backend contract."""
     try:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
@@ -392,7 +394,11 @@ def _patch_jax_outer_numpy_contract() -> None:
         return
 
     def outer(a, b):
-        return jnp.outer(jnp.ravel(jnp.asarray(a)), jnp.ravel(jnp.asarray(b)))
+        a = jnp.asarray(a)
+        b = jnp.asarray(b)
+        if a.ndim == 0 or b.ndim == 0:
+            return jnp.multiply(a, b)
+        return a[..., :, None] * b[..., None, :]
 
     outer.__name__ = getattr(original_outer, "__name__", "outer")
     outer.__doc__ = getattr(jnp.outer, "__doc__", None)
