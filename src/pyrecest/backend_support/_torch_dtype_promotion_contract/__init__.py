@@ -34,6 +34,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
 
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch)
 
 
 def _preferred_pytorch_device(torch_module, *values):
@@ -150,6 +151,19 @@ def _wrap_binary_device_helper(original_helper, torch_module, *, box_x2):
     return binary_helper
 
 
+def _wrap_tensor_binary_device_helper(original_helper, torch_module):
+    def binary_helper(x1, x2, *args, **kwargs):
+        device = _preferred_pytorch_device(torch_module, x1, x2)
+        x1 = _as_pytorch_tensor_on_device(x1, torch_module, device=device)
+        x2 = _as_pytorch_tensor_on_device(x2, torch_module, device=device)
+        return original_helper(x1, x2, *args, **kwargs)
+
+    binary_helper.__name__ = getattr(original_helper, "__name__", "binary_helper")
+    binary_helper.__doc__ = getattr(original_helper, "__doc__", None)
+    binary_helper._pyrecest_device_contract = True
+    return binary_helper
+
+
 def _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch) -> None:
     """Keep boxed PyTorch binary helper operands on an existing non-CPU device."""
     helpers = {
@@ -171,6 +185,28 @@ def _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch) -> None:
             getattr(raw_pytorch, helper_name),
             torch,
             box_x2=box_x2,
+        )
+        setattr(raw_pytorch, helper_name, wrapped_helper)
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, helper_name, wrapped_helper)
+
+
+def _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch) -> None:
+    """Keep equality-style helpers on an existing non-CPU tensor device."""
+    helper_names = ("equal", "less_equal")
+    if all(
+        getattr(getattr(raw_pytorch, helper_name, None), "_pyrecest_device_contract", False)
+        for helper_name in helper_names
+    ):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            for helper_name in helper_names:
+                setattr(backend, helper_name, getattr(raw_pytorch, helper_name))
+        return
+
+    for helper_name in helper_names:
+        wrapped_helper = _wrap_tensor_binary_device_helper(
+            getattr(raw_pytorch, helper_name),
+            torch,
         )
         setattr(raw_pytorch, helper_name, wrapped_helper)
         if getattr(backend, "__backend_name__", None) == "pytorch":
