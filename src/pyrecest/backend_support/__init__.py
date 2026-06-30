@@ -73,7 +73,6 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
-
     active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
@@ -83,7 +82,6 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_dot = raw_pytorch.dot
     if getattr(original_dot, "_pyrecest_numpy_contract", False):
         return
@@ -119,7 +117,6 @@ def _patch_pytorch_outer_numpy_contract() -> None:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
-
     active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
@@ -129,7 +126,6 @@ def _patch_pytorch_outer_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_outer = raw_pytorch.outer
     if getattr(original_outer, "_pyrecest_numpy_contract", False):
         return
@@ -196,7 +192,6 @@ def _patch_pytorch_tile_numpy_contract() -> None:
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
         return
-
     original_tile = raw_pytorch.tile
     if getattr(original_tile, "_pyrecest_numpy_contract", False):
         return
@@ -346,6 +341,38 @@ def _patch_jax_outer_numpy_contract() -> None:
         backend.outer = outer
 
 
+def _patch_jax_matmul_out_contract() -> None:
+    """Make JAX matmul honor the direct-backend ``out`` contract."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_jax_backend = getattr(backend, "__backend_name__", None) == "jax"
+
+    try:
+        import pyrecest._backend.jax as raw_jax  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - JAX backend import failed earlier
+        return
+
+    original_matmul = raw_jax.matmul
+    if getattr(original_matmul, "_pyrecest_out_contract", False):
+        return
+
+    def matmul(x, y, out=None):
+        result = original_matmul(x, y)
+        if out is None:
+            return result
+        return raw_jax.asarray(out).at[...].set(result)
+
+    matmul.__name__ = getattr(original_matmul, "__name__", "matmul")
+    matmul.__doc__ = getattr(original_matmul, "__doc__", None)
+    matmul._pyrecest_out_contract = True
+    raw_jax.matmul = matmul
+    if active_jax_backend:
+        backend.matmul = matmul
+
+
 _patch_raw_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_dtype_promotion_contract()
 _patch_pytorch_dot_numpy_contract()
@@ -354,6 +381,7 @@ _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
 _patch_jax_outer_numpy_contract()
+_patch_jax_matmul_out_contract()
 
 
 def get_backend_support(
