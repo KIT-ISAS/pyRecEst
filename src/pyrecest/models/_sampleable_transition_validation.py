@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from .likelihood import DensityTransitionModel, SampleableTransitionModel
+from .likelihood import (
+    DensityTransitionModel,
+    SampleableTransitionModel,
+    _validate_sample_count,
+)
 from .validation import _validate_bool_flag
 
 
@@ -22,11 +26,8 @@ def _set_function_is_vectorized(
     )
 
 
-def _is_single_sample_request(value: Any) -> bool:
-    try:
-        return int(value) == 1
-    except (TypeError, ValueError):
-        return False
+def _requested_sample_count(value: Any) -> int:
+    return _validate_sample_count(value)
 
 
 def _patch_sampler_count_check(model_cls) -> None:
@@ -35,7 +36,7 @@ def _patch_sampler_count_check(model_cls) -> None:
         return
 
     def checked_sample_next(self, state, n=1):
-        if getattr(self, "_sample_next_count_call_mode", None) is None and not _is_single_sample_request(n):
+        if getattr(self, "_sample_next_count_call_mode", None) is None and _requested_sample_count(n) != 1:
             raise TypeError("sample count is not supported by this sampler.")
         return original(self, state, n=n)
 
