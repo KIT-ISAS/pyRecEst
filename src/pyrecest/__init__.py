@@ -42,6 +42,21 @@ def _patch_shared_numpy_squeeze_facade() -> None:
     original_squeeze = shared_numpy.squeeze
     np_module = shared_numpy._np
 
+    def _normalize_squeeze_axes(axis):
+        if isinstance(axis, (int, np_module.integer)):
+            return (int(axis),)
+        axis_array = np_module.asarray(axis)
+        if axis_array.shape == ():
+            try:
+                return (_operator_index(axis_array),)
+            except TypeError as exc:
+                raise TypeError(
+                    "only integer scalar arrays can be converted to a scalar index"
+                ) from exc
+        return tuple(axis)
+
+    shared_numpy._normalize_squeeze_axes = _normalize_squeeze_axes
+
     def _axis_out_of_bounds_error(axis, ndim):
         axis_error = getattr(getattr(np_module, "exceptions", None), "AxisError", None)
         if axis_error is None:
@@ -60,7 +75,7 @@ def _patch_shared_numpy_squeeze_facade() -> None:
         if axis is None:
             return original_squeeze(x_arr, axis=None)
 
-        axes = shared_numpy._normalize_squeeze_axes(axis)
+        axes = _normalize_squeeze_axes(axis)
         if not axes:
             return x_arr
 
