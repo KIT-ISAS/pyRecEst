@@ -46,14 +46,18 @@ def elementwise_grad(func):
 
 def _apply_custom_gradient(cotangent, grads):
     """Apply a user-supplied Jacobian/VJP factor to an upstream cotangent."""
-    if isinstance(grads, float):
+    cotangent_ndim = getattr(cotangent, "ndim", None)
+    grad_ndim = getattr(grads, "ndim", None)
+    if cotangent_ndim is None or grad_ndim is None or cotangent_ndim == 0:
         return cotangent * grads
 
-    ndim = getattr(grads, "ndim", None)
-    if ndim == 2:
-        return cotangent[..., None] * grads
-    if ndim == 3:
-        return cotangent[..., None, None] * grads
+    cotangent_shape = tuple(getattr(cotangent, "shape", ()))
+    grad_shape = tuple(getattr(grads, "shape", ()))
+    if grad_shape == cotangent_shape or grad_ndim <= cotangent_ndim:
+        return cotangent * grads
+    if grad_shape[:cotangent_ndim] == cotangent_shape:
+        axes = tuple(range(cotangent_ndim))
+        return anp.tensordot(cotangent, grads, axes=(axes, axes))
     return cotangent * grads
 
 
