@@ -18,6 +18,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
+    _patch_pytorch_take_axis_contract(raw_pytorch, torch, np)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -283,3 +284,59 @@ def _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np) -> None:
     raw_pytorch.pad = pad
     if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
         backend.pad = pad
+
+
+def _is_logical_axis(axis, torch, np) -> bool:
+    """Return whether ``axis`` is a logical scalar, not an integer axis."""
+    if isinstance(axis, (bool, np.bool_)):
+        return True
+    return bool(torch.is_tensor(axis) and axis.dtype == torch.bool)
+
+
+def _normalize_take_axis(axis, ndim, torch, np):
+    """Normalize NumPy-style take axes without accepting non-integer scalars."""
+    if axis is None:
+        return None
+    if _is_logical_axis(axis, torch, np):
+        raise TypeError("an integer is required for the axis")
+    try:
+        axis = _operator_index(axis)
+    except TypeError as exc:
+        raise TypeError("an integer is required for the axis") from exc
+    if axis < 0:
+        axis += ndim
+    if axis < 0 or axis >= ndim:
+        raise IndexError(f"axis {axis} is out of bounds for array of dimension {ndim}")
+    return axis
+
+
+def _patch_pytorch_take_axis_contract(raw_pytorch, torch, np) -> None:
+    """Make raw/public PyTorch take reject non-integer NumPy-style axes."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    original_take = raw_pytorch.take
+    if getattr(original_take, "_pyrecest_take_axis_contract", False):
+        if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.take = original_take
+        return
+
+    def take(a, indices, axis=None, out=None, mode=None):
+        values = raw_pytorch.array(a)
+        normalized_axis = _normalize_take_axis(axis, values.ndim, torch, np)
+        return original_take(
+            values,
+            indices,
+            axis=normalized_axis,
+            out=out,
+            mode=mode,
+        )
+
+    take.__name__ = getattr(original_take, "__name__", "take")
+    take.__doc__ = getattr(original_take, "__doc__", None)
+    take._pyrecest_take_axis_contract = True
+    raw_pytorch.take = take
+    if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.take = take
