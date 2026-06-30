@@ -10,6 +10,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     try:
         import numpy as np  # pylint: disable=import-outside-toplevel
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch.random as raw_pytorch_random  # pylint: disable=import-outside-toplevel
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
         from pyrecest._backend.pytorch._common import (  # pylint: disable=import-outside-toplevel
@@ -22,6 +23,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
     _patch_pytorch_creation_numpy_contract(raw_pytorch, torch, np, _normalize_dtype)
+    _patch_pytorch_randint_empty_size_contract(raw_pytorch_random, torch)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -280,6 +282,181 @@ def _patch_pytorch_creation_numpy_contract(
         setattr(raw_pytorch, helper_name, helper)
         if active_pytorch_backend:
             setattr(backend, helper_name, helper)
+
+
+def _shape_has_zero_dimension(shape) -> bool:
+    """Return whether a shape requests no samples."""
+    return any(dimension == 0 for dimension in shape)
+
+
+def _empty_randint_tensor(shape, *, dtype, device, out, torch):
+    """Return or write an empty integer sample tensor."""
+    result = torch.empty(shape, dtype=dtype, device=device)
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def _empty_scalar_randint_result(shape, kwargs, raw_pytorch_random, torch):
+    """Return an empty scalar-bound randint result using Torch keyword semantics."""
+    kwargs = dict(kwargs)
+    dtype = raw_pytorch_random._normalize_random_dtype(
+        kwargs.pop("dtype", None),
+        default=torch.int64,
+    )
+    device = kwargs.pop("device", None)
+    generator = kwargs.pop("generator", None)
+    out = kwargs.pop("out", None)
+    layout = kwargs.pop("layout", torch.strided)
+    requires_grad = kwargs.pop("requires_grad", False)
+    pin_memory = kwargs.pop("pin_memory", False)
+    if kwargs:
+        unexpected = ", ".join(sorted(kwargs))
+        raise TypeError(f"Unexpected keyword argument(s): {unexpected}")
+    del generator
+
+    result = torch.empty(
+        shape,
+        dtype=dtype,
+        device=device,
+        layout=layout,
+        requires_grad=requires_grad,
+        pin_memory=pin_memory,
+    )
+    if out is not None:
+        out.copy_(result)
+        return out
+    return result
+
+
+def _empty_array_randint_result_or_none(
+    low,
+    high,
+    size,
+    args,
+    kwargs,
+    raw_pytorch_random,
+    torch,
+):
+    """Return an empty array-bound randint result, or ``None`` for non-empty draws."""
+    if args:
+        return None
+
+    kwargs = dict(kwargs)
+    dtype = raw_pytorch_random._normalize_random_dtype(
+        kwargs.pop("dtype", None),
+        default=torch.int64,
+    )
+    device = kwargs.pop("device", None)
+    generator = kwargs.pop("generator", None)
+    out = kwargs.pop("out", None)
+    if kwargs:
+        unexpected = ", ".join(sorted(kwargs))
+        raise TypeError(f"Unexpected keyword argument(s): {unexpected}")
+    del generator
+
+    device = raw_pytorch_random._randint_device(low, high, device=device)
+    low = torch.as_tensor(low, device=device)
+    high = torch.as_tensor(high, device=device)
+    raw_pytorch_random._validate_randint_array_bound("low", low)
+    raw_pytorch_random._validate_randint_array_bound("high", high)
+    sample_shape = raw_pytorch_random._randint_array_size(size, low, high)
+    try:
+        torch.broadcast_to(low, sample_shape)
+        torch.broadcast_to(high, sample_shape)
+    except RuntimeError as exc:
+        raise ValueError("size, low, and high could not be broadcast together") from exc
+
+    if not _shape_has_zero_dimension(sample_shape):
+        return None
+    return _empty_randint_tensor(
+        sample_shape,
+        dtype=dtype,
+        device=device,
+        out=out,
+        torch=torch,
+    )
+
+
+def _patch_pytorch_randint_empty_size_contract(raw_pytorch_random, torch) -> None:
+    """Make PyTorch randint match NumPy for empty outputs with invalid bounds."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    active_pytorch_backend = (
+        backend is not None and getattr(backend, "__backend_name__", None) == "pytorch"
+    )
+    backend_random = getattr(backend, "random", None) if active_pytorch_backend else None
+    original_randint = raw_pytorch_random.randint
+    if getattr(original_randint, "_pyrecest_empty_size_contract", False):
+        if active_pytorch_backend and backend_random is not None:
+            backend_random.randint = original_randint
+        return
+
+    def randint(low, high=None, size=None, *args, **kwargs):
+        kwargs = raw_pytorch_random._normalize_torch_dtype_kwargs(kwargs)
+        if high is None:
+            if low is None:
+                return original_randint(low, high, size, *args, **kwargs)
+            if raw_pytorch_random._is_array_parameter(low):
+                empty_result = _empty_array_randint_result_or_none(
+                    0,
+                    low,
+                    size,
+                    args,
+                    kwargs,
+                    raw_pytorch_random,
+                    torch,
+                )
+                if empty_result is not None:
+                    return empty_result
+                return original_randint(low, high, size, *args, **kwargs)
+
+            sample_shape = raw_pytorch_random._randint_size(size)
+            if not args and _shape_has_zero_dimension(sample_shape):
+                return _empty_scalar_randint_result(
+                    sample_shape,
+                    kwargs,
+                    raw_pytorch_random,
+                    torch,
+                )
+            return original_randint(low, high, size, *args, **kwargs)
+
+        if raw_pytorch_random._is_array_parameter(
+            low
+        ) or raw_pytorch_random._is_array_parameter(high):
+            empty_result = _empty_array_randint_result_or_none(
+                low,
+                high,
+                size,
+                args,
+                kwargs,
+                raw_pytorch_random,
+                torch,
+            )
+            if empty_result is not None:
+                return empty_result
+            return original_randint(low, high, size, *args, **kwargs)
+
+        sample_shape = raw_pytorch_random._randint_size(size)
+        if not args and _shape_has_zero_dimension(sample_shape):
+            return _empty_scalar_randint_result(
+                sample_shape,
+                kwargs,
+                raw_pytorch_random,
+                torch,
+            )
+        return original_randint(low, high, size, *args, **kwargs)
+
+    randint.__name__ = getattr(original_randint, "__name__", "randint")
+    randint.__doc__ = getattr(original_randint, "__doc__", None)
+    randint._pyrecest_empty_size_contract = True
+    raw_pytorch_random.randint = randint
+    if active_pytorch_backend and backend_random is not None:
+        backend_random.randint = randint
 
 
 def _normalize_pad_pairs(pad_width, ndim, np):
