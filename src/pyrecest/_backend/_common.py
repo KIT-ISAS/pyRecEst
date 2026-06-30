@@ -67,12 +67,16 @@ def size(x, axis=None):
 def _normalize_reduction_axes(axis, ndim_value):
     if isinstance(axis, (bool, _np.bool_)):
         raise TypeError("axis must be an integer or a sequence of integers")
-    if isinstance(axis, (int, _np.integer)):
-        axes = (int(axis),)
-    else:
+    try:
+        axis_index = _operator.index(axis)
+    except TypeError:
+        if getattr(axis, "shape", None) == ():
+            raise TypeError("axis must be an integer or a sequence of integers") from None
         axes = tuple(axis)
         if any(isinstance(axis_index, (bool, _np.bool_)) for axis_index in axes):
             raise TypeError("axis must be an integer or a sequence of integers")
+    else:
+        axes = (axis_index,)
 
     normalized_axes = tuple(
         axis_index + ndim_value if axis_index < 0 else axis_index for axis_index in axes
