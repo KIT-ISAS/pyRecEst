@@ -1,8 +1,11 @@
 import math as _math
+import operator as _operator
 import os as _os
 
 import numpy as _np
 from numpy import pi
+
+_AXIS_FLAG_TYPE = type(True)
 
 
 def comb(n, k):
@@ -29,8 +32,20 @@ def outer(a, b):
     return a_expanded * b_expanded
 
 
+def _normalize_size_axis(axis):
+    if axis is None:
+        return None
+    if isinstance(axis, _AXIS_FLAG_TYPE):
+        raise TypeError("an integer is required")
+    try:
+        return _operator.index(axis)
+    except TypeError as exc:
+        raise TypeError("an integer is required") from exc
+
+
 def size(x, axis=None):
     """Return the total number of elements or the length of a given axis."""
+    axis = _normalize_size_axis(axis)
     if hasattr(x, "numel"):
         if axis is None:
             return x.numel()
