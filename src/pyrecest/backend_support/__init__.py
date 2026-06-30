@@ -312,6 +312,46 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _patch_pytorch_unary_predicate_numpy_contract() -> None:
+    """Make PyTorch unary predicates accept NumPy-style array-like inputs."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
+
+    try:
+        import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
+        import torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    def _wrap_predicate(helper_name, torch_func):
+        original_helper = getattr(raw_pytorch, helper_name)
+        if getattr(original_helper, "_pyrecest_numpy_contract", False):
+            return original_helper
+
+        def predicate(a):
+            return torch_func(raw_pytorch.array(a))
+
+        predicate.__name__ = getattr(original_helper, "__name__", helper_name)
+        predicate.__doc__ = getattr(original_helper, "__doc__", None)
+        predicate._pyrecest_numpy_contract = True
+        return predicate
+
+    for helper_name, torch_func in (
+        ("isfinite", torch.isfinite),
+        ("isinf", torch.isinf),
+        ("isnan", torch.isnan),
+        ("isreal", torch.isreal),
+    ):
+        helper = _wrap_predicate(helper_name, torch_func)
+        setattr(raw_pytorch, helper_name, helper)
+        if active_pytorch_backend:
+            setattr(backend, helper_name, helper)
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer pair leading dimensions like the backend contract."""
     try:
@@ -353,6 +393,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_pytorch_unary_predicate_numpy_contract()
 _patch_jax_outer_numpy_contract()
 
 
