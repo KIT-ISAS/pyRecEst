@@ -346,6 +346,44 @@ def _patch_jax_outer_numpy_contract() -> None:
         backend.outer = outer
 
 
+def _patch_jax_one_hot_backend_contract() -> None:
+    """Make JAX one_hot accept the shared labels/num_classes contract."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_jax_backend = getattr(backend, "__backend_name__", None) == "jax"
+
+    try:
+        import jax.numpy as jnp  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.jax as raw_jax  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - JAX backend import failed earlier
+        return
+
+    original_one_hot = raw_jax.one_hot
+    if getattr(original_one_hot, "_pyrecest_backend_contract", False):
+        if active_jax_backend:
+            backend.one_hot = original_one_hot
+        return
+
+    def one_hot(labels, num_classes=None, *, depth=None):
+        if depth is not None:
+            if num_classes is not None and num_classes != depth:
+                raise TypeError("one_hot() got both 'num_classes' and 'depth'")
+            num_classes = depth
+        if num_classes is None:
+            raise TypeError("one_hot() missing required argument 'num_classes'")
+        return jnp.eye(num_classes, dtype=jnp.uint8)[jnp.asarray(labels)]
+
+    one_hot.__name__ = getattr(original_one_hot, "__name__", "one_hot")
+    one_hot.__doc__ = getattr(original_one_hot, "__doc__", None)
+    one_hot._pyrecest_backend_contract = True
+    raw_jax.one_hot = one_hot
+    if active_jax_backend:
+        backend.one_hot = one_hot
+
+
 _patch_raw_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_dtype_promotion_contract()
 _patch_pytorch_dot_numpy_contract()
@@ -354,6 +392,7 @@ _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
 _patch_jax_outer_numpy_contract()
+_patch_jax_one_hot_backend_contract()
 
 
 def get_backend_support(
