@@ -30,6 +30,8 @@ from pyrecest.backend import (
     sqrt,
 )
 
+_INVALID_SCALAR_TYPES = (bool, str, bytes, bytearray)
+
 
 def symmetrize(matrix):
     """Return the symmetric part of ``matrix``."""
@@ -75,7 +77,7 @@ def _coerce_bool_flag(value, name: str) -> bool:
 
 def _coerce_nonnegative_finite_scalar(value, name: str) -> float:
     message = f"{name} must be a finite non-negative scalar"
-    if isinstance(value, bool):
+    if isinstance(value, _INVALID_SCALAR_TYPES):
         raise ValueError(message)
     try:
         value_array = asarray(value)
@@ -84,7 +86,7 @@ def _coerce_nonnegative_finite_scalar(value, name: str) -> float:
     if value_array.shape != ():
         raise ValueError(message)
     scalar = value_array.item()
-    if isinstance(scalar, bool):
+    if isinstance(scalar, _INVALID_SCALAR_TYPES):
         raise ValueError(message)
     try:
         scalar_float = float(scalar)
