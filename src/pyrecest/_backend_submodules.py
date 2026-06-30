@@ -52,18 +52,19 @@ def _adapt_cumulative_out_contract(backend: ModuleType) -> None:
 
 
 def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
-    """Adapt PyTorch allclose to accept Torch's missing-value keyword."""
-    if getattr(backend, "__backend_name__", None) != "pytorch":
-        return
-
-    allclose = getattr(backend, "allclose", None)
-    if allclose is None or getattr(allclose, "_pyrecest_missing_value_contract", False):
-        return
-
+    """Adapt raw and public PyTorch allclose to accept NumPy's missing-value keyword."""
     try:
         import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
         import torch as _torch  # pylint: disable=import-outside-toplevel
-    except ModuleNotFoundError:  # pragma: no cover - backend import fails first
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch may be unavailable
+        return
+
+    allclose = getattr(pytorch_backend, "allclose", None)
+    if allclose is None:
+        return
+    if getattr(allclose, "_pyrecest_missing_value_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, "allclose", allclose)
         return
 
     missing_value_key = "_".join(("equal", "nan"))
@@ -93,8 +94,57 @@ def _adapt_pytorch_allclose_keyword_contract(backend: ModuleType) -> None:
         )
 
     wrapped_allclose._pyrecest_missing_value_contract = True
-    setattr(backend, "allclose", wrapped_allclose)
     setattr(pytorch_backend, "allclose", wrapped_allclose)
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        setattr(backend, "allclose", wrapped_allclose)
+
+
+def _adapt_pytorch_isclose_keyword_contract(backend: ModuleType) -> None:
+    """Adapt raw and public PyTorch isclose to accept NumPy's missing-value keyword."""
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch may be unavailable
+        return
+
+    isclose = getattr(pytorch_backend, "isclose", None)
+    if isclose is None:
+        return
+    if getattr(isclose, "_pyrecest_missing_value_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, "isclose", isclose)
+        return
+
+    missing_value_key = "_".join(("equal", "nan"))
+
+    @wraps(isclose)
+    def wrapped_isclose(
+        x, y, rtol=pytorch_backend.rtol, atol=pytorch_backend.atol, **kwargs
+    ):
+        match_missing_values = kwargs.pop(missing_value_key, False)
+        if kwargs:
+            unexpected = next(iter(kwargs))
+            raise TypeError(
+                f"isclose() got an unexpected keyword argument {unexpected!r}"
+            )
+        if not _torch.is_tensor(x):
+            x = _torch.tensor(x)
+        if not _torch.is_tensor(y):
+            y = _torch.tensor(y)
+        x, y = pytorch_backend.convert_to_wider_dtype([x, y])
+        x, y = _torch.broadcast_tensors(x, y)
+        return _torch.isclose(
+            x,
+            y,
+            atol=atol,
+            rtol=rtol,
+            **{missing_value_key: match_missing_values},
+        )
+
+    wrapped_isclose._pyrecest_missing_value_contract = True
+    setattr(pytorch_backend, "isclose", wrapped_isclose)
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        setattr(backend, "isclose", wrapped_isclose)
 
 
 def _pytorch_repeat_count(repetition) -> int:
@@ -517,6 +567,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
 
     _adapt_cumulative_out_contract(backend)
     _adapt_pytorch_allclose_keyword_contract(backend)
+    _adapt_pytorch_isclose_keyword_contract(backend)
     _adapt_pytorch_repeat_contract(backend)
     _adapt_pytorch_reshape_contract(backend)
     _adapt_pytorch_stack_helpers_contract(backend)
