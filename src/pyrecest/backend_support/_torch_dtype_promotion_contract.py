@@ -18,6 +18,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
+    _patch_pytorch_one_hot_index_dtype_contract(raw_pytorch, torch)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -283,3 +284,45 @@ def _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np) -> None:
     raw_pytorch.pad = pad
     if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
         backend.pad = pad
+
+
+def _is_pytorch_integer_label_dtype(dtype, torch) -> bool:
+    """Return whether ``dtype`` is an integer index dtype accepted as labels."""
+    return dtype in {
+        torch.uint8,
+        torch.int8,
+        torch.int16,
+        torch.int32,
+        torch.int64,
+    }
+
+
+def _patch_pytorch_one_hot_index_dtype_contract(raw_pytorch, torch) -> None:
+    """Make raw/public PyTorch one_hot accept integer tensor label dtypes."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    original_one_hot = raw_pytorch.one_hot
+    if getattr(original_one_hot, "_pyrecest_index_dtype_contract", False):
+        return
+
+    def one_hot(labels, num_classes):
+        if torch.is_tensor(labels):
+            if (
+                labels.dtype != torch.long
+                and _is_pytorch_integer_label_dtype(labels.dtype, torch)
+            ):
+                labels = labels.to(dtype=torch.long)
+        else:
+            labels = torch.LongTensor(labels)
+        result = torch.nn.functional.one_hot(labels, num_classes)
+        return result.to(dtype=torch.uint8)
+
+    one_hot.__name__ = getattr(original_one_hot, "__name__", "one_hot")
+    one_hot.__doc__ = getattr(original_one_hot, "__doc__", None)
+    one_hot._pyrecest_index_dtype_contract = True
+    raw_pytorch.one_hot = one_hot
+    if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.one_hot = one_hot
