@@ -10,6 +10,12 @@ class TestBackendSize(unittest.TestCase):
     def test_size_returns_axis_length(self):
         self.assertEqual(size(array([[1, 2, 3], [4, 5, 6]]), axis=1), 3)
 
+    def test_size_rejects_logical_axis_value(self):
+        values = array([[1, 2, 3], [4, 5, 6]])
+
+        with self.assertRaises(TypeError):
+            size(values, axis=True)
+
     def test_size_handles_python_array_like_inputs(self):
         values = [[1, 2, 3], [4, 5, 6]]
 
