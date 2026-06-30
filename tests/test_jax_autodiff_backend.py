@@ -50,6 +50,19 @@ def test_custom_gradient_overrides_jax_default_derivative():
     assert jnp.allclose(result, jnp.array([3.0, 3.0]))
 
 
+def test_custom_gradient_contracts_full_jacobian_with_cotangent():
+    @autodiff.custom_gradient(lambda x: jnp.diag(2.0 * x))
+    def squared_vector(x):
+        return x**2
+
+    weights = jnp.array([1.0, 2.0])
+    result = jax.grad(lambda x: jnp.dot(weights, squared_vector(x)))(
+        jnp.array([3.0, 5.0])
+    )
+
+    assert jnp.allclose(result, jnp.array([6.0, 20.0]))
+
+
 def test_custom_gradient_supports_multiple_arguments_and_keyword_calls():
     @autodiff.custom_gradient(
         lambda x, *, scale=1.0: scale * jnp.ones_like(x),
