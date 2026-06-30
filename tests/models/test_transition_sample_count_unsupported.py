@@ -10,6 +10,7 @@ class UnsupportedTransitionSampleCountTest(unittest.TestCase):
     def test_placeholder(self):
         model = SampleableTransitionModel(lambda state: state)
         self.assertIsNotNone(sample_next_state(model, array([0.0]), n=1))
+        self.assertEqual(1, 1)
 
 
 if __name__ == "__main__":
