@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from numbers import Integral
 
 import numpy as np
 
@@ -97,6 +98,33 @@ def _normalize_nonnegative_finite_scalar(value: float, name: str) -> float:
     return value_float
 
 
+def _normalize_bool_flag(value: bool, name: str) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    value_array = np.asarray(value)
+    if value_array.shape == () and value_array.dtype == np.bool_:
+        return bool(value_array.item())
+    raise ValueError(f"{name} must be a boolean")
+
+
+def _normalize_positive_integer(value: int, name: str) -> int:
+    message = f"{name} must be a positive integer"
+    if isinstance(value, (bool, np.bool_)):
+        raise ValueError(message)
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+    value_scalar = value_array.item()
+    if isinstance(value_scalar, (bool, np.bool_)) or not isinstance(
+        value_scalar, Integral
+    ):
+        raise ValueError(message)
+    value_int = int(value_scalar)
+    if value_int <= 0:
+        raise ValueError(message)
+    return value_int
+
+
 @dataclass
 class RollingNISProcessNoiseAdapter:
     """Maintain EWMA NIS ratios and return process-noise scale factors."""
@@ -118,11 +146,12 @@ class RollingNISProcessNoiseAdapter:
         """Ingest one innovation and return the updated source NIS ratio."""
 
         source = str(source)
-        measurement_dim = int(measurement_dim)
-        nis = float(nis)
-        if not accepted or measurement_dim <= 0 or not np.isfinite(nis):
+        accepted = _normalize_bool_flag(accepted, "accepted")
+        if not accepted:
             return self.ratios_by_source.get(source, 1.0)
-        ratio = max(nis / float(measurement_dim), 0.0)
+        measurement_dim = _normalize_positive_integer(measurement_dim, "measurement_dim")
+        nis = _normalize_nonnegative_finite_scalar(nis, "nis")
+        ratio = nis / float(measurement_dim)
         previous = self.ratios_by_source.get(source, 1.0)
         alpha = float(self.config.ewma_alpha)
         updated = (1.0 - alpha) * previous + alpha * ratio
