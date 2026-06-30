@@ -23,7 +23,7 @@ _BASE_CONTRACT = _load_base_contract_module()
 
 
 def patch_pytorch_dtype_promotion_contract() -> None:
-    """Apply the base PyTorch contract patch plus logical-helper device fixes."""
+    """Apply the base PyTorch contract patch plus device-placement fixes."""
     _BASE_CONTRACT.patch_pytorch_dtype_promotion_contract()
     try:
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
@@ -33,6 +33,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
         return
 
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch)
 
 
 def _preferred_pytorch_device(torch_module, *values):
@@ -118,6 +119,62 @@ def _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch) -> None:
     if getattr(backend, "__backend_name__", None) == "pytorch":
         backend.logical_and = logical_and
         backend.where = where
+
+
+def _is_array_like_operand(value):
+    if isinstance(value, (str, bytes)):
+        return False
+    return isinstance(value, (list, tuple)) or hasattr(value, "__array__")
+
+
+def _binary_operand(value, torch_module, *, box_array_like, device):
+    if torch_module.is_tensor(value):
+        if device is not None and value.device != device:
+            return value.to(device=device)
+        return value
+    if box_array_like and _is_array_like_operand(value):
+        return torch_module.as_tensor(value, device=device)
+    return value
+
+
+def _wrap_binary_device_helper(original_helper, torch_module, *, box_x2):
+    def binary_helper(x1, x2, *args, **kwargs):
+        device = _preferred_pytorch_device(torch_module, x1, x2)
+        x1 = _binary_operand(x1, torch_module, box_array_like=True, device=device)
+        x2 = _binary_operand(x2, torch_module, box_array_like=box_x2, device=device)
+        return original_helper(x1, x2, *args, **kwargs)
+
+    binary_helper.__name__ = getattr(original_helper, "__name__", "binary_helper")
+    binary_helper.__doc__ = getattr(original_helper, "__doc__", None)
+    binary_helper._pyrecest_device_contract = True
+    return binary_helper
+
+
+def _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch) -> None:
+    """Keep boxed PyTorch binary helper operands on an existing non-CPU device."""
+    helpers = {
+        "arctan2": True,
+        "mod": False,
+        "power": False,
+    }
+    if all(
+        getattr(getattr(raw_pytorch, helper_name, None), "_pyrecest_device_contract", False)
+        for helper_name in helpers
+    ):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            for helper_name in helpers:
+                setattr(backend, helper_name, getattr(raw_pytorch, helper_name))
+        return
+
+    for helper_name, box_x2 in helpers.items():
+        wrapped_helper = _wrap_binary_device_helper(
+            getattr(raw_pytorch, helper_name),
+            torch,
+            box_x2=box_x2,
+        )
+        setattr(raw_pytorch, helper_name, wrapped_helper)
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, helper_name, wrapped_helper)
 
 
 __all__ = ["patch_pytorch_dtype_promotion_contract"]
