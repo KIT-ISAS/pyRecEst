@@ -312,6 +312,65 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _copy_jax_result_to_out(result, out):
+    """Apply a JAX result to a NumPy-style ``out`` object."""
+    if out is None:
+        return result
+    at = getattr(out, "at", None)
+    if at is not None:
+        return at[...].set(result)
+    out[...] = result
+    return out
+
+
+def _patch_jax_take_out_contract() -> None:
+    """Make JAX take honor PyRecEst's NumPy-style ``out`` contract."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_jax_backend = getattr(backend, "__backend_name__", None) == "jax"
+
+    try:
+        import pyrecest._backend.jax as raw_jax  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - JAX backend import failed earlier
+        return
+
+    original_take = raw_jax.take
+    if getattr(original_take, "_pyrecest_out_contract", False):
+        return
+
+    def take(
+        a,
+        indices,
+        axis=None,
+        out=None,
+        mode=None,
+        unique_indices=False,
+        indices_are_sorted=False,
+        fill_value=None,
+    ):
+        result = original_take(
+            a,
+            indices,
+            axis=axis,
+            out=None,
+            mode=mode,
+            unique_indices=unique_indices,
+            indices_are_sorted=indices_are_sorted,
+            fill_value=fill_value,
+        )
+        return _copy_jax_result_to_out(result, out)
+
+    take.__name__ = getattr(original_take, "__name__", "take")
+    take.__doc__ = getattr(original_take, "__doc__", None)
+    take._pyrecest_out_contract = True
+    raw_jax.take = take
+    if active_jax_backend:
+        backend.take = take
+
+
 def _patch_jax_outer_numpy_contract() -> None:
     """Make JAX outer pair leading dimensions like the backend contract."""
     try:
@@ -353,6 +412,7 @@ _patch_pytorch_outer_numpy_contract()
 _patch_pytorch_tile_numpy_contract()
 _patch_pytorch_copy_numpy_contract()
 _patch_pytorch_clip_numpy_contract()
+_patch_jax_take_out_contract()
 _patch_jax_outer_numpy_contract()
 
 
