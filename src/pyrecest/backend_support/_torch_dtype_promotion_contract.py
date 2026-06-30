@@ -1,4 +1,4 @@
-"""PyTorch dtype promotion compatibility helpers."""
+"""PyTorch backend compatibility helpers."""
 
 from __future__ import annotations
 
@@ -8,12 +8,14 @@ from operator import index as _operator_index
 def patch_pytorch_dtype_promotion_contract() -> None:
     """Make PyTorch mixed-dtype helpers use Torch's promotion rules."""
     try:
+        import numpy as np  # pylint: disable=import-outside-toplevel
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
         return
 
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
+    _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -98,3 +100,92 @@ def _patch_pytorch_diff_numpy_contract(raw_pytorch, torch) -> None:
     raw_pytorch.diff = diff
     if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
         backend.diff = diff
+
+
+def _normalize_pad_pairs(pad_width, ndim, np):
+    """Return NumPy-style per-axis pad-width pairs as Python integers."""
+    try:
+        pad_pairs = np.broadcast_to(np.asarray(pad_width), (ndim, 2))
+    except ValueError as exc:
+        raise ValueError(f"pad_width must be broadcastable to shape ({ndim}, 2)") from exc
+    if np.any(pad_pairs < 0):
+        raise ValueError("index can't contain negative values")
+    try:
+        return tuple(
+            (_operator_index(before), _operator_index(after))
+            for before, after in pad_pairs.tolist()
+        )
+    except TypeError as exc:
+        raise TypeError("pad_width must be of integral type") from exc
+
+
+def _normalize_constant_value_pairs(constant_values, ndim, np):
+    """Return NumPy-style per-axis constant-value pairs."""
+    try:
+        constant_pairs = np.broadcast_to(np.asarray(constant_values), (ndim, 2))
+    except ValueError as exc:
+        raise ValueError(
+            f"constant_values must be broadcastable to shape ({ndim}, 2)"
+        ) from exc
+    return tuple(tuple(pair) for pair in constant_pairs.tolist())
+
+
+def _filled_pad_block(shape, value, reference, torch):
+    """Return a constant-filled block compatible with ``reference``."""
+    scalar_value = torch.as_tensor(value, dtype=reference.dtype, device=reference.device)
+    if scalar_value.ndim != 0:
+        raise ValueError("constant_values entries must be scalar")
+    block = torch.empty(tuple(shape), dtype=reference.dtype, device=reference.device)
+    block.fill_(scalar_value)
+    return block
+
+
+def _constant_pad(values, pad_width, constant_values, torch, np):
+    """Pad a tensor with NumPy-style per-axis constant values."""
+    pad_pairs = _normalize_pad_pairs(pad_width, values.ndim, np)
+    constant_pairs = _normalize_constant_value_pairs(constant_values, values.ndim, np)
+    result = values
+    for axis, ((before, after), (before_value, after_value)) in enumerate(
+        zip(pad_pairs, constant_pairs)
+    ):
+        if before:
+            before_shape = list(result.shape)
+            before_shape[axis] = before
+            before_block = _filled_pad_block(before_shape, before_value, result, torch)
+            result = torch.cat((before_block, result), dim=axis)
+        if after:
+            after_shape = list(result.shape)
+            after_shape[axis] = after
+            after_block = _filled_pad_block(after_shape, after_value, result, torch)
+            result = torch.cat((result, after_block), dim=axis)
+    return result
+
+
+def _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np) -> None:
+    """Make raw/public PyTorch pad accept NumPy-style constant_values."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    original_pad = raw_pytorch.pad
+    if getattr(original_pad, "_pyrecest_constant_values_contract", False):
+        return
+
+    def pad(a, pad_width, mode="constant", constant_values=0.0):
+        values = raw_pytorch.array(a)
+        if mode != "constant":
+            return original_pad(
+                values,
+                pad_width,
+                mode=mode,
+                constant_values=constant_values,
+            )
+        return _constant_pad(values, pad_width, constant_values, torch, np)
+
+    pad.__name__ = getattr(original_pad, "__name__", "pad")
+    pad.__doc__ = getattr(original_pad, "__doc__", None)
+    pad._pyrecest_constant_values_contract = True
+    raw_pytorch.pad = pad
+    if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.pad = pad
