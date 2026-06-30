@@ -113,6 +113,18 @@ class TestSE2DiracDistribution(unittest.TestCase):
         npt.assert_allclose(m[0], wd.trigonometric_moment(1).real, rtol=1e-10)
         npt.assert_allclose(m[1], wd.trigonometric_moment(1).imag, rtol=1e-10)
 
+    def test_sampling_accepts_scalar_array_count(self):
+        random.seed(0)
+        samples = self.dist.sample(np.array(3, dtype=np.int64))
+
+        self.assertEqual(samples.shape, (3, 3))
+
+    def test_sampling_rejects_invalid_count_values(self):
+        for n in (np.array([3], dtype=np.int64), np.array(True), True, 1.5, 0, -1):
+            with self.subTest(n=n):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    self.dist.sample(n)
+
     def test_sampling(self):
         random.seed(0)
         n = 20
