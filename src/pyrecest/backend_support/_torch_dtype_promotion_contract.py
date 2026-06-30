@@ -22,6 +22,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
     _patch_pytorch_creation_numpy_contract(raw_pytorch, torch, np, _normalize_dtype)
+    _patch_pytorch_allclose_equal_nan_contract(raw_pytorch, backend, torch)
 
     original_convert = raw_pytorch.convert_to_wider_dtype
     if getattr(original_convert, "_pyrecest_torch_promotion_contract", False):
@@ -198,6 +199,44 @@ def _patch_pytorch_diff_numpy_contract(raw_pytorch, torch) -> None:
     raw_pytorch.diff = diff
     if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
         backend.diff = diff
+
+
+def _patch_pytorch_allclose_equal_nan_contract(raw_pytorch, backend, torch) -> None:
+    """Make raw/public PyTorch allclose accept NumPy's equal_nan keyword."""
+
+    original_allclose = raw_pytorch.allclose
+    if getattr(original_allclose, "_pyrecest_equal_nan_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.allclose = original_allclose
+        return
+
+    def _coerce_binary_args(x, y):
+        device = next(
+            (value.device for value in (x, y) if torch.is_tensor(value)),
+            None,
+        )
+        if not torch.is_tensor(x):
+            x = torch.as_tensor(x, device=device)
+        elif device is not None and x.device != device:
+            x = x.to(device=device)
+        if not torch.is_tensor(y):
+            y = torch.as_tensor(y, device=device)
+        elif device is not None and y.device != device:
+            y = y.to(device=device)
+        return x, y
+
+    def allclose(a, b, rtol=raw_pytorch.rtol, atol=raw_pytorch.atol, equal_nan=False):
+        a, b = _coerce_binary_args(a, b)
+        a, b = raw_pytorch.convert_to_wider_dtype([a, b])
+        a, b = torch.broadcast_tensors(a, b)
+        return torch.allclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+    allclose.__name__ = getattr(original_allclose, "__name__", "allclose")
+    allclose.__doc__ = getattr(original_allclose, "__doc__", None)
+    allclose._pyrecest_equal_nan_contract = True
+    raw_pytorch.allclose = allclose
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.allclose = allclose
 
 
 def _normalize_creation_shape(shape, torch, np):
