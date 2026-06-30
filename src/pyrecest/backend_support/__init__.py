@@ -430,6 +430,58 @@ def _patch_jax_one_hot_backend_contract() -> None:
         backend.one_hot = one_hot
 
 
+def _patch_jax_take_out_contract() -> None:
+    """Make JAX take honor NumPy's out keyword without passing it to JAX."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        return
+
+    active_jax_backend = getattr(backend, "__backend_name__", None) == "jax"
+
+    try:
+        import pyrecest._backend.jax as raw_jax  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - JAX backend import failed earlier
+        return
+
+    original_take = raw_jax.take
+    if getattr(original_take, "_pyrecest_out_contract", False):
+        if active_jax_backend:
+            backend.take = original_take
+        return
+
+    def take(
+        a,
+        indices,
+        axis=None,
+        out=None,
+        mode=None,
+        unique_indices=False,
+        indices_are_sorted=False,
+        fill_value=None,
+    ):
+        result = original_take(
+            a,
+            indices,
+            axis=axis,
+            out=None,
+            mode=mode,
+            unique_indices=unique_indices,
+            indices_are_sorted=indices_are_sorted,
+            fill_value=fill_value,
+        )
+        if out is None:
+            return result
+        return raw_jax.asarray(out).at[...].set(result)
+
+    take.__name__ = getattr(original_take, "__name__", "take")
+    take.__doc__ = getattr(original_take, "__doc__", None)
+    take._pyrecest_out_contract = True
+    raw_jax.take = take
+    if active_jax_backend:
+        backend.take = take
+
+
 _patch_raw_pytorch_assignment_scalar_tensor_indices()
 _patch_pytorch_dtype_promotion_contract()
 _patch_pytorch_dot_numpy_contract()
@@ -440,6 +492,7 @@ _patch_pytorch_clip_numpy_contract()
 _patch_pytorch_broadcast_to_numpy_contract()
 _patch_jax_outer_numpy_contract()
 _patch_jax_one_hot_backend_contract()
+_patch_jax_take_out_contract()
 
 
 def get_backend_support(
