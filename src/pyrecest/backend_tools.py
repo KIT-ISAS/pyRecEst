@@ -104,8 +104,7 @@ def _patch_pytorch_broadcast_arrays_numpy_contract() -> None:
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
 
-    if getattr(backend, "__backend_name__", None) != "pytorch":
-        return
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
         import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
@@ -116,6 +115,8 @@ def _patch_pytorch_broadcast_arrays_numpy_contract() -> None:
         return
 
     if getattr(pytorch_backend.broadcast_arrays, "_pyrecest_numpy_contract", False):
+        if active_pytorch_backend:
+            backend.broadcast_arrays = pytorch_backend.broadcast_arrays
         return
 
     def broadcast_arrays(*arrays):
@@ -125,8 +126,9 @@ def _patch_pytorch_broadcast_arrays_numpy_contract() -> None:
     broadcast_arrays.__name__ = "broadcast_arrays"
     broadcast_arrays.__doc__ = getattr(_torch.broadcast_tensors, "__doc__", None)
     broadcast_arrays._pyrecest_numpy_contract = True
-    backend.broadcast_arrays = broadcast_arrays
     pytorch_backend.broadcast_arrays = broadcast_arrays
+    if active_pytorch_backend:
+        backend.broadcast_arrays = broadcast_arrays
 
 
 def _patch_pytorch_round_numpy_contract() -> None:
@@ -230,8 +232,7 @@ def _patch_pytorch_stack_helpers_numpy_contract() -> None:
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
         return
 
-    if getattr(backend, "__backend_name__", None) != "pytorch":
-        return
+    active_pytorch_backend = getattr(backend, "__backend_name__", None) == "pytorch"
 
     try:
         import numpy as _np  # pylint: disable=import-outside-toplevel
@@ -240,6 +241,12 @@ def _patch_pytorch_stack_helpers_numpy_contract() -> None:
     except (
         ModuleNotFoundError
     ):  # pragma: no cover - PyTorch backend import failed earlier
+        return
+
+    if getattr(pytorch_backend.hstack, "_pyrecest_numpy_contract", False):
+        if active_pytorch_backend:
+            for helper_name in ("hstack", "vstack", "column_stack", "dstack"):
+                setattr(backend, helper_name, getattr(pytorch_backend, helper_name))
         return
 
     def _tensor_sequence(tup):
@@ -276,8 +283,9 @@ def _patch_pytorch_stack_helpers_numpy_contract() -> None:
         helper.__name__ = helper_name
         helper.__doc__ = getattr(_np, helper_name).__doc__
         helper._pyrecest_numpy_contract = True
-        setattr(backend, helper_name, helper)
         setattr(pytorch_backend, helper_name, helper)
+        if active_pytorch_backend:
+            setattr(backend, helper_name, helper)
 
 
 def _patch_raw_pytorch_comparison_numpy_contract() -> None:
