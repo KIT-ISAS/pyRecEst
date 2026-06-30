@@ -179,7 +179,6 @@ def _adapt_pytorch_repeat_contract(backend: ModuleType) -> None:
     repeat = getattr(pytorch_backend, "repeat", None)
     if repeat is None or getattr(repeat, "_pyrecest_repeat_contract", False):
         return
-
     wrapped_repeat = _pytorch_repeat_with_arraylike_inputs(
         repeat,
         backend.array,
@@ -419,6 +418,98 @@ def _adapt_pytorch_reduction_alias_contract(backend: ModuleType) -> None:
         setattr(backend, "amin", pytorch_backend.min)
 
 
+def _adapt_pytorch_cross_contract(backend: ModuleType) -> None:
+    """Adapt PyTorch cross to match NumPy's 2D-vector result contract."""
+    try:
+        import numpy as numpy_module  # pylint: disable=import-outside-toplevel
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import torch as torch_module  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch may be unavailable
+        return
+
+    original_cross = getattr(pytorch_backend, "cross", None)
+    if original_cross is None:
+        return
+    if getattr(original_cross, "_pyrecest_cross_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, "cross", original_cross)
+        return
+
+    def _normalize_cross_axis(axis, ndim, name):
+        axis = _operator_index(axis)
+        if axis < 0:
+            axis += ndim
+        if axis < 0 or axis >= ndim:
+            raise IndexError(
+                f"{name} {axis} is out of bounds for array of dimension {ndim}"
+            )
+        return axis
+
+    def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
+        if axis is not None:
+            axisa = axis
+            axisb = axis
+            axisc = axis
+
+        a = pytorch_backend.array(a)
+        b = pytorch_backend.array(b)
+        a, b = pytorch_backend.convert_to_wider_dtype([a, b])
+
+        axisa = _normalize_cross_axis(axisa, a.ndim, "axisa")
+        axisb = _normalize_cross_axis(axisb, b.ndim, "axisb")
+        a = torch_module.movedim(a, axisa, -1)
+        b = torch_module.movedim(b, axisb, -1)
+
+        a_dim = a.shape[-1]
+        b_dim = b.shape[-1]
+        if a_dim not in (2, 3) or b_dim not in (2, 3):
+            raise ValueError(
+                "incompatible dimensions for cross product "
+                "(dimension must be 2 or 3)"
+            )
+
+        leading_shape = numpy_module.broadcast_shapes(tuple(a.shape[:-1]), tuple(b.shape[:-1]))
+        if tuple(a.shape[:-1]) != leading_shape:
+            a = torch_module.broadcast_to(a, leading_shape + (a_dim,))
+        if tuple(b.shape[:-1]) != leading_shape:
+            b = torch_module.broadcast_to(b, leading_shape + (b_dim,))
+
+        z_component = a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
+        if a_dim == 2 and b_dim == 2:
+            return z_component
+
+        if a_dim == 3 and b_dim == 3:
+            result = torch_module.cross(a, b, dim=-1)
+        elif a_dim == 2:
+            result = pytorch_backend.stack(
+                [
+                    a[..., 1] * b[..., 2],
+                    -a[..., 0] * b[..., 2],
+                    z_component,
+                ],
+                dim=-1,
+            )
+        else:
+            result = pytorch_backend.stack(
+                [
+                    -a[..., 2] * b[..., 1],
+                    a[..., 2] * b[..., 0],
+                    z_component,
+                ],
+                dim=-1,
+            )
+
+        axisc = _normalize_cross_axis(axisc, result.ndim, "axisc")
+        return torch_module.movedim(result, -1, axisc)
+
+    cross.__name__ = getattr(original_cross, "__name__", "cross")
+    cross.__doc__ = getattr(original_cross, "__doc__", None)
+    cross._pyrecest_cross_contract = True
+    setattr(pytorch_backend, "cross", cross)
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        setattr(backend, "cross", cross)
+
+
 def register_backend_submodules(backend: ModuleType | None = None) -> None:
     """Register virtual backend submodules for standard import statements."""
     if backend is None:
@@ -430,6 +521,7 @@ def register_backend_submodules(backend: ModuleType | None = None) -> None:
     _adapt_pytorch_reshape_contract(backend)
     _adapt_pytorch_stack_helpers_contract(backend)
     _adapt_pytorch_reduction_alias_contract(backend)
+    _adapt_pytorch_cross_contract(backend)
 
     backend.__path__ = getattr(backend, "__path__", [])
     backend_spec = getattr(backend, "__spec__", None)
