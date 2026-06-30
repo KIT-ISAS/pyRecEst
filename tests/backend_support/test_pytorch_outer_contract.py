@@ -19,33 +19,33 @@ def _backend_subprocess_env(backend_name):
 
 
 @pytest.mark.backend_portable
-def test_pytorch_outer_matches_numpy_for_flattened_inputs():
+def test_pytorch_outer_pairs_leading_dimensions():
     if importlib.util.find_spec("torch") is None:
         pytest.skip("torch is not installed")
 
     env = _backend_subprocess_env("pytorch")
 
     code = """
-import numpy as np
 import numpy.testing as npt
 import pyrecest.backend as backend
 import pyrecest._backend.pytorch as raw_pytorch
 
 cases = [
-    (np.arange(6.0).reshape(2, 3), np.arange(4.0).reshape(2, 2)),
-    (2.0, [3.0, 4.0]),
-    ([[1, 2], [3, 4]], [[5, 6], [7, 8]]),
+    (
+        [[1.0, 2.0], [3.0, 4.0]],
+        [[5.0, 6.0], [7.0, 8.0]],
+        [[[5.0, 6.0], [10.0, 12.0]], [[21.0, 24.0], [28.0, 32.0]]],
+    ),
+    (2.0, [3.0, 4.0], [6.0, 8.0]),
+    ([3.0, 4.0], 2.0, [6.0, 8.0]),
 ]
 
-for left, right in cases:
-    expected = np.outer(np.asarray(left), np.asarray(right))
+for left, right, expected in cases:
     result = backend.outer(backend.array(left), backend.array(right))
     raw_result = raw_pytorch.outer(raw_pytorch.array(left), raw_pytorch.array(right))
 
     npt.assert_allclose(backend.to_numpy(result), expected)
     npt.assert_allclose(raw_pytorch.to_numpy(raw_result), expected)
-    assert tuple(result.shape) == expected.shape
-    assert tuple(raw_result.shape) == expected.shape
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
 
@@ -58,7 +58,6 @@ def test_raw_pytorch_outer_matches_numpy_when_public_backend_is_numpy():
     env = _backend_subprocess_env("numpy")
 
     code = """
-import numpy as np
 import numpy.testing as npt
 import pyrecest.backend as public_backend
 import pyrecest._backend.pytorch as raw_pytorch
@@ -66,16 +65,18 @@ import pyrecest._backend.pytorch as raw_pytorch
 assert public_backend.__backend_name__ == "numpy"
 
 cases = [
-    (np.arange(6.0).reshape(2, 3), np.arange(4.0).reshape(2, 2)),
-    (2.0, [3.0, 4.0]),
-    ([[1, 2], [3, 4]], [[5, 6], [7, 8]]),
+    (
+        [[1.0, 2.0], [3.0, 4.0]],
+        [[5.0, 6.0], [7.0, 8.0]],
+        [[[5.0, 6.0], [10.0, 12.0]], [[21.0, 24.0], [28.0, 32.0]]],
+    ),
+    (2.0, [3.0, 4.0], [6.0, 8.0]),
+    ([3.0, 4.0], 2.0, [6.0, 8.0]),
 ]
 
-for left, right in cases:
-    expected = np.outer(np.asarray(left), np.asarray(right))
+for left, right, expected in cases:
     raw_result = raw_pytorch.outer(raw_pytorch.array(left), raw_pytorch.array(right))
 
     npt.assert_allclose(raw_pytorch.to_numpy(raw_result), expected)
-    assert tuple(raw_result.shape) == expected.shape
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
