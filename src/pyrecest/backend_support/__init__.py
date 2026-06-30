@@ -307,6 +307,17 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _pytorch_broadcast_dimension(dimension, numpy_module) -> int:
+    """Return one NumPy-style broadcast dimension as a non-boolean integer."""
+
+    if isinstance(dimension, (bool, numpy_module.bool_)):
+        raise TypeError("broadcast shape entries must be integers")
+    try:
+        return _operator_index(dimension)
+    except TypeError as exc:
+        raise TypeError("broadcast shape entries must be integers") from exc
+
+
 def _pytorch_broadcast_shape(shape, numpy_module, torch_module) -> tuple[int, ...]:
     """Normalize NumPy-style broadcast shapes for ``torch.Tensor.expand``."""
 
@@ -314,10 +325,12 @@ def _pytorch_broadcast_shape(shape, numpy_module, torch_module) -> tuple[int, ..
         shape = shape.detach().cpu().numpy()
     shape_array = numpy_module.asarray(shape)
     if shape_array.shape == ():
-        broadcast_shape = (_operator_index(shape_array.item()),)
+        broadcast_shape = (
+            _pytorch_broadcast_dimension(shape_array.item(), numpy_module),
+        )
     else:
         broadcast_shape = tuple(
-            _operator_index(one_dimension)
+            _pytorch_broadcast_dimension(one_dimension, numpy_module)
             for one_dimension in shape_array.tolist()
         )
     if any(one_dimension < 0 for one_dimension in broadcast_shape):
@@ -519,35 +532,13 @@ def _markdown_table_cell(value: object) -> str:
     return str(value).replace("\r", " ").replace("\n", "<br>").replace(chr(124), escape)
 
 
-def _markdown_table_row(cells: list[str]) -> str:
-    separator = chr(124)
-    return f"{separator} " + f" {separator} ".join(cells) + f" {separator}"
-
-
 def format_backend_support_markdown() -> str:
-    """Render the public backend API matrix as a Markdown table."""
-    lines = [
-        _markdown_table_row(["API", "NumPy", "PyTorch", "JAX", "Notes"]),
-        _markdown_table_row(["-----", "-------", "---------", "-----", "-------"]),
-    ]
-    for api_name, row in iter_api_backend_capabilities():
-        lines.append(
-            _markdown_table_row(
-                [
-                    f"`{_markdown_table_cell(api_name)}`",
-                    _markdown_table_cell(row["numpy"]),
-                    _markdown_table_cell(row["pytorch"]),
-                    _markdown_table_cell(row["jax"]),
-                    _markdown_table_cell(row.get("notes", "")),
-                ]
-            )
+    """Render the backend support matrix as a Markdown table."""
+    headers = ["API", *BACKEND_SUPPORT_LEVELS]
+    rows = [headers, ["---", *["---"] * len(BACKEND_SUPPORT_LEVELS)]]
+    for api_name, support in iter_api_backend_capabilities():
+        rows.append(
+            [api_name]
+            + [_markdown_table_cell(support.get(backend, "")) for backend in BACKEND_SUPPORT_LEVELS]
         )
-    return "\n".join(lines)
-
-
-__all__ = [
-    "BACKEND_SUPPORT_LEVELS",
-    "backend_support",
-    "format_backend_support_markdown",
-    "get_backend_support",
-]
+    return "\n".join("| " + " | ".join(row) + " |" for row in rows)
