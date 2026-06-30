@@ -1,6 +1,8 @@
 import copy
 from numbers import Integral
 
+import numpy as np
+
 # pylint: disable=no-name-in-module
 import pyrecest.backend
 
@@ -45,6 +47,34 @@ def _validate_same_dimension(first, second, operation):
             f"Cannot {operation} Gaussian distributions with dimensions "
             f"{first.dim} and {second.dim}."
         )
+
+
+def _validate_positive_sample_count(n) -> int:
+    """Return ``n`` as a positive Python int after scalar-count validation."""
+    message = "n must be a positive integer."
+    try:
+        count_array = np.asarray(n)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+
+    if count_array.ndim != 0:
+        raise ValueError(message)
+
+    count = count_array.item()
+    if isinstance(count, (bool, np.bool_)):
+        raise ValueError(message)
+
+    try:
+        count_int = int(count)
+        count_float = float(count)
+    except (OverflowError, TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+
+    if not np.isfinite(count_float) or not count_float.is_integer():
+        raise ValueError(message)
+    if count_int <= 0:
+        raise ValueError(message)
+    return count_int
 
 
 class GaussianDistribution(AbstractLinearDistribution):
@@ -303,9 +333,8 @@ class GaussianDistribution(AbstractLinearDistribution):
 
     def sample(self, n):
         """Draw ``n`` random samples with shape ``(n, dim)``."""
-        if isinstance(n, bool) or not isinstance(n, Integral) or int(n) <= 0:
-            raise ValueError("n must be a positive integer.")
-        return random.multivariate_normal(mean=self.mu, cov=self.C, size=int(n))
+        n = _validate_positive_sample_count(n)
+        return random.multivariate_normal(mean=self.mu, cov=self.C, size=n)
 
     @staticmethod
     def from_distribution(distribution, check_validity=False):
