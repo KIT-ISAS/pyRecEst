@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass
-from typing import Final, Literal, ParamSpec, TypeVar
+from typing import Any, Final, Literal, ParamSpec, TypeVar
 
 from pyrecest.backend_support._pytorch_allclose_device_contract import (
     patch_pytorch_allclose_device_contract as _patch_pytorch_allclose_device_contract,
@@ -101,6 +101,8 @@ def stability(
 
 def get_public_api_status(name: str) -> PublicAPIStatus | None:
     """Return registered stability metadata for a public API name."""
+    if not isinstance(name, str):
+        return None
     return _PUBLIC_API_STATUS.get(name)
 
 
