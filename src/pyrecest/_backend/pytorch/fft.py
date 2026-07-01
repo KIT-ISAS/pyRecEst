@@ -1,5 +1,6 @@
 # For ffts. Added for pyrecest.
 from functools import wraps as _wraps
+from operator import index as _operator_index
 
 import torch as _torch
 
@@ -19,6 +20,19 @@ def _is_empty_dim(dim):
         return len(tuple(dim)) == 0
     except TypeError:
         return False
+
+
+def _normalize_single_fft_dim(dim):
+    """Return scalar-array FFT dimensions as Python integers when possible."""
+    if dim is None or isinstance(dim, (bool, str, bytes)):
+        return dim
+    ndim = getattr(dim, "ndim", None)
+    if ndim is not None and ndim != 0:
+        return dim
+    try:
+        return _operator_index(dim)
+    except TypeError:
+        return dim
 
 
 def _with_dim_alias(kwargs, alias, func_name):
@@ -44,11 +58,15 @@ def _wrap_arraylike_fft(
     func_name,
     dim_alias=None,
     empty_dim_is_noop=False,
+    normalize_scalar_dim=False,
 ):
     @_wraps(torch_func)
     def fft_func(value, *args, **kwargs):
         if dim_alias is not None:
             kwargs = _with_dim_alias(kwargs, dim_alias, func_name)
+        if normalize_scalar_dim and "dim" in kwargs:
+            kwargs = dict(kwargs)
+            kwargs["dim"] = _normalize_single_fft_dim(kwargs["dim"])
         value = _as_fft_tensor(value)
         if empty_dim_is_noop and _is_empty_dim(kwargs.get("dim")):
             return value
@@ -57,8 +75,18 @@ def _wrap_arraylike_fft(
     return fft_func
 
 
-rfft = _wrap_arraylike_fft(_torch.fft.rfft, func_name="rfft", dim_alias="axis")
-irfft = _wrap_arraylike_fft(_torch.fft.irfft, func_name="irfft", dim_alias="axis")
+rfft = _wrap_arraylike_fft(
+    _torch.fft.rfft,
+    func_name="rfft",
+    dim_alias="axis",
+    normalize_scalar_dim=True,
+)
+irfft = _wrap_arraylike_fft(
+    _torch.fft.irfft,
+    func_name="irfft",
+    dim_alias="axis",
+    normalize_scalar_dim=True,
+)
 fftshift = _wrap_arraylike_fft(
     _torch.fft.fftshift,
     func_name="fftshift",
