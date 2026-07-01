@@ -1,14 +1,18 @@
 """JAX FFT backend wrappers."""
 
-import numpy as _np
 import jax.numpy as _jnp
+import numpy as _np
 from jax.numpy import fft as _fft
 
 
 def _normalize_real_fft_axis(axis):
     """Return a Python ``int`` for NumPy integer scalar-array FFT axes."""
     if isinstance(axis, _np.ndarray):
-        if axis.size == 1 and _np.issubdtype(axis.dtype, _np.integer) and not _np.issubdtype(axis.dtype, _np.bool_):
+        if (
+            axis.size == 1
+            and _np.issubdtype(axis.dtype, _np.integer)
+            and not _np.issubdtype(axis.dtype, _np.bool_)
+        ):
             return int(axis.item())
         return axis
     if isinstance(axis, _np.integer) and not isinstance(axis, _np.bool_):
