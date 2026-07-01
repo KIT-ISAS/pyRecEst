@@ -47,6 +47,8 @@ class AdaptiveProcessNoiseConfig:
             raise ValueError("scale bounds must be positive and ordered")
         if not 0.0 < ewma_alpha <= 1.0:
             raise ValueError("ewma_alpha must be in (0, 1]")
+        if low_nis_ratio < 0.0 or high_nis_ratio < 0.0:
+            raise ValueError("nis ratio thresholds must be nonnegative")
         if high_nis_ratio < low_nis_ratio:
             raise ValueError("high_nis_ratio must be at least low_nis_ratio")
         if scale_gain < 0.0:
