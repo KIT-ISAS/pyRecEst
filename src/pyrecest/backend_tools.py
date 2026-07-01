@@ -367,6 +367,7 @@ def _patch_raw_pytorch_comparison_numpy_contract() -> None:
         ("greater", _torch.greater),
         ("less", _torch.less),
         ("logical_or", _torch.logical_or),
+        ("logical_and", _torch.logical_and),
     ):
         helper = _wrap_comparison(helper_name, torch_func)
         setattr(pytorch_backend, helper_name, helper)
