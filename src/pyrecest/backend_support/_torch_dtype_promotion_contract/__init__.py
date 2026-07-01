@@ -30,6 +30,9 @@ def patch_pytorch_dtype_promotion_contract() -> None:
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
+        from pyrecest._backend.pytorch._common import (  # pylint: disable=import-outside-toplevel
+            _normalize_dtype,
+        )
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
         return
 
@@ -37,6 +40,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_arange_dtype_contract(raw_pytorch, backend, _normalize_dtype)
 
 
 def _pytorch_numpy_index_array(index, numpy_module, torch_module):
@@ -86,6 +90,25 @@ def _patch_pytorch_assignment_numpy_index_contract(raw_pytorch, backend, torch, 
         setattr(raw_pytorch, helper_name, wrapped_helper)
         if getattr(backend, "__backend_name__", None) == "pytorch":
             setattr(backend, helper_name, wrapped_helper)
+
+
+def _patch_pytorch_arange_dtype_contract(raw_pytorch, backend, normalize_dtype) -> None:
+    """Make PyTorch arange accept NumPy-style dtype aliases."""
+    original_arange = raw_pytorch.arange
+    if getattr(original_arange, "_pyrecest_dtype_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.arange = original_arange
+        return
+
+    def arange(*args, dtype=None, **kwargs):
+        return original_arange(*args, dtype=normalize_dtype(dtype), **kwargs)
+
+    arange.__name__ = getattr(original_arange, "__name__", "arange")
+    arange.__doc__ = getattr(original_arange, "__doc__", None)
+    arange._pyrecest_dtype_contract = True
+    raw_pytorch.arange = arange
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.arange = arange
 
 
 def _preferred_pytorch_device(torch_module, *values):
