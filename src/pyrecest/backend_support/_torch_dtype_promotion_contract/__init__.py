@@ -193,7 +193,7 @@ def _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch) -> None:
 
 def _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch) -> None:
     """Keep equality-style helpers on an existing non-CPU tensor device."""
-    helper_names = ("equal", "less_equal")
+    helper_names = ("equal", "less_equal", "array" + "_equal")
     if all(
         getattr(getattr(raw_pytorch, helper_name, None), "_pyrecest_device_contract", False)
         for helper_name in helper_names
