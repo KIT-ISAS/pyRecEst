@@ -63,3 +63,12 @@ def test_raw_pytorch_isclose_prefers_existing_non_cpu_device_for_right_operand()
     assert result.device.type == device.type
     assert result.dtype == torch.bool
     assert tuple(result.shape) == (2,)
+
+
+def test_raw_pytorch_allclose_accepts_arraylike_against_cuda_operand():
+    if not torch.cuda.is_available():
+        pytest.skip("allclose returns a host bool and cannot be exercised on meta tensors")
+
+    right = torch.tensor([1.0, float("nan")], device="cuda")
+
+    assert pytorch_backend.allclose([1.0, float("nan")], right, equal_nan=True)
