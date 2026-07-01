@@ -61,3 +61,36 @@ def test_jax_linalg_accepts_array_like_inputs_directly():
 
     root = linalg.sqrtm([[4.0, 0.0], [0.0, 9.0]])
     assert bool(jnp.allclose(root, jnp.array([[2.0, 0.0], [0.0, 3.0]]), atol=1e-5))
+
+
+@pytest.mark.backend_portable
+def test_jax_qr_accepts_numpy_economic_mode():
+    if importlib.util.find_spec("jax") is None:
+        pytest.skip("JAX is not installed")
+
+    result = run_backend_code(
+        "jax",
+        """
+import numpy as np
+import pyrecest.backend as backend
+
+values = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+economic = backend.linalg.qr(backend.array(values), mode="economic")
+expected = np.linalg.qr(values, mode="raw")[0].swapaxes(-1, -2)
+np.testing.assert_allclose(np.asarray(economic), expected, rtol=1e-5, atol=1e-5)
+
+batched_values = np.stack([values, values + 1.0])
+batched_economic = backend.linalg.qr(backend.array(batched_values), mode="economic")
+batched_expected = np.linalg.qr(batched_values, mode="raw")[0].swapaxes(-1, -2)
+np.testing.assert_allclose(
+    np.asarray(batched_economic),
+    batched_expected,
+    rtol=1e-5,
+    atol=1e-5,
+)
+print("ok")
+""",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
