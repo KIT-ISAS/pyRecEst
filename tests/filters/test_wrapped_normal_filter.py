@@ -71,6 +71,34 @@ class WrappedNormalFilterTest(unittest.TestCase):
         self.assertIsInstance(self.wn_filter.filter_state, WrappedNormalDistribution)
         self.assertTrue(math.isfinite(float(self.wn_filter.filter_state.sigma)))
 
+    def test_update_nonlinear_progressive_accepts_constant_nonzero_likelihood(self):
+        class FakeDiracDistribution:
+            def __init__(self):
+                self.d = array([0.0, 1.0])
+                self.w = array([1.0, 1.0])
+                self.reweigh_calls = 0
+
+            def reweigh(self, weight_fun):
+                self.reweigh_calls += 1
+                npt.assert_allclose(weight_fun(self.d), array([2.0, 2.0]), rtol=1e-12)
+                return self
+
+            @staticmethod
+            def to_wn():
+                return WrappedNormalDistribution(array(0.0), array(1.0))
+
+        fake_dirac = FakeDiracDistribution()
+
+        def constant_likelihood(_z, _x):
+            return 2.0
+
+        with patch.object(
+            WrappedNormalDistribution, "to_dirac5", return_value=fake_dirac
+        ):
+            self.wn_filter.update_nonlinear_progressive(constant_likelihood, z=0.0)
+
+        self.assertEqual(fake_dirac.reweigh_calls, 1)
+
     def test_update_nonlinear_progressive_rejects_invalid_tau(self):
         self.wn_filter.filter_state = WrappedNormalDistribution(array(0.0), array(0.5))
         invalid_taus = (

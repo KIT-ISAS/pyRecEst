@@ -122,23 +122,26 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
                     "Progressive update failed because likelihood is 0 everywhere"
                 )
 
-            w_min = min(wd.w)
-            w_max = max(wd.w)
+            if likelihood_vals_min == likelihood_vals_max:
+                current_lambda = lambda_
+            else:
+                w_min = min(wd.w)
+                w_max = max(wd.w)
 
-            if likelihood_vals_min == 0 or w_min == 0:
-                raise ZeroDivisionError("Cannot perform division by zero")
+                if likelihood_vals_min == 0 or w_min == 0:
+                    raise ZeroDivisionError("Cannot perform division by zero")
 
-            current_lambda = minimum(
-                log(tau * w_max / w_min)
-                / log(likelihood_vals_min / likelihood_vals_max),
-                lambda_,
-            )
+                current_lambda = minimum(
+                    log(tau * w_max / w_min)
+                    / log(likelihood_vals_min / likelihood_vals_max),
+                    lambda_,
+                )
 
-            if current_lambda <= 0:
-                raise ValueError("Progressive update with given threshold impossible")
+                if current_lambda <= 0:
+                    raise ValueError("Progressive update with given threshold impossible")
 
-            current_lambda = maximum(current_lambda, MINIMUM_LAMBDA)
-            current_lambda = minimum(current_lambda, lambda_)
+                current_lambda = maximum(current_lambda, MINIMUM_LAMBDA)
+                current_lambda = minimum(current_lambda, lambda_)
             wd_new = wd.reweigh(
                 lambda points, power=current_lambda: self._evaluate_likelihood_values(
                     likelihood, z, points, power=power
