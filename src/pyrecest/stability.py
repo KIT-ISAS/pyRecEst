@@ -6,10 +6,14 @@ from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass
 from typing import Final, Literal, ParamSpec, TypeVar
 
+from pyrecest.backend_support._jax_assignment_numpy_index_contract import (
+    patch_jax_assignment_numpy_index_contract as _patch_jax_assignment_numpy_index_contract,
+)
 from pyrecest.backend_support._pytorch_allclose_device_contract import (
     patch_pytorch_allclose_device_contract as _patch_pytorch_allclose_device_contract,
 )
 
+_patch_jax_assignment_numpy_index_contract()
 _patch_pytorch_allclose_device_contract()
 
 P = ParamSpec("P")
