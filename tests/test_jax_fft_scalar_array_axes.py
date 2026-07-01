@@ -7,4 +7,8 @@ def test_jax_fft_scalar_axis_smoke():
 
     values = jnp.arange(4.0)
     axis = jnp.array(0)
-    assert fft.rfft(values, axis=axis).shape == fft.rfft(values, axis=0).shape
+    expected = fft.rfft(values, axis=0)
+    actual = fft.rfft(values, axis=axis)
+
+    assert actual.shape == expected.shape
+    assert actual.tolist() == expected.tolist()
