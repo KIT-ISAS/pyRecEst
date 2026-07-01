@@ -15,11 +15,17 @@ samples = random.randint(0, 5, size=(16,))
 high_only = random.randint(5, size=(16,))
 compat_positional_shape = random.randint((16,), minval=2, maxval=7)
 compat_keyword_shape = random.randint(size=(16,), minval=2, maxval=7)
+empty_high_only = random.randint(0, size=(0,))
+empty_invalid_bounds = random.randint(5, 3, size=(0,))
+empty_array_bounds = random.randint([5, 1], [3, 2], size=(0, 2))
 
 assert samples.shape == (16,)
 assert high_only.shape == (16,)
 assert compat_positional_shape.shape == (16,)
 assert compat_keyword_shape.shape == (16,)
+assert empty_high_only.shape == (0,)
+assert empty_invalid_bounds.shape == (0,)
+assert empty_array_bounds.shape == (0, 2)
 assert bool(backend.all(samples >= 0))
 assert bool(backend.all(samples < 5))
 assert bool(backend.all(high_only >= 0))
@@ -36,6 +42,13 @@ for invalid_population in (0, -1, []):
         assert "positive integer or a non-empty array" in str(exc)
     else:
         raise AssertionError("invalid choice population was accepted")
+
+try:
+    random.randint(5, 3, size=(1,))
+except ValueError as exc:
+    assert "high must be greater than low" in str(exc)
+else:
+    raise AssertionError("non-empty invalid bounds were accepted")
 
 print("ok")
 """
