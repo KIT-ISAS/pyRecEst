@@ -295,9 +295,14 @@ def qr(a, mode="reduced"):
 
 
 def solve_sylvester(a, b, q):
+    device = _preferred_linalg_device(a, b, q)
     a = _as_linalg_tensor(a)
     b = _as_linalg_tensor(b)
     q = _as_linalg_tensor(q)
+    if device is not None:
+        a = a.to(device=device)
+        b = b.to(device=device)
+        q = q.to(device=device)
     common_dtype = _common_linalg_dtype(a, b, q)
     a = a.to(dtype=common_dtype)
     b = b.to(dtype=common_dtype)
