@@ -155,6 +155,20 @@ _ALLOWED_API_CAPABILITY_KEYS: Final = frozenset(
 )
 
 
+def _patch_jax_backend_contracts() -> None:
+    try:
+        from pyrecest.backend_support._jax_random_empty_contract import (  # pylint: disable=import-outside-toplevel
+            patch_jax_randint_empty_size_contract,
+        )
+    except ModuleNotFoundError:  # pragma: no cover - backend support may be unavailable
+        return
+
+    patch_jax_randint_empty_size_contract()
+
+
+_patch_jax_backend_contracts()
+
+
 def get_unsupported_functions(
     backend_name: str, module_name: str = ""
 ) -> tuple[str, ...]:
