@@ -1,7 +1,7 @@
 import warnings
 from typing import Any, Dict
 
-from pyrecest.backend import empty, size, zeros
+from pyrecest.backend import empty, zeros
 
 from .perform_predict_update_cycles import perform_predict_update_cycles
 
@@ -20,7 +20,7 @@ def iterate_configs_and_runs(
         )
         raise NotImplementedError("This is not implemented yet.")
 
-    n_configs = sum(size(f["parameter"]) for f in filter_configs)
+    n_configs = len(filter_configs)
     n_runs = groundtruths.shape[0]
     run_times = empty((n_configs, n_runs))
     run_failed = zeros((n_configs, n_runs), dtype=bool)
