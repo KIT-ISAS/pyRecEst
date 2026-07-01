@@ -38,9 +38,10 @@ def _normalize_dtype(dtype):
     if isinstance(dtype, str) and dtype.startswith("torch."):
         dtype = dtype.split(".", 1)[1]
     try:
-        return _TORCH_DTYPE_BY_NAME[str(_np.dtype(dtype))]
-    except (KeyError, TypeError):
+        np_dtype = _np.dtype(dtype)
+    except (TypeError, ValueError):
         return dtype
+    return _TORCH_DTYPE_BY_NAME.get(np_dtype.name, dtype)
 
 
 def _as_torch_compatible_numpy_array(x):
