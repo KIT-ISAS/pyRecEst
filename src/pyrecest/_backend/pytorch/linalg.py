@@ -1,5 +1,7 @@
 """Pytorch based linear algebra backend."""
 
+import operator as _operator
+
 import numpy as _np
 import scipy as _scipy
 import torch as _torch
@@ -91,6 +93,13 @@ def _preferred_linalg_device(*values):
 
 def _out_kwargs(out):
     return {} if out is None else {"out": out}
+
+
+def _normalize_linalg_norm_axis(axis):
+    """Convert single-element NumPy axis arrays to Python integer axes."""
+    if isinstance(axis, _np.ndarray) and axis.size == 1:
+        return _operator.index(axis.item())
+    return axis
 
 
 def cholesky(a, upper=False, out=None):
@@ -208,6 +217,7 @@ def svd(x, full_matrices=True, compute_uv=True):
 
 def norm(x, ord=None, axis=None, keepdims=False):
     x = _as_linalg_tensor(x)
+    axis = _normalize_linalg_norm_axis(axis)
     return _torch.linalg.norm(x, ord=ord, dim=axis, keepdim=keepdims)
 
 
