@@ -103,12 +103,43 @@ def _out_kwargs(out):
     return {} if out is None else {"out": out}
 
 
-def _normalize_linalg_tolerance(value):
-    """Return PyTorch-compatible scalar tolerances from NumPy scalar inputs."""
-    if isinstance(value, _np.ndarray) and value.ndim == 0:
-        return value.item()
+def _linalg_tolerance_dtype(reference):
+    """Return the real tolerance dtype matching a linalg input tensor."""
+    if not isinstance(reference, _torch.Tensor):
+        return None
+    if reference.dtype == _torch.complex64:
+        return _torch.float32
+    if reference.dtype == _torch.complex128:
+        return _torch.float64
+    if reference.dtype.is_floating_point:
+        return reference.dtype
+    return None
+
+
+def _normalize_linalg_tolerance(value, reference=None):
+    """Return PyTorch-compatible tolerances from NumPy scalar/array inputs."""
+    if value is None or _torch.is_tensor(value):
+        return value
     if isinstance(value, _np.generic):
         return value.item()
+    if isinstance(value, _np.ndarray):
+        if value.ndim == 0:
+            return value.item()
+        kwargs = {}
+        if isinstance(reference, _torch.Tensor):
+            kwargs["device"] = reference.device
+            dtype = _linalg_tolerance_dtype(reference)
+            if dtype is not None:
+                kwargs["dtype"] = dtype
+        return _torch.as_tensor(value, **kwargs)
+    if isinstance(value, (list, tuple)):
+        kwargs = {}
+        if isinstance(reference, _torch.Tensor):
+            kwargs["device"] = reference.device
+            dtype = _linalg_tolerance_dtype(reference)
+            if dtype is not None:
+                kwargs["dtype"] = dtype
+        return _torch.as_tensor(value, **kwargs)
     return value
 
 
@@ -159,8 +190,8 @@ def pinv(a, rcond=None, hermitian=False, *, atol=None, rtol=None, out=None):
             raise TypeError("pinv() got both 'rcond' and 'rtol'")
         rtol = rcond
     a = _as_linalg_tensor(a)
-    atol = _normalize_linalg_tolerance(atol)
-    rtol = _normalize_linalg_tolerance(rtol)
+    atol = _normalize_linalg_tolerance(atol, a)
+    rtol = _normalize_linalg_tolerance(rtol, a)
     return _torch.linalg.pinv(
         a,
         atol=atol,
@@ -270,8 +301,8 @@ def matrix_rank(a, tol=None, hermitian=False, *, rtol=None, atol=None, **kwargs)
         atol = tol
 
     a = _as_linalg_tensor(a)
-    atol = _normalize_linalg_tolerance(atol)
-    rtol = _normalize_linalg_tolerance(rtol)
+    atol = _normalize_linalg_tolerance(atol, a)
+    rtol = _normalize_linalg_tolerance(rtol, a)
     return _torch.linalg.matrix_rank(a, atol=atol, rtol=rtol, hermitian=hermitian)
 
 
