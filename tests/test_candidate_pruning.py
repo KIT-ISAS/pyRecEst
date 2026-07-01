@@ -87,7 +87,7 @@ class TestCandidatePruning(unittest.TestCase):
                         config=config,
                     )
 
-    def test_probability_matrix_ignores_nonfinite_values(self):
+    def test_probability_matrix_ignores_nan_values(self):
         config = CandidatePruningConfig(probability_threshold=0.5)
 
         mask = candidate_mask_from_costs(
@@ -97,6 +97,21 @@ class TestCandidatePruning(unittest.TestCase):
         )
 
         npt.assert_array_equal(mask, np.array([[False, True]]))
+
+    def test_probability_matrix_rejects_infinite_values(self):
+        config = CandidatePruningConfig(probability_threshold=0.5)
+
+        for probabilities in (np.array([[np.inf, 0.75]]), np.array([[-np.inf, 0.75]])):
+            with self.subTest(probabilities=probabilities):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "probability_matrix may only contain finite probabilities or NaN",
+                ):
+                    candidate_mask_from_costs(
+                        np.array([[1.0, 2.0]]),
+                        probability_matrix=probabilities,
+                        config=config,
+                    )
 
     def test_numeric_matrices_reject_none_object_values(self):
         with self.assertRaisesRegex(ValueError, "cost_matrix must be numeric"):
