@@ -20,13 +20,40 @@ def patch_jax_randint_empty_size_contract() -> None:
                 backend_random.randint = original_randint
         return
 
-    def _empty_invalid_bound_result(low, high, size, args, kwargs):
-        if args:
-            return None
+    def _parse_randint_arguments(low, high, size, kwargs):
+        legacy_minval = kwargs.pop("minval", None)
+        legacy_maxval = kwargs.pop("maxval", None)
+        if legacy_minval is not None or legacy_maxval is not None:
+            if legacy_minval is None or legacy_maxval is None or high is not None:
+                return None
+            if low is not None:
+                if size is not None:
+                    return None
+                size = low
+            elif size is None:
+                return None
+            return legacy_minval, legacy_maxval, size, kwargs
+        if (
+            raw_jax_random._looks_like_shape_sequence(low)  # pylint: disable=protected-access
+            and high is not None
+            and size is not None
+            and raw_jax_random._looks_like_scalar_randint_bound(high)  # pylint: disable=protected-access
+            and raw_jax_random._looks_like_scalar_randint_bound(size)  # pylint: disable=protected-access
+        ):
+            return high, size, low, kwargs
         if high is None:
             if low is None:
                 return None
-            low, high = 0, low
+            return 0, low, size, kwargs
+        return low, high, size, kwargs
+
+    def _empty_invalid_bound_result(low, high, size, args, kwargs):
+        if args:
+            return None
+        parsed = _parse_randint_arguments(low, high, size, dict(kwargs))
+        if parsed is None:
+            return None
+        low, high, size, kwargs = parsed
 
         low = raw_jax_random._validate_randint_bound(low, "low")  # pylint: disable=protected-access
         high = raw_jax_random._validate_randint_bound(high, "high")  # pylint: disable=protected-access
