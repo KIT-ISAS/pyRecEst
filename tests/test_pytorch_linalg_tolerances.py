@@ -24,6 +24,19 @@ class TestPytorchLinalgToleranceContract(unittest.TestCase):
             1,
         )
 
+    def test_matrix_rank_accepts_numpy_vector_tolerances(self):
+        single = pytorch_backend.diag(
+            pytorch_backend.array([1.0, 1e-5], dtype=pytorch_backend.float64)
+        )
+        value = pytorch_backend.stack([single, single])
+
+        result = pytorch_backend.linalg.matrix_rank(
+            value,
+            rtol=np.array([1e-4, 1e-6]),
+        )
+
+        self.assertEqual(pytorch_backend.to_numpy(result).tolist(), [1, 2])
+
     def test_pinv_accepts_numpy_scalar_array_tolerances(self):
         value = pytorch_backend.diag(
             pytorch_backend.array([1.0, 1e-5], dtype=pytorch_backend.float64)
@@ -37,6 +50,32 @@ class TestPytorchLinalgToleranceContract(unittest.TestCase):
                 result = pytorch_backend.linalg.pinv(
                     value,
                     **{keyword: np.array(1e-4)},
+                )
+
+                self.assertEqual(result.dtype, pytorch_backend.float64)
+                self.assertTrue(pytorch_backend.allclose(result, expected))
+
+    def test_pinv_accepts_numpy_vector_tolerances(self):
+        single = pytorch_backend.diag(
+            pytorch_backend.array([1.0, 1e-5], dtype=pytorch_backend.float64)
+        )
+        value = pytorch_backend.stack([single, single])
+        expected = pytorch_backend.stack(
+            [
+                pytorch_backend.diag(
+                    pytorch_backend.array([1.0, 0.0], dtype=pytorch_backend.float64)
+                ),
+                pytorch_backend.diag(
+                    pytorch_backend.array([1.0, 1e5], dtype=pytorch_backend.float64)
+                ),
+            ]
+        )
+
+        for keyword in ("rcond", "rtol"):
+            with self.subTest(keyword=keyword):
+                result = pytorch_backend.linalg.pinv(
+                    value,
+                    **{keyword: np.array([1e-4, 1e-6])},
                 )
 
                 self.assertEqual(result.dtype, pytorch_backend.float64)
