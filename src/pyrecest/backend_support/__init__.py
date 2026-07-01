@@ -68,7 +68,7 @@ def _patch_raw_pytorch_assignment_scalar_tensor_indices() -> None:
 
 
 def _patch_pytorch_dot_numpy_contract() -> None:
-    """Make PyTorch dot follow the backend batched inner-product contract."""
+    """Make PyTorch dot follow NumPy's dot contraction contract."""
     try:
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - import fails before this module
@@ -98,10 +98,8 @@ def _patch_pytorch_dot_numpy_contract() -> None:
         if a.ndim == 1 and b.ndim == 1:
             return torch.dot(a, b)
         if b.ndim == 1:
-            return torch.einsum("...i,i->...", a, b)
-        if a.ndim == 1:
-            return torch.einsum("i,...i->...", a, b)
-        return torch.einsum("...i,...i->...", a, b)
+            return torch.tensordot(a, b, dims=([-1], [0]))
+        return torch.tensordot(a, b, dims=([-1], [-2]))
 
     dot.__name__ = getattr(original_dot, "__name__", "dot")
     dot.__doc__ = getattr(original_dot, "__doc__", None)
