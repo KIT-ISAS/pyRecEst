@@ -26,15 +26,66 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     """Apply the base PyTorch contract patch plus device-placement fixes."""
     _BASE_CONTRACT.patch_pytorch_dtype_promotion_contract()
     try:
+        import numpy as np  # pylint: disable=import-outside-toplevel
         import pyrecest._backend.pytorch as raw_pytorch  # pylint: disable=import-outside-toplevel
         import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
         import torch  # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError:  # pragma: no cover - PyTorch backend import failed earlier
         return
 
+    _patch_pytorch_assignment_numpy_index_contract(raw_pytorch, backend, torch, np)
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch)
+
+
+def _pytorch_numpy_index_array(index, numpy_module, torch_module):
+    """Return tensor indices for NumPy index arrays before helper len() checks."""
+    if not isinstance(index, numpy_module.ndarray):
+        return index
+    if numpy_module.issubdtype(index.dtype, numpy_module.bool_):
+        return torch_module.as_tensor(index, dtype=torch_module.bool)
+    if numpy_module.issubdtype(index.dtype, numpy_module.integer):
+        return torch_module.as_tensor(index, dtype=torch_module.long)
+    return index
+
+
+def _wrap_assignment_numpy_index_helper(original_helper, torch_module, numpy_module):
+    """Normalize NumPy index arrays before assignment helper len() checks."""
+    if getattr(original_helper, "_pyrecest_numpy_index_contract", False):
+        return original_helper
+
+    def assignment(x, values, indices, axis=0):
+        indices = _pytorch_numpy_index_array(indices, numpy_module, torch_module)
+        return original_helper(x, values, indices, axis=axis)
+
+    assignment.__name__ = getattr(original_helper, "__name__", "assignment")
+    assignment.__doc__ = getattr(original_helper, "__doc__", None)
+    assignment._pyrecest_numpy_index_contract = True
+    return assignment
+
+
+def _patch_pytorch_assignment_numpy_index_contract(raw_pytorch, backend, torch, np) -> None:
+    """Make PyTorch assignment helpers accept NumPy integer and boolean indices."""
+    helper_names = ("assignment", "assignment_by_sum")
+    if all(
+        getattr(getattr(raw_pytorch, helper_name, None), "_pyrecest_numpy_index_contract", False)
+        for helper_name in helper_names
+    ):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            for helper_name in helper_names:
+                setattr(backend, helper_name, getattr(raw_pytorch, helper_name))
+        return
+
+    for helper_name in helper_names:
+        wrapped_helper = _wrap_assignment_numpy_index_helper(
+            getattr(raw_pytorch, helper_name),
+            torch,
+            np,
+        )
+        setattr(raw_pytorch, helper_name, wrapped_helper)
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            setattr(backend, helper_name, wrapped_helper)
 
 
 def _preferred_pytorch_device(torch_module, *values):
