@@ -1,6 +1,7 @@
 from collections.abc import Callable
-from numbers import Integral
 from typing import Union
+
+import numpy as np
 
 # pylint: disable=redefined-builtin,no-name-in-module,no-member
 # pylint: disable=no-name-in-module,no-member
@@ -23,12 +24,30 @@ from .manifold_mixins import HypertoroidalFilterMixin
 
 
 def _validate_positive_integer(value, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, Integral):
-        raise ValueError(f"{name} must be a positive integer.")
-    value = int(value)
-    if value <= 0:
-        raise ValueError(f"{name} must be a positive integer.")
-    return value
+    message = f"{name} must be a positive integer."
+    value_array = np.asarray(value)
+    if value_array.shape != () or value_array.dtype == np.bool_:
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, np.bool_)):
+        raise ValueError(message)
+    if isinstance(scalar, (str, bytes, bytearray, np.str_, np.bytes_)):
+        raise ValueError(message)
+    if isinstance(scalar, (complex, np.complexfloating)):
+        raise ValueError(message)
+
+    try:
+        scalar_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not np.isfinite(scalar_float) or not scalar_float.is_integer():
+        raise ValueError(message)
+
+    integer = int(scalar_float)
+    if integer <= 0:
+        raise ValueError(message)
+    return integer
 
 
 class HypertoroidalParticleFilter(AbstractParticleFilter, HypertoroidalFilterMixin):
