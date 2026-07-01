@@ -21,6 +21,7 @@ def test_pytorch_linalg_helpers_accept_array_like_inputs():
     )
 
     code = """
+import numpy as np
 import pyrecest.backend as backend
 from pyrecest.backend import linalg
 
@@ -32,7 +33,9 @@ cholesky = linalg.cholesky([[4.0, 0.0], [0.0, 9.0]])
 assert backend.to_numpy(cholesky).tolist() == [[2.0, 0.0], [0.0, 3.0]]
 
 assert backend.to_numpy(linalg.eigvalsh([[2.0, 0.0], [0.0, 3.0]])).tolist() == [2.0, 3.0]
-assert backend.to_numpy(linalg.matrix_power([[1.0, 1.0], [0.0, 1.0]], 2)).tolist() == [[1.0, 2.0], [0.0, 1.0]]
+expected_power = [[1.0, 2.0], [0.0, 1.0]]
+assert backend.to_numpy(linalg.matrix_power([[1.0, 1.0], [0.0, 1.0]], 2)).tolist() == expected_power
+assert backend.to_numpy(linalg.matrix_power([[1.0, 1.0], [0.0, 1.0]], np.array(2))).tolist() == expected_power
 assert backend.to_numpy(linalg.pinv([[1.0, 0.0], [0.0, 0.0]])).tolist() == [[1.0, 0.0], [0.0, 0.0]]
 assert backend.to_numpy(linalg.expm([[0.0, 0.0], [0.0, 0.0]])).tolist() == identity
 assert backend.to_numpy(linalg.block_diag([[1.0]], [[2.0]])).tolist() == [[1.0, 0.0], [0.0, 2.0]]
