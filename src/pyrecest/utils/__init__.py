@@ -135,6 +135,41 @@ from .association_features import (
     pairwise_feature_tensor,
 )
 from .association_models import LogisticPairwiseAssociationModel
+
+
+def _patch_logistic_pairwise_backend_standardization() -> None:
+    """Make association-model standardization use backend reduction contracts."""
+    original_fit_standardization = LogisticPairwiseAssociationModel._fit_standardization
+    if getattr(original_fit_standardization, "_pyrecest_backend_std_contract", False):
+        return
+
+    def _fit_standardization(self, features):
+        import pyrecest.backend as _backend  # pylint: disable=import-outside-toplevel
+
+        if self.standardize:
+            feature_mean = _backend.mean(features, axis=0)
+            feature_scale = _backend.std(features, axis=0)
+            feature_scale = _backend.where(feature_scale > 0.0, feature_scale, 1.0)
+        else:
+            feature_mean = _backend.zeros(features.shape[1], dtype=_backend.float64)
+            feature_scale = _backend.ones(features.shape[1], dtype=_backend.float64)
+
+        self.feature_mean_ = feature_mean
+        self.feature_scale_ = feature_scale
+        return (features - feature_mean) / feature_scale
+
+    _fit_standardization.__name__ = getattr(
+        original_fit_standardization,
+        "__name__",
+        "_fit_standardization",
+    )
+    _fit_standardization.__doc__ = getattr(original_fit_standardization, "__doc__", None)
+    _fit_standardization._pyrecest_backend_std_contract = True
+    LogisticPairwiseAssociationModel._fit_standardization = _fit_standardization
+
+
+_patch_logistic_pairwise_backend_standardization()
+
 from .candidate_pruning import (
     CandidatePruningConfig,
     candidate_mask_from_costs,
