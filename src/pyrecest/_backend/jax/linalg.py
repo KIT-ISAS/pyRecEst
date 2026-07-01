@@ -39,7 +39,8 @@ def matrix_power(a, n):
     return _jnp.linalg.matrix_power(_as_linalg_array(a), n)
 
 
-def matrix_rank(a, *args, **kwargs):
+def matrix_rank(a, *args, hermitian=False, **kwargs):
+    _ = hermitian
     return _jnp.linalg.matrix_rank(_as_linalg_array(a), *args, **kwargs)
 
 
@@ -94,7 +95,8 @@ def _unsupported_function(name):
     """Create an unsupported-function shim that preserves facade identity."""
 
     def _raise_unsupported(*args, **kwargs):
-        del args, kwargs
+        unused_args = args
+        unused_kwargs = kwargs
         raise NotImplementedError(f"{name} is not supported in this JAX backend.")
 
     _raise_unsupported.__name__ = name
