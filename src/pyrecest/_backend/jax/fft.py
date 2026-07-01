@@ -6,12 +6,21 @@ from jax.numpy import fft as _fft
 
 
 def _normalize_real_fft_axis(axis):
-    """Return a Python ``int`` for NumPy integer scalar-array FFT axes."""
+    """Return a Python ``int`` for integer scalar-array FFT axes."""
     if isinstance(axis, _np.ndarray):
         if (
             axis.size == 1
             and _np.issubdtype(axis.dtype, _np.integer)
             and not _np.issubdtype(axis.dtype, _np.bool_)
+        ):
+            return int(axis.item())
+        return axis
+    if isinstance(axis, _jnp.ndarray):
+        axis_dtype = _np.asarray(axis).dtype
+        if (
+            axis.ndim == 0
+            and _np.issubdtype(axis_dtype, _np.integer)
+            and not _np.issubdtype(axis_dtype, _np.bool_)
         ):
             return int(axis.item())
         return axis
