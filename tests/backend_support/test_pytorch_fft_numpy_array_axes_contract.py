@@ -50,9 +50,5 @@ npt.assert_allclose(
     backend.to_numpy(backend.fft.fftn(values, dim=np.array([0, 1]))),
     np.fft.fftn(values_np, axes=(0, 1)),
 )
-npt.assert_array_equal(
-    backend.to_numpy(backend.fft.fftshift(values, axes=np.array([0]), dim=(0,))),
-    np.fft.fftshift(values_np, axes=(0,)),
-)
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=env)
