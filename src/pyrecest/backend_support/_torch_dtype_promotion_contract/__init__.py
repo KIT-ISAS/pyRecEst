@@ -37,6 +37,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_linspace_integer_dtype_contract(raw_pytorch, backend, torch)
 
 
 def _pytorch_numpy_index_array(index, numpy_module, torch_module):
@@ -262,6 +263,53 @@ def _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch) -> None
         setattr(raw_pytorch, helper_name, wrapped_helper)
         if getattr(backend, "__backend_name__", None) == "pytorch":
             setattr(backend, helper_name, wrapped_helper)
+
+
+def _integer_torch_dtype(dtype, raw_pytorch, torch):
+    """Return an explicit integer torch dtype, or ``None`` for non-integers."""
+    if dtype is None:
+        return None
+    try:
+        torch_dtype = raw_pytorch.as_dtype(dtype)
+    except (KeyError, TypeError, ValueError):
+        return None
+    integer_dtypes = {
+        torch.uint8,
+        torch.int8,
+        torch.int16,
+        torch.int32,
+        torch.int64,
+    }
+    return torch_dtype if torch_dtype in integer_dtypes else None
+
+
+def _patch_pytorch_linspace_integer_dtype_contract(raw_pytorch, backend, torch) -> None:
+    """Make PyTorch linspace match NumPy flooring for explicit integer dtypes."""
+    original_linspace = raw_pytorch.linspace
+    if getattr(original_linspace, "_pyrecest_integer_dtype_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.linspace = original_linspace
+        return
+
+    def linspace(start, stop, num=50, endpoint=True, dtype=None):
+        integer_dtype = _integer_torch_dtype(dtype, raw_pytorch, torch)
+        if integer_dtype is None:
+            return original_linspace(
+                start,
+                stop,
+                num=num,
+                endpoint=endpoint,
+                dtype=dtype,
+            )
+        values = original_linspace(start, stop, num=num, endpoint=endpoint, dtype=None)
+        return torch.floor(values).to(dtype=integer_dtype)
+
+    linspace.__name__ = getattr(original_linspace, "__name__", "linspace")
+    linspace.__doc__ = getattr(original_linspace, "__doc__", None)
+    linspace._pyrecest_integer_dtype_contract = True
+    raw_pytorch.linspace = linspace
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.linspace = linspace
 
 
 __all__ = ["patch_pytorch_dtype_promotion_contract"]
