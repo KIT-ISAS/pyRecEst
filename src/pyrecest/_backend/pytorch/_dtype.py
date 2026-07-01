@@ -199,15 +199,23 @@ def _validate_scalar_normal_scale(scale):
         raise ValueError("scale must be non-negative")
 
 
+def _normalize_optional_dtype_kwargs(kwargs):
+    if "dtype" not in kwargs:
+        return kwargs
+    kwargs = dict(kwargs)
+    kwargs["dtype"] = _normalize_torch_dtype(kwargs["dtype"], default=None)
+    return kwargs
+
+
 def _allow_complex_dtype(target=None):
     def _decorator(func):
         wrapped = _base_allow_complex_dtype(func)
-        if getattr(func, "__name__", "") != "normal":
-            return wrapped
 
         @functools.wraps(wrapped)
         def _wrapped(*args, **kwargs):
-            _validate_scalar_normal_scale(_normal_scale_from_call(args, kwargs))
+            kwargs = _normalize_optional_dtype_kwargs(kwargs)
+            if getattr(func, "__name__", "") == "normal":
+                _validate_scalar_normal_scale(_normal_scale_from_call(args, kwargs))
             return wrapped(*args, **kwargs)
 
         return _wrapped
