@@ -70,7 +70,9 @@ def _with_dim_alias(kwargs, alias, func_name):
         return kwargs
     dim_value = kwargs.get("dim")
     if dim_value is not None:
-        if alias_value is not None and dim_value != alias_value:
+        dim_value = _normalize_fft_dim_sequence(dim_value)
+        alias_value = _normalize_fft_dim_sequence(alias_value)
+        if dim_value != alias_value:
             raise TypeError("conflicting FFT axis aliases")
         return kwargs
     kwargs["dim"] = alias_value
