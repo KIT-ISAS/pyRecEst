@@ -32,3 +32,26 @@ assert backend.to_numpy(matvec_result).tolist() == [3.0, 2.0, 1.0]
     result = run_backend_code("pytorch", code)
 
     assert result.returncode == 0, result.stderr
+
+
+def _alternate_device(torch):
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    try:
+        torch.empty((), device="meta")
+    except Exception as exc:  # pragma: no cover - depends on PyTorch build
+        pytest.skip(f"no alternate PyTorch test device available: {exc}")
+    return torch.device("meta")
+
+
+def test_common_torch_promoted_pair_uses_existing_alternate_device():
+    torch = pytest.importorskip("torch")
+
+    import pyrecest._backend._common as common
+
+    device = _alternate_device(torch)
+
+    result = common.matvec(torch.eye(2), torch.ones(2, device=device))
+
+    assert result.device.type == device.type
+    assert tuple(result.shape) == (2,)
