@@ -130,9 +130,26 @@ def expm(a):
     return _torch.linalg.matrix_exp(_as_linalg_tensor(a))
 
 
+def _normalize_matrix_power_exponent(n):
+    """Return a Python integer exponent from scalar integer array inputs."""
+    if _torch.is_tensor(n):
+        if n.ndim != 0:
+            raise TypeError("exponent must be an integer")
+        n = n.detach().cpu().item()
+    elif isinstance(n, _np.ndarray):
+        if n.ndim != 0:
+            raise TypeError("exponent must be an integer")
+        n = n.item()
+    if isinstance(n, (bool, _np.bool_)):
+        raise TypeError("exponent must be an integer")
+    return _operator_index(n)
+
+
 def matrix_power(a, n):
     """Raise a matrix to an integer power after array-like input promotion."""
-    return _torch.linalg.matrix_power(_as_linalg_tensor(a), n)
+    return _torch.linalg.matrix_power(
+        _as_linalg_tensor(a), _normalize_matrix_power_exponent(n)
+    )
 
 
 def pinv(a, rcond=None, hermitian=False, *, atol=None, rtol=None, out=None):
