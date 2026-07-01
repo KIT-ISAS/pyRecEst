@@ -123,6 +123,7 @@ def _to_float_list(
     *,
     name: str = "value",
     reject_text_or_bool: bool = False,
+    require_finite: bool = False,
 ) -> list[float]:
     try:
         from pyrecest.backend import to_numpy
@@ -142,9 +143,12 @@ def _to_float_list(
         ):
             raise ValueError(message)
         try:
-            return float(item)
+            result = float(item)
         except (TypeError, ValueError, OverflowError) as exc:
             raise ValueError(message) from exc
+        if require_finite and not math.isfinite(result):
+            raise ValueError(message)
+        return result
 
     if reject_text_or_bool and isinstance(value, _TEXT_TYPES):
         raise ValueError(message)
@@ -298,7 +302,16 @@ def run_particle_resampling_scenario(path: str | Path) -> ScenarioResult:
     from pyrecest.diagnostics import ParticleDiagnostics
 
     data = config["data"]
-    particles = be.asarray(data["particles"], dtype=be.float64)
+    particle_rows = [
+        _to_float_list(
+            row,
+            name="particles",
+            reject_text_or_bool=True,
+            require_finite=True,
+        )
+        for row in data["particles"]
+    ]
+    particles = be.asarray(particle_rows, dtype=be.float64)
     weights = _normalized_particle_weights(
         data.get("weights"),
         int(particles.shape[0]),

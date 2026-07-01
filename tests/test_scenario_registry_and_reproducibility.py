@@ -104,3 +104,34 @@ def test_particle_resampling_scenario_rejects_negative_weights(tmp_path: Path):
 
     with pytest.raises(ValueError, match="weights must be nonnegative"):
         run_scenario(scenario)
+
+
+@pytest.mark.parametrize(
+    "particles",
+    [
+        "[[nan, 0.0], [1.0, 0.0]]",
+        "[[inf, 0.0], [1.0, 0.0]]",
+    ],
+)
+def test_particle_resampling_scenario_rejects_nonfinite_particles(
+    tmp_path: Path,
+    particles: str,
+):
+    scenario = tmp_path / "nonfinite_particles.toml"
+    scenario.write_text(
+        f"""
+[scenario]
+type = "particle_resampling"
+name = "nonfinite-particle-resampling"
+seed = 7
+
+[data]
+particles = {particles}
+weights = [0.5, 0.5]
+num_samples = 4
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="particles must contain numeric values"):
+        run_scenario(scenario)
