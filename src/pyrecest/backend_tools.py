@@ -331,6 +331,61 @@ def _patch_pytorch_stack_helpers_numpy_contract() -> None:
             setattr(backend, helper_name, helper)
 
 
+def _pytorch_squeeze_axis(axis, torch_module):
+    """Return a PyTorch-compatible squeeze axis from NumPy-style input."""
+
+    if axis is None:
+        return None
+    if torch_module.is_tensor(axis):
+        if axis.ndim == 0:
+            return _operator_index(axis.item())
+        axis = axis.detach().cpu().tolist()
+    elif getattr(axis, "ndim", None) == 0 and hasattr(axis, "item"):
+        return _operator_index(axis.item())
+
+    try:
+        return _operator_index(axis)
+    except TypeError:
+        pass
+
+    return tuple(_operator_index(one_axis) for one_axis in axis)
+
+
+def _patch_pytorch_squeeze_numpy_axis_contract() -> None:
+    """Make PyTorch squeeze accept NumPy-style scalar-array axes."""
+
+    try:
+        import pyrecest._backend.pytorch as pytorch_backend  # pylint: disable=import-outside-toplevel
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+        import torch as _torch  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - PyTorch backend may be unavailable
+        return
+
+    original_squeeze = getattr(pytorch_backend, "squeeze", None)
+    if original_squeeze is None:
+        return
+    if getattr(original_squeeze, "_pyrecest_numpy_axis_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.squeeze = original_squeeze
+        return
+
+    def squeeze(x, axis=None):
+        values = pytorch_backend.array(x)
+        normalized_axis = _pytorch_squeeze_axis(axis, _torch)
+        if normalized_axis is None:
+            return original_squeeze(values, axis=None)
+        if normalized_axis == ():
+            return values
+        return original_squeeze(values, axis=normalized_axis)
+
+    squeeze.__name__ = getattr(original_squeeze, "__name__", "squeeze")
+    squeeze.__doc__ = getattr(original_squeeze, "__doc__", None)
+    squeeze._pyrecest_numpy_axis_contract = True
+    pytorch_backend.squeeze = squeeze
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.squeeze = squeeze
+
+
 def _patch_raw_pytorch_comparison_numpy_contract() -> None:
     """Make raw PyTorch comparison helpers accept NumPy-style array-like inputs."""
 
@@ -417,6 +472,7 @@ _patch_pytorch_broadcast_arrays_numpy_contract()
 _patch_pytorch_round_numpy_contract()
 _patch_pytorch_special_numpy_contract()
 _patch_pytorch_stack_helpers_numpy_contract()
+_patch_pytorch_squeeze_numpy_axis_contract()
 _patch_raw_pytorch_comparison_numpy_contract()
 _patch_raw_pytorch_isclose_equal_nan_contract()
 
