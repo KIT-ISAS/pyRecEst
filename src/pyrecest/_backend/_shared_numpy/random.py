@@ -65,7 +65,10 @@ def _normalize_size(size):
 def _validate_uniform_bound(bound, name):
     if _contains_boolean_value(bound):
         raise TypeError(f"{name} must be real numeric, not boolean")
-    bound_array = _np.asarray(bound)
+    try:
+        bound_array = _np.asarray(bound)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must be real numeric") from exc
     if bound_array.dtype.kind not in "iuf":
         raise TypeError(f"{name} must be real numeric")
     if _np.any(~_np.isfinite(bound_array)):
