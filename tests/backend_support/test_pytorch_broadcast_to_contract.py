@@ -52,6 +52,14 @@ for broadcast_to, to_numpy in (
         pass
     else:
         raise AssertionError("broadcast_to accepted a negative broadcast dimension")
+
+    for invalid_shape in (True, (True,), np.array(True), np.array([True]), backend.array([True])):
+        try:
+            broadcast_to(values, invalid_shape)
+        except TypeError:
+            pass
+        else:
+            raise AssertionError(f"broadcast_to accepted boolean shape {invalid_shape!r}")
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=_backend_test_env("pytorch"))
 
@@ -84,5 +92,13 @@ except ValueError:
     pass
 else:
     raise AssertionError("raw broadcast_to accepted a negative broadcast dimension")
+
+for invalid_shape in (True, (True,), np.array(True), np.array([True]), pytorch_backend.array([True])):
+    try:
+        pytorch_backend.broadcast_to(values, invalid_shape)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError(f"raw broadcast_to accepted boolean shape {invalid_shape!r}")
 """
     subprocess.run([sys.executable, "-c", code], check=True, env=_backend_test_env("numpy"))

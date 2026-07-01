@@ -307,6 +307,17 @@ def _patch_pytorch_clip_numpy_contract() -> None:
         backend.clip = clip
 
 
+def _pytorch_broadcast_dimension(dimension, numpy_module) -> int:
+    """Return one NumPy-style broadcast dimension as a non-boolean integer."""
+
+    if isinstance(dimension, (bool, numpy_module.bool_)):
+        raise TypeError("broadcast shape entries must be integers")
+    try:
+        return _operator_index(dimension)
+    except TypeError as exc:
+        raise TypeError("broadcast shape entries must be integers") from exc
+
+
 def _pytorch_broadcast_shape(shape, numpy_module, torch_module) -> tuple[int, ...]:
     """Normalize NumPy-style broadcast shapes for ``torch.Tensor.expand``."""
 
@@ -314,10 +325,12 @@ def _pytorch_broadcast_shape(shape, numpy_module, torch_module) -> tuple[int, ..
         shape = shape.detach().cpu().numpy()
     shape_array = numpy_module.asarray(shape)
     if shape_array.shape == ():
-        broadcast_shape = (_operator_index(shape_array.item()),)
+        broadcast_shape = (
+            _pytorch_broadcast_dimension(shape_array.item(), numpy_module),
+        )
     else:
         broadcast_shape = tuple(
-            _operator_index(one_dimension)
+            _pytorch_broadcast_dimension(one_dimension, numpy_module)
             for one_dimension in shape_array.tolist()
         )
     if any(one_dimension < 0 for one_dimension in broadcast_shape):
