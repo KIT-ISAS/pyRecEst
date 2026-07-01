@@ -1,5 +1,6 @@
 """JAX-based linear algebra backend."""
 
+import numpy as _np
 import jax.numpy as _jnp
 import jax.scipy.linalg as _jax_scipy_linalg
 
@@ -9,6 +10,29 @@ from .._backend_config import jax_atol as atol
 def _as_linalg_array(value):
     """Convert PyRecEst array-like inputs before calling raw JAX linalg."""
     return _jnp.asarray(value)
+
+
+def _normalize_norm_axis(axis):
+    """Convert NumPy scalar-array axes to hashable values accepted by JAX."""
+    if axis is None or isinstance(axis, (int, _np.integer)):
+        return axis
+
+    axis_array = _np.asarray(axis)
+    if axis_array.ndim == 0:
+        return int(axis_array.item())
+    if axis_array.ndim == 1 and axis_array.size == 1:
+        return int(axis_array.reshape(()).item())
+    return axis
+
+
+def _normalize_norm_arguments(args, kwargs):
+    if len(args) >= 2:
+        args = tuple(args)
+        args = args[:1] + (_normalize_norm_axis(args[1]),) + args[2:]
+    if "axis" in kwargs:
+        kwargs = dict(kwargs)
+        kwargs["axis"] = _normalize_norm_axis(kwargs["axis"])
+    return args, kwargs
 
 
 def cholesky(a, *args, **kwargs):
@@ -44,6 +68,7 @@ def matrix_rank(a, *args, **kwargs):
 
 
 def norm(x, *args, **kwargs):
+    args, kwargs = _normalize_norm_arguments(args, kwargs)
     return _jnp.linalg.norm(_as_linalg_array(x), *args, **kwargs)
 
 
