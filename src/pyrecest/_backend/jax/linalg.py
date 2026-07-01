@@ -52,7 +52,24 @@ def pinv(a, *args, **kwargs):
 
 
 def qr(a, *args, **kwargs):
-    return _jnp.linalg.qr(_as_linalg_array(a), *args, **kwargs)
+    """Compute QR decomposition with NumPy-compatible legacy mode handling."""
+    a = _as_linalg_array(a)
+    if args:
+        mode = args[0]
+        if len(args) != 1 or "mode" in kwargs or mode != "economic":
+            return _jnp.linalg.qr(a, *args, **kwargs)
+        raw_qr = _jnp.linalg.qr(a, "raw", **kwargs)
+    else:
+        mode = kwargs.get("mode", "reduced")
+        if mode != "economic":
+            return _jnp.linalg.qr(a, **kwargs)
+        kwargs = dict(kwargs)
+        kwargs["mode"] = "raw"
+        raw_qr = _jnp.linalg.qr(a, **kwargs)
+
+    # NumPy's deprecated ``economic`` mode returns the transposed raw Householder
+    # reflector matrix. JAX exposes that matrix as ``Q`` for ``mode="raw"``.
+    return _jnp.swapaxes(raw_qr.Q, -1, -2)
 
 
 def solve(a, b, *args, **kwargs):
