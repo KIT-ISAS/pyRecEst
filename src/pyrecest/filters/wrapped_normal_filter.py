@@ -121,6 +121,8 @@ class WrappedNormalFilter(AbstractFilter, CircularFilterMixin):
                 raise ValueError(
                     "Progressive update failed because likelihood is 0 everywhere"
                 )
+            if likelihood_vals_min == likelihood_vals_max:
+                return
 
             w_min = min(wd.w)
             w_max = max(wd.w)
