@@ -1,6 +1,8 @@
 # For ffts. Added for pyrecest.
 from functools import wraps as _wraps
+from operator import index as _operator_index
 
+import numpy as _np
 import torch as _torch
 
 from ._common import array as _array
@@ -9,6 +11,33 @@ from ._common import array as _array
 def _as_fft_tensor(value):
     """Convert array-like FFT inputs to torch tensors."""
     return value if _torch.is_tensor(value) else _array(value)
+
+
+def _normalize_dim_sequence(dim):
+    """Return Torch-compatible dim tuples for NumPy-style FFT axis arrays."""
+    if dim is None or isinstance(dim, (str, bytes)):
+        return dim
+    if isinstance(dim, _np.ndarray):
+        if (
+            dim.ndim != 1
+            or not _np.issubdtype(dim.dtype, _np.integer)
+            or _np.issubdtype(dim.dtype, _np.bool_)
+        ):
+            return dim
+        dim = dim.tolist()
+    elif _torch.is_tensor(dim):
+        if (
+            dim.ndim != 1
+            or dim.dtype == _torch.bool
+            or dim.dtype.is_floating_point
+            or dim.dtype.is_complex
+        ):
+            return dim
+        dim = dim.detach().cpu().tolist()
+    else:
+        return dim
+
+    return tuple(_operator_index(axis) for axis in dim)
 
 
 def _is_empty_dim(dim):
@@ -43,12 +72,16 @@ def _wrap_arraylike_fft(
     *,
     func_name,
     dim_alias=None,
+    dim_normalizer=None,
     empty_dim_is_noop=False,
 ):
     @_wraps(torch_func)
     def fft_func(value, *args, **kwargs):
         if dim_alias is not None:
             kwargs = _with_dim_alias(kwargs, dim_alias, func_name)
+        if dim_normalizer is not None and "dim" in kwargs:
+            kwargs = dict(kwargs)
+            kwargs["dim"] = dim_normalizer(kwargs["dim"])
         value = _as_fft_tensor(value)
         if empty_dim_is_noop and _is_empty_dim(kwargs.get("dim")):
             return value
@@ -63,13 +96,25 @@ fftshift = _wrap_arraylike_fft(
     _torch.fft.fftshift,
     func_name="fftshift",
     dim_alias="axes",
+    dim_normalizer=_normalize_dim_sequence,
     empty_dim_is_noop=True,
 )
 ifftshift = _wrap_arraylike_fft(
     _torch.fft.ifftshift,
     func_name="ifftshift",
     dim_alias="axes",
+    dim_normalizer=_normalize_dim_sequence,
     empty_dim_is_noop=True,
 )
-fftn = _wrap_arraylike_fft(_torch.fft.fftn, func_name="fftn", dim_alias="axes")
-ifftn = _wrap_arraylike_fft(_torch.fft.ifftn, func_name="ifftn", dim_alias="axes")
+fftn = _wrap_arraylike_fft(
+    _torch.fft.fftn,
+    func_name="fftn",
+    dim_alias="axes",
+    dim_normalizer=_normalize_dim_sequence,
+)
+ifftn = _wrap_arraylike_fft(
+    _torch.fft.ifftn,
+    func_name="ifftn",
+    dim_alias="axes",
+    dim_normalizer=_normalize_dim_sequence,
+)
