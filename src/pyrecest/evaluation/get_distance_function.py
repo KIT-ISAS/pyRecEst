@@ -256,9 +256,11 @@ def get_distance_function(
     elif _is_hypersphere_symmetric_name(normalized_name):
 
         def distance_function(x1, x2):
+            x1_array = asarray(x1)
+            x2_array = asarray(x2)
             return min(
-                _angular_distance_from_inner_product(dot(x1, x2)),
-                _angular_distance_from_inner_product(dot(x1, -x2)),
+                _angular_distance_from_inner_product(dot(x1_array, x2_array)),
+                _angular_distance_from_inner_product(dot(x1_array, -x2_array)),
             )
 
     elif "hypersphere" in normalized_name:
@@ -284,9 +286,11 @@ def get_distance_function(
     elif "se3bounded" in normalized_name:
 
         def distance_function(x1, x2):
+            orientation1 = _state_slice(x1, 0, 4)
+            orientation2 = _state_slice(x2, 0, 4)
             return min(
-                _angular_distance_from_inner_product(dot(x1[:4], x2[:4])),
-                _angular_distance_from_inner_product(dot(x1[:4], -x2[:4])),
+                _angular_distance_from_inner_product(dot(orientation1, orientation2)),
+                _angular_distance_from_inner_product(dot(orientation1, -orientation2)),
             )
 
     elif "se3" in normalized_name or "se3linear" in normalized_name:
