@@ -66,6 +66,14 @@ def _as_linalg_tensor(value):
     return tensor
 
 
+def _as_integer_scalar(value, name):
+    """Return a Python integer for Torch integer-scalar arguments."""
+    try:
+        return _operator_index(value)
+    except TypeError as exc:
+        raise TypeError(f"{name} must be an integer scalar") from exc
+
+
 def _common_linalg_dtype(*tensors):
     """Return a common floating/complex dtype for torch.linalg operations."""
     dtype = tensors[0].dtype
@@ -132,7 +140,7 @@ def expm(a):
 
 def matrix_power(a, n):
     """Raise a matrix to an integer power after array-like input promotion."""
-    return _torch.linalg.matrix_power(_as_linalg_tensor(a), n)
+    return _torch.linalg.matrix_power(_as_linalg_tensor(a), _as_integer_scalar(n, "n"))
 
 
 def pinv(a, rcond=None, hermitian=False, *, atol=None, rtol=None, out=None):
