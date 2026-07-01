@@ -188,20 +188,12 @@ def dot(a, b):
         if a.ndim == 1 and b.ndim == 1:
             return torch.dot(a, b)
         if b.ndim == 1:
-            return torch.einsum("...i,i->...", a, b)
+            return torch.tensordot(a, b, dims=([-1], [0]))
         if a.ndim == 1:
-            return torch.einsum("i,...i->...", a, b)
-        return torch.einsum("...i,...i->...", a, b)
+            return torch.tensordot(a, b, dims=([0], [-2]))
+        return torch.tensordot(a, b, dims=([-1], [-2]))
 
-    a = _np.asarray(a)
-    b = _np.asarray(b)
-    if a.ndim == 0 or b.ndim == 0:
-        return _np.multiply(a, b)
-    if b.ndim == 1:
-        return _np.einsum("...i,i->...", a, b)
-    if a.ndim == 1:
-        return _np.einsum("i,...i->...", a, b)
-    return _np.einsum("...i,...i->...", a, b)
+    return _np.dot(_np.asarray(a), _np.asarray(b))
 
 
 def matvec(matrix, vector):
