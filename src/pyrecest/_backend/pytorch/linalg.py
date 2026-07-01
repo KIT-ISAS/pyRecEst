@@ -93,6 +93,16 @@ def _out_kwargs(out):
     return {} if out is None else {"out": out}
 
 
+def _normalize_norm_axis(axis):
+    """Convert NumPy-style axis values into torch.linalg.norm dim values."""
+    if axis is None:
+        return None
+    axis_array = _np.asarray(axis)
+    if axis_array.ndim == 0:
+        return int(axis_array.item())
+    return tuple(int(dim) for dim in axis_array.tolist())
+
+
 def cholesky(a, upper=False, out=None):
     """Compute a Cholesky factor after PyRecEst-style array-like promotion."""
     return _torch.linalg.cholesky(_as_linalg_tensor(a), upper=upper, **_out_kwargs(out))
@@ -208,7 +218,9 @@ def svd(x, full_matrices=True, compute_uv=True):
 
 def norm(x, ord=None, axis=None, keepdims=False):
     x = _as_linalg_tensor(x)
-    return _torch.linalg.norm(x, ord=ord, dim=axis, keepdim=keepdims)
+    return _torch.linalg.norm(
+        x, ord=ord, dim=_normalize_norm_axis(axis), keepdim=keepdims
+    )
 
 
 def matrix_rank(a, tol=None, hermitian=False, *, rtol=None, atol=None, **kwargs):
