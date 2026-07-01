@@ -21,6 +21,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
 
     _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
+    _patch_pytorch_flip_numpy_axis_contract(raw_pytorch, torch, np)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
     _patch_pytorch_creation_numpy_contract(raw_pytorch, torch, np, _normalize_dtype)
     _patch_pytorch_randint_empty_size_contract(raw_pytorch_random, torch)
@@ -457,6 +458,45 @@ def _patch_pytorch_randint_empty_size_contract(raw_pytorch_random, torch) -> Non
     raw_pytorch_random.randint = randint
     if active_pytorch_backend and backend_random is not None:
         backend_random.randint = randint
+
+
+def _normalize_flip_axes(axis, ndim, torch, np):
+    """Return NumPy-style flip axes as Python integers for PyTorch."""
+    if axis is None:
+        return tuple(range(ndim))
+    if torch.is_tensor(axis):
+        axis = axis.detach().cpu().numpy()
+    axis_array = np.asarray(axis)
+    if axis_array.shape == ():
+        return (_operator_index(axis_array.item()),)
+    if axis_array.ndim != 1:
+        raise ValueError("axis must be None, an integer, or a tuple of integers")
+    return tuple(_operator_index(one_axis) for one_axis in axis_array.tolist())
+
+
+def _patch_pytorch_flip_numpy_axis_contract(raw_pytorch, torch, np) -> None:
+    """Make raw/public PyTorch flip accept NumPy-style scalar and array axes."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    original_flip = raw_pytorch.flip
+    if getattr(original_flip, "_pyrecest_numpy_axis_contract", False):
+        if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.flip = original_flip
+        return
+
+    def flip(x, axis):
+        values = raw_pytorch.array(x)
+        return torch.flip(values, dims=_normalize_flip_axes(axis, values.ndim, torch, np))
+
+    flip.__name__ = getattr(original_flip, "__name__", "flip")
+    flip.__doc__ = getattr(original_flip, "__doc__", None)
+    flip._pyrecest_numpy_axis_contract = True
+    raw_pytorch.flip = flip
+    if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.flip = flip
 
 
 def _normalize_pad_pairs(pad_width, ndim, np):
