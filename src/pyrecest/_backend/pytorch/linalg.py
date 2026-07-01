@@ -1,5 +1,7 @@
 """Pytorch based linear algebra backend."""
 
+from operator import index as _operator_index
+
 import numpy as _np
 import scipy as _scipy
 import torch as _torch
@@ -206,8 +208,33 @@ def svd(x, full_matrices=True, compute_uv=True):
     return _torch.linalg.svdvals(x)
 
 
+def _normalize_norm_axis(axis):
+    """Return a PyTorch-compatible norm dimension from NumPy-style axis input."""
+    if axis is None:
+        return None
+    if _torch.is_tensor(axis):
+        if axis.ndim == 0:
+            return _operator_index(axis.item())
+        if axis.ndim != 1:
+            raise TypeError("axis must be None, an integer, or a tuple of integers")
+        axis = axis.detach().cpu().tolist()
+    elif isinstance(axis, _np.ndarray):
+        if axis.ndim == 0:
+            return _operator_index(axis.item())
+        if axis.ndim != 1:
+            raise TypeError("axis must be None, an integer, or a tuple of integers")
+        axis = axis.tolist()
+    elif isinstance(axis, (int, _np.integer)):
+        return int(axis)
+
+    if isinstance(axis, (list, tuple)):
+        return tuple(_operator_index(one_axis) for one_axis in axis)
+    return _operator_index(axis)
+
+
 def norm(x, ord=None, axis=None, keepdims=False):
     x = _as_linalg_tensor(x)
+    axis = _normalize_norm_axis(axis)
     return _torch.linalg.norm(x, ord=ord, dim=axis, keepdim=keepdims)
 
 
