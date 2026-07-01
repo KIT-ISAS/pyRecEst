@@ -35,6 +35,11 @@ def _non_cpu_device():
             torch.tensor([True, False]),
             lambda device: torch.tensor([False, True], device=device),
         ),
+        (
+            "logical_and",
+            torch.tensor([True, True]),
+            lambda device: torch.tensor([False, True], device=device),
+        ),
     ],
 )
 def test_raw_pytorch_comparison_helpers_prefer_existing_non_cpu_device(
