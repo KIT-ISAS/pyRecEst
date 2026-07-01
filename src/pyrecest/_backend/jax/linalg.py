@@ -1,5 +1,7 @@
 """JAX-based linear algebra backend."""
 
+from operator import index as _operator_index
+
 import jax.numpy as _jnp
 import jax.scipy.linalg as _jax_scipy_linalg
 
@@ -9,6 +11,14 @@ from .._backend_config import jax_atol as atol
 def _as_linalg_array(value):
     """Convert PyRecEst array-like inputs before calling raw JAX linalg."""
     return _jnp.asarray(value)
+
+
+def _as_integer_scalar(value, name):
+    """Return a Python integer for JAX static integer arguments."""
+    try:
+        return _operator_index(value)
+    except TypeError as exc:
+        raise TypeError(f"{name} must be an integer scalar") from exc
 
 
 def cholesky(a, *args, **kwargs):
@@ -36,7 +46,7 @@ def inv(a, *args, **kwargs):
 
 
 def matrix_power(a, n):
-    return _jnp.linalg.matrix_power(_as_linalg_array(a), n)
+    return _jnp.linalg.matrix_power(_as_linalg_array(a), _as_integer_scalar(n, "n"))
 
 
 def matrix_rank(a, *args, **kwargs):
@@ -91,15 +101,13 @@ def solve_sylvester(a, b, q, *args, **kwargs):
 
 
 def _unsupported_function(name):
-    """Create an unsupported-function shim that preserves facade identity."""
-
     def _raise_unsupported(*args, **kwargs):
-        del args, kwargs
-        raise NotImplementedError(f"{name} is not supported in this JAX backend.")
+        _ = args, kwargs
+        raise NotImplementedError(f"{name} is not available in this JAX backend.")
 
     _raise_unsupported.__name__ = name
     _raise_unsupported.__qualname__ = name
-    _raise_unsupported.__doc__ = f"Unsupported JAX-backend placeholder for ``{name}``."
+    _raise_unsupported.__doc__ = f"JAX-backend placeholder for ``{name}``."
     return _raise_unsupported
 
 
