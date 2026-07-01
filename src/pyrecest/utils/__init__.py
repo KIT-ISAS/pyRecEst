@@ -2,10 +2,14 @@
 
 import math as _math
 
+import numpy as _np
+
 from . import assignment as _assignment_module
 from . import multisession_assignment as _multisession_assignment_module
 from . import roi_assignment as _roi_assignment_module
 from ._multisession_assignment_labels import tracks_to_session_labels
+
+_TEXT_SCALAR_TYPES = (str, bytes, bytearray, _np.str_, _np.bytes_)
 
 
 def _murty_solution_with_full_assignment(solution, n_cols):
@@ -95,6 +99,30 @@ if not hasattr(
     _roi_assignment_module.assign_by_similarity_matrix = (
         _assign_by_similarity_matrix_with_unmatched_value_validation
     )
+
+
+def _validate_multisession_scalar_cost(name, value):
+    message = f"{name} must be a finite scalar."
+    try:
+        value_array = _np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(message) from exc
+    if (
+        value_array.shape != ()
+        or value_array.dtype == _np.bool_
+        or value_array.dtype.kind in {"S", "U"}
+    ):
+        raise ValueError(message)
+
+    scalar = value_array.item()
+    if isinstance(scalar, (bool, _np.bool_) + _TEXT_SCALAR_TYPES):
+        raise ValueError(message)
+    try:
+        scalar_float = float(scalar)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(message) from exc
+    if not _math.isfinite(scalar_float):
+        raise ValueError(message)
 
 
 min_cost_max_cardinality_assignment = (
@@ -216,6 +244,7 @@ from .track_metrics import (
 )
 
 _multisession_assignment_module.tracks_to_session_labels = tracks_to_session_labels
+_multisession_assignment_module._validate_scalar_cost = _validate_multisession_scalar_cost
 
 __all__ = [
     "MultiSessionAssignmentResult",
