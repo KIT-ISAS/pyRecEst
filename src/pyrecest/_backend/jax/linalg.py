@@ -95,8 +95,7 @@ def _unsupported_function(name):
     """Create an unsupported-function shim that preserves facade identity."""
 
     def _raise_unsupported(*args, **kwargs):
-        unused_args = args
-        unused_kwargs = kwargs
+        _ = (args, kwargs)
         raise NotImplementedError(f"{name} is not supported in this JAX backend.")
 
     _raise_unsupported.__name__ = name
