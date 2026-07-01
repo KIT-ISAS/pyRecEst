@@ -162,15 +162,23 @@ def _torch_as_tensor_compatible(value, torch, *, device=None):
     return torch.as_tensor(value, device=device)
 
 
+def _preferred_torch_device(torch, *values):
+    """Return an existing non-CPU tensor device before falling back to CPU."""
+    for value in values:
+        if torch.is_tensor(value) and value.device.type != "cpu":
+            return value.device
+    for value in values:
+        if torch.is_tensor(value):
+            return value.device
+    return None
+
+
 def _torch_promoted_pair(first, second):
     torch = _torch_module_for_values(first, second)
     if torch is None:
         return None
 
-    device = next(
-        (value.device for value in (first, second) if torch.is_tensor(value)),
-        None,
-    )
+    device = _preferred_torch_device(torch, first, second)
     first_tensor = _torch_as_tensor_compatible(first, torch, device=device)
     second_tensor = _torch_as_tensor_compatible(second, torch, device=device)
     dtype = torch.promote_types(first_tensor.dtype, second_tensor.dtype)
