@@ -8,7 +8,14 @@ from numpy.random import (  # For PyRecEst
     set_state,
 )
 
-from .._shared_numpy.random import choice, multivariate_normal, normal, rand, uniform
+from .._shared_numpy.random import (
+    _normalize_size,
+    choice,
+    multivariate_normal,
+    normal,
+    rand,
+    uniform,
+)
 
 _BOOLEAN_TYPES = (bool, _np.bool_)
 
@@ -37,6 +44,7 @@ def _validate_randint_bound(bound, name):
 def randint(low, high=None, size=None, dtype=int):
     """Draw integer samples after rejecting non-integer bounds."""
 
+    size = _normalize_size(size)
     if high is None:
         _validate_randint_bound(low, "high")
         return _np.random.randint(low, high=None, size=size, dtype=dtype)
@@ -84,9 +92,7 @@ def _validate_multinomial_pvals(pvals):
 
 
 def _validate_multinomial_size(size):
-    if size is not None and _contains_boolean_value(size):
-        raise TypeError("size must be None, an integer, or a sequence of integers")
-    return size
+    return _normalize_size(size)
 
 
 def multinomial(n, pvals, size=None):
