@@ -9,8 +9,12 @@ from typing import Final, Literal, ParamSpec, TypeVar
 from pyrecest.backend_support._pytorch_allclose_device_contract import (
     patch_pytorch_allclose_device_contract as _patch_pytorch_allclose_device_contract,
 )
+from pyrecest.backend_support._pytorch_one_hot_scalar_contract import (
+    patch_pytorch_one_hot_scalar_contract as _patch_pytorch_one_hot_scalar_contract,
+)
 
 _patch_pytorch_allclose_device_contract()
+_patch_pytorch_one_hot_scalar_contract()
 
 P = ParamSpec("P")
 R = TypeVar("R")
