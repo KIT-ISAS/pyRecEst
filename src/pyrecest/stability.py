@@ -6,6 +6,13 @@ from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass
 from typing import Final, Literal, ParamSpec, TypeVar
 
+from pyrecest.backend_support._pytorch_minmax_device_contract import (
+    patch_pytorch_minmax_device_contract as _patch_pytorch_minmax_device_contract,
+)
+
+_pytorch_minmax_device_contract = _patch_pytorch_minmax_device_contract
+_pytorch_minmax_device_contract()
+
 P = ParamSpec("P")
 R = TypeVar("R")
 
