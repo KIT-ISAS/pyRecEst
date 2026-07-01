@@ -22,6 +22,19 @@ def _is_empty_dim(dim):
         return False
 
 
+def _empty_dim_noop_is_valid(args, kwargs):
+    """Return whether an empty FFT dimension tuple can safely no-op."""
+    shape = args[0] if args else kwargs.get("s", None)
+    if shape is None:
+        return True
+    if isinstance(shape, (str, bytes)):
+        return False
+    try:
+        return len(tuple(shape)) == 0
+    except TypeError:
+        return False
+
+
 def _normalize_single_fft_dim(dim):
     """Return scalar-array FFT dimensions as Python integers when possible."""
     if dim is None or isinstance(dim, (bool, str, bytes)):
@@ -99,7 +112,11 @@ def _wrap_arraylike_fft(
             kwargs = dict(kwargs)
             kwargs["dim"] = _normalize_fft_dim_sequence(kwargs["dim"])
         value = _as_fft_tensor(value)
-        if empty_dim_is_noop and _is_empty_dim(kwargs.get("dim")):
+        if (
+            empty_dim_is_noop
+            and _is_empty_dim(kwargs.get("dim"))
+            and _empty_dim_noop_is_valid(args, kwargs)
+        ):
             return value
         return torch_func(value, *args, **kwargs)
 
