@@ -43,6 +43,14 @@ def _normalize_size_axis(axis):
         raise TypeError("an integer is required") from exc
 
 
+def _normalize_diagonal_integer(value):
+    """Return NumPy-style integer scalar arguments for stricter tensor APIs."""
+    try:
+        return _operator.index(value)
+    except TypeError:
+        return value
+
+
 def size(x, axis=None):
     """Return the total number of elements or the length of a given axis."""
     axis = _normalize_size_axis(axis)
@@ -127,9 +135,9 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     if torch is not None:
         return torch.diagonal(
             _torch_as_tensor_compatible(a, torch),
-            offset=offset,
-            dim1=axis1,
-            dim2=axis2,
+            offset=_normalize_diagonal_integer(offset),
+            dim1=_normalize_diagonal_integer(axis1),
+            dim2=_normalize_diagonal_integer(axis2),
         )
     return _np.diagonal(a, offset=offset, axis1=axis1, axis2=axis2)
 
