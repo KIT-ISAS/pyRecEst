@@ -8,20 +8,15 @@ except ModuleNotFoundError:
 
 
 @pytest.mark.skipif(pytorch_backend is None, reason="PyTorch is not installed")
-def test_linalg_norm_accepts_numpy_scalar_array_axis():
+@pytest.mark.parametrize(
+    "axis",
+    (np.array(0), np.array([0])),
+    ids=("zero_dim_array", "single_element_array"),
+)
+def test_linalg_norm_accepts_numpy_scalar_array_axis(axis):
     values = pytorch_backend.array([[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
     expected = pytorch_backend.array([3.0, np.sqrt(17.0), np.sqrt(29.0)])
 
-    for axis in (np.array(0), np.array([0])):
-        with pytest.subtests.test(axis=repr(axis)) if hasattr(pytest, "subtests") else _nullcontext():
-            result = pytorch_backend.linalg.norm(values, axis=axis)
+    result = pytorch_backend.linalg.norm(values, axis=axis)
 
-            assert pytorch_backend.allclose(result, expected)
-
-
-class _nullcontext:
-    def __enter__(self):
-        return None
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        return False
+    assert pytorch_backend.allclose(result, expected)
