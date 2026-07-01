@@ -21,6 +21,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
 
     _patch_pytorch_repeat_numpy_contract(raw_pytorch, torch)
     _patch_pytorch_diff_numpy_contract(raw_pytorch, torch)
+    _patch_pytorch_transpose_numpy_axes_contract(raw_pytorch, np)
     _patch_pytorch_pad_constant_values_contract(raw_pytorch, torch, np)
     _patch_pytorch_creation_numpy_contract(raw_pytorch, torch, np, _normalize_dtype)
     _patch_pytorch_randint_empty_size_contract(raw_pytorch_random, torch)
@@ -200,6 +201,41 @@ def _patch_pytorch_diff_numpy_contract(raw_pytorch, torch) -> None:
     raw_pytorch.diff = diff
     if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
         backend.diff = diff
+
+
+def _normalize_transpose_axes(axes, np):
+    """Return PyTorch ``permute`` axes from NumPy-style transpose axes."""
+    axes_array = np.asarray(axes)
+    if axes_array.shape == () or axes_array.ndim != 1:
+        raise ValueError("axes don't match array")
+    return tuple(_operator_index(axis) for axis in axes_array.tolist())
+
+
+def _patch_pytorch_transpose_numpy_axes_contract(raw_pytorch, np) -> None:
+    """Make raw/public PyTorch transpose accept NumPy-style axes arrays."""
+    try:
+        import pyrecest.backend as backend  # pylint: disable=import-outside-toplevel
+    except ModuleNotFoundError:  # pragma: no cover - import fails before this module
+        backend = None
+
+    original_transpose = raw_pytorch.transpose
+    if getattr(original_transpose, "_pyrecest_numpy_axes_contract", False):
+        if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.transpose = original_transpose
+        return
+
+    def transpose(x, axes=None):
+        values = raw_pytorch.array(x)
+        if axes is None:
+            return original_transpose(values, axes=None)
+        return values.permute(_normalize_transpose_axes(axes, np))
+
+    transpose.__name__ = getattr(original_transpose, "__name__", "transpose")
+    transpose.__doc__ = getattr(original_transpose, "__doc__", None)
+    transpose._pyrecest_numpy_axes_contract = True
+    raw_pytorch.transpose = transpose
+    if backend is not None and getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.transpose = transpose
 
 
 def _normalize_creation_shape(shape, torch, np):
