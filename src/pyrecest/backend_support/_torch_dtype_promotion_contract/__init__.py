@@ -265,13 +265,19 @@ def _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch) -> None
             setattr(backend, helper_name, wrapped_helper)
 
 
-def _integer_torch_dtype(dtype, raw_pytorch, torch):
-    """Return an explicit integer torch dtype, or ``None`` for non-integers."""
+def _linspace_torch_dtype(dtype, raw_pytorch):
+    """Return a torch dtype for supported NumPy-style linspace dtype aliases."""
     if dtype is None:
         return None
     try:
-        torch_dtype = raw_pytorch.as_dtype(dtype)
+        return raw_pytorch.as_dtype(dtype)
     except (KeyError, TypeError, ValueError):
+        return dtype
+
+
+def _integer_torch_dtype(torch_dtype, torch):
+    """Return an explicit integer torch dtype, or ``None`` for non-integers."""
+    if torch_dtype is None:
         return None
     integer_dtypes = {
         torch.uint8,
@@ -284,7 +290,7 @@ def _integer_torch_dtype(dtype, raw_pytorch, torch):
 
 
 def _patch_pytorch_linspace_integer_dtype_contract(raw_pytorch, backend, torch) -> None:
-    """Make PyTorch linspace match NumPy flooring for explicit integer dtypes."""
+    """Make PyTorch linspace match NumPy dtype-alias and integer flooring semantics."""
     original_linspace = raw_pytorch.linspace
     if getattr(original_linspace, "_pyrecest_integer_dtype_contract", False):
         if getattr(backend, "__backend_name__", None) == "pytorch":
@@ -292,14 +298,15 @@ def _patch_pytorch_linspace_integer_dtype_contract(raw_pytorch, backend, torch) 
         return
 
     def linspace(start, stop, num=50, endpoint=True, dtype=None):
-        integer_dtype = _integer_torch_dtype(dtype, raw_pytorch, torch)
+        torch_dtype = _linspace_torch_dtype(dtype, raw_pytorch)
+        integer_dtype = _integer_torch_dtype(torch_dtype, torch)
         if integer_dtype is None:
             return original_linspace(
                 start,
                 stop,
                 num=num,
                 endpoint=endpoint,
-                dtype=dtype,
+                dtype=torch_dtype,
             )
         values = original_linspace(start, stop, num=num, endpoint=endpoint, dtype=None)
         return torch.floor(values).to(dtype=integer_dtype)
