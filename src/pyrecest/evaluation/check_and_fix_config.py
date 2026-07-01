@@ -1,13 +1,17 @@
 from pyrecest.distributions import AbstractManifoldSpecificDistribution
 
 
+def _is_integer_count(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def _expand_meas_per_step(simulation_param):
     if "n_meas_at_individual_time_step" in simulation_param:
         return
     if "meas_per_step" not in simulation_param:
         return
 
-    if not isinstance(simulation_param["meas_per_step"], int):
+    if not _is_integer_count(simulation_param["meas_per_step"]):
         raise TypeError("meas_per_step must be an integer")
     if simulation_param["meas_per_step"] <= 0:
         raise ValueError("meas_per_step must be positive")
@@ -24,7 +28,7 @@ def _validate_measurement_counts(simulation_param):
         raise ValueError(
             "n_meas_at_individual_time_step must have one entry per time step"
         )
-    if not all(isinstance(x, int) for x in counts):
+    if not all(_is_integer_count(x) for x in counts):
         raise TypeError("n_meas_at_individual_time_step must contain integer values")
     if not all(x > 0 for x in counts):
         raise ValueError("n_meas_at_individual_time_step must contain positive values")
