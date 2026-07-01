@@ -11,6 +11,12 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 
+def _normalize_backend_name(backend: object) -> str:
+    if isinstance(backend, (bytes, bytearray)):
+        return backend.decode()
+    return str(backend)
+
+
 def _normalize_supported_backends(
     supported_backends: Iterable[str] | str | None,
 ) -> tuple[str, ...]:
@@ -20,7 +26,7 @@ def _normalize_supported_backends(
         return (supported_backends,)
     if isinstance(supported_backends, (bytes, bytearray)):
         return (supported_backends.decode(),)
-    return tuple(str(backend) for backend in supported_backends)
+    return tuple(_normalize_backend_name(backend) for backend in supported_backends)
 
 
 class PyRecEstError(Exception):
