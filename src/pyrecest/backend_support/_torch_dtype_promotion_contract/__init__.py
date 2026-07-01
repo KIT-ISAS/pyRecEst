@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from operator import index as _operator_index
 
 
 def _load_base_contract_module():
@@ -37,6 +38,7 @@ def patch_pytorch_dtype_promotion_contract() -> None:
     _patch_pytorch_logical_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_binary_device_contract(raw_pytorch, backend, torch)
     _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch)
+    _patch_pytorch_moveaxis_numpy_contract(raw_pytorch, backend, torch, np)
 
 
 def _pytorch_numpy_index_array(index, numpy_module, torch_module):
@@ -262,6 +264,39 @@ def _patch_pytorch_equality_device_contract(raw_pytorch, backend, torch) -> None
         setattr(raw_pytorch, helper_name, wrapped_helper)
         if getattr(backend, "__backend_name__", None) == "pytorch":
             setattr(backend, helper_name, wrapped_helper)
+
+
+def _pytorch_moveaxis_axis(axis, numpy_module, torch_module):
+    """Return NumPy-style moveaxis axes as Python ints or tuples of ints."""
+    if torch_module.is_tensor(axis):
+        axis = axis.detach().cpu().numpy()
+    axis_array = numpy_module.asarray(axis)
+    if axis_array.shape == ():
+        return _operator_index(axis_array.item())
+    return tuple(_operator_index(one_axis) for one_axis in axis_array.tolist())
+
+
+def _patch_pytorch_moveaxis_numpy_contract(raw_pytorch, backend, torch, np) -> None:
+    """Make PyTorch moveaxis accept array-like inputs and NumPy-style axes."""
+    original_moveaxis = raw_pytorch.moveaxis
+    if getattr(original_moveaxis, "_pyrecest_numpy_contract", False):
+        if getattr(backend, "__backend_name__", None) == "pytorch":
+            backend.moveaxis = original_moveaxis
+        return
+
+    def moveaxis(a, source, destination):
+        return torch.moveaxis(
+            raw_pytorch.array(a),
+            _pytorch_moveaxis_axis(source, np, torch),
+            _pytorch_moveaxis_axis(destination, np, torch),
+        )
+
+    moveaxis.__name__ = getattr(original_moveaxis, "__name__", "moveaxis")
+    moveaxis.__doc__ = getattr(np.moveaxis, "__doc__", None)
+    moveaxis._pyrecest_numpy_contract = True
+    raw_pytorch.moveaxis = moveaxis
+    if getattr(backend, "__backend_name__", None) == "pytorch":
+        backend.moveaxis = moveaxis
 
 
 __all__ = ["patch_pytorch_dtype_promotion_contract"]
